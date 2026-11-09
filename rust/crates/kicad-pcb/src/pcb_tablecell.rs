@@ -27,7 +27,7 @@
 
 use kicad_core::text_vars::ResolutionContext;
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PcbLayerId};
+use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PcbLayerId, StrokeParams};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
 

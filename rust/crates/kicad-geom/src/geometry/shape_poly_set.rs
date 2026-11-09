@@ -335,6 +335,227 @@ impl TriangulatedPolygon {
             }
         }
     }
+
+    /// Port of `TRIANGULATED_POLYGON::SetTriangles()`: the triangles (indices) of
+    /// `a_triangles`, referring to this polygon's vertices.
+    pub fn set_triangles(&mut self, a_triangles: &[Tri]) {
+        self.triangles = a_triangles
+            .iter()
+            .map(|t| Tri::new(t.a, t.b, t.c, &self.vertices))
+            .collect();
+    }
+
+    /// Port of `TRIANGULATED_POLYGON::SetVertices()` (the triangles' vertex copies follow).
+    pub fn set_vertices(&mut self, a_vertices: &[Vector2I]) {
+        self.vertices = a_vertices.to_vec();
+
+        for tri in &mut self.triangles {
+            *tri = Tri::new(tri.a, tri.b, tri.c, &self.vertices);
+        }
+    }
+
+    /// Port of `TRIANGULATED_POLYGON::Refine()`: refine this triangulation in place with
+    /// boundary-preserving Lawson edge flips, minimizing the number of sliver triangles and,
+    /// on ties, maximizing the minimum angle.  Adds and removes no vertices or triangles.
+    pub fn refine(&mut self) {
+        use crate::geometry::geometry_predicates::{
+            in_circle_delaunay_legal, is_sliver_triangle, orientation_sign,
+        };
+
+        let tri_count = self.triangles.len();
+
+        // Indices are int; skip an implausibly huge mesh rather than overflow.
+        if tri_count < 2 || tri_count > (i32::MAX as usize) / 6 {
+            return;
+        }
+
+        let half_edge_count = (3 * tri_count) as i32;
+
+        // heVertex[3k+j] is vertex j of triangle k.
+        let mut he_vertex: Vec<i32> = vec![0; half_edge_count as usize];
+
+        for (k, tri) in self.triangles.iter().enumerate() {
+            he_vertex[3 * k] = tri.a;
+            he_vertex[3 * k + 1] = tri.b;
+            he_vertex[3 * k + 2] = tri.c;
+        }
+
+        let next_in_triangle = |a_edge: i32| a_edge - a_edge % 3 + (a_edge + 1) % 3;
+
+        // An untwinned edge is a polygon boundary and must never flip. Slots are never
+        // tombstoned so probe chains stay intact.
+        let mut twin: Vec<i32> = vec![-1; half_edge_count as usize];
+
+        let mut table_size: i32 = 1;
+
+        while table_size < half_edge_count * 2 {
+            table_size <<= 1;
+        }
+
+        let table_mask = (table_size - 1) as u32;
+        let mut slot_edge: Vec<i32> = vec![-1; table_size as usize];
+
+        // A non-manifold edge (three or more triangles, e.g. a hole-bridge pinch) is retired
+        // so no triangle straddling it can flip.
+        let mut retired: Vec<bool> = vec![false; table_size as usize];
+        let mut to_visit: Vec<i32> = Vec::new();
+        let mut queued: Vec<bool> = vec![false; half_edge_count as usize];
+
+        let key = |from: i32, to: i32| -> (u32, u32) {
+            if from < to {
+                (from as u32, to as u32)
+            } else {
+                (to as u32, from as u32)
+            }
+        };
+
+        for edge in 0..half_edge_count {
+            let from = he_vertex[edge as usize];
+            let to = he_vertex[next_in_triangle(edge) as usize];
+            let (key_low, key_high) = key(from, to);
+            let mut slot = (key_low.wrapping_mul(0x9e3779b1) ^ key_high.wrapping_mul(0x85ebca6b))
+                & table_mask;
+            let mut handled = false;
+
+            while slot_edge[slot as usize] != -1 {
+                let other = slot_edge[slot as usize];
+                let other_from = he_vertex[other as usize];
+                let other_to = he_vertex[next_in_triangle(other) as usize];
+                let (other_low, other_high) = key(other_from, other_to);
+
+                if other_low == key_low && other_high == key_high {
+                    if retired[slot as usize] {
+                        // Non-manifold; stays a boundary.
+                    } else if twin[other as usize] == -1 {
+                        twin[edge as usize] = other;
+                        twin[other as usize] = edge;
+                        queued[other as usize] = true;
+                        to_visit.push(other);
+                    } else {
+                        // Third half-edge here: retire the edge and unlink the pair already
+                        // formed.
+                        let mate = twin[other as usize];
+                        twin[other as usize] = -1;
+                        twin[mate as usize] = -1;
+                        retired[slot as usize] = true;
+                    }
+
+                    handled = true;
+                    break;
+                }
+
+                slot = (slot + 1) & table_mask;
+            }
+
+            if !handled {
+                slot_edge[slot as usize] = edge;
+            }
+        }
+
+        while let Some(edge) = to_visit.pop() {
+            queued[edge as usize] = false;
+
+            let twin_edge = twin[edge as usize];
+
+            if twin_edge == -1 {
+                continue;
+            }
+
+            let tri = edge - edge % 3;
+            let twin_tri = twin_edge - twin_edge % 3;
+
+            let apex_a_edge = tri + (edge + 2) % 3;
+            let shared_end_edge = tri + (edge + 1) % 3;
+            let apex_b_edge = twin_tri + (twin_edge + 2) % 3;
+            let twin_shared_edge = twin_tri + (twin_edge + 1) % 3;
+
+            let apex_a = he_vertex[apex_a_edge as usize];
+            let shared_from = he_vertex[edge as usize];
+            let shared_to = he_vertex[shared_end_edge as usize];
+            let apex_b = he_vertex[apex_b_edge as usize];
+
+            let apex_a_pt = self.vertices[apex_a as usize];
+            let shared_from_pt = self.vertices[shared_from as usize];
+            let shared_to_pt = self.vertices[shared_to as usize];
+            let apex_b_pt = self.vertices[apex_b as usize];
+
+            // A non-convex quad would flip a triangle outside the polygon.
+            if orientation_sign(apex_a_pt, shared_from_pt, apex_b_pt) <= 0 {
+                continue;
+            }
+
+            if orientation_sign(apex_a_pt, apex_b_pt, shared_to_pt) <= 0 {
+                continue;
+            }
+
+            // Prefer the diagonal with fewer slivers, Delaunay breaks ties. Each flip lowers
+            // (slivers, then -min-angle) lexicographically, so the loop terminates.
+            let legal = in_circle_delaunay_legal(apex_a_pt, shared_from_pt, shared_to_pt, apex_b_pt);
+
+            let cur_slivers = is_sliver_triangle(apex_a_pt, shared_from_pt, shared_to_pt) as i32
+                + is_sliver_triangle(apex_b_pt, shared_to_pt, shared_from_pt) as i32;
+
+            // Nothing to gain when already Delaunay and neither triangle is a sliver.
+            if legal && cur_slivers == 0 {
+                continue;
+            }
+
+            let flip_slivers = is_sliver_triangle(apex_a_pt, shared_from_pt, apex_b_pt) as i32
+                + is_sliver_triangle(apex_a_pt, apex_b_pt, shared_to_pt) as i32;
+
+            let do_flip = if flip_slivers != cur_slivers {
+                flip_slivers < cur_slivers
+            } else {
+                !legal
+            };
+
+            if !do_flip {
+                continue;
+            }
+
+            he_vertex[edge as usize] = apex_b;
+            he_vertex[twin_edge as usize] = apex_a;
+
+            let apex_b_outer_twin = twin[apex_b_edge as usize];
+            let apex_a_outer_twin = twin[apex_a_edge as usize];
+
+            twin[edge as usize] = apex_b_outer_twin;
+
+            if apex_b_outer_twin != -1 {
+                twin[apex_b_outer_twin as usize] = edge;
+            }
+
+            twin[twin_edge as usize] = apex_a_outer_twin;
+
+            if apex_a_outer_twin != -1 {
+                twin[apex_a_outer_twin as usize] = twin_edge;
+            }
+
+            twin[apex_a_edge as usize] = apex_b_edge;
+            twin[apex_b_edge as usize] = apex_a_edge;
+
+            // The flip may have made the quad's four outer edges illegal.
+            for outer in [edge, twin_edge, shared_end_edge, twin_shared_edge] {
+                if twin[outer as usize] != -1 && !queued[outer as usize] {
+                    queued[outer as usize] = true;
+                    to_visit.push(outer);
+                }
+            }
+        }
+
+        let refined: Vec<Tri> = (0..tri_count)
+            .map(|i| {
+                Tri::new(
+                    he_vertex[3 * i],
+                    he_vertex[3 * i + 1],
+                    he_vertex[3 * i + 2],
+                    &self.vertices,
+                )
+            })
+            .collect();
+
+        self.triangles = refined;
+    }
 }
 
 /// Port of `SHAPE_POLY_SET::VERTEX_INDEX`: the relative indices of a vertex (polygon, contour
@@ -598,6 +819,8 @@ enum CornerMode {
 pub struct ShapePolySet {
     polys: Vec<Polygon>,
     triangulated_polys: Vec<TriangulatedPolygon>,
+    /// `m_triIndex`: the spatial index over the triangles (dropped whenever they change)
+    tri_index: Option<TriangulationIndex>,
     triangulation_valid: bool,
     hash: Hash128,
     hash_valid: bool,
@@ -674,6 +897,7 @@ impl ShapePolySet {
     fn move_assign(&mut self, a_other: ShapePolySet) {
         self.polys = a_other.polys;
         self.triangulated_polys = a_other.triangulated_polys;
+        self.tri_index = a_other.tri_index;
         self.hash = a_other.hash;
         self.hash_valid = a_other.hash_valid;
         self.triangulation_valid = a_other.triangulation_valid;
@@ -2393,6 +2617,8 @@ impl ShapePolySet {
 
     /// Port of `SHAPE_POLY_SET::RemoveAllContours()`.
     pub fn remove_all_contours(&mut self) {
+        self.tri_index = None;
+
         self.polys.clear();
         self.triangulated_polys.clear();
         self.triangulation_valid = false;
@@ -2494,6 +2720,8 @@ impl ShapePolySet {
     /// polygon and its triangulation data.  If called with `a_update_hash` false, the caller
     /// must call `update_triangulation_data_hash()`.
     pub fn delete_polygon_and_triangulation_data(&mut self, a_idx: i32, a_update_hash: bool) {
+        self.tri_index = None;
+
         self.polys.remove(a_idx as usize);
 
         if self.triangulation_valid {
