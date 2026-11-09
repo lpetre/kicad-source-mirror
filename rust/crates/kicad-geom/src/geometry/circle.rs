@@ -48,19 +48,25 @@ impl Circle {
     /// the given point, generating the solution which can be used to fillet both segments.
     /// The caller is responsible for ensuring it is providing a solvable problem (the C++
     /// `wxCHECK_MSG`s return early, leaving the circle partially updated; so does the port).
-    pub fn construct_from_tan_tan_pt(&mut self, a_line_a: &Seg, a_line_b: &Seg, a_p: Vector2I) -> &mut Self {
+    pub fn construct_from_tan_tan_pt(
+        &mut self,
+        a_line_a: &Seg,
+        a_line_b: &Seg,
+        a_p: Vector2I,
+    ) -> &mut Self {
         //fixme: There might be more efficient / accurate solution than using geometrical constructs
 
         let mut anglebisector = Seg::default();
         let intersect_point: Vector2I;
 
-        let furthest_from_intersect = |ip: Vector2I, a_pt1: Vector2I, a_pt2: Vector2I| -> Vector2I {
-            if (a_pt1 - ip).euclidean_norm() > (a_pt2 - ip).euclidean_norm() {
-                a_pt1
-            } else {
-                a_pt2
-            }
-        };
+        let furthest_from_intersect =
+            |ip: Vector2I, a_pt1: Vector2I, a_pt2: Vector2I| -> Vector2I {
+                if (a_pt1 - ip).euclidean_norm() > (a_pt2 - ip).euclidean_norm() {
+                    a_pt1
+                } else {
+                    a_pt2
+                }
+            };
 
         let closest_to_intersect = |ip: Vector2I, a_pt1: Vector2I, a_pt2: Vector2I| -> Vector2I {
             if (a_pt1 - ip).euclidean_norm() <= (a_pt2 - ip).euclidean_norm() {
@@ -140,14 +146,19 @@ impl Circle {
 
             // We want to create a fillet, so the projection of homothetic projection of aP
             // should be the one closest to the intersection
-            let h_selected =
-                closest_to_intersect(intersect_point, h_projections[0], *h_projections.last().unwrap());
+            let h_selected = closest_to_intersect(
+                intersect_point,
+                h_projections[0],
+                *h_projections.last().unwrap(),
+            );
 
             let h_tan_line_a = a_line_a.line_project(h_solution.center);
             let h_tan_line_b = a_line_b.line_project(h_solution.center);
 
             // To minimise errors, use the furthest away tangent point from aP
-            if (h_tan_line_a - a_p).squared_euclidean_norm() > (h_tan_line_b - a_p).squared_euclidean_norm() {
+            if (h_tan_line_a - a_p).squared_euclidean_norm()
+                > (h_tan_line_b - a_p).squared_euclidean_norm()
+            {
                 // Find the tangent at line A by homothetic inversion
                 let h_t = Seg::new(h_tan_line_a, h_selected);
                 let Some(act_tan_a) = h_t.parallel_seg(a_p).intersect_lines(a_line_a) else {
@@ -156,7 +167,8 @@ impl Circle {
 
                 // Find circle center by perpendicular intersection with the angle bisector
                 let perpendicular_to_tan_a = a_line_a.perpendicular_seg(act_tan_a);
-                let Some(act_center) = perpendicular_to_tan_a.intersect_lines(&anglebisector) else {
+                let Some(act_center) = perpendicular_to_tan_a.intersect_lines(&anglebisector)
+                else {
                     return self;
                 };
 
@@ -171,7 +183,8 @@ impl Circle {
 
                 // Find circle center by perpendicular intersection with the angle bisector
                 let perpendicular_to_tan_b = a_line_b.perpendicular_seg(act_tan_b);
-                let Some(act_center) = perpendicular_to_tan_b.intersect_lines(&anglebisector) else {
+                let Some(act_center) = perpendicular_to_tan_b.intersect_lines(&anglebisector)
+                else {
                     return self;
                 };
 

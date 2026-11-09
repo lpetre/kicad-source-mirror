@@ -2,18 +2,15 @@
 
 Port of KiCad's `libs/kimath` (integer 2D math, shapes, polygon sets, collisions).
 
-State after **work package G1 - math foundation (kimath part 1)**: utilities and rounding,
-vectors, boxes, angles, trigonometry helpers, segments and vector utilities are ported, tested
-with the ported C++ unit tests and verified bit for bit against the original C++ code with a
-differential oracle (about one million pseudo-random cases, see "Verification").  Shapes
-(`SHAPE_*`, `circle.h`, ...) are the next work package and are not started.
-
-**Work package G7 - sorting, spatial indices, triangulation helpers**: the libstdc++-exact
-`std::sort` family (`src/stdsort.rs`), KiCad's r-trees `PACKED_RTREE` and `DYNAMIC_RTREE`
-(`src/geometry/rtree/`), delaunator-cpp and the nanoflann subset KiCad uses
-(`src/thirdparty/`), verified bit for bit (permutations, visit orders, triangulations) against
-g++/libstdc++ with a second differential oracle (`tests/oracle/spatial_oracle.cpp`, natively
-and in wasm32).
+State after **work package G2 - basic shapes (kimath part 2)**, on top of G1 (math foundation):
+utilities and rounding, vectors, boxes, angles, trigonometry helpers, segments and vector
+utilities (G1); the `SHAPE` hierarchy, `SHAPE_ARC`, `CIRCLE`, the simple shapes, compound shapes,
+geometry_utils, half lines / lines, arc chord parameters and the arc construction helpers (G2),
+plus skeletons of `SHAPE_LINE_CHAIN` (full port: G3) and `SHAPE_POLY_SET` (G4) and the part of
+the collision matrix that needs nothing else (full port: G5).  Everything is tested with the
+ported C++ unit tests and verified bit for bit against the original C++ code with two
+differential oracles (about 1.6 million pseudo-random cases, see "Verification").  The design of
+the shape hierarchy is in `rust/docs/design/geom-shapes.md`.
 
 Everything in this crate builds for `wasm32-unknown-unknown`, has no dependencies and no
 `unsafe`.
@@ -38,7 +35,7 @@ Everything in this crate builds for `wasm32-unknown-unknown`, has no dependencie
 | `libs/kimath/include/math/box2.h` | `src/math/box2.rs` | ported |
 | - `BOX2<Vec>`, `BOX2I/D/L`, `OPT_BOX2I` | `Box2<T>`, `Box2I/D/L`, `OptBox2I`; methods generated per instantiation | ported; all methods |
 | - `BOX2ISafe` (3 overloads), `IsBOX2Safe`, `KiROUND( BOX2D )` | `box2i_safe`, `box2i_safe_from_pos_size`, `box2i_safe_from_int`, method `is_box2_safe`, `ki_round( box )` | ported |
-| `libs/kimath/include/math/box2_minmax.h` | `src/math/box2_minmax.rs` (`Box2IMinMax`) | ported except the `SHAPE_ARC` constructor (next package) |
+| `libs/kimath/include/math/box2_minmax.h` | `src/math/box2_minmax.rs` (`Box2IMinMax`); the `SHAPE_ARC` constructor is `Box2IMinMax::from_arc` in `src/geometry/shape_arc.rs` | ported |
 | `libs/kimath/include/geometry/eda_angle.h`, `src/geometry/eda_angle.cpp` | `src/geometry/eda_angle.rs` | ported |
 | - `EDA_ANGLE`, `EDA_ANGLE_T`, `ANGLE_*`, `FULL_CIRCLE` | `EdaAngle`, `EdaAngleT` (+ consts `DEGREES_T`, `RADIANS_T`, `TENTHS_OF_A_DEGREE_T`), `ANGLE_*`, `FULL_CIRCLE` | ported; all methods and operators, `std::abs` is `EdaAngle::abs` |
 | - `EDA_ORIENTATION` | `EdaOrientation` | ported |
@@ -57,7 +54,30 @@ Everything in this crate builds for `wasm32-unknown-unknown`, has no dependencie
 | libstdc++ `std::sort`, `std::partial_sort`, `std::nth_element`, `std::make_heap` / `push_heap` / `pop_heap` / `sort_heap`, `std::priority_queue`, `erase( std::unique( ... ) )` | `src/stdsort.rs` (`std_sort`, `std_sort_default`, `std_partial_sort`, `std_nth_element`, `std_make_heap`, `std_push_heap`, `std_pop_heap`, `std_sort_heap`, `PriorityQueue`, `std_unique`) | ported from GCC 13 `bits/stl_algo.h` / `stl_heap.h` (PORTING.md section 9); see D14 |
 | `libs/kimath/include/math/vector2wx.h` | - | skipped: wxWidgets glue |
 | `libs/kimath/include/math/matrix3x3.h`, `vector3.h` | - | not part of this package |
-| all shape code (`geometry/shape*.h`, `circle.h`, `half_line.h`, `line.h`, `intersection.h`, `geometry_predicates.h`, ...), `convert_basic_shapes_to_polygon`, `bezier_curves`, `transform`, hashes | - | not started (next packages) |
+| `geometry/approximation.h` (`ERROR_LOC`) | `src/geometry/approximation.rs` (`ErrorLoc`, `ERROR_INSIDE`, `ERROR_OUTSIDE`) | ported |
+| `geometry/shape.h`, `src/geometry/shape.cpp` | `src/geometry/shape.rs` | ported (design: `docs/design/geom-shapes.md`) |
+| - `SHAPE_TYPE`, `SHAPE_TYPE_asString` | `ShapeType`, `shape_type_as_string` | ported |
+| - `SHAPE_BASE`, `SHAPE` (virtual interface) | trait `Shape` (+ enum `ShapeRef` for dispatch) | ported; `GetClearance` (also free fn `get_clearance`), `Distance`, `SquaredDistance`, `PointInside`, `Format`, `Centre` defaults; `Parse` skipped (G3, only `SHAPE_LINE_CHAIN` implements it); `NearestPoints( SHAPE* )` is the G5 stub `shape_collisions::nearest_points` |
+| - `SHAPE_LINE_CHAIN_BASE` + its methods in `shape_line_chain.cpp` | trait `ShapeLineChainBase` (`lcb_collide_point`, `lcb_collide_seg`, `lcb_squared_distance`, `lcb_point_inside`, `point_on_edge`, `edge_containing_point`) | ported |
+| `geometry/shape_arc.h`, `src/geometry/shape_arc.cpp` | `src/geometry/shape_arc.rs` (`ShapeArc`) | ported, except `TransformToPolygon` (GAP-5) and `NearestPoints( SHAPE_RECT )` (G5 stub, GAP-4) |
+| `geometry/shape_circle.h` (+ `Format`, `TransformToPolygon` from `shape_segment.cpp`) | `src/geometry/shape_circle.rs` | ported, except `TransformToPolygon` (GAP-5) |
+| `geometry/shape_rect.h`, `src/geometry/shape_rect.cpp` | `src/geometry/shape_rect.rs` | ported; rounded corners (`ROUNDRECT`) GAP-5 |
+| `geometry/shape_segment.h`, `src/geometry/shape_segment.cpp` | `src/geometry/shape_segment.rs` | ported, except `TransformToPolygon` (GAP-5) |
+| `geometry/shape_simple.h` (+ `TransformToPolygon` from `shape.cpp`) | `src/geometry/shape_simple.rs` | ported |
+| `geometry/shape_null.h` | `src/geometry/shape_null.rs` | ported |
+| `geometry/shape_compound.h`, `src/geometry/shape_compound.cpp` | `src/geometry/shape_compound.rs` | ported; `Distance( const SEG& )` (`assert( false )` in C++) skipped |
+| `geometry/shape_line_chain.h/.cpp` (`SHAPE_LINE_CHAIN`) | `src/geometry/shape_line_chain.rs` | **skeleton** (G3): data members, constructors (empty, points + closed, `std::vector<int>`, arc), `Append` (point, x/y, chain, arc), `Clear`, `SetClosed`, `PointCount`, `SegmentCount`, `Segment`/`CSegment`, `CPoint`, `CPoints`, `CLastPoint`, `CArcs`, `CShapes`, `ArcCount`, `Arc`, `ArcIndex`, `IsSharedPt`, `IsPtOnArc`, `IsArcSegment`, `IsArcStart`, `IsArcEnd`, `BBox`, `GenerateBBoxCache`, `Move`, `Rotate`, `SetWidth`/`Width`, `Collide` (point, segment), `PointInside`, `TransformToPolygon`, `operator==`; the rest is G3 |
+| `geometry/shape_poly_set.h/.cpp` (`SHAPE_POLY_SET`) | `src/geometry/shape_poly_set.rs` | **skeleton** (G4): `POLYGON`, constructors (empty, `BOX2D`, outline, polygon), `NewOutline`, `NewHole`, `AddOutline`, `AddHole`, `AddPolygon`, `Append` (x/y, point, set), `OutlineCount`, `HoleCount`, `Outline`/`COutline`, `Hole`/`CHole`, `Polygon`/`CPolygon`, `TotalVertices`, `IsEmpty`, `RemoveAllContours`, `BBox`, `Move`/`Rotate` of the contours, `TRIANGULATED_POLYGON` / `TRI` data (`TriangulatedPolygon`, `Tri`); `Collide( SEG )` returns false (G4) |
+| `src/geometry/shape_collisions.cpp` | `src/geometry/shape_collisions.rs` | **partial** (G5): `collideShapes` (compounds), the matrix `collideSingleShapes`, and every pair listed in GAP-4 as served |
+| `geometry/circle.h`, `src/geometry/circle.cpp` | `src/geometry/circle.rs` (`Circle`) | ported; the non-const `Contains()` overload is `contains_inside()` |
+| `geometry/arc_chord_params.h/.cpp` | `src/geometry/arc_chord_params.rs` (`ArcChordParams`) | ported |
+| `geometry/arc_construction.h/.cpp` | `src/geometry/arc_construction.rs` | ported |
+| `geometry/half_line.h/.cpp` | `src/geometry/half_line.rs` (`HalfLine`) | ported |
+| `geometry/line.h/.cpp` | `src/geometry/line.rs` (`Line`) | ported |
+| `geometry/geometry_utils.h/.cpp` | `src/geometry/geometry_utils.rs` | ported (`GetVectorSnapped45/90`, `GetClampedCoords`, `IsVec2SafeXY` for `int`, `int64_t`, `double`; `GetClampedCoords<double, int>` / `<int64_t, int>` as `get_clamped_coords_to_i` / `_l_to_i`) |
+| `include/base_units.h`: `ARC_HIGH_DEF`, `ARC_LOW_DEF` (+ `_MM`) | `src/geometry/geometry_utils.rs` | ported (constants only) |
+| `src/geometry/shape_utils.cpp`: `BoxToSegs`, `ClipHalfLineToBox`, `ClipLineToBox` | `src/geometry/shape_utils.rs` | ported; the rest of `shape_utils` is a later package |
+| `intersection.h`, `geometry_predicates.h`, `convert_basic_shapes_to_polygon`, `roundrect`, `shape_ellipse`, `bezier_curves`, `transform`, hashes, ... | - | not started (later packages) |
 
 Support modules without a C++ counterpart:
 
@@ -90,6 +110,18 @@ Support modules without a C++ counterpart:
 - `Normalize90()` etc. are `normalize90()`, `normalize180()`, `normalize720()`,
   `IsCardinal90()` is `is_cardinal90()`.
 - The module for `core/` headers is called `kicore` so it cannot shadow Rust's `core` crate.
+- Shapes: `Collide( VECTOR2I )` / `Collide( SEG )` / `Collide( SHAPE* )` / `Collide( SHAPE*, int,
+  VECTOR2I* aMTV )` are `collide_point` / `collide_seg` / `collide` / `collide_mtv`; constructors
+  are named after their arguments (`ShapeArc::from_start_mid_end`, `from_center_start_angle`,
+  `from_tangent_segments`, `with_width`; `ShapeRect::from_box`, `from_xywh`, `from_pos_size`,
+  `from_corners`; ...).  `SHAPE_ARC::Intersect( CIRCLE )` / `( SHAPE_ARC )` are
+  `intersect_circle` / `intersect_arc`, `NearestPoints( X )` is `nearest_points_<x>`,
+  `Mirror( SEG )` is `mirror_seg`, `ConvertToPolyline( err, &actual )` is
+  `convert_to_polyline_with_error`.  `CIRCLE::Intersect( SEG )` is `intersect_seg`, the
+  `VECTOR2D` overloads of `NearestPoint` / `FurthestPoint` have a `_d` suffix.
+- Getters keep their `get_` prefix where `PORTING.md` would produce a name that clashes with a
+  `Shape` method or reads badly for shapes (`get_p0`, `get_center`, `get_radius`, `get_width`,
+  `get_seg`, ...), so that the C++ names grep one to one.
 
 ### Out-parameters
 
@@ -101,6 +133,10 @@ Support modules without a C++ counterpart:
 | `SEG::CanonicalCoefs( qA, qB, qC )` | `canonical_coefs() -> ( qa, qb, qc )` |
 | `SegmentIntersectsSegment( ..., VECTOR2I* aIntersectionPoint )` | `segment_intersects_segment_with_point( ... ) -> ( bool, Option<Vector2I> )`; the point is `Some` whenever the lines are not parallel, exactly when the C++ writes to the pointer |
 | `RotatePoint( int* pX, int* pY, ... )` | `rotate_point_xy( &mut x, &mut y, ... )` (in place, like the C++) |
+| `SHAPE::Collide( ..., int* aActual, VECTOR2I* aLocation )` and the MTV variant | `Option<&mut i32>`, `Option<&mut Vector2I>`: the C++ behaves differently depending on whether a value is requested, so the nullable-pointer contract is kept |
+| `SHAPE_ARC::NearestPoints( X, VECTOR2I& aPtA, VECTOR2I& aPtB, int64_t& aDistSq )` | `nearest_points_<x>( &x, &mut pt_a, &mut pt_b, &mut dist_sq ) -> bool`: in/out, the incoming points are used when no candidate is found |
+| `SHAPE_ARC::IntersectLine( SEG, std::vector<VECTOR2I>* )` etc. | `intersect_line( &seg, &mut Vec<Vector2I> ) -> i32` (appends, returns the count) |
+| `ClipLine( const BOX2I*, int& x1, ... )` | `clip_line( &box, &mut x1, ... )` (in place) |
 
 ## Ported C++ tests
 
@@ -114,6 +150,12 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/test_vector_utils.cpp` | `tests/test_vector_utils.rs` | 4 of 4 |
 | `qa/tests/libs/kimath/test_kimath.cpp` | `tests/test_kimath.rs` | 3 of 5: `TestCalcArcCenter3Pts`, `TestInterceptsPositiveX`, `TestInterceptsNegativeX`. `TestHash128` and `TestMMH3Hash` test `hash_128.h` / `mmh3_hash.h` (not in this package). |
 | `qa/tests/libs/kimath/math/test_wide_int.cpp` | `tests/test_wide_int.rs` | 5 of 7. `OrientationSignBeyondDoublePrecision` and `InCircleDelaunayLegalExact` test `geometry_predicates.h` (next package). |
+| `qa/tests/libs/kimath/geometry/test_shape_arc.cpp` | `tests/test_shape_arc.rs` | 36 of 36 test cases (the data tables in full); 31 pass, 5 `#[ignore]`d: `CollideArcToPolygonApproximation`, the three `Transform*ArcToPolygon` tests (need `TransformArcToPolygon` / poly-set collisions) and the chain-to-chain quarter of `CollideArc` (split out as `collide_arc_chain_to_chain`, needs G5) |
+| `qa/tests/libs/kimath/geometry/test_circle.cpp` | `tests/test_circle.rs` | 7 of 7 |
+| `qa/tests/libs/kimath/geometry/test_arc_chord_params.cpp` | `tests/test_arc_chord_params.rs` | 10 of 10 |
+| `qa/tests/libs/kimath/geometry/test_half_line.cpp` | `tests/test_half_line.rs` | 3 of 3 |
+| `qa/tests/libs/kimath/geometry/test_arc_construction.cpp` | `tests/test_arc_construction.rs` | 21 of 21 |
+| `qa/qa_utils/include/qa_utils/wx_utils/unit_test_utils.h` (`CheckUnorderedMatches`), `BOOST_CHECK_CLOSE` / `BOOST_CHECK_SMALL`, `pcbIUScale.mmToIU` | `test_utils::{check_unordered_matches, is_close_pct, is_small, pcb_mm_to_iu}` | added in G2 |
 | `qa/qa_utils/include/qa_utils/numeric.h` | `test_utils::{is_within, is_within_wrapped, is_within_bounds, is_within_and_below, is_within_and_above}` | all |
 | `qa/qa_utils/include/qa_utils/geometry/geometry.h` | `test_utils::{is_vec_within_tol, is_box_within_tol}` | `ChainsAreCyclicallyEqual` and the printers need shapes: later |
 | `qa/qa_utils/geometry/seg_construction.cpp` | `test_utils::{build_h_seg, build_v_seg}` | all |
@@ -141,6 +183,49 @@ Notes on the ported tests:
 In-module unit tests (`#[cfg(test)]`, 55 tests) cover additional behaviour of every module.
 
 ## Verification against the C++ code
+
+Two oracles: `geom_oracle` (package G1, compiles the kimath sources it needs with stub wx
+headers) and `shapes_oracle` (package G2, links the static libraries of the reference build).
+
+### `shapes_oracle` (G2)
+
+`tests/oracle/shapes_oracle.cpp` links `libkimath.a`, `libcore.a`, `libclipper2.a` and
+`libkicommon.so` of the reference build (`/home/user/kicad-oracle/build`, see
+`rust/docs/ORACLE.md`), so the collision code under test is the real, complete one.  It shares
+generator, record format and hashing with `geom_oracle.cpp` (`tests/oracle/oracle_common.h`) and
+prints 17 sections, 606,000 cases: `libm_probe`, `libm:circle`, `libm:circle_tan_tan_pt`,
+`libm:arc_props` (all constructors incl. tangent-arc and `ConstructFromStartEnd*`, bbox,
+angles, length, `Reversed`, `Reverse`, `BOX2I_MINMAX`), `libm:arc_polyline`
+(`ConvertToPolyline` with actual error, `SHAPE_LINE_CHAIN( SHAPE_ARC )`), `libm:arc_collide`
+(point and segment, all out-parameter combinations), `libm:arc_intersect` (`IntersectLine`,
+`Intersect` with circles and arcs, `NearestPoint`, `NearestPoints` with segments, circles and
+arcs), `libm:arc_transform`, `shape_collide` (rect / segment / circle / simple / null /
+compound / line chain pairs through `SHAPE::Collide`, with distance, location and MTV where the
+C++ supports it, and `GetClearance`), `libm:shape_collide_arc` (arcs against circles,
+segments, simple polygons, line chains with and without arcs, arcs, straight arcs against
+rectangles; both directions), `shape_distance` (direct `Collide`, `SquaredDistance`,
+`Distance`, `PointInside`, `PointOnEdge`, `EdgeContainingPoint`, `BBox`, `Format`, rect helpers
+and `Outline`), `libm:shape_segment` (`BySizeAndCenter`, `Is45Degree`, rotations),
+`geometry_utils` (snapping, clamping, `ClipLine`, `BoxHitTest`), `libm:geometry_utils`
+(`GetArcToSegmentCount`, `CircleToEndSegmentDeltaRadius`), `lines` (`HALF_LINE`, `LINE`,
+`ClipHalfLineToBox`, `ClipLineToBox`), `libm:arc_chord_params`, `libm:arc_construction`.
+All sections match bit for bit (`tests/oracle_shapes_diff.rs`, golden file
+`tests/golden/shapes_oracle.txt`).
+
+- Regenerate: `tests/oracle/build_shapes_oracle.sh` (needs the reference build and wx-config).
+- Find a mismatch: `build_shapes_oracle.sh --dump cpp.txt`, run the test with
+  `KICAD_GEOM_ORACLE_DUMP=/abs/path/rust.txt`, diff the files.
+- Inputs avoid undefined behaviour of the C++ (the tests filter them identically on both sides):
+  arcs whose radius is converted to `int` while out of range (`NearestPoint(s)`,
+  `ConvertToPolyline` of arcs with radius >= INT_MAX/2), `ConstructFromStartEndAngle` /
+  tangent-arc constructions with nearly straight results (the clamped center overflows
+  `RotatePoint` / `p + KiROUND( distPC * cos )`), moving arcs so far that `update_values()`
+  overflows, and `Distance()` when the squared distance is `ECOORD_MAX` (D4).
+- The `wxCHECK`s reached by the inputs (`ConstructFromTanTanPt` without solution,
+  `SHAPE_LINE_CHAIN::Segment()` out of range) print to stderr in the oracle; the port takes the
+  same early returns.
+
+### `geom_oracle` (G1)
 
 `tests/oracle/geom_oracle.cpp` links the original kimath sources (`util.cpp`, `seg.cpp`,
 `eda_angle.cpp`, `vector_utils.cpp`, `trigo.cpp` and the headers) with stub wx headers
@@ -265,6 +350,31 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   comparators every comparison and move is the libstdc++ one.  `middle` / `nth` beyond the
   slice are clamped / ignored.
 
+- **D11 Wrapping where the C++ overflows on valid input.** As for `SegmentIntersectsSegment`
+  (D3), three subtractions use two's complement wrapping, because the reference build computes
+  (and then mostly discards) an overflowing value for legal input: `SHAPE_ARC::Collide( SEG )`
+  subtracts the clamped center of a nearly straight arc (`center - m_start`,
+  `aSeg.A - center`, `aSeg.B - center`; covered by `CollideNearlyFlatArcDoesNotOverflow`), and
+  `HALF_LINE::Intersect` subtracts the (arbitrarily far) intersection point of nearly parallel
+  lines.  Other overflows of degenerate input keep the D3 rule (panic with overflow checks):
+  notably `ConstructFromStartEndAngle` with an angle very close to a multiple of 360 degrees,
+  the tangent-arc constructor for nearly parallel segments and `update_values()` for arcs with
+  a radius near 1e9 nm centred near the coordinate limits.
+- **D12 Conversions of out-of-range doubles to `int`** (UB in C++, `INT_MIN` on x86) saturate in
+  the port, as in D4: `SHAPE::Distance()` of `ECOORD_MAX` (e.g. a one-point line chain), the
+  `CIRCLE( center, (int) radius )` / `GetArcToSegmentCount( (int) radius, ... )` conversions for
+  arcs with radii beyond `INT_MAX`.
+- **D13 `DISABLE_ARC_RADIUS_CORRECTION`** sets a thread-local flag (`DisableArcRadiusCorrection`
+  guard) instead of a process-wide static; the port is single threaded, so this is the same.
+- **D14 `const` methods writing `mutable` members** take `&mut self`
+  (`ShapeLineChain::generate_bbox_cache`), so that all shapes are `Send + Sync`.
+- **D15 Poly-set triangles** (`Tri`) store copies of their three vertices instead of a pointer to
+  the parent triangulation (skeleton, G4 decides).  `TRI` has no `Clone()` in C++ (it asserts);
+  `Tri::clone_shape` returns a copy.
+- **D16 `wxASSERT` / `wxCHECK` on input**: the tangent-arc constructor's "segments do not
+  intersect" assertion and the "MTV not implemented" assertions of the collision matrix are not
+  reproduced (release behaviour); `wxCHECK`s keep their early return.
+
 ## Known gaps
 
 - **GAP-1 libm on targets without glibc (notably wasm32).** Results that pass through `sin`,
@@ -284,9 +394,30 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   so wasm output can in very rare cases differ from the reference by 1 nm. Making wasm bit-exact
   needs a port of glibc's implementations of these functions; all calls already go through
   `src/cmath.rs`, which is the single place to plug it in.
-- **GAP-2** `BOX2I_MINMAX( const SHAPE_ARC& )` waits for `SHAPE_ARC`.
-- **GAP-3** Test helpers that need shapes (see the table above) and the tests of `hash_128.h`,
-  `mmh3_hash.h`, `geometry_predicates.h` wait for those ports.
+- **GAP-2** (closed in G2) `BOX2I_MINMAX( const SHAPE_ARC& )` is `Box2IMinMax::from_arc`.
+- **GAP-3** Test helpers that need polygon sets (`FilletPolySet`, `IsOutlineValid`,
+  `IsPolySetValid`, `ChainsAreCyclicallyEqual`) and the tests of `hash_128.h`, `mmh3_hash.h`,
+  `geometry_predicates.h` wait for those ports.
+- **GAP-4 Collision matrix (package G5).** `shape_collisions::collide_shapes` serves: null with
+  anything; rect-rect without clearance / distance / location / MTV; rect-circle, rect-segment,
+  rect-line chain / simple / triangle (sharp corners); circle-circle, circle-segment,
+  circle-line chain / simple / triangle (with MTV); segment-segment, segment-line chain /
+  simple / triangle; arc-circle (with MTV), arc-segment, arc-line chain (with its arcs),
+  arc-simple / triangle, arc-arc, arc-rect for effectively straight arcs; compounds of all of
+  these.  It returns false via `unsupported_g5` for: line chain / simple / triangle against each
+  other, rect-rect with clearance / distance / location / MTV or rounded corners, other arc-rect
+  pairs (need `SHAPE::NearestPoints`), and everything involving a poly set.
+  `shape_collisions::nearest_points` (`SHAPE::NearestPoints`, `shape_nearest_points.cpp`) is a
+  stub returning false, which `SHAPE_ARC::NearestPoints( SHAPE_RECT )` relies on.
+- **GAP-5 Polygonisation of round shapes.** `TransformToPolygon` of `ShapeCircle`,
+  `ShapeSegment`, `ShapeArc` and of `ShapeRect` with rounded corners needs
+  `convert_basic_shapes_to_polygon` / `ROUNDRECT` (later packages) and leaves the buffer
+  unchanged; consequently `ShapeRect::outline()` of a rounded rectangle is empty, and the
+  default `Shape::squared_distance` / `point_inside` of those shapes see no outline (they return
+  `ECOORD_MAX` / false).
+- **GAP-6 Skeletons.** Everything of `SHAPE_LINE_CHAIN` / `SHAPE_POLY_SET` not listed in the
+  table above is G3 / G4 (including `SHAPE_LINE_CHAIN::Format` / `Parse`, poly-set collisions,
+  triangulation and hashing).
 - **GAP-4 `COW_RTREE`** (`dynamic_rtree_cow.h`, 834 lines) is not ported: its only user is
   `SHAPE_INDEX` in the interactive router, which is out of scope.  Its 6 tests (suite
   `CowRTree` of `test_dynamic_rtree.cpp`) are not ported either.

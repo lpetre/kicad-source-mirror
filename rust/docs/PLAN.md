@@ -69,15 +69,22 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 - Foundation crates:
   - [x] kicad-sexpr (S1) - lexer, formatter, Prettify, tree; oracle goldens over 479 files.
   - [x] kicad-geom G1 math - 1M-case differential oracle bit-exact.
-  - [ ] kicad-geom G2 shapes, G7 sort/rtree/delaunator (running), then G3 line chain,
-        G4a poly set + clipper, G4b triangulation, G5 collisions, G6 shape utilities.
+  - [x] kicad-geom G2 basic shapes (Opus; 606k oracle cases bit-exact; Fable-reviewed:
+        deviations D11-D16 accepted except D12 - out-of-range casts now follow x86 semantics,
+        PORTING.md section 9, applied by G3).
+  - [x] kicad-geom G7 stdsort / packed + dynamic r-tree / delaunator / nanoflann (Opus; 10k
+        oracle cases bit-exact natively and on wasm; COW_RTREE skipped, router only).
+  - [ ] kicad-geom G3 line chain -> G4a clipper vendoring + poly set, G6a helpers (running).
+        Then G4b triangulation, G5 collisions, G6b shape utilities.
   - [x] kicad-core C1 ids/layers; [x] C2 units/strings/values (Opus; 152k oracle cases
         bit-exact; Fable-reviewed: deviations C2-1..9 accepted).
   - [x] kicad-libeval (Opus finish; Lemon tables regenerated and identical, 39.5k oracle
         cases; Fable-reviewed: binder API accepted, to be proven by the kicad-drc binding).
   - [ ] kicad-font F1 stroke font (running, Opus).
 - [ ] Board model + parser + writer.
-- [ ] Connectivity, plot, fab, drc.
+- [ ] kicad-plot P1 base+metadata -> P2 Gerber -> P3 text+SVG (running, Opus); kicad-core C3
+      json / pattern match / helpers (running, Opus).
+- [ ] Connectivity, fab, drc.
 - [ ] Zone filler, custom rules, remaining providers.
 - [ ] CLI, wasm, demo.
 - [ ] Differential test campaign + adversarial review.

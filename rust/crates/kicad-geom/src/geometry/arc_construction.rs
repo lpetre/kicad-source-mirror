@@ -64,14 +64,23 @@ fn to_iu(a_pt: Vector2D) -> Option<Vector2I> {
 
 // aSide is +1 for an arc on the (-dy, dx) side of start to end, and aCenterT is the center
 // offset along that normal
-fn build_on_chord(a_start: Vector2I, a_end: Vector2I, a_side: f64, a_center_t: f64, a_radius: f64) -> ArcSolution {
+fn build_on_chord(
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_side: f64,
+    a_center_t: f64,
+    a_radius: f64,
+) -> ArcSolution {
     let mut sol = ArcSolution {
         start: a_start,
         end: a_end,
         ..ArcSolution::default()
     };
 
-    let chord = Vector2D::new(a_end.x as f64 - a_start.x as f64, a_end.y as f64 - a_start.y as f64);
+    let chord = Vector2D::new(
+        a_end.x as f64 - a_start.x as f64,
+        a_end.y as f64 - a_start.y as f64,
+    );
     let len: f64 = chord.euclidean_norm();
 
     if len <= 0.0 || !a_radius.is_finite() || a_radius <= 0.0 {
@@ -117,8 +126,15 @@ fn build_on_chord(a_start: Vector2I, a_end: Vector2I, a_side: f64, a_center_t: f
 
 /// Port of `KIGEOM::ProjectToChordBisector()`: project `a_cursor` onto the perpendicular
 /// bisector of the chord `a_start` - `a_end`.
-pub fn project_to_chord_bisector(a_start: Vector2I, a_end: Vector2I, a_cursor: Vector2I) -> Vector2I {
-    let chord = Vector2D::new(a_end.x as f64 - a_start.x as f64, a_end.y as f64 - a_start.y as f64);
+pub fn project_to_chord_bisector(
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_cursor: Vector2I,
+) -> Vector2I {
+    let chord = Vector2D::new(
+        a_end.x as f64 - a_start.x as f64,
+        a_end.y as f64 - a_start.y as f64,
+    );
     let len: f64 = chord.euclidean_norm();
 
     if len <= 0.0 {
@@ -130,7 +146,10 @@ pub fn project_to_chord_bisector(a_start: Vector2I, a_end: Vector2I, a_cursor: V
         (a_start.x as f64 + a_end.x as f64) * 0.5,
         (a_start.y as f64 + a_end.y as f64) * 0.5,
     );
-    let rel = Vector2D::new(a_cursor.x as f64 - chord_mid.x, a_cursor.y as f64 - chord_mid.y);
+    let rel = Vector2D::new(
+        a_cursor.x as f64 - chord_mid.x,
+        a_cursor.y as f64 - chord_mid.y,
+    );
 
     match to_iu(chord_mid + normal * rel.dot(normal)) {
         Some(projected) => projected,
@@ -141,8 +160,14 @@ pub fn project_to_chord_bisector(a_start: Vector2I, a_end: Vector2I, a_cursor: V
 /// Port of `KIGEOM::ArcThroughPoints()`: arc from `a_start` to `a_end` that passes through
 /// `a_on_arc`.
 pub fn arc_through_points(a_start: Vector2I, a_on_arc: Vector2I, a_end: Vector2I) -> ArcSolution {
-    let b = Vector2D::new(a_end.x as f64 - a_start.x as f64, a_end.y as f64 - a_start.y as f64);
-    let c = Vector2D::new(a_on_arc.x as f64 - a_start.x as f64, a_on_arc.y as f64 - a_start.y as f64);
+    let b = Vector2D::new(
+        a_end.x as f64 - a_start.x as f64,
+        a_end.y as f64 - a_start.y as f64,
+    );
+    let c = Vector2D::new(
+        a_on_arc.x as f64 - a_start.x as f64,
+        a_on_arc.y as f64 - a_start.y as f64,
+    );
     let d: f64 = cross_z(b.x, b.y, c.x, c.y);
 
     if d == 0.0 {
@@ -153,19 +178,32 @@ pub fn arc_through_points(a_start: Vector2I, a_on_arc: Vector2I, a_end: Vector2I
     let cc: f64 = c.squared_euclidean_norm();
 
     // Circumcenter relative to the start point
-    let rel = Vector2D::new((c.y * bb - b.y * cc) / (2.0 * d), (b.x * cc - c.x * bb) / (2.0 * d));
+    let rel = Vector2D::new(
+        (c.y * bb - b.y * cc) / (2.0 * d),
+        (b.x * cc - c.x * bb) / (2.0 * d),
+    );
     let len: f64 = b.euclidean_norm();
 
     // The signed distance of the center along the chord normal, measured from the chord midpoint
     let center_t: f64 = (-rel.x * b.y + rel.y * b.x) / len;
 
-    build_on_chord(a_start, a_end, if d > 0.0 { 1.0 } else { -1.0 }, center_t, rel.euclidean_norm())
+    build_on_chord(
+        a_start,
+        a_end,
+        if d > 0.0 { 1.0 } else { -1.0 },
+        center_t,
+        rel.euclidean_norm(),
+    )
 }
 
 /// Port of `KIGEOM::ArcFromStartEndMidDrag()`: arc from `a_start` to `a_end` whose midpoint is
 /// `a_cursor` projected onto the chord bisector.  Invalid when the projection lands on the
 /// chord.
-pub fn arc_from_start_end_mid_drag(a_start: Vector2I, a_end: Vector2I, a_cursor: Vector2I) -> ArcSolution {
+pub fn arc_from_start_end_mid_drag(
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_cursor: Vector2I,
+) -> ArcSolution {
     let projected = project_to_chord_bisector(a_start, a_end, a_cursor);
     let mut sol = arc_through_points(a_start, projected, a_end);
 
@@ -183,8 +221,16 @@ pub fn arc_from_start_end_mid_drag(a_start: Vector2I, a_end: Vector2I, a_cursor:
 /// `a_major` is false for the minor arc (sweep up to 180 degrees), true for the complementary
 /// major arc.  A center on the chord gives a semicircle in either case, and the flag then picks
 /// the side.
-pub fn arc_from_start_end_center_drag(a_start: Vector2I, a_end: Vector2I, a_cursor: Vector2I, a_major: bool) -> ArcSolution {
-    let chord = Vector2D::new(a_end.x as f64 - a_start.x as f64, a_end.y as f64 - a_start.y as f64);
+pub fn arc_from_start_end_center_drag(
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_cursor: Vector2I,
+    a_major: bool,
+) -> ArcSolution {
+    let chord = Vector2D::new(
+        a_end.x as f64 - a_start.x as f64,
+        a_end.y as f64 - a_start.y as f64,
+    );
     let len: f64 = chord.euclidean_norm();
 
     if len <= 0.0 {
@@ -196,7 +242,11 @@ pub fn arc_from_start_end_center_drag(a_start: Vector2I, a_end: Vector2I, a_curs
         (a_start.x as f64 + a_end.x as f64) * 0.5,
         (a_start.y as f64 + a_end.y as f64) * 0.5,
     );
-    let center_t: f64 = Vector2D::new(a_cursor.x as f64 - chord_mid.x, a_cursor.y as f64 - chord_mid.y).dot(normal);
+    let center_t: f64 = Vector2D::new(
+        a_cursor.x as f64 - chord_mid.x,
+        a_cursor.y as f64 - chord_mid.y,
+    )
+    .dot(normal);
 
     // The minor arc bulges away from the center, the major arc toward it
     let mut side: f64 = if center_t < 0.0 { -1.0 } else { 1.0 };
@@ -205,12 +255,22 @@ pub fn arc_from_start_end_center_drag(a_start: Vector2I, a_end: Vector2I, a_curs
         side = -side;
     }
 
-    build_on_chord(a_start, a_end, side, center_t, crate::cmath::hypot(len * 0.5, center_t))
+    build_on_chord(
+        a_start,
+        a_end,
+        side,
+        center_t,
+        crate::cmath::hypot(len * 0.5, center_t),
+    )
 }
 
 /// Port of `KIGEOM::ArcFromStartTangentEnd()`: arc leaving `a_start` along `a_tangent` and
 /// ending at `a_end`.  Invalid when `a_end` lies on the tangent line or `a_tangent` is zero.
-pub fn arc_from_start_tangent_end(a_start: Vector2I, a_tangent: Vector2D, a_end: Vector2I) -> ArcSolution {
+pub fn arc_from_start_tangent_end(
+    a_start: Vector2I,
+    a_tangent: Vector2D,
+    a_end: Vector2I,
+) -> ArcSolution {
     let tangent_len: f64 = a_tangent.euclidean_norm();
 
     if tangent_len <= 0.0 || !tangent_len.is_finite() {
@@ -218,7 +278,10 @@ pub fn arc_from_start_tangent_end(a_start: Vector2I, a_tangent: Vector2D, a_end:
     }
 
     let t = Vector2D::new(a_tangent.x / tangent_len, a_tangent.y / tangent_len);
-    let d = Vector2D::new(a_end.x as f64 - a_start.x as f64, a_end.y as f64 - a_start.y as f64);
+    let d = Vector2D::new(
+        a_end.x as f64 - a_start.x as f64,
+        a_end.y as f64 - a_start.y as f64,
+    );
     let dd: f64 = d.squared_euclidean_norm();
     let cross: f64 = cross_z(d.x, d.y, t.x, t.y);
 
@@ -232,5 +295,11 @@ pub fn arc_from_start_tangent_end(a_start: Vector2I, a_tangent: Vector2D, a_end:
     let len: f64 = dd.sqrt();
     let chord_normal = Vector2D::new(-d.y / len, d.x / len);
 
-    build_on_chord(a_start, a_end, if cross > 0.0 { 1.0 } else { -1.0 }, k * n.dot(chord_normal), k.abs())
+    build_on_chord(
+        a_start,
+        a_end,
+        if cross > 0.0 { 1.0 } else { -1.0 },
+        k * n.dot(chord_normal),
+        k.abs(),
+    )
 }

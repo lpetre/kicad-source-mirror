@@ -99,6 +99,9 @@ impl Line {
         let xp: Ecoord = rescale(t, d.x, l_squared);
         let yp: Ecoord = rescale(t, d.y, l_squared);
 
-        Vector2::<i32>::from_vec(Vector2L::new(self.seg.a.x as i64 + xp, self.seg.a.y as i64 + yp))
+        Vector2::<i32>::from_vec(Vector2L::new(
+            self.seg.a.x as i64 + xp,
+            self.seg.a.y as i64 + yp,
+        ))
     }
 }

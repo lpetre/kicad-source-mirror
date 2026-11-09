@@ -113,15 +113,26 @@ SHAPE_ARC randArc( RNG& rng )
     }
     default:
     {
-        VECTOR2I  s = rng.ptMid();
-        VECTOR2I  e = rng.ptMid();
-        double    a = rng.angleDeg();
+        // The angle stays away from multiples of 360 degrees: the center of a nearly straight
+        // arc is clamped near the int limits and RotatePoint() would overflow (UB)
+        VECTOR2I  s = rng.ptR( -10000000, 10000000 );
+        VECTOR2I  e = rng.ptR( -10000000, 10000000 );
+        double    a = rng.dbl( 5.0, 355.0 ) * ( rng.flag() ? 1.0 : -1.0 );
         int       w = width( rng );
         SHAPE_ARC arc;
         arc.ConstructFromStartEndAngle( s, e, EDA_ANGLE( a, DEGREES_T ), w );
         return arc;
     }
     }
+}
+
+// Whether moving / rotating / mirroring the arc by the amounts used here keeps the quadrant
+// points of SHAPE_ARC::update_values() inside the int range (otherwise the C++ overflows: UB)
+bool arcMovable( const SHAPE_ARC& a )
+{
+    return a.GetRadius() >= kLargeRadius
+           || std::abs( (double) a.GetCenter().x ) + std::abs( (double) a.GetCenter().y ) + 3.0 * a.GetRadius()
+                      < 1.6e9;
 }
 
 // A point near the arc (or anywhere)
@@ -400,6 +411,15 @@ void sectionArcProps()
             VECTOR2I db = rng.ptR( -1000000, 1000000 );
             int      rad = (int) rng.range( 0, 3000000 );
             int      w = width( rng );
+
+            // Nearly parallel segments put the center at infinity and overflow ints (UB)
+            double cr = (double) da.x * db.y - (double) da.y * db.x;
+            double la = (double) da.x * da.x + (double) da.y * da.y;
+            double lb = (double) db.x * db.x + (double) db.y * db.y;
+
+            if( cr * cr < 0.01 * la * lb )
+                continue;
+
             a = SHAPE_ARC( SEG( ip, ip + da ), SEG( ip, ip + db ), rad, w );
             break;
         }
@@ -517,7 +537,9 @@ void sectionArcIntersect()
         {
             // move the other arc close
             VECTOR2I d = rng.ptR( -2000000, 2000000 );
-            b.Move( a.GetArcMid() - b.GetArcMid() + d );
+
+            if( arcMovable( b ) )
+                b.Move( a.GetArcMid() - b.GetArcMid() + d );
         }
 
         VECTOR2I p = nearArc( rng, a );
@@ -575,6 +597,9 @@ void sectionArcTransform()
         VECTOR2I  ref = rng.ptMid();
         bool      lr = rng.flag();
         SEG       axis = segNear( rng, ref );
+
+        if( !arcMovable( a ) )
+            continue;
 
         REC r;
         recArc( r, a );
@@ -661,6 +686,7 @@ std::unique_ptr<SHAPE> randArcPartner( RNG& rng, const SHAPE_ARC& aArc, int& aKi
 {
     aKind = (int) ( rng.next() % 6 );
     std::unique_ptr<SHAPE> s;
+    bool                   movable = true;
 
     switch( aKind )
     {
@@ -675,6 +701,7 @@ std::unique_ptr<SHAPE> randArcPartner( RNG& rng, const SHAPE_ARC& aArc, int& aKi
         if( b.GetRadius() >= kLargeRadius )
             b = SHAPE_ARC( VECTOR2I( 0, 0 ), VECTOR2I( 100, 100 ), VECTOR2I( 200, 0 ), 0 );
 
+        movable = arcMovable( b );
         auto chain = std::make_unique<SHAPE_LINE_CHAIN>( b );
         VECTOR2I d = rng.ptR( -3000000, 3000000 );
         chain->Append( b.GetP1() + d );
@@ -683,13 +710,21 @@ std::unique_ptr<SHAPE> randArcPartner( RNG& rng, const SHAPE_ARC& aArc, int& aKi
         s = std::move( chain );
         break;
     }
-    default: s = std::make_unique<SHAPE_ARC>( randArc( rng ) ); break;
+    default:
+    {
+        SHAPE_ARC b = randArc( rng );
+        movable = arcMovable( b );
+        s = std::make_unique<SHAPE_ARC>( b );
+        break;
+    }
     }
 
     if( rng.flag() )
     {
         VECTOR2I d = rng.ptR( -3000000, 3000000 );
-        s->Move( aArc.GetArcMid() - s->Centre() + d );
+
+        if( movable )
+            s->Move( aArc.GetArcMid() - s->Centre() + d );
     }
 
     return s;
@@ -792,7 +827,13 @@ void sectionShapeDistance()
 
         if( a->Type() == SH_SIMPLE || a->Type() == SH_LINE_CHAIN || a->Type() == SH_RECT )
         {
-            r.i( a->SquaredDistance( p ) ).i( a->SquaredDistance( p, true ) ).i( a->Distance( p ) );
+            r.i( a->SquaredDistance( p ) ).i( a->SquaredDistance( p, true ) );
+
+            // sqrt( ECOORD_MAX ) does not fit an int: UB in C++ (INT_MIN on x86), the port
+            // saturates (deviation D4)
+            if( a->SquaredDistance( p ) != VECTOR2I::ECOORD_MAX )
+                r.i( a->Distance( p ) );
+
             r.b( a->PointInside( p ) ).b( a->PointInside( p, acc ) ).b( a->PointInside( p, acc, true ) );
         }
 
@@ -902,7 +943,9 @@ void sectionGeometryUtils()
         r.box( box ).v( a ).v( b ).b( clipped ).i( x1 ).i( y1 ).i( x2 ).i( y2 );
 
         int   acc = (int) rng.range( 0, 1000 );
-        BOX2I box2( rng.ptMid(), rng.ptR( 0, 100000000 ) );
+        VECTOR2I b2p = rng.ptMid();
+        VECTOR2I b2s = rng.ptR( 0, 100000000 );
+        BOX2I    box2( b2p, b2s );
         bool  contained = rng.flag();
         r.b( KIGEOM::BoxHitTest( a, box, acc ) ).b( KIGEOM::BoxHitTest( box2, box, contained, acc ) );
         sec.add( r );

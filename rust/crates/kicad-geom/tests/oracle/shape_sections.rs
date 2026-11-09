@@ -21,20 +21,20 @@
 
 use kicad_geom::geometry::arc_chord_params::ArcChordParams;
 use kicad_geom::geometry::arc_construction::{
-    ArcSolution, arc_from_start_end_center_drag, arc_from_start_end_mid_drag, arc_from_start_tangent_end,
-    arc_through_points, project_to_chord_bisector,
+    ArcSolution, arc_from_start_end_center_drag, arc_from_start_end_mid_drag,
+    arc_from_start_tangent_end, arc_through_points, project_to_chord_bisector,
 };
 use kicad_geom::geometry::circle::Circle;
 use kicad_geom::geometry::eda_angle::{DEGREES_T, EdaAngle};
 use kicad_geom::geometry::geometry_utils::{
     box_hit_test_box, box_hit_test_point, circle_to_end_segment_delta_radius, clip_line,
-    get_arc_to_segment_count, get_circle_to_poly_correction, get_clamped_coords, get_clamped_coords_to_i,
-    get_vector_snapped45, get_vector_snapped90, is_vec2_safe_xy,
+    get_arc_to_segment_count, get_circle_to_poly_correction, get_clamped_coords,
+    get_clamped_coords_to_i, get_vector_snapped45, get_vector_snapped90, is_vec2_safe_xy,
 };
 use kicad_geom::geometry::half_line::HalfLine;
 use kicad_geom::geometry::line::Line;
 use kicad_geom::geometry::seg::Seg;
-use kicad_geom::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef, ShapeType};
+use kicad_geom::geometry::shape::{Shape, ShapeRef, ShapeType};
 use kicad_geom::geometry::shape_arc::ShapeArc;
 use kicad_geom::geometry::shape_circle::ShapeCircle;
 use kicad_geom::geometry::shape_compound::ShapeCompound;
@@ -97,15 +97,25 @@ fn rand_arc(rng: &mut Rng) -> ShapeArc {
             ShapeArc::from_center_start_angle(c, c + d, deg(a), w)
         }
         _ => {
-            let s = rng.pt_mid();
-            let e = rng.pt_mid();
-            let a = rng.angle_deg();
+            // The angle stays away from multiples of 360 degrees: the center of a nearly straight
+            // arc is clamped near the int limits and RotatePoint() would overflow (UB)
+            let s = rng.pt_r(-10000000, 10000000);
+            let e = rng.pt_r(-10000000, 10000000);
+            let a = rng.dbl(5.0, 355.0) * (if rng.flag() { 1.0 } else { -1.0 });
             let w = width(rng);
             let mut arc = ShapeArc::new();
             arc.construct_from_start_end_angle(s, e, deg(a), w as f64);
             arc
         }
     }
+}
+
+/// Whether moving / rotating / mirroring the arc by the amounts used here keeps the quadrant
+/// points of `update_values()` inside the int range (otherwise the C++ overflows: UB)
+fn arc_movable(a: &ShapeArc) -> bool {
+    a.get_radius() >= LARGE_RADIUS
+        || (a.get_center().x as f64).abs() + (a.get_center().y as f64).abs() + 3.0 * a.get_radius()
+            < 1.6e9
 }
 
 fn near_arc(rng: &mut Rng, a_arc: &ShapeArc) -> Vector2I {
@@ -135,11 +145,19 @@ fn near_arc(rng: &mut Rng, a_arc: &ShapeArc) -> Vector2I {
 }
 
 fn fmt(a: &dyn Shape, a_cplusplus: bool) -> String {
-    if a.type_() == ShapeType::LineChain { String::new() } else { a.format(a_cplusplus) }
+    if a.type_() == ShapeType::LineChain {
+        String::new()
+    } else {
+        a.format(a_cplusplus)
+    }
 }
 
 fn rec_arc<'r>(r: &'r mut Rec, a: &ShapeArc) -> &'r mut Rec {
-    r.v(a.get_p0()).v(a.get_arc_mid()).v(a.get_p1()).i(a.get_width()).v(a.get_center());
+    r.v(a.get_p0())
+        .v(a.get_arc_mid())
+        .v(a.get_p1())
+        .i(a.get_width())
+        .v(a.get_center());
     r.d(a.get_radius()).bx(&a.bbox(0))
 }
 
@@ -154,10 +172,14 @@ fn rec_pts<'r>(r: &'r mut Rec, a_pts: &[Vector2I]) -> &'r mut Rec {
 }
 
 fn rec_chain<'r>(r: &'r mut Rec, c: &ShapeLineChain) -> &'r mut Rec {
-    r.i(c.point_count()).b(c.is_closed()).i(c.arc_count() as i64);
+    r.i(c.point_count())
+        .b(c.is_closed())
+        .i(c.arc_count() as i64);
 
     for i in 0..c.point_count() {
-        r.v(c.c_point(i)).i(c.c_shapes()[i as usize].0 as i64).i(c.c_shapes()[i as usize].1 as i64);
+        r.v(c.c_point(i))
+            .i(c.c_shapes()[i as usize].0 as i64)
+            .i(c.c_shapes()[i as usize].1 as i64);
     }
 
     r
@@ -258,7 +280,9 @@ fn rec_collide(r: &mut Rec, a: &dyn Shape, b: &dyn Shape, cl: i32) {
     r.b(a.collide(b, cl, None, None));
     r.b(a.collide(b, cl, Some(&mut actual), None)).i(actual);
     actual = -7;
-    r.b(a.collide(b, cl, Some(&mut actual), Some(&mut loc))).i(actual).v(loc);
+    r.b(a.collide(b, cl, Some(&mut actual), Some(&mut loc)))
+        .i(actual)
+        .v(loc);
     loc = Vector2I::new(11, -13);
     r.b(a.collide(b, cl, None, Some(&mut loc))).v(loc);
 }
@@ -270,7 +294,9 @@ fn rec_collide_seg(r: &mut Rec, a: &dyn Shape, s: &Seg, cl: i32) {
     r.b(a.collide_seg(s, cl, None, None));
     r.b(a.collide_seg(s, cl, Some(&mut actual), None)).i(actual);
     actual = -7;
-    r.b(a.collide_seg(s, cl, Some(&mut actual), Some(&mut loc))).i(actual).v(loc);
+    r.b(a.collide_seg(s, cl, Some(&mut actual), Some(&mut loc)))
+        .i(actual)
+        .v(loc);
     loc = Vector2I::new(11, -13);
     r.b(a.collide_seg(s, cl, None, Some(&mut loc))).v(loc);
 }
@@ -280,9 +306,12 @@ fn rec_collide_pt(r: &mut Rec, a: &dyn Shape, p: Vector2I, cl: i32) {
     let mut loc = Vector2I::new(11, -13);
 
     r.b(a.collide_point(p, cl, None, None));
-    r.b(a.collide_point(p, cl, Some(&mut actual), None)).i(actual);
+    r.b(a.collide_point(p, cl, Some(&mut actual), None))
+        .i(actual);
     actual = -7;
-    r.b(a.collide_point(p, cl, Some(&mut actual), Some(&mut loc))).i(actual).v(loc);
+    r.b(a.collide_point(p, cl, Some(&mut actual), Some(&mut loc)))
+        .i(actual)
+        .v(loc);
     loc = Vector2I::new(11, -13);
     r.b(a.collide_point(p, cl, None, Some(&mut loc))).v(loc);
 }
@@ -298,7 +327,7 @@ fn section_circle(results: &mut Results) {
         let pd = rng.pt_d(-2e8, 2e8);
         let s = seg_near(&mut rng, c.center);
 
-        if rng.next() % 4 == 0 {
+        if rng.next().is_multiple_of(4) {
             // near-tangent and concentric circles
             let d = rng.pt_r(-3, 3);
             let dr = rng.range(-3, 3) as i32;
@@ -306,7 +335,13 @@ fn section_circle(results: &mut Results) {
         }
 
         let mut r = Rec::default();
-        r.v(c.center).i(c.radius).v(c2.center).i(c2.radius).v(p).vd(pd).seg(&s);
+        r.v(c.center)
+            .i(c.radius)
+            .v(c2.center)
+            .i(c2.radius)
+            .v(p)
+            .vd(pd)
+            .seg(&s);
 
         r.b(c.contains(p)).b(c.contains_inside(p));
         r.v(c.nearest_point(p)).vd(c.nearest_point_d(pd));
@@ -330,7 +365,7 @@ fn section_circle_tan_tan_pt(results: &mut Results) {
         let a = Seg::new(ip, ip + da);
         let mut b = Seg::new(ip, ip + db);
 
-        if rng.next() % 4 == 0 {
+        if rng.next().is_multiple_of(4) {
             b = Seg::new(ip + db, ip + db + da); // parallel
         }
 
@@ -355,7 +390,22 @@ fn section_arc_props(results: &mut Results) {
                 let db = rng.pt_r(-1000000, 1000000);
                 let rad = rng.range(0, 3000000) as i32;
                 let w = width(&mut rng);
-                ShapeArc::from_tangent_segments(&Seg::new(ip, ip + da), &Seg::new(ip, ip + db), rad, w)
+
+                // Nearly parallel segments put the center at infinity and overflow ints (UB)
+                let cr = da.x as f64 * db.y as f64 - da.y as f64 * db.x as f64;
+                let la = da.x as f64 * da.x as f64 + da.y as f64 * da.y as f64;
+                let lb = db.x as f64 * db.x as f64 + db.y as f64 * db.y as f64;
+
+                if cr * cr < 0.01 * la * lb {
+                    continue;
+                }
+
+                ShapeArc::from_tangent_segments(
+                    &Seg::new(ip, ip + da),
+                    &Seg::new(ip, ip + db),
+                    rad,
+                    w,
+                )
             }
             1 => {
                 let s = rng.pt_mid();
@@ -373,8 +423,14 @@ fn section_arc_props(results: &mut Results) {
 
         let mut r = Rec::default();
         rec_arc(&mut r, &a).bx(&a.bbox(cl));
-        r.a(a.get_central_angle()).a(a.get_start_angle()).a(a.get_end_angle()).d(a.get_length());
-        r.b(a.is_ccw()).b(a.is_clockwise()).b(a.is_effective_line()).seg(&a.get_chord());
+        r.a(a.get_central_angle())
+            .a(a.get_start_angle())
+            .a(a.get_end_angle())
+            .d(a.get_length());
+        r.b(a.is_ccw())
+            .b(a.is_clockwise())
+            .b(a.is_effective_line())
+            .seg(&a.get_chord());
         rec_arc(&mut r, &a.reversed());
 
         let mut rev = a.clone();
@@ -437,7 +493,7 @@ fn section_arc_collide(results: &mut Results) {
 
         let mut s = Seg::new(p, q);
 
-        if rng.next() % 8 == 0 {
+        if rng.next().is_multiple_of(8) {
             s = Seg::new(p, p);
         }
 
@@ -460,7 +516,10 @@ fn section_arc_intersect(results: &mut Results) {
         if rng.flag() {
             // move the other arc close
             let d = rng.pt_r(-2000000, 2000000);
-            b.move_(a.get_arc_mid() - b.get_arc_mid() + d);
+
+            if arc_movable(&b) {
+                b.move_(a.get_arc_mid() - b.get_arc_mid() + d);
+            }
         }
 
         let p = near_arc(&mut rng, &a);
@@ -489,18 +548,27 @@ fn section_arc_intersect(results: &mut Results) {
             let mut pa = Vector2I::default();
             let mut pb = Vector2I::default();
             let mut d2: i64 = -1;
-            r.b(a.nearest_points_seg(&s, &mut pa, &mut pb, &mut d2)).v(pa).v(pb).i(d2);
+            r.b(a.nearest_points_seg(&s, &mut pa, &mut pb, &mut d2))
+                .v(pa)
+                .v(pb)
+                .i(d2);
 
             let sc = ShapeCircle::from_circle(c);
             pa = Vector2I::default();
             pb = Vector2I::default();
             d2 = -1;
-            r.b(a.nearest_points_circle(&sc, &mut pa, &mut pb, &mut d2)).v(pa).v(pb).i(d2);
+            r.b(a.nearest_points_circle(&sc, &mut pa, &mut pb, &mut d2))
+                .v(pa)
+                .v(pb)
+                .i(d2);
 
             pa = Vector2I::default();
             pb = Vector2I::default();
             d2 = -1;
-            r.b(a.nearest_points_arc(&b, &mut pa, &mut pb, &mut d2)).v(pa).v(pb).i(d2);
+            r.b(a.nearest_points_arc(&b, &mut pa, &mut pb, &mut d2))
+                .v(pa)
+                .v(pb)
+                .i(d2);
         }
 
         sec.add(&r);
@@ -520,6 +588,10 @@ fn section_arc_transform(results: &mut Results) {
         let lr = rng.flag();
         let axis = seg_near(&mut rng, rf);
 
+        if !arc_movable(&a) {
+            continue;
+        }
+
         let mut r = Rec::default();
         rec_arc(&mut r, &a);
 
@@ -532,7 +604,14 @@ fn section_arc_transform(results: &mut Results) {
         rec_arc(&mut r, &m);
 
         m = a.clone();
-        m.mirror(rf, if lr { FlipDirection::LeftRight } else { FlipDirection::TopBottom });
+        m.mirror(
+            rf,
+            if lr {
+                FlipDirection::LeftRight
+            } else {
+                FlipDirection::TopBottom
+            },
+        );
         rec_arc(&mut r, &m);
 
         m = a.clone();
@@ -566,7 +645,11 @@ fn section_shape_collide(results: &mut Results) {
         let lcb_b = kb == 3 || kb == 6;
 
         let mut r = Rec::default();
-        r.i(ka).i(kb).s(&fmt(a.as_ref(), true)).s(&fmt(b.as_ref(), true)).i(cl);
+        r.i(ka)
+            .i(kb)
+            .s(&fmt(a.as_ref(), true))
+            .s(&fmt(b.as_ref(), true))
+            .i(cl);
 
         if lcb_a && lcb_b {
             // SHAPE_LINE_CHAIN_BASE against SHAPE_LINE_CHAIN_BASE: package G5
@@ -597,6 +680,7 @@ fn section_shape_collide(results: &mut Results) {
 
 fn rand_arc_partner(rng: &mut Rng, a_arc: &ShapeArc) -> (Box<dyn Shape>, i32) {
     let kind = (rng.next() % 6) as i32;
+    let mut movable = true;
 
     let mut s: Box<dyn Shape> = match kind {
         0 => rand_shape(rng, 2),
@@ -607,9 +691,15 @@ fn rand_arc_partner(rng: &mut Rng, a_arc: &ShapeArc) -> (Box<dyn Shape>, i32) {
             let mut b = rand_arc(rng);
 
             if b.get_radius() >= LARGE_RADIUS {
-                b = ShapeArc::from_start_mid_end(Vector2I::new(0, 0), Vector2I::new(100, 100), Vector2I::new(200, 0), 0);
+                b = ShapeArc::from_start_mid_end(
+                    Vector2I::new(0, 0),
+                    Vector2I::new(100, 100),
+                    Vector2I::new(200, 0),
+                    0,
+                );
             }
 
+            movable = arc_movable(&b);
             let mut chain = ShapeLineChain::from_arc(&b, false, None);
             let d = rng.pt_r(-3000000, 3000000);
             chain.append_point(b.get_p1() + d, false);
@@ -617,13 +707,20 @@ fn rand_arc_partner(rng: &mut Rng, a_arc: &ShapeArc) -> (Box<dyn Shape>, i32) {
             chain.set_closed(closed);
             Box::new(chain)
         }
-        _ => Box::new(rand_arc(rng)),
+        _ => {
+            let b = rand_arc(rng);
+            movable = arc_movable(&b);
+            Box::new(b)
+        }
     };
 
     if rng.flag() {
         let d = rng.pt_r(-3000000, 3000000);
-        let delta = a_arc.get_arc_mid() - s.centre() + d;
-        s.move_(delta);
+
+        if movable {
+            let delta = a_arc.get_arc_mid() - s.centre() + d;
+            s.move_(delta);
+        }
     }
 
     (s, kind)
@@ -715,20 +812,39 @@ fn section_shape_distance(results: &mut Results) {
         let acc = acc_k * rng.range(0, 1000) as i32;
 
         let mut r = Rec::default();
-        r.i(kind).s(&fmt(a.as_ref(), true)).s(&fmt(a.as_ref(), false)).v(p).seg(&s).i(cl);
-        r.bx(&a.bbox(0)).bx(&a.bbox(cl)).v(a.centre()).b(a.is_solid());
+        r.i(kind)
+            .s(&fmt(a.as_ref(), true))
+            .s(&fmt(a.as_ref(), false))
+            .v(p)
+            .seg(&s)
+            .i(cl);
+        r.bx(&a.bbox(0))
+            .bx(&a.bbox(cl))
+            .v(a.centre())
+            .b(a.is_solid());
         rec_collide_pt(&mut r, a.as_ref(), p, cl);
         rec_collide_seg(&mut r, a.as_ref(), &s, cl);
 
         let t = a.type_();
 
         if t == ShapeType::Simple || t == ShapeType::LineChain || t == ShapeType::Rect {
-            r.i(a.squared_distance(p, false)).i(a.squared_distance(p, true)).i(a.distance(p));
-            r.b(a.point_inside(p, 0, false)).b(a.point_inside(p, acc, false)).b(a.point_inside(p, acc, true));
+            r.i(a.squared_distance(p, false))
+                .i(a.squared_distance(p, true));
+
+            // sqrt( ECOORD_MAX ) does not fit an int: UB in C++ (INT_MIN on x86), the port
+            // saturates (deviation D4)
+            if a.squared_distance(p, false) != Vector2I::ECOORD_MAX {
+                r.i(a.distance(p));
+            }
+
+            r.b(a.point_inside(p, 0, false))
+                .b(a.point_inside(p, acc, false))
+                .b(a.point_inside(p, acc, true));
         }
 
         if let Some(lcb) = a.as_shape_ref().as_line_chain_base() {
-            r.b(lcb.point_on_edge(p, acc)).i(lcb.edge_containing_point(p, acc));
+            r.b(lcb.point_on_edge(p, acc))
+                .i(lcb.edge_containing_point(p, acc));
 
             if lcb.get_point_count() > 0 {
                 r.v(lcb.get_point(0)).seg(&lcb.get_segment(-1));
@@ -739,7 +855,10 @@ fn section_shape_distance(results: &mut Results) {
             let mut rect = *rect;
             let off = rng.range(-1000, 1000) as i32;
             let inf = rect.get_inflated(off);
-            r.s(&inf.format(true)).i(rect.diagonal()).i(rect.major_dimension()).i(rect.minor_dimension());
+            r.s(&inf.format(true))
+                .i(rect.diagonal())
+                .i(rect.major_dimension())
+                .i(rect.minor_dimension());
             rec_chain(&mut r, &rect.outline());
             rect.normalize();
             r.s(&rect.format(true));
@@ -769,8 +888,14 @@ fn section_segment_libm(results: &mut Results) {
         let s = ShapeSegment::by_size_and_center(size, c, deg(ang));
 
         let mut r = Rec::default();
-        r.v(size).v(c).d(ang).seg(s.get_seg()).i(s.get_width()).a(s.get_angle());
-        r.b(s.is_45_degree()).b(s.is_45_degree_with_tolerance(deg(tol)));
+        r.v(size)
+            .v(c)
+            .d(ang)
+            .seg(s.get_seg())
+            .i(s.get_width())
+            .a(s.get_angle());
+        r.b(s.is_45_degree())
+            .b(s.is_45_degree_with_tolerance(deg(tol)));
 
         let mut rot = s;
         rot.rotate(deg(ang), c);
@@ -798,19 +923,24 @@ fn section_geometry_utils(results: &mut Results) {
         let only45 = rng.flag();
         let pad = rng.range(0, 1000) as u32;
 
-        if rng.next() % 4 == 0 {
+        if rng.next().is_multiple_of(4) {
             v = rng.pt_r(-10, 10);
             vd = Vector2D::new(v.x as f64, v.y as f64);
         }
 
         let mut r = Rec::default();
         r.v(v).vl(vl).vd(vd).b(only45).i(pad);
-        r.v(get_vector_snapped45(v, only45)).vd(get_vector_snapped45(vd, only45));
+        r.v(get_vector_snapped45(v, only45))
+            .vd(get_vector_snapped45(vd, only45));
         r.vl(get_vector_snapped45(vl, only45));
         r.v(get_vector_snapped90(v)).vd(get_vector_snapped90(vd));
-        r.v(get_clamped_coords(v, pad)).vl(get_clamped_coords(vl, pad)).vd(get_clamped_coords(vd, pad));
+        r.v(get_clamped_coords(v, pad))
+            .vl(get_clamped_coords(vl, pad))
+            .vd(get_clamped_coords(vd, pad));
         r.v(get_clamped_coords_to_i(vd, pad));
-        r.b(is_vec2_safe_xy(v)).b(is_vec2_safe_xy(vl)).b(is_vec2_safe_xy(vd));
+        r.b(is_vec2_safe_xy(v))
+            .b(is_vec2_safe_xy(vl))
+            .b(is_vec2_safe_xy(vd));
 
         let bp = rng.pt_mid();
         let bs = rng.pt_r(0, 100000000);
@@ -826,7 +956,8 @@ fn section_geometry_utils(results: &mut Results) {
         let b2s = rng.pt_r(0, 100000000);
         let box2 = Box2I::new(b2p, b2s);
         let contained = rng.flag();
-        r.b(box_hit_test_point(a, &bx, acc)).b(box_hit_test_box(&box2, &bx, contained, acc));
+        r.b(box_hit_test_point(a, &bx, acc))
+            .b(box_hit_test_box(&box2, &bx, contained, acc));
         sec.add(&r);
     }
 }
@@ -862,7 +993,7 @@ fn section_lines(results: &mut Results) {
         let (a, b) = seg_pair(&mut rng);
         let mut p = rng.pt();
 
-        if rng.next() % 4 == 0 {
+        if rng.next().is_multiple_of(4) {
             let d = rng.pt_r(-1, 1);
             p = (if rng.flag() { a.a } else { a.b }) + d;
         }
@@ -874,8 +1005,14 @@ fn section_lines(results: &mut Results) {
 
         let mut r = Rec::default();
         r.seg(&a).seg(&b).v(p);
-        r.b(hl.contains(p)).opt(hl.intersect_seg(&b)).opt(hl.intersect(&hl2)).v(hl.nearest_point(p));
-        r.opt(ln.intersect_seg(&b)).opt(ln.intersect(&ln2)).i(ln.distance(p)).v(ln.nearest_point(p));
+        r.b(hl.contains(p))
+            .opt(hl.intersect_seg(&b))
+            .opt(hl.intersect(&hl2))
+            .v(hl.nearest_point(p));
+        r.opt(ln.intersect_seg(&b))
+            .opt(ln.intersect(&ln2))
+            .i(ln.distance(p))
+            .v(ln.nearest_point(p));
         r.b(hl == hl2).b(ln == ln2);
 
         let bp = rng.pt_mid();
@@ -912,11 +1049,20 @@ fn section_arc_chord_params(results: &mut Results) {
 
         let mut r = Rec::default();
         r.v(s).v(m).v(e).b(ok).b(p.is_valid());
-        r.d(p.chord_length()).d(p.half_chord()).vd(p.chord_unit_vec()).vd(p.normal_unit_vec());
-        r.d(p.sagitta()).d(p.radius()).d(p.center_offset()).vd(p.chord_midpoint());
+        r.d(p.chord_length())
+            .d(p.half_chord())
+            .vd(p.chord_unit_vec())
+            .vd(p.normal_unit_vec());
+        r.d(p.sagitta())
+            .d(p.radius())
+            .d(p.center_offset())
+            .vd(p.chord_midpoint());
 
         if ok {
-            r.vd(p.center_point()).a(p.start_angle()).a(p.end_angle()).d(p.arc_angle());
+            r.vd(p.center_point())
+                .a(p.start_angle())
+                .a(p.end_angle())
+                .d(p.arc_angle());
         }
 
         sec.add(&r);
@@ -924,7 +1070,12 @@ fn section_arc_chord_params(results: &mut Results) {
 }
 
 fn rec_sol<'r>(r: &'r mut Rec, s: &ArcSolution) -> &'r mut Rec {
-    r.b(s.valid).v(s.start).v(s.mid).v(s.end).vd(s.center).d(s.radius)
+    r.b(s.valid)
+        .v(s.start)
+        .v(s.mid)
+        .v(s.end)
+        .vd(s.center)
+        .d(s.radius)
 }
 
 fn section_arc_construction(results: &mut Results) {

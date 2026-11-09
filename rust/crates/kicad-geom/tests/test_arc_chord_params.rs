@@ -31,14 +31,24 @@ const fn pt(x: i32, y: i32) -> Vector2I {
 macro_rules! check_close {
     ($a:expr, $b:expr, $tol:expr) => {{
         let (a, b): (f64, f64) = ($a, $b);
-        assert!(is_close_pct(a, b, $tol), "{} = {a} is not within {}% of {b}", stringify!($a), $tol);
+        assert!(
+            is_close_pct(a, b, $tol),
+            "{} = {a} is not within {}% of {b}",
+            stringify!($a),
+            $tol
+        );
     }};
 }
 
 macro_rules! check_small {
     ($a:expr, $tol:expr) => {{
         let a: f64 = $a;
-        assert!(is_small(a, $tol), "{} = {a} is not smaller than {}", stringify!($a), $tol);
+        assert!(
+            is_small(a, $tol),
+            "{} = {a} is not smaller than {}",
+            stringify!($a),
+            $tol
+        );
     }};
 }
 

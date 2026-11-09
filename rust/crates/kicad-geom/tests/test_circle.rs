@@ -36,6 +36,7 @@ fn seg(ax: i32, ay: i32, bx: i32, by: i32) -> Seg {
     Seg::new(pt(ax, ay), pt(bx, by))
 }
 
+#[allow(clippy::approx_constant)] // the C++ test uses 0.7071
 fn min_precision_45deg() -> i32 {
     ki_round(MIN_PRECISION_IU as f64 * 0.7071)
 }
@@ -75,13 +76,43 @@ fn contains() {
     let cases: Vec<(&str, Circle, Vector2I, bool)> = vec![
         ("on center", cir(100, 100, 200), pt(100, 100), false),
         ("0 deg", cir(100, 100, 200), pt(300, 100), true),
-        ("0 deg, allowed tolerance pos", cir(100, 100, 200), pt(100, 300 + p), true),
-        ("0 deg, allowed tolerance neg", cir(100, 100, 200), pt(100, 300 - p), true),
-        ("0 deg, allowed tolerance pos + 1", cir(100, 100, 200), pt(100, 300 + p + 1), false),
-        ("0 deg, allowed tolerance neg - 1", cir(100, 100, 200), pt(100, 300 - p - 1), false),
+        (
+            "0 deg, allowed tolerance pos",
+            cir(100, 100, 200),
+            pt(100, 300 + p),
+            true,
+        ),
+        (
+            "0 deg, allowed tolerance neg",
+            cir(100, 100, 200),
+            pt(100, 300 - p),
+            true,
+        ),
+        (
+            "0 deg, allowed tolerance pos + 1",
+            cir(100, 100, 200),
+            pt(100, 300 + p + 1),
+            false,
+        ),
+        (
+            "0 deg, allowed tolerance neg - 1",
+            cir(100, 100, 200),
+            pt(100, 300 - p - 1),
+            false,
+        ),
         ("45 deg", cir(100, 100, 200), pt(241, 241), true),
-        ("45 deg, allowed tolerance pos", cir(100, 100, 200), pt(241 + p45, 241 + p45), true),
-        ("45 deg, allowed tolerance pos + 1", cir(100, 100, 200), pt(241 + p45 + 1, 241 + p45 + 1), false),
+        (
+            "45 deg, allowed tolerance pos",
+            cir(100, 100, 200),
+            pt(241 + p45, 241 + p45),
+            true,
+        ),
+        (
+            "45 deg, allowed tolerance pos + 1",
+            cir(100, 100, 200),
+            pt(241 + p45 + 1, 241 + p45 + 1),
+            false,
+        ),
         ("90 deg", cir(100, 100, 200), pt(100, 300), true),
         ("180 deg", cir(100, 100, 200), pt(-100, 100), true),
         ("270 deg", cir(100, 100, 200), pt(100, -100), true),
@@ -111,15 +142,55 @@ fn nearest_point() {
 #[test]
 fn intersect_circle() {
     let cases: Vec<(&str, Circle, Circle, Vec<Vector2I>)> = vec![
-        ("two point aligned", cir(10, 10, 20), cir(10, 45, 20), vec![pt(0, 27), pt(21, 27)]),
-        ("two point angled", cir(10, 10, 20), cir(20, 20, 20), vec![pt(2, 28), pt(28, 2)]),
-        ("tangent aligned, external", cir(10, 10, 20), cir(10, 50, 20), vec![pt(10, 30)]),
-        ("tangent aligned, internal", cir(10, 10, 40), cir(10, 30, 20), vec![pt(10, 50)]),
+        (
+            "two point aligned",
+            cir(10, 10, 20),
+            cir(10, 45, 20),
+            vec![pt(0, 27), pt(21, 27)],
+        ),
+        (
+            "two point angled",
+            cir(10, 10, 20),
+            cir(20, 20, 20),
+            vec![pt(2, 28), pt(28, 2)],
+        ),
+        (
+            "tangent aligned, external",
+            cir(10, 10, 20),
+            cir(10, 50, 20),
+            vec![pt(10, 30)],
+        ),
+        (
+            "tangent aligned, internal",
+            cir(10, 10, 40),
+            cir(10, 30, 20),
+            vec![pt(10, 50)],
+        ),
         ("no intersection", cir(10, 10, 20), cir(10, 51, 20), vec![]),
-        ("KiROUND overflow 1", cir(44798001, -94001999, 200001), cir(44797999, -94001999, 650001), vec![]),
-        ("KiROUND overflow 2", cir(50747999, -92402001, 650001), cir(50748001, -92402001, 200001), vec![]),
-        ("KiROUND overflow 3", cir(43947999, -92402001, 650001), cir(43948001, -92402001, 200001), vec![]),
-        ("KiROUND overflow 4", cir(46497999, -94001999, 200001), cir(46498001, -94001999, 650001), vec![]),
+        (
+            "KiROUND overflow 1",
+            cir(44798001, -94001999, 200001),
+            cir(44797999, -94001999, 650001),
+            vec![],
+        ),
+        (
+            "KiROUND overflow 2",
+            cir(50747999, -92402001, 650001),
+            cir(50748001, -92402001, 200001),
+            vec![],
+        ),
+        (
+            "KiROUND overflow 3",
+            cir(43947999, -92402001, 650001),
+            cir(43948001, -92402001, 200001),
+            vec![],
+        ),
+        (
+            "KiROUND overflow 4",
+            cir(46497999, -94001999, 200001),
+            cir(46498001, -94001999, 650001),
+            vec![],
+        ),
         // Exercise d=0
         (
             "Co-centered, same radius",
@@ -145,11 +216,31 @@ fn intersect_circle() {
 #[test]
 fn intersect() {
     let cases: Vec<(&str, Circle, Seg, Vec<Vector2I>)> = vec![
-        ("two point aligned", cir(0, 0, 20), seg(10, -40, 10, 40), vec![pt(10, -17), pt(10, 17)]),
-        ("two point angled", cir(0, 0, 20), seg(-20, -40, 20, 40), vec![pt(8, 17), pt(-8, -17)]),
-        ("tangent", cir(0, 0, 20), seg(20, 0, 20, 40), vec![pt(20, 0)]),
+        (
+            "two point aligned",
+            cir(0, 0, 20),
+            seg(10, -40, 10, 40),
+            vec![pt(10, -17), pt(10, 17)],
+        ),
+        (
+            "two point angled",
+            cir(0, 0, 20),
+            seg(-20, -40, 20, 40),
+            vec![pt(8, 17), pt(-8, -17)],
+        ),
+        (
+            "tangent",
+            cir(0, 0, 20),
+            seg(20, 0, 20, 40),
+            vec![pt(20, 0)],
+        ),
         ("no intersection", cir(0, 0, 20), seg(25, 0, 25, 40), vec![]),
-        ("no intersection: seg end points inside circle", cir(0, 0, 20), seg(0, 10, 0, -10), vec![]),
+        (
+            "no intersection: seg end points inside circle",
+            cir(0, 0, 20),
+            seg(0, 10, 0, -10),
+            vec![],
+        ),
     ];
 
     for (name, circle, s, exp) in cases {
@@ -163,9 +254,24 @@ fn intersect() {
 #[test]
 fn intersect_line() {
     let cases: Vec<(&str, Circle, Seg, Vec<Vector2I>)> = vec![
-        ("two point aligned", cir(0, 0, 20), seg(10, 45, 10, 40), vec![pt(10, -17), pt(10, 17)]),
-        ("two point angled", cir(0, 0, 20), seg(-20, -40, 20, 40), vec![pt(8, 17), pt(-8, -17)]),
-        ("tangent", cir(0, 0, 20), seg(20, 0, 20, 40), vec![pt(20, 0)]),
+        (
+            "two point aligned",
+            cir(0, 0, 20),
+            seg(10, 45, 10, 40),
+            vec![pt(10, -17), pt(10, 17)],
+        ),
+        (
+            "two point angled",
+            cir(0, 0, 20),
+            seg(-20, -40, 20, 40),
+            vec![pt(8, 17), pt(-8, -17)],
+        ),
+        (
+            "tangent",
+            cir(0, 0, 20),
+            seg(20, 0, 20, 40),
+            vec![pt(20, 0)],
+        ),
         ("no intersection", cir(0, 0, 20), seg(25, 0, 25, 40), vec![]),
         (
             "intersection, seg end points inside circle",
@@ -187,11 +293,29 @@ fn intersect_line() {
 fn construct_from_tan_tan_pt() {
     let cases: Vec<(&str, Seg, Seg, Vector2I, Circle)> = vec![
         // result from simple geometric inference
-        ("90 degree segs, point on seg", seg(0, 0, 0, 1000), seg(0, 0, 1000, 0), pt(0, 400), cir(400, 400, 400)),
+        (
+            "90 degree segs, point on seg",
+            seg(0, 0, 0, 1000),
+            seg(0, 0, 1000, 0),
+            pt(0, 400),
+            cir(400, 400, 400),
+        ),
         // result from LibreCAD 2.2.0-rc2
-        ("90 degree segs, point floating", seg(0, 0, 0, 1000), seg(0, 0, 1000, 0), pt(200, 100), cir(500, 500, 500)),
+        (
+            "90 degree segs, point floating",
+            seg(0, 0, 0, 1000),
+            seg(0, 0, 1000, 0),
+            pt(200, 100),
+            cir(500, 500, 500),
+        ),
         // result from LibreCAD 2.2.0-rc2
-        ("45 degree segs, point on seg", seg(0, 0, 1000, 0), seg(0, 0, 1000, 1000), pt(400, 0), cir(400, 166, 166)),
+        (
+            "45 degree segs, point on seg",
+            seg(0, 0, 1000, 0),
+            seg(0, 0, 1000, 1000),
+            pt(400, 0),
+            cir(400, 166, 166),
+        ),
         // result from LibreCAD 2.2.0-rc2
         (
             "45 degree segs, point floating",
@@ -217,7 +341,13 @@ fn construct_from_tan_tan_pt() {
             cir(814, 1964, 1964),
         ),
         // special case: radius=0
-        ("point on intersection", seg(10, 0, 1000, 0), seg(10, 0, -1000, 1000), pt(10, 0), cir(10, 0, 0)),
+        (
+            "point on intersection",
+            seg(10, 0, 1000, 0),
+            seg(10, 0, -1000, 1000),
+            pt(10, 0),
+            cir(10, 0, 0),
+        ),
     ];
 
     for (name, seg_a, seg_b, p, exp) in cases {

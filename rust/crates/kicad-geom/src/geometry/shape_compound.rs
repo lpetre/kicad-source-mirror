@@ -134,7 +134,9 @@ impl Shape for ShapeCompound {
 
     /// Port of `SHAPE_COMPOUND::Clone()` (a deep copy).
     fn clone_shape(&self) -> Box<dyn Shape> {
-        Box::new(ShapeCompound::from_shapes(self.shapes.iter().map(|s| s.clone_shape()).collect()))
+        Box::new(ShapeCompound::from_shapes(
+            self.shapes.iter().map(|s| s.clone_shape()).collect(),
+        ))
     }
 
     fn has_indexable_subshapes(&self) -> bool {
@@ -186,7 +188,11 @@ impl Shape for ShapeCompound {
             if item.collide_seg(
                 a_seg,
                 a_clearance,
-                if want_actual || want_location { Some(&mut actual) } else { None },
+                if want_actual || want_location {
+                    Some(&mut actual)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if actual < closest_dist {
@@ -198,7 +204,8 @@ impl Shape for ShapeCompound {
                     }
                 } else if want_location
                     && actual == closest_dist
-                    && (pn - a_seg.a).squared_euclidean_norm() < (nearest - a_seg.a).squared_euclidean_norm()
+                    && (pn - a_seg.a).squared_euclidean_norm()
+                        < (nearest - a_seg.a).squared_euclidean_norm()
                 {
                     nearest = pn;
                 }
@@ -221,7 +228,12 @@ impl Shape for ShapeCompound {
     }
 
     /// Port of `SHAPE_COMPOUND::TransformToPolygon()`.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        a_error_loc: ErrorLoc,
+    ) {
         for item in &self.shapes {
             item.transform_to_polygon(a_buffer, a_error, a_error_loc);
         }

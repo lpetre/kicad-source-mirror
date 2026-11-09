@@ -252,7 +252,12 @@ pub trait Shape: Debug + Send + Sync {
 
     /// Port of `SHAPE::Collide( const SHAPE* aShape, int aClearance, VECTOR2I* aMTV )`
     /// (minimum translation vector variant), implemented in `shape_collisions.cpp`.
-    fn collide_mtv(&self, a_shape: &dyn Shape, a_clearance: i32, a_mtv: Option<&mut Vector2I>) -> bool {
+    fn collide_mtv(
+        &self,
+        a_shape: &dyn Shape,
+        a_clearance: i32,
+        a_mtv: Option<&mut Vector2I>,
+    ) -> bool {
         shape_collisions::collide_shapes(
             self.as_shape_ref(),
             a_shape.as_shape_ref(),
@@ -304,12 +309,19 @@ pub trait Shape: Debug + Send + Sync {
             return false;
         }
 
-        buffer.c_outline(0).point_inside(a_pt, a_accuracy, a_use_bbox_cache)
+        buffer
+            .c_outline(0)
+            .point_inside(a_pt, a_accuracy, a_use_bbox_cache)
     }
 
     /// Port of `SHAPE::TransformToPolygon()`: fill `a_buffer` with a polygon representation of
     /// this shape.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc);
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        a_error_loc: ErrorLoc,
+    );
 
     /// Port of `SHAPE::Rotate()`.
     fn rotate(&mut self, a_angle: EdaAngle, a_center: Vector2I);

@@ -309,7 +309,11 @@ impl ShapeLineChain {
 
         let fix_shape_indices = |a_shape_indices: (isize, isize)| -> (isize, isize) {
             let fix = |a_index: isize| {
-                if a_index != Self::SHAPE_IS_PT { a_index + num_arcs } else { a_index }
+                if a_index != Self::SHAPE_IS_PT {
+                    a_index + num_arcs
+                } else {
+                    a_index
+                }
             };
 
             (fix(a_shape_indices.0), fix(a_shape_indices.1))
@@ -318,7 +322,8 @@ impl ShapeLineChain {
         if self.point_count() == 0 || a_other_line.c_point(0) != self.c_last_point() {
             let p = a_other_line.c_point(0);
             self.points.push(p);
-            self.shapes.push(fix_shape_indices(a_other_line.c_shapes()[0]));
+            self.shapes
+                .push(fix_shape_indices(a_other_line.c_shapes()[0]));
             self.bbox.merge_point(p);
         } else if a_other_line.is_arc_segment(0) {
             // Associate the new arc shape with the last point of this chain
@@ -338,7 +343,8 @@ impl ShapeLineChain {
             let arc_index = a_other_line.arc_index(i as usize);
 
             if arc_index != Self::SHAPE_IS_PT {
-                self.shapes.push(fix_shape_indices(a_other_line.shapes[i as usize]));
+                self.shapes
+                    .push(fix_shape_indices(a_other_line.shapes[i as usize]));
             } else {
                 self.shapes.push(Self::SHAPES_ARE_PT);
             }
@@ -618,7 +624,12 @@ impl Shape for ShapeLineChain {
             // The arcs in the chain should have zero width
             debug_assert!(arc.get_width() == 0, "Invalid arc width - should be zero");
 
-            if arc.collide_point(a_p, a_clearance, a_actual.as_deref_mut(), a_location.as_deref_mut()) {
+            if arc.collide_point(
+                a_p,
+                a_clearance,
+                a_actual.as_deref_mut(),
+                a_location.as_deref_mut(),
+            ) {
                 return true;
             }
         }
@@ -713,7 +724,11 @@ impl Shape for ShapeLineChain {
             if arc.collide_seg(
                 a_seg,
                 a_clearance,
-                if want_actual || want_location { Some(&mut dist) } else { None },
+                if want_actual || want_location {
+                    Some(&mut dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pos) } else { None },
             ) {
                 if !want_actual {
@@ -788,7 +803,12 @@ impl Shape for ShapeLineChain {
     }
 
     /// Port of `SHAPE_LINE_CHAIN::TransformToPolygon()`.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         a_buffer.add_outline(self);
     }
 

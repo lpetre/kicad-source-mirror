@@ -53,7 +53,11 @@ impl ShapeSegment {
     }
 
     /// Port of `SHAPE_SEGMENT::BySizeAndCenter()`.
-    pub fn by_size_and_center(a_overall_size: Vector2I, a_center: Vector2I, a_rotation: EdaAngle) -> ShapeSegment {
+    pub fn by_size_and_center(
+        a_overall_size: Vector2I,
+        a_center: Vector2I,
+        a_rotation: EdaAngle,
+    ) -> ShapeSegment {
         let mut seg_vec = Vector2I::new(0, 0);
         let width: i32;
 
@@ -191,7 +195,13 @@ impl Shape for ShapeSegment {
     ///
     /// The C++ calls `TransformOvalToPolygon()` (`convert_basic_shapes_to_polygon.cpp`), which is
     /// not ported yet: the buffer is left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(&self, _a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {}
+    fn transform_to_polygon(
+        &self,
+        _a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
+    }
 
     /// Port of `SHAPE_SEGMENT::Rotate()`.
     fn rotate(&mut self, a_angle: EdaAngle, a_center: Vector2I) {

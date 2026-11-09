@@ -238,7 +238,10 @@ pub struct OutlineGlyph {
 impl OutlineGlyph {
     /// Port of `OUTLINE_GLYPH( const SHAPE_POLY_SET& aPoly )`.
     pub fn new(poly: ShapePolySet) -> Self {
-        OutlineGlyph { poly, is_hover: false }
+        OutlineGlyph {
+            poly,
+            is_hover: false,
+        }
     }
 
     /// Port of `OUTLINE_GLYPH::BoundingBox()`.

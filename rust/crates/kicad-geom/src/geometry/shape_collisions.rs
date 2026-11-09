@@ -35,13 +35,13 @@
 //! (not ported yet; see `PORT_STATUS.md`).
 
 use crate::geometry::seg::Ecoord;
+use crate::geometry::seg::Seg;
 use crate::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef};
 use crate::geometry::shape_arc::ShapeArc;
 use crate::geometry::shape_circle::ShapeCircle;
 use crate::geometry::shape_line_chain::ShapeLineChain;
 use crate::geometry::shape_rect::ShapeRect;
 use crate::geometry::shape_segment::ShapeSegment;
-use crate::geometry::seg::Seg;
 use crate::math::util::ki_round;
 use crate::math::vector2::Vector2I;
 
@@ -81,7 +81,10 @@ fn collide_circle_circle(
         );
         set(&mut a_location, (a_a.get_center() + a_b.get_center()) / 2);
         // fixme: apparent rounding error
-        set(&mut a_mtv, delta.resize((min_dist as f64 - (dist_sq as f64).sqrt() + 3.0) as i32));
+        set(
+            &mut a_mtv,
+            delta.resize((min_dist as f64 - (dist_sq as f64).sqrt() + 3.0) as i32),
+        );
 
         return true;
     }
@@ -164,7 +167,10 @@ fn collide_rect_circle(
 
     if inside || nearest_side_dist_sq == 0 || nearest_side_dist_sq < min_dist_sq {
         set(&mut a_location, nearest);
-        set(&mut a_actual, 0.max((nearest_side_dist_sq as f64).sqrt() as i32 - r));
+        set(
+            &mut a_actual,
+            0.max((nearest_side_dist_sq as f64).sqrt() as i32 - r),
+        );
 
         if let Some(mtv) = a_mtv {
             let delta = c - nearest;
@@ -247,7 +253,11 @@ fn collide_circle_lcb(
             if a_a.collide_seg(
                 &a_b.get_segment(s as i32),
                 a_clearance,
-                if want_dist { Some(&mut collision_dist) } else { None },
+                if want_dist {
+                    Some(&mut collision_dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if collision_dist < closest_dist {
@@ -366,7 +376,11 @@ fn collide_rect_lcb(
             if a_a.collide_seg(
                 &a_b.get_segment(s as i32),
                 a_clearance,
-                if want_dist { Some(&mut collision_dist) } else { None },
+                if want_dist {
+                    Some(&mut collision_dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if collision_dist < closest_dist {
@@ -536,7 +550,14 @@ fn collide_arc_circle(
 ) -> bool {
     if a_a.is_effective_line() {
         let tmp = ShapeSegment::new(a_a.get_p0(), a_a.get_p1(), a_a.get_width());
-        let retval = collide_circle_segment(a_b, &tmp, a_clearance, a_actual, a_location, a_mtv.as_deref_mut());
+        let retval = collide_circle_segment(
+            a_b,
+            &tmp,
+            a_clearance,
+            a_actual,
+            a_location,
+            a_mtv.as_deref_mut(),
+        );
 
         if retval {
             if let Some(m) = a_mtv {
@@ -552,7 +573,15 @@ fn collide_arc_circle(
     let mut dist_sq: i64 = i64::MAX;
     a_a.nearest_points_circle(a_b, &mut pt_a, &mut pt_b, &mut dist_sq);
 
-    arc_nearest_points_result(pt_a, pt_b, dist_sq, a_clearance, a_actual, a_location, a_mtv)
+    arc_nearest_points_result(
+        pt_a,
+        pt_b,
+        dist_sq,
+        a_clearance,
+        a_actual,
+        a_location,
+        a_mtv,
+    )
 }
 
 /// Port of `Collide( const SHAPE_ARC&, const SHAPE_LINE_CHAIN&, ... )`.
@@ -586,7 +615,11 @@ fn collide_arc_line_chain(
             if a_a.collide_seg(
                 &a_b.segment(i as i32),
                 a_clearance,
-                if want_dist { Some(&mut collision_dist) } else { None },
+                if want_dist {
+                    Some(&mut collision_dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if collision_dist < closest_dist {
@@ -614,7 +647,11 @@ fn collide_arc_line_chain(
             if a_a.collide(
                 arc,
                 a_clearance,
-                if want_dist { Some(&mut collision_dist) } else { None },
+                if want_dist {
+                    Some(&mut collision_dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if collision_dist < closest_dist {
@@ -725,7 +762,8 @@ fn collide_arc_lcb(
         nearest = a_a.get_p0();
     } else {
         let arc_bbox = a_a.bbox(a_clearance);
-        let near_full_circle = (a_a.get_p0() - a_a.get_p1()).squared_euclidean_norm() < Seg::square(a_clearance)
+        let near_full_circle = (a_a.get_p0() - a_a.get_p1()).squared_euclidean_norm()
+            < Seg::square(a_clearance)
             && a_a.get_central_angle().as_degrees() > 180.0;
         let want_dist = a_actual.is_some() || a_location.is_some();
         let want_location = a_location.is_some();
@@ -749,7 +787,11 @@ fn collide_arc_lcb(
             if a_a.collide_seg(
                 &segment,
                 a_clearance,
-                if want_dist { Some(&mut collision_dist) } else { None },
+                if want_dist {
+                    Some(&mut collision_dist)
+                } else {
+                    None
+                },
                 if want_location { Some(&mut pn) } else { None },
             ) {
                 if collision_dist < closest_dist {
@@ -813,7 +855,15 @@ fn collide_arc_arc(
     let mut dist_sq: i64 = i64::MAX;
     a_a.nearest_points_arc(a_b, &mut pt_a, &mut pt_b, &mut dist_sq);
 
-    arc_nearest_points_result(pt_a, pt_b, dist_sq, a_clearance, a_actual, a_location, a_mtv)
+    arc_nearest_points_result(
+        pt_a,
+        pt_b,
+        dist_sq,
+        a_clearance,
+        a_actual,
+        a_location,
+        a_mtv,
+    )
 }
 
 /// Negates the MTV of a reversed collision (`CollCaseReversed`).
@@ -859,21 +909,24 @@ fn collide_single_shapes(
         (S::Rect(a), S::Segment(b)) => collide_rect_segment(a, b, cl, act, loc),
         (S::Rect(a), S::Simple(b)) => collide_rect_lcb(a, b, cl, act, loc, a_mtv),
         (S::Rect(a), S::PolySetTriangle(b)) => collide_rect_lcb(a, b, cl, act, loc, a_mtv),
-        (S::Rect(a), S::Arc(b)) => {
-            reversed(collide_arc_rect(b, a, cl, act, loc, a_mtv.as_deref_mut()), a_mtv)
-        }
+        (S::Rect(a), S::Arc(b)) => reversed(
+            collide_arc_rect(b, a, cl, act, loc, a_mtv.as_deref_mut()),
+            a_mtv,
+        ),
 
-        (S::Circle(a), S::Rect(b)) => {
-            reversed(collide_rect_circle(b, a, cl, act, loc, a_mtv.as_deref_mut()), a_mtv)
-        }
+        (S::Circle(a), S::Rect(b)) => reversed(
+            collide_rect_circle(b, a, cl, act, loc, a_mtv.as_deref_mut()),
+            a_mtv,
+        ),
         (S::Circle(a), S::Circle(b)) => collide_circle_circle(a, b, cl, act, loc, a_mtv),
         (S::Circle(a), S::LineChain(b)) => collide_circle_lcb(a, b, cl, act, loc, a_mtv),
         (S::Circle(a), S::Segment(b)) => collide_circle_segment(a, b, cl, act, loc, a_mtv),
         (S::Circle(a), S::Simple(b)) => collide_circle_lcb(a, b, cl, act, loc, a_mtv),
         (S::Circle(a), S::PolySetTriangle(b)) => collide_circle_lcb(a, b, cl, act, loc, a_mtv),
-        (S::Circle(a), S::Arc(b)) => {
-            reversed(collide_arc_circle(b, a, cl, act, loc, a_mtv.as_deref_mut()), a_mtv)
-        }
+        (S::Circle(a), S::Arc(b)) => reversed(
+            collide_arc_circle(b, a, cl, act, loc, a_mtv.as_deref_mut()),
+            a_mtv,
+        ),
 
         (S::LineChain(a), S::Rect(b)) => collide_rect_lcb(b, a, cl, act, loc, a_mtv),
         (S::LineChain(a), S::Circle(b)) => collide_circle_lcb(b, a, cl, act, loc, a_mtv),
@@ -881,9 +934,10 @@ fn collide_single_shapes(
         (S::LineChain(a), S::Arc(b)) => collide_arc_line_chain(b, a, cl, act, loc),
 
         (S::Segment(a), S::Rect(b)) => collide_rect_segment(b, a, cl, act, loc),
-        (S::Segment(a), S::Circle(b)) => {
-            reversed(collide_circle_segment(b, a, cl, act, loc, a_mtv.as_deref_mut()), a_mtv)
-        }
+        (S::Segment(a), S::Circle(b)) => reversed(
+            collide_circle_segment(b, a, cl, act, loc, a_mtv.as_deref_mut()),
+            a_mtv,
+        ),
         (S::Segment(a), S::LineChain(b)) => collide_lcb_segment(b, a, cl, act, loc),
         (S::Segment(a), S::Segment(b)) => collide_segment_segment(a, b, cl, act, loc),
         (S::Segment(a), S::Simple(b)) => collide_lcb_segment(b, a, cl, act, loc),
@@ -908,13 +962,16 @@ fn collide_single_shapes(
         (S::Arc(a), S::Arc(b)) => collide_arc_arc(a, b, cl, act, loc, a_mtv),
 
         // Collide( SHAPE_LINE_CHAIN_BASE, SHAPE_LINE_CHAIN_BASE ) (G5)
-        (S::LineChain(_) | S::Simple(_) | S::PolySetTriangle(_), S::LineChain(_) | S::Simple(_) | S::PolySetTriangle(_)) => {
-            unsupported_g5(a_a, a_b)
-        }
+        (
+            S::LineChain(_) | S::Simple(_) | S::PolySetTriangle(_),
+            S::LineChain(_) | S::Simple(_) | S::PolySetTriangle(_),
+        ) => unsupported_g5(a_a, a_b),
 
         // Compounds within compounds and the poly sets handled above: the C++ matrix has no
         // case for them ("Unsupported collision", wxFAIL_MSG) and returns false
-        (S::Compound(_), _) | (_, S::Compound(_)) | (S::PolySet(_), _) | (_, S::PolySet(_)) => false,
+        (S::Compound(_), _) | (_, S::Compound(_)) | (S::PolySet(_), _) | (_, S::PolySet(_)) => {
+            false
+        }
     }
 }
 
@@ -954,11 +1011,11 @@ pub fn collide_shapes(
     };
 
     let collide_compound_subshapes = |elem_a: &dyn Shape,
-                                          elem_b: &dyn Shape,
-                                          clearance: i32,
-                                          current_actual: &mut i32,
-                                          current_location: &mut Vector2I,
-                                          current_mtv: &mut Vector2I|
+                                      elem_b: &dyn Shape,
+                                      clearance: i32,
+                                      current_actual: &mut i32,
+                                      current_location: &mut Vector2I,
+                                      current_mtv: &mut Vector2I|
      -> bool {
         let mut actual: i32 = 0;
         let mut location = Vector2I::default();
@@ -968,8 +1025,16 @@ pub fn collide_shapes(
             elem_a.as_shape_ref(),
             elem_b.as_shape_ref(),
             clearance,
-            if want_actual || want_location { Some(&mut actual) } else { None },
-            if want_location { Some(&mut location) } else { None },
+            if want_actual || want_location {
+                Some(&mut actual)
+            } else {
+                None
+            },
+            if want_location {
+                Some(&mut location)
+            } else {
+                None
+            },
             if want_mtv { Some(&mut mtv) } else { None },
         ) {
             if actual < *current_actual {

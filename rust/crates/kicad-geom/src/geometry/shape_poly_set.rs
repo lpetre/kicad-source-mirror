@@ -60,7 +60,11 @@ impl Tri {
             a,
             b,
             c,
-            vertices: [a_vertices[a as usize], a_vertices[b as usize], a_vertices[c as usize]],
+            vertices: [
+                a_vertices[a as usize],
+                a_vertices[b as usize],
+                a_vertices[c as usize],
+            ],
         }
     }
 }
@@ -122,7 +126,13 @@ impl Shape for Tri {
     }
 
     /// `SHAPE_LINE_CHAIN_BASE::TransformToPolygon()` does nothing.
-    fn transform_to_polygon(&self, _a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {}
+    fn transform_to_polygon(
+        &self,
+        _a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
+    }
 
     fn rotate(&mut self, _a_angle: EdaAngle, _a_center: Vector2I) {}
 
@@ -195,10 +205,26 @@ impl ShapePolySet {
         // VECTOR2I( double, double ): the coordinates are truncated
         let mut set = Self::new();
         set.new_outline();
-        set.append_point(Vector2I::new(a_rect.left() as i32, a_rect.top() as i32), -1, -1);
-        set.append_point(Vector2I::new(a_rect.right() as i32, a_rect.top() as i32), -1, -1);
-        set.append_point(Vector2I::new(a_rect.right() as i32, a_rect.bottom() as i32), -1, -1);
-        set.append_point(Vector2I::new(a_rect.left() as i32, a_rect.bottom() as i32), -1, -1);
+        set.append_point(
+            Vector2I::new(a_rect.left() as i32, a_rect.top() as i32),
+            -1,
+            -1,
+        );
+        set.append_point(
+            Vector2I::new(a_rect.right() as i32, a_rect.top() as i32),
+            -1,
+            -1,
+        );
+        set.append_point(
+            Vector2I::new(a_rect.right() as i32, a_rect.bottom() as i32),
+            -1,
+            -1,
+        );
+        set.append_point(
+            Vector2I::new(a_rect.left() as i32, a_rect.bottom() as i32),
+            -1,
+            -1,
+        );
         set.outline(0).set_closed(true);
         set
     }
@@ -253,7 +279,14 @@ impl ShapePolySet {
     ///
     /// A negative `a_outline` counts from the end (-1 is the last outline); a negative
     /// `a_hole` means the outline itself.  Returns the number of points of the contour.
-    pub fn append(&mut self, x: i32, y: i32, a_outline: i32, a_hole: i32, a_allow_duplication: bool) -> i32 {
+    pub fn append(
+        &mut self,
+        x: i32,
+        y: i32,
+        a_outline: i32,
+        a_hole: i32,
+        a_allow_duplication: bool,
+    ) -> i32 {
         debug_assert!(!self.polys.is_empty());
 
         let mut a_outline = a_outline;
@@ -340,7 +373,10 @@ impl ShapePolySet {
     /// Port of `SHAPE_POLY_SET::HoleCount()`: the number of holes in a given outline (0 for an
     /// invalid index).
     pub fn hole_count(&self, a_outline: i32) -> i32 {
-        if a_outline < 0 || a_outline >= self.polys.len() as i32 || self.polys[a_outline as usize].len() < 2 {
+        if a_outline < 0
+            || a_outline >= self.polys.len() as i32
+            || self.polys[a_outline as usize].len() < 2
+        {
             return 0;
         }
 
@@ -441,7 +477,10 @@ impl Shape for ShapePolySet {
 
     /// Port of `SHAPE_POLY_SET::GetIndexableSubshapeCount()`: the number of triangles.
     fn indexable_subshape_count(&self) -> usize {
-        self.triangulated_polys.iter().map(|t| t.triangles.len()).sum()
+        self.triangulated_polys
+            .iter()
+            .map(|t| t.triangles.len())
+            .sum()
     }
 
     /// Port of `SHAPE_POLY_SET::GetIndexableSubshapes()`: the triangles.
@@ -486,7 +525,12 @@ impl Shape for ShapePolySet {
     }
 
     /// Port of `SHAPE_POLY_SET::TransformToPolygon()`: appends the polygons to the buffer.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         a_buffer.append_set(self);
     }
 

@@ -572,6 +572,77 @@ pub fn uniform_real_libstdcxx(rng: &mut Mt19937, a: f64, b: f64) -> f64 {
     (ret * (b - a)) + a
 }
 
+/// Port of `KI_TEST::CheckUnorderedMatches()` (`qa_utils/wx_utils/unit_test_utils.h`):
+/// check that every expected item is matched by a found item.
+///
+/// Returns the descriptions of the failures (empty when everything matches); the Boost
+/// version reports them with `BOOST_CHECK_MESSAGE`.
+pub fn check_unordered_matches<E: std::fmt::Debug, F>(
+    a_expected: &[E],
+    a_found: &[F],
+    a_match_predicate: impl Fn(&E, &F) -> bool,
+) -> Vec<String> {
+    // set of object we've already found
+    let mut matched = vec![false; a_expected.len()];
+
+    // fill the set of object that match
+    for found in a_found {
+        for (i, expected) in a_expected.iter().enumerate() {
+            if a_match_predicate(expected, found) {
+                matched[i] = true;
+                break;
+            }
+        }
+    }
+
+    // check every expected object was "found" (the second loop of the C++ checks that every
+    // matched object was expected, which holds by construction)
+    a_expected
+        .iter()
+        .zip(matched)
+        .filter(|(_, m)| !m)
+        .map(|(e, _)| format!("Expected item was not found. Expected: {e:?}"))
+        .collect()
+}
+
+/// `BOOST_CHECK_CLOSE( a, b, tol )`: `a` and `b` are within `a_tolerance_pct` percent of each
+/// other, relative to both values (Boost's "strong" check; a zero value only matches zero).
+pub fn is_close_pct(a: f64, b: f64, a_tolerance_pct: f64) -> bool {
+    if a == b {
+        return true;
+    }
+
+    let diff = (a - b).abs();
+    let safe_div = |x: f64, d: f64| -> f64 {
+        if d == 0.0 {
+            if x == 0.0 { 0.0 } else { f64::MAX }
+        } else {
+            x / d
+        }
+    };
+    let tol = a_tolerance_pct / 100.0;
+
+    safe_div(diff, b.abs()) <= tol && safe_div(diff, a.abs()) <= tol
+}
+
+/// `BOOST_CHECK_SMALL( v, tol )`: `|v| <= tol`.
+pub fn is_small(v: f64, a_tolerance: f64) -> bool {
+    v.abs() <= a_tolerance
+}
+
+/// `pcbIUScale.mmToIU()` (`include/base_units.h`) for the tests of this crate:
+/// `(int) ( mm < 0 ? ( mm * IU_PER_MM - 0.5 ) : ( mm * IU_PER_MM + 0.5 ) )` with
+/// `IU_PER_MM = 1e6`.
+pub fn pcb_mm_to_iu(mm: f64) -> i32 {
+    const IU_PER_MM: f64 = 1e6;
+
+    (if mm < 0.0 {
+        mm * IU_PER_MM - 0.5
+    } else {
+        mm * IU_PER_MM + 0.5
+    }) as i32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -723,67 +794,4 @@ mod tests {
         assert_eq!(data.holey_segments.len(), 12);
         assert_eq!(data.holey_segments[3], Seg::from_coords(100, 0, 100, 100));
     }
-}
-
-/// Port of `KI_TEST::CheckUnorderedMatches()` (`qa_utils/wx_utils/unit_test_utils.h`):
-/// check that every expected item is matched by a found item.
-///
-/// Returns the descriptions of the failures (empty when everything matches); the Boost
-/// version reports them with `BOOST_CHECK_MESSAGE`.
-pub fn check_unordered_matches<E: std::fmt::Debug, F>(
-    a_expected: &[E],
-    a_found: &[F],
-    a_match_predicate: impl Fn(&E, &F) -> bool,
-) -> Vec<String> {
-    // set of object we've already found
-    let mut matched = vec![false; a_expected.len()];
-
-    // fill the set of object that match
-    for found in a_found {
-        for (i, expected) in a_expected.iter().enumerate() {
-            if a_match_predicate(expected, found) {
-                matched[i] = true;
-                break;
-            }
-        }
-    }
-
-    // check every expected object was "found" (the second loop of the C++ checks that every
-    // matched object was expected, which holds by construction)
-    a_expected
-        .iter()
-        .zip(matched)
-        .filter(|(_, m)| !m)
-        .map(|(e, _)| format!("Expected item was not found. Expected: {e:?}"))
-        .collect()
-}
-
-/// `BOOST_CHECK_CLOSE( a, b, tol )`: `a` and `b` are within `a_tolerance_pct` percent of each
-/// other, relative to both values (Boost's "strong" check; a zero value only matches zero).
-pub fn is_close_pct(a: f64, b: f64, a_tolerance_pct: f64) -> bool {
-    if a == b {
-        return true;
-    }
-
-    let diff = (a - b).abs();
-    let safe_div = |x: f64, d: f64| -> f64 {
-        if d == 0.0 { if x == 0.0 { 0.0 } else { f64::MAX } } else { x / d }
-    };
-    let tol = a_tolerance_pct / 100.0;
-
-    safe_div(diff, b.abs()) <= tol && safe_div(diff, a.abs()) <= tol
-}
-
-/// `BOOST_CHECK_SMALL( v, tol )`: `|v| <= tol`.
-pub fn is_small(v: f64, a_tolerance: f64) -> bool {
-    v.abs() <= a_tolerance
-}
-
-/// `pcbIUScale.mmToIU()` (`include/base_units.h`) for the tests of this crate:
-/// `(int) ( mm < 0 ? ( mm * IU_PER_MM - 0.5 ) : ( mm * IU_PER_MM + 0.5 ) )` with
-/// `IU_PER_MM = 1e6`.
-pub fn pcb_mm_to_iu(mm: f64) -> i32 {
-    const IU_PER_MM: f64 = 1e6;
-
-    (if mm < 0.0 { mm * IU_PER_MM - 0.5 } else { mm * IU_PER_MM + 0.5 }) as i32
 }

@@ -144,7 +144,12 @@ impl ShapeArc {
 
     /// Port of `SHAPE_ARC( const VECTOR2I& aArcStart, const VECTOR2I& aArcMid,
     /// const VECTOR2I& aArcEnd, int aWidth )`.
-    pub fn from_start_mid_end(a_arc_start: Vector2I, a_arc_mid: Vector2I, a_arc_end: Vector2I, a_width: i32) -> Self {
+    pub fn from_start_mid_end(
+        a_arc_start: Vector2I,
+        a_arc_mid: Vector2I,
+        a_arc_end: Vector2I,
+        a_width: i32,
+    ) -> Self {
         let mut arc = ShapeArc {
             start: a_arc_start,
             mid: a_arc_mid,
@@ -159,7 +164,12 @@ impl ShapeArc {
 
     /// Port of `SHAPE_ARC( const SEG& aSegmentA, const SEG& aSegmentB, int aRadius,
     /// int aWidth )`: build an arc which is tangent to two segments and has a given radius.
-    pub fn from_tangent_segments(a_segment_a: &Seg, a_segment_b: &Seg, a_radius: i32, a_width: i32) -> Self {
+    pub fn from_tangent_segments(
+        a_segment_a: &Seg,
+        a_segment_b: &Seg,
+        a_radius: i32,
+        a_width: i32,
+    ) -> Self {
         let mut arc = ShapeArc {
             width: a_width,
             ..ShapeArc::default()
@@ -223,7 +233,8 @@ impl ShapeArc {
 
                 let alpha = (p_to_a_angle - p_to_b_angle).normalize180();
 
-                let dist_pc: f64 = a_radius as f64 / crate::cmath::sin(alpha.as_radians() / 2.0).abs();
+                let dist_pc: f64 =
+                    a_radius as f64 / crate::cmath::sin(alpha.as_radians() / 2.0).abs();
                 let ang_pc = p_to_a_angle - alpha / 2;
                 let arc_center = Vector2I::new(
                     p.x + ki_round(dist_pc * ang_pc.cos()),
@@ -286,7 +297,8 @@ impl ShapeArc {
         // double to int conversion
         self.width = a_width as i32;
 
-        let center: Vector2I = calc_arc_center_from_angle(a_start.into(), a_end.into(), a_angle).cast();
+        let center: Vector2I =
+            calc_arc_center_from_angle(a_start.into(), a_end.into(), a_angle).cast();
 
         rotate_point_around(&mut self.mid, center, -a_angle / 2.0);
 
@@ -466,7 +478,9 @@ impl ShapeArc {
     /// Port of `SHAPE_ARC::update_values()`: recompute the center, radius and bounding box.
     fn update_values(&mut self) {
         self.center = calc_arc_center(self.start, self.mid, self.end);
-        self.radius = (Vector2D::from(self.start) - self.center).squared_euclidean_norm().sqrt();
+        self.radius = (Vector2D::from(self.start) - self.center)
+            .squared_euclidean_norm()
+            .sqrt();
 
         // Put start, mid, and end points in the point list
         let mut points: Vec<Vector2I> = vec![self.start, self.mid, self.end];
@@ -526,7 +540,8 @@ impl ShapeArc {
             return nearest_pt;
         }
 
-        if (a_p - self.start).squared_euclidean_norm() <= (a_p - self.end).squared_euclidean_norm() {
+        if (a_p - self.start).squared_euclidean_norm() <= (a_p - self.end).squared_euclidean_norm()
+        {
             self.start
         } else {
             self.end
@@ -545,7 +560,9 @@ impl ShapeArc {
         a_pt_b: &mut Vector2I,
         a_dist_sq: &mut i64,
     ) -> bool {
-        if self.get_center() == a_circle.get_center() && self.get_radius() == a_circle.get_radius() as f64 {
+        if self.get_center() == a_circle.get_center()
+            && self.get_radius() == a_circle.get_radius() as f64
+        {
             *a_pt_a = self.get_p0();
             *a_pt_b = self.get_p0();
             *a_dist_sq = 0;
@@ -567,7 +584,11 @@ impl ShapeArc {
             }
         }
 
-        let pts = [self.start, self.end, circle1.nearest_point(a_circle.get_center())];
+        let pts = [
+            self.start,
+            self.end,
+            circle1.nearest_point(a_circle.get_center()),
+        ];
 
         for pt in pts {
             if self.slice_contains_point(pt) {
@@ -706,21 +727,22 @@ impl ShapeArc {
         a_pt_b: &mut Vector2I,
         a_dist_sq: &mut i64,
     ) -> bool {
-        let adjust_for_arc_widths = |a_pt_a: &mut Vector2I, a_pt_b: &mut Vector2I, a_dist_sq: &mut i64| {
-            // Adjust point A by half the arc-width towards point B
-            let mut dir = (*a_pt_b - *a_pt_a).resize(self.get_width() / 2);
-            *a_pt_a += dir;
+        let adjust_for_arc_widths =
+            |a_pt_a: &mut Vector2I, a_pt_b: &mut Vector2I, a_dist_sq: &mut i64| {
+                // Adjust point A by half the arc-width towards point B
+                let mut dir = (*a_pt_b - *a_pt_a).resize(self.get_width() / 2);
+                *a_pt_a += dir;
 
-            // Adjust point B by half the other arc-width towards point A
-            dir = (*a_pt_a - *a_pt_b).resize(a_arc.get_width() / 2);
-            *a_pt_b += dir;
+                // Adjust point B by half the other arc-width towards point A
+                dir = (*a_pt_a - *a_pt_b).resize(a_arc.get_width() / 2);
+                *a_pt_b += dir;
 
-            if *a_dist_sq < Seg::square(self.get_width() / 2 + a_arc.get_width() / 2) {
-                *a_dist_sq = 0;
-            } else {
-                *a_dist_sq = a_pt_a.squared_distance(*a_pt_b);
-            }
-        };
+                if *a_dist_sq < Seg::square(self.get_width() / 2 + a_arc.get_width() / 2) {
+                    *a_dist_sq = 0;
+                } else {
+                    *a_dist_sq = a_pt_a.squared_distance(*a_pt_b);
+                }
+            };
 
         *a_dist_sq = i64::MAX;
 
@@ -729,7 +751,8 @@ impl ShapeArc {
 
         // Centers aren't exact, so center_dist_sq won't be exact either
         let center_dist_sq: i64 = center1.squared_distance(center2);
-        let center_epsilon: i64 = ki_round(crate::math::util::std_min(self.radius, a_arc.get_radius()) / 1000.0) as i64;
+        let center_epsilon: i64 =
+            ki_round(crate::math::util::std_min(self.radius, a_arc.get_radius()) / 1000.0) as i64;
         let colocated = center_dist_sq < center_epsilon * center_epsilon;
 
         // Start by checking endpoints
@@ -980,7 +1003,8 @@ impl ShapeArc {
 
             // Recalculate the effective error of approximation, that can be < aMaxError
             let seg360: i32 = (n as f64 * 360.0 / ca.as_degrees().abs()) as i32;
-            effective_error = circle_to_end_segment_delta_radius(external_radius as i32, seg360) as f64;
+            effective_error =
+                circle_to_end_segment_delta_radius(external_radius as i32, seg360) as f64;
         }
 
         // Split the error on either side of the arc.  Since we want the start and end points
@@ -1273,7 +1297,9 @@ impl Shape for ShapeArc {
             let rotated_pt_angle = (angle_to_pt.normalize() - self.get_start_angle()).normalize();
             let rotated_end_angle = (self.get_end_angle() - self.get_start_angle()).normalize();
 
-            if (ccw && rotated_pt_angle > rotated_end_angle) || (!ccw && rotated_pt_angle < rotated_end_angle) {
+            if (ccw && rotated_pt_angle > rotated_end_angle)
+                || (!ccw && rotated_pt_angle < rotated_end_angle)
+            {
                 let dist_startpt: i32 = (a_p - self.start).euclidean_norm();
                 let dist_endpt: i32 = (a_p - self.end).euclidean_norm();
 
@@ -1307,7 +1333,13 @@ impl Shape for ShapeArc {
     ///
     /// The C++ calls `TransformArcToPolygon()` (`convert_basic_shapes_to_polygon.cpp`), which is
     /// not ported yet: the buffer is left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(&self, _a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {}
+    fn transform_to_polygon(
+        &self,
+        _a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
+    }
 
     /// Port of `SHAPE_ARC::Rotate()`: rotate the arc by a given angle about a point.
     fn rotate(&mut self, a_angle: EdaAngle, a_center: Vector2I) {

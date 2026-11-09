@@ -29,8 +29,8 @@ use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::util::ki_round;
 use kicad_geom::math::vector2::{Vector2, Vector2D, Vector2I};
 use kicad_geom::test_utils::{
-    are_points_near_circle, is_box_within_tol, is_close_pct, is_small, is_vec_within_tol, is_within,
-    is_within_wrapped, pcb_mm_to_iu,
+    are_points_near_circle, is_box_within_tol, is_close_pct, is_small, is_vec_within_tol,
+    is_within, is_within_wrapped, pcb_mm_to_iu,
 };
 use kicad_geom::trigo::{calc_arc_center, calc_arc_center_d, calc_arc_center_from_angle};
 
@@ -94,23 +94,55 @@ fn check_arc_geom(a_arc: &ShapeArc, a_props: &ArcProperties, a_syn_err_iu: i32) 
     let pos_tol = 1;
 
     // (the C++ compares the expected start point with itself)
-    assert!(is_vec_within_tol(a_props.start_point, a_props.start_point, pos_tol));
-    assert!(is_vec_within_tol(a_arc.get_p1(), a_props.end_point, pos_tol), "{a_arc}");
-    assert!(is_vec_within_tol(a_arc.get_center(), a_props.center_point, a_syn_err_iu), "{a_arc}");
+    assert!(is_vec_within_tol(
+        a_props.start_point,
+        a_props.start_point,
+        pos_tol
+    ));
     assert!(
-        is_within_wrapped(a_arc.get_central_angle().as_degrees(), a_props.center_angle, 360.0, angle_tol_deg),
+        is_vec_within_tol(a_arc.get_p1(), a_props.end_point, pos_tol),
+        "{a_arc}"
+    );
+    assert!(
+        is_vec_within_tol(a_arc.get_center(), a_props.center_point, a_syn_err_iu),
+        "{a_arc}"
+    );
+    assert!(
+        is_within_wrapped(
+            a_arc.get_central_angle().as_degrees(),
+            a_props.center_angle,
+            360.0,
+            angle_tol_deg
+        ),
         "{a_arc}: central angle {}",
         a_arc.get_central_angle().as_degrees()
     );
     assert!(
-        is_within_wrapped(a_arc.get_start_angle().as_degrees(), a_props.start_angle, 360.0, angle_tol_deg),
+        is_within_wrapped(
+            a_arc.get_start_angle().as_degrees(),
+            a_props.start_angle,
+            360.0,
+            angle_tol_deg
+        ),
         "{a_arc}"
     );
     assert!(
-        is_within_wrapped(a_arc.get_end_angle().as_degrees(), a_props.end_angle, 360.0, angle_tol_deg),
+        is_within_wrapped(
+            a_arc.get_end_angle().as_degrees(),
+            a_props.end_angle,
+            360.0,
+            angle_tol_deg
+        ),
         "{a_arc}"
     );
-    assert!(is_within(a_arc.get_radius(), a_props.radius as f64, a_syn_err_iu as f64), "{a_arc}");
+    assert!(
+        is_within(
+            a_arc.get_radius(),
+            a_props.radius as f64,
+            a_syn_err_iu as f64
+        ),
+        "{a_arc}"
+    );
 
     // Angle normalization contracts
     assert!(a_arc.get_start_angle().as_degrees() >= 0.0);
@@ -162,7 +194,16 @@ fn null_ctor() {
 
     assert_eq!(arc.get_width(), 0);
 
-    let null_props = props(pt(0, 0), pt(0, 0), pt(0, 0), 0.0, 0.0, 0.0, 0, (pt(0, 0), pt(0, 0)));
+    let null_props = props(
+        pt(0, 0),
+        pt(0, 0),
+        pt(0, 0),
+        0.0,
+        0.0,
+        0.0,
+        0,
+        (pt(0, 0), pt(0, 0)),
+    );
 
     check_arc(&arc, &null_props, 1);
 }
@@ -174,13 +215,31 @@ fn basic_sme_geom() {
             "S(-100,0), M(0,100), E(100,0)",
             [pt(-100, 0), pt(0, 100), pt(100, 0)],
             0,
-            props(pt(0, 0), pt(-100, 0), pt(100, 0), 180.0, 180.0, 0.0, 100, (pt(-100, 0), pt(200, 100))),
+            props(
+                pt(0, 0),
+                pt(-100, 0),
+                pt(100, 0),
+                180.0,
+                180.0,
+                0.0,
+                100,
+                (pt(-100, 0), pt(200, 100)),
+            ),
         ),
         (
             "S(100,0), M(0,100), E(-100,0) (reversed)",
             [pt(100, 0), pt(0, 100), pt(-100, 0)],
             0,
-            props(pt(0, 0), pt(100, 0), pt(-100, 0), -180.0, 0.0, 180.0, 100, (pt(-100, 0), pt(200, 100))),
+            props(
+                pt(0, 0),
+                pt(100, 0),
+                pt(-100, 0),
+                -180.0,
+                0.0,
+                180.0,
+                100,
+                (pt(-100, 0), pt(200, 100)),
+            ),
         ),
         (
             // This data has a midpoint not exactly at the midway point of the arc.
@@ -190,7 +249,16 @@ fn basic_sme_geom() {
             "S(100,0), M(-100,0), E(0,100) (bad midpoint)",
             [pt(100, 0), pt(-100, 0), pt(0, 100)],
             0,
-            props(pt(0, 0), pt(100, 0), pt(0, 100), -270.0, 0.0, 90.0, 100, (pt(-100, -100), pt(200, 200))),
+            props(
+                pt(0, 0),
+                pt(100, 0),
+                pt(0, 100),
+                -270.0,
+                0.0,
+                90.0,
+                100,
+                (pt(-100, -100), pt(200, 200)),
+            ),
         ),
     ];
 
@@ -223,13 +291,31 @@ fn basic_cpa_geom() {
             "C(0,0) 180 + 360 degree",
             (pt(0, 0), pt(-100, 0), 360.0),
             0,
-            props(pt(0, 0), pt(-100, 0), pt(-100, 0), 360.0, 180.0, 180.0, 100, (pt(-100, -100), pt(200, 200))),
+            props(
+                pt(0, 0),
+                pt(-100, 0),
+                pt(-100, 0),
+                360.0,
+                180.0,
+                180.0,
+                100,
+                (pt(-100, -100), pt(200, 200)),
+            ),
         ),
         (
             "C(0,0) 180 + 90 degree",
             (pt(0, 0), pt(-100, 0), 90.0),
             0,
-            props(pt(0, 0), pt(-100, 0), pt(0, -100), 90.0, 180.0, 270.0, 100, (pt(-100, -100), pt(100, 100))),
+            props(
+                pt(0, 0),
+                pt(-100, 0),
+                pt(0, -100),
+                90.0,
+                180.0,
+                270.0,
+                100,
+                (pt(-100, -100), pt(100, 100)),
+            ),
         ),
         (
             "C(100,200)  0 - 30 degree",
@@ -401,12 +487,42 @@ fn basic_ttr_geom() {
 #[test]
 fn basic_sec_geom() {
     let cases: Vec<(&str, (Vector2I, Vector2I, Vector2I), bool, Vector2I)> = vec![
-        ("180 deg, clockwise", (pt(100, 0), pt(0, 0), pt(50, 0)), true, pt(50, -50)),
-        ("180 deg, anticlockwise", (pt(100, 0), pt(0, 0), pt(50, 0)), false, pt(50, 50)),
-        ("180 deg flipped, clockwise", (pt(0, 0), pt(100, 0), pt(50, 0)), true, pt(50, 50)),
-        ("180 deg flipped, anticlockwise", (pt(0, 0), pt(100, 0), pt(50, 0)), false, pt(50, -50)),
-        ("90 deg, clockwise", (pt(-100, 0), pt(0, 100), pt(0, 0)), true, pt(-71, 71)),
-        ("90 deg, anticlockwise", (pt(-100, 0), pt(0, 100), pt(0, 0)), false, pt(71, -71)),
+        (
+            "180 deg, clockwise",
+            (pt(100, 0), pt(0, 0), pt(50, 0)),
+            true,
+            pt(50, -50),
+        ),
+        (
+            "180 deg, anticlockwise",
+            (pt(100, 0), pt(0, 0), pt(50, 0)),
+            false,
+            pt(50, 50),
+        ),
+        (
+            "180 deg flipped, clockwise",
+            (pt(0, 0), pt(100, 0), pt(50, 0)),
+            true,
+            pt(50, 50),
+        ),
+        (
+            "180 deg flipped, anticlockwise",
+            (pt(0, 0), pt(100, 0), pt(50, 0)),
+            false,
+            pt(50, -50),
+        ),
+        (
+            "90 deg, clockwise",
+            (pt(-100, 0), pt(0, 100), pt(0, 0)),
+            true,
+            pt(-71, 71),
+        ),
+        (
+            "90 deg, anticlockwise",
+            (pt(-100, 0), pt(0, 100), pt(0, 0)),
+            false,
+            pt(71, -71),
+        ),
     ];
 
     for (name, g, cw, exp_mid) in cases {
@@ -421,7 +537,11 @@ fn basic_sec_geom() {
 fn collide_circle() {
     let cases: Vec<(&str, [Vector2I; 3], i32, Vector2I, i32, bool, i32)> = vec![(
         " Issue 20336, large arc",
-        [pt(183000000, 65710001), pt(150496913, 147587363), pt(116291153, 66406583)],
+        [
+            pt(183000000, 65710001),
+            pt(150496913, 147587363),
+            pt(116291153, 66406583),
+        ],
         2000000 / 2,
         pt(116300000, 133100000),
         300000,
@@ -436,7 +556,11 @@ fn collide_circle() {
         // Test a zero width arc (distance should equal the clearance)
         {
             let mut dist = -1;
-            assert_eq!(arc.collide(&circle, arc_clearance, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide(&circle, arc_clearance, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
             assert_eq!(dist, exp_distance, "{name}");
         }
 
@@ -444,7 +568,11 @@ fn collide_circle() {
         {
             let mut dist = -1;
             arc.set_width(arc_clearance * 2);
-            assert_eq!(arc.collide(&circle, 0, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide(&circle, 0, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
 
             if exp_result {
                 assert_eq!(dist, 0, "{name}");
@@ -459,45 +587,318 @@ fn collide_circle() {
 fn collide_pt() {
     let a = |c: Vector2I, s: Vector2I, ang: f64| (c, s, ang);
     let cases: Vec<(&str, (Vector2I, Vector2I, f64), i32, Vector2I, bool, i32)> = vec![
-        (" 270deg, 0 cl, 0   deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(100, 0), true, 0),
-        (" 270deg, 0 cl, 90  deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(0, 100), true, 0),
-        (" 270deg, 0 cl, 180 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(-100, 0), true, 0),
-        (" 270deg, 0 cl, 270 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(0, -100), true, 0),
-        (" 270deg, 0 cl, 45  deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(71, 71), true, 0),
-        (" 270deg, 0 cl, -45 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, pt(71, -71), false, -1),
-        ("-270deg, 0 cl, 0   deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(100, 0), true, 0),
-        ("-270deg, 0 cl, 90  deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(0, 100), true, 0),
-        ("-270deg, 0 cl, 180 deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(-100, 0), true, 0),
-        ("-270deg, 0 cl, 270 deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(0, -100), true, 0),
-        ("-270deg, 0 cl, 45  deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(71, 71), false, -1),
-        ("-270deg, 0 cl, -45 deg    ", a(pt(0, 0), pt(100, 0), -270.0), 0, pt(71, -71), true, 0),
-        (" 270deg, 5 cl, 0   deg, 5 pos X", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(105, 0), true, 5),
-        (" 270deg, 5 cl, 0  deg, 5 pos Y", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(100, -5), true, 5),
-        (" 270deg, 5 cl, 90  deg, 5 pos", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(0, 105), true, 5),
-        (" 270deg, 5 cl, 180 deg, 5 pos", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(-105, 0), true, 5),
-        (" 270deg, 5 cl, 270 deg, 5 pos", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(0, -105), true, 5),
-        (" 270deg, 5 cl, 0   deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(105, 0), true, 5),
-        (" 270deg, 5 cl, 90  deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(0, 105), true, 5),
-        (" 270deg, 5 cl, 180 deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(-105, 0), true, 5),
-        (" 270deg, 5 cl, 270 deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(0, -105), true, 5),
-        (" 270deg, 5 cl, 45  deg, 5 pos", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(74, 75), true, 5), // 74.246, -74.246
-        (" 270deg, 5 cl, -45 deg, 5 pos", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(74, -75), false, -1), //74.246, -74.246
-        (" 270deg, 5 cl, 45  deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(67, 67), true, 5), // 67.17, 67.17
-        (" 270deg, 5 cl, -45 deg, 5 neg", a(pt(0, 0), pt(100, 0), 270.0), 5, pt(67, -67), false, -1), // 67.17, -67.17
-        (" 270deg, 4 cl, 0   deg pos", a(pt(0, 0), pt(100, 0), 270.0), 4, pt(105, 0), false, -1),
-        (" 270deg, 4 cl, 90  deg pos", a(pt(0, 0), pt(100, 0), 270.0), 4, pt(0, 105), false, -1),
-        (" 270deg, 4 cl, 180 deg pos", a(pt(0, 0), pt(100, 0), 270.0), 4, pt(-105, 0), false, -1),
-        (" 270deg, 4 cl, 270 deg pos", a(pt(0, 0), pt(100, 0), 270.0), 4, pt(0, -105), false, -1),
-        ("  90deg, 0 cl,   0 deg    ", a(pt(0, 0), pt(71, -71), 90.0), 0, pt(71, -71), true, 0),
-        ("  90deg, 0 cl,  45 deg    ", a(pt(0, 0), pt(71, -71), 90.0), 0, pt(100, 0), true, 0),
-        ("  90deg, 0 cl,  90 deg    ", a(pt(0, 0), pt(71, -71), 90.0), 0, pt(71, 71), true, 0),
-        ("  90deg, 0 cl, 135 deg    ", a(pt(0, 0), pt(71, -71), 90.0), 0, pt(0, -100), false, -1),
-        ("  90deg, 0 cl, -45 deg    ", a(pt(0, 0), pt(71, -71), 90.0), 0, pt(0, 100), false, -1),
-        (" -90deg, 0 cl,   0 deg    ", a(pt(0, 0), pt(71, 71), -90.0), 0, pt(71, -71), true, 0),
-        (" -90deg, 0 cl,  45 deg    ", a(pt(0, 0), pt(71, 71), -90.0), 0, pt(100, 0), true, 0),
-        (" -90deg, 0 cl,  90 deg    ", a(pt(0, 0), pt(71, 71), -90.0), 0, pt(71, 71), true, 0),
-        (" -90deg, 0 cl, 135 deg    ", a(pt(0, 0), pt(71, 71), -90.0), 0, pt(0, -100), false, -1),
-        (" -90deg, 0 cl, -45 deg    ", a(pt(0, 0), pt(71, 71), -90.0), 0, pt(0, 100), false, -1),
+        (
+            " 270deg, 0 cl, 0   deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(100, 0),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 0 cl, 90  deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(0, 100),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 0 cl, 180 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(-100, 0),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 0 cl, 270 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(0, -100),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 0 cl, 45  deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(71, 71),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 0 cl, -45 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            pt(71, -71),
+            false,
+            -1,
+        ),
+        (
+            "-270deg, 0 cl, 0   deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(100, 0),
+            true,
+            0,
+        ),
+        (
+            "-270deg, 0 cl, 90  deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(0, 100),
+            true,
+            0,
+        ),
+        (
+            "-270deg, 0 cl, 180 deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(-100, 0),
+            true,
+            0,
+        ),
+        (
+            "-270deg, 0 cl, 270 deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(0, -100),
+            true,
+            0,
+        ),
+        (
+            "-270deg, 0 cl, 45  deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(71, 71),
+            false,
+            -1,
+        ),
+        (
+            "-270deg, 0 cl, -45 deg    ",
+            a(pt(0, 0), pt(100, 0), -270.0),
+            0,
+            pt(71, -71),
+            true,
+            0,
+        ),
+        (
+            " 270deg, 5 cl, 0   deg, 5 pos X",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(105, 0),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 0  deg, 5 pos Y",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(100, -5),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 90  deg, 5 pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(0, 105),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 180 deg, 5 pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(-105, 0),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 270 deg, 5 pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(0, -105),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 0   deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(105, 0),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 90  deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(0, 105),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 180 deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(-105, 0),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 270 deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(0, -105),
+            true,
+            5,
+        ),
+        (
+            " 270deg, 5 cl, 45  deg, 5 pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(74, 75),
+            true,
+            5,
+        ), // 74.246, -74.246
+        (
+            " 270deg, 5 cl, -45 deg, 5 pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(74, -75),
+            false,
+            -1,
+        ), //74.246, -74.246
+        (
+            " 270deg, 5 cl, 45  deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(67, 67),
+            true,
+            5,
+        ), // 67.17, 67.17
+        (
+            " 270deg, 5 cl, -45 deg, 5 neg",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            5,
+            pt(67, -67),
+            false,
+            -1,
+        ), // 67.17, -67.17
+        (
+            " 270deg, 4 cl, 0   deg pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            4,
+            pt(105, 0),
+            false,
+            -1,
+        ),
+        (
+            " 270deg, 4 cl, 90  deg pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            4,
+            pt(0, 105),
+            false,
+            -1,
+        ),
+        (
+            " 270deg, 4 cl, 180 deg pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            4,
+            pt(-105, 0),
+            false,
+            -1,
+        ),
+        (
+            " 270deg, 4 cl, 270 deg pos",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            4,
+            pt(0, -105),
+            false,
+            -1,
+        ),
+        (
+            "  90deg, 0 cl,   0 deg    ",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            0,
+            pt(71, -71),
+            true,
+            0,
+        ),
+        (
+            "  90deg, 0 cl,  45 deg    ",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            0,
+            pt(100, 0),
+            true,
+            0,
+        ),
+        (
+            "  90deg, 0 cl,  90 deg    ",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            0,
+            pt(71, 71),
+            true,
+            0,
+        ),
+        (
+            "  90deg, 0 cl, 135 deg    ",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            0,
+            pt(0, -100),
+            false,
+            -1,
+        ),
+        (
+            "  90deg, 0 cl, -45 deg    ",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            0,
+            pt(0, 100),
+            false,
+            -1,
+        ),
+        (
+            " -90deg, 0 cl,   0 deg    ",
+            a(pt(0, 0), pt(71, 71), -90.0),
+            0,
+            pt(71, -71),
+            true,
+            0,
+        ),
+        (
+            " -90deg, 0 cl,  45 deg    ",
+            a(pt(0, 0), pt(71, 71), -90.0),
+            0,
+            pt(100, 0),
+            true,
+            0,
+        ),
+        (
+            " -90deg, 0 cl,  90 deg    ",
+            a(pt(0, 0), pt(71, 71), -90.0),
+            0,
+            pt(71, 71),
+            true,
+            0,
+        ),
+        (
+            " -90deg, 0 cl, 135 deg    ",
+            a(pt(0, 0), pt(71, 71), -90.0),
+            0,
+            pt(0, -100),
+            false,
+            -1,
+        ),
+        (
+            " -90deg, 0 cl, -45 deg    ",
+            a(pt(0, 0), pt(71, 71), -90.0),
+            0,
+            pt(0, 100),
+            false,
+            -1,
+        ),
         (
             "issue 11358 collide",
             a(pt(119888000, 60452000), pt(120904000, 60452000), 360.0),
@@ -522,7 +923,11 @@ fn collide_pt() {
         // Test a zero width arc (distance should equal the clearance)
         {
             let mut dist = -1;
-            assert_eq!(arc.collide_point(point, arc_clearance, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide_point(point, arc_clearance, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
             assert_eq!(dist, exp_distance, "{name}");
         }
 
@@ -530,7 +935,11 @@ fn collide_pt() {
         {
             let mut dist = -1;
             arc.set_width(arc_clearance * 2);
-            assert_eq!(arc.collide_point(point, 0, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide_point(point, 0, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
 
             if exp_result {
                 assert_eq!(dist, 0, "{name}");
@@ -544,15 +953,87 @@ fn collide_pt() {
 #[test]
 fn collide_seg() {
     let a = |c: Vector2I, s: Vector2I, ang: f64| (c, s, ang);
-    let cases: Vec<(&str, (Vector2I, Vector2I, f64), i32, Seg, bool, i32, Vector2I)> = vec![
-        ("0   deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(100, 0, 50, 0), true, 0, pt(100, 0)),
-        ("90  deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(0, 100, 0, 50), true, 0, pt(0, 100)),
-        ("180 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(-100, 0, -50, 0), true, 0, pt(-100, 0)),
-        ("270 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(0, -100, 0, -50), true, 0, pt(0, -100)),
-        ("45  deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(71, 71, 35, 35), true, 0, pt(70, 70)),
-        ("-45 deg    ", a(pt(0, 0), pt(100, 0), 270.0), 0, seg(71, -71, 35, -35), false, -1, pt(0, 0)),
-        ("seg inside arc start", a(pt(0, 0), pt(71, -71), 90.0), 10, seg(90, 0, -35, 0), true, 10, pt(100, 0)),
-        ("seg inside arc end", a(pt(0, 0), pt(71, -71), 90.0), 10, seg(-35, 0, 90, 0), true, 10, pt(100, 0)),
+    let cases: Vec<(
+        &str,
+        (Vector2I, Vector2I, f64),
+        i32,
+        Seg,
+        bool,
+        i32,
+        Vector2I,
+    )> = vec![
+        (
+            "0   deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(100, 0, 50, 0),
+            true,
+            0,
+            pt(100, 0),
+        ),
+        (
+            "90  deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(0, 100, 0, 50),
+            true,
+            0,
+            pt(0, 100),
+        ),
+        (
+            "180 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(-100, 0, -50, 0),
+            true,
+            0,
+            pt(-100, 0),
+        ),
+        (
+            "270 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(0, -100, 0, -50),
+            true,
+            0,
+            pt(0, -100),
+        ),
+        (
+            "45  deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(71, 71, 35, 35),
+            true,
+            0,
+            pt(70, 70),
+        ),
+        (
+            "-45 deg    ",
+            a(pt(0, 0), pt(100, 0), 270.0),
+            0,
+            seg(71, -71, 35, -35),
+            false,
+            -1,
+            pt(0, 0),
+        ),
+        (
+            "seg inside arc start",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            10,
+            seg(90, 0, -35, 0),
+            true,
+            10,
+            pt(100, 0),
+        ),
+        (
+            "seg inside arc end",
+            a(pt(0, 0), pt(71, -71), 90.0),
+            10,
+            seg(-35, 0, 90, 0),
+            true,
+            10,
+            pt(100, 0),
+        ),
         (
             "large diameter arc",
             a(pt(172367922, 82282076), pt(162530000, 92120000), -45.0),
@@ -579,7 +1060,11 @@ fn collide_seg() {
         // Test a zero width arc (distance should equal the clearance)
         {
             let mut dist = -1;
-            assert_eq!(arc.collide_seg(&s, arc_clearance, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide_seg(&s, arc_clearance, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
             assert_eq!(dist, exp_distance, "{name}");
         }
 
@@ -587,7 +1072,11 @@ fn collide_seg() {
         {
             let mut dist = -1;
             arc.set_width(arc_clearance * 2);
-            assert_eq!(arc.collide_seg(&s, 0, Some(&mut dist), None), exp_result, "{name}");
+            assert_eq!(
+                arc.collide_seg(&s, 0, Some(&mut dist), None),
+                exp_result,
+                "{name}"
+            );
 
             if exp_result {
                 assert_eq!(dist, 0, "{name}");
@@ -634,8 +1123,14 @@ impl ArcDataMm {
 
     fn generate_arc(&self) -> ShapeArc {
         // SHAPE_ARC( VECTOR2D( ... ), VECTOR2D( ... ), ... ): VECTOR2D to VECTOR2I conversion
-        let c = Vector2D::new(pcb_mm_to_iu(self.center_x) as f64, pcb_mm_to_iu(self.center_y) as f64);
-        let s = Vector2D::new(pcb_mm_to_iu(self.start_x) as f64, pcb_mm_to_iu(self.start_y) as f64);
+        let c = Vector2D::new(
+            pcb_mm_to_iu(self.center_x) as f64,
+            pcb_mm_to_iu(self.center_y) as f64,
+        );
+        let s = Vector2D::new(
+            pcb_mm_to_iu(self.start_x) as f64,
+            pcb_mm_to_iu(self.start_y) as f64,
+        );
 
         ShapeArc::from_center_start_angle(
             Vector2I::from_vec(c),
@@ -651,8 +1146,22 @@ fn arc_arc_collide_cases() -> Vec<(&'static str, ArcDataMm, ArcDataMm, f64, bool
     vec![
         (
             "case 1: No intersection",
-            a(73.843527, 74.355869, 71.713528, 72.965869, -76.36664803, 0.2),
-            a(71.236473, 74.704131, 73.366472, 76.094131, -76.36664803, 0.2),
+            a(
+                73.843527,
+                74.355869,
+                71.713528,
+                72.965869,
+                -76.36664803,
+                0.2,
+            ),
+            a(
+                71.236473,
+                74.704131,
+                73.366472,
+                76.094131,
+                -76.36664803,
+                0.2,
+            ),
             0.0,
             false,
         ),
@@ -777,17 +1286,27 @@ fn collide_arc() {
         let arc1_slc_sh: &dyn Shape = &arc1_slc;
         let arc2_slc_sh: &dyn Shape = &arc2_slc;
 
-        let result_arc_to_arc =
-            arc1_sh.collide(arc2_sh, pcb_mm_to_iu(cl), Some(&mut actual), Some(&mut location));
+        let result_arc_to_arc = arc1_sh.collide(
+            arc2_sh,
+            pcb_mm_to_iu(cl),
+            Some(&mut actual),
+            Some(&mut location),
+        );
 
         // For arc to chain collisions, we need to re-calculate the clearances because the
         // SHAPE_LINE_CHAIN is zero width
         let mut clearance = pcb_mm_to_iu(cl) + (arc2.get_width() / 2);
 
-        let result_arc_to_chain = arc1_sh.collide(arc2_slc_sh, clearance, Some(&mut actual), Some(&mut location));
+        let result_arc_to_chain = arc1_sh.collide(
+            arc2_slc_sh,
+            clearance,
+            Some(&mut actual),
+            Some(&mut location),
+        );
 
         clearance = pcb_mm_to_iu(cl) + (arc1.get_width() / 2);
-        let result_chain_to_arc = arc1_slc_sh.collide(arc2_sh, clearance, Some(&mut actual), Some(&mut location));
+        let result_chain_to_arc =
+            arc1_slc_sh.collide(arc2_sh, clearance, Some(&mut actual), Some(&mut location));
 
         assert_eq!(result_arc_to_arc, exp_result, "{name}: arc to arc");
         assert_eq!(result_arc_to_chain, exp_result, "{name}: arc to chain");
@@ -808,7 +1327,8 @@ fn collide_arc_chain_to_chain() {
         let mut actual = 0;
         let mut location = Vector2I::default();
         let clearance = (arc1.get_width() / 2) + (arc2.get_width() / 2);
-        let result_chain_to_chain = arc1_slc.collide(&arc2_slc, clearance, Some(&mut actual), Some(&mut location));
+        let result_chain_to_chain =
+            arc1_slc.collide(&arc2_slc, clearance, Some(&mut actual), Some(&mut location));
 
         assert_eq!(result_chain_to_chain, exp_result, "{name}: chain to chain");
     }
@@ -865,7 +1385,12 @@ fn collide_arc_to_closed_chain_matches_segment_scan() {
 
     // SHAPE_SIMPLE routes through the SHAPE_LINE_CHAIN_BASE overload that carries the box reject
     let cases: Vec<(ShapeArc, ShapeSimple, i32, bool)> = vec![
-        (ShapeArc::with_width(&semicircle, 4), rect(-10, 102, 10, 110), 0, true),
+        (
+            ShapeArc::with_width(&semicircle, 4),
+            rect(-10, 102, 10, 110),
+            0,
+            true,
+        ),
         (semicircle.clone(), rect(-10, 105, 10, 110), 5, false),
         (major.clone(), rect(-239, -10, -238, 10), 150, true),
     ];
@@ -897,7 +1422,8 @@ fn collide_arc_to_closed_chain_matches_segment_scan() {
 
         let mut actual = 0;
         let mut location = Vector2I::default();
-        let collided = (&arc as &dyn Shape).collide(&chain, clearance, Some(&mut actual), Some(&mut location));
+        let collided =
+            (&arc as &dyn Shape).collide(&chain, clearance, Some(&mut actual), Some(&mut location));
 
         assert_eq!(collided, expected);
 
@@ -929,7 +1455,9 @@ fn are_polyline_end_points_near_circle(
     a_rad: i32,
     a_tolerance: i32,
 ) -> bool {
-    let points: Vec<Vector2I> = (0..a_polyline.point_count()).map(|i| a_polyline.c_point(i)).collect();
+    let points: Vec<Vector2I> = (0..a_polyline.point_count())
+        .map(|i| a_polyline.c_point(i))
+        .collect();
 
     are_points_near_circle(&points, a_centre, a_rad, a_tolerance)
 }
@@ -956,7 +1484,10 @@ fn arc_to_polyline() {
         ("Semicircle", (pt(0, 0), pt(-1000000, 0), 180.0)),
         // check that very small circles don't fall apart and that reverse angles
         // work too
-        ("Extremely small semicircle", (pt(0, 0), pt(-1000, 0), -180.0)),
+        (
+            "Extremely small semicircle",
+            (pt(0, 0), pt(-1000, 0), -180.0),
+        ),
         // Make sure it doesn't only work for "easy" angles
         ("Non-round geometry", (pt(0, 0), pt(1234567, 0), 42.22)),
     ];
@@ -985,8 +1516,14 @@ fn arc_to_polyline() {
         let radius = (g.0 - g.1).euclidean_norm();
 
         // Other points within accuracy + epsilon (for rounding) of where they should be
-        assert!(are_polyline_end_points_near_circle(&chain, g.0, radius, accuracy + epsilon), "{name}");
-        assert!(are_polyline_mid_points_near_circle(&chain, g.0, radius, accuracy + epsilon), "{name}");
+        assert!(
+            are_polyline_end_points_near_circle(&chain, g.0, radius, accuracy + epsilon),
+            "{name}"
+        );
+        assert!(
+            are_polyline_mid_points_near_circle(&chain, g.0, radius, accuracy + epsilon),
+            "{name}"
+        );
     }
 }
 
@@ -1083,7 +1620,12 @@ fn degenerate_arc_coincident_points() {
 // the chord midpoint, which makes start and end antipodal and the raw sweep a clean half turn
 #[test]
 fn collinear_arc_sweep_is_not_a_full_turn() {
-    let arc = ShapeArc::from_start_mid_end(pt(2275000, 3123714), pt(2275000, 3123715), pt(2275000, 3123720), 127000);
+    let arc = ShapeArc::from_start_mid_end(
+        pt(2275000, 3123714),
+        pt(2275000, 3123715),
+        pt(2275000, 3123720),
+        127000,
+    );
 
     assert!(arc.get_central_angle().as_degrees().abs() < 1.0);
 
@@ -1098,11 +1640,21 @@ fn collinear_arc_sweep_is_not_a_full_turn() {
 // The guard must not catch major arcs, which are the only users of the full-turn correction
 #[test]
 fn curved_arcs_keep_their_sweep() {
-    let quarter = ShapeArc::from_start_mid_end(pt(1000000, 0), pt(707107, 707107), pt(0, 1000000), 127000);
-    assert!(is_close_pct(quarter.get_central_angle().as_degrees(), 90.0, 0.01));
+    let quarter =
+        ShapeArc::from_start_mid_end(pt(1000000, 0), pt(707107, 707107), pt(0, 1000000), 127000);
+    assert!(is_close_pct(
+        quarter.get_central_angle().as_degrees(),
+        90.0,
+        0.01
+    ));
 
-    let major = ShapeArc::from_start_mid_end(pt(1000000, 0), pt(-1000000, 0), pt(0, -1000000), 127000);
-    assert!(is_close_pct(major.get_central_angle().as_degrees(), 270.0, 0.01));
+    let major =
+        ShapeArc::from_start_mid_end(pt(1000000, 0), pt(-1000000, 0), pt(0, -1000000), 127000);
+    assert!(is_close_pct(
+        major.get_central_angle().as_degrees(),
+        270.0,
+        0.01
+    ));
 }
 
 // Coincident start/mid plus a distant end previously produced a center far off from the inputs
@@ -1148,8 +1700,16 @@ fn calc_arc_center_three_near_coincident() {
     let end = Vector2D::new(100.0, 201.0);
 
     let center = calc_arc_center_d(start, mid, end);
-    assert!(is_close_pct(center.x, (start.x + mid.x + end.x) / 3.0, 1e-9));
-    assert!(is_close_pct(center.y, (start.y + mid.y + end.y) / 3.0, 1e-9));
+    assert!(is_close_pct(
+        center.x,
+        (start.x + mid.x + end.x) / 3.0,
+        1e-9
+    ));
+    assert!(is_close_pct(
+        center.y,
+        (start.y + mid.y + end.y) / 3.0,
+        1e-9
+    ));
 }
 
 // A thin arc must not trip the coincident-point guards despite its short chord and small sagitta
@@ -1183,7 +1743,9 @@ fn calc_arc_center_few_unit_arc_keeps_its_circumcircle() {
     assert!(arc.get_central_angle().as_degrees().abs() < 180.0);
 
     // The chord midpoint fallback sits at (3, 3), inside the arc it is supposed to circumscribe
-    assert!(((arc.get_center() - arc.get_arc_mid()).euclidean_norm() as f64) > arc.get_radius() / 2.0);
+    assert!(
+        ((arc.get_center() - arc.get_arc_mid()).euclidean_norm() as f64) > arc.get_radius() / 2.0
+    );
 }
 
 // A board-scale arc must not regress from the new pairwise coincidence guards
@@ -1287,7 +1849,10 @@ fn calc_arc_center_snaps_to_grid_when_radii_agree() {
     assert!((exact.0 - c.x as f64).abs() + (exact.1 - c.y as f64).abs() > 1.0);
 
     assert_eq!(calc_arc_center(s, m, e), c);
-    assert_eq!(calc_arc_center_d(s.into(), m.into(), e.into()), Vector2D::from(c));
+    assert_eq!(
+        calc_arc_center_d(s.into(), m.into(), e.into()),
+        Vector2D::from(c)
+    );
 }
 
 // The 10 nm grid point would put the radii 4 nm apart, so the exact center is kept

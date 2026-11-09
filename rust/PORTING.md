@@ -160,6 +160,16 @@ section. Keep it current; it is what the reviewers and the final README are buil
   only polygon clipper. See `docs/research/polygon.json`.
 - **Spatial indices, delaunator, nanoflann**: hand ports living in `kicad-geom` (query visit
   order matters). No external spatial crates. See `docs/research/spatial.json`.
+- **Out-of-range `double` to integer casts**: a plain C++ `(int)` / implicit conversion of a
+  `double` that is out of range or NaN is undefined behaviour, but the reference binary
+  (x86-64, `cvttsd2si`) yields `INT_MIN` (`i32::MIN`; `i64::MIN` for 64-bit targets). Rust's
+  `as` saturates instead. Where such a value can reach a cast that is not protected by
+  `KiROUND`'s explicit clamping, use `kicad_geom::cmath::f64_to_i32_x86` /
+  `f64_to_i64_x86` and include the out-of-range inputs in the oracle to confirm what the
+  reference build does at that site. (Example: `SHAPE::Distance()` of an empty outline.)
+- **JSON**: `serde_json` (features `preserve_order`, `float_roundtrip`) with the
+  nlohmann-compatible reader/writer helpers in `kicad_core::json`; never `to_string_pretty`.
+- **Netclass patterns**: wildcard patterns are hand-ported; regex patterns use `regress`.
 - **Self-verification**: every work package that ports numerical or text-producing code extends
   its crate's differential oracle (`tests/oracle/`: a C++ driver linking the original sources,
   golden output committed under `tests/golden/`, a Rust test replaying it). A package is not done

@@ -40,8 +40,10 @@ mod shape_sections;
 
 #[test]
 fn oracle_shapes_differential_test() {
-    let golden_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/shapes_oracle.txt");
-    let golden_text = std::fs::read_to_string(&golden_path).expect("tests/golden/shapes_oracle.txt is missing");
+    let golden_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/shapes_oracle.txt");
+    let golden_text =
+        std::fs::read_to_string(&golden_path).expect("tests/golden/shapes_oracle.txt is missing");
 
     let golden: Vec<(String, u64, u64)> = golden_text
         .lines()
@@ -55,10 +57,11 @@ fn oracle_shapes_differential_test() {
         })
         .collect();
 
-    let dump: Option<Box<dyn std::io::Write>> = std::env::var_os("KICAD_GEOM_ORACLE_DUMP").map(|p| {
-        let file = std::fs::File::create(p).expect("cannot create the dump file");
-        Box::new(std::io::BufWriter::new(file)) as Box<dyn std::io::Write>
-    });
+    let dump: Option<Box<dyn std::io::Write>> =
+        std::env::var_os("KICAD_GEOM_ORACLE_DUMP").map(|p| {
+            let file = std::fs::File::create(p).expect("cannot create the dump file");
+            Box::new(std::io::BufWriter::new(file)) as Box<dyn std::io::Write>
+        });
 
     let mut results = sections::Results {
         sections: Vec::new(),
@@ -68,7 +71,11 @@ fn oracle_shapes_differential_test() {
     shape_sections::run_all(&mut results);
 
     assert_eq!(
-        results.sections.iter().map(|s| s.0.as_str()).collect::<Vec<_>>(),
+        results
+            .sections
+            .iter()
+            .map(|s| s.0.as_str())
+            .collect::<Vec<_>>(),
         golden.iter().map(|s| s.0.as_str()).collect::<Vec<_>>(),
         "the sections of the Rust test and of the golden file differ"
     );

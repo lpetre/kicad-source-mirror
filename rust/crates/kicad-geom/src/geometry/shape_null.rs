@@ -64,7 +64,13 @@ impl Shape for ShapeNull {
         false
     }
 
-    fn transform_to_polygon(&self, _a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {}
+    fn transform_to_polygon(
+        &self,
+        _a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
+    }
 
     fn rotate(&mut self, _a_angle: EdaAngle, _a_center: Vector2I) {}
 

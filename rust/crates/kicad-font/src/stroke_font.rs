@@ -22,7 +22,9 @@ use std::sync::OnceLock;
 
 use kicad_geom::{Box2D, Box2I, EdaAngle, Vector2D, Vector2I, ki_round};
 
-use crate::font::{Font, KICAD_FONT_NAME, TextStyleFlags, is_subscript, is_superscript, text_style};
+use crate::font::{
+    Font, KICAD_FONT_NAME, TextStyleFlags, is_subscript, is_superscript, text_style,
+};
 use crate::font_metrics::Metrics;
 use crate::glyph::{Glyph, StrokeGlyph};
 use crate::newstroke_font::{NEWSTROKE_FONT, NEWSTROKE_FONT_BUFSIZE};
@@ -131,7 +133,11 @@ fn load_new_stroke_font(a_new_stroke_font: &[&str]) -> StrokeFontData {
         boxes.push(glyph.bounding_box());
         glyphs.push(glyph);
         // std::max( m_maxGlyphWidth, glyphWidth )
-        max_glyph_width = if max_glyph_width < glyph_width { glyph_width } else { max_glyph_width };
+        max_glyph_width = if max_glyph_width < glyph_width {
+            glyph_width
+        } else {
+            max_glyph_width
+        };
     }
 
     StrokeFontData {
@@ -143,7 +149,8 @@ fn load_new_stroke_font(a_new_stroke_font: &[&str]) -> StrokeFontData {
 
 /// The process-wide decoded Newstroke table, decoded on first use.
 pub fn default_font_data() -> &'static StrokeFontData {
-    DEFAULT_FONT_DATA.get_or_init(|| load_new_stroke_font(&NEWSTROKE_FONT[..NEWSTROKE_FONT_BUFSIZE]))
+    DEFAULT_FONT_DATA
+        .get_or_init(|| load_new_stroke_font(&NEWSTROKE_FONT[..NEWSTROKE_FONT_BUFSIZE]))
 }
 
 /// Port of `KIFONT::STROKE_FONT`.
@@ -257,10 +264,13 @@ impl Font for StrokeFont {
         let space_width: f64 = boxes[0].width(); // First char is space
         let mut char_count: i32 = 0;
 
-        if a_text_style & text_style::SUBSCRIPT != 0 || a_text_style & text_style::SUPERSCRIPT != 0 {
-            glyph_size = glyph_size * self.super_sub_size_multiplier();
+        if a_text_style & text_style::SUBSCRIPT != 0 || a_text_style & text_style::SUPERSCRIPT != 0
+        {
+            glyph_size *= self.super_sub_size_multiplier();
             // int += double: the sum is truncated
-            cursor.y = (cursor.y as f64 + glyph_size.y * self.super_sub_baseline_offset(a_text_style)) as i32;
+            cursor.y = (cursor.y as f64
+                + glyph_size.y * self.super_sub_baseline_offset(a_text_style))
+                as i32;
         }
 
         for ch in a_text.chars() {
@@ -297,9 +307,9 @@ impl Font for StrokeFont {
                 let source: &StrokeGlyph = &self.data.glyphs[dd as usize];
 
                 if let Some(glyphs) = a_glyphs.as_deref_mut() {
-                    glyphs.push(Glyph::Stroke(source.transform(
-                        glyph_size, cursor, tilt, a_angle, a_mirror, a_origin,
-                    )));
+                    glyphs.push(Glyph::Stroke(
+                        source.transform(glyph_size, cursor, tilt, a_angle, a_mirror, a_origin),
+                    ));
                 }
 
                 let mut glyph_extents: Vector2D = source.bounding_box().end();

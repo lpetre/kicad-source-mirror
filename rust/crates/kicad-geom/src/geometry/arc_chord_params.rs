@@ -87,7 +87,8 @@ impl ArcChordParams {
         }
 
         self.half_chord = self.chord_len / 2.0;
-        self.radius = (self.half_chord * self.half_chord + self.sagitta * self.sagitta) / (2.0 * self.sagitta);
+        self.radius = (self.half_chord * self.half_chord + self.sagitta * self.sagitta)
+            / (2.0 * self.sagitta);
 
         if self.radius <= 0.0 {
             return false;

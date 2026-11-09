@@ -151,7 +151,11 @@ impl ShapeRect {
     /// ported yet: the result is then an empty chain (see `PORT_STATUS.md`).
     pub fn outline(&self) -> ShapeLineChain {
         let mut buffer = ShapePolySet::new();
-        self.transform_to_polygon(&mut buffer, ShapeArc::default_accuracy_for_pcb(), ERROR_INSIDE);
+        self.transform_to_polygon(
+            &mut buffer,
+            ShapeArc::default_accuracy_for_pcb(),
+            ERROR_INSIDE,
+        );
 
         if buffer.outline_count() == 0 {
             return ShapeLineChain::new();
@@ -259,7 +263,9 @@ impl Shape for ShapeRect {
             } else if a_location.is_some() && dist_sq == closest_dist_sq {
                 let near = side.nearest_point_seg(a_seg);
 
-                if (near - a_seg.a).squared_euclidean_norm() < (nearest - a_seg.a).squared_euclidean_norm() {
+                if (near - a_seg.a).squared_euclidean_norm()
+                    < (nearest - a_seg.a).squared_euclidean_norm()
+                {
                     nearest = near;
                 }
             }
@@ -284,7 +290,12 @@ impl Shape for ShapeRect {
     ///
     /// A rectangle with rounded corners goes through `ROUNDRECT` in C++, which is not ported
     /// yet: the buffer is then left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         if self.radius > 0 {
             // ROUNDRECT rr( *this, m_radius ); rr.TransformToPolygon( aBuffer, aError );
             return;

@@ -74,11 +74,13 @@ pub fn get_arc_to_segment_count(a_radius: i32, a_error_max: i32, a_arc_angle: Ed
     // error relative to the radius value:
     let rel_error: f64 = a_error_max as f64 / a_radius as f64;
     // minimal arc increment in degrees:
-    let mut arc_increment: f64 = 180.0 / std::f64::consts::PI * crate::cmath::acos(1.0 - rel_error) * 2.0;
+    let mut arc_increment: f64 =
+        180.0 / std::f64::consts::PI * crate::cmath::acos(1.0 - rel_error) * 2.0;
 
     // Ensure a minimal arc increment reasonable value for a circle
     // (360.0 degrees). For very small radius values, this is mandatory.
-    arc_increment = crate::math::util::std_min(360.0 / MIN_SEGCOUNT_FOR_CIRCLE as f64, arc_increment);
+    arc_increment =
+        crate::math::util::std_min(360.0 / MIN_SEGCOUNT_FOR_CIRCLE as f64, arc_increment);
 
     let seg_count: i32 = ki_round(a_arc_angle.as_degrees().abs() / arc_increment);
 
@@ -157,7 +159,11 @@ impl Drop for DisableArcRadiusCorrection {
 /// the equivalent polygon outside the circle.
 pub fn get_circle_to_poly_correction(a_max_error: i32) -> i32 {
     // Push all the error to the outside by increasing the radius
-    if S_DISABLE_ARC_CORRECTION.with(|f| f.get()) { 0 } else { a_max_error }
+    if S_DISABLE_ARC_CORRECTION.with(|f| f.get()) {
+        0
+    } else {
+        a_max_error
+    }
 }
 
 /// Coordinate types accepted by [`get_vector_snapped45`], [`get_vector_snapped90`],
@@ -238,7 +244,10 @@ impl SnapCoord for f64 {
 /// set equal (and/or opposite) or to zero as needed. The effect of this is
 /// that if the starting vector is on a square grid, the resulting snapped
 /// vector will still be on the same grid.
-pub fn get_vector_snapped45<T: SnapCoord + crate::math::vector2::Coord>(a_vec: Vector2<T>, only45: bool) -> Vector2<T> {
+pub fn get_vector_snapped45<T: SnapCoord + crate::math::vector2::Coord>(
+    a_vec: Vector2<T>,
+    only45: bool,
+) -> Vector2<T> {
     let mut new_vec = a_vec;
     let abs_vec = Vector2::new(a_vec.x.abs_(), a_vec.y.abs_());
 
@@ -264,7 +273,9 @@ pub fn get_vector_snapped45<T: SnapCoord + crate::math::vector2::Coord>(a_vec: V
 /// The magnitude of the vector is NOT kept; instead one of the coordinates is
 /// set to zero as needed.  If the starting vector is on a square grid, the
 /// resulting snapped vector will remain on the same grid.
-pub fn get_vector_snapped90<T: SnapCoord + crate::math::vector2::Coord>(a_vec: Vector2<T>) -> Vector2<T> {
+pub fn get_vector_snapped90<T: SnapCoord + crate::math::vector2::Coord>(
+    a_vec: Vector2<T>,
+) -> Vector2<T> {
     let mut new_vec = a_vec;
     let abs_vec = Vector2::new(a_vec.x.abs_(), a_vec.y.abs_());
 
@@ -280,8 +291,14 @@ pub fn get_vector_snapped90<T: SnapCoord + crate::math::vector2::Coord>(a_vec: V
 /// Port of `GetClampedCoords<in_type>()` with `ret_type = in_type`: clamp a vector to values
 /// that can be negated, respecting numeric limits of coordinates data type with specified
 /// padding.  Numeric limits are (-2^31 + 1) to (2^31 - 1).
-pub fn get_clamped_coords<T: SnapCoord + crate::math::vector2::Coord>(a_coords: Vector2<T>, a_padding: u32) -> Vector2<T> {
-    Vector2::new(a_coords.x.clamp_coord(a_padding), a_coords.y.clamp_coord(a_padding))
+pub fn get_clamped_coords<T: SnapCoord + crate::math::vector2::Coord>(
+    a_coords: Vector2<T>,
+    a_padding: u32,
+) -> Vector2<T> {
+    Vector2::new(
+        a_coords.x.clamp_coord(a_padding),
+        a_coords.y.clamp_coord(a_padding),
+    )
 }
 
 /// Port of `GetClampedCoords<double, int>()`: as [`get_clamped_coords`], then rounded with
@@ -332,7 +349,13 @@ fn clip_out_code(a_clip_box: &Box2I, x: i32, y: i32) -> i32 {
 ///
 /// Please note that this is only accurate for lines that are one pixel wide.
 /// Returns false if any part of the line lies within the rectangle.
-pub fn clip_line(a_clip_box: &Box2I, x1: &mut i32, y1: &mut i32, x2: &mut i32, y2: &mut i32) -> bool {
+pub fn clip_line(
+    a_clip_box: &Box2I,
+    x1: &mut i32,
+    y1: &mut i32,
+    x2: &mut i32,
+    y2: &mut i32,
+) -> bool {
     // Stock Cohen-Sutherland algorithm; check *any* CG book for details
     let mut outcode1 = clip_out_code(a_clip_box, *x1, *y1);
     let mut outcode2 = clip_out_code(a_clip_box, *x2, *y2);
@@ -393,7 +416,12 @@ pub fn box_hit_test_point(a_hit_point: Vector2I, a_hittee: &Box2I, a_accuracy: i
 }
 
 /// Port of `KIGEOM::BoxHitTest( const BOX2I&, const BOX2I&, bool, int )`: box-to-box hit test.
-pub fn box_hit_test_box(a_hitter: &Box2I, a_hittee: &Box2I, a_hittee_contained: bool, a_accuracy: i32) -> bool {
+pub fn box_hit_test_box(
+    a_hitter: &Box2I,
+    a_hittee: &Box2I,
+    a_hittee_contained: bool,
+    a_accuracy: i32,
+) -> bool {
     let hitter = a_hitter.inflated(a_accuracy);
 
     if a_hittee_contained {
@@ -405,7 +433,11 @@ pub fn box_hit_test_box(a_hitter: &Box2I, a_hittee: &Box2I, a_hittee_contained: 
 
 /// Port of `KIGEOM::BoxHitTest( const SHAPE_LINE_CHAIN&, const BOX2I&, bool )`: shape-to-box
 /// hit test.
-pub fn box_hit_test_shape(a_hitter: &ShapeLineChain, a_hittee: &Box2I, a_hittee_contained: bool) -> bool {
+pub fn box_hit_test_shape(
+    a_hitter: &ShapeLineChain,
+    a_hittee: &Box2I,
+    a_hittee_contained: bool,
+) -> bool {
     let bbox = ShapeRect::from_box(a_hittee);
 
     shape_hit_test(a_hitter, &bbox, a_hittee_contained)
@@ -447,7 +479,11 @@ pub fn box_hit_test_shape_rotated(
 /// `a_hitter` is the selection shape that is either hitting or containing the hittee,
 /// `a_hittee_contained` is true if the hittee is tested for total containment, false if it is
 /// tested for intersection.
-pub fn shape_hit_test(a_hitter: &ShapeLineChain, a_hittee: &dyn Shape, a_hittee_contained: bool) -> bool {
+pub fn shape_hit_test(
+    a_hitter: &ShapeLineChain,
+    a_hittee: &dyn Shape,
+    a_hittee_contained: bool,
+) -> bool {
     // Check if the selection polygon collides with any of the hittee's subshapes.
     let collides_any = || a_hittee.collide(a_hitter, 0, None, None);
 

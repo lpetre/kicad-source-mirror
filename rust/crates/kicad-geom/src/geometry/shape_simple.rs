@@ -135,7 +135,8 @@ impl Shape for ShapeSimple {
         a_actual: Option<&mut i32>,
         a_location: Option<&mut Vector2I>,
     ) -> bool {
-        self.points.collide_seg(a_seg, a_clearance, a_actual, a_location)
+        self.points
+            .collide_seg(a_seg, a_clearance, a_actual, a_location)
     }
 
     /// `SHAPE_LINE_CHAIN_BASE::SquaredDistance()`.
@@ -149,7 +150,12 @@ impl Shape for ShapeSimple {
     }
 
     /// Port of `SHAPE_SIMPLE::TransformToPolygon()`.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         a_buffer.add_outline(&self.points);
     }
 

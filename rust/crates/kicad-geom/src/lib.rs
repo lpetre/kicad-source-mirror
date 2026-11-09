@@ -33,6 +33,12 @@
 //! | [`geometry::seg`] | `geometry/seg.h`, `geometry/seg.cpp` |
 //! | [`geometry::vector_utils`] | `geometry/vector_utils.h`, `geometry/vector_utils.cpp` |
 //! | [`trigo`] | `trigo.h`, `trigo.cpp` |
+//! | [`geometry::shape`] | `geometry/shape.h`, `geometry/shape.cpp` (`SHAPE`, `SHAPE_LINE_CHAIN_BASE`; see `docs/design/geom-shapes.md`) |
+//! | [`geometry::shape_arc`], [`geometry::shape_circle`], [`geometry::shape_rect`], [`geometry::shape_segment`], [`geometry::shape_simple`], [`geometry::shape_null`], [`geometry::shape_compound`] | `geometry/shape_arc.h` ... `shape_compound.h` and their `.cpp` |
+//! | [`geometry::shape_line_chain`], [`geometry::shape_poly_set`] | `geometry/shape_line_chain.h`, `geometry/shape_poly_set.h` (skeletons; packages G3 / G4) |
+//! | [`geometry::shape_collisions`] | `geometry/shape_collisions.cpp` (partial; package G5) |
+//! | [`geometry::circle`], [`geometry::arc_chord_params`], [`geometry::half_line`], [`geometry::line`], [`geometry::arc_construction`] | the files of the same name |
+//! | [`geometry::geometry_utils`], [`geometry::approximation`], [`geometry::shape_utils`] | `geometry/geometry_utils.h/.cpp`, `geometry/approximation.h`, part of `geometry/shape_utils.cpp` |
 //! | [`geometry::rtree`] | `geometry/rtree/*.h` (`KIRTREE::PACKED_RTREE`, `DYNAMIC_RTREE`) |
 //! | [`thirdparty::delaunator`], [`thirdparty::nanoflann`] | `thirdparty/delaunator`, `thirdparty/nanoflann` |
 //! | [`stdsort`] | (support) libstdc++-exact `std::sort`, `std::partial_sort`, `std::nth_element`, heaps |
@@ -59,6 +65,16 @@ pub use crate::geometry::eda_angle::{
     TENTHS_OF_A_DEGREE_T,
 };
 pub use crate::geometry::seg::{Ecoord, OptVector2I, Seg};
+pub use crate::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef, ShapeType};
+pub use crate::geometry::shape_arc::ShapeArc;
+pub use crate::geometry::shape_circle::ShapeCircle;
+pub use crate::geometry::shape_compound::ShapeCompound;
+pub use crate::geometry::shape_line_chain::ShapeLineChain;
+pub use crate::geometry::shape_null::ShapeNull;
+pub use crate::geometry::shape_poly_set::ShapePolySet;
+pub use crate::geometry::shape_rect::ShapeRect;
+pub use crate::geometry::shape_segment::ShapeSegment;
+pub use crate::geometry::shape_simple::ShapeSimple;
 pub use crate::kicore::mirror::{FlipDirection, mirror, mirror_axis, mirror_point, mirror_val};
 pub use crate::math::box2::{
     Box2, Box2D, Box2I, Box2L, OptBox2I, box2i_safe, box2i_safe_from_int, box2i_safe_from_pos_size,

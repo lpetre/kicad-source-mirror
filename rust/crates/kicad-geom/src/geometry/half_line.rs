@@ -43,6 +43,13 @@ pub fn vectors_in_same_quadrant(a_a: Vector2I, a_b: Vector2I) -> bool {
     ((a_a.x >= 0) == (a_b.x >= 0)) && ((a_a.y >= 0) == (a_b.y >= 0))
 }
 
+/// `intersection - a_start` with the two's complement wrapping of the reference build: the
+/// intersection of two nearly parallel lines can be arbitrarily far away, and the C++
+/// subtraction then overflows (deviation D11 in `PORT_STATUS.md`).
+fn wrapping_sub(a: Vector2I, b: Vector2I) -> Vector2I {
+    Vector2I::new(a.x.wrapping_sub(b.x), a.y.wrapping_sub(b.y))
+}
+
 impl HalfLine {
     /// Port of `HALF_LINE( const SEG& )`: the ray starts at the segment's A point and extends
     /// infinitely in the direction of the segment, passing through its B point.
@@ -95,7 +102,10 @@ impl HalfLine {
 
         // Check that the intersection is on the right side of the
         // ray's start point (i.e. equal quadrants)
-        if !vectors_in_same_quadrant(self.seg.b - self.seg.a, intersection - self.seg.a) {
+        if !vectors_in_same_quadrant(
+            self.seg.b - self.seg.a,
+            wrapping_sub(intersection, self.seg.a),
+        ) {
             return None;
         }
 
@@ -116,9 +126,13 @@ impl HalfLine {
 
         // Check that the intersection is on the right side of both
         // rays' start points (i.e. equal quadrants)
-        if !vectors_in_same_quadrant(self.seg.b - self.seg.a, intersection - self.seg.a)
-            || !vectors_in_same_quadrant(a_other.seg.b - a_other.seg.a, intersection - a_other.seg.a)
-        {
+        if !vectors_in_same_quadrant(
+            self.seg.b - self.seg.a,
+            wrapping_sub(intersection, self.seg.a),
+        ) || !vectors_in_same_quadrant(
+            a_other.seg.b - a_other.seg.a,
+            wrapping_sub(intersection, a_other.seg.a),
+        ) {
             return None;
         }
 
@@ -151,6 +165,9 @@ impl HalfLine {
         let xp: Ecoord = rescale(t, d.x, l_squared);
         let yp: Ecoord = rescale(t, d.y, l_squared);
 
-        Vector2::<i32>::from_vec(Vector2L::new(self.seg.a.x as i64 + xp, self.seg.a.y as i64 + yp))
+        Vector2::<i32>::from_vec(Vector2L::new(
+            self.seg.a.x as i64 + xp,
+            self.seg.a.y as i64 + yp,
+        ))
     }
 }

@@ -41,8 +41,8 @@ pub mod stroke_font;
 
 pub use callback_gal::{CallbackGal, StrokeCollector, TextGal};
 pub use font::{
-    Font, FontLookup, ITALIC_TILT, KICAD_FONT_NAME, TextStyleFlags, default_font, get_font,
-    text_style,
+    Font, FontExt, FontLookup, ITALIC_TILT, KICAD_FONT_NAME, TextStyleFlags, default_font,
+    get_font, text_style,
 };
 pub use font_metrics::Metrics;
 pub use glyph::{Glyph, OutlineGlyph, StrokeGlyph};

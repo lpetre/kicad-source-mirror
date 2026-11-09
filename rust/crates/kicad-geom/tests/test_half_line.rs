@@ -37,9 +37,24 @@ fn contains() {
     let cases: Vec<(&str, HalfLine, Vector2I, bool)> = vec![
         ("Point on the ray", hl(0, 0, 100, 100), pt(50, 50), true),
         ("Point on the ray start", hl(0, 0, 100, 100), pt(0, 0), true),
-        ("Point on the ray end", hl(0, 0, 100, 100), pt(100, 100), true),
-        ("Point on the ray, past the end", hl(0, 0, 100, 100), pt(150, 150), true),
-        ("Point on the infinite line, but on the wrong side", hl(0, 0, 100, 100), pt(-50, -50), false),
+        (
+            "Point on the ray end",
+            hl(0, 0, 100, 100),
+            pt(100, 100),
+            true,
+        ),
+        (
+            "Point on the ray, past the end",
+            hl(0, 0, 100, 100),
+            pt(150, 150),
+            true,
+        ),
+        (
+            "Point on the infinite line, but on the wrong side",
+            hl(0, 0, 100, 100),
+            pt(-50, -50),
+            false,
+        ),
         ("Point to one side", hl(0, 0, 100, 100), pt(50, 0), false),
     ];
 
@@ -51,8 +66,18 @@ fn contains() {
 #[test]
 fn intersect() {
     let cases: Vec<(&str, HalfLine, HalfLine, Option<Vector2I>)> = vec![
-        ("Simple cross", hl(-100, -100, 0, 0), hl(100, -100, 0, 0), Some(pt(0, 0))),
-        ("Parallel, no intersection", hl(-100, 0, -100, 100), hl(100, 0, 100, 100), None),
+        (
+            "Simple cross",
+            hl(-100, -100, 0, 0),
+            hl(100, -100, 0, 0),
+            Some(pt(0, 0)),
+        ),
+        (
+            "Parallel, no intersection",
+            hl(-100, 0, -100, 100),
+            hl(100, 0, 100, 100),
+            None,
+        ),
     ];
 
     for (name, a, b, exp) in cases {
@@ -69,8 +94,18 @@ fn intersect() {
 fn clip_to_box() {
     let bx = Box2I::new(pt(-1000, -1000), pt(2000, 2000));
     let cases: Vec<(&str, HalfLine, Box2I, Option<Seg>)> = vec![
-        ("Center to right edge", hl(0, 0, 100, 0), bx, Some(Seg::new(pt(0, 0), pt(1000, 0)))),
-        ("Centre to corner", hl(0, 0, 100, 100), bx, Some(Seg::new(pt(0, 0), pt(1000, 1000)))),
+        (
+            "Center to right edge",
+            hl(0, 0, 100, 0),
+            bx,
+            Some(Seg::new(pt(0, 0), pt(1000, 0))),
+        ),
+        (
+            "Centre to corner",
+            hl(0, 0, 100, 100),
+            bx,
+            Some(Seg::new(pt(0, 0), pt(1000, 1000))),
+        ),
         ("Ray not in the box", hl(1500, 0, 1600, 0), bx, None),
         (
             "Ray starts outside but crosses box",
@@ -85,7 +120,10 @@ fn clip_to_box() {
         assert_eq!(clipped.is_some(), exp.is_some(), "{name}");
 
         if let Some(c) = clipped {
-            assert!(segments_have_same_end_points(&c, &exp.unwrap()), "{name}: {c:?}");
+            assert!(
+                segments_have_same_end_points(&c, &exp.unwrap()),
+                "{name}: {c:?}"
+            );
         }
     }
 }

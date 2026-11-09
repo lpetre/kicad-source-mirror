@@ -88,7 +88,10 @@ impl Shape for ShapeCircle {
 
     /// Port of `SHAPE_CIRCLE::BBox()`.
     fn bbox(&self, a_clearance: i32) -> Box2I {
-        let rc = Vector2I::new(self.circle.radius + a_clearance, self.circle.radius + a_clearance);
+        let rc = Vector2I::new(
+            self.circle.radius + a_clearance,
+            self.circle.radius + a_clearance,
+        );
 
         Box2I::new(self.circle.center - rc, rc * 2)
     }
@@ -130,7 +133,13 @@ impl Shape for ShapeCircle {
     ///
     /// The C++ calls `TransformCircleToPolygon()` (`convert_basic_shapes_to_polygon.cpp`), which
     /// is not ported yet: the buffer is left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(&self, _a_buffer: &mut ShapePolySet, _a_error: i32, _a_error_loc: ErrorLoc) {}
+    fn transform_to_polygon(
+        &self,
+        _a_buffer: &mut ShapePolySet,
+        _a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
+    }
 
     /// Port of `SHAPE_CIRCLE::Rotate()`.
     fn rotate(&mut self, a_angle: EdaAngle, a_center: Vector2I) {

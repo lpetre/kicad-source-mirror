@@ -20,8 +20,8 @@
 use std::f64::consts::PI;
 
 use kicad_geom::geometry::arc_construction::{
-    ArcSolution, arc_from_start_end_center_drag, arc_from_start_end_mid_drag, arc_from_start_tangent_end,
-    arc_through_points, project_to_chord_bisector,
+    ArcSolution, arc_from_start_end_center_drag, arc_from_start_end_mid_drag,
+    arc_from_start_tangent_end, arc_through_points, project_to_chord_bisector,
 };
 use kicad_geom::math::util::ki_round;
 use kicad_geom::math::vector2::{Vector2D, Vector2I};
@@ -54,10 +54,22 @@ fn check_consistent(a_sol: &ArcSolution, a_start: Vector2I, a_end: Vector2I, a_t
     assert!(a_sol.valid);
     assert_eq!(a_sol.start, a_start);
     assert_eq!(a_sol.end, a_end);
-    assert!(is_small(dist(a_sol.start, a_sol.center) - a_sol.radius, a_tol));
-    assert!(is_small(dist(a_sol.end, a_sol.center) - a_sol.radius, a_tol));
-    assert!(is_small(dist(a_sol.mid, a_sol.center) - a_sol.radius, a_tol));
-    assert!(is_small(dist(a_sol.mid, a_sol.start) - dist(a_sol.mid, a_sol.end), a_tol));
+    assert!(is_small(
+        dist(a_sol.start, a_sol.center) - a_sol.radius,
+        a_tol
+    ));
+    assert!(is_small(
+        dist(a_sol.end, a_sol.center) - a_sol.radius,
+        a_tol
+    ));
+    assert!(is_small(
+        dist(a_sol.mid, a_sol.center) - a_sol.radius,
+        a_tol
+    ));
+    assert!(is_small(
+        dist(a_sol.mid, a_sol.start) - dist(a_sol.mid, a_sol.end),
+        a_tol
+    ));
 }
 
 #[test]
@@ -65,14 +77,26 @@ fn project_lands_on_bisector() {
     let start = pt(0, 0);
     let end = pt(1000000, 0);
 
-    assert_eq!(project_to_chord_bisector(start, end, pt(700000, 300000)), pt(500000, 300000));
-    assert_eq!(project_to_chord_bisector(start, end, pt(-40, -900000)), pt(500000, -900000));
+    assert_eq!(
+        project_to_chord_bisector(start, end, pt(700000, 300000)),
+        pt(500000, 300000)
+    );
+    assert_eq!(
+        project_to_chord_bisector(start, end, pt(-40, -900000)),
+        pt(500000, -900000)
+    );
 
     // A diagonal chord, so the projection has to rotate
     let p = project_to_chord_bisector(pt(0, 0), pt(1000000, 1000000), pt(900000, 100000));
-    assert!(is_small(dist(p, Vector2D::new(0.0, 0.0)) - dist(p, Vector2D::new(1000000.0, 1000000.0)), 1.0));
+    assert!(is_small(
+        dist(p, Vector2D::new(0.0, 0.0)) - dist(p, Vector2D::new(1000000.0, 1000000.0)),
+        1.0
+    ));
 
-    assert_eq!(project_to_chord_bisector(start, start, pt(12, 34)), pt(12, 34));
+    assert_eq!(
+        project_to_chord_bisector(start, start, pt(12, 34)),
+        pt(12, 34)
+    );
 }
 
 #[test]
@@ -215,7 +239,11 @@ fn mid_drag_projects_onto_bisector() {
     let mut sol = arc_from_start_end_mid_drag(start, end, pt(700000, 300000));
     check_consistent(&sol, start, end, 1.5);
     assert_eq!(sol.mid, pt(500000, 300000));
-    assert!(is_close_pct(sol.radius, (500000.0 * 500000.0 + 300000.0 * 300000.0) / 600000.0, 1e-6));
+    assert!(is_close_pct(
+        sol.radius,
+        (500000.0 * 500000.0 + 300000.0 * 300000.0) / 600000.0,
+        1e-6
+    ));
 
     // Off the bisector on the other side of the chord
     sol = arc_from_start_end_mid_drag(start, end, pt(100, -250000));
@@ -291,8 +319,24 @@ fn center_drag_degenerate_and_overflow_are_invalid() {
     assert!(!arc_from_start_end_center_drag(pt(3, 3), pt(3, 3), pt(500, 500), false).valid);
 
     // The major arc apex lands outside the coordinate range, the minor arc still fits
-    assert!(!arc_from_start_end_center_drag(pt(-2000000000, 0), pt(2000000000, 0), pt(0, 2000000000), true).valid);
-    assert!(arc_from_start_end_center_drag(pt(-2000000000, 0), pt(2000000000, 0), pt(0, 2000000000), false).valid);
+    assert!(
+        !arc_from_start_end_center_drag(
+            pt(-2000000000, 0),
+            pt(2000000000, 0),
+            pt(0, 2000000000),
+            true
+        )
+        .valid
+    );
+    assert!(
+        arc_from_start_end_center_drag(
+            pt(-2000000000, 0),
+            pt(2000000000, 0),
+            pt(0, 2000000000),
+            false
+        )
+        .valid
+    );
 }
 
 #[test]
@@ -324,8 +368,14 @@ fn tangent_start_direction_is_parallel_over_end_sweep() {
                 check_consistent(&sol, start, end, 2.0);
                 let radial = (Vector2D::from(start) - sol.center) / sol.radius;
                 let travel = Vector2D::new(-radial.y, radial.x) * orientation(&sol) as f64;
-                assert!(is_small(radial.dot(unit) * sol.radius, 1.0), "{tangent:?} {degrees} {radius}");
-                assert!(travel.dot(unit) > 0.999999, "{tangent:?} {degrees} {radius}");
+                assert!(
+                    is_small(radial.dot(unit) * sol.radius, 1.0),
+                    "{tangent:?} {degrees} {radius}"
+                );
+                assert!(
+                    travel.dot(unit) > 0.999999,
+                    "{tangent:?} {degrees} {radius}"
+                );
             }
 
             degrees += 10;
@@ -339,13 +389,21 @@ fn tangent_sweep_is_twice_the_chord_angle() {
 
     // Ahead and to the side gives a quarter turn's chord at 45 degrees, so 90 degrees of sweep
     assert!(is_small(
-        sweep_degrees(&arc_from_start_tangent_end(start, Vector2D::new(1.0, 0.0), pt(100000, 100000))) - 90.0,
+        sweep_degrees(&arc_from_start_tangent_end(
+            start,
+            Vector2D::new(1.0, 0.0),
+            pt(100000, 100000)
+        )) - 90.0,
         1e-2
     ));
 
     // Behind the start the arc has to swing around the long way
     assert!(is_small(
-        sweep_degrees(&arc_from_start_tangent_end(start, Vector2D::new(1.0, 0.0), pt(-100000, 100000))) - 270.0,
+        sweep_degrees(&arc_from_start_tangent_end(
+            start,
+            Vector2D::new(1.0, 0.0),
+            pt(-100000, 100000)
+        )) - 270.0,
         1e-2
     ));
 }
@@ -368,7 +426,11 @@ fn tangent_degenerate_is_invalid() {
     // End on the tangent line, ahead of and behind the start
     assert!(!arc_from_start_tangent_end(pt(0, 0), Vector2D::new(1.0, 0.0), pt(500000, 0)).valid);
     assert!(!arc_from_start_tangent_end(pt(0, 0), Vector2D::new(1.0, 0.0), pt(-500000, 0)).valid);
-    assert!(!arc_from_start_tangent_end(pt(0, 0), Vector2D::new(0.0, 0.0), pt(500000, 500000)).valid);
+    assert!(
+        !arc_from_start_tangent_end(pt(0, 0), Vector2D::new(0.0, 0.0), pt(500000, 500000)).valid
+    );
     assert!(!arc_from_start_tangent_end(pt(10, 10), Vector2D::new(1.0, 1.0), pt(10, 10)).valid);
-    assert!(!arc_from_start_tangent_end(pt(0, 0), Vector2D::new(1.0, 1.0), pt(500000, 500000)).valid);
+    assert!(
+        !arc_from_start_tangent_end(pt(0, 0), Vector2D::new(1.0, 1.0), pt(500000, 500000)).valid
+    );
 }
