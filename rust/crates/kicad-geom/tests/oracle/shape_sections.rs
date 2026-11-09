@@ -711,7 +711,8 @@ fn section_shape_distance(results: &mut Results) {
         let p = a.centre() + rng.pt_r(-3000000, 3000000);
         let s = seg_near(&mut rng, a.centre());
         let cl = clearance(&mut rng);
-        let acc = rng.range(0, 3) as i32 * rng.range(0, 1000) as i32;
+        let acc_k = rng.range(0, 3) as i32;
+        let acc = acc_k * rng.range(0, 1000) as i32;
 
         let mut r = Rec::default();
         r.i(kind).s(&fmt(a.as_ref(), true)).s(&fmt(a.as_ref(), false)).v(p).seg(&s).i(cl);

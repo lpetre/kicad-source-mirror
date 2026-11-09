@@ -781,7 +781,8 @@ void sectionShapeDistance()
         VECTOR2I               p = a->Centre() + rng.ptR( -3000000, 3000000 );
         SEG                    s = segNear( rng, a->Centre() );
         int                    cl = clearance( rng );
-        int                    acc = (int) rng.range( 0, 3 ) * (int) rng.range( 0, 1000 );
+        int                    accK = (int) rng.range( 0, 3 );
+        int                    acc = accK * (int) rng.range( 0, 1000 );
 
         REC r;
         r.i( kind ).s( fmt( a.get() ) ).s( fmt( a.get(), false ) ).v( p ).seg( s ).i( cl );
