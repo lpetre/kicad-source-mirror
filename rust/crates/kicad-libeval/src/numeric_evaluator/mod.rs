@@ -60,10 +60,10 @@ use grammar::{
     UNIT, VALUE, VAR,
 };
 
-/// Port of `enum class NUMERIC_EVALUATOR::Unit`.
+/// Port of `enum class NUMERIC_EVALUATOR::Unit`.  (`Unit::Invalid` is `None` of an
+/// `Option<Unit>` here.)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Unit {
-    Invalid,
     Um,
     Mm,
     Cm,
@@ -571,7 +571,10 @@ impl NumericEvaluator {
     fn check_unit(&mut self, si_scaler: &mut f64, allow_infix: bool) -> Option<Unit> {
         let pos = self.token.pos;
         let ch = self.input_at(pos);
-        let cptr = |offset: usize| -> u8 { self.input_at(pos + offset) };
+
+        // const char* cptr = &m_token.input[ m_token.pos ];  (at most cptr[5] is read)
+        let window: [u8; 6] = std::array::from_fn(|offset| self.input_at(pos + offset));
+        let cptr = |offset: usize| -> u8 { window[offset] };
         let is_alnum = |c: u8| -> bool { c.is_ascii_alphanumeric() };
 
         if ch == b'"' {
@@ -688,7 +691,6 @@ impl NumericEvaluator {
         }
 
         // Unit::Invalid
-        let _ = Unit::Invalid;
         None
     }
 

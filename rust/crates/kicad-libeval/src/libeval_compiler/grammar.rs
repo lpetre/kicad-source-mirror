@@ -266,13 +266,13 @@ fn binary(p_eval: &mut Compiler<'_>, op: i32, stack: &mut [YyStackEntry<YyMinor>
 /// A->leaf[1] = B->leaf[1];
 /// ```
 fn copy_of(p_eval: &mut Compiler<'_>, b: Option<NodeId>) -> YyMinor {
-    let Some(b) = b else {
+    // A stale handle can only be met when a compiler is reused after a syntax error (the
+    // parser stack then still refers to nodes of the previous expression; C++ dereferences a
+    // dangling pointer in that case).
+    let Some((op, value, leaf)) =
+        b.and_then(|b| p_eval.node(b)).map(|b| (b.op, b.value.clone(), b.leaf))
+    else {
         return YyMinor::None;
-    };
-
-    let (op, value, leaf) = {
-        let b = p_eval.node(b);
-        (b.op, b.value.clone(), b.leaf)
     };
 
     let a = p_eval.new_node(op, &value);
