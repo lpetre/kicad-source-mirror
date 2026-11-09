@@ -1,0 +1,52 @@
+# KiCad core features, ported to Rust.
+#
+# This workspace is a port of selected parts of the KiCad C++ source tree that lives
+# in the parent directory.  See README.md and PORTING.md.
+
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+repository = "https://gitlab.com/kicad/code/kicad"
+rust-version = "1.85"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+# Ported code mirrors the shape of the C++ original; these lints fight that.
+too_many_arguments = "allow"
+type_complexity = "allow"
+needless_range_loop = "allow"
+collapsible_if = "allow"
+collapsible_else_if = "allow"
+manual_range_contains = "allow"
+new_without_default = "allow"
+len_without_is_empty = "allow"
+excessive_precision = "allow"
+module_inception = "allow"
+large_enum_variant = "allow"
+comparison_chain = "allow"
+should_implement_trait = "allow"
+wrong_self_convention = "allow"
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 4
+
+# Size-optimised profile for the WebAssembly build (see crates/kicad-wasm).
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

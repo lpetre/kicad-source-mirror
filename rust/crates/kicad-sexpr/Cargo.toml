@@ -1,0 +1,16 @@
+[package]
+name = "kicad-sexpr"
+description = "KiCad s-expression lexer (DSNLEXER-compatible), generic tree and formatter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

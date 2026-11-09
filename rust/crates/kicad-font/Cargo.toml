@@ -1,0 +1,18 @@
+[package]
+name = "kicad-font"
+description = "Port of KiCad's stroke font and text layout"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

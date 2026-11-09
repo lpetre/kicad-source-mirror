@@ -1,0 +1,19 @@
+[package]
+name = "kicad-connectivity"
+description = "Port of KiCad's board connectivity algorithm and ratsnest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+kicad-pcb = { path = "../kicad-pcb" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

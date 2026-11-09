@@ -1,0 +1,20 @@
+[package]
+name = "kicad-pcb"
+description = "Port of KiCad's board data model, .kicad_pcb reader/writer and project settings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+kicad-sexpr = { path = "../kicad-sexpr" }
+kicad-font = { path = "../kicad-font" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

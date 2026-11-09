@@ -1,0 +1,21 @@
+[package]
+name = "kicad-fab"
+description = "Port of KiCad's fabrication outputs: board layer plotting, drill files, Gerber job file"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+kicad-pcb = { path = "../kicad-pcb" }
+kicad-plot = { path = "../kicad-plot" }
+kicad-font = { path = "../kicad-font" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

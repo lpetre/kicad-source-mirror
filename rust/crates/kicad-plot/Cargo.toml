@@ -1,0 +1,19 @@
+[package]
+name = "kicad-plot"
+description = "Port of KiCad's plotters: PLOTTER base, Gerber (RS-274X/X2) and SVG"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+kicad-font = { path = "../kicad-font" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

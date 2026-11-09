@@ -1,0 +1,22 @@
+[package]
+name = "kicad-drc"
+description = "Port of KiCad's design rule checker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-geom = { path = "../kicad-geom" }
+kicad-core = { path = "../kicad-core" }
+kicad-pcb = { path = "../kicad-pcb" }
+kicad-connectivity = { path = "../kicad-connectivity" }
+kicad-libeval = { path = "../kicad-libeval" }
+kicad-sexpr = { path = "../kicad-sexpr" }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }
