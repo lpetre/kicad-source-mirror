@@ -100,6 +100,12 @@ pub fn pow(x: f64, y: f64) -> f64 {
     x.powf(y)
 }
 
+/// `std::cbrt( double )`.
+#[inline]
+pub fn cbrt(x: f64) -> f64 {
+    x.cbrt()
+}
+
 /// `std::exp( double )`.
 #[inline]
 pub fn exp(x: f64) -> f64 {

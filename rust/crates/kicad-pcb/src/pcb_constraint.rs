@@ -264,7 +264,8 @@ impl PcbConstraint {
 
     /// `AddMember( aItem, aAnchor = WHOLE, aIndex = -1 )`: `m_members.emplace_back( .. )`.
     pub fn add_member(&mut self, item: Kiid, anchor: ConstraintAnchor, index: i32) {
-        self.members.push(ConstraintMember::new(item, anchor, index));
+        self.members
+            .push(ConstraintMember::new(item, anchor, index));
     }
 
     /// `HasValue()`.
@@ -346,7 +347,13 @@ impl PcbConstraint {
         flash: Flashing,
         usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_CONSTRAINT::GetEffectiveShape", ctx, layer, flash, usage)
+        crate::port_pending!(
+            "PCB_CONSTRAINT::GetEffectiveShape",
+            ctx,
+            layer,
+            flash,
+            usage
+        )
     }
 
     /// `PCB_CONSTRAINT::GetItemDescription()`.
@@ -364,6 +371,108 @@ impl PcbConstraint {
     pub fn remap_kiids(&mut self, id_map: &std::collections::BTreeMap<Kiid, Kiid>) {
         crate::port_pending!("PCB_CONSTRAINT::RemapKIIDs", id_map)
     }
+}
+
+// ---- free functions of pcb_constraint.h (file tokens: data tables, ported as such) ---------
+
+/// `ConstraintTypeToken( aType )`: the file token.
+pub fn constraint_type_token(type_: PcbConstraintType) -> &'static str {
+    match type_ {
+        PcbConstraintType::Coincident => "coincident",
+        PcbConstraintType::Horizontal => "horizontal",
+        PcbConstraintType::Vertical => "vertical",
+        PcbConstraintType::Parallel => "parallel",
+        PcbConstraintType::Perpendicular => "perpendicular",
+        PcbConstraintType::Collinear => "collinear",
+        PcbConstraintType::Symmetric => "symmetric",
+        PcbConstraintType::EqualLength => "equal_length",
+        PcbConstraintType::EqualRadius => "equal_radius",
+        PcbConstraintType::PointOnLine => "point_on_line",
+        PcbConstraintType::Midpoint => "midpoint",
+        PcbConstraintType::FixedPosition => "fixed_position",
+        PcbConstraintType::FixedLength => "fixed_length",
+        PcbConstraintType::Concentric => "concentric",
+        PcbConstraintType::FixedRadius => "fixed_radius",
+        PcbConstraintType::AngularDimension => "angular_dimension",
+        PcbConstraintType::Tangent => "tangent",
+        PcbConstraintType::ArcAngle => "arc_angle",
+        PcbConstraintType::Undefined => "undefined",
+    }
+}
+
+/// Every `PCB_CONSTRAINT_TYPE` in value order (the C++ loops `0 ..= ARC_ANGLE`).
+const CONSTRAINT_TYPES: [PcbConstraintType; 19] = [
+    PcbConstraintType::Undefined,
+    PcbConstraintType::Coincident,
+    PcbConstraintType::Horizontal,
+    PcbConstraintType::Vertical,
+    PcbConstraintType::Parallel,
+    PcbConstraintType::Perpendicular,
+    PcbConstraintType::Collinear,
+    PcbConstraintType::Symmetric,
+    PcbConstraintType::EqualLength,
+    PcbConstraintType::EqualRadius,
+    PcbConstraintType::PointOnLine,
+    PcbConstraintType::Midpoint,
+    PcbConstraintType::FixedPosition,
+    PcbConstraintType::FixedLength,
+    PcbConstraintType::Concentric,
+    PcbConstraintType::FixedRadius,
+    PcbConstraintType::AngularDimension,
+    PcbConstraintType::Tangent,
+    PcbConstraintType::ArcAngle,
+];
+
+/// `ConstraintTypeFromToken( aToken )`: `UNDEFINED` for an unknown token.
+pub fn constraint_type_from_token(token: &str) -> PcbConstraintType {
+    CONSTRAINT_TYPES
+        .iter()
+        .copied()
+        .find(|t| token == constraint_type_token(*t))
+        .unwrap_or(PcbConstraintType::Undefined)
+}
+
+/// `ConstraintValueIsLength( aType )`: fixed length and fixed radius carry a length; the
+/// angular types are angles; everything else is valueless.
+pub fn constraint_value_is_length(type_: PcbConstraintType) -> bool {
+    matches!(
+        type_,
+        PcbConstraintType::FixedLength | PcbConstraintType::FixedRadius
+    )
+}
+
+/// `ConstraintAnchorToken( aAnchor )`: the file token.
+pub fn constraint_anchor_token(anchor: ConstraintAnchor) -> &'static str {
+    match anchor {
+        ConstraintAnchor::Whole => "whole",
+        ConstraintAnchor::Start => "start",
+        ConstraintAnchor::End => "end",
+        ConstraintAnchor::Mid => "mid",
+        ConstraintAnchor::Center => "center",
+        ConstraintAnchor::Radius => "radius",
+        ConstraintAnchor::Vertex => "vertex",
+    }
+}
+
+/// `ConstraintAnchorFromToken( aToken )`: `WHOLE` for an unknown token.
+pub fn constraint_anchor_from_token(token: &str) -> ConstraintAnchor {
+    [
+        ConstraintAnchor::Whole,
+        ConstraintAnchor::Start,
+        ConstraintAnchor::End,
+        ConstraintAnchor::Mid,
+        ConstraintAnchor::Center,
+        ConstraintAnchor::Radius,
+        ConstraintAnchor::Vertex,
+    ]
+    .into_iter()
+    .find(|a| token == constraint_anchor_token(*a))
+    .unwrap_or(ConstraintAnchor::Whole)
+}
+
+/// `ConstraintsAreDuplicate( aA, aB )`.
+pub fn constraints_are_duplicate(a: &PcbConstraint, b: &PcbConstraint) -> bool {
+    crate::port_pending!("ConstraintsAreDuplicate", a, b)
 }
 
 #[cfg(test)]
@@ -427,5 +536,101 @@ mod tests {
         BoardItemMut::move_by(&mut c, &env, Vector2I::new(5, 5));
         BoardItemMut::set_position(&mut c, &env, Vector2I::new(5, 5));
         assert_eq!(c.members()[0].anchor, ConstraintAnchor::Vertex);
+    }
+
+    // Ports of qa/tests/pcbnew/constraints/test_pcb_constraint.cpp (the cases that exercise
+    // construction, defaults and the data accessors; the rest needs M23 behaviour).
+
+    /// `BOOST_AUTO_TEST_CASE( BasicProperties )`.
+    #[test]
+    fn basic_properties() {
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut kiid_generator = KiidGenerator::default();
+        let c = PcbConstraint::new(&mut kiid_generator, PcbConstraintType::Parallel);
+
+        assert_eq!(BoardItem::type_(&c), KicadT::PcbConstraintT);
+        assert_eq!(c.constraint_type(), PcbConstraintType::Parallel);
+
+        // A constraint carries no geometry and is on no layer.
+        assert!(BoardItem::layer_set(&c, &ctx) == kicad_core::Lset::new());
+        assert!(!BoardItem::hit_test(
+            &c,
+            &ctx,
+            Vector2I::new(0, 0),
+            1_000_000
+        ));
+
+        // Driving by default.
+        assert!(c.is_driving());
+        assert!(!c.has_value());
+    }
+
+    /// `BOOST_AUTO_TEST_CASE( GeometrySurfaceIsSafe )` (the transforms; the compound
+    /// effective shape is M23).
+    #[test]
+    fn geometry_surface_is_safe() {
+        let mut c = PcbConstraint::default();
+        c.set_constraint_type(PcbConstraintType::Parallel);
+        let env = MutEnv::detached();
+        BoardItemMut::move_by(&mut c, &env, Vector2I::new(1000, 1000));
+        BoardItemMut::rotate(&mut c, &env, Vector2I::new(0, 0), kicad_geom::ANGLE_90);
+    }
+
+    /// `BOOST_AUTO_TEST_CASE( MembersAndValue )`.
+    #[test]
+    fn members_and_value() {
+        let mut kiid_generator = KiidGenerator::default();
+        let mut c = PcbConstraint::new(&mut kiid_generator, PcbConstraintType::FixedLength);
+
+        let a = Kiid::new(&mut kiid_generator);
+        let b = Kiid::new(&mut kiid_generator);
+        c.add_member(a, ConstraintAnchor::Start, -1);
+        c.add_member(b, ConstraintAnchor::End, -1);
+        c.set_value(Some(5.0));
+        c.set_driving(false);
+
+        assert_eq!(c.members().len(), 2);
+        assert!(c.members()[0].item == a);
+        assert_eq!(c.members()[0].anchor, ConstraintAnchor::Start);
+        assert_eq!(c.members()[1].anchor, ConstraintAnchor::End);
+        assert!(c.has_value());
+        assert!((c.value().unwrap() - 5.0).abs() <= 5.0 * 1e-11);
+        assert!(!c.is_driving());
+    }
+
+    /// `BOOST_AUTO_TEST_CASE( VertexMemberIdentity )`.
+    #[test]
+    fn vertex_member_identity() {
+        let mut kiid_generator = KiidGenerator::default();
+        let id = Kiid::new(&mut kiid_generator);
+        let a = ConstraintMember::new(id, ConstraintAnchor::Vertex, 2);
+        let b = ConstraintMember::new(id, ConstraintAnchor::Vertex, 2);
+        let c = ConstraintMember::new(id, ConstraintAnchor::Vertex, 3);
+
+        assert!(a == b);
+        assert!(a != c);
+        assert_eq!(
+            constraint_anchor_from_token("vertex"),
+            ConstraintAnchor::Vertex
+        );
+    }
+
+    /// Token tables round trip; unknown tokens fall back like C++.
+    #[test]
+    fn constraint_tokens() {
+        for t in CONSTRAINT_TYPES {
+            assert_eq!(constraint_type_from_token(constraint_type_token(t)), t);
+        }
+        assert_eq!(
+            constraint_type_from_token("bogus"),
+            PcbConstraintType::Undefined
+        );
+        assert_eq!(
+            constraint_anchor_from_token("bogus"),
+            ConstraintAnchor::Whole
+        );
+        assert!(constraint_value_is_length(PcbConstraintType::FixedRadius));
+        assert!(!constraint_value_is_length(PcbConstraintType::ArcAngle));
     }
 }

@@ -190,3 +190,54 @@ pub fn friendly_name<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -> Str
 pub fn layer_mask_describe<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -> String {
     crate::port_pending!("BOARD_ITEM::LayerMaskDescribe", item, ctx)
 }
+
+/// The polymorphic mutating virtuals that may cascade (footprint, group, generator, table:
+/// `board-model.md` 8.2); leaf items go through `AnyItemMut::as_leaf_mut` inside `modify`.
+impl crate::board::Board {
+    /// `item->Move( aMoveVector )` on a stored item (footprints, groups, generators and
+    /// tables cascade to their children / members).
+    pub fn move_item(&mut self, id: crate::ids::ItemId, delta: kicad_geom::Vector2I) {
+        crate::port_pending!("BOARD_ITEM::Move (move_item)", id, delta)
+    }
+
+    /// `item->Rotate( aRotCentre, aAngle )` on a stored item.
+    pub fn rotate_item(
+        &mut self,
+        id: crate::ids::ItemId,
+        centre: kicad_geom::Vector2I,
+        angle: kicad_geom::EdaAngle,
+    ) {
+        crate::port_pending!("BOARD_ITEM::Rotate (rotate_item)", id, centre, angle)
+    }
+
+    /// `item->Flip( aCentre, aFlipDirection )` on a stored item.
+    pub fn flip_item(
+        &mut self,
+        id: crate::ids::ItemId,
+        centre: kicad_geom::Vector2I,
+        dir: kicad_geom::FlipDirection,
+    ) {
+        crate::port_pending!("BOARD_ITEM::Flip (flip_item)", id, centre, dir)
+    }
+
+    /// `item->Mirror( aCentre, aFlipDirection )` on a stored item.
+    pub fn mirror_item(
+        &mut self,
+        id: crate::ids::ItemId,
+        centre: kicad_geom::Vector2I,
+        dir: kicad_geom::FlipDirection,
+    ) {
+        crate::port_pending!("BOARD_ITEM::Mirror (mirror_item)", id, centre, dir)
+    }
+
+    /// `item->SetLayer( aLayer )` on a stored item (`FOOTPRINT::SetLayerAndFlip` is the
+    /// footprint cascade; groups set every member).
+    pub fn set_item_layer(&mut self, id: crate::ids::ItemId, layer: PcbLayerId) {
+        crate::port_pending!("BOARD_ITEM::SetLayer (set_item_layer)", id, layer)
+    }
+
+    /// `item->SetLocked( aLocked )` on a stored item.
+    pub fn set_item_locked(&mut self, id: crate::ids::ItemId, locked: bool) {
+        crate::port_pending!("BOARD_ITEM::SetLocked (set_item_locked)", id, locked)
+    }
+}

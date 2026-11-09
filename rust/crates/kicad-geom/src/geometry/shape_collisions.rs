@@ -967,6 +967,10 @@ fn collide_single_shapes(
             S::LineChain(_) | S::Simple(_) | S::PolySetTriangle(_),
         ) => unsupported_g5(a_a, a_b),
 
+        // SH_ELLIPSE pairs (CollCase / CollCaseReversed with SHAPE_ELLIPSE): not served yet
+        // (G6b added the shape; the matrix entries belong to G5)
+        (S::Ellipse(_), _) | (_, S::Ellipse(_)) => unsupported_g5(a_a, a_b),
+
         // Compounds within compounds and the poly sets handled above: the C++ matrix has no
         // case for them ("Unsupported collision", wxFAIL_MSG) and returns false
         (S::Compound(_), _) | (_, S::Compound(_)) | (S::PolySet(_), _) | (_, S::PolySet(_)) => {

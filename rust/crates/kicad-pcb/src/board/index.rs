@@ -56,4 +56,20 @@ impl Board {
         self.uuid_index.remove(&old);
         self.bind_uuid(new, id);
     }
+
+    /// `BOARD_ITEM::SetUuid` on a stored item (re-binds the UUID index like
+    /// `BOARD_ITEM_INDEX::Rebind`).
+    pub fn rebind_item_uuid(&mut self, id: ItemId, new_uuid: Kiid) {
+        crate::port_pending!("BOARD_ITEM::SetUuid (rebind_item_uuid)", id, new_uuid)
+    }
+
+    /// The UUID of a live item (`None` for a stale handle).
+    pub fn uuid_of(&self, id: ItemId) -> Option<Kiid> {
+        self.get(id).map(|item| item.base().uuid)
+    }
+
+    /// `BOARD::RepairDuplicateItemUuids`: returns the number of UUIDs replaced.
+    pub fn repair_duplicate_item_uuids(&mut self) -> usize {
+        crate::port_pending!("BOARD::RepairDuplicateItemUuids")
+    }
 }

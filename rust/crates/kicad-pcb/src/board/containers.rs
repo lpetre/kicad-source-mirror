@@ -90,6 +90,168 @@ impl Board {
         Ok(id)
     }
 
+    /// `BOARD::Add( Zone, aMode )` (m_zones.push_back): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_zone(&mut self, item: crate::zone::Zone, mode: AddMode) -> crate::ids::ZoneId {
+        crate::port_pending!("BOARD::Add (zone)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbShape, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_shape(&mut self, item: crate::pcb_shape::PcbShape, mode: AddMode) -> crate::ids::ShapeId {
+        crate::port_pending!("BOARD::Add (shape)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbText, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_text(&mut self, item: crate::pcb_text::PcbText, mode: AddMode) -> crate::ids::TextId {
+        crate::port_pending!("BOARD::Add (text)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbField, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_field(&mut self, item: crate::pcb_field::PcbField, mode: AddMode) -> crate::ids::FieldId {
+        crate::port_pending!("BOARD::Add (field)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbTextbox, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_textbox(&mut self, item: crate::pcb_textbox::PcbTextbox, mode: AddMode) -> crate::ids::TextboxId {
+        crate::port_pending!("BOARD::Add (textbox)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbDimension, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_dimension(&mut self, item: crate::pcb_dimension::PcbDimension, mode: AddMode) -> crate::ids::DimensionId {
+        crate::port_pending!("BOARD::Add (dimension)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbBarcode, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_barcode(&mut self, item: crate::pcb_barcode::PcbBarcode, mode: AddMode) -> crate::ids::BarcodeId {
+        crate::port_pending!("BOARD::Add (barcode)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbReferenceImage, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_image(&mut self, item: crate::pcb_reference_image::PcbReferenceImage, mode: AddMode) -> crate::ids::ImageId {
+        crate::port_pending!("BOARD::Add (image)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbTarget, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_target(&mut self, item: crate::pcb_target::PcbTarget, mode: AddMode) -> crate::ids::TargetId {
+        crate::port_pending!("BOARD::Add (target)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbGridItem, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_grid_item(&mut self, item: crate::pcb_grid_item::PcbGridItem, mode: AddMode) -> crate::ids::GridItemId {
+        crate::port_pending!("BOARD::Add (grid_item)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbDrillMap, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_drill_map(&mut self, item: crate::pcb_drill_map::PcbDrillMap, mode: AddMode) -> crate::ids::DrillMapId {
+        crate::port_pending!("BOARD::Add (drill_map)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbPoint, aMode )` (m_points.push_back): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_point(&mut self, item: crate::pcb_point::PcbPoint, mode: AddMode) -> crate::ids::PointId {
+        crate::port_pending!("BOARD::Add (point)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbGroup, aMode )` (m_groups.push_back): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_group(&mut self, item: crate::pcb_group::PcbGroup, mode: AddMode) -> crate::ids::GroupId {
+        crate::port_pending!("BOARD::Add (group)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbGenerator, aMode )` (m_generators.push_back): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_generator(&mut self, item: crate::pcb_generator::PcbGenerator, mode: AddMode) -> crate::ids::GeneratorId {
+        crate::port_pending!("BOARD::Add (generator)", item, mode)
+    }
+
+    /// `BOARD::Add( PcbConstraint, aMode )` (m_constraints.push_back): parent = board, edit flags
+    /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
+    pub fn add_constraint(&mut self, item: crate::pcb_constraint::PcbConstraint, mode: AddMode) -> crate::ids::ConstraintId {
+        crate::port_pending!("BOARD::Add (constraint)", item, mode)
+    }
+
+    /// `BOARD::Add( PCB_MARKER )` (`m_markers.push_back`).
+    pub fn add_marker(&mut self, marker: crate::pcb_marker::PcbMarker) -> crate::ids::MarkerId {
+        crate::port_pending!("BOARD::Add (marker)", marker)
+    }
+
+    /// `BOARD::Add( aItem, aMode )`, polymorphic: dispatches on the variant; a kind the board
+    /// does not accept (pad, cell, 3D body) or a C++ refusal hands the item back.
+    #[allow(clippy::result_large_err)] // the C++ refusal hands the item back (board-model.md 8.1)
+    pub fn add(&mut self, item: OwnedItem, mode: AddMode) -> Result<ItemId, OwnedItem> {
+        crate::port_pending!("BOARD::Add", item, mode)
+    }
+
+    /// `BOARD::Remove` / `FOOTPRINT::Remove` + delete: cascades to children, leaves its
+    /// group, unbinds UUIDs, time stamp; also discards an unattached container. `false` for
+    /// a stale handle.
+    pub fn remove(&mut self, id: ItemId) -> bool {
+        crate::port_pending!("BOARD::Remove", id)
+    }
+
+    /// `remove` for several items with one retain pass per list (`REMOVE_MODE::BULK` +
+    /// `FinalizeBulkRemove`); returns the number removed.
+    pub fn remove_many(&mut self, ids: &[ItemId]) -> usize {
+        crate::port_pending!("BOARD::Remove (bulk)", ids)
+    }
+
+    /// `BOARD::RemoveAll( aTypes )`.
+    pub fn remove_all(&mut self, types: &[kicad_core::KicadT]) {
+        crate::port_pending!("BOARD::RemoveAll", types)
+    }
+
+    /// `EDA_GROUP::AddItem`: writes both sides (`member.base.group`, `members`); a member of
+    /// another group leaves it first.
+    pub fn add_to_group(&mut self, group: ItemId, member: ItemId) {
+        crate::port_pending!("EDA_GROUP::AddItem", group, member)
+    }
+
+    /// `EDA_GROUP::RemoveItem` on the member's group.
+    pub fn remove_from_group(&mut self, member: ItemId) {
+        crate::port_pending!("EDA_GROUP::RemoveItem", member)
+    }
+
+    /// `BOARD::GetPads`: footprint order x pad order.
+    pub fn get_pads(&self) -> Vec<crate::ids::PadId> {
+        crate::port_pending!("BOARD::GetPads")
+    }
+
+    /// `BOARD::AllConnectedItems` (order: tracks; per footprint pads, zones, connected
+    /// graphics; board zones; connected board drawings, `board.cpp:3757`).
+    pub fn all_connected_items(&self) -> Vec<ItemId> {
+        crate::port_pending!("BOARD::AllConnectedItems")
+    }
+
+    /// `BOARD::collectOwnedItems`.
+    pub fn collect_owned_items(&self) -> Vec<ItemId> {
+        crate::port_pending!("BOARD::collectOwnedItems")
+    }
+
+    /// `BOARD::GetItemSet`: by UUID, ties by `ItemId`.
+    pub fn get_item_set(&self) -> Vec<ItemId> {
+        crate::port_pending!("BOARD::GetItemSet")
+    }
+
+    /// `BOARD::RunOnChildren` (tracks, zones, markers, groups, constraints, points,
+    /// footprints (+ children), drawings (+ children), `board.cpp:837`).
+    pub fn run_on_children(
+        &self,
+        mode: crate::item::RecurseMode,
+        f: &mut dyn FnMut(ItemId),
+    ) {
+        crate::port_pending!("BOARD::RunOnChildren", mode, f)
+    }
+
     /// `new FOOTPRINT( board )`: arena slot, parent = Board, the four mandatory fields of the
     /// FOOTPRINT constructor. Resolvable through `ctx` and `board[id]`; **not** in
     /// `footprints()` and not UUID-indexed.

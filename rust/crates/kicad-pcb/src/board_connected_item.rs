@@ -49,3 +49,22 @@ pub fn own_clearance<B: BoardConnectedItem + ?Sized>(
         want_source
     )
 }
+
+impl crate::board::Board {
+    /// `BOARD_CONNECTED_ITEM::SetNetCode( aNetCode, aNoAssert )` with the board lookup: an
+    /// item off copper gets net 0, an unknown code makes the item orphaned (-1) and returns
+    /// `false`. `false` also for a stale or non-connected handle.
+    pub fn set_item_net(
+        &mut self,
+        id: crate::ids::ItemId,
+        net: crate::ids::NetCode,
+        no_assert: bool,
+    ) -> bool {
+        crate::port_pending!(
+            "BOARD_CONNECTED_ITEM::SetNetCode (set_item_net)",
+            id,
+            net,
+            no_assert
+        )
+    }
+}

@@ -42,12 +42,12 @@ pub struct Pcb3dBody {
     pub standoff: i32,    // m_extruded.m_standoff
     /// m_extruded.m_layer (UNDEFINED = auto, UNSELECTED = pad_bbox).
     pub layer: PcbLayerId,
-    pub color: Color4D,               // m_extruded.m_color
-    pub material: ExtrusionMaterial,  // m_extruded.m_material
-    pub show: bool,                   // m_extruded.m_show
-    pub scale: Vector3D,              // m_extruded.m_scale
-    pub rotation: Vector3D,           // m_extruded.m_rotation
-    pub offset: Vector3D,             // m_extruded.m_offset
+    pub color: Color4D,              // m_extruded.m_color
+    pub material: ExtrusionMaterial, // m_extruded.m_material
+    pub show: bool,                  // m_extruded.m_show
+    pub scale: Vector3D,             // m_extruded.m_scale
+    pub rotation: Vector3D,          // m_extruded.m_rotation
+    pub offset: Vector3D,            // m_extruded.m_offset
 }
 
 /// `PCB_3D_BODY::KIND`.

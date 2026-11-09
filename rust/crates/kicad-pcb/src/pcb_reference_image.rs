@@ -306,8 +306,8 @@ mod tests {
         assert_eq!(BoardItem::class_name(&i), "PCB_REFERENCE_IMAGE");
 
         let mut kiid_generator = KiidGenerator::default();
-        let i = PcbReferenceImage::new(&mut kiid_generator, PcbLayerId::UserDrawings);
-        assert_eq!(i.base.layer, PcbLayerId::UserDrawings);
+        let i = PcbReferenceImage::new(&mut kiid_generator, PcbLayerId::DwgsUser);
+        assert_eq!(i.base.layer, PcbLayerId::DwgsUser);
         assert!(i.base.uuid != Kiid::default());
     }
 

@@ -15,6 +15,27 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of the marker / DRC-exclusion functions of `pcbnew/board.cpp`. Package M22.
-//!
-//! Created empty by M0a so that the module tree is complete; the named package fills it.
+//! Port of the marker / DRC-exclusion functions of `pcbnew/board.cpp`
+//! (`ResolveDRCExclusions`, `RecordDRCExclusions`, `DeleteMARKERs`). Package M22; M0d wrote
+//! the signatures (`board-model-types.md` 18).
+
+use crate::board::Board;
+use crate::ids::MarkerId;
+
+impl Board {
+    /// `BOARD::ResolveDRCExclusions( aCreateMarkers )`: the markers created for exclusions
+    /// that match no existing marker.
+    pub fn resolve_drc_exclusions(&mut self, create_markers: bool) -> Vec<MarkerId> {
+        crate::port_pending!("BOARD::ResolveDRCExclusions", create_markers)
+    }
+
+    /// `BOARD::RecordDRCExclusions`.
+    pub fn record_drc_exclusions(&mut self) {
+        crate::port_pending!("BOARD::RecordDRCExclusions")
+    }
+
+    /// `BOARD::DeleteMARKERs( aWarningsAndErrors, aExclusions )`.
+    pub fn delete_markers(&mut self, warnings_and_errors: bool, exclusions: bool) {
+        crate::port_pending!("BOARD::DeleteMARKERs", warnings_and_errors, exclusions)
+    }
+}

@@ -15,6 +15,47 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `pcbnew/pcb_board_outline.cpp` and the board-outline functions of `board.cpp`. Package M21.
-//!
-//! Created empty by M0a so that the module tree is complete; the named package fills it.
+//! Port of `pcbnew/pcb_board_outline.cpp` and the board-outline functions of `board.cpp`
+//! (`GetBoardPolygonOutlines`). Package M21; M0d wrote the signatures.
+
+use std::sync::Arc;
+
+use kicad_geom::{ShapePolySet, Vector2I};
+
+use crate::board::Board;
+use crate::ctx::BoardCtx;
+use crate::ids::ItemId;
+
+/// `OUTLINE_ERROR_HANDLER` (`pcbnew/convert_shape_list_to_polygon.h`): `( msg, itemA, itemB,
+/// pt )`, the items as handles. Defined here for the `get_board_polygon_outlines` signature;
+/// package M21 may move it to `convert_shape_list_to_polygon.rs` and re-export it.
+pub trait OutlineErrorHandler {
+    fn on_error(&mut self, msg: &str, item_a: Option<ItemId>, item_b: Option<ItemId>, pt: Vector2I);
+}
+
+impl Board {
+    /// `BOARD::GetBoardPolygonOutlines( aOutlines, aInferOutlineIfNecessary, aErrorHandler,
+    /// aAllowUseArcsInPolygons, aIncludeNPTHAsOutlines )`: (outlines, success).
+    pub fn get_board_polygon_outlines(
+        &self,
+        ctx: &BoardCtx<'_>,
+        infer_outline_if_necessary: bool,
+        error_handler: Option<&mut dyn OutlineErrorHandler>,
+        allow_use_arcs_in_polygons: bool,
+        include_npth_as_outlines: bool,
+    ) -> (ShapePolySet, bool) {
+        crate::port_pending!(
+            "BOARD::GetBoardPolygonOutlines",
+            ctx.board.time_stamp(),
+            infer_outline_if_necessary,
+            error_handler.is_some(),
+            allow_use_arcs_in_polygons,
+            include_npth_as_outlines
+        )
+    }
+
+    /// `PCB_BOARD_OUTLINE` (cached in `BoardCaches::board_outline` per time stamp).
+    pub fn board_outline(&self, ctx: &BoardCtx<'_>) -> Arc<ShapePolySet> {
+        crate::port_pending!("PCB_BOARD_OUTLINE (board_outline)", ctx.board.time_stamp())
+    }
+}

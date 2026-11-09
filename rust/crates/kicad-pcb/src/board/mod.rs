@@ -34,7 +34,9 @@ pub mod text_vars;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
 use std::sync::Arc;
 
-use kicad_core::{Color4D, EdaUnits, Kiid, KiidGenerator, PCB_IU_SCALE, PageInfo, TitleBlock};
+use kicad_core::{
+    Color4D, EdaUnits, Kiid, KiidGenerator, PCB_IU_SCALE, PageInfo, PageSizeType, TitleBlock,
+};
 use kicad_geom::ShapePolySet;
 
 use crate::arena::Arena;
@@ -51,6 +53,7 @@ use crate::ids::{
 };
 use crate::item::{BoardItemBase, BoardUse, ParentRef};
 use crate::item_ref::{AnyItem, AnyItemMut};
+use crate::netclass::{NETCLASS_DEFAULT_NAME, Netclass};
 use crate::netinfo::NetinfoList;
 use crate::pcb_plot_params::PcbPlotParams;
 use crate::traits::{BoardItem, Invalidate};
@@ -159,10 +162,12 @@ pub(crate) struct BoardCaches {
 }
 
 impl Default for Board {
-    /// `BOARD::BOARD()`. The scalar members are the C++ constructor values; M0d completes the
-    /// settings-dependent part (design settings, layers, `layer_env` derived from them).
+    /// `BOARD::BOARD()` (`pcbnew/board.cpp:99`): the member initialisers (A4 paper, mm,
+    /// time stamp 1, the `BOARD_DESIGN_SETTINGS` and `NETINFO_LIST` constructors), the `LAYER`
+    /// table with `recalcOpposites()`, the board's own `Default` net class, and the
+    /// `LayerEnv` snapshot derived from all of that.
     fn default() -> Self {
-        Board {
+        let mut board = Board {
             footprints: Arena::new(),
             pads: Arena::new(),
             tracks: Arena::new(),
@@ -199,7 +204,11 @@ impl Default for Board {
             net_chain_colors: BTreeMap::new(),
             design_settings: BoardDesignSettings::default(),
             layers: BTreeMap::new(),
-            paper: PageInfo::default(),
+            paper: PageInfo::new(
+                PageSizeType::A4,
+                false,
+                &kicad_core::page_info::CustomPageSize::default(),
+            ),
             titles: TitleBlock::default(),
             plot_options: PcbPlotParams::default(),
             properties: BTreeMap::new(),
@@ -225,7 +234,28 @@ impl Default for Board {
             journal: ChangeJournal::default(),
             kiid_generator: KiidGenerator::default(),
             caches: BoardCaches::default(),
+        };
+
+        // m_NetInfo( this ): net 0 takes the default class of the NET_SETTINGS constructor,
+        // which the constructor body replaces below (the net keeps the old one, as in C++).
+        let initial_default = Arc::clone(board.design_settings.net_settings.default_netclass());
+
+        if let Some(net) = board.net_info.nets.get_mut(&NetCode::UNCONNECTED) {
+            net.netclass = Some(initial_default);
         }
+
+        board.init_layers();
+
+        // Initialize default netclass.
+        let mut default_netclass = Netclass::new(NETCLASS_DEFAULT_NAME, true);
+        default_netclass.description = "This is the default net class.".to_string();
+        let bds = &mut board.design_settings;
+        bds.net_settings
+            .set_default_netclass(Arc::new(default_netclass));
+        bds.set_use_custom_track_via_size(false);
+
+        board.layer_env = Arc::new(board.build_layer_env());
+        board
     }
 }
 

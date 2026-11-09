@@ -76,8 +76,16 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 - [ ] Model wave 0b: M0b (pad/footprint/zone), M0c (shape/text/table/dimension), M0d
       (board/settings/nets), M0e (small items) running on Opus. Orchestrator reviews their
       `decisions` and runs the shim checker before wave 1.
-- [ ] pcb-dump: item-level C++ reference dump tool linking pcbnew (running, Opus); it will
-      be the ground truth for the M packages (rust/tools/pcb-dump, docs/PCB_DUMP_FORMAT.md).
+- [x] pcb-dump: item-level C++ reference dump tool linking the real pcbnew objects
+      (rust/tools/pcb-dump, binary /home/user/kicad-oracle/bin/pcb-dump, format in
+      docs/PCB_DUMP_FORMAT.md). Sections: item, bbox, track, pad, shape, text, dim, zone,
+      footprint, misc, board, order + `defaults`. Runs the whole corpus (375 boards, one
+      intentional parse failure), deterministic. Use small boards for goldens (large demos
+      produce GBs of output).
+- [ ] DUMP-RS (after wave 0b): Rust side of the dump inside kicad-pcb (feature `dump`),
+      mirroring the C++ tool section by section, with catch_unwind per field so that
+      port_pending! stubs print as "pending"; plus tools/pcb-dump/compare.py giving
+      match / mismatch / pending counts per section = the scoreboard for the M packages.
 - Follow-ups owed to the design review: kicad-geom needs `Shape::indexable_subshape(i)`
   (assign with G5); kicad-drc must split rule resolver from run state.
 - Foundation crates:

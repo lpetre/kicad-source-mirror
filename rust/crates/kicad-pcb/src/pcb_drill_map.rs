@@ -47,9 +47,9 @@ pub struct PcbDrillMap {
 /// `DRILL_SPAN` (pcbnew/drill/drill_span.h).
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DrillSpan {
-    pub start_layer: PcbLayerId, // m_StartLayer
-    pub end_layer: PcbLayerId,   // m_EndLayer
-    pub is_backdrill: bool,      // m_IsBackdrill
+    pub start_layer: PcbLayerId,  // m_StartLayer
+    pub end_layer: PcbLayerId,    // m_EndLayer
+    pub is_backdrill: bool,       // m_IsBackdrill
     pub is_non_plated_file: bool, // m_IsNonPlatedFile
 }
 

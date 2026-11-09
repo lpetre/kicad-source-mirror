@@ -45,6 +45,7 @@ pub mod shape_arc;
 pub mod shape_circle;
 pub mod shape_collisions;
 pub mod shape_compound;
+pub mod shape_ellipse;
 pub mod shape_line_chain;
 pub mod shape_null;
 pub mod shape_poly_set;

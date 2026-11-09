@@ -48,6 +48,7 @@ use crate::geometry::shape_arc::ShapeArc;
 use crate::geometry::shape_circle::ShapeCircle;
 use crate::geometry::shape_collisions;
 use crate::geometry::shape_compound::ShapeCompound;
+use crate::geometry::shape_ellipse::ShapeEllipse;
 use crate::geometry::shape_line_chain::ShapeLineChain;
 use crate::geometry::shape_null::ShapeNull;
 use crate::geometry::shape_poly_set::{ShapePolySet, Tri};
@@ -82,7 +83,7 @@ pub enum ShapeType {
     Null,
     /// `SH_POLY_SET_TRIANGLE`: a single triangle belonging to a POLY_SET triangulation
     PolySetTriangle,
-    /// `SH_ELLIPSE`: ellipse or elliptical arc (the shape itself is not ported yet)
+    /// `SH_ELLIPSE`: ellipse or elliptical arc (`ShapeEllipse`)
     Ellipse,
 }
 
@@ -130,6 +131,8 @@ pub enum ShapeRef<'a> {
     Null(&'a ShapeNull),
     /// `SH_POLY_SET_TRIANGLE`
     PolySetTriangle(&'a Tri),
+    /// `SH_ELLIPSE`
+    Ellipse(&'a ShapeEllipse),
 }
 
 impl<'a> ShapeRef<'a> {
@@ -146,6 +149,7 @@ impl<'a> ShapeRef<'a> {
             ShapeRef::Arc(s) => s,
             ShapeRef::Null(s) => s,
             ShapeRef::PolySetTriangle(s) => s,
+            ShapeRef::Ellipse(s) => s,
         }
     }
 

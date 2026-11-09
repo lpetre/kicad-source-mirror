@@ -96,3 +96,55 @@ scaled footprint fixture (`add_child`, `add_cell`, `set_child`, `child`).
   package that owns the file (`board-model.md` 16, "Wave 0b rules").
 - `Board::build_layer_env` is a stub until M0d: `design_settings_mut()` followed by a
   `modify_*` panics with its `port_pending!` name until then.
+
+## Package M0e: groups, generators and the small item types
+
+Types of `board-model-types.md` sections 9 and 10, with `Default` = the C++ constructor values
+(nil UUID), `new(&mut KiidGenerator, ..)`, delegation shims (`check_item_shims.py` prints `ok`
+for all ten) and inherent methods (trivial accessors real, the rest `port_pending!` for M23 /
+M24).
+
+| C++ | Rust | State |
+|---|---|---|
+| `PCB_GROUP`, `EDA_GROUP` data and accessors | `pcb_group.rs` `PcbGroup` | types, defaults, shims; constant overrides real (`GetLayer`, `IsLayerAgnostic`, `IsOnCopperLayer`, `HitTest`), member walks stubs (M23) |
+| `PCB_GENERATOR` (+ subclass data as a property map) | `pcb_generator.rs` `PcbGenerator`, `GeneratorProp` | types, defaults, shims; `normalize_properties` and the subclass-dependent overrides stubs (M23) |
+| `PCB_TARGET` | `pcb_target.rs` | types, defaults, shims, position / move real |
+| `PCB_POINT`, `PCB_POINT::cmp_points` | `pcb_point.rs` `PcbPoint`, `pcb_point_cmp_points` | types, defaults, shims; frame-dependent setters and the comparator stubs (M23) |
+| `PCB_MARKER`, `MARKER_BASE`, `RC_ITEM` / `DRC_ITEM` data | `pcb_marker.rs` `PcbMarker`, `MarkerT`, `RcItem` | types, constructor (marker type from the error code) ported, shims; `GetSeverity`, glyph, hit tests stubs (M23) |
+| `PCB_CONSTRAINT`, `CONSTRAINT_MEMBER`, enums, token functions | `pcb_constraint.rs` | types, defaults, shims, constant overrides real, token tables ported; `ConstraintsAreDuplicate`, `RemapKIIDs`, shape, description stubs (M23) |
+| `PCB_3D_BODY` + `EXTRUDED_3D_BODY` | `pcb_3d_body.rs` | types, defaults (incl. `GetDefaultColor`), shims, layer accessors real; `Flip` stub (M23) |
+| `PCB_GRID_ITEM`, `PCB_GRID_AFFECTS` | `pcb_grid_item.rs` | types, defaults, shims, clamping setters and trivial overrides real; geometry stubs (M23) |
+| `PCB_DRILL_MAP`, `DRILL_SPAN` | `pcb_drill_map.rs` `PcbDrillMap`, `DrillSpan` | types, defaults, shims; `DRILL_SPAN` ordering and the drill geometry stubs (M23) |
+| `PCB_REFERENCE_IMAGE` + `REFERENCE_IMAGE` + `BITMAP_BASE` data | `pcb_reference_image.rs` | types, defaults, shims; size / position checks stubs (M24) |
+
+Tests: constructor defaults of every type (each citing its constructor), the trivial overrides
+through the traits on fixture footprint children with `check_invariants`; ported from
+`qa/tests/pcbnew/constraints/test_pcb_constraint.cpp`: `BasicProperties`,
+`GeometrySurfaceIsSafe` (transforms only), `MembersAndValue`, `VertexMemberIdentity`.
+
+Differences between the design and the C++ headers (header followed where they differ):
+
+- `PCB_GRID_ITEM::GetClass()` is `"PCB_GRIDITEM"` (no underscore before ITEM).
+- `PCB_3D_BODY`: the extrusion members live in `EXTRUDED_3D_BODY m_extruded`; the design
+  flattens them, and `layer` is `m_extruded.m_layer` (what `GetLayer` / `SetLayer` use), not
+  `BOARD_ITEM::m_layer` (`base.layer`, `UNDEFINED_LAYER`).
+- `DrcRuleInfo` is the kernel's (`drc_api.rs`), not redefined in `pcb_marker.rs`.
+- `PCB_GENERATOR` has no default layer argument; `Default` uses `F_Cu`, the default of every
+  registered subclass; `new` takes the layer.
+
+Deviations / known gaps of this package:
+
+- Group member order is insertion order (C++ `unordered_set`), also for
+  `group_member_ids`.
+- `PCB_DRILL_MAP( aParent )` with a board takes the board drill-symbol profile's size; the
+  profile is kept verbatim (`Option<Sexpr>`), so `Default` / `new` give the no-board value
+  (1.5 mm). The parser sets the size from the file.
+- `PCB_POINT::SetParent` recomputes the baked position: `Board` must call
+  `on_footprint_transformed` after adding a point to a footprint (M1 / M19).
+- The generator subclasses override `GetFriendlyName` (and `IsSelectableAsConnected`, ...);
+  `tools/check_item_shims.py` only reads `pcb_generator.h`, so `PcbGenerator` has no
+  `friendly_name` shim and returns the `BOARD_ITEM` default until the checker knows the
+  subclass headers.
+- Not ported (editor / UI): `PCB_GROUP::TopLevelGroup` / `WithinScope`, `GRID_GEOMETRY`,
+  `FindActiveGridAt`, constraint labels / glyphs / bitmaps, `EXTRUDED_3D_BODY::PackColorKey`,
+  marker colours and zoom.
