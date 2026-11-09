@@ -174,9 +174,7 @@ impl Board {
                 while ii <= PCB_LAYER_ID_COUNT {
                     let other = self.layers.entry(ii).or_default().clone();
 
-                    if other.opposite == ii
-                        && is_side(other.type_)
-                        && current.type_ != other.type_
+                    if other.opposite == ii && is_side(other.type_) && current.type_ != other.type_
                     {
                         let candidate = after_first_dot(&other.user_name);
 
@@ -289,5 +287,113 @@ impl Board {
     /// default list for the copper count.
     pub fn get_stackup_or_default(&self) -> BoardStackup {
         crate::port_pending!("BOARD::GetStackupOrDefault")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use kicad_core::{EdaUnits, PageSizeType};
+
+    use super::*;
+    use crate::ids::{ItemKind, NetCode};
+    use crate::test_support::rotated_flipped_scaled;
+
+    /// `BOARD::BOARD()` (`pcbnew/board.cpp:99`): member initialisers, the `LAYER` table,
+    /// `recalcOpposites()` and the board's default net class.
+    #[test]
+    fn board_constructor_defaults() {
+        let board = Board::default();
+        board.check_invariants().unwrap();
+
+        assert_eq!(board.time_stamp(), 1);
+        assert_eq!(board.paper.type_(), PageSizeType::A4);
+        assert_eq!(board.user_units, EdaUnits::Mm);
+        assert_eq!(board.outlines_chaining_epsilon, 10_000);
+        assert_eq!(board.file_format_version_at_load, 20160815);
+        assert_eq!(board.copper_layer_count(), 2);
+
+        // LAYER table: every id, standard names, types, opposites from ::FlipLayer( 2 ).
+        assert_eq!(board.layers.len(), PCB_LAYER_ID_COUNT as usize);
+        let f_cu = &board.layers[&PcbLayerId::FCu.0];
+        assert_eq!(f_cu.name, "F.Cu");
+        assert_eq!(f_cu.type_, LayerT::Signal);
+        assert_eq!(f_cu.number, 0);
+        assert!(f_cu.visible);
+        assert_eq!(board.layers[&PcbLayerId::User1.0].type_, LayerT::Aux);
+        assert_eq!(board.layers[&PcbLayerId::FSilkS.0].type_, LayerT::Undefined);
+        assert_eq!(board.flip_layer(PcbLayerId::FCu), PcbLayerId::BCu);
+        assert_eq!(board.flip_layer(PcbLayerId::FSilkS), PcbLayerId::BSilkS);
+        assert_eq!(board.flip_layer(PcbLayerId::In1Cu), PcbLayerId::In1Cu);
+        assert_eq!(
+            board.flip_layer(PcbLayerId::UndefinedLayer),
+            PcbLayerId::UndefinedLayer
+        );
+
+        // The LayerEnv snapshot is derived from the settings (no longer "all layers").
+        let env = board.build_layer_env();
+        assert_eq!(*board.layer_env, env);
+        assert_eq!(env.copper_layer_count, 2);
+        assert!(!env.enabled_layers.contains(PcbLayerId::In1Cu));
+        assert_eq!(env.flip_layer(PcbLayerId::BFab), PcbLayerId::FFab);
+
+        // Net 0 keeps the NET_SETTINGS-constructor class; the settings get a new Default.
+        let ns = &board.design_settings().net_settings;
+        assert_eq!(ns.default_netclass.priority, -1);
+        assert_eq!(
+            ns.default_netclass.description,
+            "This is the default net class."
+        );
+        let net0 = board.net_info().get_net_item(NetCode::UNCONNECTED).unwrap();
+        assert_eq!(net0.netclass.as_ref().unwrap().priority, i32::MAX);
+        assert_eq!(board.nets().count(), 1);
+        assert!(!board.design_settings().use_custom_track_via_size());
+        assert_eq!(board.component_class_manager().ticker(), 0);
+        assert!(board.embedded_files().is_empty());
+    }
+
+    /// `BOARD::SetCopperLayerCount` re-runs `recalcOpposites()` and makes the environment of
+    /// a footprint child see the new table.
+    #[test]
+    fn copper_layer_count_drives_flip_table() {
+        let mut fx = rotated_flipped_scaled();
+        let child = fx.child(ItemKind::Pad);
+        let before = fx.board.time_stamp();
+
+        fx.board.set_copper_layer_count(4);
+        fx.board.check_invariants().unwrap();
+        assert_ne!(fx.board.time_stamp(), before);
+        assert_eq!(fx.board.copper_layer_count(), 4);
+        assert_eq!(fx.board.flip_layer(PcbLayerId::In1Cu), PcbLayerId::In2Cu);
+        assert!(fx.board.enabled_layers().contains(PcbLayerId::In2Cu));
+
+        let env = fx.board.mut_env(child);
+        assert_eq!(env.layers.copper_layer_count, 4);
+        assert_eq!(env.layers.flip_layer(PcbLayerId::In2Cu), PcbLayerId::In1Cu);
+        assert!(env.parent.is_some());
+
+        let refreshed = fx.board.mut_env_refreshed(child).unwrap();
+        assert!(Arc::ptr_eq(&refreshed.layers, &fx.board.layer_env));
+        assert_eq!(fx.board.layer_env.copper_layer_count, 4);
+        fx.board.check_invariants().unwrap();
+    }
+
+    /// `recalcOpposites()` pairs front / back user layers by the name after the first dot.
+    #[test]
+    fn recalc_opposites_pairs_user_layers() {
+        let mut board = Board::default();
+        let (a, b) = (PcbLayerId::User1.0, PcbLayerId::User1.0 + 4);
+        for (id, t, name) in [(a, LayerT::Front, "F.Glue"), (b, LayerT::Back, "B.Glue")] {
+            let l = board.layers.get_mut(&id).unwrap();
+            l.type_ = t;
+            l.user_name = name.to_string();
+        }
+        board.recalc_opposites();
+        assert_eq!(board.flip_layer(PcbLayerId(a)), PcbLayerId(b));
+        assert_eq!(board.flip_layer(PcbLayerId(b)), PcbLayerId(a));
+        assert_eq!(after_first_dot("NoDot"), "");
+        assert_eq!(LayerT::parse_type("auxiliary"), LayerT::Aux);
+        assert_eq!(LayerT::Undefined.show_type(), "signal");
     }
 }

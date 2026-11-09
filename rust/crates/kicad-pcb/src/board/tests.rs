@@ -330,6 +330,9 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     use crate::eda_shape::EdaShapeExt;
     use crate::eda_text::EdaTextExt;
     use crate::item::RecurseMode;
+    // Unused once the textbox has inherent methods for every mutating virtual (M0c); kept so
+    // that the trait stays in scope for the ambiguity check.
+    #[allow(unused_imports)]
     use crate::traits::{BoardItemMut, EdaShapeItem, EdaTextItem, Flashing};
     use kicad_core::text_vars::ResolutionContext;
     use kicad_core::{Lset, PCB_IU_SCALE, units_provider::UnitsProvider};

@@ -2612,9 +2612,170 @@ impl ShapePolySet {
 
                 false
             }
-            // G4b: CacheTriangulation( false, {}, true ) + AnyTriangleHit( m_triIndex, ... )
-            _ => false,
+            _ => {
+                // C++: const_cast<SHAPE_POLY_SET*>( this )->CacheTriangulation( false, {}, true )
+                // followed by AnyTriangleHit( m_triIndex, ... ).  A `&self` method cannot
+                // cache, so the triangulation that call would leave behind is used (built
+                // into a copy when stale); see `collide_shape_mut()` for the caching variant.
+                let up_to_date =
+                    self.triangulation_valid && self.hash_valid && self.hash == self.checksum();
+
+                if up_to_date {
+                    let built;
+                    let index = match &self.tri_index {
+                        Some(index) => Some(index),
+                        None => {
+                            built = Self::build_tri_index(&self.triangulated_polys);
+                            built.as_ref()
+                        }
+                    };
+
+                    return Self::collide_triangles(
+                        index,
+                        &self.triangulated_polys,
+                        a_shape,
+                        a_clearance,
+                        a_actual,
+                        a_location,
+                    );
+                }
+
+                if self.failed_hash_valid && self.failed_hash == self.checksum() {
+                    return Self::collide_triangles(
+                        self.tri_index.as_ref(),
+                        &self.triangulated_polys,
+                        a_shape,
+                        a_clearance,
+                        a_actual,
+                        a_location,
+                    );
+                }
+
+                let mut copy = ShapePolySet {
+                    polys: self.polys.clone(),
+                    triangulated_polys: Vec::new(),
+                    tri_index: None,
+                    triangulation_valid: self.triangulation_valid,
+                    hash: self.hash,
+                    hash_valid: self.hash_valid,
+                    failed_hash: self.failed_hash,
+                    failed_hash_valid: self.failed_hash_valid,
+                };
+
+                copy.cache_triangulation_with(false, false, true);
+
+                Self::collide_triangles(
+                    copy.tri_index.as_ref(),
+                    &copy.triangulated_polys,
+                    a_shape,
+                    a_clearance,
+                    a_actual,
+                    a_location,
+                )
+            }
         }
+    }
+
+    /// Port of `SHAPE_POLY_SET::Collide( const SHAPE* aShape, ... )` that, like the C++,
+    /// caches the triangulation (and its index) in the set: same results as
+    /// [`collide_shape()`](Self::collide_shape), but repeated queries do not re-triangulate a
+    /// set whose triangulation is stale.
+    pub fn collide_shape_mut(
+        &mut self,
+        a_shape: &dyn Shape,
+        a_clearance: i32,
+        a_actual: Option<&mut i32>,
+        a_location: Option<&mut Vector2I>,
+    ) -> bool {
+        if matches!(a_shape.as_shape_ref(), ShapeRef::Segment(_) | ShapeRef::Circle(_)) {
+            return self.collide_shape(a_shape, a_clearance, a_actual, a_location);
+        }
+
+        self.cache_triangulation_with(false, false, true);
+
+        Self::collide_triangles(
+            self.tri_index.as_ref(),
+            &self.triangulated_polys,
+            a_shape,
+            a_clearance,
+            a_actual,
+            a_location,
+        )
+    }
+
+    /// The triangle-based tail of `Collide( const SHAPE* )`.
+    fn collide_triangles(
+        a_index: Option<&TriangulationIndex>,
+        a_polys: &[TriangulatedPolygon],
+        a_shape: &dyn Shape,
+        a_clearance: i32,
+        a_actual: Option<&mut i32>,
+        a_location: Option<&mut Vector2I>,
+    ) -> bool {
+        if a_actual.is_none() && a_location.is_none() {
+            return any_triangle_hit(a_index, a_polys, a_shape, a_clearance, None, None);
+        }
+
+        let mut actual = 0;
+        let mut location = Vector2I::default();
+
+        if !any_triangle_hit(
+            a_index,
+            a_polys,
+            a_shape,
+            a_clearance,
+            Some(&mut actual),
+            Some(&mut location),
+        ) {
+            return false;
+        }
+
+        if let Some(a) = a_actual {
+            *a = 0.max(actual);
+        }
+
+        if let Some(l) = a_location {
+            *l = location;
+        }
+
+        true
+    }
+
+    /// The `buildIndexes` lambda of `cacheTriangulation()` as a function: the triangle index,
+    /// or `None` below `RTREE_THRESHOLD` triangles.
+    fn build_tri_index(a_polys: &[TriangulatedPolygon]) -> Option<TriangulationIndex> {
+        let mut tri_count: i32 = 0;
+
+        for tpoly in a_polys {
+            tri_count = tri_count.wrapping_add(tpoly.triangle_count() as i32);
+        }
+
+        if tri_count < RTREE_THRESHOLD {
+            return None;
+        }
+
+        Some(TriangulationIndex::new(a_polys))
+    }
+
+    /// The `buildIndexes` lambda of `cacheTriangulation()`.
+    fn build_indexes(&mut self) {
+        if self.tri_index.is_some() {
+            return;
+        }
+
+        self.tri_index = Self::build_tri_index(&self.triangulated_polys);
+    }
+
+    /// Port of `SHAPE_POLY_SET::TriangulationIndex()`: the spatial index over the cached
+    /// triangles, if one was built (`CacheTriangulation( ..., aBuildIndexes = true )` or
+    /// `collide_shape_mut()` with at least `RTREE_THRESHOLD` triangles).
+    pub fn triangulation_index(&self) -> Option<&TriangulationIndex> {
+        self.tri_index.as_ref()
+    }
+
+    /// The triangulated polygons (`m_triangulatedPolys`), e.g. for `AnyTriangleHit()`.
+    pub fn triangulated_polys(&self) -> &[TriangulatedPolygon] {
+        &self.triangulated_polys
     }
 
     /// Port of `SHAPE_POLY_SET::RemoveAllContours()`.
@@ -3205,14 +3366,349 @@ impl ShapePolySet {
         self.checksum() == self.hash
     }
 
-    /// G4b hook for `SHAPE_POLY_SET::CacheTriangulation()`.
+    /// Port of `SHAPE_POLY_SET::CacheTriangulation( aSimplify )`: build (or keep, if it is up
+    /// to date) the triangulation of the set, without a task submitter and without the
+    /// triangle index.
+    pub fn cache_triangulation(&mut self, a_simplify: bool) {
+        self.cache_triangulation_hint(a_simplify, None, false, false);
+    }
+
+    /// Port of `SHAPE_POLY_SET::CacheTriangulation( aSimplify, aSubmitter, aBuildIndexes )`.
     ///
-    /// The triangulation is not ported yet (package G4b), so no triangulation can become valid
-    /// and the callers that re-triangulate a valid one (`Mirror`, `Rotate`, `Scale`) never get
-    /// here; for safety this drops any triangulation.
-    pub fn cache_triangulation(&mut self, _a_simplify: bool) {
-        self.triangulated_polys.clear();
+    /// `a_has_submitter` stands for a non-empty `TASK_SUBMITTER`: the C++ then triangulates
+    /// the partition leaves of a huge outline as separate tasks and keeps their results in
+    /// leaf order, which is what the port does sequentially (the result does not depend on
+    /// the threads).  Without a submitter the leaves are queued as outlines instead, which can
+    /// give a different triangulation.
+    pub fn cache_triangulation_with(
+        &mut self,
+        a_simplify: bool,
+        a_has_submitter: bool,
+        a_build_indexes: bool,
+    ) {
+        self.cache_triangulation_hint(a_simplify, None, a_has_submitter, a_build_indexes);
+    }
+
+    /// Port of the protected `SHAPE_POLY_SET::cacheTriangulation( aSimplify, aHintData,
+    /// aSubmitter, aBuildIndexes )` (`a_has_submitter`: see `cache_triangulation_with()`).
+    pub fn cache_triangulation_hint(
+        &mut self,
+        a_simplify: bool,
+        a_hint_data: Option<&[TriangulatedPolygon]>,
+        a_has_submitter: bool,
+        a_build_indexes: bool,
+    ) {
+        if self.triangulation_valid && self.hash_valid && self.hash == self.checksum() {
+            if a_build_indexes {
+                self.build_indexes();
+            }
+
+            return;
+        }
+
+        if self.failed_hash_valid && self.failed_hash == self.checksum() {
+            return;
+        }
+
+        // Invalidate, in case anything goes wrong below
+        self.tri_index = None;
         self.triangulation_valid = false;
+        self.hash_valid = false;
+        self.failed_hash_valid = false;
+
+        self.triangulated_polys.clear();
+        let mut tris: Vec<TriangulatedPolygon> = Vec::new();
+
+        let tmp_set;
+        let src_set: &ShapePolySet = if self.arc_count() > 0 || a_simplify {
+            let mut t = self.clone();
+            t.clear_arcs();
+
+            if a_simplify {
+                t.simplify();
+            }
+
+            tmp_set = t;
+            &tmp_set
+        } else {
+            self
+        };
+
+        let mut direct_ok = true;
+        let mut ii = 0;
+
+        while ii < src_set.outline_count() && direct_ok {
+            let poly = src_set.c_polygon(ii);
+            let prev_count = tris.len();
+
+            if poly.len() > 1 {
+                tris.push(TriangulatedPolygon::new(ii));
+
+                if PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_polygon(poly, None) {
+                    ii += 1;
+                    continue;
+                }
+
+                // Hole bridging failed; fracture to merge holes into the outline
+                tris.truncate(prev_count);
+
+                let mut flat_set = ShapePolySet::from_outline(&poly[0]);
+
+                for hole in poly.iter().skip(1) {
+                    flat_set.add_hole(hole, -1);
+                }
+
+                flat_set.fracture(true);
+                flat_set.split_self_touching_outlines();
+
+                if Self::triangulate(&mut flat_set, ii, &mut tris, None, a_has_submitter) {
+                    ii += 1;
+                    continue;
+                }
+
+                tris.truncate(prev_count);
+                direct_ok = false;
+                ii += 1;
+                continue;
+            }
+
+            {
+                let mut part_scratch = TriangulatedPolygon::new(-1);
+                let part_checker = PolygonTriangulation::new(&mut part_scratch);
+
+                if part_checker.suggested_partition_leaf_count(&poly[0]) > 1 {
+                    let mut part_set = ShapePolySet::new();
+                    part_set.add_outline(&poly[0]);
+
+                    if Self::triangulate(&mut part_set, ii, &mut tris, None, a_has_submitter) {
+                        ii += 1;
+                        continue;
+                    }
+
+                    tris.truncate(prev_count);
+                }
+            }
+
+            tris.push(TriangulatedPolygon::new(ii));
+
+            let mut ok = PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_chain(&poly[0], None);
+
+            // Self-touching outlines produce overlapping triangles; detect via area coverage
+            if ok {
+                let original_area = poly[0].area(true).abs();
+
+                if original_area > 0.0 {
+                    let mut tri_area = 0.0;
+
+                    for tri in &tris.last().unwrap().triangles {
+                        tri_area += tri.area().abs();
+                    }
+
+                    let coverage = tri_area / original_area;
+
+                    if coverage > 1.01 || coverage < 0.99 {
+                        ok = false;
+                    }
+                }
+            }
+
+            if !ok {
+                tris.truncate(prev_count);
+
+                let mut split_set = ShapePolySet::new();
+                split_set.add_outline(&poly[0]);
+                split_set.split_self_touching_outlines();
+
+                let mut split_ok = true;
+                let mut jj = 0;
+
+                while jj < split_set.outline_count() && split_ok {
+                    tris.push(TriangulatedPolygon::new(ii));
+                    split_ok = PolygonTriangulation::new(tris.last_mut().unwrap())
+                        .tesselate_chain(&split_set.c_polygon(jj)[0], None);
+                    jj += 1;
+                }
+
+                if !split_ok {
+                    direct_ok = false;
+                }
+            }
+
+            ii += 1;
+        }
+
+        if tris.last().is_some_and(|t| t.triangle_count() == 0) {
+            tris.pop();
+        }
+
+        if direct_ok && !tris.is_empty() {
+            self.triangulated_polys = tris;
+            self.hash = self.checksum();
+            self.hash_valid = true;
+            self.triangulation_valid = true;
+        } else {
+            // Fracture each outline individually to preserve source outline indices
+            tris.clear();
+            let mut fallback_ok = true;
+            let mut ii = 0;
+
+            while ii < src_set.outline_count() && fallback_ok {
+                let poly = src_set.c_polygon(ii);
+                let mut flat_set = ShapePolySet::from_outline(&poly[0]);
+
+                for hole in poly.iter().skip(1) {
+                    flat_set.add_hole(hole, -1);
+                }
+
+                flat_set.clear_arcs();
+                flat_set.fracture(true);
+                flat_set.split_self_touching_outlines();
+
+                if !Self::triangulate(&mut flat_set, ii, &mut tris, None, a_has_submitter) {
+                    fallback_ok = false;
+                }
+
+                ii += 1;
+            }
+
+            let mut valid = false;
+
+            if !fallback_ok {
+                // Last resort: flatten everything together (loses outline indices)
+                tris.clear();
+                let mut fallback_set = self.clone();
+                fallback_set.clear_arcs();
+                fallback_set.fracture(true);
+                fallback_set.split_self_touching_outlines();
+
+                // else: "Failed to triangulate polygon"
+                if Self::triangulate(&mut fallback_set, -1, &mut tris, a_hint_data, a_has_submitter)
+                {
+                    valid = true;
+                }
+            } else {
+                valid = true;
+            }
+
+            self.triangulated_polys = tris;
+            self.triangulation_valid = valid;
+
+            if self.triangulation_valid {
+                self.hash = self.checksum();
+                self.hash_valid = true;
+            } else {
+                self.failed_hash = self.checksum();
+                self.failed_hash_valid = true;
+            }
+        }
+
+        if a_build_indexes && self.triangulation_valid {
+            self.build_indexes();
+        }
+    }
+
+    /// The `triangulate` lambda of `cacheTriangulation()`: triangulate the outlines of
+    /// `poly_set` (consumed from the front) into `dest`, partitioning huge outlines,
+    /// simplifying once on failure.  With `a_has_submitter` the partition leaves are
+    /// triangulated as the C++ tasks would be (sequentially, in leaf order).
+    fn triangulate(
+        poly_set: &mut ShapePolySet,
+        for_outline: i32,
+        dest: &mut Vec<TriangulatedPolygon>,
+        hint_data: Option<&[TriangulatedPolygon]>,
+        a_has_submitter: bool,
+    ) -> bool {
+        let mut triangulation_valid = false;
+        let mut pass = 0;
+        let mut index = 0;
+        let mut hint_data = hint_data;
+
+        if hint_data.is_some_and(|h| h.len() != poly_set.outline_count() as usize) {
+            hint_data = None;
+        }
+
+        while poly_set.outline_count() > 0 {
+            if dest.last().is_some_and(|t| t.triangle_count() == 0) {
+                dest.pop();
+            }
+
+            {
+                let mut partition_scratch = TriangulatedPolygon::new(for_outline);
+                let partitioner = PolygonTriangulation::new(&mut partition_scratch);
+                let outline = &poly_set.c_polygon(0)[0];
+                let partition_leaves = partitioner.suggested_partition_leaf_count(outline);
+
+                if partition_leaves > 1 {
+                    let partitions = partitioner.partition_polygon_balanced(outline, partition_leaves);
+
+                    if partitions.len() > 1 {
+                        poly_set.delete_polygon(0);
+
+                        if a_has_submitter && partitions.len() > 2 {
+                            // The work-stealing tasks: every leaf is triangulated on its own
+                            let mut results: Vec<TriangulatedPolygon> = partitions
+                                .iter()
+                                .map(|_| TriangulatedPolygon::new(for_outline))
+                                .collect();
+                            let mut all_ok = true;
+
+                            for (result, leaf) in results.iter_mut().zip(partitions.iter()) {
+                                let ok = PolygonTriangulation::new(result).tesselate_chain(leaf, None);
+                                all_ok = all_ok && ok;
+                            }
+
+                            if all_ok {
+                                for r in results {
+                                    if r.triangle_count() > 0 {
+                                        dest.push(r);
+                                    }
+                                }
+
+                                triangulation_valid = true;
+                                hint_data = None;
+                                continue;
+                            }
+                        }
+
+                        for part in partitions.iter().rev() {
+                            poly_set.add_outline(part);
+                        }
+
+                        hint_data = None;
+                        continue;
+                    }
+                }
+            }
+
+            dest.push(TriangulatedPolygon::new(for_outline));
+
+            // If the tessellation fails, we re-fracture the polygon, which will
+            // first simplify the system before fracturing and removing the holes
+            // This may result in multiple, disjoint polygons.
+            let ok = PolygonTriangulation::new(dest.last_mut().unwrap())
+                .tesselate_chain(&poly_set.c_polygon(0)[0], hint_data.map(|h| &h[index]));
+
+            if !ok {
+                pass += 1;
+
+                if pass == 1 {
+                    poly_set.simplify_outlines(TRIANGULATE_SIMPLIFICATION_LEVEL);
+                } else {
+                    // In Clipper2, there is only one type of simplification
+                    break;
+                }
+
+                triangulation_valid = false;
+                hint_data = None;
+                continue;
+            }
+
+            poly_set.delete_polygon(0);
+            index += 1;
+            triangulation_valid = true;
+        }
+
+        triangulation_valid
     }
 
     /// Port of `SHAPE_POLY_SET::checksum()`: MurmurHash3 of the polygon structure and the

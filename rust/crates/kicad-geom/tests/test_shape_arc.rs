@@ -17,7 +17,10 @@
 
 //! Port of `qa/tests/libs/kimath/geometry/test_shape_arc.cpp`.
 
+use kicad_geom::convert_basic_shapes_to_polygon::transform_arc_to_polygon;
+use kicad_geom::geometry::approximation::ERROR_INSIDE;
 use kicad_geom::geometry::eda_angle::{ANGLE_90, DEGREES_T, EdaAngle};
+use kicad_geom::geometry::shape_poly_set::ShapePolySet;
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::geometry::shape::{Shape, ShapeLineChainBase, ShapeType};
 use kicad_geom::geometry::shape_arc::ShapeArc;
@@ -1534,32 +1537,93 @@ fn arc_to_polyline() {
 /// This is a regression test for issue #22475 where shallow-radius arc segments
 /// caused polygon pour rendering artifacts.
 #[test]
-#[ignore = "needs TransformArcToPolygon (convert_basic_shapes_to_polygon, later package)"]
 fn transform_shallow_arc_to_polygon() {
-    // start( 0, 0 ), end( 10000000, 0 ), mid( 5000000, 5 ), width 250000, aError 5000,
-    // ERROR_INSIDE: at least one closed outline with >= 3 points, bbox width <= end.x + 2 * width,
-    // bbox height <= 2 * width + 100
-    panic!("not ported yet");
+    let mut buffer = ShapePolySet::new();
+
+    // Create an arc where the mid-point is only slightly off the start-end line.
+    // This creates a very large radius arc that previously caused integer overflow.
+    let start = pt(0, 0);
+    let end = pt(10000000, 0); // 10mm chord length
+    let mid = pt(5000000, 5); // Mid-point only 5nm off the line
+
+    let width = 250000; // 0.25mm track width
+    let a_error = 5000; // Default error tolerance
+
+    // This should not crash or produce invalid geometry
+    transform_arc_to_polygon(&mut buffer, start, mid, end, width, a_error, ERROR_INSIDE);
+
+    // Should produce at least one outline
+    assert!(buffer.outline_count() >= 1);
+
+    // The outline should be valid (closed, has points)
+    if buffer.outline_count() > 0 {
+        let outline = buffer.c_outline(0);
+        assert!(outline.is_closed());
+        assert!(outline.point_count() >= 3);
+
+        // The bounding box should be reasonable (roughly the track width around the chord)
+        let bbox = outline.bbox(0);
+        assert!(bbox.width() as i64 <= (end.x + width * 2) as i64);
+        assert!(bbox.height() as i64 <= (width * 2 + 100) as i64); // Allow some tolerance
+    }
 }
 
 /// Test that arcs with extremely large radii (greater than INT_MAX/2) are
 /// properly converted to line segments.
 #[test]
-#[ignore = "needs TransformArcToPolygon (convert_basic_shapes_to_polygon, later package)"]
 fn transform_very_shallow_arc_to_polygon() {
-    // start( 0, 0 ), end( 50000000, 0 ), mid( 25000000, 1 ), width 250000, aError 5000:
-    // at least one closed outline with >= 3 points
-    panic!("not ported yet");
+    let mut buffer = ShapePolySet::new();
+
+    // Create an arc that is effectively a straight line - mid-point essentially on the line.
+    // This should be detected by IsEffectiveLine() and handled as a line segment.
+    let start = pt(0, 0);
+    let end = pt(50000000, 0); // 50mm chord length
+    let mid = pt(25000000, 1); // Mid-point only 1nm off the line
+
+    let width = 250000; // 0.25mm track width
+    let a_error = 5000;
+
+    // This should not crash and should produce valid geometry
+    transform_arc_to_polygon(&mut buffer, start, mid, end, width, a_error, ERROR_INSIDE);
+
+    assert!(buffer.outline_count() >= 1);
+
+    if buffer.outline_count() > 0 {
+        let outline = buffer.c_outline(0);
+        assert!(outline.is_closed());
+        assert!(outline.point_count() >= 3);
+    }
 }
 
 /// Test arc with values similar to problematic arcs in issue #22475 board.
 /// These arcs have distToMid around 12-13µm with radius around 24mm.
 #[test]
-#[ignore = "needs TransformArcToPolygon (convert_basic_shapes_to_polygon, later package)"]
 fn transform_issue22475_arc_to_polygon() {
-    // start( 0, 0 ), end( 1620000, 0 ), mid( 810000, 12960 ), width 200000, aError 5000:
-    // closed outline, >= 3 points, bbox width <= 3000000, bbox height <= 1000000
-    panic!("not ported yet");
+    let mut buffer = ShapePolySet::new();
+
+    // Values approximating one of the problematic arcs from issue #22475:
+    // radius=24.35 mm, distToMid=12960 nm, chord=1.62 mm, angle=-3.8 deg
+    let start = pt(0, 0);
+    let end = pt(1620000, 0); // 1.62mm chord length
+    let mid = pt(810000, 12960); // Mid-point 12960nm (12.96um) off the line
+
+    let width = 200000; // 0.2mm track width
+    let a_error = 5000;
+
+    transform_arc_to_polygon(&mut buffer, start, mid, end, width, a_error, ERROR_INSIDE);
+
+    assert!(buffer.outline_count() >= 1);
+
+    let outline = buffer.c_outline(0);
+    assert!(outline.is_closed());
+    assert!(outline.point_count() >= 3);
+
+    let bbox = outline.bbox(0);
+
+    // The bounding box should be reasonable - roughly chord + 2*width wide, 2*width high
+    // Check that the polygon isn't ridiculously large
+    assert!(bbox.width() <= 3000000, "Polygon width {} is too large (expected ~2020000)", bbox.width());
+    assert!(bbox.height() <= 1000000, "Polygon height {} is too large (expected ~400000)", bbox.height());
 }
 
 /// Test that SHAPE_ARC::Collide handles arcs with near-INT_MAX radius without crashing.

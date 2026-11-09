@@ -847,12 +847,7 @@ impl Padstack {
     }
 
     /// `ReplacePrimitives( aPrimitivesList, aLayer )`.
-    pub fn replace_primitives(
-        &mut self,
-        list: &[PcbShape],
-        layer: PcbLayerId,
-        parent: ParentRef,
-    ) {
+    pub fn replace_primitives(&mut self, list: &[PcbShape], layer: PcbLayerId, parent: ParentRef) {
         crate::port_pending!("PADSTACK::ReplacePrimitives", list, layer, parent)
     }
 
@@ -960,7 +955,10 @@ mod tests {
         assert_eq!(p.unconnected_layer_mode, UnconnectedLayerMode::KeepAll);
         assert_eq!(p.custom_shape_in_zone_mode, CustomShapeZoneMode::Outline);
         assert_eq!(p.drill.shape, PadDrillShape::Circle);
-        assert_eq!((p.drill.start, p.drill.end), (PcbLayerId::FCu, PcbLayerId::BCu));
+        assert_eq!(
+            (p.drill.start, p.drill.end),
+            (PcbLayerId::FCu, PcbLayerId::BCu)
+        );
         assert_eq!(p.drill.size, Vector2I::new(0, 0));
         for d in [&p.secondary_drill, &p.tertiary_drill] {
             assert_eq!(d.shape, PadDrillShape::Undefined);
@@ -976,10 +974,16 @@ mod tests {
     fn padstack_for_new_via() {
         let p = Padstack::for_new_via();
         assert_eq!(p.drill.size, Vector2I::new(-1, -1));
-        assert_eq!((p.start_layer(), p.end_layer()), (PcbLayerId::FCu, PcbLayerId::BCu));
+        assert_eq!(
+            (p.start_layer(), p.end_layer()),
+            (PcbLayerId::FCu, PcbLayerId::BCu)
+        );
         assert_eq!(p.unconnected_layer_mode(), UnconnectedLayerMode::KeepAll);
         assert!(p.layer_set().iter().next().is_none());
-        assert_eq!(p.copper_props[&Padstack::ALL_LAYERS].shape.shape, PadShape::Circle);
+        assert_eq!(
+            p.copper_props[&Padstack::ALL_LAYERS].shape.shape,
+            PadShape::Circle
+        );
     }
 
     #[test]

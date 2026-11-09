@@ -98,85 +98,141 @@ impl Board {
 
     /// `BOARD::Add( PcbShape, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_shape(&mut self, item: crate::pcb_shape::PcbShape, mode: AddMode) -> crate::ids::ShapeId {
+    pub fn add_shape(
+        &mut self,
+        item: crate::pcb_shape::PcbShape,
+        mode: AddMode,
+    ) -> crate::ids::ShapeId {
         crate::port_pending!("BOARD::Add (shape)", item, mode)
     }
 
     /// `BOARD::Add( PcbText, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_text(&mut self, item: crate::pcb_text::PcbText, mode: AddMode) -> crate::ids::TextId {
+    pub fn add_text(
+        &mut self,
+        item: crate::pcb_text::PcbText,
+        mode: AddMode,
+    ) -> crate::ids::TextId {
         crate::port_pending!("BOARD::Add (text)", item, mode)
     }
 
     /// `BOARD::Add( PcbField, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_field(&mut self, item: crate::pcb_field::PcbField, mode: AddMode) -> crate::ids::FieldId {
+    pub fn add_field(
+        &mut self,
+        item: crate::pcb_field::PcbField,
+        mode: AddMode,
+    ) -> crate::ids::FieldId {
         crate::port_pending!("BOARD::Add (field)", item, mode)
     }
 
     /// `BOARD::Add( PcbTextbox, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_textbox(&mut self, item: crate::pcb_textbox::PcbTextbox, mode: AddMode) -> crate::ids::TextboxId {
+    pub fn add_textbox(
+        &mut self,
+        item: crate::pcb_textbox::PcbTextbox,
+        mode: AddMode,
+    ) -> crate::ids::TextboxId {
         crate::port_pending!("BOARD::Add (textbox)", item, mode)
     }
 
     /// `BOARD::Add( PcbDimension, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_dimension(&mut self, item: crate::pcb_dimension::PcbDimension, mode: AddMode) -> crate::ids::DimensionId {
+    pub fn add_dimension(
+        &mut self,
+        item: crate::pcb_dimension::PcbDimension,
+        mode: AddMode,
+    ) -> crate::ids::DimensionId {
         crate::port_pending!("BOARD::Add (dimension)", item, mode)
     }
 
     /// `BOARD::Add( PcbBarcode, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_barcode(&mut self, item: crate::pcb_barcode::PcbBarcode, mode: AddMode) -> crate::ids::BarcodeId {
+    pub fn add_barcode(
+        &mut self,
+        item: crate::pcb_barcode::PcbBarcode,
+        mode: AddMode,
+    ) -> crate::ids::BarcodeId {
         crate::port_pending!("BOARD::Add (barcode)", item, mode)
     }
 
     /// `BOARD::Add( PcbReferenceImage, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_image(&mut self, item: crate::pcb_reference_image::PcbReferenceImage, mode: AddMode) -> crate::ids::ImageId {
+    pub fn add_image(
+        &mut self,
+        item: crate::pcb_reference_image::PcbReferenceImage,
+        mode: AddMode,
+    ) -> crate::ids::ImageId {
         crate::port_pending!("BOARD::Add (image)", item, mode)
     }
 
     /// `BOARD::Add( PcbTarget, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_target(&mut self, item: crate::pcb_target::PcbTarget, mode: AddMode) -> crate::ids::TargetId {
+    pub fn add_target(
+        &mut self,
+        item: crate::pcb_target::PcbTarget,
+        mode: AddMode,
+    ) -> crate::ids::TargetId {
         crate::port_pending!("BOARD::Add (target)", item, mode)
     }
 
     /// `BOARD::Add( PcbGridItem, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_grid_item(&mut self, item: crate::pcb_grid_item::PcbGridItem, mode: AddMode) -> crate::ids::GridItemId {
+    pub fn add_grid_item(
+        &mut self,
+        item: crate::pcb_grid_item::PcbGridItem,
+        mode: AddMode,
+    ) -> crate::ids::GridItemId {
         crate::port_pending!("BOARD::Add (grid_item)", item, mode)
     }
 
     /// `BOARD::Add( PcbDrillMap, aMode )` (m_drawings, front unless APPEND / BULK_APPEND): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_drill_map(&mut self, item: crate::pcb_drill_map::PcbDrillMap, mode: AddMode) -> crate::ids::DrillMapId {
+    pub fn add_drill_map(
+        &mut self,
+        item: crate::pcb_drill_map::PcbDrillMap,
+        mode: AddMode,
+    ) -> crate::ids::DrillMapId {
         crate::port_pending!("BOARD::Add (drill_map)", item, mode)
     }
 
     /// `BOARD::Add( PcbPoint, aMode )` (m_points.push_back): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_point(&mut self, item: crate::pcb_point::PcbPoint, mode: AddMode) -> crate::ids::PointId {
+    pub fn add_point(
+        &mut self,
+        item: crate::pcb_point::PcbPoint,
+        mode: AddMode,
+    ) -> crate::ids::PointId {
         crate::port_pending!("BOARD::Add (point)", item, mode)
     }
 
     /// `BOARD::Add( PcbGroup, aMode )` (m_groups.push_back): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_group(&mut self, item: crate::pcb_group::PcbGroup, mode: AddMode) -> crate::ids::GroupId {
+    pub fn add_group(
+        &mut self,
+        item: crate::pcb_group::PcbGroup,
+        mode: AddMode,
+    ) -> crate::ids::GroupId {
         crate::port_pending!("BOARD::Add (group)", item, mode)
     }
 
     /// `BOARD::Add( PcbGenerator, aMode )` (m_generators.push_back): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_generator(&mut self, item: crate::pcb_generator::PcbGenerator, mode: AddMode) -> crate::ids::GeneratorId {
+    pub fn add_generator(
+        &mut self,
+        item: crate::pcb_generator::PcbGenerator,
+        mode: AddMode,
+    ) -> crate::ids::GeneratorId {
         crate::port_pending!("BOARD::Add (generator)", item, mode)
     }
 
     /// `BOARD::Add( PcbConstraint, aMode )` (m_constraints.push_back): parent = board, edit flags
     /// cleared, `base.id` stamped, UUID bound, time stamp bumped.
-    pub fn add_constraint(&mut self, item: crate::pcb_constraint::PcbConstraint, mode: AddMode) -> crate::ids::ConstraintId {
+    pub fn add_constraint(
+        &mut self,
+        item: crate::pcb_constraint::PcbConstraint,
+        mode: AddMode,
+    ) -> crate::ids::ConstraintId {
         crate::port_pending!("BOARD::Add (constraint)", item, mode)
     }
 
@@ -244,11 +300,7 @@ impl Board {
 
     /// `BOARD::RunOnChildren` (tracks, zones, markers, groups, constraints, points,
     /// footprints (+ children), drawings (+ children), `board.cpp:837`).
-    pub fn run_on_children(
-        &self,
-        mode: crate::item::RecurseMode,
-        f: &mut dyn FnMut(ItemId),
-    ) {
+    pub fn run_on_children(&self, mode: crate::item::RecurseMode, f: &mut dyn FnMut(ItemId)) {
         crate::port_pending!("BOARD::RunOnChildren", mode, f)
     }
 

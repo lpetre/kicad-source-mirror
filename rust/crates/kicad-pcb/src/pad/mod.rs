@@ -125,9 +125,9 @@ pub(crate) struct PadMaskShapes {
 #[allow(dead_code)] // built and read by package M15
 pub(crate) struct PadEffectiveShapes {
     pub key: PadCacheKey,
-    pub bounding_box: Box2I,                              // m_effectiveBoundingBox
+    pub bounding_box: Box2I, // m_effectiveBoundingBox
     pub shapes: BTreeMap<PcbLayerId, Arc<ShapeCompound>>, // m_effectiveShapes
-    pub hole_shape: Arc<ShapeSegment>,                    // m_effectiveHoleShape
+    pub hole_shape: Arc<ShapeSegment>, // m_effectiveHoleShape
 }
 
 /// The polygon part of PAD_DRAW_CACHE_DATA for one ERROR_LOC.
@@ -224,7 +224,12 @@ impl Pad {
 
     /// `PAD::UnplatedHoleMask()`.
     pub fn unplated_hole_mask() -> Lset {
-        Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu, PcbLayerId::FMask, PcbLayerId::BMask])
+        Lset::from_layers(&[
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+            PcbLayerId::FMask,
+            PcbLayerId::BMask,
+        ])
     }
 
     /// `PAD::ApertureMask()`.
@@ -564,7 +569,10 @@ mod tests {
         assert_eq!(pad.lib_pos, Vector2I::new(0, 0));
         assert_eq!(pad.lib_orientation(), ANGLE_0);
         assert_eq!(pad.zone_layer_overrides.len(), 32);
-        assert_eq!(pad.zone_layer_override(PcbLayerId::In5Cu), ZoneLayerOverride::None);
+        assert_eq!(
+            pad.zone_layer_override(PcbLayerId::In5Cu),
+            ZoneLayerOverride::None
+        );
         assert!(pad.base.item.uuid == Kiid::default());
         assert!(pad.number.is_empty() && pad.pin_function.is_empty());
     }

@@ -97,23 +97,23 @@ pub struct EdaShapeHatchCacheData {
 pub struct EdaShape {
     /// m_endsSwapped: true if start/end were swapped, e.g. by SetArcAngleAndEnd.
     pub ends_swapped: bool,
-    pub shape: ShapeT,               // m_shape
-    pub stroke: StrokeParams,        // m_stroke
-    pub start_ending: LineEnding,    // m_startEnding
-    pub end_ending: LineEnding,      // m_endEnding
-    pub fill: FillT,                 // m_fill
-    pub fill_color: Color4D,         // m_fillColor
-    pub rectangle_height: i64,       // m_rectangleHeight (long long)
-    pub rectangle_width: i64,        // m_rectangleWidth (long long)
-    pub corner_radius: i32,          // m_cornerRadius
+    pub shape: ShapeT,            // m_shape
+    pub stroke: StrokeParams,     // m_stroke
+    pub start_ending: LineEnding, // m_startEnding
+    pub end_ending: LineEnding,   // m_endEnding
+    pub fill: FillT,              // m_fill
+    pub fill_color: Color4D,      // m_fillColor
+    pub rectangle_height: i64,    // m_rectangleHeight (long long)
+    pub rectangle_width: i64,     // m_rectangleWidth (long long)
+    pub corner_radius: i32,       // m_cornerRadius
     /// m_start: line start point or circle centre.
     pub start: Vector2I,
     /// m_end: line end point or circle 3 o'clock point.
     pub end: Vector2I,
-    pub arc_center: Vector2I,        // m_arcCenter
-    pub arc_mid_data: ArcMid,        // m_arcMidData
-    pub bezier_c1: Vector2I,         // m_bezierC1
-    pub bezier_c2: Vector2I,         // m_bezierC2
+    pub arc_center: Vector2I,         // m_arcCenter
+    pub arc_mid_data: ArcMid,         // m_arcMidData
+    pub bezier_c1: Vector2I,          // m_bezierC1
+    pub bezier_c2: Vector2I,          // m_bezierC2
     pub bezier_points: Vec<Vector2I>, // m_bezierPoints
     /// m_ellipse: used only for ELLIPSE / ELLIPSE_ARC.
     pub ellipse: Ellipse<i32>,
@@ -431,7 +431,14 @@ pub fn shape_hit_test_rect<H: EdaShapeItem + ?Sized>(
     contained: bool,
     accuracy: i32,
 ) -> bool {
-    crate::port_pending!("EDA_SHAPE::hitTest (rect)", host, ctx, rect, contained, accuracy)
+    crate::port_pending!(
+        "EDA_SHAPE::hitTest (rect)",
+        host,
+        ctx,
+        rect,
+        contained,
+        accuracy
+    )
 }
 
 /// `EDA_SHAPE::TransformShapeToPolygon( aBuffer, aClearance, aError, aErrorLoc,
@@ -576,10 +583,16 @@ mod tests {
         assert_eq!(s.stroke.line_style(), LineStyle::Default);
         assert_eq!(s.fill, FillT::NoFill);
         assert_eq!(s.fill_color, Color4D::UNSPECIFIED);
-        assert_eq!((s.rectangle_height, s.rectangle_width, s.corner_radius), (0, 0, 0));
+        assert_eq!(
+            (s.rectangle_height, s.rectangle_width, s.corner_radius),
+            (0, 0, 0)
+        );
         assert!(!s.ends_swapped && !s.proxy_item);
         assert_eq!(s.start_ending, LineEnding::default());
-        assert_eq!((ShapeT::Undefined as i32, ShapeT::EllipseArc as i32), (-1, 7));
+        assert_eq!(
+            (ShapeT::Undefined as i32, ShapeT::EllipseArc as i32),
+            (-1, 7)
+        );
         assert_eq!((FillT::NoFill as i32, FillT::CrossHatch as i32), (1, 7));
     }
 }

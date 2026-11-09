@@ -291,7 +291,12 @@ pub fn effective_text_pen_width<H: EdaTextItem + ?Sized>(
     ctx: &BoardCtx<'_>,
     default_pen_width: i32,
 ) -> i32 {
-    crate::port_pending!("EDA_TEXT::GetEffectiveTextPenWidth", host, ctx, default_pen_width)
+    crate::port_pending!(
+        "EDA_TEXT::GetEffectiveTextPenWidth",
+        host,
+        ctx,
+        default_pen_width
+    )
 }
 
 /// `EDA_TEXT::GetEffectiveTextShape( aTriangulate, aBBox, aAngle )` (`None` = the default
@@ -303,7 +308,14 @@ pub fn effective_text_shape<H: EdaTextItem + ?Sized>(
     bbox: Option<&Box2I>,
     angle: EdaAngle,
 ) -> Arc<ShapeCompound> {
-    crate::port_pending!("EDA_TEXT::GetEffectiveTextShape", host, ctx, triangulate, bbox, angle)
+    crate::port_pending!(
+        "EDA_TEXT::GetEffectiveTextShape",
+        host,
+        ctx,
+        triangulate,
+        bbox,
+        angle
+    )
 }
 
 /// `EDA_TEXT::GetLinePositions( aSettings, aPositions, aLineCount )`.

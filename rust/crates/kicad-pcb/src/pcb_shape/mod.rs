@@ -108,7 +108,11 @@ impl PcbShape {
     pub fn with_shape(shape: ShapeT) -> Self {
         PcbShape {
             base: ConnectedItemBase::default(),
-            shape: EdaShape::new(shape, PCB_IU_SCALE.mm_to_iu(DEFAULT_LINE_WIDTH), FillT::NoFill),
+            shape: EdaShape::new(
+                shape,
+                PCB_IU_SCALE.mm_to_iu(DEFAULT_LINE_WIDTH),
+                FillT::NoFill,
+            ),
             has_solder_mask: false,
             solder_mask_margin: None,
             lib: PcbShapeLib::new(shape),
@@ -156,7 +160,13 @@ impl BoardItem for PcbShape {
     fn center(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbShape::center(self, ctx)
     }
-    fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         PcbShape::effective_shape(self, ctx, layer, flash, usage)
     }
     fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
@@ -168,13 +178,24 @@ impl BoardItem for PcbShape {
     fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         PcbShape::hit_test(self, ctx, pos, accuracy)
     }
-    fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         PcbShape::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
     fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
         PcbShape::is_on_layer(self, ctx, layer)
     }
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         PcbShape::item_description(self, ctx, units, full)
     }
     fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
@@ -189,11 +210,37 @@ impl BoardItem for PcbShape {
     fn stroke(&self, ctx: &BoardCtx<'_>) -> StrokeParams {
         PcbShape::stroke(self, ctx)
     }
-    fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
+    fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
         PcbShape::transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
     }
-    fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        PcbShape::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        PcbShape::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 }
 
@@ -216,8 +263,24 @@ impl BoardItemMut for PcbShape {
     fn normalize(&mut self) {
         PcbShape::normalize(self)
     }
-    fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        PcbShape::on_footprint_rescaled(self, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        PcbShape::on_footprint_rescaled(
+            self,
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
     fn on_footprint_transformed(&mut self, env: &MutEnv) {
         PcbShape::on_footprint_transformed(self, env)
@@ -274,7 +337,13 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::GetEffectiveShape`.
-    pub fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    pub fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         crate::port_pending!("PCB_SHAPE::GetEffectiveShape", ctx, layer, flash, usage)
     }
 
@@ -294,7 +363,13 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::HitTest`.
-    pub fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    pub fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         crate::port_pending!("PCB_SHAPE::HitTest", ctx, rect, contained, accuracy)
     }
 
@@ -304,7 +379,12 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::GetItemDescription`.
-    pub fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    pub fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         crate::port_pending!("PCB_SHAPE::GetItemDescription", ctx, units, full)
     }
 
@@ -331,13 +411,47 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::TransformShapeToPolySet`.
-    pub fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
-        crate::port_pending!("PCB_SHAPE::TransformShapeToPolySet", ctx, buffer, layer, clearance, error, error_loc)
+    pub fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        crate::port_pending!(
+            "PCB_SHAPE::TransformShapeToPolySet",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc
+        )
     }
 
     /// `PCB_SHAPE::TransformShapeToPolygon`.
-    pub fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        crate::port_pending!("PCB_SHAPE::TransformShapeToPolygon", ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    pub fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        crate::port_pending!(
+            "PCB_SHAPE::TransformShapeToPolygon",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width
+        )
     }
 
     /// `PCB_SHAPE::IsConnected`.
@@ -366,8 +480,24 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::OnFootprintRescaled`.
-    pub fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        crate::port_pending!("PCB_SHAPE::OnFootprintRescaled", env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    pub fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        crate::port_pending!(
+            "PCB_SHAPE::OnFootprintRescaled",
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate
+        )
     }
 
     /// `PCB_SHAPE::OnFootprintTransformed`.
@@ -438,7 +568,10 @@ mod tests {
         assert!(!s.has_solder_mask);
         assert_eq!(s.solder_mask_margin, None);
         assert_eq!(s.lib.shape, ShapeT::Segment);
-        assert_eq!((s.lib.start, s.lib.end, s.lib.corner_radius), (Vector2I::default(), Vector2I::default(), 0));
+        assert_eq!(
+            (s.lib.start, s.lib.end, s.lib.corner_radius),
+            (Vector2I::default(), Vector2I::default(), 0)
+        );
         assert_eq!(s.lib.ellipse_rotation, ANGLE_0);
         assert_eq!(s.base.item.layer, PcbLayerId::FCu);
         assert!(s.base.item.uuid == Kiid::default());

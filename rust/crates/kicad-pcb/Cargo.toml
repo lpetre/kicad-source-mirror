@@ -10,6 +10,16 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+# Reference-dump support (src/dump, bin pcb-dump-rs): prints the model in the line format of
+# rust/tools/pcb-dump (docs/PCB_DUMP_FORMAT.md) for differential testing against the C++.
+dump = []
+
+[[bin]]
+name = "pcb-dump-rs"
+path = "src/bin/pcb_dump_rs.rs"
+required-features = ["dump"]
+
 [dependencies]
 kicad-geom = { path = "../kicad-geom" }
 kicad-core = { path = "../kicad-core" }

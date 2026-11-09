@@ -200,7 +200,13 @@ impl BoardItem for PcbTablecell {
     fn center(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbTablecell::center(self, ctx)
     }
-    fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         PcbTablecell::effective_shape(self, ctx, layer, flash, usage)
     }
     fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
@@ -212,13 +218,24 @@ impl BoardItem for PcbTablecell {
     fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         PcbTablecell::hit_test(self, ctx, pos, accuracy)
     }
-    fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         PcbTablecell::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
     fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
         PcbTablecell::is_on_layer(self, ctx, layer)
     }
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         PcbTablecell::item_description(self, ctx, units, full)
     }
     fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
@@ -236,11 +253,39 @@ impl BoardItem for PcbTablecell {
     fn stroke(&self, ctx: &BoardCtx<'_>) -> StrokeParams {
         PcbTablecell::stroke(self, ctx)
     }
-    fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
-        PcbTablecell::transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
+    fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        PcbTablecell::transform_shape_to_poly_set(
+            self, ctx, buffer, layer, clearance, error, error_loc,
+        )
     }
-    fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        PcbTablecell::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        PcbTablecell::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 }
 
@@ -263,8 +308,24 @@ impl BoardItemMut for PcbTablecell {
     fn normalize(&mut self) {
         PcbTablecell::normalize(self)
     }
-    fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        PcbTablecell::on_footprint_rescaled(self, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        PcbTablecell::on_footprint_rescaled(
+            self,
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
     fn on_footprint_transformed(&mut self, env: &MutEnv) {
         PcbTablecell::on_footprint_transformed(self, env)
@@ -372,8 +433,20 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::GetEffectiveShape (PCB_TABLECELL)`.
-    pub fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
-        crate::port_pending!("PCB_TEXTBOX::GetEffectiveShape (PCB_TABLECELL)", ctx, layer, flash, usage)
+    pub fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
+        crate::port_pending!(
+            "PCB_TEXTBOX::GetEffectiveShape (PCB_TABLECELL)",
+            ctx,
+            layer,
+            flash,
+            usage
+        )
     }
 
     /// `PCB_TABLECELL::GetFriendlyName()`: "Table Cell" (untranslated).
@@ -392,8 +465,20 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::HitTest (PCB_TABLECELL)`.
-    pub fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXTBOX::HitTest (PCB_TABLECELL)", ctx, rect, contained, accuracy)
+    pub fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
+        crate::port_pending!(
+            "PCB_TEXTBOX::HitTest (PCB_TABLECELL)",
+            ctx,
+            rect,
+            contained,
+            accuracy
+        )
     }
 
     /// `PCB_SHAPE::IsOnLayer`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -402,7 +487,12 @@ impl PcbTablecell {
     }
 
     /// `PCB_TABLECELL::GetItemDescription`.
-    pub fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    pub fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         crate::port_pending!("PCB_TABLECELL::GetItemDescription", ctx, units, full)
     }
 
@@ -427,13 +517,47 @@ impl PcbTablecell {
     }
 
     /// `PCB_SHAPE::TransformShapeToPolySet (PCB_TABLECELL)`.
-    pub fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
-        crate::port_pending!("PCB_SHAPE::TransformShapeToPolySet (PCB_TABLECELL)", ctx, buffer, layer, clearance, error, error_loc)
+    pub fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        crate::port_pending!(
+            "PCB_SHAPE::TransformShapeToPolySet (PCB_TABLECELL)",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc
+        )
     }
 
     /// `PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)`.
-    pub fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        crate::port_pending!("PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)", ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    pub fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        crate::port_pending!(
+            "PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width
+        )
     }
 
     /// `PCB_SHAPE::IsConnected`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -462,8 +586,23 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::OnFootprintRescaled`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        self.textbox.on_footprint_rescaled(env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    pub fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        self.textbox.on_footprint_rescaled(
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
 
     /// `PCB_TEXTBOX::OnFootprintTransformed`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).

@@ -61,11 +61,11 @@ pub enum FieldT {
 pub struct PcbField {
     /// The `PCB_TEXT` part.
     pub text: PcbText,
-    pub id: FieldT,       // m_id
+    pub id: FieldT, // m_id
     /// m_ordinal: sort order for non-mandatory fields.
     pub ordinal: i32,
-    pub name: String,     // m_name
-    pub private: bool,    // m_private
+    pub name: String,  // m_name
+    pub private: bool, // m_private
 }
 
 impl Default for PcbField {
@@ -175,7 +175,13 @@ impl PcbField {
         context: ResolutionContext,
         depth: i32,
     ) -> String {
-        crate::port_pending!("PCB_FIELD::GetShownText (variant)", ctx, variant_name, context, depth)
+        crate::port_pending!(
+            "PCB_FIELD::GetShownText (variant)",
+            ctx,
+            variant_name,
+            context,
+            depth
+        )
     }
 
     /// `PCB_FIELD::GetTextTypeDescription()`.
@@ -196,7 +202,13 @@ impl PcbField {
         contains: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!("PCB_TEXT::TextHitTest (PCB_FIELD, rect)", ctx, rect, contains, accuracy)
+        crate::port_pending!(
+            "PCB_TEXT::TextHitTest (PCB_FIELD, rect)",
+            ctx,
+            rect,
+            contains,
+            accuracy
+        )
     }
 }
 
@@ -224,23 +236,58 @@ impl BoardItem for PcbField {
     fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
         PcbField::bounding_box(self, ctx)
     }
-    fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         PcbField::effective_shape(self, ctx, layer, flash, usage)
     }
     fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         PcbField::hit_test(self, ctx, pos, accuracy)
     }
-    fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         PcbField::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         PcbField::item_description(self, ctx, units, full)
     }
     fn position(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbField::position(self, ctx)
     }
-    fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        PcbField::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        PcbField::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 }
 
@@ -254,8 +301,24 @@ impl BoardItemMut for PcbField {
     fn move_by(&mut self, env: &MutEnv, delta: Vector2I) {
         PcbField::move_by(self, env, delta)
     }
-    fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        PcbField::on_footprint_rescaled(self, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        PcbField::on_footprint_rescaled(
+            self,
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
     fn on_footprint_transformed(&mut self, env: &MutEnv) {
         PcbField::on_footprint_transformed(self, env)
@@ -322,8 +385,20 @@ impl PcbField {
     }
 
     /// `PCB_TEXT::GetEffectiveShape (PCB_FIELD)`.
-    pub fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
-        crate::port_pending!("PCB_TEXT::GetEffectiveShape (PCB_FIELD)", ctx, layer, flash, usage)
+    pub fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
+        crate::port_pending!(
+            "PCB_TEXT::GetEffectiveShape (PCB_FIELD)",
+            ctx,
+            layer,
+            flash,
+            usage
+        )
     }
 
     /// `PCB_TEXT::HitTest (PCB_FIELD)`.
@@ -332,12 +407,29 @@ impl PcbField {
     }
 
     /// `PCB_TEXT::HitTest (PCB_FIELD)`.
-    pub fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXT::HitTest (PCB_FIELD)", ctx, rect, contained, accuracy)
+    pub fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
+        crate::port_pending!(
+            "PCB_TEXT::HitTest (PCB_FIELD)",
+            ctx,
+            rect,
+            contained,
+            accuracy
+        )
     }
 
     /// `PCB_FIELD::GetItemDescription`.
-    pub fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    pub fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         crate::port_pending!("PCB_FIELD::GetItemDescription", ctx, units, full)
     }
 
@@ -347,8 +439,26 @@ impl PcbField {
     }
 
     /// `PCB_TEXT::TransformShapeToPolygon (PCB_FIELD)`.
-    pub fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        crate::port_pending!("PCB_TEXT::TransformShapeToPolygon (PCB_FIELD)", ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    pub fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        crate::port_pending!(
+            "PCB_TEXT::TransformShapeToPolygon (PCB_FIELD)",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width
+        )
     }
 
     /// `PCB_TEXT::Flip`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
@@ -367,8 +477,17 @@ impl PcbField {
     }
 
     /// `PCB_TEXT::OnFootprintRescaled`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
-    pub fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        self.text.on_footprint_rescaled(env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    pub fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        self.text
+            .on_footprint_rescaled(env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
     }
 
     /// `PCB_TEXT::OnFootprintTransformed`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
@@ -461,7 +580,10 @@ mod tests {
         assert!(f.name.is_empty());
         assert_eq!(f.text.base.layer, PcbLayerId::FSilkS);
         assert!(f.text.text.attributes.keep_upright);
-        assert_eq!((FieldT::Reference as i32, FieldT::SheetRefSuffix as i32), (1, 10));
+        assert_eq!(
+            (FieldT::Reference as i32, FieldT::SheetRefSuffix as i32),
+            (1, 10)
+        );
 
         let mut fx = rotated_flipped_scaled();
         let id = fx.child(ItemKind::Field).typed::<PcbField>().unwrap();

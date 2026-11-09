@@ -195,94 +195,94 @@ impl Ord for DrcExclusion {
 /// bases (JSON plumbing and BOM).
 #[derive(Clone, Debug)]
 pub struct BoardDesignSettings {
-    pub track_width_list: Vec<i32>,                        // m_TrackWidthList
-    pub vias_dimensions_list: Vec<ViaDimension>,           // m_ViasDimensionsList
-    pub via_stack_presets: Vec<ViaStackPreset>,            // m_ViaStackPresets
+    pub track_width_list: Vec<i32>,              // m_TrackWidthList
+    pub vias_dimensions_list: Vec<ViaDimension>, // m_ViasDimensionsList
+    pub via_stack_presets: Vec<ViaStackPreset>,  // m_ViaStackPresets
     pub diff_pair_dimensions_list: Vec<DiffPairDimension>, // m_DiffPairDimensionsList
-    pub teardrop_params_list: TeardropParametersList,      // m_TeardropParamsList
+    pub teardrop_params_list: TeardropParametersList, // m_TeardropParamsList
     /// m_SingleTrackMeanderSettings, m_DiffPairMeanderSettings, m_SkewMeanderSettings
     /// (PNS::MEANDER_SETTINGS): kept as the JSON objects of `tuning_pattern_settings`
     /// (`single_track_defaults`, `diff_pair_defaults`, `diff_pair_skew_defaults`); only the
     /// length tuner reads them.
     pub meander_settings: [JsonValue; 3],
-    pub current_via_type: Viatype,           // m_CurrentViaType
-    pub use_connected_track_width: bool,     // m_UseConnectedTrackWidth
-    pub temp_override_track_width: bool,     // m_TempOverrideTrackWidth
-    pub min_clearance: i32,                  // m_MinClearance
-    pub min_groove_width: i32,               // m_MinGrooveWidth
-    pub min_conn: i32,                       // m_MinConn
-    pub track_min_width: i32,                // m_TrackMinWidth
-    pub vias_min_annular_width: i32,         // m_ViasMinAnnularWidth
-    pub vias_min_size: i32,                  // m_ViasMinSize
-    pub min_through_drill: i32,              // m_MinThroughDrill
-    pub micro_vias_min_size: i32,            // m_MicroViasMinSize
-    pub micro_vias_min_drill: i32,           // m_MicroViasMinDrill
-    pub copper_edge_clearance: i32,          // m_CopperEdgeClearance
-    pub hole_clearance: i32,                 // m_HoleClearance
-    pub hole_to_hole_min: i32,               // m_HoleToHoleMin
-    pub silk_clearance: i32,                 // m_SilkClearance
-    pub min_resolved_spokes: i32,            // m_MinResolvedSpokes
-    pub min_silk_text_height: i32,           // m_MinSilkTextHeight
-    pub min_silk_text_thickness: i32,        // m_MinSilkTextThickness
-    pub drc_severities: BTreeMap<i32, Severity>, // m_DRCSeverities (DRCE code -> severity)
-    pub drc_exclusions: BTreeSet<DrcExclusion>,  // m_DrcExclusions
-    pub zone_keep_external_fillets: bool,    // m_ZoneKeepExternalFillets
-    pub max_error: i32,                      // m_MaxError
-    pub solder_mask_expansion: i32,          // m_SolderMaskExpansion
-    pub solder_mask_min_width: i32,          // m_SolderMaskMinWidth
-    pub solder_mask_to_copper_clearance: i32, // m_SolderMaskToCopperClearance
-    pub solder_paste_margin: i32,            // m_SolderPasteMargin
-    pub solder_paste_margin_ratio: f64,      // m_SolderPasteMarginRatio
-    pub allow_soldermask_bridges_in_fps: bool, // m_AllowSoldermaskBridgesInFPs
-    pub tent_vias_front: bool,               // m_TentViasFront
-    pub tent_vias_back: bool,                // m_TentViasBack
-    pub cover_vias_front: bool,              // m_CoverViasFront
-    pub cover_vias_back: bool,               // m_CoverViasBack
-    pub plug_vias_front: bool,               // m_PlugViasFront
-    pub plug_vias_back: bool,                // m_PlugViasBack
-    pub cap_vias: bool,                      // m_CapVias
-    pub fill_vias: bool,                     // m_FillVias
-    pub net_settings: NetSettings,           // m_NetSettings (shared_ptr)
-    pub default_fp_text_items: Vec<TextItemInfo>, // m_DefaultFPTextItems
+    pub current_via_type: Viatype,                  // m_CurrentViaType
+    pub use_connected_track_width: bool,            // m_UseConnectedTrackWidth
+    pub temp_override_track_width: bool,            // m_TempOverrideTrackWidth
+    pub min_clearance: i32,                         // m_MinClearance
+    pub min_groove_width: i32,                      // m_MinGrooveWidth
+    pub min_conn: i32,                              // m_MinConn
+    pub track_min_width: i32,                       // m_TrackMinWidth
+    pub vias_min_annular_width: i32,                // m_ViasMinAnnularWidth
+    pub vias_min_size: i32,                         // m_ViasMinSize
+    pub min_through_drill: i32,                     // m_MinThroughDrill
+    pub micro_vias_min_size: i32,                   // m_MicroViasMinSize
+    pub micro_vias_min_drill: i32,                  // m_MicroViasMinDrill
+    pub copper_edge_clearance: i32,                 // m_CopperEdgeClearance
+    pub hole_clearance: i32,                        // m_HoleClearance
+    pub hole_to_hole_min: i32,                      // m_HoleToHoleMin
+    pub silk_clearance: i32,                        // m_SilkClearance
+    pub min_resolved_spokes: i32,                   // m_MinResolvedSpokes
+    pub min_silk_text_height: i32,                  // m_MinSilkTextHeight
+    pub min_silk_text_thickness: i32,               // m_MinSilkTextThickness
+    pub drc_severities: BTreeMap<i32, Severity>,    // m_DRCSeverities (DRCE code -> severity)
+    pub drc_exclusions: BTreeSet<DrcExclusion>,     // m_DrcExclusions
+    pub zone_keep_external_fillets: bool,           // m_ZoneKeepExternalFillets
+    pub max_error: i32,                             // m_MaxError
+    pub solder_mask_expansion: i32,                 // m_SolderMaskExpansion
+    pub solder_mask_min_width: i32,                 // m_SolderMaskMinWidth
+    pub solder_mask_to_copper_clearance: i32,       // m_SolderMaskToCopperClearance
+    pub solder_paste_margin: i32,                   // m_SolderPasteMargin
+    pub solder_paste_margin_ratio: f64,             // m_SolderPasteMarginRatio
+    pub allow_soldermask_bridges_in_fps: bool,      // m_AllowSoldermaskBridgesInFPs
+    pub tent_vias_front: bool,                      // m_TentViasFront
+    pub tent_vias_back: bool,                       // m_TentViasBack
+    pub cover_vias_front: bool,                     // m_CoverViasFront
+    pub cover_vias_back: bool,                      // m_CoverViasBack
+    pub plug_vias_front: bool,                      // m_PlugViasFront
+    pub plug_vias_back: bool,                       // m_PlugViasBack
+    pub cap_vias: bool,                             // m_CapVias
+    pub fill_vias: bool,                            // m_FillVias
+    pub net_settings: NetSettings,                  // m_NetSettings (shared_ptr)
+    pub default_fp_text_items: Vec<TextItemInfo>,   // m_DefaultFPTextItems
     pub user_layer_names: BTreeMap<String, String>, // m_UserLayerNames
     pub zone_layer_properties: BTreeMap<PcbLayerId, ZoneLayerProperties>, // m_ZoneLayerProperties
-    pub line_thickness: [i32; LAYER_CLASS_COUNT], // m_LineThickness
-    pub text_size: [Vector2I; LAYER_CLASS_COUNT], // m_TextSize
-    pub text_thickness: [i32; LAYER_CLASS_COUNT], // m_TextThickness
-    pub text_italic: [bool; LAYER_CLASS_COUNT], // m_TextItalic
-    pub text_upright: [bool; LAYER_CLASS_COUNT], // m_TextUpright
-    pub dimension_units_mode: DimUnitsMode,  // m_DimensionUnitsMode
-    pub dimension_precision: DimPrecision,   // m_DimensionPrecision
-    pub dimension_units_format: DimUnitsFormat, // m_DimensionUnitsFormat
-    pub dimension_suppress_zeroes: bool,     // m_DimensionSuppressZeroes
-    pub dimension_text_position: DimTextPosition, // m_DimensionTextPosition
-    pub dimension_keep_text_aligned: bool,   // m_DimensionKeepTextAligned
-    pub dimension_arrow_length: i32,         // m_DimensionArrowLength
-    pub dimension_extension_offset: i32,     // m_DimensionExtensionOffset
-    pub style_fp_fields: bool,               // m_StyleFPFields
-    pub style_fp_text: bool,                 // m_StyleFPText
-    pub style_fp_shapes: bool,               // m_StyleFPShapes
-    pub style_fp_dimensions: bool,           // m_StyleFPDimensions
-    pub style_fp_barcodes: bool,             // m_StyleFPBarcodes
-    pub has_stackup: bool,                   // m_HasStackup
-    pub use_height_for_length_calcs: bool,   // m_UseHeightForLengthCalcs
-    pub aux_origin: Vector2I,                // m_auxOrigin
-    pub grid_origin: Vector2I,               // m_gridOrigin
-    pub track_width_index: i32,              // m_trackWidthIndex
-    pub via_size_index: i32,                 // m_viaSizeIndex
-    pub diff_pair_index: i32,                // m_diffPairIndex
-    pub via_stack_index: i32,                // m_viaStackIndex
-    pub use_custom_track_via: bool,          // m_useCustomTrackVia
-    pub custom_track_width: i32,             // m_customTrackWidth
-    pub custom_via_size: ViaDimension,       // m_customViaSize
-    pub use_custom_diff_pair: bool,          // m_useCustomDiffPair
-    pub custom_diff_pair: DiffPairDimension, // m_customDiffPair
-    pub copper_layer_count: i32,             // m_copperLayerCount
-    pub user_defined_layer_count: i32,       // m_userDefinedLayerCount
-    pub enabled_layers: Lset,                // m_enabledLayers
-    pub board_thickness: i32,                // m_boardThickness
-    pub current_net_class_name: String,      // m_currentNetClassName
-    pub stackup: BoardStackup,               // m_stackup
+    pub line_thickness: [i32; LAYER_CLASS_COUNT],   // m_LineThickness
+    pub text_size: [Vector2I; LAYER_CLASS_COUNT],   // m_TextSize
+    pub text_thickness: [i32; LAYER_CLASS_COUNT],   // m_TextThickness
+    pub text_italic: [bool; LAYER_CLASS_COUNT],     // m_TextItalic
+    pub text_upright: [bool; LAYER_CLASS_COUNT],    // m_TextUpright
+    pub dimension_units_mode: DimUnitsMode,         // m_DimensionUnitsMode
+    pub dimension_precision: DimPrecision,          // m_DimensionPrecision
+    pub dimension_units_format: DimUnitsFormat,     // m_DimensionUnitsFormat
+    pub dimension_suppress_zeroes: bool,            // m_DimensionSuppressZeroes
+    pub dimension_text_position: DimTextPosition,   // m_DimensionTextPosition
+    pub dimension_keep_text_aligned: bool,          // m_DimensionKeepTextAligned
+    pub dimension_arrow_length: i32,                // m_DimensionArrowLength
+    pub dimension_extension_offset: i32,            // m_DimensionExtensionOffset
+    pub style_fp_fields: bool,                      // m_StyleFPFields
+    pub style_fp_text: bool,                        // m_StyleFPText
+    pub style_fp_shapes: bool,                      // m_StyleFPShapes
+    pub style_fp_dimensions: bool,                  // m_StyleFPDimensions
+    pub style_fp_barcodes: bool,                    // m_StyleFPBarcodes
+    pub has_stackup: bool,                          // m_HasStackup
+    pub use_height_for_length_calcs: bool,          // m_UseHeightForLengthCalcs
+    pub aux_origin: Vector2I,                       // m_auxOrigin
+    pub grid_origin: Vector2I,                      // m_gridOrigin
+    pub track_width_index: i32,                     // m_trackWidthIndex
+    pub via_size_index: i32,                        // m_viaSizeIndex
+    pub diff_pair_index: i32,                       // m_diffPairIndex
+    pub via_stack_index: i32,                       // m_viaStackIndex
+    pub use_custom_track_via: bool,                 // m_useCustomTrackVia
+    pub custom_track_width: i32,                    // m_customTrackWidth
+    pub custom_via_size: ViaDimension,              // m_customViaSize
+    pub use_custom_diff_pair: bool,                 // m_useCustomDiffPair
+    pub custom_diff_pair: DiffPairDimension,        // m_customDiffPair
+    pub copper_layer_count: i32,                    // m_copperLayerCount
+    pub user_defined_layer_count: i32,              // m_userDefinedLayerCount
+    pub enabled_layers: Lset,                       // m_enabledLayers
+    pub board_thickness: i32,                       // m_boardThickness
+    pub current_net_class_name: String,             // m_currentNetClassName
+    pub stackup: BoardStackup,                      // m_stackup
     /// m_drillSymbolProfile: the `(drill_symbol_profile ...)` node of `(setup ...)`, verbatim.
     pub drill_symbol_profile: Option<Sexpr>,
     pub default_zone_settings: ZoneSettings, // m_defaultZoneSettings
@@ -730,34 +730,59 @@ mod tests {
         );
         assert_eq!(b.vias_min_annular_width, 100_000);
         assert_eq!((b.vias_min_size, b.min_through_drill), (500_000, 300_000));
-        assert_eq!((b.micro_vias_min_size, b.micro_vias_min_drill), (200_000, 100_000));
+        assert_eq!(
+            (b.micro_vias_min_size, b.micro_vias_min_drill),
+            (200_000, 100_000)
+        );
         assert_eq!(b.copper_edge_clearance, 500_000);
         assert_eq!((b.hole_clearance, b.hole_to_hole_min), (250_000, 250_000));
         assert_eq!((b.silk_clearance, b.min_groove_width), (0, 0));
         assert_eq!(b.min_resolved_spokes, 2);
-        assert_eq!((b.min_silk_text_height, b.min_silk_text_thickness), (800_000, 80_000));
+        assert_eq!(
+            (b.min_silk_text_height, b.min_silk_text_thickness),
+            (800_000, 80_000)
+        );
         assert!(b.use_height_for_length_calcs && !b.zone_keep_external_fillets);
         assert!(b.tent_vias_front && b.tent_vias_back && !b.cap_vias && !b.fill_vias);
         assert_eq!(b.board_thickness, 1_600_000);
         assert_eq!(b.custom_track_width, 200_000);
-        assert_eq!(b.custom_via_size, ViaDimension { diameter: 500_000, drill: 300_000 });
+        assert_eq!(
+            b.custom_via_size,
+            ViaDimension {
+                diameter: 500_000,
+                drill: 300_000
+            }
+        );
         assert_eq!(
             b.custom_diff_pair,
-            DiffPairDimension { width: 125_000, gap: 180_000, via_gap: 180_000 }
+            DiffPairDimension {
+                width: 125_000,
+                gap: 180_000,
+                via_gap: 180_000
+            }
         );
         assert_eq!(b.current_via_type, Viatype::Through);
         assert_eq!(
             b.line_thickness,
             [100_000, 200_000, 50_000, 50_000, 100_000, 100_000]
         );
-        assert_eq!(b.text_size[LAYER_CLASS_COPPER], Vector2I::new(1_500_000, 1_500_000));
-        assert_eq!(b.text_size[LAYER_CLASS_FAB], Vector2I::new(1_000_000, 1_000_000));
+        assert_eq!(
+            b.text_size[LAYER_CLASS_COPPER],
+            Vector2I::new(1_500_000, 1_500_000)
+        );
+        assert_eq!(
+            b.text_size[LAYER_CLASS_FAB],
+            Vector2I::new(1_000_000, 1_000_000)
+        );
         assert_eq!(
             b.text_thickness,
             [100_000, 300_000, 150_000, 150_000, 150_000, 150_000]
         );
         assert_eq!(b.default_fp_text_items.len(), 3);
-        assert_eq!(b.default_fp_text_items[0], TextItemInfo::new("REF**", true, PcbLayerId::FSilkS));
+        assert_eq!(
+            b.default_fp_text_items[0],
+            TextItemInfo::new("REF**", true, PcbLayerId::FSilkS)
+        );
         assert_eq!(b.default_fp_text_items[2].text, "${REFERENCE}");
         assert_eq!(b.dimension_precision, DimPrecision::X_XXXX);
         assert_eq!(b.dimension_units_mode, DimUnitsMode::Automatic);

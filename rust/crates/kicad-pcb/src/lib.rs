@@ -99,6 +99,8 @@ pub mod zone;
 pub mod zone_utils;
 
 // ---- file formats ----------------------------------------------------------------------------
+#[cfg(feature = "dump")]
+pub mod dump;
 pub mod io;
 pub mod project;
 

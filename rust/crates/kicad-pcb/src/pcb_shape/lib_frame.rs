@@ -248,7 +248,13 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::SetArcGeometry( aStart, aMid, aEnd )`.
-    pub fn set_arc_geometry(&mut self, env: &MutEnv, start: Vector2I, mid: Vector2I, end: Vector2I) {
+    pub fn set_arc_geometry(
+        &mut self,
+        env: &MutEnv,
+        start: Vector2I,
+        mid: Vector2I,
+        end: Vector2I,
+    ) {
         crate::port_pending!("PCB_SHAPE::SetArcGeometry", env, start, mid, end)
     }
 

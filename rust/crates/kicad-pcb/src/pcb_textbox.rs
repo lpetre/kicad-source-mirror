@@ -23,12 +23,14 @@
 //! `PCB_TEXTBOX` or `PCB_SHAPE` overrides. An inherited `PCB_SHAPE` body calls the embedded
 //! `PcbShape` where it reaches no virtual that `PCB_TEXTBOX` overrides; the others are stubs.
 
+use kicad_core::StrokeParams;
 use kicad_core::text_vars::ResolutionContext;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{GrTextHAlignT, GrTextVAlignT, KicadT, Kiid, KiidGenerator, Lset, PcbLayerId};
-use kicad_core::StrokeParams;
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{Box2I, EdaAngle, EdaOrientation, FlipDirection, ShapePolySet, Vector2I, ki_round};
+use kicad_geom::{
+    Box2I, EdaAngle, EdaOrientation, FlipDirection, ShapePolySet, Vector2I, ki_round,
+};
 
 use crate::board_design_settings::BoardDesignSettings;
 use crate::ctx::{BoardCtx, MutEnv};
@@ -76,8 +78,8 @@ impl PcbTextbox {
         text.attributes.valign = GrTextVAlignT::Center;
         text.attributes.multiline = true;
         let stroke_width = shape.shape.stroke.width().max(0);
-        let default_margin: i32 = ki_round(stroke_width as f64 / 2.0)
-            + ki_round(text.attributes.size.1 as f64 * 0.75);
+        let default_margin: i32 =
+            ki_round(stroke_width as f64 / 2.0) + ki_round(text.attributes.size.1 as f64 * 0.75);
         PcbTextbox {
             shape,
             text,
@@ -218,7 +220,13 @@ impl BoardItem for PcbTextbox {
     fn center(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbTextbox::center(self, ctx)
     }
-    fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         PcbTextbox::effective_shape(self, ctx, layer, flash, usage)
     }
     fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
@@ -230,13 +238,24 @@ impl BoardItem for PcbTextbox {
     fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         PcbTextbox::hit_test(self, ctx, pos, accuracy)
     }
-    fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         PcbTextbox::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
     fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
         PcbTextbox::is_on_layer(self, ctx, layer)
     }
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         PcbTextbox::item_description(self, ctx, units, full)
     }
     fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
@@ -251,11 +270,39 @@ impl BoardItem for PcbTextbox {
     fn stroke(&self, ctx: &BoardCtx<'_>) -> StrokeParams {
         PcbTextbox::stroke(self, ctx)
     }
-    fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
-        PcbTextbox::transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
+    fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        PcbTextbox::transform_shape_to_poly_set(
+            self, ctx, buffer, layer, clearance, error, error_loc,
+        )
     }
-    fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        PcbTextbox::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        PcbTextbox::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 }
 
@@ -278,8 +325,24 @@ impl BoardItemMut for PcbTextbox {
     fn normalize(&mut self) {
         PcbTextbox::normalize(self)
     }
-    fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        PcbTextbox::on_footprint_rescaled(self, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        PcbTextbox::on_footprint_rescaled(
+            self,
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
     fn on_footprint_transformed(&mut self, env: &MutEnv) {
         PcbTextbox::on_footprint_transformed(self, env)
@@ -384,7 +447,13 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::GetEffectiveShape`.
-    pub fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    pub fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         crate::port_pending!("PCB_TEXTBOX::GetEffectiveShape", ctx, layer, flash, usage)
     }
 
@@ -404,7 +473,13 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::HitTest`.
-    pub fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    pub fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         crate::port_pending!("PCB_TEXTBOX::HitTest", ctx, rect, contained, accuracy)
     }
 
@@ -414,7 +489,12 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::GetItemDescription`.
-    pub fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    pub fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         crate::port_pending!("PCB_TEXTBOX::GetItemDescription", ctx, units, full)
     }
 
@@ -439,13 +519,47 @@ impl PcbTextbox {
     }
 
     /// `PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)`.
-    pub fn transform_shape_to_poly_set(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc) {
-        crate::port_pending!("PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)", ctx, buffer, layer, clearance, error, error_loc)
+    pub fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        crate::port_pending!(
+            "PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc
+        )
     }
 
     /// `PCB_TEXTBOX::TransformShapeToPolygon`.
-    pub fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        crate::port_pending!("PCB_TEXTBOX::TransformShapeToPolygon", ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    pub fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        crate::port_pending!(
+            "PCB_TEXTBOX::TransformShapeToPolygon",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width
+        )
     }
 
     /// `PCB_SHAPE::IsConnected`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
@@ -474,8 +588,24 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::OnFootprintRescaled`.
-    pub fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        crate::port_pending!("PCB_TEXTBOX::OnFootprintRescaled", env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    pub fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        crate::port_pending!(
+            "PCB_TEXTBOX::OnFootprintRescaled",
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate
+        )
     }
 
     /// `PCB_TEXTBOX::OnFootprintTransformed`.
@@ -613,7 +743,10 @@ mod tests {
         assert!(t.text.attributes.multiline && t.border_enabled);
         // KiROUND( 100000 / 2.0 ) + KiROUND( 1270000 * 0.75 )
         assert_eq!(t.margin_left, 1_002_500);
-        assert_eq!((t.margin_top, t.margin_right, t.margin_bottom), (1_002_500, 1_002_500, 1_002_500));
+        assert_eq!(
+            (t.margin_top, t.margin_right, t.margin_bottom),
+            (1_002_500, 1_002_500, 1_002_500)
+        );
         assert_eq!(t.lib_text_angle(), EdaAngle::from_degrees(0.0));
         assert_eq!(t.shape.base.item.layer, PcbLayerId::FCu);
 

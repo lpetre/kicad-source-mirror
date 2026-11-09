@@ -64,7 +64,7 @@ pub enum BsEdgeConnectorConstraints {
 #[repr(i32)]
 pub enum DielectricModel {
     #[default]
-    Constant = 0,     // CONSTANT
+    Constant = 0, // CONSTANT
     DjordjevicSarkar, // DJORDJEVIC_SARKAR
 }
 
@@ -100,13 +100,13 @@ impl Default for DielectricPrms {
 /// `BOARD_STACKUP_ITEM`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BoardStackupItem {
-    pub type_: BoardStackupItemType,             // m_Type
-    pub layer_name: String,                      // m_LayerName
-    pub type_name: String,                       // m_TypeName
-    pub layer_id: PcbLayerId,                    // m_LayerId
-    pub dielectric_layer_id: i32,                // m_DielectricLayerId
+    pub type_: BoardStackupItemType,               // m_Type
+    pub layer_name: String,                        // m_LayerName
+    pub type_name: String,                         // m_TypeName
+    pub layer_id: PcbLayerId,                      // m_LayerId
+    pub dielectric_layer_id: i32,                  // m_DielectricLayerId
     pub dielectric_prms_list: Vec<DielectricPrms>, // m_DielectricPrmsList
-    pub enabled: bool,                           // m_enabled
+    pub enabled: bool,                             // m_enabled
 }
 
 impl Default for BoardStackupItem {
@@ -262,12 +262,12 @@ impl BoardStackupItem {
 /// `BOARD_STACKUP`. `m_list` owns its items (C++ deep-copies them in the copy constructor).
 #[derive(Clone, Debug, PartialEq)]
 pub struct BoardStackup {
-    pub finish_type: String,               // m_FinishType
-    pub has_dielectric_constrains: bool,   // m_HasDielectricConstrains
-    pub has_thickness_constrains: bool,    // m_HasThicknessConstrains
+    pub finish_type: String,                                    // m_FinishType
+    pub has_dielectric_constrains: bool,                        // m_HasDielectricConstrains
+    pub has_thickness_constrains: bool,                         // m_HasThicknessConstrains
     pub edge_connector_constraints: BsEdgeConnectorConstraints, // m_EdgeConnectorConstraints
-    pub edge_plating: bool,                // m_EdgePlating
-    pub list: Vec<BoardStackupItem>,       // m_list
+    pub edge_plating: bool,                                     // m_EdgePlating
+    pub list: Vec<BoardStackupItem>,                            // m_list
 }
 
 impl Default for BoardStackup {
@@ -359,7 +359,10 @@ mod tests {
     fn constructor_defaults() {
         let s = BoardStackup::default();
         assert_eq!(s.finish_type, "None");
-        assert_eq!(s.edge_connector_constraints, BsEdgeConnectorConstraints::None);
+        assert_eq!(
+            s.edge_connector_constraints,
+            BsEdgeConnectorConstraints::None
+        );
         assert!(s.list.is_empty() && !s.edge_plating);
 
         let cu = BoardStackupItem::new(BoardStackupItemType::Copper);

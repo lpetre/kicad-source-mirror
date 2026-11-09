@@ -15,6 +15,19 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `pcbnew/zone_utils.cpp`. Package M18.
-//!
-//! Created empty by M0a so that the module tree is complete; the named package fills it.
+//! Port of `pcbnew/zone_utils.h` and `pcbnew/zone_utils.cpp` (package M18).
+
+use crate::board::Board;
+use crate::zone::Zone;
+
+/// `MergeZonesWithSameOutline( aZones )`: merge zones that share an outline into one
+/// multi-layer zone.
+pub fn merge_zones_with_same_outline(zones: Vec<Zone>) -> Vec<Zone> {
+    crate::port_pending!("MergeZonesWithSameOutline", zones)
+}
+
+/// `AutoAssignZonePriorities( aBoard, aReporter )` (no progress reporter): true if any
+/// priority changed.
+pub fn auto_assign_zone_priorities(board: &mut Board) -> bool {
+    crate::port_pending!("AutoAssignZonePriorities", board)
+}

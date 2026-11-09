@@ -244,7 +244,9 @@ impl NetinfoList {
 
     /// `NETINFO_LIST::NetsByName()` iteration order.
     pub fn nets_by_name(&self) -> impl Iterator<Item = &NetinfoItem> + '_ {
-        self.names.values().filter_map(move |code| self.nets.get(code))
+        self.names
+            .values()
+            .filter_map(move |code| self.nets.get(code))
     }
 
     /// `NETINFO_LIST::NetsByNetcode()` iteration order.
@@ -300,12 +302,21 @@ mod tests {
         assert!(net.is_current);
         assert_eq!(net.terminal_pads, [None, None]);
         assert_eq!(net.terminal_pad_uuids, [NILUUID, NILUUID]);
-        assert_eq!(net.netclass.as_ref().map(|c| c.name.as_str()), Some("Default"));
+        assert_eq!(
+            net.netclass.as_ref().map(|c| c.name.as_str()),
+            Some("Default")
+        );
         assert_eq!(net.base.uuid, NILUUID);
-        assert_eq!(NetinfoItem::with_name("GND", NetCode(1)).short_netname, "GND");
+        assert_eq!(
+            NetinfoItem::with_name("GND", NetCode(1)).short_netname,
+            "GND"
+        );
 
         let mut generator = KiidGenerator::default();
-        assert_ne!(NetinfoItem::new(&mut generator, "A", NetCode(1)).base.uuid, NILUUID);
+        assert_ne!(
+            NetinfoItem::new(&mut generator, "A", NetCode(1)).base.uuid,
+            NILUUID
+        );
 
         let list = NetinfoList::default();
         assert_eq!(list.net_count(), 1);

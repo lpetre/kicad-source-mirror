@@ -190,42 +190,42 @@ impl Default for RepeatLayoutOptions {
 /// reader). Equality is the C++ `operator==` (manual impl below).
 #[derive(Clone, Debug)]
 pub struct ZoneSettings {
-    pub zone_priority: u32,                                  // m_ZonePriority
-    pub fill_mode: ZoneFillMode,                             // m_FillMode
-    pub zone_clearance: i32,                                 // m_ZoneClearance
-    pub zone_min_thickness: i32,                             // m_ZoneMinThickness
-    pub hatch_thickness: i32,                                // m_HatchThickness
-    pub hatch_gap: i32,                                      // m_HatchGap
-    pub hatch_orientation: EdaAngle,                         // m_HatchOrientation
-    pub hatch_smoothing_level: i32,                          // m_HatchSmoothingLevel
-    pub hatch_smoothing_value: f64,                          // m_HatchSmoothingValue
-    pub hatch_hole_min_area: f64,                            // m_HatchHoleMinArea
-    pub hatch_border_algorithm: i32,                         // m_HatchBorderAlgorithm
-    pub thieving_settings: ThievingSettings,                 // m_ThievingSettings
-    pub netcode: i32,                                        // m_Netcode
-    pub name: String,                                        // m_Name
-    pub layers: Lset,                                        // m_Layers
-    pub zone_border_display_style: ZoneBorderDisplayStyle,   // m_ZoneBorderDisplayStyle
-    pub border_hatch_pitch: i32,                             // m_BorderHatchPitch
-    pub thermal_relief_gap: i64,                             // m_ThermalReliefGap (long)
-    pub thermal_relief_spoke_width: i64,                     // m_ThermalReliefSpokeWidth (long)
-    pub locked: bool,                                        // m_Locked
-    pub teardrop_type: TeardropType,                         // m_TeardropType
+    pub zone_priority: u32,                                // m_ZonePriority
+    pub fill_mode: ZoneFillMode,                           // m_FillMode
+    pub zone_clearance: i32,                               // m_ZoneClearance
+    pub zone_min_thickness: i32,                           // m_ZoneMinThickness
+    pub hatch_thickness: i32,                              // m_HatchThickness
+    pub hatch_gap: i32,                                    // m_HatchGap
+    pub hatch_orientation: EdaAngle,                       // m_HatchOrientation
+    pub hatch_smoothing_level: i32,                        // m_HatchSmoothingLevel
+    pub hatch_smoothing_value: f64,                        // m_HatchSmoothingValue
+    pub hatch_hole_min_area: f64,                          // m_HatchHoleMinArea
+    pub hatch_border_algorithm: i32,                       // m_HatchBorderAlgorithm
+    pub thieving_settings: ThievingSettings,               // m_ThievingSettings
+    pub netcode: i32,                                      // m_Netcode
+    pub name: String,                                      // m_Name
+    pub layers: Lset,                                      // m_Layers
+    pub zone_border_display_style: ZoneBorderDisplayStyle, // m_ZoneBorderDisplayStyle
+    pub border_hatch_pitch: i32,                           // m_BorderHatchPitch
+    pub thermal_relief_gap: i64,                           // m_ThermalReliefGap (long)
+    pub thermal_relief_spoke_width: i64,                   // m_ThermalReliefSpokeWidth (long)
+    pub locked: bool,                                      // m_Locked
+    pub teardrop_type: TeardropType,                       // m_TeardropType
     pub layer_properties: BTreeMap<PcbLayerId, ZoneLayerProperties>, // m_LayerProperties
-    pub corner_smoothing_type: CornerSmoothing,              // m_cornerSmoothingType
-    pub corner_radius: u32,                                  // m_cornerRadius
-    pub pad_connection: ZoneConnection,                      // m_padConnection
-    pub is_rule_area: bool,                                  // m_isRuleArea
-    pub placement_area_enabled: bool,                        // m_placementAreaEnabled
-    pub placement_area_source_type: PlacementSourceT,        // m_placementAreaSourceType
-    pub placement_area_source: String,                       // m_placementAreaSource
-    pub keepout_do_not_allow_zone_fills: bool,               // m_keepoutDoNotAllowZoneFills
-    pub keepout_do_not_allow_vias: bool,                     // m_keepoutDoNotAllowVias
-    pub keepout_do_not_allow_tracks: bool,                   // m_keepoutDoNotAllowTracks
-    pub keepout_do_not_allow_pads: bool,                     // m_keepoutDoNotAllowPads
-    pub keepout_do_not_allow_footprints: bool,               // m_keepoutDoNotAllowFootprints
-    pub remove_islands: IslandRemovalMode,                   // m_removeIslands
-    pub min_island_area: i64,                                // m_minIslandArea (long long)
+    pub corner_smoothing_type: CornerSmoothing,            // m_cornerSmoothingType
+    pub corner_radius: u32,                                // m_cornerRadius
+    pub pad_connection: ZoneConnection,                    // m_padConnection
+    pub is_rule_area: bool,                                // m_isRuleArea
+    pub placement_area_enabled: bool,                      // m_placementAreaEnabled
+    pub placement_area_source_type: PlacementSourceT,      // m_placementAreaSourceType
+    pub placement_area_source: String,                     // m_placementAreaSource
+    pub keepout_do_not_allow_zone_fills: bool,             // m_keepoutDoNotAllowZoneFills
+    pub keepout_do_not_allow_vias: bool,                   // m_keepoutDoNotAllowVias
+    pub keepout_do_not_allow_tracks: bool,                 // m_keepoutDoNotAllowTracks
+    pub keepout_do_not_allow_pads: bool,                   // m_keepoutDoNotAllowPads
+    pub keepout_do_not_allow_footprints: bool,             // m_keepoutDoNotAllowFootprints
+    pub remove_islands: IslandRemovalMode,                 // m_removeIslands
+    pub min_island_area: i64,                              // m_minIslandArea (long long)
 }
 
 impl Default for ZoneSettings {
@@ -296,8 +296,7 @@ impl PartialEq for ZoneSettings {
     /// `std::equal( begin, end, other.begin )`: the other map may be longer (its extra
     /// entries are not looked at); a shorter one (undefined behaviour in C++) is unequal.
     fn eq(&self, other: &Self) -> bool {
-        let layer_properties_equal = other.layer_properties.len()
-            >= self.layer_properties.len()
+        let layer_properties_equal = other.layer_properties.len() >= self.layer_properties.len()
             && self
                 .layer_properties
                 .iter()
@@ -400,9 +399,15 @@ mod tests {
         assert!(!s.thieving_settings.stagger);
         assert_eq!(s.netcode, 0);
         assert_eq!(s.layers, Lset::from_layers(&[PcbLayerId::FCu]));
-        assert_eq!(s.zone_border_display_style, ZoneBorderDisplayStyle::DiagonalEdge);
+        assert_eq!(
+            s.zone_border_display_style,
+            ZoneBorderDisplayStyle::DiagonalEdge
+        );
         assert_eq!(s.border_hatch_pitch, 500_000);
-        assert_eq!((s.thermal_relief_gap, s.thermal_relief_spoke_width), (500_000, 500_000));
+        assert_eq!(
+            (s.thermal_relief_gap, s.thermal_relief_spoke_width),
+            (500_000, 500_000)
+        );
         assert_eq!(s.pad_connection, ZoneConnection::Thermal);
         assert!(!s.locked && !s.is_rule_area && !s.placement_area_enabled);
         assert_eq!(s.corner_smoothing_type, CornerSmoothing::NoSmoothing);

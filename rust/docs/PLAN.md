@@ -73,16 +73,24 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
       EDA_SHAPE overrides for fields/dimensions/table cells, overrides unable to call base
       bodies, shared files that four agents would have edited) and added
       crates/kicad-pcb/tools/check_item_shims.py. Design docs are at revision 2.1.
-- [ ] Model wave 0b: M0b (pad/footprint/zone), M0c (shape/text/table/dimension), M0d
-      (board/settings/nets), M0e (small items) running on Opus. Orchestrator reviews their
-      `decisions` and runs the shim checker before wave 1.
+- [x] Model wave 0b: M0b (pad/footprint/zone), M0c (shape/text/table/dimension), M0d
+      (board/settings/nets), M0e (small items) on Opus: all 26 item types pass the shim
+      checker; 793 port_pending! stubs carry the final signatures (~27k lines in kicad-pcb).
+- [ ] Fable integration of wave 0b (trait change EdaShapeItem::width(ctx), matcher types
+      Send+Sync+Clone, checker for generator subclasses, decision review, defaults
+      spot-check) -> then M7 EdaShape core, M10 Text (running).
+- [ ] Model wave 1 (Opus, running): M1 containers/index/create-attach, M2 item base, M3 nets
+      and netclasses, M13 padstack. Queued: M5 design settings, M6 stackup/plot params, M24
+      images/embedded files/component classes, then waves 2-5 per board-model.md section 16.
+      Policy: at most ~7 agents in kicad-pcb at once (shared crate, transient build breaks).
+      Reusable workflow script: model-wave (args: optional integration text + package list).
 - [x] pcb-dump: item-level C++ reference dump tool linking the real pcbnew objects
       (rust/tools/pcb-dump, binary /home/user/kicad-oracle/bin/pcb-dump, format in
       docs/PCB_DUMP_FORMAT.md). Sections: item, bbox, track, pad, shape, text, dim, zone,
       footprint, misc, board, order + `defaults`. Runs the whole corpus (375 boards, one
       intentional parse failure), deterministic. Use small boards for goldens (large demos
       produce GBs of output).
-- [ ] DUMP-RS (after wave 0b): Rust side of the dump inside kicad-pcb (feature `dump`),
+- [ ] DUMP-RS (running, Opus): Rust side of the dump inside kicad-pcb (feature `dump`),
       mirroring the C++ tool section by section, with catch_unwind per field so that
       port_pending! stubs print as "pending"; plus tools/pcb-dump/compare.py giving
       match / mismatch / pending counts per section = the scoreboard for the M packages.

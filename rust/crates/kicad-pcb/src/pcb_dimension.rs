@@ -131,9 +131,9 @@ pub struct PcbDimension {
     pub override_text_enabled: bool,
     /// m_valueString: displayed value when the override is on.
     pub value_string: String,
-    pub prefix: String,                     // m_prefix
-    pub suffix: String,                     // m_suffix
-    pub units: EdaUnits,                    // m_units
+    pub prefix: String,  // m_prefix
+    pub suffix: String,  // m_suffix
+    pub units: EdaUnits, // m_units
     /// m_autoUnits: follow the currently selected UI units.
     pub auto_units: bool,
     pub units_format: DimUnitsFormat,       // m_unitsFormat
@@ -193,7 +193,8 @@ impl DimAligned {
     fn for_arrow_length(arrow_length: i32) -> Self {
         DimAligned {
             height: 0,
-            extension_height: (arrow_length as f64 * EdaAngle::from_degrees(ARROW_ANGLE_DEGREES).sin())
+            extension_height: (arrow_length as f64
+                * EdaAngle::from_degrees(ARROW_ANGLE_DEGREES).sin())
                 as i32,
             cross_bar_start: Vector2I::default(),
             cross_bar_end: Vector2I::default(),
@@ -407,23 +408,58 @@ impl BoardItem for PcbDimension {
     fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
         PcbDimension::bounding_box(self, ctx)
     }
-    fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
+    fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         PcbDimension::effective_shape(self, ctx, layer, flash, usage)
     }
     fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         PcbDimension::hit_test(self, ctx, pos, accuracy)
     }
-    fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+    fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
         PcbDimension::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         PcbDimension::item_description(self, ctx, units, full)
     }
     fn position(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbDimension::position(self, ctx)
     }
-    fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        PcbDimension::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        PcbDimension::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 }
 
@@ -437,8 +473,24 @@ impl BoardItemMut for PcbDimension {
     fn move_by(&mut self, env: &MutEnv, delta: Vector2I) {
         PcbDimension::move_by(self, env, delta)
     }
-    fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        PcbDimension::on_footprint_rescaled(self, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        PcbDimension::on_footprint_rescaled(
+            self,
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate,
+        )
     }
     fn on_footprint_transformed(&mut self, env: &MutEnv) {
         PcbDimension::on_footprint_transformed(self, env)
@@ -505,8 +557,20 @@ impl PcbDimension {
     }
 
     /// `PCB_DIMENSION_BASE::GetEffectiveShape`.
-    pub fn effective_shape(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, flash: Flashing, usage: DrcConstraintT) -> SharedShape {
-        crate::port_pending!("PCB_DIMENSION_BASE::GetEffectiveShape", ctx, layer, flash, usage)
+    pub fn effective_shape(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        flash: Flashing,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
+        crate::port_pending!(
+            "PCB_DIMENSION_BASE::GetEffectiveShape",
+            ctx,
+            layer,
+            flash,
+            usage
+        )
     }
 
     /// `PCB_DIMENSION_BASE::HitTest`.
@@ -515,12 +579,29 @@ impl PcbDimension {
     }
 
     /// `PCB_DIMENSION_BASE::HitTest`.
-    pub fn hit_test_rect(&self, ctx: &BoardCtx<'_>, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_DIMENSION_BASE::HitTest", ctx, rect, contained, accuracy)
+    pub fn hit_test_rect(
+        &self,
+        ctx: &BoardCtx<'_>,
+        rect: &Box2I,
+        contained: bool,
+        accuracy: i32,
+    ) -> bool {
+        crate::port_pending!(
+            "PCB_DIMENSION_BASE::HitTest",
+            ctx,
+            rect,
+            contained,
+            accuracy
+        )
     }
 
     /// `PCB_DIMENSION_BASE::GetItemDescription`.
-    pub fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String {
+    pub fn item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
+        units: &UnitsProvider<'_>,
+        full: bool,
+    ) -> String {
         crate::port_pending!("PCB_DIMENSION_BASE::GetItemDescription", ctx, units, full)
     }
 
@@ -530,8 +611,26 @@ impl PcbDimension {
     }
 
     /// `PCB_DIMENSION_BASE::TransformShapeToPolygon`.
-    pub fn transform_shape_to_polygon(&self, ctx: &BoardCtx<'_>, buffer: &mut ShapePolySet, layer: PcbLayerId, clearance: i32, error: i32, error_loc: ErrorLoc, ignore_line_width: bool) {
-        crate::port_pending!("PCB_DIMENSION_BASE::TransformShapeToPolygon", ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+    pub fn transform_shape_to_polygon(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+        ignore_line_width: bool,
+    ) {
+        crate::port_pending!(
+            "PCB_DIMENSION_BASE::TransformShapeToPolygon",
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width
+        )
     }
 
     /// `PCB_DIMENSION_BASE::Flip`.
@@ -550,8 +649,24 @@ impl PcbDimension {
     }
 
     /// `PCB_DIMENSION_BASE::OnFootprintRescaled`.
-    pub fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64, linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {
-        crate::port_pending!("PCB_DIMENSION_BASE::OnFootprintRescaled", env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate)
+    pub fn on_footprint_rescaled(
+        &mut self,
+        env: &MutEnv,
+        ratio_x: f64,
+        ratio_y: f64,
+        linear_factor: f64,
+        anchor: Vector2I,
+        parent_rotate: EdaAngle,
+    ) {
+        crate::port_pending!(
+            "PCB_DIMENSION_BASE::OnFootprintRescaled",
+            env,
+            ratio_x,
+            ratio_y,
+            linear_factor,
+            anchor,
+            parent_rotate
+        )
     }
 
     /// `PCB_DIMENSION_BASE::OnFootprintTransformed`.
@@ -571,7 +686,11 @@ impl PcbDimension {
 
     /// `PCB_DIMENSION_BASE::StyleFromSettings`.
     pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        crate::port_pending!("PCB_DIMENSION_BASE::StyleFromSettings", settings, check_side)
+        crate::port_pending!(
+            "PCB_DIMENSION_BASE::StyleFromSettings",
+            settings,
+            check_side
+        )
     }
 
     /// `PCB_TEXT::GetDrawRotation`, inherited by `PCB_DIMENSION_BASE` (the base body reaches no virtual that `PCB_DIMENSION_BASE` overrides).
@@ -651,23 +770,39 @@ mod tests {
         assert_eq!(d.text_position, DimTextPosition::Outside);
         assert!(d.keep_text_aligned && !d.override_text_enabled && !d.auto_units);
         // ( int )( 1270000 * sin( 27.5 deg ) )
-        let DimensionKind::Aligned(a) = &d.kind else { panic!() };
+        let DimensionKind::Aligned(a) = &d.kind else {
+            panic!()
+        };
         assert_eq!((a.height, a.extension_height), (0, 586_420));
 
         let r = PcbDimension::of_type(KicadT::PcbDimRadialT).unwrap();
         assert_eq!(r.prefix, "R ");
-        assert!(matches!(r.kind, DimensionKind::Radial { leader_length: 3_810_000 }));
+        assert!(matches!(
+            r.kind,
+            DimensionKind::Radial {
+                leader_length: 3_810_000
+            }
+        ));
         let l = PcbDimension::of_type(KicadT::PcbDimLeaderT).unwrap();
-        assert_eq!((l.value_string.as_str(), l.override_text_enabled), ("Leader", true));
+        assert_eq!(
+            (l.value_string.as_str(), l.override_text_enabled),
+            ("Leader", true)
+        );
         assert!(!l.keep_text_aligned);
         let c = PcbDimension::of_type(KicadT::PcbDimCenterT).unwrap();
-        assert_eq!((c.units_format, c.override_text_enabled), (DimUnitsFormat::NoSuffix, true));
+        assert_eq!(
+            (c.units_format, c.override_text_enabled),
+            (DimUnitsFormat::NoSuffix, true)
+        );
         let o = PcbDimension::of_type(KicadT::PcbDimOrthogonalT).unwrap();
         assert_eq!(o.class_name(), "PCB_DIM_ORTHOGONAL");
         assert!(PcbDimension::of_type(KicadT::PcbTextT).is_none());
 
         let mut fx = rotated_flipped_scaled();
-        let id = fx.child(ItemKind::Dimension).typed::<PcbDimension>().unwrap();
+        let id = fx
+            .child(ItemKind::Dimension)
+            .typed::<PcbDimension>()
+            .unwrap();
         let mut kiids = KiidGenerator::default();
         let mut leader = PcbDimension::new(&mut kiids, KicadT::PcbDimLeaderT).unwrap();
         leader.set_lib_points(Vector2I::new(1, 2), Vector2I::new(3, 4));

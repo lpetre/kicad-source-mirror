@@ -32,9 +32,7 @@ use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::hash_128::Hash128;
-use kicad_geom::{
-    ANGLE_0, Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg, ShapePolySet, Vector2I,
-};
+use kicad_geom::{Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg, ShapePolySet, Vector2I};
 
 use crate::board::Board;
 use crate::cache::KeyedCache;
@@ -45,8 +43,8 @@ use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
 use crate::teardrop_parameters::TeardropType;
 use crate::traits::{BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate};
 use crate::zone_settings::{
-    CornerSmoothing, IslandRemovalMode, PlacementSourceT, RepeatLayoutOptions,
-    ThievingPattern, ThievingSettings, ZONE_BORDER_HATCH_DIST_MM, ZONE_BORDER_HATCH_MAXDIST_MM,
+    CornerSmoothing, IslandRemovalMode, PlacementSourceT, RepeatLayoutOptions, ThievingPattern,
+    ThievingSettings, ZONE_BORDER_HATCH_DIST_MM, ZONE_BORDER_HATCH_MAXDIST_MM,
     ZONE_BORDER_HATCH_MINDIST_MM, ZoneBorderDisplayStyle, ZoneConnection, ZoneFillMode,
     ZoneLayerProperties, ZoneSettings,
 };
@@ -112,11 +110,11 @@ pub struct ZoneFill {
     /// m_FilledPolysList. `Arc` like the C++ `shared_ptr`: consumers may keep a snapshot while
     /// the filler installs a new one.
     pub filled_polys_list: BTreeMap<PcbLayerId, Arc<ShapePolySet>>,
-    pub fill_flags: Lset,                                        // m_fillFlags
-    pub filled_polys_hash: BTreeMap<PcbLayerId, Hash128>,        // m_filledPolysHash
+    pub fill_flags: Lset,                                       // m_fillFlags
+    pub filled_polys_hash: BTreeMap<PcbLayerId, Hash128>,       // m_filledPolysHash
     pub insulated_islands: BTreeMap<PcbLayerId, BTreeSet<i32>>, // m_insulatedIslands
-    pub is_filled: bool,                                         // m_isFilled
-    pub need_refill: bool,                                       // m_needRefill
+    pub is_filled: bool,                                        // m_isFilled
+    pub need_refill: bool,                                      // m_needRefill
 }
 
 /// `ISOLATED_ISLANDS`: produced by connectivity, consumed by the filler and DRC.
@@ -619,7 +617,11 @@ impl Board {
     /// neither invalidates caches nor bumps the time stamp, like C++). Panics on a stale
     /// handle.
     pub fn zone_fill_mut(&mut self, id: ZoneId) -> &mut ZoneFill {
-        &mut self.zones.get_mut(id).expect("zone_fill_mut: stale zone handle").fill
+        &mut self
+            .zones
+            .get_mut(id)
+            .expect("zone_fill_mut: stale zone handle")
+            .fill
     }
 }
 
@@ -783,6 +785,7 @@ mod tests {
     use super::*;
     use crate::ids::{ItemKind, NetCode};
     use crate::test_support::rotated_flipped_scaled;
+    use kicad_geom::ANGLE_0;
 
     /// `ZONE::ZONE( aParent )` without a board (zone.cpp): member initialisers, then
     /// `ZONE_SETTINGS().ExportSetting( *this, false )`.
@@ -804,7 +807,10 @@ mod tests {
         assert_eq!(z.fill_version, 5);
         assert_eq!(z.island_removal_mode, IslandRemovalMode::Always);
         assert_eq!(z.min_island_area, 10_000_000_000_000);
-        assert_eq!((z.thermal_relief_gap, z.thermal_relief_spoke_width), (500_000, 500_000));
+        assert_eq!(
+            (z.thermal_relief_gap, z.thermal_relief_spoke_width),
+            (500_000, 500_000)
+        );
         assert_eq!(z.fill_mode, ZoneFillMode::Polygons);
         assert_eq!((z.hatch_thickness, z.hatch_gap), (1_000_000, 1_500_000));
         assert_eq!(z.hatch_orientation(), ANGLE_0);

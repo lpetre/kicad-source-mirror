@@ -62,7 +62,7 @@ pub struct Netclass {
     pub constituents: Vec<Arc<Netclass>>, // m_constituents + m_constituentOwners
     pub name: String,                     // m_Name
     pub priority: i32,                    // m_Priority
-    pub description: String,             // m_Description
+    pub description: String,              // m_Description
     pub clearance: Option<i32>,           // m_Clearance
     pub track_width: Option<i32>,         // m_TrackWidth
     pub via_dia: Option<i32>,             // m_ViaDia
