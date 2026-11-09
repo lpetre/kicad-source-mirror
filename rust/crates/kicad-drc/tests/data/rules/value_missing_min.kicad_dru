@@ -1,0 +1,2 @@
+(version 1)
+(rule a (constraint clearance (min)))

@@ -24,9 +24,13 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
+use kicad_core::eda_units::ui::string_from_value;
 use kicad_core::json::Value as JsonValue;
 use kicad_core::layer_ids::is_copper_layer;
-use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId, Severity};
+use kicad_core::{
+    EdaDataType, EdaUnits, Lset, MAX_USER_DEFINED_LAYERS, PCB_IU_SCALE, PCB_LAYER_ID_COUNT,
+    PcbLayerId, Severity,
+};
 use kicad_geom::Vector2I;
 use kicad_geom::geometry::geometry_utils::ARC_HIGH_DEF;
 use kicad_sexpr::Sexpr;
@@ -37,7 +41,7 @@ use crate::drc_api::*;
 use crate::net_settings::NetSettings;
 use crate::pcb_dimension::{DimPrecision, DimTextPosition, DimUnitsFormat, DimUnitsMode};
 use crate::pcb_track::Viatype;
-use crate::teardrop_parameters::TeardropParametersList;
+use crate::teardrop_parameters::{TargetTd, TeardropParametersList, teardrop_target_canonical_name};
 use crate::zone_settings::{ZoneLayerProperties, ZoneSettings};
 
 // ---- include/board_design_settings_defaults.h (values in mm unless stated) ----
@@ -562,12 +566,194 @@ impl BoardDesignSettings {
     /// `BOARD_DESIGN_SETTINGS::SetEnabledLayers`: forces the mandatory layers and recounts the
     /// copper and user-defined layers from the argument mask.
     pub fn set_enabled_layers(&mut self, mask: &Lset) {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::SetEnabledLayers", mask)
+        self.enabled_layers = mask.clone();
+
+        // Ensures mandatory back and front layers are always enabled regardless of board file
+        // configuration.
+        self.enabled_layers
+            .set(PcbLayerId::BCu)
+            .set(PcbLayerId::FCu)
+            .set(PcbLayerId::BCrtYd)
+            .set(PcbLayerId::FCrtYd)
+            .set(PcbLayerId::EdgeCuts)
+            .set(PcbLayerId::Margin);
+
+        // update layer counts to ensure their consistency with m_EnabledLayers
+        let mut copper_layers = mask.clone();
+        copper_layers.clear_non_copper_layers();
+
+        let user_layers = mask & &Lset::user_defined_layers_mask(MAX_USER_DEFINED_LAYERS);
+
+        self.copper_layer_count = copper_layers.count() as i32;
+        self.user_defined_layer_count = user_layers.count() as i32;
     }
 
     /// `BOARD_DESIGN_SETTINGS::IsLayerEnabled`.
     pub fn is_layer_enabled(&self, layer: PcbLayerId) -> bool {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::IsLayerEnabled", layer)
+        if layer.0 >= 0 && layer.0 < PCB_LAYER_ID_COUNT {
+            return self.enabled_layers.test(layer);
+        }
+
+        false
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetBoardThickness`.
+    pub fn set_board_thickness(&mut self, thickness: i32) {
+        self.board_thickness = thickness;
+    }
+
+    /// Mutable `BOARD_DESIGN_SETTINGS::GetStackupDescriptor`.
+    pub fn stackup_descriptor_mut(&mut self) -> &mut BoardStackup {
+        &mut self.stackup
+    }
+
+    /// Mutable `BOARD_DESIGN_SETTINGS::GetDefaultZoneSettings`.
+    pub fn default_zone_settings_mut(&mut self) -> &mut ZoneSettings {
+        &mut self.default_zone_settings
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetDefaultZoneSettings`.
+    pub fn set_default_zone_settings(&mut self, settings: &ZoneSettings) {
+        self.default_zone_settings = settings.clone();
+    }
+
+    /// Mutable `BOARD_DESIGN_SETTINGS::GetTeadropParamsList`.
+    pub fn teardrop_params_list_mut(&mut self) -> &mut TeardropParametersList {
+        &mut self.teardrop_params_list
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCurrentNetClassName`.
+    pub fn current_net_class_name(&self) -> &str {
+        &self.current_net_class_name
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetAuxOrigin`.
+    pub fn set_aux_origin(&mut self, origin: Vector2I) {
+        self.aux_origin = origin;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetGridOrigin`.
+    pub fn set_grid_origin(&mut self, origin: Vector2I) {
+        self.grid_origin = origin;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS( const BOARD_DESIGN_SETTINGS& )`: the copy constructor. The
+    /// members `initFromOther` copies come from `other`; the others (teardrop parameters,
+    /// tuning pattern settings, zone layer properties, drill symbol profile) are
+    /// default-constructed, exactly as the C++ copy constructor leaves them.
+    pub fn detached_copy(&self) -> BoardDesignSettings {
+        let mut copy = BoardDesignSettings::default();
+
+        // The members initFromOther() does not copy, default-constructed (not the values the
+        // main constructor body writes).
+        copy.teardrop_params_list = TeardropParametersList::default();
+        copy.meander_settings = [
+            default_meander_json(DEFAULT_MEANDER_SPACING),
+            default_meander_json(DEFAULT_MEANDER_SPACING),
+            default_meander_json(DEFAULT_MEANDER_SPACING),
+        ];
+        copy.zone_layer_properties = BTreeMap::new();
+        copy.drill_symbol_profile = None;
+
+        copy.init_from_other(self);
+        copy
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::operator=` / `initFromOther`: copy every member that
+    /// `initFromOther` copies; the teardrop parameters, tuning pattern settings, zone layer
+    /// properties and drill symbol profile of `self` are left unchanged. (Dropped: the BOM
+    /// members.)
+    pub fn init_from_other(&mut self, other: &BoardDesignSettings) {
+        // Copy of NESTED_SETTINGS around is not allowed, so let's just update the params.
+        self.track_width_list = other.track_width_list.clone();
+        self.vias_dimensions_list = other.vias_dimensions_list.clone();
+        self.via_stack_presets = other.via_stack_presets.clone();
+        self.diff_pair_dimensions_list = other.diff_pair_dimensions_list.clone();
+        self.current_via_type = other.current_via_type;
+        self.use_connected_track_width = other.use_connected_track_width;
+        self.temp_override_track_width = other.temp_override_track_width;
+        self.min_clearance = other.min_clearance;
+        self.min_groove_width = other.min_groove_width;
+        self.min_conn = other.min_conn;
+        self.track_min_width = other.track_min_width;
+        self.vias_min_annular_width = other.vias_min_annular_width;
+        self.vias_min_size = other.vias_min_size;
+        self.min_through_drill = other.min_through_drill;
+        self.micro_vias_min_size = other.micro_vias_min_size;
+        self.micro_vias_min_drill = other.micro_vias_min_drill;
+        self.copper_edge_clearance = other.copper_edge_clearance;
+        self.hole_clearance = other.hole_clearance;
+        self.hole_to_hole_min = other.hole_to_hole_min;
+        self.silk_clearance = other.silk_clearance;
+        self.min_resolved_spokes = other.min_resolved_spokes;
+        self.min_silk_text_height = other.min_silk_text_height;
+        self.min_silk_text_thickness = other.min_silk_text_thickness;
+        self.drc_severities = other.drc_severities.clone();
+        self.drc_exclusions = other.drc_exclusions.clone();
+        self.zone_keep_external_fillets = other.zone_keep_external_fillets;
+        self.max_error = other.max_error;
+        self.solder_mask_expansion = other.solder_mask_expansion;
+        self.solder_mask_min_width = other.solder_mask_min_width;
+        self.solder_mask_to_copper_clearance = other.solder_mask_to_copper_clearance;
+        self.solder_paste_margin = other.solder_paste_margin;
+        self.solder_paste_margin_ratio = other.solder_paste_margin_ratio;
+        self.allow_soldermask_bridges_in_fps = other.allow_soldermask_bridges_in_fps;
+        self.tent_vias_front = other.tent_vias_front;
+        self.tent_vias_back = other.tent_vias_back;
+        self.cover_vias_front = other.cover_vias_front;
+        self.cover_vias_back = other.cover_vias_back;
+        self.plug_vias_front = other.plug_vias_front;
+        self.plug_vias_back = other.plug_vias_back;
+        self.cap_vias = other.cap_vias;
+        self.fill_vias = other.fill_vias;
+        self.default_fp_text_items = other.default_fp_text_items.clone();
+        self.user_layer_names = other.user_layer_names.clone();
+
+        self.line_thickness = other.line_thickness;
+        self.text_size = other.text_size;
+        self.text_thickness = other.text_thickness;
+        self.text_italic = other.text_italic;
+        self.text_upright = other.text_upright;
+
+        self.dimension_units_mode = other.dimension_units_mode;
+        self.dimension_precision = other.dimension_precision;
+        self.dimension_units_format = other.dimension_units_format;
+        self.dimension_suppress_zeroes = other.dimension_suppress_zeroes;
+        self.dimension_text_position = other.dimension_text_position;
+        self.dimension_keep_text_aligned = other.dimension_keep_text_aligned;
+        self.dimension_arrow_length = other.dimension_arrow_length;
+        self.dimension_extension_offset = other.dimension_extension_offset;
+
+        self.aux_origin = other.aux_origin;
+        self.grid_origin = other.grid_origin;
+        self.has_stackup = other.has_stackup;
+        self.use_height_for_length_calcs = other.use_height_for_length_calcs;
+
+        self.track_width_index = other.track_width_index;
+        self.via_size_index = other.via_size_index;
+        self.via_stack_index = other.via_stack_index;
+        self.diff_pair_index = other.diff_pair_index;
+        self.use_custom_track_via = other.use_custom_track_via;
+        self.custom_track_width = other.custom_track_width;
+        self.custom_via_size = other.custom_via_size;
+        self.use_custom_diff_pair = other.use_custom_diff_pair;
+        self.custom_diff_pair = other.custom_diff_pair;
+        self.copper_layer_count = other.copper_layer_count;
+        self.user_defined_layer_count = other.user_defined_layer_count;
+        self.enabled_layers = other.enabled_layers.clone();
+        self.board_thickness = other.board_thickness;
+        self.current_net_class_name = other.current_net_class_name.clone();
+        self.stackup = other.stackup.clone();
+        // m_NetSettings is a shared_ptr in C++ (the copy shares the object); the Rust model
+        // owns its NetSettings by value.
+        self.net_settings = other.net_settings.clone();
+        self.default_zone_settings = other.default_zone_settings.clone();
+
+        self.style_fp_fields = other.style_fp_fields;
+        self.style_fp_text = other.style_fp_text;
+        self.style_fp_shapes = other.style_fp_shapes;
+        self.style_fp_dimensions = other.style_fp_dimensions;
+        self.style_fp_barcodes = other.style_fp_barcodes;
     }
 
     /// `BOARD_DESIGN_SETTINGS::GetBoardThickness`.
@@ -617,25 +803,56 @@ impl BoardDesignSettings {
     /// `BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue` (asks the engine's
     /// `QueryWorstConstraint` when there is one).
     pub fn get_biggest_clearance_value(&self, rules: Option<&dyn RuleResolver>) -> i32 {
-        crate::port_pending!(
-            "BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue",
-            rules.is_some()
-        )
+        let mut biggest = self.min_clearance.max(self.hole_clearance);
+
+        biggest = biggest.max(self.hole_to_hole_min);
+        biggest = biggest.max(self.copper_edge_clearance);
+
+        if let Some(engine) = rules {
+            // `QueryWorstConstraint` leaves the constraint unchanged when it finds none; the
+            // previous value is already part of `biggest`, so `None` changes nothing.
+            for constraint in [
+                DrcConstraintT::ClearanceConstraint,
+                DrcConstraintT::PhysicalClearanceConstraint,
+                DrcConstraintT::PhysicalHoleClearanceConstraint,
+                DrcConstraintT::HoleClearanceConstraint,
+                DrcConstraintT::EdgeClearanceConstraint,
+                DrcConstraintT::HoleToHoleConstraint,
+            ] {
+                if let Some(worst) = engine.query_worst_constraint(constraint) {
+                    biggest = biggest.max(worst.value().min());
+                }
+            }
+        }
+
+        // Clip to avoid integer overflows in subsequent calculations
+        biggest.min(maximum_clearance())
     }
 
-    /// `BOARD_DESIGN_SETTINGS::GetSmallestClearanceValue`.
+    /// `BOARD_DESIGN_SETTINGS::GetSmallestClearanceValue`: the default netclass clearance,
+    /// lowered by every netclass that has one.
     pub fn get_smallest_clearance_value(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetSmallestClearanceValue")
+        let mut clearance = self.net_settings.default_netclass().clearance();
+
+        for netclass in self.net_settings.netclasses.values() {
+            if netclass.has_clearance() {
+                clearance = clearance.min(netclass.clearance());
+            }
+        }
+
+        clearance
     }
 
-    /// `BOARD_DESIGN_SETTINGS::GetDRCEpsilon`.
+    /// `BOARD_DESIGN_SETTINGS::GetDRCEpsilon`: `ADVANCED_CFG::m_DRCEpsilon` (the built-in
+    /// default; the advanced config file is not read, see `PORT_STATUS.md`).
     pub fn get_drc_epsilon(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetDRCEpsilon")
+        PCB_IU_SCALE.mm_to_iu(ADVANCED_CFG_DRC_EPSILON_MM)
     }
 
-    /// `BOARD_DESIGN_SETTINGS::GetHolePlatingThickness`.
+    /// `BOARD_DESIGN_SETTINGS::GetHolePlatingThickness`: `ADVANCED_CFG::m_HoleWallThickness`
+    /// (built-in default).
     pub fn get_hole_plating_thickness(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetHolePlatingThickness")
+        PCB_IU_SCALE.mm_to_iu(ADVANCED_CFG_HOLE_WALL_THICKNESS_MM)
     }
 
     /// `BOARD_DESIGN_SETTINGS::GetLayerClass`.
@@ -682,17 +899,491 @@ impl BoardDesignSettings {
 
     /// `BOARD_DESIGN_SETTINGS::GetCurrentTrackWidth`.
     pub fn get_current_track_width(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetCurrentTrackWidth")
+        if self.use_custom_track_via {
+            self.custom_track_width
+        } else if self.track_width_index <= 0
+            || self.track_width_index >= self.track_width_list.len() as i32
+        {
+            self.net_settings.default_netclass().track_width()
+        } else {
+            self.track_width_list[self.track_width_index as usize]
+        }
     }
 
     /// `BOARD_DESIGN_SETTINGS::GetCurrentViaSize`.
     pub fn get_current_via_size(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetCurrentViaSize")
+        if self.use_custom_track_via {
+            self.custom_via_size.diameter
+        } else if self.via_size_index <= 0
+            || self.via_size_index >= self.vias_dimensions_list.len() as i32
+        {
+            self.net_settings.default_netclass().via_diameter()
+        } else {
+            self.vias_dimensions_list[self.via_size_index as usize].diameter
+        }
     }
 
-    /// `BOARD_DESIGN_SETTINGS::GetCurrentViaDrill`.
+    /// `BOARD_DESIGN_SETTINGS::GetCurrentViaDrill`: `-1` when the selected drill is not
+    /// positive.
     pub fn get_current_via_drill(&self) -> i32 {
-        crate::port_pending!("BOARD_DESIGN_SETTINGS::GetCurrentViaDrill")
+        let drill = if self.use_custom_track_via {
+            self.custom_via_size.drill
+        } else if self.via_size_index <= 0
+            || self.via_size_index >= self.vias_dimensions_list.len() as i32
+        {
+            self.net_settings.default_netclass().via_drill()
+        } else {
+            self.vias_dimensions_list[self.via_size_index as usize].drill
+        };
+
+        if drill > 0 { drill } else { -1 }
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::UseNetClassTrack`.
+    pub fn use_net_class_track(&self) -> bool {
+        self.track_width_index <= 0 && !self.use_custom_track_via
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::UseNetClassVia`.
+    pub fn use_net_class_via(&self) -> bool {
+        self.via_size_index <= 0 && !self.use_custom_track_via
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::UseNetClassDiffPair` (note: `== 0`, not `<= 0`, as C++).
+    pub fn use_net_class_diff_pair(&self) -> bool {
+        self.diff_pair_index == 0 && !self.use_custom_diff_pair
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetTrackWidthIndex`.
+    pub fn track_width_index(&self) -> i32 {
+        self.track_width_index
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetTrackWidthIndex`: clamped to the list; disables the custom
+    /// track / via sizes.
+    pub fn set_track_width_index(&mut self, index: i32) {
+        self.track_width_index = if self.track_width_list.is_empty() {
+            0
+        } else {
+            index.clamp(0, self.track_width_list.len() as i32 - 1)
+        };
+        self.use_custom_track_via = false;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetNextTrackWidthIndex`.
+    pub fn get_next_track_width_index(&self, index: i32, forward: bool) -> i32 {
+        next_predefined_index(index, forward, self.track_width_list.len() as i32)
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomTrackWidth`.
+    pub fn set_custom_track_width(&mut self, width: i32) {
+        self.custom_track_width = width;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomTrackWidth`.
+    pub fn custom_track_width(&self) -> i32 {
+        self.custom_track_width
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetViaSizeIndex`.
+    pub fn via_size_index(&self) -> i32 {
+        self.via_size_index
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetViaStackIndex`.
+    pub fn via_stack_index(&self) -> i32 {
+        self.via_stack_index
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetViaStackIndex` (not clamped, as C++).
+    pub fn set_via_stack_index(&mut self, index: i32) {
+        self.via_stack_index = index;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetViaSizeIndex`: clamped to the list; disables the custom
+    /// track / via sizes.
+    pub fn set_via_size_index(&mut self, index: i32) {
+        self.via_size_index = if self.vias_dimensions_list.is_empty() {
+            0
+        } else {
+            index.clamp(0, self.vias_dimensions_list.len() as i32 - 1)
+        };
+        self.use_custom_track_via = false;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetNextViaSizeIndex`.
+    pub fn get_next_via_size_index(&self, index: i32, forward: bool) -> i32 {
+        next_predefined_index(index, forward, self.vias_dimensions_list.len() as i32)
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomViaSize`.
+    pub fn set_custom_via_size(&mut self, size: i32) {
+        self.custom_via_size.diameter = size;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomViaSize`.
+    pub fn custom_via_size(&self) -> i32 {
+        self.custom_via_size.diameter
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomViaDrill`.
+    pub fn set_custom_via_drill(&mut self, drill: i32) {
+        self.custom_via_size.drill = drill;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomViaDrill`.
+    pub fn custom_via_drill(&self) -> i32 {
+        self.custom_via_size.drill
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetDiffPairIndex`.
+    pub fn diff_pair_index(&self) -> i32 {
+        self.diff_pair_index
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetDiffPairIndex`: clamped to the list; disables the custom
+    /// diff pair dimensions.
+    pub fn set_diff_pair_index(&mut self, index: i32) {
+        self.diff_pair_index = if self.diff_pair_dimensions_list.is_empty() {
+            0
+        } else {
+            index.clamp(0, self.diff_pair_dimensions_list.len() as i32 - 1)
+        };
+        self.use_custom_diff_pair = false;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetNextDiffPairIndex`.
+    pub fn get_next_diff_pair_index(&self, index: i32, forward: bool) -> i32 {
+        next_predefined_index(index, forward, self.diff_pair_dimensions_list.len() as i32)
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomDiffPairWidth`.
+    pub fn set_custom_diff_pair_width(&mut self, width: i32) {
+        self.custom_diff_pair.width = width;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomDiffPairWidth`.
+    pub fn custom_diff_pair_width(&self) -> i32 {
+        self.custom_diff_pair.width
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomDiffPairGap`.
+    pub fn set_custom_diff_pair_gap(&mut self, gap: i32) {
+        self.custom_diff_pair.gap = gap;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomDiffPairGap`.
+    pub fn custom_diff_pair_gap(&self) -> i32 {
+        self.custom_diff_pair.gap
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::SetCustomDiffPairViaGap`.
+    pub fn set_custom_diff_pair_via_gap(&mut self, gap: i32) {
+        self.custom_diff_pair.via_gap = gap;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCustomDiffPairViaGap`: the gap when the via gap is not
+    /// positive.
+    pub fn custom_diff_pair_via_gap(&self) -> i32 {
+        if self.custom_diff_pair.via_gap > 0 {
+            self.custom_diff_pair.via_gap
+        } else {
+            self.custom_diff_pair.gap
+        }
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::UseCustomDiffPairDimensions( aEnabled )`.
+    pub fn set_use_custom_diff_pair_dimensions(&mut self, enabled: bool) {
+        self.use_custom_diff_pair = enabled;
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::UseCustomDiffPairDimensions()`.
+    pub fn use_custom_diff_pair_dimensions(&self) -> bool {
+        self.use_custom_diff_pair
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCurrentDiffPairWidth`.
+    pub fn get_current_diff_pair_width(&self) -> i32 {
+        if self.use_custom_diff_pair {
+            self.custom_diff_pair.width
+        } else if self.diff_pair_index <= 0
+            || self.diff_pair_index >= self.diff_pair_dimensions_list.len() as i32
+        {
+            let default_netclass = self.net_settings.default_netclass();
+
+            if default_netclass.has_diff_pair_width() {
+                default_netclass.diff_pair_width()
+            } else {
+                default_netclass.track_width()
+            }
+        } else {
+            self.diff_pair_dimensions_list[self.diff_pair_index as usize].width
+        }
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCurrentDiffPairGap`.
+    pub fn get_current_diff_pair_gap(&self) -> i32 {
+        if self.use_custom_diff_pair {
+            self.custom_diff_pair.gap
+        } else if self.diff_pair_index <= 0
+            || self.diff_pair_index >= self.diff_pair_dimensions_list.len() as i32
+        {
+            let default_netclass = self.net_settings.default_netclass();
+
+            if default_netclass.has_diff_pair_gap() {
+                default_netclass.diff_pair_gap()
+            } else {
+                default_netclass.clearance()
+            }
+        } else {
+            self.diff_pair_dimensions_list[self.diff_pair_index as usize].gap
+        }
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetCurrentDiffPairViaGap`.
+    pub fn get_current_diff_pair_via_gap(&self) -> i32 {
+        if self.use_custom_diff_pair {
+            self.custom_diff_pair.via_gap
+        } else if self.diff_pair_index <= 0
+            || self.diff_pair_index >= self.diff_pair_dimensions_list.len() as i32
+        {
+            let default_netclass = self.net_settings.default_netclass();
+
+            if default_netclass.has_diff_pair_via_gap() {
+                default_netclass.diff_pair_via_gap()
+            } else {
+                self.get_current_diff_pair_gap()
+            }
+        } else {
+            self.diff_pair_dimensions_list[self.diff_pair_index as usize].via_gap
+        }
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::ValidateDesignRules( aUnits )`: per-field range errors of the
+    /// constraint values, teardrop ratios, diff pair and via dimension lists (entry 0 of the
+    /// lists is the netclass placeholder and is skipped). `units` defaults to millimetres.
+    /// Messages are the untranslated C++ texts.
+    pub fn validate_design_rules(&self, units: Option<EdaUnits>) -> Vec<ValidationError> {
+        let mut errors: Vec<ValidationError> = Vec::new();
+        let units = units.unwrap_or(EdaUnits::Mm);
+        let mm = |v: f64| PCB_IU_SCALE.mm_to_iu(v);
+
+        let mut add_range_error = |errors: &mut Vec<ValidationError>,
+                                   field: &str,
+                                   value: i32,
+                                   min: i32,
+                                   max: i32| {
+            if value < min || value > max {
+                let min = string_from_iu(units, min);
+                let max = string_from_iu(units, max);
+
+                errors.push(ValidationError::new(
+                    field,
+                    &format!("Value must be between {min} and {max}."),
+                ));
+            }
+        };
+
+        let add_ratio_range_error =
+            |errors: &mut Vec<ValidationError>, field: &str, value: f64, min: f64, max: f64| {
+                if !value.is_finite() || value < min || value > max {
+                    errors.push(ValidationError::new(
+                        field,
+                        &format!("Value must be between {min:.3} and {max:.3}."),
+                    ));
+                }
+            };
+
+        let e = &mut errors;
+        add_range_error(e, "min_clearance", self.min_clearance, mm(0.00), mm(25.0));
+        add_range_error(e, "min_connection", self.min_conn, mm(0.00), mm(100.0));
+        add_range_error(e, "min_track_width", self.track_min_width, mm(0.00), mm(25.0));
+        add_range_error(
+            e,
+            "min_via_annular_width",
+            self.vias_min_annular_width,
+            mm(0.00),
+            mm(25.0),
+        );
+        add_range_error(e, "min_via_diameter", self.vias_min_size, mm(0.00), mm(25.0));
+        add_range_error(
+            e,
+            "min_through_hole_diameter",
+            self.min_through_drill,
+            mm(0.00),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "min_microvia_diameter",
+            self.micro_vias_min_size,
+            mm(0.00),
+            mm(10.0),
+        );
+        add_range_error(
+            e,
+            "min_microvia_drill",
+            self.micro_vias_min_drill,
+            mm(0.00),
+            mm(10.0),
+        );
+        add_range_error(e, "min_hole_to_hole", self.hole_to_hole_min, mm(0.00), mm(10.0));
+        add_range_error(e, "min_hole_clearance", self.hole_clearance, mm(0.00), mm(100.0));
+        add_range_error(e, "min_silk_clearance", self.silk_clearance, mm(-10.0), mm(100.0));
+        add_range_error(e, "min_groove_width", self.min_groove_width, mm(0.00), mm(25.0));
+        add_range_error(e, "min_text_height", self.min_silk_text_height, mm(0.00), mm(100.0));
+        add_range_error(
+            e,
+            "min_text_thickness",
+            self.min_silk_text_thickness,
+            mm(0.00),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "min_copper_edge_clearance",
+            self.copper_edge_clearance,
+            mm(-0.01),
+            mm(25.0),
+        );
+
+        if self.min_resolved_spokes < 0 || self.min_resolved_spokes > 99 {
+            e.push(ValidationError::new(
+                "min_resolved_spokes",
+                "Value must be between 0 and 99.",
+            ));
+        }
+
+        add_range_error(
+            e,
+            "max_error",
+            self.max_error,
+            mm(MINIMUM_ERROR_SIZE_MM),
+            mm(MAXIMUM_ERROR_SIZE_MM),
+        );
+
+        add_range_error(
+            e,
+            "solder_mask_expansion",
+            self.solder_mask_expansion,
+            mm(-25.0),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "solder_mask_min_width",
+            self.solder_mask_min_width,
+            mm(0.0),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "solder_mask_to_copper_clearance",
+            self.solder_mask_to_copper_clearance,
+            mm(0.0),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "solder_paste_margin",
+            self.solder_paste_margin,
+            mm(-25.0),
+            mm(25.0),
+        );
+        add_ratio_range_error(
+            e,
+            "solder_paste_margin_ratio",
+            self.solder_paste_margin_ratio,
+            -1.0,
+            1.0,
+        );
+
+        let teardrop_params_list = &self.teardrop_params_list;
+
+        for ii in 0..teardrop_params_list.parameters_count() {
+            // GetParameters( static_cast<TARGET_TD>( ii ) ) is m_params_list.at( ii ).
+            let params = &teardrop_params_list.params_list[ii];
+            let target = teardrop_target_canonical_name(match ii {
+                0 => TargetTd::Round,
+                1 => TargetTd::Rect,
+                2 => TargetTd::Track,
+                _ => TargetTd::Unknown,
+            });
+
+            add_ratio_range_error(
+                e,
+                &format!("teardrop_parameters[{target}].best_length_ratio"),
+                params.best_length_ratio,
+                0.0,
+                1.0,
+            );
+            add_ratio_range_error(
+                e,
+                &format!("teardrop_parameters[{target}].best_width_ratio"),
+                params.best_width_ratio,
+                0.0,
+                1.0,
+            );
+            add_ratio_range_error(
+                e,
+                &format!("teardrop_parameters[{target}].width_to_size_filter_ratio"),
+                params.width_to_size_filter_ratio,
+                0.0,
+                1.0,
+            );
+        }
+
+        for (ii, diff_pair) in self.diff_pair_dimensions_list.iter().enumerate().skip(1) {
+            if diff_pair.width > 0 && diff_pair.gap <= 0 {
+                e.push(ValidationError::new(
+                    &format!("diff_pair_dimensions_list[{ii}].gap"),
+                    "No differential pair gap defined.",
+                ));
+            }
+        }
+
+        for (ii, via_dim) in self.vias_dimensions_list.iter().enumerate().skip(1) {
+            let via_diameter = (via_dim.diameter > 0).then_some(via_dim.diameter);
+            let via_drill = (via_dim.drill > 0).then_some(via_dim.drill);
+
+            if let Some(message) = validate_via_diameter_and_drill(via_diameter, via_drill) {
+                e.push(ValidationError::new(
+                    &format!("via_dimensions_list[{ii}]"),
+                    message,
+                ));
+            }
+        }
+
+        errors
+    }
+
+    /// `BOARD_DESIGN_SETTINGS::GetDesignRuleWarnings( aUnits )`: legal values without effect
+    /// because other rules imply a stricter limit (advisory).
+    pub fn get_design_rule_warnings(&self, units: Option<EdaUnits>) -> Vec<ValidationError> {
+        let mut warnings = Vec::new();
+        let units = units.unwrap_or(EdaUnits::Mm);
+        let str_ = |value: i32| string_from_iu(units, value);
+
+        // Microvias are excluded because their default drill plus annulus already exceeds
+        // their default diameter
+        let implied_via_min = self.min_through_drill + 2 * self.vias_min_annular_width;
+
+        if self.vias_min_size < implied_via_min {
+            warnings.push(ValidationError::new(
+                "min_via_diameter",
+                &format!(
+                    "Minimum via diameter ({}) is smaller than the minimum drill size ({}) plus \
+                     twice the minimum annular width ({}), so it has no effect. The effective \
+                     minimum via diameter is {}.",
+                    str_(self.vias_min_size),
+                    str_(self.min_through_drill),
+                    str_(self.vias_min_annular_width),
+                    str_(implied_via_min)
+                ),
+            ));
+        }
+
+        warnings
     }
 
     /// `BOARD_DESIGN_SETTINGS::UseCustomTrackViaSize( aEnabled )`.

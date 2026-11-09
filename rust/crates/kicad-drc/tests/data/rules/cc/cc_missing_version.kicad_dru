@@ -1,0 +1,1 @@
+(assign_component_class "Power" (condition "A.Reference == 'U*'"))

@@ -1,0 +1,2 @@
+(version 1)
+(rule a (constraint mechanical_clearance (min 1mm)) (constraint mechanical_hole_clearance (min 2mm)) (constraint hole (min 0.3mm)))

@@ -1,0 +1,2 @@
+(version 1)
+(rule a (layer F.Cu B.Cu) (constraint clearance (min 1mm)))

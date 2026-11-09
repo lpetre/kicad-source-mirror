@@ -1,0 +1,2 @@
+(version 1)
+(rule a (constraint clearance (foo 1) (min 1mm)))

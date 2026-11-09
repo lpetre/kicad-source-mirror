@@ -1,0 +1,2 @@
+(version 1)
+(rule a (constraint min_resolved_spokes many) (condition "A.Type == 'Pad'"))

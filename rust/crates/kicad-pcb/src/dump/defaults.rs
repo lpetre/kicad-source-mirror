@@ -211,25 +211,25 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "table.rows", v_int(t.row_count()));
             emit!(o, "table.end", no_api("PCB_TABLE::GetEnd"));
             emit!(o, "table.border_width", v_int(t.border_stroke.width()));
-            emit!(o, "table.border_style", v_enum(t.border_stroke.line_style()));
+            emit!(o, "table.border_style", no_api("PCB_TABLE::GetBorderStyle"));
             emit!(o, "table.separators_width", v_int(t.separators_stroke.width()));
             emit!(
                 o,
                 "table.separators_style",
-                v_enum(t.separators_stroke.line_style())
+                no_api("PCB_TABLE::GetSeparatorsStyle")
             );
             emit!(o, "table.stroke_external", v_bool(t.stroke_external));
             emit!(o, "table.stroke_header", v_bool(t.stroke_header_separator));
             emit!(o, "table.stroke_columns", v_bool(t.stroke_columns));
             emit!(o, "table.stroke_rows", v_bool(t.stroke_rows));
 
-            if let Some(n) = o.cond("table.col_width", || t.col_count()) {
+            if let Some(n) = o.cond("table.col_width.*", || t.col_count()) {
                 for c in 0..n {
                     emit!(o, format!("table.col_width.{c}"), v_int(t.col_width(c)));
                 }
             }
 
-            if let Some(n) = o.cond("table.row_height", || t.row_count()) {
+            if let Some(n) = o.cond("table.row_height.*", || t.row_count()) {
                 for r in 0..n {
                     emit!(o, format!("table.row_height.{r}"), v_int(t.row_height(r)));
                 }
@@ -382,14 +382,12 @@ pub(crate) fn dump_defaults_into(o: &mut Out) {
                 .to_string(),
             ..RcItem::default()
         };
-        parented(
-            PcbMarker::new(
-                &mut board.kiid_generator,
-                Arc::new(rc),
-                Vector2I::new(0, 0),
-                PcbLayerId::FCu.as_i32(),
-            ),
-            ParentRef::Board,
+        // PCB_MARKER( item, pos ) takes no parent.
+        PcbMarker::new(
+            &mut board.kiid_generator,
+            Arc::new(rc),
+            Vector2I::new(0, 0),
+            PcbLayerId::FCu.as_i32(),
         )
     });
     // FOOTPRINT( &board ): the constructor with its mandatory fields (create_footprint).

@@ -1,0 +1,3 @@
+(version 1)
+(rule a (condition "A.Type == 'Via')
+(constraint clearance (min 1mm)))

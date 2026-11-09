@@ -463,3 +463,113 @@ Deviations:
 Change made outside the package files: `board/mod.rs` (M0a), the two journal hooks only
 (`mut_env_refreshed` notes the before-values, `after_modify` records `Modified`; the
 `port_pending!` there was the journal recording of this package).
+
+## Package M13: padstack and pad utilities
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `PADSTACK::CopperLayer` (const and mutable), `ForEachUniqueLayer`, `UniqueLayers`, `EffectiveLayerFor`, `RelevantShapeLayers`, `HasExplicitDefinitionForLayer` | `padstack.rs` (`copper_props`, `copper_props_mut`, ...) | ported |
+| `m_copperProps` (`std::unordered_map`) | `padstack::CopperPropsMap` | ported: libstdc++ g++ 13 node order (bucket = id % count, insert at bucket begin / list front, `_Prime_rehash_policy` 13 / 29 / 59, copies keep order and bucket count, `clear()` keeps the bucket count), `board-model.md` 10.1 |
+| `PADSTACK::operator=`, `operator==`, `Compare`, `Similarity`, `FlipLayers`, `GetMaxHoleSize`, `PostMachiningKnockout`, `MachiningKnockout`, `IsTented` / `IsCovered` / `IsPlugged` | `assign_from`, `eq_padstack`, `compare`, `similarity`, `flip_layers`, `max_hole_size`, `post_machining_knockout`, `machining_knockout`, `is_*` | ported |
+| per-layer getters / setters (`SetSize`, `RoundRectRadius`, `SetRoundRectRadius`, `SolderMaskMargin` & co., `DefaultThermalSpokeAngleForShape`, `ThermalSpokeAngle`, ...), mutable `Offset` / `ChamferPositions` | `padstack.rs` | ported (`offset_mut`, `chamfer_positions_mut` added) |
+| `AddPrimitive`, `AppendPrimitives`, `ReplacePrimitives`, `ClearPrimitives` | `padstack.rs` | ported |
+| backdrill accessors (`findBackdrillDrill`, `backdrillWriteSlot`, `clearBackdrillSide`, `Get/SetBackdrillMode`, `...Size`, `...EndLayer`) | `padstack.rs` | ported |
+| `SHAPE_PROPS` / `COPPER_LAYER_PROPS` / `MASK_LAYER_PROPS` / `DRILL_PROPS` / `POST_MACHINING_PROPS` `Compare`, `COPPER_LAYER_PROPS::operator==` / `Similarity` | `padstack.rs` | ported; `COPPER_LAYER_PROPS::Compare` of two equal-length non-empty primitive lists calls the `port_pending!("EDA_SHAPE::Compare")` marker (no `EDA_SHAPE::Compare` port or stub exists yet, M7) |
+| `PADSTACK::Serialize` / `Deserialize` / `unpackCopperLayer` | - | skipped: protobuf API |
+| `PAD_UTILS::GetDefaultIpcRoundingRatio`, `PadHasMeaningfulRoundingRadius`, `RemoveAllDrillsFromPadstack`, `GetPadAttributeString`, `CheckPad` (+ `checkPadLayer`) | `pad_utils.rs` | ported (messages untranslated); `CheckPad` reaches M14 / M15 pad stubs (`GetSize`, `GetBoundingBox`, `TransformShapeToPolygon`, `GetEffectiveHoleShape`, `MergePrimitivesAsPolygon`, layer set) at run time |
+
+### Tests
+
+`qa/tests/pcbnew/test_backdrill_properties.cpp`: all 10 cases. `test_padstack_clone.cpp`:
+`InnerLayerKeepsInheritedSize`, `NewLayerOwnsItsPrimitives`, `CustomLayerEditKeepsInheritedSize`
+(padstack part; `HalfTurnedPadComparison` needs `FOOTPRINT::FootprintNeedsUpdate`, M20).
+`test_pad_setters.cpp` `SetAttributeClearsAllDrilling` (padstack part). `CopperPropsMap` order
+against golden orders printed by a g++ 13 `std::unordered_map` driver (insert, rehash to 29 / 59,
+copy + `clear()` + re-insert); the CUSTOM pad 05e66fff-... of `padstacks_complex.kicad_pcb`
+against the oracle (`unique_layers=[B.Cu,In2.Cu,In1.Cu,F.Cu]`, `round_rect_radius`, inherited
+anchor / spoke angle). `pcb-dump defaults`: all 153 `padstack.*` lines of `PAD` / `PCB_VIA` match
+the oracle. `test_pad_check.cpp` (two NON_COMPONENT cases) not ported: needs the M14 pad getters
+and a footprint fixture; port with M14.
+
+### Deviations / notes
+
+- Supersedes the M0b note: `m_copperProps` is no longer a `BTreeMap`; iteration follows libstdc++.
+- The C++ `operator==` checks `(bool) m_customName != (bool) m_customName` (a self-comparison),
+  so a custom name on one side only is not a difference; ported as is (`Compare` does see it).
+- `abs( double )` in the `Compare` functions is taken as `std::abs( double )` (fabs).
+- Primitives are values: `CopperLayer()`'s "new layer owns its primitives" copies with
+  `detached_copy()` and keeps their parent (the C++ `SetParent( m_parent )` sets the same owner);
+  `Similarity` treats two non-empty primitive lists as different (C++ compares `shared_ptr`s).
+- `VECTOR2I * 1.1` in `SetBackdrillMode` is computed as `Vector2D` and converted with the
+  clamping converting constructor (`cast`), as C++.
+
+## Package PCBIO-01: board file parser core and board skeleton
+
+### C++ to Rust map
+
+| C++ (`pcbnew/pcb_io/kicad_sexpr/`) | Rust (`src/io/`) | state |
+|---|---|---|
+| `pcb_io_kicad_sexpr.h` version constants (`SEXPR_BOARD_FILE_VERSION`, `BOARD_FILE_HOST_VERSION`, `LEGACY_*`, `FIRST_*`, `SEXPR_FOOTPRINT_LIB_FILE_VERSION`) | `mod.rs` | ported (`CTL_*` flags: PCBIO-02) |
+| `PCB_IO_KICAD_SEXPR::DoLoad` (new load: parse, `FUTURE_FORMAT_ERROR` conversion, "This file does not contain a PCB.") | `mod.rs` `parse_board`, `parse_board_report` | ported (append / preserved stackup: PCBIO-16) |
+| `.kicad_mod` entry (`FP_CACHE::Load` -> `ParseFootprintLib`) | `mod.rs` `parse_footprint_file`, `parser/fp_lib.rs` | stub (PCBIO-14) |
+| parser class, `GROUP_INFO` / `GENERATOR_INFO` / `CONSTRAINT_INFO`, `init`, `skipCurrent`, `pushValueIntoMap`, `getNetCode`, `parseBoardUnits` (3 forms), `parseInt`, `parseHex`, `parseBool`, `parseOptBool`, `parseMaybeAbsentBool`, `parseFrontBackOptBool`, `parseNet`, `GetRequiredVersion`, `parseXY`, `parseOutlinePoints`, `parseMargins`, `parseBoardProperty`, `parseCustomProperty` (2 forms), `lookUpLayer`, `lookUpLayerSet`, `parseBoardItemLayer`, `parseBoardItemLayersAsMask`, `parseLayersForCuItemWithSoldermask`, `CurStrToKIID` | `parser/mod.rs` `PcbParser` | ported |
+| `IsValidBoardHeader`, `Parse`, `finishItem`, `parseBOARD`, `parseBOARD_unchecked` (loop and post-processing), `parseHeader`, `parseGeneralSection`, `parsePAGE_INFO`, `parseTITLE_BLOCK`, `parseLayer`, `createOldLayerMapping`, `parseLayers`, `parseNETINFO_ITEM` | `parser/board.rs` | ported |
+| every other `parseXXX` | `parser/{tracks,shapes,setup,text,footprint,pad,zone,group,dimension,netclass_embedded,misc_items,generator,fp_lib}.rs` | staging stubs with the final signatures (PCBIO-03 .. 14) |
+| `checkpoint()` (progress reporter, wall clock), query-user callback, undefined-layer rescue dialog | - | skipped: GUI (headless branch ported) |
+| `remapAppendedLayers`, `m_appendToExisting` / `m_preserveDestinationStackup` branches | `parser/board.rs` (flags plumbed, always false) | skipped: PCBIO-16 |
+
+Staging: a stub called with `ParseOptions::allow_pending == false` fails with the `IO_ERROR`
+"port pending: <token> (PCBIO-nn)"; with `true` it skips the balanced list (`skipCurrent`) and
+records `(token, line, package)` in `ParseReport::skipped`. Item parsers return `Ok(None)` while
+they are stubs; `parseBOARD` adds what they return with `AddMode::BulkAppend` (footprints and
+tables: `attach_footprint` / `attach_table` of a created container).
+
+### Tests
+
+`src/io/parser/tests.rs`: helper semantics (`board_units` incl. the scientific notation of
+`ScientificNotationLoading`, `maybe_absent_bool`, `bools`, `kiids`, `required_version`,
+`layer_lookups`, `outline_points`, `misc_helpers`, `init_maps`, `staging_stubs`); error texts
+of the reference build (`error_messages`, `layer_errors`, `footprint_is_not_a_board`); the
+corpus (`corpus_boards`: all 371 boards of `qa/data/pcbnew` + `demos` below 20 MB with
+`allow_pending`, only `plugins/fakeboard.kicad_pcb` fails, with the oracle's message;
+`corpus_large`, `#[ignore]`: the four boards of 20 MB and more); `test_kicad_sexpr.cpp`
+`ScientificNotationLoading` (full check once PCBIO-03 and `GetArcMid` land); the differential
+oracle `oracle_board_section`: the skeleton fields of `pcb-dump board --no-init` (file version,
+generator, copper count, enabled layers, layer names and types, page, title block, properties,
+net names) of 63 corpus boards (the smallest of each file format version) and 4 hand-made boards
+(`tests/data/pcbio01/`), golden `tests/golden/pcbio01_board_section.txt` written by
+`tests/oracle/pcbio01_board_golden.sh`. Tests that reach a `port_pending!` model stub report it
+as pending instead of failing (`model()` in the test file); mismatches fail.
+
+### Deviations / notes
+
+- `GetRequiredVersion` formats the date as the reference build's C locale `%x` does
+  (`MM/DD/YY`, checked: 29990101 -> "01/01/99"); a host in another locale would print
+  differently. Days per month use the Gregorian calendar (`wxDateTime` default).
+- `parseLayer` / `parseNET*` read names with `CurText()` / `FromUTF8()`; a name that is not
+  valid UTF-8 gets the lexer's lossy text (the C++ `From_UTF8` falls back to the current locale).
+- `parse_board` takes `&str`: callers convert file bytes (`from_utf8_lossy` in the dump hook).
+- `FinalizeBulkAdd` (listeners, drill model generation), `m_LegacyVisibleLayers` (GUI state,
+  never written back), `RefreshDrillSymbolLayers` (view-only layer / placement state) have no
+  Rust counterpart: no field on `Board`.
+- `parseNet` on a local item: `SetNetCode` uses the item's `is_on_copper_layer` and its parent
+  chain (`GetBoard()`); `SetNet` is passed in by the caller (`parse_net_with`) because `ZONE`
+  overrides it.
+- `pushValueIntoMap` with a negative file net code is ignored (the C++ would `resize` to a huge
+  size and abort).
+- Empty input fails with "Unexpected ''end of input''"; not oracle-checked (the reference QA
+  stream load path does not terminate on an empty file).
+
+### Known gaps
+
+- Model calls that are still stubs when this package landed (the parse panics with their name
+  until they land; the tests report them as pending): `BOARD::SetLayerDescr`,
+  `BOARD::SetEnabledLayers` / `BOARD_DESIGN_SETTINGS::SetEnabledLayers`, `BOARD::GetLayerName`,
+  `BOARD::GetLayerType`, `EMBEDDED_FILES::UpdateFontFiles`, `BOARD::FixupEmbeddedData`,
+  `FOOTPRINT::RunOnChildren`, `PCB_BARCODE::AssembleBarcode`.
+- No model API yet (marked with `port_pending!` at the call site, reached only when such items
+  exist): `EDA_TEXT::ResolveFont`, `ZONE::SetLayerSetAndRemoveUnusedFills`.
+- `resolveGroups` / `resolveConstraints` are PCBIO-09 / PCBIO-13 stubs: exact (no-op) while no
+  declaration was recorded, i.e. while their declaring parsers are stubs too.

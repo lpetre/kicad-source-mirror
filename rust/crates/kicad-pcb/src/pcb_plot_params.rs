@@ -16,8 +16,10 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcb_plot_params.h` and `pcbnew/pcb_plot_params.cpp` (`PCB_PLOT_PARAMS`):
-//! data, constructor defaults and accessors (package M0d). `Format` / `Parse` belong to the
-//! board I/O packages, `IsSameAs` to package M6.
+//! data, constructor defaults and accessors (package M0d), the setters with clamping and
+//! `IsSameAs` (package M6). `Format` / `Parse` (and the legacy layer mask remapping they use,
+//! `kicad_core::legacy_layers::remap_legacy_layer_lset`) belong to the board I/O package
+//! PCBIO-04.
 
 use kicad_core::plot_enums::{DrillMarks, DxfOutlineMode, DxfUnits, PlotFormat, PlotTextMode};
 use kicad_core::{Color4D, Lset, PCB_IU_SCALE, PcbLayerId};
@@ -190,9 +192,237 @@ impl PcbPlotParams {
         self.svg_precision = precision.clamp(SVG_PRECISION_MIN, SVG_PRECISION_MAX);
     }
 
-    /// `PCB_PLOT_PARAMS::IsSameAs`.
+    /// `PCB_PLOT_PARAMS::GetGerberPrecision`.
+    pub fn gerber_precision(&self) -> i32 {
+        self.gerber_precision
+    }
+
+    /// `PCB_PLOT_PARAMS::GetSvgPrecision`.
+    pub fn svg_precision(&self) -> u32 {
+        self.svg_precision
+    }
+
+    /// `PCB_PLOT_PARAMS::SetLayerSelection`.
+    pub fn set_layer_selection(&mut self, selection: &Lset) {
+        self.layer_selection = selection.clone();
+    }
+
+    /// `PCB_PLOT_PARAMS::GetLayerSelection`.
+    pub fn layer_selection(&self) -> &Lset {
+        &self.layer_selection
+    }
+
+    /// `PCB_PLOT_PARAMS::SetPlotOnAllLayersSequence`.
+    pub fn set_plot_on_all_layers_sequence(&mut self, seq: Vec<PcbLayerId>) {
+        self.plot_on_all_layers_sequence = seq;
+    }
+
+    /// `PCB_PLOT_PARAMS::GetLegacyPlotViaOnMaskLayer`.
+    pub fn legacy_plot_via_on_mask_layer(&self) -> Option<bool> {
+        self.plot_via_on_mask_layer
+    }
+
+    /// `PCB_PLOT_PARAMS::IsSameAs`: compares the current settings to `other`, including
+    /// parameters not saved in the board file; format-specific options only matter for
+    /// their format.
     pub fn is_same_as(&self, other: &PcbPlotParams) -> bool {
-        crate::port_pending!("PCB_PLOT_PARAMS::IsSameAs", other)
+        if self.layer_selection != other.layer_selection {
+            return false;
+        }
+
+        if self.plot_on_all_layers_sequence != other.plot_on_all_layers_sequence {
+            return false;
+        }
+
+        if self.format == PlotFormat::Gerber {
+            if self.use_gerber_protel_extensions != other.use_gerber_protel_extensions {
+                return false;
+            }
+
+            if self.gerber_disable_apert_macros != other.gerber_disable_apert_macros {
+                return false;
+            }
+
+            if self.use_gerber_x2_format != other.use_gerber_x2_format {
+                return false;
+            }
+
+            if self.include_gerber_netlist_info != other.include_gerber_netlist_info {
+                return false;
+            }
+
+            if self.create_gerber_job_file != other.create_gerber_job_file {
+                return false;
+            }
+
+            if self.gerber_precision != other.gerber_precision {
+                return false;
+            }
+        }
+
+        if self.dashed_line_dash_ratio != other.dashed_line_dash_ratio {
+            return false;
+        }
+
+        if self.dashed_line_gap_ratio != other.dashed_line_gap_ratio {
+            return false;
+        }
+
+        if self.plot_drawing_sheet != other.plot_drawing_sheet {
+            return false;
+        }
+
+        if self.format == PlotFormat::Dxf {
+            if self.dxf_plot_mode != other.dxf_plot_mode {
+                return false;
+            }
+
+            if self.dxf_polygon_mode != other.dxf_polygon_mode {
+                return false;
+            }
+
+            if self.dxf_units != other.dxf_units {
+                return false;
+            }
+
+            if self.dxf_export_as_multi_layered_file != other.dxf_export_as_multi_layered_file {
+                return false;
+            }
+        }
+
+        if self.svg_precision != other.svg_precision {
+            return false;
+        }
+
+        if self.png_dpi != other.png_dpi {
+            return false;
+        }
+
+        if self.png_antialias != other.png_antialias {
+            return false;
+        }
+
+        if self.format != PlotFormat::Post && self.use_aux_origin != other.use_aux_origin {
+            return false;
+        }
+
+        if self.format == PlotFormat::Post
+            || self.format == PlotFormat::Svg
+            || self.format == PlotFormat::Pdf
+        {
+            if self.negative != other.negative {
+                return false;
+            }
+
+            if self.mirror != other.mirror {
+                return false;
+            }
+        }
+
+        if self.format == PlotFormat::Pdf {
+            if self.pdf_front_fp_property_popups != other.pdf_front_fp_property_popups {
+                return false;
+            }
+
+            if self.pdf_back_fp_property_popups != other.pdf_back_fp_property_popups {
+                return false;
+            }
+
+            if self.pdf_metadata != other.pdf_metadata {
+                return false;
+            }
+        }
+
+        if self.plot_reference != other.plot_reference {
+            return false;
+        }
+
+        if self.plot_value != other.plot_value {
+            return false;
+        }
+
+        if self.plot_fp_text != other.plot_fp_text {
+            return false;
+        }
+
+        if self.sketch_pads_on_fab_layers != other.sketch_pads_on_fab_layers {
+            return false;
+        }
+
+        if self.plot_pad_numbers != other.plot_pad_numbers {
+            return false;
+        }
+
+        if self.hide_dnp_fps_on_fab_layers != other.hide_dnp_fps_on_fab_layers {
+            return false;
+        }
+
+        if self.sketch_dnp_fps_on_fab_layers != other.sketch_dnp_fps_on_fab_layers {
+            return false;
+        }
+
+        if self.crossout_dnp_fps_on_fab_layers != other.crossout_dnp_fps_on_fab_layers {
+            return false;
+        }
+
+        if self.subtract_mask_from_silk != other.subtract_mask_from_silk {
+            return false;
+        }
+
+        if self.format != other.format {
+            return false;
+        }
+
+        if self.format != PlotFormat::Gerber {
+            if self.drill_marks != other.drill_marks {
+                return false;
+            }
+
+            if self.scale_selection != other.scale_selection {
+                return false;
+            }
+
+            if self.auto_scale != other.auto_scale {
+                return false;
+            }
+
+            if self.scale != other.scale {
+                return false;
+            }
+        }
+
+        if self.format == PlotFormat::Post {
+            if self.a4_output != other.a4_output {
+                return false;
+            }
+
+            if self.fine_scale_adjust_x != other.fine_scale_adjust_x {
+                return false;
+            }
+
+            if self.fine_scale_adjust_y != other.fine_scale_adjust_y {
+                return false;
+            }
+
+            if self.width_adjust != other.width_adjust {
+                return false;
+            }
+        }
+
+        if self.text_mode != other.text_mode {
+            return false;
+        }
+
+        if self.black_and_white != other.black_and_white {
+            return false;
+        }
+
+        // wxString::IsSameAs( aStr ) is case sensitive.
+        if self.output_directory != other.output_directory {
+            return false;
+        }
+
+        true
     }
 }
 

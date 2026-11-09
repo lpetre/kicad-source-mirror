@@ -1,0 +1,4 @@
+(version 1)
+(rule a (condition "AB.isCoupledDiffPair()") (constraint length (max 100mm)) (constraint skew (max 1mm)) (constraint net_chain_length (max 1mm)))
+(rule b (condition "AB.isCoupledDiffPair() && B.Type == 'Track'") (constraint length (max 100mm)))
+(rule c (condition "AB.isCoupledDiffPair()") (constraint hole_size (min 0.2mm)))

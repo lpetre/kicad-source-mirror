@@ -39,6 +39,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstdint>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -62,6 +63,7 @@
 #include <pcb_track.h>
 #include <pcb_io/pcb_io_mgr.h>
 #include <wildcards_and_files_ext.h>
+#include <kiway_player.h>
 
 #include <drill/drill_enumerator.h>
 #include <exporters/gendrill_writer_base.h>
@@ -91,20 +93,45 @@ static std::string fmtOpt( const std::optional<int>& aVal )
 }
 
 
+/// Source item ordinals: V<n> = index in BOARD::Tracks(), P<n> = running index over
+/// Footprints() x Pads() (the Rust side numbers its items the same way).
+static std::map<const BOARD_ITEM*, std::string> s_ordinals;
+
+
+static void numberItems( BOARD* aBoard )
+{
+    s_ordinals.clear();
+    int n = 0;
+
+    for( PCB_TRACK* track : aBoard->Tracks() )
+        s_ordinals[track] = "V" + std::to_string( n++ );
+
+    n = 0;
+
+    for( FOOTPRINT* fp : aBoard->Footprints() )
+    {
+        for( PAD* pad : fp->Pads() )
+            s_ordinals[pad] = "P" + std::to_string( n++ );
+    }
+}
+
+
 static std::string fmtOp( const DRILL_OPERATION& op )
 {
-    char src = '-';
+    std::string src = "-";
 
-    if( dynamic_cast<PCB_VIA*>( op.m_SourceItem ) )
-        src = 'V';
-    else if( dynamic_cast<PAD*>( op.m_SourceItem ) )
-        src = 'P';
+    if( s_ordinals.count( op.m_SourceItem ) )
+        src = s_ordinals[op.m_SourceItem];
+
+    // The source UUID must be the item's own.
+    if( op.m_SourceItem && op.m_SourceItem->m_Uuid != op.m_SourceId )
+        src += "!uuid";
 
     char buf[1024];
     snprintf( buf, sizeof( buf ),
-              "%d|%c|%s|%d|%d|%d|%d|%.17g|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|"
+              "%d|%s|%d|%d|%d|%d|%.17g|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|"
               "%d|%d|%d|%d|%d|%d|%d|%d|%s",
-              (int) op.m_Kind, src, op.m_SourceId.AsStdString().c_str(), op.m_Position.x,
+              (int) op.m_Kind, src.c_str(), op.m_Position.x,
               op.m_Position.y, op.m_SizeXY.x, op.m_SizeXY.y, op.m_Orientation.AsDegrees(),
               op.m_Diameter, (int) op.m_IsSlot, (int) op.m_TopLayer, (int) op.m_BottomLayer,
               (int) op.m_DrillStart, (int) op.m_DrillEnd, (int) op.m_NotPlated,
@@ -123,6 +150,7 @@ static std::string fmtOp( const DRILL_OPERATION& op )
 static void dumpBoard( BOARD* aBoard, const std::string& aName )
 {
     ORACLE_WRITER w( aBoard );
+    numberItems( aBoard );
 
     printf( "board|%s|%d|%s\n", aName.c_str(), aBoard->GetCopperLayerCount(),
             wxFileName( aBoard->GetFileName() ).GetFullName().ToStdString().c_str() );
@@ -422,10 +450,10 @@ int main( int argc, char** argv )
     wxSetAssertHandler( &noAssert );
 
     // Synthetic boards first (independent of the corpus).
-    dumpBoard( makeSynthetic( "synthetic6", 6, 12345, 200, 80 ).get(), "synthetic6" );
-    dumpBoard( makeSynthetic( "synthetic4", 4, 777, 60, 40 ).get(), "synthetic4" );
-    dumpBoard( makeSynthetic( "synthetic2", 2, 99, 40, 30 ).get(), "synthetic2" );
-    dumpBoard( makeSynthetic( "synthetic32", 32, 5, 80, 10 ).get(), "synthetic32" );
+    dumpBoard( makeSynthetic( "synthetic6", 6, 12345, 100, 40 ).get(), "synthetic6" );
+    dumpBoard( makeSynthetic( "synthetic4", 4, 777, 30, 20 ).get(), "synthetic4" );
+    dumpBoard( makeSynthetic( "synthetic2", 2, 99, 24, 24 ).get(), "synthetic2" );
+    dumpBoard( makeSynthetic( "synthetic32", 32, 5, 30, 6 ).get(), "synthetic32" );
 
     for( int i = 1; i < argc; i++ )
     {

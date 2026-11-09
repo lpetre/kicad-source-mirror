@@ -2472,3 +2472,283 @@ fn collide_no_clearance() {
     assert!(!collided);
     assert_eq!(actual, 0);
 }
+
+// --- test_shape_line_chain_collision.cpp: the corpus tests (indexed vs. reference algorithm) ---
+
+/// Sentinels far outside the fixtures' range, so an untouched output cannot look like a real
+/// one
+const NO_ACTUAL: i32 = 123456789;
+const NO_LOCATION: Vector2I = Vector2I::new(123456789, -123456789);
+
+const WANT_NOTHING: i32 = 0;
+const WANT_ACTUAL: i32 = 1;
+const WANT_LOCATION: i32 = 2;
+const WANT_BOTH: i32 = 3;
+
+/// `loadZone()`: the polyset of zone `a_zone` of a file of `qa/data/triangulation`.
+fn load_zone(a_filename: &str, a_zone: i32) -> kicad_geom::geometry::shape_poly_set::ShapePolySet {
+    let path = kicad_qa::qa_data_dir()
+        .join("triangulation")
+        .join(a_filename);
+    let data = std::fs::read_to_string(&path).expect("Unable to open zone file");
+    let mut pos = 0;
+
+    for _ in 0..=a_zone {
+        pos += data[pos..].find("(zone (layer \"").expect("Missing zone");
+        pos += 1;
+    }
+
+    pos += data[pos..].find("polyset ").expect("Missing polyset");
+
+    // Parse consumes only the polyset expression, so handing it the rest of the file is
+    // harmless
+    let mut serialized = StringStream::new(&data[pos..]);
+    let mut result = kicad_geom::geometry::shape_poly_set::ShapePolySet::new();
+    assert!(result.parse(&mut serialized), "Unable to parse zone");
+
+    result
+}
+
+/// `extractSubchain()`
+fn extract_subchain(a_source: &ShapeLineChain, a_start: i32, a_segment_count: i32) -> ShapeLineChain {
+    let mut result = ShapeLineChain::new();
+    result.append_point(a_source.c_segment(a_start).a, false);
+
+    for i in 0..a_segment_count {
+        result.append_point(a_source.c_segment(a_start + i).b, true);
+    }
+
+    result
+}
+
+#[derive(Debug, PartialEq)]
+struct CollisionOutput {
+    result: bool,
+    actual: i32,
+    location: Vector2I,
+}
+
+/// `referenceCollision()`: the pre-index algorithm, which walked every segment pair in sorted
+/// order.  Valid only for arc-free chains, since it skips the arc refinement pass.
+fn reference_collision(
+    a_a: &ShapeLineChain,
+    a_b: &ShapeLineChain,
+    a_clearance: i32,
+    a_outputs: i32,
+) -> CollisionOutput {
+    let mut closest = i32::MAX;
+    let mut nearest = Vector2I::default();
+
+    if a_b.is_closed() && a_a.get_point_count() > 0 && a_b.point_inside(a_a.get_point(0), 0, false)
+    {
+        closest = 0;
+        nearest = a_a.get_point(0);
+    } else if a_a.is_closed()
+        && a_b.get_point_count() > 0
+        && a_a.point_inside(a_b.get_point(0), 0, false)
+    {
+        closest = 0;
+        nearest = a_b.get_point(0);
+    } else if a_clearance >= 0 {
+        let mut a_segments: Vec<Seg> = (0..a_a.segment_count()).map(|i| a_a.c_segment(i)).collect();
+        let mut b_segments: Vec<Seg> = (0..a_b.segment_count()).map(|i| a_b.c_segment(i)).collect();
+
+        let segment_sort = |a_first: &Seg, a_second: &Seg| {
+            a_first.a.x < a_second.a.x || (a_first.a.x == a_second.a.x && a_first.a.y < a_second.a.y)
+        };
+
+        kicad_geom::stdsort::std_sort(&mut a_segments, segment_sort);
+        kicad_geom::stdsort::std_sort(&mut b_segments, segment_sort);
+
+        for a in &a_segments {
+            for b in &b_segments {
+                let (collides, distance) = a.collide_actual(b, a_clearance);
+
+                if collides {
+                    if distance < closest {
+                        nearest = a.nearest_point_seg(b);
+                        closest = distance;
+                    }
+
+                    if closest == 0 || (a_outputs & WANT_ACTUAL) == 0 {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    let mut result = CollisionOutput {
+        result: false,
+        actual: NO_ACTUAL,
+        location: NO_LOCATION,
+    };
+
+    if closest == 0 || closest < a_clearance {
+        result.result = true;
+
+        if a_outputs & WANT_ACTUAL != 0 {
+            result.actual = closest;
+        }
+
+        if a_outputs & WANT_LOCATION != 0 {
+            result.location = nearest;
+        }
+    }
+
+    result
+}
+
+/// `indexedCollision()`
+fn indexed_collision(
+    a_a: &ShapeLineChain,
+    a_b: &ShapeLineChain,
+    a_clearance: i32,
+    a_outputs: i32,
+) -> CollisionOutput {
+    let mut actual = NO_ACTUAL;
+    let mut location = NO_LOCATION;
+    let result = (a_a as &dyn Shape).collide(
+        a_b,
+        a_clearance,
+        if a_outputs & WANT_ACTUAL != 0 {
+            Some(&mut actual)
+        } else {
+            None
+        },
+        if a_outputs & WANT_LOCATION != 0 {
+            Some(&mut location)
+        } else {
+            None
+        },
+    );
+
+    CollisionOutput {
+        result,
+        actual,
+        location,
+    }
+}
+
+/// `checkCollisionParity()`
+fn check_collision_parity(a_a: &ShapeLineChain, a_b: &ShapeLineChain, a_clearance: i32) {
+    for outputs in WANT_NOTHING..=WANT_BOTH {
+        let expected = reference_collision(a_a, a_b, a_clearance, outputs);
+        let actual = indexed_collision(a_a, a_b, a_clearance, outputs);
+
+        assert_eq!(actual.result, expected.result);
+        assert_eq!(actual.actual, expected.actual);
+        assert_eq!(actual.location, expected.location);
+    }
+}
+
+#[test]
+fn collide_real_contour_parity() {
+    let cases = [
+        ("One-Air-Max.kicad_polys", 18, 0, 3),
+        ("issue5093.kicad_polys", 3, 0, 1),
+        ("bad_triangulation_case.kicad_polys", 47, 0, 3),
+    ];
+
+    for (file, zone, outline_a, outline_b) in cases {
+        let poly = load_zone(file, zone);
+        assert!(poly.outline_count() > outline_a.max(outline_b));
+
+        let a = poly.c_outline(outline_a);
+        let b = poly.c_outline(outline_b);
+        assert_eq!(a.arc_count(), 0);
+        assert_eq!(b.arc_count(), 0);
+
+        for clearance in [-1, 0, 200000, 2000000] {
+            check_collision_parity(a, b, clearance);
+            check_collision_parity(b, a, clearance);
+        }
+    }
+}
+
+#[test]
+fn collide_real_contour_gate_boundaries() {
+    let poly = load_zone("issue5093.kicad_polys", 3);
+    let source_a = poly.c_outline(0);
+    let source_b = poly.c_outline(1);
+    // Sizes straddle the output gate of A>=32, B>=64 and 4096 pairs, so 31x133 stays direct
+    // while 66x63 and 63x65 cross it in one argument order only
+    let sizes = [(31, 133), (32, 128), (66, 63), (63, 65), (64, 64)];
+    assert_eq!(source_a.segment_count(), 265);
+    assert_eq!(source_b.segment_count(), 307);
+
+    for (count_a, count_b) in sizes {
+        for start_a in [0, source_a.segment_count() - count_a] {
+            let a = extract_subchain(source_a, start_a, count_a);
+            let b = extract_subchain(source_b, 0, count_b);
+
+            for clearance in [-1, 0, 200000, 2000000] {
+                check_collision_parity(&a, &b, clearance);
+                check_collision_parity(&b, &a, clearance);
+            }
+        }
+    }
+}
+
+#[test]
+fn collide_real_contour_shared_segments() {
+    let poly = load_zone("issue5093.kicad_polys", 3);
+    let source = poly.c_outline(0);
+
+    // Overlapping subchains share 32 segments, which drives the zero-distance exact-hit exit
+    let a = extract_subchain(source, 0, 64);
+    let b = extract_subchain(source, 32, 128);
+
+    check_collision_parity(&a, &b, 0);
+    check_collision_parity(&b, &a, 0);
+}
+
+#[test]
+fn segment_index_real_contour_candidate_set() {
+    let poly = load_zone("One-Air-Max.kicad_polys", 18);
+    let contour = poly.c_outline(0);
+    let segments: Vec<Seg> = (0..contour.segment_count())
+        .map(|i| contour.c_segment(i))
+        .collect();
+
+    // Enough segments to force a multi-level tree rather than a single leaf
+    let index = kicad_geom::geometry::segment_index::SegmentIndex::new(segments.clone());
+    assert!(index.size() > 256);
+
+    for query_index in (0..segments.len()).step_by(17) {
+        let query = &segments[query_index];
+
+        for padding in [0, 200000, 2000000] {
+            let mut expected = Vec::new();
+            let min_x = query.a.x.min(query.b.x) as i64 - padding as i64;
+            let min_y = query.a.y.min(query.b.y) as i64 - padding as i64;
+            let max_x = query.a.x.max(query.b.x) as i64 + padding as i64;
+            let max_y = query.a.y.max(query.b.y) as i64 + padding as i64;
+
+            for (i, segment) in segments.iter().enumerate() {
+                if segment.a.x.max(segment.b.x) as i64 >= min_x
+                    && segment.a.x.min(segment.b.x) as i64 <= max_x
+                    && segment.a.y.max(segment.b.y) as i64 >= min_y
+                    && segment.a.y.min(segment.b.y) as i64 <= max_y
+                {
+                    expected.push(i as i32);
+                }
+            }
+
+            let mut actual = Vec::new();
+            index.visit_candidates(query, padding, |a_item| {
+                actual.push(a_item);
+                true
+            });
+            actual.sort();
+            assert_eq!(actual, expected);
+        }
+    }
+
+    let mut calls = 0;
+    index.visit_candidates(&segments[0], i32::MAX, |_| {
+        calls += 1;
+        false
+    });
+    assert_eq!(calls, 1);
+}

@@ -1138,23 +1138,30 @@ void sectionEllipse( const char* aName, uint64_t aSeed, int aCount )
 int main( int argc, char** argv )
 {
     wxSetAssertHandler( nullptr );
+    std::string only;
 
     for( int i = 1; i + 1 < argc; i += 2 )
     {
         if( std::string( argv[i] ) == "--dump" )
             g_dump = fopen( argv[i + 1], "w" );
+
+        if( std::string( argv[i] ) == "--only" )
+            only = argv[i + 1];
     }
 
-    sectionLibmProbe();
-    sectionCircle( "libm:conv_circle", 600, 20000 );
-    sectionOval( "libm:conv_oval", 601, 20000 );
-    sectionRect( "libm:conv_rect", 602, 30000 );
-    sectionArc( "libm:conv_arc", 603, 20000 );
-    sectionRoundrect( "libm:conv_roundrect", 604, 20000 );
-    sectionCornerOps( "libm:conv_corner_ops", 605, 20000 );
-    sectionShapeUtils( "libm:conv_shape_utils", 606, 20000 );
-    sectionIntersection( "libm:intersection", 607, 30000 );
-    sectionEllipse( "libm:shape_ellipse", 608, 30000 );
+    // --only NAME runs just that section (to dump a mismatch quickly)
+    auto run = [&]( const char* aName ) { return only.empty() || only == aName; };
+
+    if( run( "libm_probe" ) ) sectionLibmProbe();
+    if( run( "libm:conv_circle" ) ) sectionCircle( "libm:conv_circle", 600, 20000  );
+    if( run( "libm:conv_oval" ) ) sectionOval( "libm:conv_oval", 601, 20000  );
+    if( run( "libm:conv_rect" ) ) sectionRect( "libm:conv_rect", 602, 30000  );
+    if( run( "libm:conv_arc" ) ) sectionArc( "libm:conv_arc", 603, 20000  );
+    if( run( "libm:conv_roundrect" ) ) sectionRoundrect( "libm:conv_roundrect", 604, 20000  );
+    if( run( "libm:conv_corner_ops" ) ) sectionCornerOps( "libm:conv_corner_ops", 605, 20000  );
+    if( run( "libm:conv_shape_utils" ) ) sectionShapeUtils( "libm:conv_shape_utils", 606, 20000  );
+    if( run( "libm:intersection" ) ) sectionIntersection( "libm:intersection", 607, 30000  );
+    if( run( "libm:shape_ellipse" ) ) sectionEllipse( "libm:shape_ellipse", 608, 30000  );
 
     if( g_dump )
         fclose( g_dump );

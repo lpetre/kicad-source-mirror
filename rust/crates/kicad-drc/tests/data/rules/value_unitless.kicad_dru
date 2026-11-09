@@ -1,0 +1,7 @@
+(version 1)
+(rule a (constraint via_count (max 2)))
+(rule b (constraint microvia_stack_depth (max 3)))
+(rule c (constraint via_dangling (max 0)))
+(rule d (constraint bridged_mask (min 0)))
+(rule e (constraint hole_aspect_ratio (max 1.2345)))
+(rule f (constraint hole_aspect_ratio (min 0.0005) (max 10)))

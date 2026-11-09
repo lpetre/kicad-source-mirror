@@ -1,0 +1,3 @@
+(version 1)
+(rule a (constraint return_path (layer "B.Cu") (net "GND")))
+(rule b (constraint return_path (layer In1.Cu) (foo bar) (net 5)))

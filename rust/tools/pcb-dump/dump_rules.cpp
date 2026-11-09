@@ -41,6 +41,17 @@
 namespace
 {
 
+/// wx assertions raised while parsing (e.g. KiROUND overflow in kimathLogOverflow). A release
+/// build of KiCad only logs them; the rules command counts them instead of throwing like the
+/// QA harness handler installed by main().
+int s_ruleAsserts = 0;
+
+void countingRuleAssertHandler( const wxString&, int, const wxString&, const wxString&,
+                                const wxString& )
+{
+    s_ruleAsserts++;
+}
+
 /// REPORTER that records every message with its severity.
 class COLLECTING_REPORTER : public REPORTER
 {
@@ -248,8 +259,17 @@ int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses 
         wxString text = wxString::FromUTF8( buf.str() );
         wxString source = wxString::FromUTF8( name );
 
+        s_ruleAsserts = 0;
+        wxAssertHandler_t previous = wxSetAssertHandler( &countingRuleAssertHandler );
+
         Guard( "report", [&]() { dumpParse( text, source, true, aComponentClasses ); } );
         Guard( "throw", [&]() { dumpParse( text, source, false, aComponentClasses ); } );
+
+        wxSetAssertHandler( previous );
+
+        if( s_ruleAsserts )
+            printf( "warn|rules|%s|wx assertions: %d\n", name.c_str(), s_ruleAsserts );
+
         fflush( stdout );
     }
 

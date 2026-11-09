@@ -1,0 +1,5 @@
+(version 1)
+(rule a (constraint clearance (min 0.2mm + 1mil) (opt 2 * 0.1mm) (max (1mm + 1mm) / 4)))
+(rule b (constraint track_width (min 10mil) (max 0.5in)))
+(rule c (constraint hole_size (min "0.3mm")))
+(rule d (constraint annular_width (min 0,15mm)))

@@ -1,0 +1,5 @@
+# comment line
+(version 1)
+# another
+(rule a # trailing
+  (constraint clearance (min 1mm)))

@@ -150,14 +150,24 @@ Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend 
 (Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
 
 Progress log of launches (workflow task ids):
-- done: M1 containers/index/create-attach, M2 item base (wnw19yvig; Opus; Fable-reviewed:
-  decisions accepted; create_footprint needs M10's EDA_TEXT::SetVisible at run time).
+- done: M1 containers/index/create-attach, M2 item base (wnw19yvig); M3 nets + netclasses,
+  M13 padstack (w1sw02b68; padstack reproduces the libstdc++ unordered_map iteration order
+  of m_copperProps and matches the oracle; all 153 padstack default lines identical). All
+  Opus, Fable-reviewed, decisions accepted.
 - running: geometry G4b -> G5 and G6b (wvunbqm6s); Fable integration of wave 0b -> M7, M10
-  (wawxgug4p); M3, M13 (w1sw02b68); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17
-  and DRC-20 -> DRC-11 (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 -> FAB-02
-  (wqbof03ge); M5 -> SET-4 (BDS JSON) and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk).
-- next up when their dependencies land: M4 (after M3), M8 (after M7), M14 (after M13), M18
-  (after M5), M22 (after M3), M24.
+  (wawxgug4p); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17 and DRC-20 -> DRC-11
+  (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 -> FAB-02 (wqbof03ge); M5 -> SET-4
+  and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk); M4 -> SET-3 and M14 (wi1yj6pr0); M22
+  and M24 (wjpjy2o11). kicad-pcb Cargo.toml now has ruzstd 0.9.1 and base64 0.23.1 (M24).
+- next up when their dependencies land: M8 (after M7), M18 (after M5), M9 (after M8), M12
+  (after M10, M8), then M11, M15, M21, M19, M20; PCBIO fan-out after PCBIO-02; connectivity
+  after G5; DRC engine after DRC-20.
+- small follow-ups collected from package reports: wire Board::apply_net_chain_netclasses to
+  M4's chain-pattern functions; move wx_string_matches (netclass.rs) to kicad_core; an
+  unbind_uuid helper in board/index.rs; ConnectivityQuery::net_items for
+  NETINFO_ITEM::GetBoundingBox (GUI only); a SetNet virtual for the zone copper-thieving
+  override; Board table rotate / flip / mirror stubs (M11); own_clearance for an item
+  without a handle.
 
 Queue - launch each item as soon as its dependencies have landed (model package rows and
 run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis

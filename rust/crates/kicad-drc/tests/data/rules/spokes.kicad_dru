@@ -1,0 +1,3 @@
+(version 1)
+(rule a (constraint min_resolved_spokes 3))
+(rule b (constraint min_resolved_spokes 2.7))

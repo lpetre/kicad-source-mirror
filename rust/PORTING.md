@@ -136,6 +136,17 @@ Several agents work in this workspace at the same time, in different crates or d
   modify anything outside `<kicad>/rust/` (the C++ tree is read-only reference).
 - Scratch files go under `rust/target/` or the system temp dir, not into the source tree.
 - Do not use `cargo install` or `rustup` without being asked to.
+- **Disk is small and shared** (about 40 GB for everything, including the reference build and
+  all build outputs). The disk has filled up once already because of scratch dumps. Never write
+  a scratch file larger than about 200 MB: hash oracle output per case or per section instead
+  of dumping it, pipe large output through a hash or `head`, and delete scratch files as soon
+  as you have compared them. Never run `pcb-dump` on the large demo boards (jetson, vme-wren,
+  openair-max, tiny_tapeout) without `--hash` and a narrow `--sections` list, and never store
+  that output. A watchdog deletes scratch files over 1 GB and stops the process writing them;
+  if your command is killed or your file vanishes, that is why: shrink the output, do not
+  retry the same command. If a write fails with "No space left on device", re-check the file
+  you were writing (it may be truncated) once space is back.
+
 
 ## 8. `PORT_STATUS.md` (one per crate, owned by the crate's agents)
 

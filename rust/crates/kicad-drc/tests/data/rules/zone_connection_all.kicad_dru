@@ -1,0 +1,5 @@
+(version 1)
+(rule a (constraint zone_connection solid))
+(rule b (constraint zone_connection thermal_reliefs))
+(rule c (constraint zone_connection none))
+(rule d (constraint zone_connection "solid"))

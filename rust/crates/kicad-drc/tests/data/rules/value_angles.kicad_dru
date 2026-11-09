@@ -1,0 +1,6 @@
+(version 1)
+(rule a (constraint track_angle (min 45)))
+(rule b (constraint track_angle (min 30deg) (max 90deg)))
+(rule c (constraint track_angle (min 1mm)))
+(rule d (constraint clearance (min 45deg)))
+(rule e (constraint track_angle (min 1,5deg)))

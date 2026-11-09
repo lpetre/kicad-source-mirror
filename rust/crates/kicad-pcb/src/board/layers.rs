@@ -311,7 +311,7 @@ mod tests {
         assert_eq!(board.paper.type_(), PageSizeType::A4);
         assert_eq!(board.user_units, EdaUnits::Mm);
         assert_eq!(board.outlines_chaining_epsilon, 10_000);
-        assert_eq!(board.file_format_version_at_load, 20160815);
+        assert_eq!(board.file_format_version_at_load, 2);
         assert_eq!(board.copper_layer_count(), 2);
 
         // LAYER table: every id, standard names, types, opposites from ::FlipLayer( 2 ).

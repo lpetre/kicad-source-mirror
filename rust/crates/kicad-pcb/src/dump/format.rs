@@ -184,10 +184,15 @@ impl Out {
         ));
     }
 
+    /// Report a failure for `field`. `field` may list several fields separated by `|` and use
+    /// `*` wildcards (`shape.*`, `*.F.Cu`, `*` = every field of the key): a failed condition
+    /// stands for all the fields it controls (`compare.py` matches them with `fnmatch`).
     pub(crate) fn fail(&mut self, field: &str, failure: Failure) {
-        match failure {
-            Failure::Pending(name) => self.tagged("pending", field, &name),
-            Failure::Error(msg) => self.tagged("rust-error", field, &msg),
+        for f in field.split('|') {
+            match &failure {
+                Failure::Pending(name) => self.tagged("pending", f, name),
+                Failure::Error(msg) => self.tagged("rust-error", f, msg),
+            }
         }
     }
 

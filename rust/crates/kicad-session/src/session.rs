@@ -28,7 +28,8 @@
 //! written; [`parse_board_text`] is the single switch for the parser.
 
 use kicad_core::lset::Lset;
-use kicad_core::{PcbLayerId, is_copper_layer};
+use kicad_core::PcbLayerId;
+use kicad_core::layer_ids::is_copper_layer;
 use kicad_geom::Vector2I;
 use kicad_pcb::padstack::Padstack;
 use kicad_pcb::pcb_track::{PcbTrack, PcbVia, Track};
@@ -102,7 +103,6 @@ pub const PENDING_LOAD_STEPS: &[&str] = &[
 ];
 
 /// The board, its project and rules: what a CLI run or a browser tab works on.
-#[derive(Debug)]
 pub struct Session {
     /// The board (`m_cliBoard`).
     pub board: Board,
@@ -184,6 +184,17 @@ pub struct ViaSpec {
     /// Net code (0 = unconnected).
     #[serde(default)]
     pub net: i32,
+}
+
+impl std::fmt::Debug for Session {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Session")
+            .field("source_name", &self.source_name)
+            .field("has_project", &self.project_json.is_some())
+            .field("has_rules", &self.rules_text.is_some())
+            .field("pending_load_steps", &self.pending_load_steps)
+            .finish_non_exhaustive()
+    }
 }
 
 fn xy(v: Vector2I) -> [i32; 2] {

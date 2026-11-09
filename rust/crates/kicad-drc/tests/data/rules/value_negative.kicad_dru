@@ -1,0 +1,3 @@
+(version 1)
+(rule a (constraint solder_mask_expansion (opt -0.05mm)))
+(rule b (constraint solder_paste_rel_margin (opt -10)))

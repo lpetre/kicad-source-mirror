@@ -17,9 +17,15 @@
 
 //! Port of `pcbnew/board_stackup_manager/board_stackup.h` and `board_stackup.cpp`
 //! (`BOARD_STACKUP`, `BOARD_STACKUP_ITEM`, `DIELECTRIC_PRMS`): data, constructor defaults and
-//! accessors (package M0d). The stack-up algorithms are package M6.
+//! accessors (package M0d), and the stack-up algorithms (package M6). Also ports
+//! `pcbnew/board_stackup_manager/stackup_predefined_prms.h` / `.cpp` (material, colour and
+//! copper finish tables). `FormatBoardStackup` (the writer side) belongs to the board I/O
+//! package PCBIO-04.
 
-use kicad_core::{PCB_IU_SCALE, PcbLayerId};
+use kicad_core::layer_ids::{is_copper_layer, is_copper_layer_lower_than};
+use kicad_core::lset::Lset;
+use kicad_core::string_utils::ui_double2_str;
+use kicad_core::{Color4D, PCB_IU_SCALE, PcbLayerId};
 
 use crate::board_design_settings::BoardDesignSettings;
 
@@ -213,49 +219,143 @@ impl BoardStackupItem {
         color, set_color, color: String, "GetColor", "SetColor";
     }
 
-    /// `BOARD_STACKUP_ITEM::AddDielectricPrms`.
+    /// `BOARD_STACKUP_ITEM::AddDielectricPrms`: inserts a default `DIELECTRIC_PRMS` at
+    /// `index`. C++ `emplace( begin() + idx )` is undefined for `idx > size()`; such a call
+    /// is ignored here.
     pub fn add_dielectric_prms(&mut self, index: usize) {
-        crate::port_pending!("BOARD_STACKUP_ITEM::AddDielectricPrms", index)
+        // add a DIELECTRIC_PRMS item to m_DielectricPrmsList
+        debug_assert!(index <= self.dielectric_prms_list.len());
+
+        if index <= self.dielectric_prms_list.len() {
+            self.dielectric_prms_list
+                .insert(index, DielectricPrms::default());
+        }
     }
 
     /// `BOARD_STACKUP_ITEM::RemoveDielectricPrms`.
     pub fn remove_dielectric_prms(&mut self, index: usize) {
-        crate::port_pending!("BOARD_STACKUP_ITEM::RemoveDielectricPrms", index)
+        // Remove a DIELECTRIC_PRMS item from m_DielectricPrmsList if possible
+        if self.sublayers_count() < 2 || index >= self.sublayers_count() {
+            return;
+        }
+
+        self.dielectric_prms_list.remove(index);
+    }
+
+    /// `BOARD_STACKUP_ITEM::IsEnabled`.
+    pub fn is_enabled(&self) -> bool {
+        self.enabled
+    }
+
+    /// `BOARD_STACKUP_ITEM::SetEnabled`.
+    pub fn set_enabled(&mut self, enable: bool) {
+        self.enabled = enable;
+    }
+
+    /// `BOARD_STACKUP_ITEM::GetType`.
+    pub fn type_(&self) -> BoardStackupItemType {
+        self.type_
+    }
+
+    /// `BOARD_STACKUP_ITEM::GetBrdLayerId`.
+    pub fn brd_layer_id(&self) -> PcbLayerId {
+        self.layer_id
+    }
+
+    /// `BOARD_STACKUP_ITEM::SetBrdLayerId`.
+    pub fn set_brd_layer_id(&mut self, layer: PcbLayerId) {
+        self.layer_id = layer;
+    }
+
+    /// `BOARD_STACKUP_ITEM::GetLayerName`.
+    pub fn layer_name(&self) -> &str {
+        &self.layer_name
+    }
+
+    /// `BOARD_STACKUP_ITEM::SetLayerName`.
+    pub fn set_layer_name(&mut self, name: &str) {
+        self.layer_name = name.to_string();
+    }
+
+    /// `BOARD_STACKUP_ITEM::GetTypeName`.
+    pub fn type_name(&self) -> &str {
+        &self.type_name
+    }
+
+    /// `BOARD_STACKUP_ITEM::SetTypeName`.
+    pub fn set_type_name(&mut self, name: &str) {
+        self.type_name = name.to_string();
+    }
+
+    /// `BOARD_STACKUP_ITEM::GetDielectricLayerId`.
+    pub fn dielectric_layer_id(&self) -> i32 {
+        self.dielectric_layer_id
+    }
+
+    /// `BOARD_STACKUP_ITEM::SetDielectricLayerId`.
+    pub fn set_dielectric_layer_id(&mut self, layer_id: i32) {
+        self.dielectric_layer_id = layer_id;
     }
 
     /// `BOARD_STACKUP_ITEM::HasEpsilonRValue`.
     pub fn has_epsilon_r_value(&self) -> bool {
-        crate::port_pending!("BOARD_STACKUP_ITEM::HasEpsilonRValue")
+        self.type_ == BoardStackupItemType::Dielectric
+            || self.type_ == BoardStackupItemType::Soldermask
     }
 
     /// `BOARD_STACKUP_ITEM::HasLossTangentValue`.
     pub fn has_loss_tangent_value(&self) -> bool {
-        crate::port_pending!("BOARD_STACKUP_ITEM::HasLossTangentValue")
+        self.type_ == BoardStackupItemType::Dielectric
+            || self.type_ == BoardStackupItemType::Soldermask
     }
 
-    /// `BOARD_STACKUP_ITEM::HasMaterialValue`.
+    /// `BOARD_STACKUP_ITEM::HasSpecFreqValue`.
+    pub fn has_spec_freq_value(&self) -> bool {
+        self.type_ == BoardStackupItemType::Dielectric
+    }
+
+    /// `BOARD_STACKUP_ITEM::HasMaterialValue`: true if the material is specified.
     pub fn has_material_value(&self, sublayer: usize) -> bool {
-        crate::port_pending!("BOARD_STACKUP_ITEM::HasMaterialValue", sublayer)
+        self.is_material_editable() && is_prm_specified(&self.material(sublayer))
+    }
+
+    /// `BOARD_STACKUP_ITEM::IsMaterialEditable`.
+    pub fn is_material_editable(&self) -> bool {
+        self.type_ == BoardStackupItemType::Dielectric
+            || self.type_ == BoardStackupItemType::Soldermask
+            || self.type_ == BoardStackupItemType::Silkscreen
+    }
+
+    /// `BOARD_STACKUP_ITEM::IsColorEditable`.
+    pub fn is_color_editable(&self) -> bool {
+        self.type_ == BoardStackupItemType::Dielectric
+            || self.type_ == BoardStackupItemType::Soldermask
+            || self.type_ == BoardStackupItemType::Silkscreen
     }
 
     /// `BOARD_STACKUP_ITEM::IsThicknessEditable`.
     pub fn is_thickness_editable(&self) -> bool {
-        crate::port_pending!("BOARD_STACKUP_ITEM::IsThicknessEditable")
+        self.type_ == BoardStackupItemType::Copper
+            || self.type_ == BoardStackupItemType::Dielectric
+            || self.type_ == BoardStackupItemType::Soldermask
     }
 
-    /// `BOARD_STACKUP_ITEM::FormatEpsilonR`.
+    /// `BOARD_STACKUP_ITEM::FormatEpsilonR`: Epsilon R for print / display (no scientific
+    /// notation).
     pub fn format_epsilon_r(&self, sublayer: usize) -> String {
-        crate::port_pending!("BOARD_STACKUP_ITEM::FormatEpsilonR", sublayer)
+        ui_double2_str(self.epsilon_r(sublayer))
     }
 
-    /// `BOARD_STACKUP_ITEM::FormatLossTangent`.
+    /// `BOARD_STACKUP_ITEM::FormatLossTangent`: loss tangent for print / display (no
+    /// scientific notation).
     pub fn format_loss_tangent(&self, sublayer: usize) -> String {
-        crate::port_pending!("BOARD_STACKUP_ITEM::FormatLossTangent", sublayer)
+        ui_double2_str(self.loss_tangent(sublayer))
     }
 
-    /// `BOARD_STACKUP_ITEM::FormatDielectricLayerName`.
+    /// `BOARD_STACKUP_ITEM::FormatDielectricLayerName`: `"Dielectric %d"` (the untranslated
+    /// text; the C++ passes it through `_()` for the dialogs).
     pub fn format_dielectric_layer_name(&self) -> String {
-        crate::port_pending!("BOARD_STACKUP_ITEM::FormatDielectricLayerName")
+        format!("Dielectric {}", self.dielectric_layer_id())
     }
 }
 
@@ -310,43 +410,535 @@ impl BoardStackup {
         self.list.get(index)
     }
 
-    /// `BOARD_STACKUP::StackupAllowedBrdLayers`.
-    pub fn stackup_allowed_brd_layers() -> kicad_core::Lset {
-        crate::port_pending!("BOARD_STACKUP::StackupAllowedBrdLayers")
+    /// `BOARD_STACKUP::GetStackupLayer` (mutable overload; the C++ returns a non-const
+    /// pointer).
+    pub fn stackup_layer_mut(&mut self, index: usize) -> Option<&mut BoardStackupItem> {
+        self.list.get_mut(index)
     }
 
-    /// `BOARD_STACKUP::BuildDefaultStackupList( aSettings, aActiveCopperLayersCount )`.
+    /// `BOARD_STACKUP::StackupAllowedBrdLayers`: the board layers allowed in the stackup
+    /// list, i.e. the SilkS, Mask, Paste and all copper layers.
+    pub fn stackup_allowed_brd_layers() -> Lset {
+        let mut set = Lset::from_layers(&[
+            PcbLayerId::FSilkS,
+            PcbLayerId::FMask,
+            PcbLayerId::FPaste,
+            PcbLayerId::BSilkS,
+            PcbLayerId::BMask,
+            PcbLayerId::BPaste,
+        ]);
+        set |= Lset::external_cu_mask();
+        set |= Lset::internal_cu_mask();
+        set
+    }
+
+    /// `BOARD_STACKUP::BuildDefaultStackupList( aSettings, aActiveCopperLayersCount )`:
+    /// appends (the C++ does not clear `m_list` first) a default stackup built from the
+    /// settings, or a full 32 copper layer stackup when `settings` is `None`.
     pub fn build_default_stackup_list(
         &mut self,
         settings: Option<&BoardDesignSettings>,
         copper_layers: i32,
     ) {
-        crate::port_pending!(
-            "BOARD_STACKUP::BuildDefaultStackupList",
-            settings,
-            copper_layers
+        // Creates a default stackup, according to the current BOARD_DESIGN_SETTINGS settings.
+        // Note: the m_TypeName string is made translatable using _HKI marker, but is not
+        // translated when building the stackup.
+        // It will be used as this in files, and can be translated only in dialog
+        // if aSettings == NULL, build a full stackup (with 32 copper layers)
+        let enabled_layer = match settings {
+            Some(s) => s.enabled_layers().clone(),
+            None => Self::stackup_allowed_brd_layers(),
+        };
+        let copper_layer_count = settings.map_or(32, |s| s.copper_layer_count());
+
+        // We need to calculate a suitable dielectric layer thickness.
+        // If no settings, and if aActiveCopperLayersCount is given, use it
+        // (If no settings, and no aActiveCopperLayersCount, the full 32 layers are used)
+        let mut active_cu_layer_count = copper_layer_count;
+
+        if settings.is_none() && copper_layers > 0 {
+            active_cu_layer_count = copper_layers;
+        }
+
+        let brd_thickness = settings.map_or(PCB_IU_SCALE.mm_to_iu(1.6), |s| s.board_thickness());
+        let mut diel_thickness =
+            brd_thickness - (BoardStackupItem::copper_default_thickness() * active_cu_layer_count);
+
+        // Take in account the solder mask thickness:
+        let sm_count = (&enabled_layer
+            & &Lset::from_layers(&[PcbLayerId::FMask, PcbLayerId::BMask]))
+            .count() as i32;
+        diel_thickness -= BoardStackupItem::mask_default_thickness() * sm_count;
+        diel_thickness /= 1.max(active_cu_layer_count - 1);
+
+        let mut dielectric_idx: i32 = 0;
+
+        // Add silk screen, solder mask and solder paste layers on top
+        if enabled_layer.contains(PcbLayerId::FSilkS) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Silkscreen);
+            item.set_brd_layer_id(PcbLayerId::FSilkS);
+            item.set_type_name("Top Silk Screen");
+            self.add(item);
+        }
+
+        if enabled_layer.contains(PcbLayerId::FPaste) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Solderpaste);
+            item.set_brd_layer_id(PcbLayerId::FPaste);
+            item.set_type_name("Top Solder Paste");
+            self.add(item);
+        }
+
+        if enabled_layer.contains(PcbLayerId::FMask) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Soldermask);
+            item.set_brd_layer_id(PcbLayerId::FMask);
+            item.set_type_name("Top Solder Mask");
+            self.add(item);
+        }
+
+        // Add copper and dielectric layers
+        for layer in enabled_layer.cu_stack() {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Copper);
+            item.set_brd_layer_id(layer);
+            item.set_type_name(KEY_COPPER);
+            self.add(item);
+
+            if layer == PcbLayerId::BCu {
+                break;
+            }
+
+            // Add the dielectric layer:
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Dielectric);
+            item.set_thickness(diel_thickness, 0);
+            item.set_dielectric_layer_id(dielectric_idx + 1);
+
+            // Display a dielectric default layer name:
+            if (dielectric_idx & 1) == 0 {
+                item.set_type_name(KEY_CORE);
+                item.set_material("FR4".to_string(), 0);
+            } else {
+                item.set_type_name(KEY_PREPREG);
+                item.set_material("FR4".to_string(), 0);
+            }
+
+            self.add(item);
+            dielectric_idx += 1;
+        }
+
+        // Add silk screen, solder mask and solder paste layers on bottom
+        if enabled_layer.contains(PcbLayerId::BMask) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Soldermask);
+            item.set_brd_layer_id(PcbLayerId::BMask);
+            item.set_type_name("Bottom Solder Mask");
+            self.add(item);
+        }
+
+        if enabled_layer.contains(PcbLayerId::BPaste) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Solderpaste);
+            item.set_brd_layer_id(PcbLayerId::BPaste);
+            item.set_type_name("Bottom Solder Paste");
+            self.add(item);
+        }
+
+        if enabled_layer.contains(PcbLayerId::BSilkS) {
+            let mut item = BoardStackupItem::new(BoardStackupItemType::Silkscreen);
+            item.set_brd_layer_id(PcbLayerId::BSilkS);
+            item.set_type_name("Bottom Silk Screen");
+            self.add(item);
+        }
+
+        // Transfer other stackup settings from aSettings
+        if let Some(s) = settings {
+            let source_stackup = s.stackup_descriptor();
+            self.edge_connector_constraints = source_stackup.edge_connector_constraints;
+            self.has_dielectric_constrains = source_stackup.has_dielectric_constrains;
+            self.edge_plating = source_stackup.edge_plating;
+            self.finish_type = source_stackup.finish_type.clone();
+        }
+    }
+
+    /// `BOARD_STACKUP::BuildBoardThicknessFromStackup`: the board thickness from the
+    /// thickness of the items.
+    pub fn build_board_thickness_from_stackup(&self) -> i32 {
+        // return the board thickness from the thickness of BOARD_STACKUP_ITEM list
+        let mut thickness = 0;
+
+        for item in &self.list {
+            if item.is_thickness_editable() && item.is_enabled() {
+                thickness += item.thickness(0);
+
+                // dielectric layers can have more than one main layer
+                // add thickness of all sublayers
+                for idx in 1..item.sublayers_count() {
+                    thickness += item.thickness(idx);
+                }
+            }
+        }
+
+        thickness
+    }
+
+    /// `BOARD_STACKUP::GetLayerDistance`: distance between two copper layers (half of each
+    /// internal copper end layer is counted).
+    pub fn get_layer_distance(&self, a: PcbLayerId, b: PcbLayerId) -> i32 {
+        debug_assert!(is_copper_layer(a) && is_copper_layer(b));
+
+        let mut first_layer = a;
+        let mut second_layer = b;
+
+        if first_layer == second_layer {
+            return 0;
+        }
+
+        // B_Cu is always the last copper layer but doesn't have the last numerical value
+        if second_layer != PcbLayerId::BCu
+            && (second_layer < first_layer || first_layer == PcbLayerId::BCu)
+        {
+            std::mem::swap(&mut first_layer, &mut second_layer);
+        }
+
+        let mut total = 0;
+        let mut start = false;
+        let mut half = false;
+
+        for item in &self.list {
+            // Will be UNDEFINED_LAYER for dielectrics
+            let layer = item.brd_layer_id();
+
+            if layer != PcbLayerId::UndefinedLayer && !is_copper_layer(layer) {
+                continue; // Silk/mask layer
+            }
+
+            // Reached the start copper layer?  Start counting the next dielectric after it
+            if !start && (layer != PcbLayerId::UndefinedLayer && layer == first_layer) {
+                start = true;
+
+                // Only count half of each internal copper layer
+                if first_layer != PcbLayerId::FCu && first_layer != PcbLayerId::BCu {
+                    half = true;
+                }
+            } else if !start {
+                continue;
+            }
+
+            // Reached the stop copper layer?  we're done
+            if start && (layer != PcbLayerId::UndefinedLayer && layer == second_layer) {
+                // Only count half of each internal copper layer
+                if second_layer != PcbLayerId::FCu && second_layer != PcbLayerId::BCu {
+                    half = true;
+                }
+            }
+
+            for sublayer in 0..item.sublayers_count() {
+                let sub_thickness = item.thickness(sublayer);
+                total += if half {
+                    sub_thickness / 2
+                } else {
+                    sub_thickness
+                };
+            }
+
+            half = false;
+
+            if layer != PcbLayerId::UndefinedLayer && layer == second_layer {
+                break;
+            }
+        }
+
+        total
+    }
+
+    /// `BOARD_STACKUP::GetDrillDepth`. As in the C++, `a` only selects the walk direction.
+    pub fn get_drill_depth(&self, a: PcbLayerId, b: PcbLayerId) -> i32 {
+        let mut total = 0;
+        let mut half = false;
+        let mut done = false;
+
+        // The C++ lambda `processStackupItem` capturing total / half / done by reference.
+        let process_stackup_item =
+            |item: &BoardStackupItem, total: &mut i32, half: &mut bool, done: &mut bool| {
+                // Will be UNDEFINED_LAYER for dielectrics
+                let layer = item.brd_layer_id();
+
+                if layer != PcbLayerId::UndefinedLayer && !is_copper_layer(layer) {
+                    return; // Silk/mask layer
+                }
+
+                if item.sublayers_count() > 0 {
+                    for sublayer in 0..item.sublayers_count() {
+                        let sub_thickness = item.thickness(sublayer);
+                        *total += if *half {
+                            sub_thickness / 2
+                        } else {
+                            sub_thickness
+                        };
+                    }
+                } else if is_copper_layer(layer) {
+                    *total += BoardStackupItem::copper_default_thickness();
+                }
+
+                if *half {
+                    *done = true;
+                } else if layer == b {
+                    *half = true;
+                }
+            };
+
+        if is_copper_layer_lower_than(b, a) {
+            for item in &self.list {
+                process_stackup_item(item, &mut total, &mut half, &mut done);
+
+                if done {
+                    return total;
+                }
+            }
+        } else {
+            for item in self.list.iter().rev() {
+                process_stackup_item(item, &mut total, &mut half, &mut done);
+
+                if done {
+                    return total;
+                }
+            }
+        }
+
+        total
+    }
+
+    /// `BOARD_STACKUP::SynchronizeWithBoard`: rebuilds the list for the enabled layers of
+    /// `settings`, keeping the existing items of layers that still exist. Returns true if
+    /// layers were removed or added.
+    ///
+    /// The C++ is called on `aSettings->GetStackupDescriptor()` itself; in Rust the caller
+    /// passes a copy of the settings (or synchronises a copy of the stackup).
+    pub fn synchronize_with_board(&mut self, settings: &BoardDesignSettings) -> bool {
+        let mut change = false;
+        // Build the suitable stackup:
+        let mut stackup = BoardStackup::default();
+        stackup.build_default_stackup_list(Some(settings), 0);
+
+        let same_layer = |first: &BoardStackupItem, second: &BoardStackupItem| {
+            first.brd_layer_id() == second.brd_layer_id()
+                && (first.brd_layer_id() != PcbLayerId::UndefinedLayer
+                    || first.dielectric_layer_id() == second.dielectric_layer_id())
+        };
+
+        // First, find removed layers:
+        for curr_item in &self.list {
+            if !stackup.list.iter().any(|item| same_layer(curr_item, item)) {
+                change = true;
+                break;
+            }
+        }
+
+        // Now initialize all stackup items to the initial values, when exist
+        for item in stackup.list.iter_mut() {
+            let initial = self.list.iter().find(|other| same_layer(item, other));
+
+            match initial {
+                Some(initial) => *item = initial.clone(),
+                None => change = true,
+            }
+        }
+
+        // Transfer layer settings:
+        *self = stackup;
+
+        // Transfer other stackup settings from aSettings
+        let source_stackup = settings.stackup_descriptor();
+        self.has_dielectric_constrains = source_stackup.has_dielectric_constrains;
+        self.edge_connector_constraints = source_stackup.edge_connector_constraints;
+        self.edge_plating = source_stackup.edge_plating;
+        self.finish_type = source_stackup.finish_type.clone();
+
+        change
+    }
+}
+
+/// `IsPrmSpecified` (`board_stackup.cpp`): true if the parameter value is neither empty nor
+/// `NotSpecifiedPrm()` (case-insensitive). Without translations the `wxGetTranslation`
+/// comparison of the C++ is the same test.
+pub fn is_prm_specified(prm_value: &str) -> bool {
+    // return true if the param value is specified:
+    !prm_value.is_empty() && !wx_cmp_no_case_eq(prm_value, NOT_SPECIFIED_PRM)
+}
+
+/// `wxString::CmpNoCase( b ) == 0`: per-character comparison after `towlower`. A character
+/// whose Rust lower case is several characters maps to the first one (`U+0130` -> `i`, as
+/// glibc `towlower` does).
+fn wx_cmp_no_case_eq(a: &str, b: &str) -> bool {
+    fn lower(c: char) -> char {
+        c.to_lowercase().next().unwrap_or(c)
+    }
+
+    a.chars().count() == b.chars().count()
+        && a.chars().zip(b.chars()).all(|(x, y)| lower(x) == lower(y))
+}
+
+// ---------------------------------------------------------------------------------------
+// Port of `pcbnew/board_stackup_manager/stackup_predefined_prms.h` and `.cpp`.
+// ---------------------------------------------------------------------------------------
+
+/// `DEFAULT_SOLDERMASK_OPACITY`.
+pub const DEFAULT_SOLDERMASK_OPACITY: f64 = 0.83;
+
+/// `FAB_LAYER_COLOR`: a colour of the gerber job file / stackup dialog lists.
+#[derive(Clone, Debug, PartialEq)]
+pub struct FabLayerColor {
+    /// m_colorName: the name (in job file) of the color. User values are the HTML encoded
+    /// "#rrggbbaa" RGB hexa value.
+    pub color_name: &'static str,
+    /// m_color
+    pub color: Color4D,
+}
+
+impl FabLayerColor {
+    /// `FAB_LAYER_COLOR( aColorName, wxColor( r, g, b, a ) )`.
+    const fn new(color_name: &'static str, r: u8, g: u8, b: u8, a: u8) -> Self {
+        FabLayerColor {
+            color_name,
+            color: Color4D::new(
+                r as f64 / 255.0,
+                g as f64 / 255.0,
+                b as f64 / 255.0,
+                a as f64 / 255.0,
+            ),
+        }
+    }
+
+    /// `FAB_LAYER_COLOR::GetName`.
+    pub fn name(&self) -> &'static str {
+        self.color_name
+    }
+
+    /// `FAB_LAYER_COLOR::GetColor( aItemType )`: solder mask colours get the default
+    /// opacity, the others are opaque.
+    pub fn color(&self, item_type: BoardStackupItemType) -> Color4D {
+        if item_type == BoardStackupItemType::Soldermask {
+            self.color.with_alpha(DEFAULT_SOLDERMASK_OPACITY)
+        } else {
+            self.color.with_alpha(1.0)
+        }
+    }
+
+    /// `FAB_LAYER_COLOR::GetColorAsString`: a colour name acceptable in a gerber job file:
+    /// one of the normalized colour names, or `R<int>G<int>B<int>` (0 to 255).
+    pub fn color_as_string(&self) -> String {
+        if is_color_name_normalized(self.color_name) {
+            return self.color_name.to_string();
+        }
+
+        format!(
+            "R{}G{}B{}",
+            (self.color.r * 255.0) as i32,
+            (self.color.g * 255.0) as i32,
+            (self.color.b * 255.0) as i32
         )
     }
+}
 
-    /// `BOARD_STACKUP::BuildBoardThicknessFromStackup`.
-    pub fn build_board_thickness_from_stackup(&self) -> i32 {
-        crate::port_pending!("BOARD_STACKUP::BuildBoardThicknessFromStackup")
-    }
+/// `copperFinishType[]`: the standard copper finish type names. They are standard names in
+/// .gbrjob files, so avoid changing them or ensure they are compatible with .gbrjob file spec.
+static COPPER_FINISH_TYPE: [&str; 14] = [
+    NOT_SPECIFIED_PRM,  // Not specified, not in .gbrjob file
+    "ENIG",             // used in .gbrjob file
+    "ENEPIG",           // used in .gbrjob file
+    "HAL SnPb",         // used in .gbrjob file
+    "HAL lead-free",    // used in .gbrjob file
+    "Hard gold",        // used in .gbrjob file
+    "Immersion tin",    // used in .gbrjob file
+    "Immersion nickel", // used in .gbrjob file
+    "Immersion silver", // used in .gbrjob file
+    "Immersion gold",   // used in .gbrjob file
+    "HT_OSP",           // used in .gbrjob file
+    "OSP",              // used in .gbrjob file
+    "None",             // used in .gbrjob file
+    "User defined",     // keep this option at end
+];
 
-    /// `BOARD_STACKUP::GetLayerDistance`.
-    pub fn get_layer_distance(&self, a: PcbLayerId, b: PcbLayerId) -> i32 {
-        crate::port_pending!("BOARD_STACKUP::GetLayerDistance", a, b)
-    }
+/// `gbrjobColors`: the available colours for solder mask and silkscreen. These names are
+/// used in .gbrjob file, so they are not fully free. For other (user defined) colours the
+/// value is the html colour syntax in .kicad_pcb files and R<int>G<int>B<int> in .gbrjob.
+static GBRJOB_COLORS: [FabLayerColor; 9] = [
+    FabLayerColor::new(NOT_SPECIFIED_PRM, 80, 80, 80, 255), // Not specified, not in .gbrjob
+    FabLayerColor::new("Green", 60, 150, 80, 255),
+    FabLayerColor::new("Red", 128, 0, 0, 255),
+    FabLayerColor::new("Blue", 0, 0, 128, 255),
+    FabLayerColor::new("Purple", 80, 0, 80, 255),
+    FabLayerColor::new("Black", 20, 20, 20, 255),
+    FabLayerColor::new("White", 200, 200, 200, 255),
+    FabLayerColor::new("Yellow", 128, 128, 0, 255),
+    FabLayerColor::new("User defined", 128, 128, 128, 255), // Free; the name is a dummy name
+];
 
-    /// `BOARD_STACKUP::GetDrillDepth`.
-    pub fn get_drill_depth(&self, a: PcbLayerId, b: PcbLayerId) -> i32 {
-        crate::port_pending!("BOARD_STACKUP::GetDrillDepth", a, b)
-    }
+/// `dielectricColors`: used primarily as a source for the 3D renderer. They are written as
+/// R<int>G<int>B<int> to the .gbrjob file.
+static DIELECTRIC_COLORS: [FabLayerColor; 7] = [
+    FabLayerColor::new(NOT_SPECIFIED_PRM, 80, 80, 80, 255),
+    FabLayerColor::new("FR4 natural", 109, 116, 75, 212),
+    FabLayerColor::new("PTFE natural", 252, 252, 250, 230),
+    FabLayerColor::new("Polyimide", 205, 130, 0, 170),
+    FabLayerColor::new("Phenolic natural", 92, 17, 6, 230),
+    FabLayerColor::new("Aluminum", 213, 213, 213, 255),
+    FabLayerColor::new("User defined", 128, 128, 128, 212),
+];
 
-    /// `BOARD_STACKUP::SynchronizeWithBoard`.
-    pub fn synchronize_with_board(&mut self, settings: &BoardDesignSettings) -> bool {
-        crate::port_pending!("BOARD_STACKUP::SynchronizeWithBoard", settings)
+/// `GetStandardCopperFinishes( aTranslate )`: always the untranslated names (no
+/// translations in the port).
+pub fn standard_copper_finishes() -> Vec<String> {
+    COPPER_FINISH_TYPE.iter().map(|s| s.to_string()).collect()
+}
+
+/// `GetStandardColors( aType )`: empty for types without a colour list.
+pub fn standard_colors(type_: BoardStackupItemType) -> &'static [FabLayerColor] {
+    match type_ {
+        BoardStackupItemType::Silkscreen => &GBRJOB_COLORS,
+        BoardStackupItemType::Soldermask => &GBRJOB_COLORS,
+        BoardStackupItemType::Dielectric => &DIELECTRIC_COLORS,
+        _ => &[],
     }
+}
+
+/// `GetColorUserDefinedListIdx( aType )`: the index of the last ("User defined") entry;
+/// -1 for an empty list (`size() - 1` converted to `int` in the C++).
+pub fn color_user_defined_list_idx(type_: BoardStackupItemType) -> i32 {
+    // this is the last item in list
+    standard_colors(type_).len() as i32 - 1
+}
+
+/// `GetDefaultUserColor( aType )`. `None` for a type without a colour list (C++ indexes
+/// an empty vector there).
+pub fn default_user_color(type_: BoardStackupItemType) -> Option<Color4D> {
+    standard_color(type_, color_user_defined_list_idx(type_))
+}
+
+/// `GetStandardColor( aType, aIdx )`; `None` for an index out of range.
+pub fn standard_color(type_: BoardStackupItemType, idx: i32) -> Option<Color4D> {
+    usize::try_from(idx)
+        .ok()
+        .and_then(|i| standard_colors(type_).get(i))
+        .map(|c| c.color(type_))
+}
+
+/// `GetStandardColorName( aType, aIdx )`; `None` for an index out of range.
+pub fn standard_color_name(type_: BoardStackupItemType, idx: i32) -> Option<&'static str> {
+    usize::try_from(idx)
+        .ok()
+        .and_then(|i| standard_colors(type_).get(i))
+        .map(|c| c.name())
+}
+
+/// `IsCustomColorIdx( aType, aIdx )`.
+pub fn is_custom_color_idx(type_: BoardStackupItemType, idx: i32) -> bool {
+    idx == color_user_defined_list_idx(type_)
+}
+
+/// `IsColorNameNormalized`: the colour names of the gerber job file specification (note:
+/// "Purple" is not in the C++ list).
+pub fn is_color_name_normalized(name: &str) -> bool {
+    const LIST: [&str; 6] = ["Green", "Red", "Blue", "Black", "White", "Yellow"];
+
+    LIST.iter()
+        .any(|candidate| wx_cmp_no_case_eq(candidate, name))
 }
 
 #[cfg(test)]

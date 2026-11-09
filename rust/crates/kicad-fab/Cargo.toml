@@ -19,3 +19,8 @@ kicad-font = { path = "../kicad-font" }
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }
+
+[features]
+# Enables the end-to-end drill tests that need the board parser (kicad_pcb::io::parse_board)
+# and the pad / via model; see PORT_STATUS.md.
+e2e = []

@@ -72,8 +72,8 @@ pub(crate) trait ArenaOf<T> {
 /// `DEFAULT_CHAINING_EPSILON_MM` (`pcbnew/board.h`).
 const DEFAULT_CHAINING_EPSILON_MM: f64 = 0.01;
 
-/// `LEGACY_BOARD_FILE_VERSION` (`pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.h`).
-const LEGACY_BOARD_FILE_VERSION: i32 = 20160815;
+/// `LEGACY_BOARD_FILE_VERSION` (`cmake/config.h.cmake`: 2; `BOARD::BOARD()` stores it).
+const LEGACY_BOARD_FILE_VERSION: i32 = 2;
 
 board_items!(gen_board, {
     /// `BOARD`. `Clone` copies every item (caches and journal start empty in the clone; every
@@ -243,6 +243,9 @@ impl Default for Board {
 
         if let Some(net) = board.net_info.nets.get_mut(&NetCode::UNCONNECTED) {
             net.netclass = Some(initial_default);
+            // NETINFO_LIST::AppendNet via BOARD::Add sets the parent of every later net;
+            // net 0 is a BOARD_ITEM of this board as well.
+            net.base.parent = ParentRef::Board;
         }
 
         board.init_layers();

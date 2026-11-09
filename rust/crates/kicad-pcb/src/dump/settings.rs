@@ -185,9 +185,10 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
     }
 }
 
-fn opt_parent(p: &Option<Arc<Netclass>>) -> String {
-    p.as_ref()
-        .map_or_else(|| "null".to_string(), |n| v_str(&n.get_name()))
+/// `optParent( nc.GetXxxParent() )`: in the Rust model a `None` parent is the class itself
+/// (`NETCLASS::ResetParents` sets `this`), so it prints the class's own name.
+fn opt_parent(nc: &Netclass, p: &Option<Arc<Netclass>>) -> String {
+    v_str(&p.as_ref().map_or_else(|| nc.get_name(), |n| n.get_name()))
 }
 
 fn v_opt_i32(v: Option<i32>) -> String {
@@ -234,12 +235,12 @@ pub(crate) fn dump_netclass(o: &mut Out, p: &str, nc: &Netclass) {
     emit!(
         o,
         format!("{p}track_width_parent"),
-        opt_parent(&nc.parents.track_width)
+        opt_parent(nc, &nc.parents.track_width)
     );
     emit!(
         o,
         format!("{p}via_diameter_parent"),
-        opt_parent(&nc.parents.via_diameter)
+        opt_parent(nc, &nc.parents.via_diameter)
     );
     emit!(o, format!("{p}constituents"), {
         let v: Vec<String> = nc
@@ -267,7 +268,7 @@ pub(crate) fn dump_stackup(o: &mut Out, p: &str, s: &BoardStackup) {
     emit!(
         o,
         format!("{p}edge_connector_constraints"),
-        v_enum(s.edge_connector_constraints)
+        format!("BS_EDGE_CONNECTOR_{}", v_enum(s.edge_connector_constraints))
     );
     emit!(o, format!("{p}edge_plating"), v_bool(s.edge_plating));
     emit!(o, format!("{p}count"), v_int(s.count() as i64));
@@ -615,7 +616,7 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
     for (i, t) in b.default_fp_text_items.iter().enumerate() {
         emit!(
             o,
-            format!("{p}default_fp_text.{i}"),
+            format!("{p}default_fp_text.{}", 2 * i + 1),
             format!("{} {} {}", v_str(&t.text), v_bool(t.visible), v_layer(t.layer))
         );
     }
@@ -762,7 +763,7 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
         for (i, (matcher, nc_name)) in ns.netclass_pattern_assignments.iter().enumerate() {
             emit!(
                 o,
-                format!("{p}netclass_pattern.{i}"),
+                format!("{p}netclass_pattern.{}", 2 * i + 1),
                 format!("{} {}", v_str(&matcher.pattern()), v_str(nc_name))
             );
         }
@@ -791,7 +792,7 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     emit!(o, "visible_layers", no_api("BOARD::GetVisibleLayers"));
     emit!(o, "has_project", v_bool(b.project.is_some()));
 
-    if let Some(ls) = o.cond("layer", || b.enabled_layers()) {
+    if let Some(ls) = o.cond("layer.*", || b.enabled_layers()) {
         for l in ls.seq().iter().copied() {
             emit!(o, format!("layer.{}.name", v_layer(l)), v_str(&b.layer_name(l)));
             emit!(o, format!("layer.{}.type", v_layer(l)), v_enum(b.layer_type(l)));
@@ -857,7 +858,7 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         }
     });
 
-    match o.cond("stackup_or_default", || b.get_stackup_or_default()) {
+    match o.cond("stackup_or_default.*", || b.get_stackup_or_default()) {
         Some(s) => dump_stackup(o, "stackup_or_default.", &s),
         None => {}
     }
@@ -876,7 +877,7 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         ("outline_inferred", true, false),
         ("outline_arcs", false, true),
     ] {
-        o.guard(name, |o| {
+        o.guard(&format!("{name}.ok|{name}"), |o| {
             let (outline, ok) = b.get_board_polygon_outlines(ctx, infer, None, arcs, false);
             emit!(o, format!("{name}.ok"), v_bool(ok));
             emit!(o, name, v_polyset(&outline));

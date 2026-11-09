@@ -1,0 +1,116 @@
+file|cc_bad_condition.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:53'>Syntax error</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:39'>Could not parse expression 'A.Reference =='.</a>"
+rules|report|count=1
+rules|report|ccrule.0.class="X"
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Could not parse expression 'A.Reference =='. in 'cc_bad_condition.kicad_dru', line 2, offset 39."
+rules|throw|error.problem="ERROR: Could not parse expression 'A.Reference =='."
+rules|throw|error.line=2
+rules|throw|error.offset=39
+rules|throw|error.input_line="(assign_component_class X (condition \"A.Reference ==\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#4d16d69162a7103e
+throw|status=parse_error|count=0|msgs=0|#73cbd179bf4da9bc
+file|cc_eof.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|report|ccrule.0=null
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Incomplete statement. in 'cc_eof.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Incomplete statement."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#1f6f5f8283414220
+throw|status=parse_error|count=0|msgs=0|#bfaca1dd832b0b7a
+file|cc_missing_cond.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:37'>Missing condition expression.</a>"
+rules|report|count=1
+rules|report|ccrule.0.class="X"
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing condition expression. in 'cc_missing_cond.kicad_dru', line 2, offset 37."
+rules|throw|error.problem="ERROR: Missing condition expression."
+rules|throw|error.line=2
+rules|throw|error.offset=37
+rules|throw|error.input_line="(assign_component_class X (condition))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#268e94819f9269ff
+throw|status=parse_error|count=0|msgs=0|#95a24d22f4bd1a6a
+file|cc_missing_name.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:25'>Missing component class name.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:26'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:37'>Unrecognized item 'A.Reference == 'U*''.</a> Expected condition."
+rules|report|count=1
+rules|report|ccrule.0.class="("
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing component class name. in 'cc_missing_name.kicad_dru', line 2, offset 25."
+rules|throw|error.problem="ERROR: Missing component class name."
+rules|throw|error.line=2
+rules|throw|error.offset=25
+rules|throw|error.input_line="(assign_component_class (condition \"A.Reference == 'U*'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#6c772c1a88a903aa
+throw|status=parse_error|count=0|msgs=0|#4a2ca678d767f476
+file|cc_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:56'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:59'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:60'>Unrecognized item ')'.</a> Expected assign_component_class or version."
+rules|report|count=1
+rules|report|ccrule.0.class="X"
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'cc_missing_paren.kicad_dru', line 2, offset 56."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=56
+rules|throw|error.input_line="(assign_component_class X (condition \"A.Type == 'Pad'\" y) x)\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#be1bad61bcfa95ab
+throw|status=parse_error|count=0|msgs=0|#63e6b8574b8be197
+file|cc_missing_version.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:2'>Missing version statement.</a>"
+rules|report|count=1
+rules|report|ccrule.0.class="Power"
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing version statement. in 'cc_missing_version.kicad_dru', line 1, offset 2."
+rules|throw|error.problem="ERROR: Missing version statement."
+rules|throw|error.line=1
+rules|throw|error.offset=2
+rules|throw|error.input_line="(assign_component_class \"Power\" (condition \"A.Reference == 'U*'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#b090f9ca9790d753
+throw|status=parse_error|count=0|msgs=0|#d07f52de274c3478
+file|cc_ok.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|report|ccrule.0.class="Power"
+rules|report|ccrule.1.class="Other"
+rules|throw|status=ok
+rules|throw|count=2
+rules|throw|ccrule.0.class="Power"
+rules|throw|ccrule.1.class="Other"
+report|status=ok|count=2|msgs=1|#17d65f30533f80d4
+throw|status=ok|count=2|msgs=0|#4f2635f27d097930
+file|cc_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:28'>Unrecognized item 'foo'.</a> Expected condition."
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='3:2'>Unrecognized item 'rule'.</a> Expected assign_component_class or version."
+rules|report|count=1
+rules|report|ccrule.0.class="X"
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'foo'. Expected condition. in 'cc_unknown.kicad_dru', line 2, offset 28."
+rules|throw|error.problem="ERROR: Unrecognized item 'foo'. Expected condition."
+rules|throw|error.line=2
+rules|throw|error.offset=28
+rules|throw|error.input_line="(assign_component_class X (foo))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#a1f53580bb791ffd
+throw|status=parse_error|count=0|msgs=0|#4f9ced45beb12c06

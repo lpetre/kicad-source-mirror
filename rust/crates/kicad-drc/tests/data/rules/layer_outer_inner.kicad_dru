@@ -1,0 +1,3 @@
+(version 1)
+(rule a (layer outer) (constraint clearance (min 1mm)))
+(rule b (layer inner) (constraint clearance (min 1mm)))

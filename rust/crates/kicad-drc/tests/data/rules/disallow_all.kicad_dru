@@ -1,0 +1,3 @@
+(version 1)
+(rule a (constraint disallow track via through_via blind_via buried_via micro_via pad zone text graphic hole footprint))
+(rule b (constraint disallow "track" "via"))

@@ -34,6 +34,7 @@ never fail. Exit code 0 only when there are no mismatch / rust-error / missing /
 """
 
 import argparse
+import fnmatch
 import json
 import sys
 from collections import OrderedDict
@@ -51,7 +52,7 @@ def parse(path):
         for raw in f:
             line = raw.rstrip("\n")
 
-            if not line:
+            if not line or line.startswith("#"):
                 continue
 
             kind = line.split("|", 1)[0]
@@ -127,9 +128,24 @@ def main():
     def wanted(k):
         return args.section is None or k.split("|", 2)[1] == args.section
 
-    def key_pending(k):
-        file_name, section, key, _ = k.split("|", 3)
-        return pending.get(f"{file_name}|{section}|{key}|*")
+    # Failure lines whose FIELD contains `*` stand for every field they match (a failed
+    # condition, a class whose constructor is pending): index them per SECTION|KEY.
+    patterns = {}
+
+    for source, kind in ((pending, "pending"), (rust_errors, "rust-error")):
+        for k, v in source.items():
+            if "*" in k.split("|", 3)[3]:
+                head, field = k.rsplit("|", 1)
+                patterns.setdefault(head, []).append((field, kind, v))
+
+    def pattern_failure(k):
+        head, field = k.rsplit("|", 1)
+
+        for pat, kind, v in patterns.get(head, []):
+            if fnmatch.fnmatchcase(field, pat):
+                return kind, v
+
+        return None
 
     results = []   # (kind, key, ref value, rust value)
 
@@ -141,16 +157,17 @@ def main():
             results.append(("match" if rust[k] == v else "mismatch", k, v, rust[k]))
         elif k in pending:
             results.append(("pending", k, v, pending[k]))
-        elif key_pending(k) is not None:
-            results.append(("pending", k, v, key_pending(k)))
         elif k in rust_errors:
             results.append(("rust-error", k, v, rust_errors[k]))
+        elif pattern_failure(k) is not None:
+            kind, pv = pattern_failure(k)
+            results.append((kind, k, v, pv))
         else:
             results.append(("missing", k, v, None))
 
     for source in (rust, pending, rust_errors):
         for k, v in source.items():
-            if not wanted(k) or k in ref or k.endswith("|*"):
+            if not wanted(k) or k in ref or "*" in k.split("|", 3)[3]:
                 continue
 
             if covered_by_ref_error(k, ref_errors):

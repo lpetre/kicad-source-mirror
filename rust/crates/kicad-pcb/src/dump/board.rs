@@ -195,7 +195,10 @@ pub(crate) fn dump_item_base(o: &mut Out, it: ItemRef<'_>) {
                 );
             }
         }
-        Err(f) => o.fail("connected_type", f),
+        Err(f) => o.fail(
+            "connected_type|net|netname|local_ratsnest_visible|local_clearance",
+            f,
+        ),
     }
 
     for (k, v) in &base.custom_properties {
@@ -235,7 +238,7 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
         }
         AnyItem::Pad(pad) => {
             for l in copper_layers(item_copper_count(it)) {
-                if let Some(true) = o.cond("bbox", || pad.is_on_layer(ctx, l)) {
+                if let Some(true) = o.cond(&format!("bbox.{}", v_layer(l)), || pad.is_on_layer(ctx, l)) {
                     emit!(
                         o,
                         format!("bbox.{}", v_layer(l)),
@@ -248,7 +251,7 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
         }
         AnyItem::Track(t) if t.as_via().is_some() => {
             for l in copper_layers(item_copper_count(it)) {
-                if let Some(true) = o.cond("bbox", || it.is_on_layer(l)) {
+                if let Some(true) = o.cond(&format!("bbox.{}", v_layer(l)), || it.is_on_layer(l)) {
                     emit!(
                         o,
                         format!("bbox.{}", v_layer(l)),

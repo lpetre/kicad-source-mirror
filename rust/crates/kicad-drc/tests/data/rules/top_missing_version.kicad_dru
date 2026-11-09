@@ -1,0 +1,2 @@
+(rule a (constraint clearance (min 1mm)))
+(rule b (constraint clearance (min 2mm)))

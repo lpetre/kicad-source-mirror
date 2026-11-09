@@ -1,0 +1,3 @@
+(version 1)
+(assign_component_class "Power" (condition "A.Reference == 'U*'"))
+(assign_component_class Other)

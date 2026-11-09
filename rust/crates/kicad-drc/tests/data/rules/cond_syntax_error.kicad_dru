@@ -1,0 +1,4 @@
+(version 1)
+(rule a
+  (condition "A.Type ==")
+  (constraint clearance (min 1mm)))

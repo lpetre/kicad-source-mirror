@@ -25,6 +25,9 @@ kicad-geom = { path = "../kicad-geom" }
 kicad-core = { path = "../kicad-core" }
 kicad-sexpr = { path = "../kicad-sexpr" }
 kicad-font = { path = "../kicad-font" }
+# Embedded files (docs/THIRD_PARTY_EQUIVALENTS.md 3.5): pure-Rust zstd and base64.
+ruzstd = "0.9.1"
+base64 = "0.23.1"
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }

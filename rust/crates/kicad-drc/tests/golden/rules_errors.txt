@@ -1,0 +1,1172 @@
+file|all_types.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#e5da0ef917856244
+throw|status=ok|count=1|msgs=0|#a8ac17e7a1f64fe4
+file|assertion_item_b.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:32'>Item 'B' is not available in assertion expressions.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Item 'B' is not available in assertion expressions. in 'assertion_item_b.kicad_dru', line 2, offset 32."
+rules|throw|error.problem="ERROR: Item 'B' is not available in assertion expressions."
+rules|throw|error.line=2
+rules|throw|error.offset=32
+rules|throw|error.input_line="(rule a (constraint assertion \"B.Type == 'Graphic'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#6f811d49e5aa213e
+throw|status=parse_error|count=0|msgs=0|#d2736a12da58e148
+file|assertion_missing.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:30'>Missing assertion expression.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:30'>Unrecognized item ')'.</a> Expected quoted expression."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing assertion expression. in 'assertion_missing.kicad_dru', line 2, offset 30."
+rules|throw|error.problem="ERROR: Missing assertion expression."
+rules|throw|error.line=2
+rules|throw|error.offset=30
+rules|throw|error.input_line="(rule a (constraint assertion))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#e8838bc466d5849b
+throw|status=parse_error|count=0|msgs=0|#c35c948480a9bf7e
+file|assertion_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:49'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:51'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'assertion_missing_paren.kicad_dru', line 2, offset 49."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=49
+rules|throw|error.input_line="(rule a (constraint assertion \"A.Type == 'Pad'\" x))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#0948321a94d2d9fc
+throw|status=parse_error|count=0|msgs=0|#75d8fdda8fe326c3
+file|assertion_not_quoted.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:31'>Unrecognized item '('.</a> Expected quoted expression."
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item '('. Expected quoted expression. in 'assertion_not_quoted.kicad_dru', line 2, offset 31."
+rules|throw|error.problem="ERROR: Unrecognized item '('. Expected quoted expression."
+rules|throw|error.line=2
+rules|throw|error.offset=31
+rules|throw|error.input_line="(rule a (constraint assertion (x)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#deaab36138ad9e02
+throw|status=parse_error|count=0|msgs=0|#257c91b7eaed8dab
+file|assertion_ok.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#552fb68f4fea2e49
+throw|status=ok|count=1|msgs=0|#11dc346fb6550bf1
+file|comments.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='4:9'>Missing '('.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='4:11'>Unrecognized item 'trailing'.</a> Expected constraint, condition, or disallow."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='6:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing '('. in 'comments.kicad_dru', line 4, offset 9."
+rules|throw|error.problem="ERROR: Missing '('."
+rules|throw|error.line=4
+rules|throw|error.offset=9
+rules|throw|error.input_line="(rule a # trailing\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#469964ceb27fe31e
+throw|status=parse_error|count=0|msgs=0|#4a2eccba85af543b
+file|cond_missing_expr.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:19'>Missing condition expression.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing condition expression. in 'cond_missing_expr.kicad_dru', line 2, offset 19."
+rules|throw|error.problem="ERROR: Missing condition expression."
+rules|throw|error.line=2
+rules|throw|error.offset=19
+rules|throw|error.input_line="(rule a (condition) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#226741770b4c0df8
+throw|status=parse_error|count=0|msgs=0|#b06fce9d69ff4598
+file|cond_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:38'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:46'>Unrecognized item 'constraint'.</a> Expected rule or version."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:77'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'cond_missing_paren.kicad_dru', line 2, offset 38."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=38
+rules|throw|error.input_line="(rule a (condition \"A.Type == 'Via'\" extra) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#a22788b0cb6505e7
+throw|status=parse_error|count=0|msgs=0|#181deba2fc9ca752
+file|cond_not_quoted.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:20'>Unrecognized item '('.</a> Expected quoted expression."
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:28'>Unrecognized item 'constraint'.</a> Expected rule or version."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:59'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item '('. Expected quoted expression. in 'cond_not_quoted.kicad_dru', line 2, offset 20."
+rules|throw|error.problem="ERROR: Unrecognized item '('. Expected quoted expression."
+rules|throw|error.line=2
+rules|throw|error.offset=20
+rules|throw|error.input_line="(rule a (condition (x y)) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#02decfb0c3c1f13e
+throw|status=parse_error|count=0|msgs=0|#85b8e38e3cea5d52
+file|cond_syntax_error.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:24'>Syntax error</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='3:15'>Could not parse expression 'A.Type =='.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Could not parse expression 'A.Type =='. in 'cond_syntax_error.kicad_dru', line 3, offset 15."
+rules|throw|error.problem="ERROR: Could not parse expression 'A.Type =='."
+rules|throw|error.line=3
+rules|throw|error.offset=15
+rules|throw|error.input_line="  (condition \"A.Type ==\")\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#d96591dbde94c65f
+throw|status=parse_error|count=0|msgs=0|#3b2742ff56dc6cad
+file|cond_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Unresolved text variable</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'cond_textvar.kicad_dru', line 2, offset 35."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=35
+rules|throw|error.input_line="(rule a (condition \"A.NetName == '${NET}'\") (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#44933ac66497144d
+throw|status=parse_error|count=0|msgs=0|#127bbbad3925ef2e
+file|cond_unknown_char.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:36'>Unrecognized character '#'</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:21'>Could not parse expression 'A.Type == 'Via' # 1'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Could not parse expression 'A.Type == 'Via' # 1'. in 'cond_unknown_char.kicad_dru', line 2, offset 21."
+rules|throw|error.problem="ERROR: Could not parse expression 'A.Type == 'Via' # 1'."
+rules|throw|error.line=2
+rules|throw|error.offset=21
+rules|throw|error.input_line="(rule a (condition \"A.Type == 'Via' # 1\") (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#2d883fd4c10f7545
+throw|status=parse_error|count=0|msgs=0|#47730302abf3c34e
+file|constraint_deprecated.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_WARNING "The 'mechanical_clearance' keyword has been deprecated.  Please use 'physical_clearance' instead."
+rules|report|msg.1=RPT_SEVERITY_WARNING "The 'mechanical_hole_clearance' keyword has been deprecated.  Please use 'physical_hole_clearance' instead."
+rules|report|msg.2=RPT_SEVERITY_WARNING "The 'hole' keyword has been deprecated.  Please use 'hole_size' instead."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=3|#f595af89a0d0863c
+throw|status=ok|count=1|msgs=0|#89398f610835da7f
+file|constraint_duplicate.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:54'>Rule already has a 'clearance' constraint.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Rule already has a 'clearance' constraint. in 'constraint_duplicate.kicad_dru', line 2, offset 54."
+rules|throw|error.problem="ERROR: Rule already has a 'clearance' constraint."
+rules|throw|error.line=2
+rules|throw|error.offset=54
+rules|throw|error.input_line="(rule a (constraint clearance (min 1mm)) (constraint clearance (max 2mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#42b56c20e2f6a831
+throw|status=parse_error|count=0|msgs=0|#e8d78f96ad258d83
+file|constraint_missing_type.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:20'>Missing constraint type.</a>  Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap or diff_pair_uncoupled."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing constraint type.  Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap or diff_pair_uncoupled. in 'constraint_missing_type.kicad_dru', line 2, offset 20."
+rules|throw|error.problem="ERROR: Missing constraint type.  Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap or diff_pair_uncoupled."
+rules|throw|error.line=2
+rules|throw|error.offset=20
+rules|throw|error.input_line="(rule a (constraint) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#c918ee664cd2d8be
+throw|status=parse_error|count=0|msgs=0|#13de1bdd2236e61e
+file|constraint_quoted_type.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:22'>Unrecognized item 'clearance'.</a> Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'clearance'. Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask. in 'constraint_quoted_type.kicad_dru', line 2, offset 22."
+rules|throw|error.problem="ERROR: Unrecognized item 'clearance'. Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask."
+rules|throw|error.line=2
+rules|throw|error.offset=22
+rules|throw|error.input_line="(rule a (constraint \"clearance\" (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#67642f3d627a4f9c
+throw|status=parse_error|count=0|msgs=0|#86d66a3772dace54
+file|constraint_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:21'>Unresolved text variable</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:30'>Unrecognized item 'min'.</a> Expected constraint, condition, or disallow."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:41'>Unrecognized item 'constraint'.</a> Expected rule or version."
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='2:72'>Missing '('.</a>"
+rules|report|msg.4=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'constraint_textvar.kicad_dru', line 2, offset 21."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=21
+rules|throw|error.input_line="(rule a (constraint ${TYPE} (min 1mm)) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=5|#d2c6c8f318d0fc7b
+throw|status=parse_error|count=0|msgs=0|#33894945b9f7e205
+file|constraint_unknown_type.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:21'>Unrecognized item 'foo'.</a> Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'foo'. Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask. in 'constraint_unknown_type.kicad_dru', line 2, offset 21."
+rules|throw|error.problem="ERROR: Unrecognized item 'foo'. Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask."
+rules|throw|error.line=2
+rules|throw|error.offset=21
+rules|throw|error.input_line="(rule a (constraint foo (min 1mm)) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#4d5adbe183550a2c
+throw|status=parse_error|count=0|msgs=0|#346a66306305720e
+file|disallow_all.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#af559743786decb2
+throw|status=ok|count=2|msgs=0|#245939d565788f3c
+file|disallow_eof.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='3:35'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'disallow_eof.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#c5064b7831f19f45
+throw|status=parse_error|count=0|msgs=0|#ef2c57dead8ce93f
+file|disallow_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:30'>Unrecognized item '('.</a> Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.."
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:40'>Unrecognized item 'condition'.</a> Expected rule or version."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:68'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item '('. Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.. in 'disallow_paren.kicad_dru', line 2, offset 30."
+rules|throw|error.problem="ERROR: Unrecognized item '('. Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.."
+rules|throw|error.line=2
+rules|throw|error.offset=30
+rules|throw|error.input_line="(rule a (constraint disallow (track)) (condition \"A.Type == 'Pad'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#77431a1a5b647b6d
+throw|status=parse_error|count=0|msgs=0|#a35ebff9a8bfbdba
+file|disallow_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:36'>Unrecognized item 'bogus'.</a> Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'bogus'. Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.. in 'disallow_unknown.kicad_dru', line 2, offset 36."
+rules|throw|error.problem="ERROR: Unrecognized item 'bogus'. Expected track, via, through_via, blind_via, micro_via, buried_via, pad, zone, text, graphic, hole, or footprint.."
+rules|throw|error.line=2
+rules|throw|error.offset=36
+rules|throw|error.input_line="(rule a (constraint disallow track bogus) (condition \"A.Type == 'Pad'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#cf82b78bcc151fd1
+throw|status=parse_error|count=0|msgs=0|#2d88a4c42a9beb4d
+file|empty.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=0
+rules|throw|status=ok
+rules|throw|count=0
+report|status=ok|count=0|msgs=1|#f81c37cab5073a9c
+throw|status=ok|count=0|msgs=0|#c69ca6131b6209be
+file|item_b_ab_length.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:21'>Item 'B' is not available for a single-item constraint in rule 'b'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='4:21'>Item 'B' is not available for a single-item constraint in rule 'c'.</a>"
+rules|report|count=3
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Item 'B' is not available for a single-item constraint in rule 'b'. in 'item_b_ab_length.kicad_dru', line 3, offset 21."
+rules|throw|error.problem="ERROR: Item 'B' is not available for a single-item constraint in rule 'b'."
+rules|throw|error.line=3
+rules|throw|error.offset=21
+rules|throw|error.input_line="(rule b (condition \"AB.isCoupledDiffPair() && B.Type == 'Track'\") (constraint length (max 100mm)))\n"
+rules|throw|count=1
+report|status=ok|count=3|msgs=2|#7dc1712168e56455
+throw|status=parse_error|count=1|msgs=0|#53dee12092ad9493
+file|item_b_nonunary.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#5a25ab9a55d2e583
+throw|status=ok|count=2|msgs=0|#ccfa7d1bcf1854a9
+file|item_b_unary_cond_first.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:13'>Item 'B' is not available for a single-item constraint in rule 'test'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Item 'B' is not available for a single-item constraint in rule 'test'. in 'item_b_unary_cond_first.kicad_dru', line 3, offset 13."
+rules|throw|error.problem="ERROR: Item 'B' is not available for a single-item constraint in rule 'test'."
+rules|throw|error.line=3
+rules|throw|error.offset=13
+rules|throw|error.input_line="(condition \"B.Type == 'Graphic'\")\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#38939e1f6cd004c4
+throw|status=parse_error|count=0|msgs=0|#c968c2740434c125
+file|item_b_unary_cond_last.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='4:13'>Item 'B' is not available for a single-item constraint in rule 'test'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Item 'B' is not available for a single-item constraint in rule 'test'. in 'item_b_unary_cond_last.kicad_dru', line 4, offset 13."
+rules|throw|error.problem="ERROR: Item 'B' is not available for a single-item constraint in rule 'test'."
+rules|throw|error.line=4
+rules|throw|error.offset=13
+rules|throw|error.input_line="(condition \"B.Type == 'Graphic'\")\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#67cedd7984bc9c19
+throw|status=parse_error|count=0|msgs=0|#08ffe3401ca4f6cf
+file|layer_missing.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:15'>Missing layer name or type.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing layer name or type. in 'layer_missing.kicad_dru', line 2, offset 15."
+rules|throw|error.problem="ERROR: Missing layer name or type."
+rules|throw|error.line=2
+rules|throw|error.offset=15
+rules|throw|error.input_line="(rule a (layer) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#9ba58347c9e3799e
+throw|status=parse_error|count=0|msgs=0|#f677bdc23eacf3a5
+file|layer_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:21'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:28'>Unrecognized item 'constraint'.</a> Expected rule or version."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:59'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'layer_missing_paren.kicad_dru', line 2, offset 21."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=21
+rules|throw|error.input_line="(rule a (layer F.Cu B.Cu) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#de6827b72ddd754b
+throw|status=parse_error|count=0|msgs=0|#7196034fa535146a
+file|layer_outer_inner.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#90927f9c4aaf412a
+throw|status=ok|count=2|msgs=0|#7a7bb8a69dfdbc50
+file|layer_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:17'>Unresolved text variable</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'layer_textvar.kicad_dru', line 2, offset 17."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=17
+rules|throw|error.input_line="(rule a (layer \"${LAYER}\") (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#1ef006347bd98ed3
+throw|status=parse_error|count=0|msgs=0|#455a15ff899c4cbc
+file|layer_twice.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:23'>'layer' keyword already present.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: 'layer' keyword already present. in 'layer_twice.kicad_dru', line 2, offset 23."
+rules|throw|error.problem="ERROR: 'layer' keyword already present."
+rules|throw|error.line=2
+rules|throw|error.offset=23
+rules|throw|error.input_line="(rule a (layer F.Cu) (layer B.Cu) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#5d94f835f79309db
+throw|status=parse_error|count=0|msgs=0|#a07c85378726d927
+file|layer_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:16'>Unrecognized layer 'Q.Cu'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized layer 'Q.Cu'. in 'layer_unknown.kicad_dru', line 2, offset 16."
+rules|throw|error.problem="ERROR: Unrecognized layer 'Q.Cu'."
+rules|throw|error.line=2
+rules|throw|error.offset=16
+rules|throw|error.input_line="(rule a (layer Q.Cu) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#60b39e33cc60cdab
+throw|status=parse_error|count=0|msgs=0|#cc57f7566ef3ee70
+file|layer_wildcards.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='6:17'>Unrecognized layer 'f.cu'.</a>"
+rules|report|count=6
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized layer 'f.cu'. in 'layer_wildcards.kicad_dru', line 6, offset 17."
+rules|throw|error.problem="ERROR: Unrecognized layer 'f.cu'."
+rules|throw|error.line=6
+rules|throw|error.offset=17
+rules|throw|error.input_line="(rule e (layer \"f.cu\") (constraint clearance (min 1mm)))\n"
+rules|throw|count=4
+report|status=ok|count=6|msgs=1|#2503391b52cfb06b
+throw|status=parse_error|count=4|msgs=0|#545401570e2a7c77
+file|lexer_unterminated.kicad_dru|
+rules|report|status=parse_error
+rules|report|error="Unterminated delimited string in 'lexer_unterminated.kicad_dru', line 2, offset 37."
+rules|report|error.problem="Unterminated delimited string"
+rules|report|error.line=2
+rules|report|error.offset=37
+rules|report|error.input_line="(rule a (condition \"A.Type == 'Via')\n"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="Unterminated delimited string in 'lexer_unterminated.kicad_dru', line 2, offset 37."
+rules|throw|error.problem="Unterminated delimited string"
+rules|throw|error.line=2
+rules|throw|error.offset=37
+rules|throw|error.input_line="(rule a (condition \"A.Type == 'Via')\n"
+rules|throw|count=0
+report|status=parse_error|count=0|msgs=0|#6e25cbdb45d6af5e
+throw|status=parse_error|count=0|msgs=0|#4adbe834bd4eb008
+file|multi_errors.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:38'>Missing units for '1'</a> (must be mm, in, mil, deg, fs, or ps)"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:52'>Unrecognized item 'foo'.</a> Expected assertion, clearance, hole_clearance, edge_clearance, physical_clearance, physical_hole_clearance, courtyard_clearance, silk_clearance, hole_size, hole_to_hole, track_width, track_angle, track_segment_length, annular_width, disallow, zone_connection, thermal_relief_gap, thermal_spoke_width, min_resolved_spokes, microvia_stack_depth, hole_aspect_ratio, solder_mask_expansion, solder_mask_sliver, solder_paste_abs_margin, solder_paste_rel_margin, length, net_chain_length, skew, via_count, via_dangling, via_diameter, diff_pair_gap, diff_pair_uncoupled or bridged_mask."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:64'>Unrecognized layer 'Q.Cu'.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='2:80'>Unrecognized item 'bad'.</a> Expected ignore, warning, error, or exclusion."
+rules|report|msg.4=RPT_SEVERITY_ERROR "ERROR: <a href='3:2'>Unrecognized item 'rule'.</a> Expected constraint, condition, or disallow."
+rules|report|msg.5=RPT_SEVERITY_ERROR "ERROR: <a href='4:1'>Missing '('.</a>"
+rules|report|msg.6=RPT_SEVERITY_ERROR "ERROR: <a href='5:1'>Unrecognized item '('.</a> Expected constraint, condition, or disallow."
+rules|report|msg.7=RPT_SEVERITY_ERROR "ERROR: <a href='6:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing units for '1' (must be mm, in, mil, deg, fs, or ps) in 'multi_errors.kicad_dru', line 2, offset 74."
+rules|throw|error.problem="ERROR: Missing units for '1' (must be mm, in, mil, deg, fs, or ps)"
+rules|throw|error.line=2
+rules|throw|error.offset=74
+rules|throw|error.input_line="(rule a (constraint clearance (min 1)) (constraint foo) (layer Q.Cu) (severity bad))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=8|#55294e1937c91e0d
+throw|status=parse_error|count=0|msgs=0|#b66ec824d0649322
+file|only_comment.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=0
+rules|throw|status=ok
+rules|throw|count=0
+report|status=ok|count=0|msgs=1|#f81c37cab5073a9c
+throw|status=ok|count=0|msgs=0|#c69ca6131b6209be
+file|return_path_bad_layer.kicad_dru|
+rules|report|status=parse_error
+rules|report|error="Expecting a symbol or number. Got ''('' in 'return_path_bad_layer.kicad_dru', line 2, offset 40."
+rules|report|error.problem="Expecting a symbol or number. Got ''(''"
+rules|report|error.line=2
+rules|report|error.offset=40
+rules|report|error.input_line="(rule a (constraint return_path (layer (x))))\n"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="Expecting a symbol or number. Got ''('' in 'return_path_bad_layer.kicad_dru', line 2, offset 40."
+rules|throw|error.problem="Expecting a symbol or number. Got ''(''"
+rules|throw|error.line=2
+rules|throw|error.offset=40
+rules|throw|error.input_line="(rule a (constraint return_path (layer (x))))\n"
+rules|throw|count=0
+report|status=parse_error|count=0|msgs=0|#54f6e0c9334383ae
+throw|status=parse_error|count=0|msgs=0|#b013f203abbdfd58
+file|return_path_eof.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='3:45'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'return_path_eof.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#0cc4b8f2af10c7ae
+throw|status=parse_error|count=0|msgs=0|#6af93baf2372f816
+file|return_path_missing_right.kicad_dru|
+rules|report|status=parse_error
+rules|report|error="Expecting '')'' in 'return_path_missing_right.kicad_dru', line 2, offset 45."
+rules|report|error.problem="Expecting '')''"
+rules|report|error.line=2
+rules|report|error.offset=45
+rules|report|error.input_line="(rule a (constraint return_path (layer B.Cu B.Cu)))\n"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="Expecting '')'' in 'return_path_missing_right.kicad_dru', line 2, offset 45."
+rules|throw|error.problem="Expecting '')''"
+rules|throw|error.line=2
+rules|throw|error.offset=45
+rules|throw|error.input_line="(rule a (constraint return_path (layer B.Cu B.Cu)))\n"
+rules|throw|count=0
+report|status=parse_error|count=0|msgs=0|#4760921ec7f924dd
+throw|status=parse_error|count=0|msgs=0|#38b884e79f4a9c5f
+file|return_path_ok.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#9e6c7e86c9f7ab35
+throw|status=ok|count=2|msgs=0|#9c31ead7d4d46aed
+file|rule_eof.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'rule_eof.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#103e66bfcaf24888
+throw|status=parse_error|count=0|msgs=0|#7add7b41461197fc
+file|rule_incomplete.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='4:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Incomplete statement. in 'rule_incomplete.kicad_dru', line 4, offset 1."
+rules|throw|error.problem="ERROR: Incomplete statement."
+rules|throw|error.line=4
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#3cd7ed91a323fde3
+throw|status=parse_error|count=0|msgs=0|#8ac0b3f13f2280f6
+file|rule_missing_name.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:7'>Missing rule name.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:8'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:19'>Unrecognized item 'clearance'.</a> Expected constraint, condition, or disallow."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing rule name. in 'rule_missing_name.kicad_dru', line 2, offset 7."
+rules|throw|error.problem="ERROR: Missing rule name."
+rules|throw|error.line=2
+rules|throw|error.offset=7
+rules|throw|error.input_line="(rule (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#85984189b07e53c2
+throw|status=parse_error|count=0|msgs=0|#362afdb6707fc925
+file|rule_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:9'>Missing '('.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:20'>Unrecognized item 'clearance'.</a> Expected constraint, condition, or disallow."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing '('. in 'rule_missing_paren.kicad_dru', line 2, offset 9."
+rules|throw|error.problem="ERROR: Missing '('."
+rules|throw|error.line=2
+rules|throw|error.offset=9
+rules|throw|error.input_line="(rule a constraint clearance (min 1mm))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#2c0709b4ec02863f
+throw|status=parse_error|count=0|msgs=0|#1633fd4ce8364a46
+file|rule_name_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:9'>Unresolved text variable</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'rule_name_textvar.kicad_dru', line 2, offset 9."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=9
+rules|throw|error.input_line="(rule \"x${NAME}\" (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#f29daeaea6ebbce0
+throw|status=parse_error|count=0|msgs=0|#aeb4c3b3132cc898
+file|rule_unknown_clause.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:10'>Unrecognized item 'foo'.</a> Expected constraint, condition, or disallow."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'foo'. Expected constraint, condition, or disallow. in 'rule_unknown_clause.kicad_dru', line 2, offset 10."
+rules|throw|error.problem="ERROR: Unrecognized item 'foo'. Expected constraint, condition, or disallow."
+rules|throw|error.line=2
+rules|throw|error.offset=10
+rules|throw|error.input_line="(rule a (foo 1 (2)) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#a7354dbc1c569454
+throw|status=parse_error|count=0|msgs=0|#4cfe4e6776b8750f
+file|severity_all.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=4
+rules|throw|status=ok
+rules|throw|count=4
+report|status=ok|count=4|msgs=1|#5c5e1f10740e6f46
+throw|status=ok|count=4|msgs=0|#dd40c78e7930547c
+file|severity_missing.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:18'>Missing severity name.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing severity name. in 'severity_missing.kicad_dru', line 2, offset 18."
+rules|throw|error.problem="ERROR: Missing severity name."
+rules|throw|error.line=2
+rules|throw|error.offset=18
+rules|throw|error.input_line="(rule a (severity) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#4bb4f6924f954f56
+throw|status=parse_error|count=0|msgs=0|#a319fef5f4a83f95
+file|severity_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:25'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:29'>Unrecognized item 'constraint'.</a> Expected rule or version."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:60'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'severity_missing_paren.kicad_dru', line 2, offset 25."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=25
+rules|throw|error.input_line="(rule a (severity error x) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#194c984280a557bb
+throw|status=parse_error|count=0|msgs=0|#36a428411f7553bc
+file|severity_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:19'>Unrecognized item 'fatal'.</a> Expected ignore, warning, error, or exclusion."
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:26'>Missing ')'.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:27'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='2:38'>Unrecognized item 'clearance'.</a> Expected constraint, condition, or disallow."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'fatal'. Expected ignore, warning, error, or exclusion. in 'severity_unknown.kicad_dru', line 2, offset 19."
+rules|throw|error.problem="ERROR: Unrecognized item 'fatal'. Expected ignore, warning, error, or exclusion."
+rules|throw|error.line=2
+rules|throw|error.offset=19
+rules|throw|error.input_line="(rule a (severity fatal) (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#ed45498223fcf111
+throw|status=parse_error|count=0|msgs=0|#74c1aded78ae2893
+file|spokes.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#ea6267929801aa8a
+throw|status=ok|count=2|msgs=0|#df228071ac2546a6
+file|spokes_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:43'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:45'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'spokes_missing_paren.kicad_dru', line 2, offset 43."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=43
+rules|throw|error.input_line="(rule a (constraint min_resolved_spokes 3 4))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#e67ca9ab4a6f52fb
+throw|status=parse_error|count=0|msgs=0|#f333912269332aea
+file|spokes_not_number.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:41'>Unrecognized item 'many'.</a> Expected number."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'many'. Expected number. in 'spokes_not_number.kicad_dru', line 2, offset 41."
+rules|throw|error.problem="ERROR: Unrecognized item 'many'. Expected number."
+rules|throw|error.line=2
+rules|throw|error.offset=41
+rules|throw|error.input_line="(rule a (constraint min_resolved_spokes many) (condition \"A.Type == 'Pad'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#351f874f7a517e5a
+throw|status=parse_error|count=0|msgs=0|#1b130b03cd0e99a6
+file|top_incomplete.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Incomplete statement. in 'top_incomplete.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Incomplete statement."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=0|msgs=1|#7af82a2bb27dcf0c
+throw|status=parse_error|count=0|msgs=0|#e3386e39040a5813
+file|top_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:1'>Missing '('.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='1:9'>Missing version statement.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='1:9'>Unrecognized item '1'.</a> Expected rule or version."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing '('. in 'top_missing_paren.kicad_dru', line 1, offset 1."
+rules|throw|error.problem="ERROR: Missing '('."
+rules|throw|error.line=1
+rules|throw|error.offset=1
+rules|throw|error.input_line="version 1)\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#c3f49ae52894f7a9
+throw|status=parse_error|count=0|msgs=0|#96153d905b71ee20
+file|top_missing_version.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:2'>Missing version statement.</a>"
+rules|report|count=2
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing version statement. in 'top_missing_version.kicad_dru', line 1, offset 2."
+rules|throw|error.problem="ERROR: Missing version statement."
+rules|throw|error.line=1
+rules|throw|error.offset=2
+rules|throw|error.input_line="(rule a (constraint clearance (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=2|msgs=1|#f418cf366a7dc513
+throw|status=parse_error|count=0|msgs=0|#b5b7120888f1b84a
+file|top_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:1'>Unresolved text variable</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'top_textvar.kicad_dru', line 2, offset 1."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=1
+rules|throw|error.input_line="${UNRESOLVED}\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#84c80e5b58862d80
+throw|status=parse_error|count=0|msgs=0|#8a437fbe4ef37d22
+file|top_textvar_class.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#00a4b2c762b6b0ef
+throw|status=ok|count=1|msgs=0|#c766a71074afa6f5
+file|top_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:2'>Unrecognized item 'foo'.</a> Expected rule or version."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'foo'. Expected rule or version. in 'top_unknown.kicad_dru', line 2, offset 2."
+rules|throw|error.problem="ERROR: Unrecognized item 'foo'. Expected rule or version."
+rules|throw|error.line=2
+rules|throw|error.offset=2
+rules|throw|error.input_line="(foo bar (baz))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#37e9ec064b368694
+throw|status=parse_error|count=0|msgs=0|#014a719a2ebe294d
+file|unicode_name.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#74f80f0431dab9e6
+throw|status=ok|count=1|msgs=0|#cf07b5900aa1a0ee
+file|value_angles.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=5
+rules|throw|status=ok
+rules|throw|count=5
+report|status=ok|count=5|msgs=1|#e1fe97a9d9678fde
+throw|status=ok|count=5|msgs=0|#d8f5c367e7094af4
+file|value_big.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=3
+rules|throw|status=ok
+rules|throw|count=3
+report|status=ok|count=3|msgs=1|#051b566c920d53d3
+throw|status=ok|count=3|msgs=0|#b75e2df8107caedb
+file|value_expressions.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=4
+rules|throw|status=ok
+rules|throw|count=4
+report|status=ok|count=4|msgs=1|#6252661dcff3499a
+throw|status=ok|count=4|msgs=0|#4ef06cfb041b9f16
+file|value_func.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#b600f8063b598e08
+throw|status=ok|count=1|msgs=0|#dac0e927f3ca2c62
+file|value_incomplete.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:40'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'value_incomplete.kicad_dru', line 3, offset 40."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=3
+rules|throw|error.offset=40
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#53305c1566479807
+throw|status=parse_error|count=0|msgs=0|#e0075b3ddeadb7c9
+file|value_missing_max.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Missing max value.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing max value. in 'value_missing_max.kicad_dru', line 2, offset 35."
+rules|throw|error.problem="ERROR: Missing max value."
+rules|throw|error.line=2
+rules|throw|error.offset=35
+rules|throw|error.input_line="(rule a (constraint clearance (max)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#481449ac125f06e7
+throw|status=parse_error|count=0|msgs=0|#0aa4a673da4c1e0f
+file|value_missing_min.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Missing min value.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing min value. in 'value_missing_min.kicad_dru', line 2, offset 35."
+rules|throw|error.problem="ERROR: Missing min value."
+rules|throw|error.line=2
+rules|throw|error.offset=35
+rules|throw|error.input_line="(rule a (constraint clearance (min)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#7922ad82e2ff7961
+throw|status=parse_error|count=0|msgs=0|#5a0adb318b42b20b
+file|value_missing_opt.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Missing opt value.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing opt value. in 'value_missing_opt.kicad_dru', line 2, offset 35."
+rules|throw|error.problem="ERROR: Missing opt value."
+rules|throw|error.line=2
+rules|throw|error.offset=35
+rules|throw|error.input_line="(rule a (constraint clearance (opt)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#5e4114bdf219d98c
+throw|status=parse_error|count=0|msgs=0|#d61df64e594c64b9
+file|value_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:31'>Missing '('.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:35'>Unrecognized item '1mm'.</a> Expected min, max, opt, or within_diff_pairs."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing '('. in 'value_missing_paren.kicad_dru', line 2, offset 31."
+rules|throw|error.problem="ERROR: Missing '('."
+rules|throw|error.line=2
+rules|throw|error.offset=31
+rules|throw|error.input_line="(rule a (constraint clearance min 1mm))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#5475f8da5f420fbc
+throw|status=parse_error|count=0|msgs=0|#8e4d0e6f78ed2b3b
+file|value_missing_units.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:34'>Missing units for '1'</a> (must be mm, in, mil, deg, fs, or ps)"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing units for '1' (must be mm, in, mil, deg, fs, or ps) in 'value_missing_units.kicad_dru', line 3, offset 66."
+rules|throw|error.problem="ERROR: Missing units for '1' (must be mm, in, mil, deg, fs, or ps)"
+rules|throw|error.line=3
+rules|throw|error.offset=66
+rules|throw|error.input_line="    (constraint clearance (min 1)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#0ebe7677a383b5ff
+throw|status=parse_error|count=0|msgs=0|#6c29c083d9715b3c
+file|value_mixed_units.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:47'>Mixed units for constraint values.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Mixed units for constraint values. in 'value_mixed_units.kicad_dru', line 2, offset 47."
+rules|throw|error.problem="ERROR: Mixed units for constraint values."
+rules|throw|error.line=2
+rules|throw|error.offset=47
+rules|throw|error.input_line="(rule a (constraint length (min 1mm) (max 10ps)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#550df00b58030d90
+throw|status=parse_error|count=0|msgs=0|#d1316cd2ff63fce7
+file|value_negative.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#9cb70d1ea33e646f
+throw|status=ok|count=2|msgs=0|#8f1812dcea51deed
+file|value_string_compare.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#a53432ff1f8cfc65
+throw|status=ok|count=1|msgs=0|#ed573e17fc28c9b9
+file|value_syntax_error.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:42'>Syntax error</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Syntax error in 'value_syntax_error.kicad_dru', line 2, offset 78."
+rules|throw|error.problem="ERROR: Syntax error"
+rules|throw|error.line=2
+rules|throw|error.offset=78
+rules|throw|error.input_line="(rule a (constraint clearance (min 1mm +)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#2ada6c07ffea6b3d
+throw|status=parse_error|count=0|msgs=0|#0cb0c32ebea86a5a
+file|value_textvar.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:36'>Unresolved text variable</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:39'>Unresolved text variable reference</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unresolved text variable in 'value_textvar.kicad_dru', line 2, offset 36."
+rules|throw|error.problem="ERROR: Unresolved text variable"
+rules|throw|error.line=2
+rules|throw|error.offset=36
+rules|throw|error.input_line="(rule a (constraint clearance (min ${MIN})))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#05491e877e46d59a
+throw|status=parse_error|count=0|msgs=0|#9111d085517cc784
+file|value_time_not_allowed.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:40'>Time based units not allowed for constraint type.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Time based units not allowed for constraint type. in 'value_time_not_allowed.kicad_dru', line 2, offset 40."
+rules|throw|error.problem="ERROR: Time based units not allowed for constraint type."
+rules|throw|error.line=2
+rules|throw|error.offset=40
+rules|throw|error.input_line="(rule a (constraint clearance (min 10ps)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#172cb5c3f85adb7f
+throw|status=parse_error|count=0|msgs=0|#71ecdbaf6ce03c18
+file|value_time_ok.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=4
+rules|throw|status=ok
+rules|throw|count=4
+report|status=ok|count=4|msgs=1|#979683896139acb3
+throw|status=ok|count=4|msgs=0|#7712fe97fb916859
+file|value_unexpected_units.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:38'>Syntax error</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Syntax error in 'value_unexpected_units.kicad_dru', line 2, offset 76."
+rules|throw|error.problem="ERROR: Syntax error"
+rules|throw|error.line=2
+rules|throw|error.offset=76
+rules|throw|error.input_line="(rule a (constraint via_count (max 2mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#8cdd27872618c490
+throw|status=parse_error|count=0|msgs=0|#480dd57f08613201
+file|value_unitless.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=6
+rules|throw|status=ok
+rules|throw|count=6
+report|status=ok|count=6|msgs=1|#0c40d8f094df0369
+throw|status=ok|count=6|msgs=0|#c44ecbb11096e2b1
+file|value_unitless_missing.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=2
+rules|throw|status=ok
+rules|throw|count=2
+report|status=ok|count=2|msgs=1|#ae4a203d4edffc6d
+throw|status=ok|count=2|msgs=0|#e66e037b8bbfb819
+file|value_unknown_option.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:32'>Unrecognized item 'foo'.</a> Expected min, max, opt, or within_diff_pairs."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'foo'. Expected min, max, opt, or within_diff_pairs. in 'value_unknown_option.kicad_dru', line 2, offset 32."
+rules|throw|error.problem="ERROR: Unrecognized item 'foo'. Expected min, max, opt, or within_diff_pairs."
+rules|throw|error.line=2
+rules|throw|error.offset=32
+rules|throw|error.input_line="(rule a (constraint clearance (foo 1) (min 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#bc18e46a3ba1e4b1
+throw|status=parse_error|count=0|msgs=0|#96992f7556b51003
+file|version_big.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=0
+rules|throw|status=ok
+rules|throw|count=0
+report|status=ok|count=0|msgs=1|#f81c37cab5073a9c
+throw|status=ok|count=0|msgs=0|#c69ca6131b6209be
+file|version_missing_number.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:9'>Missing version number.</a>"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing version number. in 'version_missing_number.kicad_dru', line 1, offset 9."
+rules|throw|error.problem="ERROR: Missing version number."
+rules|throw|error.line=1
+rules|throw|error.offset=9
+rules|throw|error.input_line="(version)\n"
+rules|throw|count=0
+report|status=ok|count=0|msgs=1|#9e136c51f1d3939a
+throw|status=parse_error|count=0|msgs=0|#40365f7e6cee0263
+file|version_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:12'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='1:13'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:1'>Incomplete statement.</a>"
+rules|report|count=0
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'version_missing_paren.kicad_dru', line 1, offset 12."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=1
+rules|throw|error.offset=12
+rules|throw|error.input_line="(version 1 2)\n"
+rules|throw|count=0
+report|status=ok|count=0|msgs=3|#750c19da5b7445e8
+throw|status=parse_error|count=0|msgs=0|#4e79d2d81933072b
+file|version_not_number.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='1:10'>Unrecognized item 'abc'.</a> Expected version number."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'abc'. Expected version number. in 'version_not_number.kicad_dru', line 1, offset 10."
+rules|throw|error.problem="ERROR: Unrecognized item 'abc'. Expected version number."
+rules|throw|error.line=1
+rules|throw|error.offset=10
+rules|throw|error.input_line="(version abc)\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#9745b615f280447c
+throw|status=parse_error|count=0|msgs=0|#155aab269e350dee
+file|within_diff_pairs.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=1
+rules|throw|status=ok
+rules|throw|count=1
+report|status=ok|count=1|msgs=1|#7ed812f24cff802e
+throw|status=ok|count=1|msgs=0|#4b40448c7d77b002
+file|within_diff_pairs_invalid.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:39'>within_diff_pairs option invalid for constraint type.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: within_diff_pairs option invalid for constraint type. in 'within_diff_pairs_invalid.kicad_dru', line 2, offset 39."
+rules|throw|error.problem="ERROR: within_diff_pairs option invalid for constraint type."
+rules|throw|error.line=2
+rules|throw|error.offset=39
+rules|throw|error.input_line="(rule a (constraint length (max 1mm) (within_diff_pairs)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#d3e818c606bd0609
+throw|status=parse_error|count=0|msgs=0|#70dd252f54652870
+file|within_diff_pairs_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:45'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:49'>Unrecognized item 'max'.</a> Expected constraint, condition, or disallow."
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='2:58'>Missing '('.</a>"
+rules|report|msg.3=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'within_diff_pairs_paren.kicad_dru', line 2, offset 45."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=45
+rules|throw|error.input_line="(rule a (constraint skew (within_diff_pairs x) (max 1mm)))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=4|#7c26ff26336e30d7
+throw|status=parse_error|count=0|msgs=0|#1005b25f11f489dd
+file|zone_connection_all.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_INFO "No errors found."
+rules|report|count=4
+rules|throw|status=ok
+rules|throw|count=4
+report|status=ok|count=4|msgs=1|#c09a9aede945ebd3
+throw|status=ok|count=4|msgs=0|#fee8cace6afd0969
+file|zone_connection_eof.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='3:36'>Missing ')'.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'zone_connection_eof.kicad_dru', line 3, offset 1."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=3
+rules|throw|error.offset=1
+rules|throw|error.input_line=""
+rules|throw|count=0
+report|status=ok|count=1|msgs=2|#f4a6ce812b9387d4
+throw|status=parse_error|count=0|msgs=0|#37ce6eead0629ec1
+file|zone_connection_missing_paren.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:43'>Missing ')'.</a>"
+rules|report|msg.1=RPT_SEVERITY_ERROR "ERROR: <a href='2:49'>Missing '('.</a>"
+rules|report|msg.2=RPT_SEVERITY_ERROR "ERROR: <a href='3:1'>Incomplete statement.</a>"
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Missing ')'. in 'zone_connection_missing_paren.kicad_dru', line 2, offset 43."
+rules|throw|error.problem="ERROR: Missing ')'."
+rules|throw|error.line=2
+rules|throw|error.offset=43
+rules|throw|error.input_line="(rule a (constraint zone_connection solid extra))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=3|#c6318edcb1c229f7
+throw|status=parse_error|count=0|msgs=0|#9128757bf34c3f58
+file|zone_connection_unknown.kicad_dru|
+rules|report|status=ok
+rules|report|msg.0=RPT_SEVERITY_ERROR "ERROR: <a href='2:37'>Unrecognized item 'bogus'.</a> Expected solid, thermal_reliefs or none.."
+rules|report|count=1
+rules|throw|status=parse_error
+rules|throw|error="ERROR: Unrecognized item 'bogus'. Expected solid, thermal_reliefs or none.. in 'zone_connection_unknown.kicad_dru', line 2, offset 37."
+rules|throw|error.problem="ERROR: Unrecognized item 'bogus'. Expected solid, thermal_reliefs or none.."
+rules|throw|error.line=2
+rules|throw|error.offset=37
+rules|throw|error.input_line="(rule a (constraint zone_connection bogus) (condition \"A.Type == 'Pad'\"))\n"
+rules|throw|count=0
+report|status=ok|count=1|msgs=1|#53edcaa76de8c09e
+throw|status=parse_error|count=0|msgs=0|#933b62380f9b3e52

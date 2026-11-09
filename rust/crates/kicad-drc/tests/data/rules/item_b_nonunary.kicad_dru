@@ -1,0 +1,3 @@
+(version 1)
+(rule a (condition "B.Type == 'Track'") (constraint track_width (min 0.2mm)) (constraint clearance (min 1mm)))
+(rule b (condition "A.Reference == 'B.Width'") (constraint hole_size (min 0.2mm)))

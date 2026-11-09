@@ -22,11 +22,17 @@
 //! [`defaults`] (`dump_defaults.cpp`). Every field is evaluated under a panic guard: a
 //! `port_pending!` stub prints `pending|SECTION|KEY|FIELD=CXX::Name`, any other panic
 //! `rust-error|SECTION|KEY|FIELD=message`; `pending|SECTION|KEY|*=...` marks a whole class whose
-//! constructor is pending. Compare with `rust/tools/pcb-dump/compare.py`.
+//! constructor is pending; a failure FIELD with `*` / `|` stands for every field a failed
+//! condition controls. Compare with `rust/tools/pcb-dump/compare.py` or [`compare::compare`].
+//!
+//! Quirk kept from the C++ tool: `EMIT( "x." + std::to_string( i++ ), .. )` evaluates its field
+//! expression twice, so those list indices are 1, 3, 5, ... (`default_fp_text`,
+//! `netclass_pattern`, footprint `pad` / `drawing` / `zone`); the Rust side prints `2 * i + 1`.
 
 use std::collections::BTreeSet;
 
 pub mod board;
+pub mod compare;
 pub mod defaults;
 pub mod format;
 pub mod items;
@@ -77,11 +83,19 @@ pub fn dump_defaults(hash: bool) -> String {
 /// PARSER HOOK: the `.kicad_pcb` parser package replaces this body with the Rust equivalent of
 /// the C++ tool's default load path (`KI_TEST::LoadBoard`: parse, then `BuildListOfNets`,
 /// `BuildConnectivity`, ...). Until then it reports that the parser is pending.
+///
+/// PCBIO-01: the parser only (`KI_TEST::ReadBoardFromFileOrStream`, the C++ tool's `--no-init`
+/// path, source name "" like its stream reader), with the constructs of packages that have not
+/// landed yet skipped (`ParseOptions::allow_pending`). The post-load steps of the default path
+/// (`BuildListOfNets`, `BuildConnectivity`, ...) are PCBIO-15 / connectivity.
 pub fn load_board_for_dump(path: &std::path::Path) -> Result<Board, String> {
-    Err(format!(
-        "{}: the .kicad_pcb parser is not ported yet (kicad_pcb::dump::load_board_for_dump)",
-        path.display()
-    ))
+    let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
+    let text = String::from_utf8_lossy(&bytes);
+    let options = crate::io::ParseOptions {
+        allow_pending: true,
+    };
+
+    crate::io::parse_board(&text, "", &options).map_err(|e| e.what().to_string())
 }
 
 #[cfg(test)]

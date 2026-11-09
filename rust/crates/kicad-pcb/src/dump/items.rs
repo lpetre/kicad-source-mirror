@@ -215,7 +215,7 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
     emit!(o, format!("{p}is_filled"), v_opt_bool(ps.is_filled()));
     emit!(o, format!("{p}unique_layers"), v_layers(ps.unique_layers()));
 
-    let Some(layers) = o.cond(&format!("{p}copper"), || ps.unique_layers()) else {
+    let Some(layers) = o.cond(&format!("{p}copper.*"), || ps.unique_layers()) else {
         return;
     };
 
@@ -407,7 +407,7 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
             let ln = v_layer(l);
             emit!(o, format!("on_layer.{ln}"), v_bool(it.is_on_layer(l)));
 
-            if o.cond(&format!("on_layer.{ln}"), || it.is_on_layer(l)) != Some(true) {
+            if o.cond(&format!("*.{ln}"), || it.is_on_layer(l)) != Some(true) {
                 continue;
             }
 
@@ -552,7 +552,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
 
     dump_padstack(o, "padstack.", ps);
 
-    if let Some(layers) = o.cond("layer", || ps.unique_layers()) {
+    if let Some(layers) = o.cond("layer.*", || ps.unique_layers()) {
         for l in layers {
             let lp = format!("layer.{}.", v_layer(l));
             emit!(o, format!("{lp}shape"), v_enum(pad.shape(l)));
@@ -589,7 +589,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
             v_bool(pad.flash_layer_permitted(ctx, l))
         );
 
-        if o.cond(&format!("on_layer.{ln}"), || pad.is_on_layer(ctx, l)) != Some(true) {
+        if o.cond(&format!("*.{ln}"), || pad.is_on_layer(ctx, l)) != Some(true) {
             continue;
         }
 
@@ -620,7 +620,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         });
     }
 
-    if let Some(ls) = o.cond("shape", || it.layer_set()) {
+    if let Some(ls) = o.cond("shape.*", || it.layer_set()) {
         for l in ls.seq().iter().copied() {
             if kicad_core::layer_ids::is_copper_layer(l.as_i32()) {
                 continue;
@@ -648,7 +648,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         });
     }
 
-    match o.cond("tpoly", || {
+    match o.cond("tpoly.*", || {
         if pad.is_on_layer(ctx, PcbLayerId::FCu) {
             PcbLayerId::FCu
         } else {
@@ -673,7 +673,7 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
     emit!(o, format!("{p}end"), v_vec(s.end()));
     emit!(o, format!("{p}width"), v_int(h.width(ctx)));
     emit!(o, format!("{p}effective_width"), v_int(h.effective_width(ctx)));
-    emit!(o, format!("{p}line_style"), v_enum(s.stroke.line_style()));
+    emit!(o, format!("{p}line_style"), no_api("EDA_SHAPE::GetLineStyle"));
     emit!(o, format!("{p}fill"), v_enum(s.fill_mode()));
     emit!(o, format!("{p}closed"), v_bool(s.is_closed()));
     emit!(o, format!("{p}hatch_line_width"), v_int(h.hatch_line_width(ctx)));
@@ -811,7 +811,7 @@ pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
         );
     }
 
-    if let Some(ls) = o.cond("shape", || it.layer_set()) {
+    if let Some(ls) = o.cond("shape.*|tpoly.*", || it.layer_set()) {
         for l in ls.seq().iter().copied() {
             dump_effective_shape(o, &format!("shape.{}", v_layer(l)), it, l, Flashing::Default);
             dump_transformed_polys(o, it, l);
@@ -931,7 +931,7 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
     });
 
     if it.as_dyn().is_knockout() {
-        if let Some(l) = o.cond("tpoly", || it.layer()) {
+        if let Some(l) = o.cond("tpoly.*", || it.layer()) {
             dump_transformed_polys(o, it, l);
         }
     }
@@ -1001,7 +1001,7 @@ pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
         _ => {}
     }
 
-    if let Some(l) = o.cond("tpoly", || it.layer()) {
+    if let Some(l) = o.cond("tpoly.*", || it.layer()) {
         dump_transformed_polys(o, it, l);
     }
 }
@@ -1076,10 +1076,10 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
         format!("[{}]", v.join(" "))
     });
 
-    if let Some(ls) = o.cond("filled", || it.layer_set()) {
+    if let Some(ls) = o.cond("filled.*|islands.*", || it.layer_set()) {
         for l in ls.seq().iter().copied() {
             let ln = v_layer(l);
-            let Some(has) = o.cond(&format!("filled.{ln}"), || z.has_filled_polys_for_layer(l))
+            let Some(has) = o.cond(&format!("filled.{ln}|islands.{ln}"), || z.has_filled_polys_for_layer(l))
             else {
                 continue;
             };
@@ -1100,7 +1100,7 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
         }
     }
 
-    if let Some(Some(l)) = o.cond("shape", || {
+    if let Some(Some(l)) = o.cond("shape.*", || {
         (!z.is_rule_area() && it.as_dyn().is_on_copper_layer(ctx)).then(|| z.first_layer())
     }) {
         dump_effective_shape(o, &format!("shape.{}", v_layer(l)), it, l, Flashing::Default);
@@ -1226,21 +1226,21 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
 
         for (i, (pid, p)) in pads.into_iter().enumerate() {
             let k = o.item_key(Some(pid.into()));
-            emit!(o, format!("pad.{i}"), format!("{k} {}", v_str(p.number())));
+            emit!(o, format!("pad.{}", 2 * i + 1), format!("{k} {}", v_str(p.number())));
         }
 
         let drawings: Vec<_> = board.footprint_drawings(fp_id).map(|(id, _)| id).collect();
 
         for (i, did) in drawings.into_iter().enumerate() {
             let k = o.item_key(Some(did));
-            emit!(o, format!("drawing.{i}"), k);
+            emit!(o, format!("drawing.{}", 2 * i + 1), k);
         }
 
         let zones: Vec<_> = board.footprint_zones(fp_id).map(|(id, _)| id).collect();
 
         for (i, zid) in zones.into_iter().enumerate() {
             let k = o.item_key(Some(zid.into()));
-            emit!(o, format!("zone.{i}"), k);
+            emit!(o, format!("zone.{}", 2 * i + 1), k);
         }
     }
 

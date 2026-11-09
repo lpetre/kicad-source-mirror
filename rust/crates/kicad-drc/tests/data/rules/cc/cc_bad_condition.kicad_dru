@@ -1,0 +1,2 @@
+(version 1)
+(assign_component_class X (condition "A.Reference =="))

@@ -1243,15 +1243,32 @@ fn section_ellipse(results: &mut Results, name: &'static str, seed: u64, count: 
     }
 }
 
+/// `KICAD_CONV_ORACLE_ONLY=NAME` runs just that section (to dump a mismatch quickly, like
+/// `conv_oracle --only NAME`).
 pub fn run_all(results: &mut Results) {
-    super::sections::section_libm_probe(results);
-    section_circle(results, "libm:conv_circle", 600, 20000);
-    section_oval(results, "libm:conv_oval", 601, 20000);
-    section_rect(results, "libm:conv_rect", 602, 30000);
-    section_arc(results, "libm:conv_arc", 603, 20000);
-    section_roundrect(results, "libm:conv_roundrect", 604, 20000);
-    section_corner_ops(results, "libm:conv_corner_ops", 605, 20000);
-    section_shape_utils(results, "libm:conv_shape_utils", 606, 20000);
-    section_intersection(results, "libm:intersection", 607, 30000);
-    section_ellipse(results, "libm:shape_ellipse", 608, 30000);
+    let only = std::env::var("KICAD_CONV_ORACLE_ONLY").ok();
+    let run = |name: &str| only.as_deref().is_none_or(|o| o == name);
+
+    if run("libm_probe") {
+        super::sections::section_libm_probe(results);
+    }
+
+    type SectionFn = fn(&mut Results, &'static str, u64, i32);
+    let sections: [(SectionFn, &'static str, u64, i32); 9] = [
+        (section_circle, "libm:conv_circle", 600, 20000),
+        (section_oval, "libm:conv_oval", 601, 20000),
+        (section_rect, "libm:conv_rect", 602, 30000),
+        (section_arc, "libm:conv_arc", 603, 20000),
+        (section_roundrect, "libm:conv_roundrect", 604, 20000),
+        (section_corner_ops, "libm:conv_corner_ops", 605, 20000),
+        (section_shape_utils, "libm:conv_shape_utils", 606, 20000),
+        (section_intersection, "libm:intersection", 607, 30000),
+        (section_ellipse, "libm:shape_ellipse", 608, 30000),
+    ];
+
+    for (f, name, seed, count) in sections {
+        if run(name) {
+            f(results, name, seed, count);
+        }
+    }
 }
