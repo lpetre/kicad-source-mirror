@@ -88,8 +88,13 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
         PORTING.md section 9, applied by G3).
   - [x] kicad-geom G7 stdsort / packed + dynamic r-tree / delaunator / nanoflann (Opus; 10k
         oracle cases bit-exact natively and on wasm; COW_RTREE skipped, router only).
-  - [ ] kicad-geom G3 line chain -> G4a clipper vendoring + poly set, G6a helpers (running).
-        Then G4b triangulation, G5 collisions, G6b shape utilities.
+  - [x] kicad-geom G3 SHAPE_LINE_CHAIN (Opus; 222k oracle cases), G4a vendored Clipper2 +
+        SHAPE_POLY_SET (Opus; 328k oracle cases, Clipper2 re-validated on 19.7k harness cases),
+        G6a bezier / hull / TRANSFORM_TRS / ellipse / hashes (Opus; 540k oracle cases). All
+        Fable-reviewed and accepted; orchestrator re-ran the crate: 361 tests pass, clippy
+        clean, wasm32 builds. x86 cast rule confirmed by oracle and applied.
+  - [ ] kicad-geom G4b triangulation -> G5 collisions/nearest points/shape index (+
+        Shape::indexable_subshape), G6b shape conversion utilities (running, Opus).
   - [x] kicad-core C1 ids/layers; [x] C2 units/strings/values (Opus; 152k oracle cases
         bit-exact; Fable-reviewed: deviations C2-1..9 accepted).
   - [x] kicad-libeval (Opus finish; Lemon tables regenerated and identical, 39.5k oracle
@@ -99,8 +104,14 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
         out-of-range cast rule (agent used saturating casts before the rule existed);
         @{...} text evaluation (text_eval) and outline fonts are not ported (tier 2/3).
 - [ ] Board model + parser + writer.
-- [ ] kicad-plot P1 base+metadata -> P2 Gerber -> P3 text+SVG (running, Opus); kicad-core C3
-      json / pattern match / helpers (running, Opus).
+- [x] kicad-plot P1 base+metadata, P2 Gerber plotter (2400 scripted files byte-identical),
+      P3 text plotting + SVG plotter (1500 scripted files byte-identical); kicad-core C3
+      nlohmann-compatible JSON (413 corpus files re-dumped identically), settings PARAM
+      mechanics, pattern matcher (all 1899 corpus netclass patterns match), text variables.
+      All Opus, Fable-reviewed and accepted; orchestrator re-ran: 253 tests pass, clippy clean.
+      Follow-ups once G6b lands: drop the round-rect polygon closures in kicad-plot and use
+      kicad-geom directly; SVG rounded Rect; remove the Gerber PlotText debug_assert on
+      negative width (C++ only asserts and continues).
 - [ ] Connectivity, fab, drc.
 - [ ] Zone filler, custom rules, remaining providers.
 - [ ] CLI, wasm, demo.

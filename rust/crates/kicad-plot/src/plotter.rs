@@ -38,8 +38,8 @@
 //! Output: C++ writes to a `FILE*` opened by `OpenFile`; the port writes into the in-memory
 //! [`PlotterState::output`] string and the caller writes the bytes to a file.
 //!
-//! Not here: `Text` / `PlotText` (`plotter.cpp` L548-667, work package PLOT-05, they will be
-//! added as provided methods), `ThickArc( const EDA_SHAPE& )` (no caller in the board plot
+//! `Text` / `PlotText` (`plotter.cpp` L548-667) are provided trait methods whose bodies live
+//! in `plotter_text.rs`. Not here: `ThickArc( const EDA_SHAPE& )` (no caller in the board plot
 //! code), the PDF-only hyperlink/bookmark hooks, `m_project`, `m_layersToExport` and
 //! `m_plottedFootprints`. See `PORT_STATUS.md`.
 

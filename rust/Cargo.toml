@@ -37,6 +37,9 @@ should_implement_trait = "allow"
 wrong_self_convention = "allow"
 # `let mut x = T::default(); x.field = ..;` is the natural shape of ported constructors.
 field_reassign_with_default = "allow"
+# `x % n == 0` mirrors the C++ source text.
+manual_is_multiple_of = "allow"
+doc_lazy_continuation = "allow"
 
 [profile.dev]
 opt-level = 1
