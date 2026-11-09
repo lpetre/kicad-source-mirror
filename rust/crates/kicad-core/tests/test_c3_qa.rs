@@ -294,11 +294,12 @@ fn settings_load_store_round_trip() {
 
 // ---- JSON helpers ----
 
+/// Grisu2 is not always shortest: nlohmann prints 1e23 as 9.999999999999999e+22.
 #[test]
 fn nlohmann_dump_forms() {
     let v = json::parse(r#"{"b":[],"a":{},"c":[1,2.0,-0.0,1e23,"\u0001\"\\/é"],"d":null}"#, ObjectOrder::Insertion).unwrap();
-    assert_eq!(dump(&v, None, ObjectOrder::Sorted), r#"{"a":{},"b":[],"c":[1,2.0,-0.0,1e+23,"\u0001\"\\/é"],"d":null}"#);
-    assert_eq!(dump(&v, None, ObjectOrder::Insertion), r#"{"b":[],"a":{},"c":[1,2.0,-0.0,1e+23,"\u0001\"\\/é"],"d":null}"#);
+    assert_eq!(dump(&v, None, ObjectOrder::Sorted), r#"{"a":{},"b":[],"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#);
+    assert_eq!(dump(&v, None, ObjectOrder::Insertion), r#"{"b":[],"a":{},"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#);
     assert_eq!(dump(&json::parse("[1,[]]", ObjectOrder::Sorted).unwrap(), Some(2), ObjectOrder::Sorted), "[\n  1,\n  []\n]");
     assert_eq!(json::dump_float(1e-5), "1e-05");
     assert_eq!(json::dump_float(f64::NAN), "null");
