@@ -2402,7 +2402,6 @@ fn clipper2_round_trip() {
 // the collision matrix (package G5) ---
 
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions (collision matrix)"]
 fn collide_line_to_line() {
     let line_a = chain_of(&[(0, 0), (10, 0)]);
     let line_b = chain_of(&[(5, 5), (5, -5)]);
@@ -2417,7 +2416,6 @@ fn collide_line_to_line() {
 }
 
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions (collision matrix)"]
 fn collide_line_to_arc() {
     let line_a = chain_of(&[(0, 0), (10, 0)]);
     let mut arc_b = ShapeLineChain::new();
@@ -2433,7 +2431,6 @@ fn collide_line_to_arc() {
 }
 
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions (collision matrix)"]
 fn collide_arc_to_arc() {
     let mut arc_a = ShapeLineChain::new();
     arc_a.append_arc(&arc3(v(0, 0), v(10, 0), v(5, 5)));
@@ -2450,7 +2447,6 @@ fn collide_arc_to_arc() {
 }
 
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions (collision matrix)"]
 fn collide_with_clearance() {
     let line_a = chain_of(&[(0, 0), (10, 0)]);
     let line_b = chain_of(&[(5, 6), (-5, 6)]);
@@ -2465,7 +2461,6 @@ fn collide_with_clearance() {
 }
 
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions (collision matrix)"]
 fn collide_no_clearance() {
     let line_a = chain_of(&[(0, 0), (10, 0)]);
     let line_b = chain_of(&[(5, 6), (-5, 6)]);

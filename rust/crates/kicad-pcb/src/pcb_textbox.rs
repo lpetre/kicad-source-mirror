@@ -407,8 +407,8 @@ impl EdaShapeItem for PcbTextbox {
     fn eda_shape_mut(&mut self) -> &mut EdaShape {
         &mut self.shape.shape
     }
-    fn bot_right(&self) -> Vector2I {
-        PcbTextbox::bot_right(self)
+    fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        PcbTextbox::bot_right(self, ctx)
     }
     fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
         PcbTextbox::corners_in_sequence(self, angle)
@@ -425,8 +425,8 @@ impl EdaShapeItem for PcbTextbox {
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 {
         PcbTextbox::shape_max_error(self, ctx)
     }
-    fn top_left(&self) -> Vector2I {
-        PcbTextbox::top_left(self)
+    fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        PcbTextbox::top_left(self, ctx)
     }
     fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
         PcbTextbox::width(self, ctx)
@@ -684,8 +684,8 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::GetBotRight`.
-    pub fn bot_right(&self) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetBotRight")
+    pub fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        crate::port_pending!("PCB_TEXTBOX::GetBotRight", ctx)
     }
 
     /// `PCB_TEXTBOX::GetCornersInSequence`.
@@ -714,8 +714,8 @@ impl PcbTextbox {
     }
 
     /// `PCB_TEXTBOX::GetTopLeft`.
-    pub fn top_left(&self) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetTopLeft")
+    pub fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        crate::port_pending!("PCB_TEXTBOX::GetTopLeft", ctx)
     }
 
     /// `PCB_SHAPE::GetWidth`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).

@@ -98,7 +98,6 @@ pub fn set_layer_set<B: BoardItemMut + ?Sized>(item: &mut B, env: &MutEnv, layer
     }
 }
 
-
 /// `GetBoard() != nullptr` for an item: true when its parent chain reaches the board
 /// (`ParentRef::Board`, or an item parent that does). An item with `ParentRef::None` (a value
 /// being built, a dummy without parent) is the C++ null-board case.
@@ -250,7 +249,11 @@ pub fn fp_relative_position<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>)
 
 /// Port of `BOARD_ITEM::SetFPRelativePosition`: `SetPosition( transform.Apply( aPos ) )` with
 /// the parent footprint's transform from `env`, else `SetPosition( aPos )`.
-pub fn set_fp_relative_position<B: BoardItemMut + ?Sized>(item: &mut B, env: &MutEnv, pos: Vector2I) {
+pub fn set_fp_relative_position<B: BoardItemMut + ?Sized>(
+    item: &mut B,
+    env: &MutEnv,
+    pos: Vector2I,
+) {
     if let Some(frame) = env.parent {
         item.set_position(env, frame.transform.apply(pos));
     } else {
@@ -733,5 +736,224 @@ impl Board {
                 }
             });
         found
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! No C++ unit test exercises these base-class bodies on their own (`qa/tests/pcbnew/
+    //! test_board_item.cpp` tests the overrides of the concrete classes, ported with their
+    //! packages). Each test names the C++ body it checks; expectations follow from that body.
+
+    use super::*;
+    use crate::board::AddMode;
+    use crate::item::BoardUse;
+    use crate::pcb_group::PcbGroup;
+    use crate::pcb_point::PcbPoint;
+    use crate::pcb_target::PcbTarget;
+    use crate::pcb_track::{PcbTrack, Track};
+    use crate::test_support;
+    use crate::traits::BoardConnectedItem;
+    use kicad_core::Kiid;
+
+    fn board_track(board: &mut Board, layer: PcbLayerId) -> ItemId {
+        let mut t = PcbTrack::new(&mut board.kiid_generator);
+        t.base.item.layer = layer;
+        board
+            .add_track(Track::Trace(t), AddMode::Append)
+            .unwrap()
+            .into()
+    }
+
+    /// `BOARD_ITEM::IsLocked`: own flag on a board item; parent group lock wins; no board and
+    /// footprint holder boards are never locked.
+    #[test]
+    fn is_locked_rules() {
+        let mut board = Board::new();
+        let track = board_track(&mut board, PcbLayerId::FCu);
+        assert!(!BoardCtx::bare(&board).item(track).unwrap().is_locked());
+
+        board.set_item_locked(track, true);
+        assert!(BoardCtx::bare(&board).item(track).unwrap().is_locked());
+
+        board.board_use = BoardUse::FpHolder;
+        assert!(!BoardCtx::bare(&board).item(track).unwrap().is_locked());
+        board.board_use = BoardUse::Normal;
+
+        // Locked parent group: the member is locked whatever its own flag.
+        board.set_item_locked(track, false);
+        let mut group = PcbGroup::default();
+        group.base.is_locked = true;
+        let group = board.insert_item(group, ParentRef::Board);
+        board
+            .tracks
+            .get_mut(track.typed().unwrap())
+            .unwrap()
+            .base_mut()
+            .group = Some(group.into());
+        assert!(BoardCtx::bare(&board).item(track).unwrap().is_locked());
+
+        // No board: a detached value is never locked by its own flag.
+        let mut target = PcbTarget::default();
+        target.base.is_locked = true;
+        assert!(!is_locked(&target, &BoardCtx::bare(&board)));
+    }
+
+    /// `BOARD_ITEM::IsOnCopperLayer` for a single-layer type, `IsSideSpecific` without a board.
+    #[test]
+    fn copper_and_side_specific() {
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut target = PcbTarget::default();
+
+        target.base.layer = PcbLayerId::FCu;
+        assert!(is_on_copper_layer(&target, &ctx));
+        target.base.layer = PcbLayerId::FSilkS;
+        assert!(!is_on_copper_layer(&target, &ctx));
+        assert!(is_side_specific(&target, &ctx));
+        target.base.layer = PcbLayerId::DwgsUser;
+        assert!(!is_side_specific(&target, &ctx));
+    }
+
+    /// `BOARD_ITEM::LayerMaskDescribe` without a board (`MAX_CU_LAYERS`, `LayerName`).
+    #[test]
+    fn layer_mask_describe_boardless() {
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut target = PcbTarget::default();
+
+        target.base.layer = PcbLayerId::FFab;
+        assert_eq!(layer_mask_describe(&target, &ctx), "F.Fab");
+        target.base.layer = PcbLayerId::BCu;
+        assert_eq!(layer_mask_describe(&target, &ctx), "B.Cu");
+        target.base.layer = PcbLayerId::UndefinedLayer;
+        assert_eq!(layer_mask_describe(&target, &ctx), "no layers");
+    }
+
+    /// `EDA_ITEM::GetFriendlyName`, `GetItemDescription`, `BOARD_ITEM::GetStroke` base bodies.
+    #[test]
+    fn base_texts_and_stroke() {
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let target = PcbTarget::default();
+
+        assert_eq!(friendly_name(&target, &ctx), "Target");
+        assert_eq!(crate::eda_item::type_desc(KicadT::PcbArcT), "Track");
+        assert_eq!(crate::eda_item::type_desc(KicadT::PcbDimLeaderT), "Leader");
+        assert_eq!(stroke(&target, &ctx).width(), 100_000);
+        assert!(!is_groupable_type(&target));
+        assert!(is_groupable_type(&PcbPoint::default()));
+    }
+
+    fn board_target(board: &mut Board, layer: PcbLayerId) -> ItemId {
+        let mut t = PcbTarget::new(&mut board.kiid_generator);
+        t.base.layer = layer;
+        board.insert_item(t, ParentRef::Board).into()
+    }
+
+    /// `BOARD_ITEM::ptr_cmp`: type, then layer sequence, then UUID, then pointer (`ItemId`).
+    #[test]
+    fn ptr_cmp_order() {
+        let mut board = Board::new();
+        let front = board_target(&mut board, PcbLayerId::FCu);
+        let back = board_target(&mut board, PcbLayerId::BCu);
+        let point: ItemId = board
+            .insert_item(PcbPoint::default(), ParentRef::Board)
+            .into();
+        let ctx = BoardCtx::bare(&board);
+
+        // PCB_TARGET_T < PCB_POINT_T
+        assert_eq!(board_item_ptr_cmp(&ctx, front, point), Ordering::Less);
+        assert_eq!(board_item_ptr_cmp(&ctx, point, back), Ordering::Greater);
+        // F_Cu (0) < B_Cu (2)
+        assert_eq!(board_item_ptr_cmp(&ctx, back, front), Ordering::Greater);
+        assert_eq!(board_item_ptr_cmp(&ctx, front, front), Ordering::Equal);
+
+        // Same type and layers: UUID order, then handle order for duplicate UUIDs.
+        let mut board = Board::new();
+        let a = board_target(&mut board, PcbLayerId::FCu);
+        let b = board_target(&mut board, PcbLayerId::FCu);
+        let (ua, ub) = {
+            let ctx = BoardCtx::bare(&board);
+            (ctx.item(a).unwrap().uuid(), ctx.item(b).unwrap().uuid())
+        };
+        assert_ne!(ua, ub);
+        let ctx = BoardCtx::bare(&board);
+        assert_eq!(board_item_ptr_cmp(&ctx, a, b), ua.cmp(&ub));
+        assert_eq!(board_item_ptr_cmp(&ctx, b, a), ub.cmp(&ua));
+
+        let mut board = Board::new();
+        let a = board_target(&mut board, PcbLayerId::FCu);
+        let b = board_target(&mut board, PcbLayerId::FCu);
+        for id in [a, b] {
+            let tid: crate::ids::TargetId = id.typed().unwrap();
+            board.targets.get_mut(tid).unwrap().base.uuid = Kiid::default();
+        }
+        let ctx = BoardCtx::bare(&board);
+        assert_eq!(board_item_ptr_cmp(&ctx, a, b), a.cmp(&b));
+        assert_eq!(a.cmp(&b), Ordering::Less);
+    }
+
+    /// `BOARD_ITEM::GetParentFootprint` and `GetFPRelativePosition` on a footprint child.
+    #[test]
+    fn parent_footprint_and_relative_position() {
+        let mut fx = test_support::rotated_flipped_scaled();
+        let lib = Vector2I::new(1_000_000, -2_000_000);
+        let transform = fx.board[fx.footprint].transform();
+        let mut point = PcbPoint::default();
+        point.pos = transform.apply(lib);
+        let id = fx.add_child(point, |fp| &mut fp.points);
+
+        let ctx = BoardCtx::bare(&fx.board);
+        let point = &fx.board[id];
+        let fp = parent_footprint(point, &ctx).expect("parent footprint");
+        assert!(std::ptr::eq(fp, &fx.board[fx.footprint]));
+        assert_eq!(
+            fp_relative_position(point, &ctx),
+            transform.inverse_apply(transform.apply(lib))
+        );
+        assert!(has_board(point, &ctx));
+        assert!(parent_footprint(&PcbPoint::default(), &ctx).is_none());
+        assert!(!has_board(&PcbPoint::default(), &ctx));
+    }
+
+    /// Leaf `Move` / `SetLayer` through the polymorphic board methods.
+    #[test]
+    fn leaf_move_and_layer() {
+        let mut board = Board::new();
+        let track = board_track(&mut board, PcbLayerId::FCu);
+        board.move_item(track, Vector2I::new(10, 20));
+        let tid: crate::ids::TrackId = track.typed().unwrap();
+        let Track::Trace(t) = &board[tid] else {
+            panic!("segment expected")
+        };
+        assert_eq!(t.start, Vector2I::new(10, 20));
+
+        // Group SetLayer is a no-op; a stale handle is ignored.
+        let group: ItemId = board
+            .insert_item(PcbGroup::default(), ParentRef::Board)
+            .into();
+        board.set_item_layer(group, PcbLayerId::BCu);
+        let gid: crate::ids::GroupId = group.typed().unwrap();
+        assert_eq!(board[gid].base.layer, PcbLayerId::FCu);
+    }
+
+    /// `BOARD_CONNECTED_ITEM::GetEffectiveNetClass` / `GetOwnClearance` without a board or
+    /// rules.
+    #[test]
+    fn connected_item_null_branches() {
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let track = PcbTrack::default();
+
+        assert!(std::ptr::eq(
+            track.effective_netclass(&ctx),
+            crate::netclass::Netclass::fallback()
+        ));
+        assert_eq!(track.own_clearance(&ctx, PcbLayerId::FCu, true), (0, None));
+        assert_eq!(
+            crate::board_connected_item::netname_msg(&track, &ctx),
+            "[** NO BOARD DEFINED **]"
+        );
     }
 }

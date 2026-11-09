@@ -393,7 +393,9 @@ impl Board {
             }
 
             count += 1;
-            let parent = self.get(id).map_or(ParentRef::None, |item| item.base().parent);
+            let parent = self
+                .get(id)
+                .map_or(ParentRef::None, |item| item.base().parent);
             self.journal_record(ChangeKind::Removed, id);
 
             match parent {
@@ -486,9 +488,7 @@ impl Board {
                 .is_some_and(|t: TrackId| self.track_list.contains(&t)),
             ItemKind::Zone => id.typed().is_some_and(|z| self.zone_list.contains(&z)),
             ItemKind::Group => id.typed().is_some_and(|g| self.group_list.contains(&g)),
-            ItemKind::Generator => id
-                .typed()
-                .is_some_and(|g| self.generator_list.contains(&g)),
+            ItemKind::Generator => id.typed().is_some_and(|g| self.generator_list.contains(&g)),
             ItemKind::Constraint => id
                 .typed()
                 .is_some_and(|c| self.constraint_list.contains(&c)),
@@ -626,7 +626,20 @@ impl Board {
         for &kicad_t in types {
             match kicad_t {
                 KicadT::PcbNetinfoT => {
-                    crate::port_pending!("NETINFO_LIST::detachAll (BOARD::RemoveAll nets, M3)")
+                    // FinalizeBulkRemove sees the nets, then m_NetInfo.detachAll() and the
+                    // deletion of the detached nets.
+                    let nets: Vec<ItemId> = self
+                        .net_info
+                        .nets
+                        .keys()
+                        .filter_map(|&code| ItemId::net(code))
+                        .collect();
+
+                    for net in nets {
+                        self.journal_record(ChangeKind::Removed, net);
+                    }
+
+                    self.net_info.clear();
                 }
                 KicadT::PcbMarkerT => {
                     removed.extend(self.marker_list.drain(..).map(ItemId::from));
@@ -957,9 +970,9 @@ impl Board {
         // m_layer = F_Cu, m_embedFonts = false: the Footprint constructor values.
         let footprint = Footprint::new(&mut self.kiid_generator);
         let fp = self.insert_item(footprint, ParentRef::Board);
-        let fp_layer = self.footprints[fp].base.layer;
+        let fp_layer = self[fp].base.layer;
 
-        let mut add_field = |board: &mut Board, id: FieldT, layer, visible: bool| {
+        let add_field = |board: &mut Board, id: FieldT, layer, visible: bool| {
             // new PCB_FIELD( this, id ): PCB_TEXT( FOOTPRINT* ) puts it on F_SilkS (B_SilkS
             // for a back footprint) at the footprint position, which is the origin of the
             // identity transform here, i.e. the default library position.
@@ -967,7 +980,7 @@ impl Board {
             field.text.base.layer = layer; // field->SetLayer( layer )
             field.text.text.set_visible(visible); // field->SetVisible( visible )
             let field_id = board.insert_item(field, ParentRef::Item(fp.into()));
-            board.footprints[fp].fields.push_back(field_id); // m_fields.push_back( field )
+            board.fp_mut(fp).fields.push_back(field_id); // m_fields.push_back( field )
         };
 
         use kicad_core::PcbLayerId;
@@ -978,6 +991,11 @@ impl Board {
 
         self.increment_time_stamp();
         fp
+    }
+
+    /// A live footprint for writing (callers checked the handle).
+    fn fp_mut(&mut self, fp: FootprintId) -> &mut Footprint {
+        self.footprints.get_mut(fp).expect("live footprint")
     }
 
     /// `IsItemIndexedById( footprint )`: a forward index entry exists for the footprint's UUID
@@ -1037,14 +1055,14 @@ impl Board {
         macro_rules! child {
             ($value:expr, $list:ident) => {{
                 let id = self.insert_fp_child($value, fp);
-                push_mode(&mut self.footprints[fp].$list, id, append);
+                push_mode(&mut self.fp_mut(fp).$list, id, append);
                 ItemId::from(id)
             }};
         }
         macro_rules! drawing {
             ($value:expr) => {{
                 let id: ItemId = self.insert_fp_child($value, fp).into();
-                push_mode(&mut self.footprints[fp].drawings, id, append);
+                push_mode(&mut self.fp_mut(fp).drawings, id, append);
                 id
             }};
         }
@@ -1052,7 +1070,7 @@ impl Board {
         let id = match item {
             OwnedItem::Field(field) => {
                 let id = self.insert_fp_child(*field, fp);
-                self.footprints[fp].fields.push_back(id);
+                self.fp_mut(fp).fields.push_back(id);
                 ItemId::from(id)
             }
             OwnedItem::Barcode(b) => drawing!(*b),
@@ -1084,7 +1102,7 @@ impl Board {
 
         push_mode(&mut self.footprint_list, fp, mode.is_append());
 
-        let footprint = &mut self.footprints[fp];
+        let footprint = self.fp_mut(fp);
         footprint.base.parent = ParentRef::Board;
         footprint.base.flags.clear(ItemFlags::EDIT_FLAGS);
 
@@ -1094,7 +1112,10 @@ impl Board {
     /// `new PCB_TABLE( parent )`: `parent` is `Board` or `Item(footprint)`; cells added with
     /// `table_add_cell` get `ParentRef::Item(table)`. The value's `cells` must be empty.
     pub fn create_table(&mut self, mut table: PcbTable, parent: ParentRef) -> TableId {
-        debug_assert!(table.cells.is_empty(), "create_table: cells are added with table_add_cell");
+        debug_assert!(
+            table.cells.is_empty(),
+            "create_table: cells are added with table_add_cell"
+        );
         table.cells.clear();
         let id = self.insert_item(table, parent);
         self.increment_time_stamp();
@@ -1107,8 +1128,14 @@ impl Board {
         let layer = self[table].base.layer;
         let env = self.child_env(ParentRef::Item(table.into()));
         let id = self.insert_item(cell, ParentRef::Item(table.into()));
-        self.tables[table].cells.push(id);
-        self.tablecells[id].set_layer(&env, layer);
+        self.tables
+            .get_mut(table)
+            .expect("live table")
+            .cells
+            .push(id);
+        if let Some(cell) = self.tablecells.get_mut(id) {
+            cell.set_layer(&env, layer);
+        }
         self.increment_time_stamp();
         id
     }
@@ -1128,20 +1155,15 @@ impl Board {
             Some(fp) => {
                 if kicad_t != KicadT::PcbTableT
                     || !self.footprints.contains(fp)
-                    || self.footprints[fp].drawings.contains(&id)
+                    || self[fp].drawings.contains(&id)
                 {
                     return;
                 }
 
-                push_mode(
-                    &mut self.footprints[fp].drawings,
-                    id,
-                    mode == AddMode::Append,
-                );
-                self.tables[table]
-                    .base
-                    .flags
-                    .clear(ItemFlags::EDIT_FLAGS);
+                push_mode(&mut self.fp_mut(fp).drawings, id, mode == AddMode::Append);
+                if let Some(t) = self.tables.get_mut(table) {
+                    t.base.flags.clear(ItemFlags::EDIT_FLAGS);
+                }
                 self.after_footprint_add(fp, id);
             }
             None => {
@@ -1150,9 +1172,10 @@ impl Board {
                 }
 
                 push_mode(&mut self.drawing_list, id, mode.is_append());
-                let t = &mut self.tables[table];
-                t.base.parent = ParentRef::Board;
-                t.base.flags.clear(ItemFlags::EDIT_FLAGS);
+                if let Some(t) = self.tables.get_mut(table) {
+                    t.base.parent = ParentRef::Board;
+                    t.base.flags.clear(ItemFlags::EDIT_FLAGS);
+                }
                 self.after_board_add(id);
             }
         }
@@ -1165,3 +1188,505 @@ impl Board {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    //! Ports of `qa/tests/pcbnew/test_board_item_index.cpp` (cited per test) and tests of the
+    //! container order rules of `pcbnew/board.cpp` `BOARD::Add` / `footprint.cpp`
+    //! `FOOTPRINT::Add` (new tests: no C++ test checks those orders directly).
+
+    use kicad_core::{KicadT, Kiid, PcbLayerId};
+
+    use super::*;
+    use crate::board::ChangeKind;
+    use crate::eda_shape::ShapeT;
+    use crate::ids::{GroupId, PadId, ShapeId};
+    use crate::item::BoardUse;
+    use crate::pad::Pad;
+    use crate::pcb_group::PcbGroup;
+    use crate::pcb_shape::PcbShape;
+    use crate::pcb_target::PcbTarget;
+    use crate::pcb_track::PcbTrack;
+    use crate::test_support;
+
+    /// `new FOOTPRINT( &board )` without the four mandatory fields (their `SetVisible` belongs
+    /// to M10); the container behaviour under test does not depend on them.
+    fn bare_footprint(board: &mut Board) -> FootprintId {
+        let footprint = Footprint::new(&mut board.kiid_generator);
+        board.insert_item(footprint, ParentRef::Board)
+    }
+
+    fn new_group(board: &mut Board) -> PcbGroup {
+        PcbGroup::new(&mut board.kiid_generator)
+    }
+
+    fn shape(board: &mut Board) -> PcbShape {
+        PcbShape::new(&mut board.kiid_generator, ShapeT::Segment)
+    }
+
+    fn pad(board: &mut Board, fp: FootprintId) -> OwnedItem {
+        let mut pad = Pad::new(&mut board.kiid_generator);
+        pad.base_mut().parent = ParentRef::Item(fp.into());
+        OwnedItem::Pad(Box::new(pad))
+    }
+
+    fn fp_pad(board: &mut Board, fp: FootprintId, mode: AddMode) -> PadId {
+        let item = pad(board, fp);
+        board
+            .footprint_add(fp, item, mode)
+            .ok()
+            .and_then(|id| id.typed())
+            .unwrap()
+    }
+
+    /// Set a UUID behind the index's back (the C++ tests' `const_cast<KIID&>( m_Uuid )`).
+    fn rewrite_uuid(board: &mut Board, id: ItemId, uuid: Kiid) {
+        board.get_mut_raw(id).unwrap().as_dyn_mut().base_mut().uuid = uuid;
+    }
+
+    /// A table with one cell, the cell appended like `PCB_TABLE::AddCell` without its
+    /// `SetLayer` (PCB_SHAPE::SetLayer belongs to M9).
+    fn table_with_cell(board: &mut Board, parent: ParentRef) -> (TableId, TablecellId) {
+        let table = PcbTable::new(&mut board.kiid_generator);
+        let table = board.create_table(table, parent);
+        let cell = PcbTablecell::new(&mut board.kiid_generator, false);
+        let cell = board.insert_item(cell, ParentRef::Item(table.into()));
+        board.tables.get_mut(table).unwrap().cells.push(cell);
+        (table, cell)
+    }
+
+    #[test]
+    fn board_drawings_front_unless_append_or_bulk_append() {
+        // board.cpp BOARD::Add: m_drawings push_back for APPEND / BULK_APPEND, else push_front.
+        let mut board = Board::new();
+        let a = shape(&mut board);
+        let a = board.add_shape(a, AddMode::Append);
+        let b = shape(&mut board);
+        let b = board.add_shape(b, AddMode::Insert);
+        let c = shape(&mut board);
+        let c = board.add_shape(c, AddMode::BulkAppend);
+        let d = shape(&mut board);
+        let d = board.add_shape(d, AddMode::BulkInsert);
+        let order: Vec<ItemId> = board.drawings().map(|(id, _)| id).collect();
+        assert_eq!(order, vec![d.into(), b.into(), a.into(), c.into()]);
+        assert!(a.item_id() < b.item_id() && b.item_id() < c.item_id());
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn footprint_lists_front_unless_exactly_append_fields_always_back() {
+        // footprint.cpp FOOTPRINT::Add: only ADD_MODE::APPEND appends; fields push_back.
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        board.attach_footprint(fp, AddMode::Append);
+        let p1 = fp_pad(&mut board, fp, AddMode::Append);
+        let p2 = fp_pad(&mut board, fp, AddMode::BulkAppend);
+        let p3 = fp_pad(&mut board, fp, AddMode::Insert);
+        let p4 = fp_pad(&mut board, fp, AddMode::Append);
+        let order: Vec<PadId> = board.footprint_pads(fp).map(|(id, _)| id).collect();
+        assert_eq!(order, vec![p3, p2, p1, p4]);
+
+        let f1 = PcbField::new(&mut board.kiid_generator, None, FieldT::User, "a");
+        let f1 = board
+            .footprint_add(fp, OwnedItem::Field(Box::new(f1)), AddMode::Insert)
+            .unwrap();
+        let f2 = PcbField::new(&mut board.kiid_generator, None, FieldT::User, "b");
+        let f2 = board
+            .footprint_add(fp, OwnedItem::Field(Box::new(f2)), AddMode::Insert)
+            .unwrap();
+        let fields: Vec<ItemId> = board
+            .footprint_fields(fp)
+            .map(|(id, _)| id.into())
+            .collect();
+        assert_eq!(fields, vec![f1, f2]);
+
+        // Markers, tracks and nested footprints are refused (wxFAIL in C++).
+        let track = Track::Trace(PcbTrack::new(&mut board.kiid_generator));
+        assert!(
+            board
+                .footprint_add(fp, OwnedItem::Track(track), AddMode::Append)
+                .is_err()
+        );
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn zones_groups_points_always_appended() {
+        let mut board = Board::new();
+        let g1 = {
+            let g = new_group(&mut board);
+            board.add_group(g, AddMode::Insert)
+        };
+        let g2 = {
+            let g = new_group(&mut board);
+            board.add_group(g, AddMode::Insert)
+        };
+        let groups: Vec<GroupId> = board.groups().map(|(id, _)| id).collect();
+        assert_eq!(groups, vec![g1, g2]);
+    }
+
+    #[test]
+    fn children_of_an_unattached_footprint_are_not_indexed() {
+        // footprint.cpp FOOTPRINT::Add: CacheItemSubtreeById only if IsItemIndexedById( this ).
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        let p1 = fp_pad(&mut board, fp, AddMode::Append);
+        let p1_uuid = board[p1].base().uuid;
+        let fp_uuid = board[fp].base().uuid;
+        assert!(!board.is_item_indexed_by_id(&fp_uuid));
+        assert!(!board.is_item_indexed_by_id(&p1_uuid));
+        assert_eq!(board.footprints().count(), 0);
+
+        // BOARD::Add( footprint ): CacheItemById + CacheChildrenById.
+        board.attach_footprint(fp, AddMode::Insert);
+        assert!(board.is_item_indexed_by_id(&fp_uuid));
+        assert!(board.is_item_indexed_by_id(&p1_uuid));
+
+        let p2 = fp_pad(&mut board, fp, AddMode::Append);
+        let p2_uuid = board[p2].base().uuid;
+        assert!(board.is_item_indexed_by_id(&p2_uuid));
+        assert_eq!(board.resolve_item(&p2_uuid), Some(p2.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn resolve_item_identity_cache_purged_on_destruction() {
+        // test_board_item_index.cpp ResolveItemIdentityCachePurgedOnDestruction
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        board.attach_footprint(fp, AddMode::Insert);
+        let pad = fp_pad(&mut board, fp, AddMode::Append);
+        let pad_id = board[pad].base().uuid;
+        assert!(board.is_item_indexed_by_id(&pad_id));
+        assert_eq!(board.resolve_item(&pad_id), Some(pad.into()));
+
+        assert!(board.remove(pad.into()));
+        assert_eq!(board.resolve_item(&pad_id), None);
+        assert!(!board.remove(pad.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn attached_item_uuid_rewrite_drops_old_alias() {
+        // test_board_item_index.cpp AttachedItemUuidRewriteDropsOldAlias and
+        // ResolvingNewUuidPurgesStaleOldAlias
+        let mut board = Board::new();
+        let s = shape(&mut board);
+        let old_id = s.base().uuid;
+        let new_id = Kiid::new(&mut board.kiid_generator);
+        let s = board.add_shape(s, AddMode::Insert);
+
+        rewrite_uuid(&mut board, s.into(), new_id);
+
+        assert_eq!(board.resolve_item(&old_id), None);
+        assert_eq!(board.resolve_item(&new_id), Some(s.into()));
+
+        // The same rewrite through modify_shape (BOARD_ITEM::SetUuid) re-binds the index.
+        let s2 = shape(&mut board);
+        let s2_old = s2.base().uuid;
+        let s2 = board.add_shape(s2, AddMode::Insert);
+        let newer = Kiid::new(&mut board.kiid_generator);
+        board.modify_shape(s2, |x, _| x.base_mut().uuid = newer);
+        assert!(board.is_item_indexed_by_id(&newer));
+        assert!(!board.is_item_indexed_by_id(&s2_old));
+        assert_eq!(board.resolve_item(&newer), Some(s2.into()));
+    }
+
+    #[test]
+    fn rebind_item_uuid_updates_cache_atomically() {
+        // test_board_item_index.cpp RebindItemUuidUpdatesCacheAtomically
+        let mut board = Board::new();
+        let s = shape(&mut board);
+        let old_id = s.base().uuid;
+        let new_id = Kiid::new(&mut board.kiid_generator);
+        let s: ShapeId = board.add_shape(s, AddMode::Insert);
+
+        board.rebind_item_uuid_index(s.into(), new_id);
+
+        assert_eq!(board[s].base().uuid, new_id);
+        assert!(!board.is_item_indexed_by_id(&old_id));
+        assert!(board.is_item_indexed_by_id(&new_id));
+        assert_eq!(board.resolve_item(&new_id), Some(s.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn attached_child_set_uuid_rebinds_cache() {
+        // test_board_item_index.cpp AttachedChildSetUuidRebindsCache
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        let pad = fp_pad(&mut board, fp, AddMode::Insert);
+        board.attach_footprint(fp, AddMode::Insert);
+        let old_id = board[pad].base().uuid;
+        let new_id = Kiid::new(&mut board.kiid_generator);
+
+        board.rebind_item_uuid(pad.into(), new_id);
+
+        assert_eq!(board[pad].base().uuid, new_id);
+        assert!(!board.is_item_indexed_by_id(&old_id));
+        assert!(board.is_item_indexed_by_id(&new_id));
+        assert_eq!(board.resolve_item(&new_id), Some(pad.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn repair_duplicate_item_uuids_keeps_earlier_traversal_winner() {
+        // test_board_item_index.cpp RepairDuplicateItemUuidsKeepsEarlierTraversalWinner
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        let claimed_id = board[fp].base().uuid;
+        let s = shape(&mut board);
+        let original_shape_id = s.base().uuid;
+
+        board.attach_footprint(fp, AddMode::Insert);
+        let s = board.add_shape(s, AddMode::Insert);
+
+        rewrite_uuid(&mut board, s.into(), claimed_id);
+
+        assert_eq!(board.repair_duplicate_item_uuids(), 1);
+        assert_eq!(board[fp].base().uuid, claimed_id);
+        let shape_uuid = board[s].base().uuid;
+        assert_ne!(shape_uuid, claimed_id);
+        assert_ne!(shape_uuid, original_shape_id);
+        assert_eq!(board.resolve_item(&claimed_id), Some(fp.into()));
+        assert_eq!(board.resolve_item(&original_shape_id), None);
+        assert_eq!(board.resolve_item(&shape_uuid), Some(s.into()));
+        // The const_cast left the stale alias original -> shape, which resolve_item ignores.
+        assert_eq!(board.resolve_item(&original_shape_id), None);
+    }
+
+    #[test]
+    fn removing_resolved_child_evicts_cache_on_footprint_holder() {
+        // test_board_item_index.cpp RemovingResolvedChildEvictsCacheOnFootprintHolder
+        let mut board = Board::new();
+        board.board_use = BoardUse::FpHolder;
+        let fp = bare_footprint(&mut board);
+        let pad = fp_pad(&mut board, fp, AddMode::Insert);
+        let pad_id = board[pad].base().uuid;
+        board.attach_footprint(fp, AddMode::Insert);
+
+        // A footprint holder indexes nothing; the linear scan still finds the pad.
+        assert_eq!(board.resolve_item(&pad_id), Some(pad.into()));
+
+        assert!(board.remove(pad.into()));
+        assert!(!board.is_item_indexed_by_id(&pad_id));
+        assert_eq!(board.resolve_item(&pad_id), None);
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn table_cell_resolves_to_the_cell_not_its_table() {
+        // test_board_item_index.cpp TableCellResolvesToTheCellNotItsTable
+        let mut board = Board::new();
+        let (table, cell) = table_with_cell(&mut board, ParentRef::Board);
+        board.attach_table(table, AddMode::Insert);
+        let table_id = board[table].base().uuid;
+        let cell_id = board[cell].base().uuid;
+        assert!(board.is_item_indexed_by_id(&table_id));
+        assert!(board.is_item_indexed_by_id(&cell_id));
+
+        board.clear_item_by_id_cache();
+
+        assert_eq!(board.resolve_item(&cell_id), Some(cell.into()));
+        assert_eq!(board.resolve_item(&table_id), Some(table.into()));
+        assert_eq!(board.resolve_item(&cell_id), Some(cell.into()));
+    }
+
+    #[test]
+    fn footprint_table_cell_resolves_by_its_own_id() {
+        // test_board_item_index.cpp FootprintTableCellResolvesByItsOwnId
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        let (table, cell) = table_with_cell(&mut board, ParentRef::Item(fp.into()));
+        board.attach_table(table, AddMode::Append);
+        board.attach_footprint(fp, AddMode::Insert);
+        assert_eq!(
+            board[fp].drawings.iter().copied().collect::<Vec<_>>(),
+            vec![ItemId::from(table)]
+        );
+        board.check_invariants().unwrap();
+
+        board.clear_item_by_id_cache();
+        let cell_id = board[cell].base().uuid;
+        assert_eq!(board.resolve_item(&cell_id), Some(cell.into()));
+
+        // Removing the table removes its cell.
+        assert!(board.remove(table.into()));
+        assert!(!board.contains(cell.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn removing_a_footprint_cascades_to_every_child() {
+        let mut fx = test_support::rotated_flipped_scaled();
+        let fp = fx.footprint;
+        let pad = fx.child(ItemKind::Pad);
+        let group = fx.child(ItemKind::Group);
+        let cell = fx.child(ItemKind::Tablecell);
+        fx.board.add_to_group(group, pad);
+        assert_eq!(fx.board.group_members(group).collect::<Vec<_>>(), vec![pad]);
+        fx.board.check_invariants().unwrap();
+
+        let stamp = fx.board.time_stamp();
+        assert!(fx.board.remove(fp.into()));
+        assert!(fx.board.time_stamp() != stamp);
+        assert_eq!(fx.board.live_item_count(), 0);
+        assert!(!fx.board.contains(cell));
+        assert!(fx.board.uuid_index.is_empty());
+        fx.board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn group_membership_is_two_sided() {
+        // common/eda_group.cpp AddItem / RemoveItem; BOARD::Remove leaves the parent group.
+        let mut board = Board::new();
+        let g1 = new_group(&mut board);
+        let g1: ItemId = board.add_group(g1, AddMode::Insert).into();
+        let g2 = new_group(&mut board);
+        let g2: ItemId = board.add_group(g2, AddMode::Insert).into();
+        let s = shape(&mut board);
+        let s: ItemId = board.add_shape(s, AddMode::Insert).into();
+
+        board.add_to_group(g1, s);
+        board.add_to_group(g2, g1);
+        // "Ancestor group added to group." and "Group added to itself." are refused.
+        board.add_to_group(g1, g2);
+        board.add_to_group(g1, g1);
+        assert_eq!(board.get(g2).unwrap().base().group, None);
+        assert!(board.group_contains_item(g2, s));
+        board.check_invariants().unwrap();
+
+        // Items can only be in one group at a time.
+        board.add_to_group(g2, s);
+        assert_eq!(board.group_members(g1).count(), 0);
+        assert_eq!(board.group_members(g2).collect::<Vec<_>>(), vec![g1, s]);
+
+        board.remove(s);
+        assert_eq!(board.group_members(g2).collect::<Vec<_>>(), vec![g1]);
+        board.remove(g2);
+        assert_eq!(board.get(g1).unwrap().base().group, None);
+        board.check_invariants().unwrap();
+
+        board.remove_from_group(g1);
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn remove_all_footprints_clears_the_index() {
+        // board.cpp BOARD::RemoveAll: ClearItemByIdCache, so the rest resolves by scan.
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        fp_pad(&mut board, fp, AddMode::Append);
+        board.attach_footprint(fp, AddMode::Insert);
+        let s = shape(&mut board);
+        let s_uuid = s.base().uuid;
+        let s = board.add_shape(s, AddMode::Insert);
+
+        board.remove_all(&[KicadT::PcbFootprintT, KicadT::PcbArcT]);
+
+        assert_eq!(board.footprints().count(), 0);
+        assert!(!board.is_item_indexed_by_id(&s_uuid));
+        assert_eq!(board.resolve_item(&s_uuid), Some(s.into()));
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn traversal_orders() {
+        // board.cpp RunOnChildren (837), AllConnectedItems (3757), collectOwnedItems,
+        // GetItemSet.
+        let mut board = Board::new();
+        let fp = bare_footprint(&mut board);
+        let p = fp_pad(&mut board, fp, AddMode::Append);
+        board.attach_footprint(fp, AddMode::Insert);
+        let s = shape(&mut board);
+        let s: ItemId = board.add_shape(s, AddMode::Insert).into();
+        let t = Track::Trace(PcbTrack::new(&mut board.kiid_generator));
+        let t: ItemId = board.add_track(t, AddMode::Insert).unwrap().into();
+        let g = new_group(&mut board);
+        let g: ItemId = board.add_group(g, AddMode::Insert).into();
+
+        let mut seen = Vec::new();
+        board.run_on_children(RecurseMode::Recurse, &mut |id| seen.push(id));
+        assert_eq!(seen, vec![t, g, fp.into(), p.into(), s]);
+
+        let mut flat = Vec::new();
+        board.run_on_children(RecurseMode::NoRecurse, &mut |id| flat.push(id));
+        assert_eq!(flat, vec![t, g, fp.into(), s]);
+
+        assert_eq!(board.all_connected_items(), vec![t, p.into(), s]);
+        assert_eq!(board.get_pads(), vec![p]);
+        assert_eq!(board.collect_owned_items(), vec![t, fp.into(), s, g]);
+
+        let mut by_uuid = board.collect_owned_items();
+        by_uuid.sort_by_key(|&id| board.uuid_of(id));
+        assert_eq!(board.get_item_set(), by_uuid);
+    }
+
+    #[test]
+    fn journal_records_when_enabled() {
+        let mut board = Board::new();
+        let target = {
+            let x = PcbTarget::new(&mut board.kiid_generator);
+            board.add_target(x, AddMode::Insert)
+        };
+        assert!(board.drain_changes().is_empty());
+
+        let initial_layer = board[target].base().layer;
+        board.set_journal_enabled(true);
+        let t2 = {
+            let x = PcbTarget::new(&mut board.kiid_generator);
+            board.add_target(x, AddMode::Insert)
+        };
+        board.modify_target(target, |x, _| x.base_mut().layer = PcbLayerId::BCu);
+        board.remove(t2.into());
+        let changes = board.drain_changes();
+        let kinds: Vec<ChangeKind> = changes.iter().map(|c| c.kind).collect();
+        assert_eq!(
+            kinds,
+            vec![ChangeKind::Added, ChangeKind::Modified, ChangeKind::Removed]
+        );
+        assert_eq!(changes[1].id, ItemId::from(target));
+        assert!(changes[1].layers_before.contains(initial_layer));
+        assert!(!changes[1].layers_before.contains(PcbLayerId::BCu));
+        assert_eq!(changes[0].kicad_t, KicadT::PcbTargetT);
+    }
+
+    #[test]
+    #[ignore = "needs EDA_TEXT::SetVisible (M10)"]
+    fn create_footprint_has_the_four_mandatory_fields() {
+        // footprint.cpp FOOTPRINT::FOOTPRINT( BOARD* ): REFERENCE (F_SilkS, visible), VALUE
+        // (F_Fab, visible), DATASHEET and DESCRIPTION (F_Fab, hidden), in that order.
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        assert_eq!(board.footprints().count(), 0);
+        let fp_uuid = board[fp].base.uuid;
+        assert!(!board.is_item_indexed_by_id(&fp_uuid));
+
+        let fields: Vec<(FieldT, PcbLayerId)> = board
+            .footprint_fields(fp)
+            .map(|(_, f)| (f.id, f.text.base.layer))
+            .collect();
+        assert_eq!(
+            fields,
+            vec![
+                (FieldT::Reference, PcbLayerId::FSilkS),
+                (FieldT::Value, PcbLayerId::FFab),
+                (FieldT::Datasheet, PcbLayerId::FFab),
+                (FieldT::Description, PcbLayerId::FFab),
+            ]
+        );
+        // Insertion order: the footprint, then its fields (board-model.md 3.1).
+        let ids: Vec<ItemId> = board
+            .footprint_fields(fp)
+            .map(|(id, _)| id.into())
+            .collect();
+        assert!(ids.windows(2).all(|w| w[0] < w[1]));
+
+        board.attach_footprint(fp, AddMode::Insert);
+        assert!(board.is_item_indexed_by_id(&fp_uuid));
+        for id in ids {
+            let uuid = board.uuid_of(id).unwrap();
+            assert_eq!(board.resolve_item(&uuid), Some(id));
+        }
+        board.check_invariants().unwrap();
+    }
+}

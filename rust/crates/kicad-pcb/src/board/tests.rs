@@ -330,9 +330,6 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     use crate::eda_shape::EdaShapeExt;
     use crate::eda_text::EdaTextExt;
     use crate::item::RecurseMode;
-    // Unused once the textbox has inherent methods for every mutating virtual (M0c); kept so
-    // that the trait stays in scope for the ambiguity check.
-    #[allow(unused_imports)]
     use crate::traits::{BoardItemMut, EdaShapeItem, EdaTextItem, Flashing};
     use kicad_core::text_vars::ResolutionContext;
     use kicad_core::{Lset, PCB_IU_SCALE, units_provider::UnitsProvider};
@@ -340,6 +337,9 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     use kicad_geom::{ANGLE_0, Box2I, FlipDirection, ShapePolySet};
 
     fn ext_only<T: EdaShapeExt + EdaTextExt + ?Sized>(_: &T) {}
+    // The textbox has an inherent method for every mutating virtual, so method syntax below
+    // never reaches `BoardItemMut`; the bound keeps the trait part of the check.
+    fn mutators<T: BoardItemMut + EdaShapeItem + EdaTextItem + ?Sized>(_: &T) {}
 
     let layer = PcbLayerId::FCu;
     let p = Vector2I::new(0, 0);
@@ -406,12 +406,13 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     let _ = (tb.hatch_line_spacing(ctx), tb.is_proxy_item());
     let _ = (
         tb.is_filled_for_hit_testing(),
-        tb.top_left(),
-        tb.bot_right(),
+        tb.top_left(ctx),
+        tb.bot_right(ctx),
     );
     let _ = (tb.corners_in_sequence(ANGLE_0), tb.shape_draw_rotation(ctx));
     let _ = (tb.shape_max_error(ctx), tb.hatching_knockouts(ctx));
     ext_only(tb);
+    mutators(tb);
 
     // mutators of all three
     tb.set_position(env, p);

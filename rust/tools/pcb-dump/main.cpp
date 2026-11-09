@@ -72,6 +72,7 @@ static void usage()
     fprintf( stderr,
              "usage: pcb-dump defaults [--hash]\n"
              "       pcb-dump board [--sections LIST] [--hash] [--loader] [--no-init] FILE...\n"
+             "       pcb-dump rules [--component-classes] FILE...\n"
              "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n" );
 }
 
@@ -202,6 +203,9 @@ static std::unique_ptr<BOARD> loadBoardCli( const wxString& aPath )
 }
 
 
+int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses ); // dump_rules.cpp
+
+
 int main( int argc, char** argv )
 {
     // Deterministic, headless environment (same as the kicad-cli oracle wrapper).
@@ -220,6 +224,7 @@ int main( int argc, char** argv )
     DUMP_OPTIONS          opts;
     bool                  useLoader = false;
     bool                  init = true;
+    bool                  componentClasses = false;
     std::vector<wxString> files;
 
     for( int i = 2; i < argc; ++i )
@@ -237,6 +242,10 @@ int main( int argc, char** argv )
         else if( a == "--no-init" )
         {
             init = false;
+        }
+        else if( a == "--component-classes" )
+        {
+            componentClasses = true;
         }
         else if( a == "--sections" && i + 1 < argc )
         {
@@ -267,7 +276,7 @@ int main( int argc, char** argv )
         }
     }
 
-    if( cmd != "defaults" && cmd != "board" )
+    if( cmd != "defaults" && cmd != "board" && cmd != "rules" )
     {
         usage();
         return 2;
@@ -288,6 +297,10 @@ int main( int argc, char** argv )
     if( cmd == "defaults" )
     {
         Guard( "defaults", [&]() { DumpDefaults(); } );
+    }
+    else if( cmd == "rules" )
+    {
+        failures = DumpRulesFiles( files, componentClasses );
     }
     else
     {

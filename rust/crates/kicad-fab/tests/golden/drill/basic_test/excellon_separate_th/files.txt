@@ -1,0 +1,2 @@
+Created file 'basic_test-PTH.drl'
+Created file 'basic_test-NPTH.drl'

@@ -1,0 +1,17 @@
+M48
+; DRILL file KiCad 10.99.0-unknown date 2026-11-09T23:28:40
+; FORMAT={-:-/ absolute / metric / decimal}
+; #@! TF.CreationDate,2026-11-09T23:28:40+00:00
+; #@! TF.GenerationSoftware,Kicad,Pcbnew,10.99.0-unknown
+; #@! TF.FileFunction,NonPlated,7,10,Blind
+FMAT,2
+METRIC
+; #@! TA.AperFunction,NonPlated,BackDrill
+T1C0.330
+; Backdrill stub 0.614mm (0.0242"), post-machining
+%
+G90
+G05
+T1
+X105.0Y-78.0
+M30

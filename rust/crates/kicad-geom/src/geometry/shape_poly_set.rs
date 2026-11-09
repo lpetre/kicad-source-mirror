@@ -4492,6 +4492,19 @@ impl Shape for ShapePolySet {
         subshapes
     }
 
+    /// The `a_index`-th triangle in [`Shape::indexable_subshapes`] order.
+    fn indexable_subshape(&self, mut a_index: usize) -> Option<&dyn Shape> {
+        for tpoly in &self.triangulated_polys {
+            if a_index < tpoly.triangles.len() {
+                return Some(&tpoly.triangles[a_index]);
+            }
+
+            a_index -= tpoly.triangles.len();
+        }
+
+        None
+    }
+
     /// Port of `SHAPE_POLY_SET::Collide( const VECTOR2I& aP, ... )`: whether `a_p` is inside
     /// or on the edge of the set, or closer than `a_clearance` to it.
     fn collide_point(

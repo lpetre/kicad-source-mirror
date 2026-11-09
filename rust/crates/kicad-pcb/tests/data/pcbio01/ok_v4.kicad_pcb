@@ -1,0 +1,1 @@
+(kicad_pcb (version 4) (host pcbnew 4.0.7) (general (links 0) (no_connects 0) (area 0 0 0 0) (thickness 1.6) (drawings 0) (tracks 0) (zones 0) (modules 0) (nets 1)) (page A4) (layers (0 F.Cu signal) (1 Inner1.Cu signal) (2 Inner2.Cu signal) (31 B.Cu signal) (32 B.Adhes user) (44 Edge.Cuts user)) (net 0 ""))

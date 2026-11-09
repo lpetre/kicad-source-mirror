@@ -390,8 +390,8 @@ impl EdaShapeItem for PcbTablecell {
     fn eda_shape_mut(&mut self) -> &mut EdaShape {
         &mut self.textbox.shape.shape
     }
-    fn bot_right(&self) -> Vector2I {
-        PcbTablecell::bot_right(self)
+    fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        PcbTablecell::bot_right(self, ctx)
     }
     fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
         PcbTablecell::corners_in_sequence(self, angle)
@@ -411,8 +411,8 @@ impl EdaShapeItem for PcbTablecell {
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 {
         PcbTablecell::shape_max_error(self, ctx)
     }
-    fn top_left(&self) -> Vector2I {
-        PcbTablecell::top_left(self)
+    fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        PcbTablecell::top_left(self, ctx)
     }
     fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
         PcbTablecell::width(self, ctx)
@@ -681,8 +681,8 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::GetBotRight`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn bot_right(&self) -> Vector2I {
-        self.textbox.bot_right()
+    pub fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        self.textbox.bot_right(ctx)
     }
 
     /// `PCB_TEXTBOX::GetCornersInSequence`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -716,8 +716,8 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::GetTopLeft`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn top_left(&self) -> Vector2I {
-        self.textbox.top_left()
+    pub fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        self.textbox.top_left(ctx)
     }
 
     /// `PCB_SHAPE::GetWidth`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).

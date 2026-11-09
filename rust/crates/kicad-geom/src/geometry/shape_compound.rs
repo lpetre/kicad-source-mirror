@@ -151,6 +151,10 @@ impl Shape for ShapeCompound {
         self.shapes.iter().map(|s| s.as_ref()).collect()
     }
 
+    fn indexable_subshape(&self, a_index: usize) -> Option<&dyn Shape> {
+        self.shapes.get(a_index).map(|s| s.as_ref())
+    }
+
     /// Port of `SHAPE_COMPOUND::BBox()`.  Note that, as in C++, `a_clearance` is ignored.
     fn bbox(&self, _a_clearance: i32) -> Box2I {
         let mut bb = Box2I::default();

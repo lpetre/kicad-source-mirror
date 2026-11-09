@@ -15,8 +15,91 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! `pcb-dump-rs`: prints the Rust board model in the line format of the C++ `pcb-dump` tool.
+//! `pcb-dump-rs`: prints the Rust board model in the line format of the C++ `pcb-dump` tool
+//! (`rust/tools/pcb-dump/main.cpp`, `docs/PCB_DUMP_FORMAT.md`).
 //!
-//! Placeholder: filled in by the DUMP-RS package.
+//! ```text
+//! pcb-dump-rs defaults [--hash]
+//! pcb-dump-rs board [--sections LIST] [--hash] FILE...
+//! ```
 
-fn main() {}
+use std::io::Write;
+use std::path::Path;
+
+use kicad_pcb::dump::{DumpOptions, dump_board, dump_defaults, load_board_for_dump, scan_file_uuids};
+
+fn usage() -> std::process::ExitCode {
+    eprintln!(
+        "usage: pcb-dump-rs defaults [--hash]\n       pcb-dump-rs board [--sections LIST] [--hash] FILE..."
+    );
+    std::process::ExitCode::from(2)
+}
+
+fn main() -> std::process::ExitCode {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    let Some(cmd) = args.first() else {
+        return usage();
+    };
+    let mut opts = DumpOptions::default();
+    let mut files = Vec::new();
+    let mut i = 1;
+
+    while i < args.len() {
+        match args[i].as_str() {
+            "--hash" => opts.hash = true,
+            "--sections" if i + 1 < args.len() => {
+                i += 1;
+                opts.sections = args[i]
+                    .split(',')
+                    .filter(|s| !s.is_empty())
+                    .map(str::to_string)
+                    .collect();
+            }
+            a if a.starts_with("--") => return usage(),
+            f => files.push(f.to_string()),
+        }
+
+        i += 1;
+    }
+
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+
+    match cmd.as_str() {
+        "defaults" => {
+            let _ = out.write_all(dump_defaults(opts.hash).as_bytes());
+            std::process::ExitCode::SUCCESS
+        }
+        "board" if !files.is_empty() => {
+            let mut failures = 0;
+
+            for file in &files {
+                let path = Path::new(file);
+                let name = path
+                    .file_name()
+                    .map_or_else(|| file.clone(), |n| n.to_string_lossy().into_owned());
+                let _ = writeln!(out, "file|{name}|");
+
+                let board = match load_board_for_dump(path) {
+                    Ok(b) => b,
+                    Err(e) => {
+                        let _ = writeln!(out, "error|load|{name}|{}", e.replace('\n', " "));
+                        failures += 1;
+                        continue;
+                    }
+                };
+
+                let mut o = opts.clone();
+                o.file_uuids = Some(std::fs::read(path).map(|t| scan_file_uuids(&t)).unwrap_or_default());
+                let _ = out.write_all(dump_board(&board, &o).as_bytes());
+            }
+
+            if failures > 0 {
+                std::process::ExitCode::from(1)
+            } else {
+                std::process::ExitCode::SUCCESS
+            }
+        }
+        _ => usage(),
+    }
+}

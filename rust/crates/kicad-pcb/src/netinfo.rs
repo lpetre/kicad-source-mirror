@@ -238,7 +238,10 @@ impl NetinfoItem {
     /// Not ported (GUI, `settings.md` 2.3): needs `CONNECTIVITY_DATA::GetNetItems`, which
     /// `ConnectivityQuery` does not offer.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("NETINFO_ITEM::GetBoundingBox (GUI only, needs CONNECTIVITY_DATA::GetNetItems)", ctx)
+        crate::port_pending!(
+            "NETINFO_ITEM::GetBoundingBox (GUI only, needs CONNECTIVITY_DATA::GetNetItems)",
+            ctx
+        )
     }
 }
 
@@ -283,7 +286,7 @@ pub struct NetinfoList {
     /// m_netCodes (+ ownership of m_netNames): the owner map, by code.
     pub(crate) nets: BTreeMap<NetCode, NetinfoItem>,
     pub(crate) names: BTreeMap<String, NetCode>, // m_netNames
-    pub(crate) new_net_code: i32, // m_newNetCode
+    pub(crate) new_net_code: i32,                // m_newNetCode
     pub display_netnames_dirty: bool,            // m_DisplayNetnamesDirty
 }
 
@@ -510,6 +513,138 @@ mod tests {
         assert_eq!(
             list.get_net_item_by_name("").map(|n| n.net_code),
             Some(NetCode::UNCONNECTED)
+        );
+    }
+
+    /// `NETINFO_ITEM::SetNetname` (`pcbnew/netinfo_item.cpp:227`). Expected values from
+    /// `pcb-dump board --sections board qa/data/pcbnew/issue11814.kicad_pcb`:
+    /// `net.30.name="/OUT1+"`, `net.30.short_name="OUT1+"`.
+    #[test]
+    fn set_netname_and_auto_names() {
+        let mut net = NetinfoItem::with_name("A", NetCode(1));
+        net.set_netname("/OUT1+");
+        assert_eq!(net.netname(), "/OUT1+");
+        assert_eq!(net.short_netname(), "OUT1+");
+        assert_eq!(net.display_netname(), "OUT1+");
+        net.set_netname("/a/b/{slash}x");
+        assert_eq!(net.short_netname(), "{slash}x");
+        assert_eq!(net.display_netname(), "/x");
+        net.set_netname("GND");
+        assert_eq!(net.short_netname(), "GND");
+        assert!(!net.has_auto_generated_netname());
+        net.set_netname("/sub/Net-(R1-Pad2)");
+        assert!(net.has_auto_generated_netname());
+        net.set_netname("unconnected-(U1-NC-Pad3)");
+        assert!(net.has_auto_generated_netname());
+    }
+
+    /// `NETINFO_LIST::AppendNet` / `getFreeNetCode` (`pcbnew/netinfo_list.cpp:154`, `:308`):
+    /// a code equal to the list size is kept, any other (or -1) gets the next free code, a
+    /// duplicate name is dropped (`settings.md` 4.10).
+    #[test]
+    fn append_net_code_assignment() {
+        let mut list = NetinfoList::default();
+        assert_eq!(
+            list.get_net_item(NetCode(0)).and_then(|n| n.base.id),
+            ItemId::net(NetCode(0))
+        );
+
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("A", NetCode(1))),
+            Some(NetCode(1))
+        );
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("B", NetCode(2))),
+            Some(NetCode(2))
+        );
+        // m_newNetCode is still 0: the free-code search starts at 1
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("C", NetCode(7))),
+            Some(NetCode(3))
+        );
+        assert_eq!(list.new_net_code, 3);
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("D", NetCode::ORPHANED)),
+            Some(NetCode(4))
+        );
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("A", NetCode::ORPHANED)),
+            None
+        );
+        assert_eq!(list.net_count(), 5);
+
+        let by_name: Vec<&str> = list.nets_by_name().map(|n| n.netname()).collect();
+        assert_eq!(by_name, ["", "A", "B", "C", "D"]);
+        let n = list.get_net_item_by_name("C").unwrap();
+        assert_eq!(n.net_code(), NetCode(3));
+        assert_eq!(n.base.id, ItemId::net(NetCode(3)));
+
+        // RemoveNet: m_newNetCode = min( m_newNetCode, code - 1 ), so the code is reused
+        list.remove_net(NetCode(2));
+        assert_eq!(list.new_net_code, 1);
+        assert!(list.get_net_item_by_name("B").is_none());
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("E", NetCode::ORPHANED)),
+            Some(NetCode(2))
+        );
+        assert_eq!(
+            list.append_net(NetinfoItem::with_name("F", NetCode(5))),
+            Some(NetCode(5))
+        );
+        list.remove_net(NetCode(42));
+        assert_eq!(list.net_count(), 6);
+    }
+
+    /// `NETINFO_LIST::RemoveUnusedNets`, `clear`, `buildListOfNets` list part
+    /// (`pcbnew/netinfo_list.cpp:56`, `:128`, `:187`).
+    #[test]
+    fn remove_unused_clear_and_rebuild() {
+        let mut list = NetinfoList::default();
+        list.append_net(NetinfoItem::with_name("A", NetCode(1)));
+        list.append_net(NetinfoItem::with_name("B", NetCode(2)));
+        list.append_net(NetinfoItem::with_name("C", NetCode(3)));
+        list.get_net_item_mut(NetCode(2))
+            .unwrap()
+            .set_is_current(false);
+        list.display_netnames_dirty = false;
+        list.remove_unused_nets();
+        assert!(list.display_netnames_dirty);
+        let codes: Vec<i32> = list.nets_by_netcode().map(|n| n.net_code().0).collect();
+        assert_eq!(codes, [0, 1, 3]);
+        assert!(list.get_net_item_by_name("B").is_none());
+
+        let net = list.get_net_item_mut(NetCode(3)).unwrap();
+        net.set_net_chain("CHAIN");
+        let uuid = Kiid::new(&mut KiidGenerator::default());
+        net.set_terminal(0, Some((PadId::from_parts(4, 0), uuid)));
+        net.set_netclass(Some(Arc::new(Netclass::new("HV", true))));
+        list.build_list_of_nets();
+        let net = list.get_net_item(NetCode(3)).unwrap();
+        assert_eq!(net.net_chain(), "CHAIN");
+        assert_eq!(net.terminal_pad(0), None);
+        assert_eq!(*net.terminal_pad_uuid(0), uuid);
+        assert!(net.netclass().is_none());
+
+        let default = Arc::new(Netclass::new("Default", true));
+        list.reset_nets(Some(&default));
+        assert!(Arc::ptr_eq(
+            list.get_net_item(NetCode(3)).unwrap().netclass().unwrap(),
+            &default
+        ));
+
+        let mut net = NetinfoItem::with_name("X", NetCode(1));
+        net.set_netclass_or_default(None, &default);
+        assert!(Arc::ptr_eq(net.netclass().unwrap(), &default));
+        net.set_net_chain("C");
+        net.clear_with_default(&default);
+        assert_eq!(net.net_chain(), "");
+
+        list.clear();
+        assert_eq!(list.net_count(), 0);
+        assert_eq!(list.new_net_code, 0);
+        assert_eq!(
+            NetinfoList::orphaned_item().net_code(),
+            NetCode::UNCONNECTED
         );
     }
 }

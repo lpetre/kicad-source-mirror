@@ -189,7 +189,11 @@ impl Netclass {
 
         // Count commas
         let str_len = self.constituent_count() - 1
-            + self.constituents.iter().map(|c| c.name.len()).sum::<usize>();
+            + self
+                .constituents
+                .iter()
+                .map(|c| c.name.len())
+                .sum::<usize>();
 
         let mut name = String::with_capacity(str_len);
         name.push_str(&self.constituents[0].name);
@@ -620,5 +624,133 @@ mod tests {
         assert_eq!(bare.clearance(), -1);
         assert_eq!(bare.line_style(), 0);
         assert_eq!(bare.priority, -1);
+    }
+
+    fn nc(name: &str) -> Arc<Netclass> {
+        Arc::new(Netclass::new(name, true))
+    }
+
+    fn composite(constituents: &[&Arc<Netclass>]) -> Netclass {
+        let mut c = Netclass::new("", true);
+        c.set_constituent_netclasses(constituents.iter().map(|&n| Arc::clone(n)).collect());
+        c
+    }
+
+    /// `qa/tests/common/test_netclass.cpp`, `NameEqualsMatchesGetName`.
+    #[test]
+    fn name_equals_matches_get_name() {
+        // The allocation-free comparison must preserve GetName() equality for every valid name
+        let check = |netclass: &Netclass, name: &str, expected: bool| {
+            assert_eq!(netclass.name_equals(name), expected, "{name:?}");
+            assert_eq!(
+                netclass.name_equals(name),
+                netclass.get_name() == name,
+                "{name:?}"
+            );
+        };
+
+        let first = nc("Power");
+        let second = nc("Ground");
+        let third = nc("Signal");
+        let empty = nc("");
+        let comma = nc("A,B");
+
+        check(&first, "Power", true);
+        check(&first, "Powe", false);
+        check(&first, "PowerX", false);
+        check(&empty, "", true);
+        check(&empty, "Power", false);
+
+        let mut alias = Netclass::new("Alias", true);
+        alias.set_constituent_netclasses(vec![Arc::clone(&first)]);
+        check(&alias, "Alias", true);
+        check(&alias, "Power", false);
+
+        let c = composite(&[&first, &second]);
+        check(&c, "Power,Ground", true);
+        check(&c, "Power;Ground", false);
+
+        let c = composite(&[&comma, &third]);
+        check(&c, "A,B,Signal", true);
+        check(&c, "A,B;Signal", false);
+
+        let c = composite(&[&empty, &first]);
+        check(&c, ",Power", true);
+        check(&c, "Power", false);
+    }
+
+    /// `NETCLASS::GetHumanReadableName` (`common/netclass.cpp:347`).
+    #[test]
+    fn human_readable_name() {
+        let (a, b, c, d) = (nc("A"), nc("B"), nc("C"), nc("D"));
+        assert_eq!(a.get_human_readable_name(), "A");
+        assert_eq!(composite(&[&a, &b]).get_human_readable_name(), "A and B");
+        assert_eq!(
+            composite(&[&a, &b, &c]).get_human_readable_name(),
+            "A, B and C"
+        );
+        assert_eq!(
+            composite(&[&a, &b, &c, &d]).get_human_readable_name(),
+            "A, B and 2 more"
+        );
+        assert_eq!(composite(&[&a, &b, &c, &d]).get_name(), "A,B,C,D");
+        assert_eq!(composite(&[&a, &b]).constituent_netclasses().len(), 2);
+        assert_eq!(a.constituent_netclasses()[0].name, "A");
+    }
+
+    /// `NETCLASS::ContainsNetclassWithName` (`common/netclass.cpp:337`) and the
+    /// `wxString::Matches` rules it relies on.
+    #[test]
+    fn contains_netclass_with_name() {
+        let (hv, power, default) = (nc("HV"), nc("Power"), nc("Default"));
+        let c = composite(&[&hv, &power, &default]);
+        assert!(c.contains_netclass_with_name("HV"));
+        assert!(c.contains_netclass_with_name("Pow*"));
+        assert!(c.contains_netclass_with_name("?efault"));
+        assert!(!c.contains_netclass_with_name("hv"));
+        assert!(!c.contains_netclass_with_name("HV,Power"));
+        assert!(hv.contains_netclass_with_name("H*"));
+        assert!(!hv.contains_netclass_with_name("Power"));
+
+        assert!(wx_string_matches("abc", "a*c"));
+        assert!(wx_string_matches("abc", "*"));
+        assert!(wx_string_matches("", "*"));
+        assert!(!wx_string_matches("", "?"));
+        assert!(wx_string_matches("abcbc", "a*bc"));
+        assert!(wx_string_matches("aXbYb", "a*b"));
+        assert!(!wx_string_matches("abd", "a*c"));
+        // wx skips '?' directly after '*': "a*?" matches "a" (WildCompareString would not)
+        assert!(wx_string_matches("a", "a*?"));
+        assert!(wx_string_matches("a.b.c", "*.c"));
+        assert!(!wx_string_matches("ab", "a"));
+    }
+
+    /// `NETCLASS::ResetParameters`, `EqualsByPersistedFields`, `operator==`
+    /// (`common/netclass.cpp:105-158`).
+    #[test]
+    fn reset_parameters_and_equality() {
+        let mut a = Netclass::new("HV", true);
+        a.tuning_profile = "fast".to_string();
+        a.parents.clearance = Some(nc("X"));
+        a.reset_parameters();
+        assert_eq!(a.clearance, None);
+        assert_eq!(a.line_style, None);
+        assert_eq!(a.bus_width, None);
+        assert!(a.parents.clearance.is_none());
+        assert_eq!(a.tuning_profile, "fast");
+
+        let mut b = Netclass::new("HV", false);
+        b.tuning_profile = "fast".to_string();
+        b.description = "ignored".to_string();
+        assert!(a.equals_by_persisted_fields(&b));
+        b.priority = 3;
+        assert!(!a.equals_by_persisted_fields(&b));
+
+        let (x, y) = (nc("X"), nc("Y"));
+        assert!(composite(&[&x, &y]).same_constituents(&composite(&[&x, &y])));
+        assert!(!composite(&[&x, &y]).same_constituents(&composite(&[&y, &x])));
+        assert!(x.same_constituents(&x));
+        assert!(!x.same_constituents(&Netclass::new("X", true)));
+        assert!(composite(&[&x]).same_constituents(&x));
     }
 }

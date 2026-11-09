@@ -17,11 +17,16 @@
 
 //! The optional pull-based change journal that replaces `BOARD_LISTENER`
 //! (`board-model.md` 8.5). Off by default; no tier 1/2 package may depend on it. Package M1
-//! records the changes; M0a wrote the types and the switch.
+//! records the changes: `Added` where `BOARD::Add` invokes `OnBoardItemAdded` (every mode:
+//! the bulk modes are reported at once instead of by `FinalizeBulkAdd`) and for children added
+//! to an attached footprint, `Removed` for every removed root item (`OnBoardItemRemoved`,
+//! `FinalizeBulkRemove`), `Modified` after every `modify_*` (`OnBoardItemChanged`). Recording
+//! asks the item for its layer set, so it reaches the type packages' `GetLayerSet`.
 
 use kicad_core::{KicadT, Kiid, Lset};
 
 use crate::board::Board;
+use crate::ctx::BoardCtx;
 use crate::ids::{ItemId, NetCode};
 
 /// What happened to an item.
@@ -48,6 +53,8 @@ pub struct Change {
 pub struct ChangeJournal {
     enabled: bool,
     changes: Vec<Change>,
+    /// Snapshot of the item a `modify_*` is about to edit (taken when its `MutEnv` is built).
+    before: Option<Change>,
 }
 
 impl Clone for ChangeJournal {
@@ -55,6 +62,7 @@ impl Clone for ChangeJournal {
         ChangeJournal {
             enabled: self.enabled,
             changes: Vec::new(),
+            before: None,
         }
     }
 }
@@ -73,7 +81,64 @@ impl Board {
 
         if !on {
             self.journal.changes.clear();
+            self.journal.before = None;
         }
+    }
+
+    /// The journal entry of `id` as it is now (`None` for a stale handle).
+    fn journal_snapshot(&self, kind: ChangeKind, id: ItemId) -> Option<Change> {
+        let item = self.get(id)?;
+        let ctx = BoardCtx::bare(self);
+        let item = item.as_dyn();
+
+        Some(Change {
+            kind,
+            id,
+            uuid: item.base().uuid,
+            kicad_t: item.type_(),
+            net_before: item.connected().map(|c| c.net),
+            layers_before: item.layer_set(&ctx),
+        })
+    }
+
+    /// Record `kind` for `id` when the journal is on.
+    pub(crate) fn journal_record(&mut self, kind: ChangeKind, id: ItemId) {
+        if !self.journal.enabled {
+            return;
+        }
+
+        if let Some(change) = self.journal_snapshot(kind, id) {
+            self.journal.changes.push(change);
+        }
+    }
+
+    /// Remember net and layers of `id` before a `modify_*` edits it.
+    pub(crate) fn journal_note_before(&mut self, id: ItemId) {
+        if !self.journal.enabled {
+            return;
+        }
+
+        self.journal.before = self.journal_snapshot(ChangeKind::Modified, id);
+    }
+
+    /// Record `Modified` for `id` with the values noted before the edit (the current ones if
+    /// no snapshot of `id` was taken).
+    pub(crate) fn journal_record_modified(&mut self, id: ItemId) {
+        if !self.journal.enabled {
+            return;
+        }
+
+        let before = self.journal.before.take().filter(|c| c.id == id);
+        let Some(mut change) = self.journal_snapshot(ChangeKind::Modified, id) else {
+            return;
+        };
+
+        if let Some(before) = before {
+            change.net_before = before.net_before;
+            change.layers_before = before.layers_before;
+        }
+
+        self.journal.changes.push(change);
     }
 
     /// Take the recorded changes.

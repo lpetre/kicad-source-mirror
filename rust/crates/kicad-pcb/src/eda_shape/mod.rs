@@ -356,13 +356,13 @@ pub fn is_filled_for_hit_testing<H: EdaShapeItem + ?Sized>(host: &H) -> bool {
 }
 
 /// `EDA_SHAPE::GetTopLeft()`.
-pub fn top_left<H: EdaShapeItem + ?Sized>(host: &H) -> Vector2I {
-    crate::port_pending!("EDA_SHAPE::GetTopLeft", host)
+pub fn top_left<H: EdaShapeItem + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vector2I {
+    crate::port_pending!("EDA_SHAPE::GetTopLeft", host, ctx)
 }
 
 /// `EDA_SHAPE::GetBotRight()`.
-pub fn bot_right<H: EdaShapeItem + ?Sized>(host: &H) -> Vector2I {
-    crate::port_pending!("EDA_SHAPE::GetBotRight", host)
+pub fn bot_right<H: EdaShapeItem + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vector2I {
+    crate::port_pending!("EDA_SHAPE::GetBotRight", host, ctx)
 }
 
 /// `EDA_SHAPE::GetCornersInSequence( aAngle )`.

@@ -85,7 +85,9 @@ pub struct PcbPlotParams {
     pub dashed_line_gap_ratio: f64,                   // m_dashedLineGapRatio
     pub dxf_export_as_multi_layered_file: bool,       // m_DXFExportAsMultiLayeredFile
     pub layers_to_export: Vec<(PcbLayerId, String)>,  // m_layersToExport
-    /// m_layer: not initialised by the C++ constructor; `UNDEFINED_LAYER` here.
+    /// m_layer: not initialised by the C++ constructor (set by `SetLayer` before each plot).
+    /// `F_Cu` (0) here, the value the reference build reads (`pcb-dump defaults`:
+    /// `PCB_PLOT_PARAMS|layer=F.Cu`).
     pub layer: PcbLayerId,
     // The four PDF switches are read from and written to `(pcbplotparams ...)`
     // (pdf_front_fp_property_popups, pdf_back_fp_property_popups, pdf_metadata,
@@ -163,7 +165,7 @@ impl Default for PcbPlotParams {
             dashed_line_gap_ratio: 3.0,   // From ISO 128-2
             dxf_export_as_multi_layered_file: false,
             layers_to_export: Vec::new(),
-            layer: PcbLayerId::UndefinedLayer,
+            layer: PcbLayerId::FCu,
             pdf_front_fp_property_popups: true,
             pdf_back_fp_property_popups: true,
             pdf_metadata: true,

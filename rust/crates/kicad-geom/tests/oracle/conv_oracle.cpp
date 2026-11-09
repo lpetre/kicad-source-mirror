@@ -377,6 +377,11 @@ void sectionRect( const char* aName, uint64_t aSeed, int aCount )
             if( inflate < 0 && ( ( dx && sx < 2 ) || ( dy && sy < 2 ) ) )
                 inflate = 0;
 
+            // Inflating a needle-like trapezoid overflows int at its acute corners (undefined
+            // behaviour: ( int )( aInflate / tanAngle2 ) out of range)
+            if( inflate > 0 && std::min( sx, sy ) * 50 < std::max( sx, sy ) )
+                inflate = 0;
+
             TransformTrapezoidToPolygon( ps, pos, VECTOR2I( sx, sy ), rot, dx, dy, inflate, err, loc );
         }
         else
@@ -773,7 +778,7 @@ void sectionShapeUtils( const char* aName, uint64_t aSeed, int aCount )
         VECTOR2I  pt0 = pos + rng.ptR( -1000000, 1000000 );
         bool      across = rng.flag();
         double    angD = rotDeg( rng );
-        size_t    nSides2 = nSides == 0 ? 1 : nSides;
+        size_t    nSides2 = nSides < 3 ? 3 : nSides; // across flats of 1 or 2 sides divides by cos( 90 deg )
 
         recPts( rec, KIGEOM::MakeRegularPolygonPoints( pos, nSides, pt0 ) );
         recPts( rec, KIGEOM::MakeRegularPolygonPoints( pos, nSides2, rad, across, EDA_ANGLE( angD, DEGREES_T ) ) );
@@ -865,7 +870,14 @@ SHAPE_ARC randomArc( RNG& rng, bool aGrid )
     double   aa = sweepDeg( rng );
     VECTOR2I st = c + VECTOR2I( r, 0 );
     RotatePoint( st, c, EDA_ANGLE( sa, DEGREES_T ) );
-    return SHAPE_ARC( c, st, EDA_ANGLE( aa, DEGREES_T ), 0 );
+    SHAPE_ARC arc( c, st, EDA_ANGLE( aa, DEGREES_T ), 0 );
+
+    // Arcs whose rounded points are collinear get a clamped centre near the int limits, which
+    // overflows int in the intersection code (undefined behaviour)
+    if( arc.GetRadius() > 2.0 * r + 1000.0 )
+        return SHAPE_ARC( c, c + VECTOR2I( r, 0 ), ANGLE_90, 0 );
+
+    return arc;
 }
 
 

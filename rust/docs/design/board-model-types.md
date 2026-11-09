@@ -12,6 +12,10 @@ Revision 2.1 (M0a gate review): `PcbTextbox::lib_text_angle` is `pub(crate)` lik
 field, `ComponentClassCache` defaults and `ComponentClassAssignmentRule` are spelled out, the
 foundation list reflects what the foundation crates provide, section 19 matches the tree, and
 the generated-table data types belong to package M0c (with `PcbTable`).
+Revision 2.2 (wave 0b integration review): `Padstack::copper_props` is a `CopperPropsMap`
+(libstdc++ node order, `board-model.md` 10.1), `ComponentClass::is_constituent`,
+`GeneratedTableData::hidden`, the root-class convention of `Netclass::constituents`, the
+default of `PcbPlotParams::layer`, `NetclassPatternAssignment`.
 
 Conventions:
 
@@ -386,8 +390,10 @@ pub struct Padstack {
     pub custom_name: Option<String>,                               // m_customName
     pub orientation: EdaOrientation,                               // m_orientation
     /// m_copperProps (std::unordered_map). Keys: F_Cu (ALL_LAYERS), In1_Cu (INNER_LAYERS),
-    /// B_Cu, or any copper layer in CUSTOM mode.
-    pub copper_props: BTreeMap<PcbLayerId, CopperLayerProps>,
+    /// B_Cu, or any copper layer in CUSTOM mode. `CopperPropsMap` (padstack.rs) is a map with
+    /// the iteration order of the reference build's unordered_map (`board-model.md` 10.1):
+    /// not a BTreeMap, because the order is observable in CUSTOM mode.
+    pub copper_props: CopperPropsMap,
     pub front_mask_props: MaskLayerProps,                          // m_frontMaskProps
     pub back_mask_props: MaskLayerProps,                           // m_backMaskProps
     pub unconnected_layer_mode: UnconnectedLayerMode,              // m_unconnectedLayerMode
@@ -986,6 +992,7 @@ pub struct GeneratedTableData {
     pub columns: Vec<GeneratedTableColumn>,       // m_columns
     pub units: GeneratedTableUnits,               // m_units
     pub precision: i32,                           // m_precision
+    pub hidden: Vec<GeneratedTableColumn>,        // m_hidden (persisted: AllColumns() in the writer)
     pub row_keys: BTreeMap<i32, String>,          // m_rowKeys
     pub kind: GeneratedTableKind,
 }
@@ -1316,7 +1323,9 @@ pub struct NetinfoList {
 #[derive(Clone, Debug)]
 pub struct Netclass {
     pub is_default: bool,                         // m_isDefault
-    pub constituents: Vec<Arc<Netclass>>,         // m_constituents + m_constituentOwners
+    /// m_constituents + m_constituentOwners. Empty = a root class, whose C++ list is
+    /// `{ this }` (every NETCLASS has at least one constituent, so empty is free to mean it).
+    pub constituents: Vec<Arc<Netclass>>,
     pub name: String,                             // m_Name
     pub priority: i32,                            // m_Priority
     pub description: String,                      // m_Description
@@ -1374,8 +1383,11 @@ pub struct NetSettings {
 ```
 
 `EdaCombinedMatcher` is the port of `EDA_COMBINED_MATCHER` (`common/eda_pattern_match.cpp`,
-wildcard + regex matching of net names against pattern assignments); its regex half uses the
-`regex` crate (`board-model.md` section 17 for the documented deviation).
+wildcard + regex matching of net names against pattern assignments); its regex half uses
+`regress` (`PORTING.md` 9). It is `Clone + Send + Sync`, so the assignments hold the matcher
+compiled once (`net_settings::netclass_matcher( pattern )` = `EDA_COMBINED_MATCHER( pattern,
+CTX_NETCLASS )`), exactly like the C++ `unique_ptr`; the pair type is
+`NetclassPatternAssignment = (EdaCombinedMatcher, String)`.
 
 ## 12 Design settings, stack-up, plot parameters, layers (`board_design_settings.rs`, `board_stackup.rs`, `pcb_plot_params.rs`)
 
@@ -1581,7 +1593,7 @@ pub struct PcbPlotParams {
     pub dashed_line_gap_ratio: f64,                          // m_dashedLineGapRatio
     pub dxf_export_as_multi_layered_file: bool,              // m_DXFExportAsMultiLayeredFile
     pub layers_to_export: Vec<(PcbLayerId, String)>,         // m_layersToExport
-    pub layer: PcbLayerId,                                   // m_layer
+    pub layer: PcbLayerId,                                   // m_layer (C++: uninitialised; F_Cu, as the reference build reads)
     // The four PDF switches are read from and written to `(pcbplotparams ...)`
     // (pdf_front_fp_property_popups, pdf_back_fp_property_popups, pdf_metadata,
     // pdf_single_document): required for a byte-exact re-save.
@@ -1643,7 +1655,10 @@ pub enum EmbeddedFileType { Font, Model, Worksheet, Datasheet, Other }
 #[derive(Clone, Debug)]
 pub struct ComponentClass {
     pub name: String,                                 // m_name
-    pub constituent_classes: Vec<Arc<ComponentClass>>,   // m_constituentClasses
+    /// m_constituentClasses of an effective class. A constituent class lists itself in C++
+    /// (`{ this }`): that is `is_constituent`; the "none" class has neither.
+    pub constituent_classes: Vec<Arc<ComponentClass>>,
+    pub is_constituent: bool,                         // m_constituentClasses == { this }
     pub usage_context: ComponentClassUsage,           // m_usageContext
 }
 pub enum ComponentClassUsage { Static, Dynamic, StaticAndDynamic, Effective }

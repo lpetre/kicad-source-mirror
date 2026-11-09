@@ -3,6 +3,37 @@
 version = 4
 
 [[package]]
+name = "anstyle"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
+
+[[package]]
+name = "clap"
+version = "4.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aa8876b300ab35ba921adea3dfd70157a46249b33f95c9084ae5709785478946"
+dependencies = [
+ "clap_builder",
+]
+
+[[package]]
+name = "clap_builder"
+version = "4.6.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec0797fb7aeb1406c84efac526901f7ec3ead2124f946b494e72879d4b54704d"
+dependencies = [
+ "anstyle",
+ "clap_lex",
+]
+
+[[package]]
+name = "clap_lex"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
+
+[[package]]
 name = "clipper2-rs"
 version = "0.3.0"
 
@@ -39,6 +70,16 @@ name = "itoa"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bd1574e617a9a6c1f8f8181bd7e841e1f20e4277607ef28945765188d6284d4"
+
+[[package]]
+name = "kicad-cli"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "kicad-core",
+ "kicad-qa",
+ "kicad-session",
+]
 
 [[package]]
 name = "kicad-connectivity"
@@ -132,6 +173,22 @@ name = "kicad-qa"
 version = "0.1.0"
 
 [[package]]
+name = "kicad-session"
+version = "0.1.0"
+dependencies = [
+ "kicad-connectivity",
+ "kicad-core",
+ "kicad-drc",
+ "kicad-fab",
+ "kicad-geom",
+ "kicad-pcb",
+ "kicad-qa",
+ "kicad-sexpr",
+ "kicad-zone",
+ "serde",
+]
+
+[[package]]
 name = "kicad-sexpr"
 version = "0.1.0"
 dependencies = [
@@ -190,6 +247,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
 dependencies = [
  "serde_core",
+ "serde_derive",
 ]
 
 [[package]]

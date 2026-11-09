@@ -1319,7 +1319,6 @@ fn collide_arc() {
 
 /// The chain-to-chain part of `CollideArc`.
 #[test]
-#[ignore = "needs G5: SHAPE_LINE_CHAIN vs SHAPE_LINE_CHAIN collisions"]
 fn collide_arc_chain_to_chain() {
     for (name, d1, d2, _cl, exp_result) in arc_arc_collide_cases() {
         let arc1 = d1.generate_arc();
@@ -1438,16 +1437,69 @@ fn collide_arc_to_closed_chain_matches_segment_scan() {
 }
 
 #[test]
-#[ignore = "needs TransformArcToPolygon (convert_basic_shapes_to_polygon), SHAPE_POLY_SET triangulation and collisions (G4/G5)"]
 fn collide_arc_to_polygon_approximation() {
-    // SHAPE_ARC arc( VECTOR2I( 73843527, 74355869 ), VECTOR2I( 71713528, 72965869 ),
-    //                EDA_ANGLE( -76.36664803, DEGREES_T ), 1000000 );
-    // Create a polyset approximation from the arc - error outside (simulating the zone filler),
-    // make a reasonably large rectangular outline around the arc shape, create a synthetic
-    // "zone fill" polygon with the approximation as a hole and check
-    //   zoneFill.Collide( &arc, clearance + epsilon ) == true
-    //   zoneFill.Collide( &arc, clearance - epsilon ) == false
-    panic!("not ported yet");
+    let arc = ShapeArc::from_center_start_angle(
+        pt(73843527, 74355869),
+        pt(71713528, 72965869),
+        EdaAngle::new(-76.36664803, DEGREES_T),
+        1000000,
+    );
+
+    // Create a polyset approximation from the arc - error outside (simulating the zone filler)
+    let mut arc_buffer = ShapePolySet::new();
+    let clearance = (arc.get_width() * 3) / 2;
+    let polygon_approximation_error = ShapeArc::default_accuracy_for_pcb();
+
+    transform_arc_to_polygon(
+        &mut arc_buffer,
+        arc.get_p0(),
+        arc.get_arc_mid(),
+        arc.get_p1(),
+        arc.get_width() + 2 * clearance,
+        polygon_approximation_error,
+        kicad_geom::geometry::approximation::ERROR_OUTSIDE,
+    );
+
+    assert_eq!(arc_buffer.outline_count(), 1);
+    assert_eq!(arc_buffer.hole_count(0), 0);
+
+    // Make a reasonably large rectangular outline around the arc shape
+    let arcbbox = arc.bbox(clearance * 4);
+
+    let zone_outline = ShapeLineChain::from_points(
+        &[
+            arcbbox.position(),
+            arcbbox.position() + pt(arcbbox.width() as i32, 0),
+            arcbbox.end(),
+            arcbbox.end() - pt(arcbbox.width() as i32, 0),
+        ],
+        true,
+    );
+
+    // Create a synthetic "zone fill" polygon
+    let mut zone_fill = ShapePolySet::new();
+    zone_fill.add_outline(&zone_outline);
+    let hole = arc_buffer.outline(0).clone();
+    zone_fill.add_hole(&hole, -1);
+    zone_fill.cache_triangulation(false);
+
+    let mut actual = 0;
+    let mut location = Vector2I::default();
+    let epsilon = polygon_approximation_error / 10;
+
+    assert!(zone_fill.collide_shape_mut(
+        &arc,
+        clearance + epsilon,
+        Some(&mut actual),
+        Some(&mut location)
+    ));
+
+    assert!(!zone_fill.collide_shape_mut(
+        &arc,
+        clearance - epsilon,
+        Some(&mut actual),
+        Some(&mut location)
+    ));
 }
 
 /// Predicate for checking a polyline has all the points on (near) a circle of

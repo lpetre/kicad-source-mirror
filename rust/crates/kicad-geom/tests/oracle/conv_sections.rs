@@ -362,6 +362,12 @@ fn section_rect(results: &mut Results, name: &'static str, seed: u64, count: i32
                 inflate = 0;
             }
 
+            // Inflating a needle-like trapezoid overflows int at its acute corners (undefined
+            // behaviour in C++: `( int )( aInflate / tanAngle2 )` out of range)
+            if inflate > 0 && sx.min(sy) * 50 < sx.max(sy) {
+                inflate = 0;
+            }
+
             transform_trapezoid_to_polygon(&mut ps, pos, v(sx, sy), rot, dx, dy, inflate, err, loc);
         } else {
             // A convex, clockwise (in KiCad's y-down frame) corner list on a circle
@@ -786,7 +792,7 @@ fn section_shape_utils(results: &mut Results, name: &'static str, seed: u64, cou
         let pt0 = pos + rng.pt_r(-1000000, 1000000);
         let across = rng.flag();
         let ang_d = rot_deg(&mut rng);
-        let n_sides2 = if n_sides == 0 { 1 } else { n_sides };
+        let n_sides2 = if n_sides < 3 { 3 } else { n_sides }; // across flats of 1 or 2 sides divides by cos( 90 deg )
 
         rec_pts(
             &mut rec,
@@ -889,7 +895,15 @@ fn random_arc(rng: &mut Rng, grid: bool) -> ShapeArc {
     let aa = sweep_deg(rng);
     let mut st = c + v(r, 0);
     rotate_point_around(&mut st, c, deg(sa));
-    ShapeArc::from_center_start_angle(c, st, deg(aa), 0)
+    let arc = ShapeArc::from_center_start_angle(c, st, deg(aa), 0);
+
+    // Arcs whose rounded points are collinear get a clamped centre near the int limits, which
+    // overflows int in the intersection code (undefined behaviour in C++)
+    if arc.get_radius() > 2.0 * r as f64 + 1000.0 {
+        return ShapeArc::from_center_start_angle(c, c + v(r, 0), EdaAngle::new(90.0, DEGREES_T), 0);
+    }
+
+    arc
 }
 
 fn random_geom(rng: &mut Rng, grid: bool) -> (IntersectableGeom, i32) {

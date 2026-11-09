@@ -1,0 +1,25 @@
+[package]
+name = "kicad-session"
+description = "Headless session (board + project + rules) and the pcbnew jobs (DRC, Gerber, drill, SVG, upgrade) shared by kicad-cli and kicad-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+kicad-core = { path = "../kicad-core" }
+kicad-geom = { path = "../kicad-geom" }
+kicad-pcb = { path = "../kicad-pcb" }
+kicad-sexpr = { path = "../kicad-sexpr" }
+kicad-connectivity = { path = "../kicad-connectivity" }
+kicad-drc = { path = "../kicad-drc" }
+kicad-fab = { path = "../kicad-fab" }
+kicad-zone = { path = "../kicad-zone" }
+serde = { version = "1.0.229", features = ["derive"] }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

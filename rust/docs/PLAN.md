@@ -149,10 +149,15 @@ Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend 
   receiving its predecessor's notes. Generic for every non-model package.
 (Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
 
-Launched in this round (workflow task ids): geometry G4b -> G5 and G6b (wvunbqm6s); Fable
-integration of wave 0b -> M7, M10 (wawxgug4p); M1, M2 (wnw19yvig); M3, M13 (w1sw02b68);
-DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17 and DRC-20 -> DRC-11 (wh3q6gcxx);
-W1 session/cli/wasm skeleton and FAB-01 -> FAB-02 (wqbof03ge).
+Progress log of launches (workflow task ids):
+- done: M1 containers/index/create-attach, M2 item base (wnw19yvig; Opus; Fable-reviewed:
+  decisions accepted; create_footprint needs M10's EDA_TEXT::SetVisible at run time).
+- running: geometry G4b -> G5 and G6b (wvunbqm6s); Fable integration of wave 0b -> M7, M10
+  (wawxgug4p); M3, M13 (w1sw02b68); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17
+  and DRC-20 -> DRC-11 (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 -> FAB-02
+  (wqbof03ge); M5 -> SET-4 (BDS JSON) and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk).
+- next up when their dependencies land: M4 (after M3), M8 (after M7), M14 (after M13), M18
+  (after M5), M22 (after M3), M24.
 
 Queue - launch each item as soon as its dependencies have landed (model package rows and
 run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis

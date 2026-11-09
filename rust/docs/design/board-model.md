@@ -29,6 +29,20 @@ frozen (6.2a); virtuals introduced by a concrete class are inherent methods plus
 dispatcher (6.3); `modify_*` also re-stamps `base.group` (8.2); `UnitsProvider` is a struct;
 the kernel files are frozen from wave 0b on and the wave-0b ownership rules are in section 16.
 
+Revision 2.2 (integration review of wave 0b, the four type packages). Changes, all reflected
+in the code: `EdaShapeItem::width`, `effective_width`, `hatch_line_width` and
+`hatch_line_spacing` take `ctx: &BoardCtx<'_>` (all four are C++ virtuals; `PCB_SHAPE::GetWidth`
+scales by the parent footprint, 6.2a), and so do `top_left` / `bot_right` (the `PCB_TEXTBOX`
+overrides read the draw rotation, which reads the parent footprint); `Padstack::copper_props` iterates in the order of the
+reference build's `std::unordered_map`, not in key order (10.1); `EdaCombinedMatcher` is
+`Clone + Send + Sync` and `NetSettings` holds compiled matchers, as designed;
+`OutlineErrorHandler` has one definition, in `convert_shape_list_to_polygon.rs`;
+`ComponentClass::is_constituent` replaces "listing itself" (a root `Netclass` has an empty
+constituent list for the same reason); `GeneratedTableData::hidden` is added;
+`LayerEnv::default_board()` is gone (a board always derives its snapshot from its settings);
+`tools/check_item_shims.py` reads the subclasses folded into one Rust type (generators,
+dimensions, generated tables), whose overrides need a shim that dispatches on the subclass.
+
 ## 0. The design on one screen
 
 | Topic | Decision |
@@ -477,13 +491,20 @@ pub trait EdaTextExt: EdaTextItem {
 pub trait EdaShapeItem {
     fn eda_shape(&self) -> &EdaShape;
     fn eda_shape_mut(&mut self) -> &mut EdaShape;
-    fn width(&self) -> i32 { self.eda_shape().stroke.width() }      // GetWidth
-    fn effective_width(&self) -> i32 { self.width() }               // GetEffectiveWidth
-    fn hatch_line_width(&self) -> i32 { self.effective_width() }
-    fn hatch_line_spacing(&self) -> i32 { self.hatch_line_width() * 10 }
+    // The four width virtuals take the context: PCB_SHAPE::GetWidth (inherited by PCB_TEXTBOX
+    // and PCB_TABLECELL; the only PCB override of the four) clamps the stored library width
+    // at 0 and scales it by fpScaleLinear( transformFp() ), the parent footprint's mean scale
+    // (no footprint for a pad primitive). The stored value is eda_shape().stroke.width().
+    fn width(&self, ctx: &BoardCtx<'_>) -> i32 { self.eda_shape().stroke.width() }    // GetWidth
+    fn effective_width(&self, ctx: &BoardCtx<'_>) -> i32 { self.width(ctx) }          // GetEffectiveWidth
+    fn hatch_line_width(&self, ctx: &BoardCtx<'_>) -> i32 { self.effective_width(ctx) }
+    fn hatch_line_spacing(&self, ctx: &BoardCtx<'_>) -> i32 { self.hatch_line_width(ctx) * 10 }
     fn is_proxy_item(&self) -> bool { self.eda_shape().proxy_item }
     fn is_filled_for_hit_testing(&self) -> bool;                    // IsSolidFill(); PCB_TABLECELL: true
-    fn top_left(&self) -> Vector2I;  fn bot_right(&self) -> Vector2I;   // PCB_TEXTBOX overrides
+    // GetTopLeft / GetBotRight: the PCB_TEXTBOX overrides pick the corner by GetDrawRotation()
+    // = GetTextAngle(), which adds the parent footprint's orientation: `ctx` as well.
+    fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I;
+    fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I;
     fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I>;
     fn shape_draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { ANGLE_0 }   // getDrawRotation
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 { 100 }    // getMaxError (PCB_SHAPE: board)
@@ -493,9 +514,15 @@ pub trait EdaShapeItem {
 /// blanket-implemented in eda_shape/mod.rs, forwarding to generic functions in
 /// eda_shape/{mod,geometry,shapes}.rs (signatures M0c, bodies M7 / M8):
 /// make_effective_shapes(ctx, edge_only), hatching(ctx), shape_bounding_box(ctx),
-/// shape_hit_test(..), shape_transform_to_polygon(..), ...
+/// shape_hit_test(..), shape_transform_to_polygon(..), ... Every member whose C++ body reads
+/// a width (GetWidth / GetEffectiveWidth / GetHatchLine*) takes `ctx`; the ones without it
+/// (shape_position, shape_center, shape_length, rectangle_size) must not call them.
 pub trait EdaShapeExt: EdaShapeItem {}
 ```
+
+`PcbShape::transform_fp(ctx)` is `PCB_SHAPE::transformFp()` for read-only code (mutators read
+`MutEnv::parent`): `None` when the direct parent is a pad, else the footprint found by walking
+the parent chain (`GetParentFootprint()`, through the table for a cell).
 
 Methods shown without a body have the base-class body as their default in the real trait
 (the stored value; for a footprint child that is the library-frame value, which is why every
@@ -917,6 +944,22 @@ net code -> `NetinfoItem::netclass` -> else `net_settings.default_netclass` -> e
 | `get_item_set()` | by UUID, ties by `ItemId` |
 | writer | the ported comparators; group members as sorted UUID strings |
 | group members (C++ `unordered_set`) | insertion order; record in `PORT_STATUS.md` |
+| `Padstack::copper_props` (C++ `std::unordered_map<PCB_LAYER_ID, ..>`): CUSTOM-mode `for_each_unique_layer` / `unique_layers`, and the `begin()` fallbacks of `copper_props(layer)` / `effective_layer_for` | the node order of libstdc++ (reference platform, `PORTING.md` 9), reproduced by `padstack::CopperPropsMap`; rule below |
+
+**The `m_copperProps` order rule.** The map is observable (DRC reports per unique layer, pad
+compare, the first-entry fallbacks), so it is neither sorted nor "insertion order". libstdc++
+keeps all nodes in one list; `std::hash<PCB_LAYER_ID>` is the layer id, the bucket is
+`id % bucket_count`. (1) Insert: the new node goes in front of the first node of its bucket,
+or to the **front of the whole list** when its bucket is empty; so with distinct buckets the
+map iterates in reverse insertion order and `begin()` is the entry inserted last (after the
+constructor and `(layer B.Cu)` / `(layer In1.Cu)` of a custom padstack: `In1.Cu`, `B.Cu`,
+`F.Cu`). (2) Bucket count: 1 when empty, 13 from the first insertion, then 29 at the 14th
+element and 59 at the 30th (`_Prime_rehash_policy`, load factor 1); a rehash re-inserts every
+node in list order with rule (1), which reverses the order of the distinct buckets. (3) Copy
+(`operator=`, copy construction, also the temporaries of `FlipLayers`) keeps the node order
+and the bucket count; `clear()` keeps the bucket count; erase keeps the order of the rest.
+(4) `FlipLayers` therefore re-inserts in the old iteration order, each through rule (1).
+Nothing outside `padstack.rs` may depend on the order except through `Padstack` methods.
 | anything C++ orders by pointer address | section 3.1 (analysis-doc order, else `ItemId` order); record it |
 
 ## 11. Module layout (`rust/crates/kicad-pcb/src/`)

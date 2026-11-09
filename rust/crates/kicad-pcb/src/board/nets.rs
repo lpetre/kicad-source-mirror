@@ -514,3 +514,110 @@ impl Board {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::netclass::Netclass;
+
+    /// `BOARD::MatchDpSuffix` (`pcbnew/board.cpp:2835`). The `/OUT1+` / `/OUT1-` pair is
+    /// `net.30.name` / `net.31.name` of `pcb-dump board --sections board
+    /// qa/data/pcbnew/issue11814.kicad_pcb`.
+    #[test]
+    fn match_dp_suffix() {
+        let m = |s: &str| Board::match_dp_suffix(s);
+        assert_eq!(m("/OUT1+"), (1, "/OUT1-".to_string()));
+        assert_eq!(m("/OUT1-"), (-1, "/OUT1+".to_string()));
+        assert_eq!(m("CLK_N"), (-1, "CLK_P".to_string()));
+        assert_eq!(m("USB_DP"), (1, "USB_DN".to_string()));
+        assert_eq!(m("D+1"), (1, "D-1".to_string()));
+        assert_eq!(m("LANE_P_12"), (1, "LANE_N_12".to_string()));
+        assert_eq!(m("P"), (1, "N".to_string()));
+        assert_eq!(m("GND"), (0, String::new()));
+        assert_eq!(m("12_3"), (0, String::new()));
+        assert_eq!(m(""), (0, String::new()));
+        assert_eq!(m("Ü+"), (1, "Ü-".to_string()));
+    }
+
+    /// `BOARD::FindNet`, `FindOrAddNet`, `Add( NETINFO_ITEM )`, `DpCoupledNet`,
+    /// `GetNetClassAssignmentCandidates`, `GetNodesCount`, `BuildListOfNets` without a project
+    /// (`pcbnew/board.cpp:2805-2895`, `:2954`, `:2527`, `board.h:1180`).
+    #[test]
+    fn find_add_and_couple() {
+        let mut board = Board::default();
+        assert_eq!(board.net_count(), 1);
+        assert_eq!(board.find_net(NetCode(0)).map(|n| n.netname()), Some(""));
+        assert!(board.find_net(NetCode(1)).is_none());
+
+        assert_eq!(
+            board.find_or_add_net("/OUT1+", Some(NetCode(1))),
+            NetCode(1)
+        );
+        assert_eq!(board.find_or_add_net("/OUT1-", None), NetCode(2));
+        assert_eq!(
+            board.find_or_add_net("/OUT1+", Some(NetCode(9))),
+            NetCode(1)
+        );
+        assert_eq!(board.find_or_add_net("GND", Some(NetCode(9))), NetCode(3));
+
+        let net = board.find_net(NetCode(2)).unwrap();
+        assert_eq!(net.short_netname(), "OUT1-");
+        assert_eq!(net.base.parent, ParentRef::Board);
+        assert_ne!(net.base.uuid, kicad_core::NILUUID);
+        assert!(Arc::ptr_eq(
+            net.netclass().unwrap(),
+            board.design_settings().net_settings.default_netclass()
+        ));
+        assert_eq!(board.resolve_item(&net.base.uuid), ItemId::net(NetCode(2)));
+        assert_eq!(
+            board.find_net_by_name("GND").map(|n| n.net_code()),
+            Some(NetCode(3))
+        );
+
+        assert_eq!(
+            board.add_net(NetinfoItem::with_name("GND", NetCode(4))),
+            None
+        );
+        assert_eq!(
+            board.add_net(NetinfoItem::with_name("VCC", NetCode(4))),
+            Some(NetCode(4))
+        );
+
+        assert_eq!(board.dp_coupled_net(NetCode(1)), Some(NetCode(2)));
+        assert_eq!(board.dp_coupled_net(NetCode(2)), Some(NetCode(1)));
+        assert_eq!(board.dp_coupled_net(NetCode(3)), None);
+        assert_eq!(board.dp_coupled_net(NetCode(17)), None);
+
+        let candidates: Vec<String> = board
+            .get_net_class_assignment_candidates()
+            .into_iter()
+            .collect();
+        assert_eq!(candidates, ["/OUT1+", "/OUT1-", "GND", "VCC"]);
+        assert_eq!(board.get_nodes_count(&BoardCtx::bare(&board), None), 0);
+        assert!(board.tracks_in_net(NetCode(1)).is_empty());
+
+        // No project: SynchronizeNetsAndNetClasses is a no-op, the classes become the default.
+        board
+            .net_info
+            .get_net_item_mut(NetCode(3))
+            .unwrap()
+            .set_netclass(Some(Arc::new(Netclass::new("HV", true))));
+        board.build_list_of_nets();
+        assert_eq!(
+            board
+                .find_net(NetCode(3))
+                .and_then(|n| n.netclass())
+                .map(|c| c.name.as_str()),
+            Some("Default")
+        );
+
+        board.check_invariants().unwrap();
+
+        // FindNet( 0 ) of an empty list: the orphaned item
+        board.net_info.clear();
+        assert!(std::ptr::eq(
+            board.find_net(NetCode(0)).unwrap(),
+            NetinfoList::orphaned_item()
+        ));
+    }
+}

@@ -71,7 +71,7 @@ pub(crate) type SectionFn = fn(&mut Out, ItemRef<'_>);
 fn dump_item_sections(o: &mut Out, it: ItemRef<'_>, opts: &DumpOptions) {
     let key = o.item_key(it.id());
     let t = it.type_();
-    let mut section = |o: &mut Out, name: &str, f: SectionFn| {
+    let section = |o: &mut Out, name: &str, f: SectionFn| {
         if opts.want(name) {
             o.scope(name, &key, |o| o.guard(name, |o| f(o, it)));
         }

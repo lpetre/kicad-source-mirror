@@ -177,3 +177,49 @@ impl BoardItemBase {
         self.custom_properties.get(key).map(String::as_str)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `EDA_ITEM::SetCustomProperty` / `SetCustomProperties` (`include/eda_item.h`): a key
+    /// matching case-insensitively is overwritten and keeps its first spelling
+    /// (qa/tests/pcbnew/test_pcb_dynamic_properties.cpp `CustomPropertiesExposedAsDynamic`
+    /// sets and reads back "MPN" / "Supplier").
+    #[test]
+    fn custom_properties() {
+        let mut base = BoardItemBase::default();
+        assert!(!base.has_custom_properties());
+
+        base.set_custom_property("MPN", "12345");
+        base.set_custom_property("Supplier", "ACME");
+        assert_eq!(base.custom_property("MPN"), Some("12345"));
+        assert_eq!(base.custom_property("Supplier"), Some("ACME"));
+
+        base.set_custom_property("mpn", "999");
+        assert_eq!(base.custom_properties().len(), 2);
+        assert_eq!(base.custom_property("MPN"), Some("999"));
+        assert_eq!(base.custom_property("mpn"), None);
+
+        let mut props = BTreeMap::new();
+        props.insert("A".to_string(), "1".to_string());
+        props.insert("a".to_string(), "2".to_string());
+        base.set_custom_properties(&props);
+        assert_eq!(base.custom_properties().len(), 1);
+        assert_eq!(base.custom_property("A"), Some("2"));
+
+        base.remove_custom_property("A");
+        assert!(!base.has_custom_properties());
+    }
+
+    /// `EDA_ITEM::GetEditFlags` / `ClearEditFlags`.
+    #[test]
+    fn edit_flags() {
+        let mut base = BoardItemBase::default();
+        base.set_flags(ItemFlags::IS_NEW | ItemFlags::CANDIDATE);
+        assert!(base.is_new());
+        assert_eq!(base.edit_flags(), ItemFlags::IS_NEW);
+        base.clear_edit_flags();
+        assert_eq!(base.get_flags(), ItemFlags::CANDIDATE);
+    }
+}

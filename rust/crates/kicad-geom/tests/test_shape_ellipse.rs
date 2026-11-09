@@ -20,7 +20,7 @@
 //! The randomised tests use the libstdc++ engine / distribution replicas of `test_utils` and
 //! draw in GCC's argument evaluation order (right to left for constructor calls), so they run
 //! on the reference build's data.  The tests of `SHAPE::Collide( SHAPE* )` against other shapes
-//! need the `SH_ELLIPSE` entries of the collision matrix (package G5) and are `#[ignore]`d.
+//! use the `SH_ELLIPSE` entries of the collision matrix (package G5).
 
 use std::f64::consts::PI;
 
@@ -529,7 +529,6 @@ fn collide_circle_degenerate_agrees_with_shape_circle() {
 const NEEDS_G5: &str = "needs the SH_ELLIPSE entries of the collision matrix (package G5)";
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_circle_overlap() {
     // Ellipse and circle overlap. They should collide.
     let e = ell(pt(0, 0), 500, 300, 0.0);
@@ -546,7 +545,6 @@ fn collide_ellipse_vs_circle_disjoint() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_rect_contains_ellipse() {
     // Large rectangle entirely contains the ellipse. Collision detected
     // because the ellipse center is inside the rect.
@@ -564,7 +562,6 @@ fn collide_ellipse_vs_rect_disjoint() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_rect_edge_intersects() {
     // Rectangle straddles the ellipse's right edge. We have partial overlap.
     let e = ell(pt(0, 0), 500, 300, 0.0);
@@ -573,7 +570,6 @@ fn collide_ellipse_vs_rect_edge_intersects() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_line_chain_intersects() {
     // Open polyline passes through the ellipse. It should collide.
     let e = ell(pt(0, 0), 500, 300, 0.0);
@@ -585,7 +581,6 @@ fn collide_ellipse_vs_line_chain_intersects() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_inside_closed_chain() {
     // Closed square chain entirely contains the ellipse. Collision detected
     let mut chain = ShapeLineChain::new();
@@ -600,7 +595,6 @@ fn collide_ellipse_inside_closed_chain() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_arc_overlap() {
     // Circular arc overlaps the ellipse. It should collide.
     let e = ell(pt(0, 0), 500, 300, 0.0);
@@ -609,7 +603,6 @@ fn collide_ellipse_vs_arc_overlap() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_ellipse_overlap() {
     // Two overlapping ellipses. They should collide.
     let a = ell(pt(0, 0), 500, 300, 0.0);
@@ -626,7 +619,6 @@ fn collide_ellipse_vs_ellipse_disjoint() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_inside_another_ellipse() {
     // Small ellipse inside a larger one. Collision should be detected.
     let big = ell(pt(0, 0), 2000, 1500, 0.0);
@@ -635,7 +627,6 @@ fn collide_ellipse_inside_another_ellipse() {
 }
 
 #[test]
-#[ignore = "needs the SH_ELLIPSE entries of the collision matrix (package G5)"]
 fn collide_ellipse_vs_rect() {
     let e = ShapeEllipse::new(pt(0, 0), 500, 300, ANGLE_0);
     let r = ShapeRect::from_pos_size(pt(400, 0), 200, 200); // straddles the ellipse boundary

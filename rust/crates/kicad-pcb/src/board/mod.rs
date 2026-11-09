@@ -361,6 +361,7 @@ impl Board {
         }
 
         let parent = self.get(id)?.base().parent;
+        self.journal_note_before(id);
         Some(self.env_for_parent(parent, Arc::clone(&self.layer_env)))
     }
 
@@ -374,9 +375,7 @@ impl Board {
             }
         }
 
-        if self.journal.is_enabled() {
-            crate::port_pending!("BOARD_LISTENER::OnBoardItemChanged (journal Modified)", id)
-        }
+        self.journal_record_modified(id);
     }
 
     /// Store `item` in its arena and stamp `base.id` and `base.parent` (crate-internal: the

@@ -530,14 +530,16 @@ pub trait EdaShapeItem {
         eda_shape::is_filled_for_hit_testing(self)
     }
 
-    /// `GetTopLeft()` (PCB_TEXTBOX overrides).
-    fn top_left(&self) -> Vector2I {
-        eda_shape::top_left(self)
+    /// `GetTopLeft()`. Takes the context because the `PCB_TEXTBOX` override picks the corner
+    /// by `GetDrawRotation()`, i.e. `GetTextAngle()`, which adds the parent footprint's
+    /// orientation.
+    fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        eda_shape::top_left(self, ctx)
     }
 
-    /// `GetBotRight()` (PCB_TEXTBOX overrides).
-    fn bot_right(&self) -> Vector2I {
-        eda_shape::bot_right(self)
+    /// `GetBotRight()` (see `top_left`).
+    fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        eda_shape::bot_right(self, ctx)
     }
 
     /// `GetCornersInSequence( aAngle )`.

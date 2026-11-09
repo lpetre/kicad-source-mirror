@@ -650,7 +650,7 @@ fn section_refine(results: &mut Results, name: &'static str, seed: u64, count: u
         let gy = rng.range(1, 12) as i32;
         let s_scale = 1000.max(scale_of(&mut rng));
         let s = rng.range(1, (s_scale / 12) as i64) as i32;
-        let j = rng.range(0, s as i64) as i64;
+        let j = rng.range(0, s as i64);
         let flip_orientation = rng.flag();
         let mut tp = TriangulatedPolygon::new(0);
 

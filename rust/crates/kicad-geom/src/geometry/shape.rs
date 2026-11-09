@@ -199,6 +199,13 @@ pub trait Shape: Debug + Send + Sync {
         Vec::new()
     }
 
+    /// The `a_index`-th of [`Shape::indexable_subshapes`] without collecting them (no C++
+    /// counterpart: DRC r-tree payloads address sub-shapes by index).  `None` when `a_index`
+    /// is not below [`Shape::indexable_subshape_count`].
+    fn indexable_subshape(&self, _a_index: usize) -> Option<&dyn Shape> {
+        None
+    }
+
     /// A borrowed enum view of this shape (no C++ counterpart; replaces RTTI).
     fn as_shape_ref(&self) -> ShapeRef<'_>;
 
@@ -269,6 +276,23 @@ pub trait Shape: Debug + Send + Sync {
             None,
             None,
             a_mtv,
+        )
+    }
+
+    /// Port of `SHAPE::NearestPoints( const SHAPE* aOther, VECTOR2I& aPtThis,
+    /// VECTOR2I& aPtOther )` (`shape_nearest_points.cpp`): the nearest points between this
+    /// shape and `a_other`.  Returns false (the points are untouched) when the pair has none.
+    fn nearest_points(
+        &self,
+        a_other: &dyn Shape,
+        a_pt_this: &mut Vector2I,
+        a_pt_other: &mut Vector2I,
+    ) -> bool {
+        shape_collisions::nearest_points(
+            self.as_shape_ref(),
+            a_other.as_shape_ref(),
+            a_pt_this,
+            a_pt_other,
         )
     }
 

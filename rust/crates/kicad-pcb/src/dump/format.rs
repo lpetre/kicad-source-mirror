@@ -579,10 +579,14 @@ pub fn v_opt_enum<E: Debug>(v: Option<E>) -> String {
 /// the magic_enum name (keyed by the Rust `Debug` text, which includes the type for
 /// ambiguous variants via [`v_enum_in`]).
 fn enum_override(rust: &str) -> Option<&'static str> {
-    Some(match rust {
-        _ => return None,
-    })
+    ENUM_OVERRIDES
+        .iter()
+        .find(|(r, _)| *r == rust)
+        .map(|(_, c)| *c)
 }
+
+/// `(Rust Debug name or "CXX_TYPE::RustName", C++ enumerator)`.
+const ENUM_OVERRIDES: &[(&str, &str)] = &[];
 
 /// `VEnum`: the C++ enumerator name, derived from the Rust variant name (`PcbTraceT` ->
 /// `PCB_TRACE_T`, `GrTextHAlignCenter` -> `GR_TEXT_H_ALIGN_CENTER`); a variant with data
@@ -686,7 +690,7 @@ pub fn board_items(board: &Board) -> Vec<ItemId> {
 
         match board.get(id) {
             Some(AnyItem::Footprint(_)) => {
-                let fp = id.try_into().expect("footprint id");
+                let fp = id.typed().expect("footprint id");
 
                 for (c, _) in board.footprint_fields(fp) {
                     visit(board, c.into(), out);
@@ -713,7 +717,7 @@ pub fn board_items(board: &Board) -> Vec<ItemId> {
                 }
             }
             Some(AnyItem::Table(_)) => {
-                let t = id.try_into().expect("table id");
+                let t = id.typed().expect("table id");
 
                 for (c, _) in board.table_cells(t) {
                     visit(board, c.into(), out);

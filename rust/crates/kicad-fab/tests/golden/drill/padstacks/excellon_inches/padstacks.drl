@@ -1,0 +1,33 @@
+M48
+; DRILL file KiCad 10.99.0-unknown date 2026-11-09T23:28:47
+; FORMAT={-:-/ absolute / inch / decimal}
+; #@! TF.CreationDate,2026-11-09T23:28:47+00:00
+; #@! TF.GenerationSoftware,Kicad,Pcbnew,10.99.0-unknown
+; #@! TF.FileFunction,MixedPlating,1,6
+FMAT,2
+INCH
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T1C0.0039
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T2C0.0118
+; Post-machining
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T3C0.0138
+%
+G90
+G05
+T1
+X4.9606Y-3.1496
+T2
+; Post-machining front countersink dia 0.0197in depth 0.0098in angle 82deg
+X4.7244Y-3.1496
+X4.8031Y-3.1142
+X4.8031Y-3.1496
+X4.8819Y-3.1496
+X5.0394Y-3.1496
+T3
+X4.8031Y-3.189
+X4.8031Y-3.2283
+X4.8031Y-3.2677
+X4.8425Y-3.2677
+M30

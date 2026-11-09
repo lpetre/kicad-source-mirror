@@ -1,0 +1,23 @@
+[package]
+name = "kicad-cli"
+description = "kicad-rs: native command line front end of the KiCad Rust port (mirrors the reference kicad-cli)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "kicad-rs"
+path = "src/main.rs"
+
+[dependencies]
+kicad-core = { path = "../kicad-core" }
+kicad-session = { path = "../kicad-session" }
+clap = { version = "4.6.7", default-features = false, features = ["std", "help", "usage", "error-context"] }
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }

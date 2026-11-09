@@ -32,23 +32,48 @@ pub enum ComponentClassUsage {
     Effective,
 }
 
-/// `COMPONENT_CLASS`. `constituent_classes` ports the `COMPONENT_CLASS*` vector; a C++
-/// constituent class lists itself, which an owned value cannot: an **empty** list on a
-/// class with a name means "constituent class" (itself), the "none" class has an empty name.
+/// `COMPONENT_CLASS`. The C++ `m_constituentClasses` is a `COMPONENT_CLASS*` vector with three
+/// shapes: empty (the "none" class and a freshly constructed class), `{ this }` (a constituent
+/// class, `getOrCreateConstituentClass`) and the constituents of an effective class. An owned
+/// value cannot list itself, so the self entry is the flag `is_constituent`; the name plays no
+/// part in telling the shapes apart (a constituent class may have an empty name).
 #[derive(Clone, Debug, Default)]
 pub struct ComponentClass {
-    pub name: String,                                  // m_name
-    pub constituent_classes: Vec<Arc<ComponentClass>>, // m_constituentClasses
-    pub usage_context: ComponentClassUsage,            // m_usageContext
+    pub name: String, // m_name
+    /// m_constituentClasses of an effective class, in C++ order. Empty for the "none" class
+    /// and for a constituent class.
+    pub constituent_classes: Vec<Arc<ComponentClass>>,
+    /// m_constituentClasses is `{ this }`.
+    pub is_constituent: bool,
+    pub usage_context: ComponentClassUsage, // m_usageContext
 }
 
 impl ComponentClass {
-    /// `COMPONENT_CLASS::COMPONENT_CLASS( name, aUsageContext )`.
+    /// `COMPONENT_CLASS::COMPONENT_CLASS( name, aUsageContext )`: no constituents.
     pub fn new(name: &str, usage_context: ComponentClassUsage) -> Self {
         ComponentClass {
             name: name.to_string(),
             constituent_classes: Vec::new(),
+            is_constituent: false,
             usage_context,
+        }
+    }
+
+    /// The constructor followed by `AddConstituentClass( this )`: a constituent class, as
+    /// `COMPONENT_CLASS_MANAGER::getOrCreateConstituentClass` builds it.
+    pub fn new_constituent(name: &str, usage_context: ComponentClassUsage) -> Self {
+        ComponentClass {
+            is_constituent: true,
+            ..ComponentClass::new(name, usage_context)
+        }
+    }
+
+    /// `m_constituentClasses.size()`.
+    pub fn constituent_count(&self) -> usize {
+        if self.is_constituent {
+            1
+        } else {
+            self.constituent_classes.len()
         }
     }
 
@@ -72,9 +97,9 @@ impl ComponentClass {
         crate::port_pending!("COMPONENT_CLASS::ContainsClassName", name)
     }
 
-    /// `COMPONENT_CLASS::IsEmpty`.
+    /// `COMPONENT_CLASS::IsEmpty`: `m_constituentClasses.empty()`.
     pub fn is_empty(&self) -> bool {
-        crate::port_pending!("COMPONENT_CLASS::IsEmpty")
+        self.constituent_count() == 0
     }
 }
 
@@ -191,5 +216,33 @@ mod tests {
         assert_eq!(m.ticker, 0);
         assert!(m.constituent_classes.is_empty() && m.assignment_rules.is_empty());
         assert_eq!(ComponentClassCache::default().last_ticker_value, -1);
+    }
+
+    /// `COMPONENT_CLASS::IsEmpty` (`component_class.cpp`) and the three shapes of
+    /// `m_constituentClasses`: the "none" class is empty, a constituent class lists itself
+    /// (also with an empty name), an effective class lists its constituents.
+    #[test]
+    fn constituent_shapes() {
+        let none = ComponentClassManager::default().none_class;
+        assert!(none.is_empty());
+        assert_eq!(none.constituent_count(), 0);
+
+        let unnamed = ComponentClass::new_constituent("", ComponentClassUsage::Static);
+        assert!(!unnamed.is_empty());
+        assert_eq!(unnamed.constituent_count(), 1);
+
+        let a = Arc::new(ComponentClass::new_constituent(
+            "A",
+            ComponentClassUsage::Static,
+        ));
+        let b = Arc::new(ComponentClass::new_constituent(
+            "B",
+            ComponentClassUsage::Static,
+        ));
+        let mut effective = ComponentClass::new("A,B", ComponentClassUsage::Effective);
+        assert!(effective.is_empty());
+        effective.constituent_classes = vec![a, b];
+        assert_eq!(effective.constituent_count(), 2);
+        assert!(!effective.is_empty());
     }
 }

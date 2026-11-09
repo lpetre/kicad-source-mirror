@@ -131,10 +131,7 @@ pub fn netname_msg<B: BoardConnectedItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>)
 }
 
 /// Port of `BOARD_CONNECTED_ITEM::GetShortNetname`.
-pub fn short_netname<'a, B: BoardConnectedItem + ?Sized>(
-    item: &B,
-    ctx: &BoardCtx<'a>,
-) -> &'a str {
+pub fn short_netname<'a, B: BoardConnectedItem + ?Sized>(item: &B, ctx: &BoardCtx<'a>) -> &'a str {
     net(item, ctx).map_or("", |n| n.short_netname())
 }
 

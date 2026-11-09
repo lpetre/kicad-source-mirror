@@ -644,15 +644,22 @@ mod tests {
         let mut fx = rotated_flipped_scaled();
         let shape_id = fx.child(ItemKind::Shape).typed::<PcbShape>().unwrap();
         let textbox_id = fx.child(ItemKind::Textbox);
-        let textbox_id = textbox_id.typed::<crate::pcb_textbox::PcbTextbox>().unwrap();
+        let textbox_id = textbox_id
+            .typed::<crate::pcb_textbox::PcbTextbox>()
+            .unwrap();
         let cell_id = fx.child(ItemKind::Tablecell);
-        let cell_id = cell_id.typed::<crate::pcb_tablecell::PcbTablecell>().unwrap();
+        let cell_id = cell_id
+            .typed::<crate::pcb_tablecell::PcbTablecell>()
+            .unwrap();
         let detached = PcbShape::default();
 
         {
             let ctx = &BoardCtx::bare(&fx.board);
             let shape = &fx.board[shape_id];
-            assert_eq!(shape.transform_fp(ctx).unwrap().base.id(), Some(fx.footprint.into()));
+            assert_eq!(
+                shape.transform_fp(ctx).unwrap().base.id(),
+                Some(fx.footprint.into())
+            );
             assert_eq!(shape.shape.stroke.width(), 100_000);
             assert_eq!(EdaShapeItem::width(shape, ctx), 112_500);
             assert_eq!(shape.effective_width(ctx), 112_500);

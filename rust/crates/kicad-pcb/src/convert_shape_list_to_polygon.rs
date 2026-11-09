@@ -36,7 +36,13 @@ impl<F> OutlineErrorHandler for F
 where
     F: FnMut(&str, Option<ItemId>, Option<ItemId>, Vector2I),
 {
-    fn on_error(&mut self, msg: &str, item_a: Option<ItemId>, item_b: Option<ItemId>, pt: Vector2I) {
+    fn on_error(
+        &mut self,
+        msg: &str,
+        item_a: Option<ItemId>,
+        item_b: Option<ItemId>,
+        pt: Vector2I,
+    ) {
         self(msg, item_a, item_b, pt)
     }
 }
@@ -55,11 +61,12 @@ mod tests {
         }
 
         let mut seen = Vec::new();
-        report(Some(
-            &mut |msg: &str, _a: Option<ItemId>, _b: Option<ItemId>, pt: Vector2I| {
-                seen.push((msg.to_string(), pt));
-            },
-        ));
+        report(Some(&mut |msg: &str,
+                          _a: Option<ItemId>,
+                          _b: Option<ItemId>,
+                          pt: Vector2I| {
+            seen.push((msg.to_string(), pt));
+        }));
         report(None);
         assert_eq!(seen, vec![("gap".to_string(), Vector2I::new(1, 2))]);
     }

@@ -32,6 +32,13 @@ simplification, chamfer / fillet, the vertex index machinery and iterators, dist
 non-triangulated collisions, hashing, `Format` / `Parse`; verified by the `sps_oracle` (328,146
 cases, bit for bit).  The triangulation is package G4b (GAP-P1).
 
+**Work package G4b** (triangulation) ported `polygon_triangulation.h` (`POLYGON_TRIANGULATION`),
+`vertex_set.h/.cpp`, `shape_poly_tri_index.h`, `poly_ystripes_index.h`, `TRIANGULATED_POLYGON::Refine`
+and the triangulation parts of `SHAPE_POLY_SET` (`cacheTriangulation` with its partition /
+fracture / self-touching fallbacks and hash check, the triangle index, the triangle-based
+`Collide( SHAPE* )`), closing GAP-P1, GAP-5 and GAP-P4; verified by the `tri_oracle` (140,000
+cases, bit for bit, triangle lists and their order included).
+
 Everything in this crate builds for `wasm32-unknown-unknown` and has no `unsafe`.  Its only
 dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependency, feature
 `usingz`; pure Rust, BSL-1.0; PORTING.md section 9).
@@ -71,7 +78,10 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `libs/kimath/include/geometry/rtree/dynamic_rtree_cow.h` (`COW_RTREE`) | - | skipped: only used by the interactive router (`SHAPE_INDEX`), see GAP-4 |
 | `thirdparty/delaunator/delaunator.cpp`, `.hpp` | `src/thirdparty/delaunator.rs` (`Delaunator`, `Point`, `INVALID_INDEX`, `DelaunatorError`) | ported statement by statement (incl. `get_hull_area`, `get_triangle_area`; the unused `clockwise` helpers are omitted); MIT notice kept; see D13 |
 | `thirdparty/nanoflann/nanoflann.hpp` | `src/thirdparty/nanoflann.rs` (`KdTreeSingleIndexAdaptor`, `DatasetAdaptor`, `KnnResultSet`, `RadiusResultSet`, `ResultItem`, `SearchParameters`, `KdTreeSingleIndexAdaptorParams`) | partial: exactly the subset KiCad uses (`convert_shape_list_to_polygon.cpp`, `fix_board_shape.cpp`): static kd-tree, `L2_Simple_Adaptor`, `knnSearch`, `radiusSearch`, `findNeighbors`; BSD notice kept; see GAP-6 |
-| `libs/kimath/include/geometry/polygon_triangulation.h` | - | not part of this package (every helper in it depends on `SHAPE_LINE_CHAIN` / `VERTEX_SET`; no dependency-free piece was worth splitting off), see GAP-5 |
+| `libs/kimath/include/geometry/polygon_triangulation.h` (`POLYGON_TRIANGULATION`) | `src/geometry/polygon_triangulation.rs` (`PolygonTriangulation`; consts `TRIANGULATE_SIMPLIFICATION_LEVEL`, `TRIANGULATE_MINIMUM_AREA`, `TRIANGULATE_DELAUNAY_REFINE`) | ported (G4b): both `TesselatePolygon`s (`tesselate_chain`, `tesselate_polygon`), `PartitionAreaFractionsForTesting`, and every private helper (scanline splitting, balanced partition, `simplifyList`, `decimateList`, `removeNullTriangles`, `earcutList` / `earcutRing` with the ear lookahead and reflex index, `createRing`, `eliminateHoles`, `filterPoints`, `findHoleBridge`, `subdividePolygon`, `splitPolygon`, `clipRemainingEars`, `goodSplit`, `intersects`, `intersectsPolygon`); `logRemaining` / `logVertices` (trace output only) dropped; see D-T1..D-T3 |
+| `geometry/vertex_set.h`, `src/geometry/vertex_set.cpp` (`VERTEX`, `VERTEX_SET`) | `src/geometry/vertex_set.rs` (`Vertex`, `VertexSet`, `VertexId`, `NIL`, `ReflexEntry`, `area_xy`) | ported (G4b); the `VERTEX` methods are `VertexSet` methods taking the vertex id (`remove`, `split`, `update_order`, `update_list`, `z_sort`, `ring_area` = `VERTEX::area`, `is_ear`), the protected `VERTEX_SET` helpers are `pub` for the zone filler / connection-width users; D-T1 |
+| `geometry/shape_poly_tri_index.h` (`TRIANGULATION_INDEX`, `VisitTriangleCandidates`, both `AnyTriangleHit`s) | `src/geometry/shape_poly_tri_index.rs` (`TriangulationIndex`, `visit_triangle_candidates`, `any_triangle_hit`, `any_triangle_hit_point`) | ported (G4b); the index stores ( polygon, triangle ) indices and queries take the triangulation (C++: `const TRI*`) |
+| `geometry/poly_ystripes_index.h` (`POLY_YSTRIPES_INDEX`) | `src/geometry/poly_ystripes_index.rs` (`PolyYStripesIndex`: `build`, `contains`) | ported (G4b) |
 | libstdc++ `std::sort`, `std::partial_sort`, `std::nth_element`, `std::make_heap` / `push_heap` / `pop_heap` / `sort_heap`, `std::priority_queue`, `erase( std::unique( ... ) )` | `src/stdsort.rs` (`std_sort`, `std_sort_default`, `std_partial_sort`, `std_nth_element`, `std_make_heap`, `std_push_heap`, `std_pop_heap`, `std_sort_heap`, `PriorityQueue`, `std_unique`) | ported from GCC 13 `bits/stl_algo.h` / `stl_heap.h` (PORTING.md section 9); see D14 |
 | `libs/kimath/include/math/vector2wx.h` | - | skipped: wxWidgets glue |
 | `libs/kimath/include/math/vector3.h` | `src/math/vector3.rs` (`Vector3<T>`, `Vector3I/D/U`, trait `Vector3Coord`) | ported (G6a): all methods, `operator<<` (`Display`) |
@@ -93,9 +103,9 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | - `Clipper2Lib::Path64` / `Point64` (constructor, `convertToClipper2`) | `ShapeLineChain::from_clipper2( &[P: ClipperPoint64], .. )`, `convert_to_clipper2() -> Vec<(i64, i64, i64)>` | ported; trait `ClipperPoint64` (implemented for `(x, y, z)` triples) so that the module needs no clipper dependency |
 | - protected helpers (`convertArc`, `splitArc`, `amendArc*`, `fixIndicesRotation`, `mergeFirstLastPointIfNeeded`, `reversedArcIndex`, `convertToClipper2`) | same names, `pub` (the C++ `friend SHAPE_POLY_SET` becomes visibility) | ported |
 | - `std::stringstream` of `Parse()` | `StringStream` | the `>>` extractions `Parse` uses (D-S6) |
-| `geometry/shape_poly_set.h/.cpp` (`SHAPE_POLY_SET`) | `src/geometry/shape_poly_set.rs` (`ShapePolySet`, `Polygon`, `VertexIndex`, `PolySetIterator`, `SegmentIterator`, `Tri`, `TriangulatedPolygon`) and `src/geometry/shape_poly_set_fracture.rs` (file-local fracture helpers) | ported (G4a) except the triangulation (GAP-P1): every member of the header (overload table in the module docs) and every function of the `.cpp` outside `cacheTriangulation` / `TRIANGULATED_POLYGON::Refine`; see D-P1..D-P9 |
+| `geometry/shape_poly_set.h/.cpp` (`SHAPE_POLY_SET`) | `src/geometry/shape_poly_set.rs` (`ShapePolySet`, `Polygon`, `VertexIndex`, `PolySetIterator`, `SegmentIterator`, `Tri`, `TriangulatedPolygon`) and `src/geometry/shape_poly_set_fracture.rs` (file-local fracture helpers) | ported (G4a, triangulation G4b): every member of the header (overload table in the module docs) and every function of the `.cpp`; `CacheTriangulation( aSimplify, aSubmitter, aBuildIndexes )` is `cache_triangulation` / `cache_triangulation_with( simplify, has_submitter, build_indexes )`, the protected `cacheTriangulation( ..., aHintData, ... )` is `cache_triangulation_hint`, `TriangulationIndex()` is `triangulation_index()`, `Collide( SHAPE* )` is `collide_shape` (`&self`) / `collide_shape_mut` (caching); see D-P1..D-P9, D-T2, D-T3 |
 | - `ITERATOR_TEMPLATE` (`ITERATOR`, `CONST_ITERATOR`), `SEGMENT_ITERATOR_TEMPLATE` | `PolySetIterator`, `SegmentIterator`: cursors with the C++ methods (`is_valid` = `operator bool`, `advance` = `operator++`, `get` = `operator*`, `get_index`, `is_end_contour`, `is_last_polygon`, `is_adjacent`) that also implement `Iterator` with the same traversal and end condition (D-P3) | ported |
-| - `TRIANGULATED_POLYGON` / `TRI` | `TriangulatedPolygon` (`new`, `clear`, `get_triangle`, `add_triangle`, `add_vertex`, `triangle_count`, `source_outline_index`, `set_source_outline_index`, `vertex_count`, `move_`; `Triangles()` / `Vertices()` / `SetTriangles()` / `SetVertices()` are the public fields), `Tri` (incl. `Area()`) | partial: data and accessors; `Refine()` and building triangulations are G4b |
+| - `TRIANGULATED_POLYGON` / `TRI` | `TriangulatedPolygon` (`new`, `clear`, `get_triangle`, `add_triangle`, `add_vertex`, `triangle_count`, `source_outline_index`, `set_source_outline_index`, `vertex_count`, `move_`; `Triangles()` / `Vertices()` / `SetTriangles()` / `SetVertices()` are the public fields), `Tri` (incl. `Area()`) | ported (G4b: `refine`, `set_triangles`, `set_vertices`; the triangles' vertex copies are kept in sync, D15) |
 | - file-local helpers of `shape_poly_set.cpp`: `splitAtBridges`, `FractureEdge`, `FRACTURE_EDGE_INDEX`, `fractureIntersectX`, `processHole`, `fractureSingleCacheFriendly` | `shape_poly_set_fracture.rs` | ported; `FractureEdgeSlow` / `processEdge` / `fractureSingleSlow` (only selected by `ADVANCED_CFG::m_EnableCacheFriendlyFracture = false`) skipped, D-P7 |
 | - `SHAPE_LINE_CHAIN::OffsetLine()` | `ShapeLineChain::offset_line` (in `shape_poly_set.rs`) | ported (closes GAP-S1) |
 | `geometry/corner_operations.cpp`: `SHAPE_POLY_SET::chamferFilletPolygon` | `shape_poly_set.rs` | ported; the free functions `ComputeChamferPoints`, `ComputeDogbone` (`corner_operations.h`) are not part of this package (not started) |
@@ -232,7 +242,10 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_distance.cpp` | `tests/test_shape_poly_set_distance.rs` | 1 of 1 (all 7 data cases) |
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_split_outlines.cpp` | `tests/test_shape_poly_set_split_outlines.rs` | 2 of 2 |
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_collision.cpp` | `tests/test_shape_poly_set_collision.rs` | 8 of 8 (none needs the triangulation, so nothing is `#[ignore]`d) |
-| `qa/tests/libs/kimath/geometry/test_shape_poly_set_triangle_index.cpp` | - | not ported: triangulation (G4b) |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_triangle_index.cpp` | `tests/test_shape_poly_set_triangle_index.rs` | 6 of 6 (the cases relying on `Collide()` caching through `const_cast` use `collide_shape_mut`; pointer identity in `TriPointersSurviveMove` becomes "same triangles, moved") |
+| `qa/tests/libs/kimath/geometry/test_poly_triangulation.cpp` | `tests/test_poly_triangulation.rs` | 39 of 39 (data under `qa/data/triangulation`); `FractureEdgeIndexMatchesLinearScan` can only check the indexed fracture (the linear variant is not ported, D-P7); `ConcurrentTriangulation` / `ParallelPartitionTriangulation` run sequentially (the latter with `cache_triangulation_with( .., true, .. )`) |
+| `qa/tests/libs/kimath/geometry/test_poly_ystripes_index.cpp` | `tests/test_poly_ystripes_index.rs` | 3 of 3 (`std::mt19937` / `uniform_int_distribution` replicas) |
+| `test_shape_poly_set_collision.cpp`, triangulation-dependent cases | - | none: all 8 cases use segments / points, already ported; the triangle-based collisions are covered by the two files above and `tri_collide` |
 | `fixtures_geometry.h` (poly sets), `geom_test_utils.h` (`IsPolySetValid`, `FilletPolySet`), `qa_utils/geometry/poly_set_construction` / `line_chain_construction` (`BuildPolyset`, `BuildHollowSquare`, `BuildRectChain`, `BuildSquareChain`) | `tests/common_poly/mod.rs` | added in G4a (closes GAP-3 except `ChainsAreCyclicallyEqual`) |
 | (Clipper2 fidelity patch, `gnu_sort.rs`) | `tests/test_stdsort.rs` | `std_sort` and the vendored Clipper2's private libstdc++ sort copy give identical permutations on 4000 tie-heavy arrays |
 
@@ -257,6 +270,33 @@ In-module unit tests (`#[cfg(test)]`, 55 tests) cover additional behaviour of ev
 
 Two oracles: `geom_oracle` (package G1, compiles the kimath sources it needs with stub wx
 headers) and `shapes_oracle` (package G2, links the static libraries of the reference build).
+
+### `tri_oracle` (G4b)
+
+`tests/oracle/tri_oracle.cpp` links `libkimath.a` (+ `libcore.a`, `libkicommon.so` for
+`ADVANCED_CFG`, run with an empty config directory = defaults) and prints 11 sections; replay:
+`tests/oracle_tri_diff.rs` with `tests/oracle/tri_sections.rs`, golden `tests/golden/tri_oracle.txt`.
+Every record holds the complete output (success flag, all result vertices incl. subdivision
+Steiner points, every triangle's indices in order).  All sections match bit for bit:
+
+| Section | Cases | Content |
+|---|---|---|
+| `tri_chain` | 40000 | `TesselatePolygon( SHAPE_LINE_CHAIN )` on random rings (self-intersecting, grids), x-monotone polygons (with / without duplicate points), serpentines, subdivided squares (collinear runs, decimation), star polygons, tiny / collinear / all-duplicate / below-simplification chains, jittered noisy outlines, 40..400-vertex outlines, both orientations, scales 60 nm .. 4e8 nm; 1/8 also with hint data (matching and non-matching) |
+| `tri_polygon` | 20000 | `TesselatePolygon( POLYGON )`: rectangles with grid holes (rects, monotone, all-duplicate), monotone outlines with random (overlapping, crossing) rect holes, holes sharing an outline vertex (issue 24059), stars with holes; random orientations |
+| `libm:tri_cache` | 10000 | `CacheTriangulation( simplify, {}, index )` on multi-outline sets with holes, Clipper2 zone fills (rect unions minus rect / star cut-outs), random rings, fractured or not; then nothing / `Move` + re-cache / `Rotate` (90 degree multiples) / `Mirror` / copy + `SetVertex` + re-cache; up-to-date flag, every triangulated polygon (source index, vertices, triangles), index presence |
+| `tri_large` | 24 | 8k..30k vertex outlines (reflex index path) |
+| `tri_partition` | 12 | 52k..120k vertex outlines through `CacheTriangulation`: balanced partition (incl. the x86 `int` wrap of `splitPolygonBalanced` for 8e8 nm wide outlines), with an (inline) task submitter and without |
+| `tri_fractions` | 10000 | `PartitionAreaFractionsForTesting`, 0..8 leaves |
+| `tri_refine` | 10000 | `Refine()` of jittered grid meshes with random diagonals, both orientations |
+| `ystripes` | 5000 | `POLY_YSTRIPES_INDEX::Build` + 40 `Contains` queries (vertices, around the bbox; accuracies 0..10000) |
+| `tri_collide` | 5000 | `Collide( SHAPE* )` (rect, 1x1 rect, segment, circle, compounds of segments / circles / rects; clearances -5..; all out-parameter combinations) on cold, cached and indexed sets, then `AnyTriangleHit( point )`; the port's `&self` variant is asserted equal to the caching one |
+| `seg_intersects_line` | 20000 | `SEG::IntersectsLine` incl. infinite / NaN / huge slopes and offsets (GAP-P4) |
+
+- Regenerate: `tests/oracle/build_tri_oracle.sh` (about 2.5 minutes); find a mismatch with
+  `--dump cpp.txt` and `KICAD_GEOM_ORACLE_DUMP=rust.txt`.  The replay takes about 2.5 minutes.
+- Not covered: arcs in triangulated sets (`ClearArcs` path; arc construction is libm and G2/G5
+  territory), shapes other than rect / segment / circle / compound in `Collide( SHAPE* )`
+  (line chain / simple against triangles is not served by the G5 collision matrix yet, GAP-4).
 
 ### `sps_oracle` (G4a)
 
@@ -550,7 +590,9 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **D14 `const` methods writing `mutable` members** take `&mut self`
   (`ShapeLineChain::generate_bbox_cache`), so that all shapes are `Send + Sync`.
 - **D15 Poly-set triangles** (`Tri`) store copies of their three vertices instead of a pointer to
-  the parent triangulation (kept in G4a; G4b may change it).  `TRI` has no `Clone()` in C++ (it asserts);
+  the parent triangulation (kept in G4b: every `TriangulatedPolygon` mutator - `add_triangle`,
+  `set_triangles`, `set_vertices`, `move_`, `refine` - keeps the copies in sync; code writing the
+  public fields directly must do the same).  `TRI` has no `Clone()` in C++ (it asserts);
   `Tri::clone_shape` returns a copy.
 - **D16 `wxASSERT` / `wxCHECK` on input**: the tangent-arc constructor's "segments do not
   intersect" assertion and the "MTV not implemented" assertions of the collision matrix are not
@@ -643,6 +685,28 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   `GetArcToSegmentCount`, `SHAPE_POLY_SET( BOX2D )`, `CollideVertex`'s squared norm) use
   `cmath::f64_to_i32_x86` / `f64_to_i64_x86`.
 
+- **D-T1 Vertex arena (G4b).** `VERTEX` objects live in `VertexSet::vertices` (creation order,
+  as the C++ `std::deque`, which `intersectsPolygon` relies on) and link through indices; a null
+  dereference of the C++ panics.  `void* m_userData` is a `usize` (0 = `nullptr`).  The vertex
+  set keeps its state across `TesselatePolygon` calls exactly where the C++ does not clear it
+  (early returns), so reused triangulators behave the same.  Tie order of `zSort`,
+  `buildReflexIndex` and the hole sort is libstdc++'s (`stdsort`); `subdividePolygon`'s
+  `std::set` (equal lengths collapse) is reproduced.  Out-of-range `double` to `int` conversions
+  use `f64_to_i32_x86`; `int` arithmetic that overflows on valid input in
+  `collectScanlineHits` / `splitPolygonBalanced` (outlines wider than about 143 mm) wraps like
+  x86 (verified by `tri_partition`).
+- **D-T2 Task submitter.** `TASK_SUBMITTER` is a flag (`a_has_submitter`): with it, partition
+  leaves are triangulated one after the other in leaf order, which is the C++ result whatever
+  the threads do; without it the leaves are re-queued as outlines as in C++ (a different but
+  equally deterministic result).  No threads, mutexes or atomics.
+- **D-T3 `Collide( const SHAPE* )` on `&self`.** The C++ caches the triangulation through a
+  `const_cast`.  `collide_shape(&self)` (also `Shape::collide`) uses the cached triangulation
+  when it is up to date (building a temporary index above `RTREE_THRESHOLD` triangles, as the
+  C++ would), the stale failed one when the failed hash matches, and otherwise triangulates a
+  copy; `collide_shape_mut` caches like the C++.  Results are identical (asserted on every
+  `tri_collide` probe); callers with many queries should cache first
+  (`cache_triangulation_with( false, false, true )`) or use `collide_shape_mut`.
+
 ## Known gaps
 
 - **GAP-1 libm on targets without glibc (notably wasm32).** Results that pass through `sin`,
@@ -689,28 +753,21 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **GAP-6** (closed in G4a) the `SHAPE_POLY_SET` skeleton; what is left is GAP-P1.
 - **GAP-S1** (closed in G4a) `SHAPE_LINE_CHAIN::OffsetLine` is `ShapeLineChain::offset_line`
   (verified by `libm:sps_inflate`).
-- **GAP-P1 Triangulation (package G4b).** Not ported: `TRIANGULATED_POLYGON::Refine()`,
-  `cacheTriangulation()` / `CacheTriangulation()` (the Rust `cache_triangulation` is a hook that
-  only drops a triangulation; none can be built yet, so `Mirror` / `Rotate` / `Scale` never
-  reach it), `TRIANGULATION_INDEX` / `m_triIndex` / `TriangulationIndex()`, `TASK_SUBMITTER`, the
-  triangle-based branch of `Collide( const SHAPE* )` (`AnyTriangleHit`; `collide_shape` returns
-  false for shapes other than segments and circles), `IsTriangulationUpToDate()` is ported but
-  always false until then.  `qa/.../test_shape_poly_set_triangle_index.cpp` belongs to G4b.
+- **GAP-P1** (closed in G4b) the triangulation: see the map, D-T1..D-T3 and the `tri_oracle`.
 - **GAP-P2 Collision matrix.** `shape_collisions::collide_shapes` (G5) still routes poly-set
   pairs to `unsupported_g5`; G5 should call `ShapePolySet::collide_shape` like the C++
   `collideSingleShapes`.
 - **GAP-P3** `SHAPE_LINE_CHAIN` collision corpus tests (`test_shape_line_chain_collision.cpp`)
   that need `SHAPE_POLY_SET::Parse` and `SEGMENT_INDEX` are now unblocked but not ported (G3/G5
   test files).
-- **GAP-P4 Found in G1 code (not fixed, not owned):** `Seg::intersects_line` converts
-  `aSlope * 1000` with `as Ecoord` (saturating) where the C++ `static_cast<ecoord>` of an
-  infinite / NaN / huge slope yields `INT64_MIN` on x86 (PORTING.md section 9); reachable via
-  `GenerateHatchLines` with a line length of 0.
+- **GAP-P4** (closed in G4b) `Seg::intersects_line` converts `aSlope * 1000` with
+  `f64_to_i64_x86` (`INT64_MIN` for infinite / NaN / huge slopes, like the reference build) and
+  computes the then overflowing cross product with wrapping arithmetic; verified by
+  `seg_intersects_line`.
 - **GAP-4 `COW_RTREE`** (`dynamic_rtree_cow.h`, 834 lines) is not ported: its only user is
   `SHAPE_INDEX` in the interactive router, which is out of scope.  Its 6 tests (suite
   `CowRTree` of `test_dynamic_rtree.cpp`) are not ported either.
-- **GAP-5 `polygon_triangulation.h`** belongs to the triangulation package; nothing was ported
-  here.
+- **GAP-5 `polygon_triangulation.h`** (closed in G4b).
 - **GAP-6 nanoflann subset.** Only what KiCad uses is ported: the static single-index kd-tree
   with the L2 metric (`L2_Simple_Adaptor`), `KNNResultSet` (without `NANOFLANN_FIRST_MATCH`),
   `RadiusResultSet`, `knnSearch`, `radiusSearch`, `findNeighbors` with `SearchParameters`.
