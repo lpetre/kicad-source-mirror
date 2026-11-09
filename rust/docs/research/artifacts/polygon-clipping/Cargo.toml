@@ -1,0 +1,42 @@
+[package]
+name = "clipresearch"
+version = "0.0.0"
+edition = "2024"
+publish = false
+autobins = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "drv_clipper2_rs"
+path = "src/bin/drv_clipper2_rs.rs"
+
+[[bin]]
+name = "drv_clipper2_rust"
+path = "src/bin/drv_clipper2_rust.rs"
+
+[[bin]]
+name = "drv_clipper2_rs_gnusort"
+path = "src/bin/drv_clipper2_rs_gnusort.rs"
+
+[[bin]]
+name = "libmtrace"
+path = "src/bin/libmtrace.rs"
+
+[[bin]]
+name = "sorttest"
+path = "src/bin/sorttest.rs"
+
+[dependencies]
+clipper2-rs-gnusort = { path = "vendor/clipper2-rs-gnusort", features = ["usingz"] }
+clipper2-rs = { version = "=0.3.0", features = ["usingz"] }
+clipper2-rust = { version = "=1.2.0", features = ["using_z"] }
+
+[profile.release]
+opt-level = 3
+debug = false
+
+[workspace]
+members = [".", "wasmdrv"]
+exclude = ["ffi-check", "alt-check", "patches/verify"]

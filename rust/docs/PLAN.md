@@ -51,13 +51,32 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 
 ## Status log
 
-- [x] Workspace skeleton, porting rules.
-- [ ] Oracle build (background).
-- [ ] Third-party equivalents research -> `docs/THIRD_PARTY_EQUIVALENTS.md`.
-- [ ] Subsystem analysis docs -> `docs/analysis/`, board model design -> `docs/design/`.
-- [ ] Foundation crates: sexpr, geom, core, libeval, font.
+- [x] Workspace skeleton, porting rules (PORTING.md, incl. section 9 binding decisions).
+- [x] Oracle: reference kicad-cli 10.99.0 built from this tree, see docs/ORACLE.md.
+- [x] Research: Clipper2 (vendor patched clipper2-rs 0.3.0) and spatial/sort/delaunator
+      (hand ports) decided, see docs/research/. Report docs/THIRD_PARTY_EQUIVALENTS.md pending.
+- [x] Analysis docs: pcb-io, drc, plot-fab, settings. Pending: connectivity-zones, text-font.
+- [ ] Board model design: three proposals written, final synthesis pending
+      (docs/design/board-model.md + board-model-types.md).
+- Foundation crates:
+  - [x] kicad-sexpr (S1) - lexer, formatter, Prettify, tree; oracle goldens over 479 files.
+  - [x] kicad-geom G1 math - 1M-case differential oracle bit-exact.
+  - [ ] kicad-geom G2 shapes, G7 sort/rtree/delaunator (running), then G3 line chain,
+        G4a poly set + clipper, G4b triangulation, G5 collisions, G6 shape utilities.
+  - [x] kicad-core C1 ids/layers; [ ] C2 units/strings/values (running).
+  - [ ] kicad-libeval (finishing run).
+  - [ ] kicad-font.
 - [ ] Board model + parser + writer.
 - [ ] Connectivity, plot, fab, drc.
 - [ ] Zone filler, custom rules, remaining providers.
 - [ ] CLI, wasm, demo.
 - [ ] Differential test campaign + adversarial review.
+
+## Notes for the orchestrator
+
+- Separate verify agents were dropped for packages whose implementer built a differential
+  oracle against the real C++ (cheaper and stronger). A cross-cutting adversarial review is
+  planned at the end.
+- Known duplication to consolidate later: printf-style formatting lives in
+  kicad-sexpr/src/formatter/cformat.rs; kicad-libeval carries local copies of eda_units /
+  string_utils helpers.

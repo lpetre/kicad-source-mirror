@@ -1,0 +1,310 @@
+{
+ "group": "spatial indexing and triangulation (rtree / KIRTREE, delaunator, nanoflann, rectpack2d, libpopcnt, dynamic_bitset, polygon triangulation)",
+ "libs": [
+  {
+   "cpp_lib": "rtree (thirdparty/rtree/geometry/rtree.h - Guttman RTree<> template, nushoin/RTree)",
+   "bundled_version": "Unversioned snapshot of github.com/nushoin/RTree (single header, 2022 lines); README says upstream has no licence so KiCad ships it as GPLv3.",
+   "kicad_usage": "NOT used by production code in this tree (KiCad 10.99). The only include is qa/tests/libs/kimath/geometry/bench_spatial_index.cpp:22 (5 `RTree<intptr_t,int,2,double,8,4>` instantiations, a benchmark of old vs new trees). CMake still lists the interface target (libs/kimath/CMakeLists.txt:61, pcbnew/router/CMakeLists.txt:13) but no source includes it. SHAPE_INDEX, DRC_RTREE, CN_RTREE, VIEW_RTREE, SCH_RTREE were all moved to KiCad's own KIRTREE trees in libs/kimath/include/geometry/rtree/ (see next entry).",
+   "scope": "out-of-scope",
+   "candidates": [],
+   "recommendation": "not needed",
+   "rationale": "Dead dependency for the port: nothing in Tier 1-3 reaches it. Do not port it and do not look for a crate; the functionality lives in KIRTREE (next entry).",
+   "fidelity_risk": "none - unused by any code path in scope.",
+   "experiments": "grep over the whole tree for `#include <geometry/rtree.h>` / `rtree.h` and for `RTree<` instantiations: only the QA benchmark matches. NOTE for the orchestrator (process, not library): running `cargo init` under rust/target/research/<group>/ made cargo append that directory to `members` in /home/user/kicad-source-mirror/rust/Cargo.toml (\"target/research/spatial\"). I removed my entry immediately (file is back to `members = [\"crates/*\"]`, no diff against HEAD); other research agents following the same instruction may have left similar entries."
+  },
+  {
+   "cpp_lib": "KIRTREE - KiCad's own r-trees that replaced thirdparty/rtree: PACKED_RTREE, DYNAMIC_RTREE, COW_RTREE (libs/kimath/include/geometry/rtree/*.h)",
+   "bundled_version": "KiCad-own code in the 10.99 tree: packed_rtree.h (528 lines), dynamic_rtree.h (1812), dynamic_rtree_cow.h (834), rtree_node.h (719). Not third-party, GPL-3.0-or-later.",
+   "kicad_usage": "15 production includes (9 packed, 5 dynamic, 1 cow). PACKED_RTREE<T,int,2,16> (Hilbert-sorted bulk load via std::sort, immutable): DRC_RTREE (pcbnew/drc/drc_rtree.h:75, per-layer trees used by copper/silk/mask/edge/hole/physical clearance providers), SEGMENT_INDEX (libs/kimath/include/geometry/segment_index.h, used by shape_collisions.cpp:462-585 and shape_poly_set.cpp:2277,2476), TRIANGULATION_INDEX (shape_poly_tri_index.h, used by SHAPE_POLY_SET::Collide and CN_ZONE_LAYER), zone_filler.h:249, drc_zone_index.h, footprint_courtyard_index.h, drc_creepage_utils.h, copper_clearance.cpp:1270. DYNAMIC_RTREE<T,int,3> (R*-tree with forced reinsert, Morton bulk load): CN_RTREE (pcbnew/connectivity/connectivity_rtree.h:39; BulkLoad/Insert/Remove/Search on {layer,x,y}); also VIEW, SCH_RTREE, teardrops (out of scope). COW_RTREE: SHAPE_INDEX, only pcbnew/router (Tier 3). API used: Builder::Add/Build, Search(min,max,visitor returning bool to stop), begin()/end() iteration, BulkLoad, Insert, Remove.\n\nDoes query ORDER influence output? Yes for DRC and geometry, no for connectivity and zone-fill queries:\n- ORDER-SENSITIVE: (1) drc_test_provider_copper_clearance.cpp:704-708 stops after the first violation per track/layer unless --all-track-errors (default false, drc_engine.cpp:94), so which violation is reported follows tree order; (2) drc_rtree.h:391-443 QueryColliding keeps `curActual < actual` and stops at actual<=0, so the marker position of an overlapping item/zone is the first intersecting triangle in tree order; (3) copper_clearance.cpp:1337-1373 testZonesToZones reports pt/otherPt/actual of the first segment pair under clearance; (4) shape_poly_tri_index.h:182-196 AnyTriangleHit (strict `<`, first tie wins) feeds SHAPE_POLY_SET::Collide(...,&actual,&location); (5) shape_poly_set.cpp:2483-2507 splitSelfTouchingOutlines takes the first pinch candidate; (6) DRC_RTREE::OnLayer iterates in packed order (QueryCollidingPairs).\n- NORMALISED by KiCad itself (any order works): zone_filler.cpp:404-428 (sorted by board sequence), drc_zone_index.h:87,150 (sorted), shape_collisions.cpp:575-577 (\"Candidate IDs restore the legacy order\").\n- ORDER-INSENSITIVE: connectivity (CN_VISITOR always returns true, CN_ITEM::Connect inserts with lower_bound, deferred net codes are sorted: connectivity_algo.cpp:310-378), and all boolean queries.\nThe packed order = Hilbert key order, and ties (identical bbox centres: pad+hole, via on pad, the two triangles of a rectangle) are resolved by libstdc++'s unstable std::sort.",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "rstar",
+     "version": "0.14.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "R*-tree, 28 releases 2018-11..2026-11 (georust), deps heapless/num-traits/ordered-float/smallvec, MSRV 1.90 (workspace rust-version 1.85 + resolver 3 locks 0.13.1). Has bulk_load, insert, remove, locate_in_envelope_intersecting (closed intervals, same predicate as KiCad), 2D and 3D. Result SETS equal KIRTREE in 100% of 20,850 queries (bulk/insert/remove, 2D+3D, f64 coords) but ORDER equals PACKED_RTREE in only 438 of 6,927 multi-hit queries (first hit equal in 822). Integer coordinates are unsafe with overflow checks: AABB<[i32;2]> panics on insert at nm scale (area = product in the scalar type); i64 panics for boxes spanning the i32 range and for {layer,x,y}; f64 or Wrapping<i64> work."
+    },
+    {
+     "crate": "static_aabb2d_index",
+     "version": "2.1.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Flatbush-style Hilbert packed static index (closest in design to PACKED_RTREE), forbid(unsafe) by default, only dep num-traits, 13 releases 2020-12..2026-08, MSRV 1.86 (1.85 resolves 2.0.0). 2D only, no insert/remove. Sets equal in 10,900/10,900 queries; order equal in 435/6,927 multi-hit queries (16-bit Hilbert grid, different node layout and tie order). With i32 coordinates it panics (subtract overflow in build) on 38/40 full-int-range cases; fine with f64."
+    },
+    {
+     "crate": "geo-index",
+     "version": "0.4.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Flatbush/kdbush ports with ABI-stable buffers; deps bytemuck, geo-traits, num-traits, thiserror, tinyvec; 9 releases 2024-01..2026-09, MSRV 1.75. 2D static only. Sets equal 10,900/10,900; order equal 657/6,927 multi-hit queries; i32 variant panics on overflow for full-range boxes (38/40 cases)."
+    },
+    {
+     "crate": "packed_spatial_index",
+     "version": "0.33.0",
+     "license": "Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Found via cargo search (Hilbert packed 2D/3D index with SIMD). Not evaluated; `pure_rust` not verified by reading the source. Would have the same order mismatch."
+    }
+   ],
+   "recommendation": "port by hand (kicad-geom): PACKED_RTREE exactly, DYNAMIC_RTREE exactly (or at least BulkLoad+Search), COW_RTREE only if Tier 3; no external crate.",
+   "rationale": "No crate can reproduce KIRTREE's visit order, and DRC output (which violation, marker position, actual distance) depends on it. A statement-by-statement port does reproduce it bit for bit, provided the Hilbert sort and the R*-tree split/reinsert sorts use a port of libstdc++'s std::sort (see the std::sort entry). Working prototypes exist and can be lifted: /home/user/kicad-source-mirror/rust/target/research/spatial/src/packed_rtree.rs (315 lines) and src/dynamic_rtree.rs (1151 lines, arena-based, no unsafe). Porting notes found the hard way: HilbertXY2D needs wrapping u32 arithmetic (`s*2-1-x` wraps for s=2^31); DYNAMIC_RTREE area/overlap products overflow int64 for whole-range boxes (UB in C++, wraps in practice) so use wrapping_mul; the SSE2/NEON OverlapMask2D paths are the same closed-interval predicate as the scalar one. For CN_RTREE alone any exact AABB index would do (order-insensitive); rstar with f64 is a verified fallback but adds nothing over the hand port.",
+   "fidelity_risk": "low with the hand port (visit order verified identical to g++/libstdc++ on every query tested; residual risk is that the tie order is libstdc++-specific, i.e. the port matches a Linux/GCC oracle, not MSVC/libc++ builds of KiCad). HIGH if a crate is substituted: 91-94% of multi-hit queries come back in a different order, which changes first-hit DRC results.",
+   "experiments": "C++ driver (cpp/rtree_driver.cpp, g++ 13.3 -O2 -std=c++20 against libs/kimath/include) prints PACKED iteration order and the visit order of every query for PACKED (2D) and DYNAMIC after BulkLoad, after n Insert, and after Remove of every odd id (2D and 3D). Cases per seed: 834 trees, 719,051 boxes, 20,850 queries: board-like boxes, heavy centre ties, identical boxes, triangle pairs, negative coords, zero-size boxes, node-boundary sizes (0,1,16,17,256,257,4096,4097), full int range.\n- Hand port PackedRTree: iteration order identical 437/437 2D trees (199 with Hilbert-key ties), visit order identical 10,925/10,925 queries; same on 5 more seeds (65,550 queries total).\n- Hand port DynamicRTree: visit order identical 20,850/20,850 for each of BulkLoad, Insert, Remove (2D+3D), same on 2 more seeds (187,650 query comparisons), including the full-int-range cases where int64 wraps.\n- All C++ trees agree with brute force as sets (sanity).\n- Crates: numbers in the candidate notes; overflow panics reproduced with overflow-checks on (src/bin/rstar_int.rs, rtree_cmp).\n- wasm32-unknown-unknown: whole scratch project builds; checksums over all visit orders computed inside WebAssembly (node 22) equal the native ones for both ports."
+  },
+  {
+   "cpp_lib": "delaunator (thirdparty/delaunator - abellgithub/delaunator-cpp)",
+   "bundled_version": "Unversioned snapshot of github.com/abellgithub/delaunator-cpp (delaunator.cpp 648 lines + delaunator.hpp 147), MIT. Differs from mapbox delaunator: non-robust orientation test with a `reldet > 1e14` guard, extra `Point::equal(.., span)` skip, hash size ceil(sqrt(n)), std::sort of ids by distance.",
+   "kicad_usage": "One user: pcbnew/ratsnest/ratsnest_data.cpp:47,228 (RN_NET::TRIANGULATOR_STATE::Triangulate; library linked into pcbcommon, common/CMakeLists.txt:1332). Input contract: >= 3 anchors with unique integer nm positions sorted by x then y (CN_PTR_CMP), not all exactly collinear (areNodesColinear handles that case). Uses only `triangles` and `halfedges`: every undirected edge becomes an MST candidate; kruskalMST then runs with a strict total order (weight, endpoints, tags), so triangle ORDER is irrelevant but the SET of edges matters. The MST edges are the ratsnest, i.e. what DRC reports as unconnected items (Tier 1 connectivity + unconnected test).",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "delaunator",
+     "version": "1.1.0",
+     "license": "ISC",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "mourner's port of mapbox delaunator; 8 releases 2018-09..2026-05, one dependency (robust 1.2.0), no_std capable, no unsafe found, MSRV 1.87 (workspace 1.85 locks 1.0.2, which gave the same comparison statistics on a 2,437-case set). NOT equivalent to the bundled C++: robust orient2d vs naive determinant, seed point requires d>0, hash size floor(sqrt n), sort_unstable, different circumradius expression. On 2,721 contract-conforming sets: identical triangles+halfedges arrays in 896 (33%), identical edge set in 2,112 (78%), identical hull in 2,610. Random points: edge set equal 400/400 but array order equal 32/400. Gridded/cocircular sets mostly differ (full grid 2/80, two rows 8/80, QFP-like 29/80 edge-set-equal)."
+    },
+    {
+     "crate": "spade",
+     "version": "2.15.1",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Incremental Delaunay/CDT with exact predicates, 40 releases 2016..2026-03, deps hashbrown/num-traits/robust/smallvec. Different algorithm and tie handling; not compared numerically (only smoke-tested). No better than `delaunator` for fidelity."
+    }
+   ],
+   "recommendation": "port by hand (statement-by-statement port of delaunator.cpp, ~620 lines of Rust, in kicad-connectivity or kicad-geom) together with the libstdc++ std::sort port.",
+   "rationale": "The hand port is byte-identical to the bundled C++ on every case tried, including the cases where the C++ produces an incomplete triangulation, so the ratsnest is reproduced exactly. The crate is a different algorithm variant. Its differing diagonals on cocircular (grid) sets turned out not to change KiCad's MST (0 MST differences in all grid/cocircular/random categories, also with random pre-connected pairs - consistent with the fact that an interior chord of a cocircular polygon is always the strictly longest edge of one adjacent triangle), but on near-collinear anchor sets (a pad row a few nm off a line, e.g. rotated footprints) the MST differs: 57/284 board-scale near-collinear sets, 1/146 rotated pad rows, 1/394 tiny integer sets. Prototype: /home/user/kicad-source-mirror/rust/target/research/spatial/src/delaunator_port.rs. Porting notes: do size_t index maths in u64 so wasm32 matches (INVALID_INDEX, hash_key); hash_key must map NaN (point exactly at the circumcentre) to 2^63 like glibc llround; keep the exact floating expression order (x86-64 GCC does not contract to FMA); the C++ `throw`/assert paths become errors.",
+   "fidelity_risk": "low with the hand port (bit-identical triangles/halfedges/hull; depends on the libstdc++ sort tie order like the oracle). medium if the `delaunator` crate is used: identical ratsnest on well-conditioned and gridded nets, different on near-collinear nets. Note a KiCad quirk the port will faithfully reproduce: the bundled C++ leaves anchors out of the triangulation on 142 of 2,721 test sets (all near-collinear), which yields missing ratsnest edges.",
+   "experiments": "cpp/delaunator_driver.cpp built with g++ 13.3 -O2 against thirdparty/delaunator; src/bin/delaunay_cmp.rs generates point sets and compares triangles, halfedges, hull, undirected edge set and the KiCad-style Kruskal MST. Default set: 3,050 cases / ~240k points: tiny integer sets, PCB-pitch grid subsets, uniform random at 1e3..2e9 nm, full grids, grids with nm jitter, circles/rings, near-collinear lines (one category beyond i32 range, one inside 300 mm), QFP-like, two-row, symmetric squares/octagons, big sets (up to 6,000 points), rotated pad rows/DIPs/grids rounded to nm, plus off-contract inputs (duplicates, unsorted, all-collinear).\n- Hand port vs C++: output files byte-identical (cmp) for all 3,050 cases, and for 14 further seeds: 37,096 cases in total; the 29 all-collinear cases fail identically (C++ throws \"not triangulation\").\n- Crate 1.1.0 vs C++: figures in the candidate notes; MST differs in 125/2,721 contract cases (all in near-collinear categories, plus the two singletons above).\n- wasm32: delaunator crate and the port build; a checksum over triangles/halfedges/hull of all 3,050 cases computed in WebAssembly (node 22) equals the native value."
+  },
+  {
+   "cpp_lib": "nanoflann (thirdparty/nanoflann/nanoflann.hpp - kd-tree)",
+   "bundled_version": "1.7.1 (NANOFLANN_VERSION 0x171), single header 2,740 lines, BSD.",
+   "kicad_usage": "Two includes: pcbnew/convert_shape_list_to_polygon.cpp:44 and pcbnew/fix_board_shape.cpp:30 (the latter is a GUI repair tool, out of scope). In convert_shape_list_to_polygon.cpp a `KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<double,..>,..,2>` (default params: leaf_max_size 10, single-threaded build) is built over the two end points of every open outline shape (lines 191, 867, 1322). Used API: `radiusSearch(pt, eps*eps, matches)` in findNeighbours (line 683) - KiCad immediately re-sorts the matches by (distance, index) (closerEndpoint, line 685), so only the SET matters (strict dist^2 < r^2); and `knnSearch(pt, 8, ...)` in report_gap (line 1061) for the \"not a closed shape\" error, where indices[0] and the first index of another shape pick the two reported items - here nanoflann's order among equidistant end points matters. This code builds board/footprint/courtyard outline polygons: callers in scope are drc_test_provider_edge_clearance.cpp, drc_test_provider_misc.cpp, zone_filler.cpp, footprint.cpp (courtyards), pcb_plotter.cpp, board.cpp.",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "kiddo",
+     "version": "6.3.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Most active kd-tree crate (63 releases 2021..2026-09) but heavy: build.rs, ~960 `unsafe` lines, SIMD kernels, MSRV 1.89 (no 6.x release fits the workspace's 1.85); built with default-features=false. `.within(r2).exclusive_boundaries()` matched nanoflann's radius sets 48,000/48,000; nearest_n(8) order matched 13,515/48,000 on tie-heavy data."
+    },
+    {
+     "crate": "kd-tree",
+     "version": "0.6.2",
+     "license": "MIT",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Small (deps num-traits, ordered-float, paste, typenum), 12 releases 2020..2025-11. within_radius is strict (<), sets matched 48,000/48,000; nearests(8) order matched 12,475/48,000."
+    },
+    {
+     "crate": "rstar",
+     "version": "0.14.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "locate_within_distance is inclusive (<=): 39,737/48,000 until a strict post-filter is added (then 48,000/48,000); nearest_neighbor_iter order matched 12,905/48,000."
+    },
+    {
+     "crate": "kdtree",
+     "version": "0.8.1",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Listed from cargo info only; not evaluated (`pure_rust` not verified)."
+    },
+    {
+     "crate": "kdbush",
+     "version": "0.2.0",
+     "license": "ISC",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Static 2D point index (range/within only, no kNN); cargo info only, not evaluated."
+    }
+   ],
+   "recommendation": "port by hand: the ~400-line subset of nanoflann KiCad uses (divideTree/middleSplit_/planeSplit, searchLevel, KNNResultSet, RadiusResultSet). A brute-force scan is an acceptable simplification for the radius query only.",
+   "rationale": "Point counts are tiny (outline end points) so performance is irrelevant; what matters is (a) the strict `<` radius boundary on f64 squared distances, which every candidate gets right with care, and (b) the order of equidistant neighbours in knnSearch, which is defined by nanoflann's tree build and traversal and which no crate (and no simple (distance, index) tie-break) reproduces: on outline-like data brute force yields the same reported shape pair in only 8,321 of 16,000 queries. Ties are structural there because consecutive outline segments share end points. The hand port reproduces both queries exactly. Prototype: /home/user/kicad-source-mirror/rust/target/research/spatial/src/nanoflann_port.rs.",
+   "fidelity_risk": "low with the hand port (exact on all tested queries). With brute force or a crate: none for well-formed outlines (radius path is canonicalised by KiCad), medium for malformed outlines (the items named in the \"not a closed shape\" violation can differ).",
+   "experiments": "cpp/nanoflann_driver.cpp mirrors KiCad's adaptor and calls; src/bin/knn_cmp.rs compares. Per seed: 1,000 point sets, 535,162 points, 48,000 queries (outline-like polygons with gaps, nm near-misses and T junctions; coarse-grid duplicates incl. radius exactly equal to an existing distance; all points on one axis; uniform random). Hand port: radius results identical in KiCad's canonical order and in nanoflann's own std::sort order, knnSearch(8) order identical: 48,000/48,000 each, on 4 seeds (192,000 queries). Brute force: radius 48,000/48,000; knn order 14,006/48,000 (10,000/10,000 on tie-free uniform data), same (shapeA, shapeB) 25,524/48,000. Crates: see notes; kiddo ImmutableKdTree built all 1,000 sets without panics. wasm32: all three crates and the port build; port checksum in WebAssembly equals native."
+  },
+  {
+   "cpp_lib": "rectpack2d (thirdparty/rectpack2d - TeamHypersomnia rectpack2D)",
+   "bundled_version": "Unversioned header-only snapshot (6 headers, ~880 lines), MIT (c) 2022 Patryk Czachurski.",
+   "kicad_usage": "One include: pcbnew/autorouter/spread_footprints.cpp:40 (`rectpack2D::find_best_packing<empty_spaces<allow_flip, default_empty_spaces>>` with flipping disabled, lines 45-104). SpreadFootprints() is called when new footprints arrive from a netlist (pcbnew/netlist_reader/netlist.cpp:141, api/headless_pcb_context.cpp:267) and by the interactive \"pack and move\" tool (tools/edit_tool_move_fct.cpp:813).",
+   "scope": "out-of-scope",
+   "candidates": [
+    {
+     "crate": "rectangle-pack",
+     "version": "0.4.2",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Deterministic bin packer, no dependencies, last release 2021-05. Smoke-tested only."
+    },
+    {
+     "crate": "crunch",
+     "version": "0.5.3",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Rectangle packer with optional rotation, no dependencies, last release 2023-04. Smoke-tested only."
+    },
+    {
+     "crate": "guillotiere",
+     "version": "0.7.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Guillotine atlas allocator (dep euclid), last release 2026-03. Smoke-tested only."
+    },
+    {
+     "crate": "etagere",
+     "version": "0.3.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Shelf-packing atlas allocator (dep euclid), last release 2026-03. Smoke-tested only."
+    },
+    {
+     "crate": "binpack2d",
+     "version": "1.0.1",
+     "license": "MIT",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "cargo info only (2 releases, 2023); `pure_rust` not verified."
+    }
+   ],
+   "recommendation": "not needed",
+   "rationale": "Footprint spreading belongs to netlist import / interactive placement, which is in none of the tiers. If it is ever wanted, port rectpack2d by hand: placements go straight into footprint positions, and none of the crates implements rectpack2D's best-bin-finder search, so they would give different layouts.",
+   "fidelity_risk": "none for the planned scope (code path not ported). Would be high with any of the listed crates if spreading were added later.",
+   "experiments": "Usage established by grep. The four crates marked verified-ok were added to the scratch project, exercised by src/bin/pack_alt.rs natively (20 rectangles packed/allocated by each) and built for wasm32-unknown-unknown. No comparison against rectpack2d was made."
+  },
+  {
+   "cpp_lib": "libpopcnt (thirdparty/libpopcnt/libpopcnt.h)",
+   "bundled_version": "Single header (1,143 lines), no version macro; copyright 2016-2026 Kim Walisch, BSD-2-Clause. Exact upstream release could not be verified.",
+   "kicad_usage": "No KiCad source includes it directly. It is pulled in by thirdparty/dynamic_bitset/dynamic_bitset.h:59-63 (`__has_include(<libpopcnt.h>)`) and used in exactly one place, `dynamic_bitset::count()` (dynamic_bitset.h:2745-2746), i.e. LSET/BASE_SET::count(). thirdparty/dynamic_bitset/CMakeLists.txt links the `popcnt` interface target.",
+   "scope": "core",
+   "candidates": [],
+   "recommendation": "std is enough: `u64::count_ones()` summed over the blocks.",
+   "rationale": "It is only a faster population count; the result is a plain integer with no room for numerical differences. Rust's count_ones compiles to popcnt/NEON where available and to a bit-trick fallback on wasm32 (or the wasm `i64.popcnt` instruction).",
+   "fidelity_risk": "none.",
+   "experiments": "Covered by the dynamic_bitset experiment: the C++ driver was compiled with -I thirdparty/libpopcnt so `count()` went through libpopcnt, and its value matched the Rust `count_ones` sum after each of 200,000 random bit-set operations."
+  },
+  {
+   "cpp_lib": "dynamic_bitset (thirdparty/dynamic_bitset - sul::dynamic_bitset)",
+   "bundled_version": "1.3.3 (SUL_DYNAMIC_BITSET_VERSION_*), single header 3,681 lines, MIT (c) 2019 Maxime Pinard.",
+   "kicad_usage": "One include: include/base_set.h:34. `class BASE_SET : public sul::dynamic_bitset<uint64_t>` (base_set.h:51) and `class LSET : public BASE_SET` with 128 bits (include/lset.h:36-43, PCB_LAYER_ID_COUNT = 128). LSET appears in 280 non-test source files (46 in drc/connectivity/zone filler/plot/sexpr io). Library surface actually used by BASE_SET: constructor(size), size(), resize(), set/reset/flip (single bit and all), test(), count(), any()/none()/all(), &= |= ^= ~, operator==. Everything else is KiCad's own code layered on top and must be ported from base_set.h/lset.cpp: auto-growing set(pos), size-reconciling bit operators, compare()/operator<, FmtHex/FmtBin/ParseHex, set-bit iterators, std::hash<BASE_SET> (hash = hash*31 + bit). Other sizes exist (e.g. `BASE_SET legacyLSET(LEGACY_PCB_LAYER_ID_COUNT)` in pcb_plot_params.cpp:590), so a fixed u128 alone is not enough for BASE_SET.",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "fixedbitset",
+     "version": "0.5.9",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "petgraph's bit set, no dependencies, 32 releases 2015..2026-11, MSRV 1.56, ~78 `unsafe` lines (SIMD blocks). State/count/any/none/all/equality identical to sul::dynamic_bitset after each of 200,000 random operations; caveat: no shrinking resize (grow only), had to rebuild the set to emulate resize()."
+    },
+    {
+     "crate": "bit-set",
+     "version": "0.11.1",
+     "license": "Apache-2.0 OR MIT",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "contain-rs BitSet over bit-vec 0.10.1, MSRV 1.85. Set-of-integers semantics without a fixed length, so flip-all / all() / size-aware equality do not map directly. Smoke-tested only."
+    },
+    {
+     "crate": "bitvec",
+     "version": "1.1.1",
+     "license": "MIT",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Very general (deps funty, radium, tap, wyz; ~537 `unsafe` lines). wasm32 caveat found: `BitVec<u64, _>` does NOT compile for wasm32-unknown-unknown (`u64: BitStore` is only implemented on 64-bit targets); it builds with u32/usize storage. Smoke-tested only."
+    },
+    {
+     "crate": "smallbitvec",
+     "version": "2.6.1",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "cargo info only."
+    }
+   ],
+   "recommendation": "std is enough: hand-write `BaseSet { blocks: Vec<u64>, len }` (or `[u64; 2]` for the 128-bit LSET fast path) in kicad-core and port BASE_SET/LSET's own methods on top.",
+   "rationale": "The library part KiCad relies on is about 60 lines of Rust (the experiment's StdBitSet), has no numerical behaviour, and keeping the block layout explicit (u64 blocks, unused high bits zero) makes FmtHex/ParseHex, iteration order and the hash straightforward to port and identical on wasm32. A crate would add a dependency without removing any of the BASE_SET/LSET porting work; fixedbitset is the only one whose semantics matched without contortions.",
+   "fidelity_risk": "none for the bit-set operations (verified equivalent). The risk sits in KiCad's own layer (ParseHex/FmtHex, compare, hash, auto-resize rules), which must be ported and tested from base_set.h, not in the choice of container.",
+   "experiments": "cpp/bitset_driver.cpp (sul::dynamic_bitset<uint64_t>, with libpopcnt) and src/bin/bitset_cmp.rs replay a random script of 200,000 operations (set/reset/flip bit, set/reset/flip all, &=, |=, ^=, ~, resize, new) on sizes 0, 1, 60, 64, 65, 127, 128, 129, 200 and random 0..260; after every operation count, any, none, all, equality with a second set and the full bit string are compared. Result: std-only Vec<u64> implementation identical after 200,000/200,000, fixedbitset identical after 200,000/200,000. All three crates build for wasm32-unknown-unknown (bitvec only with non-u64 storage, as noted)."
+  },
+  {
+   "cpp_lib": "polygon triangulation (KiCad's own libs/kimath/include/geometry/polygon_triangulation.h; poly2tri-like need)",
+   "bundled_version": "KiCad-own header, 1,597 lines (ear clipping with z-order hashing, partitioning, hole bridging); not third-party. No poly2tri in thirdparty/.",
+   "kicad_usage": "Included by libs/kimath/src/geometry/shape_poly_set.cpp:47 (SHAPE_POLY_SET::cacheTriangulation, line 3490 onward) and by the 3D ray tracer (out of scope). The triangles feed SHAPE_POLY_SET::Collide (via TRIANGULATION_INDEX / AnyTriangleHit), DRC_RTREE for zones (SH_POLY_SET_TRIANGLE subshapes), CN_ZONE_LAYER in connectivity, and the triangulation is cached in zone fills. Distances to a polygon do not depend on how it is triangulated, but collision LOCATIONS for overlapping shapes are taken from the first intersecting triangle, so the exact triangles (and their order) influence DRC marker positions.",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "earcutr",
+     "version": "0.5.0",
+     "license": "ISC",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Port of mapbox earcut (f64), deps itertools/num-traits, 9 releases 2021..2025-05. Alternative only: different triangles than KiCad."
+    },
+    {
+     "crate": "earcut",
+     "version": "0.4.12",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "georust port of earcut, dep num-traits, 18 releases 2024..2026-11. On the same square-with-hole input it already disagrees with earcutr on the first triangle."
+    },
+    {
+     "crate": "i_triangle",
+     "version": "0.51.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "iShape integer-based sweep/Delaunay triangulator (pulls i_overlay, i_float, i_shape, i_tree, i_key_sort), 75 releases 2023..2026-10. Robust on integers but a different algorithm."
+    },
+    {
+     "crate": "spade",
+     "version": "2.15.1",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Constrained Delaunay triangulation; triangulates the convex hull, holes must be filtered by the caller."
+    },
+    {
+     "crate": "cdt",
+     "version": "0.1.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "cargo info only (single release)."
+    }
+   ],
+   "recommendation": "port by hand (KiCad's polygon_triangulation.h into kicad-geom); the crates are fallbacks only.",
+   "rationale": "It is KiCad code, not a library, and its output is observable (collision witness points, triangle counts in zone caches, R-tree contents). Every candidate crate implements a different algorithm and would produce a different, equally valid, triangle set.",
+   "fidelity_risk": "low if ported statement by statement (not verified here: no C++ comparison was run for this item). medium if a crate is used: clearances and yes/no collisions stay correct, but marker positions for overlapping polygon collisions and anything keyed on triangle order would differ.",
+   "experiments": "Only a smoke test (src/bin/tri_alt.rs): a 20 mm square with a 4 mm hole in nm coordinates gives 8 triangles with earcutr, earcut and i_triangle but with different first triangles ([3,0,4], [0,4,5], [2,1,0]); spade returns 10 faces including the hole. All four build for wasm32-unknown-unknown. KiCad's triangulator itself was not driven from C++ (it needs SHAPE_POLY_SET and most of kimath), so equivalence of any port remains to be tested by the geometry team."
+  },
+  {
+   "cpp_lib": "libstdc++ std::sort / std::partial_sort tie order (implicit dependency of KIRTREE, delaunator and nanoflann; not in thirdparty/)",
+   "bundled_version": "GCC 13.3 libstdc++ (bits/stl_algo.h, bits/stl_heap.h): introsort with median-of-3 pivot, insertion sort below 16 elements, heapsort fallback at depth 2*floor(log2 n).",
+   "kicad_usage": "Not a bundled library, but the libraries of this group only become reproducible with it: `std::sort` is unstable and the comparators involved leave ties. Call sites that decide output: packed_rtree.h:264 (Hilbert keys; equal for items with the same bbox centre), dynamic_rtree.h:927 (forced reinsert by distance), :1098-1141 and :1287-1303 (R*-tree split axis sorts), delaunator.cpp:304 (point ids by distance to the seed circumcentre; equal distances are normal on symmetric layouts), nanoflann.hpp RadiusResultSet::sort. The same issue will exist for other KiCad code that sorts with a non-total comparator.",
+   "scope": "core",
+   "candidates": [],
+   "recommendation": "port by hand: a small `std_sort` / `std_partial_sort` module in kicad-core, used wherever the C++ calls std::sort with a comparator that is not a total order.",
+   "rationale": "Rust's `sort_unstable_by` produced the libstdc++ order in only 1,197 of 3,102 test arrays (essentially the tie-free ones), and a stable sort is a different permutation again. A 330-line port of the libstdc++ algorithms reproduces the order exactly. `std::stable_sort` needs no port (the result of a stable sort is unique; use `slice::sort_by`). Prototype: /home/user/kicad-source-mirror/rust/target/research/spatial/src/stdsort.rs. One trap found by the overflow checks: __adjust_heap relies on signed truncating division for len 0 and 1 (std::partial_sort(first, first, last) still moves the minimum to the front), so the port uses isize there.",
+   "fidelity_risk": "low: exact against the Linux/GCC reference. Inherent caveat: the order of equal elements is libstdc++-specific, so results match a GCC-built oracle but would not match KiCad built with libc++ or MSVC, which already differ from each other in these tie cases.",
+   "experiments": "cpp/sort_driver.cpp vs src/bin/sort_cmp.rs: 4,602 arrays of (key, original index) sorted by key only - 3,000 random arrays with 1..1e9 distinct keys and sizes 0..5,000, structured inputs (sorted, reversed, organ pipe, sawtooth, pairs, at the 15/16/17/32/33 thresholds up to 10,000), McIlroy antiquicksort adversarial inputs up to 10,000 elements (the port took the heapsort fallback 109 times), and 1,500 std::partial_sort cases. Result: 4,602 identical, 0 different (2,322 of the std::sort cases contain ties). The port is additionally exercised indirectly by every delaunator / r-tree / nanoflann comparison above, natively and in wasm32. Reproduction: `sh run_all.sh` in /home/user/kicad-source-mirror/rust/target/research/spatial/ (git-ignored target dir, so copy the sources out before any `cargo clean`; a tarball is at /tmp/claude-0/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/scratchpad/spatial_research_src.tar.gz and the last full log at /tmp/claude-0/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/scratchpad/run_all.log)."
+  }
+ ]
+}

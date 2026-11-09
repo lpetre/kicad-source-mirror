@@ -1,0 +1,121 @@
+{
+ "group": "polygon clipping",
+ "libs": [
+  {
+   "cpp_lib": "clipper2 (thirdparty/clipper2, Angus Johnson's Clipper2, BSL-1.0)",
+   "bundled_version": "clipper.version.h says \"2.0.1\", but the copy is a post-tag upstream snapshot: clipper.engine.cpp is dated 21 February 2026 (the 2.0.1 tag, as shipped in crate clipper2-src 2.0.1, is dated 5 November 2025). Diffed against two pristine upstream copies found in the cargo registry: (a) vs the snapshot bundled by clipper2-sys 1.0.0 (same 21 Feb 2026 engine date) every file is identical except clipper.engine.h/.cpp, which carry KiCad-local patches: a StripeIndex Y-stripe point-in-polygon index used for PolyTree nesting (Path2ContainsPath1Indexed, pip_index_threshold_=64, PipIndexThreshold() knob, comment \"After KiCad's POLY_YSTRIPES_INDEX\"), IntersectListSort changed from function to functor, #include <cmath>, a renamed local; (b) vs the 2.0.1 tag there is additionally an upstream behavioural change: FixSelfIntersects lost its 'adjacent micro self-intersections' branch. Built with -DUSINGZ (target_compile_definitions(clipper2 PUBLIC USINGZ)); only engine/offset/rectclip .cpp are compiled (triangulation is not). Could not verify: the exact upstream commit hash, and KiCad's patch history (mirror is shallow, 50 commits, one touching thirdparty/clipper2).",
+   "kicad_usage": "Only libs/kimath talks to Clipper2 directly: 4 files include <clipper2/clipper.h> (libs/kimath/include/geometry/shape_poly_set.h, shape_line_chain.h, src/geometry/shape_poly_set.cpp, shape_line_chain.cpp); plus two catch(Clipper2Lib::Clipper2Exception) sites (common/eda_draw_frame.cpp:1124, qa/tools/drc_proto/drc_proto.cpp:135), one QA test (qa/tests/libs/kimath/geometry/test_shape_line_chain.cpp) and PCH lists in common/, pcbnew/router/, 3d-viewer/ CMakeLists. Everything else reaches it through SHAPE_POLY_SET; call-site line counts in pcbnew/common/libs/eeschema/gerbview/3d-viewer: Inflate( 317, Simplify() 148, BooleanSubtract 113, Fracture() 92, BooleanIntersection 51, BooleanAdd 48, Deflate( 29, InflateWithLinkedHoles 14, OffsetLineChain 5, BooleanXor 4, BuildPolysetFromOrientedPaths 3; by subsystem: zone_filler.cpp 78, 3d-viewer 79, kimath 58, pcbnew/drc 48, router 44, exporters 25, plot_board_layers.cpp 13.\n\nAPI surface actually used (shape_poly_set.cpp):\n- booleanOp (l.933-1044): Clipper64, AddSubject, AddClip, SetZCallback (ZCallback64: every call pushes a new CLIPPER_Z_VALUE and sets pt.z to its index, so arc indices survive booleans), Execute(ClipType Union/Difference/Intersection/Xor, FillRule::NonZero, PolyTree64). Return value of Execute is ignored.\n- inflate2 / inflateLine2 (l.1104-1304): ClipperOffset, AddPaths(paths, JoinType Miter|Square|Round, EndType::Polygon) once per polygon (one group each), AddPath(path, jt, EndType::Butt) for OffsetLineChain, ArcTolerance(|amount|*(1-cos(pi/segCount))), MiterLimit(2.0 or 10), Execute(delta, PolyTree64) or Execute(delta, Paths64) followed by Clipper64 with PreserveCollinear(false), ReverseSolution(false), Execute(Union, FillRule::Positive, tree).\n- BuildPolysetFromOrientedPaths (l.4235): Union with FillRule::EvenOdd or NonZero into a PolyTree64.\n- PolyTree64/PolyPath64: iteration, IsHole(), Count(), Polygon(), Clear(); Point64 x/y/z; Path64/Paths64.\n- Clipper2Lib::SimplifyPaths is called at l.1190 and l.1287 but its return value is discarded (the bundled function returns a new Paths and does not modify its argument), i.e. it is a no-op that the port must NOT turn into a real simplification.\n- Not used anywhere: RectClip, Minkowski, TrimCollinear, InflatePaths, ClipperD/PathsD, open subject paths, triangulation. importPaths (only external user of Clipper2Lib::Area) is never called.\nOutput vertex coordinates, vertex start/order, contour order, PolyTree nesting and z values all flow straight into SHAPE_POLY_SET, hence into zone fills, DRC and plots.",
+   "scope": "core",
+   "candidates": [
+    {
+     "crate": "clipper2-rs",
+     "version": "0.3.0",
+     "license": "BSL-1.0 (same as Clipper2; GPL-3.0-or-later compatible)",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Function-by-function port of Clipper2 '2.0.1 plus upstream fixes, commit b496b45' (README), i.e. the same post-tag behaviour as KiCad's copy (its FixSelfIntersects matches KiCad's, not the 2.0.1 tag). Zero dependencies, #![forbid(unsafe_code)], edition 2024, MSRV 1.85, ~9.2k lines. Feature `usingz` = USINGZ: Point.z: i64, ZCallback64 = Box<dyn FnMut(Point64,Point64,Point64,Point64,&mut Point64)> on Clipper64 and ClipperOffset (callback is 'static, so KiCad's captured zValues need Rc<RefCell<..>>). Covers everything KiCad uses: Clipper64 (add_subject/add_clip, set_preserve_collinear, set_reverse_solution, execute_tree -> PolyTree64 arena with roots()/node()/is_hole()), ClipperOffset (all join/end types, set_arc_tolerance, set_miter_limit, execute, execute_tree), simplify_paths, area; also RectClip, Minkowski, triangulation. Measured: byte-identical to KiCad's C++ on 78,174/78,174 cases when the C++ intersection sort is std::stable_sort; against real KiCad (std::sort) 67,467/78,174 exact (86.30%). Three deliberate deviations matter: (1) stable sort of the intersection list instead of std::sort, (2) a zero-area polygon group no longer flips delta positive for later ClipperOffset groups (upstream does delta_ = abs(delta_)), (3) Err instead of bool/UB. Maintenance: only 3 releases, 2026-10-30, 10-31, 11-02 (crate is ~10 days old; repo github.com/serdarvaran/clipper2-rs not reachable, web search found nothing, so history/issue tracker could not be verified)."
+    },
+    {
+     "crate": "clipper2-rust",
+     "version": "1.2.0",
+     "license": "BSL-1.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Pure Rust port by Lars Brubaker/MatterHackers (README: created 'using Claude'), tracks Clipper2 1.5.4 (src/version.rs), one dependency (num-traits), forbid(unsafe_code), feature `using_z` with z-callbacks, PolyTree64, ClipperOffset. 6 releases 2026-02-07..2026-09-18. Measured vs KiCad C++: 65,600/78,174 exact (83.92%). Even against the stable-sort C++ variant only 8,789/9,225 (95.27%) because of real behavioural gaps: still has the old FixSelfIntersects branch KiCad's snapshot removed; area() is a plain shoelace sum, not the C++ expression (bit-exact for only 697/1,200 random polygons); 8/768 exact on coordinates beyond i32. Would need more patching than clipper2-rs for no benefit."
+    },
+    {
+     "crate": "clipper2",
+     "version": "0.6.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": false,
+     "wasm32_build": "verified-fails",
+     "notes": "Safe wrapper over clipper2c-sys 0.2.0, which compiles bundled C++ Clipper2 (the 2.0.1 tag, engine dated 5 Nov 2025, without USINGZ) through a C shim. Native build OK. wasm32-unknown-unknown build fails here ('cstdint' file not found; README says it needs the WASI SDK clang toolchain). API unsuitable: scaled-float point types, Paths output only (no PolyTree in the safe API), no Z, inflate() has no arc-tolerance parameter. Violates PORTING.md 'no C/C++ dependencies'. 16 releases 2024-03..2026-05-06."
+    },
+    {
+     "crate": "clipper2c-sys",
+     "version": "0.2.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": false,
+     "wasm32_build": "verified-fails",
+     "notes": "Raw FFI behind the `clipper2` crate (cc build, libc dep). Bundles the 2.0.1 tag, which differs from KiCad's snapshot on 266/9,225 of my cases (97.12% exact when the tag is compiled as C++). No USINGZ. 8 releases 2024-04..2026-05-05."
+    },
+    {
+     "crate": "clipper2-sys",
+     "version": "1.0.0",
+     "license": "MIT",
+     "pure_rust": false,
+     "wasm32_build": "verified-fails",
+     "notes": "cxx bridge to bundled C++ Clipper2. Its bundled sources are the same upstream snapshot as KiCad's (engine dated 21 Feb 2026); compiled as C++ they gave byte-identical output to KiCad's patched copy on 19,080 cases. Exposes PolyTree and ClipperOffset with arc tolerance, but is built without USINGZ (no z, no ZCallback). Native build OK; wasm32 fails ('algorithm' file not found in cxx.h; build.rs has unimplemented!() for other targets). Useful only as a source of pristine upstream code and test data (Tests/Polygons.txt). 7 releases 2024-04..2026-03-29."
+    },
+    {
+     "crate": "i_overlay",
+     "version": "9.1.0",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "Actively maintained independent boolean engine (132 releases, latest 2026-10-14; deps i_float, i_shape, i_tree, i_key_sort; MSRV 1.88, above the workspace's 1.85). i16/i32/i64 engines, all four fill rules, hierarchy output, buffering, per-edge provenance data but no per-vertex Z callback and no Clipper-compatible offsetter. wasm32 lib build OK (not executed). Not output-compatible with Clipper2: on 6,163 boolean cases 384 exact (6.2%), 794 same contours in different order, 648 same area only, 4,337 different; 0/144 exact on zone-minus-clearance cases."
+    },
+    {
+     "crate": "geo",
+     "version": "0.33.1",
+     "license": "MIT OR Apache-2.0",
+     "pure_rust": true,
+     "wasm32_build": "verified-ok",
+     "notes": "BooleanOps on f64 geo-types, implemented with i_overlay 4.5.2; no fill-rule parameter, no Z, no Clipper-style offset; large dependency tree (geo-types, rstar, robust, geographiclib-rs, rand...). wasm32 lib build OK with default-features = false (not executed). 122/2,977 NonZero boolean cases matched Clipper2 exactly (4.1%)."
+    },
+    {
+     "crate": "geo-clipper",
+     "version": "0.9.0",
+     "license": "ISC",
+     "pure_rust": false,
+     "wasm32_build": "verified-fails",
+     "notes": "Wraps the old Clipper 6.4.2 (Clipper1, via clipper-sys 0.8.0 C++), not Clipper2; f64 geo-types with a scale factor. Native build OK, wasm32 fails ('vector' file not found). Last release 2025-02-08."
+    },
+    {
+     "crate": "tippecanoe-rs-clipper2",
+     "version": "1.4.0",
+     "license": "BSL-1.0",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Partial port of Clipper2 1.4.0 (engine with Paths output only: no PolyTree, no ClipperOffset, no Z). Too old and incomplete. Noteworthy only because it ships its own port of libc++ std::sort for the same tie-order reason found here. Single release 2026-11-05."
+    },
+    {
+     "crate": "polyclip",
+     "version": "0.0.6",
+     "license": "MIT",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Independent exact-integer polygon library 'built for the cadlab PCB tool' (booleans, offsets, PolyTree, edge tags). Different algorithm, so not expected to reproduce Clipper2 output; not tested. MSRV 1.89, 7 releases within 2026-10-03..05."
+    },
+    {
+     "crate": "polystrata",
+     "version": "0.1.2",
+     "license": "MIT",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "f64 boolean kernel with its own algorithm; no integer grid, no offsetter with Clipper semantics. Not tested. 3 releases in Oct 2026."
+    },
+    {
+     "crate": "solidmesh-clipper",
+     "version": "0.2.0",
+     "license": "BSD-2-Clause",
+     "pure_rust": true,
+     "wasm32_build": "not-tested",
+     "notes": "Pure Rust port of Clipper 6.4.2 (Clipper1), depends on clipper2-rust for types. Wrong library generation; not tested."
+    },
+    {
+     "crate": "clipper2-src",
+     "version": "2.0.1",
+     "license": "BSL-1.0",
+     "pure_rust": false,
+     "wasm32_build": "not-tested",
+     "notes": "Not an API: just the pristine upstream C++ sources of the 2.0.1 tag. Used here as the reference to diff KiCad's bundled copy against."
+    }
+   ],
+   "recommendation": "Vendor clipper2-rs 0.3.0 into the workspace (feature usingz on) with the two-change fidelity patch I verified, rather than depending on the crates.io release or porting Clipper2 by hand. The patch is ready at /home/user/kicad-source-mirror/rust/target/research/polygon-clipping/patches/clipper2-rs-0.3.0-kicad-fidelity.patch (260 lines: new src/gnu_sort.rs = port of libstdc++ std::sort used for the intersection list; 5 lines in src/offset.rs restoring upstream's delta_ = abs(delta_) for zero-area groups). Do not use any C++ wrapper, clipper2-rust, i_overlay or geo for SHAPE_POLY_SET.",
+   "rationale": "It is the only candidate that is pure Rust, builds and runs on wasm32-unknown-unknown, has USINGZ/ZCallback, PolyTree and ClipperOffset, and tracks the same post-2.0.1 upstream behaviour KiCad bundles. With the patch it reproduced KiCad's bundled C++ (g++ 13, -DUSINGZ) byte for byte on every one of 97,893 randomised and degenerate cases natively, and on every case run under wasm32 in node, including the z-callback call sequence, PolyTree shape, vertex and contour order and z values of offsets.\n\nThe patch is needed, not cosmetic. Unpatched, the stable sort changes results whenever a scanbeam has more than 16 intersections with ties (libstdc++ std::sort is insertion sort up to 16 elements, unstable quicksort above). That is 100% harmless on most PCB-like categories I generated (22,000+ cases exact) but hit 61 of 1,470 inflate/deflate cases on coincident track/pad geometry (4.15%: 51 vertex-order only, 10 with different geometry, e.g. 258 vs 259 vertices). The delta quirk matters when a SHAPE_POLY_SET holding a zero-area polygon is deflated: upstream then inflates all later polygons, and the port has to do the same.\n\nVendoring (rather than a version pin) is also the safer choice because the crate is about 10 days old with three releases and an unverifiable maintenance record. BSL-1.0 is what KiCad already ships for Clipper2; keep its LICENSE and copyright lines.\n\nIntegration notes for kicad-geom: map Err from execute_tree to an empty result (C++ ignores Execute's bool and uses the empty tree); keep SimplifyPaths a no-op as in KiCad; hold the zValues buffer in Rc<RefCell<..>> because the callback type is 'static; triangulation, rectclip, clipper_d and minkowski modules are unused and can be dropped later. The harness (run_all.sh in the scratch directory) should be re-run whenever KiCad updates thirdparty/clipper2.",
+   "fidelity_risk": "Low with the patched vendored copy; medium if clipper2-rs is used unpatched; high for every other candidate.\n\nResidual risks with the patched copy:\n1. The tie order reproduced is that of libstdc++. It matches a g++/libstdc++ KiCad build (the oracle on this machine). KiCad built with libc++ or MSVC orders ties differently, so KiCad itself is not bit-identical across platforms here.\n2. libm on wasm. Native Rust calls glibc (same as the C++ oracle); wasm32-unknown-unknown uses Rust's built-in libm. I measured 1-ulp differences in 3% of sin/cos, 18% of atan2, 7.6% of acos, 10% of exp/powf calls (sqrt, cbrt, round, fmod identical). For ClipperOffset round joins with KiCad's arc tolerances (segCount 6..1024, 17 amounts) step_sin differed in 31 and step_cos in 15 of 17,323 combinations; the derived step counts for 45/90/135/180 degree corners were identical in all 121,261 combinations. No output difference showed up in any wasm run, but a rare 1 nm or vertex-count difference on wasm round joins is possible in principle. This libm gap applies to every trig call in the whole port, not just Clipper, and needs a project-level decision (std everywhere = matches the oracle natively; libm crate everywhere = native equals wasm but not glibc).\n3. Upstream undefined behaviour cannot be matched: the C++ driver segfaulted on an offset group consisting only of an empty path (Miter join); clipper2-rs skips empty paths and returns errors for out-of-range input instead.\n4. KiCad's StripeIndex patch is assumed output-neutral; that held on 19,080 cases with the index forced on, off and default, but it is an empirical result.\n5. Young single-maintainer crate: treat the vendored copy as owned code.",
+   "experiments": "All work is in /home/user/kicad-source-mirror/rust/target/research/polygon-clipping/ (git-ignored; run_all.sh reproduces it).\n\nSetup. gen_cases.py writes seeded case files; cpp/driver.cpp (g++ 13.3 -O2 -std=c++17 -DUSINGZ against a chosen Clipper2Lib) and Rust drivers (src/body_clipper2_rs.rs, src/d_clipper2_rust.rs) print, per case: the KiCad-style z-callback log (all four edge points and the seeded z, each call assigns a fresh z index), the PolyTree (depth, hole flag, x y z per vertex), the Paths64 result, and for offsets also KiCad's inflate2(aSimplify) pipeline (offset to paths, then Union/Positive with PreserveCollinear(false)). compare.py classifies each case as exact / result-equal (only callback order differs) / xy-equal / same contours in another order / different. Categories: random polygons on tiny grids (maximally degenerate), mid-range, dense self-intersecting, int32 nanometre range, beyond int32; grid rectangles; 51 hand-written degenerate inputs (empty, 1-2 points, duplicates, collinear, spikes, shared edges, touching vertices, holes touching outlines, bowties, int32 extremes) x 4 clip types x NonZero/EvenOdd; Positive/Negative fill; PreserveCollinear(false); zone-minus-clearance shapes in nm (circles, track ovals, round rects with KiCad segment counts); nested rings; rings over 64 vertices with many holes and comb outlines (exercise KiCad's StripeIndex); KiCad-fractured outlines; star/fan inputs with many edges through one point; chained track ovals, duplicated pads, pad arrays, thermal spokes ('kicad_coincident'); upstream Tests/Polygons.txt (195 cases); ClipperOffset with Round, Miter(2), Miter(10), Square, Bevel, EndType Polygon/Butt/Joined/Square/Round, KiCad arc tolerances from GetArcToSegmentCount, positive and negative deltas; SimplifyPaths, Area, RectClip, Minkowski. Set 1 has 9,225 cases, set 2 has 9,855, eight further seeds add 78,813: 97,893 in total.\n\nBundled copy vs upstream (C++ vs C++). KiCad's copy, the same copy with PipIndexThreshold forced to 0 and to 1e9, and the upstream snapshot from clipper2-sys 1.0.0 gave byte-identical output on set 1 (9,225) and (default, forced-on, upstream) on set 2 (9,855). The upstream 2.0.1 tag matched KiCad on 8,959/9,225 (97.12%); all 266 differences are in self-intersection-heavy categories.\n\nclipper2-rs 0.3.0 unpatched vs KiCad C++, 78,174 cases: 67,467 exact (86.30%), 947 result-equal, 3,579 xy-equal, 1,007 reordered, 5,174 different. 100% exact in: kicad_zone 1,116, kicad_inflate 5,760, kicad_offset_line 1,600, kicad_coincident booleans 2,940, big_rings 720, comb 240, fractured 2,880, nested_rings 1,600, rect_grid 5,760, degenerate booleans 3,584, degenerate offsets 5,376, rnd_i32 2,560, rnd_i62 768, simplify 1,200, area 1,200, rectclip 2,000. Below 100%: kicad_coincident OFFSET 1,409/1,470 (95.85%), rnd_offset 4,478/4,480, rnd_offset_open 1,279/1,280, minkowski 1,590/1,600, rnd_small 71.1%, rnd_small_nocollinear 86.7%, rnd_small_posneg 90.7%, rnd_mid 57.7%, upstream_polygons 69.7%, star 39.8%, fan_exact 38.5%, rnd_dense 0.56%.\n\nCause isolated. I rebuilt KiCad's C++ with std::stable_sort for intersect_nodes_: unpatched clipper2-rs then matched byte for byte on all eight sets (78,174/78,174). So the sort tie order is the only difference on these inputs.\n\nPatch 1 (sort). Ported libstdc++'s introsort (median-of-3 quicksort to 16 elements, heapsort fallback, final insertion sort) to safe Rust. Checked against g++ std::sort on 1,061 arrays with ties, including McIlroy 'antiqsort' adversarial inputs that drove the heapsort fallback 223 times: identical permutations. With it, clipper2-rs output was byte-identical to unmodified KiCad C++ on all 78,174 cases, natively and under wasm32 in node 22.\n\nPatch 2 (offset delta). 1,260 targeted multi-group offsets with a zero-area group first/middle/last: clipper2-rs 0.3.0 matched 756 (all 504 misses are negative deltas with the degenerate group before others); after the 5-line patch 1,260/1,260.\n\nFinal candidate (both patches): byte-identical on sets 1 and 2 again, on two fresh seeds (19,719 cases), and on the quirk set, each natively and under wasm32; total 97,893 random/degenerate cases native. The hand-over patch applied to a pristine copy of the crate was re-verified on sets 1, 2 and the quirk set. 400 empty-path offset cases: first 75 identical, then the C++ reference segfaulted (upstream UB), so the rest could not be compared.\n\nclipper2-rust 1.2.0: 65,600/78,174 exact vs KiCad (83.92%); vs the stable-sort C++ on set 1 8,789/9,225 (95.27%). Its wasm output equals its native output.\n\ni_overlay 9.1.0 (i64 engine) and geo 0.33.1: boolean geometry only, numbers in the candidate notes.\n\nBuilds. cargo build --target wasm32-unknown-unknown: OK for clipper2-rs, clipper2-rust, i_overlay, geo (default-features off); fails for clipper2/clipper2c-sys, clipper2-sys, geo-clipper/clipper-sys (no C++ standard library for wasm). Whole-set run time including text I/O: C++ 6.1 s, clipper2-rs native 4.0 s, clipper2-rust 4.6 s, wasm in node 5.6-6.0 s (not a benchmark).\n\nNot verified: clipper2-rs repository activity (GitHub blocked, web search empty); polyclip, polystrata, tippecanoe-rs-clipper2, solidmesh-clipper were only read, not run.\n\nSide effect to know about: `cargo init` inside rust/target/research/ silently added the scratch project to `members` in /home/user/kicad-source-mirror/rust/Cargo.toml. I restored the line to members = [\"crates/*\"] (git shows the file clean). Other research agents following the same instructions may leave the same edit behind."
+  }
+ ]
+}

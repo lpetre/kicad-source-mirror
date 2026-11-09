@@ -144,7 +144,29 @@ A table mapping C++ files/classes/functions to their Rust location and state
 "Deviations" section listing every intentional behavioural difference and a "Known gaps"
 section. Keep it current; it is what the reviewers and the final README are built from.
 
-## 9. Licence header
+## 9. Project-wide decisions (binding)
+
+- **Reference platform**: results must match KiCad built with g++/libstdc++ on Linux (the
+  oracle, `docs/ORACLE.md`). Where C++ behaviour is implementation-defined (tie order of
+  `std::sort`, `int64_t` being `long`), the libstdc++/Linux behaviour is the specification.
+- **`std::sort` tie order**: whenever the C++ calls `std::sort`/`std::partial_sort`/
+  `std::nth_element` with a comparator under which distinct elements can compare equal and the
+  resulting order can influence output, use the libstdc++-exact ports in `kicad_geom::stdsort`
+  (not `slice::sort*`). `std::stable_sort` maps to `slice::sort_by` (both stable).
+- **libm**: call the `f64` std methods through `kicad_geom::cmath` only. Natively this is glibc,
+  identical to the oracle. On wasm32 Rust's bundled libm is used, which can differ from glibc by
+  one ulp in `sin/cos/atan2/acos/exp/pow`; this is an accepted, documented wasm-only deviation.
+- **Clipper2**: the vendored, fidelity-patched `clipper2-rs` in `rust/vendor/clipper2-rs` is the
+  only polygon clipper. See `docs/research/polygon.json`.
+- **Spatial indices, delaunator, nanoflann**: hand ports living in `kicad-geom` (query visit
+  order matters). No external spatial crates. See `docs/research/spatial.json`.
+- **Self-verification**: every work package that ports numerical or text-producing code extends
+  its crate's differential oracle (`tests/oracle/`: a C++ driver linking the original sources,
+  golden output committed under `tests/golden/`, a Rust test replaying it). A package is not done
+  until its oracle sections match bit for bit, or each mismatch is explained in
+  `PORT_STATUS.md`.
+
+## 10. Licence header
 
 KiCad is GPL-3.0-or-later and so is this port. Start every `.rs` file with:
 

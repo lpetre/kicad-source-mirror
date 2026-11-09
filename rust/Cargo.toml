@@ -6,6 +6,8 @@
 [workspace]
 resolver = "3"
 members = ["crates/*"]
+# Vendored third-party crates carry their own lint and edition settings.
+exclude = ["vendor"]
 
 [workspace.package]
 version = "0.1.0"
