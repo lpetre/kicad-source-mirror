@@ -33,6 +33,7 @@
  * This file is not part of the cargo build.
  */
 
+#include <clocale>
 #include <cstdio>
 #include <memory>
 #include <cstdint>
@@ -694,6 +695,12 @@ static void compileOne( TEST_COMPILER& aCompiler, const wxString& aExpr, bool aR
 
 int main( int argc, char* argv[] )
 {
+    // Case-insensitive comparisons (wxString::IsSameAs / MakeUpper) go through towlower() /
+    // towupper(), which only know ASCII in the "C" locale.  KiCad runs with the user's locale,
+    // so take the character classification from the environment (run with LC_ALL=C.UTF-8);
+    // everything else, in particular LC_NUMERIC, stays "C".
+    setlocale( LC_CTYPE, "" );
+
     std::string line;
 
     while( std::getline( std::cin, line ) )
@@ -730,6 +737,7 @@ int main( int argc, char* argv[] )
             compileOne( compiler, wxString::FromUTF8( unescape( parts[i] ).c_str() ), parts.size() == 2 );
 
         printf( "END\n" );
+        fflush( stdout );
     }
 
     return 0;

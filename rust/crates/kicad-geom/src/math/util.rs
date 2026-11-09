@@ -432,6 +432,7 @@ pub fn sign<T: PartialOrd + Default>(val: T) -> i32 {
 macro_rules! impl_ct_sqrt {
     ($helper:ident, $name:ident, $t:ty) => {
         /// Port of `ct_sqrt_helper<T>`.
+        #[allow(clippy::manual_div_ceil)]
         pub const fn $helper(a_x: $t, a_lo: $t, a_hi: $t) -> $t {
             if a_lo == a_hi {
                 return a_lo;
@@ -522,7 +523,11 @@ pub fn isqrt<T: Isqrt>(a_x: T) -> T {
 /// Port of `UnsignedAbs`: magnitude of a signed integer, well defined for INT64_MIN.
 #[inline]
 pub const fn unsigned_abs(a_x: i64) -> u64 {
-    if a_x < 0 { 0u64.wrapping_sub(a_x as u64) } else { a_x as u64 }
+    if a_x < 0 {
+        0u64.wrapping_sub(a_x as u64)
+    } else {
+        a_x as u64
+    }
 }
 
 /// Port of `RoundedHypotWide`.
@@ -574,7 +579,9 @@ pub fn rounded_hypot(a_x: i64, a_y: i64) -> u64 {
 }
 
 /// Floating point types the scalar `equals` template is instantiated for.
-pub trait KiFloat: Copy + PartialOrd + core::ops::Sub<Output = Self> + core::ops::Mul<Output = Self> {
+pub trait KiFloat:
+    Copy + PartialOrd + core::ops::Sub<Output = Self> + core::ops::Mul<Output = Self>
+{
     /// `std::numeric_limits<T>::epsilon()`.
     const EPSILON: Self;
 
@@ -619,7 +626,11 @@ pub fn equals_eps<T: KiFloat>(a_first: T, a_second: T, a_epsilon: T) -> bool {
 
     let a_first = a_first.abs();
     let a_second = a_second.abs();
-    let largest: T = if a_first > a_second { a_first } else { a_second };
+    let largest: T = if a_first > a_second {
+        a_first
+    } else {
+        a_second
+    };
 
     if diff <= largest * a_epsilon {
         return true;
@@ -667,7 +678,14 @@ mod tests {
         assert_eq!(isqrt(4294967295u64 * 4294967295u64 - 1), 4294967294);
 
         // Just above and below perfect squares that are not exactly representable as doubles
-        for r in [94906265u64, 94906266, 94906267, 3037000498, 3037000499, 4000000000] {
+        for r in [
+            94906265u64,
+            94906266,
+            94906267,
+            3037000498,
+            3037000499,
+            4000000000,
+        ] {
             assert_eq!(isqrt(r * r), r);
             assert_eq!(isqrt(r * r - 1), r - 1);
             assert_eq!(isqrt(r * r + 1), r);

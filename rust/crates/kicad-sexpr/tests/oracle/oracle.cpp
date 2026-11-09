@@ -141,7 +141,9 @@ static std::string readFile( const std::string& aPath )
 
 static std::string utf8( const wxString& aText )
 {
-    return std::string( aText.utf8_str() );
+    // Keep embedded NULs.
+    wxScopedCharBuffer buf = aText.utf8_str();
+    return std::string( buf.data(), buf.length() );
 }
 
 
@@ -277,6 +279,29 @@ static std::string prettify( std::string aText, const std::string& aMode )
 }
 
 
+/// One text per (escaped) line: Prettify() in the three modes.
+static int modePrettifyLines( const std::string& aFile )
+{
+    std::istringstream in( readFile( aFile ) );
+    std::string        line;
+
+    while( std::getline( in, line ) )
+    {
+        if( !line.empty() && line[0] == '#' )
+            continue;
+
+        std::string text = unesc( line );
+
+        std::cout << "> " << line << "\n";
+
+        for( const char* mode : { "normal", "compact", "libtable" } )
+            std::cout << mode << "\t" << esc( prettify( text, mode ) ) << "\n";
+    }
+
+    return 0;
+}
+
+
 static void dumpTree( const SEXPR::SEXPR* aNode, int aDepth, std::string& aOut )
 {
     std::string indent( aDepth * 2, ' ' );
@@ -351,6 +376,159 @@ static int modeSexpr( const std::string& aFile )
         {
             std::cout << "invalid_type_exception\t" << e.what() << "\n";
         }
+    }
+
+    return 0;
+}
+
+
+template <typename F>
+static void attempt( const char* aLabel, F&& aFunc )
+{
+    std::cout << aLabel << "\t";
+
+    try
+    {
+        aFunc();
+    }
+    catch( const SEXPR::INVALID_TYPE_EXCEPTION& e )
+    {
+        std::cout << "invalid_type_exception: " << e.what();
+    }
+    catch( const SEXPR::PARSE_EXCEPTION& e )
+    {
+        std::cout << "parse_exception: " << e.what();
+    }
+    catch( const std::invalid_argument& e )
+    {
+        std::cout << "invalid_argument: " << e.what();
+    }
+
+    std::cout << "\n";
+}
+
+
+/// The programmatic interface of the SEXPR tree on fixed inputs.
+static int modeSexprApi()
+{
+    using namespace SEXPR;
+
+    // The variadic constructor / AddChildren
+    {
+        std::string sym = "sym";
+        std::string str2 = "str2";
+        SEXPR_LIST  list( 1, (int64_t) 2, 3.5, "str", AsSymbol( (const std::string&) sym ),
+                          AsString( (const std::string&) str2 ), (SEXPR::SEXPR*) new SEXPR_SYMBOL( "node" ) );
+
+        std::cout << "variadic\t" << list.GetNumberOfChildren() << "\t" << list.GetLineNumber() << "\t"
+                  << esc( list.AsString() ) << "\n";
+
+        list.AddChildren( -7, 0.25 );
+        std::cout << "add_children\t" << esc( list.AsString() ) << "\n";
+    }
+
+    // The stream insertion operators
+    SEXPR_LIST list;
+
+    {
+        std::string name = "name";
+        std::string text = "text";
+
+        SEXPR_LIST* sub = new SEXPR_LIST( 7 );
+        *sub << 2 << 42.42 << "substring";
+
+        list << AsSymbol( (const std::string&) name ) << AsString( (const std::string&) text ) << 5
+             << (int64_t) 1099511627776 << 1.5 << 2.5f << std::string( "plain" ) << sub
+             << (SEXPR::SEXPR*) new SEXPR_DOUBLE( 0.125, 3 ) << 9;
+
+        std::cout << "insert\t" << list.GetNumberOfChildren() << "\t" << esc( list.AsString() ) << "\n";
+        std::cout << "insert_level\t" << esc( list.AsString( 2 ) ) << "\n";
+        std::cout << "sub_line\t" << sub->GetLineNumber() << "\t" << list.GetChild( 8 )->GetLineNumber()
+                  << "\n";
+    }
+
+    // The stream extraction operators
+    {
+        std::string symbol, string, plain;
+        int32_t     i32 = 0;
+        int64_t     i64 = 0;
+        float       f32 = 0;
+        double      f64 = 0;
+
+        attempt( "extract_string_as_symbol", [&]() { list >> AsString( symbol ); } );
+        attempt( "extract_symbol", [&]() { list >> AsSymbol( symbol ); std::cout << symbol; } );
+        attempt( "extract_symbol_as_string", [&]() { list >> AsSymbol( string ); } );
+        attempt( "extract_int_from_string", [&]() { list >> i32; } );
+        attempt( "extract_long_from_string", [&]() { list >> i64; } );
+        attempt( "extract_float_from_string", [&]() { list >> f32; } );
+        attempt( "extract_double_from_string", [&]() { list >> f64; } );
+        attempt( "extract_string", [&]() { list >> AsString( string ); std::cout << string; } );
+        attempt( "extract_std_string_from_int", [&]() { list >> plain; } );
+        attempt( "extract_double_from_int", [&]() { list >> f64; } );
+        attempt( "extract_int", [&]() { list >> i32; std::cout << i32; } );
+        attempt( "extract_long", [&]() { list >> i64; std::cout << i64; } );
+        attempt( "extract_int_from_double", [&]() { list >> i32; } );
+        attempt( "extract_double", [&]() { list >> f64; std::cout << f64; } );
+        attempt( "extract_float", [&]() { list >> f32; std::cout << f32; } );
+        attempt( "extract_std_string", [&]() { list >> plain; std::cout << plain; } );
+    }
+
+    // Scan (without int32_t* arguments: doScan() writes a double through those)
+    {
+        std::string symbol = "none", string = "none";
+        double      number = -1;
+        int64_t     big = -1;
+
+        size_t n = list.Scan( "name", "text", &number, &big );
+        std::cout << "scan\t" << n << "\t" << number << "\t" << big << "\n";
+
+        n = list.Scan( &symbol, &string, &number );
+        std::cout << "scan_strings\t" << n << "\t" << symbol << "\t" << string << "\t" << number << "\n";
+
+        n = list.Scan( "name", "other", &number );
+        std::cout << "scan_mismatch\t" << n << "\n";
+
+        n = list.Scan( "name", &big );
+        std::cout << "scan_wrong_type\t" << n << "\n";
+
+        // a string comparison against a number is skipped, a string target keeps its value
+        string = "kept";
+        n = list.Scan( "name", "text", "five", &big, &string );
+        std::cout << "scan_skipped\t" << n << "\t" << big << "\t" << string << "\n";
+
+        const std::string expected = "name";
+        n = list.Scan( &expected, std::string( "text" ) );
+        std::cout << "scan_const_string\t" << n << "\n";
+    }
+
+    // The accessors on the wrong kind of node
+    {
+        SEXPR_INTEGER integer( 7 );
+        SEXPR_DOUBLE  dbl( 2.5 );
+        SEXPR_STRING  string( "s" );
+        SEXPR_SYMBOL  symbol( "sym", 12 );
+
+        std::cout << "values\t" << integer.GetLongInteger() << "\t" << integer.GetInteger() << "\t"
+                  << integer.GetDouble() << "\t" << integer.GetFloat() << "\t" << dbl.GetDouble() << "\t"
+                  << dbl.GetFloat() << "\t" << string.GetString() << "\t" << symbol.GetSymbol() << "\t"
+                  << symbol.GetLineNumber() << "\t" << integer.GetLineNumber() << "\n";
+
+        attempt( "double_as_integer", [&]() { dbl.GetLongInteger(); } );
+        attempt( "double_as_int", [&]() { dbl.GetInteger(); } );
+        attempt( "string_as_double", [&]() { string.GetDouble(); } );
+        attempt( "string_as_float", [&]() { string.GetFloat(); } );
+        attempt( "symbol_as_string", [&]() { symbol.GetString(); } );
+        attempt( "string_as_symbol", [&]() { string.GetSymbol(); } );
+        attempt( "symbol_line_as_symbol", [&]() { SEXPR_INTEGER( 1, 42 ).GetSymbol(); } );
+        attempt( "integer_children", [&]() { integer.GetChildren(); } );
+        attempt( "integer_child", [&]() { integer.GetChild( 0 ); } );
+        attempt( "integer_number_of_children", [&]() { integer.GetNumberOfChildren(); } );
+        attempt( "integer_add_child", [&]() { integer.AddChild( nullptr ); } );
+        attempt( "integer_list", [&]() { integer.GetList(); } );
+
+        SEXPR_INTEGER wide( 4294967301ll );
+        std::cout << "wide\t" << wide.GetLongInteger() << "\t" << wide.GetInteger() << "\t" << wide.AsString()
+                  << "\n";
     }
 
     return 0;
@@ -517,6 +695,69 @@ static int modeFormat()
         std::cout << "strip_useless\t" << esc( out.GetString() ) << "\n";
     }
 
+    // The exception classes
+    {
+        auto describe = [&]( const char* aLabel, const IO_ERROR& aError )
+        {
+            std::cout << aLabel << "\t" << errorLine( aError ) << "\n";
+        };
+
+        try
+        {
+            THROW_IO_ERROR( wxT( "Line length exceeded" ) );
+        }
+        catch( const IO_ERROR& e )
+        {
+            describe( "io_error", e );
+        }
+
+        try
+        {
+            THROW_IO_CANCELLED();
+        }
+        catch( const IO_ERROR& e )
+        {
+            describe( "io_cancelled", e );
+        }
+
+        try
+        {
+            THROW_IO_CANCELLED_MSG( wxT( "stop" ) );
+        }
+        catch( const IO_ERROR& e )
+        {
+            describe( "io_cancelled_msg", e );
+        }
+
+        FUTURE_FORMAT_ERROR versionOnly( wxT( "20250101" ) );
+        describe( "future_format", versionOnly );
+
+        FUTURE_FORMAT_ERROR withGenerator( wxT( "20250101" ), wxT( "10.0" ) );
+        describe( "future_format_generator", withGenerator );
+        std::cout << "future_format_fields\t" << utf8( withGenerator.requiredVersion ) << "\t"
+                  << utf8( withGenerator.requiredGenerator ) << "\n";
+
+        try
+        {
+            THROW_PARSE_ERROR( wxT( "Unexpected 'foo'" ), wxT( "f.kicad_pcb" ), "the line\n", 3, 9 );
+        }
+        catch( const PARSE_ERROR& pe )
+        {
+            describe( "parse_error", pe );
+
+            FUTURE_FORMAT_ERROR fromParse( pe, wxT( "20250101" ) );
+            describe( "future_format_from_parse", fromParse );
+
+            FUTURE_FORMAT_ERROR fromParseGenerator( pe, wxT( "20250101" ), wxT( "10.0" ) );
+            describe( "future_format_from_parse_generator", fromParseGenerator );
+
+            FUTURE_FORMAT_ERROR again( fromParseGenerator, wxT( "1" ), wxT( "2" ) );
+            describe( "future_format_from_future_format", again );
+            std::cout << "future_format_from_future_format_fields\t" << utf8( again.requiredVersion ) << "\t"
+                      << utf8( again.requiredGenerator ) << "\n";
+        }
+    }
+
     return 0;
 }
 
@@ -613,6 +854,27 @@ static int modeScript( const std::string& aFile )
             continue;
         }
 
+        if( cmd == "lexer_repeat" )
+        {
+            // lexer_repeat <keywords> <count> <text>: the text repeated <count> times
+            std::istringstream fields( arg );
+            std::string        kw, piece;
+            size_t             count = 0;
+
+            fields >> kw >> count >> piece;
+            piece = unesc( piece );
+
+            std::string text;
+            text.reserve( piece.size() * count );
+
+            for( size_t i = 0; i < count; ++i )
+                text += piece;
+
+            subLexer.reset();
+            mainLexer = std::make_unique<ORACLE_LEXER>( keywordTable( kw ), text, wxString::FromUTF8( source ) );
+            continue;
+        }
+
         if( cmd == "lexer" || cmd == "lexer_no_reader" )
         {
             std::string kw = arg.substr( 0, arg.find( ' ' ) );
@@ -664,6 +926,13 @@ static int modeScript( const std::string& aFile )
             {
                 int tok = lexer->NextTok();
                 std::cout << tokenLine( *lexer, tok ) << "\n";
+            }
+            else if( cmd == "nexttok" )
+            {
+                // Only the token: usable on a lexer without line reader, whose position
+                // accessors dereference a null pointer in C++.
+                int tok = lexer->NextTok();
+                std::cout << "token\t" << tok << "\n";
             }
             else if( cmd == "all" )
             {
@@ -872,8 +1141,14 @@ int main( int argc, char** argv )
         return 0;
     }
 
+    if( args.size() == 2 && args[0] == "prettifylines" )
+        return modePrettifyLines( args[1] );
+
     if( args.size() == 2 && args[0] == "sexpr" )
         return modeSexpr( args[1] );
+
+    if( args.size() == 1 && args[0] == "sexprapi" )
+        return modeSexprApi();
 
     if( args.size() == 2 && args[0] == "numbers" )
         return modeNumbers( args[1] );
@@ -897,7 +1172,9 @@ int main( int argc, char** argv )
              "usage: oracle script <file>\n"
              "       oracle lex <keyword set> <knows bar: 0|1> <file>\n"
              "       oracle prettify <normal|compact|libtable> <file>\n"
+             "       oracle prettifylines <file>\n"
              "       oracle sexpr <file>\n"
+             "       oracle sexprapi\n"
              "       oracle numbers <file>\n"
              "       oracle printf <file>\n"
              "       oracle quotes <file>\n"

@@ -29,7 +29,9 @@ pub struct ParseException {
 impl ParseException {
     /// Port of `PARSE_EXCEPTION::PARSE_EXCEPTION( const std::string& aMessage )`.
     pub fn new(message: impl Into<String>) -> Self {
-        Self { msg: message.into() }
+        Self {
+            msg: message.into(),
+        }
     }
 
     /// Port of `PARSE_EXCEPTION::what`.
@@ -55,7 +57,9 @@ pub struct InvalidTypeException {
 impl InvalidTypeException {
     /// Port of `INVALID_TYPE_EXCEPTION::INVALID_TYPE_EXCEPTION( const std::string& aMessage )`.
     pub fn new(message: impl Into<String>) -> Self {
-        Self { msg: message.into() }
+        Self {
+            msg: message.into(),
+        }
     }
 
     /// Port of `INVALID_TYPE_EXCEPTION::what`.
@@ -106,7 +110,10 @@ impl fmt::Display for SexprException {
             SexprException::InvalidType(e) => f.write_str(e.what()),
             SexprException::InvalidArgument(msg) => f.write_str(msg),
             SexprException::OutOfRange { index, len } => {
-                write!(f, "SEXPR child index {index} is out of range (list has {len} children)")
+                write!(
+                    f,
+                    "SEXPR child index {index} is out of range (list has {len} children)"
+                )
             }
         }
     }

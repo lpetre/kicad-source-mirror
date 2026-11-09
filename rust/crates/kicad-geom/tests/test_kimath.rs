@@ -24,7 +24,9 @@
 
 use kicad_geom::geometry::eda_angle::EdaAngle;
 use kicad_geom::math::vector2::{Vector2D, Vector2I};
-use kicad_geom::trigo::{calc_arc_center_d, intercepts_negative_x, intercepts_positive_x, rotate_point_around};
+use kicad_geom::trigo::{
+    calc_arc_center_d, intercepts_negative_x, intercepts_positive_x, rotate_point_around,
+};
 
 /*
 CircleCenterFrom3Points calculate the center of a circle defined by 3 points
@@ -85,7 +87,8 @@ fn ref1_calc_arc_center(a_start: Vector2D, a_mid: Vector2D, a_end: Vector2D) -> 
     // This is a special case for aMid as the half-way point when aSlope = 0 and bSlope = inf
     // or the other way around.  In that case, the center lies in a straight line between
     // aStart and aEnd
-    if ((x_delta_21 == 0.0) && (y_delta_32 == 0.0)) || ((y_delta_21 == 0.0) && (x_delta_32 == 0.0)) {
+    if ((x_delta_21 == 0.0) && (y_delta_32 == 0.0)) || ((y_delta_21 == 0.0) && (x_delta_32 == 0.0))
+    {
         center.x = (a_start.x + a_end.x) / 2.0;
         center.y = (a_start.y + a_end.y) / 2.0;
         return center;
@@ -183,7 +186,10 @@ fn test_calc_arc_center_3_pts() {
 
         let cavg: f64 = (crs + crm + cre) / 3.0;
 
-        if (crs - cavg).abs() > tolerance || (crm - cavg).abs() > tolerance || (cre - cavg).abs() > tolerance {
+        if (crs - cavg).abs() > tolerance
+            || (crm - cavg).abs() > tolerance
+            || (cre - cavg).abs() > tolerance
+        {
             msg += "CalcArcCenter failed.";
 
             msg += &format!("\nstart: {}", entry.istart.format());
@@ -191,7 +197,10 @@ fn test_calc_arc_center_3_pts() {
             msg += &format!("\nend: {}", entry.iend.format());
 
             {
-                msg += &format!("\nCalculated center: {:.15}, {:.15}", calc_center.x, calc_center.y);
+                msg += &format!(
+                    "\nCalculated center: {:.15}, {:.15}",
+                    calc_center.x, calc_center.y
+                );
 
                 msg += &format!("\n  Avg radius: {cavg:.15}");
                 msg += &format!("\nStart radius: {crs:.15}");
@@ -224,7 +233,8 @@ fn test_calc_arc_center_3_pts() {
             }
 
             {
-                let ref0_center: Vector2D = ref0_circle_center_from_3_points(start, mid, end).unwrap_or_default();
+                let ref0_center: Vector2D =
+                    ref0_circle_center_from_3_points(start, mid, end).unwrap_or_default();
 
                 let r0_rs: f64 = (ref0_center - start).euclidean_norm();
                 let r0_rm: f64 = (ref0_center - mid).euclidean_norm();
@@ -232,7 +242,10 @@ fn test_calc_arc_center_3_pts() {
 
                 let r0_ravg: f64 = (r0_rs + r0_rm + r0_rre) / 3.0;
 
-                msg += &format!("\nReference0 center: {:.15}, {:.15}", ref0_center.x, ref0_center.y);
+                msg += &format!(
+                    "\nReference0 center: {:.15}, {:.15}",
+                    ref0_center.x, ref0_center.y
+                );
 
                 msg += &format!("\nRef0   Avg radius: {r0_ravg:.15}");
                 msg += &format!("\nRef0 Start radius: {r0_rs:.15}");
@@ -250,7 +263,10 @@ fn test_calc_arc_center_3_pts() {
 
                 let r1_ravg: f64 = (r1_rs + r1_rm + r1_rre) / 3.0;
 
-                msg += &format!("\nReference1 center: {:.15}, {:.15}", ref1_center.x, ref1_center.y);
+                msg += &format!(
+                    "\nReference1 center: {:.15}, {:.15}",
+                    ref1_center.x, ref1_center.y
+                );
 
                 msg += &format!("\nRef1   Avg radius: {r1_ravg:.15}");
                 msg += &format!("\nRef1 Start radius: {r1_rs:.15}");

@@ -50,12 +50,27 @@ fn copper_layers() {
     assert!(!is_copper_layer(PcbLayerId::UndefinedLayer));
     assert!(!is_copper_layer(PcbLayerId::FSilkS));
 
-    assert!(!is_copper_layer_lower_than(PcbLayerId::FCu, PcbLayerId::BCu));
-    assert!(is_copper_layer_lower_than(PcbLayerId::In1Cu, PcbLayerId::FCu));
-    assert!(is_copper_layer_lower_than(PcbLayerId::In2Cu, PcbLayerId::FCu));
+    assert!(!is_copper_layer_lower_than(
+        PcbLayerId::FCu,
+        PcbLayerId::BCu
+    ));
+    assert!(is_copper_layer_lower_than(
+        PcbLayerId::In1Cu,
+        PcbLayerId::FCu
+    ));
+    assert!(is_copper_layer_lower_than(
+        PcbLayerId::In2Cu,
+        PcbLayerId::FCu
+    ));
     assert!(is_copper_layer_lower_than(PcbLayerId::BCu, PcbLayerId::FCu));
-    assert!(!is_copper_layer_lower_than(PcbLayerId::In1Cu, PcbLayerId::BCu));
-    assert!(!is_copper_layer_lower_than(PcbLayerId::BCu, PcbLayerId::BCu));
+    assert!(!is_copper_layer_lower_than(
+        PcbLayerId::In1Cu,
+        PcbLayerId::BCu
+    ));
+    assert!(!is_copper_layer_lower_than(
+        PcbLayerId::BCu,
+        PcbLayerId::BCu
+    ));
 }
 
 #[test]
@@ -94,6 +109,7 @@ fn pcb_layer_id_values() {
     assert_eq!(UNDEFINED_LAYER, L::UndefinedLayer);
     assert_eq!(UNSELECTED_LAYER, L::UnselectedLayer);
     assert_eq!(PCBNEW_LAYER_ID_START, L::FCu);
+    assert_eq!(PcbLayerId::default(), L::FCu);
 
     let named: [(PcbLayerId, i32); 23] = [
         (L::FCu, 0),
@@ -129,10 +145,36 @@ fn pcb_layer_id_values() {
     }
 
     let inner = [
-        L::In1Cu, L::In2Cu, L::In3Cu, L::In4Cu, L::In5Cu, L::In6Cu, L::In7Cu, L::In8Cu, L::In9Cu,
-        L::In10Cu, L::In11Cu, L::In12Cu, L::In13Cu, L::In14Cu, L::In15Cu, L::In16Cu, L::In17Cu,
-        L::In18Cu, L::In19Cu, L::In20Cu, L::In21Cu, L::In22Cu, L::In23Cu, L::In24Cu, L::In25Cu,
-        L::In26Cu, L::In27Cu, L::In28Cu, L::In29Cu, L::In30Cu,
+        L::In1Cu,
+        L::In2Cu,
+        L::In3Cu,
+        L::In4Cu,
+        L::In5Cu,
+        L::In6Cu,
+        L::In7Cu,
+        L::In8Cu,
+        L::In9Cu,
+        L::In10Cu,
+        L::In11Cu,
+        L::In12Cu,
+        L::In13Cu,
+        L::In14Cu,
+        L::In15Cu,
+        L::In16Cu,
+        L::In17Cu,
+        L::In18Cu,
+        L::In19Cu,
+        L::In20Cu,
+        L::In21Cu,
+        L::In22Cu,
+        L::In23Cu,
+        L::In24Cu,
+        L::In25Cu,
+        L::In26Cu,
+        L::In27Cu,
+        L::In28Cu,
+        L::In29Cu,
+        L::In30Cu,
     ];
 
     for (i, layer) in inner.iter().enumerate() {
@@ -142,12 +184,51 @@ fn pcb_layer_id_values() {
     }
 
     let user = [
-        L::User1, L::User2, L::User3, L::User4, L::User5, L::User6, L::User7, L::User8, L::User9,
-        L::User10, L::User11, L::User12, L::User13, L::User14, L::User15, L::User16, L::User17,
-        L::User18, L::User19, L::User20, L::User21, L::User22, L::User23, L::User24, L::User25,
-        L::User26, L::User27, L::User28, L::User29, L::User30, L::User31, L::User32, L::User33,
-        L::User34, L::User35, L::User36, L::User37, L::User38, L::User39, L::User40, L::User41,
-        L::User42, L::User43, L::User44, L::User45,
+        L::User1,
+        L::User2,
+        L::User3,
+        L::User4,
+        L::User5,
+        L::User6,
+        L::User7,
+        L::User8,
+        L::User9,
+        L::User10,
+        L::User11,
+        L::User12,
+        L::User13,
+        L::User14,
+        L::User15,
+        L::User16,
+        L::User17,
+        L::User18,
+        L::User19,
+        L::User20,
+        L::User21,
+        L::User22,
+        L::User23,
+        L::User24,
+        L::User25,
+        L::User26,
+        L::User27,
+        L::User28,
+        L::User29,
+        L::User30,
+        L::User31,
+        L::User32,
+        L::User33,
+        L::User34,
+        L::User35,
+        L::User36,
+        L::User37,
+        L::User38,
+        L::User39,
+        L::User40,
+        L::User41,
+        L::User42,
+        L::User43,
+        L::User44,
+        L::User45,
     ];
 
     for (i, layer) in user.iter().enumerate() {
@@ -251,7 +332,10 @@ fn gui_layer_id_values_match_cpp() {
         ("LAYER_CONSTRAINT_WELL", LAYER_CONSTRAINT_WELL),
         ("LAYER_CONSTRAINT_OVER", LAYER_CONSTRAINT_OVER),
         ("LAYER_ROUTER_PREVIEW_SHADOW", LAYER_ROUTER_PREVIEW_SHADOW),
-        ("LAYER_ROUTER_PREVIEW_COLLISION", LAYER_ROUTER_PREVIEW_COLLISION),
+        (
+            "LAYER_ROUTER_PREVIEW_COLLISION",
+            LAYER_ROUTER_PREVIEW_COLLISION,
+        ),
         ("LAYER_OUTSIDE_GROUP_OPACITY", LAYER_OUTSIDE_GROUP_OPACITY),
         ("LAYER_ZONE_START", LAYER_ZONE_START),
         ("LAYER_ZONE_END", LAYER_ZONE_END),
@@ -466,18 +550,33 @@ fn gui_layer_id_values_match_cpp() {
 fn gui_layer_helpers() {
     assert_eq!(GAL_UI_LAYER_COUNT, 10);
     assert_eq!(GERBER_DRAWLAYERS_COUNT, PCB_LAYER_ID_COUNT);
-    assert_eq!(netnames_layer_index(PcbLayerId::FCu), NETNAMES_LAYER_ID_START);
-    assert_eq!(netnames_layer_index(PcbLayerId::BCu), NETNAMES_LAYER_ID_START + 2);
+    assert_eq!(
+        netnames_layer_index(PcbLayerId::FCu),
+        NETNAMES_LAYER_ID_START
+    );
+    assert_eq!(
+        netnames_layer_index(PcbLayerId::BCu),
+        NETNAMES_LAYER_ID_START + 2
+    );
     assert_eq!(gal_layer_index(LAYER_VIAS), 0);
     assert_eq!(gal_layer_index(LAYER_RATSNEST), 11);
     assert_eq!(sch_layer_index(LAYER_BUS), 1);
     assert_eq!(bitmap_layer_for(PcbLayerId::BCu), LAYER_BITMAP_START + 2);
     assert_eq!(zone_layer_for(PcbLayerId::In1Cu), LAYER_ZONE_START + 4);
-    assert_eq!(pad_copper_layer_for(PcbLayerId::FCu), LAYER_PAD_COPPER_START);
-    assert_eq!(via_copper_layer_for(PcbLayerId::FCu), LAYER_VIA_COPPER_START);
+    assert_eq!(
+        pad_copper_layer_for(PcbLayerId::FCu),
+        LAYER_PAD_COPPER_START
+    );
+    assert_eq!(
+        via_copper_layer_for(PcbLayerId::FCu),
+        LAYER_VIA_COPPER_START
+    );
     assert_eq!(clearance_layer_for(PcbLayerId::FCu), LAYER_CLEARANCE_START);
     assert_eq!(point_layer_for(PcbLayerId::FCu), LAYER_POINT_START);
-    assert_eq!(drill_symbol_layer_for(PcbLayerId::BCu), LAYER_DRILL_SYMBOL_START + 2);
+    assert_eq!(
+        drill_symbol_layer_for(PcbLayerId::BCu),
+        LAYER_DRILL_SYMBOL_START + 2
+    );
     assert_eq!(
         board_layer_for_drill_symbol(LAYER_DRILL_SYMBOL_START + 2),
         PcbLayerId::BCu
@@ -501,7 +600,10 @@ fn gui_layer_helpers() {
         get_netname_layer(LAYER_VIA_THROUGH),
         NETNAMES_LAYER_ID_START + LAYER_VIA_THROUGH
     );
-    assert_eq!(get_netname_layer(PcbLayerId::FSilkS), PcbLayerId::CmtsUser.0);
+    assert_eq!(
+        get_netname_layer(PcbLayerId::FSilkS),
+        PcbLayerId::CmtsUser.0
+    );
     assert!(is_netname_layer(NETNAMES_LAYER_ID_START));
     assert!(is_netname_layer(LAYER_VIA_NETNAMES));
     assert!(!is_netname_layer(NETNAMES_LAYER_ID_END));
@@ -517,9 +619,13 @@ fn gui_layer_helpers() {
     assert!(is_points_layer(LAYER_POINT_END));
     assert!(is_drill_symbol_layer(LAYER_DRILL_SYMBOL_START));
     assert!(!is_drill_symbol_layer(LAYER_DRILL_SYMBOL_END));
-    assert!(is_dcode_layer(GERBVIEW_LAYER_ID_START + GERBER_DRAWLAYERS_COUNT));
+    assert!(is_dcode_layer(
+        GERBVIEW_LAYER_ID_START + GERBER_DRAWLAYERS_COUNT
+    ));
     assert!(!is_dcode_layer(GERBVIEW_LAYER_ID_START));
-    assert!(!is_dcode_layer(GERBVIEW_LAYER_ID_START + 2 * GERBER_DRAWLAYERS_COUNT));
+    assert!(!is_dcode_layer(
+        GERBVIEW_LAYER_ID_START + 2 * GERBER_DRAWLAYERS_COUNT
+    ));
 
     // Synthetic copper layers: anything that is not an (odd) non-copper board layer.
     assert!(is_copper_layer_incl_synthetic(LAYER_VIA_THROUGH, true));
@@ -575,8 +681,24 @@ fn layer_classification() {
     assert!(!is_user_layer(L::In20Cu));
     assert!(!is_user_layer(L::FFab));
 
-    let front = [L::FCu, L::FAdhes, L::FPaste, L::FSilkS, L::FMask, L::FCrtYd, L::FFab];
-    let back = [L::BCu, L::BAdhes, L::BPaste, L::BSilkS, L::BMask, L::BCrtYd, L::BFab];
+    let front = [
+        L::FCu,
+        L::FAdhes,
+        L::FPaste,
+        L::FSilkS,
+        L::FMask,
+        L::FCrtYd,
+        L::FFab,
+    ];
+    let back = [
+        L::BCu,
+        L::BAdhes,
+        L::BPaste,
+        L::BSilkS,
+        L::BMask,
+        L::BCrtYd,
+        L::BFab,
+    ];
 
     for id in -2..PCB_LAYER_ID_COUNT {
         let layer = PcbLayerId(id);

@@ -1,0 +1,493 @@
+# Script for the DSNLEXER comparison between the C++ original (tests/oracle/oracle.cpp, mode
+# "script") and the Rust port (tests/oracle_goldens.rs).  lexer_script.out is the transcript
+# the C++ program prints for it.
+#
+# One command per line: a command word and, behind one space, its argument.  Text arguments
+# are escaped: \xHH stands for the byte HH (\x0a newline, \x09 tab, \x5c backslash, \x00 NUL).
+#
+#   source <name>              source name for the lexers made from here on (default "src")
+#   lexer <keywords> <text>    make a lexer reading <text>; <keywords> is a module of
+#                              kicad_sexpr::keywords or "none"
+#   lexer_no_reader <keywords> make a lexer without line reader
+#   lexer_repeat <keywords> <count> <text>   make a lexer reading <text> repeated <count> times
+#   specctra|knowsbar|comments|spaceinquoted <0|1>, delim <char>     the setters
+#   next, nexttok, all, needleft, needright, needbar, needsymbol, needsymbolornumber, neednumber <text>
+#   expecting <int>, expectingstr <text>, unexpected <int>, unexpectedstr <text>, duplicate <int>
+#   state, readcomments, fromutf8, curstrastoken, tokentext <int>, tokenstring <int>,
+#   issymbol <int>, parsedouble, parsedoubleexp <text>, parsedoubletok <int>,
+#   parseint, parseintexp <text>, parsehex, push <text>, pop, init,
+#   sub <keywords> / endsub / dropsub      a second lexer sharing the line reader
+
+# ---- basic tokens and keywords
+lexer pcb_keys_t (kicad_pcb (version 20241229) (generator "pcbnew") (at 1.5 -2 90) foo "bar baz" | )
+all
+state
+next
+state
+
+# ---- white space, blank lines, CR LF, NUL as white space
+lexer none \x0a\x0a  (a\x09b\x0d\x0a\x0a   c\x00d)\x0a
+all
+
+# ---- numbers versus symbols
+lexer none 0 1 -1 +1 1. .5 -.5 +.5 1.5 1e5 1E5 1e+5 1e-5 1.e5 .5e5 -1.5E-10 123456789012345678901234567890
+all
+lexer none - + . e 1e 1e+ 1e- 1.5.2 1-2 0x10 1a a1 -a 12abc 1_000 1,5 --1 +-1 1e5.5 1e5e5 00 007 .e5 -. +. inf nan 1/2 1:2 1.5mm 3V3 +3V3 F.Cu B.Cu *.Cu
+all
+
+# ---- quoted strings and escape sequences
+lexer none "plain" "" "a\x5c"b" "a\x5c\x5cb" "\x5ca\x5cb\x5cf\x5cn\x5cr\x5ct\x5cv" "\x5cx41\x5cx4a\x5cx4" "\x5cxZZ" "\x5cx" "\x5c101\x5c60\x5c7" "\x5c8" "\x5cq" "\x5c1234" "\x5c0" "a\x09b" "(not a list)" "# no comment" "| bar"
+all
+lexer none "\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"
+next
+state
+fromutf8
+curstrastoken
+next
+state
+fromutf8
+next
+state
+fromutf8
+next
+state
+next
+state
+
+# an escaped NUL ends the text for the keyword lookup (C string)
+lexer pcb_keys_t "at\x5c0xyz" "at" "layer\x00" "At"
+next
+curstrastoken
+fromutf8
+next
+curstrastoken
+next
+curstrastoken
+next
+curstrastoken
+
+# tokens glued to strings
+lexer none "abc"def"ghi" x"y z"(w)"q"
+all
+
+# ---- unterminated strings
+lexer none (a "abc
+next
+next
+next
+state
+next
+state
+lexer none "abc\x5c
+next
+state
+lexer none "abc\x5c\x0a"
+next
+state
+lexer none \x0a\x0a   "multi\x0aline"
+next
+state
+lexer none (ok)\x0a  "a\x5cnb\x5c"c
+next
+next
+next
+next
+lexer none (a\x00b "unterminated
+next
+next
+next
+next
+lexer none "
+next
+lexer none "\x5c
+next
+
+# ---- comments
+lexer none # comment 1\x0a  # comment 2\x0a(a # not a comment\x0a#c3\x0a b) # neither\x0a# trailing
+all
+lexer none # comment 1\x0a  # comment 2\x0a(a # not a comment\x0a#c3\x0a b) # neither\x0a# trailing
+comments 1
+all
+lexer none   # c1 \x0d\x0a#c2\x0a\x0a(a)\x0d\x0a#\x0a# last
+comments 1
+comments 1
+next
+state
+all
+lexer pcb_keys_t # first\x0a   # second\x0a\x0a(kicad_pcb)\x0a# later\x0a# more\x0a(at)
+readcomments
+state
+readcomments
+state
+next
+readcomments
+state
+readcomments
+state
+all
+lexer none (a)
+readcomments
+state
+comments 0
+
+# ---- token texts
+lexer pcb_keys_t (layer F.Cu)
+tokentext -13
+tokentext -12
+tokentext -11
+tokentext -10
+tokentext -9
+tokentext -8
+tokentext -7
+tokentext -6
+tokentext -5
+tokentext -4
+tokentext -3
+tokentext -2
+tokentext -1
+tokentext 0
+tokentext 17
+tokentext 484
+tokentext 485
+tokentext 100000
+tokenstring -3
+tokenstring 0
+tokenstring 485
+issymbol -12
+issymbol -6
+issymbol -5
+issymbol -4
+issymbol -3
+issymbol -2
+issymbol -1
+issymbol 0
+issymbol 99
+
+# ---- error messages
+lexer pcb_keys_t (at 1 2)\x0a  (layer "F.Cu")
+expecting -3
+next
+expecting -3
+expecting -4
+expecting 0
+expectingstr yes or no
+next
+expectingstr at, layer or uuid
+unexpected -4
+unexpected 17
+unexpected 99999
+unexpectedstr foo bar
+unexpectedstr 
+duplicate 5
+duplicate -2
+next
+next
+next
+next
+expecting -3
+expectingstr a number
+next
+next
+unexpected 20
+next
+next
+expectingstr more
+next
+expecting -1
+
+# ---- the Need* family
+lexer pcb_keys_t ( at "str" 5 ) |
+needleft
+needsymbol
+needsymbol
+needsymbol
+needright
+needbar
+needbar
+needleft
+needright
+needsymbol
+needsymbolornumber
+lexer pcb_keys_t 5 x ( 7 "8" 9.5 ) 6.25 1
+needsymbolornumber
+needsymbolornumber
+needsymbolornumber
+neednumber width
+neednumber width
+parsedoubleexp radius
+parsedoubleexp radius
+parsedoubletok 5
+parsedoubletok 5
+parsedoubletok -3
+neednumber 
+
+# ---- parseDouble
+lexer none 1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+next
+parsedouble
+
+# ---- parseInt / parseHex of the parsers
+lexer none 42 -17 3.9 abc 99999999999 -99999999999 " 7" 1e3 0x1F ff 0x10 zz -a 7fffffffffffffffff
+next
+parseint
+next
+parseint
+next
+parseint
+next
+parseint
+next
+parseint
+next
+parseint
+next
+parseint
+parseintexp count
+parseintexp count
+parsehex
+parsehex
+parsehex
+parsehex
+parsehex
+
+# ---- specctra mode
+lexer dsn (pcb "my board"\x0a (parser (string_quote ")\x0a (space_in_quoted_tokens on))\x0a (net U2-14 "U2"-"14" -5 a-b - x-)\x0a (PCB Parser CLASS)\x0a ("with \x5c backslash" "a\x5c")\x0a)
+specctra 1
+all
+lexer dsn (pcb "my board"\x0a (parser (string_quote ")\x0a (net U2-14 a-b)\x0a (PCB Parser CLASS))
+all
+lexer dsn (string_quote ')\x0a('a b' "c d" $e f$)\x0a(string_quote $)\x0a($e f$ 'g h')
+specctra 1
+next
+next
+next
+delim '
+next
+next
+next
+next
+next
+next
+next
+next
+next
+next
+next
+delim $
+all
+lexer dsn (string_quote x)
+specctra 1
+next
+next
+next
+state
+lexer dsn (string_quote "x)
+specctra 1
+next
+next
+next
+lexer dsn (string_quote ")\x0a(string_quote $ )(string_quote '
+specctra 1
+all
+lexer dsn ("abc def
+specctra 1
+next
+next
+state
+lexer dsn ("abc def" ghi "j k")
+specctra 1
+spaceinquoted 0
+all
+lexer dsn ("abc def" ghi)
+specctra 1
+spaceinquoted 0
+specctra 0
+all
+lexer dsn ('abc def' "x")
+specctra 1
+delim '
+specctra 0
+all
+# the setters do nothing outside of specctra mode
+lexer none ('a b' "c d")
+delim '
+spaceinquoted 1
+all
+lexer dsn (Layer LAYER layer "Layer")
+specctra 1
+all
+lexer dsn (Layer LAYER layer "Layer")
+all
+
+# ---- the bar token
+lexer none (a|b | c "d|e")
+all
+lexer none (a|b | c "d|e")
+knowsbar 0
+all
+
+# ---- source names
+source 
+lexer none (a "x
+next
+next
+next
+state
+source board.kicad_pcb
+lexer none (a "x
+next
+next
+next
+source src
+
+# ---- end of input
+lexer none (a)
+all
+next
+state
+next
+state
+lexer none 
+next
+state
+next
+state
+lexer none \x0a\x0a  \x0a
+next
+state
+lexer none (a)\x0a\x0a
+all
+state
+init
+state
+next
+state
+lexer_no_reader none
+nexttok
+nexttok
+
+# ---- the line length limit of STRING_LINE_READER (16 000 000 bytes)
+lexer_repeat none 15999999 x
+nexttok
+nexttok
+lexer_repeat none 16000000 x
+nexttok
+nexttok
+state
+lexer_repeat none 3999999 abc\x0a
+nexttok
+nexttok
+nexttok
+lexer_repeat none 4000000 \x0aabc
+nexttok
+nexttok
+nexttok
+lexer_repeat none 4000000 abc\x20
+nexttok
+state
+
+# ---- offsets and line numbers
+lexer none \x09(a\x0a\x09\x09(bb  "cc")\x0a)
+all
+lexer none (\xc2\xb5 "\xc3\xa9" \xc3\xbc|\xc3\xb6)
+all
+
+# ---- reader stack
+lexer none (a b\x0a c d)\x0a(e)
+next
+next
+push (x y)\x0a z
+next
+next
+next
+state
+pop
+state
+all
+lexer none (a b\x0a c d)\x0a(e)
+next
+push x
+next
+next
+pop
+next
+state
+
+# ---- two lexers on one line reader
+lexer pcb_keys_t (gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))
+next
+next
+next
+next
+state
+sub strokeparams_t
+state
+next
+next
+next
+next
+next
+next
+next
+next
+next
+state
+endsub
+state
+all
+lexer pcb_keys_t (a (stroke (width 0.1)\x0a (type solid)) (layer "F.Cu"))
+next
+next
+next
+next
+sub strokeparams_t
+next
+next
+next
+next
+next
+next
+state
+dropsub
+state
+next
+lexer pcb_keys_t (a b)
+sub strokeparams_t
+all
+endsub
+next
+state

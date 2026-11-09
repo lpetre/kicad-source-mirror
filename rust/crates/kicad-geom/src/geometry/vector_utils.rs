@@ -48,7 +48,11 @@ use crate::math::vector2::{Coord, Vector2, Vector2I};
 /// * `a_from` - The point to test from.
 ///
 /// Returns true if the point is in the direction.
-pub fn point_is_in_direction<T: Coord>(a_point: Vector2<T>, a_direction: Vector2<T>, a_from: Vector2<T>) -> bool {
+pub fn point_is_in_direction<T: Coord>(
+    a_point: Vector2<T>,
+    a_direction: Vector2<T>,
+    a_from: Vector2<T>,
+) -> bool {
     (a_point - a_from).dot(a_direction) > <T::Extended as Coord>::ZERO
 }
 
@@ -150,7 +154,11 @@ pub fn get_nearest_endpoint(a_seg: &Seg, a_point: Vector2I) -> Vector2I {
     let dist_to_cb_start: f64 = a_seg.a.distance(a_point);
     let dist_to_cb_end: f64 = a_seg.b.distance(a_point);
 
-    if dist_to_cb_start <= dist_to_cb_end { a_seg.a } else { a_seg.b }
+    if dist_to_cb_start <= dist_to_cb_end {
+        a_seg.a
+    } else {
+        a_seg.b
+    }
 }
 
 /// Port of the file-local `RoundNearest` template.
@@ -175,7 +183,10 @@ const fn round_up(x: i32, g: i32) -> i32 {
 ///
 /// Round a vector to the nearest grid point in any direction.
 pub fn round_grid(a_vec: Vector2I, a_grid_size: i32) -> Vector2I {
-    Vector2I::new(round_nearest(a_vec.x, a_grid_size), round_nearest(a_vec.y, a_grid_size))
+    Vector2I::new(
+        round_nearest(a_vec.x, a_grid_size),
+        round_nearest(a_vec.y, a_grid_size),
+    )
 }
 
 /// Port of `KIGEOM::RoundNW`.
@@ -184,7 +195,10 @@ pub fn round_grid(a_vec: Vector2I, a_grid_size: i32) -> Vector2I {
 ///
 /// This means x and y are both rounded downwards (regardless of sign).
 pub fn round_nw(a_vec: Vector2I, a_grid_size: i32) -> Vector2I {
-    Vector2I::new(round_down(a_vec.x, a_grid_size), round_down(a_vec.y, a_grid_size))
+    Vector2I::new(
+        round_down(a_vec.x, a_grid_size),
+        round_down(a_vec.y, a_grid_size),
+    )
 }
 
 /// Port of `KIGEOM::RoundSE`.
@@ -193,7 +207,10 @@ pub fn round_nw(a_vec: Vector2I, a_grid_size: i32) -> Vector2I {
 ///
 /// This means x and y are both rounded upwards (regardless of sign).
 pub fn round_se(a_vec: Vector2I, a_grid_size: i32) -> Vector2I {
-    Vector2I::new(round_up(a_vec.x, a_grid_size), round_up(a_vec.y, a_grid_size))
+    Vector2I::new(
+        round_up(a_vec.x, a_grid_size),
+        round_up(a_vec.y, a_grid_size),
+    )
 }
 
 #[cfg(test)]
@@ -202,8 +219,14 @@ mod tests {
 
     #[test]
     fn grid_rounding() {
-        assert_eq!(round_grid(Vector2I::new(14, -14), 10), Vector2I::new(10, -10));
-        assert_eq!(round_grid(Vector2I::new(15, -15), 10), Vector2I::new(20, -20));
+        assert_eq!(
+            round_grid(Vector2I::new(14, -14), 10),
+            Vector2I::new(10, -10)
+        );
+        assert_eq!(
+            round_grid(Vector2I::new(15, -15), 10),
+            Vector2I::new(20, -20)
+        );
         assert_eq!(round_grid(Vector2I::new(0, 4), 10), Vector2I::new(0, 0));
         assert_eq!(round_nw(Vector2I::new(19, -11), 10), Vector2I::new(10, -20));
         assert_eq!(round_nw(Vector2I::new(20, -20), 10), Vector2I::new(20, -20));
@@ -228,8 +251,17 @@ mod tests {
             Vector2I::new(-10, -1),
             Vector2I::new(0, 0)
         ));
-        assert_eq!(get_projected_point_length_ratio(Vector2I::new(-5, 7), &seg), 0.0);
-        assert_eq!(get_projected_point_length_ratio(Vector2I::new(500, 7), &seg), 1.0);
-        assert_eq!(get_projected_point_length_ratio(Vector2I::new(25, 7), &seg), 0.25);
+        assert_eq!(
+            get_projected_point_length_ratio(Vector2I::new(-5, 7), &seg),
+            0.0
+        );
+        assert_eq!(
+            get_projected_point_length_ratio(Vector2I::new(500, 7), &seg),
+            1.0
+        );
+        assert_eq!(
+            get_projected_point_length_ratio(Vector2I::new(25, 7), &seg),
+            0.25
+        );
     }
 }

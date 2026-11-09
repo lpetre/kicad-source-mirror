@@ -49,7 +49,12 @@ impl Box2IMinMax {
     /// (`BOX2I_MINMAX()`, all zero, is `Box2IMinMax::default()`.)
     #[inline]
     pub const fn new(a_left: i32, a_top: i32, a_right: i32, a_bottom: i32) -> Self {
-        Box2IMinMax { left: a_left, top: a_top, right: a_right, bottom: a_bottom }
+        Box2IMinMax {
+            left: a_left,
+            top: a_top,
+            right: a_right,
+            bottom: a_bottom,
+        }
     }
 
     /// Port of `BOX2I_MINMAX( const VECTOR2I& aPt )`.
@@ -61,13 +66,23 @@ impl Box2IMinMax {
     /// Port of `BOX2I_MINMAX( int aX, int aY )`.
     #[inline]
     pub const fn from_xy(a_x: i32, a_y: i32) -> Self {
-        Box2IMinMax { left: a_x, top: a_y, right: a_x, bottom: a_y }
+        Box2IMinMax {
+            left: a_x,
+            top: a_y,
+            right: a_x,
+            bottom: a_y,
+        }
     }
 
     /// Port of `BOX2I_MINMAX( const BOX2I& aBox )`.
     #[inline]
     pub fn from_box(a_box: &Box2I) -> Self {
-        Box2IMinMax { left: a_box.left(), top: a_box.top(), right: a_box.right(), bottom: a_box.bottom() }
+        Box2IMinMax {
+            left: a_box.left(),
+            top: a_box.top(),
+            right: a_box.right(),
+            bottom: a_box.bottom(),
+        }
     }
 
     /// Port of `BOX2I_MINMAX( const VECTOR2I& aA, const VECTOR2I& aB )`.
@@ -92,7 +107,10 @@ impl Box2IMinMax {
     pub fn to_box2i(&self) -> Box2I {
         box2i_safe_from_int(
             Vector2I::new(self.left, self.top),
-            Vector2L::new(self.right as i64 - self.left as i64, self.bottom as i64 - self.top as i64),
+            Vector2L::new(
+                self.right as i64 - self.left as i64,
+                self.bottom as i64 - self.top as i64,
+            ),
         )
     }
 
@@ -137,7 +155,8 @@ impl Box2IMinMax {
         let end = Vector2L::new(self.right as i64, self.bottom as i64);
         let d: Vector2L = end - start;
 
-        (d.x as f64).hypot(d.y as f64)
+        // std::hypot( d.x, d.y )
+        crate::cmath::hypot(d.x as f64, d.y as f64)
     }
 }
 
@@ -181,7 +200,10 @@ mod tests {
         assert_eq!(a.center(), Vector2I::new(0, 0));
         assert_eq!(a.diameter(), 500.0f64.sqrt());
         assert_eq!(Box2IMinMax::from_seg(&Seg::from_coords(10, -5, -10, 5)), a);
-        assert_eq!(Box2IMinMax::from_point(Vector2I::new(3, 4)), Box2IMinMax::new(3, 4, 3, 4));
+        assert_eq!(
+            Box2IMinMax::from_point(Vector2I::new(3, 4)),
+            Box2IMinMax::new(3, 4, 3, 4)
+        );
         assert_eq!(Box2IMinMax::default(), Box2IMinMax::new(0, 0, 0, 0));
 
         let b = Box2I::new(Vector2I::new(1, 2), Vector2I::new(3, 4));

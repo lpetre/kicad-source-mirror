@@ -366,7 +366,11 @@ impl NumericEvaluator {
 
         let mut retval = Token {
             token: ENDS,
-            value: TokenType { d_value: 0.0, valid: false, text: String::new() },
+            value: TokenType {
+                d_value: 0.0,
+                valid: false,
+                text: String::new(),
+            },
         };
 
         if self.token.token.is_none() {
@@ -404,8 +408,7 @@ impl NumericEvaluator {
             // VALUE
             self.extract_number(&mut si_scaler, allow_infix);
             retval.token = VALUE;
-            retval.value.d_value =
-                crt::atof(self.token.token.as_deref().unwrap_or("")) * si_scaler;
+            retval.value.d_value = crt::atof(self.token.token.as_deref().unwrap_or("")) * si_scaler;
         } else if let Some(convert_from) = self.check_unit(&mut si_scaler, allow_infix) {
             // UNIT
             // Units are appended to a VALUE.
@@ -661,11 +664,7 @@ impl NumericEvaluator {
             return Some(Unit::Inch);
         }
 
-        if size_left >= 3
-            && ch == b'm'
-            && cptr(1) == b'i'
-            && cptr(2) == b'l'
-            && !is_alnum(cptr(3))
+        if size_left >= 3 && ch == b'm' && cptr(1) == b'i' && cptr(2) == b'l' && !is_alnum(cptr(3))
         {
             self.token.pos += 3;
             return Some(Unit::Mil);

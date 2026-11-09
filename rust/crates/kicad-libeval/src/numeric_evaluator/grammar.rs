@@ -1,6 +1,7 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
 // Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
@@ -39,18 +40,30 @@ use super::NumericEvaluator;
 use crate::lemon::{Grammar, YyStackEntry, YyTables};
 
 // ---- BEGIN GENERATED TABLES (tests/oracle/gen_tables.py) ----
-// Token codes (grammar.h).
+// Token codes (grammar.h).  Not every token of a grammar is produced by its lexer.
+#[allow(dead_code)]
 pub(crate) const VAR: i32 = 1;
+#[allow(dead_code)]
 pub(crate) const ASSIGN: i32 = 2;
+#[allow(dead_code)]
 pub(crate) const SEMCOL: i32 = 3;
+#[allow(dead_code)]
 pub(crate) const PLUS: i32 = 4;
+#[allow(dead_code)]
 pub(crate) const MINUS: i32 = 5;
+#[allow(dead_code)]
 pub(crate) const UNIT: i32 = 6;
+#[allow(dead_code)]
 pub(crate) const DIVIDE: i32 = 7;
+#[allow(dead_code)]
 pub(crate) const MULT: i32 = 8;
+#[allow(dead_code)]
 pub(crate) const ENDS: i32 = 9;
+#[allow(dead_code)]
 pub(crate) const VALUE: i32 = 10;
+#[allow(dead_code)]
 pub(crate) const PARENL: i32 = 11;
+#[allow(dead_code)]
 pub(crate) const PARENR: i32 = 12;
 
 // Rule names (yyRuleName[]), for reference:
@@ -91,38 +104,27 @@ pub(crate) static TABLES: YyTables = YyTables {
     yy_shift_count: 17,
     yy_reduce_count: 9,
     yy_action: &[
-        61, 17, 63, 10, 4, 5, 11, 12, 13, 44, 30, 2,
-        14, 29, 9, 8, 31, 6, 7, 28, 17, 59, 17, 4,
-        5, 4, 5, 58, 44, 30, 2, 30, 2, 9, 8, 31,
-        6, 7, 31, 6, 7, 40, 9, 8, 31, 6, 7, 46,
-        1, 1, 10, 15, 16, 3,
+        61, 17, 63, 10, 4, 5, 11, 12, 13, 44, 30, 2, 14, 29, 9, 8, 31, 6, 7, 28, 17, 59, 17, 4, 5,
+        4, 5, 58, 44, 30, 2, 30, 2, 9, 8, 31, 6, 7, 31, 6, 7, 40, 9, 8, 31, 6, 7, 46, 1, 1, 10, 15,
+        16, 3,
     ],
     yy_lookahead: &[
-        0, 1, 15, 16, 4, 5, 16, 16, 16, 9, 10, 11,
-        16, 3, 4, 5, 6, 7, 8, 9, 1, 16, 1, 4,
-        5, 4, 5, 16, 9, 10, 11, 10, 11, 4, 5, 6,
-        7, 8, 6, 7, 8, 12, 4, 5, 6, 7, 8, 13,
-        14, 15, 16, 16, 16, 2, 17, 17, 17, 17, 17, 17,
-        17, 17, 17, 17, 17, 17, 17,
+        0, 1, 15, 16, 4, 5, 16, 16, 16, 9, 10, 11, 16, 3, 4, 5, 6, 7, 8, 9, 1, 16, 1, 4, 5, 4, 5,
+        16, 9, 10, 11, 10, 11, 4, 5, 6, 7, 8, 6, 7, 8, 12, 4, 5, 6, 7, 8, 13, 14, 15, 16, 16, 16,
+        2, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
     ],
     yy_shift_ofst: &[
-        19, 0, 21, 21, 21, 21, 21, 21, 21, 21, 10, 29,
-        38, 32, 32, 32, 32, 51,
+        19, 0, 21, 21, 21, 21, 21, 21, 21, 21, 10, 29, 38, 32, 32, 32, 32, 51,
     ],
-    yy_reduce_ofst: &[
-        34, -13, -10, -9, -8, -4, 5, 11, 35, 36,
-    ],
+    yy_reduce_ofst: &[34, -13, -10, -9, -8, -4, 5, 11, 35, 36],
     yy_default: &[
-        45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
-        55, 53, 52, 57, 56, 54,
+        45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 55, 53, 52, 57, 56, 54,
     ],
     yy_rule_info_lhs: &[
-        15, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-        16, 13, 14, 14, 15,
+        15, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 13, 14, 14, 15,
     ],
     yy_rule_info_nrhs: &[
-        -2, -2, -1, -2, -2, -2, -1, -3, -3, -3, -3, -3,
-        -3, -1, -1, -2, -1,
+        -2, -2, -1, -2, -2, -2, -1, -3, -3, -3, -3, -3, -3, -1, -1, -2, -1,
     ],
 };
 // ---- END GENERATED TABLES ----

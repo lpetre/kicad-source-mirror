@@ -1,0 +1,281 @@
+> ()
+as_string	()
+list line=1 children=0
+> (symbol)
+as_string	(symbol)
+list line=1 children=1
+  symbol line=1 symbol
+> (symbol "string" 42 3.14 (nested 4 ()))
+as_string	(symbol "string" 42 3.14 \x0a  (nested 4 \x0a    ()))
+list line=1 children=5
+  symbol line=1 symbol
+  string line=1 string
+  integer line=1 42
+  double line=1 40091eb851eb851f
+  list line=1 children=3
+    symbol line=1 nested
+    integer line=1 4
+    list line=1 children=0
+> (42 3.14 "string")
+as_string	(42 3.14 "string")
+list line=1 children=3
+  integer line=1 42
+  double line=1 40091eb851eb851f
+  string line=1 string
+> (42 \x0a  (1 2))
+as_string	(42 \x0a  (1 2))
+list line=1 children=2
+  integer line=1 42
+  list line=2 children=2
+    integer line=2 1
+    integer line=2 2
+> this is just writing
+as_string	this
+symbol line=1 this
+> "string"
+as_string	"string"
+string line=1 string
+> "string" trailing
+as_string	"string"
+string line=1 string
+> ""
+as_string	""
+string line=1 
+> (a (b (c (d))) e)
+as_string	(a \x0a  (b \x0a    (c \x0a      (d))) e)
+list line=1 children=3
+  symbol line=1 a
+  list line=1 children=2
+    symbol line=1 b
+    list line=1 children=2
+      symbol line=1 c
+      list line=1 children=1
+        symbol line=1 d
+  symbol line=1 e
+> (a(b)c)
+as_string	(a \x0a  (b) c)
+list line=1 children=3
+  symbol line=1 a
+  list line=1 children=1
+    symbol line=1 b
+  symbol line=1 c
+> (  a   b\x09c\x0a\x0d d\x08\x0c\x0b)
+as_string	(a b c d)
+list line=1 children=4
+  symbol line=1 a
+  symbol line=1 b
+  symbol line=1 c
+  symbol line=2 d
+> \x0a\x0a(a\x0a  (b "x\x0ay"\x0a c)\x0a\x0a 5)\x0a
+as_string	(a \x0a  (b "x\x0ay" c) 5)
+list line=3 children=3
+  symbol line=3 a
+  list line=4 children=3
+    symbol line=4 b
+    string line=4 x\x0ay
+    symbol line=5 c
+  integer line=7 5
+> (a "esc \x5c" quote \x5c\x5c" b)
+as_string	(a "esc \x5c" quote \x5c\x5c" b)
+list line=1 children=3
+  symbol line=1 a
+  string line=1 esc \x5c" quote \x5c\x5c
+  symbol line=1 b
+> (a "x\x5c\x5c\x5c" (b)")
+as_string	(a "x\x5c\x5c\x5c" (b)")
+list line=1 children=2
+  symbol line=1 a
+  string line=1 x\x5c\x5c\x5c" (b)
+> (42 -42 3.14 -3.14 .5 5. -.5 1.2.3 007 08 -012 0129 - -a 1e5 +1 1,5 a1 -1e5 --1 1- 1.-)
+as_string	(42 -42 3.14 -3.14 0.5 5 -0.5 1.2 7 0 -10 10 - -a 1e5 +1 1,5 a1 -1e5 --1 1- 1.-)
+list line=1 children=22
+  integer line=1 42
+  integer line=1 -42
+  double line=1 40091eb851eb851f
+  double line=1 c0091eb851eb851f
+  double line=1 3fe0000000000000
+  double line=1 4014000000000000
+  double line=1 bfe0000000000000
+  double line=1 3ff3333333333333
+  integer line=1 7
+  integer line=1 0
+  integer line=1 -10
+  integer line=1 10
+  symbol line=1 -
+  symbol line=1 -a
+  symbol line=1 1e5
+  symbol line=1 +1
+  symbol line=1 1,5
+  symbol line=1 a1
+  symbol line=1 -1e5
+  symbol line=1 --1
+  symbol line=1 1-
+  symbol line=1 1.-
+> (0 00 0.0 -0 -0.0 000.500 1. 2.50 100 1e2)
+as_string	(0 0 0 0 -0 0.5 1 2.5 100 1e2)
+list line=1 children=10
+  integer line=1 0
+  integer line=1 0
+  double line=1 0000000000000000
+  integer line=1 0
+  double line=1 8000000000000000
+  double line=1 3fe0000000000000
+  double line=1 3ff0000000000000
+  double line=1 4004000000000000
+  integer line=1 100
+  symbol line=1 1e2
+> (99999999999999999999 -99999999999999999999 9223372036854775807 -9223372036854775808 4294967296 2147483648 -2147483649)
+as_string	(-1 0 -1 0 0 -2147483648 2147483647)
+list line=1 children=7
+  integer line=1 9223372036854775807
+  integer line=1 -9223372036854775808
+  integer line=1 9223372036854775807
+  integer line=1 -9223372036854775808
+  integer line=1 4294967296
+  integer line=1 2147483648
+  integer line=1 -2147483649
+> (0.1 0.2 0.30000000000000004 1.5 123456789.123456789 12345678901234567890.5 0.000001 0.00001234 100000.0 10000000000.0 123456789012.5)
+as_string	(0.1 0.2 0.3 1.5 123456789.1 12345678901234567168 0.000001 0.00001234 100000 10000000000 123456789012.5)
+list line=1 children=11
+  double line=1 3fb999999999999a
+  double line=1 3fc999999999999a
+  double line=1 3fd3333333333334
+  double line=1 3ff8000000000000
+  double line=1 419d6f34547e6b75
+  double line=1 43e56a95319d63e1
+  double line=1 3eb0c6f7a0b5ed8d
+  double line=1 3ee9e0fcaf9380fc
+  double line=1 40f86a0000000000
+  double line=1 4202a05f20000000
+  double line=1 423cbe991a148000
+> (0.00000000001 0.99999999999 9999999999.9 99999999999.9 0.123456789012345 1234567.891)
+as_string	(0 1 9999999999.8999996185 99999999999.8999938965 0.123456789 1234567.891)
+list line=1 children=6
+  double line=1 3da5fd7fe1796495
+  double line=1 3feffffffffea028
+  double line=1 4202a05f1fff3333
+  double line=1 42374876e7ffe666
+  double line=1 3fbf9add3746f62e
+  double line=1 4132d687e4189375
+> (\xc2\xb5m "\xce\xa9 \xc3\xa9" \xc3\xbc)
+as_string	(\xc2\xb5m "\xce\xa9 \xc3\xa9" \xc3\xbc)
+list line=1 children=3
+  symbol line=1 \xc2\xb5m
+  string line=1 \xce\xa9 \xc3\xa9
+  symbol line=1 \xc3\xbc
+> (a "unterminated
+parse_exception	missing closing quote
+> (a "unterminated\x5c
+parse_exception	missing closing quote
+> "abc\x5c"
+parse_exception	missing closing quote
+> (symbol
+parse_exception	format error
+> (a (b
+parse_exception	format error
+> (1
+parse_exception	format error
+> 1
+parse_exception	format error
+> 3.14
+parse_exception	format error
+> symbol
+parse_exception	format error
+> ,
+parse_exception	format error
+> symbol\x20
+as_string	symbol
+symbol line=1 symbol
+> 12 13
+as_string	12
+integer line=1 12
+> 1.5(
+as_string	1.5
+double line=1 3ff8000000000000
+> a)
+as_string	a
+symbol line=1 a
+> (
+as_string	()
+list line=1 children=0
+> (a\x20
+as_string	(a)
+list line=1 children=1
+  symbol line=1 a
+> (a (b\x20
+as_string	(a \x0a  (b))
+list line=1 children=2
+  symbol line=1 a
+  list line=1 children=1
+    symbol line=1 b
+> (a "s"
+as_string	(a "s")
+list line=1 children=2
+  symbol line=1 a
+  string line=1 s
+> )
+null
+> \x20\x20) (a)
+null
+> \x20\x09\x0d\x0a\x08\x0c\x0b
+null
+> (a))(b)
+as_string	(a)
+list line=1 children=1
+  symbol line=1 a
+> ((a) (b)) (c)
+as_string	(\x0a  (a) \x0a  (b))
+list line=1 children=2
+  list line=1 children=1
+    symbol line=1 a
+  list line=1 children=1
+    symbol line=1 b
+> (()())
+as_string	(\x0a  () \x0a  ())
+list line=1 children=2
+  list line=1 children=0
+  list line=1 children=0
+> (()()(()))
+as_string	(\x0a  () \x0a  () \x0a  (\x0a    ()))
+list line=1 children=3
+  list line=1 children=0
+  list line=1 children=0
+  list line=1 children=1
+    list line=1 children=0
+> (pts (xy 1 2) (xy 3 4))
+as_string	(pts \x0a  (xy 1 2) \x0a  (xy 3 4))
+list line=1 children=3
+  symbol line=1 pts
+  list line=1 children=3
+    symbol line=1 xy
+    integer line=1 1
+    integer line=1 2
+  list line=1 children=3
+    symbol line=1 xy
+    integer line=1 3
+    integer line=1 4
+> (a\x00b c)
+as_string	(a\x00b c)
+list line=1 children=2
+  symbol line=1 a\x00b
+  symbol line=1 c
+> (;comment #x 'y' $z %w {v} [u])
+as_string	(;comment #x 'y' $z %w {v} [u])
+list line=1 children=7
+  symbol line=1 ;comment
+  symbol line=1 #x
+  symbol line=1 'y'
+  symbol line=1 $z
+  symbol line=1 %w
+  symbol line=1 {v}
+  symbol line=1 [u]
+> (- -- -1 .- -a. a.b 1.x)
+as_string	(- -- -1 .- -a. a.b 1.x)
+list line=1 children=7
+  symbol line=1 -
+  symbol line=1 --
+  integer line=1 -1
+  symbol line=1 .-
+  symbol line=1 -a.
+  symbol line=1 a.b
+  symbol line=1 1.x

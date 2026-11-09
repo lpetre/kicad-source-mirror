@@ -51,7 +51,11 @@
 /// (the "control #defines" and "parsing tables" sections of `grammar.c`).
 ///
 /// Field names are the lower-case spelling of the C macros/arrays they hold.
+///
+/// Not every constant is consulted by the ported driver (some only size C arrays or feed the
+/// tracing code); they are all kept so the tables can be pasted from the generator as is.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) struct YyTables {
     /// A symbol code that is not used for any terminal or non-terminal.
     pub yynocode: u16,
@@ -174,14 +178,22 @@ impl<G: Grammar> YyParser<G> {
         let mut yystack = Vec::with_capacity(depth);
 
         for _ in 0..depth {
-            yystack.push(YyStackEntry { stateno: 0, major: 0, minor: G::Minor::default() });
+            yystack.push(YyStackEntry {
+                stateno: 0,
+                major: 0,
+                minor: G::Minor::default(),
+            });
         }
 
         // yypParser->yyerrcnt = -1;
         // yypParser->yytos = yypParser->yystack;
         // yypParser->yystack[0].stateno = 0;
         // yypParser->yystack[0].major = 0;
-        YyParser { yytos: 0, yyerrcnt: -1, yystack }
+        YyParser {
+            yytos: 0,
+            yyerrcnt: -1,
+            yystack,
+        }
     }
 
     /// Index of the last entry in the stack (C: `yystackEnd`).
@@ -364,8 +376,7 @@ impl<G: Grammar> YyParser<G> {
                 // Check that the stack is large enough to grow by a single entry
                 // if the RHS of the rule is empty.  This ensures that there is room
                 // enough on the stack to push the LHS value
-                if t.yy_rule_info_nrhs[yyruleno as usize] == 0 && self.yytos >= self.yystack_end()
-                {
+                if t.yy_rule_info_nrhs[yyruleno as usize] == 0 && self.yytos >= self.yystack_end() {
                     self.yy_stack_overflow(extra);
                     break;
                 }

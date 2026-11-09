@@ -1,5 +1,6 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
+// Copyright (C) 2007 Michael Geselbracht, mgeselbracht3@gmail.com
 // Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
 // Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
@@ -159,7 +160,11 @@ impl<'a> Compiler<'a> {
     pub(crate) fn new_node(&mut self, op: i32, value: &TTokenValue) -> NodeId {
         let t2 = TreeNode {
             valid: true,
-            value: TTokenValue { str: value.str.clone(), num: value.num, idx: value.idx },
+            value: TTokenValue {
+                str: value.str.clone(),
+                num: value.num,
+                idx: value.idx,
+            },
             op,
             leaf: [None, None],
             is_terminal: false,
@@ -333,15 +338,11 @@ impl<'a> Compiler<'a> {
     /// unit names (followed by a non-alphanumeric character or the end), consume it and
     /// return its index; -1 otherwise.
     fn resolve_units(&mut self) -> i32 {
-        let mut unit_id = 0;
-
-        for unit_name in self.unit_resolver.supported_units() {
+        for (unit_id, unit_name) in self.unit_resolver.supported_units().iter().enumerate() {
             if self.tokenizer.match_ahead(unit_name, |c| !crt::is_alnum(c)) {
                 self.tokenizer.next_char(unit_name.chars().count());
-                return unit_id;
+                return unit_id as i32;
             }
-
-            unit_id += 1;
         }
 
         -1
@@ -349,8 +350,14 @@ impl<'a> Compiler<'a> {
 
     /// Port of `COMPILER::lexDefault`.
     fn lex_default(&mut self, token: &mut TToken) -> bool {
-        let mut retval =
-            TToken { token: G_ENDS, value: TTokenValue { str: None, num: 0.0, idx: -1 } };
+        let mut retval = TToken {
+            token: G_ENDS,
+            value: TTokenValue {
+                str: None,
+                num: 0.0,
+                idx: -1,
+            },
+        };
         let mut current = String::new();
 
         if self.tokenizer.done() {
@@ -406,7 +413,13 @@ impl<'a> Compiler<'a> {
             // Ensure that the systems decimal separator is used
             current = current
                 .chars()
-                .map(|c| if is_decimal_separator(c) { locale_decimal_separator } else { c })
+                .map(|c| {
+                    if is_decimal_separator(c) {
+                        locale_decimal_separator
+                    } else {
+                        c
+                    }
+                })
                 .collect();
 
             retval.token = G_VALUE;
@@ -965,7 +978,10 @@ impl<'a> Compiler<'a> {
                     let is_wildcard = str.contains('?') || str.contains('*');
                     uops[node.0] = Some(Uop::with_value(
                         TR_UOP_PUSH_VALUE,
-                        Some(UopValue::String { value: str, is_wildcard }),
+                        Some(UopValue::String {
+                            value: str,
+                            is_wildcard,
+                        }),
                     ));
                     self.node_mut(node).is_terminal = true;
                 }
@@ -1004,7 +1020,11 @@ impl<'a> Compiler<'a> {
                     let op = self.n(node).op;
 
                     if op == TR_OP_BOOL_AND || op == TR_OP_BOOL_OR {
-                        let jump = Uop::new(if op == TR_OP_BOOL_AND { TR_OP_JZ } else { TR_OP_JNZ });
+                        let jump = Uop::new(if op == TR_OP_BOOL_AND {
+                            TR_OP_JZ
+                        } else {
+                            TR_OP_JNZ
+                        });
                         sc_jumps.insert(node, code.size() as usize);
                         code.add_op(jump);
                         code.mark_has_jumps();

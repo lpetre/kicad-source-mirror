@@ -161,9 +161,8 @@ impl Parser {
                 };
 
                 let tmp = &text[start_pos..closing_pos];
-                let is_digits_or_dots = |bytes: &[u8]| {
-                    bytes.iter().all(|&c| c.is_ascii_digit() || c == b'.')
-                };
+                let is_digits_or_dots =
+                    |bytes: &[u8]| bytes.iter().all(|&c| c.is_ascii_digit() || c == b'.');
 
                 if is_digits_or_dots(tmp)
                     || (tmp.len() > 1 && tmp[0] == b'-' && is_digits_or_dots(&tmp[1..]))
@@ -239,6 +238,8 @@ impl Parser {
 }
 
 #[cfg(test)]
+// 3.14 is test data here (as in the C++ tests), not an approximation of pi.
+#[allow(clippy::approx_constant)]
 mod tests {
     use super::*;
 
@@ -283,11 +284,21 @@ mod tests {
     fn strings_keep_their_escapes() {
         assert_eq!(parse_ok("\"string\"").string().unwrap(), "string");
         assert_eq!(parse_ok("\"\"").string().unwrap(), "");
-        assert_eq!(parse_ok("\"a \\\"b\\\" \\\\ (c)\"").string().unwrap(), "a \\\"b\\\" \\\\ (c)");
-        assert_eq!(parse_ok("(\"a\nb\" x)").child(0).unwrap().string().unwrap(), "a\nb");
+        assert_eq!(
+            parse_ok("\"a \\\"b\\\" \\\\ (c)\"").string().unwrap(),
+            "a \\\"b\\\" \\\\ (c)"
+        );
+        assert_eq!(
+            parse_ok("(\"a\nb\" x)").child(0).unwrap().string().unwrap(),
+            "a\nb"
+        );
 
         for text in ["\"abc", "\"abc\\", "\"abc\\\"", "(a \"b"] {
-            assert_eq!(parse(text).unwrap_err().what(), "missing closing quote", "{text:?}");
+            assert_eq!(
+                parse(text).unwrap_err().what(),
+                "missing closing quote",
+                "{text:?}"
+            );
         }
     }
 
@@ -312,8 +323,14 @@ mod tests {
         assert_eq!(children[9].long_integer().unwrap(), 0);
         assert_eq!(children[10].long_integer().unwrap(), -10);
 
-        for (index, symbol) in [(11, "-"), (12, "-a"), (13, "1e5"), (14, "+1"), (15, "1,5"), (16, "a1")]
-        {
+        for (index, symbol) in [
+            (11, "-"),
+            (12, "-a"),
+            (13, "1e5"),
+            (14, "+1"),
+            (15, "1,5"),
+            (16, "a1"),
+        ] {
             assert_eq!(children[index].symbol().unwrap(), symbol);
         }
     }
@@ -335,7 +352,10 @@ mod tests {
     #[test]
     fn line_numbers() {
         let mut parser = Parser::new();
-        let list = parser.parse("\n(a\n  (b \"x\ny\"\n c)\n\n 5)\n").unwrap().unwrap();
+        let list = parser
+            .parse("\n(a\n  (b \"x\ny\"\n c)\n\n 5)\n")
+            .unwrap()
+            .unwrap();
 
         assert_eq!(list.line_number(), 2);
         assert_eq!(list.child(0).unwrap().line_number(), 2);

@@ -167,7 +167,7 @@ fn assign_text(text: &mut String, raw: &mut Option<Vec<u8>>, bytes: &[u8]) {
 /// Port of `DSNLEXER`: a lexical analyzer for the SPECCTRA DSN file format, also used for all
 /// of KiCad's s-expression file formats.
 ///
-/// `T` is the token type; see [`KeywordSet`] and the [`keywords!`](crate::keywords) macro.
+/// `T` is the token type; see [`KeywordSet`] and the [`keywords!`](crate::keywords!) macro.
 pub struct DsnLexer<T: KeywordSet = DsnSyntaxT> {
     /// C++ `readerStack`: all the LINE_READERs.  The last entry is the C++ `reader`.
     ///
@@ -272,7 +272,11 @@ impl<T: KeywordSet> DsnLexer<T> {
     /// empty `source` becomes "clipboard", as in C++.
     pub fn new(s_expression: impl Into<String>, source: &str) -> Self {
         let mut this = Self::with_table(T::KEYWORDS);
-        let source = if source.is_empty() { FMT_CLIPBOARD } else { source };
+        let source = if source.is_empty() {
+            FMT_CLIPBOARD
+        } else {
+            source
+        };
 
         this.push_reader(Box::new(StringLineReader::new(s_expression, source)));
         this
@@ -396,17 +400,37 @@ impl<T: KeywordSet> DsnLexer<T> {
 
         if result.is_ok() {
             self.sync_line_reader_with(&mut sub);
-        } else if self.reader().is_none() && sub.reader().is_some() {
-            // Only take the reader back.
-            let reader = sub.reader_stack.last_mut().and_then(Option::take);
-
-            match self.reader_stack.last_mut() {
-                Some(slot) => *slot = reader,
-                None => self.reader_stack.push(reader),
-            }
+        } else {
+            self.reclaim_line_reader_from(&mut sub);
         }
 
         result
+    }
+
+    /// Take the line reader back from `lexer`, to which it was handed over by
+    /// [`sync_line_reader_with`](Self::sync_line_reader_with), *without* synchronizing the
+    /// position.
+    ///
+    /// This is what remains of the C++ sharing when the other lexer goes out of scope before
+    /// the closing `SyncLineReaderWith()` call, typically because an exception unwinds its
+    /// scope: the first lexer still has its `LINE_READER` pointer, and its own (now stale)
+    /// position.  Use it on the error path of code that calls `sync_line_reader_with` by hand;
+    /// [`with_sub_lexer`](Self::with_sub_lexer) does it automatically.
+    ///
+    /// Returns true if a reader was taken back.
+    pub fn reclaim_line_reader_from<U: KeywordSet>(&mut self, lexer: &mut DsnLexer<U>) -> bool {
+        if self.reader().is_some() || lexer.reader().is_none() {
+            return false;
+        }
+
+        let reader = lexer.reader_stack.last_mut().and_then(Option::take);
+
+        match self.reader_stack.last_mut() {
+            Some(slot) => *slot = reader,
+            None => self.reader_stack.push(reader),
+        }
+
+        true
     }
 
     /// Port of `DSNLEXER::SetSpecctraMode`: change the behavior of this lexer into or out of
@@ -498,8 +522,8 @@ impl<T: KeywordSet> DsnLexer<T> {
             Some(order) => {
                 // `order` is stably sorted, so among equal keywords the first of the table
                 // comes first (the C++ hash table keeps the first of duplicate keys as well).
-                let position = order
-                    .partition_point(|&index| self.keywords[index as usize].as_bytes() < tok);
+                let position =
+                    order.partition_point(|&index| self.keywords[index as usize].as_bytes() < tok);
 
                 order
                     .get(position)
@@ -891,7 +915,11 @@ impl<T: KeywordSet> DsnLexer<T> {
                         return Err(self.parse_error("Un-terminated delimited string"));
                     }
 
-                    assign_text(&mut self.cur_text, &mut self.cur_text_raw, &bytes[cur..head]);
+                    assign_text(
+                        &mut self.cur_text,
+                        &mut self.cur_text_raw,
+                        &bytes[cur..head],
+                    );
 
                     head += 1; // skip over the trailing delimiter
 
@@ -914,7 +942,11 @@ impl<T: KeywordSet> DsnLexer<T> {
                     self.cur_text_raw = None;
                 }
                 None => {
-                    assign_text(&mut self.cur_text, &mut self.cur_text_raw, &bytes[cur..head]);
+                    assign_text(
+                        &mut self.cur_text,
+                        &mut self.cur_text_raw,
+                        &bytes[cur..head],
+                    );
                 }
             }
 
@@ -983,7 +1015,7 @@ impl<T: KeywordSet> DsnLexer<T> {
     ///
     /// # Errors
     ///
-    /// An error ("need a number for '<expectation>'") if the next token is not a number.
+    /// An error (`need a number for '<expectation>'`) if the next token is not a number.
     pub fn need_number(&mut self, expectation: &str) -> Result<T, IoError> {
         let tok = self.next_tok_i32()?;
 
@@ -1150,7 +1182,10 @@ impl<T: KeywordSet> DsnLexer<T> {
     ///
     /// `tok` is the token/keyword type which was not expected at the current input location.
     pub fn unexpected(&self, tok: T) -> IoError {
-        self.parse_error(format!("Unexpected '{}'", self.token_string_i32(tok.to_i32())))
+        self.parse_error(format!(
+            "Unexpected '{}'",
+            self.token_string_i32(tok.to_i32())
+        ))
     }
 
     /// Port of `DSNLEXER::Unexpected( const char* aToken )`: make an error with an input file
@@ -1164,7 +1199,10 @@ impl<T: KeywordSet> DsnLexer<T> {
     /// Port of `DSNLEXER::Duplicate`: make an error with a message saying specifically that
     /// `tok` is a duplicate of one already seen in current context.
     pub fn duplicate(&self, tok: T) -> IoError {
-        self.parse_error(format!("{} is a duplicate", self.token_string_i32(tok.to_i32())))
+        self.parse_error(format!(
+            "{} is a duplicate",
+            self.token_string_i32(tok.to_i32())
+        ))
     }
 
     /// Port of `DSNLEXER::NeedLEFT`: call [`next_tok`](Self::next_tok) and then verify that the
@@ -1249,13 +1287,18 @@ impl<T: KeywordSet> DsnLexer<T> {
     ///
     /// As with `wxString::FromUTF8`, the result is empty if the token text is not valid UTF-8.
     pub fn from_utf8(&self) -> String {
-        if self.cur_text_raw.is_some() { String::new() } else { self.cur_text.clone() }
+        if self.cur_text_raw.is_some() {
+            String::new()
+        } else {
+            self.cur_text.clone()
+        }
     }
 
     /// Port of `DSNLEXER::CurLineNumber`: return the current line number within my line reader
     /// (0 if there is no reader).
     pub fn cur_line_number(&self) -> i32 {
-        self.reader().map_or(0, |reader| reader.line_number() as i32)
+        self.reader()
+            .map_or(0, |reader| reader.line_number() as i32)
     }
 
     /// Port of `DSNLEXER::CurLine`: return the current line of text from which the
@@ -1347,7 +1390,11 @@ impl DsnLexer<i32> {
         source: &str,
     ) -> Self {
         let mut this = Self::with_table(keywords);
-        let source = if source.is_empty() { FMT_CLIPBOARD } else { source };
+        let source = if source.is_empty() {
+            FMT_CLIPBOARD
+        } else {
+            source
+        };
 
         this.push_reader(Box::new(StringLineReader::new(s_expression, source)));
         this
@@ -1393,5 +1440,662 @@ impl<T: KeywordSet> std::fmt::Debug for DsnLexer<T> {
             .field("comments_are_tokens", &self.comments_are_tokens)
             .field("reader_stack_depth", &self.reader_stack.len())
             .finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    // The behaviour of the tokenizer itself is pinned against the C++ original by
+    // tests/oracle_goldens.rs and tests/corpus.rs; the tests here cover the typed interface
+    // and the parts that only exist in the port.
+
+    use super::*;
+    use crate::keywords::pcb_keys_t::T::{self, *};
+    use crate::keywords::strokeparams_t;
+    use crate::ki_exception::IoError;
+
+    fn tokens(lexer: &mut DsnLexer<T>) -> Vec<(T, String)> {
+        let mut out = Vec::new();
+
+        loop {
+            let tok = lexer.next_tok().unwrap();
+
+            if tok == T_EOF {
+                return out;
+            }
+
+            out.push((tok, lexer.cur_text().to_string()));
+        }
+    }
+
+    #[test]
+    fn typed_tokens() {
+        let mut lexer = DsnLexer::<T>::new(
+            "(kicad_pcb (version 20241229)\n  (at 1.5 -2) \"F.Cu\" foo|)",
+            "",
+        );
+
+        assert_eq!(lexer.cur_tok(), T_NONE);
+        assert_eq!(lexer.cur_source(), "clipboard");
+
+        assert_eq!(
+            tokens(&mut lexer),
+            [
+                (T_LEFT, "(".to_string()),
+                (T_kicad_pcb, "kicad_pcb".to_string()),
+                (T_LEFT, "(".to_string()),
+                (T_version, "version".to_string()),
+                (T_NUMBER, "20241229".to_string()),
+                (T_RIGHT, ")".to_string()),
+                (T_LEFT, "(".to_string()),
+                (T_at, "at".to_string()),
+                (T_NUMBER, "1.5".to_string()),
+                (T_NUMBER, "-2".to_string()),
+                (T_RIGHT, ")".to_string()),
+                (T_STRING, "F.Cu".to_string()),
+                (T_SYMBOL, "foo".to_string()),
+                (T_BAR, "|".to_string()),
+                (T_RIGHT, ")".to_string()),
+            ]
+        );
+
+        assert_eq!(lexer.cur_tok(), T_EOF);
+        assert_eq!(lexer.prev_tok(), T_RIGHT);
+        assert_eq!(lexer.cur_line_number(), 3);
+    }
+
+    #[test]
+    fn positions() {
+        let mut lexer = DsnLexer::<T>::new("(at 1\n   \"x\" layer)", "pos.kicad_pcb");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!((lexer.cur_line_number(), lexer.cur_offset()), (1, 1));
+        assert_eq!(lexer.cur_line(), "(at 1\n");
+        assert_eq!(lexer.cur_source(), "pos.kicad_pcb");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_at);
+        assert_eq!((lexer.cur_line_number(), lexer.cur_offset()), (1, 2));
+        assert_eq!(lexer.cur_separator(), "");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_NUMBER);
+        assert_eq!((lexer.cur_line_number(), lexer.cur_offset()), (1, 5));
+        assert_eq!(lexer.cur_separator(), " ");
+
+        // The offset of a string is that of its first character behind the quote.
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!((lexer.cur_line_number(), lexer.cur_offset()), (2, 5));
+        assert_eq!(lexer.cur_separator(), "\n   ");
+        assert_eq!(lexer.cur_line(), "   \"x\" layer)");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_layer);
+        assert_eq!(lexer.cur_offset(), 8);
+        assert_eq!(lexer.cur_str(), "layer");
+        assert_eq!(lexer.cur_bytes(), b"layer");
+        assert_eq!(lexer.from_utf8(), "layer");
+    }
+
+    #[test]
+    fn symbol_and_number_predicates() {
+        assert!(DsnLexer::<T>::is_symbol(T_SYMBOL));
+        assert!(DsnLexer::<T>::is_symbol(T_STRING));
+        assert!(DsnLexer::<T>::is_symbol(T_at));
+        assert!(!DsnLexer::<T>::is_symbol(T_NUMBER));
+        assert!(!DsnLexer::<T>::is_symbol(T_LEFT));
+        assert!(!DsnLexer::<T>::is_symbol(T_EOF));
+        assert!(DsnLexer::<T>::is_number(T_NUMBER));
+        assert!(!DsnLexer::<T>::is_number(T_SYMBOL));
+    }
+
+    #[test]
+    fn token_texts() {
+        let lexer = DsnLexer::<T>::new("", "s");
+
+        assert_eq!(lexer.token_text(T_at), "at");
+        assert_eq!(lexer.token_text(T_LEFT), "(");
+        assert_eq!(lexer.token_text(T_STRING), "quoted string");
+        assert_eq!(lexer.token_string(T_layer), "'layer'");
+        assert_eq!(lexer.token_string(T_EOF), "'end of input'");
+        assert_eq!(syntax(DSN_NUMBER), "number");
+        assert_eq!(syntax(0), "???");
+    }
+
+    #[test]
+    fn error_messages() {
+        let mut lexer = DsnLexer::<T>::new("(at 1 2)\n", "board.kicad_pcb");
+
+        lexer.next_tok().unwrap();
+        lexer.next_tok().unwrap();
+
+        // GetTokenString() already quotes the token and the format string quotes it again.
+        let err = lexer.expecting(T_LEFT);
+        assert_eq!(
+            err.problem(),
+            "Expecting ''('' in 'board.kicad_pcb', line 1, offset 2."
+        );
+
+        let pe = err.as_parse_error().expect("a PARSE_ERROR");
+        assert_eq!(pe.parse_problem(), "Expecting ''(''");
+        assert_eq!(pe.line_number, 1);
+        assert_eq!(pe.byte_index, 2);
+        assert_eq!(pe.input_line, "(at 1 2)\n");
+
+        assert_eq!(
+            lexer
+                .expecting(T_layer)
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Expecting ''layer''"
+        );
+        assert_eq!(
+            lexer
+                .expecting_str("yes or no")
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Expecting yes or no. Got ''at''"
+        );
+        assert_eq!(
+            lexer
+                .unexpected(T_at)
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Unexpected ''at''"
+        );
+        assert_eq!(
+            lexer
+                .unexpected_str("end of file")
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Unexpected end of file"
+        );
+        assert_eq!(
+            lexer
+                .duplicate(T_at)
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "'at' is a duplicate"
+        );
+        assert_eq!(
+            lexer.parse_error("custom").problem(),
+            "custom in 'board.kicad_pcb', line 1, offset 2."
+        );
+    }
+
+    #[test]
+    fn need_functions() {
+        let mut lexer = DsnLexer::<T>::new("( at 5 \"s\" ) | foo", "s");
+
+        lexer.need_left().unwrap();
+        assert_eq!(lexer.need_symbol().unwrap(), T_at);
+        assert_eq!(lexer.need_number("count").unwrap(), T_NUMBER);
+        assert_eq!(lexer.need_symbol_or_number().unwrap(), T_STRING);
+        lexer.need_right().unwrap();
+        lexer.need_bar().unwrap();
+
+        let err = lexer.need_left().unwrap_err();
+        assert_eq!(
+            err.as_parse_error().unwrap().parse_problem(),
+            "Expecting ''(''"
+        );
+        // the offending token has been consumed
+        assert_eq!(lexer.cur_tok(), T_SYMBOL);
+
+        let mut lexer = DsnLexer::<T>::new("x ( )", "s");
+        assert_eq!(
+            lexer
+                .need_number("width")
+                .unwrap_err()
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "need a number for 'width'"
+        );
+        assert_eq!(
+            lexer
+                .need_symbol()
+                .unwrap_err()
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Expecting ''symbol''"
+        );
+        assert_eq!(
+            lexer
+                .need_symbol_or_number()
+                .unwrap_err()
+                .as_parse_error()
+                .unwrap()
+                .parse_problem(),
+            "Expecting a symbol or number. Got '')''"
+        );
+        assert!(lexer.need_right().is_err());
+        assert!(lexer.need_bar().is_err());
+    }
+
+    #[test]
+    fn numbers() {
+        let mut lexer = DsnLexer::<T>::new("1.5 2.25 0.125 abc 17 -3 1F 7.9", "s");
+
+        lexer.next_tok().unwrap();
+        assert_eq!(lexer.parse_double().unwrap(), 1.5);
+        assert_eq!(lexer.parse_double_expected("width").unwrap(), 2.25);
+        assert_eq!(lexer.parse_double_tok(T_width).unwrap(), 0.125);
+
+        let err = lexer.parse_double_tok(T_width).unwrap_err();
+        assert_eq!(
+            err.as_parse_error().unwrap().parse_problem(),
+            "need a number for 'width'"
+        );
+
+        let err = lexer.parse_double().unwrap_err();
+        assert_eq!(
+            err.as_parse_error().unwrap().parse_problem(),
+            "Invalid floating point number"
+        );
+        assert_eq!(lexer.parse_int(), 0);
+
+        assert_eq!(lexer.parse_int_expected("count").unwrap(), 17);
+        lexer.next_tok().unwrap();
+        assert_eq!(lexer.parse_int(), -3);
+        assert_eq!(lexer.parse_hex().unwrap(), 0x1f);
+        lexer.next_tok().unwrap();
+        assert_eq!(lexer.parse_int(), 7);
+    }
+
+    #[test]
+    fn number_classification() {
+        for text in ["0", "-1", "+1", "1.", ".5", "-.5", "1e5", "1E-5", "1.5e+10"] {
+            assert!(is_number_text(text.as_bytes()), "{text}");
+        }
+
+        for text in [
+            "", "-", "+", ".", "e5", "1e", "1e+", "1.2.3", "1a", "0x10", "--1", "1 ",
+        ] {
+            assert!(!is_number_text(text.as_bytes()), "{text}");
+        }
+    }
+
+    #[test]
+    fn escapes_that_are_not_utf8() {
+        let mut lexer = DsnLexer::<T>::new("\"a\\xe9b\" \"\\xc3\\xa9\" plain", "s");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!(lexer.cur_bytes(), b"a\xe9b");
+        assert_eq!(lexer.cur_text(), "a\u{fffd}b");
+        // wxString::FromUTF8() of invalid UTF-8 is empty
+        assert_eq!(lexer.from_utf8(), "");
+
+        // Escapes may also build a valid multi-byte character.
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!(lexer.cur_text(), "é");
+        assert_eq!(lexer.from_utf8(), "é");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_SYMBOL);
+        assert_eq!(lexer.cur_bytes(), b"plain");
+    }
+
+    #[test]
+    fn unterminated_string() {
+        let mut lexer = DsnLexer::<T>::new("(at \"abc\n)", "s");
+
+        lexer.next_tok().unwrap();
+        lexer.next_tok().unwrap();
+
+        let err = lexer.next_tok().unwrap_err();
+        let pe = err.as_parse_error().expect("a PARSE_ERROR");
+
+        assert_eq!(pe.parse_problem(), "Unterminated delimited string");
+        assert_eq!(pe.line_number, 1);
+        // offset of the string start (0 based) plus the length of what was read
+        assert_eq!(pe.byte_index, 9);
+        assert_eq!(pe.input_line, "(at \"abc\n");
+
+        // The lexer did not advance: the same error again.
+        assert!(lexer.next_tok().is_err());
+        assert_eq!(lexer.cur_tok(), T_at);
+    }
+
+    #[test]
+    fn comments() {
+        let text = "# one\n  # two\n(at) # three\n# four\n";
+
+        let mut lexer = DsnLexer::<T>::new(text, "s");
+        assert_eq!(
+            lexer.read_comment_lines().unwrap(),
+            Some(vec!["# one".to_string(), "  # two".to_string()])
+        );
+        assert_eq!(lexer.cur_tok(), T_LEFT);
+        assert_eq!(lexer.read_comment_lines().unwrap(), None);
+        assert_eq!(lexer.cur_tok(), T_at);
+
+        let mut lexer = DsnLexer::<T>::new(text, "s");
+        assert!(!lexer.set_comments_are_tokens(true));
+        assert_eq!(lexer.next_tok().unwrap(), T_COMMENT);
+        assert_eq!(lexer.cur_text(), "# one");
+        assert!(lexer.set_comments_are_tokens(false));
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+    }
+
+    #[test]
+    fn keyword_lookup_of_quoted_text() {
+        let mut lexer = DsnLexer::<T>::new("\"layer\" \"Layer\"", "s");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!(lexer.cur_str_as_token(), T_layer);
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!(lexer.cur_str_as_token(), T_SYMBOL);
+    }
+
+    #[test]
+    fn lexer_without_keywords() {
+        let mut lexer = DsnLexer::<DsnSyntaxT>::new("(at 1 \"s\")", "s");
+        let mut toks = Vec::new();
+
+        loop {
+            let tok = lexer.next_tok().unwrap();
+            toks.push(tok);
+
+            if tok == DsnSyntaxT::Eof {
+                break;
+            }
+        }
+
+        assert_eq!(
+            toks,
+            [
+                DsnSyntaxT::Left,
+                DsnSyntaxT::Symbol,
+                DsnSyntaxT::Number,
+                DsnSyntaxT::String,
+                DsnSyntaxT::Right,
+                DsnSyntaxT::Eof
+            ]
+        );
+
+        // The default type parameter is the keyword-less lexer.
+        let mut lexer: DsnLexer = DsnLexer::new("x", "s");
+        assert_eq!(lexer.next_tok().unwrap(), DsnSyntaxT::Symbol);
+    }
+
+    #[test]
+    fn run_time_keyword_table_in_any_order() {
+        static TABLE: [&str; 5] = ["zeta", "alpha", "mid", "alpha", "beta"];
+
+        let mut lexer = DsnLexer::<i32>::with_keywords(&TABLE, "alpha beta mid zeta gamma (", "s");
+        let mut toks = Vec::new();
+
+        loop {
+            let tok = lexer.next_tok().unwrap();
+
+            if tok == DSN_EOF {
+                break;
+            }
+
+            toks.push(tok);
+        }
+
+        // the first "alpha" wins, as in a hash table built from the list
+        assert_eq!(toks, [1, 4, 2, 0, DSN_SYMBOL, DSN_LEFT]);
+        assert_eq!(lexer.token_text(0), "zeta");
+        assert_eq!(lexer.token_text(5), "token too big");
+        assert_eq!(lexer.token_text(DSN_LEFT), "(");
+
+        let mut lexer = DsnLexer::<i32>::with_keywords_from_line_reader(
+            &TABLE,
+            Some(Box::new(StringLineReader::new("beta", "reader"))),
+        );
+        assert_eq!(lexer.next_tok().unwrap(), 4);
+        assert_eq!(lexer.cur_source(), "reader");
+    }
+
+    #[test]
+    fn lexer_without_reader_is_at_eof() {
+        let mut lexer = DsnLexer::<T>::from_line_reader(None);
+
+        assert_eq!(lexer.next_tok().unwrap(), T_EOF);
+        assert_eq!(lexer.cur_line_number(), 0);
+        assert_eq!(lexer.cur_line(), "");
+        assert_eq!(lexer.cur_source(), "");
+        assert!(lexer.pop_reader().is_none());
+    }
+
+    #[test]
+    fn sub_lexer_by_hand() {
+        let mut lexer = DsnLexer::<T>::new(
+            "(gr_line (stroke (width 0.1) (type solid)) (layer \"F.Cu\"))",
+            "s",
+        );
+
+        for expected in [T_LEFT, T_gr_line, T_LEFT, T_stroke] {
+            assert_eq!(lexer.next_tok().unwrap(), expected);
+        }
+
+        // STROKE_PARAMS_PARSER strokeParser( reader ); strokeParser.SyncLineReaderWith( *this );
+        let mut stroke_lexer = DsnLexer::<strokeparams_t::T>::from_line_reader(None);
+        assert!(stroke_lexer.sync_line_reader_with(&mut lexer));
+
+        // The reader is with the other lexer now.
+        assert_eq!(lexer.cur_source(), "");
+        assert_eq!(stroke_lexer.cur_source(), "s");
+        assert_eq!(stroke_lexer.cur_tok(), strokeparams_t::T::T_NONE);
+        assert_eq!(stroke_lexer.cur_text(), "stroke");
+
+        let mut seen = Vec::new();
+
+        loop {
+            let tok = stroke_lexer.next_tok().unwrap();
+            seen.push(tok);
+
+            if tok == strokeparams_t::T::T_solid {
+                break;
+            }
+        }
+
+        use strokeparams_t::T as S;
+        assert_eq!(
+            seen,
+            [
+                S::T_LEFT,
+                S::T_width,
+                S::T_NUMBER,
+                S::T_RIGHT,
+                S::T_LEFT,
+                S::T_type,
+                S::T_solid
+            ]
+        );
+
+        stroke_lexer.need_right().unwrap();
+        stroke_lexer.need_right().unwrap();
+
+        // SyncLineReaderWith( strokeParser );
+        assert!(lexer.sync_line_reader_with(&mut stroke_lexer));
+        assert_eq!(lexer.cur_source(), "s");
+        // The token state of the first lexer is its own.
+        assert_eq!(lexer.cur_tok(), T_stroke);
+
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!(lexer.next_tok().unwrap(), T_layer);
+
+        // Two lexers that both have a reader do not share one.
+        let mut other = DsnLexer::<T>::new("x", "other");
+        assert!(!lexer.sync_line_reader_with(&mut other));
+        assert!(!lexer.reclaim_line_reader_from(&mut other));
+
+        // Two lexers without reader "share" the null reader.
+        let mut a = DsnLexer::<T>::from_line_reader(None);
+        let mut b = DsnLexer::<T>::from_line_reader(None);
+        assert!(a.sync_line_reader_with(&mut b));
+    }
+
+    #[test]
+    fn with_sub_lexer_success_and_failure() {
+        let mut lexer =
+            DsnLexer::<T>::new("(stroke (width 0.1)) (layer) (stroke (width x)) (at)", "s");
+
+        lexer.need_left().unwrap();
+        assert_eq!(lexer.next_tok().unwrap(), T_stroke);
+
+        let parse_width = |sub: &mut DsnLexer<strokeparams_t::T>| -> Result<f64, IoError> {
+            sub.need_left()?;
+
+            if sub.next_tok()? != strokeparams_t::T::T_width {
+                return Err(sub.expecting(strokeparams_t::T::T_width));
+            }
+
+            let width = sub.parse_double_expected("stroke width")?;
+            sub.need_right()?;
+            sub.need_right()?;
+            Ok(width)
+        };
+
+        // Success: the lexer continues behind the tokens the sub-lexer consumed.
+        assert_eq!(lexer.with_sub_lexer(parse_width).unwrap(), 0.1);
+        lexer.need_left().unwrap();
+        assert_eq!(lexer.next_tok().unwrap(), T_layer);
+        lexer.need_right().unwrap();
+        lexer.need_left().unwrap();
+        assert_eq!(lexer.next_tok().unwrap(), T_stroke);
+
+        // Failure: the error comes from the sub-lexer, the reader is back, and the position is
+        // the one from before the hand-over (as after a C++ exception).
+        let err = lexer.with_sub_lexer(parse_width).unwrap_err();
+        assert_eq!(
+            err.problem(),
+            "need a number for 'stroke width' in 's', line 1, offset 45."
+        );
+        assert_eq!(lexer.cur_source(), "s");
+        assert_eq!(lexer.cur_tok(), T_stroke);
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!(lexer.next_tok().unwrap(), T_width);
+    }
+
+    /// A reader that fails at a given line, like the `CANCEL_AT_LINE_READER` of the C++ tests.
+    struct FailingReader {
+        inner: StringLineReader,
+        fail_at: u32,
+    }
+
+    impl LineReader for FailingReader {
+        fn read_line(&mut self) -> Result<Option<&str>, IoError> {
+            if self.inner.line_number() + 1 >= self.fail_at {
+                return Err(IoError::cancelled());
+            }
+
+            self.inner.read_line()
+        }
+
+        fn source(&self) -> &str {
+            self.inner.source()
+        }
+
+        fn line(&self) -> &str {
+            self.inner.line()
+        }
+
+        fn line_number(&self) -> u32 {
+            self.inner.line_number()
+        }
+
+        fn length(&self) -> u32 {
+            self.inner.length()
+        }
+    }
+
+    #[test]
+    fn reader_errors_pass_through() {
+        let reader = FailingReader {
+            inner: StringLineReader::new("(at\n1\n2)", "r"),
+            fail_at: 3,
+        };
+        let mut lexer = DsnLexer::<T>::from_line_reader(Some(Box::new(reader)));
+
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!(lexer.next_tok().unwrap(), T_at);
+        assert_eq!(lexer.next_tok().unwrap(), T_NUMBER);
+
+        let err = lexer.next_tok().unwrap_err();
+        assert!(err.is_cancelled());
+        assert_eq!(err.problem(), "Canceled by user.");
+
+        // prevTok was already shifted when the reader failed.
+        assert_eq!(lexer.cur_tok(), T_NUMBER);
+        assert_eq!(lexer.prev_tok(), T_NUMBER);
+
+        let reader = lexer.pop_reader().expect("the reader");
+        assert_eq!(reader.line_number(), 2);
+    }
+
+    #[test]
+    fn reader_stack() {
+        let mut lexer = DsnLexer::<T>::new("(at\n layer)", "outer");
+
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!(lexer.next_tok().unwrap(), T_at);
+
+        lexer.push_reader(Box::new(StringLineReader::new("width", "inner")));
+        assert_eq!(lexer.next_tok().unwrap(), T_width);
+        assert_eq!(lexer.cur_source(), "inner");
+        assert_eq!(lexer.cur_line_number(), 1);
+
+        assert_eq!(lexer.pop_reader().expect("inner reader").source(), "inner");
+        assert_eq!(lexer.cur_source(), "outer");
+        assert_eq!(lexer.next_tok().unwrap(), T_layer);
+        assert_eq!(lexer.cur_line_number(), 2);
+    }
+
+    #[test]
+    fn init_parser_state() {
+        let mut lexer = DsnLexer::<T>::new("(at)", "s");
+
+        lexer.set_comments_are_tokens(true);
+        lexer.next_tok().unwrap();
+        lexer.next_tok().unwrap();
+        lexer.init_parser_state();
+
+        assert_eq!(lexer.cur_tok(), T_NONE);
+        assert_eq!(lexer.prev_tok(), T_NONE);
+        assert_eq!(lexer.cur_offset(), 1);
+        assert!(!lexer.set_comments_are_tokens(false));
+        // the position in the input is kept
+        assert_eq!(lexer.next_tok().unwrap(), T_RIGHT);
+    }
+
+    #[test]
+    fn specctra_mode_setters() {
+        let mut lexer = DsnLexer::<T>::new("('a b' x)", "s");
+
+        // No effect outside of specctra mode.
+        assert_eq!(lexer.set_string_delimiter(b'\''), b'"');
+        assert_eq!(lexer.set_string_delimiter(b'$'), b'"');
+        assert!(!lexer.set_space_in_quoted_tokens(true));
+        assert!(!lexer.set_space_in_quoted_tokens(true));
+
+        lexer.set_specctra_mode(true);
+        assert!(lexer.set_space_in_quoted_tokens(true));
+        assert_eq!(lexer.set_string_delimiter(b'\''), b'"');
+        assert_eq!(lexer.set_string_delimiter(b'\''), b'\'');
+
+        assert_eq!(lexer.next_tok().unwrap(), T_LEFT);
+        assert_eq!(lexer.next_tok().unwrap(), T_STRING);
+        assert_eq!(lexer.cur_text(), "a b");
+
+        // Leaving specctra mode restores the defaults.
+        lexer.set_specctra_mode(false);
+        assert_eq!(lexer.set_string_delimiter(b'$'), b'"');
+    }
+
+    #[test]
+    fn debug_output() {
+        let mut lexer = DsnLexer::<T>::new("(at)", "s");
+        lexer.next_tok().unwrap();
+
+        let text = format!("{lexer:?}");
+        assert!(text.contains("cur_tok: T_LEFT"), "{text}");
+        assert!(text.contains("source: \"s\""), "{text}");
     }
 }

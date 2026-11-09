@@ -1,6 +1,5 @@
 // This program source code file is part of KiCad, a free EDA CAD application.
 //
-// Copyright (C) 2004-2017 Jean-Pierre Charras, jp.charras at wanadoo.fr
 // Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -88,99 +87,140 @@ pub fn wild_compare_string(pattern: &str, string_to_tst: &str, case_sensitive: b
 
 /// Port of `UnescapeString`: replace the `{token}` escape sequences produced by
 /// `EscapeString` (e.g. `{slash}`, `{dblquote}`) by the characters they stand for.
+///
+/// The C++ function calls itself for the text inside unknown or prefixed (`${...}`) braces.
+/// The port runs the same algorithm with an explicit stack of activation records, so deeply
+/// nested braces in (untrusted) text cannot overflow the call stack.
 pub fn unescape_string(source: &str) -> String {
-    let src: Vec<char> = source.chars().collect();
-    let source_len = src.len();
-
-    // smallest escape string is three characters, shortcut everything else
-    if source_len <= 2 {
-        return source.to_string();
+    /// The local state of one C++ call.
+    struct Frame {
+        src: Vec<char>,
+        i: usize,
+        ch: char,
+        newbuf: String,
+        /// Whether `}` follows the result of the nested call this frame is waiting for.
+        close: bool,
     }
 
-    let mut newbuf = String::with_capacity(source.len());
+    let mut stack: Vec<Frame> = Vec::new();
+    // The argument of a call about to be made, and the value a finished call returned.
+    let mut call: Option<Vec<char>> = Some(source.chars().collect());
+    let mut ret: Option<String> = None;
 
-    let mut prev;
-    let mut ch = '\0';
-    let mut i = 0;
-
-    while i < source_len {
-        prev = ch;
-        ch = src[i];
-
-        if ch == '{' {
-            let mut token = String::new();
-            let mut depth = 1;
-            let mut terminated = false;
-
-            i += 1;
-
-            while i < source_len {
-                ch = src[i];
-
-                if ch == '{' {
-                    depth += 1;
-                } else if ch == '}' {
-                    depth -= 1;
-                }
-
-                if depth <= 0 {
-                    terminated = true;
-                    break;
-                } else {
-                    token.push(ch);
-                }
-
-                i += 1;
-            }
-
-            if !terminated {
-                newbuf.push('{');
-                newbuf.push_str(&unescape_string(&token));
-            } else if prev == '$' || prev == '~' || prev == '^' || prev == '_' {
-                newbuf.push('{');
-                newbuf.push_str(&unescape_string(&token));
-                newbuf.push('}');
-            } else if token == "dblquote" {
-                newbuf.push('"');
-            } else if token == "quote" {
-                newbuf.push('\'');
-            } else if token == "lt" {
-                newbuf.push('<');
-            } else if token == "gt" {
-                newbuf.push('>');
-            } else if token == "backslash" {
-                newbuf.push('\\');
-            } else if token == "slash" {
-                newbuf.push('/');
-            } else if token == "bar" {
-                newbuf.push('|');
-            } else if token == "comma" {
-                newbuf.push(',');
-            } else if token == "colon" {
-                newbuf.push(':');
-            } else if token == "space" {
-                newbuf.push(' ');
-            } else if token == "dollar" {
-                newbuf.push('$');
-            } else if token == "tab" {
-                newbuf.push('\t');
-            } else if token == "return" {
-                newbuf.push('\n');
-            } else if token == "brace" {
-                newbuf.push('{');
+    loop {
+        if let Some(src) = call.take() {
+            // smallest escape string is three characters, shortcut everything else
+            if src.len() <= 2 {
+                ret = Some(src.into_iter().collect());
             } else {
-                newbuf.push('{');
-                newbuf.push_str(&unescape_string(&token));
-                newbuf.push('}');
+                let newbuf = String::with_capacity(src.len());
+                stack.push(Frame {
+                    src,
+                    i: 0,
+                    ch: '\0',
+                    newbuf,
+                    close: false,
+                });
             }
-        } else {
-            newbuf.push(ch);
         }
 
-        i += 1;
-    }
+        let Some(frame) = stack.last_mut() else {
+            return ret.unwrap_or_default();
+        };
 
-    newbuf
+        if let Some(nested) = ret.take() {
+            frame.newbuf.push_str(&nested);
+
+            if frame.close {
+                frame.newbuf.push('}');
+            }
+
+            frame.i += 1;
+        }
+
+        let source_len = frame.src.len();
+
+        while frame.i < source_len {
+            let prev = frame.ch;
+            frame.ch = frame.src[frame.i];
+
+            if frame.ch == '{' {
+                let mut token: Vec<char> = Vec::new();
+                let mut depth = 1;
+                let mut terminated = false;
+
+                frame.i += 1;
+
+                while frame.i < source_len {
+                    frame.ch = frame.src[frame.i];
+
+                    if frame.ch == '{' {
+                        depth += 1;
+                    } else if frame.ch == '}' {
+                        depth -= 1;
+                    }
+
+                    if depth <= 0 {
+                        terminated = true;
+                        break;
+                    } else {
+                        token.push(frame.ch);
+                    }
+
+                    frame.i += 1;
+                }
+
+                // Unterminated braces and braces after one of the markup prefixes are kept.
+                let keep_braces =
+                    !terminated || prev == '$' || prev == '~' || prev == '^' || prev == '_';
+
+                let replacement = if keep_braces {
+                    None
+                } else {
+                    match token.iter().collect::<String>().as_str() {
+                        "dblquote" => Some('"'),
+                        "quote" => Some('\''),
+                        "lt" => Some('<'),
+                        "gt" => Some('>'),
+                        "backslash" => Some('\\'),
+                        "slash" => Some('/'),
+                        "bar" => Some('|'),
+                        "comma" => Some(','),
+                        "colon" => Some(':'),
+                        "space" => Some(' '),
+                        "dollar" => Some('$'),
+                        "tab" => Some('\t'),
+                        "return" => Some('\n'),
+                        "brace" => Some('{'),
+                        _ => None,
+                    }
+                };
+
+                match replacement {
+                    Some(c) => frame.newbuf.push(c),
+                    None => {
+                        // newbuf << "{" << UnescapeString( token ) [<< "}"]
+                        frame.newbuf.push('{');
+                        frame.close = terminated;
+                        call = Some(token);
+                        break;
+                    }
+                }
+            } else {
+                frame.newbuf.push(frame.ch);
+            }
+
+            frame.i += 1;
+        }
+
+        if call.is_some() {
+            continue;
+        }
+
+        if let Some(done) = stack.pop() {
+            ret = Some(done.newbuf);
+        }
+    }
 }
 
 /// Port of `ApplyModifier`: scale `value` by the SI/IEC 60062 modifier `string` starts with
@@ -386,9 +426,8 @@ pub fn split_string(str_to_split: &str) -> (String, String, String) {
     const SEPARATORS: &str = ".,";
 
     let chars: Vec<char> = str_to_split.chars().collect();
-    let substr = |from: usize, len: usize| -> String {
-        chars.iter().skip(from).take(len).collect()
-    };
+    let substr =
+        |from: usize, len: usize| -> String { chars.iter().skip(from).take(len).collect() };
 
     let mut infix: Option<char> = None;
 
@@ -578,6 +617,15 @@ mod tests {
         assert_eq!(unescape_string("{open"), "{open");
         assert_eq!(unescape_string("{}"), "{}");
         assert_eq!(unescape_string("{{slash}}"), "{/}");
+        assert_eq!(unescape_string("a{b{c"), "a{b{c");
+        assert_eq!(unescape_string("x{y{slash}z}w"), "x{y/z}w");
+        assert_eq!(unescape_string("_{a{lt}b}{gt}"), "_{a<b}>");
+        assert_eq!(unescape_string("{a}"), "{a}");
+        assert_eq!(unescape_string("{ab}{"), "{ab}{");
+
+        // Deep nesting must not exhaust the stack.
+        let deep = "{".repeat(4000);
+        assert_eq!(unescape_string(&deep), deep);
     }
 
     #[test]
@@ -605,8 +653,9 @@ mod tests {
         assert_eq!(quacks_like_a_duck("hello"), None);
         assert_eq!(quacks_like_a_duck(""), None);
         assert_eq!(quacks_like_a_duck("-5"), None);
-        assert_eq!(quacks_like_a_duck("R5"), None);
-        assert_eq!(quacks_like_a_duck("1.5mm"), None);
+        // Values confirmed with the C++ implementation (tests/oracle).
+        assert_eq!(quacks_like_a_duck("R5"), Some(0.5));
+        assert_eq!(quacks_like_a_duck("1.5mm"), Some(0.0015));
         assert_eq!(quacks_like_a_duck("10k"), Some(10000.0));
         assert_eq!(quacks_like_a_duck("1.2.3"), None);
     }

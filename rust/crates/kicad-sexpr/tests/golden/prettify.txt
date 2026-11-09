@@ -1,0 +1,62 @@
+# Texts for KICAD_FORMAT::Prettify (escaped like the lexer script), one per line; an empty
+# line is the empty text.  prettify.out: the result in the three FORMAT_MODEs.
+
+\x20\x20\x20\x0a\x09
+(a)
+(first (second (third list) (another list)) (fifth) (sixth thing with lots of tokens (and a sub list)))
+\x20\x20( a   b\x09\x09c \x0d\x0a d )  \x0a\x0a
+(a\x0a  (b)\x0a)\x0a
+( a ( b ) )
+(a)(b)
+(a) (b)
+abc def
+)
+(a))
+((a
+()
+(()())
+(a "b   c" "(d)"  " ")
+(a "x \x5c" (  y" b)
+(a "x\x5c\x5c" (b))
+(a "x\x5c\x5c\x5c" (b)")
+(a "l1\x0al2")
+(a "unterminated (b) c
+(pts (xy 100.5 200.25) (xy 101.5 201.25) (xy 102.5 202.25) (xy 103.5 203.25) (xy 104.5 204.25) (xy 105.5 205.25) (xy 106.5 206.25) (xy 107.5 207.25) (xy 108.5 208.25) (xy 109.5 209.25) (xy 110.5 210.25) (xy 111.5 211.25))
+(pts (xyz 1 2) (xyz 3 4))
+(pts (xy) (xy))
+(pts (xy\x091 2) (xy 3 4))
+(pts (xy 1 2)\x0a\x0a(xy 3 4) (arc (start 1 2) (mid 3 4) (end 5 6)) (xy 7 8) (xy 9 10))
+(polygon (pts (xy 1 2) (xy 3 4)) (pts (xy 5 6)))
+(xy 1 2)
+(xy 1 2) (xy 3 4)
+(members "00000000-1111-2222-3333-444444444444" "00000001-1111-2222-3333-444444444444" "00000002-1111-2222-3333-444444444444" "00000003-1111-2222-3333-444444444444" "00000004-1111-2222-3333-444444444444" "00000005-1111-2222-3333-444444444444" "00000006-1111-2222-3333-444444444444" "00000007-1111-2222-3333-444444444444")
+(data "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" "BBBB")
+(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 (b) c d)
+(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 c d (b))
+\x23 a  (comment) "x\x0a(a  b)
+\x23 only
+\x23 only\x0a
+\x23 c1\x0a#  c2\x0a(a)
+(a)\x0a#  c1\x0a#c2\x0a(b)
+(a # b)
+(a\x0a# b\x0a)
+\x20# indented comment\x0a(a)
+(a)\x0a\x0a# after\x0a
+(effects (font (size 1 1) (thickness 0.15)) (justify left))
+(a (stroke (width 0.1) (type solid)) (fill none))
+(a (stroke (width 0.1) (type solid)) (fill (type color) (color 1 2 3 4)) (b))
+(pad "1" smd (at 0 0) (teardrops (best_length_ratio 0.5) (max_length 1)) (offset 1 2) (rotate 90) (scale 1 1 1))
+(font (size 1 1)) (x)
+(fonts (size 1 1)) (font2 (a)) (font)
+(model "x" (offset (xyz 0 0 0)) (scale (xyz 1 1 1)) (rotate (xyz 0 0 0)))
+(fill yes) (fill (b (c (d)))) (e (f))
+(text "a very long text that goes on and on and on and on and on and on and on and on" (font (size 1 1) (thickness 0.15) bold italic and many more tokens to pass the column threshold of the formatter) (z))
+(fp_lib_table (version 7) (lib (name "A")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/A.pretty")(options "")(descr "A long description of the library")) (lib (name "B")(type "KiCad")(uri "b")(options "")(descr "")))
+(sym_lib_table (lib (name "x") (nested (a (b)))) (libs (name "y")) (lib))
+(lib (name "x")) (lib (name y))
+(a\x09\x09(b\x0d\x0a\x0d\x0a)\x0d\x0a)
+(a "\xc3\xa9\xc2\xb5" \xc3\xbc (\xc3\xb6))
+(a\x5c"b c\x5c" d)
+(a \x5c\x5c "b (c)" d)
+(a "b\x5c\x5c\x5c\x5c" (c))
+(kicad_pcb (version 20241229) (generator "pcbnew") (generator_version "9.0") (general (thickness 1.6) (legacy_teardrops no)) (paper "A4") (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (net 0 "") (segment (start 1 2) (end 3 4) (width 0.25) (layer "F.Cu") (net 0) (uuid "0f1a2b3c-0000-4000-8000-00000000abcd")))

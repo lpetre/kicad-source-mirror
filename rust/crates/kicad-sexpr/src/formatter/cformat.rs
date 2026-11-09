@@ -130,6 +130,8 @@ pub fn format_g(value: f64, precision: usize) -> String {
 }
 
 #[cfg(test)]
+// 3.14 is test data here (as in the C++ tests), not an approximation of pi.
+#[allow(clippy::approx_constant)]
 mod tests {
     use super::*;
 

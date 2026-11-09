@@ -1,0 +1,1060 @@
+> lexer pcb_keys_t (kicad_pcb (version 20241229) (generator "pcbnew") (at 1.5 -2 90) foo "bar baz" | )
+> all
+tok	-3	1	1	(	
+tok	227	2	1	kicad_pcb	
+tok	-3	12	1	(	 
+tok	461	13	1	version	
+tok	-5	21	1	20241229	 
+tok	-4	29	1	)	
+tok	-3	31	1	(	 
+tok	176	32	1	generator	
+tok	-2	43	1	pcbnew	 
+tok	-4	50	1	)	
+tok	-3	52	1	(	 
+tok	24	53	1	at	
+tok	-5	56	1	1.5	 
+tok	-5	60	1	-2	 
+tok	-5	63	1	90	 
+tok	-4	65	1	)	
+tok	-6	67	1	foo	 
+tok	-2	72	1	bar baz	 
+tok	-11	81	1	|	 
+tok	-4	83	1	)	 
+tok	-1	1	2	)	
+> state
+state	cur=-1	prev=-4	text=)	offset=1	line=2	source=src	curline=	sep=
+> next
+tok	-1	84	2	)	
+> state
+state	cur=-1	prev=-1	text=)	offset=84	line=2	source=src	curline=	sep=
+> lexer none \x0a\x0a  (a\x09b\x0d\x0a\x0a   c\x00d)\x0a
+> all
+tok	-3	3	3	(	\x0a\x0a  
+tok	-6	4	3	a	
+tok	-6	6	3	b	\x09
+tok	-6	4	5	c	\x0d\x0a\x0a   
+tok	-6	6	5	d	\x00
+tok	-4	7	5	)	
+tok	-1	1	6	)	\x0a
+> lexer none 0 1 -1 +1 1. .5 -.5 +.5 1.5 1e5 1E5 1e+5 1e-5 1.e5 .5e5 -1.5E-10 123456789012345678901234567890
+> all
+tok	-5	1	1	0	
+tok	-5	3	1	1	 
+tok	-5	5	1	-1	 
+tok	-5	8	1	+1	 
+tok	-5	11	1	1.	 
+tok	-5	14	1	.5	 
+tok	-5	17	1	-.5	 
+tok	-5	21	1	+.5	 
+tok	-5	25	1	1.5	 
+tok	-5	29	1	1e5	 
+tok	-5	33	1	1E5	 
+tok	-5	37	1	1e+5	 
+tok	-5	42	1	1e-5	 
+tok	-5	47	1	1.e5	 
+tok	-5	52	1	.5e5	 
+tok	-5	57	1	-1.5E-10	 
+tok	-5	66	1	123456789012345678901234567890	 
+tok	-1	1	2	123456789012345678901234567890	
+> lexer none - + . e 1e 1e+ 1e- 1.5.2 1-2 0x10 1a a1 -a 12abc 1_000 1,5 --1 +-1 1e5.5 1e5e5 00 007 .e5 -. +. inf nan 1/2 1:2 1.5mm 3V3 +3V3 F.Cu B.Cu *.Cu
+> all
+tok	-6	1	1	-	
+tok	-6	3	1	+	 
+tok	-6	5	1	.	 
+tok	-6	7	1	e	 
+tok	-6	9	1	1e	 
+tok	-6	12	1	1e+	 
+tok	-6	16	1	1e-	 
+tok	-6	20	1	1.5.2	 
+tok	-6	26	1	1-2	 
+tok	-6	30	1	0x10	 
+tok	-6	35	1	1a	 
+tok	-6	38	1	a1	 
+tok	-6	41	1	-a	 
+tok	-6	44	1	12abc	 
+tok	-6	50	1	1_000	 
+tok	-6	56	1	1,5	 
+tok	-6	60	1	--1	 
+tok	-6	64	1	+-1	 
+tok	-6	68	1	1e5.5	 
+tok	-6	74	1	1e5e5	 
+tok	-5	80	1	00	 
+tok	-5	83	1	007	 
+tok	-6	87	1	.e5	 
+tok	-6	91	1	-.	 
+tok	-6	94	1	+.	 
+tok	-6	97	1	inf	 
+tok	-6	101	1	nan	 
+tok	-6	105	1	1/2	 
+tok	-6	109	1	1:2	 
+tok	-6	113	1	1.5mm	 
+tok	-6	119	1	3V3	 
+tok	-6	123	1	+3V3	 
+tok	-6	128	1	F.Cu	 
+tok	-6	133	1	B.Cu	 
+tok	-6	138	1	*.Cu	 
+tok	-1	1	2	*.Cu	
+> lexer none "plain" "" "a\x5c"b" "a\x5c\x5cb" "\x5ca\x5cb\x5cf\x5cn\x5cr\x5ct\x5cv" "\x5cx41\x5cx4a\x5cx4" "\x5cxZZ" "\x5cx" "\x5c101\x5c60\x5c7" "\x5c8" "\x5cq" "\x5c1234" "\x5c0" "a\x09b" "(not a list)" "# no comment" "| bar"
+> all
+tok	-2	2	1	plain	
+tok	-2	10	1		 
+tok	-2	13	1	a"b	 
+tok	-2	20	1	a\x5cb	 
+tok	-2	27	1	\x07\x08\x0c\x0a\x0d\x09\x0b	 
+tok	-2	44	1	AJ\x04	 
+tok	-2	58	1	xZZ	 
+tok	-2	65	1	x	 
+tok	-2	70	1	A0\x07	 
+tok	-2	82	1	\x5c8	 
+tok	-2	87	1	\x5cq	 
+tok	-2	92	1	S4	 
+tok	-2	100	1	\x00	 
+tok	-2	105	1	a\x09b	 
+tok	-2	111	1	(not a list)	 
+tok	-2	126	1	# no comment	 
+tok	-2	141	1	| bar	 
+tok	-1	1	2	| bar	
+> lexer none "\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"
+> next
+tok	-2	2	1	\xff\xff\xe9	
+> state
+state	cur=-2	prev=-12	text=\xff\xff\xe9	offset=2	line=1	source=src	curline="\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"	sep=
+> fromutf8
+text	
+> curstrastoken
+token	-6
+> next
+tok	-2	17	1	\xc3\xa9	 
+> state
+state	cur=-2	prev=-2	text=\xc3\xa9	offset=17	line=1	source=src	curline="\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"	sep= 
+> fromutf8
+text	\xc3\xa9
+> next
+tok	-2	28	1	\xc2\xb5 \xc3\xa9	 
+> state
+state	cur=-2	prev=-2	text=\xc2\xb5 \xc3\xa9	offset=28	line=1	source=src	curline="\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"	sep= 
+> fromutf8
+text	\xc2\xb5 \xc3\xa9
+> next
+tok	-2	36	1	at\x00xyz	 
+> state
+state	cur=-2	prev=-2	text=at\x00xyz	offset=36	line=1	source=src	curline="\x5c377\x5c777\x5cxe9" "\x5cxc3\x5cxa9" "\xc2\xb5 \xc3\xa9" "at\x5c0xyz"	sep= 
+> next
+tok	-1	1	2	at\x00xyz	
+> state
+state	cur=-1	prev=-2	text=at\x00xyz	offset=1	line=2	source=src	curline=	sep=
+> lexer pcb_keys_t "at\x5c0xyz" "at" "layer\x00" "At"
+> next
+tok	-2	2	1	at\x00xyz	
+> curstrastoken
+token	24
+> fromutf8
+text	at\x00xyz
+> next
+tok	-2	12	1	at	 
+> curstrastoken
+token	24
+> next
+tok	-2	17	1	layer\x00	 
+> curstrastoken
+token	230
+> next
+tok	-2	26	1	At	 
+> curstrastoken
+token	-6
+> lexer none "abc"def"ghi" x"y z"(w)"q"
+> all
+tok	-2	2	1	abc	
+tok	-6	6	1	def"ghi"	
+tok	-6	15	1	x"y	 
+tok	-6	19	1	z"	 
+tok	-3	21	1	(	
+tok	-6	22	1	w	
+tok	-4	23	1	)	
+tok	-2	25	1	q	
+tok	-1	1	2	q	
+> lexer none (a "abc
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 7.	Unterminated delimited string	1	7	(a "abc
+> state
+state	cur=-6	prev=-6	text=abc	offset=2	line=1	source=src	curline=(a "abc	sep= 
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 7.	Unterminated delimited string	1	7	(a "abc
+> state
+state	cur=-6	prev=-6	text=abc	offset=2	line=1	source=src	curline=(a "abc	sep= 
+> lexer none "abc\x5c
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 4.	Unterminated delimited string	1	4	"abc\x5c
+> state
+state	cur=-12	prev=-12	text=abc	offset=1	line=1	source=src	curline="abc\x5c	sep=
+> lexer none "abc\x5c\x0a"
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 6.	Unterminated delimited string	1	6	"abc\x5c\x0a
+> state
+state	cur=-12	prev=-12	text=abc\x5c\x0a	offset=1	line=1	source=src	curline="abc\x5c\x0a	sep=
+> lexer none \x0a\x0a   "multi\x0aline"
+> next
+parse_error	Unterminated delimited string in 'src', line 3, offset 10.	Unterminated delimited string	3	10	   "multi\x0a
+> state
+state	cur=-12	prev=-12	text=multi\x0a	offset=1	line=3	source=src	curline=   "multi\x0a	sep=\x0a\x0a   
+> lexer none (ok)\x0a  "a\x5cnb\x5c"c
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	ok	
+> next
+tok	-4	4	1	)	
+> next
+parse_error	Unterminated delimited string in 'src', line 2, offset 8.	Unterminated delimited string	2	8	  "a\x5cnb\x5c"c
+> lexer none (a\x00b "unterminated
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> next
+tok	-6	4	1	b	\x00
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 18.	Unterminated delimited string	1	18	(a
+> lexer none "
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 1.	Unterminated delimited string	1	1	"
+> lexer none "\x5c
+> next
+parse_error	Unterminated delimited string in 'src', line 1, offset 1.	Unterminated delimited string	1	1	"\x5c
+> lexer none # comment 1\x0a  # comment 2\x0a(a # not a comment\x0a#c3\x0a b) # neither\x0a# trailing
+> all
+tok	-3	1	3	(	  
+tok	-6	2	3	a	
+tok	-6	4	3	#	 
+tok	-6	6	3	not	 
+tok	-6	10	3	a	 
+tok	-6	12	3	comment	 
+tok	-6	2	5	b	\x0a 
+tok	-4	3	5	)	
+tok	-6	5	5	#	 
+tok	-6	7	5	neither	 
+tok	-1	1	7	neither	\x0a
+> lexer none # comment 1\x0a  # comment 2\x0a(a # not a comment\x0a#c3\x0a b) # neither\x0a# trailing
+> comments 1
+old	0
+> all
+tok	-10	1	1	# comment 1	
+tok	-10	1	2	  # comment 2	  
+tok	-3	1	3	(	
+tok	-6	2	3	a	
+tok	-6	4	3	#	 
+tok	-6	6	3	not	 
+tok	-6	10	3	a	 
+tok	-6	12	3	comment	 
+tok	-10	1	4	#c3	\x0a
+tok	-6	2	5	b	 
+tok	-4	3	5	)	
+tok	-6	5	5	#	 
+tok	-6	7	5	neither	 
+tok	-10	1	6	# trailing	\x0a
+tok	-1	1	7	# trailing	
+> lexer none   # c1 \x0d\x0a#c2\x0a\x0a(a)\x0d\x0a#\x0a# last
+> comments 1
+old	0
+> comments 1
+old	1
+> next
+tok	-10	1	1	  # c1 	  
+> state
+state	cur=-10	prev=-12	text=  # c1 	offset=1	line=1	source=src	curline=  # c1 \x0d\x0a	sep=  
+> all
+tok	-10	1	2	#c2	
+tok	-3	1	4	(	\x0a
+tok	-6	2	4	a	
+tok	-4	3	4	)	
+tok	-10	1	5	#	\x0d\x0a
+tok	-10	1	6	# last	
+tok	-1	1	7	# last	
+> lexer pcb_keys_t # first\x0a   # second\x0a\x0a(kicad_pcb)\x0a# later\x0a# more\x0a(at)
+> readcomments
+comments	2
+	# first
+	   # second
+> state
+state	cur=-3	prev=-10	text=(	offset=1	line=4	source=src	curline=(kicad_pcb)\x0a	sep=\x0a
+> readcomments
+comments	none
+> state
+state	cur=227	prev=-3	text=kicad_pcb	offset=2	line=4	source=src	curline=(kicad_pcb)\x0a	sep=
+> next
+tok	-4	11	4	)	
+> readcomments
+comments	2
+	# later
+	# more
+> state
+state	cur=-3	prev=-10	text=(	offset=1	line=7	source=src	curline=(at)	sep=
+> readcomments
+comments	none
+> state
+state	cur=24	prev=-3	text=at	offset=2	line=7	source=src	curline=(at)	sep=
+> all
+tok	-4	4	7	)	
+tok	-1	1	8	)	
+> lexer none (a)
+> readcomments
+comments	none
+> state
+state	cur=-3	prev=-12	text=(	offset=1	line=1	source=src	curline=(a)	sep=
+> comments 0
+old	0
+> lexer pcb_keys_t (layer F.Cu)
+> tokentext -13
+text	???
+> tokentext -12
+text	NONE
+> tokentext -11
+text	|
+> tokentext -10
+text	???
+> tokentext -9
+text	string_quote
+> tokentext -8
+text	quoted text delimiter
+> tokentext -7
+text	-
+> tokentext -6
+text	symbol
+> tokentext -5
+text	number
+> tokentext -4
+text	)
+> tokentext -3
+text	(
+> tokentext -2
+text	quoted string
+> tokentext -1
+text	end of input
+> tokentext 0
+text	add_net
+> tokentext 17
+text	arrow1b
+> tokentext 484
+text	zones
+> tokentext 485
+text	token too big
+> tokentext 100000
+text	token too big
+> tokenstring -3
+text	'('
+> tokenstring 0
+text	'add_net'
+> tokenstring 485
+text	'token too big'
+> issymbol -12
+is_symbol	0	is_number	0
+> issymbol -6
+is_symbol	1	is_number	0
+> issymbol -5
+is_symbol	0	is_number	1
+> issymbol -4
+is_symbol	0	is_number	0
+> issymbol -3
+is_symbol	0	is_number	0
+> issymbol -2
+is_symbol	1	is_number	0
+> issymbol -1
+is_symbol	0	is_number	0
+> issymbol 0
+is_symbol	1	is_number	0
+> issymbol 99
+is_symbol	1	is_number	0
+> lexer pcb_keys_t (at 1 2)\x0a  (layer "F.Cu")
+> expecting -3
+parse_error	Expecting ''('' in 'src', line 0, offset 1.	Expecting ''(''	0	1	
+> next
+tok	-3	1	1	(	
+> expecting -3
+parse_error	Expecting ''('' in 'src', line 1, offset 1.	Expecting ''(''	1	1	(at 1 2)\x0a
+> expecting -4
+parse_error	Expecting '')'' in 'src', line 1, offset 1.	Expecting '')''	1	1	(at 1 2)\x0a
+> expecting 0
+parse_error	Expecting ''add_net'' in 'src', line 1, offset 1.	Expecting ''add_net''	1	1	(at 1 2)\x0a
+> expectingstr yes or no
+parse_error	Expecting yes or no. Got ''('' in 'src', line 1, offset 1.	Expecting yes or no. Got ''(''	1	1	(at 1 2)\x0a
+> next
+tok	24	2	1	at	
+> expectingstr at, layer or uuid
+parse_error	Expecting at, layer or uuid. Got ''at'' in 'src', line 1, offset 2.	Expecting at, layer or uuid. Got ''at''	1	2	(at 1 2)\x0a
+> unexpected -4
+parse_error	Unexpected '')'' in 'src', line 1, offset 2.	Unexpected '')''	1	2	(at 1 2)\x0a
+> unexpected 17
+parse_error	Unexpected ''arrow1b'' in 'src', line 1, offset 2.	Unexpected ''arrow1b''	1	2	(at 1 2)\x0a
+> unexpected 99999
+parse_error	Unexpected ''token too big'' in 'src', line 1, offset 2.	Unexpected ''token too big''	1	2	(at 1 2)\x0a
+> unexpectedstr foo bar
+parse_error	Unexpected foo bar in 'src', line 1, offset 2.	Unexpected foo bar	1	2	(at 1 2)\x0a
+> unexpectedstr 
+parse_error	Unexpected  in 'src', line 1, offset 2.	Unexpected 	1	2	(at 1 2)\x0a
+> duplicate 5
+parse_error	'allow_missing_courtyard' is a duplicate in 'src', line 1, offset 2.	'allow_missing_courtyard' is a duplicate	1	2	(at 1 2)\x0a
+> duplicate -2
+parse_error	'quoted string' is a duplicate in 'src', line 1, offset 2.	'quoted string' is a duplicate	1	2	(at 1 2)\x0a
+> next
+tok	-5	5	1	1	 
+> next
+tok	-5	7	1	2	 
+> next
+tok	-4	8	1	)	
+> next
+tok	-3	3	2	(	\x0a  
+> expecting -3
+parse_error	Expecting ''('' in 'src', line 2, offset 3.	Expecting ''(''	2	3	  (layer "F.Cu")
+> expectingstr a number
+parse_error	Expecting a number. Got ''('' in 'src', line 2, offset 3.	Expecting a number. Got ''(''	2	3	  (layer "F.Cu")
+> next
+tok	230	4	2	layer	
+> next
+tok	-2	11	2	F.Cu	 
+> unexpected 20
+parse_error	Unexpected ''arrow_direction'' in 'src', line 2, offset 11.	Unexpected ''arrow_direction''	2	11	  (layer "F.Cu")
+> next
+tok	-4	16	2	)	
+> next
+tok	-1	1	3	)	
+> expectingstr more
+parse_error	Expecting more. Got ''end of input'' in 'src', line 3, offset 1.	Expecting more. Got ''end of input''	3	1	
+> next
+tok	-1	17	3	)	
+> expecting -1
+parse_error	Expecting ''end of input'' in 'src', line 3, offset 17.	Expecting ''end of input''	3	17	
+> lexer pcb_keys_t ( at "str" 5 ) |
+> needleft
+ok
+> needsymbol
+tok	24	3	1	at	 
+> needsymbol
+tok	-2	7	1	str	 
+> needsymbol
+parse_error	Expecting ''symbol'' in 'src', line 1, offset 12.	Expecting ''symbol''	1	12	( at "str" 5 ) |
+> needright
+ok
+> needbar
+ok
+> needbar
+parse_error	Expecting ''|'' in 'src', line 2, offset 1.	Expecting ''|''	2	1	
+> needleft
+parse_error	Expecting ''('' in 'src', line 2, offset 17.	Expecting ''(''	2	17	
+> needright
+parse_error	Expecting '')'' in 'src', line 2, offset 17.	Expecting '')''	2	17	
+> needsymbol
+parse_error	Expecting ''symbol'' in 'src', line 2, offset 17.	Expecting ''symbol''	2	17	
+> needsymbolornumber
+parse_error	Expecting a symbol or number. Got ''end of input'' in 'src', line 2, offset 17.	Expecting a symbol or number. Got ''end of input''	2	17	
+> lexer pcb_keys_t 5 x ( 7 "8" 9.5 ) 6.25 1
+> needsymbolornumber
+tok	-5	1	1	5	
+> needsymbolornumber
+tok	473	3	1	x	 
+> needsymbolornumber
+parse_error	Expecting a symbol or number. Got ''('' in 'src', line 1, offset 5.	Expecting a symbol or number. Got ''(''	1	5	5 x ( 7 "8" 9.5 ) 6.25 1
+> neednumber width
+tok	-5	7	1	7	 
+> neednumber width
+parse_error	need a number for 'width' in 'src', line 1, offset 10.	need a number for 'width'	1	10	5 x ( 7 "8" 9.5 ) 6.25 1
+> parsedoubleexp radius
+double	4023000000000000
+> parsedoubleexp radius
+parse_error	need a number for 'radius' in 'src', line 1, offset 17.	need a number for 'radius'	1	17	5 x ( 7 "8" 9.5 ) 6.25 1
+> parsedoubletok 5
+double	4019000000000000
+> parsedoubletok 5
+double	3ff0000000000000
+> parsedoubletok -3
+parse_error	need a number for '(' in 'src', line 2, offset 1.	need a number for '('	2	1	
+> neednumber 
+parse_error	need a number for '' in 'src', line 2, offset 25.	need a number for ''	2	25	
+> lexer none 1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-5	1	1	1.5	
+> parsedouble
+double	3ff8000000000000
+> next
+tok	-6	5	1	abc	 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 5.	Invalid floating point number	1	5	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-2	10	1	  2.5	 
+> parsedouble
+double	4004000000000000
+> next
+tok	-2	18	1	1e999	 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 18.	Invalid floating point number	1	18	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-5	25	1	-0	 
+> parsedouble
+double	8000000000000000
+> next
+tok	-6	28	1	1.5mm	 
+> parsedouble
+double	3ff8000000000000
+> next
+tok	-2	35	1	nan	 
+> parsedouble
+double	7ff8000000000000
+> next
+tok	-2	41	1	-inf	 
+> parsedouble
+double	fff0000000000000
+> next
+tok	-2	48	1		 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 48.	Invalid floating point number	1	48	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-5	50	1	1e-400	 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 50.	Invalid floating point number	1	50	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-5	57	1	.5	 
+> parsedouble
+double	3fe0000000000000
+> next
+tok	-5	60	1	5.	 
+> parsedouble
+double	4014000000000000
+> next
+tok	-5	63	1	-.5e1	 
+> parsedouble
+double	c014000000000000
+> next
+tok	-5	69	1	+1	 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 69.	Invalid floating point number	1	69	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-6	72	1	1e	 
+> parsedouble
+double	3ff0000000000000
+> next
+tok	-5	75	1	0.1	 
+> parsedouble
+double	3fb999999999999a
+> next
+tok	-3	79	1	(	 
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 1, offset 79.	Invalid floating point number	1	79	1.5 abc "  2.5" "1e999" -0 1.5mm "nan" "-inf" "" 1e-400 .5 5. -.5e1 +1 1e 0.1 (
+> next
+tok	-1	1	2	(	
+> parsedouble
+parse_error	Invalid floating point number in 'src', line 2, offset 1.	Invalid floating point number	2	1	
+> lexer none 42 -17 3.9 abc 99999999999 -99999999999 " 7" 1e3 0x1F ff 0x10 zz -a 7fffffffffffffffff
+> next
+tok	-5	1	1	42	
+> parseint
+int	42
+> next
+tok	-5	4	1	-17	 
+> parseint
+int	-17
+> next
+tok	-5	8	1	3.9	 
+> parseint
+int	3
+> next
+tok	-6	12	1	abc	 
+> parseint
+int	0
+> next
+tok	-5	16	1	99999999999	 
+> parseint
+int	1215752191
+> next
+tok	-5	28	1	-99999999999	 
+> parseint
+int	-1215752191
+> next
+tok	-2	42	1	 7	 
+> parseint
+int	7
+> parseintexp count
+int	1
+> parseintexp count
+parse_error	need a number for 'count' in 'src', line 1, offset 50.	need a number for 'count'	1	50	42 -17 3.9 abc 99999999999 -99999999999 " 7" 1e3 0x1F ff 0x10 zz -a 7fffffffffffffffff
+> parsehex
+long	255
+> parsehex
+long	16
+> parsehex
+long	0
+> parsehex
+long	-10
+> parsehex
+long	9223372036854775807
+> lexer dsn (pcb "my board"\x0a (parser (string_quote ")\x0a (space_in_quoted_tokens on))\x0a (net U2-14 "U2"-"14" -5 a-b - x-)\x0a (PCB Parser CLASS)\x0a ("with \x5c backslash" "a\x5c")\x0a)
+> specctra 1
+> all
+tok	-3	1	1	(	
+tok	217	2	1	pcb	
+tok	-2	7	1	my board	 
+tok	-3	2	2	(	\x0a 
+tok	214	3	2	parser	
+tok	-3	10	2	(	 
+tok	-9	11	2	string_quote	
+tok	-8	24	2	"	 
+tok	-4	25	2	)	
+tok	-3	2	3	(	\x0a 
+tok	309	3	3	space_in_quoted_tokens	
+tok	200	26	3	on	 
+tok	-4	28	3	)	
+tok	-4	29	3	)	
+tok	-3	2	4	(	\x0a 
+tok	184	3	4	net	
+tok	-6	7	4	U2-14	 
+tok	-2	14	4	U2	 
+tok	-7	17	4	-	
+tok	-2	19	4	14	
+tok	-5	23	4	-5	 
+tok	-6	26	4	a-b	 
+tok	-6	30	4	-	 
+tok	-6	32	4	x-	 
+tok	-4	34	4	)	
+tok	-3	2	5	(	\x0a 
+tok	217	3	5	PCB	
+tok	214	7	5	Parser	 
+tok	37	14	5	CLASS	 
+tok	-4	19	5	)	
+tok	-3	2	6	(	\x0a 
+tok	-2	4	6	with \x5c backslash	
+tok	-2	23	6	a\x5c	 
+tok	-4	26	6	)	
+tok	-4	1	7	)	\x0a
+tok	-1	1	8	)	
+> lexer dsn (pcb "my board"\x0a (parser (string_quote ")\x0a (net U2-14 a-b)\x0a (PCB Parser CLASS))
+> all
+tok	-3	1	1	(	
+tok	217	2	1	pcb	
+tok	-2	7	1	my board	 
+tok	-3	2	2	(	\x0a 
+tok	214	3	2	parser	
+tok	-3	10	2	(	 
+tok	-6	11	2	string_quote	
+parse_error	Unterminated delimited string in 'src', line 2, offset 26.	Unterminated delimited string	2	26	 (parser (string_quote ")\x0a
+> lexer dsn (string_quote ')\x0a('a b' "c d" $e f$)\x0a(string_quote $)\x0a($e f$ 'g h')
+> specctra 1
+> next
+tok	-3	1	1	(	
+> next
+tok	-9	2	1	string_quote	
+> next
+tok	-8	15	1	'	 
+> delim '
+old	34
+> next
+tok	-4	16	1	)	
+> next
+tok	-3	1	2	(	\x0a
+> next
+tok	-2	3	2	a b	
+> next
+tok	-6	8	2	"c	 
+> next
+tok	-6	11	2	d"	 
+> next
+tok	-6	14	2	$e	 
+> next
+tok	-6	17	2	f$	 
+> next
+tok	-4	19	2	)	
+> next
+tok	-3	1	3	(	\x0a
+> next
+tok	-9	2	3	string_quote	
+> next
+tok	-8	15	3	$	 
+> delim $
+old	39
+> all
+tok	-4	16	3	)	
+tok	-3	1	4	(	\x0a
+tok	-2	3	4	e f	
+tok	-6	8	4	'g	 
+tok	-6	11	4	h'	 
+tok	-4	13	4	)	
+tok	-1	1	5	)	
+> lexer dsn (string_quote x)
+> specctra 1
+> next
+tok	-3	1	1	(	
+> next
+tok	-9	2	1	string_quote	
+> next
+parse_error	String delimiter must be a single character of ', ", or $ in 'src', line 1, offset 2.	String delimiter must be a single character of ', ", or $	1	2	(string_quote x)
+> state
+state	cur=-9	prev=-9	text=string_quote	offset=2	line=1	source=src	curline=(string_quote x)	sep= 
+> lexer dsn (string_quote "x)
+> specctra 1
+> next
+tok	-3	1	1	(	
+> next
+tok	-9	2	1	string_quote	
+> next
+parse_error	String delimiter must be a single character of ', ", or $ in 'src', line 1, offset 2.	String delimiter must be a single character of ', ", or $	1	2	(string_quote "x)
+> lexer dsn (string_quote ")\x0a(string_quote $ )(string_quote '
+> specctra 1
+> all
+tok	-3	1	1	(	
+tok	-9	2	1	string_quote	
+tok	-8	15	1	"	 
+tok	-4	16	1	)	
+tok	-3	1	2	(	\x0a
+tok	-9	2	2	string_quote	
+tok	-8	15	2	$	 
+tok	-4	17	2	)	 
+tok	-3	18	2	(	
+tok	-9	19	2	string_quote	
+tok	-8	32	2	'	 
+tok	-1	1	3	'	
+> lexer dsn ("abc def
+> specctra 1
+> next
+tok	-3	1	1	(	
+> next
+parse_error	Un-terminated delimited string in 'src', line 1, offset 1.	Un-terminated delimited string	1	1	("abc def
+> state
+state	cur=-3	prev=-3	text=(	offset=1	line=1	source=src	curline=("abc def	sep=
+> lexer dsn ("abc def" ghi "j k")
+> specctra 1
+> spaceinquoted 0
+old	1
+> all
+tok	-3	1	1	(	
+tok	-2	3	1	abc	
+tok	-6	7	1	def"	
+tok	-6	12	1	ghi	 
+tok	-2	17	1	j	 
+tok	-6	19	1	k"	
+tok	-4	21	1	)	
+tok	-1	1	2	)	
+> lexer dsn ("abc def" ghi)
+> specctra 1
+> spaceinquoted 0
+old	1
+> specctra 0
+> all
+tok	-3	1	1	(	
+tok	-2	3	1	abc def	
+tok	-6	12	1	ghi	 
+tok	-4	15	1	)	
+tok	-1	1	2	)	
+> lexer dsn ('abc def' "x")
+> specctra 1
+> delim '
+old	34
+> specctra 0
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	'abc	
+tok	-6	7	1	def'	 
+tok	-2	13	1	x	 
+tok	-4	15	1	)	
+tok	-1	1	2	)	
+> lexer none ('a b' "c d")
+> delim '
+old	34
+> spaceinquoted 1
+old	0
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	'a	
+tok	-6	5	1	b'	 
+tok	-2	9	1	c d	 
+tok	-4	13	1	)	
+tok	-1	1	2	)	
+> lexer dsn (Layer LAYER layer "Layer")
+> specctra 1
+> all
+tok	-3	1	1	(	
+tok	133	2	1	Layer	
+tok	133	8	1	LAYER	 
+tok	133	14	1	layer	 
+tok	-2	21	1	Layer	 
+tok	-4	27	1	)	
+tok	-1	1	2	)	
+> lexer dsn (Layer LAYER layer "Layer")
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	Layer	
+tok	-6	8	1	LAYER	 
+tok	133	14	1	layer	 
+tok	-2	21	1	Layer	 
+tok	-4	27	1	)	
+tok	-1	1	2	)	
+> lexer none (a|b | c "d|e")
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	a	
+tok	-11	3	1	|	
+tok	-6	4	1	b	
+tok	-11	6	1	|	 
+tok	-6	8	1	c	 
+tok	-2	11	1	d|e	 
+tok	-4	15	1	)	
+tok	-1	1	2	)	
+> lexer none (a|b | c "d|e")
+> knowsbar 0
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	a|b	
+tok	-6	6	1	|	 
+tok	-6	8	1	c	 
+tok	-2	11	1	d|e	 
+tok	-4	15	1	)	
+tok	-1	1	2	)	
+> source 
+> lexer none (a "x
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> next
+parse_error	Unterminated delimited string in 'clipboard', line 1, offset 5.	Unterminated delimited string	1	5	(a "x
+> state
+state	cur=-6	prev=-6	text=x	offset=2	line=1	source=clipboard	curline=(a "x	sep= 
+> source board.kicad_pcb
+> lexer none (a "x
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> next
+parse_error	Unterminated delimited string in 'board.kicad_pcb', line 1, offset 5.	Unterminated delimited string	1	5	(a "x
+> source src
+> lexer none (a)
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	a	
+tok	-4	3	1	)	
+tok	-1	1	2	)	
+> next
+tok	-1	4	2	)	
+> state
+state	cur=-1	prev=-1	text=)	offset=4	line=2	source=src	curline=	sep=
+> next
+tok	-1	4	2	)	
+> state
+state	cur=-1	prev=-1	text=)	offset=4	line=2	source=src	curline=	sep=
+> lexer none 
+> next
+tok	-1	1	1		
+> state
+state	cur=-1	prev=-12	text=	offset=1	line=1	source=src	curline=	sep=
+> next
+tok	-1	1	1		
+> state
+state	cur=-1	prev=-1	text=	offset=1	line=1	source=src	curline=	sep=
+> lexer none \x0a\x0a  \x0a
+> next
+tok	-1	1	4		\x0a\x0a  \x0a
+> state
+state	cur=-1	prev=-12	text=	offset=1	line=4	source=src	curline=	sep=\x0a\x0a  \x0a
+> lexer none (a)\x0a\x0a
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	a	
+tok	-4	3	1	)	
+tok	-1	1	3	)	\x0a\x0a
+> state
+state	cur=-1	prev=-4	text=)	offset=1	line=3	source=src	curline=	sep=\x0a\x0a
+> init
+> state
+state	cur=-12	prev=-12	text=)	offset=1	line=3	source=src	curline=	sep=\x0a\x0a
+> next
+tok	-1	1	4	)	
+> state
+state	cur=-1	prev=-12	text=)	offset=1	line=4	source=src	curline=	sep=
+> lexer_no_reader none
+> nexttok
+token	-1
+> nexttok
+token	-1
+> lexer_repeat none 15999999 x
+> nexttok
+token	-6
+> nexttok
+token	-1
+> lexer_repeat none 16000000 x
+> nexttok
+io_error	Line length exceeded
+> nexttok
+io_error	Line length exceeded
+> state
+state	cur=-12	prev=-12	text=	offset=1	line=0	source=src	curline=	sep=
+> lexer_repeat none 3999999 abc\x0a
+> nexttok
+token	-6
+> nexttok
+token	-6
+> nexttok
+token	-6
+> lexer_repeat none 4000000 \x0aabc
+> nexttok
+token	-6
+> nexttok
+token	-6
+> nexttok
+token	-6
+> lexer_repeat none 4000000 abc\x20
+> nexttok
+io_error	Line length exceeded
+> state
+state	cur=-12	prev=-12	text=	offset=1	line=0	source=src	curline=	sep=
+> lexer none \x09(a\x0a\x09\x09(bb  "cc")\x0a)
+> all
+tok	-3	2	1	(	\x09
+tok	-6	3	1	a	
+tok	-3	3	2	(	\x0a\x09\x09
+tok	-6	4	2	bb	
+tok	-2	9	2	cc	  
+tok	-4	12	2	)	
+tok	-4	1	3	)	\x0a
+tok	-1	1	4	)	
+> lexer none (\xc2\xb5 "\xc3\xa9" \xc3\xbc|\xc3\xb6)
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	\xc2\xb5	
+tok	-2	6	1	\xc3\xa9	 
+tok	-6	10	1	\xc3\xbc	 
+tok	-11	12	1	|	
+tok	-6	13	1	\xc3\xb6	
+tok	-4	15	1	)	
+tok	-1	1	2	)	
+> lexer none (a b\x0a c d)\x0a(e)
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> push (x y)\x0a z
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	x	
+> next
+tok	-6	4	1	y	 
+> state
+state	cur=-6	prev=-6	text=y	offset=4	line=1	source=pushed	curline=(x y)\x0a	sep= 
+> pop
+popped	pushed
+> state
+state	cur=-6	prev=-6	text=y	offset=4	line=1	source=src	curline=(a b\x0a	sep= 
+> all
+tok	-6	2	2	c	 
+tok	-6	4	2	d	 
+tok	-4	5	2	)	
+tok	-3	1	3	(	\x0a
+tok	-6	2	3	e	
+tok	-4	3	3	)	
+tok	-1	1	4	)	
+> lexer none (a b\x0a c d)\x0a(e)
+> next
+tok	-3	1	1	(	
+> push x
+> next
+tok	-6	1	1	x	
+> next
+tok	-1	1	2	x	
+> pop
+popped	pushed
+> next
+tok	-1	1	1	x	
+> state
+state	cur=-1	prev=-1	text=x	offset=1	line=1	source=src	curline=(a b\x0a	sep=
+> lexer pcb_keys_t (gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))
+> next
+tok	-3	1	1	(	
+> next
+tok	184	2	1	gr_line	
+> next
+tok	-3	10	1	(	 
+> next
+tok	394	11	1	stroke	
+> state
+state	cur=394	prev=-3	text=stroke	offset=11	line=1	source=src	curline=(gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))	sep=
+> sub strokeparams_t
+sync	1
+> state
+state	cur=-12	prev=-12	text=stroke	offset=11	line=1	source=src	curline=(gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))	sep=
+> next
+tok	-3	18	1	(	 
+> next
+tok	9	19	1	width	
+> next
+tok	-5	25	1	0.1	 
+> next
+tok	-4	28	1	)	
+> next
+tok	-3	30	1	(	 
+> next
+tok	8	31	1	type	
+> next
+tok	6	36	1	solid	 
+> next
+tok	-4	41	1	)	
+> next
+tok	-4	42	1	)	
+> state
+state	cur=-4	prev=-4	text=)	offset=42	line=1	source=src	curline=(gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))	sep=
+> endsub
+sync	1
+> state
+state	cur=394	prev=-3	text=)	offset=42	line=1	source=src	curline=(gr_line (stroke (width 0.1) (type solid)) (layer "F.Cu"))	sep=
+> all
+tok	-3	44	1	(	 
+tok	230	45	1	layer	
+tok	-2	52	1	F.Cu	 
+tok	-4	57	1	)	
+tok	-4	58	1	)	
+tok	-1	1	2	)	
+> lexer pcb_keys_t (a (stroke (width 0.1)\x0a (type solid)) (layer "F.Cu"))
+> next
+tok	-3	1	1	(	
+> next
+tok	-6	2	1	a	
+> next
+tok	-3	4	1	(	 
+> next
+tok	394	5	1	stroke	
+> sub strokeparams_t
+sync	1
+> next
+tok	-3	12	1	(	 
+> next
+tok	9	13	1	width	
+> next
+tok	-5	19	1	0.1	 
+> next
+tok	-4	22	1	)	
+> next
+tok	-3	2	2	(	\x0a 
+> next
+tok	8	3	2	type	
+> state
+state	cur=8	prev=-3	text=type	offset=3	line=2	source=src	curline= (type solid)) (layer "F.Cu"))	sep=
+> dropsub
+> state
+state	cur=394	prev=-3	text=stroke	offset=5	line=2	source=src	curline= (type solid)) (layer "F.Cu"))	sep=
+> next
+tok	211	11	2	id	
+> lexer pcb_keys_t (a b)
+> sub strokeparams_t
+sync	1
+> all
+tok	-3	1	1	(	
+tok	-6	2	1	a	
+tok	-6	4	1	b	 
+tok	-4	5	1	)	
+tok	-1	1	2	)	
+> endsub
+sync	1
+> next
+tok	-1	1	3	)	
+> state
+state	cur=-1	prev=-12	text=)	offset=1	line=3	source=src	curline=	sep=

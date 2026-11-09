@@ -66,7 +66,9 @@ fn constexpr() {
 
     assert!(box_1_2_3_4.squared_diagonal() < box0_1_5_6.squared_diagonal());
 
-    let box1_2_100_4: Box2I = *box_1_2_3_4.with_offset(Vector2I::new(100, 0)).merge(&box_1_2_3_4);
+    let box1_2_100_4: Box2I = *box_1_2_3_4
+        .with_offset(Vector2I::new(100, 0))
+        .merge(&box_1_2_3_4);
     assert!(box1_2_100_4.position() == Vector2I::new(1, 2));
     assert!(box1_2_100_4.size() == Vector2L::new(103, 4));
 }
@@ -87,7 +89,11 @@ fn basic_double() {
         Vector2D::new(-0.5, 0.5).cast(),
         tol as i32
     ));
-    assert!(is_vec_within_tol::<i32>(inflated.size().cast(), Vector2D::new(6.0, 7.0).cast(), tol as i32));
+    assert!(is_vec_within_tol::<i32>(
+        inflated.size().cast(),
+        Vector2D::new(6.0, 7.0).cast(),
+        tol as i32
+    ));
 
     // (Not in the C++ test) the exact values the weakened predicate above cannot see
     assert_eq!(inflated.position(), Vector2D::new(-0.5, 0.5));

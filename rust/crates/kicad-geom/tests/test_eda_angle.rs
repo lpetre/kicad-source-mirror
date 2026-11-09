@@ -18,8 +18,8 @@
 //! Port of `qa/tests/libs/kimath/geometry/test_eda_angle.cpp` (Boost test suite `EdaAngle`).
 
 use kicad_geom::geometry::eda_angle::{
-    ANGLE_0, ANGLE_45, ANGLE_90, ANGLE_135, ANGLE_180, ANGLE_270, ANGLE_360, ANGLE_HORIZONTAL, ANGLE_VERTICAL,
-    DEGREES_T, EdaAngle, EdaOrientation, FULL_CIRCLE,
+    ANGLE_0, ANGLE_45, ANGLE_90, ANGLE_135, ANGLE_180, ANGLE_270, ANGLE_360, ANGLE_HORIZONTAL,
+    ANGLE_VERTICAL, DEGREES_T, EdaAngle, EdaOrientation, FULL_CIRCLE,
 };
 
 /// Port of `EDA_ANGLE_NORMALISE_CASE`.
@@ -96,7 +96,11 @@ fn normalize() {
         normalized720.normalize720();
 
         assert_eq!(normalized.as_degrees(), c.exp_normalized, "{ctx}");
-        assert_eq!(normalized_negative.as_degrees(), c.exp_normalized_negative, "{ctx}");
+        assert_eq!(
+            normalized_negative.as_degrees(),
+            c.exp_normalized_negative,
+            "{ctx}"
+        );
         assert_eq!(normalized90.as_degrees(), c.exp_normalized90, "{ctx}");
         assert_eq!(normalized180.as_degrees(), c.exp_normalized180, "{ctx}");
         assert_eq!(normalized720.as_degrees(), c.exp_normalized720, "{ctx}");
@@ -107,7 +111,12 @@ fn normalize() {
 #[test]
 fn normalize_huge_and_non_finite() {
     // The old loops leave NaN alone and never finish on inf or 1e19, so fail here before reaching those
-    assert_eq!(EdaAngle::new(f64::NAN, DEGREES_T).normalize180().as_degrees(), 0.0);
+    assert_eq!(
+        EdaAngle::new(f64::NAN, DEGREES_T)
+            .normalize180()
+            .as_degrees(),
+        0.0
+    );
 
     // 1e19 is exact and 1e19 mod 360 = 280
     //                 [0,360)   (-360,0]    [-90,90]   (-180,180]   [-360,360)
@@ -123,15 +132,37 @@ fn normalize_huge_and_non_finite() {
     for c in &cases {
         let ctx = format!("Original angle: {} degrees", c.angle);
 
-        assert_eq!(EdaAngle::new(c.angle, DEGREES_T).normalize().as_degrees(), c.exp_normalized, "{ctx}");
         assert_eq!(
-            EdaAngle::new(c.angle, DEGREES_T).normalize_negative().as_degrees(),
+            EdaAngle::new(c.angle, DEGREES_T).normalize().as_degrees(),
+            c.exp_normalized,
+            "{ctx}"
+        );
+        assert_eq!(
+            EdaAngle::new(c.angle, DEGREES_T)
+                .normalize_negative()
+                .as_degrees(),
             c.exp_normalized_negative,
             "{ctx}"
         );
-        assert_eq!(EdaAngle::new(c.angle, DEGREES_T).normalize90().as_degrees(), c.exp_normalized90, "{ctx}");
-        assert_eq!(EdaAngle::new(c.angle, DEGREES_T).normalize180().as_degrees(), c.exp_normalized180, "{ctx}");
-        assert_eq!(EdaAngle::new(c.angle, DEGREES_T).normalize720().as_degrees(), c.exp_normalized720, "{ctx}");
+        assert_eq!(
+            EdaAngle::new(c.angle, DEGREES_T).normalize90().as_degrees(),
+            c.exp_normalized90,
+            "{ctx}"
+        );
+        assert_eq!(
+            EdaAngle::new(c.angle, DEGREES_T)
+                .normalize180()
+                .as_degrees(),
+            c.exp_normalized180,
+            "{ctx}"
+        );
+        assert_eq!(
+            EdaAngle::new(c.angle, DEGREES_T)
+                .normalize720()
+                .as_degrees(),
+            c.exp_normalized720,
+            "{ctx}"
+        );
     }
 
     // 9e18 is an exact multiple of 180
@@ -149,14 +180,29 @@ fn normalize_huge_and_non_finite() {
 /// Reference copy of the stepping loops that normalization used before exact folding.  They
 /// are exact at the magnitudes sampled here, so the folded versions must match them bit for
 /// bit, signed zero included.
-fn ref_step(a_value: f64, a_low: f64, a_low_incl: bool, a_high: f64, a_high_incl: bool, a_period: f64) -> f64 {
+fn ref_step(
+    a_value: f64,
+    a_low: f64,
+    a_low_incl: bool,
+    a_high: f64,
+    a_high_incl: bool,
+    a_period: f64,
+) -> f64 {
     let mut a_value = a_value;
 
-    while if a_low_incl { a_value < a_low } else { a_value <= a_low } {
+    while if a_low_incl {
+        a_value < a_low
+    } else {
+        a_value <= a_low
+    } {
         a_value += a_period;
     }
 
-    while if a_high_incl { a_value > a_high } else { a_value >= a_high } {
+    while if a_high_incl {
+        a_value > a_high
+    } else {
+        a_value >= a_high
+    } {
         a_value -= a_period;
     }
 
@@ -208,13 +254,21 @@ fn nextafter(x: f64, to: f64) -> f64 {
 
     if x == 0.0 {
         // The smallest subnormal with the sign of the direction
-        return if up { f64::from_bits(1) } else { -f64::from_bits(1) };
+        return if up {
+            f64::from_bits(1)
+        } else {
+            -f64::from_bits(1)
+        };
     }
 
     let bits: u64 = x.to_bits();
 
     // Moving away from zero increments the magnitude bits, moving towards zero decrements
-    if (x > 0.0) == up { f64::from_bits(bits + 1) } else { f64::from_bits(bits - 1) }
+    if (x > 0.0) == up {
+        f64::from_bits(bits + 1)
+    } else {
+        f64::from_bits(bits - 1)
+    }
 }
 
 /// Port of `BOOST_AUTO_TEST_CASE( NormalizeMatchesSteppingLoops )`.
@@ -239,7 +293,8 @@ fn normalize_matches_stepping_loops() {
 
     inputs.extend_from_slice(&[0.0, -0.0, 1e-300, -1e-300]);
 
-    let same_bits = |a: f64, b: f64| -> bool { a == b && a.is_sign_negative() == b.is_sign_negative() };
+    let same_bits =
+        |a: f64, b: f64| -> bool { a == b && a.is_sign_negative() == b.is_sign_negative() };
 
     for x in inputs {
         let ctx = format!("Original angle: {x:.17e} degrees");
@@ -253,7 +308,9 @@ fn normalize_matches_stepping_loops() {
         );
         assert!(
             same_bits(
-                EdaAngle::new(x, DEGREES_T).normalize_negative().as_degrees(),
+                EdaAngle::new(x, DEGREES_T)
+                    .normalize_negative()
+                    .as_degrees(),
                 ref_step(x, -360.0, false, 0.0, true, 360.0)
             ),
             "{ctx}"
@@ -279,8 +336,16 @@ fn normalize_matches_stepping_loops() {
             ),
             "{ctx}"
         );
-        assert_eq!(EdaAngle::new(x, DEGREES_T).is_cardinal(), ref_is_cardinal(x), "{ctx}");
-        assert_eq!(EdaAngle::new(x, DEGREES_T).is_cardinal90(), ref_is_cardinal90(x), "{ctx}");
+        assert_eq!(
+            EdaAngle::new(x, DEGREES_T).is_cardinal(),
+            ref_is_cardinal(x),
+            "{ctx}"
+        );
+        assert_eq!(
+            EdaAngle::new(x, DEGREES_T).is_cardinal90(),
+            ref_is_cardinal90(x),
+            "{ctx}"
+        );
     }
 }
 
@@ -338,12 +403,20 @@ fn angle_reflect() {
         // And check the reverse returns
         let reversed: EdaAngle = reflected.reflect(axis);
 
-        assert_eq!(reversed.normalized().as_degrees(), angle.normalized().as_degrees(), "{ctx}");
+        assert_eq!(
+            reversed.normalized().as_degrees(),
+            angle.normalized().as_degrees(),
+            "{ctx}"
+        );
 
         // And check that and axis reversal has no effect on the reflection result.
         let reversed_axis: EdaAngle = axis + deg(180.0);
         let reflected_with_reversed_axis: EdaAngle = angle.reflect(reversed_axis);
-        assert_eq!(reflected_with_reversed_axis.normalized().as_degrees(), a_expected, "{ctx}");
+        assert_eq!(
+            reflected_with_reversed_axis.normalized().as_degrees(),
+            a_expected,
+            "{ctx}"
+        );
     };
 
     //   ^
@@ -409,6 +482,12 @@ fn orientation_test() {
 #[test]
 fn orientation_reflect() {
     // Reflecting an orientation is just reflecting its angle over the given axis.
-    assert_eq!(orientation(30.0).reflect(deg(90.0)).angle().as_degrees(), 150.0);
-    assert_eq!(orientation(0.0).reflect(deg(45.0)).angle().as_degrees(), 90.0);
+    assert_eq!(
+        orientation(30.0).reflect(deg(90.0)).angle().as_degrees(),
+        150.0
+    );
+    assert_eq!(
+        orientation(0.0).reflect(deg(45.0)).angle().as_degrees(),
+        90.0
+    );
 }

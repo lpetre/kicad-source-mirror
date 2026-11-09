@@ -59,8 +59,9 @@ def main():
     h = open(sys.argv[2]).read()
     prefix = sys.argv[3] if len(sys.argv) > 3 else ""
 
-    print("// Token codes (grammar.h).")
+    print("// Token codes (grammar.h).  Not every token of a grammar is produced by its lexer.")
     for name, value in re.findall(r"#define\s+(\w+)\s+(\d+)", h):
+        print("#[allow(dead_code)]")
         print("pub(crate) const %s%s: i32 = %s;" % (prefix, name, value))
 
     print()

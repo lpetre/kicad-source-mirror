@@ -305,7 +305,10 @@ mod tests {
     use super::*;
 
     fn layers(start: PcbLayerId, stop: PcbLayerId, count: i32) -> Vec<PcbLayerId> {
-        LayerRange::new(start, stop, count).unwrap().iter().collect()
+        LayerRange::new(start, stop, count)
+            .unwrap()
+            .iter()
+            .collect()
     }
 
     #[test]

@@ -38,8 +38,14 @@ fn ldexp1(exp: i32) -> f64 {
 /// Port of `BOOST_AUTO_TEST_CASE( CrossWideKnownValues )`.
 #[test]
 fn cross_wide_known_values() {
-    assert_eq!(to_double(cross_wide(Vector2L::new(3, 4), Vector2L::new(5, 6))), -2.0);
-    assert_eq!(to_double(dot_wide(Vector2L::new(3, 4), Vector2L::new(5, 6))), 39.0);
+    assert_eq!(
+        to_double(cross_wide(Vector2L::new(3, 4), Vector2L::new(5, 6))),
+        -2.0
+    );
+    assert_eq!(
+        to_double(dot_wide(Vector2L::new(3, 4), Vector2L::new(5, 6))),
+        39.0
+    );
 
     // The (+-1.1e9) diagonals wrap an int64 cross product
     let d1 = Vector2L::new(2200000000, 2200000000);
@@ -48,13 +54,28 @@ fn cross_wide_known_values() {
     assert_eq!(sign(cross_wide(d1, d2)), -1);
     assert_eq!(sign(cross_wide(d2, d1)), 1);
     assert_eq!(sign(cross_wide(d1, d1)), 0);
-    assert_eq!(to_double(cross_wide(d1, d2)), -2.0 * 2200000000.0 * 2200000000.0);
+    assert_eq!(
+        to_double(cross_wide(d1, d2)),
+        -2.0 * 2200000000.0 * 2200000000.0
+    );
 
     // Products differing by 1, invisible to a double product
     let k: i64 = 3000000000;
 
-    assert_eq!(to_double(cross_wide(Vector2L::new(k + 1, k), Vector2L::new(k + 2, k + 1))), 1.0);
-    assert_eq!(to_double(cross_wide(Vector2L::new(k + 2, k + 1), Vector2L::new(k + 1, k))), -1.0);
+    assert_eq!(
+        to_double(cross_wide(
+            Vector2L::new(k + 1, k),
+            Vector2L::new(k + 2, k + 1)
+        )),
+        1.0
+    );
+    assert_eq!(
+        to_double(cross_wide(
+            Vector2L::new(k + 2, k + 1),
+            Vector2L::new(k + 1, k)
+        )),
+        -1.0
+    );
 }
 
 /// Port of `BOOST_AUTO_TEST_CASE( Int64Extremes )`.
@@ -64,9 +85,18 @@ fn int64_extremes() {
     const HI: i64 = i64::MAX;
 
     // (-2^63)^2 - 0 = 2^126
-    assert_eq!(to_double(cross_wide(Vector2L::new(LO, 0), Vector2L::new(0, LO))), ldexp1(126));
-    assert_eq!(to_double(cross_wide(Vector2L::new(LO, 0), Vector2L::new(0, HI))), -ldexp1(126));
-    assert_eq!(to_double(dot_wide(Vector2L::new(LO, 0), Vector2L::new(LO, 0))), ldexp1(126));
+    assert_eq!(
+        to_double(cross_wide(Vector2L::new(LO, 0), Vector2L::new(0, LO))),
+        ldexp1(126)
+    );
+    assert_eq!(
+        to_double(cross_wide(Vector2L::new(LO, 0), Vector2L::new(0, HI))),
+        -ldexp1(126)
+    );
+    assert_eq!(
+        to_double(dot_wide(Vector2L::new(LO, 0), Vector2L::new(LO, 0))),
+        ldexp1(126)
+    );
 }
 
 /// Port of `BOOST_AUTO_TEST_CASE( WordsToDoubleBorrowAndRounding )`.
@@ -82,7 +112,10 @@ fn words_to_double_borrow_and_rounding() {
     let up: f64 = ldexp1(64) + ldexp1(12);
 
     assert_eq!(words_to_double(1, (1u64 << 11) + 1), up);
-    assert_eq!(words_to_double(-2, (!((1u64 << 11) + 1)).wrapping_add(1)), -up);
+    assert_eq!(
+        words_to_double(-2, (!((1u64 << 11) + 1)).wrapping_add(1)),
+        -up
+    );
 
     // Exactly halfway rounds to even
     assert_eq!(words_to_double(1, 1u64 << 11), ldexp1(64));
@@ -124,7 +157,11 @@ fn random_against_long_double() {
         let cross: i128 = a.x as i128 * b.y as i128 - a.y as i128 * b.x as i128;
         let dot: i128 = a.x as i128 * b.x as i128 + a.y as i128 * b.y as i128;
 
-        assert!(close_fraction(to_double(cross_wide(a, b)), cross as f64, 1e-9));
+        assert!(close_fraction(
+            to_double(cross_wide(a, b)),
+            cross as f64,
+            1e-9
+        ));
         assert!(close_fraction(to_double(dot_wide(a, b)), dot as f64, 1e-9));
         assert_eq!(cross_wide(a, b), cross);
         assert_eq!(dot_wide(a, b), dot);
@@ -137,8 +174,9 @@ fn words_to_double_against_int128() {
     let mut rng = Mt19937_64::new(987);
 
     for i in 0..300000 {
-        // ( static_cast<unsigned __int128>( rng() ) << 64 ) | rng(): GCC evaluates the right
-        // operand of | first here; the order does not matter for the property tested.
+        // ( static_cast<unsigned __int128>( rng() ) << 64 ) | rng(): the order in which C++
+        // evaluates the two rng() calls is unspecified; it does not matter for the property
+        // tested.
         let lo: u128 = rng.next_u64() as u128;
         let hi: u128 = rng.next_u64() as u128;
         let mut mag: u128 = (hi << 64) | lo;

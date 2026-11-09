@@ -68,7 +68,11 @@ impl Default for Seg {
     /// Port of `SEG::SEG()`: create an empty (0, 0) segment.
     #[inline]
     fn default() -> Self {
-        Seg { a: Vector2I::new(0, 0), b: Vector2I::new(0, 0), index: -1 }
+        Seg {
+            a: Vector2I::new(0, 0),
+            b: Vector2I::new(0, 0),
+            index: -1,
+        }
     }
 }
 
@@ -111,7 +115,12 @@ impl Ord for Seg {
 impl fmt::Display for Seg {
     /// Port of `operator<<( std::ostream&, const SEG& )`: `[ [ ax | ay ] - [ bx | by ] ]`.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[ {} - {} ]", self.a.to_stream_string(), self.b.to_stream_string())
+        write!(
+            f,
+            "[ {} - {} ]",
+            self.a.to_stream_string(),
+            self.b.to_stream_string()
+        )
     }
 }
 
@@ -120,14 +129,22 @@ impl Seg {
     /// (aA) and (aB).
     #[inline]
     pub const fn new(a_a: Vector2I, a_b: Vector2I) -> Self {
-        Seg { a: a_a, b: a_b, index: -1 }
+        Seg {
+            a: a_a,
+            b: a_b,
+            index: -1,
+        }
     }
 
     /// Port of `SEG::SEG( int aX1, int aY1, int aX2, int aY2 )`: create a segment between
     /// (aX1, aY1) and (aX2, aY2).
     #[inline]
     pub const fn from_coords(a_x1: i32, a_y1: i32, a_x2: i32, a_y2: i32) -> Self {
-        Seg { a: Vector2I::new(a_x1, a_y1), b: Vector2I::new(a_x2, a_y2), index: -1 }
+        Seg {
+            a: Vector2I::new(a_x1, a_y1),
+            b: Vector2I::new(a_x2, a_y2),
+            index: -1,
+        }
     }
 
     /// Port of `SEG::SEG( const VECTOR2I& aA, const VECTOR2I& aB, int aIndex )`.
@@ -139,7 +156,11 @@ impl Seg {
     /// * `a_index` - index of the segment within the parent shape
     #[inline]
     pub const fn with_index(a_a: Vector2I, a_b: Vector2I, a_index: i32) -> Self {
-        Seg { a: a_a, b: a_b, index: a_index }
+        Seg {
+            a: a_a,
+            b: a_b,
+            index: a_index,
+        }
     }
 
     /// Port of `SEG::Square()`.
@@ -216,7 +237,11 @@ impl Seg {
 
         let dist: Ecoord = isqrt(dist_sq);
 
-        (if a_determine_side { sgn(det) * dist } else { dist.abs() }) as i32
+        (if a_determine_side {
+            sgn(det) * dist
+        } else {
+            dist.abs()
+        }) as i32
     }
 
     /// Port of `SEG::Angle()`.
@@ -234,7 +259,10 @@ impl Seg {
     /// Compute a point on the segment (this) that is closest to point `a_p`.
     pub fn nearest_point(&self, a_p: Vector2I) -> Vector2I {
         // Inlined for performance reasons
-        let d = Vector2L::new(self.b.x as i64 - self.a.x as i64, self.b.y as i64 - self.a.y as i64);
+        let d = Vector2L::new(
+            self.b.x as i64 - self.a.x as i64,
+            self.b.y as i64 - self.a.y as i64,
+        );
 
         let l_squared: Ecoord = d.x * d.x + d.y * d.y;
 
@@ -243,7 +271,10 @@ impl Seg {
         }
 
         // Inlined for performance reasons
-        let pa = Vector2L::new(a_p.x as i64 - self.a.x as i64, a_p.y as i64 - self.a.y as i64);
+        let pa = Vector2L::new(
+            a_p.x as i64 - self.a.x as i64,
+            a_p.y as i64 - self.a.y as i64,
+        );
 
         let t: Ecoord = d.dot(pa);
 
@@ -371,10 +402,19 @@ impl Seg {
     /// * `a_lines` - treat segments as infinite lines
     ///
     /// Returns the intersection point, if exists.
-    pub fn intersect_with(&self, a_seg: &Seg, a_ignore_endpoints: bool, a_lines: bool) -> OptVector2I {
+    pub fn intersect_with(
+        &self,
+        a_seg: &Seg,
+        a_ignore_endpoints: bool,
+        a_lines: bool,
+    ) -> OptVector2I {
         let mut ip = Vector2I::new(0, 0);
 
-        if self.intersects_impl(a_seg, a_ignore_endpoints, a_lines, Some(&mut ip)) { Some(ip) } else { None }
+        if self.intersects_impl(a_seg, a_ignore_endpoints, a_lines, Some(&mut ip)) {
+            Some(ip)
+        } else {
+            None
+        }
     }
 
     /// Port of `SEG::Intersects()`.
@@ -450,7 +490,10 @@ impl Seg {
 
         // Check if intersection is within segment bounds
         if (0.0..=1.0).contains(&t) {
-            return Some(ki_round_xy(seg_a.x as f64 + t * seg_dir.x as f64, seg_a.y as f64 + t * seg_dir.y as f64));
+            return Some(ki_round_xy(
+                seg_a.x as f64 + t * seg_dir.x as f64,
+                seg_a.y as f64 + t * seg_dir.y as f64,
+            ));
         }
 
         None
@@ -589,7 +632,10 @@ impl Seg {
             self.b.x as Ecoord - self.a.x as Ecoord,
             self.b.y as Ecoord - self.a.y as Ecoord,
         );
-        let ap = Vector2::<Ecoord>::new(a_p.x as Ecoord - self.a.x as Ecoord, a_p.y as Ecoord - self.a.y as Ecoord);
+        let ap = Vector2::<Ecoord>::new(
+            a_p.x as Ecoord - self.a.x as Ecoord,
+            a_p.y as Ecoord - self.a.y as Ecoord,
+        );
 
         let e: Ecoord = ap.dot(ab);
 
@@ -738,12 +784,14 @@ impl Seg {
             return false;
         }
 
-        if a_seg.contains_with_threshold(self.a, a_threshold) || a_seg.contains_with_threshold(self.b, a_threshold)
+        if a_seg.contains_with_threshold(self.a, a_threshold)
+            || a_seg.contains_with_threshold(self.b, a_threshold)
         {
             return true;
         }
 
-        if self.contains_with_threshold(a_seg.a, a_threshold) || self.contains_with_threshold(a_seg.b, a_threshold)
+        if self.contains_with_threshold(a_seg.a, a_threshold)
+            || self.contains_with_threshold(a_seg.b, a_threshold)
         {
             return true;
         }
@@ -914,16 +962,18 @@ impl Seg {
             let intersection_proj: i32 = (overlap_start + overlap_end) / 2;
 
             // Calculate corresponding coordinate on the other axis
-            let intersection_other: i32;
-
-            if seg1_end != seg1_start {
+            let intersection_other: i32 = if seg1_end != seg1_start {
                 // Use this segment's line equation to find other coordinate
-                intersection_other = coord1_start
-                    + rescale(intersection_proj - seg1_start, coord1_end - coord1_start, seg1_end - seg1_start);
+                coord1_start
+                    + rescale(
+                        intersection_proj - seg1_start,
+                        coord1_end - coord1_start,
+                        seg1_end - seg1_start,
+                    )
             } else {
                 // Degenerate segment (point) or perpendicular to projection axis
-                intersection_other = coord1_start;
-            }
+                coord1_start
+            };
 
             // Set result based on projection axis
             if use_x_axis {
@@ -1020,12 +1070,20 @@ impl Seg {
             // Since we're comparing t = q/d and s = p/d to [0,1], we need to handle sign of d
             if determinant > 0 {
                 // d > 0: check 0 ≤ q ≤ d and 0 ≤ p ≤ d
-                if param1_num < 0 || param1_num > determinant || param2_num < 0 || param2_num > determinant {
+                if param1_num < 0
+                    || param1_num > determinant
+                    || param2_num < 0
+                    || param2_num > determinant
+                {
                     return false;
                 }
             } else {
                 // d < 0: check d ≤ q ≤ 0 and d ≤ p ≤ 0
-                if param1_num > 0 || param1_num < determinant || param2_num > 0 || param2_num < determinant {
+                if param1_num > 0
+                    || param1_num < determinant
+                    || param2_num > 0
+                    || param2_num < determinant
+                {
                     return false;
                 }
             }
@@ -1041,15 +1099,21 @@ impl Seg {
 
         if let Some(a_pt) = a_pt {
             // Use parametric equation: intersection = aSeg.A + (q/d) * f
-            let scaled_dir2: Vector2L =
-                Vector2L::new(rescale(param1_num, dir2.x, determinant), rescale(param1_num, dir2.y, determinant));
+            let scaled_dir2: Vector2L = Vector2L::new(
+                rescale(param1_num, dir2.x, determinant),
+                rescale(param1_num, dir2.y, determinant),
+            );
             let result: Vector2L = Vector2L::from(a_seg.a) + scaled_dir2;
 
             // Verify result fits in coordinate type range
             const MAX_COORD: Ecoord = i32::MAX as Ecoord;
             const MIN_COORD: Ecoord = i32::MIN as Ecoord;
 
-            if result.x > MAX_COORD || result.x < MIN_COORD || result.y > MAX_COORD || result.y < MIN_COORD {
+            if result.x > MAX_COORD
+                || result.x < MIN_COORD
+                || result.y > MAX_COORD
+                || result.y < MIN_COORD
+            {
                 return false; // Intersection exists but coordinates overflow
             }
 

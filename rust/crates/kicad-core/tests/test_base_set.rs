@@ -156,9 +156,9 @@ fn base_set_and_assignment() {
     bs2.set(3);
 
     bs1 &= &bs2;
-    assert_eq!(bs1.test(1), false);
-    assert_eq!(bs1.test(2), false);
-    assert_eq!(bs1.test(3), true);
+    assert!(!bs1.test(1));
+    assert!(!bs1.test(2));
+    assert!(bs1.test(3));
 }
 
 // Test boolean operator|=
@@ -171,9 +171,9 @@ fn base_set_or_assignment() {
     bs2.set(3);
 
     bs1 |= &bs2;
-    assert_eq!(bs1.test(1), true);
-    assert_eq!(bs1.test(2), true);
-    assert_eq!(bs1.test(3), true);
+    assert!(bs1.test(1));
+    assert!(bs1.test(2));
+    assert!(bs1.test(3));
 }
 
 // Test boolean operator^=
@@ -187,9 +187,9 @@ fn base_set_xor_assignment() {
     bs2.set(3);
 
     bs1 ^= &bs2;
-    assert_eq!(bs1.test(1), true);
-    assert_eq!(bs1.test(2), true);
-    assert_eq!(bs1.test(3), false);
+    assert!(bs1.test(1));
+    assert!(bs1.test(2));
+    assert!(!bs1.test(3));
 }
 
 // Test boolean operator~
@@ -200,10 +200,10 @@ fn base_set_not_operator() {
     bs1.set(3);
     let bs2 = !&bs1;
 
-    assert_eq!(bs2.test(0), true);
-    assert_eq!(bs2.test(1), false);
-    assert_eq!(bs2.test(2), true);
-    assert_eq!(bs2.test(3), false);
+    assert!(bs2.test(0));
+    assert!(!bs2.test(1));
+    assert!(bs2.test(2));
+    assert!(!bs2.test(3));
 }
 
 // Test non-member operator&
@@ -217,9 +217,9 @@ fn base_set_and_operator() {
     bs2.set(3);
 
     let result = &bs1 & &bs2;
-    assert_eq!(result.test(1), false);
-    assert_eq!(result.test(2), false);
-    assert_eq!(result.test(3), true);
+    assert!(!result.test(1));
+    assert!(!result.test(2));
+    assert!(result.test(3));
 }
 
 // Test non-member operator|
@@ -232,9 +232,9 @@ fn base_set_or_operator() {
     bs2.set(3);
 
     let result = &bs1 | &bs2;
-    assert_eq!(result.test(1), true);
-    assert_eq!(result.test(2), true);
-    assert_eq!(result.test(3), true);
+    assert!(result.test(1));
+    assert!(result.test(2));
+    assert!(result.test(3));
 }
 
 // Test non-member operator^
@@ -248,9 +248,9 @@ fn base_set_xor_operator() {
     bs2.set(3);
 
     let result = &bs1 ^ &bs2;
-    assert_eq!(result.test(1), true);
-    assert_eq!(result.test(2), true);
-    assert_eq!(result.test(3), false);
+    assert!(result.test(1));
+    assert!(result.test(2));
+    assert!(!result.test(3));
 }
 
 // Test std::hash specialization

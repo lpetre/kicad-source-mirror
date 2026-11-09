@@ -43,8 +43,10 @@ use core::fmt;
 use core::ops::{Add, AddAssign, Div, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::f64::consts::{FRAC_1_SQRT_2, SQRT_2};
 
+use crate::cmath;
 use crate::math::util::{
-    KiRound, ct_sqrt_u64, equals_eps, ki_round, rescale, rounded_hypot, sign, std_clamp, unsigned_abs,
+    KiRound, ct_sqrt_u64, equals_eps, ki_round, rescale, rounded_hypot, sign, std_clamp,
+    unsigned_abs,
 };
 use crate::ostream::format_double;
 
@@ -229,8 +231,16 @@ macro_rules! impl_signed_coord_integral {
                 }
 
                 // KiROUND returns int here, whatever T is
-                let rx: $t = (if x < 0 { -ki_round(new_x) } else { ki_round(new_x) }) as $t;
-                let ry: $t = (if y < 0 { -ki_round(new_y) } else { ki_round(new_y) }) as $t;
+                let rx: $t = (if x < 0 {
+                    -ki_round(new_x)
+                } else {
+                    ki_round(new_x)
+                }) as $t;
+                let ry: $t = (if y < 0 {
+                    -ki_round(new_y)
+                } else {
+                    ki_round(new_y)
+                }) as $t;
                 let s: $t = sign(a_new_length) as $t;
 
                 (rx * s, ry * s)
@@ -536,7 +546,7 @@ impl SignedCoord for f64 {
             return x.abs();
         }
 
-        x.hypot(y)
+        cmath::hypot(x, y)
     }
 
     fn coord_resize(x: f64, y: f64, a_new_length: f64) -> (f64, f64) {
@@ -583,7 +593,7 @@ impl SignedCoord for f32 {
             return x.abs();
         }
 
-        x.hypot(y)
+        cmath::hypotf(x, y)
     }
 
     fn coord_resize(x: f32, y: f32, a_new_length: f32) -> (f32, f32) {
@@ -679,7 +689,10 @@ impl<T: Coord> Vector2<T> {
     /// and out-of-range values saturate.
     #[inline]
     pub fn cast<U: Coord>(self) -> Vector2<U> {
-        Vector2::new(U::cast_from_num(self.x.to_num()), U::cast_from_num(self.y.to_num()))
+        Vector2::new(
+            U::cast_from_num(self.x.to_num()),
+            U::cast_from_num(self.y.to_num()),
+        )
     }
 
     /// Same conversion as [`Vector2::cast`], spelled like the C++ converting constructor
@@ -748,7 +761,10 @@ impl<T: Coord> Vector2<T> {
         let a_vector: Vector2<T::Extended> = a_vector.into();
         let dx: T::Extended = a_vector.x.coord_sub(self.x.to_extended());
         let dy: T::Extended = a_vector.y.coord_sub(self.y.to_extended());
-        let diff: Vector2<f64> = Vector2::new(f64::cast_from_num(dx.to_num()), f64::cast_from_num(dy.to_num()));
+        let diff: Vector2<f64> = Vector2::new(
+            f64::cast_from_num(dx.to_num()),
+            f64::cast_from_num(dy.to_num()),
+        );
 
         diff.euclidean_norm()
     }
@@ -795,7 +811,12 @@ impl<T: SignedCoord> Vector2<T> {
 impl<T: Coord> fmt::Display for Vector2<T> {
     /// Same text as [`Vector2::format`] (`VECTOR2<T>::Format()`).
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "( xy {} {} )", self.x.coord_format(), self.y.coord_format())
+        write!(
+            f,
+            "( xy {} {} )",
+            self.x.coord_format(),
+            self.y.coord_format()
+        )
     }
 }
 
@@ -916,7 +937,10 @@ impl<T: Coord> Div<f64> for Vector2<T> {
     /// the `int` range, also for `Vector2L`).
     #[inline]
     fn div(self, a_factor: f64) -> Vector2<T> {
-        Vector2::new(self.x.coord_div_f64(a_factor), self.y.coord_div_f64(a_factor))
+        Vector2::new(
+            self.x.coord_div_f64(a_factor),
+            self.y.coord_div_f64(a_factor),
+        )
     }
 }
 
@@ -991,7 +1015,10 @@ macro_rules! impl_mixed_vector_ops {
             #[inline]
             #[allow(clippy::unnecessary_cast)]
             fn add(self, rhs: Vector2<$rhs>) -> Vector2<$out> {
-                Vector2::new(self.x as $out + rhs.x as $out, self.y as $out + rhs.y as $out)
+                Vector2::new(
+                    self.x as $out + rhs.x as $out,
+                    self.y as $out + rhs.y as $out,
+                )
             }
         }
 
@@ -1001,7 +1028,10 @@ macro_rules! impl_mixed_vector_ops {
             #[inline]
             #[allow(clippy::unnecessary_cast)]
             fn sub(self, rhs: Vector2<$rhs>) -> Vector2<$out> {
-                Vector2::new(self.x as $out - rhs.x as $out, self.y as $out - rhs.y as $out)
+                Vector2::new(
+                    self.x as $out - rhs.x as $out,
+                    self.y as $out - rhs.y as $out,
+                )
             }
         }
 
@@ -1033,7 +1063,10 @@ macro_rules! impl_mixed_scalar_mul {
             #[inline]
             #[allow(clippy::unnecessary_cast)]
             fn mul(self, a_scalar: $scalar) -> Vector2<$out> {
-                Vector2::new(self.x as $out * a_scalar as $out, self.y as $out * a_scalar as $out)
+                Vector2::new(
+                    self.x as $out * a_scalar as $out,
+                    self.y as $out * a_scalar as $out,
+                )
             }
         }
     };
@@ -1055,7 +1088,10 @@ macro_rules! impl_scalar_times_vector {
             #[inline]
             #[allow(clippy::unnecessary_cast)]
             fn mul(self, a_vector: Vector2<$vec>) -> Vector2<$out> {
-                Vector2::new(self as $out * a_vector.x as $out, self as $out * a_vector.y as $out)
+                Vector2::new(
+                    self as $out * a_vector.x as $out,
+                    self as $out * a_vector.y as $out,
+                )
             }
         }
     };
@@ -1124,7 +1160,10 @@ impl_mixed_scalar_add_sub!(f32, f64, |x, s| add: (x as f64 + s) as f32, sub: (x 
 
 /// Port of `LexicographicalMax`.
 #[inline]
-pub fn lexicographical_max<'a, T: Coord>(a_a: &'a Vector2<T>, a_b: &'a Vector2<T>) -> &'a Vector2<T> {
+pub fn lexicographical_max<'a, T: Coord>(
+    a_a: &'a Vector2<T>,
+    a_b: &'a Vector2<T>,
+) -> &'a Vector2<T> {
     if a_a.x > a_b.x || (a_a.x == a_b.x && a_a.y > a_b.y) {
         return a_a;
     }
@@ -1134,7 +1173,10 @@ pub fn lexicographical_max<'a, T: Coord>(a_a: &'a Vector2<T>, a_b: &'a Vector2<T
 
 /// Port of `LexicographicalMin`.
 #[inline]
-pub fn lexicographical_min<'a, T: Coord>(a_a: &'a Vector2<T>, a_b: &'a Vector2<T>) -> &'a Vector2<T> {
+pub fn lexicographical_min<'a, T: Coord>(
+    a_a: &'a Vector2<T>,
+    a_b: &'a Vector2<T>,
+) -> &'a Vector2<T> {
     if a_a.x < a_b.x || (a_a.x == a_b.x && a_a.y < a_b.y) {
         return a_a;
     }
@@ -1186,7 +1228,10 @@ pub fn equals_vec_eps<T: crate::math::util::KiFloat>(
 /// Port of `equals( VECTOR2<T> const&, VECTOR2<T> const& )` with the default epsilon
 /// `std::numeric_limits<T>::epsilon()`.
 #[inline]
-pub fn equals_vec<T: crate::math::util::KiFloat>(a_first: Vector2<T>, a_second: Vector2<T>) -> bool {
+pub fn equals_vec<T: crate::math::util::KiFloat>(
+    a_first: Vector2<T>,
+    a_second: Vector2<T>,
+) -> bool {
     equals_vec_eps(a_first, a_second, T::EPSILON)
 }
 
@@ -1225,11 +1270,18 @@ mod tests {
         assert_eq!(Vector2I::new(1, -2).to_string(), "( xy 1 -2 )");
         assert_eq!(Vector2I::new(1, -2).to_stream_string(), "[ 1 | -2 ]");
         assert_eq!(Vector2D::new(1.5, -2.5e-7).format(), "( xy 1.5 -2.5e-07 )");
-        assert_eq!(Vector2D::new(1234567.0, 0.1 + 0.2).format(), "( xy 1.23457e+06 0.3 )");
-        assert_eq!(Vector2L::new(i64::MAX, i64::MIN).format(), "( xy 9223372036854775807 -9223372036854775808 )");
+        assert_eq!(
+            Vector2D::new(1234567.0, 0.1 + 0.2).format(),
+            "( xy 1.23457e+06 0.3 )"
+        );
+        assert_eq!(
+            Vector2L::new(i64::MAX, i64::MIN).format(),
+            "( xy 9223372036854775807 -9223372036854775808 )"
+        );
     }
 
     #[test]
+    #[allow(clippy::neg_cmp_op_on_partial_ord)]
     fn ordering_is_lexicographical() {
         let a = Vector2I::new(1, 5);
         let b = Vector2I::new(2, 0);
@@ -1262,18 +1314,45 @@ mod tests {
     fn cast_follows_converting_constructor() {
         // Floating point to integral truncates (does not round) after clamping
         assert_eq!(Vector2D::new(1.9, -1.9).cast::<i32>(), Vector2I::new(1, -1));
-        assert_eq!(Vector2D::new(1e30, -1e30).cast::<i32>(), Vector2I::new(i32::MAX, i32::MIN));
-        assert_eq!(Vector2D::new(1e30, -1e30).cast::<i64>(), Vector2L::new(i64::MAX, i64::MIN));
-        assert_eq!(Vector2D::new(1e30, -5.0).cast::<u32>(), Vector2::<u32>::new(u32::MAX, 0));
+        assert_eq!(
+            Vector2D::new(1e30, -1e30).cast::<i32>(),
+            Vector2I::new(i32::MAX, i32::MIN)
+        );
+        assert_eq!(
+            Vector2D::new(1e30, -1e30).cast::<i64>(),
+            Vector2L::new(i64::MAX, i64::MIN)
+        );
+        assert_eq!(
+            Vector2D::new(1e30, -5.0).cast::<u32>(),
+            Vector2::<u32>::new(u32::MAX, 0)
+        );
         // Integral to integral clamps
-        assert_eq!(Vector2L::new(1 << 40, -(1 << 40)).cast::<i32>(), Vector2I::new(i32::MAX, i32::MIN));
-        assert_eq!(Vector2I::new(-4, 3).cast::<u32>(), Vector2::<u32>::new(0, 3));
-        assert_eq!(Vector2::<u32>::new(u32::MAX, 7).cast::<i32>(), Vector2I::new(i32::MAX, 7));
+        assert_eq!(
+            Vector2L::new(1 << 40, -(1 << 40)).cast::<i32>(),
+            Vector2I::new(i32::MAX, i32::MIN)
+        );
+        assert_eq!(
+            Vector2I::new(-4, 3).cast::<u32>(),
+            Vector2::<u32>::new(0, 3)
+        );
+        assert_eq!(
+            Vector2::<u32>::new(u32::MAX, 7).cast::<i32>(),
+            Vector2I::new(i32::MAX, 7)
+        );
         // To floating point is a plain static_cast
-        assert_eq!(Vector2L::new(i64::MAX, 1).cast::<f64>(), Vector2D::new(9223372036854775808.0, 1.0));
-        assert_eq!(Vector2I::from_vec(Vector2D::new(2.5, 3.5)), Vector2I::new(2, 3));
+        assert_eq!(
+            Vector2L::new(i64::MAX, 1).cast::<f64>(),
+            Vector2D::new(9223372036854775808.0, 1.0)
+        );
+        assert_eq!(
+            Vector2I::from_vec(Vector2D::new(2.5, 3.5)),
+            Vector2I::new(2, 3)
+        );
         assert_eq!(Vector2L::from(Vector2I::new(-1, 2)), Vector2L::new(-1, 2));
-        assert_eq!(Vector2D::from(Vector2I::new(-1, 2)), Vector2D::new(-1.0, 2.0));
+        assert_eq!(
+            Vector2D::from(Vector2I::new(-1, 2)),
+            Vector2D::new(-1.0, 2.0)
+        );
     }
 
     #[test]
@@ -1283,7 +1362,10 @@ mod tests {
         assert_eq!(Vector2I::new(10, 20) / 4.0, Vector2I::new(3, 5));
         assert_eq!(Vector2D::new(5.0, -5.0) / 2, Vector2D::new(2.5, -2.5));
         // VECTOR2L division is clamped to the int range by KiROUND
-        assert_eq!(Vector2L::new(1 << 40, 6) / 2.0, Vector2L::new(i32::MAX as i64, 3));
+        assert_eq!(
+            Vector2L::new(1 << 40, 6) / 2.0,
+            Vector2L::new(i32::MAX as i64, 3)
+        );
     }
 
     #[test]
@@ -1303,7 +1385,10 @@ mod tests {
         assert_eq!(2 * vi, Vector2I::new(6, -8));
         assert_eq!(vi * 0.5, Vector2D::new(1.5, -2.0));
         assert_eq!(0.5 * vi, Vector2D::new(1.5, -2.0));
-        assert_eq!(vi * 10_000_000_000i64, Vector2L::new(30_000_000_000, -40_000_000_000));
+        assert_eq!(
+            vi * 10_000_000_000i64,
+            Vector2L::new(30_000_000_000, -40_000_000_000)
+        );
         assert_eq!(-vi, Vector2I::new(-3, 4));
         // KiROUND( 3.5 ) and KiROUND( -3.5 ): halfway cases round away from zero
         assert_eq!(vi + 0.5, Vector2I::new(4, -4));
@@ -1362,22 +1447,41 @@ mod tests {
         assert_eq!(Vector2I::new(10, 0).resize(-5), Vector2I::new(-5, 0));
         assert_eq!(Vector2I::new(10, 0).resize(0), Vector2I::new(0, 0));
         assert_eq!(Vector2I::new(-7, 7).resize(100), Vector2I::new(-71, 71));
-        assert_eq!(Vector2D::new(3.0, 4.0).resize(10.0), Vector2D::new(6.0, 8.0));
-        assert_eq!(Vector2D::new(0.0, 0.0).resize(10.0), Vector2D::new(0.0, 0.0));
+        assert_eq!(
+            Vector2D::new(3.0, 4.0).resize(10.0),
+            Vector2D::new(6.0, 8.0)
+        );
+        assert_eq!(
+            Vector2D::new(0.0, 0.0).resize(10.0),
+            Vector2D::new(0.0, 0.0)
+        );
         assert_eq!(Vector2L::new(3, 4).resize(10), Vector2L::new(6, 8));
     }
 
     #[test]
     fn ki_round_vectors() {
         assert_eq!(ki_round(Vector2D::new(0.5, -0.5)), Vector2I::new(1, -1));
-        assert_eq!(ki_round(Vector2D::new(1e30, f64::NAN)), Vector2I::new(i32::MAX, 0));
+        assert_eq!(
+            ki_round(Vector2D::new(1e30, f64::NAN)),
+            Vector2I::new(i32::MAX, 0)
+        );
         assert_eq!(ki_round_xy(2.4, -2.6), Vector2I::new(2, -3));
     }
 
     #[test]
     fn equals_for_vectors() {
-        assert!(equals_vec(Vector2D::new(0.1 + 0.2, 1.0), Vector2D::new(0.3, 1.0)));
-        assert!(!equals_vec(Vector2D::new(0.31, 1.0), Vector2D::new(0.3, 1.0)));
-        assert!(equals_vec_eps(Vector2D::new(1.0, 2.0), Vector2D::new(3.0, 4.0), 2.0));
+        assert!(equals_vec(
+            Vector2D::new(0.1 + 0.2, 1.0),
+            Vector2D::new(0.3, 1.0)
+        ));
+        assert!(!equals_vec(
+            Vector2D::new(0.31, 1.0),
+            Vector2D::new(0.3, 1.0)
+        ));
+        assert!(equals_vec_eps(
+            Vector2D::new(1.0, 2.0),
+            Vector2D::new(3.0, 4.0),
+            2.0
+        ));
     }
 }

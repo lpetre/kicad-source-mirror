@@ -61,7 +61,11 @@ use crate::math::wide_int::{KiInt128, cross_wide, to_double};
 /// * `a_test_point` - The point to test.
 ///
 /// Returns true if the point is on the line segment.
-pub fn is_point_on_segment(a_seg_start: Vector2I, a_seg_end: Vector2I, a_test_point: Vector2I) -> bool {
+pub fn is_point_on_segment(
+    a_seg_start: Vector2I,
+    a_seg_end: Vector2I,
+    a_test_point: Vector2I,
+) -> bool {
     let vect_seg: Vector2I = a_seg_end - a_seg_start; // Vector from S1 to S2
     let vect_point: Vector2I = a_test_point - a_seg_start; // Vector from S1 to P
 
@@ -119,9 +123,17 @@ fn segment_intersects_segment_impl(
 
     if a_want_intersection_point {
         // (The y coordinate really is computed from num_b in the C++ source.)
+        //
+        // The point is computed before it is known whether the segments intersect at all.  For
+        // nearly parallel segments the offsets are far outside the coordinate range (KiROUND
+        // clamps them) and the C++ `+=` overflows; the meaningless point is then discarded
+        // because the function returns false.  The additions wrap here, like the C++ does in
+        // practice, so that this perfectly valid input cannot trip the overflow checks.
         let mut pt: Vector2I = a_p1_l1;
-        pt.x += ki_round(d_x_a as f64 * num_a as f64 / den as f64);
-        pt.y += ki_round(d_y_a as f64 * num_b as f64 / den as f64);
+        pt.x =
+            pt.x.wrapping_add(ki_round(d_x_a as f64 * num_a as f64 / den as f64));
+        pt.y =
+            pt.y.wrapping_add(ki_round(d_y_a as f64 * num_b as f64 / den as f64));
         intersection_point = Some(pt);
     }
 
@@ -197,7 +209,12 @@ pub fn segment_intersects_segment_with_point(
 /// * `a_start` - is the first end-point of the line segment
 /// * `a_end` - is the second end-point of the line segment
 /// * `a_dist` - maximum distance for hit
-pub fn test_segment_hit(a_ref_point: Vector2I, a_start: Vector2I, a_end: Vector2I, a_dist: i32) -> bool {
+pub fn test_segment_hit(
+    a_ref_point: Vector2I,
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_dist: i32,
+) -> bool {
     let mut xmin: i32 = a_start.x;
     let mut xmax: i32 = a_end.x;
     let mut ymin: i32 = a_start.y;
@@ -247,7 +264,12 @@ pub fn test_segment_hit(a_ref_point: Vector2I, a_start: Vector2I, a_end: Vector2
 /// * `a_center` - The center point of the arc.
 /// * `a_min_arc_angle` - If true, returns the point that results in the smallest arc angle
 ///   (the C++ default).
-pub fn calc_arc_mid(a_start: Vector2I, a_end: Vector2I, a_center: Vector2I, a_min_arc_angle: bool) -> Vector2I {
+pub fn calc_arc_mid(
+    a_start: Vector2I,
+    a_end: Vector2I,
+    a_center: Vector2I,
+    a_min_arc_angle: bool,
+) -> Vector2I {
     let start_vector: Vector2I = a_start - a_center;
     let end_vector: Vector2I = a_end - a_center;
 
@@ -349,7 +371,10 @@ pub fn rotate_point_xy_d(p_x: &mut f64, p_y: &mut f64, a_angle: EdaAngle) {
         let sinus: f64 = angle.sin();
         let cosinus: f64 = angle.cos();
 
-        pt = Vector2D::new((*p_y * sinus) + (*p_x * cosinus), (*p_y * cosinus) - (*p_x * sinus));
+        pt = Vector2D::new(
+            (*p_y * sinus) + (*p_x * cosinus),
+            (*p_y * cosinus) - (*p_x * sinus),
+        );
     }
 
     *p_x = pt.x;
@@ -431,7 +456,11 @@ pub fn get_rotated_around<P: Rotatable>(a_vector: P, a_centre: P, a_angle: EdaAn
 }
 
 /// Port of `CalcArcCenter( const VECTOR2D& aStart, const VECTOR2D& aEnd, const EDA_ANGLE& )`.
-pub fn calc_arc_center_from_angle(a_start: Vector2D, a_end: Vector2D, a_angle: EdaAngle) -> Vector2D {
+pub fn calc_arc_center_from_angle(
+    a_start: Vector2D,
+    a_end: Vector2D,
+    a_angle: EdaAngle,
+) -> Vector2D {
     let mut angle: EdaAngle = a_angle;
     let mut start: Vector2D = a_start;
     let mut end: Vector2D = a_end;
@@ -522,16 +551,23 @@ fn degenerate_arc_center(a_start: Vector2D, a_mid: Vector2D, a_end: Vector2D) ->
         ));
     }
 
-    let coincident =
-        |a: Vector2D, b: Vector2D| -> bool { (a - b).squared_euclidean_norm() < K_COINCIDENT_RADIUS_SQUARED };
+    let coincident = |a: Vector2D, b: Vector2D| -> bool {
+        (a - b).squared_euclidean_norm() < K_COINCIDENT_RADIUS_SQUARED
+    };
 
     // Two distinct points fall back to the chord midpoint, same as the diameter-arc paths below
     if coincident(a_start, a_mid) || coincident(a_mid, a_end) {
-        return Some(Vector2D::new((a_start.x + a_end.x) / 2.0, (a_start.y + a_end.y) / 2.0));
+        return Some(Vector2D::new(
+            (a_start.x + a_end.x) / 2.0,
+            (a_start.y + a_end.y) / 2.0,
+        ));
     }
 
     if coincident(a_start, a_end) {
-        return Some(Vector2D::new((a_start.x + a_mid.x) / 2.0, (a_start.y + a_mid.y) / 2.0));
+        return Some(Vector2D::new(
+            (a_start.x + a_mid.x) / 2.0,
+            (a_start.y + a_mid.y) / 2.0,
+        ));
     }
 
     None
@@ -562,7 +598,12 @@ fn det2(a: f64, b: f64, c: f64, d: f64) -> f64 {
 ///
 /// Prefer a nice 100 nm or 10 nm center when it still lies on the circle to within a
 /// nanometer.
-fn snap_arc_center(a_center: Vector2D, a_start: Vector2D, a_mid: Vector2D, a_end: Vector2D) -> Vector2D {
+fn snap_arc_center(
+    a_center: Vector2D,
+    a_start: Vector2D,
+    a_mid: Vector2D,
+    a_end: Vector2D,
+) -> Vector2D {
     #[allow(clippy::neg_cmp_op_on_partial_ord)]
     if !(a_center.x.abs() < K_MAX_EXACT_INTEGER) || !(a_center.y.abs() < K_MAX_EXACT_INTEGER) {
         return a_center;
@@ -602,8 +643,14 @@ fn unclamped_arc_center(a_start: Vector2I, a_mid: Vector2I, a_end: Vector2I) -> 
     }
 
     // Deltas are exact in 64 bits and the numerators in 128, so only the final divisions round
-    let b = Vector2L::new(a_mid.x as i64 - a_start.x as i64, a_mid.y as i64 - a_start.y as i64);
-    let c = Vector2L::new(a_end.x as i64 - a_start.x as i64, a_end.y as i64 - a_start.y as i64);
+    let b = Vector2L::new(
+        a_mid.x as i64 - a_start.x as i64,
+        a_mid.y as i64 - a_start.y as i64,
+    );
+    let c = Vector2L::new(
+        a_end.x as i64 - a_start.x as i64,
+        a_end.y as i64 - a_start.y as i64,
+    );
 
     let b2: KiInt128 = b.x as i128 * b.x as i128 + b.y as i128 * b.y as i128;
     let c2: KiInt128 = c.x as i128 * c.x as i128 + c.y as i128 * c.y as i128;
@@ -652,7 +699,12 @@ pub fn calc_arc_center_d(a_start: Vector2D, a_mid: Vector2D, a_end: Vector2D) ->
     let ux: f64 = det2(b2, c2, by, cy) / d;
     let uy: f64 = det2(c2, b2, cx, bx) / d;
 
-    snap_arc_center(Vector2D::new(a_start.x + ux, a_start.y + uy), a_start, a_mid, a_end)
+    snap_arc_center(
+        Vector2D::new(a_start.x + ux, a_start.y + uy),
+        a_start,
+        a_mid,
+        a_end,
+    )
 }
 
 /// Port of `CalcArcCenter( const VECTOR2I& aStart, const VECTOR2I& aMid, const VECTOR2I& aEnd )`.
@@ -829,13 +881,25 @@ mod tests {
         assert_eq!(get_rotated(p, ANGLE_270), Vector2I::new(-200, 1000));
         assert_eq!(get_rotated(p, ANGLE_360), Vector2I::new(1000, 200));
         assert_eq!(get_rotated(p, -ANGLE_90), Vector2I::new(-200, 1000));
-        assert_eq!(get_rotated(p, EdaAngle::new(450.0, DEGREES_T)), Vector2I::new(200, -1000));
-        assert_eq!(get_rotated(p, EdaAngle::new(-720.0, DEGREES_T)), Vector2I::new(1000, 200));
+        assert_eq!(
+            get_rotated(p, EdaAngle::new(450.0, DEGREES_T)),
+            Vector2I::new(200, -1000)
+        );
+        assert_eq!(
+            get_rotated(p, EdaAngle::new(-720.0, DEGREES_T)),
+            Vector2I::new(1000, 200)
+        );
 
         // Large coordinates stay exact for cardinal angles (no trip through double)
         let big = Vector2I::new(2147483647, -2147483647);
-        assert_eq!(get_rotated(big, ANGLE_90), Vector2I::new(-2147483647, -2147483647));
-        assert_eq!(get_rotated(big, ANGLE_180), Vector2I::new(-2147483647, 2147483647));
+        assert_eq!(
+            get_rotated(big, ANGLE_90),
+            Vector2I::new(-2147483647, -2147483647)
+        );
+        assert_eq!(
+            get_rotated(big, ANGLE_180),
+            Vector2I::new(-2147483647, 2147483647)
+        );
 
         let d = Vector2D::new(1.5, -2.5);
         assert_eq!(get_rotated(d, ANGLE_90), Vector2D::new(-2.5, -1.5));
@@ -849,7 +913,10 @@ mod tests {
         let p = Vector2I::new(1000, 0);
         assert_eq!(get_rotated(p, ANGLE_45), Vector2I::new(707, -707));
         assert_eq!(get_rotated(p, -ANGLE_45), Vector2I::new(707, 707));
-        assert_eq!(get_rotated(Vector2I::new(0, 1000), ANGLE_45), Vector2I::new(707, 707));
+        assert_eq!(
+            get_rotated(Vector2I::new(0, 1000), ANGLE_45),
+            Vector2I::new(707, 707)
+        );
 
         let q = Vector2I::new(1000, 0);
         let a30 = EdaAngle::new(30.0, DEGREES_T);
@@ -927,6 +994,17 @@ mod tests {
             Vector2I::new(10, 0),
             Vector2I::new(10, 10)
         ));
+
+        // Nearly parallel segments far from the origin: the lines meet about 1e15 units away.
+        // No intersection, and computing the (discarded) point must not overflow.
+        let (hit, pt) = segment_intersects_segment_with_point(
+            Vector2I::new(1_000_000_000, 1_000_000_000),
+            Vector2I::new(2_000_000_000, 1_000_000_001),
+            Vector2I::new(1_000_000_000, 1_000_000_010),
+            Vector2I::new(2_000_000_000, 1_000_000_010),
+        );
+        assert!(!hit);
+        assert!(pt.is_some());
     }
 
     #[test]
@@ -938,36 +1016,83 @@ mod tests {
         assert!(!test_segment_hit(Vector2I::new(50, 6), a, b, 5));
         assert!(test_segment_hit(Vector2I::new(103, 4), a, b, 5));
         assert!(!test_segment_hit(Vector2I::new(110, 0), a, b, 5));
-        assert!(test_segment_hit(Vector2I::new(52, 48), a, Vector2I::new(100, 100), 3));
+        assert!(test_segment_hit(
+            Vector2I::new(52, 48),
+            a,
+            Vector2I::new(100, 100),
+            3
+        ));
     }
 
     #[test]
     fn arc_center_simple_cases() {
         // Quarter of a circle of radius 1000 around the origin
-        let c = calc_arc_center(Vector2I::new(1000, 0), Vector2I::new(707, 707), Vector2I::new(0, 1000));
+        let c = calc_arc_center(
+            Vector2I::new(1000, 0),
+            Vector2I::new(707, 707),
+            Vector2I::new(0, 1000),
+        );
         assert_eq!(c, Vector2I::new(0, 0));
 
         // Full circle: coincident start and end, center half-way to mid
-        let c = calc_arc_center(Vector2I::new(0, 0), Vector2I::new(2000, 0), Vector2I::new(0, 0));
+        let c = calc_arc_center(
+            Vector2I::new(0, 0),
+            Vector2I::new(2000, 0),
+            Vector2I::new(0, 0),
+        );
         assert_eq!(c, Vector2I::new(1000, 0));
 
         // Collinear points are clamped
-        let c = calc_arc_center(Vector2I::new(0, 0), Vector2I::new(1000, 0), Vector2I::new(2000, 0));
+        let c = calc_arc_center(
+            Vector2I::new(0, 0),
+            Vector2I::new(1000, 0),
+            Vector2I::new(2000, 0),
+        );
         assert_eq!(c, Vector2I::new(1000, -2147483548));
 
-        assert!(is_straight_arc(Vector2I::new(0, 0), Vector2I::new(1000, 0), Vector2I::new(2000, 0)));
-        assert!(!is_straight_arc(Vector2I::new(1000, 0), Vector2I::new(707, 707), Vector2I::new(0, 1000)));
-        assert!(!is_straight_arc(Vector2I::new(0, 0), Vector2I::new(2000, 0), Vector2I::new(0, 0)));
+        assert!(is_straight_arc(
+            Vector2I::new(0, 0),
+            Vector2I::new(1000, 0),
+            Vector2I::new(2000, 0)
+        ));
+        assert!(!is_straight_arc(
+            Vector2I::new(1000, 0),
+            Vector2I::new(707, 707),
+            Vector2I::new(0, 1000)
+        ));
+        assert!(!is_straight_arc(
+            Vector2I::new(0, 0),
+            Vector2I::new(2000, 0),
+            Vector2I::new(0, 0)
+        ));
 
-        let c = calc_arc_center_d(Vector2D::new(1000.0, 0.0), Vector2D::new(0.0, 1000.0), Vector2D::new(-1000.0, 0.0));
+        let c = calc_arc_center_d(
+            Vector2D::new(1000.0, 0.0),
+            Vector2D::new(0.0, 1000.0),
+            Vector2D::new(-1000.0, 0.0),
+        );
         assert_eq!(c, Vector2D::new(0.0, 0.0));
 
-        let c = calc_arc_center_from_angle(Vector2D::new(1000.0, 0.0), Vector2D::new(-1000.0, 0.0), ANGLE_180);
+        let c = calc_arc_center_from_angle(
+            Vector2D::new(1000.0, 0.0),
+            Vector2D::new(-1000.0, 0.0),
+            ANGLE_180,
+        );
         assert_eq!(c, Vector2D::new(0.0, 0.0));
 
-        let mid = calc_arc_mid(Vector2I::new(1000, 0), Vector2I::new(0, 1000), Vector2I::new(0, 0), true);
+        let mid = calc_arc_mid(
+            Vector2I::new(1000, 0),
+            Vector2I::new(0, 1000),
+            Vector2I::new(0, 0),
+            true,
+        );
         assert_eq!(mid, Vector2I::new(707, 707));
-        let mid = calc_arc_mid(Vector2I::new(1000, 0), Vector2I::new(0, 1000), Vector2I::new(0, 0), false);
+        let mid = calc_arc_mid(
+            Vector2I::new(1000, 0),
+            Vector2I::new(0, 1000),
+            Vector2I::new(0, 0),
+            false,
+        );
         assert_eq!(mid, Vector2I::new(-707, -707));
     }
 

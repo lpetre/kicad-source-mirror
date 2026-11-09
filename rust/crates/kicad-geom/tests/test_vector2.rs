@@ -51,8 +51,14 @@ fn constexpr() {
 
     assert!(lexicographical_compare(&VI_1_2, &vi_3_5) < 0);
     // Was the copy avoided?
-    assert!(core::ptr::eq(lexicographical_min(&VI_1_2, &vi_3_5), &VI_1_2));
-    assert!(core::ptr::eq(lexicographical_min(&VI_1_2, &vi_3_5), &VI_1_2));
+    assert!(core::ptr::eq(
+        lexicographical_min(&VI_1_2, &vi_3_5),
+        &VI_1_2
+    ));
+    assert!(core::ptr::eq(
+        lexicographical_min(&VI_1_2, &vi_3_5),
+        &VI_1_2
+    ));
 
     const VD_1_2: Vector2D = Vector2D::new(1.0, 2.0);
     const VD_3_4: Vector2D = Vector2D::new(3.0, 4.0);
@@ -138,6 +144,7 @@ fn test_resize() {
 /// the implicit arithmetic conversions of the mixed-type operators are implemented per
 /// operand type pair, see `math/vector2.rs`.
 #[test]
+#[allow(clippy::assign_op_pattern)] // `v = v - 1` is what the C++ test does
 fn test_casting() {
     let mut vint = Vector2I::new(4, 3);
     let mut vdouble = Vector2D::new(4.0, 3.0);

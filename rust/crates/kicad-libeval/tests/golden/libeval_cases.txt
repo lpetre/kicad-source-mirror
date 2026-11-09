@@ -1,0 +1,1621 @@
+# Cases for tests/oracle_golden.rs.  Format: <resolver> TAB <expr> [TAB <expr> ...]
+# (resolver: none | pcb | pcbdeg; several expressions are compiled by one COMPILER in turn;
+# \\ \t \n \r are escapes).  The expected results are in libeval_golden.txt, written by the
+# C++ reference driver tests/oracle/oracle_libeval.cpp.
+# --- qa/tests/pcbnew/test_libeval_compiler.cpp: simpleExpressions
+pcb	10mm + 20 mm
+pcb	3*(7+8)
+pcb	3*7+8
+pcb	(3*7)+8
+pcb	10mm + 20)
+pcb	1
+pcb	1.5
+pcb	1,5
+pcb	1mm
+pcb	   1 +     2    
+pcb	1.5 + 0.2 + 0.1
+pcb	3 - 10
+pcb	1 + 2 + 10 + 1000.05
+pcb	1 + 2 - 4 * 20 / 2
+pcb	(1)
+pcb	-(1 + (2 - 4)) * 20.8 / 2
+pcb	+2 - 1
+pcb	(2 || 0) == 1
+pcb	(7 || 0) + 5
+# --- qa/tests/common/libeval/test_libeval_string_literal.cpp
+none	'it\\'s'
+none	'a\\\\'b'
+none	'a\\b'
+# --- numbers
+none	0
+pcb	0
+none	007
+pcb	007
+none	1.
+pcb	1.
+none	1.5
+pcb	1.5
+none	1,5
+pcb	1,5
+none	1.2.3
+pcb	1.2.3
+none	1,2,3
+pcb	1,2,3
+none	1..2
+pcb	1..2
+none	123456789012345678901234567890
+pcb	123456789012345678901234567890
+none	0.000001
+pcb	0.000001
+none	1e3
+pcb	1e3
+none	1 e3
+pcb	1 e3
+none	1x
+pcb	1x
+none	1_
+pcb	1_
+none	12 34
+pcb	12 34
+none	1 . 5
+pcb	1 . 5
+none	.5
+pcb	.5
+none	1 .5
+pcb	1 .5
+none	-1
+pcb	-1
+none	- 1
+pcb	- 1
+none	--1
+pcb	--1
+none	+1
+pcb	+1
+none	++1
+pcb	++1
+none	+-1
+pcb	+-1
+none	-+1
+pcb	-+1
+none	1 + -1
+pcb	1 + -1
+none	1 - -1
+pcb	1 - -1
+none	1 - - 1
+pcb	1 - - 1
+none	0.1 + 0.2
+pcb	0.1 + 0.2
+none	1/3
+pcb	1/3
+none	2*3.5
+pcb	2*3.5
+none	10/4
+pcb	10/4
+none	7/0
+pcb	7/0
+none	0/0
+pcb	0/0
+none	-7/0
+pcb	-7/0
+none	1e
+pcb	1e
+none	99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+pcb	99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
+# --- units
+pcb	1mm
+pcb	1 mm
+pcb	1  mm
+pcb	1mil
+pcb	1in
+pcb	1deg
+pcb	1fs
+pcb	1ps
+pcb	1.5mm
+pcb	1,5mm
+pcb	0.2mm + 1mil
+pcb	1mmx
+pcb	1mm2
+pcb	1 um
+pcb	1um
+pcb	1cm
+pcb	mm
+pcb	mm 1
+pcb	1mm mm
+pcb	1 mm mm
+pcb	1mm_
+pcb	1mm.
+pcb	1 mm + 2
+pcb	2 * 1.5mm
+pcb	2mm + 105mil
+pcb	2mm > 20mil
+pcb	(2mm + 1.5mm) * 3
+pcb	1in == 25.4mm
+pcb	1in == 1000mil
+pcb	1mil * 1000 == 1in
+pcb	1deg + 1
+pcb	45deg
+pcb	1mm + 1deg
+pcb	1ps + 1fs
+pcb	1ps == 1000fs
+pcb	1
+pcb	-1
+pcb	(1)
+pcb	+1
+pcb	1 + 1
+pcb	A.Num
+pcb	A.Num == 1
+pcb	A.Num == 1mm
+pcb	'1'
+pcb	1mm == A.Mm
+pcb	A.Mm + 1mm
+pcb	A.Mm + 1
+pcb	1 + A.Mm
+pcb	A.Mm + B.Mm
+pcb	A.Mm * 2
+pcb	-A.Mm
+pcb	!A.Mm
+pcb	A.Mm == 1mm
+pcb	A.Mm > 0.5mm
+pcb	1MM
+pcb	1Mm
+pcb	1 Mil
+pcb	1mils
+pcb	1inch
+pcb	1 in
+pcb	in
+pcb	mil
+pcb	deg
+pcb	1 deg
+pcb	1mm1
+pcb	1.mm
+pcb	1 .mm
+pcbdeg	1
+pcbdeg	1 + 1
+pcbdeg	45
+pcbdeg	-45
+pcbdeg	A.Num
+pcbdeg	1mm
+pcbdeg	45deg
+none	1mm
+none	1 mm
+none	mm
+none	1mil
+none	1deg
+# --- strings
+none	''
+none	'abc'
+none	'a b c'
+none	  'abc'  
+none	'abc
+none	'
+none	'abc' 'def'
+none	'abc' + 'def'
+none	'abc' == 'ABC'
+none	'abc' == 'abd'
+none	'abc' != 'ABC'
+none	'abc' != 'abd'
+none	'abc' == 'a*'
+none	'a*' == 'abc'
+none	'abc' == 'a?c'
+none	'abc' == '*'
+none	'abc' == '???'
+none	'abc' == '????'
+none	'abc' != 'a*'
+none	'' == ''
+none	'' == '*'
+none	'' == '?'
+none	'a' < 'b'
+none	'a' + 1
+none	1 + 'a'
+none	'5' + 1
+none	1 + '5'
+none	'5' == 5
+none	5 == '5'
+none	'5' != 5
+none	5 != '5'
+none	'4k7' + 0
+none	'1.5mm' + 0
+none	'R5' + 0
+none	'-5' + 0
+none	'1,000' + 0
+none	'1.000,5' + 0
+none	'1,000.5' + 0
+none	'1 000' + 0
+none	'10k' + 0
+none	'10kHz' + 0
+none	'10 k' + 0
+none	'5V' + 0
+none	'1u5F' + 0
+none	'{slash}5' + 0
+none	'5{slash}' + 0
+none	'0x10' + 0
+none	'1e3' + 0
+none	'' + 0
+none	' 5 ' + 0
+none	'5' * '5'
+none	'abc' && 1
+none	'' || 0
+none	!'abc'
+none	-'abc'
+none	'a' , 'b'
+none	'with \\ backslash'
+none	'tab\there'
+none	'quote \\' in'
+none	'ends with \\'
+none	'ünïcödé' == 'ÜNÏCÖDÉ'
+none	'ünïcödé' == 'Ü*'
+none	'straße' == 'STRASSE'
+none	'İ' == 'i'
+none	'x' == 'X' == 1
+none	('x' == 'X') == 1
+# --- arithmetic and precedence
+none	1+2*3
+none	(1+2)*3
+none	1*2+3
+none	1-2-3
+none	1-(2-3)
+none	8/4/2
+none	8/(4/2)
+none	2*3/4
+none	2/3*4
+none	1+2-3+4
+none	-2*3
+none	-2+3
+none	-(2+3)
+none	- 2 * 3 + 4
+none	+2*3
+none	+ 2 + 3
+none	+(2)
+none	+(-2)
+none	-(+2)
+none	-(-(2))
+none	((((1))))
+none	(1)+(2)
+none	1 + (2 * (3 + (4 * 5)))
+none	2 * -3
+none	2 * +3
+none	2 - -3
+none	2 + + 3
+none	2 * - - 3
+none	-2 * -3
+none	1 +
+none	+
+none	-
+none	*
+none	1 *
+none	* 1
+none	1 * * 2
+none	1 + * 2
+none	( )
+none	()
+none	(
+none	  
+none	(1
+none	1)
+none	((1)
+none	(1))
+none	)(
+none	1 2
+none	1 (2)
+none	(1)(2)
+none	(1) 2
+none	1 + (
+none	1 + )
+# --- comparisons
+none	1 < 2
+none	2 < 1
+none	1 < 1
+none	1 <= 1
+none	1 >= 1
+none	1 > 1
+none	2 > 1
+none	1 == 1
+none	1 == 2
+none	1 != 1
+none	1 != 2
+none	1 < 2 < 3
+none	1 < 2 == 1
+none	(1 < 2) == 1
+none	1 == 1 == 1
+none	1 != 1 != 1
+none	1 <= 2 >= 1
+none	1 < 2 + 3
+none	1 + 2 < 3
+none	1 + 2 == 3
+none	3 == 1 + 2
+none	1 < 2 && 2 < 3
+none	1 < 2 || 2 < 1
+none	1 = 1
+none	1 === 1
+none	1 !== 1
+none	1 =! 1
+none	1 =< 2
+none	1 => 2
+none	1 <> 2
+none	1 >< 2
+none	1 < = 2
+none	1 <== 2
+none	1 >== 2
+none	1 ! = 2
+none	1 & 2
+none	1 | 2
+none	1 &&& 2
+none	1 ||| 2
+none	1 & & 2
+none	0.1 + 0.2 == 0.3
+none	1/0 == 1/0
+none	0/0 == 0/0
+none	0/0 != 0/0
+none	1/0 > 1
+none	-1/0 < 1
+# --- booleans and short circuit
+none	1 && 1
+none	1 && 0
+none	0 && 1
+none	0 && 0
+none	1 || 1
+none	1 || 0
+none	0 || 1
+none	0 || 0
+none	!0
+none	!1
+none	!5
+none	!!5
+none	! ! 0
+none	!-1
+none	-!1
+none	!0 + 1
+none	!1 + 1
+none	!(1 + 1)
+none	!0 == 1
+none	!1 == 0
+none	!(0 == 1)
+none	1 && !0
+none	1 && ! 0
+none	!1 || 1
+none	2 && 3
+none	2 || 3
+none	0.5 && 0.5
+none	1 && 1 && 1
+none	1 && 1 && 0
+none	0 || 0 || 1
+none	1 || 0 && 0
+none	(1 || 0) && 0
+none	1 || (0 && 0)
+none	0 && 0 || 1
+none	(0 && 0) || 1
+none	0 && (0 || 1)
+none	1 && 0 || 1 && 1
+none	1 || 1 && 0 || 0
+none	(2 || 0) == 1
+none	(7 || 0) + 5
+none	(0 || 7) + 5
+none	(7 && 3) + 5
+none	(0 && 3) + 5
+none	(3 && 0) + 5
+none	A.lazy()
+none	A.lazy() + 1
+none	0 && A.lazy()
+none	1 && A.lazy()
+none	1 || A.lazy()
+none	0 || A.lazy()
+none	A.lazy() && 0
+none	A.lazy() || 1
+none	A.lazy() && A.lazy()
+none	A.lazy() || A.lazy()
+none	A.lazy() == 5
+none	A.lazy() + A.lazy()
+none	A.lazy() * 0
+none	!A.lazy()
+none	-A.lazy()
+none	A.isFoo('foo') || A.lazy()
+none	A.isFoo('bar') || A.lazy()
+none	A.isFoo('bar') && A.lazy()
+none	A.isFoo('foo') && A.lazy()
+none	A.lazyStr('x')
+none	A.lazyStr('x') == '<x>'
+none	A.lazyStr('x') == '<y>'
+none	A.lazyStr(A.Str)
+none	A.lazyStr(A.lazyStr('x'))
+none	A.lazyStr('x') + 1
+none	0 && A.lazyStr('x')
+none	A.Undef && 1
+none	A.Undef || 1
+none	A.Null && 1
+none	A.Null || 1
+none	A.Str && 1
+none	A.Str || 0
+none	A && 1
+none	A || 0
+none	!A
+none	!A.Undef
+none	!A.Null
+none	!A.Str
+none	!null
+# --- variables, properties, navigation
+none	A
+none	B
+none	L
+none	AB
+none	X
+none	a
+none	A.Num
+none	B.Num
+none	L.Num
+none	A.num
+none	A.NUM
+none	a.Num
+none	A.Frac
+none	B.Frac
+none	L.Frac
+none	A.Str
+none	B.Str
+none	L.Str
+none	A.NumStr
+none	B.NumStr
+none	L.NumStr
+none	A.Empty
+none	A.Undef
+none	A.Null
+none	A.Mm
+none	A.Wild
+none	A.Code
+none	A.Alias
+none	A.Bad
+none	A.Bogus
+none	X.Num
+none	X.Bogus
+none	X
+none	A.Num + B.Num
+none	A.Num + B.Num * L.Num
+none	A.Num == 10
+none	A.Num == B.Num
+none	A.Num != B.Num
+none	A.Num < B.Num
+none	A.Frac * 2
+none	A.Frac + B.Frac
+none	A.Str == 'hello'
+none	A.Str == 'HELLO'
+none	A.Str == 'h*'
+none	A.Str == 'h?llo'
+none	A.Str != 'hello'
+none	A.Str != 'world'
+none	A.Str == B.Str
+none	B.Str == 'world'
+none	'hello' == A.Str
+none	'h*' == A.Str
+none	A.Wild == 'hello'
+none	'hello' == A.Wild
+none	A.Wild == 'h*'
+none	A.Wild == A.Str
+none	A.Str == A.Wild
+none	B.Str == A.Wild
+none	A.Str + 1
+none	1 + A.Str
+none	A.Str + A.Str
+none	A.Str * 2
+none	A.NumStr + 1
+none	1 + A.NumStr
+none	B.NumStr + 1
+none	L.NumStr + 1
+none	A.NumStr == 42
+none	42 == A.NumStr
+none	A.NumStr == '42'
+none	A.NumStr != 42
+none	A.NumStr > 41
+none	A.Empty == ''
+none	A.Empty == '*'
+none	A.Empty + 1
+none	A.Empty == 0
+none	A.Undef == 0
+none	0 == A.Undef
+none	A.Undef != 0
+none	0 != A.Undef
+none	A.Undef == A.Undef
+none	A.Undef != A.Undef
+none	A.Undef == null
+none	null == A.Undef
+none	A.Undef + 1
+none	A.Undef < 1
+none	A.Undef == 'x'
+none	A.Undef != 'x'
+none	A.Null == null
+none	null == A.Null
+none	A.Null != null
+none	null != null
+none	null == null
+none	NULL == Null
+none	A.Null == 0
+none	A.Null != 0
+none	0 == A.Null
+none	A.Null + 1
+none	A.Null == 'x'
+none	A.Null == A.Undef
+none	A.Num == null
+none	A.Num != null
+none	A.Str == null
+none	A.Str != null
+none	null
+none	null + 1
+none	null.Foo
+none	A.null
+none	A == A
+none	A == B
+none	A != B
+none	A == null
+none	A.Parent
+none	A.Parent.Num
+none	A.Parent.Parent.Num
+none	A.Parent.Parent.Parent.Num
+none	A.parent.Num
+none	A.PARENT.num
+none	A.Bogus.Num
+none	A.Num.Parent
+none	L.Parent.Num
+none	X.Parent.Num
+none	AB.Parent.Num
+none	A.Parent.Bogus
+none	A.Parent.Parent
+none	A . Num
+none	A. Num
+none	A .Num
+none	A  .  Num
+none	A.Num.
+none	A..Num
+none	.Num
+none	A.
+none	A.1
+none	A.'x'
+none	A.(Num)
+none	(A).Num
+none	(A.Num)
+none	(A.Parent).Num
+none	(A.Parent.Num)
+none	A.(Parent.Num)
+none	A.Num.Num
+none	1.Num
+none	1 .Num
+none	's'.Num
+none	(1+2).Num
+none	A.Num.1
+none	(A.Num + 1).Str
+none	A.B
+none	A.B.Num
+none	A.L.Num
+none	B.Parent.Str
+none	A_1
+none	_A
+none	A1
+none	A.Num_1
+none	_
+none	__
+none	A._
+none	A.Num1
+# --- functions
+none	A.one()
+none	A.one
+none	A.one( )
+none	A.one ()
+none	A . one ( )
+none	A.ONE()
+none	A.One() + A.one()
+none	one()
+none	one
+none	one(1)
+none	one(1 , 2)
+none	foo()
+none	foo(1)
+none	foo('x')
+none	A.foo()
+none	A.foo(1)
+none	A.foo('x')
+none	X.one()
+none	X.foo()
+none	X.foo(1)
+none	A.one(1)
+none	A.one('x')
+none	A.one('x' , 'y')
+none	A.isFoo('foo')
+none	A.isFoo('bar')
+none	A.isFoo('')
+none	A.isFoo()
+none	A.isFoo(1)
+none	A.isFoo(foo)
+none	A.isFoo(A.Str)
+none	A.isFoo('foo' , 'bar')
+none	A.isFoo('bar' , 'foo')
+none	A.isFoo('foo') == 1
+none	!A.isFoo('foo')
+none	A.add(1 , 2)
+none	A.add(1, 2)
+none	A.add(1,2)
+none	A.add(1 ,2)
+none	A.add(1)
+none	A.add()
+none	A.add(1 , 2 , 3)
+none	A.add(A.Num , B.Num)
+none	A.add(A.Num , 2)
+none	A.add(1 + 2 , 3)
+none	A.add(-1 , 2)
+none	A.add((1 , 2))
+none	A.add((1 , 2) , 3)
+none	A.add(1 , (2 , 3))
+none	A.add(1mm , 2mm)
+none	A.add('1' , '2')
+none	A.add(A.add(1 , 2) , 3)
+none	A.add(1 , A.add(2 , 3))
+none	A.cat('a' , 'b')
+none	A.cat('a','b')
+none	A.cat('a' ,'b')
+none	A.cat('a', 'b')
+none	A.cat('a' , 'b' , 'c')
+none	A.cat(A.Str , B.Str)
+none	A.cat(A.Str , 'x')
+none	A.cat('x' , A.Str)
+none	A.cat(A.cat('a' , 'b') , 'c')
+none	A.cat('a' , A.cat('b' , 'c'))
+none	A.cat('a')
+none	A.cat()
+none	A.cat(1 , 2)
+none	A.cat('a' , 'b') == 'ba'
+none	A.cat('a' , 'b') == 'ab'
+none	A.self()
+none	B.self()
+none	L.self()
+none	A.Parent.self()
+none	A.Parent.Parent.self()
+none	B.Parent.self()
+none	X.self()
+none	X.Parent.self()
+none	A.Bogus.self()
+none	A.self().Num
+none	A.self().self()
+none	A.one().one()
+none	A.Parent.self() + A.Parent.Parent.Num
+none	A.nopush()
+none	A.nopush(1)
+none	A.nopush(1 , 2)
+none	A.nopush(A.Num)
+none	A.push2()
+none	A.push2() + 1
+none	A.one() + A.nopush(1)
+none	A.unknown()
+none	A.unknown(1)
+none	A.unknown(A.Num)
+none	A.unknown() + 1
+none	A.Num()
+none	A.Num(1)
+none	A.Str('x')
+none	A.one()()
+none	A.one()(1)
+none	A.one() A.one()
+none	A.one(
+none	A.one)
+none	A.one(()
+none	A.one(1
+none	A.(one())
+none	A.(one)()
+none	(A.one)()
+none	(A.one())
+none	(A).one()
+none	A.one().Bogus
+none	A.Parent.one().Num
+none	null.one()
+none	null.self()
+none	A.lazy
+none	A.lazy(1)
+none	A.isFoo('foo'
+none	A.isFoo 'foo'
+none	A.isFoo('*')
+none	A.isFoo('f?o')
+# --- custom values
+none	A.Code
+none	B.Code
+none	L.Code
+none	A.Code == B.Code
+none	A.Code != B.Code
+none	A.Code == L.Code
+none	A.Code != L.Code
+none	A.Code == 'seven'
+none	A.Code == 'SEVEN'
+none	B.Code == 'seven'
+none	B.Code == 'seven-b'
+none	'seven' == A.Code
+none	'seven' == B.Code
+none	A.Code != 'seven'
+none	A.Code != 'eight'
+none	A.Code == 's*'
+none	's*' == A.Code
+none	A.Code == 7
+none	A.Code + 1
+none	A.Code == A.Str
+none	A.Code == A.Undef
+none	A.Undef == A.Code
+none	A.Code != A.Undef
+none	A.Code == null
+none	A.Alias
+none	A.Alias == 'power_in'
+none	A.Alias == 'POWER_IN'
+none	A.Alias == 'Power input'
+none	A.Alias == 'power input'
+none	A.Alias == 'passive'
+none	A.Alias != 'Power input'
+none	A.Alias != 'passive'
+none	'Power input' == A.Alias
+none	'power_in' == A.Alias
+none	B.Alias == 'Passive'
+none	A.Alias == B.Alias
+none	A.Alias == 'p*'
+none	A.Alias == 5
+none	A.Alias == A.Undef
+none	A.Undef == A.Alias
+none	A.Alias != A.Undef
+none	A.Undef != A.Alias
+none	A.Alias == A.Code
+none	A.Code == A.Alias
+none	A.lazyStr(A.Code)
+none	A.cat(A.Code , A.Alias)
+none	A.isFoo(A.Code)
+# --- lexical errors
+none	$
+none	1 $ 2
+none	1 $
+none	$ 1
+none	@
+none	#
+none	1 # 2
+none	1 % 2
+none	1 ^ 2
+none	1 ~ 2
+none	1 ? 2
+none	1 : 2
+none	1 \\ 2
+none	1 " 2
+none	"abc"
+none	1 ` 2
+none	[1]
+none	{1}
+none	${x}
+none	${
+none	$
+none	$ {x}
+none	1 + ${x}
+none	A.Str == '${x}'
+none	${x} == 1
+none	1 ${
+none	1 $$
+none	$$
+none	1\t2
+none	\t1
+none	1\n2
+none	1 é 2
+none	é
+none	1 Ł 2
+none	Größe
+none	A.Größe
+none	größe.Num
+none	1 € 2
+none	1 ; 2
+none	;
+none	1 ;
+none	; 1
+none	1 = 2
+none	1 & 2
+none	1 | 2
+none	=
+none	&
+none	|
+none	! =
+none	1 !
+none	!
+none	1 ! 2
+none	a b
+none	a b c
+none	1 a
+none	a 1
+none	'a' b
+none	a 'b'
+none	A.Num B.Num
+none	A.Num 1
+none	1 A.Num
+# --- comma
+none	1 , 2
+none	1 , 2 , 3
+none	(1 , 2)
+none	1,2
+none	1, 2
+none	1 ,2
+none	,
+none	1 ,
+none	, 1
+none	1 , , 2
+none	'a' , 'b'
+none	A.Num , B.Num
+none	1 , 2 + 3
+none	1 + 2 , 3
+none	1 , 2 && 3
+none	1 && 2 , 3
+none	1 , 2 == 3
+none	!1 , 2
+none	-1 , 2
+none	(1 , 2) + 3
+none	(1 , 2) , 3
+none	1 , (2 , 3)
+# --- whitespace and positions
+none	X
+none	  X
+none	X  
+none	  X  
+none	1 + X
+none	1 +   X
+none	1 + X   
+none	X.Num
+none	  X.Num
+none	X  .Num
+none	X.  Num
+none	A.Bogus
+none	  A.Bogus
+none	A  .Bogus
+none	A.  Bogus
+none	A.Bogus  
+none	A.Bogus + 1
+none	1 + A.Bogus
+none	1 + A.Bogus + 1
+none	(A.Bogus)
+none	( A.Bogus )
+none	A.unknown()
+none	  A.unknown()
+none	A.  unknown()
+none	A.unknown  ()
+none	A.unknown(  )
+none	A.unknown()  
+none	1 + A.unknown()
+none	A.isFoo()
+none	  A.isFoo()
+none	A.isFoo(  )
+none	A.isFoo('')
+none	A.isFoo(  ''  )
+none	A.isFoo('')  
+none	1 + A.isFoo('')
+none	A.isFoo('') + 1
+none	foo()
+none	  foo()
+none	foo(  )
+none	1 + foo()
+none	foo() + 1
+none	1 +  )
+none	1 +)
+none	1+)
+none	   )
+none	1 2
+none	1  2
+none	1   2 
+none	(1+2).Num
+none	  (1+2).Num
+none	( 1 + 2 ) . Num
+none	(1+2)  .Num
+none	X.one()
+none	X.Bogus.one()
+none	X.foo(1 , 2)
+none	A.Bogus == X.Num
+none	X == Y
+none	X.a == Y.b
+none	A.Bogus1 == A.Bogus2
+none	A.unknown1() == A.unknown2()
+none	A.isFoo('') == A.isFoo('')
+none	A.isFoo() == A.isFoo('')
+pcb	1
+pcb	  1
+pcb	1  
+pcb	  1  
+pcb	(1)
+pcb	( 1 )
+pcb	1 + 1
+pcb	A.Num == 1
+pcb	  1mm
+pcb	1 == 1
+# --- deep nesting (parser stack depth is 100)
+none	((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))
+none	(((((((((((((((((((((((((((((((((((((((((((((((((1)))))))))))))))))))))))))))))))))))))))))))))))))
+none	((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	(((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1)))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	--------------------------------------------------1
+none	--------------------------------------------------------------------------------------------------1
+none	---------------------------------------------------------------------------------------------------1
+none	----------------------------------------------------------------------------------------------------1
+none	------------------------------------------------------------------------------------------------------------------------1
+none	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+none	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+none	1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1+1
+none	2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2
+none	1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1 && 1
+none	0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0 || 0
+none	1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1))))))))))))))))))))))))))))))))))))))))))))))))
+none	1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1)))))))))))))))))))))))))))))))))))))))))))))))))
+none	1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1))))))))))))))))))))))))))))))))))))))))))))))))))
+none	1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1+(1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+none	A.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Num
+none	A.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Parent.Num
+# --- the same COMPILER reused (errors are sticky)
+none	1 + 2	3 * 4	5
+none	1 +)	2
+none	1 +)		2
+none		1
+none		
+none	X	1
+none	A.Bogus	1	
+none	1 + (2 *	) + 3	4 5 6 7 8
+none	1 2	3	4	5	6	7	8
+pcb	1	1mm
+pcb	1mm	1	1mm
+none	A.one()	B.one()	A.one(
+none	'abc	1
+none	'abc'	'def'
+# --- operator matrix: a OP1 b OP2 c
+none	7 , 3 , 2
+none	7 , 3 && 2
+none	7 , 3 || 2
+none	7 , 3 < 2
+none	7 , 3 > 2
+none	7 , 3 <= 2
+none	7 , 3 >= 2
+none	7 , 3 == 2
+none	7 , 3 != 2
+none	7 , 3 + 2
+none	7 , 3 - 2
+none	7 , 3 * 2
+none	7 , 3 / 2
+none	7 , 3 . 2
+none	7 && 3 , 2
+none	7 && 3 && 2
+none	7 && 3 || 2
+none	7 && 3 < 2
+none	7 && 3 > 2
+none	7 && 3 <= 2
+none	7 && 3 >= 2
+none	7 && 3 == 2
+none	7 && 3 != 2
+none	7 && 3 + 2
+none	7 && 3 - 2
+none	7 && 3 * 2
+none	7 && 3 / 2
+none	7 && 3 . 2
+none	7 || 3 , 2
+none	7 || 3 && 2
+none	7 || 3 || 2
+none	7 || 3 < 2
+none	7 || 3 > 2
+none	7 || 3 <= 2
+none	7 || 3 >= 2
+none	7 || 3 == 2
+none	7 || 3 != 2
+none	7 || 3 + 2
+none	7 || 3 - 2
+none	7 || 3 * 2
+none	7 || 3 / 2
+none	7 || 3 . 2
+none	7 < 3 , 2
+none	7 < 3 && 2
+none	7 < 3 || 2
+none	7 < 3 < 2
+none	7 < 3 > 2
+none	7 < 3 <= 2
+none	7 < 3 >= 2
+none	7 < 3 == 2
+none	7 < 3 != 2
+none	7 < 3 + 2
+none	7 < 3 - 2
+none	7 < 3 * 2
+none	7 < 3 / 2
+none	7 < 3 . 2
+none	7 > 3 , 2
+none	7 > 3 && 2
+none	7 > 3 || 2
+none	7 > 3 < 2
+none	7 > 3 > 2
+none	7 > 3 <= 2
+none	7 > 3 >= 2
+none	7 > 3 == 2
+none	7 > 3 != 2
+none	7 > 3 + 2
+none	7 > 3 - 2
+none	7 > 3 * 2
+none	7 > 3 / 2
+none	7 > 3 . 2
+none	7 <= 3 , 2
+none	7 <= 3 && 2
+none	7 <= 3 || 2
+none	7 <= 3 < 2
+none	7 <= 3 > 2
+none	7 <= 3 <= 2
+none	7 <= 3 >= 2
+none	7 <= 3 == 2
+none	7 <= 3 != 2
+none	7 <= 3 + 2
+none	7 <= 3 - 2
+none	7 <= 3 * 2
+none	7 <= 3 / 2
+none	7 <= 3 . 2
+none	7 >= 3 , 2
+none	7 >= 3 && 2
+none	7 >= 3 || 2
+none	7 >= 3 < 2
+none	7 >= 3 > 2
+none	7 >= 3 <= 2
+none	7 >= 3 >= 2
+none	7 >= 3 == 2
+none	7 >= 3 != 2
+none	7 >= 3 + 2
+none	7 >= 3 - 2
+none	7 >= 3 * 2
+none	7 >= 3 / 2
+none	7 >= 3 . 2
+none	7 == 3 , 2
+none	7 == 3 && 2
+none	7 == 3 || 2
+none	7 == 3 < 2
+none	7 == 3 > 2
+none	7 == 3 <= 2
+none	7 == 3 >= 2
+none	7 == 3 == 2
+none	7 == 3 != 2
+none	7 == 3 + 2
+none	7 == 3 - 2
+none	7 == 3 * 2
+none	7 == 3 / 2
+none	7 == 3 . 2
+none	7 != 3 , 2
+none	7 != 3 && 2
+none	7 != 3 || 2
+none	7 != 3 < 2
+none	7 != 3 > 2
+none	7 != 3 <= 2
+none	7 != 3 >= 2
+none	7 != 3 == 2
+none	7 != 3 != 2
+none	7 != 3 + 2
+none	7 != 3 - 2
+none	7 != 3 * 2
+none	7 != 3 / 2
+none	7 != 3 . 2
+none	7 + 3 , 2
+none	7 + 3 && 2
+none	7 + 3 || 2
+none	7 + 3 < 2
+none	7 + 3 > 2
+none	7 + 3 <= 2
+none	7 + 3 >= 2
+none	7 + 3 == 2
+none	7 + 3 != 2
+none	7 + 3 + 2
+none	7 + 3 - 2
+none	7 + 3 * 2
+none	7 + 3 / 2
+none	7 + 3 . 2
+none	7 - 3 , 2
+none	7 - 3 && 2
+none	7 - 3 || 2
+none	7 - 3 < 2
+none	7 - 3 > 2
+none	7 - 3 <= 2
+none	7 - 3 >= 2
+none	7 - 3 == 2
+none	7 - 3 != 2
+none	7 - 3 + 2
+none	7 - 3 - 2
+none	7 - 3 * 2
+none	7 - 3 / 2
+none	7 - 3 . 2
+none	7 * 3 , 2
+none	7 * 3 && 2
+none	7 * 3 || 2
+none	7 * 3 < 2
+none	7 * 3 > 2
+none	7 * 3 <= 2
+none	7 * 3 >= 2
+none	7 * 3 == 2
+none	7 * 3 != 2
+none	7 * 3 + 2
+none	7 * 3 - 2
+none	7 * 3 * 2
+none	7 * 3 / 2
+none	7 * 3 . 2
+none	7 / 3 , 2
+none	7 / 3 && 2
+none	7 / 3 || 2
+none	7 / 3 < 2
+none	7 / 3 > 2
+none	7 / 3 <= 2
+none	7 / 3 >= 2
+none	7 / 3 == 2
+none	7 / 3 != 2
+none	7 / 3 + 2
+none	7 / 3 - 2
+none	7 / 3 * 2
+none	7 / 3 / 2
+none	7 / 3 . 2
+none	7 . 3 , 2
+none	7 . 3 && 2
+none	7 . 3 || 2
+none	7 . 3 < 2
+none	7 . 3 > 2
+none	7 . 3 <= 2
+none	7 . 3 >= 2
+none	7 . 3 == 2
+none	7 . 3 != 2
+none	7 . 3 + 2
+none	7 . 3 - 2
+none	7 . 3 * 2
+none	7 . 3 / 2
+none	7 . 3 . 2
+# --- operator matrix with variables
+none	A.Num , B.Num , L.Num
+none	A.Num , B.Num && L.Num
+none	A.Num , B.Num || L.Num
+none	A.Num , B.Num < L.Num
+none	A.Num , B.Num > L.Num
+none	A.Num , B.Num <= L.Num
+none	A.Num , B.Num >= L.Num
+none	A.Num , B.Num == L.Num
+none	A.Num , B.Num != L.Num
+none	A.Num , B.Num + L.Num
+none	A.Num , B.Num - L.Num
+none	A.Num , B.Num * L.Num
+none	A.Num , B.Num / L.Num
+none	A.Num , B.Num . L.Num
+none	A.Num && B.Num , L.Num
+none	A.Num && B.Num && L.Num
+none	A.Num && B.Num || L.Num
+none	A.Num && B.Num < L.Num
+none	A.Num && B.Num > L.Num
+none	A.Num && B.Num <= L.Num
+none	A.Num && B.Num >= L.Num
+none	A.Num && B.Num == L.Num
+none	A.Num && B.Num != L.Num
+none	A.Num && B.Num + L.Num
+none	A.Num && B.Num - L.Num
+none	A.Num && B.Num * L.Num
+none	A.Num && B.Num / L.Num
+none	A.Num && B.Num . L.Num
+none	A.Num || B.Num , L.Num
+none	A.Num || B.Num && L.Num
+none	A.Num || B.Num || L.Num
+none	A.Num || B.Num < L.Num
+none	A.Num || B.Num > L.Num
+none	A.Num || B.Num <= L.Num
+none	A.Num || B.Num >= L.Num
+none	A.Num || B.Num == L.Num
+none	A.Num || B.Num != L.Num
+none	A.Num || B.Num + L.Num
+none	A.Num || B.Num - L.Num
+none	A.Num || B.Num * L.Num
+none	A.Num || B.Num / L.Num
+none	A.Num || B.Num . L.Num
+none	A.Num < B.Num , L.Num
+none	A.Num < B.Num && L.Num
+none	A.Num < B.Num || L.Num
+none	A.Num < B.Num < L.Num
+none	A.Num < B.Num > L.Num
+none	A.Num < B.Num <= L.Num
+none	A.Num < B.Num >= L.Num
+none	A.Num < B.Num == L.Num
+none	A.Num < B.Num != L.Num
+none	A.Num < B.Num + L.Num
+none	A.Num < B.Num - L.Num
+none	A.Num < B.Num * L.Num
+none	A.Num < B.Num / L.Num
+none	A.Num < B.Num . L.Num
+none	A.Num > B.Num , L.Num
+none	A.Num > B.Num && L.Num
+none	A.Num > B.Num || L.Num
+none	A.Num > B.Num < L.Num
+none	A.Num > B.Num > L.Num
+none	A.Num > B.Num <= L.Num
+none	A.Num > B.Num >= L.Num
+none	A.Num > B.Num == L.Num
+none	A.Num > B.Num != L.Num
+none	A.Num > B.Num + L.Num
+none	A.Num > B.Num - L.Num
+none	A.Num > B.Num * L.Num
+none	A.Num > B.Num / L.Num
+none	A.Num > B.Num . L.Num
+none	A.Num <= B.Num , L.Num
+none	A.Num <= B.Num && L.Num
+none	A.Num <= B.Num || L.Num
+none	A.Num <= B.Num < L.Num
+none	A.Num <= B.Num > L.Num
+none	A.Num <= B.Num <= L.Num
+none	A.Num <= B.Num >= L.Num
+none	A.Num <= B.Num == L.Num
+none	A.Num <= B.Num != L.Num
+none	A.Num <= B.Num + L.Num
+none	A.Num <= B.Num - L.Num
+none	A.Num <= B.Num * L.Num
+none	A.Num <= B.Num / L.Num
+none	A.Num <= B.Num . L.Num
+none	A.Num >= B.Num , L.Num
+none	A.Num >= B.Num && L.Num
+none	A.Num >= B.Num || L.Num
+none	A.Num >= B.Num < L.Num
+none	A.Num >= B.Num > L.Num
+none	A.Num >= B.Num <= L.Num
+none	A.Num >= B.Num >= L.Num
+none	A.Num >= B.Num == L.Num
+none	A.Num >= B.Num != L.Num
+none	A.Num >= B.Num + L.Num
+none	A.Num >= B.Num - L.Num
+none	A.Num >= B.Num * L.Num
+none	A.Num >= B.Num / L.Num
+none	A.Num >= B.Num . L.Num
+none	A.Num == B.Num , L.Num
+none	A.Num == B.Num && L.Num
+none	A.Num == B.Num || L.Num
+none	A.Num == B.Num < L.Num
+none	A.Num == B.Num > L.Num
+none	A.Num == B.Num <= L.Num
+none	A.Num == B.Num >= L.Num
+none	A.Num == B.Num == L.Num
+none	A.Num == B.Num != L.Num
+none	A.Num == B.Num + L.Num
+none	A.Num == B.Num - L.Num
+none	A.Num == B.Num * L.Num
+none	A.Num == B.Num / L.Num
+none	A.Num == B.Num . L.Num
+none	A.Num != B.Num , L.Num
+none	A.Num != B.Num && L.Num
+none	A.Num != B.Num || L.Num
+none	A.Num != B.Num < L.Num
+none	A.Num != B.Num > L.Num
+none	A.Num != B.Num <= L.Num
+none	A.Num != B.Num >= L.Num
+none	A.Num != B.Num == L.Num
+none	A.Num != B.Num != L.Num
+none	A.Num != B.Num + L.Num
+none	A.Num != B.Num - L.Num
+none	A.Num != B.Num * L.Num
+none	A.Num != B.Num / L.Num
+none	A.Num != B.Num . L.Num
+none	A.Num + B.Num , L.Num
+none	A.Num + B.Num && L.Num
+none	A.Num + B.Num || L.Num
+none	A.Num + B.Num < L.Num
+none	A.Num + B.Num > L.Num
+none	A.Num + B.Num <= L.Num
+none	A.Num + B.Num >= L.Num
+none	A.Num + B.Num == L.Num
+none	A.Num + B.Num != L.Num
+none	A.Num + B.Num + L.Num
+none	A.Num + B.Num - L.Num
+none	A.Num + B.Num * L.Num
+none	A.Num + B.Num / L.Num
+none	A.Num + B.Num . L.Num
+none	A.Num - B.Num , L.Num
+none	A.Num - B.Num && L.Num
+none	A.Num - B.Num || L.Num
+none	A.Num - B.Num < L.Num
+none	A.Num - B.Num > L.Num
+none	A.Num - B.Num <= L.Num
+none	A.Num - B.Num >= L.Num
+none	A.Num - B.Num == L.Num
+none	A.Num - B.Num != L.Num
+none	A.Num - B.Num + L.Num
+none	A.Num - B.Num - L.Num
+none	A.Num - B.Num * L.Num
+none	A.Num - B.Num / L.Num
+none	A.Num - B.Num . L.Num
+none	A.Num * B.Num , L.Num
+none	A.Num * B.Num && L.Num
+none	A.Num * B.Num || L.Num
+none	A.Num * B.Num < L.Num
+none	A.Num * B.Num > L.Num
+none	A.Num * B.Num <= L.Num
+none	A.Num * B.Num >= L.Num
+none	A.Num * B.Num == L.Num
+none	A.Num * B.Num != L.Num
+none	A.Num * B.Num + L.Num
+none	A.Num * B.Num - L.Num
+none	A.Num * B.Num * L.Num
+none	A.Num * B.Num / L.Num
+none	A.Num * B.Num . L.Num
+none	A.Num / B.Num , L.Num
+none	A.Num / B.Num && L.Num
+none	A.Num / B.Num || L.Num
+none	A.Num / B.Num < L.Num
+none	A.Num / B.Num > L.Num
+none	A.Num / B.Num <= L.Num
+none	A.Num / B.Num >= L.Num
+none	A.Num / B.Num == L.Num
+none	A.Num / B.Num != L.Num
+none	A.Num / B.Num + L.Num
+none	A.Num / B.Num - L.Num
+none	A.Num / B.Num * L.Num
+none	A.Num / B.Num / L.Num
+none	A.Num / B.Num . L.Num
+none	A.Num . B.Num , L.Num
+none	A.Num . B.Num && L.Num
+none	A.Num . B.Num || L.Num
+none	A.Num . B.Num < L.Num
+none	A.Num . B.Num > L.Num
+none	A.Num . B.Num <= L.Num
+none	A.Num . B.Num >= L.Num
+none	A.Num . B.Num == L.Num
+none	A.Num . B.Num != L.Num
+none	A.Num . B.Num + L.Num
+none	A.Num . B.Num - L.Num
+none	A.Num . B.Num * L.Num
+none	A.Num . B.Num / L.Num
+none	A.Num . B.Num . L.Num
+# --- unary operators against binary operators
+none	! 7 , 2
+none	7 , ! 2
+none	! A.Num , B.Num
+none	! 7 && 2
+none	7 && ! 2
+none	! A.Num && B.Num
+none	! 7 || 2
+none	7 || ! 2
+none	! A.Num || B.Num
+none	! 7 < 2
+none	7 < ! 2
+none	! A.Num < B.Num
+none	! 7 > 2
+none	7 > ! 2
+none	! A.Num > B.Num
+none	! 7 <= 2
+none	7 <= ! 2
+none	! A.Num <= B.Num
+none	! 7 >= 2
+none	7 >= ! 2
+none	! A.Num >= B.Num
+none	! 7 == 2
+none	7 == ! 2
+none	! A.Num == B.Num
+none	! 7 != 2
+none	7 != ! 2
+none	! A.Num != B.Num
+none	! 7 + 2
+none	7 + ! 2
+none	! A.Num + B.Num
+none	! 7 - 2
+none	7 - ! 2
+none	! A.Num - B.Num
+none	! 7 * 2
+none	7 * ! 2
+none	! A.Num * B.Num
+none	! 7 / 2
+none	7 / ! 2
+none	! A.Num / B.Num
+none	! 7 . 2
+none	7 . ! 2
+none	! A.Num . B.Num
+none	- 7 , 2
+none	7 , - 2
+none	- A.Num , B.Num
+none	- 7 && 2
+none	7 && - 2
+none	- A.Num && B.Num
+none	- 7 || 2
+none	7 || - 2
+none	- A.Num || B.Num
+none	- 7 < 2
+none	7 < - 2
+none	- A.Num < B.Num
+none	- 7 > 2
+none	7 > - 2
+none	- A.Num > B.Num
+none	- 7 <= 2
+none	7 <= - 2
+none	- A.Num <= B.Num
+none	- 7 >= 2
+none	7 >= - 2
+none	- A.Num >= B.Num
+none	- 7 == 2
+none	7 == - 2
+none	- A.Num == B.Num
+none	- 7 != 2
+none	7 != - 2
+none	- A.Num != B.Num
+none	- 7 + 2
+none	7 + - 2
+none	- A.Num + B.Num
+none	- 7 - 2
+none	7 - - 2
+none	- A.Num - B.Num
+none	- 7 * 2
+none	7 * - 2
+none	- A.Num * B.Num
+none	- 7 / 2
+none	7 / - 2
+none	- A.Num / B.Num
+none	- 7 . 2
+none	7 . - 2
+none	- A.Num . B.Num
+none	+ 7 , 2
+none	7 , + 2
+none	+ A.Num , B.Num
+none	+ 7 && 2
+none	7 && + 2
+none	+ A.Num && B.Num
+none	+ 7 || 2
+none	7 || + 2
+none	+ A.Num || B.Num
+none	+ 7 < 2
+none	7 < + 2
+none	+ A.Num < B.Num
+none	+ 7 > 2
+none	7 > + 2
+none	+ A.Num > B.Num
+none	+ 7 <= 2
+none	7 <= + 2
+none	+ A.Num <= B.Num
+none	+ 7 >= 2
+none	7 >= + 2
+none	+ A.Num >= B.Num
+none	+ 7 == 2
+none	7 == + 2
+none	+ A.Num == B.Num
+none	+ 7 != 2
+none	7 != + 2
+none	+ A.Num != B.Num
+none	+ 7 + 2
+none	7 + + 2
+none	+ A.Num + B.Num
+none	+ 7 - 2
+none	7 - + 2
+none	+ A.Num - B.Num
+none	+ 7 * 2
+none	7 * + 2
+none	+ A.Num * B.Num
+none	+ 7 / 2
+none	7 / + 2
+none	+ A.Num / B.Num
+none	+ 7 . 2
+none	7 . + 2
+none	+ A.Num . B.Num
+none	! ! 7
+none	!!7 + 1
+none	! - 7
+none	!-7 + 1
+none	! + 7
+none	!+7 + 1
+none	- ! 7
+none	-!7 + 1
+none	- - 7
+none	--7 + 1
+none	- + 7
+none	-+7 + 1
+none	+ ! 7
+none	+!7 + 1
+none	+ - 7
+none	+-7 + 1
+none	+ + 7
+none	++7 + 1
+# --- units against operators
+pcb	1mm , 2mm
+pcb	1mm , 2
+pcb	1 , 2mm
+pcb	1 mm , 2 mil
+pcb	1mm && 2mm
+pcb	1mm && 2
+pcb	1 && 2mm
+pcb	1 mm && 2 mil
+pcb	1mm || 2mm
+pcb	1mm || 2
+pcb	1 || 2mm
+pcb	1 mm || 2 mil
+pcb	1mm < 2mm
+pcb	1mm < 2
+pcb	1 < 2mm
+pcb	1 mm < 2 mil
+pcb	1mm > 2mm
+pcb	1mm > 2
+pcb	1 > 2mm
+pcb	1 mm > 2 mil
+pcb	1mm <= 2mm
+pcb	1mm <= 2
+pcb	1 <= 2mm
+pcb	1 mm <= 2 mil
+pcb	1mm >= 2mm
+pcb	1mm >= 2
+pcb	1 >= 2mm
+pcb	1 mm >= 2 mil
+pcb	1mm == 2mm
+pcb	1mm == 2
+pcb	1 == 2mm
+pcb	1 mm == 2 mil
+pcb	1mm != 2mm
+pcb	1mm != 2
+pcb	1 != 2mm
+pcb	1 mm != 2 mil
+pcb	1mm + 2mm
+pcb	1mm + 2
+pcb	1 + 2mm
+pcb	1 mm + 2 mil
+pcb	1mm - 2mm
+pcb	1mm - 2
+pcb	1 - 2mm
+pcb	1 mm - 2 mil
+pcb	1mm * 2mm
+pcb	1mm * 2
+pcb	1 * 2mm
+pcb	1 mm * 2 mil
+pcb	1mm / 2mm
+pcb	1mm / 2
+pcb	1 / 2mm
+pcb	1 mm / 2 mil
+pcb	1mm . 2mm
+pcb	1mm . 2
+pcb	1 . 2mm
+pcb	1 mm . 2 mil
+pcb	!1mm
+pcb	! 1 mm
+pcb	-1mm
+pcb	- 1 mm
+pcb	+1mm
+pcb	+ 1 mm
+# --- cases spelled out in tests/libeval_errors.rs
+none	1 + $
+none	(1 $
+none	1 + ) * ( 2 3 4
+none	) ) )
+none	A.unknown('')
+none	A.isFoo(A.Empty)
+none	A.isFoo(-1)
+none	1
+# --- cases spelled out in tests/libeval_vm.rs
+none	1 + 2
+none	1 - 2
+none	3 * 4
+none	7 / 2
+none	-(1 + 2)
+none	1 / 0
+none	-1 / 0
+none	0 / 0
+none	(1 / 0) == (1 / 0)
+none	(0 / 0) == (0 / 0)
+none	(0 / 0) != (0 / 0)
+none	!(0 / 0)
+none	(0 / 0) && 1
+none	(0 / 0) || 0
+none	2 <= 2
+none	3 > 2
+none	2 >= 3
+none	!0.5
+none	   
+none	A.Undef * 5
+none	1 - A.Undef
+none	A.Undef >= 0
+none	A.Null != 'x'
+none	A.Null != A.Undef
+none	A.Str == 'hell'
+none	A.Str != 'HELLO'
+none	A.Str == 'H?LLO'
+none	A.Str != A.Wild
+none	B.Str != A.Wild
+none	'5' + '5'
+none	!''
+none	A.Str < 1
+none	A.Str == 1
+none	A.Str != 1
+none	1 == A.Str
+none	1 != A.Str
+none	'abc' + 1
+none	A.one() + A.one()
+none	A.add(10 , 2) - A.add(2 , 10)
+none	'seven-b' == B.Code
+pcb	1mm + 1
+pcb	1 + 1mm
+pcb	1mm + 1mil
+pcb	1mil + 1mm
+pcb	2 / 1mm
+pcb	1mm - 1in
+pcb	1deg + 1mm
+pcb	1mm == 1mm
+pcb	1mm && 1mm
+pcb	1mm || 0
+pcb	0 || 1mm
+pcb	(1mm || 0) + 1mm
+pcb	A.Mm

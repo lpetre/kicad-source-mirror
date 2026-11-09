@@ -1,6 +1,7 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
 // Copyright (C) 2007 Michael Geselbracht, mgeselbracht3@gmail.com
+// Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
 // Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -190,23 +191,47 @@ pub struct Uop<B: UcodeBinder> {
 impl<B: UcodeBinder> Uop<B> {
     /// Port of `UOP( int op, std::unique_ptr<VALUE> value )`.
     pub fn with_value(op: i32, value: Option<UopValue>) -> Self {
-        Uop { op, jump_target: -1, func: None, ref_: None, value }
+        Uop {
+            op,
+            jump_target: -1,
+            func: None,
+            ref_: None,
+            value,
+        }
     }
 
     /// Port of `UOP( int op, std::unique_ptr<VAR_REF> vref )`.
     pub fn with_ref(op: i32, vref: Option<B::VarRef>) -> Self {
-        Uop { op, jump_target: -1, func: None, ref_: vref, value: None }
+        Uop {
+            op,
+            jump_target: -1,
+            func: None,
+            ref_: vref,
+            value: None,
+        }
     }
 
     /// Port of `UOP( int op, FUNC_CALL_REF func, std::unique_ptr<VAR_REF> vref = nullptr )`.
     pub fn with_func(op: i32, func: Option<FuncCallRef<B>>, vref: Option<B::VarRef>) -> Self {
-        Uop { op, jump_target: -1, func, ref_: vref, value: None }
+        Uop {
+            op,
+            jump_target: -1,
+            func,
+            ref_: vref,
+            value: None,
+        }
     }
 
     /// Port of `explicit UOP( int op )`: bare op (used for the short-circuit jumps, whose only
     /// payload is a jump target).
     pub fn new(op: i32) -> Self {
-        Uop { op, jump_target: -1, func: None, ref_: None, value: None }
+        Uop {
+            op,
+            jump_target: -1,
+            func: None,
+            ref_: None,
+            value: None,
+        }
     }
 
     /// The opcode (`TR_UOP_*` / `TR_OP_*`).
@@ -404,9 +429,7 @@ impl<B: UcodeBinder> Uop<B> {
                         result_units = get_op_result_units(arg1, arg2);
                         arg1.as_double(ctx) / arg2.as_double(ctx)
                     }
-                    TR_OP_LESS_EQUAL => {
-                        bool_to_double(arg1.as_double(ctx) <= arg2.as_double(ctx))
-                    }
+                    TR_OP_LESS_EQUAL => bool_to_double(arg1.as_double(ctx) <= arg2.as_double(ctx)),
                     TR_OP_GREATER_EQUAL => {
                         bool_to_double(arg1.as_double(ctx) >= arg2.as_double(ctx))
                     }
@@ -555,7 +578,11 @@ impl<B: UcodeBinder> Ucode<B> {
     /// Port of `UCODE::UCODE()`; `binder` provides the overridable `CreateVarRef` /
     /// `CreateFuncCall` behaviour and any per-expression state.
     pub fn new(binder: B) -> Self {
-        Ucode { ucode: Vec::new(), has_jumps: false, binder }
+        Ucode {
+            ucode: Vec::new(),
+            has_jumps: false,
+            binder,
+        }
     }
 
     /// The binder (C++: the data members of the `UCODE` subclass).
@@ -626,7 +653,11 @@ impl<B: UcodeBinder> Ucode<B> {
                 // or stale target would spin or read out of range, so reject it.
                 debug_assert!(next < 0 || next as usize > ip);
 
-                ip = if next < 0 || next as usize <= ip { ip + 1 } else { next as usize };
+                ip = if next < 0 || next as usize <= ip {
+                    ip + 1
+                } else {
+                    next as usize
+                };
             }
         } else {
             for op in &self.ucode {

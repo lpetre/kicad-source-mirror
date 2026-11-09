@@ -1,0 +1,53 @@
+# Texts for SEXPR::PARSER (escaped like the lexer script), one per line.
+# sexpr.out: SEXPR::AsString() of the parsed tree and a dump of its nodes, or the exception.
+# (Atoms like "." or "-." are left out: C++ reads an uninitialised double for them.)
+()
+(symbol)
+(symbol "string" 42 3.14 (nested 4 ()))
+(42 3.14 "string")
+(42 \x0a  (1 2))
+this is just writing
+"string"
+"string" trailing
+""
+(a (b (c (d))) e)
+(a(b)c)
+(  a   b\x09c\x0a\x0d d\x08\x0c\x0b)
+\x0a\x0a(a\x0a  (b "x\x0ay"\x0a c)\x0a\x0a 5)\x0a
+(a "esc \x5c" quote \x5c\x5c" b)
+(a "x\x5c\x5c\x5c" (b)")
+(42 -42 3.14 -3.14 .5 5. -.5 1.2.3 007 08 -012 0129 - -a 1e5 +1 1,5 a1 -1e5 --1 1- 1.-)
+(0 00 0.0 -0 -0.0 000.500 1. 2.50 100 1e2)
+(99999999999999999999 -99999999999999999999 9223372036854775807 -9223372036854775808 4294967296 2147483648 -2147483649)
+(0.1 0.2 0.30000000000000004 1.5 123456789.123456789 12345678901234567890.5 0.000001 0.00001234 100000.0 10000000000.0 123456789012.5)
+(0.00000000001 0.99999999999 9999999999.9 99999999999.9 0.123456789012345 1234567.891)
+(\xc2\xb5m "\xce\xa9 \xc3\xa9" \xc3\xbc)
+(a "unterminated
+(a "unterminated\x5c
+"abc\x5c"
+(symbol
+(a (b
+(1
+1
+3.14
+symbol
+,
+symbol\x20
+12 13
+1.5(
+a)
+(
+(a\x20
+(a (b\x20
+(a "s"
+)
+\x20\x20) (a)
+\x20\x09\x0d\x0a\x08\x0c\x0b
+(a))(b)
+((a) (b)) (c)
+(()())
+(()()(()))
+(pts (xy 1 2) (xy 3 4))
+(a\x00b c)
+(;comment #x 'y' $z %w {v} [u])
+(- -- -1 .- -a. a.b 1.x)

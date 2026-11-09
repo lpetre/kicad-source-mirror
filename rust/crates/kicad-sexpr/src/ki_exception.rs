@@ -34,7 +34,7 @@
 //!
 //! The translatable message texts (`_( "..." )`) are the untranslated English originals.
 //!
-//! `IO_ERROR::Where()` is "from <file> : <function>() line <n>" of the C++ throw site.  The port
+//! `IO_ERROR::Where()` is `"from <file> : <function>() line <n>"` of the C++ throw site.  The port
 //! records the Rust source location of the constructor call instead (file name without directory
 //! and line, no function name), see [`IoErrorBase::where_`].  It only shows up in
 //! [`IoError::what_debug`]; the release-build `What()` text is the problem text alone.
@@ -52,7 +52,9 @@ pub struct KiParamError {
 impl KiParamError {
     /// Port of `KI_PARAM_ERROR::KI_PARAM_ERROR( const wxString& aMessage )`.
     pub fn new(message: impl Into<String>) -> Self {
-        Self { message: message.into() }
+        Self {
+            message: message.into(),
+        }
     }
 
     /// Port of `KI_PARAM_ERROR::What`.
@@ -91,7 +93,10 @@ impl IoErrorBase {
     /// Port of `IO_ERROR::init`.
     #[track_caller]
     pub fn new(problem: impl Into<String>) -> Self {
-        Self { problem: problem.into(), where_: where_from_location(Location::caller()) }
+        Self {
+            problem: problem.into(),
+            where_: where_from_location(Location::caller()),
+        }
     }
 
     /// Port of `IO_ERROR::Problem`: what was the problem?
@@ -153,7 +158,10 @@ impl ParseError {
         };
 
         Self {
-            base: IoErrorBase { problem, where_: where_from_location(Location::caller()) },
+            base: IoErrorBase {
+                problem,
+                where_: where_from_location(Location::caller()),
+            },
             line_number,
             byte_index,
             input_line: input_line.to_string(),
@@ -272,10 +280,12 @@ impl FutureFormatError {
     /// required version/generator and the problem text of `error` are kept and the version
     /// arguments of the C++ constructor are ignored.
     pub fn from_future_format_error(error: &FutureFormatError) -> Self {
-        let mut this = Self::default();
+        let mut this = Self {
+            required_version: error.required_version.clone(),
+            required_generator: error.required_generator.clone(),
+            ..Self::default()
+        };
 
-        this.required_version = error.required_version.clone();
-        this.required_generator = error.required_generator.clone();
         this.parse.base.problem = error.problem().to_string();
 
         this.parse.line_number = error.parse.line_number;
@@ -320,11 +330,11 @@ pub enum IoError {
     /// in the input.
     Cancelled(IoErrorBase),
 
-    /// `PARSE_ERROR`.
-    Parse(ParseError),
+    /// `PARSE_ERROR`.  (Boxed to keep `Result<_, IoError>` small.)
+    Parse(Box<ParseError>),
 
-    /// `FUTURE_FORMAT_ERROR`.
-    FutureFormat(FutureFormatError),
+    /// `FUTURE_FORMAT_ERROR`.  (Boxed to keep `Result<_, IoError>` small.)
+    FutureFormat(Box<FutureFormatError>),
 }
 
 impl IoError {
@@ -365,7 +375,13 @@ impl IoError {
         line_number: i32,
         byte_index: i32,
     ) -> Self {
-        IoError::Parse(ParseError::new(problem, source, input_line, line_number, byte_index))
+        IoError::Parse(Box::new(ParseError::new(
+            problem,
+            source,
+            input_line,
+            line_number,
+            byte_index,
+        )))
     }
 
     fn base(&self) -> &IoErrorBase {
@@ -454,13 +470,13 @@ impl std::error::Error for IoError {}
 
 impl From<ParseError> for IoError {
     fn from(error: ParseError) -> Self {
-        IoError::Parse(error)
+        IoError::Parse(Box::new(error))
     }
 }
 
 impl From<FutureFormatError> for IoError {
     fn from(error: FutureFormatError) -> Self {
-        IoError::FutureFormat(error)
+        IoError::FutureFormat(Box::new(error))
     }
 }
 
@@ -497,7 +513,10 @@ mod tests {
         let e = ParseError::new("Expecting '('", "board.kicad_pcb", "(kicad_pcb\n", 12, 5);
 
         assert_eq!(e.parse_problem(), "Expecting '('");
-        assert_eq!(e.problem(), "Expecting '(' in 'board.kicad_pcb', line 12, offset 5.");
+        assert_eq!(
+            e.problem(),
+            "Expecting '(' in 'board.kicad_pcb', line 12, offset 5."
+        );
         assert_eq!(e.what(), e.problem());
         assert_eq!(e.line_number, 12);
         assert_eq!(e.byte_index, 5);

@@ -113,11 +113,6 @@ pub(crate) fn is_same_as_no_case(a: &str, b: &str) -> bool {
     }
 }
 
-/// `wxString::Lower()`.
-pub(crate) fn lower(s: &str) -> String {
-    s.chars().map(to_lower).collect()
-}
-
 /// `wxString::Trim( true )` / `Strip( wxString::trailing )`: remove trailing white space.
 pub(crate) fn trim_right(s: &str) -> &str {
     s.trim_end_matches(is_space)
@@ -191,7 +186,11 @@ pub(crate) fn strtod(s: &str) -> Strtod {
     }
 
     if digits == 0 {
-        return Strtod { value: 0.0, consumed: 0, erange: false };
+        return Strtod {
+            value: 0.0,
+            consumed: 0,
+            erange: false,
+        };
     }
 
     if i < bytes.len() && (bytes[i] == b'e' || bytes[i] == b'E') {
@@ -218,7 +217,11 @@ pub(crate) fn strtod(s: &str) -> Strtod {
     // glibc reports ERANGE on overflow (HUGE_VAL is returned) and when the result underflows.
     let erange = value.is_infinite() || (nonzero && (value == 0.0 || value.is_subnormal()));
 
-    Strtod { value, consumed: i, erange }
+    Strtod {
+        value,
+        consumed: i,
+        erange,
+    }
 }
 
 /// C `atof`: `strtod` without any error reporting.
@@ -245,11 +248,19 @@ pub(crate) fn to_double(s: &str) -> (Option<f64>, bool) {
 /// `printf( "%.<precision>f" )` (also `%lf`, which is the same conversion).
 pub(crate) fn format_f(value: f64, precision: usize) -> String {
     if value.is_nan() {
-        return if value.is_sign_negative() { "-nan".to_string() } else { "nan".to_string() };
+        return if value.is_sign_negative() {
+            "-nan".to_string()
+        } else {
+            "nan".to_string()
+        };
     }
 
     if value.is_infinite() {
-        return if value < 0.0 { "-inf".to_string() } else { "inf".to_string() };
+        return if value < 0.0 {
+            "-inf".to_string()
+        } else {
+            "inf".to_string()
+        };
     }
 
     format!("{value:.precision$}")
@@ -258,11 +269,19 @@ pub(crate) fn format_f(value: f64, precision: usize) -> String {
 /// `printf( "%.<precision>g" )`.
 pub(crate) fn format_g(value: f64, precision: usize) -> String {
     if value.is_nan() {
-        return if value.is_sign_negative() { "-nan".to_string() } else { "nan".to_string() };
+        return if value.is_sign_negative() {
+            "-nan".to_string()
+        } else {
+            "nan".to_string()
+        };
     }
 
     if value.is_infinite() {
-        return if value < 0.0 { "-inf".to_string() } else { "inf".to_string() };
+        return if value < 0.0 {
+            "-inf".to_string()
+        } else {
+            "inf".to_string()
+        };
     }
 
     // "Let P equal the precision if nonzero, 6 if the precision is omitted, or 1 if it is
@@ -299,17 +318,94 @@ mod tests {
 
     #[test]
     fn strtod_prefixes() {
-        assert_eq!(strtod("1.5"), Strtod { value: 1.5, consumed: 3, erange: false });
-        assert_eq!(strtod("1.2.3"), Strtod { value: 1.2, consumed: 3, erange: false });
-        assert_eq!(strtod("1."), Strtod { value: 1.0, consumed: 2, erange: false });
-        assert_eq!(strtod(".5"), Strtod { value: 0.5, consumed: 2, erange: false });
-        assert_eq!(strtod("."), Strtod { value: 0.0, consumed: 0, erange: false });
-        assert_eq!(strtod("+-1"), Strtod { value: 0.0, consumed: 0, erange: false });
-        assert_eq!(strtod("-1+2"), Strtod { value: -1.0, consumed: 2, erange: false });
-        assert_eq!(strtod("  7x"), Strtod { value: 7.0, consumed: 3, erange: false });
-        assert_eq!(strtod("1e3"), Strtod { value: 1000.0, consumed: 3, erange: false });
-        assert_eq!(strtod("1e"), Strtod { value: 1.0, consumed: 1, erange: false });
-        assert_eq!(strtod(""), Strtod { value: 0.0, consumed: 0, erange: false });
+        assert_eq!(
+            strtod("1.5"),
+            Strtod {
+                value: 1.5,
+                consumed: 3,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("1.2.3"),
+            Strtod {
+                value: 1.2,
+                consumed: 3,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("1."),
+            Strtod {
+                value: 1.0,
+                consumed: 2,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod(".5"),
+            Strtod {
+                value: 0.5,
+                consumed: 2,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("."),
+            Strtod {
+                value: 0.0,
+                consumed: 0,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("+-1"),
+            Strtod {
+                value: 0.0,
+                consumed: 0,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("-1+2"),
+            Strtod {
+                value: -1.0,
+                consumed: 2,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("  7x"),
+            Strtod {
+                value: 7.0,
+                consumed: 3,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("1e3"),
+            Strtod {
+                value: 1000.0,
+                consumed: 3,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod("1e"),
+            Strtod {
+                value: 1.0,
+                consumed: 1,
+                erange: false
+            }
+        );
+        assert_eq!(
+            strtod(""),
+            Strtod {
+                value: 0.0,
+                consumed: 0,
+                erange: false
+            }
+        );
         assert!(strtod(&"9".repeat(400)).erange);
         assert!(strtod(&format!("0.{}1", "0".repeat(400))).erange);
         assert!(!strtod("0.000").erange);

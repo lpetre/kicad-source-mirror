@@ -302,7 +302,9 @@ fn append_formatted(buffer: &mut String, args: fmt::Arguments<'_>) -> Result<i32
         None => {
             if fmt::write(buffer, args).is_err() {
                 buffer.truncate(before);
-                return Err(IoError::new("a formatting trait implementation returned an error"));
+                return Err(IoError::new(
+                    "a formatting trait implementation returned an error",
+                ));
             }
         }
     }
@@ -336,7 +338,10 @@ impl StringFormatter {
     /// `reserve` is the size of the C++ formatting buffer; here it is the initial capacity of
     /// the output string.
     pub fn with_quote_char(reserve: usize, quote_char: char) -> Self {
-        Self { quote_char: quote_char.to_string(), mystring: String::with_capacity(reserve) }
+        Self {
+            quote_char: quote_char.to_string(),
+            mystring: String::with_capacity(reserve),
+        }
     }
 
     /// Port of `STRING_FORMATTER::Clear`: clear the buffer and empty the internal string.
@@ -349,7 +354,10 @@ impl StringFormatter {
     pub fn strip_useless(&mut self) {
         // isspace() in the "C" locale
         self.mystring.retain(|c| {
-            !matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r') && c != ')' && c != '(' && c != '"'
+            !matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
+                && c != ')'
+                && c != '('
+                && c != '"'
         });
     }
 
@@ -422,7 +430,12 @@ impl PrettifiedOutputFormatter {
             mode = FormatMode::CompactTextProperties;
         }
 
-        Self { quote_char: quote_char.to_string(), buf: String::new(), mode, finished: false }
+        Self {
+            quote_char: quote_char.to_string(),
+            buf: String::new(),
+            mode,
+            finished: false,
+        }
     }
 
     /// The effective format mode (C++ `m_mode`).
@@ -463,7 +476,10 @@ impl OutputFormatter for PrettifiedOutputFormatter {
     /// the C++ `wxCHECK_MSG` in `SIBLING_TEMP_FILE::Commit` it then does nothing and returns
     /// false.
     fn finish(&mut self) -> Result<bool, IoError> {
-        debug_assert!(!self.finished, "finish() called on an already-used formatter");
+        debug_assert!(
+            !self.finished,
+            "finish() called on an already-used formatter"
+        );
 
         if self.finished {
             return Ok(false);
@@ -483,8 +499,9 @@ mod tests {
     #[test]
     fn quote_char_determination() {
         // No quoting needed.
-        for wrapee in ["abc", "F.Cu", "-12", "-", "a_b", "1.5", "é", "a\"b", "a\\b", "a#b", "a|b"]
-        {
+        for wrapee in [
+            "abc", "F.Cu", "-12", "-", "a_b", "1.5", "é", "a\"b", "a\\b", "a#b", "a|b",
+        ] {
             assert_eq!(get_quote_char(wrapee, "\""), "", "{wrapee:?}");
         }
 
@@ -580,7 +597,8 @@ mod tests {
     #[test]
     fn strip_useless() {
         let mut fmt = StringFormatter::new();
-        fmt.print(format_args!("(a \"b c\"\n\t(d)\r\x0b\x0c)")).unwrap();
+        fmt.print(format_args!("(a \"b c\"\n\t(d)\r\x0b\x0c)"))
+            .unwrap();
         fmt.strip_useless();
         assert_eq!(fmt.string(), "abcd");
     }
@@ -598,11 +616,21 @@ mod tests {
         let mut out = PrettifiedOutputFormatter::new(FormatMode::Normal, false);
         assert_eq!(out.mode(), FormatMode::Normal);
 
-        out.print(format_args!("(kicad_pcb (version {}) (generator \"pcbnew\"))", 20241229)).unwrap();
-        assert_eq!(out.string(), "(kicad_pcb (version 20241229) (generator \"pcbnew\"))");
+        out.print(format_args!(
+            "(kicad_pcb (version {}) (generator \"pcbnew\"))",
+            20241229
+        ))
+        .unwrap();
+        assert_eq!(
+            out.string(),
+            "(kicad_pcb (version 20241229) (generator \"pcbnew\"))"
+        );
 
         assert!(out.finish().unwrap());
-        assert_eq!(out.string(), "(kicad_pcb\n\t(version 20241229)\n\t(generator \"pcbnew\")\n)\n");
+        assert_eq!(
+            out.string(),
+            "(kicad_pcb\n\t(version 20241229)\n\t(generator \"pcbnew\")\n)\n"
+        );
         assert_eq!(
             out.into_string(),
             "(kicad_pcb\n\t(version 20241229)\n\t(generator \"pcbnew\")\n)\n"

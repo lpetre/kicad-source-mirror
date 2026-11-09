@@ -54,12 +54,18 @@ pub struct SexprInteger {
 impl SexprInteger {
     /// Port of `SEXPR_INTEGER::SEXPR_INTEGER( int64_t aValue )` (line number 1).
     pub fn new(value: i64) -> Self {
-        Self { value, line_number: 1 }
+        Self {
+            value,
+            line_number: 1,
+        }
     }
 
     /// Port of `SEXPR_INTEGER::SEXPR_INTEGER( int64_t aValue, int aLineNumber )`.
     pub fn with_line_number(value: i64, line_number: i32) -> Self {
-        Self { value, line_number: line_number as usize }
+        Self {
+            value,
+            line_number: line_number as usize,
+        }
     }
 }
 
@@ -74,12 +80,18 @@ pub struct SexprDouble {
 impl SexprDouble {
     /// Port of `SEXPR_DOUBLE::SEXPR_DOUBLE( double aValue )` (line number 1).
     pub fn new(value: f64) -> Self {
-        Self { value, line_number: 1 }
+        Self {
+            value,
+            line_number: 1,
+        }
     }
 
     /// Port of `SEXPR_DOUBLE::SEXPR_DOUBLE( double aValue, int aLineNumber )`.
     pub fn with_line_number(value: f64, line_number: i32) -> Self {
-        Self { value, line_number: line_number as usize }
+        Self {
+            value,
+            line_number: line_number as usize,
+        }
     }
 }
 
@@ -95,12 +107,18 @@ pub struct SexprString {
 impl SexprString {
     /// Port of `SEXPR_STRING::SEXPR_STRING( const std::string& aValue )` (line number 1).
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into(), line_number: 1 }
+        Self {
+            value: value.into(),
+            line_number: 1,
+        }
     }
 
     /// Port of `SEXPR_STRING::SEXPR_STRING( const std::string& aValue, int aLineNumber )`.
     pub fn with_line_number(value: impl Into<String>, line_number: i32) -> Self {
-        Self { value: value.into(), line_number: line_number as usize }
+        Self {
+            value: value.into(),
+            line_number: line_number as usize,
+        }
     }
 }
 
@@ -115,12 +133,18 @@ pub struct SexprSymbol {
 impl SexprSymbol {
     /// Port of `SEXPR_SYMBOL::SEXPR_SYMBOL( const std::string& aValue )` (line number 1).
     pub fn new(value: impl Into<String>) -> Self {
-        Self { value: value.into(), line_number: 1 }
+        Self {
+            value: value.into(),
+            line_number: 1,
+        }
     }
 
     /// Port of `SEXPR_SYMBOL::SEXPR_SYMBOL( const std::string& aValue, int aLineNumber )`.
     pub fn with_line_number(value: impl Into<String>, line_number: i32) -> Self {
-        Self { value: value.into(), line_number: line_number as usize }
+        Self {
+            value: value.into(),
+            line_number: line_number as usize,
+        }
     }
 }
 
@@ -137,13 +161,19 @@ pub struct OutString {
 /// Port of `SEXPR::AsSymbol( const std::string& aString )`: mark `string` to be added to a list
 /// as a symbol.
 pub fn as_symbol(string: &str) -> OutString {
-    OutString { symbol: true, string: string.to_string() }
+    OutString {
+        symbol: true,
+        string: string.to_string(),
+    }
 }
 
 /// Port of `SEXPR::AsString( const std::string& aString )`: mark `string` to be added to a list
 /// as a quoted string.
 pub fn as_string(string: &str) -> OutString {
-    OutString { symbol: false, string: string.to_string() }
+    OutString {
+        symbol: false,
+        string: string.to_string(),
+    }
 }
 
 /// Port of `SEXPR::_IN_STRING`: a string to read into, together with the kind of node it must
@@ -158,12 +188,18 @@ pub struct InString<'a> {
 
 /// Port of `SEXPR::AsSymbol( std::string& aString )`: read a symbol into `string`.
 pub fn as_symbol_in(string: &mut String) -> InString<'_> {
-    InString { symbol: true, string }
+    InString {
+        symbol: true,
+        string,
+    }
 }
 
 /// Port of `SEXPR::AsString( std::string& aString )`: read a quoted string into `string`.
 pub fn as_string_in(string: &mut String) -> InString<'_> {
-    InString { symbol: false, string }
+    InString {
+        symbol: false,
+        string,
+    }
 }
 
 /// Port of `SEXPR::SEXPR_SCAN_ARG`: one argument of [`SexprList::scan`].
@@ -313,12 +349,20 @@ pub struct SexprList {
 impl SexprList {
     /// Port of `SEXPR_LIST::SEXPR_LIST()` (line number 1).
     pub fn new() -> Self {
-        Self { children: Vec::new(), line_number: 1, in_stream_child: 0 }
+        Self {
+            children: Vec::new(),
+            line_number: 1,
+            in_stream_child: 0,
+        }
     }
 
     /// Port of `SEXPR_LIST::SEXPR_LIST( int aLineNumber )`.
     pub fn with_line_number(line_number: i32) -> Self {
-        Self { children: Vec::new(), line_number: line_number as usize, in_stream_child: 0 }
+        Self {
+            children: Vec::new(),
+            line_number: line_number as usize,
+            in_stream_child: 0,
+        }
     }
 
     /// Port of the variadic constructor `SEXPR_LIST::SEXPR_LIST( const Args&... args )`: a list
@@ -351,9 +395,10 @@ impl SexprList {
     ///
     /// [`SexprException::OutOfRange`] if there is no child `index` (C++ does not check).
     pub fn child(&self, index: usize) -> Result<&Sexpr, SexprException> {
-        self.children
-            .get(index)
-            .ok_or(SexprException::OutOfRange { index, len: self.children.len() })
+        self.children.get(index).ok_or(SexprException::OutOfRange {
+            index,
+            len: self.children.len(),
+        })
     }
 
     /// Port of `SEXPR::GetNumberOfChildren` on a list.
@@ -452,9 +497,10 @@ impl SexprList {
     fn in_stream_child(&self) -> Result<&Sexpr, SexprException> {
         let index = self.in_stream_child as usize;
 
-        self.children
-            .get(index)
-            .ok_or(SexprException::OutOfRange { index, len: self.children.len() })
+        self.children.get(index).ok_or(SexprException::OutOfRange {
+            index,
+            len: self.children.len(),
+        })
     }
 
     /// Port of `operator>>( SEXPR_LIST& input, ISEXPRABLE& obj )`: let `obj` read itself from
@@ -478,7 +524,9 @@ impl SexprList {
             self.in_stream_child += 1;
             Ok(inte)
         } else {
-            Err(SexprException::InvalidArgument("SEXPR is not a integer type!".to_string()))
+            Err(SexprException::InvalidArgument(
+                "SEXPR is not a integer type!".to_string(),
+            ))
         }
     }
 
@@ -500,7 +548,9 @@ impl SexprList {
             self.in_stream_child += 1;
             Ok(str)
         } else {
-            Err(SexprException::InvalidArgument("SEXPR is not a string type!".to_string()))
+            Err(SexprException::InvalidArgument(
+                "SEXPR is not a string type!".to_string(),
+            ))
         }
     }
 
@@ -518,7 +568,9 @@ impl SexprList {
             self.in_stream_child += 1;
             Ok(lint)
         } else {
-            Err(SexprException::InvalidArgument("SEXPR is not a long integer type!".to_string()))
+            Err(SexprException::InvalidArgument(
+                "SEXPR is not a long integer type!".to_string(),
+            ))
         }
     }
 
@@ -536,7 +588,9 @@ impl SexprList {
             self.in_stream_child += 1;
             Ok(fl)
         } else {
-            Err(SexprException::InvalidArgument("SEXPR is not a float type!".to_string()))
+            Err(SexprException::InvalidArgument(
+                "SEXPR is not a float type!".to_string(),
+            ))
         }
     }
 
@@ -554,7 +608,9 @@ impl SexprList {
             self.in_stream_child += 1;
             Ok(dbl)
         } else {
-            Err(SexprException::InvalidArgument("SEXPR is not a double type!".to_string()))
+            Err(SexprException::InvalidArgument(
+                "SEXPR is not a double type!".to_string(),
+            ))
         }
     }
 
@@ -581,7 +637,9 @@ impl SexprList {
             *is.string = child.string()?.to_string();
             self.in_stream_child += 1;
         } else {
-            return Err(SexprException::InvalidArgument("SEXPR is not a string type!".to_string()));
+            return Err(SexprException::InvalidArgument(
+                "SEXPR is not a string type!".to_string(),
+            ));
         }
 
         Ok(self)
@@ -985,6 +1043,8 @@ fn write_remaining<'a>(result: &mut String, stack: &mut Vec<(&'a SexprList, usiz
 }
 
 #[cfg(test)]
+// 3.14 is test data here (as in the C++ tests), not an approximation of pi.
+#[allow(clippy::approx_constant)]
 mod tests {
     use super::*;
 
@@ -1023,15 +1083,24 @@ mod tests {
     fn integer_is_written_as_32_bit() {
         assert_eq!(Sexpr::from(SexprInteger::new(42)).as_string(0), "42");
         assert_eq!(Sexpr::from(SexprInteger::new(-42)).as_string(0), "-42");
-        assert_eq!(Sexpr::from(SexprInteger::new(i64::from(i32::MAX))).as_string(0), "2147483647");
+        assert_eq!(
+            Sexpr::from(SexprInteger::new(i64::from(i32::MAX))).as_string(0),
+            "2147483647"
+        );
         // out << GetInteger() truncates
         assert_eq!(Sexpr::from(SexprInteger::new(1 << 32)).as_string(0), "0");
-        assert_eq!(Sexpr::from(SexprInteger::new((1 << 31) + 5)).as_string(0), "-2147483643");
+        assert_eq!(
+            Sexpr::from(SexprInteger::new((1 << 31) + 5)).as_string(0),
+            "-2147483643"
+        );
     }
 
     #[test]
     fn string_is_not_escaped() {
-        assert_eq!(Sexpr::from(SexprString::new("a \"b\" \\ c")).as_string(0), "\"a \"b\" \\ c\"");
+        assert_eq!(
+            Sexpr::from(SexprString::new("a \"b\" \\ c")).as_string(0),
+            "\"a \"b\" \\ c\""
+        );
     }
 
     #[test]
@@ -1078,16 +1147,34 @@ mod tests {
         assert_eq!(symbol.line_number(), 12);
         assert_eq!(int.line_number(), 1);
 
-        assert_eq!(dbl.long_integer().unwrap_err().what(), "SEXPR is not a integer type!");
-        assert_eq!(string.double().unwrap_err().what(), "SEXPR is not a double type!");
-        assert_eq!(symbol.string().unwrap_err().what(), "SEXPR is not a string type!");
+        assert_eq!(
+            dbl.long_integer().unwrap_err().what(),
+            "SEXPR is not a integer type!"
+        );
+        assert_eq!(
+            string.double().unwrap_err().what(),
+            "SEXPR is not a double type!"
+        );
+        assert_eq!(
+            symbol.string().unwrap_err().what(),
+            "SEXPR is not a string type!"
+        );
         assert_eq!(
             string.symbol().unwrap_err().what(),
             "GetSymbol(): SEXPR is not a symbol type! error line 1"
         );
-        assert_eq!(int.children().unwrap_err().what(), "SEXPR is not a list type!");
-        assert_eq!(int.child(0).unwrap_err().what(), "SEXPR is not a list type!");
-        assert_eq!(int.number_of_children().unwrap_err().what(), "SEXPR is not a list type!");
+        assert_eq!(
+            int.children().unwrap_err().what(),
+            "SEXPR is not a list type!"
+        );
+        assert_eq!(
+            int.child(0).unwrap_err().what(),
+            "SEXPR is not a list type!"
+        );
+        assert_eq!(
+            int.number_of_children().unwrap_err().what(),
+            "SEXPR is not a list type!"
+        );
         assert!(matches!(
             int.clone().add_child(SexprInteger::new(1)),
             Err(SexprException::InvalidType(_))
@@ -1098,7 +1185,10 @@ mod tests {
         assert_eq!(list.number_of_children().unwrap(), 1);
         assert_eq!(list.children().unwrap().len(), 1);
         assert!(list.child(0).unwrap().is_integer());
-        assert_eq!(list.child(1).unwrap_err(), SexprException::OutOfRange { index: 1, len: 1 });
+        assert_eq!(
+            list.child(1).unwrap_err(),
+            SexprException::OutOfRange { index: 1, len: 1 }
+        );
         assert_eq!(list.list().unwrap().number_of_children(), 1);
     }
 
@@ -1123,7 +1213,13 @@ mod tests {
     #[test]
     fn stream_extraction() {
         let mut list = SexprList::new();
-        list.push(as_symbol("name")).push("text").push(5).push(6i64).push(1.5).push(2.5).push(9);
+        list.push(as_symbol("name"))
+            .push("text")
+            .push(5)
+            .push(6i64)
+            .push(1.5)
+            .push(2.5)
+            .push(9);
 
         let mut symbol = String::new();
         list.read_in_string(as_symbol_in(&mut symbol)).unwrap();
@@ -1132,25 +1228,45 @@ mod tests {
         let mut string = String::new();
         // wrong kind: nothing is consumed
         assert_eq!(
-            list.read_in_string(as_symbol_in(&mut string)).unwrap_err().what(),
+            list.read_in_string(as_symbol_in(&mut string))
+                .unwrap_err()
+                .what(),
             "operator>>: SEXPR is not a symbol type!"
         );
         list.read_in_string(as_string_in(&mut string)).unwrap();
         assert_eq!(string, "text");
 
-        assert_eq!(list.read_f64().unwrap_err().what(), "SEXPR is not a double type!");
-        assert_eq!(list.read_f32().unwrap_err().what(), "SEXPR is not a float type!");
-        assert_eq!(list.read_string().unwrap_err().what(), "SEXPR is not a string type!");
+        assert_eq!(
+            list.read_f64().unwrap_err().what(),
+            "SEXPR is not a double type!"
+        );
+        assert_eq!(
+            list.read_f32().unwrap_err().what(),
+            "SEXPR is not a float type!"
+        );
+        assert_eq!(
+            list.read_string().unwrap_err().what(),
+            "SEXPR is not a string type!"
+        );
         assert_eq!(list.read_i32().unwrap(), 5);
         assert_eq!(list.read_i64().unwrap(), 6);
-        assert_eq!(list.read_i32().unwrap_err().what(), "SEXPR is not a integer type!");
-        assert_eq!(list.read_i64().unwrap_err().what(), "SEXPR is not a long integer type!");
+        assert_eq!(
+            list.read_i32().unwrap_err().what(),
+            "SEXPR is not a integer type!"
+        );
+        assert_eq!(
+            list.read_i64().unwrap_err().what(),
+            "SEXPR is not a long integer type!"
+        );
         assert_eq!(list.read_f64().unwrap(), 1.5);
         assert_eq!(list.read_f32().unwrap(), 2.5);
         assert_eq!(list.read_i32().unwrap(), 9);
 
         // past the end
-        assert_eq!(list.read_i32().unwrap_err(), SexprException::OutOfRange { index: 7, len: 7 });
+        assert_eq!(
+            list.read_i32().unwrap_err(),
+            SexprException::OutOfRange { index: 7, len: 7 }
+        );
     }
 
     #[test]
@@ -1159,7 +1275,10 @@ mod tests {
         list.push(as_symbol("sym")).push("str");
 
         // IsSymbol() passes the test of operator>>, GetString() then throws.
-        assert!(matches!(list.read_string(), Err(SexprException::InvalidType(_))));
+        assert!(matches!(
+            list.read_string(),
+            Err(SexprException::InvalidType(_))
+        ));
 
         let mut symbol = String::new();
         list.read_in_string(as_symbol_in(&mut symbol)).unwrap();
@@ -1169,7 +1288,11 @@ mod tests {
     #[test]
     fn scan() {
         let mut list = SexprList::new();
-        list.push(as_symbol("at")).push(10).push(2.5).push("text").push(1i64 << 40);
+        list.push(as_symbol("at"))
+            .push(10)
+            .push(2.5)
+            .push("text")
+            .push(1i64 << 40);
 
         let mut x = 0i32;
         let mut y = 0.0f64;
@@ -1195,7 +1318,10 @@ mod tests {
 
         // A type mismatch stops the scan as well.
         let mut wrong = 0i32;
-        assert_eq!(list.scan(&mut ["at".into(), (&mut x).into(), (&mut wrong).into()]), 2);
+        assert_eq!(
+            list.scan(&mut ["at".into(), (&mut x).into(), (&mut wrong).into()]),
+            2
+        );
 
         // An integer child satisfies a double argument.
         let mut d = 0.0;
@@ -1246,12 +1372,15 @@ mod tests {
     #[test]
     fn isexprable_round_trip() {
         let mut list = SexprList::new();
-        list.push_sexprable(&Point { x: 3, y: -4 }).push_sexprable(&Nothing);
+        list.push_sexprable(&Point { x: 3, y: -4 })
+            .push_sexprable(&Nothing);
 
         assert_eq!(list.as_string(0), "(\n  (xy 3 -4))");
 
         let mut point = Point { x: 0, y: 0 };
-        let Sexpr::List(inner) = &mut list.children[0] else { panic!("not a list") };
+        let Sexpr::List(inner) = &mut list.children[0] else {
+            panic!("not a list")
+        };
         inner.read_sexprable(&mut point);
 
         assert_eq!((point.x, point.y), (3, -4));

@@ -30,7 +30,11 @@ use crate::ki_exception::IoError;
 /// `out` is the output formatter to write to, `key` is the name of the boolean flag and
 /// `value` is the value to write.
 pub fn format_bool(out: &mut dyn OutputFormatter, key: &str, value: bool) -> Result<(), IoError> {
-    out.print(format_args!("({} {})", key, if value { "yes" } else { "no" }))?;
+    out.print(format_args!(
+        "({} {})",
+        key,
+        if value { "yes" } else { "no" }
+    ))?;
     Ok(())
 }
 
@@ -86,8 +90,7 @@ where
 /// Encode `data` as base 64 text the way `wxBase64Encode` does: the standard alphabet with
 /// `'='` padding and no line breaks.
 pub fn base64_encode(data: &[u8]) -> String {
-    const ALPHABET: &[u8; 64] =
-        b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
 
@@ -97,10 +100,14 @@ pub fn base64_encode(data: &[u8]) -> String {
         let b2 = chunk.get(2).copied().unwrap_or(0);
 
         out.push(char::from(ALPHABET[usize::from(b0 >> 2)]));
-        out.push(char::from(ALPHABET[usize::from(((b0 & 0x03) << 4) | (b1 >> 4))]));
+        out.push(char::from(
+            ALPHABET[usize::from(((b0 & 0x03) << 4) | (b1 >> 4))],
+        ));
 
         if chunk.len() > 1 {
-            out.push(char::from(ALPHABET[usize::from(((b1 & 0x0f) << 2) | (b2 >> 6))]));
+            out.push(char::from(
+                ALPHABET[usize::from(((b1 & 0x0f) << 2) | (b2 >> 6))],
+            ));
         } else {
             out.push('=');
         }
@@ -239,7 +246,11 @@ pub fn prettify_bytes(source: &[u8], mode: FormatMode) -> Vec<u8> {
             whitespace_run_end = seek;
         }
 
-        if whitespace_run_end == end { 0 } else { source[whitespace_run_end] }
+        if whitespace_run_end == end {
+            0
+        } else {
+            source[whitespace_run_end]
+        }
     };
 
     let is_xy = |it: usize| -> bool {
@@ -259,10 +270,14 @@ pub fn prettify_bytes(source: &[u8], mode: FormatMode) -> Vec<u8> {
         let c = source[cursor];
 
         // A comment line is not s-expression syntax and must keep its spacing, quotes and parens
-        if list_depth == 0 && c == b'#' && (formatted.is_empty() || formatted.last() == Some(&b'\n'))
+        if list_depth == 0
+            && c == b'#'
+            && (formatted.is_empty() || formatted.last() == Some(&b'\n'))
         {
-            let line_end =
-                source[cursor..].iter().position(|&b| b == b'\n').map_or(end, |p| cursor + p);
+            let line_end = source[cursor..]
+                .iter()
+                .position(|&b| b == b'\n')
+                .map_or(end, |p| cursor + p);
 
             formatted.extend_from_slice(&source[cursor..line_end]);
             formatted.push(b'\n');
@@ -465,7 +480,10 @@ mod tests {
 
         format_uuid(&mut out, "0f1a2b3c-0000-4000-8000-00000000abcd").unwrap();
 
-        assert_eq!(out.string(), "(uuid \"0f1a2b3c-0000-4000-8000-00000000abcd\")");
+        assert_eq!(
+            out.string(),
+            "(uuid \"0f1a2b3c-0000-4000-8000-00000000abcd\")"
+        );
     }
 
     #[test]
@@ -514,7 +532,10 @@ mod tests {
 
         out.clear();
         format_stream_data(&mut out, &[0x42; 58]).unwrap();
-        assert_eq!(out.string(), format!("(data\n\"{}\"\n\"Qg==\")", "QkJC".repeat(19)));
+        assert_eq!(
+            out.string(),
+            format!("(data\n\"{}\"\n\"Qg==\")", "QkJC".repeat(19))
+        );
     }
 
     #[test]
@@ -553,7 +574,10 @@ mod tests {
 
     #[test]
     fn prettify_keeps_quoted_text() {
-        assert_eq!(pretty("(a \"b   c\" \"(d)\"  \" \")"), "(a \"b   c\" \"(d)\" \" \")\n");
+        assert_eq!(
+            pretty("(a \"b   c\" \"(d)\"  \" \")"),
+            "(a \"b   c\" \"(d)\" \" \")\n"
+        );
         // An escaped quote does not end the string, an escaped backslash before a quote does.
         assert_eq!(pretty("(a \"x \\\" (  y\" b)"), "(a \"x \\\" (  y\" b)\n");
         assert_eq!(pretty("(a \"x\\\\\" (b))"), "(a \"x\\\\\"\n\t(b)\n)\n");
@@ -580,7 +604,10 @@ mod tests {
         );
 
         // "(xyz" and "(xy)" are not points.
-        assert_eq!(pretty("(pts (xyz 1 2) (xyz 3 4))"), "(pts\n\t(xyz 1 2)\n\t(xyz 3 4)\n)\n");
+        assert_eq!(
+            pretty("(pts (xyz 1 2) (xyz 3 4))"),
+            "(pts\n\t(xyz 1 2)\n\t(xyz 3 4)\n)\n"
+        );
         assert_eq!(pretty("(pts (xy) (xy))"), "(pts\n\t(xy)\n\t(xy)\n)\n");
     }
 
@@ -607,7 +634,10 @@ mod tests {
 
     #[test]
     fn prettify_comment_lines() {
-        assert_eq!(pretty("# a  (comment) \"x\n(a  b)"), "# a  (comment) \"x\n(a b)\n");
+        assert_eq!(
+            pretty("# a  (comment) \"x\n(a  b)"),
+            "# a  (comment) \"x\n(a b)\n"
+        );
         // The line break the comment ends with is followed by the final one.
         assert_eq!(pretty("# only"), "# only\n\n");
         assert_eq!(pretty("# only\n"), "# only\n\n");
@@ -633,7 +663,10 @@ mod tests {
             "(effects\n\t(font (size 1 1) (thickness 0.15))\n\t(justify left)\n)\n"
         );
         assert_eq!(
-            prettify("(a (stroke (width 0.1) (type solid)) (fill none))", FormatMode::CompactTextProperties),
+            prettify(
+                "(a (stroke (width 0.1) (type solid)) (fill none))",
+                FormatMode::CompactTextProperties
+            ),
             "(a\n\t(stroke (width 0.1) (type solid))\n\t(fill none)\n)\n"
         );
         // Not affected in the library table mode.

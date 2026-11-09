@@ -1,7 +1,7 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
 // Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
-// Copyright (C) 2019-2020 KiCad Developers, see AUTHORS.txt for contributors.
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU General Public License as published by the
@@ -66,31 +66,56 @@ use super::{
 use crate::lemon::{Grammar, YyStackEntry, YyTables};
 
 // ---- BEGIN GENERATED TABLES (tests/oracle/gen_tables.py) ----
-// Token codes (grammar.h).
+// Token codes (grammar.h).  Not every token of a grammar is produced by its lexer.
+#[allow(dead_code)]
 pub(crate) const G_IDENTIFIER: i32 = 1;
+#[allow(dead_code)]
 pub(crate) const G_ASSIGN: i32 = 2;
+#[allow(dead_code)]
 pub(crate) const G_SEMCOL: i32 = 3;
+#[allow(dead_code)]
 pub(crate) const G_COMMA: i32 = 4;
+#[allow(dead_code)]
 pub(crate) const G_BOOL_AND: i32 = 5;
+#[allow(dead_code)]
 pub(crate) const G_BOOL_OR: i32 = 6;
+#[allow(dead_code)]
 pub(crate) const G_BOOL_XOR: i32 = 7;
+#[allow(dead_code)]
 pub(crate) const G_LESS_THAN: i32 = 8;
+#[allow(dead_code)]
 pub(crate) const G_GREATER_THAN: i32 = 9;
+#[allow(dead_code)]
 pub(crate) const G_LESS_EQUAL_THAN: i32 = 10;
+#[allow(dead_code)]
 pub(crate) const G_GREATER_EQUAL_THAN: i32 = 11;
+#[allow(dead_code)]
 pub(crate) const G_EQUAL: i32 = 12;
+#[allow(dead_code)]
 pub(crate) const G_NOT_EQUAL: i32 = 13;
+#[allow(dead_code)]
 pub(crate) const G_BOOL_NOT: i32 = 14;
+#[allow(dead_code)]
 pub(crate) const G_PLUS: i32 = 15;
+#[allow(dead_code)]
 pub(crate) const G_MINUS: i32 = 16;
+#[allow(dead_code)]
 pub(crate) const G_DIVIDE: i32 = 17;
+#[allow(dead_code)]
 pub(crate) const G_MULT: i32 = 18;
+#[allow(dead_code)]
 pub(crate) const G_STRUCT_REF: i32 = 19;
+#[allow(dead_code)]
 pub(crate) const G_UNIT: i32 = 20;
+#[allow(dead_code)]
 pub(crate) const G_ENDS: i32 = 21;
+#[allow(dead_code)]
 pub(crate) const G_VALUE: i32 = 22;
+#[allow(dead_code)]
 pub(crate) const G_STRING: i32 = 23;
+#[allow(dead_code)]
 pub(crate) const G_PARENL: i32 = 24;
+#[allow(dead_code)]
 pub(crate) const G_PARENR: i32 = 25;
 
 // Rule names (yyRuleName[]), for reference:
@@ -143,68 +168,45 @@ pub(crate) static TABLES: YyTables = YyTables {
     yy_shift_count: 42,
     yy_reduce_count: 20,
     yy_action: &[
-        23, 82, 1, 1, 20, 14, 13, 22, 19, 18, 17, 16,
-        8, 15, 21, 12, 11, 9, 10, 7, 34, 35, 20, 14,
-        13, 74, 19, 18, 17, 16, 8, 15, 33, 12, 11, 9,
-        10, 7, 105, 26, 20, 14, 13, 75, 19, 18, 17, 16,
-        8, 15, 39, 12, 11, 9, 10, 7, 40, 52, 14, 13,
-        36, 19, 18, 17, 16, 8, 15, 37, 12, 11, 9, 10,
-        7, 13, 27, 19, 18, 17, 16, 8, 15, 25, 12, 11,
-        9, 10, 7, 81, 81, 81, 81, 81, 81, 81, 12, 11,
-        9, 10, 7, 19, 18, 17, 16, 8, 15, 7, 12, 11,
-        9, 10, 7, 109, 41, 12, 11, 9, 10, 7, 9, 10,
-        7, 23, 28, 29, 111, 6, 5, 4, 41, 30, 31, 32,
-        80, 42, 55, 3, 24, 2, 54, 83, 83, 6, 5, 4,
-        41, 83, 83, 83, 80, 42, 55, 3, 83, 83, 83, 83,
-        83, 6, 5, 4, 41, 83, 83, 83, 83, 42, 55, 3,
-        76, 83, 83, 83, 83, 6, 5, 4, 83, 83, 83, 83,
-        83, 42, 55, 3,
+        23, 82, 1, 1, 20, 14, 13, 22, 19, 18, 17, 16, 8, 15, 21, 12, 11, 9, 10, 7, 34, 35, 20, 14,
+        13, 74, 19, 18, 17, 16, 8, 15, 33, 12, 11, 9, 10, 7, 105, 26, 20, 14, 13, 75, 19, 18, 17,
+        16, 8, 15, 39, 12, 11, 9, 10, 7, 40, 52, 14, 13, 36, 19, 18, 17, 16, 8, 15, 37, 12, 11, 9,
+        10, 7, 13, 27, 19, 18, 17, 16, 8, 15, 25, 12, 11, 9, 10, 7, 81, 81, 81, 81, 81, 81, 81, 12,
+        11, 9, 10, 7, 19, 18, 17, 16, 8, 15, 7, 12, 11, 9, 10, 7, 109, 41, 12, 11, 9, 10, 7, 9, 10,
+        7, 23, 28, 29, 111, 6, 5, 4, 41, 30, 31, 32, 80, 42, 55, 3, 24, 2, 54, 83, 83, 6, 5, 4, 41,
+        83, 83, 83, 80, 42, 55, 3, 83, 83, 83, 83, 83, 6, 5, 4, 41, 83, 83, 83, 83, 42, 55, 3, 76,
+        83, 83, 83, 83, 6, 5, 4, 83, 83, 83, 83, 83, 42, 55, 3,
     ],
     yy_lookahead: &[
-        26, 27, 28, 29, 4, 5, 6, 26, 8, 9, 10, 11,
-        12, 13, 26, 15, 16, 17, 18, 19, 26, 26, 4, 5,
-        6, 25, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17,
-        18, 19, 26, 26, 4, 5, 6, 25, 8, 9, 10, 11,
-        12, 13, 26, 15, 16, 17, 18, 19, 26, 21, 5, 6,
-        26, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17, 18,
-        19, 6, 26, 8, 9, 10, 11, 12, 13, 26, 15, 16,
-        17, 18, 19, 8, 9, 10, 11, 12, 13, 19, 15, 16,
-        17, 18, 19, 8, 9, 10, 11, 12, 13, 19, 15, 16,
-        17, 18, 19, 0, 1, 15, 16, 17, 18, 19, 17, 18,
-        19, 26, 26, 26, 29, 14, 15, 16, 1, 26, 26, 26,
-        21, 22, 23, 24, 26, 24, 20, 30, 30, 14, 15, 16,
-        1, 30, 30, 30, 21, 22, 23, 24, 30, 30, 30, 30,
-        30, 14, 15, 16, 1, 30, 30, 30, 30, 22, 23, 24,
-        25, 30, 30, 30, 30, 14, 15, 16, 30, 30, 30, 30,
-        30, 22, 23, 24, 30, 30, 30, 26, 26, 26, 26, 26,
-        26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26,
-        26, 26, 26, 26, 26, 26,
+        26, 27, 28, 29, 4, 5, 6, 26, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17, 18, 19, 26, 26, 4, 5, 6,
+        25, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17, 18, 19, 26, 26, 4, 5, 6, 25, 8, 9, 10, 11, 12,
+        13, 26, 15, 16, 17, 18, 19, 26, 21, 5, 6, 26, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17, 18, 19,
+        6, 26, 8, 9, 10, 11, 12, 13, 26, 15, 16, 17, 18, 19, 8, 9, 10, 11, 12, 13, 19, 15, 16, 17,
+        18, 19, 8, 9, 10, 11, 12, 13, 19, 15, 16, 17, 18, 19, 0, 1, 15, 16, 17, 18, 19, 17, 18, 19,
+        26, 26, 26, 29, 14, 15, 16, 1, 26, 26, 26, 21, 22, 23, 24, 26, 24, 20, 30, 30, 14, 15, 16,
+        1, 30, 30, 30, 21, 22, 23, 24, 30, 30, 30, 30, 30, 14, 15, 16, 1, 30, 30, 30, 30, 22, 23,
+        24, 25, 30, 30, 30, 30, 14, 15, 16, 30, 30, 30, 30, 30, 22, 23, 24, 30, 30, 30, 26, 26, 26,
+        26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26,
     ],
     yy_shift_ofst: &[
-        127, 111, 143, 159, 159, 159, 159, 159, 159, 159, 159, 159,
-        159, 159, 159, 159, 159, 159, 159, 159, 159, 0, 18, 36,
-        53, 67, 79, 91, 79, 79, 79, 79, 79, 98, 101, 101,
-        101, 101, 74, 86, 86, 113, 118,
+        127, 111, 143, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159, 159,
+        159, 159, 159, 0, 18, 36, 53, 67, 79, 91, 79, 79, 79, 79, 79, 98, 101, 101, 101, 101, 74,
+        86, 86, 113, 118,
     ],
     yy_reduce_ofst: &[
-        -26, 95, -19, -12, -6, -5, 6, 12, 13, 24, 30, 34,
-        41, 48, 55, 96, 97, 103, 104, 105, 110,
+        -26, 95, -19, -12, -6, -5, 6, 12, 13, 24, 30, 34, 41, 48, 55, 96, 97, 103, 104, 105, 110,
     ],
     yy_default: &[
-        81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81,
-        81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81,
-        89, 95, 104, 96, 94, 93, 92, 91, 90, 97, 100, 99,
-        101, 98, 105, 103, 102, 88, 85,
+        81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81, 81,
+        81, 89, 95, 104, 96, 94, 93, 92, 91, 90, 97, 100, 99, 101, 98, 105, 103, 102, 88, 85,
     ],
     yy_rule_info_lhs: &[
-        29, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26,
-        26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26,
-        26, 27, 28, 28, 29,
+        29, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26,
+        26, 26, 27, 28, 28, 29,
     ],
     yy_rule_info_nrhs: &[
-        -2, -1, -2, -1, -1, -3, -3, -3, -3, -3, -3, -3,
-        -3, -2, -3, -2, -2, -3, -3, -3, -3, -3, -3, -4,
-        -3, -1, -1, -2, -1,
+        -2, -1, -2, -1, -1, -3, -3, -3, -3, -3, -3, -3, -3, -2, -3, -2, -2, -3, -3, -3, -3, -3, -3,
+        -4, -3, -1, -1, -2, -1,
     ],
 };
 // ---- END GENERATED TABLES ----
@@ -269,8 +271,9 @@ fn copy_of(p_eval: &mut Compiler<'_>, b: Option<NodeId>) -> YyMinor {
     // A stale handle can only be met when a compiler is reused after a syntax error (the
     // parser stack then still refers to nodes of the previous expression; C++ dereferences a
     // dangling pointer in that case).
-    let Some((op, value, leaf)) =
-        b.and_then(|b| p_eval.node(b)).map(|b| (b.op, b.value.clone(), b.leaf))
+    let Some((op, value, leaf)) = b
+        .and_then(|b| p_eval.node(b))
+        .map(|b| (b.op, b.value.clone(), b.leaf))
     else {
         return YyMinor::None;
     };

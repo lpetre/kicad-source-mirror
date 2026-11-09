@@ -356,7 +356,7 @@ impl Kiid {
             h1 ^= c;
             h1 = h1.wrapping_mul(0x0000_0100_0000_01b3);
             h2 ^= c.wrapping_mul(0x9E37_79B9_7F4A_7C15);
-            h2 = (h2 << 13) | (h2 >> 51);
+            h2 = h2.rotate_left(13); // ( h2 << 13 ) | ( h2 >> 51 )
         }
 
         // "%08x-%04x-%04x-%04x-%012llx" of
@@ -387,6 +387,17 @@ impl Kiid {
                 break;
             }
         }
+    }
+}
+
+impl Default for Kiid {
+    /// The nil id.
+    ///
+    /// Note that this is *not* what the C++ default constructor does: `KIID()` draws a fresh
+    /// random id, which in the port is the explicit [`Kiid::new`].  `Default` exists so that
+    /// item structs can derive `Default` and start with a nil id.
+    fn default() -> Self {
+        Kiid::nil()
     }
 }
 

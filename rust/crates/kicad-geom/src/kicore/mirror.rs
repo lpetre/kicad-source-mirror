@@ -62,8 +62,11 @@ where
 /// Updates aPoint with the mirror of aPoint relative to the aMirrorRef,
 /// in the specified direction.
 #[inline]
-pub fn mirror_point<T>(a_point: &mut Vector2<T>, a_mirror_ref: Vector2<T>, a_flip_direction: FlipDirection)
-where
+pub fn mirror_point<T>(
+    a_point: &mut Vector2<T>,
+    a_mirror_ref: Vector2<T>,
+    a_flip_direction: FlipDirection,
+) where
     T: Coord + Sub<Output = T> + Add<Output = T> + Neg<Output = T>,
 {
     if a_flip_direction == FlipDirection::LeftRight {

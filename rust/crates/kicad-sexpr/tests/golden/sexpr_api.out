@@ -1,0 +1,41 @@
+variadic	7	1	(1 2 3.5 "str" sym "str2" node)
+add_children	(1 2 3.5 "str" sym "str2" node -7 0.25)
+insert	10	(name "text" 5 0 1.5 2.5 "plain" \x0a  (2 42.42 "substring") 0.125 9)
+insert_level	\x0a    (name "text" 5 0 1.5 2.5 "plain" \x0a      (2 42.42 "substring") 0.125 9)
+sub_line	7	3
+extract_string_as_symbol	invalid_argument: SEXPR is not a string type!
+extract_symbol	name
+extract_symbol_as_string	invalid_argument: operator>>: SEXPR is not a symbol type!
+extract_int_from_string	invalid_argument: SEXPR is not a integer type!
+extract_long_from_string	invalid_argument: SEXPR is not a long integer type!
+extract_float_from_string	invalid_argument: SEXPR is not a float type!
+extract_double_from_string	invalid_argument: SEXPR is not a double type!
+extract_string	text
+extract_std_string_from_int	invalid_argument: SEXPR is not a string type!
+extract_double_from_int	invalid_argument: SEXPR is not a double type!
+extract_int	5
+extract_long	1099511627776
+extract_int_from_double	invalid_argument: SEXPR is not a integer type!
+extract_double	1.5
+extract_float	2.5
+extract_std_string	plain
+scan	4	5	1099511627776
+scan_strings	3	name	text	5
+scan_mismatch	1
+scan_wrong_type	1
+scan_skipped	5	1099511627776	kept
+scan_const_string	2
+values	7	7	7	7	2.5	2.5	s	sym	12	1
+double_as_integer	invalid_type_exception: SEXPR is not a integer type!
+double_as_int	invalid_type_exception: SEXPR is not a integer type!
+string_as_double	invalid_type_exception: SEXPR is not a double type!
+string_as_float	invalid_type_exception: SEXPR is not a double type!
+symbol_as_string	invalid_type_exception: SEXPR is not a string type!
+string_as_symbol	invalid_type_exception: GetSymbol(): SEXPR is not a symbol type! error line 1
+symbol_line_as_symbol	invalid_type_exception: GetSymbol(): SEXPR is not a symbol type! error line 42
+integer_children	invalid_type_exception: SEXPR is not a list type!
+integer_child	invalid_type_exception: SEXPR is not a list type!
+integer_number_of_children	invalid_type_exception: SEXPR is not a list type!
+integer_add_child	invalid_type_exception: SEXPR is not a list type!
+integer_list	invalid_type_exception: SEXPR is not a list type!
+wide	4294967301	5	5

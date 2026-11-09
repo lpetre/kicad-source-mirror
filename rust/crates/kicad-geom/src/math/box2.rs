@@ -51,8 +51,12 @@
 //! | `IsBOX2Safe( box )` | `is_box2_safe` (method) |
 //! | `KiROUND( BOX2D )` | [`crate::math::util::ki_round`] |
 
-use crate::geometry::eda_angle::{ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_270, ANGLE_360, DEGREES_T, EdaAngle};
-use crate::math::util::{KiRound, ki_checked_cast, ki_round, ki_round_to, std_clamp, std_max, std_min};
+use crate::geometry::eda_angle::{
+    ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_270, ANGLE_360, DEGREES_T, EdaAngle,
+};
+use crate::math::util::{
+    KiRound, ki_checked_cast, ki_round, ki_round_to, std_clamp, std_max, std_min,
+};
 use crate::math::vector2::{Coord, Vector2, Vector2D, Vector2I, Vector2L};
 use crate::trigo::{rotate_point, rotate_point_around, segment_intersects_segment};
 
@@ -1036,7 +1040,10 @@ pub fn box2i_safe(a_input: &Box2D) -> Box2I {
     let right: i64 = std_clamp(a_input.right(), LOW, HIGH) as i64;
     let bottom: i64 = std_clamp(a_input.bottom(), LOW, HIGH) as i64;
 
-    Box2I::new(Vector2I::new(left, top), Vector2L::new(right - left as i64, bottom - top as i64))
+    Box2I::new(
+        Vector2I::new(left, top),
+        Vector2L::new(right - left as i64, bottom - top as i64),
+    )
 }
 
 /// Port of `BOX2ISafe( const VECTOR2D& aPos, const VECTOR2D& aSize )`.
@@ -1050,7 +1057,10 @@ pub fn box2i_safe_from_pos_size(a_pos: Vector2D, a_size: Vector2D) -> Box2I {
     let right: i64 = std_clamp(a_pos.x + a_size.x, LOW, HIGH) as i64;
     let bottom: i64 = std_clamp(a_pos.y + a_size.y, LOW, HIGH) as i64;
 
-    Box2I::new(Vector2I::new(left, top), Vector2L::new(right - left as i64, bottom - top as i64))
+    Box2I::new(
+        Vector2I::new(left, top),
+        Vector2L::new(right - left as i64, bottom - top as i64),
+    )
 }
 
 /// Port of `BOX2ISafe( const VECTOR2I& aPos, const VECTOR2<S>& aSize )` for integral `S`.
@@ -1066,7 +1076,10 @@ pub fn box2i_safe_from_int(a_pos: Vector2I, a_size: impl Into<Vector2L>) -> Box2
     let right: i64 = std_clamp(ext_right, LOW, HIGH);
     let bottom: i64 = std_clamp(ext_bottom, LOW, HIGH);
 
-    Box2I::new(a_pos, Vector2L::new(right - a_pos.x as i64, bottom - a_pos.y as i64))
+    Box2I::new(
+        a_pos,
+        Vector2L::new(right - a_pos.x as i64, bottom - a_pos.y as i64),
+    )
 }
 
 impl KiRound for Box2<f64> {
@@ -1114,14 +1127,20 @@ mod tests {
         assert_eq!(b.size(), Vector2L::new(100, 50));
         assert_eq!(b.end(), Vector2I::new(100, 100));
         assert_eq!(b, Box2I::new(Vector2I::new(0, 50), Vector2I::new(100, 50)));
-        assert_eq!(Box2I::from_pos(Vector2I::new(1, 2)).size(), Vector2L::new(0, 0));
+        assert_eq!(
+            Box2I::from_pos(Vector2I::new(1, 2)).size(),
+            Vector2L::new(0, 0)
+        );
     }
 
     #[test]
     fn accessors_and_setters() {
         let mut b = Box2I::new(Vector2I::new(1, 2), Vector2I::new(30, 40));
 
-        assert_eq!((b.x(), b.y(), b.left(), b.top(), b.right(), b.bottom()), (1, 2, 1, 2, 31, 42));
+        assert_eq!(
+            (b.x(), b.y(), b.left(), b.top(), b.right(), b.bottom()),
+            (1, 2, 1, 2, 31, 42)
+        );
         assert_eq!((b.width(), b.height()), (30, 40));
         assert_eq!(b.centre(), Vector2I::new(16, 22));
         assert_eq!(b.center(), b.centre());
@@ -1143,7 +1162,10 @@ mod tests {
         b.offset(Vector2I::new(1, 1));
         b.move_(Vector2I::new(1, 1));
         assert_eq!(b.origin(), Vector2I::new(2, 2));
-        assert_eq!(b.with_offset(Vector2I::new(8, 8)).origin(), Vector2I::new(10, 10));
+        assert_eq!(
+            b.with_offset(Vector2I::new(8, 8)).origin(),
+            Vector2I::new(10, 10)
+        );
         b.set_origin_xy(0, 0);
         b.set_size_wh(7, 8);
         assert_eq!(b.end(), Vector2I::new(7, 8));
@@ -1188,7 +1210,10 @@ mod tests {
         // A long thin rect through the middle of the box, at any angle
         let thin = Box2I::new(Vector2I::new(-150, 45), Vector2I::new(400, 10));
         for deg in [0.0, 30.0, 45.0, 90.0, 135.0, 180.0, 270.0, 300.0] {
-            assert!(b.intersects_rotated(&thin, EdaAngle::new(deg, DEGREES_T)), "{deg}");
+            assert!(
+                b.intersects_rotated(&thin, EdaAngle::new(deg, DEGREES_T)),
+                "{deg}"
+            );
         }
 
         // Centre (400, 5): rotating by 45 degrees keeps it away from the box
@@ -1199,14 +1224,29 @@ mod tests {
     fn inflate_and_deflate() {
         let b = Box2I::new(Vector2I::new(0, 0), Vector2I::new(100, 50));
 
-        assert_eq!(b.inflated(10), Box2I::new(Vector2I::new(-10, -10), Vector2I::new(120, 70)));
-        assert_eq!(b.inflated_xy(10, -10), Box2I::new(Vector2I::new(-10, 10), Vector2I::new(120, 30)));
+        assert_eq!(
+            b.inflated(10),
+            Box2I::new(Vector2I::new(-10, -10), Vector2I::new(120, 70))
+        );
+        assert_eq!(
+            b.inflated_xy(10, -10),
+            Box2I::new(Vector2I::new(-10, 10), Vector2I::new(120, 30))
+        );
         // Deflating by more than half the size collapses the axis onto its centre
-        assert_eq!(b.inflated(-30), Box2I::new(Vector2I::new(30, 25), Vector2I::new(40, 0)));
-        assert_eq!(b.inflated(-60), Box2I::new(Vector2I::new(50, 25), Vector2I::new(0, 0)));
+        assert_eq!(
+            b.inflated(-30),
+            Box2I::new(Vector2I::new(30, 25), Vector2I::new(40, 0))
+        );
+        assert_eq!(
+            b.inflated(-60),
+            Box2I::new(Vector2I::new(50, 25), Vector2I::new(0, 0))
+        );
 
         let d = Box2D::new(Vector2D::new(1.0, 2.0), Vector2D::new(3.0, 4.0));
-        assert_eq!(d.inflated(1.5), Box2D::new(Vector2D::new(-0.5, 0.5), Vector2D::new(6.0, 7.0)));
+        assert_eq!(
+            d.inflated(1.5),
+            Box2D::new(Vector2D::new(-0.5, 0.5), Vector2D::new(6.0, 7.0))
+        );
 
         let mut l = Box2L::new(Vector2L::new(0, 0), Vector2L::new(10, 10));
         l.inflate(5_000_000_000);
@@ -1246,7 +1286,10 @@ mod tests {
         assert_eq!(b.squared_distance_box(&other), 25);
         assert_eq!(b.distance_box(&other), 5);
         assert_eq!(other.distance_box(&b), 5);
-        assert_eq!(b.distance_box(&Box2I::new(Vector2I::new(50, 50), Vector2I::new(10, 10))), 0);
+        assert_eq!(
+            b.distance_box(&Box2I::new(Vector2I::new(50, 50), Vector2I::new(10, 10))),
+            0
+        );
 
         let d = Box2D::new(Vector2D::new(0.0, 0.0), Vector2D::new(1.0, 1.0));
         assert_eq!(d.distance_point(Vector2D::new(4.0, 5.0)), 5.0);
@@ -1257,12 +1300,19 @@ mod tests {
         let mut b = Box2I::default();
         b.compute(&[]);
         assert!(!b.is_valid());
-        b.compute(&[Vector2I::new(5, -5), Vector2I::new(-10, 20), Vector2I::new(0, 0)]);
+        b.compute(&[
+            Vector2I::new(5, -5),
+            Vector2I::new(-10, 20),
+            Vector2I::new(0, 0),
+        ]);
         assert_eq!(b, Box2I::new(Vector2I::new(-10, -5), Vector2I::new(15, 25)));
 
         let r = Box2I::new(Vector2I::new(0, 0), Vector2I::new(100, 50));
         let bb = r.bounding_box_rotated(Vector2I::new(0, 0), ANGLE_90);
-        assert_eq!(bb, Box2I::new(Vector2I::new(0, -100), Vector2I::new(50, 100)));
+        assert_eq!(
+            bb,
+            Box2I::new(Vector2I::new(0, -100), Vector2I::new(50, 100))
+        );
     }
 
     #[test]
@@ -1282,7 +1332,13 @@ mod tests {
         assert_eq!(s3.origin(), Vector2I::new(10, 20));
         assert_eq!(s3.end(), Vector2I::new(i32::MAX, 25));
 
-        let rounded = ki_round(Box2D::new(Vector2D::new(0.5, -0.5), Vector2D::new(2.5, 3.4)));
-        assert_eq!(rounded, Box2I::new(Vector2I::new(1, -1), Vector2I::new(3, 3)));
+        let rounded = ki_round(Box2D::new(
+            Vector2D::new(0.5, -0.5),
+            Vector2D::new(2.5, 3.4),
+        ));
+        assert_eq!(
+            rounded,
+            Box2I::new(Vector2I::new(1, -1), Vector2I::new(3, 3))
+        );
     }
 }

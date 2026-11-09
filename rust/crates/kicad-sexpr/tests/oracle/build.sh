@@ -1,4 +1,7 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Part of the KiCad Rust port.  Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+#
 # Build the oracle harness of the kicad-sexpr crate (see oracle.cpp) from the original KiCad
 # C++ sources.  Needs a C++20 compiler, CMake and wxWidgets (wx-config, base library only).
 #

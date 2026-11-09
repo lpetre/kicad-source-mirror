@@ -277,7 +277,10 @@ impl LibId {
     /// proper format as an LIB_ID for a combination of `library_name` and `lib_item_name`.
     ///
     /// Fails (C++ throws `PARSE_ERROR`) if the library nickname contains ':'.
-    pub fn format_parts(library_name: &str, lib_item_name: &str) -> Result<String, LibIdParseError> {
+    pub fn format_parts(
+        library_name: &str,
+        lib_item_name: &str,
+    ) -> Result<String, LibIdParseError> {
         let mut ret = String::new();
 
         if !library_name.is_empty() {
@@ -343,7 +346,10 @@ impl LibId {
             return 0;
         }
 
-        let retv = self.library_name.as_bytes().cmp(lib_id.library_name.as_bytes());
+        let retv = self
+            .library_name
+            .as_bytes()
+            .cmp(lib_id.library_name.as_bytes());
 
         let ordering = if retv != Ordering::Equal {
             retv
@@ -542,13 +548,25 @@ mod tests {
         assert_eq!(id.lib_nickname(), "other");
 
         assert_eq!(LibId::find_illegal_library_name_char("my lib"), 0);
-        assert_eq!(LibId::find_illegal_library_name_char("my:lib"), u32::from(':'));
-        assert_eq!(LibId::find_illegal_library_name_char("my\\lib"), u32::from('\\'));
-        assert_eq!(LibId::find_illegal_library_name_char("my\tlib"), u32::from('\t'));
+        assert_eq!(
+            LibId::find_illegal_library_name_char("my:lib"),
+            u32::from(':')
+        );
+        assert_eq!(
+            LibId::find_illegal_library_name_char("my\\lib"),
+            u32::from('\\')
+        );
+        assert_eq!(
+            LibId::find_illegal_library_name_char("my\tlib"),
+            u32::from('\t')
+        );
         assert_eq!(LibId::find_illegal_library_name_char("bibliothèque"), 0);
 
         assert_eq!(LibId::fix_illegal_chars("a:b\\c d\te", true), "a_b_c d_e");
-        assert_eq!(LibId::fix_illegal_chars("a:b\\c d\te<é>", false), "a_b_c d_e_é_");
+        assert_eq!(
+            LibId::fix_illegal_chars("a:b\\c d\te<é>", false),
+            "a_b_c d_e_é_"
+        );
     }
 
     #[test]

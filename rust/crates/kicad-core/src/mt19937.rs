@@ -196,7 +196,9 @@ impl Default for Mt19937 {
 
 impl std::fmt::Debug for Mt19937 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Mt19937").field("i", &self.i).finish_non_exhaustive()
+        f.debug_struct("Mt19937")
+            .field("i", &self.i)
+            .finish_non_exhaustive()
     }
 }
 

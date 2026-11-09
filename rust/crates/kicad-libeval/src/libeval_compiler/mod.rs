@@ -1,6 +1,7 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
 // Copyright (C) 2007 Michael Geselbracht, mgeselbracht3@gmail.com
+// Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
 // Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -62,9 +63,7 @@ pub mod value;
 pub use compiler::Compiler;
 pub use context::{Context, ValueId};
 pub use tokenizer::Tokenizer;
-pub use ucode::{
-    DefaultBinder, FuncCallRef, NoVarRef, Ucode, UcodeBinder, Uop, UopValue, VarRef,
-};
+pub use ucode::{DefaultBinder, FuncCallRef, NoVarRef, Ucode, UcodeBinder, Uop, UopValue, VarRef};
 pub use value::{CustomValue, NoCustomValue, Value};
 
 use crate::eda_units::EdaUnits;

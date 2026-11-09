@@ -13,4 +13,3 @@ workspace = true
 [dependencies]
 
 [dev-dependencies]
-kicad-qa = { path = "../kicad-qa" }

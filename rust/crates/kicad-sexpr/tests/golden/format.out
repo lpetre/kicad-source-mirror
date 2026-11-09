@@ -1,0 +1,28 @@
+bool	(locked yes)(hide no)(a yes)(b no)(c none)
+uuid	(uuid "0f1a2b3c-0000-4000-8000-00000000abcd")
+custom_properties	(custom_property "a \x5c"b\x5c"" "line1\x5cnline2")(custom_property "key" "value")
+stream_data	0	(data)
+stream_data	1	(data\x0a"Cw==")
+stream_data	2	(data\x0a"CzA=")
+stream_data	3	(data\x0a"CzBV")
+stream_data	4	(data\x0a"CzBVeg==")
+stream_data	56	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4=")
+stream_data	57	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j")
+stream_data	58	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j"\x0a"SA==")
+stream_data	113	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j"\x0a"SG2St9wBJktwlbrfBClOc5i94gcsUXabwOUKL1R5nsPoDTJXfKHG6xA1Wn+kye4TOF2Cp8zxFjs=")
+stream_data	114	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j"\x0a"SG2St9wBJktwlbrfBClOc5i94gcsUXabwOUKL1R5nsPoDTJXfKHG6xA1Wn+kye4TOF2Cp8zxFjtg")
+stream_data	115	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j"\x0a"SG2St9wBJktwlbrfBClOc5i94gcsUXabwOUKL1R5nsPoDTJXfKHG6xA1Wn+kye4TOF2Cp8zxFjtg"\x0a"hQ==")
+stream_data	300	(data\x0a"CzBVep/E6Q4zWH2ix+wRNluApcrvFDleg6jN8hc8YYar0PUaP2SJrtP4HUJnjLHW+yBFao+02f4j"\x0a"SG2St9wBJktwlbrfBClOc5i94gcsUXabwOUKL1R5nsPoDTJXfKHG6xA1Wn+kye4TOF2Cp8zxFjtg"\x0a"harP9Bk+Y4it0vccQWaLsNX6H0RpjrPY/SJHbJG22wAlSm+Uud4DKE1yl7zhBitQdZq/5AkuU3id"\x0a"wucMMVZ7oMXqDzRZfqPI7RI3XIGmy/AVOl+Eqc7zGD1ih6zR9htAZYqv1PkeQ2iNstf8IUZrkLXa"\x0a"/yRJbpO43QInTHGWu+AFKk90mb7jCC1Sd5zB5gswVXqfxOkOM1h9osfsETZbgKXK7xQ5XoOozfIX"\x0a"PGGGq9D1Gj9kia7T+B1C")
+print	14	14	0	4	      (net 42)(x 0.1 2.5000)    
+strip_useless	net42x0.12.5000
+io_error	io_error	Line length exceeded
+io_cancelled	io_error	Canceled by user.
+io_cancelled_msg	io_error	stop
+future_format	parse_error	KiCad was unable to open this file because it was created with a more recent version than the one you are running.\x0a\x0aTo open it you will need to upgrade KiCad to a version dated 20250101 or later.		0	0	
+future_format_generator	parse_error	KiCad was unable to open this file because it was created with a more recent version than the one you are running.\x0a\x0aTo open it you will need to upgrade KiCad to version 10.0 or later (file format dated 20250101 or later).		0	0	
+future_format_fields	20250101	10.0
+parse_error	parse_error	Unexpected 'foo' in 'f.kicad_pcb', line 3, offset 9.	Unexpected 'foo'	3	9	the line\x0a
+future_format_from_parse	parse_error	KiCad was unable to open this file because it was created with a more recent version than the one you are running.\x0a\x0aTo open it you will need to upgrade KiCad to a version dated 20250101 or later.\x0a\x0aFull error text:\x0aUnexpected 'foo' in 'f.kicad_pcb', line 3, offset 9.		3	9	the line\x0a
+future_format_from_parse_generator	parse_error	KiCad was unable to open this file because it was created with a more recent version than the one you are running.\x0a\x0aTo open it you will need to upgrade KiCad to version 10.0 or later (file format dated 20250101 or later).\x0a\x0aFull error text:\x0aUnexpected 'foo' in 'f.kicad_pcb', line 3, offset 9.		3	9	the line\x0a
+future_format_from_future_format	parse_error	KiCad was unable to open this file because it was created with a more recent version than the one you are running.\x0a\x0aTo open it you will need to upgrade KiCad to version 10.0 or later (file format dated 20250101 or later).\x0a\x0aFull error text:\x0aUnexpected 'foo' in 'f.kicad_pcb', line 3, offset 9.		3	9	the line\x0a
+future_format_from_future_format_fields	20250101	10.0

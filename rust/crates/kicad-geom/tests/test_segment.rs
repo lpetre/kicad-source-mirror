@@ -289,7 +289,11 @@ const SEG_SEG_DIST_CASES: &[SegSegDistanceCase] = &[
 #[test]
 fn seg_seg_distance() {
     for c in SEG_SEG_DIST_CASES {
-        assert!(seg_distance_correct(&c.seg_a, &c.seg_b, c.exp_dist), "case: {}", c.case_name);
+        assert!(
+            seg_distance_correct(&c.seg_a, &c.seg_b, c.exp_dist),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -358,7 +362,11 @@ const SEG_VEC_DIST_CASES: &[SegVectorDistanceCase] = &[
 #[test]
 fn seg_vec_distance() {
     for c in SEG_VEC_DIST_CASES {
-        assert!(seg_vec_distance_correct(&c.seg, c.vec, c.exp_dist), "case: {}", c.case_name);
+        assert!(
+            seg_vec_distance_correct(&c.seg, c.vec, c.exp_dist),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -561,7 +569,11 @@ const SEG_VEC_COLLINEAR_CASES: &[SegSegBooleanCase] = &[
 #[test]
 fn seg_seg_collinear() {
     for c in SEG_VEC_COLLINEAR_CASES {
-        assert!(seg_collinear_correct(&c.seg_a, &c.seg_b, c.exp_result), "case: {}", c.case_name);
+        assert!(
+            seg_collinear_correct(&c.seg_a, &c.seg_b, c.exp_result),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -606,7 +618,11 @@ const SEG_VEC_PARALLEL_CASES: &[SegSegBooleanCase] = &[
 #[test]
 fn seg_seg_parallel() {
     for c in SEG_VEC_PARALLEL_CASES {
-        assert!(seg_parallel_correct(&c.seg_a, &c.seg_b, c.exp_result), "case: {}", c.case_name);
+        assert!(
+            seg_parallel_correct(&c.seg_a, &c.seg_b, c.exp_result),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -675,7 +691,11 @@ const SEG_VEC_PERPENDICULAR_CASES: &[SegSegBooleanCase] = &[
 #[test]
 fn seg_seg_perpendicular() {
     for c in SEG_VEC_PERPENDICULAR_CASES {
-        assert!(seg_perpendicular_correct(&c.seg_a, &c.seg_b, c.exp_result), "case: {}", c.case_name);
+        assert!(
+            seg_perpendicular_correct(&c.seg_a, &c.seg_b, c.exp_result),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -731,8 +751,16 @@ fn seg_create_parallel() {
     for c in SEGMENT_AND_POINT_CASES {
         let perpendicular: Seg = c.seg.parallel_seg(c.vec);
 
-        assert!(seg_parallel_correct(&perpendicular, &c.seg, true), "case: {}", c.case_name);
-        assert!(seg_vec_distance_correct(&perpendicular, c.vec, 0), "case: {}", c.case_name);
+        assert!(
+            seg_parallel_correct(&perpendicular, &c.seg, true),
+            "case: {}",
+            c.case_name
+        );
+        assert!(
+            seg_vec_distance_correct(&perpendicular, c.vec, 0),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -742,8 +770,16 @@ fn seg_create_perpendicular() {
     for c in SEGMENT_AND_POINT_CASES {
         let perpendicular: Seg = c.seg.perpendicular_seg(c.vec);
 
-        assert!(seg_perpendicular_correct(&perpendicular, &c.seg, true), "case: {}", c.case_name);
-        assert!(seg_vec_distance_correct(&perpendicular, c.vec, 0), "case: {}", c.case_name);
+        assert!(
+            seg_perpendicular_correct(&perpendicular, &c.seg, true),
+            "case: {}",
+            c.case_name
+        );
+        assert!(
+            seg_vec_distance_correct(&perpendicular, c.vec, 0),
+            "case: {}",
+            c.case_name
+        );
     }
 }
 
@@ -838,7 +874,10 @@ fn squared_distance_long_segment_random() {
         let sd: i64 = Seg::new(a, b).squared_distance(p);
 
         // std::abs( (long double) SEG( a, b ).SquaredDistance( p ) - expected ) <= 1.0L
-        assert!((sd as i128 * f - cr * cr).abs() <= f, "a={a} b={b} p={p} sd={sd}");
+        assert!(
+            (sd as i128 * f - cr * cr).abs() <= f,
+            "a={a} b={b} p={p} sd={sd}"
+        );
 
         mix(sd);
     }
@@ -846,9 +885,24 @@ fn squared_distance_long_segment_random() {
     assert_eq!(
         first,
         vec![
-            (pt(390154713, 429616087), pt(-369292706, -183624440), pt(325006645, 377010115), 1221),
-            (pt(32077916, 67725026), pt(456309975, 95544703), pt(229657106, 80681598), 87),
-            (pt(-126078823, 248906637), pt(-345026645, 153569875), pt(-312865295, 167573990), 2322),
+            (
+                pt(390154713, 429616087),
+                pt(-369292706, -183624440),
+                pt(325006645, 377010115),
+                1221
+            ),
+            (
+                pt(32077916, 67725026),
+                pt(456309975, 95544703),
+                pt(229657106, 80681598),
+                87
+            ),
+            (
+                pt(-126078823, 248906637),
+                pt(-345026645, 153569875),
+                pt(-312865295, 167573990),
+                2322
+            ),
         ]
     );
     assert_eq!(checked, 2000);
@@ -886,7 +940,15 @@ const fn isect(
     exp_intersect: bool,
     exp_point: Vector2I,
 ) -> SegSegIntersectCase {
-    SegSegIntersectCase { case_name, seg_a, seg_b, ignore_endpoints, lines, exp_intersect, exp_point }
+    SegSegIntersectCase {
+        case_name,
+        seg_a,
+        seg_b,
+        ignore_endpoints,
+        lines,
+        exp_intersect,
+        exp_point,
+    }
 }
 
 /// Port of `seg_intersect_cases`.
@@ -1092,13 +1154,20 @@ const SEG_INTERSECT_CASES: &[SegSegIntersectCase] = &[
 ///
 /// Returns: does the intersection calculated agree?
 fn seg_intersect_correct(a_case: &SegSegIntersectCase) -> bool {
-    let result_a = a_case.seg_a.intersect_with(&a_case.seg_b, a_case.ignore_endpoints, a_case.lines);
-    let result_b = a_case.seg_b.intersect_with(&a_case.seg_a, a_case.ignore_endpoints, a_case.lines);
+    let result_a =
+        a_case
+            .seg_a
+            .intersect_with(&a_case.seg_b, a_case.ignore_endpoints, a_case.lines);
+    let result_b =
+        a_case
+            .seg_b
+            .intersect_with(&a_case.seg_a, a_case.ignore_endpoints, a_case.lines);
 
     let intersects_a: bool = result_a.is_some();
     let intersects_b: bool = result_b.is_some();
 
-    let mut ok: bool = (intersects_a == a_case.exp_intersect) && (intersects_b == a_case.exp_intersect);
+    let mut ok: bool =
+        (intersects_a == a_case.exp_intersect) && (intersects_b == a_case.exp_intersect);
 
     if intersects_a != intersects_b {
         eprintln!(
@@ -1107,7 +1176,10 @@ fn seg_intersect_correct(a_case: &SegSegIntersectCase) -> bool {
         );
         ok = false;
     } else if !ok {
-        eprintln!("Intersection incorrect: expected {}, got {}", a_case.exp_intersect, intersects_a);
+        eprintln!(
+            "Intersection incorrect: expected {}, got {}",
+            a_case.exp_intersect, intersects_a
+        );
     }
 
     // Check intersection point if intersection was expected
@@ -1179,7 +1251,10 @@ fn intersect_overflow_detection() {
     let intersection = seg_a.intersect_with(&seg_b, false, false);
 
     // The test passes if it doesn't crash - the exact result depends on overflow handling
-    println!("Overflow test completed without crash. Has intersection: {}", intersection.is_some());
+    println!(
+        "Overflow test completed without crash. Has intersection: {}",
+        intersection.is_some()
+    );
 
     if let Some(p) = intersection {
         println!("Intersection point: {}", p.format());
@@ -1438,7 +1513,14 @@ const fn line_case(
     exp_intersect: bool,
     exp_point: Vector2I,
 ) -> SegLineIntersectCase {
-    SegLineIntersectCase { case_name, seg, slope, offset, exp_intersect, exp_point }
+    SegLineIntersectCase {
+        case_name,
+        seg,
+        slope,
+        offset,
+        exp_intersect,
+        exp_point,
+    }
 }
 
 /// Port of `SegLineIntersectCorrect`.

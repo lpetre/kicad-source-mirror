@@ -47,7 +47,7 @@
 //! - A token type is anything implementing [`KeywordSet`]: its [`KEYWORDS`](KeywordSet::KEYWORDS)
 //!   table is the sorted keyword list (index = token number) and it converts from/to the `int`
 //!   token values `DSNLEXER` works with.
-//! - The [`keywords!`](crate::keywords) macro turns a *sorted* list of `T_<keyword> = "<keyword>"`
+//! - The [`keywords!`](crate::keywords!) macro turns a *sorted* list of `T_<keyword> = "<keyword>"`
 //!   pairs into such an enum, numbered exactly like step 4, and checks rules 2 and 3 at compile
 //!   time.  The enumerators keep their C++ spelling (`T_at`, `T_LEFT`, ...) because the keyword
 //!   and syntax tokens of one enum differ only in case (`T_LEFT` is `'('`, `T_left` the keyword
@@ -101,7 +101,7 @@ pub trait KeywordSet: Copy + Eq + fmt::Debug + 'static {
     /// The keyword table (C++ `<NAME>_LEXER::keywords[]`): keyword `KEYWORDS[n]` is token `n`.
     ///
     /// Must be sorted in byte-wise ascending order without duplicates, as the CMake generator
-    /// guarantees for the C++ tables.  The [`keywords!`](crate::keywords) macro checks this at
+    /// guarantees for the C++ tables.  The [`keywords!`](crate::keywords!) macro checks this at
     /// compile time.
     const KEYWORDS: &'static [&'static str];
 
@@ -243,7 +243,7 @@ pub const fn is_sorted_keyword_table(table: &[&str]) -> bool {
     true
 }
 
-/// Compile-time check used by the [`keywords!`](crate::keywords) macro: every keyword is valid
+/// Compile-time check used by the [`keywords!`](crate::keywords!) macro: every keyword is valid
 /// and the table is sorted without duplicates, so the token numbering equals that of
 /// `TokenList2DsnLexer.cmake`.
 pub const fn assert_valid_keyword_table(table: &[&str]) {
@@ -426,7 +426,11 @@ pub enum TokenListError {
 impl fmt::Display for TokenListError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            TokenListError::InvalidToken { token, line, input_file } => write!(
+            TokenListError::InvalidToken {
+                token,
+                line,
+                input_file,
+            } => write!(
                 f,
                 "TokenList2DsnLexer.cmake failure: Invalid token string \"{token}\" at line \
                  {line} in file <{input_file}>."
@@ -498,7 +502,9 @@ pub fn parse_token_list(text: &str, input_file: &str) -> Result<Vec<String>, Tok
     tokens.dedup();
 
     if tokens_before != tokens.len() {
-        return Err(TokenListError::DuplicateTokens { input_file: input_file.to_string() });
+        return Err(TokenListError::DuplicateTokens {
+            input_file: input_file.to_string(),
+        });
     }
 
     Ok(tokens)
@@ -548,7 +554,7 @@ pub struct KeywordsModuleSpec<'a> {
     pub copyright_lines: &'a [String],
 }
 
-/// Write the Rust source of a module that defines `enum T` (via [`keywords!`](crate::keywords))
+/// Write the Rust source of a module that defines `enum T` (via [`keywords!`](crate::keywords!))
 /// and the lexer type alias for a token list, the counterpart of the `<name>_lexer.h` /
 /// `<name>_keywords.cpp` pair `TokenList2DsnLexer.cmake` writes.
 ///
@@ -557,7 +563,11 @@ pub fn generate_keywords_module(spec: &KeywordsModuleSpec<'_>, tokens: &[String]
     use std::fmt::Write as _;
 
     // the keywords filename without extension is important, it sets the classname into RESULT
-    let file_name = spec.input_file.rsplit('/').next().unwrap_or(spec.input_file);
+    let file_name = spec
+        .input_file
+        .rsplit('/')
+        .next()
+        .unwrap_or(spec.input_file);
     let result = file_name.split('.').next().unwrap_or(file_name);
     let lexer_class = format!("{}_LEXER", result.to_uppercase());
     let lexer_alias = upper_camel_case(&lexer_class);
@@ -673,7 +683,10 @@ mod tests {
         assert_eq!(TestT::T_left as i32, 3);
         assert_eq!(TestT::T_xy as i32, 4);
 
-        assert_eq!(TestT::KEYWORDS, ["arrow1a", "arrow_open", "at", "left", "xy"]);
+        assert_eq!(
+            TestT::KEYWORDS,
+            ["arrow1a", "arrow_open", "at", "left", "xy"]
+        );
         assert!(EmptyT::KEYWORDS.is_empty());
     }
 
@@ -730,7 +743,9 @@ mod tests {
         }
 
         // Invalid tokens:  1 A _foo foO, and anything with '-', '+', '.' or spaces.
-        for token in ["", "1", "A", "_foo", "foO", "f.cu", "a-b", "a+b", "1v8", "a b", "é"] {
+        for token in [
+            "", "1", "A", "_foo", "foO", "f.cu", "a-b", "a+b", "1v8", "a b", "é",
+        ] {
             assert!(!is_valid_keyword(token), "{token}");
         }
     }
@@ -753,7 +768,10 @@ mod tests {
 
         // '1' < '_' < letters
         assert_eq!(tokens, ["arrow1a", "arrow_open", "at", "left", "xy"]);
-        assert_eq!(token_list_copyright_lines(text), ["Copyright (C) 2012 CERN."]);
+        assert_eq!(
+            token_list_copyright_lines(text),
+            ["Copyright (C) 2012 CERN."]
+        );
     }
 
     #[test]
@@ -790,7 +808,10 @@ mod tests {
     #[test]
     fn lexer_class_names() {
         assert_eq!(upper_camel_case("PCB_LEXER"), "PcbLexer");
-        assert_eq!(upper_camel_case("PCB_PLOT_PARAMS_LEXER"), "PcbPlotParamsLexer");
+        assert_eq!(
+            upper_camel_case("PCB_PLOT_PARAMS_LEXER"),
+            "PcbPlotParamsLexer"
+        );
         assert_eq!(upper_camel_case("SPECCTRA_LEXER"), "SpecctraLexer");
     }
 

@@ -49,7 +49,10 @@ pub fn is_c_space(c: u8) -> bool {
 /// ignoring ASCII case (port of `fastfloat_strncasecmp`).  The caller guarantees the length.
 fn starts_with_ignore_case(text: &[u8], pattern: &[u8]) -> bool {
     text.len() >= pattern.len()
-        && text.iter().zip(pattern).all(|(t, p)| t.to_ascii_lowercase() == *p)
+        && text
+            .iter()
+            .zip(pattern)
+            .all(|(t, p)| t.to_ascii_lowercase() == *p)
 }
 
 /// Port of `fast_float::detail::parse_infnan` (without `allow_leading_plus`): the special
@@ -96,12 +99,88 @@ fn parse_infnan(first: &[u8]) -> Result<(f64, usize), FromCharsError> {
                 pos + 3
             };
 
-            let value = if minus_sign { f64::NEG_INFINITY } else { f64::INFINITY };
+            let value = if minus_sign {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            };
             return Ok((value, end));
         }
     }
 
     Err(FromCharsError::InvalidArgument)
+}
+
+/// Port of the number grammar of `fast_float::parse_number_string` for the `general` format
+/// without `allow_leading_plus`, starting at offset `first` (where there is at least one
+/// byte).
+///
+/// Returns the offset behind the number (C++ `lastmatch`) and whether the mantissa has a
+/// non-zero digit, or `None` where C++ reports a parse error (`answer.valid == false`).
+fn parse_number_string(text: &[u8], first: usize) -> Option<(usize, bool)> {
+    let mut p = first;
+
+    // C++17 20.19.3.(7.1) explicitly forbids '+' sign here
+    if text[p] == b'-' {
+        p += 1;
+
+        if p == text.len() {
+            return None; // missing_integer_or_dot_after_sign
+        }
+
+        // a sign must be followed by an integer or the dot
+        if !text[p].is_ascii_digit() && text[p] != b'.' {
+            return None; // missing_integer_or_dot_after_sign
+        }
+    }
+
+    let start_digits = p;
+    let mut nonzero_mantissa = false;
+
+    while p != text.len() && text[p].is_ascii_digit() {
+        nonzero_mantissa |= text[p] != b'0';
+        p += 1;
+    }
+
+    let mut digit_count = p - start_digits;
+
+    if p != text.len() && text[p] == b'.' {
+        p += 1;
+        let before = p;
+
+        while p != text.len() && text[p].is_ascii_digit() {
+            nonzero_mantissa |= text[p] != b'0';
+            p += 1;
+        }
+
+        digit_count += p - before;
+    }
+
+    if digit_count == 0 {
+        return None; // no_digits_in_mantissa: we must have encountered at least one integer!
+    }
+
+    if p != text.len() && (text[p] == b'e' || text[p] == b'E') {
+        let location_of_e = p;
+        p += 1;
+
+        if p != text.len() && (text[p] == b'-' || text[p] == b'+') {
+            // '+' on exponent is allowed by C++17 20.19.3.(7.1)
+            p += 1;
+        }
+
+        if p == text.len() || !text[p].is_ascii_digit() {
+            // The format includes chars_format::fixed, so the exponential part is not
+            // an error: we will be ignoring the 'e'.
+            p = location_of_e;
+        } else {
+            while p != text.len() && text[p].is_ascii_digit() {
+                p += 1;
+            }
+        }
+    }
+
+    Some((p, nonzero_mantissa))
 }
 
 /// Port of the accepted syntax and error reporting of
@@ -135,71 +214,7 @@ pub fn from_chars_double(text: &[u8]) -> Result<(f64, usize), FromCharsError> {
     }
 
     // parse_number_string(); any failure in there falls through to parse_infnan().
-    let number = (|| {
-        let mut p = first;
-
-        // C++17 20.19.3.(7.1) explicitly forbids '+' sign here
-        if text[p] == b'-' {
-            p += 1;
-
-            if p == text.len() {
-                return None; // missing_integer_or_dot_after_sign
-            }
-
-            // a sign must be followed by an integer or the dot
-            if !text[p].is_ascii_digit() && text[p] != b'.' {
-                return None; // missing_integer_or_dot_after_sign
-            }
-        }
-
-        let start_digits = p;
-        let mut nonzero_mantissa = false;
-
-        while p != text.len() && text[p].is_ascii_digit() {
-            nonzero_mantissa |= text[p] != b'0';
-            p += 1;
-        }
-
-        let mut digit_count = p - start_digits;
-
-        if p != text.len() && text[p] == b'.' {
-            p += 1;
-            let before = p;
-
-            while p != text.len() && text[p].is_ascii_digit() {
-                nonzero_mantissa |= text[p] != b'0';
-                p += 1;
-            }
-
-            digit_count += p - before;
-        }
-
-        if digit_count == 0 {
-            return None; // no_digits_in_mantissa: we must have encountered at least one integer!
-        }
-
-        if p != text.len() && (text[p] == b'e' || text[p] == b'E') {
-            let location_of_e = p;
-            p += 1;
-
-            if p != text.len() && (text[p] == b'-' || text[p] == b'+') {
-                // '+' on exponent is allowed by C++17 20.19.3.(7.1)
-                p += 1;
-            }
-
-            if p == text.len() || !text[p].is_ascii_digit() {
-                // The format includes chars_format::fixed, so the exponential part is not
-                // an error: we will be ignoring the 'e'.
-                p = location_of_e;
-            } else {
-                while p != text.len() && text[p].is_ascii_digit() {
-                    p += 1;
-                }
-            }
-        }
-
-        Some((p, nonzero_mantissa))
-    })();
+    let number = parse_number_string(text, first);
 
     let Some((lastmatch, nonzero_mantissa)) = number else {
         return parse_infnan(&text[first..]).map(|(value, used)| (value, first + used));
@@ -291,7 +306,11 @@ pub fn strtoll(text: &[u8], base: u32) -> (i64, usize) {
     let digits_start = p;
 
     // Accumulate the magnitude; the negative range is one larger than the positive one.
-    let limit: u64 = if negative { 1u64 << 63 } else { i64::MAX as u64 };
+    let limit: u64 = if negative {
+        1u64 << 63
+    } else {
+        i64::MAX as u64
+    };
     let mut value: u64 = 0;
     let mut overflow = false;
 
@@ -301,7 +320,9 @@ pub fn strtoll(text: &[u8], base: u32) -> (i64, usize) {
         };
 
         if !overflow {
-            match value.checked_mul(u64::from(base)).and_then(|v| v.checked_add(u64::from(digit)))
+            match value
+                .checked_mul(u64::from(base))
+                .and_then(|v| v.checked_add(u64::from(digit)))
             {
                 Some(v) if v <= limit => value = v,
                 _ => overflow = true,
@@ -402,12 +423,17 @@ pub fn strtod_prefix(text: &[u8]) -> Option<(f64, usize)> {
         }
     }
 
-    let value = std::str::from_utf8(&text[first..p]).ok()?.parse::<f64>().ok()?;
+    let value = std::str::from_utf8(&text[first..p])
+        .ok()?
+        .parse::<f64>()
+        .ok()?;
 
     Some((value, p))
 }
 
 #[cfg(test)]
+// 3.14 is test data here (as in the C++ tests), not an approximation of pi.
+#[allow(clippy::approx_constant)]
 mod tests {
     use super::*;
 
@@ -474,8 +500,9 @@ mod tests {
 
     #[test]
     fn from_chars_rejects_non_numbers() {
-        for text in ["+1", "+.5", "-", "-x", ".", "-.", "e5", ".e5", "abc", "--1", "-+1", "(", "x1"]
-        {
+        for text in [
+            "+1", "+.5", "-", "-x", ".", "-.", "e5", ".e5", "abc", "--1", "-+1", "(", "x1",
+        ] {
             assert_eq!(err(text), FromCharsError::InvalidArgument, "{text:?}");
         }
     }
@@ -515,7 +542,10 @@ mod tests {
         assert_eq!(err("1e999"), FromCharsError::ResultOutOfRange);
         assert_eq!(err("-1e999"), FromCharsError::ResultOutOfRange);
         assert_eq!(err("1e-999"), FromCharsError::ResultOutOfRange);
-        assert_eq!(err("1e99999999999999999999"), FromCharsError::ResultOutOfRange);
+        assert_eq!(
+            err("1e99999999999999999999"),
+            FromCharsError::ResultOutOfRange
+        );
         assert_eq!(err("1.8e308"), FromCharsError::ResultOutOfRange);
 
         // Zero with any exponent is fine, and so are subnormals and the extremes.
@@ -533,7 +563,10 @@ mod tests {
         assert_eq!(ok("9007199254740993").0, 9007199254740992.0);
         assert_eq!(ok("9007199254740995").0, 9007199254740996.0);
         assert_eq!(ok("2.2250738585072011e-308").0, 2.2250738585072011e-308);
-        assert_eq!(ok("123456789012345678901234567890").0, 1.2345678901234568e29);
+        assert_eq!(
+            ok("123456789012345678901234567890").0,
+            1.2345678901234568e29
+        );
     }
 
     #[test]

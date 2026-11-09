@@ -20,7 +20,9 @@
 
 use std::collections::BTreeSet;
 
-use kicad_core::kiid::{Kiid, KiidGenerator, KiidNilSetReset, KiidPath, NILUUID, Timestamp, nil_uuid};
+use kicad_core::kiid::{
+    Kiid, KiidGenerator, KiidNilSetReset, KiidPath, NILUUID, Timestamp, nil_uuid,
+};
 
 // ---- qa/tests/common/test_kiid.cpp ----
 
@@ -473,7 +475,9 @@ fn sniff_test() {
     assert!(!Kiid::sniff_test("0123456789abcdef0123456789abcdef"));
     assert!(!Kiid::sniff_test("01234567-89ab-cdef-0123-456789abcdeg"));
     assert!(!Kiid::sniff_test("{01234567-89ab-cdef-0123-456789abcdef}"));
-    assert!(!Kiid::sniff_test("01234567-89ab-cdef-0123-456789abcd\u{e9}"));
+    assert!(!Kiid::sniff_test(
+        "01234567-89ab-cdef-0123-456789abcd\u{e9}"
+    ));
     assert!(!Kiid::sniff_test("0123456789ab-cdef-0123-456789abcd\u{e9}"));
 }
 
@@ -510,6 +514,7 @@ fn ordering_and_hash() {
     assert!(b < d);
     assert!(c > d);
     assert!(NILUUID < a);
+    assert_eq!(Kiid::default(), NILUUID);
 
     assert_eq!(a.hash_value(), 17562157925649023534);
     assert_eq!(c.hash_value(), 3996712364485557191);
@@ -562,7 +567,10 @@ fn kiid_path() {
     assert_eq!(path.to_string(), text);
 
     // Empty steps are skipped; legacy timestamps are valid steps.
-    assert_eq!(KiidPath::parse(&format!("{a}//{b}/")).unwrap().0, vec![a, b]);
+    assert_eq!(
+        KiidPath::parse(&format!("{a}//{b}/")).unwrap().0,
+        vec![a, b]
+    );
     assert_eq!(
         KiidPath::parse("/5F0B8A2C").unwrap().0,
         vec![Kiid::from_legacy_timestamp(0x5F0B8A2C)]
@@ -577,7 +585,10 @@ fn kiid_path() {
     let random = KiidPath::from_string_or_random(&format!("/{a}/nonsense"), &mut generator);
     assert_eq!(random.len(), 2);
     assert_eq!(random[0], a);
-    assert_eq!(random[1].as_string(), "ac0a7f8c-2faa-4497-b5a6-16b7c0cc21d8");
+    assert_eq!(
+        random[1].as_string(),
+        "ac0a7f8c-2faa-4497-b5a6-16b7c0cc21d8"
+    );
 
     // MakeRelativeTo
     let parent: KiidPath = vec![a, b].into();
@@ -622,10 +633,7 @@ fn kiid_path() {
     // std::hash<KIID_PATH>
     assert_eq!(KiidPath::new().hash_value(), 0);
     let single: KiidPath = vec![a].into();
-    assert_eq!(
-        single.hash_value(),
-        a.hash_value().wrapping_add(0x9e3779b9)
-    );
+    assert_eq!(single.hash_value(), a.hash_value().wrapping_add(0x9e3779b9));
     assert_ne!(pb.hash_value(), pc.hash_value());
 
     let collected: KiidPath = path.iter().copied().collect();

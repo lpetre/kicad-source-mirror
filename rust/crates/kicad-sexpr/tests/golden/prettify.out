@@ -1,0 +1,240 @@
+> 
+normal	\x0a
+compact	\x0a
+libtable	\x0a
+> \x20\x20\x20\x0a\x09
+normal	\x0a
+compact	\x0a
+libtable	\x0a
+> (a)
+normal	(a)\x0a
+compact	(a)\x0a
+libtable	(a)\x0a
+> (first (second (third list) (another list)) (fifth) (sixth thing with lots of tokens (and a sub list)))
+normal	(first\x0a\x09(second\x0a\x09\x09(third list)\x0a\x09\x09(another list)\x0a\x09)\x0a\x09(fifth)\x0a\x09(sixth thing with lots of tokens\x0a\x09\x09(and a sub list)\x0a\x09)\x0a)\x0a
+compact	(first\x0a\x09(second\x0a\x09\x09(third list)\x0a\x09\x09(another list)\x0a\x09)\x0a\x09(fifth)\x0a\x09(sixth thing with lots of tokens\x0a\x09\x09(and a sub list)\x0a\x09)\x0a)\x0a
+libtable	(first\x0a\x09(second\x0a\x09\x09(third list)\x0a\x09\x09(another list)\x0a\x09)\x0a\x09(fifth)\x0a\x09(sixth thing with lots of tokens\x0a\x09\x09(and a sub list)\x0a\x09)\x0a)\x0a
+> \x20\x20( a   b\x09\x09c \x0d\x0a d )  \x0a\x0a
+normal	(a b c d)\x0a
+compact	(a b c d)\x0a
+libtable	(a b c d)\x0a
+> (a\x0a  (b)\x0a)\x0a
+normal	(a\x0a\x09(b)\x0a)\x0a
+compact	(a\x0a\x09(b)\x0a)\x0a
+libtable	(a\x0a\x09(b)\x0a)\x0a
+> ( a ( b ) )
+normal	(a\x0a\x09(b)\x0a)\x0a
+compact	(a\x0a\x09(b)\x0a)\x0a
+libtable	(a\x0a\x09(b)\x0a)\x0a
+> (a)(b)
+normal	(a)\x0a(b)\x0a
+compact	(a)\x0a(b)\x0a
+libtable	(a)\x0a(b)\x0a
+> (a) (b)
+normal	(a)\x0a(b)\x0a
+compact	(a)\x0a(b)\x0a
+libtable	(a)\x0a(b)\x0a
+> abc def
+normal	abcdef\x0a
+compact	abcdef\x0a
+libtable	abcdef\x0a
+> )
+normal	)\x0a
+compact	)\x0a
+libtable	)\x0a
+> (a))
+normal	(a)\x0a)\x0a
+compact	(a)\x0a)\x0a
+libtable	(a)\x0a)\x0a
+> ((a
+normal	(\x0a\x09(a\x0a
+compact	(\x0a\x09(a\x0a
+libtable	(\x0a\x09(a\x0a
+> ()
+normal	()\x0a
+compact	()\x0a
+libtable	()\x0a
+> (()())
+normal	(\x0a\x09()\x0a\x09()\x0a)\x0a
+compact	(\x0a\x09()\x0a\x09()\x0a)\x0a
+libtable	(\x0a\x09()\x0a\x09()\x0a)\x0a
+> (a "b   c" "(d)"  " ")
+normal	(a "b   c" "(d)" " ")\x0a
+compact	(a "b   c" "(d)" " ")\x0a
+libtable	(a "b   c" "(d)" " ")\x0a
+> (a "x \x5c" (  y" b)
+normal	(a "x \x5c" (  y" b)\x0a
+compact	(a "x \x5c" (  y" b)\x0a
+libtable	(a "x \x5c" (  y" b)\x0a
+> (a "x\x5c\x5c" (b))
+normal	(a "x\x5c\x5c"\x0a\x09(b)\x0a)\x0a
+compact	(a "x\x5c\x5c"\x0a\x09(b)\x0a)\x0a
+libtable	(a "x\x5c\x5c"\x0a\x09(b)\x0a)\x0a
+> (a "x\x5c\x5c\x5c" (b)")
+normal	(a "x\x5c\x5c\x5c" (b)")\x0a
+compact	(a "x\x5c\x5c\x5c" (b)")\x0a
+libtable	(a "x\x5c\x5c\x5c" (b)")\x0a
+> (a "l1\x0al2")
+normal	(a "l1\x0al2")\x0a
+compact	(a "l1\x0al2")\x0a
+libtable	(a "l1\x0al2")\x0a
+> (a "unterminated (b) c
+normal	(a "unterminated (b) c\x0a
+compact	(a "unterminated (b) c\x0a
+libtable	(a "unterminated (b) c\x0a
+> (pts (xy 100.5 200.25) (xy 101.5 201.25) (xy 102.5 202.25) (xy 103.5 203.25) (xy 104.5 204.25) (xy 105.5 205.25) (xy 106.5 206.25) (xy 107.5 207.25) (xy 108.5 208.25) (xy 109.5 209.25) (xy 110.5 210.25) (xy 111.5 211.25))
+normal	(pts\x0a\x09(xy 100.5 200.25) (xy 101.5 201.25) (xy 102.5 202.25) (xy 103.5 203.25) (xy 104.5 204.25) (xy 105.5 205.25)\x0a\x09(xy 106.5 206.25) (xy 107.5 207.25) (xy 108.5 208.25) (xy 109.5 209.25) (xy 110.5 210.25) (xy 111.5 211.25)\x0a)\x0a
+compact	(pts\x0a\x09(xy 100.5 200.25) (xy 101.5 201.25) (xy 102.5 202.25) (xy 103.5 203.25) (xy 104.5 204.25) (xy 105.5 205.25)\x0a\x09(xy 106.5 206.25) (xy 107.5 207.25) (xy 108.5 208.25) (xy 109.5 209.25) (xy 110.5 210.25) (xy 111.5 211.25)\x0a)\x0a
+libtable	(pts\x0a\x09(xy 100.5 200.25) (xy 101.5 201.25) (xy 102.5 202.25) (xy 103.5 203.25) (xy 104.5 204.25) (xy 105.5 205.25)\x0a\x09(xy 106.5 206.25) (xy 107.5 207.25) (xy 108.5 208.25) (xy 109.5 209.25) (xy 110.5 210.25) (xy 111.5 211.25)\x0a)\x0a
+> (pts (xyz 1 2) (xyz 3 4))
+normal	(pts\x0a\x09(xyz 1 2)\x0a\x09(xyz 3 4)\x0a)\x0a
+compact	(pts\x0a\x09(xyz 1 2)\x0a\x09(xyz 3 4)\x0a)\x0a
+libtable	(pts\x0a\x09(xyz 1 2)\x0a\x09(xyz 3 4)\x0a)\x0a
+> (pts (xy) (xy))
+normal	(pts\x0a\x09(xy)\x0a\x09(xy)\x0a)\x0a
+compact	(pts\x0a\x09(xy)\x0a\x09(xy)\x0a)\x0a
+libtable	(pts\x0a\x09(xy)\x0a\x09(xy)\x0a)\x0a
+> (pts (xy\x091 2) (xy 3 4))
+normal	(pts\x0a\x09(xy 1 2)\x0a\x09(xy 3 4)\x0a)\x0a
+compact	(pts\x0a\x09(xy 1 2)\x0a\x09(xy 3 4)\x0a)\x0a
+libtable	(pts\x0a\x09(xy 1 2)\x0a\x09(xy 3 4)\x0a)\x0a
+> (pts (xy 1 2)\x0a\x0a(xy 3 4) (arc (start 1 2) (mid 3 4) (end 5 6)) (xy 7 8) (xy 9 10))
+normal	(pts\x0a\x09(xy 1 2) (xy 3 4)\x0a\x09(arc\x0a\x09\x09(start 1 2)\x0a\x09\x09(mid 3 4)\x0a\x09\x09(end 5 6)\x0a\x09)\x0a\x09(xy 7 8) (xy 9 10)\x0a)\x0a
+compact	(pts\x0a\x09(xy 1 2) (xy 3 4)\x0a\x09(arc\x0a\x09\x09(start 1 2)\x0a\x09\x09(mid 3 4)\x0a\x09\x09(end 5 6)\x0a\x09)\x0a\x09(xy 7 8) (xy 9 10)\x0a)\x0a
+libtable	(pts\x0a\x09(xy 1 2) (xy 3 4)\x0a\x09(arc\x0a\x09\x09(start 1 2)\x0a\x09\x09(mid 3 4)\x0a\x09\x09(end 5 6)\x0a\x09)\x0a\x09(xy 7 8) (xy 9 10)\x0a)\x0a
+> (polygon (pts (xy 1 2) (xy 3 4)) (pts (xy 5 6)))
+normal	(polygon\x0a\x09(pts\x0a\x09\x09(xy 1 2) (xy 3 4)\x0a\x09)\x0a\x09(pts\x0a\x09\x09(xy 5 6)\x0a\x09)\x0a)\x0a
+compact	(polygon\x0a\x09(pts\x0a\x09\x09(xy 1 2) (xy 3 4)\x0a\x09)\x0a\x09(pts\x0a\x09\x09(xy 5 6)\x0a\x09)\x0a)\x0a
+libtable	(polygon\x0a\x09(pts\x0a\x09\x09(xy 1 2) (xy 3 4)\x0a\x09)\x0a\x09(pts\x0a\x09\x09(xy 5 6)\x0a\x09)\x0a)\x0a
+> (xy 1 2)
+normal	(xy 1 2)\x0a
+compact	(xy 1 2)\x0a
+libtable	(xy 1 2)\x0a
+> (xy 1 2) (xy 3 4)
+normal	(xy 1 2) (xy 3 4)\x0a
+compact	(xy 1 2) (xy 3 4)\x0a
+libtable	(xy 1 2) (xy 3 4)\x0a
+> (members "00000000-1111-2222-3333-444444444444" "00000001-1111-2222-3333-444444444444" "00000002-1111-2222-3333-444444444444" "00000003-1111-2222-3333-444444444444" "00000004-1111-2222-3333-444444444444" "00000005-1111-2222-3333-444444444444" "00000006-1111-2222-3333-444444444444" "00000007-1111-2222-3333-444444444444")
+normal	(members "00000000-1111-2222-3333-444444444444" "00000001-1111-2222-3333-444444444444"\x0a\x09"00000002-1111-2222-3333-444444444444" "00000003-1111-2222-3333-444444444444"\x0a\x09"00000004-1111-2222-3333-444444444444" "00000005-1111-2222-3333-444444444444"\x0a\x09"00000006-1111-2222-3333-444444444444" "00000007-1111-2222-3333-444444444444"\x0a)\x0a
+compact	(members "00000000-1111-2222-3333-444444444444" "00000001-1111-2222-3333-444444444444"\x0a\x09"00000002-1111-2222-3333-444444444444" "00000003-1111-2222-3333-444444444444"\x0a\x09"00000004-1111-2222-3333-444444444444" "00000005-1111-2222-3333-444444444444"\x0a\x09"00000006-1111-2222-3333-444444444444" "00000007-1111-2222-3333-444444444444"\x0a)\x0a
+libtable	(members "00000000-1111-2222-3333-444444444444" "00000001-1111-2222-3333-444444444444"\x0a\x09"00000002-1111-2222-3333-444444444444" "00000003-1111-2222-3333-444444444444"\x0a\x09"00000004-1111-2222-3333-444444444444" "00000005-1111-2222-3333-444444444444"\x0a\x09"00000006-1111-2222-3333-444444444444" "00000007-1111-2222-3333-444444444444"\x0a)\x0a
+> (data "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" "BBBB")
+normal	(data "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="\x0a\x09"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"\x0a\x09"BBBB"\x0a)\x0a
+compact	(data "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="\x0a\x09"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"\x0a\x09"BBBB"\x0a)\x0a
+libtable	(data "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="\x0a\x09"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"\x0a\x09"BBBB"\x0a)\x0a
+> (a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 (b) c d)
+normal	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890\x0a\x09(b\x0a\x09) c d)\x0a
+compact	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890\x0a\x09(b\x0a\x09) c d)\x0a
+libtable	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890\x0a\x09(b\x0a\x09) c d)\x0a
+> (a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 c d (b))
+normal	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890 c d\x0a\x09(b\x0a\x09)\x0a)\x0a
+compact	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890 c d\x0a\x09(b\x0a\x09)\x0a)\x0a
+libtable	(a 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890 1234567890\x0a\x091234567890 1234567890 c d\x0a\x09(b\x0a\x09)\x0a)\x0a
+> \x23 a  (comment) "x\x0a(a  b)
+normal	# a  (comment) "x\x0a(a b)\x0a
+compact	# a  (comment) "x\x0a(a b)\x0a
+libtable	# a  (comment) "x\x0a(a b)\x0a
+> \x23 only
+normal	# only\x0a\x0a
+compact	# only\x0a\x0a
+libtable	# only\x0a\x0a
+> \x23 only\x0a
+normal	# only\x0a\x0a
+compact	# only\x0a\x0a
+libtable	# only\x0a\x0a
+> \x23 c1\x0a#  c2\x0a(a)
+normal	# c1\x0a#  c2\x0a(a)\x0a
+compact	# c1\x0a#  c2\x0a(a)\x0a
+libtable	# c1\x0a#  c2\x0a(a)\x0a
+> (a)\x0a#  c1\x0a#c2\x0a(b)
+normal	(a)#c1#c2\x0a(b)\x0a
+compact	(a)#c1#c2\x0a(b)\x0a
+libtable	(a)#c1#c2\x0a(b)\x0a
+> (a # b)
+normal	(a # b)\x0a
+compact	(a # b)\x0a
+libtable	(a # b)\x0a
+> (a\x0a# b\x0a)
+normal	(a # b)\x0a
+compact	(a # b)\x0a
+libtable	(a # b)\x0a
+> \x20# indented comment\x0a(a)
+normal	# indented comment\x0a(a)\x0a
+compact	# indented comment\x0a(a)\x0a
+libtable	# indented comment\x0a(a)\x0a
+> (a)\x0a\x0a# after\x0a
+normal	(a)#after\x0a
+compact	(a)#after\x0a
+libtable	(a)#after\x0a
+> (effects (font (size 1 1) (thickness 0.15)) (justify left))
+normal	(effects\x0a\x09(font\x0a\x09\x09(size 1 1)\x0a\x09\x09(thickness 0.15)\x0a\x09)\x0a\x09(justify left)\x0a)\x0a
+compact	(effects\x0a\x09(font (size 1 1) (thickness 0.15))\x0a\x09(justify left)\x0a)\x0a
+libtable	(effects\x0a\x09(font\x0a\x09\x09(size 1 1)\x0a\x09\x09(thickness 0.15)\x0a\x09)\x0a\x09(justify left)\x0a)\x0a
+> (a (stroke (width 0.1) (type solid)) (fill none))
+normal	(a\x0a\x09(stroke\x0a\x09\x09(width 0.1)\x0a\x09\x09(type solid)\x0a\x09)\x0a\x09(fill none)\x0a)\x0a
+compact	(a\x0a\x09(stroke (width 0.1) (type solid))\x0a\x09(fill none)\x0a)\x0a
+libtable	(a\x0a\x09(stroke\x0a\x09\x09(width 0.1)\x0a\x09\x09(type solid)\x0a\x09)\x0a\x09(fill none)\x0a)\x0a
+> (a (stroke (width 0.1) (type solid)) (fill (type color) (color 1 2 3 4)) (b))
+normal	(a\x0a\x09(stroke\x0a\x09\x09(width 0.1)\x0a\x09\x09(type solid)\x0a\x09)\x0a\x09(fill\x0a\x09\x09(type color)\x0a\x09\x09(color 1 2 3 4)\x0a\x09)\x0a\x09(b)\x0a)\x0a
+compact	(a\x0a\x09(stroke (width 0.1) (type solid))\x0a\x09(fill (type color) (color 1 2 3 4))\x0a\x09(b)\x0a)\x0a
+libtable	(a\x0a\x09(stroke\x0a\x09\x09(width 0.1)\x0a\x09\x09(type solid)\x0a\x09)\x0a\x09(fill\x0a\x09\x09(type color)\x0a\x09\x09(color 1 2 3 4)\x0a\x09)\x0a\x09(b)\x0a)\x0a
+> (pad "1" smd (at 0 0) (teardrops (best_length_ratio 0.5) (max_length 1)) (offset 1 2) (rotate 90) (scale 1 1 1))
+normal	(pad "1" smd\x0a\x09(at 0 0)\x0a\x09(teardrops\x0a\x09\x09(best_length_ratio 0.5)\x0a\x09\x09(max_length 1)\x0a\x09)\x0a\x09(offset 1 2)\x0a\x09(rotate 90)\x0a\x09(scale 1 1 1)\x0a)\x0a
+compact	(pad "1" smd\x0a\x09(at 0 0)\x0a\x09(teardrops\x0a\x09\x09(best_length_ratio 0.5)\x0a\x09\x09(max_length 1)\x0a\x09)\x0a\x09(offset 1 2)\x0a\x09(rotate 90)\x0a\x09(scale 1 1 1)\x0a)\x0a
+libtable	(pad "1" smd\x0a\x09(at 0 0)\x0a\x09(teardrops\x0a\x09\x09(best_length_ratio 0.5)\x0a\x09\x09(max_length 1)\x0a\x09)\x0a\x09(offset 1 2)\x0a\x09(rotate 90)\x0a\x09(scale 1 1 1)\x0a)\x0a
+> (font (size 1 1)) (x)
+normal	(font\x0a\x09(size 1 1)\x0a)\x0a(x)\x0a
+compact	(font (size 1 1))\x0a(x)\x0a
+libtable	(font\x0a\x09(size 1 1)\x0a)\x0a(x)\x0a
+> (fonts (size 1 1)) (font2 (a)) (font)
+normal	(fonts\x0a\x09(size 1 1)\x0a)\x0a(font2\x0a\x09(a)\x0a)\x0a(font)\x0a
+compact	(fonts\x0a\x09(size 1 1)\x0a)\x0a(font2 (a))\x0a(font)\x0a
+libtable	(fonts\x0a\x09(size 1 1)\x0a)\x0a(font2\x0a\x09(a)\x0a)\x0a(font)\x0a
+> (model "x" (offset (xyz 0 0 0)) (scale (xyz 1 1 1)) (rotate (xyz 0 0 0)))
+normal	(model "x"\x0a\x09(offset\x0a\x09\x09(xyz 0 0 0)\x0a\x09)\x0a\x09(scale\x0a\x09\x09(xyz 1 1 1)\x0a\x09)\x0a\x09(rotate\x0a\x09\x09(xyz 0 0 0)\x0a\x09)\x0a)\x0a
+compact	(model "x"\x0a\x09(offset (xyz 0 0 0))\x0a\x09(scale (xyz 1 1 1))\x0a\x09(rotate (xyz 0 0 0))\x0a)\x0a
+libtable	(model "x"\x0a\x09(offset\x0a\x09\x09(xyz 0 0 0)\x0a\x09)\x0a\x09(scale\x0a\x09\x09(xyz 1 1 1)\x0a\x09)\x0a\x09(rotate\x0a\x09\x09(xyz 0 0 0)\x0a\x09)\x0a)\x0a
+> (fill yes) (fill (b (c (d)))) (e (f))
+normal	(fill yes)\x0a(fill\x0a\x09(b\x0a\x09\x09(c\x0a\x09\x09\x09(d)\x0a\x09\x09)\x0a\x09)\x0a)\x0a(e\x0a\x09(f)\x0a)\x0a
+compact	(fill yes)\x0a(fill (b (c (d))))\x0a(e\x0a\x09(f)\x0a)\x0a
+libtable	(fill yes)\x0a(fill\x0a\x09(b\x0a\x09\x09(c\x0a\x09\x09\x09(d)\x0a\x09\x09)\x0a\x09)\x0a)\x0a(e\x0a\x09(f)\x0a)\x0a
+> (text "a very long text that goes on and on and on and on and on and on and on and on" (font (size 1 1) (thickness 0.15) bold italic and many more tokens to pass the column threshold of the formatter) (z))
+normal	(text "a very long text that goes on and on and on and on and on and on and on and on"\x0a\x09(font\x0a\x09\x09(size 1 1)\x0a\x09\x09(thickness 0.15) bold italic and many more tokens to pass the column threshold\x0a\x09\x09of the formatter\x0a\x09)\x0a\x09(z)\x0a)\x0a
+compact	(text "a very long text that goes on and on and on and on and on and on and on and on"\x0a\x09(font (size 1 1) (thickness 0.15) bold italic and many more tokens to pass the column threshold of the formatter)\x0a\x09(z)\x0a)\x0a
+libtable	(text "a very long text that goes on and on and on and on and on and on and on and on"\x0a\x09(font\x0a\x09\x09(size 1 1)\x0a\x09\x09(thickness 0.15) bold italic and many more tokens to pass the column threshold\x0a\x09\x09of the formatter\x0a\x09)\x0a\x09(z)\x0a)\x0a
+> (fp_lib_table (version 7) (lib (name "A")(type "KiCad")(uri "${KICAD9_FOOTPRINT_DIR}/A.pretty")(options "")(descr "A long description of the library")) (lib (name "B")(type "KiCad")(uri "b")(options "")(descr "")))
+normal	(fp_lib_table\x0a\x09(version 7)\x0a\x09(lib\x0a\x09\x09(name "A")\x0a\x09\x09(type "KiCad")\x0a\x09\x09(uri "${KICAD9_FOOTPRINT_DIR}/A.pretty")\x0a\x09\x09(options "")\x0a\x09\x09(descr "A long description of the library")\x0a\x09)\x0a\x09(lib\x0a\x09\x09(name "B")\x0a\x09\x09(type "KiCad")\x0a\x09\x09(uri "b")\x0a\x09\x09(options "")\x0a\x09\x09(descr "")\x0a\x09)\x0a)\x0a
+compact	(fp_lib_table\x0a\x09(version 7)\x0a\x09(lib\x0a\x09\x09(name "A")\x0a\x09\x09(type "KiCad")\x0a\x09\x09(uri "${KICAD9_FOOTPRINT_DIR}/A.pretty")\x0a\x09\x09(options "")\x0a\x09\x09(descr "A long description of the library")\x0a\x09)\x0a\x09(lib\x0a\x09\x09(name "B")\x0a\x09\x09(type "KiCad")\x0a\x09\x09(uri "b")\x0a\x09\x09(options "")\x0a\x09\x09(descr "")\x0a\x09)\x0a)\x0a
+libtable	(fp_lib_table\x0a\x09(version 7)\x0a\x09(lib (name "A") (type "KiCad") (uri "${KICAD9_FOOTPRINT_DIR}/A.pretty") (options "") (descr "A long description of the library"))\x0a\x09(lib (name "B") (type "KiCad") (uri "b") (options "") (descr ""))\x0a)\x0a
+> (sym_lib_table (lib (name "x") (nested (a (b)))) (libs (name "y")) (lib))
+normal	(sym_lib_table\x0a\x09(lib\x0a\x09\x09(name "x")\x0a\x09\x09(nested\x0a\x09\x09\x09(a\x0a\x09\x09\x09\x09(b)\x0a\x09\x09\x09)\x0a\x09\x09)\x0a\x09)\x0a\x09(libs\x0a\x09\x09(name "y")\x0a\x09)\x0a\x09(lib)\x0a)\x0a
+compact	(sym_lib_table\x0a\x09(lib\x0a\x09\x09(name "x")\x0a\x09\x09(nested\x0a\x09\x09\x09(a\x0a\x09\x09\x09\x09(b)\x0a\x09\x09\x09)\x0a\x09\x09)\x0a\x09)\x0a\x09(libs\x0a\x09\x09(name "y")\x0a\x09)\x0a\x09(lib)\x0a)\x0a
+libtable	(sym_lib_table\x0a\x09(lib (name "x") (nested (a (b)\x0a\x09\x09\x09)\x0a\x09\x09))\x0a\x09(libs\x0a\x09\x09(name "y")\x0a\x09)\x0a\x09(lib)\x0a)\x0a
+> (lib (name "x")) (lib (name y))
+normal	(lib\x0a\x09(name "x")\x0a)\x0a(lib\x0a\x09(name y)\x0a)\x0a
+compact	(lib\x0a\x09(name "x")\x0a)\x0a(lib\x0a\x09(name y)\x0a)\x0a
+libtable	(lib (name "x"))\x0a(lib (name y))\x0a
+> (a\x09\x09(b\x0d\x0a\x0d\x0a)\x0d\x0a)
+normal	(a\x0a\x09(b)\x0a)\x0a
+compact	(a\x0a\x09(b)\x0a)\x0a
+libtable	(a\x0a\x09(b)\x0a)\x0a
+> (a "\xc3\xa9\xc2\xb5" \xc3\xbc (\xc3\xb6))
+normal	(a "\xc3\xa9\xc2\xb5" \xc3\xbc\x0a\x09(\xc3\xb6)\x0a)\x0a
+compact	(a "\xc3\xa9\xc2\xb5" \xc3\xbc\x0a\x09(\xc3\xb6)\x0a)\x0a
+libtable	(a "\xc3\xa9\xc2\xb5" \xc3\xbc\x0a\x09(\xc3\xb6)\x0a)\x0a
+> (a\x5c"b c\x5c" d)
+normal	(a\x5c"b c\x5c" d)\x0a
+compact	(a\x5c"b c\x5c" d)\x0a
+libtable	(a\x5c"b c\x5c" d)\x0a
+> (a \x5c\x5c "b (c)" d)
+normal	(a \x5c\x5c "b (c)" d)\x0a
+compact	(a \x5c\x5c "b (c)" d)\x0a
+libtable	(a \x5c\x5c "b (c)" d)\x0a
+> (a "b\x5c\x5c\x5c\x5c" (c))
+normal	(a "b\x5c\x5c\x5c\x5c"\x0a\x09(c)\x0a)\x0a
+compact	(a "b\x5c\x5c\x5c\x5c"\x0a\x09(c)\x0a)\x0a
+libtable	(a "b\x5c\x5c\x5c\x5c"\x0a\x09(c)\x0a)\x0a
+> (kicad_pcb (version 20241229) (generator "pcbnew") (generator_version "9.0") (general (thickness 1.6) (legacy_teardrops no)) (paper "A4") (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (net 0 "") (segment (start 1 2) (end 3 4) (width 0.25) (layer "F.Cu") (net 0) (uuid "0f1a2b3c-0000-4000-8000-00000000abcd")))
+normal	(kicad_pcb\x0a\x09(version 20241229)\x0a\x09(generator "pcbnew")\x0a\x09(generator_version "9.0")\x0a\x09(general\x0a\x09\x09(thickness 1.6)\x0a\x09\x09(legacy_teardrops no)\x0a\x09)\x0a\x09(paper "A4")\x0a\x09(layers\x0a\x09\x09(0 "F.Cu" signal)\x0a\x09\x09(2 "B.Cu" signal)\x0a\x09)\x0a\x09(net 0 "")\x0a\x09(segment\x0a\x09\x09(start 1 2)\x0a\x09\x09(end 3 4)\x0a\x09\x09(width 0.25)\x0a\x09\x09(layer "F.Cu")\x0a\x09\x09(net 0)\x0a\x09\x09(uuid "0f1a2b3c-0000-4000-8000-00000000abcd")\x0a\x09)\x0a)\x0a
+compact	(kicad_pcb\x0a\x09(version 20241229)\x0a\x09(generator "pcbnew")\x0a\x09(generator_version "9.0")\x0a\x09(general\x0a\x09\x09(thickness 1.6)\x0a\x09\x09(legacy_teardrops no)\x0a\x09)\x0a\x09(paper "A4")\x0a\x09(layers\x0a\x09\x09(0 "F.Cu" signal)\x0a\x09\x09(2 "B.Cu" signal)\x0a\x09)\x0a\x09(net 0 "")\x0a\x09(segment\x0a\x09\x09(start 1 2)\x0a\x09\x09(end 3 4)\x0a\x09\x09(width 0.25)\x0a\x09\x09(layer "F.Cu")\x0a\x09\x09(net 0)\x0a\x09\x09(uuid "0f1a2b3c-0000-4000-8000-00000000abcd")\x0a\x09)\x0a)\x0a
+libtable	(kicad_pcb\x0a\x09(version 20241229)\x0a\x09(generator "pcbnew")\x0a\x09(generator_version "9.0")\x0a\x09(general\x0a\x09\x09(thickness 1.6)\x0a\x09\x09(legacy_teardrops no)\x0a\x09)\x0a\x09(paper "A4")\x0a\x09(layers\x0a\x09\x09(0 "F.Cu" signal)\x0a\x09\x09(2 "B.Cu" signal)\x0a\x09)\x0a\x09(net 0 "")\x0a\x09(segment\x0a\x09\x09(start 1 2)\x0a\x09\x09(end 3 4)\x0a\x09\x09(width 0.25)\x0a\x09\x09(layer "F.Cu")\x0a\x09\x09(net 0)\x0a\x09\x09(uuid "0f1a2b3c-0000-4000-8000-00000000abcd")\x0a\x09)\x0a)\x0a

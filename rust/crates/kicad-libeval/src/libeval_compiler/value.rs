@@ -1,6 +1,7 @@
-// This file is part of libeval, a simple math expression evaluator
+// This program source code file is part of KiCad, a free EDA CAD application.
 //
 // Copyright (C) 2007 Michael Geselbracht, mgeselbracht3@gmail.com
+// Copyright (C) 2017 Michael Geselbracht, mgeselbracht3@gmail.com
 // Copyright The KiCad Developers, see AUTHORS.txt for contributors.
 //
 // This program is free software: you can redistribute it and/or modify it
@@ -22,9 +23,9 @@
 use std::cell::{Cell, OnceCell};
 use std::fmt;
 
+use super::VarType;
 use super::context::Context;
 use super::ucode::UcodeBinder;
-use super::VarType;
 use crate::crt;
 use crate::eda_units::EdaUnits;
 use crate::string_utils::wild_compare_string;
@@ -145,12 +146,19 @@ impl<'e, B: UcodeBinder> Value<'e, B> {
 
     /// Port of `VALUE::VALUE( const double aVal )`.
     pub fn from_double(val: f64) -> Self {
-        Value { type_: VarType::Numeric, value_dbl: Cell::new(val), ..Self::new() }
+        Value {
+            type_: VarType::Numeric,
+            value_dbl: Cell::new(val),
+            ..Self::new()
+        }
     }
 
     /// Port of `VALUE::MakeNullValue()`.
     pub fn make_null_value() -> Self {
-        Value { type_: VarType::Null, ..Self::new() }
+        Value {
+            type_: VarType::Null,
+            ..Self::new()
+        }
     }
 
     /// Attach the payload that makes this value an instance of a "subclass" (see

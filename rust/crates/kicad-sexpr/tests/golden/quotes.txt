@@ -1,0 +1,38 @@
+# Texts for OUTPUTFORMATTER::Quotes and OUTPUTFORMATTER::GetQuoteChar (escaped like the lexer
+# script), one per line; an empty line is the empty text.
+
+abc
+F.Cu
+-12
+-
+a_b
+1.5
+\xc3\xa9
+a"b
+a\x5cb
+a#b
+a|b
+\x23abc
+\x23
+a b
+\x20a
+a\x09b
+a(b
+a)b
+a%b
+a{b
+a}b
+a-b
+a-
+--
+line1\x0aline2\x0d
+say "hi"
+back\x5cslash\x5c
+a\x09b\x07 \xc3\xa9 \xc2\xb5
+'single'
+$dollar
+tab\x09
+\x0a
+"
+\x5c
+\x5c"

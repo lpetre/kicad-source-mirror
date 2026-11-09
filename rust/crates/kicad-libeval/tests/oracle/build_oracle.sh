@@ -6,8 +6,8 @@
 # (default: <kicad>/rust/target/libeval-oracle).
 #
 #   tests/oracle/build_oracle.sh [outdir]
-#   <outdir>/oracle_libeval < tests/golden/libeval_cases.txt   > tests/golden/libeval_golden.txt
-#   <outdir>/oracle_numeric < tests/golden/numeric_cases.txt   > tests/golden/numeric_golden.txt
+#   LC_ALL=C.UTF-8 <outdir>/oracle_libeval < tests/golden/libeval_cases.txt > tests/golden/libeval_golden.txt
+#   <outdir>/oracle_numeric < tests/golden/numeric_cases.txt > tests/golden/numeric_golden.txt
 #
 # The parser tables embedded in src/libeval_compiler/grammar.rs and
 # src/numeric_evaluator/grammar.rs come from the same Lemon run (see tests/oracle/README.md).

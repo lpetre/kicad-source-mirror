@@ -144,7 +144,11 @@ macro_rules! impl_box_within_tol {
             fn is_box_within_tol(&self, a_exp: &Self, a_tol: $c) -> bool {
                 // using VEC = VECTOR2<typename BOX::coord_type>: the sizes are converted
                 is_vec_within_tol::<$c>(self.position(), a_exp.position(), a_tol)
-                    && is_vec_within_tol::<$c>(self.size().cast(), a_exp.size().cast(), a_tol * (2 as $c))
+                    && is_vec_within_tol::<$c>(
+                        self.size().cast(),
+                        a_exp.size().cast(),
+                        a_tol * (2 as $c),
+                    )
             }
         }
     };
@@ -165,14 +169,20 @@ pub fn is_box_within_tol<B: BoxWithinTol>(a_box: &B, a_exp: &B, a_tol: B::CoordT
 ///
 /// Build a horizontal segment from a point with a length.
 pub fn build_h_seg(a_start: Vector2I, a_length: i32) -> Seg {
-    Seg::new(Vector2I::new(a_start.x, a_start.y), Vector2I::new(a_start.x + a_length, a_start.y))
+    Seg::new(
+        Vector2I::new(a_start.x, a_start.y),
+        Vector2I::new(a_start.x + a_length, a_start.y),
+    )
 }
 
 /// Port of `KI_TEST::BuildVSeg`.
 ///
 /// Build a vertical segment from a point with a length.
 pub fn build_v_seg(a_start: Vector2I, a_length: i32) -> Seg {
-    Seg::new(Vector2I::new(a_start.x, a_start.y), Vector2I::new(a_start.x, a_start.y + a_length))
+    Seg::new(
+        Vector2I::new(a_start.x, a_start.y),
+        Vector2I::new(a_start.x, a_start.y + a_length),
+    )
 }
 
 /// Port of `GEOM_TEST::QUADRANT`.
@@ -238,7 +248,12 @@ pub fn segment_completely_within_radius(a_seg: &Seg, a_pt: Vector2I, a_radius: i
 ///
 /// (The C++ template stores the distance in an `int`, so it is only usable with
 /// `T = int`.)
-pub fn is_point_at_distance(a_pt_a: Vector2I, a_pt_b: Vector2I, a_exp_dist: i32, a_tol: i32) -> bool {
+pub fn is_point_at_distance(
+    a_pt_a: Vector2I,
+    a_pt_b: Vector2I,
+    a_exp_dist: i32,
+    a_tol: i32,
+) -> bool {
     let dist: i32 = (a_pt_b - a_pt_a).euclidean_norm();
 
     is_within(dist, a_exp_dist, a_tol)
@@ -252,7 +267,12 @@ pub fn is_point_at_distance(a_pt_a: Vector2I, a_pt_b: Vector2I, a_exp_dist: i32,
 /// * `a_centre` - the circle centre
 /// * `a_rad` - the circle radius
 /// * `a_tol` - the circle tolerance
-pub fn are_points_near_circle(a_points: &[Vector2I], a_centre: Vector2I, a_rad: i32, a_tol: i32) -> bool {
+pub fn are_points_near_circle(
+    a_points: &[Vector2I],
+    a_centre: Vector2I,
+    a_rad: i32,
+    a_tol: i32,
+) -> bool {
     let mut ok = true;
 
     for point in a_points {
@@ -269,7 +289,11 @@ pub fn are_points_near_circle(a_points: &[Vector2I], a_centre: Vector2I, a_rad: 
 /// Check if two vectors are perpendicular.
 ///
 /// * `a_tolerance` - the allowed deviation from PI/2 (e.g. when rounding)
-pub fn are_perpendicular(a: impl Into<Vector2D>, b: impl Into<Vector2D>, a_tolerance: EdaAngle) -> bool {
+pub fn are_perpendicular(
+    a: impl Into<Vector2D>,
+    b: impl Into<Vector2D>,
+    a_tolerance: EdaAngle,
+) -> bool {
     let mut angle: EdaAngle = (EdaAngle::from_vector(a) - EdaAngle::from_vector(b)).abs();
 
     // Normalise: angles of 3*pi/2 are also perpendicular
@@ -277,7 +301,11 @@ pub fn are_perpendicular(a: impl Into<Vector2D>, b: impl Into<Vector2D>, a_toler
         angle -= ANGLE_180;
     }
 
-    is_within(angle.as_radians(), ANGLE_90.as_radians(), a_tolerance.as_radians())
+    is_within(
+        angle.as_radians(),
+        ANGLE_90.as_radians(),
+        a_tolerance.as_radians(),
+    )
 }
 
 /// Port of `GEOM_TEST::SegmentsHaveSameEndPoints`.
@@ -297,7 +325,8 @@ pub fn triangle_min_angle_deg(a: Vector2I, b: Vector2I, c: Vector2I) -> f64 {
         let u = Vector2D::new((p.x - v.x) as f64, (p.y - v.y) as f64);
         let w = Vector2D::new((q.x - v.x) as f64, (q.y - v.y) as f64);
 
-        (u.x * w.y - u.y * w.x).abs().atan2(u.x * w.x + u.y * w.y) * 180.0 / std::f64::consts::PI
+        crate::cmath::atan2((u.x * w.y - u.y * w.x).abs(), u.x * w.x + u.y * w.y) * 180.0
+            / std::f64::consts::PI
     };
 
     let a1 = angle_at(a, b, c);
@@ -371,7 +400,11 @@ impl CommonTestData {
             Seg::new(p[11], p[9]),
         ];
 
-        CommonTestData { unique_points, holey_points, holey_segments }
+        CommonTestData {
+            unique_points,
+            holey_points,
+            holey_segments,
+        }
     }
 }
 
@@ -393,7 +426,9 @@ impl Mt19937 {
         mt[0] = seed;
 
         for i in 1..Self::N {
-            mt[i] = 1812433253u32.wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 30)).wrapping_add(i as u32);
+            mt[i] = 1812433253u32
+                .wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 30))
+                .wrapping_add(i as u32);
         }
 
         Mt19937 { mt, index: Self::N }
@@ -445,7 +480,9 @@ impl Mt19937_64 {
         mt[0] = seed;
 
         for i in 1..Self::N {
-            mt[i] = 6364136223846793005u64.wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 62)).wrapping_add(i as u64);
+            mt[i] = 6364136223846793005u64
+                .wrapping_mul(mt[i - 1] ^ (mt[i - 1] >> 62))
+                .wrapping_add(i as u64);
         }
 
         Mt19937_64 { mt, index: Self::N }
@@ -455,7 +492,8 @@ impl Mt19937_64 {
     pub fn next_u64(&mut self) -> u64 {
         if self.index >= Self::N {
             for i in 0..Self::N {
-                let y = (self.mt[i] & 0xffff_ffff_8000_0000) | (self.mt[(i + 1) % Self::N] & 0x7fff_ffff);
+                let y = (self.mt[i] & 0xffff_ffff_8000_0000)
+                    | (self.mt[(i + 1) % Self::N] & 0x7fff_ffff);
                 let mut next = self.mt[(i + Self::M) % Self::N] ^ (y >> 1);
 
                 if y & 1 != 0 {
@@ -488,7 +526,10 @@ impl Mt19937_64 {
 pub fn uniform_int_libstdcxx(rng: &mut Mt19937, a: i64, b: i64) -> i64 {
     let urange: u64 = (b as u64).wrapping_sub(a as u64);
 
-    assert!(urange < 0xffff_ffff, "only ranges narrower than the engine range are supported");
+    assert!(
+        urange < 0xffff_ffff,
+        "only ranges narrower than the engine range are supported"
+    );
 
     let uerange: u32 = (urange + 1) as u32;
 
@@ -574,13 +615,25 @@ mod tests {
         assert!(!is_within_wrapped(350.0, 1.0, 360.0, 2.0));
         assert!(is_within_wrapped(1.0, 359.0, 360.0, 2.0));
 
-        assert!(is_vec_within_tol(Vector2I::new(10, 10), Vector2I::new(11, 9), 1));
-        assert!(!is_vec_within_tol(Vector2I::new(10, 10), Vector2I::new(12, 9), 1));
+        assert!(is_vec_within_tol(
+            Vector2I::new(10, 10),
+            Vector2I::new(11, 9),
+            1
+        ));
+        assert!(!is_vec_within_tol(
+            Vector2I::new(10, 10),
+            Vector2I::new(12, 9),
+            1
+        ));
 
         let a = Box2I::new(Vector2I::new(0, 0), Vector2I::new(10, 10));
         let b = Box2I::new(Vector2I::new(1, -1), Vector2I::new(12, 8));
         assert!(is_box_within_tol(&a, &b, 1));
-        assert!(!is_box_within_tol(&a, &Box2I::new(Vector2I::new(1, -1), Vector2I::new(13, 8)), 1));
+        assert!(!is_box_within_tol(
+            &a,
+            &Box2I::new(Vector2I::new(1, -1), Vector2I::new(13, 8)),
+            1
+        ));
     }
 
     #[test]
@@ -596,23 +649,72 @@ mod tests {
         assert_eq!(seg, Seg::from_coords(-5, 3, 5, 3));
         assert!(!segment_completely_in_quadrant(&seg, Quadrant::Q1));
         assert!(segment_ends_in_quadrant(&seg, Quadrant::Q1));
-        assert!(segment_completely_within_radius(&seg, Vector2I::new(0, 0), 7));
-        assert!(!segment_completely_within_radius(&seg, Vector2I::new(0, 0), 5));
-        assert_eq!(build_v_seg(Vector2I::new(1, 2), 3), Seg::from_coords(1, 2, 1, 5));
+        assert!(segment_completely_within_radius(
+            &seg,
+            Vector2I::new(0, 0),
+            7
+        ));
+        assert!(!segment_completely_within_radius(
+            &seg,
+            Vector2I::new(0, 0),
+            5
+        ));
+        assert_eq!(
+            build_v_seg(Vector2I::new(1, 2), 3),
+            Seg::from_coords(1, 2, 1, 5)
+        );
 
-        assert!(is_point_at_distance(Vector2I::new(0, 0), Vector2I::new(3, 4), 5, 0));
-        assert!(are_points_near_circle(&[Vector2I::new(10, 0), Vector2I::new(0, -10), Vector2I::new(7, 7)], Vector2I::new(0, 0), 10, 0));
-        assert!(!are_points_near_circle(&[Vector2I::new(10, 0), Vector2I::new(5, 5)], Vector2I::new(0, 0), 10, 1));
+        assert!(is_point_at_distance(
+            Vector2I::new(0, 0),
+            Vector2I::new(3, 4),
+            5,
+            0
+        ));
+        assert!(are_points_near_circle(
+            &[
+                Vector2I::new(10, 0),
+                Vector2I::new(0, -10),
+                Vector2I::new(7, 7)
+            ],
+            Vector2I::new(0, 0),
+            10,
+            0
+        ));
+        assert!(!are_points_near_circle(
+            &[Vector2I::new(10, 0), Vector2I::new(5, 5)],
+            Vector2I::new(0, 0),
+            10,
+            1
+        ));
 
         let tol = EdaAngle::new(0.001, crate::geometry::eda_angle::DEGREES_T);
-        assert!(are_perpendicular(Vector2I::new(10, 0), Vector2I::new(0, 7), tol));
-        assert!(are_perpendicular(Vector2I::new(10, 0), Vector2I::new(0, -7), tol));
-        assert!(!are_perpendicular(Vector2I::new(10, 0), Vector2I::new(7, 7), tol));
+        assert!(are_perpendicular(
+            Vector2I::new(10, 0),
+            Vector2I::new(0, 7),
+            tol
+        ));
+        assert!(are_perpendicular(
+            Vector2I::new(10, 0),
+            Vector2I::new(0, -7),
+            tol
+        ));
+        assert!(!are_perpendicular(
+            Vector2I::new(10, 0),
+            Vector2I::new(7, 7),
+            tol
+        ));
 
         assert!(segments_have_same_end_points(&seg, &seg.reversed()));
-        assert!(!segments_have_same_end_points(&seg, &build_v_seg(Vector2I::new(-5, 3), 10)));
+        assert!(!segments_have_same_end_points(
+            &seg,
+            &build_v_seg(Vector2I::new(-5, 3), 10)
+        ));
 
-        let min_angle = triangle_min_angle_deg(Vector2I::new(0, 0), Vector2I::new(10, 0), Vector2I::new(0, 10));
+        let min_angle = triangle_min_angle_deg(
+            Vector2I::new(0, 0),
+            Vector2I::new(10, 0),
+            Vector2I::new(0, 10),
+        );
         assert!((min_angle - 45.0).abs() < 1e-9);
 
         let data = CommonTestData::new();

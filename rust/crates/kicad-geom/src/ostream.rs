@@ -34,11 +34,19 @@
 /// are then removed.  The exponent is written with a sign and at least two digits.
 pub fn format_g(value: f64, precision: usize) -> String {
     if value.is_nan() {
-        return if value.is_sign_negative() { "-nan".to_string() } else { "nan".to_string() };
+        return if value.is_sign_negative() {
+            "-nan".to_string()
+        } else {
+            "nan".to_string()
+        };
     }
 
     if value.is_infinite() {
-        return if value < 0.0 { "-inf".to_string() } else { "inf".to_string() };
+        return if value < 0.0 {
+            "-inf".to_string()
+        } else {
+            "inf".to_string()
+        };
     }
 
     let p = if precision == 0 { 1 } else { precision };
@@ -55,7 +63,12 @@ pub fn format_g(value: f64, precision: usize) -> String {
     } else {
         let sign = if x < 0 { '-' } else { '+' };
 
-        format!("{}e{}{:02}", strip_trailing_zeros(mantissa), sign, x.unsigned_abs())
+        format!(
+            "{}e{}{:02}",
+            strip_trailing_zeros(mantissa),
+            sign,
+            x.unsigned_abs()
+        )
     }
 }
 
@@ -67,7 +80,11 @@ pub fn format_double(value: f64) -> String {
 
 /// Remove trailing zeros of the fractional part, and the decimal point if nothing remains.
 fn strip_trailing_zeros(s: &str) -> &str {
-    if s.contains('.') { s.trim_end_matches('0').trim_end_matches('.') } else { s }
+    if s.contains('.') {
+        s.trim_end_matches('0').trim_end_matches('.')
+    } else {
+        s
+    }
 }
 
 #[cfg(test)]

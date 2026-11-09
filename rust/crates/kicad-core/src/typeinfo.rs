@@ -403,9 +403,9 @@ impl KicadT {
             | KicadT::PcbFieldLocateFootprintT
             | KicadT::PcbFieldLocateDatasheetT => KicadT::PcbFieldT,
 
-            KicadT::PcbLocateHoleT
-            | KicadT::PcbLocatePthT
-            | KicadT::PcbLocateNpthT => KicadT::PcbLocateHoleT,
+            KicadT::PcbLocateHoleT | KicadT::PcbLocatePthT | KicadT::PcbLocateNpthT => {
+                KicadT::PcbLocateHoleT
+            }
 
             KicadT::PcbShapeLocateSegmentT
             | KicadT::PcbShapeLocateRectT
@@ -422,8 +422,7 @@ impl KicadT {
             | KicadT::PcbDimOrthogonalT
             | KicadT::PcbDimLeaderT => KicadT::PcbDimensionT,
 
-            KicadT::PcbDrillChartT
-            | KicadT::PcbStackupTableT => KicadT::PcbTableT,
+            KicadT::PcbDrillChartT | KicadT::PcbStackupTableT => KicadT::PcbTableT,
 
             _ => self,
         }
@@ -456,43 +455,43 @@ impl KicadT {
         !matches!(
             self,
             KicadT::SchLocateAnyT
-            | KicadT::SchFieldLocateReferenceT
-            | KicadT::SchFieldLocateValueT
-            | KicadT::SchFieldLocateFootprintT
-            | KicadT::SchFieldLocateDatasheetT
-            | KicadT::SchItemLocateWireT
-            | KicadT::SchItemLocateBusT
-            | KicadT::SchItemLocateGraphicLineT
-            | KicadT::SchLabelLocateAnyT
-            | KicadT::SchLabelLocateWireT
-            | KicadT::SchLabelLocateBusT
-            | KicadT::SchSymbolLocatePowerT
-            | KicadT::PcbFieldLocateReferenceT
-            | KicadT::PcbFieldLocateValueT
-            | KicadT::PcbFieldLocateFootprintT
-            | KicadT::PcbFieldLocateDatasheetT
-            | KicadT::PcbLocateStdviaT
-            | KicadT::PcbLocateUviaT
-            | KicadT::PcbLocateBlindviaT
-            | KicadT::PcbLocateBuriedviaT
-            | KicadT::PcbLocateTextT
-            | KicadT::PcbLocateHoleT
-            | KicadT::PcbLocatePthT
-            | KicadT::PcbLocateNpthT
-            | KicadT::PcbLocateBoardEdgeT
-            | KicadT::PcbShapeLocateSegmentT
-            | KicadT::PcbShapeLocateRectT
-            | KicadT::PcbShapeLocateCircleT
-            | KicadT::PcbShapeLocateArcT
-            | KicadT::PcbShapeLocatePolyT
-            | KicadT::PcbShapeLocateBezierT
-            | KicadT::PcbShapeLocateEllipseT
-            | KicadT::PcbShapeLocateEllipseArcT
-            | KicadT::PcbDimensionT
-            | KicadT::SchTablecellT
-            | KicadT::PcbTablecellT
-            | KicadT::SchScreenT
-            | KicadT::PcbItemListT
+                | KicadT::SchFieldLocateReferenceT
+                | KicadT::SchFieldLocateValueT
+                | KicadT::SchFieldLocateFootprintT
+                | KicadT::SchFieldLocateDatasheetT
+                | KicadT::SchItemLocateWireT
+                | KicadT::SchItemLocateBusT
+                | KicadT::SchItemLocateGraphicLineT
+                | KicadT::SchLabelLocateAnyT
+                | KicadT::SchLabelLocateWireT
+                | KicadT::SchLabelLocateBusT
+                | KicadT::SchSymbolLocatePowerT
+                | KicadT::PcbFieldLocateReferenceT
+                | KicadT::PcbFieldLocateValueT
+                | KicadT::PcbFieldLocateFootprintT
+                | KicadT::PcbFieldLocateDatasheetT
+                | KicadT::PcbLocateStdviaT
+                | KicadT::PcbLocateUviaT
+                | KicadT::PcbLocateBlindviaT
+                | KicadT::PcbLocateBuriedviaT
+                | KicadT::PcbLocateTextT
+                | KicadT::PcbLocateHoleT
+                | KicadT::PcbLocatePthT
+                | KicadT::PcbLocateNpthT
+                | KicadT::PcbLocateBoardEdgeT
+                | KicadT::PcbShapeLocateSegmentT
+                | KicadT::PcbShapeLocateRectT
+                | KicadT::PcbShapeLocateCircleT
+                | KicadT::PcbShapeLocateArcT
+                | KicadT::PcbShapeLocatePolyT
+                | KicadT::PcbShapeLocateBezierT
+                | KicadT::PcbShapeLocateEllipseT
+                | KicadT::PcbShapeLocateEllipseArcT
+                | KicadT::PcbDimensionT
+                | KicadT::SchTablecellT
+                | KicadT::PcbTablecellT
+                | KicadT::SchScreenT
+                | KicadT::PcbItemListT
         )
     }
 
@@ -501,43 +500,43 @@ impl KicadT {
         matches!(
             self,
             KicadT::SchMarkerT
-            | KicadT::SchJunctionT
-            | KicadT::SchNoConnectT
-            | KicadT::SchBusWireEntryT
-            | KicadT::SchBusBusEntryT
-            | KicadT::SchLineT
-            | KicadT::SchShapeT
-            | KicadT::SchRuleAreaT
-            | KicadT::SchBitmapT
-            | KicadT::SchTextT
-            | KicadT::SchTextboxT
-            | KicadT::SchTableT
-            | KicadT::SchTablecellT
-            | KicadT::SchLabelT
-            | KicadT::SchDirectiveLabelT
-            | KicadT::SchGlobalLabelT
-            | KicadT::SchHierLabelT
-            | KicadT::SchFieldT
-            | KicadT::SchSymbolT
-            | KicadT::SchSheetPinT
-            | KicadT::SchGroupT
-            | KicadT::SchSheetT
-            | KicadT::SchPinT
-            | KicadT::SchFieldLocateReferenceT
-            | KicadT::SchFieldLocateValueT
-            | KicadT::SchFieldLocateFootprintT
-            | KicadT::SchFieldLocateDatasheetT
-            | KicadT::SchItemLocateWireT
-            | KicadT::SchItemLocateBusT
-            | KicadT::SchItemLocateGraphicLineT
-            | KicadT::SchLabelLocateAnyT
-            | KicadT::SchLabelLocateWireT
-            | KicadT::SchLabelLocateBusT
-            | KicadT::SchSymbolLocatePowerT
-            | KicadT::SchLocateAnyT
-            | KicadT::SchScreenT
-            | KicadT::SchematicT
-            | KicadT::LibSymbolT
+                | KicadT::SchJunctionT
+                | KicadT::SchNoConnectT
+                | KicadT::SchBusWireEntryT
+                | KicadT::SchBusBusEntryT
+                | KicadT::SchLineT
+                | KicadT::SchShapeT
+                | KicadT::SchRuleAreaT
+                | KicadT::SchBitmapT
+                | KicadT::SchTextT
+                | KicadT::SchTextboxT
+                | KicadT::SchTableT
+                | KicadT::SchTablecellT
+                | KicadT::SchLabelT
+                | KicadT::SchDirectiveLabelT
+                | KicadT::SchGlobalLabelT
+                | KicadT::SchHierLabelT
+                | KicadT::SchFieldT
+                | KicadT::SchSymbolT
+                | KicadT::SchSheetPinT
+                | KicadT::SchGroupT
+                | KicadT::SchSheetT
+                | KicadT::SchPinT
+                | KicadT::SchFieldLocateReferenceT
+                | KicadT::SchFieldLocateValueT
+                | KicadT::SchFieldLocateFootprintT
+                | KicadT::SchFieldLocateDatasheetT
+                | KicadT::SchItemLocateWireT
+                | KicadT::SchItemLocateBusT
+                | KicadT::SchItemLocateGraphicLineT
+                | KicadT::SchLabelLocateAnyT
+                | KicadT::SchLabelLocateWireT
+                | KicadT::SchLabelLocateBusT
+                | KicadT::SchSymbolLocatePowerT
+                | KicadT::SchLocateAnyT
+                | KicadT::SchScreenT
+                | KicadT::SchematicT
+                | KicadT::LibSymbolT
         )
     }
 
@@ -546,61 +545,61 @@ impl KicadT {
         matches!(
             self,
             KicadT::PcbT
-            | KicadT::PcbFootprintT
-            | KicadT::PcbPadT
-            | KicadT::PcbShapeT
-            | KicadT::PcbReferenceImageT
-            | KicadT::PcbFieldT
-            | KicadT::PcbTextT
-            | KicadT::PcbTextboxT
-            | KicadT::PcbBarcodeT
-            | KicadT::PcbTableT
-            | KicadT::PcbTablecellT
-            | KicadT::PcbTraceT
-            | KicadT::PcbViaT
-            | KicadT::PcbArcT
-            | KicadT::PcbMarkerT
-            | KicadT::PcbDimensionT
-            | KicadT::PcbDimAlignedT
-            | KicadT::PcbDimLeaderT
-            | KicadT::PcbDimCenterT
-            | KicadT::PcbDimRadialT
-            | KicadT::PcbDimOrthogonalT
-            | KicadT::PcbTargetT
-            | KicadT::PcbDrillChartT
-            | KicadT::PcbDrillMapT
-            | KicadT::Pcb3dBodyT
-            | KicadT::PcbStackupTableT
-            | KicadT::PcbPointT
-            | KicadT::PcbZoneT
-            | KicadT::PcbItemListT
-            | KicadT::PcbNetinfoT
-            | KicadT::PcbGroupT
-            | KicadT::PcbGeneratorT
-            | KicadT::PcbGridItemT
-            | KicadT::PcbFieldLocateReferenceT
-            | KicadT::PcbFieldLocateValueT
-            | KicadT::PcbFieldLocateFootprintT
-            | KicadT::PcbFieldLocateDatasheetT
-            | KicadT::PcbLocateStdviaT
-            | KicadT::PcbLocateUviaT
-            | KicadT::PcbLocateBlindviaT
-            | KicadT::PcbLocateBuriedviaT
-            | KicadT::PcbLocateTextT
-            | KicadT::PcbLocateHoleT
-            | KicadT::PcbLocatePthT
-            | KicadT::PcbLocateNpthT
-            | KicadT::PcbLocateBoardEdgeT
-            | KicadT::PcbShapeLocateSegmentT
-            | KicadT::PcbShapeLocateRectT
-            | KicadT::PcbShapeLocateCircleT
-            | KicadT::PcbShapeLocateArcT
-            | KicadT::PcbShapeLocatePolyT
-            | KicadT::PcbShapeLocateBezierT
-            | KicadT::PcbShapeLocateEllipseT
-            | KicadT::PcbShapeLocateEllipseArcT
-            | KicadT::PcbBoardOutlineT
-            | KicadT::PcbConstraintT
+                | KicadT::PcbFootprintT
+                | KicadT::PcbPadT
+                | KicadT::PcbShapeT
+                | KicadT::PcbReferenceImageT
+                | KicadT::PcbFieldT
+                | KicadT::PcbTextT
+                | KicadT::PcbTextboxT
+                | KicadT::PcbBarcodeT
+                | KicadT::PcbTableT
+                | KicadT::PcbTablecellT
+                | KicadT::PcbTraceT
+                | KicadT::PcbViaT
+                | KicadT::PcbArcT
+                | KicadT::PcbMarkerT
+                | KicadT::PcbDimensionT
+                | KicadT::PcbDimAlignedT
+                | KicadT::PcbDimLeaderT
+                | KicadT::PcbDimCenterT
+                | KicadT::PcbDimRadialT
+                | KicadT::PcbDimOrthogonalT
+                | KicadT::PcbTargetT
+                | KicadT::PcbDrillChartT
+                | KicadT::PcbDrillMapT
+                | KicadT::Pcb3dBodyT
+                | KicadT::PcbStackupTableT
+                | KicadT::PcbPointT
+                | KicadT::PcbZoneT
+                | KicadT::PcbItemListT
+                | KicadT::PcbNetinfoT
+                | KicadT::PcbGroupT
+                | KicadT::PcbGeneratorT
+                | KicadT::PcbGridItemT
+                | KicadT::PcbFieldLocateReferenceT
+                | KicadT::PcbFieldLocateValueT
+                | KicadT::PcbFieldLocateFootprintT
+                | KicadT::PcbFieldLocateDatasheetT
+                | KicadT::PcbLocateStdviaT
+                | KicadT::PcbLocateUviaT
+                | KicadT::PcbLocateBlindviaT
+                | KicadT::PcbLocateBuriedviaT
+                | KicadT::PcbLocateTextT
+                | KicadT::PcbLocateHoleT
+                | KicadT::PcbLocatePthT
+                | KicadT::PcbLocateNpthT
+                | KicadT::PcbLocateBoardEdgeT
+                | KicadT::PcbShapeLocateSegmentT
+                | KicadT::PcbShapeLocateRectT
+                | KicadT::PcbShapeLocateCircleT
+                | KicadT::PcbShapeLocateArcT
+                | KicadT::PcbShapeLocatePolyT
+                | KicadT::PcbShapeLocateBezierT
+                | KicadT::PcbShapeLocateEllipseT
+                | KicadT::PcbShapeLocateEllipseArcT
+                | KicadT::PcbBoardOutlineT
+                | KicadT::PcbConstraintT
         )
     }
 
@@ -609,28 +608,28 @@ impl KicadT {
         matches!(
             self,
             KicadT::PcbShapeT
-            | KicadT::PcbReferenceImageT
-            | KicadT::PcbFieldT
-            | KicadT::PcbTextT
-            | KicadT::PcbTextboxT
-            | KicadT::PcbBarcodeT
-            | KicadT::PcbTableT
-            | KicadT::PcbDrillChartT
-            | KicadT::PcbDrillMapT
-            | KicadT::PcbStackupTableT
-            | KicadT::PcbTablecellT
-            | KicadT::PcbTraceT
-            | KicadT::PcbArcT
-            | KicadT::PcbMarkerT
-            | KicadT::PcbDimensionT
-            | KicadT::PcbDimAlignedT
-            | KicadT::PcbDimLeaderT
-            | KicadT::PcbDimCenterT
-            | KicadT::PcbDimRadialT
-            | KicadT::PcbDimOrthogonalT
-            | KicadT::PcbTargetT
-            | KicadT::PcbPointT
-            | KicadT::PcbGeneratorT
+                | KicadT::PcbReferenceImageT
+                | KicadT::PcbFieldT
+                | KicadT::PcbTextT
+                | KicadT::PcbTextboxT
+                | KicadT::PcbBarcodeT
+                | KicadT::PcbTableT
+                | KicadT::PcbDrillChartT
+                | KicadT::PcbDrillMapT
+                | KicadT::PcbStackupTableT
+                | KicadT::PcbTablecellT
+                | KicadT::PcbTraceT
+                | KicadT::PcbArcT
+                | KicadT::PcbMarkerT
+                | KicadT::PcbDimensionT
+                | KicadT::PcbDimAlignedT
+                | KicadT::PcbDimLeaderT
+                | KicadT::PcbDimCenterT
+                | KicadT::PcbDimRadialT
+                | KicadT::PcbDimOrthogonalT
+                | KicadT::PcbTargetT
+                | KicadT::PcbPointT
+                | KicadT::PcbGeneratorT
         )
     }
 
@@ -638,9 +637,7 @@ impl KicadT {
     pub const fn is_gerbview_type(self) -> bool {
         matches!(
             self,
-            KicadT::GerberLayoutT
-            | KicadT::GerberDrawItemT
-            | KicadT::GerberImageT
+            KicadT::GerberLayoutT | KicadT::GerberDrawItemT | KicadT::GerberImageT
         )
     }
 
@@ -649,13 +646,13 @@ impl KicadT {
         matches!(
             self,
             KicadT::WsgLineT
-            | KicadT::WsgRectT
-            | KicadT::WsgPolyT
-            | KicadT::WsgTextT
-            | KicadT::WsgBitmapT
-            | KicadT::WsgPageT
-            | KicadT::WsProxyUndoItemT
-            | KicadT::WsProxyUndoItemPlusT
+                | KicadT::WsgRectT
+                | KicadT::WsgPolyT
+                | KicadT::WsgTextT
+                | KicadT::WsgBitmapT
+                | KicadT::WsgPageT
+                | KicadT::WsProxyUndoItemT
+                | KicadT::WsProxyUndoItemPlusT
         )
     }
 
@@ -664,12 +661,12 @@ impl KicadT {
         matches!(
             self,
             KicadT::ScreenT
-            | KicadT::SymbolLibTableT
-            | KicadT::FpLibTableT
-            | KicadT::DesignBlockLibTableT
-            | KicadT::SymbolLibsT
-            | KicadT::SearchStackT
-            | KicadT::S3dCacheT
+                | KicadT::SymbolLibTableT
+                | KicadT::FpLibTableT
+                | KicadT::DesignBlockLibTableT
+                | KicadT::SymbolLibsT
+                | KicadT::SearchStackT
+                | KicadT::S3dCacheT
         )
     }
 

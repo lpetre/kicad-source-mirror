@@ -45,15 +45,17 @@ pub fn words_to_double(a_hi: i64, a_lo: u64) -> f64 {
         hi = (!hi).wrapping_add(if lo == 0 { 1 } else { 0 });
     }
 
-    let magnitude: f64;
-
-    if hi == 0 {
-        magnitude = lo as f64;
+    let magnitude: f64 = if hi == 0 {
+        lo as f64
     } else {
         // Fold the discarded low bits into a sticky bit so the single uint64 to double rounding
         // matches rounding the full 128-bit value
         let shift: u32 = hi.leading_zeros();
-        let mut top: u64 = if shift == 0 { hi } else { (hi << shift) | (lo >> (64 - shift)) };
+        let mut top: u64 = if shift == 0 {
+            hi
+        } else {
+            (hi << shift) | (lo >> (64 - shift))
+        };
 
         if (lo << shift) != 0 {
             top |= 1;
@@ -63,8 +65,9 @@ pub fn words_to_double(a_hi: i64, a_lo: u64) -> f64 {
         // is exact (the result is far from the overflow and subnormal ranges).  The factor
         // 2^(64 - shift) is built directly from its bit pattern.
         let scale: f64 = f64::from_bits((1023 + (64 - shift) as u64) << 52);
-        magnitude = top as f64 * scale;
-    }
+
+        top as f64 * scale
+    };
 
     if negative { -magnitude } else { magnitude }
 }

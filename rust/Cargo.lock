@@ -63,9 +63,6 @@ dependencies = [
 [[package]]
 name = "kicad-libeval"
 version = "0.1.0"
-dependencies = [
- "kicad-qa",
-]
 
 [[package]]
 name = "kicad-pcb"

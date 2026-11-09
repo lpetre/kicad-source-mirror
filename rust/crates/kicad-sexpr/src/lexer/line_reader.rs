@@ -166,7 +166,11 @@ impl LineReader for StringLineReader {
         self.length = new_length;
         self.line_num += 1; // this gets incremented even if no bytes were read
 
-        Ok(if self.length != 0 { Some(self.line()) } else { None })
+        Ok(if self.length != 0 {
+            Some(self.line())
+        } else {
+            None
+        })
     }
 
     fn source(&self) -> &str {
@@ -176,7 +180,9 @@ impl LineReader for StringLineReader {
     fn line(&self) -> &str {
         // Lines end right after a '\n' or at the end of the text, both of which are character
         // boundaries, so this cannot fail.
-        self.lines.get(self.line_start..self.line_start + self.length as usize).unwrap_or("")
+        self.lines
+            .get(self.line_start..self.line_start + self.length as usize)
+            .unwrap_or("")
     }
 
     fn line_number(&self) -> u32 {
@@ -253,7 +259,10 @@ mod tests {
         // Nothing changes on the error: same line, same line number, and the same error again.
         assert_eq!(reader.line(), "ab\n");
         assert_eq!(reader.line_number(), 1);
-        assert_eq!(reader.read_line().unwrap_err().problem(), "Line length exceeded");
+        assert_eq!(
+            reader.read_line().unwrap_err().problem(),
+            "Line length exceeded"
+        );
     }
 
     #[test]
@@ -268,7 +277,10 @@ mod tests {
 
         ok.insert(0, 'x');
         let mut reader = StringLineReader::new(ok, "s");
-        assert_eq!(reader.read_line().unwrap_err().problem(), "Line length exceeded");
+        assert_eq!(
+            reader.read_line().unwrap_err().problem(),
+            "Line length exceeded"
+        );
     }
 
     #[test]

@@ -117,6 +117,7 @@ int main( int argc, char* argv[] )
         }
 
         printf( "END\n" );
+        fflush( stdout );
     }
 
     return 0;

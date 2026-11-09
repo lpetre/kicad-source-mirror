@@ -23,14 +23,12 @@
 
 use std::fmt;
 use std::ops::{
-    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Not,
+    BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, DerefMut, Index, Not,
 };
 use std::sync::OnceLock;
 
 use crate::base_set::{BaseSet, impl_bit_ops};
-use crate::layer_ids::{
-    MAX_CU_LAYERS, PCB_LAYER_ID_COUNT, PcbLayerId, is_copper_layer,
-};
+use crate::layer_ids::{MAX_CU_LAYERS, PCB_LAYER_ID_COUNT, PcbLayerId, is_copper_layer};
 use crate::layer_range::LayerRange;
 use crate::lseq::Lseq;
 
@@ -222,8 +220,8 @@ impl Lset {
             if let Some(offset) = wx_to_long(rest) {
                 if offset > 0 {
                     // int + long arithmetic, truncated to the int return type.
-                    return i64::from(PcbLayerId::User1.0)
-                        .wrapping_add((offset - 1).wrapping_mul(2)) as i32;
+                    return i64::from(PcbLayerId::User1.0).wrapping_add((offset - 1).wrapping_mul(2))
+                        as i32;
                 }
             }
         }
@@ -242,8 +240,8 @@ impl Lset {
 
             if let Some(offset) = wx_to_long(&str_num) {
                 if offset > 0 {
-                    return i64::from(PcbLayerId::In1Cu.0)
-                        .wrapping_add((offset - 1).wrapping_mul(2)) as i32;
+                    return i64::from(PcbLayerId::In1Cu.0).wrapping_add((offset - 1).wrapping_mul(2))
+                        as i32;
                 }
             }
         }
@@ -501,9 +499,7 @@ impl Lset {
     pub fn side_specific_mask() -> &'static Lset {
         static SAVED: OnceLock<Lset> = OnceLock::new();
 
-        SAVED.get_or_init(|| {
-            Self::back_tech_mask() | Self::front_tech_mask() | Self::all_cu_mask()
-        })
+        SAVED.get_or_init(|| Self::back_tech_mask() | Self::front_tech_mask() | Self::all_cu_mask())
     }
 
     /// Port of `LSET::UserMask`.
@@ -1023,7 +1019,11 @@ fn wx_to_long(s: &str) -> Option<i64> {
         return None;
     }
 
-    if negative { Some(value) } else { value.checked_neg() }
+    if negative {
+        Some(value)
+    } else {
+        value.checked_neg()
+    }
 }
 
 impl Default for Lset {
@@ -1043,6 +1043,15 @@ impl Deref for Lset {
 impl DerefMut for Lset {
     fn deref_mut(&mut self) -> &mut BaseSet {
         &mut self.0
+    }
+}
+
+impl Index<PcbLayerId> for Lset {
+    type Output = bool;
+
+    /// Port of the read-only `operator[]` with a layer: same as [`Lset::contains`].
+    fn index(&self, layer: PcbLayerId) -> &bool {
+        if self.contains(layer) { &true } else { &false }
     }
 }
 
@@ -1432,6 +1441,11 @@ mod tests {
         ]);
 
         assert_eq!(format!("{set:?}"), "Lset[FCu, FMask, In2Cu, User1]");
+        assert!(set[PcbLayerId::FMask]);
+        assert!(!set[PcbLayerId::BMask]);
+        assert!(!set[PcbLayerId::UndefinedLayer]);
+        assert!(set.as_base_set()[1]);
+        assert_eq!(set.to_string().len(), 128);
 
         let mut a = set.clone();
         a.clear_copper_layers();

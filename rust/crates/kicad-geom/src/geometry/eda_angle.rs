@@ -22,6 +22,7 @@ use core::fmt;
 use core::ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign};
 use std::f64::consts::{FRAC_1_SQRT_2, PI};
 
+use crate::cmath;
 use crate::math::util::{equals, ki_round};
 use crate::math::vector2::Vector2D;
 use crate::ostream::format_double;
@@ -84,7 +85,9 @@ impl EdaAngle {
     /// global angles.  All other code should use `EdaAngle::new( xxx, DEGREES_T )`.
     #[inline]
     pub const fn from_degrees(a_angle_in_degrees: f64) -> Self {
-        EdaAngle { value: a_angle_in_degrees }
+        EdaAngle {
+            value: a_angle_in_degrees,
+        }
     }
 
     /// Port of `explicit EDA_ANGLE( const VECTOR2D& aVector )`: the direction of a vector,
@@ -101,11 +104,19 @@ impl EdaAngle {
         } else if a_vector.x == 0.0 {
             if a_vector.y >= 0.0 { 90.0 } else { -90.0 }
         } else if a_vector.x == a_vector.y {
-            if a_vector.x >= 0.0 { 45.0 } else { -180.0 + 45.0 }
+            if a_vector.x >= 0.0 {
+                45.0
+            } else {
+                -180.0 + 45.0
+            }
         } else if a_vector.x == -a_vector.y {
-            if a_vector.x >= 0.0 { -45.0 } else { 180.0 - 45.0 }
+            if a_vector.x >= 0.0 {
+                -45.0
+            } else {
+                180.0 - 45.0
+            }
         } else {
-            return EdaAngle::new(a_vector.y.atan2(a_vector.x), EdaAngleT::Radians);
+            return EdaAngle::new(cmath::atan2(a_vector.y, a_vector.x), EdaAngleT::Radians);
         };
 
         EdaAngle { value }
@@ -232,7 +243,7 @@ impl EdaAngle {
         } else if test.value == 270.0 {
             -1.0
         } else {
-            self.as_radians().sin()
+            cmath::sin(self.as_radians())
         }
     }
 
@@ -252,38 +263,38 @@ impl EdaAngle {
         } else if test.value == 135.0 || test.value == 225.0 {
             -FRAC_1_SQRT_2
         } else {
-            self.as_radians().cos()
+            cmath::cos(self.as_radians())
         }
     }
 
     /// Port of `EDA_ANGLE::Tan()`.
     #[inline]
     pub fn tan(self) -> f64 {
-        self.as_radians().tan()
+        cmath::tan(self.as_radians())
     }
 
     /// Port of `EDA_ANGLE::Arccos()`.
     #[inline]
     pub fn arccos(x: f64) -> EdaAngle {
-        EdaAngle::new(x.acos(), EdaAngleT::Radians)
+        EdaAngle::new(cmath::acos(x), EdaAngleT::Radians)
     }
 
     /// Port of `EDA_ANGLE::Arcsin()`.
     #[inline]
     pub fn arcsin(x: f64) -> EdaAngle {
-        EdaAngle::new(x.asin(), EdaAngleT::Radians)
+        EdaAngle::new(cmath::asin(x), EdaAngleT::Radians)
     }
 
     /// Port of `EDA_ANGLE::Arctan()`.
     #[inline]
     pub fn arctan(x: f64) -> EdaAngle {
-        EdaAngle::new(x.atan(), EdaAngleT::Radians)
+        EdaAngle::new(cmath::atan(x), EdaAngleT::Radians)
     }
 
     /// Port of `EDA_ANGLE::Arctan2()`.
     #[inline]
     pub fn arctan2(y: f64, x: f64) -> EdaAngle {
-        EdaAngle::new(y.atan2(x), EdaAngleT::Radians)
+        EdaAngle::new(cmath::atan2(y, x), EdaAngleT::Radians)
     }
 
     /// Port of `EDA_ANGLE::Normalize()`: normalize in place to [0, 360) and return the new
@@ -385,7 +396,10 @@ impl EdaAngle {
             return self;
         }
 
-        EdaAngle::new(step * ki_round(self.as_degrees() / step) as f64, EdaAngleT::Degrees)
+        EdaAngle::new(
+            step * ki_round(self.as_degrees() / step) as f64,
+            EdaAngleT::Degrees,
+        )
     }
 
     /// Port of `EDA_ANGLE::KeepUpright()`.
@@ -395,12 +409,14 @@ impl EdaAngle {
 
         let in_degrees: f64 = in_angle.as_degrees();
 
-        let out_degrees: f64 =
-            if in_degrees <= 45.0 || in_degrees >= 315.0 || (in_degrees > 135.0 && in_degrees <= 225.0) {
-                0.0
-            } else {
-                90.0
-            };
+        let out_degrees: f64 = if in_degrees <= 45.0
+            || in_degrees >= 315.0
+            || (in_degrees > 135.0 && in_degrees <= 225.0)
+        {
+            0.0
+        } else {
+            90.0
+        };
 
         EdaAngle::new(out_degrees, EdaAngleT::Degrees)
     }
@@ -428,14 +444,17 @@ impl EdaAngle {
     /// does not matter.
     #[must_use]
     pub fn reflect(self, a_axis_angle: EdaAngle) -> EdaAngle {
-        EdaAngle::new(2.0 * a_axis_angle.as_degrees() - self.as_degrees(), EdaAngleT::Degrees)
+        EdaAngle::new(
+            2.0 * a_axis_angle.as_degrees() - self.as_degrees(),
+            EdaAngleT::Degrees,
+        )
     }
 
     /// Port of `EDA_ANGLE::Round( int digits )`.
     #[must_use]
     pub fn round(self, digits: i32) -> EdaAngle {
-        let rounded: f64 =
-            ki_round(self.as_degrees() * 10.0f64.powf(digits as f64)) as f64 / 10.0f64.powf(digits as f64);
+        let rounded: f64 = ki_round(self.as_degrees() * cmath::pow(10.0, digits as f64)) as f64
+            / cmath::pow(10.0, digits as f64);
 
         EdaAngle::new(rounded, EdaAngleT::Degrees)
     }
@@ -743,14 +762,20 @@ mod tests {
 
     #[test]
     fn construction_units() {
-        assert_eq!(EdaAngle::new(900.0, TENTHS_OF_A_DEGREE_T).as_degrees(), 90.0);
+        assert_eq!(
+            EdaAngle::new(900.0, TENTHS_OF_A_DEGREE_T).as_degrees(),
+            90.0
+        );
         assert_eq!(EdaAngle::new(90.0, DEGREES_T).as_degrees(), 90.0);
         assert_eq!(EdaAngle::new(PI, RADIANS_T).as_degrees(), 180.0);
         assert_eq!(EdaAngle::new(90.0, DEGREES_T).as_tenths_of_a_degree(), 900);
         assert_eq!(EdaAngle::new(180.0, DEGREES_T).as_radians(), PI);
         assert_eq!(EdaAngle::default().as_degrees(), 0.0);
         assert_eq!(EdaAngle::new(12.34, DEGREES_T).as_tenths_of_a_degree(), 123);
-        assert_eq!(EdaAngle::new(-12.35, DEGREES_T).as_tenths_of_a_degree(), -124);
+        assert_eq!(
+            EdaAngle::new(-12.35, DEGREES_T).as_tenths_of_a_degree(),
+            -124
+        );
     }
 
     #[test]
@@ -767,7 +792,10 @@ mod tests {
         assert_eq!(deg(5, -5), -45.0);
         assert_eq!(deg(-5, 5), 135.0);
         assert_eq!(deg(1, 2), 2.0f64.atan2(1.0) / EdaAngle::DEGREES_TO_RADIANS);
-        assert_eq!(EdaAngle::from_vector(Vector2D::new(-0.5, -0.5)).as_degrees(), -135.0);
+        assert_eq!(
+            EdaAngle::from_vector(Vector2D::new(-0.5, -0.5)).as_degrees(),
+            -135.0
+        );
     }
 
     #[test]
@@ -804,7 +832,11 @@ mod tests {
     #[test]
     fn normalization_ranges_at_boundaries() {
         let n = |d: f64| EdaAngle::new(d, DEGREES_T).normalize().as_degrees();
-        let nn = |d: f64| EdaAngle::new(d, DEGREES_T).normalize_negative().as_degrees();
+        let nn = |d: f64| {
+            EdaAngle::new(d, DEGREES_T)
+                .normalize_negative()
+                .as_degrees()
+        };
         let n90 = |d: f64| EdaAngle::new(d, DEGREES_T).normalize90().as_degrees();
         let n180 = |d: f64| EdaAngle::new(d, DEGREES_T).normalize180().as_degrees();
         let n720 = |d: f64| EdaAngle::new(d, DEGREES_T).normalize720().as_degrees();
@@ -910,10 +942,16 @@ mod tests {
         assert!(a < b && b > a && a <= a && a >= a && a != b);
         assert_eq!((a - b).abs().as_degrees(), 15.0);
         assert_eq!(a.round(0).as_degrees(), 30.0);
-        assert_eq!(EdaAngle::new(12.3456, DEGREES_T).round(2).as_degrees(), 12.35);
+        assert_eq!(
+            EdaAngle::new(12.3456, DEGREES_T).round(2).as_degrees(),
+            12.35
+        );
         assert_eq!(a.to_string(), "30");
         assert_eq!(EdaAngle::new(22.5, DEGREES_T).to_string(), "22.5");
-        assert_eq!(EdaOrientation::new(EdaAngle::new(-90.0, DEGREES_T)).to_string(), "270");
+        assert_eq!(
+            EdaOrientation::new(EdaAngle::new(-90.0, DEGREES_T)).to_string(),
+            "270"
+        );
 
         let mut c = a;
         c += b;
@@ -921,9 +959,21 @@ mod tests {
         c -= a;
         assert_eq!(c.as_degrees(), 45.0);
 
-        assert_eq!(EdaAngle::arccos(0.0).as_degrees(), 0.0f64.acos() / EdaAngle::DEGREES_TO_RADIANS);
-        assert_eq!(EdaAngle::arcsin(1.0).as_degrees(), 1.0f64.asin() / EdaAngle::DEGREES_TO_RADIANS);
-        assert_eq!(EdaAngle::arctan(1.0).as_degrees(), 1.0f64.atan() / EdaAngle::DEGREES_TO_RADIANS);
-        assert_eq!(EdaAngle::arctan2(1.0, -1.0).as_degrees(), 1.0f64.atan2(-1.0) / EdaAngle::DEGREES_TO_RADIANS);
+        assert_eq!(
+            EdaAngle::arccos(0.0).as_degrees(),
+            0.0f64.acos() / EdaAngle::DEGREES_TO_RADIANS
+        );
+        assert_eq!(
+            EdaAngle::arcsin(1.0).as_degrees(),
+            1.0f64.asin() / EdaAngle::DEGREES_TO_RADIANS
+        );
+        assert_eq!(
+            EdaAngle::arctan(1.0).as_degrees(),
+            1.0f64.atan() / EdaAngle::DEGREES_TO_RADIANS
+        );
+        assert_eq!(
+            EdaAngle::arctan2(1.0, -1.0).as_degrees(),
+            1.0f64.atan2(-1.0) / EdaAngle::DEGREES_TO_RADIANS
+        );
     }
 }

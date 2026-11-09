@@ -28,7 +28,12 @@ struct TestRescaleI64Case {
 }
 
 const fn c(numerator: i64, value: i64, denominator: i64, result: i64) -> TestRescaleI64Case {
-    TestRescaleI64Case { numerator, value, denominator, result }
+    TestRescaleI64Case {
+        numerator,
+        value,
+        denominator,
+        result,
+    }
 }
 
 /// Port of `BOOST_AUTO_TEST_CASE( test_rescale_int64 )`.

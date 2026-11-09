@@ -1,0 +1,36 @@
+	quotes=""	quote_char="
+abc	quotes="abc"	quote_char=
+F.Cu	quotes="F.Cu"	quote_char=
+-12	quotes="-12"	quote_char=
+-	quotes="-"	quote_char=
+a_b	quotes="a_b"	quote_char=
+1.5	quotes="1.5"	quote_char=
+\xc3\xa9	quotes="\xc3\xa9"	quote_char=
+a"b	quotes="a\x5c"b"	quote_char=
+a\x5cb	quotes="a\x5c\x5cb"	quote_char=
+a#b	quotes="a#b"	quote_char=
+a|b	quotes="a|b"	quote_char=
+\x23abc	quotes="#abc"	quote_char="
+\x23	quotes="#"	quote_char="
+a b	quotes="a b"	quote_char="
+\x20a	quotes=" a"	quote_char="
+a\x09b	quotes="a\x09b"	quote_char="
+a(b	quotes="a(b"	quote_char="
+a)b	quotes="a)b"	quote_char="
+a%b	quotes="a%b"	quote_char="
+a{b	quotes="a{b"	quote_char="
+a}b	quotes="a}b"	quote_char="
+a-b	quotes="a-b"	quote_char="
+a-	quotes="a-"	quote_char="
+--	quotes="--"	quote_char="
+line1\x0aline2\x0d	quotes="line1\x5cnline2\x5cr"	quote_char=
+say "hi"	quotes="say \x5c"hi\x5c""	quote_char="
+back\x5cslash\x5c	quotes="back\x5c\x5cslash\x5c\x5c"	quote_char=
+a\x09b\x07 \xc3\xa9 \xc2\xb5	quotes="a\x09b\x07 \xc3\xa9 \xc2\xb5"	quote_char="
+'single'	quotes="'single'"	quote_char=
+$dollar	quotes="$dollar"	quote_char=
+tab\x09	quotes="tab\x09"	quote_char="
+\x0a	quotes="\x5cn"	quote_char=
+"	quotes="\x5c""	quote_char=
+\x5c	quotes="\x5c\x5c"	quote_char=
+\x5c"	quotes="\x5c\x5c\x5c""	quote_char=
