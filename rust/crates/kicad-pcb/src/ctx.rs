@@ -181,26 +181,15 @@ pub struct LayerEnv {
 
 impl LayerEnv {
     /// The C++ null-board answers: `BoardCopperLayerCount()` = 32, `BoardLayerSet()` =
-    /// `LSET::AllLayersMask()`, `GetFlippedLayer()` = `::FlipLayer( aLayer )`.
+    /// `LSET::AllLayersMask()`, `GetFlippedLayer()` = `::FlipLayer( aLayer )`. A board's own
+    /// snapshot is always derived from its settings (`Board::build_layer_env`), also for a
+    /// default-constructed board.
     pub fn no_board() -> Self {
         LayerEnv {
             copper_layer_count: 32,
             enabled_layers: Lset::all_layers_mask().clone(),
             flipped: (0..PCB_LAYER_ID_COUNT)
                 .map(|l| flip_layer(PcbLayerId(l), 0))
-                .collect(),
-        }
-    }
-
-    /// The snapshot of a default-constructed board: 2 copper layers, `FlipLayer` with that
-    /// count. PLACEHOLDER (M0a): enabled layers are all layers until M0d / M22 derive the
-    /// snapshot from the default design settings (`build_layer_env`).
-    pub fn default_board() -> Self {
-        LayerEnv {
-            copper_layer_count: 2,
-            enabled_layers: Lset::all_layers_mask().clone(),
-            flipped: (0..PCB_LAYER_ID_COUNT)
-                .map(|l| flip_layer(PcbLayerId(l), 2))
                 .collect(),
         }
     }

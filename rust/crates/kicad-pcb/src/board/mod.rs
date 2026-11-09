@@ -229,7 +229,8 @@ impl Default for Board {
             legacy_netclasses_loaded: false,
             project: None,
             time_stamp: 1,
-            layer_env: Arc::new(LayerEnv::default_board()),
+            // Replaced at the end of the constructor by the snapshot of the settings.
+            layer_env: Arc::new(LayerEnv::no_board()),
             layer_env_stale: false,
             journal: ChangeJournal::default(),
             kiid_generator: KiidGenerator::default(),

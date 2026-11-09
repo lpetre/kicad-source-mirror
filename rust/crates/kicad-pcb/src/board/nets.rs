@@ -15,16 +15,22 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of the net functions of `pcbnew/board.cpp` (`FindNet`, `GetNetInfo`, `NetsByNetcode`,
-//! `SynchronizeNetsAndNetClasses`, ...). Package M3; M0a / M0d wrote the signatures and the
-//! plain lookups.
+//! Port of the net functions of `pcbnew/board.cpp` (`FindNet`, `FindOrAddNet`, `Add` /
+//! `Remove` of a `NETINFO_ITEM`, `BuildListOfNets`, `SynchronizeNetsAndNetClasses`,
+//! `ApplyNetChainNetclasses`, `SetAreasNetCodesFromNetNames`, `MapNets`, `SanitizeNetcodes`,
+//! `MatchDpSuffix`, `DpCoupledNet`, `GetNodesCount`, `TracksInNet`, ...). Package M3; M0a / M0d
+//! wrote the signatures and the plain lookups.
 
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 use crate::board::Board;
 use crate::ctx::BoardCtx;
-use crate::ids::NetCode;
+use crate::ids::{ItemId, NetCode};
+use crate::item::ParentRef;
+use crate::net_settings::NetChainSource;
 use crate::netinfo::{NetinfoItem, NetinfoList};
+use crate::traits::BoardConnectedItem;
 
 impl Board {
     /// `BOARD::GetNetInfo()`.
@@ -42,99 +48,469 @@ impl Board {
         self.net_info.nets_by_netcode()
     }
 
-    /// `BOARD::FindNet( aNetcode )`.
+    /// `BOARD::GetNetCount()`.
+    pub fn net_count(&self) -> usize {
+        self.net_info.net_count()
+    }
+
+    /// Port of `BOARD::FindNet( aNetcode )`.
     pub fn find_net(&self, code: NetCode) -> Option<&NetinfoItem> {
-        crate::port_pending!("BOARD::FindNet", code)
+        // the first valid netcode is 1 and the last is m_NetInfo.GetCount()-1.
+        // zero is reserved for "no connection" and is not actually a net.
+        // nullptr is returned for non valid netcodes
+
+        if code == NetCode::UNCONNECTED && self.net_info.net_count() == 0 {
+            Some(NetinfoList::orphaned_item())
+        } else {
+            self.net_info.get_net_item(code)
+        }
     }
 
-    /// `BOARD::FindNet( aNetname )`.
+    /// Port of `BOARD::FindNet( aNetname )`.
     pub fn find_net_by_name(&self, name: &str) -> Option<&NetinfoItem> {
-        crate::port_pending!("BOARD::FindNet (by name)", name)
+        self.net_info.get_net_item_by_name(name)
     }
 
-    /// `NETINFO_LIST::AppendNet` through `BOARD::Add( NETINFO_ITEM )`: `None` when a net of
-    /// that name exists (the new one is dropped, as C++ deletes it).
+    /// Port of `BOARD::Add` for a `NETINFO_ITEM` (`NETINFO_LIST::AppendNet`, then parent,
+    /// UUID index, time stamp): `None` when a net of that name exists (the new one is dropped,
+    /// as C++ deletes it).
     pub fn add_net(&mut self, net: NetinfoItem) -> Option<NetCode> {
-        crate::port_pending!("BOARD::Add (net)", net)
+        // A duplicate net is deleted here, so nothing below may touch it
+        let code = self.net_info.append_net(net)?;
+        let id = ItemId::net(code);
+
+        let uuid = match self.net_info.get_net_item_mut(code) {
+            Some(net) => {
+                net.base.parent = ParentRef::Board;
+                net.base.flags = Default::default(); // ClearEditFlags (a net carries no others)
+                net.base.uuid
+            }
+            None => return Some(code),
+        };
+
+        if let Some(id) = id {
+            self.bind_uuid(uuid, id);
+        }
+
+        self.increment_time_stamp();
+        Some(code)
     }
 
-    /// The parser's net creation: the existing net of that name, else a new one with `code`
-    /// (or the next free code), in first-use order.
+    /// Port of `BOARD::FindOrAddNet( aNetName, aNetCode )`, the parser's net creation: the
+    /// existing net of that name, else `new NETINFO_ITEM( this, aNetName, aNetCode )` (fresh
+    /// UUID, the board's default class; `None` = -1, the next free code) added to the board.
     pub fn find_or_add_net(&mut self, name: &str, code: Option<NetCode>) -> NetCode {
-        crate::port_pending!("BOARD::FindOrAddNet (parser)", name, code)
+        if let Some(existing) = self.find_net_by_name(name) {
+            return existing.net_code;
+        }
+
+        let mut net = NetinfoItem::new(
+            &mut self.kiid_generator,
+            name,
+            code.unwrap_or(NetCode::ORPHANED),
+        );
+        net.netclass = Some(Arc::clone(
+            self.design_settings.net_settings.default_netclass(),
+        ));
+
+        // AppendNet cannot refuse it: no net of that name exists.
+        self.add_net(net).unwrap_or(NetCode::ORPHANED)
     }
 
-    /// `BOARD::Remove( NETINFO_ITEM )`: items of the net fall back to net 0.
+    /// Port of `BOARD::Remove( NETINFO_ITEM )`: the UUID is unbound, items of the net fall
+    /// back to net 0 (`SetNet( unconnected )`, no copper check), the net is removed from the
+    /// list, time stamp. A code that is not on the board changes nothing.
     pub fn remove_net(&mut self, code: NetCode) {
-        crate::port_pending!("BOARD::Remove (net)", code)
+        let Some(uuid) = self.net_info.get_net_item(code).map(|n| n.base.uuid) else {
+            return;
+        };
+
+        if let Some(id) = ItemId::net(code) {
+            self.unbind_net_uuid(uuid, id);
+        }
+
+        let affected: Vec<ItemId> = self
+            .all_connected_items()
+            .into_iter()
+            .filter(|&id| {
+                self.get(id)
+                    .and_then(|item| item.as_connected())
+                    .is_some_and(|c| c.net_code() == code)
+            })
+            .collect();
+
+        for id in affected {
+            self.set_item_net_direct(id, NetCode::UNCONNECTED);
+        }
+
+        self.net_info.remove_net(code);
+        self.increment_time_stamp();
     }
 
-    /// `BOARD::RemoveUnusedNets`.
+    /// Port of `BOARD::RemoveUnusedNets( nullptr )` (`NETINFO_LIST::RemoveUnusedNets`). The
+    /// UUIDs of the dropped nets are unbound (C++ leaves them in the item index, dangling).
     pub fn remove_unused_nets(&mut self) {
-        crate::port_pending!("BOARD::RemoveUnusedNets")
+        let unused: Vec<(NetCode, kicad_core::Kiid)> = self
+            .net_info
+            .nets_by_netcode()
+            .filter(|net| !net.is_current)
+            .map(|net| (net.net_code, net.base.uuid))
+            .collect();
+
+        self.net_info.remove_unused_nets();
+
+        for (code, uuid) in unused {
+            if let Some(id) = ItemId::net(code) {
+                self.unbind_net_uuid(uuid, id);
+            }
+        }
     }
 
-    /// `BOARD::BuildListOfNets` (`NETINFO_LIST::buildListOfNets`).
+    /// Port of `BOARD::BuildListOfNets` (`NETINFO_LIST::buildListOfNets`): every net is
+    /// cleared to the board's default class keeping its chain name and terminal pad UUIDs,
+    /// then `SynchronizeNetsAndNetClasses( false )` and `SetAreasNetCodesFromNetNames()`.
     pub fn build_list_of_nets(&mut self) {
-        crate::port_pending!("BOARD::BuildListOfNets")
+        let default = Arc::clone(self.design_settings.net_settings.default_netclass());
+        self.net_info.reset_nets(Some(&default));
+
+        self.synchronize_nets_and_netclasses(false);
+        self.set_areas_net_codes_from_net_names();
     }
 
-    /// `BOARD::SanitizeNetcodes`.
+    /// Port of `BOARD::SanitizeNetcodes`: items whose net code is not on the board become
+    /// orphaned (`SetNetCode( NETINFO_LIST::ORPHANED )`).
     pub fn sanitize_netcodes(&mut self) {
-        crate::port_pending!("BOARD::SanitizeNetcodes")
+        let orphans: Vec<ItemId> = self
+            .all_connected_items()
+            .into_iter()
+            .filter(|&id| {
+                self.get(id)
+                    .and_then(|item| item.as_connected())
+                    .is_some_and(|c| self.find_net(c.net_code()).is_none())
+            })
+            .collect();
+
+        for id in orphans {
+            self.set_item_net(id, NetCode::ORPHANED, false);
+        }
     }
 
-    /// `BOARD::MapNets`.
+    /// Port of `BOARD::MapNets( aDestBoard )`: every connected item of this board is given
+    /// the net of `dest` with its net name (`SetNet`, no copper check), creating missing nets
+    /// in `dest` (`new NETINFO_ITEM( aDestBoard, name )`, code -1). As in C++ the items stay
+    /// here and afterwards carry `dest`'s net codes.
     pub fn map_nets(&mut self, dest: &mut Board) {
-        crate::port_pending!("BOARD::MapNets", dest.time_stamp())
+        for id in self.all_connected_items() {
+            let netname = {
+                let ctx = BoardCtx::bare(self);
+                match ctx.item(id) {
+                    Some(item) => item.netname().to_string(),
+                    None => continue,
+                }
+            };
+
+            let code = match dest.find_net_by_name(&netname) {
+                Some(net_info) => net_info.net_code,
+                None => {
+                    let mut new_net =
+                        NetinfoItem::new(&mut dest.kiid_generator, &netname, NetCode::ORPHANED);
+                    new_net.netclass = Some(Arc::clone(
+                        dest.design_settings.net_settings.default_netclass(),
+                    ));
+                    dest.add_net(new_net).unwrap_or(NetCode::ORPHANED)
+                }
+            };
+
+            self.set_item_net_direct(id, code);
+        }
     }
 
-    /// `BOARD::MatchDpSuffix`: (+1 / -1 / 0, the complementary net name).
+    /// Port of `BOARD::MatchDpSuffix`: (+1 for a `+` / `P` suffix, -1 for `-` / `N`, 0 for
+    /// none; trailing digits and `_` are skipped), and the complementary net name (empty when
+    /// the result is 0).
     pub fn match_dp_suffix(net_name: &str) -> (i32, String) {
-        crate::port_pending!("BOARD::MatchDpSuffix", net_name)
+        let chars: Vec<char> = net_name.chars().collect();
+        let mut complement = String::new();
+        let mut rv = 0;
+        let mut count = 0usize;
+
+        for &ch in chars.iter().rev() {
+            if rv != 0 {
+                break;
+            }
+
+            if ch.is_ascii_digit() || ch == '_' {
+                // continue
+            } else if ch == '+' {
+                complement = "-".to_string();
+                rv = 1;
+            } else if ch == '-' {
+                complement = "+".to_string();
+                rv = -1;
+            } else if ch == 'N' {
+                complement = "P".to_string();
+                rv = -1;
+            } else if ch == 'P' {
+                complement = "N".to_string();
+                rv = 1;
+            } else {
+                break;
+            }
+
+            count += 1;
+        }
+
+        if rv != 0 && count >= 1 {
+            let left: String = chars[..chars.len() - count].iter().collect();
+            let right: String = chars[chars.len() - (count - 1)..].iter().collect();
+            complement = left + &complement + &right;
+        }
+
+        (rv, complement)
     }
 
-    /// `BOARD::DpCoupledNet`.
+    /// Port of `BOARD::DpCoupledNet`: the net whose name has the complementary
+    /// differential-pair suffix, if it exists.
     pub fn dp_coupled_net(&self, net: NetCode) -> Option<NetCode> {
-        crate::port_pending!("BOARD::DpCoupledNet", net)
+        let net = self.find_net(net)?;
+        let (rv, coupled_net_name) = Board::match_dp_suffix(&net.netname);
+
+        if rv != 0 {
+            return self.find_net_by_name(&coupled_net_name).map(|n| n.net_code);
+        }
+
+        None
     }
 
-    /// `BOARD::GetNodesCount( aNet )` (asks `ctx.connectivity`).
-    pub fn get_nodes_count(&self, ctx: &BoardCtx<'_>, net: Option<NetCode>) -> u32 {
-        crate::port_pending!("BOARD::GetNodesCount", ctx.board.time_stamp(), net)
+    /// Port of `BOARD::GetNodesCount( aNet )`: the pads in `net`, or (`None`, C++ -1) all
+    /// pads with a net code > 0. (The C++ body counts footprint pads; `ctx` is not needed.)
+    pub fn get_nodes_count(&self, _ctx: &BoardCtx<'_>, net: Option<NetCode>) -> u32 {
+        let a_net = net.unwrap_or(NetCode::ORPHANED);
+        let mut retval = 0u32;
+
+        for (fp, _) in self.footprints() {
+            for (_, pad) in self.footprint_pads(fp) {
+                let code = pad.net_code();
+
+                if (a_net == NetCode::ORPHANED && code.0 > 0) || a_net == code {
+                    retval += 1;
+                }
+            }
+        }
+
+        retval
     }
 
-    /// `BOARD::SetAreasNetCodesFromNetNames`.
+    /// Port of `BOARD::SetAreasNetCodesFromNetNames`: zones off copper get net 0; a zone with
+    /// a net code that is not on the board gets -1 and counts as an error. Returns the error
+    /// count.
     pub fn set_areas_net_codes_from_net_names(&mut self) -> i32 {
-        crate::port_pending!("BOARD::SetAreasNetCodesFromNetNames")
+        let mut error_count = 0;
+        let mut updates: Vec<(ItemId, NetCode)> = Vec::new();
+
+        {
+            let ctx = BoardCtx::bare(self);
+
+            for (zid, zone) in self.zones() {
+                if !zone.is_on_copper_layer(&ctx) {
+                    updates.push((zid.into(), NetCode::UNCONNECTED));
+                    continue;
+                }
+
+                // i.e. if this zone is connected to a net
+                if zone.net_code() != NetCode::UNCONNECTED {
+                    match self.find_net(zone.net_code()) {
+                        Some(net) => updates.push((zid.into(), net.net_code)),
+                        None => {
+                            error_count += 1;
+
+                            // keep Net Name and set m_NetCode to -1 : error flag.
+                            updates.push((zid.into(), NetCode::ORPHANED));
+                        }
+                    }
+                }
+            }
+        }
+
+        for (id, code) in updates {
+            self.set_item_net(id, code, false);
+        }
+
+        error_count
     }
 
-    /// `BOARD::SynchronizeNetsAndNetClasses( aResetTrackAndViaSizes )`; a no-op without a
-    /// project.
+    /// Port of `BOARD::SynchronizeNetsAndNetClasses( aResetTrackAndViaSizes )`; a no-op
+    /// without a project. Stores `GetEffectiveNetClass( name )` into every net (name order);
+    /// with `reset_track_and_via_sizes` the custom track / via / diff-pair sizes are reset to
+    /// the default class values. Bumps the time stamp (C++ notifies the listeners).
     pub fn synchronize_nets_and_netclasses(&mut self, reset_track_and_via_sizes: bool) {
+        if self.project.is_none() {
+            return;
+        }
+
+        let default_net_class = Arc::clone(self.design_settings.net_settings.default_netclass());
+
+        self.apply_net_chain_netclasses();
+
+        self.design_settings.net_settings.clear_all_caches();
+
+        let nets: Vec<(String, NetCode)> = self
+            .net_info
+            .names
+            .iter()
+            .map(|(name, &code)| (name.clone(), code))
+            .collect();
+
+        for (name, code) in nets {
+            let netclass = self
+                .design_settings
+                .net_settings
+                .get_effective_netclass(&name);
+
+            if let Some(net) = self.net_info.get_net_item_mut(code) {
+                net.set_netclass_or_default(Some(netclass), &default_net_class);
+            }
+        }
+
+        if reset_track_and_via_sizes {
+            let bds = &mut self.design_settings;
+
+            // Set initial values for custom track width & via size to match the default
+            // netclass settings
+            bds.set_use_custom_track_via_size(false);
+            bds.custom_track_width = default_net_class.track_width();
+            bds.custom_via_size.diameter = default_net_class.via_diameter();
+            bds.custom_via_size.drill = default_net_class.via_drill();
+
+            if default_net_class.has_diff_pair_width() {
+                bds.custom_diff_pair.width = default_net_class.diff_pair_width();
+            } else {
+                bds.custom_diff_pair.width = default_net_class.track_width();
+            }
+
+            if default_net_class.has_diff_pair_gap() {
+                bds.custom_diff_pair.gap = default_net_class.diff_pair_gap();
+            } else {
+                bds.custom_diff_pair.gap = default_net_class.clearance();
+            }
+
+            if default_net_class.has_diff_pair_via_gap() {
+                bds.custom_diff_pair.via_gap = default_net_class.diff_pair_via_gap();
+            } else {
+                bds.custom_diff_pair.via_gap = bds.custom_diff_pair.gap;
+            }
+        }
+
+        // InvokeListeners( OnBoardNetSettingsChanged ): consumers revalidate by time stamp.
+        self.increment_time_stamp();
+    }
+
+    /// Port of `BOARD::ApplyNetChainNetclasses`: derives the board's chain pattern
+    /// assignments (net name -> class of its chain) from `m_netChainNetClasses`. A no-op
+    /// without a project, or without chain classes and earlier board chain assignments.
+    pub fn apply_net_chain_netclasses(&mut self) {
+        if self.project.is_none() {
+            return;
+        }
+
+        let net_settings = &self.design_settings.net_settings;
+
+        // HasChainPatternAssignments( NET_CHAIN_SOURCE::BOARD ) (inline in net_settings.h)
+        let has_board_chain_patterns = net_settings
+            .netclass_chain_pattern_assignments
+            .get(&NetChainSource::Board)
+            .is_some_and(|v| !v.is_empty());
+
+        // Nothing to derive and nothing left from a prior pass, so skip the cache wipe a
+        // rebuild would cost on every resync of a board without chain overrides.
+        if net_settings.net_chain_net_classes.is_empty() && !has_board_chain_patterns {
+            return;
+        }
+
+        // ClearChainPatternAssignments( BOARD ) and SetChainPatternAssignment( BOARD, net,
+        // class ) for every net (name order) whose chain has a known class
+        // (`HasNetclass`): NET_SETTINGS functions of package M4 that have no Rust signature yet.
+        let assignments: Vec<(String, String)> = self
+            .nets()
+            .filter(|net| !net.net_chain.is_empty())
+            .filter_map(|net| {
+                let class = net_settings.net_chain_net_classes.get(&net.net_chain)?;
+                net_settings
+                    .netclasses
+                    .contains_key(class)
+                    .then(|| (net.netname.clone(), class.clone()))
+            })
+            .collect();
+
         crate::port_pending!(
-            "BOARD::SynchronizeNetsAndNetClasses",
-            reset_track_and_via_sizes
+            "NET_SETTINGS::ClearChainPatternAssignments / SetChainPatternAssignment (package M4)",
+            assignments
         )
     }
 
-    /// `BOARD::ApplyNetChainNetclasses`.
-    pub fn apply_net_chain_netclasses(&mut self) {
-        crate::port_pending!("BOARD::ApplyNetChainNetclasses")
-    }
-
-    /// `BOARD::ResolveNetChainTerminalPads`.
+    /// The terminal-pad resolution loop at the end of the parser
+    /// (`NETINFO_ITEM::ResolveTerminalPads( m_board )` for every net, name order): each
+    /// unresolved terminal pad is looked up by its UUID (`BOARD::FindPadByUuid`). The parser's
+    /// UUID remapping before it belongs to the parser.
     pub fn resolve_net_chain_terminal_pads(&mut self) {
-        crate::port_pending!("BOARD::ResolveNetChainTerminalPads")
+        let codes: Vec<NetCode> = self.nets().map(|net| net.net_code).collect();
+
+        for code in codes {
+            for i in 0..2 {
+                let Some(net) = self.net_info.get_net_item(code) else {
+                    continue;
+                };
+
+                if net.terminal_pads[i].is_some() {
+                    continue;
+                }
+
+                let uuid = net.terminal_pad_uuids[i];
+                let pad = self.find_pad_by_uuid(&uuid);
+
+                if let Some(net) = self.net_info.get_net_item_mut(code) {
+                    net.terminal_pads[i] = pad;
+                }
+            }
+        }
     }
 
-    /// `BOARD::GetNetClassAssignmentCandidates`.
+    /// Port of `BOARD::GetNetClassAssignmentCandidates`: the non-empty net names.
     pub fn get_net_class_assignment_candidates(&self) -> BTreeSet<String> {
-        crate::port_pending!("BOARD::GetNetClassAssignmentCandidates")
+        let mut names = BTreeSet::new();
+
+        for net in self.nets() {
+            if !net.netname.is_empty() {
+                names.insert(net.netname.clone());
+            }
+        }
+
+        names
     }
 
-    /// `BOARD::TracksInNet`.
+    /// Port of `BOARD::TracksInNet`: tracks, arcs and vias of `net` in `m_tracks` order (the
+    /// `Visit` with `GENERAL_COLLECTOR::Tracks`).
     pub fn tracks_in_net(&self, net: NetCode) -> Vec<crate::ids::TrackId> {
-        crate::port_pending!("BOARD::TracksInNet", net)
+        self.tracks()
+            .filter(|(_, track)| track.net_code() == net)
+            .map(|(id, _)| id)
+            .collect()
+    }
+
+    /// `BOARD_CONNECTED_ITEM::SetNet` on a stored item: the net code is written without the
+    /// copper check of `SetNetCode`.
+    fn set_item_net_direct(&mut self, id: ItemId, code: NetCode) {
+        self.modify(id, |mut item, _env| {
+            if let Some(c) = item.as_leaf_mut().and_then(|leaf| leaf.connected_mut()) {
+                c.net = code;
+            }
+        });
+    }
+
+    /// `m_itemIndex.Unbind( net->m_Uuid )` when the index entry names this net.
+    fn unbind_net_uuid(&mut self, uuid: kicad_core::Kiid, id: ItemId) {
+        if self.uuid_index.get(&uuid) == Some(&id) {
+            self.uuid_index.remove(&uuid);
+        }
     }
 }

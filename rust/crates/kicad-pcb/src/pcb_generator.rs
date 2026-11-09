@@ -25,9 +25,11 @@
 //! `PcbGenerator::normalize_properties` (M23). Regeneration is router work (tier 3). Like a
 //! group, a generator cascades its mutating virtuals through `Board` (no `BoardItemMut`).
 //!
-//! The subclass overrides of `GetBoundingBox`, `GetPosition`, `GetLayer`, `HitTest` and
-//! `GetItemDescription` are reached through the same shims: the inherent methods below
-//! dispatch on `generator_type` once M23 ports them.
+//! The subclass overrides of `GetBoundingBox`, `GetPosition`, `GetLayer`, `HitTest`,
+//! `GetItemDescription` and `GetFriendlyName` are reached through the same shims: the inherent
+//! methods below dispatch on `generator_type` (`friendly_name` does; the others once M23
+//! ports them). `tools/check_item_shims.py` reads the subclass headers
+//! (`pcbnew/generators/*.h`) for the shim list.
 
 use std::collections::BTreeMap;
 
@@ -41,6 +43,13 @@ use crate::item::{BoardItemBase, RecurseMode, SharedShape};
 use crate::item_ref::{ItemRef, OwnedItem};
 use crate::pcb_group::PcbGroup;
 use crate::traits::{BoardItem, Flashing, Invalidate};
+
+/// `PCB_TUNING_PATTERN::GENERATOR_TYPE` (`generators/pcb_tuning_pattern.cpp`).
+pub const GENERATOR_TYPE_TUNING_PATTERN: &str = "tuning_pattern";
+/// `PCB_VIA_STACK::GENERATOR_TYPE` (`generators/pcb_via_stack.cpp`).
+pub const GENERATOR_TYPE_VIA_STACK: &str = "via_stack";
+/// `PCB_VIA_STITCH::GENERATOR_TYPE` (`generators/pcb_via_stitch.cpp`).
+pub const GENERATOR_TYPE_VIA_STITCH: &str = "via_stitch";
 
 /// `PCB_GENERATOR : PCB_GROUP` (tuning patterns, via stacks, via stitching).
 #[derive(Clone, Debug)]
@@ -184,6 +193,9 @@ impl BoardItem for PcbGenerator {
     ) -> String {
         PcbGenerator::item_description(self, ctx, units, full)
     }
+    fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
+        PcbGenerator::friendly_name(self, ctx)
+    }
 }
 
 // ---- inherent methods (package M23) -------------------------------------------------------
@@ -315,6 +327,18 @@ impl PcbGenerator {
     ) -> String {
         crate::port_pending!("PCB_GENERATOR::GetItemDescription", ctx, units, full)
     }
+
+    /// `GetFriendlyName()`: overridden by every registered subclass
+    /// (`PCB_TUNING_PATTERN`, `PCB_VIA_STACK`, `PCB_VIA_STITCH`; the untranslated strings);
+    /// `PCB_GENERATOR` itself inherits `EDA_ITEM::GetFriendlyName`.
+    pub fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
+        match self.generator_type.as_str() {
+            GENERATOR_TYPE_TUNING_PATTERN => "Tuning Pattern".to_string(),
+            GENERATOR_TYPE_VIA_STACK => "Microvia Stack".to_string(),
+            GENERATOR_TYPE_VIA_STITCH => "Via Stitching".to_string(),
+            _ => crate::board_item::friendly_name(self, ctx),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -346,5 +370,23 @@ mod tests {
         assert!(g.is_dirty());
         g.clear_dirty();
         assert!(!g.is_dirty());
+    }
+
+    /// `GetFriendlyName()` of the generator subclasses (`pcbnew/generators/*.h`), reached
+    /// through the trait.
+    #[test]
+    fn friendly_name_of_the_subclasses() {
+        let board = crate::board::Board::new();
+        let ctx = &BoardCtx::bare(&board);
+
+        for (generator_type, name) in [
+            (GENERATOR_TYPE_TUNING_PATTERN, "Tuning Pattern"),
+            (GENERATOR_TYPE_VIA_STACK, "Microvia Stack"),
+            (GENERATOR_TYPE_VIA_STITCH, "Via Stitching"),
+        ] {
+            let mut g = PcbGenerator::default();
+            g.generator_type = generator_type.to_string();
+            assert_eq!(BoardItem::friendly_name(&g, ctx), name);
+        }
     }
 }

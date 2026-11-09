@@ -27,10 +27,15 @@ this script compares the two sides:
     python3 crates/kicad-pcb/tools/check_item_shims.py            # every type
     python3 crates/kicad-pcb/tools/check_item_shims.py PcbVia Pad # some types
 
+A Rust type that stands for a whole C++ class family (`PcbGenerator`: `PCB_GENERATOR` and its
+subclasses in `pcbnew/generators/*.h`) needs a shim for every virtual that any class of the
+family overrides: the shim's inherent method dispatches on the subclass (`FAMILIES`).
+
 Run from `<kicad>/rust`. Exit status 1 if a shim is missing or unexpected. It reads the C++
 tree and the Rust sources only; it changes nothing.
 """
 
+import glob
 import os
 import re
 import sys
@@ -85,6 +90,20 @@ TYPES = {
     "PcbGridItem": ("pcb_grid_item.rs", "pcbnew/pcb_grid_item.h", "PCB_GRID_ITEM", []),
     "PcbDrillMap": ("pcb_drill_map.rs", "pcbnew/pcb_drill_map.h", "PCB_DRILL_MAP", []),
     "NetinfoItem": ("netinfo.rs", "pcbnew/netinfo.h", "NETINFO_ITEM", []),
+}
+
+# Rust type -> header globs (relative to the C++ tree) searched for C++ subclasses of the type's
+# class, direct or indirect. The Rust struct represents every class found (the subclass is a
+# data member, e.g. `PcbGenerator::generator_type`), so an override in any of them needs a
+# shim, exactly like an override in the class itself.
+FAMILIES = {
+    "PcbGenerator": ["pcbnew/pcb_generator.h", "pcbnew/generators/*.h"],
+    "PcbDimension": ["pcbnew/pcb_dimension.h"],
+    "PcbTable": [
+        "pcbnew/pcb_generated_table.h",
+        "pcbnew/pcb_drill_chart.h",
+        "pcbnew/pcb_stackup_table.h",
+    ],
 }
 
 # trait -> { C++ virtual : trait method }. A value may be a dict keyed by a substring of the
@@ -249,6 +268,43 @@ def overrides(body):
     return found
 
 
+def subclasses(root_class, patterns, cache):
+    """[(header, class)] of the classes in the headers matching `patterns` that derive from
+    `root_class`, directly or through another class of the same headers; sorted."""
+    headers = sorted(
+        os.path.relpath(path, CXX)
+        for pattern in patterns
+        for path in glob.glob(os.path.join(CXX, pattern))
+    )
+    if not headers:
+        raise SystemExit(f"no header matches {' '.join(patterns)}")
+    declared = []  # (header, class, bases)
+    for header in headers:
+        text = read(os.path.join(CXX, header), cache)
+        text = re.sub(r"//[^\n]*", "", text)
+        for match in re.finditer(r"\bclass\s+(?:\w+\s+)?(\w+)\s*(?:final\s*)?:([^{;]*)\{", text):
+            bases = re.findall(r"\b(?:public|protected|private)\s+([\w:]+)", match.group(2))
+            declared.append((header, match.group(1), bases))
+    family = {root_class}
+    found = []
+    grown = True
+    while grown:
+        grown = False
+        for header, name, bases in declared:
+            if name not in family and family.intersection(bases):
+                family.add(name)
+                found.append((header, name))
+                grown = True
+    return sorted(found)
+
+
+def read(path, cache):
+    if path not in cache:
+        with open(path, encoding="utf-8") as handle:
+            cache[path] = handle.read()
+    return cache[path]
+
+
 def trait_method(mapping, name, params):
     target = mapping.get(name, "absent")
     if target == "absent":
@@ -292,14 +348,13 @@ def cxx_overrides_of(rust_type, cache):
     """trait method -> C++ origin, for the class of `rust_type` and its item base classes."""
     _, header, cxx_class, bases = TYPES[rust_type]
     result = {}
-    chain = [rust_type] + bases
-    for link in chain:
-        _, link_header, link_class, _ = TYPES[link]
-        path = os.path.join(CXX, link_header)
-        if path not in cache:
-            with open(path, encoding="utf-8") as handle:
-                cache[path] = handle.read()
-        body = class_body(cache[path], link_class)
+    # the class itself, the subclasses folded into the Rust type, then the item base classes
+    chain = [(header, cxx_class)]
+    if rust_type in FAMILIES:
+        chain += subclasses(cxx_class, FAMILIES[rust_type], cache)
+    chain += [(TYPES[base][1], TYPES[base][2]) for base in bases]
+    for link_header, link_class in chain:
+        body = class_body(read(os.path.join(CXX, link_header), cache), link_class)
         if body is None:
             raise SystemExit(f"class {link_class} not found in {link_header}")
         for name, params in overrides(body):

@@ -22,16 +22,12 @@
 use kicad_core::{Lset, PcbLayerId};
 use kicad_geom::{Box2I, ShapePolySet, Vector2I};
 
+use crate::convert_shape_list_to_polygon::OutlineErrorHandler;
 use crate::ctx::BoardCtx;
 use crate::drc_api::DrcConstraintT;
 use crate::footprint::Footprint;
-use crate::ids::ItemId;
 use crate::item::SharedShape;
 use crate::traits::Flashing;
-
-/// `OUTLINE_ERROR_HANDLER` (`convert_shape_list_to_polygon.h`): message, the two items
-/// involved (if any) and the position of the problem.
-pub type CourtyardErrorHandler<'h> = dyn FnMut(&str, Option<ItemId>, Option<ItemId>, Vector2I) + 'h;
 
 /// The malformed-courtyard flags of `BuildCourtyardCaches` (C++ item flags
 /// `MALFORMED_F_COURTYARD` / `MALFORMED_B_COURTYARD`).
@@ -108,9 +104,9 @@ impl Footprint {
     pub fn build_courtyard_caches(
         &self,
         ctx: &BoardCtx<'_>,
-        handler: Option<&mut CourtyardErrorHandler<'_>>,
+        handler: Option<&mut dyn OutlineErrorHandler>,
     ) {
-        crate::port_pending!("FOOTPRINT::BuildCourtyardCaches", ctx, handler)
+        crate::port_pending!("FOOTPRINT::BuildCourtyardCaches", ctx, handler.is_some())
     }
 
     /// `FOOTPRINT::GetCourtyard( aLayer )`: the cached courtyard of F_CrtYd / B_CrtYd,

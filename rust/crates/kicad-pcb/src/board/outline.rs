@@ -20,18 +20,11 @@
 
 use std::sync::Arc;
 
-use kicad_geom::{ShapePolySet, Vector2I};
+use kicad_geom::ShapePolySet;
 
 use crate::board::Board;
+pub use crate::convert_shape_list_to_polygon::OutlineErrorHandler;
 use crate::ctx::BoardCtx;
-use crate::ids::ItemId;
-
-/// `OUTLINE_ERROR_HANDLER` (`pcbnew/convert_shape_list_to_polygon.h`): `( msg, itemA, itemB,
-/// pt )`, the items as handles. Defined here for the `get_board_polygon_outlines` signature;
-/// package M21 may move it to `convert_shape_list_to_polygon.rs` and re-export it.
-pub trait OutlineErrorHandler {
-    fn on_error(&mut self, msg: &str, item_a: Option<ItemId>, item_b: Option<ItemId>, pt: Vector2I);
-}
 
 impl Board {
     /// `BOARD::GetBoardPolygonOutlines( aOutlines, aInferOutlineIfNecessary, aErrorHandler,

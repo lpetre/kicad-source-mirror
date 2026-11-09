@@ -16,18 +16,19 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/netinfo.h` (`NETINFO_ITEM`, `NETINFO_LIST`): data, constructor defaults and
-//! the delegation shims (package M0d). The behaviour of `netinfo_item.cpp` /
-//! `netinfo_list.cpp` is package M3.
+//! the delegation shims (package M0d); the behaviour of `netinfo_item.cpp` /
+//! `netinfo_list.cpp` (package M3). GUI parts (`GetMsgPanelInfo`, `RebuildDisplayNetnames`)
+//! and the editor-only `RenameNets` are not ported.
 
 use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use kicad_core::string_utils::unescape_string;
 use kicad_core::{KicadT, Kiid, KiidGenerator, NILUUID, PcbLayerId};
 use kicad_geom::{Box2I, Vector2I};
 
 use crate::ctx::BoardCtx;
-use crate::ids::{NetCode, PadId};
+use crate::ids::{ItemId, NetCode, PadId};
 use crate::item::BoardItemBase;
 use crate::netclass::{NETCLASS_DEFAULT_NAME, Netclass};
 use crate::traits::{BoardItem, Invalidate};
@@ -126,19 +127,99 @@ impl NetinfoItem {
         self.netclass.as_ref()
     }
 
-    /// `NETINFO_ITEM::SetNetname`: also refreshes the short and display names.
+    /// Port of `NETINFO_ITEM::SetNetname`: also refreshes the short and display names.
     pub fn set_netname(&mut self, name: &str) {
-        crate::port_pending!("NETINFO_ITEM::SetNetname", name)
+        self.netname = name.to_string();
+
+        if name.contains('/') {
+            self.short_netname = name.rsplit_once('/').map_or(name, |(_, s)| s).to_string();
+        } else {
+            self.short_netname = name.to_string();
+        }
+
+        self.display_netname = unescape_string(&self.short_netname);
     }
 
-    /// `NETINFO_ITEM::SetNetClass`.
+    /// `NETINFO_ITEM::SetNetClass` without the board: `Some` is stored; `None` (C++: "the
+    /// board's default class") is stored as `None`, which every reader resolves to the board's
+    /// default class (`board-model.md` 10). Board code uses `set_netclass_or_default`.
     pub fn set_netclass(&mut self, netclass: Option<Arc<Netclass>>) {
-        crate::port_pending!("NETINFO_ITEM::SetNetClass", netclass)
+        self.netclass = netclass;
     }
 
-    /// `NETINFO_ITEM::Clear` (`m_isCurrent = true`, netclass reset).
+    /// Port of `NETINFO_ITEM::SetNetClass` with the parent board's default class
+    /// (`m_parent->GetDesignSettings().m_NetSettings->GetDefaultNetclass()`).
+    pub fn set_netclass_or_default(
+        &mut self,
+        netclass: Option<Arc<Netclass>>,
+        default: &Arc<Netclass>,
+    ) {
+        match netclass {
+            Some(netclass) => self.netclass = Some(netclass),
+            None => self.netclass = Some(Arc::clone(default)),
+        }
+    }
+
+    /// `NETINFO_ITEM::Clear` without the board: the class becomes `None` (= the board's
+    /// default, see `set_netclass`), chain and terminal pads are cleared. `m_isCurrent` is not
+    /// touched (as in C++). Board code uses `clear_with_default`.
     pub fn clear(&mut self) {
-        crate::port_pending!("NETINFO_ITEM::Clear")
+        self.netclass = None;
+        self.clear_chain_and_terminals();
+    }
+
+    /// Port of `NETINFO_ITEM::Clear` with the parent board's default class.
+    pub fn clear_with_default(&mut self, default: &Arc<Netclass>) {
+        self.netclass = Some(Arc::clone(default));
+        self.clear_chain_and_terminals();
+    }
+
+    fn clear_chain_and_terminals(&mut self) {
+        self.net_chain.clear();
+        self.terminal_pads = [None, None];
+        self.terminal_pad_uuids = [NILUUID, NILUUID];
+    }
+
+    /// `NETINFO_ITEM::SetNetChain`.
+    pub fn set_net_chain(&mut self, net_chain: &str) {
+        self.net_chain = net_chain.to_string();
+    }
+
+    /// `NETINFO_ITEM::GetTerminalPad`.
+    pub fn terminal_pad(&self, index: usize) -> Option<PadId> {
+        self.terminal_pads[index]
+    }
+
+    /// `NETINFO_ITEM::GetTerminalPadUuid`.
+    pub fn terminal_pad_uuid(&self, index: usize) -> &Kiid {
+        &self.terminal_pad_uuids[index]
+    }
+
+    /// `NETINFO_ITEM::SetTerminalPadUuid`.
+    pub fn set_terminal_pad_uuid(&mut self, index: usize, uuid: Kiid) {
+        self.terminal_pad_uuids[index] = uuid;
+    }
+
+    /// `NETINFO_ITEM::ClearTerminalPad`: pointer and UUID together.
+    pub fn clear_terminal_pad(&mut self, index: usize) {
+        self.terminal_pads[index] = None;
+        self.terminal_pad_uuids[index] = NILUUID;
+    }
+
+    /// Port of `NETINFO_ITEM::SetTerminal`: pointer and UUID from one pad (`None`: nil UUID).
+    pub fn set_terminal(&mut self, index: usize, pad: Option<(PadId, Kiid)>) {
+        self.terminal_pads[index] = pad.map(|(id, _)| id);
+        self.terminal_pad_uuids[index] = pad.map_or(NILUUID, |(_, uuid)| uuid);
+    }
+
+    /// `NETINFO_ITEM::SetIsCurrent`.
+    pub fn set_is_current(&mut self, is_current: bool) {
+        self.is_current = is_current;
+    }
+
+    /// Port of `NETINFO_ITEM::HasAutoGeneratedNetname`: the net was not labelled by the user.
+    pub fn has_auto_generated_netname(&self) -> bool {
+        self.short_netname.starts_with("Net-(") || self.short_netname.starts_with("unconnected-(")
     }
 
     /// `NETINFO_ITEM::GetLayer` override: `UNDEFINED_LAYER` (C++ also asserts: "doesn't have
@@ -154,8 +235,10 @@ impl NetinfoItem {
 
     /// `NETINFO_ITEM::GetBoundingBox` override: the union of the bounding boxes of the
     /// board's tracks, vias, zones and pads in this net.
+    /// Not ported (GUI, `settings.md` 2.3): needs `CONNECTIVITY_DATA::GetNetItems`, which
+    /// `ConnectivityQuery` does not offer.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("NETINFO_ITEM::GetBoundingBox", ctx)
+        crate::port_pending!("NETINFO_ITEM::GetBoundingBox (GUI only, needs CONNECTIVITY_DATA::GetNetItems)", ctx)
     }
 }
 
@@ -200,7 +283,6 @@ pub struct NetinfoList {
     /// m_netCodes (+ ownership of m_netNames): the owner map, by code.
     pub(crate) nets: BTreeMap<NetCode, NetinfoItem>,
     pub(crate) names: BTreeMap<String, NetCode>, // m_netNames
-    #[allow(dead_code)] // read by getFreeNetCode (package M3)
     pub(crate) new_net_code: i32, // m_newNetCode
     pub display_netnames_dirty: bool,            // m_DisplayNetnamesDirty
 }
@@ -214,14 +296,11 @@ impl Default for NetinfoList {
             nets: BTreeMap::new(),
             names: BTreeMap::new(),
             new_net_code: 0,
-            display_netnames_dirty: true,
+            display_netnames_dirty: false,
         };
 
-        list.names.insert(String::new(), NetCode::UNCONNECTED);
-        list.nets.insert(
-            NetCode::UNCONNECTED,
-            NetinfoItem::with_name("", NetCode::UNCONNECTED),
-        );
+        // Make sure that the unconnected net has number 0
+        list.append_net(NetinfoItem::with_name("", NetCode::UNCONNECTED));
         list
     }
 }
@@ -254,36 +333,142 @@ impl NetinfoList {
         self.nets.values()
     }
 
-    /// `NETINFO_LIST::AppendNet`: `false` (and the net dropped) for a name already present;
-    /// a code that is not the list size (or negative) gets `getFreeNetCode()`.
-    pub fn append_net(&mut self, net: NetinfoItem) -> Option<NetCode> {
-        crate::port_pending!("NETINFO_LIST::AppendNet", net)
+    /// `NETINFO_LIST::OrphanedItem()`: the static net (empty name, code 0, no board) that
+    /// `BOARD::FindNet( 0 )` returns for an empty list.
+    pub fn orphaned_item() -> &'static NetinfoItem {
+        static ORPHANED_ITEM: OnceLock<NetinfoItem> = OnceLock::new();
+        ORPHANED_ITEM.get_or_init(|| NetinfoItem::with_name("", NetCode::UNCONNECTED))
     }
 
-    /// `NETINFO_LIST::RemoveNet`.
+    /// Mutable `GetNetItem( int )`.
+    pub(crate) fn get_net_item_mut(&mut self, code: NetCode) -> Option<&mut NetinfoItem> {
+        self.nets.get_mut(&code)
+    }
+
+    /// Port of `NETINFO_LIST::AppendNet`: `None` (and the net dropped, as C++ deletes it) for a
+    /// name already present; a code that is not the list size (or negative) gets
+    /// `getFreeNetCode()`. Returns the code the net is stored under; stamps `base.id` with the
+    /// net handle (`ItemId::net`). (The C++ "same object" case cannot occur with owned values.)
+    pub fn append_net(&mut self, mut net: NetinfoItem) -> Option<NetCode> {
+        if self.names.contains_key(&net.netname) {
+            return None;
+        }
+
+        // be sure that net codes are consecutive
+        // negative net code means that it has to be auto assigned
+        if i64::from(net.net_code.0) != self.nets.len() as i64 || net.net_code.0 < 0 {
+            net.net_code = NetCode(self.get_free_net_code());
+        }
+
+        // net names & codes are supposed to be unique
+        debug_assert!(!self.nets.contains_key(&net.net_code));
+
+        let code = net.net_code;
+        net.base.id = ItemId::net(code);
+
+        // add an entry for fast look up by a net name using a map
+        self.names.insert(net.netname.clone(), code);
+        self.nets.insert(code, net);
+
+        self.display_netnames_dirty = true;
+        Some(code)
+    }
+
+    /// Port of `NETINFO_LIST::RemoveNet` (the net is dropped; C++ leaves deleting it to the
+    /// caller). A code that is not in the list changes nothing.
     pub fn remove_net(&mut self, code: NetCode) {
-        crate::port_pending!("NETINFO_LIST::RemoveNet", code)
+        self.take_net(code);
     }
 
-    /// `NETINFO_LIST::RemoveUnusedNets` helper part: drops every net whose `is_current` is
-    /// false.
+    /// `remove_net` returning the removed net.
+    pub(crate) fn take_net(&mut self, code: NetCode) -> Option<NetinfoItem> {
+        let removed = self.nets.remove(&code)?;
+
+        let name = self
+            .names
+            .iter()
+            .find(|&(_, &c)| c == code)
+            .map(|(name, _)| name.clone());
+
+        if let Some(name) = name {
+            self.names.remove(&name);
+        }
+
+        self.new_net_code = self.new_net_code.min(removed.net_code.0 - 1);
+        self.display_netnames_dirty = true;
+        Some(removed)
+    }
+
+    /// Port of `NETINFO_LIST::RemoveUnusedNets( nullptr )`: drops every net whose
+    /// `is_current` is false (the codes of the others stay).
     pub fn remove_unused_nets(&mut self) {
-        crate::port_pending!("NETINFO_LIST::RemoveUnusedNets")
+        let existing = std::mem::take(&mut self.nets);
+        self.names.clear();
+
+        for (code, net) in existing {
+            if net.is_current {
+                // std::map::insert keeps the first entry of a duplicate name
+                self.names.entry(net.netname.clone()).or_insert(code);
+                self.nets.insert(code, net);
+            } else {
+                self.display_netnames_dirty = true;
+            }
+        }
     }
 
-    /// `NETINFO_LIST::clear`.
+    /// Port of `NETINFO_LIST::clear` (+ `detachAll`): no nets at all, `m_newNetCode = 0`.
     pub fn clear(&mut self) {
-        crate::port_pending!("NETINFO_LIST::clear")
+        self.names.clear();
+        self.nets.clear();
+        self.new_net_code = 0;
     }
 
-    /// `NETINFO_LIST::buildListOfNets`.
+    /// The list part of `NETINFO_LIST::buildListOfNets` without the board: every net is
+    /// `clear()`ed (class `None` = board default) keeping its chain name and terminal pad
+    /// UUIDs. `Board::build_list_of_nets` is the complete port (board default class,
+    /// `SynchronizeNetsAndNetClasses( false )`, `SetAreasNetCodesFromNetNames()`).
     pub fn build_list_of_nets(&mut self) {
-        crate::port_pending!("NETINFO_LIST::buildListOfNets")
+        self.reset_nets(None);
     }
 
-    /// `NETINFO_LIST::getFreeNetCode`.
+    /// The loop of `NETINFO_LIST::buildListOfNets`: preserve the net-chain names and terminal
+    /// pad UUIDs, `Clear()` every net, restore them (the terminal pad handles stay cleared
+    /// until resolved again).
+    pub(crate) fn reset_nets(&mut self, default: Option<&Arc<Netclass>>) {
+        // Preserve any parsed net-chain names and terminal pad UUIDs before clearing. The GUI
+        // load path calls BuildListOfNets() after the board file is parsed (see files.cpp)
+        // which was unintentionally wiping the m_netChain field set by the (net_chains ...)
+        // section.  Cache and restore them so persisted chains survive the rebuild.
+        // (Keyed by the unique net code in C++, so a per-net save / restore is the same.)
+        for net in self.nets.values_mut() {
+            let chain = std::mem::take(&mut net.net_chain);
+            let pads = net.terminal_pad_uuids;
+
+            match default {
+                Some(default) => net.clear_with_default(default),
+                None => net.clear(),
+            }
+
+            net.net_chain = chain;
+            net.terminal_pad_uuids = pads;
+        }
+    }
+
+    /// Port of `NETINFO_LIST::getFreeNetCode`.
     pub fn get_free_net_code(&mut self) -> i32 {
-        crate::port_pending!("NETINFO_LIST::getFreeNetCode")
+        loop {
+            if self.new_net_code < 0 {
+                self.new_net_code = 0;
+            }
+
+            self.new_net_code += 1;
+
+            if !self.nets.contains_key(&NetCode(self.new_net_code)) {
+                break;
+            }
+        }
+
+        self.new_net_code
     }
 }
 

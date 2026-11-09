@@ -134,6 +134,70 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 - [ ] Differential test campaign + adversarial review.
 - [ ] Performance phase (see below).
 
+## Overnight runbook (the user is asleep: keep going, do not wait for input)
+
+Standing instructions from the user: do not stop; spare no tokens; Opus for the bulk, Fable
+reviews every Opus decision before others build on it; commit and push after every workflow.
+A heartbeat reminder is scheduled with send_later; re-arm it each time it fires.
+
+Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend the script):
+- `.../workflows/scripts/model-wave-wf_9da70494-9c4.js` - args `{integration?: text,
+  packages: [{id, title, modules, cpp, notes}]}`: optional Fable integration step, then the
+  kicad-pcb model packages in parallel (2 per workflow).
+- `.../workflows/scripts/port-packages-wf_122f1b23-a17.js` - args `{chains: [[{id, title,
+  crate, body, model?}, ...], ...]}`: chains in parallel, packages of a chain in order, each
+  receiving its predecessor's notes. Generic for every non-model package.
+(Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
+
+Launched in this round (workflow task ids): geometry G4b -> G5 and G6b (wvunbqm6s); Fable
+integration of wave 0b -> M7, M10 (wawxgug4p); M1, M2 (wnw19yvig); M3, M13 (w1sw02b68);
+DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17 and DRC-20 -> DRC-11 (wh3q6gcxx);
+W1 session/cli/wasm skeleton and FAB-01 -> FAB-02 (wqbof03ge).
+
+Queue - launch each item as soon as its dependencies have landed (model package rows and
+run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis
+docs' section 10). Keep at most ~8 agents inside kicad-pcb at once.
+1. Model wave 1b: M5 design settings, M6 stackup + plot params, M24 images / embedded files /
+   component classes (after M0; start when M1/M2/M3/M13 slots free up).
+2. Model wave 2: M4 (after M3), M8 (after M7), M14 (after M13, M2), M16 (after M2), M18
+   (after M2, M5), M22 (after M1, M3), M23 (after M2).
+3. Model wave 3: M9 (after M8), M12 (after M10, M8), M17 (after M13, M16).
+4. Model wave 4: M11 (after M9, M10), M15 (after M14, M9; needs G4-G6), M21 (after M9; needs
+   G4, G7), M19 (after M1, M14, M9, M10, M18).  Wave 5: M20 (after M19, M15, M21).
+5. Settings loaders (kicad-pcb src/project, see docs/analysis/settings.md SET-3/4/5/8):
+   NET_SETTINGS JSON + migrations (after M4), BOARD_DESIGN_SETTINGS JSON keys + severities
+   (after M5), project file subset + SetProject + SynchronizeNetsAndNetClasses (after both),
+   text variable resolvers (with M22).
+6. Parser / writer fan-out after PCBIO-02: PCBIO-03 tracks/vias/shapes, PCBIO-04 setup,
+   PCBIO-05 text, PCBIO-08 zones, PCBIO-09 groups, PCBIO-11 legacy netclasses / embedded
+   files; then PCBIO-06 footprints -> PCBIO-07 pads -> PCBIO-10 dimensions; tier 2: PCBIO-12,
+   13, 14. PCBIO-15 (BOARD_LOADER glue, re-save command) goes into kicad-session once
+   connectivity exists. Drive them with the PCBIO-17 corpus scoreboard and the dump scoreboard.
+7. Connectivity (kicad-connectivity, docs/analysis/connectivity-zones.md): CN-01 -> CN-02 ->
+   CN-03 -> CN-04 after G5 and model M1-M3, M9, M14, M16-M18 (M15 for contact shapes). A
+   Fable review of the pointer-order replacements (R-1, R-2) before DRC builds on it.
+8. DRC (kicad-drc, docs/analysis/drc.md): DRC-02 r-tree/provider base, DRC-03 engine core,
+   DRC-04 EvalRules, DRC-05 caches (Fable review of the resolver / run-state split and of
+   EvalRules), then providers DRC-06, 07, 08a, 08b, 09, 10, CLI flow DRC-12; tier 2: DRC-21
+   expression binding, DRC-22 functions, DRC-23..29; tier 3: DRC-30..34.
+9. Fabrication (kicad-fab, docs/analysis/plot-fab.md): FAB-03 board plot driver, FAB-04
+   standard layer, FAB-05 graphic items, FAB-06 text, FAB-07 gerbers job, FAB-08 Gerber
+   drill, FAB-09 gbrjob, FAB-T1 harness; tier 2: FAB-10, 11, 12.
+10. Zone fill (kicad-zone): ZF-01..06, TD-01/02 teardrops, after connectivity and EvalRules.
+    Fable review of the fill pipeline port (vertex-exactness is the hard part).
+11. Wire everything into kicad-session / kicad-cli / kicad-wasm (W1 leaves the hooks), browser
+    demo with real DRC + Gerber export, node + Playwright smoke tests.
+12. Cleanup pass: kicad-plot round-rect closures -> kicad-geom (after G6b); SVG rounded Rect;
+    Gerber PlotText debug_assert; kicad-font x86 cast rule + FontRef into kicad-font;
+    kicad-libeval duplicates -> kicad-core; Pad::default RECT_CHAMFER_POSITIONS literal;
+    `rg foundation_stub` empty; Shape::indexable_subshape (G5).
+13. Differential test campaign: io corpus byte equality, dump scoreboard to zero mismatches on
+    the small-board set, DRC report equality (text + JSON) on qa DRC boards and demos, Gerber
+    and drill byte equality, qa DRC regression tables (drc.md) as Rust tests; fix loops until
+    dry; cross-cutting adversarial Fable review; final rust/README.md (scope, how to build
+    native + wasm, what matches KiCad and what does not, AGENTS.md policy note).
+14. Performance phase (below).
+
 ## Performance phase (requested by the user; after the differential test campaign)
 
 Goal: hill-climb the speed of the Rust port without changing a single output byte.

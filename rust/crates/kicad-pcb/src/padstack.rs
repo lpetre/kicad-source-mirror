@@ -18,16 +18,26 @@
 //! Port of `pcbnew/padstack.h` and `pcbnew/padstack.cpp` (`PADSTACK` and the pad enums
 //! declared there), `board-model-types.md` section 2.
 //!
-//! Data, constructor defaults and trivial accessors are complete (M0b); every member with
-//! mode logic (`CopperLayer`, `EffectiveLayerFor`, `ForEachUniqueLayer`, flipping, compare,
-//! knockouts, backdrill) is a `port_pending!` stub with its final signature (package M13).
-//! Per-layer access always goes through `copper_props(layer)` / `copper_props_mut(layer)`;
-//! nothing outside this file indexes `copper_props` directly (`board-model.md` 12).
+//! Data and constructor defaults (M0b), mode logic, compare, flip, knockouts, backdrill and
+//! primitives (M13). Per-layer access always goes through `copper_props(layer)` /
+//! `copper_props_mut(layer)`; nothing outside this file indexes `copper_props` directly
+//! (`board-model.md` 12).
+//!
+//! `m_copperProps` is a `std::unordered_map<PCB_LAYER_ID, COPPER_LAYER_PROPS>` whose iteration
+//! order is observable (CUSTOM-mode `ForEachUniqueLayer`, hence `Compare`, `UniqueLayers`,
+//! `PAD_UTILS::CheckPad` report order, and the `begin()` fallbacks). [`CopperPropsMap`]
+//! reproduces the libstdc++ (g++ 13) node order exactly, which is the reference platform
+//! (`PORTING.md` 9).
 
-use std::collections::BTreeMap;
+use std::ops::Index;
 
+use kicad_core::layer_ids::{is_back_layer, is_front_layer, is_non_copper_layer};
+use kicad_core::layer_range::LayerRange;
 use kicad_core::{Lset, PcbLayerId};
-use kicad_geom::{ANGLE_0, ANGLE_45, EdaAngle, EdaOrientation, Vector2I};
+use kicad_geom::cmath;
+use kicad_geom::{
+    ANGLE_0, ANGLE_45, ANGLE_90, EdaAngle, EdaOrientation, Vector2D, Vector2I, ki_round,
+};
 
 use crate::board_stackup::BoardStackup;
 use crate::ctx::{BoardCtx, LayerEnv};
@@ -285,9 +295,9 @@ pub struct Padstack {
     /// m_customName (`std::unique_ptr<wxString>`; never holds an empty string).
     pub custom_name: Option<String>,
     pub orientation: EdaOrientation, // m_orientation
-    /// m_copperProps (`std::unordered_map`). Keys: F_Cu (`ALL_LAYERS`), In1_Cu
-    /// (`INNER_LAYERS`), B_Cu, or any copper layer in CUSTOM mode.
-    pub copper_props: BTreeMap<PcbLayerId, CopperLayerProps>,
+    /// m_copperProps (`std::unordered_map`, libstdc++ iteration order). Keys: F_Cu
+    /// (`ALL_LAYERS`), In1_Cu (`INNER_LAYERS`), B_Cu, or any copper layer in CUSTOM mode.
+    pub copper_props: CopperPropsMap,
     pub front_mask_props: MaskLayerProps, // m_frontMaskProps
     pub back_mask_props: MaskLayerProps,  // m_backMaskProps
     pub unconnected_layer_mode: UnconnectedLayerMode, // m_unconnectedLayerMode
@@ -304,19 +314,18 @@ impl Default for Padstack {
     /// connection, 45 degree spoke angle), circular drill from F_Cu to B_Cu, secondary and
     /// tertiary drills undefined.
     fn default() -> Self {
-        let mut copper_props = BTreeMap::new();
-        copper_props.insert(
-            Padstack::ALL_LAYERS,
-            CopperLayerProps {
-                shape: ShapeProps::default(),
-                zone_connection: Some(ZoneConnection::Inherited),
-                thermal_spoke_width: None,
-                thermal_spoke_angle: Some(EdaOrientation::new(ANGLE_45)),
-                thermal_gap: None,
-                clearance: None,
-                custom_shapes: Vec::new(),
-            },
-        );
+        // m_copperProps[ALL_LAYERS].shape = SHAPE_PROPS(); ... (the first operator[] creates
+        // the entry with default props).
+        let mut copper_props = CopperPropsMap::new();
+        *copper_props.index_or_default(Padstack::ALL_LAYERS) = CopperLayerProps {
+            shape: ShapeProps::default(),
+            zone_connection: Some(ZoneConnection::Inherited),
+            thermal_spoke_width: None,
+            thermal_spoke_angle: Some(EdaOrientation::new(ANGLE_45)),
+            thermal_gap: None,
+            clearance: None,
+            custom_shapes: Vec::new(),
+        };
 
         Padstack {
             mode: PadstackMode::Normal,
@@ -365,8 +374,7 @@ impl Padstack {
         // SetShape( CIRCLE, ALL_LAYERS ) on a NORMAL padstack writes m_copperProps[ALL_LAYERS].
         padstack
             .copper_props
-            .entry(Padstack::ALL_LAYERS)
-            .or_default()
+            .index_or_default(Padstack::ALL_LAYERS)
             .shape
             .shape = PadShape::Circle;
         padstack

@@ -18,7 +18,8 @@
 //! Port of `include/project/net_settings.h` and the non-JSON part of
 //! `common/project/net_settings.cpp` (`NET_SETTINGS`): data and constructor defaults
 //! (package M0d); the effective-netclass logic is package M4, the JSON loader belongs to the
-//! project-settings packages.
+//! project-settings packages. Pattern assignments hold compiled matchers
+//! (`kicad_core::eda_pattern_match::EdaCombinedMatcher` is `Clone + Send + Sync`), as in C++.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
@@ -35,33 +36,15 @@ pub enum NetChainSource {
     Board,
 }
 
-/// A netclass pattern of `m_netClassPatternAssignments`: C++ stores a
-/// `unique_ptr<EDA_COMBINED_MATCHER>`. `kicad_core::eda_pattern_match::EdaCombinedMatcher` is
-/// neither `Clone` nor `Send + Sync` (its matchers are `Box<dyn EdaPatternMatch>`), which
-/// `Board: Clone + Sync` needs; so the pattern text is stored and the matcher
-/// (`EDA_COMBINED_MATCHER( pattern, CTX_NETCLASS )`) is built when it is used.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct NetclassPattern {
-    pattern: String,
-}
+/// One entry of `m_netClassPatternAssignments` / `m_netClassChainPatternAssignments`:
+/// `std::pair<std::unique_ptr<EDA_COMBINED_MATCHER>, wxString>`, the matcher compiled once
+/// with `CTX_NETCLASS` when the assignment is added, and the netclass name.
+pub type NetclassPatternAssignment = (EdaCombinedMatcher, String);
 
-impl NetclassPattern {
-    /// `std::make_unique<EDA_COMBINED_MATCHER>( aPattern, CTX_NETCLASS )`.
-    pub fn new(pattern: &str) -> Self {
-        NetclassPattern {
-            pattern: pattern.to_string(),
-        }
-    }
-
-    /// `EDA_COMBINED_MATCHER::GetPattern`.
-    pub fn pattern(&self) -> &str {
-        &self.pattern
-    }
-
-    /// The matcher C++ keeps alive in the assignment.
-    pub fn matcher(&self) -> EdaCombinedMatcher {
-        EdaCombinedMatcher::new(&self.pattern, CombinedMatcherContext::Netclass)
-    }
+/// `std::make_unique<EDA_COMBINED_MATCHER>( aPattern, CTX_NETCLASS )`: the compiled matcher
+/// of a netclass pattern (anchored regular expression and anchored wildcard).
+pub fn netclass_matcher(pattern: &str) -> EdaCombinedMatcher {
+    EdaCombinedMatcher::new(pattern, CombinedMatcherContext::Netclass)
 }
 
 /// `NET_SETTINGS` (`include/project/net_settings.h`). Loaded from the `.kicad_pro` JSON.
@@ -71,9 +54,12 @@ pub struct NetSettings {
     pub default_netclass: Arc<Netclass>, // m_defaultNetClass
     pub netclasses: BTreeMap<String, Arc<Netclass>>, // m_netClasses
     pub netclass_label_assignments: BTreeMap<String, BTreeSet<String>>, // m_netClassLabelAssignments
-    pub netclass_pattern_assignments: Vec<(NetclassPattern, String)>, // m_netClassPatternAssignments
+    /// m_netClassPatternAssignments: compiled matchers, in file order.
+    pub netclass_pattern_assignments: Vec<NetclassPatternAssignment>,
+    /// m_netClassChainPatternAssignments (derived from `net_chain_net_classes`, not
+    /// serialised).
     pub netclass_chain_pattern_assignments:
-        BTreeMap<NetChainSource, Vec<(NetclassPattern, String)>>, // m_netClassChainPatternAssignments
+        BTreeMap<NetChainSource, Vec<NetclassPatternAssignment>>,
     pub net_color_assignments: BTreeMap<String, Color4D>, // m_netColorAssignments
     pub net_chain_classes: BTreeMap<String, String>,      // m_netChainClasses
     pub net_chain_net_classes: BTreeMap<String, String>,  // m_netChainNetClasses
@@ -145,7 +131,9 @@ impl NetSettings {
     /// `NET_SETTINGS::ClearAllCaches`: the effective cache, the composites and the bus
     /// members (not the implicit classes).
     pub fn clear_all_caches(&mut self) {
-        crate::port_pending!("NET_SETTINGS::ClearAllCaches")
+        self.effective_netclass_cache.clear();
+        self.composite_netclasses.clear();
+        self.netclass_bus_members.clear();
     }
 
     /// `NET_SETTINGS::ClearCacheForNet`.
@@ -153,13 +141,78 @@ impl NetSettings {
         crate::port_pending!("NET_SETTINGS::ClearCacheForNet", net_name)
     }
 
-    /// `NET_SETTINGS::SetNetclassPatternAssignment`.
+    /// `NET_SETTINGS::SetNetclassPatternAssignment`: expands bus patterns
+    /// (`ForEachBusMember`, package M4) into `add_single_pattern_assignment` calls, then
+    /// `ClearAllCaches`.
     pub fn set_netclass_pattern_assignment(&mut self, pattern: &str, netclass: &str) {
         crate::port_pending!(
             "NET_SETTINGS::SetNetclassPatternAssignment",
             pattern,
             netclass
         )
+    }
+
+    /// `NET_SETTINGS::addSinglePatternAssignment`: appends the compiled matcher unless the
+    /// same pattern is already assigned to the same class.
+    pub fn add_single_pattern_assignment(&mut self, pattern: &str, netclass: &str) {
+        // Avoid exact duplicates - these shouldn't cause problems, due to later de-duplication
+        // but they are unnecessary.
+        for assignment in &self.netclass_pattern_assignments {
+            if assignment.0.pattern() == pattern && assignment.1 == netclass {
+                return;
+            }
+        }
+
+        // No assignment, add a new one
+        self.netclass_pattern_assignments
+            .push((netclass_matcher(pattern), netclass.to_string()));
+    }
+
+    /// `NET_SETTINGS::SetNetclassPatternAssignments( && )`.
+    pub fn set_netclass_pattern_assignments(&mut self, patterns: Vec<NetclassPatternAssignment>) {
+        self.netclass_pattern_assignments = patterns;
+        self.clear_all_caches();
+    }
+
+    /// `NET_SETTINGS::GetNetclassPatternAssignments`.
+    pub fn netclass_pattern_assignments(&self) -> &[NetclassPatternAssignment] {
+        &self.netclass_pattern_assignments
+    }
+
+    /// `NET_SETTINGS::ClearNetclassPatternAssignments` (does not clear the caches, as in
+    /// C++).
+    pub fn clear_netclass_pattern_assignments(&mut self) {
+        self.netclass_pattern_assignments.clear();
+    }
+
+    /// `NET_SETTINGS::addSingleChainPatternAssignment`.
+    pub fn add_single_chain_pattern_assignment(
+        &mut self,
+        source: NetChainSource,
+        pattern: &str,
+        netclass: &str,
+    ) {
+        let assignments = self
+            .netclass_chain_pattern_assignments
+            .entry(source)
+            .or_default();
+
+        for assignment in assignments.iter() {
+            if assignment.0.pattern() == pattern && assignment.1 == netclass {
+                return;
+            }
+        }
+
+        assignments.push((netclass_matcher(pattern), netclass.to_string()));
+    }
+
+    /// `NET_SETTINGS::ClearChainPatternAssignments`.
+    pub fn clear_chain_pattern_assignments(&mut self, source: NetChainSource) {
+        self.netclass_chain_pattern_assignments
+            .entry(source)
+            .or_default()
+            .clear();
+        self.clear_all_caches();
     }
 }
 
@@ -181,6 +234,39 @@ mod tests {
         );
         assert!(ns.netclasses.is_empty());
         assert!(ns.netclass_pattern_assignments.is_empty());
-        assert_eq!(NetclassPattern::new("HV*").pattern(), "HV*");
+    }
+
+    /// `NET_SETTINGS::addSinglePatternAssignment` / `addSingleChainPatternAssignment` /
+    /// `ClearNetclassPatternAssignments` / `ClearChainPatternAssignments`
+    /// (`common/project/net_settings.cpp`): the matcher is compiled once (`CTX_NETCLASS`:
+    /// anchored), exact duplicates are skipped, and a clone of the settings keeps the
+    /// compiled matchers.
+    #[test]
+    fn pattern_assignments_hold_compiled_matchers() {
+        let mut ns = NetSettings::default();
+        ns.add_single_pattern_assignment("HV*", "HighVoltage");
+        ns.add_single_pattern_assignment("HV*", "HighVoltage");
+        ns.add_single_pattern_assignment("HV*", "Other");
+        assert_eq!(ns.netclass_pattern_assignments().len(), 2);
+
+        let (matcher, class) = &ns.netclass_pattern_assignments()[0];
+        assert_eq!((matcher.pattern(), class.as_str()), ("HV*", "HighVoltage"));
+        assert!(matcher.find("HV_BUS"));
+        assert!(!matcher.find("xHV_BUS"));
+
+        ns.add_single_chain_pattern_assignment(NetChainSource::Board, "/CHAIN?", "Fast");
+        ns.add_single_chain_pattern_assignment(NetChainSource::Board, "/CHAIN?", "Fast");
+        let copy = ns.clone();
+        let chain = &copy.netclass_chain_pattern_assignments[&NetChainSource::Board];
+        assert_eq!(chain.len(), 1);
+        assert!(chain[0].0.find("/CHAIN1"));
+        assert!(copy.netclass_pattern_assignments()[1].0.find("HV1"));
+
+        ns.clear_chain_pattern_assignments(NetChainSource::Board);
+        assert!(ns.netclass_chain_pattern_assignments[&NetChainSource::Board].is_empty());
+        ns.clear_netclass_pattern_assignments();
+        assert!(ns.netclass_pattern_assignments().is_empty());
+        ns.set_netclass_pattern_assignments(vec![(netclass_matcher("A?"), "X".to_string())]);
+        assert_eq!(ns.netclass_pattern_assignments().len(), 1);
     }
 }

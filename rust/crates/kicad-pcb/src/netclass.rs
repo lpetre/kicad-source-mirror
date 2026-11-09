@@ -16,7 +16,8 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `include/netclass.h` and `common/netclass.cpp` (`NETCLASS`): data, constructor
-//! defaults and accessors (package M0d). The name / composite logic is package M3.
+//! defaults and accessors (package M0d), names, composites and comparisons (package M3).
+//! `Serialize` / `Deserialize` (protobuf API) are not ported.
 
 use std::sync::{Arc, OnceLock};
 
@@ -164,29 +165,165 @@ impl Netclass {
         self.is_default
     }
 
-    /// `NETCLASS::GetName`: the root name, or the constituents' names joined with `,`.
+    /// The number of entries of the C++ `m_constituents`: a root class lists itself (the empty
+    /// Rust list), a composite its constituents.
+    fn constituent_count(&self) -> usize {
+        self.constituents.len().max(1)
+    }
+
+    /// Entry `i` of the C++ `m_constituents` (`self` for a root class).
+    fn constituent(&self, i: usize) -> &Netclass {
+        if self.constituents.is_empty() {
+            self
+        } else {
+            &self.constituents[i]
+        }
+    }
+
+    /// Port of `NETCLASS::GetName`: the root name, or the constituents' names (`m_Name`)
+    /// joined with `,` in constituent order.
     pub fn get_name(&self) -> String {
-        crate::port_pending!("NETCLASS::GetName")
+        if self.constituent_count() == 1 {
+            return self.name.clone();
+        }
+
+        // Count commas
+        let str_len = self.constituent_count() - 1
+            + self.constituents.iter().map(|c| c.name.len()).sum::<usize>();
+
+        let mut name = String::with_capacity(str_len);
+        name.push_str(&self.constituents[0].name);
+
+        for constituent in &self.constituents[1..] {
+            name.push(',');
+            name.push_str(&constituent.name);
+        }
+
+        name
     }
 
-    /// `NETCLASS::GetHumanReadableName`.
+    /// Port of `NETCLASS::GetHumanReadableName` (the English originals of the translated
+    /// formats).
     pub fn get_human_readable_name(&self) -> String {
-        crate::port_pending!("NETCLASS::GetHumanReadableName")
+        let count = self.constituent_count();
+
+        if count == 1 {
+            return self.name.clone();
+        }
+
+        let c = |i: usize| self.constituent(i).get_name();
+
+        if count == 2 {
+            format!("{} and {}", c(0), c(1))
+        } else if count == 3 {
+            format!("{}, {} and {}", c(0), c(1), c(2))
+        } else {
+            format!("{}, {} and {} more", c(0), c(1), count as i32 - 2)
+        }
     }
 
-    /// `NETCLASS::NameEquals`.
+    /// Port of `NETCLASS::NameEquals`: `get_name() == name` without building the string.
     pub fn name_equals(&self, other: &str) -> bool {
-        crate::port_pending!("NETCLASS::NameEquals", other)
+        if self.constituent_count() <= 1 {
+            return self.name == other;
+        }
+
+        // Byte offsets: every match below ends on a character boundary of `other` (UTF-8 is
+        // self-synchronising), so this equals the C++ character-offset comparison.
+        let bytes = other.as_bytes();
+        let mut offset = 0usize;
+
+        for (i, constituent) in self.constituents.iter().enumerate() {
+            if i > 0 {
+                if offset >= bytes.len() || bytes[offset] != b',' {
+                    return false;
+                }
+
+                offset += 1;
+            }
+
+            let constituent_name = constituent.name.as_bytes();
+
+            // aName.compare( offset, len, constituentName ) != 0
+            if !bytes[offset..].starts_with(constituent_name) {
+                return false;
+            }
+
+            offset += constituent_name.len();
+        }
+
+        offset == bytes.len()
     }
 
-    /// `NETCLASS::ContainsNetclassWithName` (wildcard match on the constituents' names).
+    /// Port of `NETCLASS::ContainsNetclassWithName`: any constituent whose `GetName()` matches
+    /// the wildcard pattern `netclass` (`wxString::Matches`).
     pub fn contains_netclass_with_name(&self, netclass: &str) -> bool {
-        crate::port_pending!("NETCLASS::ContainsNetclassWithName", netclass)
+        (0..self.constituent_count())
+            .any(|i| wx_string_matches(&self.constituent(i).get_name(), netclass))
     }
 
-    /// `NETCLASS::EqualsByPersistedFields`.
+    /// Port of `NETCLASS::operator==`: the constituent lists hold the same class objects.
+    /// A root class is only equal to itself (C++ compares `{ this }`).
+    pub fn same_constituents(&self, other: &Netclass) -> bool {
+        if self.constituents.is_empty() || other.constituents.is_empty() {
+            return std::ptr::eq(self, other)
+                || (self.constituents.len() == 1
+                    && other.constituents.is_empty()
+                    && std::ptr::eq(&*self.constituents[0], other))
+                || (other.constituents.len() == 1
+                    && self.constituents.is_empty()
+                    && std::ptr::eq(&*other.constituents[0], self));
+        }
+
+        self.constituents.len() == other.constituents.len()
+            && self
+                .constituents
+                .iter()
+                .zip(&other.constituents)
+                .all(|(a, b)| Arc::ptr_eq(a, b))
+    }
+
+    /// Port of `NETCLASS::EqualsByPersistedFields`.
     pub fn equals_by_persisted_fields(&self, other: &Netclass) -> bool {
-        crate::port_pending!("NETCLASS::EqualsByPersistedFields", other)
+        // m_Description intentionally omitted: the project-file JSON writer does not
+        // serialize description, so a load round-trip drops it.  Including it here
+        // would mark every fresh load dirty (or every CopyFrom-produced copy unequal).
+        //
+        // This list is a hand-maintained mirror of the netclass JSON serialization in
+        // NET_SETTINGS (common/project/net_settings.cpp, the saveNetclass/readNetClass
+        // lambdas).  Any new persisted field added there must be added here too, or two
+        // netclasses differing only in the new field will silently compare equal.
+        self.name == other.name
+            && self.priority == other.priority
+            && self.clearance == other.clearance
+            && self.track_width == other.track_width
+            && self.via_dia == other.via_dia
+            && self.via_drill == other.via_drill
+            && self.uvia_dia == other.uvia_dia
+            && self.uvia_drill == other.uvia_drill
+            && self.diff_pair_width == other.diff_pair_width
+            && self.diff_pair_gap == other.diff_pair_gap
+            && self.diff_pair_via_gap == other.diff_pair_via_gap
+            && self.wire_width == other.wire_width
+            && self.bus_width == other.bus_width
+            && self.schematic_color == other.schematic_color
+            && self.line_style == other.line_style
+            && self.pcb_color == other.pcb_color
+            && self.tuning_profile == other.tuning_profile
+    }
+
+    /// Port of `NETCLASS::GetConstituentNetclasses` with the self reference made explicit:
+    /// `[self]` for a root class.
+    pub fn constituent_netclasses(&self) -> Vec<&Netclass> {
+        (0..self.constituent_count())
+            .map(|i| self.constituent(i))
+            .collect()
+    }
+
+    /// Port of `NETCLASS::SetConstituentNetclasses` / `SetConstituentOwners`. Pass an empty
+    /// list for C++ `{ this }`.
+    pub fn set_constituent_netclasses(&mut self, constituents: Vec<Arc<Netclass>>) {
+        self.constituents = constituents;
     }
 
     /// `NETCLASS::ResetParents`: every parent is the class itself again.
@@ -194,10 +331,25 @@ impl Netclass {
         self.parents = NetclassParents::default();
     }
 
-    /// `NETCLASS::ResetParameters`: clears every optional and both colours (not the tuning
-    /// profile), then `ResetParents()`.
+    /// Port of `NETCLASS::ResetParameters`: clears every optional and both colours (not the
+    /// tuning profile), then `ResetParents()`.
     pub fn reset_parameters(&mut self) {
-        crate::port_pending!("NETCLASS::ResetParameters")
+        self.pcb_color = Color4D::UNSPECIFIED;
+        self.schematic_color = Color4D::UNSPECIFIED;
+        self.clearance = None;
+        self.via_drill = None;
+        self.uvia_drill = None;
+        self.track_width = None;
+        self.via_dia = None;
+        self.uvia_dia = None;
+        self.diff_pair_width = None;
+        self.diff_pair_gap = None;
+        self.diff_pair_via_gap = None;
+        self.wire_width = None;
+        self.bus_width = None;
+        self.line_style = None;
+
+        self.reset_parents();
     }
 
     /// `NETCLASS::GetPriority`.
@@ -338,6 +490,100 @@ impl Netclass {
     /// `NETCLASS::HasTuningProfile`.
     pub fn has_tuning_profile(&self) -> bool {
         !self.tuning_profile.is_empty()
+    }
+}
+
+/// Port of `wxString::Matches( mask )` (wxWidgets 3.2, `src/common/string.cpp`, the
+/// non-regex branch): `*` and `?` wildcards, case sensitive, with wx's quirks kept: any `*` /
+/// `?` run after a `*` is skipped (so `"*?"` matches the empty string), the literal run after a
+/// `*` is found with `wxStrstr`, and only the last `*` is backtracked to.
+pub fn wx_string_matches(text: &str, mask: &str) -> bool {
+    // The C strings the wx code walks: up to the first NUL, NUL-terminated.
+    fn c_chars(s: &str) -> Vec<char> {
+        let mut v: Vec<char> = s.chars().take_while(|&c| c != '\0').collect();
+        v.push('\0');
+        v
+    }
+
+    let mask = c_chars(mask);
+    let txt = c_chars(text);
+    let mut m = 0usize;
+    let mut t = 0usize;
+    let mut last_star_in_text: Option<usize> = None;
+    let mut last_star_in_mask = 0usize;
+
+    loop {
+        // match:
+        let mut failed = false;
+
+        while mask[m] != '\0' {
+            match mask[m] {
+                '?' => {
+                    if txt[t] == '\0' {
+                        return false;
+                    }
+                }
+                '*' => {
+                    // remember where we started to be able to backtrack later
+                    last_star_in_text = Some(t);
+                    last_star_in_mask = m;
+
+                    // ignore special chars immediately following this one
+                    while mask[m] == '*' || mask[m] == '?' {
+                        m += 1;
+                    }
+
+                    // if there is nothing more, match
+                    if mask[m] == '\0' {
+                        return true;
+                    }
+
+                    // are there any other metacharacters in the mask?
+                    let len_mask = mask[m..]
+                        .iter()
+                        .position(|&c| c == '*' || c == '?' || c == '\0')
+                        .unwrap_or(0);
+                    let to_match = &mask[m..m + len_mask];
+
+                    // wxStrstr( pszTxt, strToMatch )
+                    let hay = &txt[t..txt.len() - 1];
+                    let Some(found) = hay.windows(len_mask).position(|w| w == to_match) else {
+                        return false;
+                    };
+
+                    // -1 to compensate "++" in the loop
+                    t = t + found + len_mask - 1;
+                    m += len_mask - 1;
+                }
+                c => {
+                    if c != txt[t] {
+                        failed = true;
+                        break;
+                    }
+                }
+            }
+
+            m += 1;
+            t += 1;
+        }
+
+        if failed {
+            return false;
+        }
+
+        // match only if nothing left
+        if txt[t] == '\0' {
+            return true;
+        }
+
+        // if we failed to match, backtrack if we can
+        match last_star_in_text.take() {
+            Some(star) => {
+                t = star + 1;
+                m = last_star_in_mask;
+            }
+            None => return false,
+        }
     }
 }
 
