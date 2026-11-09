@@ -932,7 +932,7 @@ void sectionHashes()
         recBytes( r, bytes );
         r.u( seed );
 
-        // MMH3_HASH: addData in random pieces, interleaved with add( int32_t ) when aligned
+        // MMH3_HASH: addData in random pieces, interleaved with add( int32_t )
         {
             MMH3_HASH h( seed );
             size_t    pos = 0;
@@ -941,7 +941,9 @@ void sectionHashes()
             {
                 size_t piece = std::min<size_t>( bytes.size() - pos, (size_t) rng.range( 0, 40 ) );
 
-                if( rng.next() % 4 == 0 && piece >= 4 )
+                // add( int32_t ) after a misaligned addData() hashes a block byte that was
+                // never written (uninitialised in C++), so mix them only at aligned lengths
+                if( rng.next() % 4 == 0 && piece >= 4 && pos % 4 == 0 )
                 {
                     int32_t v;
                     memcpy( &v, bytes.data() + pos, 4 );

@@ -161,6 +161,9 @@ pub fn build_convex_hull_poly_set_moved(
     // Move and rotate the points according to aPosition and aRotation
     for pt in a_result.iter_mut() {
         rotate_point(pt, a_rotation);
-        *pt = Vector2I::new(pt.x.wrapping_add(a_position.x), pt.y.wrapping_add(a_position.y));
+        *pt = Vector2I::new(
+            pt.x.wrapping_add(a_position.x),
+            pt.y.wrapping_add(a_position.y),
+        );
     }
 }

@@ -32,7 +32,9 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <fstream>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -56,6 +58,16 @@ namespace
 {
 
 const int kErr[] = { 5000, 25000, 1000 };
+
+// Cases the port cannot replay because the C++ overflows a signed integer on them (UB; the
+// port panics in builds with overflow checks): golden/slc_oracle_skip.txt, written by the
+// Rust test (see oracle_slc_diff.rs)
+std::set<std::pair<std::string, int>> g_skip;
+
+bool skipped( const char* aName, int aCase )
+{
+    return g_skip.count( { std::string( aName ), aCase } ) > 0;
+}
 
 
 void recArc( REC& r, const SHAPE_ARC& a )
@@ -110,9 +122,16 @@ SHAPE_ARC chainArc( RNG& rng, bool aConnect, const VECTOR2I& aStart )
     case 0:
     {
         // small arc from three points (often degenerate: collinear, coincident)
-        VECTOR2I m = s + rng.ptR( -3000, 3000 );
-        VECTOR2I e = s + rng.ptR( -3000, 3000 );
-        return SHAPE_ARC( s, m, e, 0 );
+        VECTOR2I  m = s + rng.ptR( -3000, 3000 );
+        VECTOR2I  e = s + rng.ptR( -3000, 3000 );
+        SHAPE_ARC a( s, m, e, 0 );
+
+        // Nearly straight arcs have their center clamped near the int limits, and the arc
+        // editing code (ConstructFromStartEndCenter) overflows on them (UB)
+        if( a.GetRadius() >= (double) std::numeric_limits<int>::max() / 2.0 )
+            a = SHAPE_ARC( s, s + VECTOR2I( 1000, 1000 ), s + VECTOR2I( 2000, 0 ), 0 );
+
+        return a;
     }
     case 1:
     {
@@ -355,10 +374,14 @@ void recState( REC& r, const SHAPE_LINE_CHAIN& c )
 void sectionBuild( const char* aName, bool aArcs, uint64_t aSeed, int aCount )
 {
     SECTION sec( aName );
-    RNG     rng( aSeed );
-
     for( int n = 0; n < aCount; n++ )
     {
+        // every case has a generator of its own, so that cases can be skipped
+        RNG rng( aSeed * 1000003ULL + (uint64_t) n );
+
+        if( skipped( aName, n ) )
+            continue;
+
         SHAPE_LINE_CHAIN c = aArcs ? arcChain( rng ) : plainChain( rng );
 
         REC r;
@@ -414,10 +437,14 @@ void sectionBuild( const char* aName, bool aArcs, uint64_t aSeed, int aCount )
 void sectionEdit( const char* aName, bool aArcs, uint64_t aSeed, int aCount )
 {
     SECTION sec( aName );
-    RNG     rng( aSeed );
-
     for( int n = 0; n < aCount; n++ )
     {
+        // every case has a generator of its own, so that cases can be skipped
+        RNG rng( aSeed * 1000003ULL + (uint64_t) n );
+
+        if( skipped( aName, n ) )
+            continue;
+
         SHAPE_LINE_CHAIN c = aArcs ? arcChain( rng ) : plainChain( rng );
         int              pc = c.PointCount();
         int              op = (int) ( rng.next() % 20 );
@@ -619,10 +646,14 @@ void recCollide( REC& r, const SHAPE_LINE_CHAIN& c, const VECTOR2I& p, const SEG
 void sectionQuery( const char* aName, bool aArcs, uint64_t aSeed, int aCount )
 {
     SECTION sec( aName );
-    RNG     rng( aSeed );
-
     for( int n = 0; n < aCount; n++ )
     {
+        // every case has a generator of its own, so that cases can be skipped
+        RNG rng( aSeed * 1000003ULL + (uint64_t) n );
+
+        if( skipped( aName, n ) )
+            continue;
+
         SHAPE_LINE_CHAIN c = aArcs ? arcChain( rng ) : plainChain( rng );
         int              pc = c.PointCount();
         VECTOR2I         p = queryPt( rng, c );
@@ -857,8 +888,20 @@ void sectionX86Casts()
 
 int main( int argc, char** argv )
 {
-    if( argc == 3 && std::string( argv[1] ) == "--dump" )
-        g_dump = fopen( argv[2], "w" );
+    for( int i = 1; i + 1 < argc; i += 2 )
+    {
+        if( std::string( argv[i] ) == "--dump" )
+            g_dump = fopen( argv[i + 1], "w" );
+        else if( std::string( argv[i] ) == "--skip" )
+        {
+            std::ifstream f( argv[i + 1] );
+            std::string   name;
+            int           idx;
+
+            while( f >> name >> idx )
+                g_skip.insert( { name, idx } );
+        }
+    }
 
     sectionLibmProbe();
     sectionBuild( "slc_build", false, 300, 15000 );

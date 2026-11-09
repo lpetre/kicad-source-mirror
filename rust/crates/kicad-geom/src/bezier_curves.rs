@@ -220,7 +220,10 @@ impl BezierPoly {
     pub fn from_points_i(a_control_points: &[Vector2I]) -> Self {
         BezierPoly {
             min_seg_len: 0.0,
-            ctrl_pts: a_control_points.iter().map(|&p| Vector2D::from(p)).collect(),
+            ctrl_pts: a_control_points
+                .iter()
+                .map(|&p| Vector2D::from(p))
+                .collect(),
         }
     }
 
@@ -244,7 +247,9 @@ impl BezierPoly {
 
     /// Port of `BEZIER_POLY::isNaN`.
     fn is_nan(&self) -> bool {
-        self.ctrl_pts.iter().any(|pt| pt.x.is_nan() || pt.y.is_nan())
+        self.ctrl_pts
+            .iter()
+            .any(|pt| pt.x.is_nan() || pt.y.is_nan())
     }
 
     /// Port of `BEZIER_POLY::isFlat`.
@@ -321,7 +326,10 @@ impl BezierPoly {
         } else if self.ctrl_pts.len() == 4 {
             self.get_cubic_poly(a_output, max_error);
         } else {
-            debug_assert!(false, "BEZIER_POLY::GetPoly: not a quadratic or cubic curve");
+            debug_assert!(
+                false,
+                "BEZIER_POLY::GetPoly: not a quadratic or cubic curve"
+            );
         }
     }
 
@@ -368,9 +376,8 @@ impl BezierPoly {
 
         // `int n = std::ceil( ... )`: NaN / infinity (collinear control points) give INT_MIN on
         // the reference build, so no intermediate point is generated
-        let n: i32 = cmath::f64_to_i32_x86(
-            (0.5 * (a2 - a0).abs() * (scale / a_max_error).sqrt()).ceil(),
-        );
+        let n: i32 =
+            cmath::f64_to_i32_x86((0.5 * (a2 - a0).abs() * (scale / a_max_error).sqrt()).ceil());
 
         let v0: f64 = approx_inv_int(a0);
         let v2: f64 = approx_inv_int(a2);
@@ -464,7 +471,10 @@ impl BezierPoly {
             right.ctrl_pts[1] = right_ctrl1;
             right.ctrl_pts[0] = shared;
         } else {
-            debug_assert!(false, "BEZIER_POLY::subdivide: not a quadratic or cubic curve");
+            debug_assert!(
+                false,
+                "BEZIER_POLY::subdivide: not a quadratic or cubic curve"
+            );
         }
 
         (left, right)
@@ -667,7 +677,12 @@ pub struct Bezier<T> {
 
 impl<T: NumericType> Bezier<T> {
     /// `BEZIER( aStart, aC1, aC2, aEnd )`.
-    pub const fn new(a_start: Vector2<T>, a_c1: Vector2<T>, a_c2: Vector2<T>, a_end: Vector2<T>) -> Self {
+    pub const fn new(
+        a_start: Vector2<T>,
+        a_c1: Vector2<T>,
+        a_c2: Vector2<T>,
+        a_end: Vector2<T>,
+    ) -> Self {
         Bezier {
             start: a_start,
             c1: a_c1,

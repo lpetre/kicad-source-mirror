@@ -124,7 +124,11 @@ pub fn is_sliver_triangle(a: Vector2I, b: Vector2I, c: Vector2I) -> bool {
     // std::max / std::min of an initializer list keep the first of equal elements
     let longest_squared = std_max(std_max(ab_squared, bc_squared), ca_squared);
     let shortest_squared = {
-        let m = if bc_squared < ab_squared { bc_squared } else { ab_squared };
+        let m = if bc_squared < ab_squared {
+            bc_squared
+        } else {
+            ab_squared
+        };
         if ca_squared < m { ca_squared } else { m }
     };
 

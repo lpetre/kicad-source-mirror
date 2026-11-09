@@ -1038,7 +1038,8 @@ impl ShapeLineChain {
         let current_arc_idx = self.arc_index(a_point_index as usize);
 
         // Now skip the rest of the arc
-        while a_point_index < last_index && self.arc_index(a_point_index as usize) == current_arc_idx
+        while a_point_index < last_index
+            && self.arc_index(a_point_index as usize) == current_arc_idx
         {
             a_point_index += 1;
         }
@@ -1728,11 +1729,20 @@ impl ShapeLineChain {
     /// Port of `SHAPE_LINE_CHAIN::Slice( int aStartIndex, int aEndIndex )`: a subset of this
     /// line chain containing the [start_index, end_index] range of points.
     pub fn slice(&self, a_start_index: i32, a_end_index: i32) -> ShapeLineChain {
-        self.slice_with_error(a_start_index, a_end_index, get_arc_polygonization_max_error())
+        self.slice_with_error(
+            a_start_index,
+            a_end_index,
+            get_arc_polygonization_max_error(),
+        )
     }
 
     /// Port of `SHAPE_LINE_CHAIN::Slice( int aStartIndex, int aEndIndex, int aMaxError )`.
-    pub fn slice_with_error(&self, a_start_index: i32, a_end_index: i32, a_max_error: i32) -> ShapeLineChain {
+    pub fn slice_with_error(
+        &self,
+        a_start_index: i32,
+        a_end_index: i32,
+        a_max_error: i32,
+    ) -> ShapeLineChain {
         let mut rv = ShapeLineChain::new();
         let mut a_start_index = a_start_index;
         let mut a_end_index = a_end_index;
@@ -1774,8 +1784,7 @@ impl ShapeLineChain {
 
             while i <= a_end_index && arc_to_split_index == self.arc_index(i as usize) {
                 rv.points.push(self.points[i as usize]);
-                rv.shapes
-                    .push((rv.arcs.len() as isize, Self::SHAPE_IS_PT));
+                rv.shapes.push((rv.arcs.len() as isize, Self::SHAPE_IS_PT));
                 rv.bbox.merge_point(self.points[i as usize]);
                 i += 1;
             }
@@ -1830,8 +1839,7 @@ impl ShapeLineChain {
                         }
 
                         rv.points.push(self.points[i as usize]);
-                        rv.shapes
-                            .push((rv.arcs.len() as isize, Self::SHAPE_IS_PT));
+                        rv.shapes.push((rv.arcs.len() as isize, Self::SHAPE_IS_PT));
                         rv.bbox.merge_point(self.points[i as usize]);
                         i += 1;
                     }
@@ -2003,7 +2011,11 @@ impl ShapeLineChain {
 
         for i in 0..their_seg_count {
             let pa = their_pts[i as usize];
-            let pb = their_pts[if i + 1 < their_pt_count { i as usize + 1 } else { 0 }];
+            let pb = their_pts[if i + 1 < their_pt_count {
+                i as usize + 1
+            } else {
+                0
+            }];
             their_segs.push(Seg::with_index(pa, pb, i));
         }
 
@@ -2024,7 +2036,11 @@ impl ShapeLineChain {
 
         for s1 in 0..our_seg_count {
             let a1 = self.points[s1 as usize];
-            let b1 = self.points[if s1 + 1 < our_pt_count { s1 as usize + 1 } else { 0 }];
+            let b1 = self.points[if s1 + 1 < our_pt_count {
+                s1 as usize + 1
+            } else {
+                0
+            }];
 
             let our_min_x = a1.x.min(b1.x);
             let our_max_x = a1.x.max(b1.x);
@@ -2245,7 +2261,8 @@ impl ShapeLineChain {
                         p: b2,
                         ..Intersection::default()
                     });
-                } else if let Some(p) = seg1.intersect_with(&Seg::with_index(a2, b2, s2), true, false)
+                } else if let Some(p) =
+                    seg1.intersect_with(&Seg::with_index(a2, b2, s2), true, false)
                 {
                     return Some(Intersection {
                         index_our: s1,
@@ -2267,34 +2284,39 @@ impl ShapeLineChain {
             (Vector2D::from(a_pt1) - Vector2D::from(a_pt2)).squared_euclidean_norm() <= 2.0
         };
 
-        let collide_arc_seg = |a_arc: &ShapeArc, a_seg: &Seg, a_clearance: i32, a_location: &mut Vector2I| -> bool {
-            let center = a_arc.get_center();
-            // CIRCLE( center, double radius ): implicit conversion to int
-            let circle = Circle::new(center, f64_to_i32_x86(a_arc.get_radius()));
+        let collide_arc_seg =
+            |a_arc: &ShapeArc, a_seg: &Seg, a_clearance: i32, a_location: &mut Vector2I| -> bool {
+                let center = a_arc.get_center();
+                // CIRCLE( center, double radius ): implicit conversion to int
+                let circle = Circle::new(center, f64_to_i32_x86(a_arc.get_radius()));
 
-            let candidate_pts = circle.intersect_seg(a_seg);
+                let candidate_pts = circle.intersect_seg(a_seg);
 
-            for &candidate in &candidate_pts {
-                // Skip shared points
-                if a_arc.get_p1() == a_seg.a && points_close(candidate, a_seg.a) {
-                    continue;
+                for &candidate in &candidate_pts {
+                    // Skip shared points
+                    if a_arc.get_p1() == a_seg.a && points_close(candidate, a_seg.a) {
+                        continue;
+                    }
+
+                    if a_seg.b == a_arc.get_p0() && points_close(candidate, a_seg.b) {
+                        continue;
+                    }
+
+                    let collides =
+                        a_arc.collide_point(candidate, a_clearance, None, Some(&mut *a_location));
+
+                    if collides {
+                        return true;
+                    }
                 }
 
-                if a_seg.b == a_arc.get_p0() && points_close(candidate, a_seg.b) {
-                    continue;
-                }
+                false
+            };
 
-                let collides = a_arc.collide_point(candidate, a_clearance, None, Some(&mut *a_location));
-
-                if collides {
-                    return true;
-                }
-            }
-
-            false
-        };
-
-        let collide_arc_arc = |a_arc1: &ShapeArc, a_arc2: &ShapeArc, a_location: &mut Vector2I| -> bool {
+        let collide_arc_arc = |a_arc1: &ShapeArc,
+                               a_arc2: &ShapeArc,
+                               a_location: &mut Vector2I|
+         -> bool {
             let mut candidate_pts: Vec<Vector2I> = Vec::new();
 
             a_arc1.intersect_arc(a_arc2, &mut candidate_pts);
@@ -2453,7 +2475,8 @@ impl ShapeLineChain {
 
         if !a_allow_internal_shape_points {
             //Snap to arc end points if the closest found segment is part of an arc segment
-            if nearest > 0 && nearest < self.point_count() && self.is_arc_segment(nearest as usize) {
+            if nearest > 0 && nearest < self.point_count() && self.is_arc_segment(nearest as usize)
+            {
                 let pt_to_seg_start = self.c_segment(nearest).a - a_p;
                 let pt_to_seg_end = self.c_segment(nearest).b - a_p;
 
@@ -2967,7 +2990,10 @@ impl ShapeLineChain {
     /// `OffsetLine()` itself (the offset of the chain into a polygon set) belongs to the
     /// polygon set port: `offset_line( amount, corner_strategy, max_error, simplify )` is
     /// `self.offset_line_from_poly( &offset_line_chain( self, ... ) )`; see `PORT_STATUS.md`.
-    pub fn offset_line_from_poly(&self, a_poly: &ShapePolySet) -> Option<(ShapeLineChain, ShapeLineChain)> {
+    pub fn offset_line_from_poly(
+        &self,
+        a_poly: &ShapePolySet,
+    ) -> Option<(ShapeLineChain, ShapeLineChain)> {
         if self.point_count() < 2 {
             return None;
         }
@@ -3186,8 +3212,7 @@ impl ShapeLineChain {
         let other_points_per_box =
             C_MIN_PTS_PER_BOX.max((other_pts.len() / C_MAX_BOXES) as i32 + 1);
 
-        let my_num_boxes =
-            my_pts.len().div_ceil(my_points_per_box as usize) as i32;
+        let my_num_boxes = my_pts.len().div_ceil(my_points_per_box as usize) as i32;
         let other_num_boxes = other_pts.len().div_ceil(other_points_per_box as usize) as i32;
 
         #[derive(Clone, Copy, Default)]

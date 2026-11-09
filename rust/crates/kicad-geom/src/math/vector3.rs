@@ -60,7 +60,11 @@ impl Vector3Coord for i32 {
     }
 
     fn c_div(self, b: Self) -> Option<Self> {
-        if b == 0 { None } else { Some(self.wrapping_div(b)) }
+        if b == 0 {
+            None
+        } else {
+            Some(self.wrapping_div(b))
+        }
     }
 
     fn dot3(a: [Self; 3], b: [Self; 3]) -> i64 {
@@ -191,7 +195,10 @@ impl<T: Vector3Coord> Vector3<T> {
 
     /// Port of `VECTOR3<T>::Dot`.
     pub fn dot(&self, a_vector: &Vector3<T>) -> T::Extended {
-        T::dot3([self.x, self.y, self.z], [a_vector.x, a_vector.y, a_vector.z])
+        T::dot3(
+            [self.x, self.y, self.z],
+            [a_vector.x, a_vector.y, a_vector.z],
+        )
     }
 
     /// Port of `VECTOR3<T>::EuclideanNorm`.

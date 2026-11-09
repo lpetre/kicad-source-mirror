@@ -40,9 +40,24 @@ fn in_circle_delaunay_legal_exact() {
     let c = Vector2I::new(0, 1000000);
 
     // Cocircular is legal, inside is not, outside is
-    assert!(in_circle_delaunay_legal(a, b, c, Vector2I::new(1000000, 1000000)));
-    assert!(!in_circle_delaunay_legal(a, b, c, Vector2I::new(999999, 999999)));
-    assert!(in_circle_delaunay_legal(a, b, c, Vector2I::new(1000001, 1000001)));
+    assert!(in_circle_delaunay_legal(
+        a,
+        b,
+        c,
+        Vector2I::new(1000000, 1000000)
+    ));
+    assert!(!in_circle_delaunay_legal(
+        a,
+        b,
+        c,
+        Vector2I::new(999999, 999999)
+    ));
+    assert!(in_circle_delaunay_legal(
+        a,
+        b,
+        c,
+        Vector2I::new(1000001, 1000001)
+    ));
 
     // Exact determinant is 999999999000000000, far below the tolerance of a filtered double test
     assert!(!in_circle_delaunay_legal(

@@ -51,8 +51,10 @@ impl Default for Mmh3Hash {
 impl Mmh3Hash {
     /// `MMH3_HASH( uint32_t aSeed )`.
     ///
-    /// The C++ leaves the block buffer uninitialised; it is zeroed here.  No sequence of public
-    /// calls reads a buffer byte that was not written before.
+    /// The C++ leaves the block buffer uninitialised; it is zeroed here.  The only call
+    /// sequences that read a buffer byte never written are `add( int32_t )` after an `addData`
+    /// that left the length unaligned to 4 (and `addDataV1` after a previous unaligned call):
+    /// the C++ hashes indeterminate memory there, the port a zero (or the stale byte).
     pub fn new(a_seed: u32) -> Self {
         let mut h = Mmh3Hash {
             h1: 0,

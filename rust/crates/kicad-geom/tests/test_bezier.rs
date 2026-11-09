@@ -23,8 +23,14 @@ use kicad_geom::test_utils::is_small;
 
 fn check_vec_close(a_actual: Vector2D, a_expected: Vector2D) {
     const TOL: f64 = 1e-9;
-    assert!(is_small(a_actual.x - a_expected.x, TOL), "{a_actual:?} vs {a_expected:?}");
-    assert!(is_small(a_actual.y - a_expected.y, TOL), "{a_actual:?} vs {a_expected:?}");
+    assert!(
+        is_small(a_actual.x - a_expected.x, TOL),
+        "{a_actual:?} vs {a_expected:?}"
+    );
+    assert!(
+        is_small(a_actual.y - a_expected.y, TOL),
+        "{a_actual:?} vs {a_expected:?}"
+    );
 }
 
 fn curve() -> Bezier<f64> {
@@ -56,5 +62,8 @@ fn sub_curve_preserves_original_parameterization() {
 
     check_vec_close(sub_curve.start, curve.point_at(t0));
     check_vec_close(sub_curve.end, curve.point_at(t1));
-    check_vec_close(sub_curve.point_at(0.5), curve.point_at(t0 + (t1 - t0) * 0.5));
+    check_vec_close(
+        sub_curve.point_at(0.5),
+        curve.point_at(t0 + (t1 - t0) * 0.5),
+    );
 }

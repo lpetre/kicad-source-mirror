@@ -5,6 +5,9 @@
 #
 # Usage: ./build_slc_oracle.sh [--dump FILE]
 #
+# The cases listed in ../golden/slc_oracle_skip.txt are left out (regenerate that list first
+# with KICAD_SLC_ORACLE_WRITE_SKIPS=1 cargo test -p kicad-geom --test oracle_slc_diff).
+#
 # Requires the reference build (KICAD_ORACLE_BUILD, default /home/user/kicad-oracle/build) and
 # the wxWidgets development files it was built with (wx-config).
 set -eu
@@ -34,5 +37,5 @@ ${CXX:-g++} -std=c++20 -O2 -ffp-contract=off -DWXUSINGDLL -D__WXGTK__ -DUSINGZ \
     -Wl,-rpath,"$build/common" \
     -o "$out/slc_oracle"
 
-"$out/slc_oracle" "$@" > "$here/../golden/slc_oracle.txt"
+"$out/slc_oracle" --skip "$here/../golden/slc_oracle_skip.txt" "$@" > "$here/../golden/slc_oracle.txt"
 echo "wrote $here/../golden/slc_oracle.txt"

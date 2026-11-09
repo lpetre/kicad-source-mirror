@@ -104,10 +104,16 @@ fn ellipse_to_bezier() {
         assert_eq!(expected.len(), out.len(), "{name}");
 
         for (e, o) in expected.iter().zip(out.iter()) {
-            assert!((e.start - o.start).euclidean_norm() <= MAX_ERROR, "{name}: {o:?}");
+            assert!(
+                (e.start - o.start).euclidean_norm() <= MAX_ERROR,
+                "{name}: {o:?}"
+            );
             assert!((e.c1 - o.c1).euclidean_norm() <= MAX_ERROR, "{name}: {o:?}");
             assert!((e.c2 - o.c2).euclidean_norm() <= MAX_ERROR, "{name}: {o:?}");
-            assert!((e.end - o.end).euclidean_norm() <= MAX_ERROR, "{name}: {o:?}");
+            assert!(
+                (e.end - o.end).euclidean_norm() <= MAX_ERROR,
+                "{name}: {o:?}"
+            );
         }
     }
 }

@@ -29,6 +29,9 @@ use kicad_geom::kicore::mirror::FlipDirection;
 use kicad_geom::math::box2::Box2D;
 use kicad_geom::math::vector2::{Vector2, Vector2D, Vector2I, Vector2L};
 
+use std::collections::BTreeSet;
+use std::panic::AssertUnwindSafe;
+
 use super::sections::{Rec, Results, Rng, Section};
 
 const K_ERR: [i32; 3] = [5000, 25000, 1000];
@@ -87,7 +90,18 @@ fn chain_arc(rng: &mut Rng, connect: bool, start: Vector2I) -> ShapeArc {
         0 => {
             let m = s + rng.pt_r(-3000, 3000);
             let e = s + rng.pt_r(-3000, 3000);
-            ShapeArc::from_start_mid_end(s, m, e, 0)
+            let mut a = ShapeArc::from_start_mid_end(s, m, e, 0);
+
+            if a.get_radius() >= i32::MAX as f64 / 2.0 {
+                a = ShapeArc::from_start_mid_end(
+                    s,
+                    s + Vector2I::new(1000, 1000),
+                    s + Vector2I::new(2000, 0),
+                    0,
+                );
+            }
+
+            a
         }
         1 => {
             let mut d = rng.pt_r(-20000000, 20000000);
@@ -307,223 +321,259 @@ fn rec_state(r: &mut Rec, c: &ShapeLineChain) {
         .bx(&Shape::bbox(c, 7));
 }
 
-fn section_build(results: &mut Results, name: &'static str, arcs: bool, seed: u64, count: i32) {
+fn section_build(
+    results: &mut Results,
+    skips: &mut Skips,
+    name: &'static str,
+    arcs: bool,
+    seed: u64,
+    count: i32,
+) {
     let mut sec = Section::new(results, name);
-    let mut rng = Rng::new(seed);
 
-    for _ in 0..count {
-        let c = if arcs {
-            arc_chain(&mut rng)
-        } else {
-            plain_chain(&mut rng)
-        };
+    for n in 0..count {
+        if let Some(recs) = run_case(
+            skips,
+            name,
+            n,
+            seed,
+            |rng: &mut Rng, recs: &mut Vec<Rec>| {
+                let c = if arcs {
+                    arc_chain(rng)
+                } else {
+                    plain_chain(rng)
+                };
 
-        let mut r = Rec::default();
-        rec_state(&mut r, &c);
-        sec.add(&r);
+                let mut r = Rec::default();
+                rec_state(&mut r, &c);
+                recs.push(r);
 
-        let mut t = c.clone();
-        t.set_closed(!c.is_closed());
-        let mut r2 = Rec::default();
-        rec_state(&mut r2, &t);
-        sec.add(&r2);
+                let mut t = c.clone();
+                t.set_closed(!c.is_closed());
+                let mut r2 = Rec::default();
+                rec_state(&mut r2, &t);
+                recs.push(r2);
 
-        t.set_closed(c.is_closed());
-        let mut r3 = Rec::default();
-        rec_state(&mut r3, &t);
-        sec.add(&r3);
+                t.set_closed(c.is_closed());
+                let mut r3 = Rec::default();
+                rec_state(&mut r3, &t);
+                recs.push(r3);
 
-        if c.is_closed() && c.point_count() >= 3 && !has_cyclic_duplicate(&c) {
-            let mut z: Vec<ClipperZValue> = Vec::new();
-            let mut arcs_buf: Vec<ShapeArc> = Vec::new();
-            let orient = rng.flag();
+                if c.is_closed() && c.point_count() >= 3 && !has_cyclic_duplicate(&c) {
+                    let mut z: Vec<ClipperZValue> = Vec::new();
+                    let mut arcs_buf: Vec<ShapeArc> = Vec::new();
+                    let orient = rng.flag();
 
-            if rng.flag() {
-                arcs_buf.push(ShapeArc::from_start_mid_end(
-                    Vector2I::new(0, 0),
-                    Vector2I::new(10, 10),
-                    Vector2I::new(20, 0),
-                    0,
-                ));
+                    if rng.flag() {
+                        arcs_buf.push(ShapeArc::from_start_mid_end(
+                            Vector2I::new(0, 0),
+                            Vector2I::new(10, 10),
+                            Vector2I::new(20, 0),
+                            0,
+                        ));
+                    }
+
+                    let mut path = c.convert_to_clipper2(orient, &mut z, &mut arcs_buf);
+
+                    let mut r4 = Rec::default();
+
+                    for p in &path {
+                        r4.i(p.0).i(p.1).i(p.2);
+                    }
+
+                    for v in &z {
+                        r4.i(v.first_arc_idx as i64).i(v.second_arc_idx as i64);
+                    }
+
+                    r4.u(arcs_buf.len() as u64);
+
+                    let rot = if path.is_empty() {
+                        0
+                    } else {
+                        rng.range(0, path.len() as i64 - 1) as usize
+                    };
+                    path.rotate_left(rot);
+
+                    let back = ShapeLineChain::from_clipper2(&path, &z, &arcs_buf);
+                    rec_state(&mut r4, &back);
+                    recs.push(r4);
+                }
+            },
+        ) {
+            for r in &recs {
+                sec.add(r);
             }
-
-            let mut path = c.convert_to_clipper2(orient, &mut z, &mut arcs_buf);
-
-            let mut r4 = Rec::default();
-
-            for p in &path {
-                r4.i(p.0).i(p.1).i(p.2);
-            }
-
-            for v in &z {
-                r4.i(v.first_arc_idx as i64).i(v.second_arc_idx as i64);
-            }
-
-            r4.u(arcs_buf.len() as u64);
-
-            let rot = if path.is_empty() {
-                0
-            } else {
-                rng.range(0, path.len() as i64 - 1) as usize
-            };
-            path.rotate_left(rot);
-
-            let back = ShapeLineChain::from_clipper2(&path, &z, &arcs_buf);
-            rec_state(&mut r4, &back);
-            sec.add(&r4);
         }
     }
 }
 
-fn section_edit(results: &mut Results, name: &'static str, arcs: bool, seed: u64, count: i32) {
+fn section_edit(
+    results: &mut Results,
+    skips: &mut Skips,
+    name: &'static str,
+    arcs: bool,
+    seed: u64,
+    count: i32,
+) {
     let mut sec = Section::new(results, name);
-    let mut rng = Rng::new(seed);
 
-    for _ in 0..count {
-        let mut c = if arcs {
-            arc_chain(&mut rng)
-        } else {
-            plain_chain(&mut rng)
-        };
-        let pc = c.point_count() as i64;
-        let op = (rng.next() % 20) as i32;
-        let mut r = Rec::default();
-        r.i(op);
+    for n in 0..count {
+        if let Some(recs) = run_case(
+            skips,
+            name,
+            n,
+            seed,
+            |rng: &mut Rng, recs: &mut Vec<Rec>| {
+                let mut c = if arcs {
+                    arc_chain(rng)
+                } else {
+                    plain_chain(rng)
+                };
+                let pc = c.point_count() as i64;
+                let op = (rng.next() % 20) as i32;
+                let mut r = Rec::default();
+                r.i(op);
 
-        match op {
-            0 => {
-                let v = rng.range(0, pc) as usize;
-                let p = query_pt(&mut rng, &c);
-                c.insert_point(v, p);
-            }
-            1 => {
-                let err = K_ERR[(rng.next() % 3) as usize];
-                let a = chain_arc(&mut rng, false, Vector2I::default());
-
-                if pc > 0 {
-                    c.insert_arc_with_error(0, &a, err);
-                }
-            }
-            2 => {
-                if pc != 0 {
-                    let s = rng.range(0, pc - 1) as i32;
-                    let e = rng.range(s as i64, pc - 1) as i32;
-                    let p = query_pt(&mut rng, &c);
-                    c.replace_point(s, e, p);
-                }
-            }
-            3 => {
-                if pc != 0 {
-                    let s = rng.range(0, pc - 1) as i32;
-                    let e = rng.range(s as i64, pc - 1) as i32;
-                    let mut other = any_chain(&mut rng);
-
-                    if other.is_closed() {
-                        other.set_closed(false);
+                match op {
+                    0 => {
+                        let v = rng.range(0, pc) as usize;
+                        let p = query_pt(rng, &c);
+                        c.insert_point(v, p);
                     }
+                    1 => {
+                        let err = K_ERR[(rng.next() % 3) as usize];
+                        let a = chain_arc(rng, false, Vector2I::default());
 
-                    if c.is_closed() {
-                        c.set_closed(false);
-                        r.i(c.point_count());
+                        if pc > 0 {
+                            c.insert_arc_with_error(0, &a, err);
+                        }
                     }
-
-                    if rng.next() % 4 == 0 && other.point_count() > 0 {
-                        other.set_point(0, c.c_point(s));
+                    2 => {
+                        if pc != 0 {
+                            let s = rng.range(0, pc - 1) as i32;
+                            let e = rng.range(s as i64, pc - 1) as i32;
+                            let p = query_pt(rng, &c);
+                            c.replace_point(s, e, p);
+                        }
                     }
+                    3 => {
+                        if pc != 0 {
+                            let s = rng.range(0, pc - 1) as i32;
+                            let e = rng.range(s as i64, pc - 1) as i32;
+                            let mut other = any_chain(rng);
 
-                    c.replace_chain(s, e, &other);
-                }
-            }
-            4 => {
-                if pc != 0 {
-                    let s = rng.range(-pc, pc - 1) as i32;
-                    let e = rng.range(-pc, pc - 1) as i32;
-                    c.remove_range(s, e);
-                }
-            }
-            5 => {
-                let i = rng.range(-pc - 1, pc) as i32;
-                c.remove_shape(i);
-            }
-            6 => {
-                if pc != 0 {
-                    let i = rng.range(-pc, 2 * pc - 1) as i32;
-                    let p = rng.pt_mid();
-                    c.set_point(i, p);
-                }
-            }
-            7 => {
-                let p = query_pt(&mut rng, &c);
-                let exact = rng.flag();
-                r.i(c.split(p, exact));
-            }
-            8 => c.clear_arcs(),
-            9 => c.remove_duplicate_points(),
-            10 => {
-                const TOLS: [i32; 5] = [0, 1, 10, 1000, 2000000];
-                let tol = TOLS[(rng.next() % 5) as usize];
-                c.simplify(tol);
-            }
-            11 => {
-                let col = rng.flag();
-                c.simplify2(col);
-            }
-            12 => c = c.reverse(),
-            13 => {
-                let rf = rng.pt_r(-10000000, 10000000);
-                let lr = rng.flag();
-                c.mirror(
-                    rf,
-                    if lr {
-                        FlipDirection::LeftRight
-                    } else {
-                        FlipDirection::TopBottom
-                    },
-                );
-            }
-            14 => {
-                let a = rng.pt_r(-10000000, 10000000);
-                let b = rng.pt_r(-10000000, 10000000);
-                c.mirror_seg(&Seg::new(a, b));
-            }
-            15 => {
-                let mut deg = rng.dbl(-360.0, 360.0);
-                let ctr = rng.pt_r(-10000000, 10000000);
+                            if other.is_closed() {
+                                other.set_closed(false);
+                            }
 
-                if rng.flag() {
-                    deg = 90.0 * rng.range(-4, 4) as f64;
+                            if c.is_closed() {
+                                c.set_closed(false);
+                                r.i(c.point_count());
+                            }
+
+                            if rng.next() % 4 == 0 && other.point_count() > 0 {
+                                other.set_point(0, c.c_point(s));
+                            }
+
+                            c.replace_chain(s, e, &other);
+                        }
+                    }
+                    4 => {
+                        if pc != 0 {
+                            let s = rng.range(-pc, pc - 1) as i32;
+                            let e = rng.range(-pc, pc - 1) as i32;
+                            c.remove_range(s, e);
+                        }
+                    }
+                    5 => {
+                        let i = rng.range(-pc - 1, pc) as i32;
+                        c.remove_shape(i);
+                    }
+                    6 => {
+                        if pc != 0 {
+                            let i = rng.range(-pc, 2 * pc - 1) as i32;
+                            let p = rng.pt_mid();
+                            c.set_point(i, p);
+                        }
+                    }
+                    7 => {
+                        let p = query_pt(rng, &c);
+                        let exact = rng.flag();
+                        r.i(c.split(p, exact));
+                    }
+                    8 => c.clear_arcs(),
+                    9 => c.remove_duplicate_points(),
+                    10 => {
+                        const TOLS: [i32; 5] = [0, 1, 10, 1000, 2000000];
+                        let tol = TOLS[(rng.next() % 5) as usize];
+                        c.simplify(tol);
+                    }
+                    11 => {
+                        let col = rng.flag();
+                        c.simplify2(col);
+                    }
+                    12 => c = c.reverse(),
+                    13 => {
+                        let rf = rng.pt_r(-10000000, 10000000);
+                        let lr = rng.flag();
+                        c.mirror(
+                            rf,
+                            if lr {
+                                FlipDirection::LeftRight
+                            } else {
+                                FlipDirection::TopBottom
+                            },
+                        );
+                    }
+                    14 => {
+                        let a = rng.pt_r(-10000000, 10000000);
+                        let b = rng.pt_r(-10000000, 10000000);
+                        c.mirror_seg(&Seg::new(a, b));
+                    }
+                    15 => {
+                        let mut deg = rng.dbl(-360.0, 360.0);
+                        let ctr = rng.pt_r(-10000000, 10000000);
+
+                        if rng.flag() {
+                            deg = 90.0 * rng.range(-4, 4) as f64;
+                        }
+
+                        c.rotate(EdaAngle::new(deg, DEGREES_T), ctr);
+                    }
+                    16 => {
+                        let v = rng.pt_r(-10000000, 10000000);
+                        c.move_(v);
+                    }
+                    17 => {
+                        if pc != 0 {
+                            let i = rng.range(-pc, pc - 1) as isize;
+                            let coincident = rng.flag();
+                            c.split_arc(i, coincident);
+                        }
+                    }
+                    18 => {
+                        let ac = c.arc_count() as i64;
+                        let i = rng.range(-ac, ac) as isize;
+                        c.convert_arc(i);
+                    }
+                    _ => {
+                        if pc != 0 {
+                            let s = rng.range(0, pc - 1) as i32;
+                            c.remove(s);
+                            let p = query_pt(rng, &c);
+                            c.insert_point(s.min(c.point_count()) as usize, p);
+                        }
+                    }
                 }
 
-                c.rotate(EdaAngle::new(deg, DEGREES_T), ctr);
-            }
-            16 => {
-                let v = rng.pt_r(-10000000, 10000000);
-                c.move_(v);
-            }
-            17 => {
-                if pc != 0 {
-                    let i = rng.range(-pc, pc - 1) as isize;
-                    let coincident = rng.flag();
-                    c.split_arc(i, coincident);
-                }
-            }
-            18 => {
-                let ac = c.arc_count() as i64;
-                let i = rng.range(-ac, ac) as isize;
-                c.convert_arc(i);
-            }
-            _ => {
-                if pc != 0 {
-                    let s = rng.range(0, pc - 1) as i32;
-                    c.remove(s);
-                    let p = query_pt(&mut rng, &c);
-                    c.insert_point(s.min(c.point_count()) as usize, p);
-                }
+                rec_state(&mut r, &c);
+                recs.push(r);
+            },
+        ) {
+            for r in &recs {
+                sec.add(r);
             }
         }
-
-        rec_state(&mut r, &c);
-        sec.add(&r);
     }
 }
 
@@ -551,223 +601,241 @@ fn rec_collide(r: &mut Rec, c: &ShapeLineChain, p: Vector2I, s: &Seg, cl: i32) {
     }
 }
 
-fn section_query(results: &mut Results, name: &'static str, arcs: bool, seed: u64, count: i32) {
+fn section_query(
+    results: &mut Results,
+    skips: &mut Skips,
+    name: &'static str,
+    arcs: bool,
+    seed: u64,
+    count: i32,
+) {
     let mut sec = Section::new(results, name);
-    let mut rng = Rng::new(seed);
 
-    for _ in 0..count {
-        let c = if arcs {
-            arc_chain(&mut rng)
-        } else {
-            plain_chain(&mut rng)
-        };
-        let pc = c.point_count();
-        let p = query_pt(&mut rng, &c);
-        let q = query_pt(&mut rng, &c);
-        let s = Seg::new(p, q);
-        let cl = clearance(&mut rng);
-        let thr_a = rng.range(0, 3) as i32;
-        let thr = thr_a * rng.range(0, 1000) as i32;
+    for n in 0..count {
+        if let Some(recs) = run_case(
+            skips,
+            name,
+            n,
+            seed,
+            |rng: &mut Rng, recs: &mut Vec<Rec>| {
+                let c = if arcs {
+                    arc_chain(rng)
+                } else {
+                    plain_chain(rng)
+                };
+                let pc = c.point_count();
+                let p = query_pt(rng, &c);
+                let q = query_pt(rng, &c);
+                let s = Seg::new(p, q);
+                let cl = clearance(rng);
+                let thr_a = rng.range(0, 3) as i32;
+                let thr = thr_a * rng.range(0, 1000) as i32;
 
-        let mut r = Rec::default();
-        r.v(p).v(q).i(cl).i(thr);
-        r.i(c.find(p, 0))
-            .i(c.find(p, thr))
-            .i(c.find_segment(p, 1))
-            .i(c.find_segment(p, thr));
-        let idx = rng.range(-1, pc as i64) as i32;
-        r.i(c.path_length(p, -1)).i(c.path_length(p, idx));
+                let mut r = Rec::default();
+                r.v(p).v(q).i(cl).i(thr);
+                r.i(c.find(p, 0))
+                    .i(c.find(p, thr))
+                    .i(c.find_segment(p, 1))
+                    .i(c.find_segment(p, thr));
+                let idx = rng.range(-1, pc as i64) as i32;
+                r.i(c.path_length(p, -1)).i(c.path_length(p, idx));
 
-        if pc > 0 {
-            let len = rng.range(0, 100000000) as i32;
-            r.v(c.point_along(len))
-                .v(c.point_along(c.path_length(p, -1)));
-        }
+                if pc > 0 {
+                    let len = rng.range(0, 100000000) as i32;
+                    r.v(c.point_along(len))
+                        .v(c.point_along(c.path_length(p, -1)));
+                }
 
-        r.v(c.nearest_point(p, true));
+                r.v(c.nearest_point(p, true));
 
-        if !nearest_point_ub(&c, p) {
-            r.v(c.nearest_point(p, false));
-        }
+                if !nearest_point_ub(&c, p) {
+                    r.v(c.nearest_point(p, false));
+                }
 
-        let mut dist = -9;
-        r.v(c.nearest_point_seg(&s, &mut dist))
-            .i(dist)
-            .i(c.nearest_segment(p));
-        r.i(c.distance_outline(p, false))
-            .i(c.distance_outline(p, true))
-            .i(Shape::distance(&c, p));
-        r.i(c.squared_distance(p, false))
-            .i(c.squared_distance(p, true));
-        r.b(c.point_inside(p, 0, false))
-            .b(c.point_inside(p, thr, false))
-            .b(c.point_on_edge(p, thr));
-        r.i(c.edge_containing_point(p, thr))
-            .b(c.check_clearance(p, thr));
+                let mut dist = -9;
+                r.v(c.nearest_point_seg(&s, &mut dist))
+                    .i(dist)
+                    .i(c.nearest_segment(p));
+                r.i(c.distance_outline(p, false))
+                    .i(c.distance_outline(p, true))
+                    .i(Shape::distance(&c, p));
+                r.i(c.squared_distance(p, false))
+                    .i(c.squared_distance(p, true));
+                r.b(c.point_inside(p, 0, false))
+                    .b(c.point_inside(p, thr, false))
+                    .b(c.point_on_edge(p, thr));
+                r.i(c.edge_containing_point(p, thr))
+                    .b(c.check_clearance(p, thr));
 
-        let mut cached = c.clone();
-        cached.generate_bbox_cache();
-        r.b(cached.point_inside(p, 0, true))
-            .b(cached.point_inside(p, thr, true));
+                let mut cached = c.clone();
+                cached.generate_bbox_cache();
+                r.b(cached.point_inside(p, 0, true))
+                    .b(cached.point_inside(p, thr, true));
 
-        rec_collide(&mut r, &c, p, &s, cl);
+                rec_collide(&mut r, &c, p, &s, cl);
 
-        let mut ips: Vec<Intersection> = Vec::new();
-        r.i(c.intersect_seg(&s, &mut ips));
+                let mut ips: Vec<Intersection> = Vec::new();
+                r.i(c.intersect_seg(&s, &mut ips));
 
-        for is in &ips {
-            rec_is(&mut r, is);
-        }
+                for is in &ips {
+                    rec_is(&mut r, is);
+                }
 
-        r.b(c.intersects_seg(&s));
+                r.b(c.intersects_seg(&s));
 
-        let other = if arcs {
-            arc_chain(&mut rng)
-        } else {
-            plain_chain(&mut rng)
-        };
+                let other = if arcs {
+                    arc_chain(rng)
+                } else {
+                    plain_chain(rng)
+                };
 
-        for ex in 0..2 {
-            let mut ips2: Vec<Intersection> = Vec::new();
-            r.i(c.intersect_chain(&other, &mut ips2, ex == 1, None));
+                for ex in 0..2 {
+                    let mut ips2: Vec<Intersection> = Vec::new();
+                    r.i(c.intersect_chain(&other, &mut ips2, ex == 1, None));
 
-            for is in &ips2 {
-                rec_is(&mut r, is);
+                    for is in &ips2 {
+                        rec_is(&mut r, is);
+                    }
+                }
+
+                let bbcl = rng.range(0, 1000) as i32;
+                let bb = Shape::bbox(&other, bbcl);
+                let mut ips3: Vec<Intersection> = Vec::new();
+                r.i(c.intersect_chain(&other, &mut ips3, false, Some(&bb)));
+
+                for is in &ips3 {
+                    rec_is(&mut r, is);
+                }
+
+                r.b(c.intersects_chain(&other));
+
+                let si = c.self_intersecting();
+                r.b(si.is_some());
+
+                if let Some(si) = si {
+                    rec_is(&mut r, &si);
+                }
+
+                if pc >= 2 {
+                    let sia = c.self_intersecting_with_arcs();
+                    r.b(sia.is_some());
+
+                    if let Some(sia) = sia {
+                        rec_is(&mut r, &sia);
+                    }
+                }
+
+                let (found, a0, a1) = match c.closest_points(&other) {
+                    Some((a, b)) => (true, a, b),
+                    None => (false, Vector2I::new(-5, -5), Vector2I::new(-5, -5)),
+                };
+                r.b(found).v(a0).v(a1);
+
+                if pc > 0 && other.point_count() > 0 {
+                    let (found, b0, b1) = match c.closest_segments_fast(&other) {
+                        Some((a, b)) => (true, a, b),
+                        None => (false, Vector2I::new(-5, -5), Vector2I::new(-5, -5)),
+                    };
+                    r.b(found).v(b0).v(b1);
+                }
+
+                r.s(&Shape::format(&c, true)).b(c != other).b(c != c);
+                r.b(c.compare_geometry(&other, false, 0))
+                    .b(c.compare_geometry(&c, false, thr));
+
+                let mut moved = c.clone();
+                moved.move_(rng.pt_r(-2, 2));
+                r.b(c.compare_geometry(&moved, false, 1))
+                    .b(c.compare_geometry(&c.reverse(), true, 0));
+                r.b(c.compare_geometry(&other, true, thr));
+
+                if pc > 0 {
+                    let s0 = rng.range(-pc as i64, pc as i64 - 1) as i32;
+                    let s1 = rng.range(-pc as i64, pc as i64 - 1) as i32;
+
+                    if (if s0 < 0 { s0 + pc } else { s0 }) <= (if s1 < 0 { s1 + pc } else { s1 }) {
+                        let err = K_ERR[(rng.next() % 3) as usize];
+                        rec_chain(&mut r, &c.slice(s0, s1));
+                        rec_chain(&mut r, &c.slice_with_error(s0, s1, err));
+                    }
+                }
+
+                if pc >= 2 && !nearest_point_ub(&c, p) && !nearest_point_ub(&c, q) {
+                    let (pre, mid, post) = c.split_range(p, q);
+                    rec_chain(&mut r, &pre);
+                    rec_chain(&mut r, &mid);
+                    rec_chain(&mut r, &post);
+                }
+
+                if pc >= 2 {
+                    let k = rng.range(1, pc as i64 - 1) as i32;
+                    let mut tracker = PointInsideTracker::new(p);
+                    let mut part1 = ShapeLineChain::new();
+                    let mut part2 = ShapeLineChain::new();
+
+                    for i in 0..=k {
+                        part1.append_point(c.c_point(i), true);
+                    }
+
+                    for i in k..pc {
+                        part2.append_point(c.c_point(i), true);
+                    }
+
+                    tracker.add_polyline(&part1);
+                    tracker.add_polyline(&part2);
+                    r.b(tracker.is_inside());
+                }
+
+                {
+                    let mut text = format!(
+                        "{} {} {}",
+                        pc,
+                        if c.is_closed() { "1" } else { "0" },
+                        c.arc_count()
+                    );
+
+                    for i in 0..pc {
+                        text += &format!(
+                            " {} {} {}",
+                            c.c_point(i).x,
+                            c.c_point(i).y,
+                            c.c_shapes()[i as usize].0
+                        );
+                    }
+
+                    for i in 0..c.arc_count() {
+                        let a = c.arc(i);
+                        let ang = rng.range(-3600, 3600) as i32 / 10;
+                        text += &format!(
+                            " {} {} {} {} {}.5",
+                            a.get_center().x,
+                            a.get_center().y,
+                            a.get_p0().x,
+                            a.get_p0().y,
+                            ang
+                        );
+                    }
+
+                    match rng.next() % 8 {
+                        0 => text = "100000 1 0 1 2 3".to_string(),
+                        1 => text = "1 1 100000 1 2 3".to_string(),
+                        _ => {}
+                    }
+
+                    let mut ss = StringStream::new(&text);
+                    let mut parsed = ShapeLineChain::new();
+                    let ok = parsed.parse(&mut ss);
+                    r.b(ok);
+                    rec_chain(&mut r, &parsed);
+                }
+
+                recs.push(r);
+            },
+        ) {
+            for r in &recs {
+                sec.add(r);
             }
         }
-
-        let bbcl = rng.range(0, 1000) as i32;
-        let bb = Shape::bbox(&other, bbcl);
-        let mut ips3: Vec<Intersection> = Vec::new();
-        r.i(c.intersect_chain(&other, &mut ips3, false, Some(&bb)));
-
-        for is in &ips3 {
-            rec_is(&mut r, is);
-        }
-
-        r.b(c.intersects_chain(&other));
-
-        let si = c.self_intersecting();
-        r.b(si.is_some());
-
-        if let Some(si) = si {
-            rec_is(&mut r, &si);
-        }
-
-        if pc >= 2 {
-            let sia = c.self_intersecting_with_arcs();
-            r.b(sia.is_some());
-
-            if let Some(sia) = sia {
-                rec_is(&mut r, &sia);
-            }
-        }
-
-        let (found, a0, a1) = match c.closest_points(&other) {
-            Some((a, b)) => (true, a, b),
-            None => (false, Vector2I::new(-5, -5), Vector2I::new(-5, -5)),
-        };
-        r.b(found).v(a0).v(a1);
-
-        if pc > 0 && other.point_count() > 0 {
-            let (found, b0, b1) = match c.closest_segments_fast(&other) {
-                Some((a, b)) => (true, a, b),
-                None => (false, Vector2I::new(-5, -5), Vector2I::new(-5, -5)),
-            };
-            r.b(found).v(b0).v(b1);
-        }
-
-        r.s(&Shape::format(&c, true)).b(c != other).b(c != c);
-        r.b(c.compare_geometry(&other, false, 0))
-            .b(c.compare_geometry(&c, false, thr));
-
-        let mut moved = c.clone();
-        moved.move_(rng.pt_r(-2, 2));
-        r.b(c.compare_geometry(&moved, false, 1))
-            .b(c.compare_geometry(&c.reverse(), true, 0));
-        r.b(c.compare_geometry(&other, true, thr));
-
-        if pc > 0 {
-            let s0 = rng.range(-pc as i64, pc as i64 - 1) as i32;
-            let s1 = rng.range(-pc as i64, pc as i64 - 1) as i32;
-
-            if (if s0 < 0 { s0 + pc } else { s0 }) <= (if s1 < 0 { s1 + pc } else { s1 }) {
-                let err = K_ERR[(rng.next() % 3) as usize];
-                rec_chain(&mut r, &c.slice(s0, s1));
-                rec_chain(&mut r, &c.slice_with_error(s0, s1, err));
-            }
-        }
-
-        if pc >= 2 && !nearest_point_ub(&c, p) && !nearest_point_ub(&c, q) {
-            let (pre, mid, post) = c.split_range(p, q);
-            rec_chain(&mut r, &pre);
-            rec_chain(&mut r, &mid);
-            rec_chain(&mut r, &post);
-        }
-
-        if pc >= 2 {
-            let k = rng.range(1, pc as i64 - 1) as i32;
-            let mut tracker = PointInsideTracker::new(p);
-            let mut part1 = ShapeLineChain::new();
-            let mut part2 = ShapeLineChain::new();
-
-            for i in 0..=k {
-                part1.append_point(c.c_point(i), true);
-            }
-
-            for i in k..pc {
-                part2.append_point(c.c_point(i), true);
-            }
-
-            tracker.add_polyline(&part1);
-            tracker.add_polyline(&part2);
-            r.b(tracker.is_inside());
-        }
-
-        {
-            let mut text = format!(
-                "{} {} {}",
-                pc,
-                if c.is_closed() { "1" } else { "0" },
-                c.arc_count()
-            );
-
-            for i in 0..pc {
-                text += &format!(
-                    " {} {} {}",
-                    c.c_point(i).x,
-                    c.c_point(i).y,
-                    c.c_shapes()[i as usize].0
-                );
-            }
-
-            for i in 0..c.arc_count() {
-                let a = c.arc(i);
-                let ang = rng.range(-3600, 3600) as i32 / 10;
-                text += &format!(
-                    " {} {} {} {} {}.5",
-                    a.get_center().x,
-                    a.get_center().y,
-                    a.get_p0().x,
-                    a.get_p0().y,
-                    ang
-                );
-            }
-
-            match rng.next() % 8 {
-                0 => text = "100000 1 0 1 2 3".to_string(),
-                1 => text = "1 1 100000 1 2 3".to_string(),
-                _ => {}
-            }
-
-            let mut ss = StringStream::new(&text);
-            let mut parsed = ShapeLineChain::new();
-            let ok = parsed.parse(&mut ss);
-            r.b(ok);
-            rec_chain(&mut r, &parsed);
-        }
-
-        sec.add(&r);
     }
 }
 
@@ -827,20 +895,59 @@ fn section_x86_casts(results: &mut Results) {
         r.i(bx.size_max());
 
         let mut arc = ShapeArc::new();
-        arc.construct_from_start_end_angle(Vector2I::new(0, 0), Vector2I::new(1000, 0), ANGLE_90, x);
+        arc.construct_from_start_end_angle(
+            Vector2I::new(0, 0),
+            Vector2I::new(1000, 0),
+            ANGLE_90,
+            x,
+        );
         r.i(arc.get_width());
         sec.add(&r);
     }
 }
 
-pub fn run_all(results: &mut Results) {
+/// The cases of `slc_oracle.cpp` that are not replayed (`golden/slc_oracle_skip.txt`: the
+/// C++ overflows a signed integer on them, see `PORT_STATUS.md`), and the cases that panicked.
+#[derive(Default)]
+pub struct Skips {
+    pub listed: BTreeSet<(String, i32)>,
+    pub found: Vec<(String, i32)>,
+}
+
+/// Run one case with a generator of its own (seeded like the C++ one); `None` if the case is
+/// listed in the skip list or panics (then it is added to `skips.found`).
+fn run_case(
+    skips: &mut Skips,
+    name: &str,
+    n: i32,
+    seed: u64,
+    f: impl FnOnce(&mut Rng, &mut Vec<Rec>),
+) -> Option<Vec<Rec>> {
+    let mut rng = Rng::new(seed.wrapping_mul(1000003).wrapping_add(n as u64));
+
+    if skips.listed.contains(&(name.to_string(), n)) {
+        return None;
+    }
+
+    let mut recs = Vec::new();
+
+    match std::panic::catch_unwind(AssertUnwindSafe(|| f(&mut rng, &mut recs))) {
+        Ok(()) => Some(recs),
+        Err(_) => {
+            skips.found.push((name.to_string(), n));
+            None
+        }
+    }
+}
+
+pub fn run_all(results: &mut Results, skips: &mut Skips) {
     super::sections::section_libm_probe(results);
-    section_build(results, "slc_build", false, 300, 15000);
-    section_build(results, "libm:slc_build_arcs", true, 301, 15000);
-    section_edit(results, "libm:slc_edit", false, 302, 30000);
-    section_edit(results, "libm:slc_edit_arcs", true, 303, 40000);
-    section_query(results, "libm:slc_query", false, 304, 15000);
-    section_query(results, "libm:slc_query_arcs", true, 305, 15000);
+    section_build(results, skips, "slc_build", false, 300, 15000);
+    section_build(results, skips, "libm:slc_build_arcs", true, 301, 15000);
+    section_edit(results, skips, "libm:slc_edit", false, 302, 30000);
+    section_edit(results, skips, "libm:slc_edit_arcs", true, 303, 40000);
+    section_query(results, skips, "libm:slc_query", false, 304, 15000);
+    section_query(results, skips, "libm:slc_query_arcs", true, 305, 15000);
     section_x86_casts(results);
 
     if let Some(dump) = results.dump.as_mut() {

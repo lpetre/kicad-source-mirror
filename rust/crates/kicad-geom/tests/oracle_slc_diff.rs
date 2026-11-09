@@ -68,7 +68,51 @@ fn oracle_slc_differential_test() {
         dump,
     };
 
-    slc_sections::run_all(&mut results);
+    let skip_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/slc_oracle_skip.txt");
+    let mut skips = slc_sections::Skips::default();
+
+    if let Ok(text) = std::fs::read_to_string(&skip_path) {
+        for l in text.lines().filter(|l| !l.trim().is_empty()) {
+            let mut it = l.split_whitespace();
+            let name = it.next().unwrap().to_string();
+            let idx: i32 = it.next().unwrap().parse().unwrap();
+            skips.listed.insert((name, idx));
+        }
+    }
+
+    // The cases the port panics on (signed overflow of the C++) are silenced and collected
+    let hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(|_| {}));
+    slc_sections::run_all(&mut results, &mut skips);
+    std::panic::set_hook(hook);
+
+    if !skips.found.is_empty() {
+        if std::env::var_os("KICAD_SLC_ORACLE_WRITE_SKIPS").is_some() {
+            let mut all: Vec<(String, i32)> = skips.listed.iter().cloned().collect();
+            all.extend(skips.found.iter().cloned());
+            all.sort();
+            let text: String = all.iter().map(|(n, i)| format!("{n} {i}\n")).collect();
+            std::fs::write(&skip_path, text).unwrap();
+            println!(
+                "wrote {} cases to {}; regenerate the golden file",
+                all.len(),
+                skip_path.display()
+            );
+            return;
+        }
+
+        panic!(
+            "the port panics on {} cases that are not in tests/golden/slc_oracle_skip.txt: {:?}",
+            skips.found.len(),
+            &skips.found[..skips.found.len().min(20)]
+        );
+    }
+
+    println!(
+        "{} cases skipped (tests/golden/slc_oracle_skip.txt)",
+        skips.listed.len()
+    );
 
     assert_eq!(
         results

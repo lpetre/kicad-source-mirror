@@ -86,7 +86,16 @@ fn i(x: u32, y: u32, z: u32) -> u32 {
 
 /// `FF/GG/HH/II( a, b, c, d, m, s, t )`: `a += fn( b, c, d ) + m + t; a = b + ROTLEFT( a, s );`
 #[inline]
-fn step(func: fn(u32, u32, u32) -> u32, a: &mut u32, b: u32, c: u32, d: u32, m: u32, s: u32, t: u32) {
+fn step(
+    func: fn(u32, u32, u32) -> u32,
+    a: &mut u32,
+    b: u32,
+    c: u32,
+    d: u32,
+    m: u32,
+    s: u32,
+    t: u32,
+) {
     *a = a.wrapping_add(func(b, c, d).wrapping_add(m).wrapping_add(t));
     *a = b.wrapping_add(a.rotate_left(s));
 }
