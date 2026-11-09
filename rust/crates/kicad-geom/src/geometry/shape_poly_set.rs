@@ -60,7 +60,9 @@ use crate::geometry::shape_arc::ShapeArc;
 use crate::geometry::shape_line_chain::{
     ClipperPoint64, ClipperZValue, ShapeLineChain, StringStream,
 };
+use crate::geometry::polygon_triangulation::{PolygonTriangulation, TRIANGULATE_SIMPLIFICATION_LEVEL};
 use crate::geometry::shape_poly_set_fracture::{fracture_single_cache_friendly, split_at_bridges};
+use crate::geometry::shape_poly_tri_index::{TriangulationIndex, any_triangle_hit};
 use crate::hash_128::Hash128;
 use crate::kicore::mirror::FlipDirection;
 use crate::math::box2::{Box2D, Box2I};
@@ -4110,6 +4112,8 @@ impl Shape for ShapePolySet {
     /// Port of `SHAPE_POLY_SET::Move()`: moves the contours and the triangulation and updates
     /// the hash.
     fn move_(&mut self, a_vector: Vector2I) {
+        self.tri_index = None;
+
         for poly in &mut self.polys {
             for path in poly {
                 path.move_(a_vector);
