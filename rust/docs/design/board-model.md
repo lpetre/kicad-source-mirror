@@ -7,21 +7,32 @@ settings, CLI, wasm, external clients). The complete type definitions are in
 the rules. C++ reference: this tree, board file format `SEXPR_BOARD_FILE_VERSION 20261031`.
 Read `rust/PORTING.md` first; nothing here overrides it.
 
+Revision 2 (senior review, approved with changes). What changed against revision 1, so that
+nobody works from memory of the first draft: every item knows its own handle
+(`BoardItemBase::id`, section 3); containers are **created, filled, then attached** (the parser
+no longer builds detached footprint trees, 8.1); the `EDA_TEXT` / `EDA_SHAPE` mixins have their
+own traits (6.2a); pointer-order replacements are spelled out (3.1); `BoardCommit`, parking,
+`with_item_taken`, `SideTable`, `OnceCache` and detached footprint trees are **deferred**
+(section 17) and the change journal is off by default; the owner of board + connectivity + DRC
+engine is the crate `kicad-session`; M0 is split into a reviewed kernel and parallel type
+packages (section 16); the orchestrator's foundation decisions are recorded in section 17.
+
 ## 0. The design on one screen
 
 | Topic | Decision |
 |---|---|
 | Storage | Every board item lives in a **board-level typed arena** `Arena<T>` (generational slot vector), one arena per concrete Rust item type, declared by one table (`board_items!`). Footprint children live in the same arenas as their board-level siblings. |
 | Order | Arena slot order is meaningless. The C++ containers (`m_tracks`, `m_drawings`, `FOOTPRINT::m_pads`, ...) are **order lists of handles** (`VecDeque<TrackId>` ...) that reproduce C++ insertion order exactly (`push_back` / `push_front`). |
-| Identity | `Kiid` (persistent: file, reports, JS across save/load) and a **`Copy` handle** `Id<T>` / `ItemId` (8 bytes, O(1), stays valid across all edits of other items, R-tree payload, cache key, wasm `number`). |
+| Identity | `Kiid` (persistent: file, reports, JS across save/load) and a **`Copy` handle** `Id<T>` / `ItemId` (8 bytes, O(1), stays valid across all edits of other items, R-tree payload, cache key, wasm `number`). Every stored item carries its own handle in `BoardItemBase::id` (the Rust `this`). |
 | Parent / child | `ParentRef` value in every item (`None` / `Board` / `Item(ItemId)`); child order lists in `Footprint`, `PcbTable`; group membership by handle on both sides. No `Rc`, no `RefCell`, no lifetimes in item types. |
+| Create / attach | Like C++ `new X( parent )` then `parent->Add( x )`: leaf items are local values added with `add_*`; containers (footprint, table) are **created** in the arena (resolvable through `ctx`, not yet listed or UUID-indexed), filled, then **attached**. |
 | Polymorphism | Plain structs with inherent methods (one module per C++ file); `trait BoardItem` / `BoardConnectedItem` / `BoardItemMut` carry the C++ virtuals with base-class bodies as defaults; `AnyItem<'a>` enum for `switch( Type() )`; `ItemRef<'a>` = context + handle + `AnyItem`, the Rust spelling of a `BOARD_ITEM*` parameter. |
 | Context | Anything that C++ reaches through `m_parent` / `GetBoard()` / `m_DRCEngine` / `GetConnectivity()` comes from an explicit `&BoardCtx` (board + optional rule resolver + optional connectivity). |
 | Frames | Footprint children are stored in the **library frame**. Board-frame values exist only behind accessors that take `&BoardCtx` (read) or `&MutEnv` (write); frame-dependent fields are `pub(crate)` and named `lib_*`. |
-| Mutation | Only through `Board` methods: `add_*`, `remove`, `modify_*` (leaf mutators get a `MutEnv` snapshot), `footprint_*` cascades, derived-state writers (fills, zone-layer overrides) that do not invalidate, `BoardCommit` (parking, revert keeps handles). A pull-based **change journal** replaces `BOARD_LISTENER`. |
-| Caches | Per-item derived data stays in the item (`OnceCache` / `KeyedCache`, `Clone` to empty). Everything spanning items (connectivity, R-trees, DRC pair caches) lives in the consumer crate, keyed by `ItemId`. |
+| Mutation | Only through `Board` methods: `add_*`, `remove`, `modify_*` (leaf mutators get a `MutEnv` snapshot), `footprint_*` cascades, derived-state writers (fills, zone-layer overrides) that do not invalidate. Consumers revalidate against `board.time_stamp()` and rebuild; an optional pull-based change journal (off by default) replaces `BOARD_LISTENER`. Undo / `BoardCommit` is deferred (section 17). |
+| Caches | Per-item derived data stays in the item (`KeyedCache` / `CacheCell`, `Clone` to empty). Everything spanning items (connectivity, R-trees, DRC pair caches) lives in the consumer crate, keyed by `ItemId`. |
 | Upward calls | `RuleResolver` and `ConnectivityQuery` traits defined in `kicad-pcb`, implemented in `kicad-drc` / `kicad-connectivity`, passed in through `BoardCtx`. |
-| Above the model | A `Design { board, connectivity, drc }` owner in the CLI / wasm / client crates holds the peers side by side; none borrows another. |
+| Above the model | `kicad_session::Session { board, connectivity, drc }` (new small crate used by `kicad-cli` and `kicad-wasm`, also home of the `BOARD_LOADER` glue) holds the peers side by side; none borrows another. |
 
 Why this design (scored against two alternatives, nested ownership with borrowed views and a
 mirrored `dyn` class hierarchy): handles that survive edits are what connectivity, R-trees, the
@@ -74,23 +85,11 @@ board_items! {
     Track       TrackId        tracks       Track;            // PCB_TRACK, PCB_ARC, PCB_VIA (enum)
     Zone        ZoneId         zones        Zone;             // ZONE
     Shape       ShapeId        shapes       PcbShape;         // PCB_SHAPE
-    Text        TextId         texts        PcbText;          // PCB_TEXT
-    Field       FieldId        fields       PcbField;         // PCB_FIELD
-    Textbox     TextboxId      textboxes    PcbTextbox;       // PCB_TEXTBOX
     Table       TableId        tables       PcbTable;         // PCB_TABLE, PCB_DRILL_CHART, PCB_STACKUP_TABLE
-    Tablecell   TablecellId    tablecells   PcbTablecell;     // PCB_TABLECELL
-    Dimension   DimensionId    dimensions   PcbDimension;     // PCB_DIM_ALIGNED/ORTHOGONAL/RADIAL/LEADER/CENTER
-    Barcode     BarcodeId      barcodes     PcbBarcode;       // PCB_BARCODE
-    Image       ImageId        images       PcbReferenceImage;// PCB_REFERENCE_IMAGE
-    Target      TargetId       targets      PcbTarget;        // PCB_TARGET
-    Point       PointId        points       PcbPoint;         // PCB_POINT
-    Group       GroupId        groups       PcbGroup;         // PCB_GROUP
-    Generator   GeneratorId    generators   PcbGenerator;     // PCB_GENERATOR + subclasses
-    Marker      MarkerId       markers      PcbMarker;        // PCB_MARKER
-    Constraint  ConstraintId   constraints  PcbConstraint;    // PCB_CONSTRAINT
-    Body3d      Body3dId       bodies       Pcb3dBody;        // PCB_3D_BODY
-    GridItem    GridItemId     grid_items   PcbGridItem;      // PCB_GRID_ITEM
-    DrillMap    DrillMapId     drill_maps   PcbDrillMap;      // PCB_DRILL_MAP
+    Dimension   DimensionId    dimensions   PcbDimension;     // the five PCB_DIM_* classes
+    // ... 22 rows in all: also Text, Field, Textbox, Tablecell, Barcode, Image, Target, Point,
+    // Group, Generator, Marker, Constraint, Body3d, GridItem, DrillMap (the full list is
+    // `ItemKind` and the arena fields of `Board` in board-model-types.md sections 0 and 14).
 }
 ```
 
@@ -109,13 +108,18 @@ typed-id conversions, the arena fields of `Board`, `Index<XxxId> for Board`, `An
 * Inline (non-arena) sub-items, exactly where C++ does not register them with the board: pad
   custom-shape primitives (`Padstack` copper props), the barcode's text, marker path shapes,
   generator template items. They carry `ParentRef::Item(owner)` and no handle.
-* Detached subtrees (commit before-images, clipboard, a footprint loaded from a library) are
-  `OwnedItem` values; a footprint subtree is `OwnedItem::Footprint(Box<FootprintTree>)` (the
-  footprint plus its children by value, group members by `Kiid`). `Board::add` /
-  `Board::footprint_take` convert between the two forms and remap handles (port of the
-  `ptrMap` in the C++ `FOOTPRINT` copy constructor).
-* A footprint-library file (`.kicad_mod`) is parsed into a `Board` with
-  `board_use == BoardUse::FpHolder` holding one footprint, as C++ does.
+* Leaf items outside a board (a value being built by the parser, a dummy copy) are plain
+  struct values, polymorphically `OwnedItem`. **A footprint or table never exists outside a
+  board**: its children need the arena to resolve their parent, so containers are created in
+  the arena first (8.1). `FootprintTree` / `TableTree` (a container with its children by value)
+  are data-only carriers for a future deep copy between boards; nothing in tier 1/2 builds one
+  (section 17, deferred).
+* A footprint-library file (`.kicad_mod`) is parsed into its own `Board` with
+  `board_use == BoardUse::FpHolder` holding one attached footprint (what the C++ footprint
+  editor and `FootprintLoad` callers end up with). Known difference to record when PCBIO-14
+  lands: the C++ library parser runs with a null board, so children take the `GetBoard() ==
+  nullptr` defaults while the footprint is parsed; the holder board is a default-constructed
+  board, and each such default (copper layer count, max error, flip table) must be shown equal.
 
 ## 3. Identity
 
@@ -133,17 +137,46 @@ container becomes an `ItemId` (or typed id); a `BOARD_ITEM*` parameter becomes `
   other items never invalidate it. A stale handle resolves to `None` (generation mismatch), never
   to another item. `board[id]` panics on a stale handle and is only for handles obtained from the
   board during the current borrow; `board.get(id)` is for handles that crossed a boundary.
+* **Every stored item knows its own handle**: `BoardItemBase::id: Option<ItemId>`, written only
+  by `Board` (on insertion, and re-stamped after every `modify_*`), `None` for a value that is
+  not in an arena. This is the Rust `this`: `PAD::FlashLayer` passing `this` to
+  `IsConnectedOnLayer`, the net-tie cache keyed by item pointer and `a == b` on pointers all
+  need it from inside a `&self` method. Consequences:
+  * `#[derive(Clone)]` keeps `id` (so `Board::clone()` and the clone-edit-store idiom of 8.2
+    work). The C++ copy-constructor idiom (`PAD dummy( *pad )`: a *different* object with the
+    same UUID and parent) is `item.detached_copy()` = clone + `id = None`. Never use a bare
+    `clone()` for a dummy: connectivity would treat it as the original, where C++ finds no
+    entry for the copy's address.
+  * `ItemRef::id()` reads the base; an `ItemRef` over a detached copy has `id() == None`.
+  * `check_invariants()` verifies `base.id == Some(handle)` for every live item.
 * `ItemId::to_bits()` < 2^53 (exact JS `number`); `from_bits` validates the kind.
-* Ordering of `ItemId` is total and deterministic; it replaces every C++ pointer-order
-  tie-break (only reachable with duplicate UUIDs; record as a deviation where it occurs).
 * `NetCode(i32)` identifies nets (`NETINFO_ITEM` is not an arena item);
   `ItemId` has an `ItemKind::Net` form (index = code) so `ResolveItem` can return a net.
-* A removed item that an open `BoardCommit` may restore is **parked**: invisible to `get` and
-  iteration, restorable with the same handle.
 * Generations are `u16`; a slot whose generation is exhausted is retired, never reused.
 * New UUIDs come from `board.kiid_generator` (`kicad_core::KiidGenerator`, deterministic by
   default; the CLI and wasm hosts reseed it from entropy before creating items in a board that
   will be saved). `add_*` never changes a UUID.
+
+### 3.1 Replacing pointer-address order (normative)
+
+C++ orders by heap address in more places than the last line of the save comparators:
+`std::set<T*>` / `std::map<T*, ..>` that are iterated, `std::sort` of pointers
+(`CONNECTIVITY_DATA::GetNetItems`, `GetConnectedTracks/Pads`), `CN_ITEM::m_connected`. Heap
+order is not reproducible; on a freshly loaded board it approximates *allocation order*, which
+is file order. The replacements, in order of precedence:
+
+1. Where an analysis document names the replacement (drc.md 4.12, connectivity-zones.md R-1 /
+   R-2: `CN_ITEM` list index, cluster creation index, board zone order), use that.
+2. Otherwise **`ItemId` order** (`Ord` = kind, generation, index; identical to the numeric
+   order of `to_bits()`). M1 guarantees that arena indices are handed out in insertion order
+   while no slot has been freed, and the parser adds items in file order, so on a loaded board
+   `ItemId` order within one kind *is* file order = C++ allocation order; across kinds it is
+   footprints, pads, tracks, zones, then graphics.
+3. Maps keyed by item that are only looked up (never iterated) may be `HashMap<ItemId, _>`.
+
+Every use of rule 1 or 2 is listed in the consumer crate's `PORT_STATUS.md` with what the
+oracle comparison showed. Sorting `ItemId`s inside a comparator that also has a `Kiid` step
+(the save comparators) only matters for duplicate UUIDs.
 
 ## 4. Parent / child and cross references
 
@@ -162,9 +195,10 @@ container becomes an `ItemId` (or typed id); a `BOARD_ITEM*` parameter becomes `
 
 Only `Board` methods write both sides of a relation (`add_to_group`, `remove_from_group`,
 `add_*`, `remove`). `Board::check_invariants()` (debug builds, every model test) verifies:
-order lists hold live ids and every live item is in exactly one list; `parent` agrees with the
-containing list; `group` agrees with `members`, the group graph is acyclic; the UUID index points
-at live items carrying that UUID; every `net` is known or `UNCONNECTED`; no slot is `Taken`.
+order lists hold live ids and every live item is in exactly one list (no created-but-unattached
+container is left over); `parent` agrees with the containing list; `base.id` is the item's
+handle; `group` agrees with `members`, the group graph is acyclic; the UUID index points at
+live items carrying that UUID; every `net` is known, `UNCONNECTED` or `ORPHANED`.
 
 ## 5. Coordinate frames (read this twice)
 
@@ -174,7 +208,7 @@ The C++ strategy is kept **per type**, so rounding happens at the same places:
 
 | type | stored | board-frame value |
 |---|---|---|
-| `Pad` | `lib_pos`, `lib_orientation`, padstack sizes / offsets / drill in lib frame | derived on read: `pad.position(ctx)`, `pad.size(ctx, layer)`, `pad.offset(ctx, layer)`, `pad.orientation(ctx)`, `pad.drill_size(ctx)` |
+| `Pad` | `lib_pos`, `lib_orientation`, padstack sizes / offsets / drill in lib frame; `padstack.orientation` (`PADSTACK::m_orientation`) is a **baked board-frame copy** kept by `set_orientation`, `set_fp_relative_orientation` and `on_footprint_transformed`, exactly as C++ | derived on read: `pad.position(ctx)`, `pad.size(ctx, layer)`, `pad.offset(ctx, layer)`, `pad.orientation(ctx)`, `pad.drill_size(ctx)` |
 | `PcbText`, `PcbField`, dimension text, barcode text | `EdaText::lib_pos`, attribute size / thickness, `lib_text_angle` in lib frame | derived: `text.text_pos(ctx)`, `text_size(ctx)`, `text_thickness(ctx)`, `text_angle(ctx)` |
 | `Zone` in a footprint | `lib_outline` | derived: `zone.board_outline(ctx)`; board zones: lib == board |
 | `PcbDimension`, `PcbBarcode` | lib frame | derived on read |
@@ -224,6 +258,9 @@ pub struct BoardCtx<'a> {
     /// connectivity). Plotting copper and DRC must pass a real one. Note: an item whose parent
     /// chain does not reach the board (`ParentRef::None`) is "GetBoard() == nullptr" in C++ and
     /// takes the no-board branch (e.g. FlashLayer returns true) whatever the context holds.
+    /// Connectivity's own `&mut self` methods (build, islands) necessarily run with `None`;
+    /// that is equivalent because the C++ algorithm never calls FlashLayer from inside (it uses
+    /// ConditionallyFlashed, the zone-layer overrides and ALWAYS_FLASHED shapes).
     pub connectivity: Option<&'a dyn ConnectivityQuery>,
 }
 impl<'a> BoardCtx<'a> {
@@ -232,9 +269,11 @@ impl<'a> BoardCtx<'a> {
     pub fn with_connectivity(self, c: &'a dyn ConnectivityQuery) -> Self;
     pub fn item(&'a self, id: ItemId) -> Option<ItemRef<'a>>;      // handle -> BOARD_ITEM*
     pub fn resolve(&'a self, uuid: &Kiid) -> Option<ItemRef<'a>>;  // BOARD::ResolveItem
-    /// A value outside the board (dummy pad of the filler, DRC helper shape). Its `parent`
-    /// still resolves, so a clone of a footprint pad keeps its board-frame geometry.
-    pub fn detached(&'a self, item: AnyItem<'a>) -> ItemRef<'a>;
+    /// `&item` -> `BOARD_ITEM*`: wraps any item reference. Used by item code to pass `this`
+    /// (`ctx.view(AnyItem::Pad(self))`, identity from `base.id`) and by consumers for values
+    /// outside the board (dummy pad of the filler, DRC helper shape: `id() == None`, but the
+    /// `parent` still resolves, so a copy of a footprint pad keeps its board-frame geometry).
+    pub fn view(&'a self, item: AnyItem<'a>) -> ItemRef<'a>;
     // forwards of the null-board defaults, used by item code:
     pub fn max_error(&self) -> i32;                 // BOARD_ITEM::GetMaxError
     pub fn copper_layer_count(&self) -> i32;        // BoardCopperLayerCount
@@ -251,6 +290,18 @@ Default bodies are the C++ base-class bodies (`include/board_item.h`, `pcbnew/bo
 that can reach beyond `self` takes `ctx`, uniformly (so `PCB_GROUP::GetLayerSet`, which unions
 its members, needs no special case). Implemented for every arena type, for `PcbTrack`, `PcbArc`,
 `PcbVia` and for `Track` (delegating), and for inline items.
+
+**How the impl blocks are written (binding, it is what lets packages work in parallel).** An
+`impl BoardItem for T` block can only live in one file, so it contains *no behaviour*: for each
+virtual the C++ class overrides it has a one-line shim `fn layer_set(&self, ctx: &BoardCtx<'_>)
+-> Lset { T::layer_set(self, ctx) }` that forwards to an **inherent method with the same name
+and the same signature** (inherent methods win name resolution; if the inherent method is
+missing the shim recurses and rustc's `unconditional_recursion` warning fails the clippy gate).
+The impl blocks are written once by M0 in the type's main module file (`pad/mod.rs`,
+`pcb_text.rs`) and are not edited afterwards; the inherent methods live in whichever module the
+owning package has (`pad/shapes.rs` for `Pad::effective_shape`), first as `port_pending!` stubs. Consumers holding a concrete type
+call the inherent method (`pad.layer_set(ctx)`), consumers holding `ItemRef` / `dyn BoardItem`
+get the same code through the shim.
 
 ```rust
 pub trait BoardItem: Invalidate {
@@ -333,24 +384,82 @@ pub trait BoardItemMut: BoardItem {
 pub trait Invalidate { fn invalidate_caches(&mut self); }
 ```
 
+### 6.2a The `EDA_TEXT` and `EDA_SHAPE` mixins
+
+`EDA_TEXT` and `EDA_SHAPE` are second base classes whose non-virtual code calls virtuals that
+the PCB classes override (`EDA_TEXT::GetTextBox` calls `GetTextPos()`, which `PCB_TEXT`
+overrides to apply the footprint transform; `EDA_SHAPE::makeEffectiveShapes` calls `GetWidth()`
+and `getMaxError()`). The data lives in the plain structs `EdaText` / `EdaShape`; the virtual
+interface is a trait implemented by the **host** item, and the base-class algorithms are
+generic functions over the host. Never call an algorithm on the bare data struct.
+
+```rust
+/// Virtual interface of EDA_TEXT. Hosts: PcbText (PcbField, PcbDimension, the barcode text
+/// delegate to it), PcbTextbox (PcbTablecell delegates). Defaults = the EDA_TEXT bodies.
+pub trait EdaTextItem {
+    fn eda_text(&self) -> &EdaText;
+    fn eda_text_mut(&mut self) -> &mut EdaText;
+    fn text_pos(&self, ctx: &BoardCtx<'_>) -> Vector2I;             // GetTextPos   (stored value)
+    fn text_size(&self, ctx: &BoardCtx<'_>) -> Vector2I;            // GetTextSize
+    fn text_thickness(&self, ctx: &BoardCtx<'_>) -> i32;            // GetTextThickness
+    fn text_angle(&self, ctx: &BoardCtx<'_>) -> EdaAngle;           // GetTextAngle
+    fn draw_pos(&self, ctx: &BoardCtx<'_>) -> Vector2I { self.text_pos(ctx) }        // GetDrawPos
+    fn draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { self.text_angle(ctx) } // GetDrawRotation
+    fn shown_text(&self, ctx: &BoardCtx<'_>, allow_extra_text: bool, depth: i32) -> String; // GetShownText
+    fn font_metrics(&self, ctx: &BoardCtx<'_>) -> &'static kicad_font::Metrics;      // getFontMetrics
+    fn set_text_pos(&mut self, env: &MutEnv, pos: Vector2I);        // SetTextPos, Offset, SetTextSize,
+    fn set_text_size(&mut self, env: &MutEnv, size: Vector2I, enforce_min: bool);  // SetTextThickness,
+    fn set_text_thickness(&mut self, env: &MutEnv, width: i32);     // SetTextAngle: the overrides
+    fn set_text_angle(&mut self, env: &MutEnv, angle: EdaAngle);    // convert board -> lib frame
+    fn offset(&mut self, env: &MutEnv, delta: Vector2I);
+    // Non-virtual EDA_TEXT members that call the virtuals: provided methods whose bodies are
+    // generic functions in eda_text.rs (package M10), e.g.
+    fn text_box(&self, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I { eda_text::text_box(self, ctx, line) }
+    // likewise: effective_text_pen_width, effective_text_shape, line_positions, draw_font,
+    // text_hit_test, text_hit_test_rect, interline, compare_text, format-relevant getters.
+}
+
+/// Virtual interface of EDA_SHAPE. Hosts: PcbShape (PcbTextbox, PcbTablecell delegate, with
+/// the PCB_TEXTBOX overrides). Defaults = the EDA_SHAPE bodies.
+pub trait EdaShapeItem {
+    fn eda_shape(&self) -> &EdaShape;
+    fn eda_shape_mut(&mut self) -> &mut EdaShape;
+    fn width(&self) -> i32 { self.eda_shape().stroke.width() }      // GetWidth
+    fn effective_width(&self) -> i32 { self.width() }               // GetEffectiveWidth
+    fn hatch_line_width(&self) -> i32 { self.effective_width() }
+    fn hatch_line_spacing(&self) -> i32 { self.hatch_line_width() * 10 }
+    fn is_proxy_item(&self) -> bool { self.eda_shape().proxy_item }
+    fn top_left(&self) -> Vector2I;  fn bot_right(&self) -> Vector2I;   // PCB_TEXTBOX overrides
+    fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I>;
+    fn shape_draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { ANGLE_0 }   // getDrawRotation
+    fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 { 100 }    // getMaxError (PCB_SHAPE: board)
+    fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet { ShapePolySet::new() } // PCB_SHAPE reads other items
+    // Provided (bodies in eda_shape/{geometry,shapes}.rs, packages M7 / M8):
+    // make_effective_shapes(ctx, edge_only), hatching(ctx), shape_bounding_box(ctx),
+    // shape_hit_test(..), shape_transform_to_polygon(..), ...
+}
+```
+
+Methods shown without a body have the base-class body as their default in the real trait
+(the stored value; for a footprint child that is the library-frame value, which is why every
+PCB host overrides them). The host `impl` blocks follow the shim rule of 6.2. Mutators:
+`EdaShape` has plain inherent setters (the `EDA_SHAPE` bodies); `PcbShape` setters take
+`&MutEnv`, call them and then `sync_lib_coords(env)`, as each C++ override does.
+`ItemRef::as_eda_text()` / `as_eda_shape()` return `&dyn EdaTextItem` / `&dyn EdaShapeItem`.
+
 ### 6.3 `ItemRef` and `AnyItem`
 
 ```rust
-/// Resolved shared reference, for `match` (= `switch( Type() )` + `static_cast`).
+/// Resolved shared reference, for `match` (= `switch( Type() )` + `static_cast`): one variant
+/// per `ItemKind` holding `&'a T` (`Pad(&'a Pad)`, `Track(&'a Track)`, ... `Net(&'a NetinfoItem)`),
+/// generated by `board_items!`. `AnyItemMut<'a>` is the `&mut` twin without `Net`.
 #[derive(Clone, Copy)]
-pub enum AnyItem<'a> {
-    Footprint(&'a Footprint), Pad(&'a Pad), Track(&'a Track), Zone(&'a Zone),
-    Shape(&'a PcbShape), Text(&'a PcbText), Field(&'a PcbField), Textbox(&'a PcbTextbox),
-    Table(&'a PcbTable), Tablecell(&'a PcbTablecell), Dimension(&'a PcbDimension),
-    Barcode(&'a PcbBarcode), Image(&'a PcbReferenceImage), Target(&'a PcbTarget),
-    Point(&'a PcbPoint), Group(&'a PcbGroup), Generator(&'a PcbGenerator),
-    Marker(&'a PcbMarker), Constraint(&'a PcbConstraint), Body3d(&'a Pcb3dBody),
-    GridItem(&'a PcbGridItem), DrillMap(&'a PcbDrillMap), Net(&'a NetinfoItem),
-}
+pub enum AnyItem<'a> { /* 23 variants */ }
 
-/// The Rust spelling of a `BOARD_ITEM*` parameter: context + handle + item.
+/// The Rust spelling of a `BOARD_ITEM*` parameter: context + item (+ its handle, read from
+/// `base.id`; for `AnyItem::Net` the `ItemKind::Net` form).
 #[derive(Clone, Copy)]
-pub struct ItemRef<'a> { pub ctx: &'a BoardCtx<'a>, id: Option<ItemId>, item: AnyItem<'a>, hole_proxy: bool }
+pub struct ItemRef<'a> { pub ctx: &'a BoardCtx<'a>, item: AnyItem<'a>, hole_proxy: bool }
 
 impl<'a> ItemRef<'a> {
     pub fn id(&self) -> Option<ItemId>;                 // None for detached / inline values
@@ -363,8 +472,8 @@ impl<'a> ItemRef<'a> {
     pub fn as_zone(&self) -> Option<&'a Zone>;
     pub fn as_shape(&self) -> Option<&'a PcbShape>;     // PCB_SHAPE*: also the box of a textbox / cell
     pub fn as_text(&self) -> Option<&'a PcbText>;       // PCB_TEXT*: also field, dimension text
-    pub fn as_eda_text(&self) -> Option<&'a EdaText>;   // EDA_TEXT*
-    pub fn as_eda_shape(&self) -> Option<&'a EdaShape>; // EDA_SHAPE*
+    pub fn as_eda_text(&self) -> Option<&'a dyn EdaTextItem>;    // EDA_TEXT*  (6.2a)
+    pub fn as_eda_shape(&self) -> Option<&'a dyn EdaShapeItem>;  // EDA_SHAPE* (6.2a)
     pub fn as_textbox(&self) -> Option<&'a PcbTextbox>; // PCB_TEXTBOX*: also cell
     pub fn as_table(&self) -> Option<&'a PcbTable>;     pub fn as_dimension(&self) -> Option<&'a PcbDimension>;
     pub fn as_group(&self) -> Option<&'a PcbGroup>;     // EDA_GROUP*: group or generator's group
@@ -399,8 +508,11 @@ impl PartialEq for ItemRef<'_> { /* same id (or same address for detached); = po
 
 Typed per-class behaviour (`pad.flash_layer(ctx, layer)`, `via.layer_pair()`,
 `zone.filled_polys_list(layer)`, `padstack.for_each_unique_layer(..)`) is inherent methods on
-the structs, in the module that ports the C++ file, taking `ctx` iff the C++ body reaches beyond
-`self` (rule C1). Per-layer padstack access mirrors C++: `pad.shape(layer)`,
+the structs, in the module that ports the C++ file. Rule C1: an inherent method that backs a
+trait method has **exactly the trait's signature** (so it always takes `ctx`, see 6.2); any
+other inherent method takes `ctx` iff the C++ body reaches beyond `self`. A method that must
+name its own item (`this`) uses `self.base().id` or `ctx.view(AnyItem::Pad(self))`.
+Per-layer padstack access mirrors C++: `pad.shape(layer)`,
 `pad.size(ctx, layer)`, `pad.offset(ctx, layer)`, `pad.shape_pos(ctx, layer)`,
 `via.width(layer)`, `padstack.effective_layer_for(layer)`, `padstack.copper_props(layer)`.
 
@@ -416,11 +528,14 @@ the structs, in the module that ports the C++ file, taking `ctx` iff the C++ bod
 | `a->GetParent() == b->GetParent()` | `a.parent() == b.parent()` on `ParentRef` values |
 | `item->GetBoard()->GetDesignSettings()` | `ctx.board.design_settings()` |
 | `a == b` (pointers) | `a == b` on `ItemRef`, or on `ItemId` |
-| `std::map<BOARD_ITEM*, X>` | `BTreeMap<ItemId, X>` (iterated) / `HashMap<ItemId, X>` (lookup only) / `SideTable<T, X>` |
+| `this` passed to another subsystem | `self.base().id` / `ctx.view(AnyItem::Pad(self))` |
+| `std::map<BOARD_ITEM*, X>` | `BTreeMap<ItemId, X>` (iterated, see 3.1) / `HashMap<ItemId, X>` (lookup only) |
 | `std::set<BOARD_ITEM*, cmp>` | collect `Vec<ItemId>`, `sort_by(|a, b| cmp(ctx, *a, *b))` (stable sort is fine: set semantics, comparators total) |
+| `std::set<T*>` / `std::sort` of pointers | `BTreeSet<ItemId>` / sort by `ItemId`, or the order an analysis doc names (3.1) |
 | `for( PCB_TRACK* t : board->Tracks() )` | `for (id, t) in board.tracks()` |
 | `for( PAD* p : fp->Pads() )` | `for (pad_id, pad) in board.footprint_pads(fp_id)` |
-| `PAD dummy( *pad ); dummy.SetSize( l, s );` | `let mut d = pad.clone(); d.set_size(&env, l, s); ctx.detached(AnyItem::Pad(&d))` |
+| `PAD dummy( *pad ); dummy.SetSize( l, s );` | `let mut d = pad.detached_copy(); d.set_size(&env, l, s); ctx.view(AnyItem::Pad(&d))` (`env = board.mut_env(pad_id)`) |
+| a C++ setter that reads other items (`PCB_DIMENSION_BASE::Update`) | clone-edit-store: `let mut d = board[id].clone(); d.update(&ctx); board.modify_dimension(id, \|x, _\| *x = d)` |
 
 ## 7. Upward hooks (no crate cycle)
 
@@ -431,8 +546,9 @@ by `BoardDesignSettings::drc_severities` and the `.kicad_pro` reader) and `Error
 `kicad-pcb/src/drc_api.rs`; `kicad-drc` re-exports them.
 
 ```rust
-/// Implemented by kicad_drc::DrcEngine.
-pub trait RuleResolver {
+/// Implemented by kicad_drc::DrcEngine. `Sync` so that a `BoardCtx` can cross threads if the
+/// optional `parallel` feature is ever added; all methods take `&self`.
+pub trait RuleResolver: Sync {
     fn eval_rules(&self, ctx: &BoardCtx<'_>, constraint: DrcConstraintT,
                   a: Option<ItemRef<'_>>, b: Option<ItemRef<'_>>, layer: PcbLayerId) -> DrcConstraint;
     fn has_rules_for_constraint_type(&self, constraint: DrcConstraintT) -> bool;
@@ -444,9 +560,11 @@ pub trait RuleResolver {
 }
 
 /// Implemented by kicad_connectivity::ConnectivityData.
-pub trait ConnectivityQuery {
-    /// CONNECTIVITY_DATA::IsConnectedOnLayer (PAD::FlashLayer, PCB_VIA::FlashLayer).
-    fn is_connected_on_layer(&self, ctx: &BoardCtx<'_>, item: ItemId, layer: PcbLayerId,
+pub trait ConnectivityQuery: Sync {
+    /// CONNECTIVITY_DATA::IsConnectedOnLayer (PAD::FlashLayer, PCB_VIA::FlashLayer). The item
+    /// passes itself (`ctx.view(AnyItem::Pad(self))`); an item without a handle (detached
+    /// copy) has no entry in the item map, exactly like a C++ copy at another address: false.
+    fn is_connected_on_layer(&self, ctx: &BoardCtx<'_>, item: ItemRef<'_>, layer: PcbLayerId,
                              types: &[KicadT]) -> bool;
     /// CONNECTIVITY_DATA::GetNodeCount / GetPadCount (BOARD::GetNodesCount, net statistics).
     fn node_count(&self, net: Option<NetCode>) -> u32;
@@ -456,8 +574,14 @@ pub trait ConnectivityQuery {
 
 * Re-entrancy: `eval_rules` calls item methods, which may call `cached_own_clearance`. Engine
   caches use `Mutex` (works on wasm32) and never hold a lock across an item call.
-* `DRC_ENGINE::InvalidateClearanceCache` (called from C++ setters) is replaced by the engine
-  reading the change journal; the model never calls into the engine from a mutator.
+* Because a run holds `ctx.rules = Some(&engine)`, **everything a DRC run mutates must not be
+  the engine**: `kicad-drc` splits the C++ `DRC_ENGINE` into the rule set + memo caches (the
+  `RuleResolver`, shared, interior mutability only for caches) and a separate run state
+  (violation sink, per-code error counts, progress) passed as `&mut` to providers.
+* `DRC_ENGINE::InvalidateClearanceCache` (called from C++ setters) has no model-side
+  counterpart: the engine stamps its own-clearance cache with `board.time_stamp()` and drops
+  it when the stamp moved (every `add` / `remove` / `modify_*` moves it, 8.5). The model never
+  calls into the engine from a mutator.
 * Connectivity's own `IsConnectedOnLayer` asks for `Flashing::AlwaysFlashed` shapes exactly like
   C++, so it never recurses into itself.
 * Each `None` default (`rules`, `connectivity`) is the C++ null branch and has its own test.
@@ -474,29 +598,50 @@ is the design, not an obstacle: "compute with `&Board`, then apply with `&mut Bo
 pub enum AddMode { Insert, Append, BulkAppend, BulkInsert }    // ADD_MODE
 pub enum RemoveMode { Normal, Bulk }                           // REMOVE_MODE
 impl Board {
-    // BOARD::Add: list choice per kind, push_front / push_back per mode (fact 3), parent,
-    // UUID bind (subtree, BindSubtree order), time stamp, journal `Added`. Tracks on a
-    // non-copper layer and other C++ refusals return Err with the item.
-    pub fn add_track(&mut self, track: Track, mode: AddMode) -> TrackId;
+    // BOARD::Add for leaf items: list choice per kind, push_front / push_back per mode (fact 3),
+    // parent, `base.id`, UUID bind, time stamp. Tracks on a non-copper layer and other C++
+    // refusals return Err with the item.
+    pub fn add_track(&mut self, track: Track, mode: AddMode) -> Result<TrackId, Track>;
     pub fn add_zone(&mut self, zone: Zone, mode: AddMode) -> ZoneId;
-    pub fn add_footprint(&mut self, fp: FootprintTree, mode: AddMode) -> FootprintId;
-    pub fn add_shape(&mut self, s: PcbShape, mode: AddMode) -> ShapeId;   // ... one per board-level kind
-    pub fn add(&mut self, item: OwnedItem, parent: ParentRef, mode: AddMode) -> Result<ItemId, OwnedItem>;
-    // FOOTPRINT::Add on a board member (front-insert unless mode == Append, fields append):
-    pub fn footprint_add(&mut self, fp: FootprintId, item: OwnedItem, mode: AddMode) -> Result<ItemId, OwnedItem>;
+    pub fn add_shape(&mut self, s: PcbShape, mode: AddMode) -> ShapeId;   // ... one per board-level leaf kind
+    pub fn add(&mut self, item: OwnedItem, mode: AddMode) -> Result<ItemId, OwnedItem>;   // polymorphic form
     pub fn add_net(&mut self, net: NetinfoItem) -> Option<NetCode>;        // NETINFO_LIST::AppendNet
     pub fn add_marker(&mut self, m: PcbMarker) -> MarkerId;
+
+    // Containers: create (= `new FOOTPRINT( board )`), fill, attach (= `BOARD::Add`).
+    /// Arena slot, parent = Board, the four mandatory fields of the FOOTPRINT constructor.
+    /// Resolvable through `ctx` and `board[id]`; **not** in `footprints()` and not UUID-indexed.
+    pub fn create_footprint(&mut self) -> FootprintId;
+    /// FOOTPRINT::Add (front-insert unless mode == Append, fields always append). Children of
+    /// an unattached footprint are not UUID-indexed (C++ `IsItemIndexedById( this )` test).
+    pub fn footprint_add(&mut self, fp: FootprintId, item: OwnedItem, mode: AddMode) -> Result<ItemId, OwnedItem>;
+    /// BOARD::Add( footprint ): order list per mode, UUID bind of the subtree in the C++
+    /// `CacheItemById` + `CacheChildrenById` order, time stamp.
+    pub fn attach_footprint(&mut self, fp: FootprintId, mode: AddMode);
+    /// PCB_TABLE: `parent` is `Board` or `Item(footprint)`; cells get `ParentRef::Item(table)`.
+    pub fn create_table(&mut self, table: PcbTable, parent: ParentRef) -> TableId;
+    pub fn table_add_cell(&mut self, table: TableId, cell: PcbTablecell) -> TablecellId;   // AddCell
+    pub fn attach_table(&mut self, table: TableId, mode: AddMode);    // BOARD::Add / FOOTPRINT::Add
+    /// Environment for mutators of a value that is not added yet (the parser calls
+    /// `text.rotate( &env, .. )` on a child before `footprint_add`).
+    pub fn child_env(&self, parent: ParentRef) -> MutEnv;
+
     // BOARD::Remove / FOOTPRINT::Remove + delete: cascades to children, leaves its group,
-    // unbinds UUIDs, time stamp, journal `Removed`. `false` for a stale handle.
+    // unbinds UUIDs, time stamp. `false` for a stale handle.
     pub fn remove(&mut self, id: ItemId) -> bool;
     pub fn remove_many(&mut self, ids: &[ItemId]) -> usize;               // one retain pass per list
     pub fn remove_all(&mut self, types: &[KicadT]);                       // BOARD::RemoveAll
-    pub fn footprint_take(&mut self, fp: FootprintId) -> Option<FootprintTree>;   // remove, keep data
     pub fn add_to_group(&mut self, group: ItemId, member: ItemId);
     pub fn remove_from_group(&mut self, member: ItemId);
     pub fn rebind_item_uuid(&mut self, id: ItemId, new_uuid: Kiid);       // BOARD_ITEM::SetUuid
 }
 ```
+
+A leaf value built for a footprint or table gets `base.parent = ParentRef::Item(parent)`
+*before* it is added (C++ passes the parent to the constructor), so its board-frame getters
+already work through `ctx` while it is still a local. `remove` also discards an unattached
+container (the C++ `unique_ptr` going out of scope); dropping a `Board` that holds one (parse
+error) is fine; `check_invariants` reports one that is left over.
 
 ### 8.2 Leaf edits: `modify_*` and `MutEnv`
 
@@ -516,8 +661,9 @@ impl MutEnv { pub fn detached() -> MutEnv; }   // no board: the C++ null-board d
 
 impl Board {
     pub fn mut_env(&self, id: ItemId) -> MutEnv;
-    /// Invalidate the item's caches, run `f`, bump the time stamp, invalidate the parent
-    /// footprint's geometry caches, journal `Modified` (with the pre-edit net and layers).
+    /// Invalidate the item's caches, run `f`, re-stamp `base.id` and `base.parent` (so `f` may
+    /// assign a whole new value), bump the time stamp, invalidate the parent footprint's
+    /// geometry caches, journal `Modified` if the journal is on.
     pub fn modify<R>(&mut self, id: ItemId, f: impl FnOnce(AnyItemMut<'_>, &MutEnv) -> R) -> Option<R>;
     pub fn modify_track<R>(&mut self, id: TrackId, f: impl FnOnce(&mut Track, &MutEnv) -> R) -> Option<R>;
     pub fn modify_pad<R>(&mut self, id: PadId, f: impl FnOnce(&mut Pad, &MutEnv) -> R) -> Option<R>;
@@ -531,19 +677,27 @@ impl Board {
     /// BOARD_CONNECTED_ITEM::SetNetCode with the board lookup: 0 off copper, unknown code -> -1.
     pub fn set_item_net(&mut self, id: ItemId, net: NetCode, no_assert: bool) -> bool;
     pub fn set_item_locked(&mut self, id: ItemId, locked: bool);
-    /// Escape hatch for mutators whose C++ body reads other items (PCB_DIMENSION_BASE::Update
-    /// with text variables, generator updates): the item is moved out (`Taken`), `f` gets it and
-    /// a full read-only context of the rest, then it is put back. Never for footprints.
-    pub fn with_item_taken<R>(&mut self, id: ItemId, rules: Option<&dyn RuleResolver>,
-                              f: impl FnOnce(AnyItemMut<'_>, &BoardCtx<'_>) -> R) -> Option<R>;
 }
 ```
+
+A mutator whose C++ body reads other items or the board beyond what `MutEnv` carries
+(`PCB_DIMENSION_BASE::Update` with text variables, generator updates) is ported as a `&mut self`
+method taking `&BoardCtx` and applied with **clone-edit-store** (6.4): clone the item, edit the
+clone against the unmodified board, store it with `modify_*`. No slot is ever "taken out".
+
+Scope note: the tier 1/2 consumers (parser incl. legacy conversions, plot dummies, zone filler,
+net propagation, autorouter clients) need the setters, `Move` / `Rotate` of texts and shapes
+used by the parser, layer / net changes and the footprint cascades. `Flip` / `Mirror` of every
+item type are ported with their class (placement clients and `FOOTPRINT::Flip` need them), but
+they are the last thing a package does; a `port_pending!` there does not block tier 1.
 
 ### 8.3 Footprint cascades
 
 `FOOTPRINT::SetPosition/SetOrientation/Flip/SetTransformScale/RescaleAroundPoint/
 MoveAnchorPosition/SetLayerAndFlip/Move/Rotate` become `Board::footprint_set_position(id, pos)`
-etc. in `footprint/transform.rs`. The body destructures `Board` into disjoint arena borrows,
+etc. in `footprint/transform.rs`; they work the same on a created-but-unattached footprint (the
+parser applies `(at ..)` / `(transform ..)` while only the mandatory fields exist, like C++).
+The body destructures `Board` into disjoint arena borrows,
 updates `transform`, builds one `MutEnv` with the new `ParentFrame` and runs the C++ loop body on
 each child list in C++ order (fields, pads, zones, points, drawings by kind, table cells), then
 patches the footprint's geometry / courtyard caches exactly where C++ patches them instead of
@@ -554,62 +708,69 @@ dropping them. Groups and generators cascade the same way (`move_item` on a grou
 Results that another subsystem computes and the file stores: zone fills
 (`set_filled_polys_list`, `set_fill_flag`, `set_is_filled`, `set_need_refill`,
 `set_is_island` / `insulated_islands`, `build_hash_value`, `cache_triangulation`),
-`zone_layer_overrides` on pads and vias, courtyard / net-tie caches
-(`build_courtyard_caches`, `build_net_tie_cache`, `MALFORMED_*_COURTYARD` flags). They are
-reached through `board.zone_fill_mut(id) -> &mut ZoneFill`,
+`zone_layer_overrides` on pads and vias, the footprint net-tie cache (`build_net_tie_cache`).
+They are reached through `board.zone_fill_mut(id) -> &mut ZoneFill`,
 `board.set_zone_layer_override(id, layer, value)`, `board.clear_zone_layer_overrides(id)`,
-`board.footprint_caches_mut(id)`. C++ does not bump `m_timeStamp` for these either.
+`board.build_net_tie_cache(fp)`. C++ does not bump `m_timeStamp` for these either; the zone
+filler calls `board.increment_time_stamp()` where the C++ tool does. The footprint courtyard
+cache is *not* in this class: C++ builds it lazily from the `const` `GetCourtyard()`, so it is
+a class-1 `KeyedCache` (section 9) and `fp.build_courtyard_caches(ctx, handler)` takes `&self`.
 
-### 8.5 Change journal and commits
+### 8.5 Time stamp, change journal
 
 ```rust
 pub enum ChangeKind { Added, Removed, Modified }
 pub struct Change { pub kind: ChangeKind, pub id: ItemId, pub uuid: Kiid, pub kicad_t: KicadT,
                     pub net_before: Option<NetCode>, pub layers_before: Lset }
 impl Board {
-    pub fn set_journal_enabled(&mut self, on: bool);    // off while parsing (aSkipConnectivity)
-    pub fn drain_changes(&mut self) -> Vec<Change>;
     pub fn time_stamp(&self) -> i32;                     // BOARD::GetTimeStamp
     pub fn increment_time_stamp(&mut self);              // also clears BoardCaches
-}
-
-/// Non-GUI core of BOARD_COMMIT / COMMIT (board_commit.cpp, common/commit.cpp).
-pub struct BoardCommit { /* Added(ItemId) | Removed { id, list_pos } (parked) | Modified { id, before: OwnedItem } */ }
-impl BoardCommit {
-    pub fn new() -> Self;
-    pub fn add(&mut self, board: &mut Board, item: OwnedItem, parent: ParentRef, mode: AddMode) -> ItemId;
-    pub fn modify(&mut self, board: &Board, id: ItemId);          // snapshot before the edit
-    pub fn remove(&mut self, board: &mut Board, id: ItemId);      // park item and children
-    pub fn push(self, board: &mut Board) -> Vec<Change>;          // purge parked items
-    pub fn revert(self, board: &mut Board);                       // restore under the same handles
+    pub fn set_journal_enabled(&mut self, on: bool);     // default: off
+    pub fn drain_changes(&mut self) -> Vec<Change>;
 }
 ```
 
-Consumers that live next to the board (connectivity, a persistent DRC R-tree, the router world,
-the wasm id cache) consume `drain_changes()` after each batch. `Board: Clone` (caches and journal
-start empty in the clone, all handles stay valid) is the heavyweight alternative for speculative
-autorouter passes.
+**The time stamp is the one invalidation signal every tier 1/2 consumer uses.** `add_*`,
+`attach_*`, `remove*`, `modify*`, the `footprint_*` cascades and `design_settings_mut()` bump it;
+derived-state writers (8.4) do not. C++ bumps it in fewer places (commit push, remove, DRC
+init and run); bumping more often only empties caches earlier and cannot change a result.
+Consumers that keep state next to the board (connectivity, DRC caches, the own-clearance
+cache) record the stamp they were built at and **rebuild from scratch** when it moved; for
+connectivity that is the C++ full `Build()`, which connectivity-zones.md R-6 shows equivalent
+to the incremental path for every CLI output. `kicad-session` decides when to rebuild.
+
+The journal is implemented by M1 (a `Vec<Change>` push in the same places) but **off by
+default and no tier 1/2 package may depend on it**; it exists so that incremental connectivity
+updates and an interactive router can be added later without touching the mutators. Undo
+(`BoardCommit`, parking removed items so that a revert restores the same handles) is deferred
+with it (section 17). Until then: a client that wants to try something speculatively works on
+`board.clone()` (all handles stay valid in the clone) or removes what it added.
 
 Scratch flags: `BoardItemBase::flags` exists for non-algorithmic code (`STRUCT_DELETED`,
 `IS_NEW`, `MALFORMED_*`); algorithms marking items while reading (`SKIP_STRUCT`, `CANDIDATE`,
-`m_arflag`, `PAD::m_subRatsnest`) use a `SideTable` or `BTreeSet<ItemId>` of their own.
+`m_arflag`, `PAD::m_subRatsnest`) use a `HashMap<ItemId, _>` / `BTreeSet<ItemId>` of their own.
 
 ## 9. Derived caches and invalidation
 
-Cache cells (in `cache.rs`), both `Sync`, both `Clone` to **empty**, both ignored by equality:
+Cache cells (in `cache.rs`), both `Sync`, both `Clone` to **empty** (which is what lets item
+structs derive `Clone` although they hold a `Mutex`), both `Debug`, both ignored by equality:
 
 ```rust
-/// Built once from `&self`, cleared only through `&mut self` (Invalidate).
-pub struct OnceCache<T>(std::sync::OnceLock<T>);
 /// Re-validated from `&self` (C++ `mutable` + mutex + time stamp / dirty check). `T` stores the
 /// inputs it was built from (time stamp, parent transform, text ...); `valid` compares them, so
-/// a forgotten invalidation cannot produce a stale read.
+/// a forgotten invalidation cannot produce a stale read. A cache whose only input is the item
+/// itself uses `|_| true` and relies on `Invalidate`.
 pub struct KeyedCache<T>(std::sync::Mutex<Option<Arc<T>>>);
 impl<T> KeyedCache<T> {
     pub fn get_or_build(&self, valid: impl Fn(&T) -> bool, build: impl FnOnce() -> T) -> Arc<T>; // build runs unlocked
-    pub fn invalidate(&self);  pub fn clear(&mut self);
+    pub fn peek(&self) -> Option<Arc<T>>;      pub fn store(&self, value: T);
+    pub fn invalidate(&self);                  pub fn clear(&mut self);
     pub fn update(&mut self, f: impl FnOnce(&mut T)) where T: Clone;  // patch in place (FOOTPRINT::Flip on caches)
 }
+/// Plain interior-mutable scratch for C++ `mutable` members that are not "one value built
+/// from inputs" (per-line text bbox map, the three time-stamped footprint boxes).
+pub struct CacheCell<T: Default>(std::sync::Mutex<T>);
+impl<T: Default> CacheCell<T> { pub fn with<R>(&self, f: impl FnOnce(&mut T) -> R) -> R;  pub fn clear(&mut self); }
 ```
 
 Three classes, three rules:
@@ -617,152 +778,38 @@ Three classes, three rules:
 1. **Derived from the item and its parent** (C++ `mutable` members): stored in the item.
    Pad shapes / polygons / mask shapes (`KeyedCache` validated against `PadCacheKey` = parent
    transform + flip + `max_error`, also cleared by `set_dirty()` where C++ calls `SetDirty()`), footprint bbox /
-   text-excluded bbox / hull (keyed by board time stamp, as C++), zone bbox (time stamp), text
-   render / bbox / knockout caches (key = the inputs C++ compares), shape hatching, barcode
-   cache. `EDA_TEXT::m_shown_text` stays an eagerly maintained plain field (as
-   `cacheShownText`). Dimension `shapes` are a plain field rebuilt by `update()`.
+   text-excluded bbox / hull (keyed by board time stamp, as C++), the footprint courtyard cache
+   (valid while the stored hashes match, as `GetCourtyard()`; the malformed flags live in the
+   cache value), zone bbox (time stamp), text render / bbox / knockout caches (key = the inputs
+   C++ compares), shape hatching, barcode cache. `EDA_TEXT::m_shown_text` stays an eagerly
+   maintained plain field (as `cacheShownText`). Dimension `shapes` are a plain field rebuilt
+   by `update()`.
 2. **Results written by another subsystem and saved in the file**: section 8.4.
 3. **Spanning items**: connectivity graph, ratsnest, DRC R-trees, `m_DRCZones`,
    `m_Intersects*Cache`, island maps, own-clearance cache, drill symbol cache. **Not in
    `Board`.** They live in the consumer (`kicad_connectivity::ConnectivityData`,
    `kicad_drc::DrcBoardCaches`), keyed by `ItemId` (iterated maps: `BTreeMap`), stamped with
-   `board.time_stamp()` and rebuilt or updated from the journal. Board-level caches used by
+   `board.time_stamp()` and rebuilt when it moved (8.5). Board-level caches used by
    model code itself (`m_maxClearanceValue`, `m_ZonesByNameCache`, `m_DeflatedZoneOutlineCache`,
    `m_StackedMicroviaCache`, `m_footprintCourtyardIndex`, `m_LayerExpressionCache`, board
    outline) are `Board::caches: BoardCaches`, keyed by time stamp.
 
 ## 10. Board-level services
 
-All `impl Board` unless stated; C++ origin `pcbnew/board.cpp` unless stated.
+The complete list of board-level signatures (iteration, lookup, nets and netclasses, design
+settings, stackup and layers, title block / variants / text variables, geometry, save-order
+comparators; all `impl Board` unless stated, C++ origin `pcbnew/board.cpp`) is the **API index
+in `board-model-types.md` section 18**; M0 stubs every entry. The rules that go with it:
 
-```rust
-// ---- iteration in C++ container order ----
-pub fn tracks(&self) -> impl Iterator<Item = (TrackId, &Track)> + '_;              // Tracks()
-pub fn footprints(&self) -> impl Iterator<Item = (FootprintId, &Footprint)> + '_;   // Footprints()
-pub fn drawings(&self) -> impl Iterator<Item = (ItemId, AnyItem<'_>)> + '_;         // Drawings()
-pub fn zones(&self) -> impl Iterator<Item = (ZoneId, &Zone)> + '_;                  // Zones()
-pub fn groups(&self) -> ..; pub fn generators(&self) -> ..; pub fn constraints(&self) -> ..;
-pub fn board_points(&self) -> ..; pub fn markers(&self) -> ..;
-pub fn footprint_fields(&self, fp: FootprintId) -> impl Iterator<Item = (FieldId, &PcbField)> + '_;
-pub fn footprint_pads(&self, fp: FootprintId) -> impl Iterator<Item = (PadId, &Pad)> + '_;
-pub fn footprint_drawings(&self, fp: FootprintId) -> impl Iterator<Item = (ItemId, AnyItem<'_>)> + '_;
-pub fn footprint_zones(&self, fp: FootprintId) -> ..; footprint_groups, footprint_points,
-    footprint_constraints, footprint_bodies;
-pub fn table_cells(&self, t: TableId) -> impl Iterator<Item = (TablecellId, &PcbTablecell)> + '_;
-pub fn group_members(&self, g: ItemId) -> impl Iterator<Item = ItemId> + '_;
-pub fn track_ids(&self) -> Vec<TrackId>; pub fn footprint_ids(&self) -> Vec<FootprintId>;  // snapshot before mutating loops
-pub fn get_pads(&self) -> Vec<PadId>;                       // GetPads: footprint order x pad order
-pub fn all_connected_items(&self) -> Vec<ItemId>;           // AllConnectedItems (order below)
-pub fn collect_owned_items(&self) -> Vec<ItemId>;
-pub fn get_item_set(&self) -> Vec<ItemId>;                  // GetItemSet: by UUID, ties by ItemId
-pub fn run_on_children(&self, mode: RecurseMode, f: &mut dyn FnMut(ItemId));
-pub fn get_zone_list(&self, include_zones_in_footprints: bool) -> Vec<ZoneId>;
-pub fn tracks_in_net(&self, net: NetCode) -> Vec<TrackId>;
-pub fn get_sorted_pad_list_by_x_then_y_coord(&self, ctx: &BoardCtx<'_>, net: Option<NetCode>) -> Vec<PadId>;
+* Iterators yield `(handle, &item)` in C++ container order (10.1); `*_ids()` snapshots exist
+  for loops that mutate.
+* `nets()` iterates by name (`for( net : GetNetInfo() )`), `nets_by_netcode()` by code;
+  `find_or_add_net` assigns codes in first-use order like the parser.
+* `design_settings()` / `design_settings_mut()` are the only access to the settings (the
+  `_mut` form bumps the time stamp and marks the `LayerEnv` snapshot stale).
+* Comparators are free functions `(ctx, a: ItemId, b: ItemId) -> Ordering` next to the type
+  the C++ comparator belongs to.
 
-// ---- lookup ----
-pub fn get(&self, id: ItemId) -> Option<AnyItem<'_>>;  pub fn contains(&self, id: ItemId) -> bool;
-pub fn track(&self, id: TrackId) -> Option<&Track>;    // typed getters, one per kind
-pub fn resolve_item(&self, uuid: &Kiid) -> Option<ItemId>;          // ResolveItem (nil -> None)
-pub fn uuid_of(&self, id: ItemId) -> Option<Kiid>;  pub fn repair_duplicate_item_uuids(&mut self) -> usize;
-pub fn find_footprint_by_reference(&self, reference: &str) -> Option<FootprintId>;
-pub fn find_footprint_by_path(&self, path: &KiidPath) -> Option<FootprintId>;
-pub fn find_pad_by_uuid(&self, uuid: &Kiid) -> Option<PadId>;
-pub fn get_pad_at(&self, ctx: &BoardCtx<'_>, pos: Vector2I, layers: Lset) -> Option<PadId>;   // GetPad
-pub fn convert_cross_references_to_kiids(&self, source: &str) -> String;
-pub fn convert_kiids_to_cross_references(&self, source: &str) -> String;
-pub fn groups_sanity_check(&mut self, repair: bool) -> String;
-pub fn check_invariants(&self) -> Result<(), String>;
-
-// ---- nets and netclasses ----
-pub fn net_info(&self) -> &NetinfoList;
-pub fn nets(&self) -> impl Iterator<Item = &NetinfoItem> + '_;              // by NAME (`for( net : GetNetInfo() )`)
-pub fn nets_by_netcode(&self) -> impl Iterator<Item = &NetinfoItem> + '_;   // NetsByNetcode()
-pub fn find_net(&self, code: NetCode) -> Option<&NetinfoItem>;
-pub fn find_net_by_name(&self, name: &str) -> Option<&NetinfoItem>;
-pub fn find_or_add_net(&mut self, name: &str, code: Option<NetCode>) -> NetCode;   // parser: file order
-pub fn remove_net(&mut self, code: NetCode);                    // items fall back to net 0
-pub fn remove_unused_nets(&mut self); pub fn build_list_of_nets(&mut self);
-pub fn sanitize_netcodes(&mut self); pub fn map_nets(&mut self, dest: &mut Board);
-pub fn match_dp_suffix(net_name: &str) -> (i32, String);     pub fn dp_coupled_net(&self, net: NetCode) -> Option<NetCode>;
-pub fn get_nodes_count(&self, ctx: &BoardCtx<'_>, net: Option<NetCode>) -> u32;
-pub fn set_areas_net_codes_from_net_names(&mut self) -> i32;
-pub fn synchronize_nets_and_netclasses(&mut self, reset_track_and_via_sizes: bool);
-pub fn apply_net_chain_netclasses(&mut self);  pub fn resolve_net_chain_terminal_pads(&mut self);
-pub fn get_net_class_assignment_candidates(&self) -> BTreeSet<String>;
-impl NetSettings {                                              // common/project/net_settings.cpp
-    pub fn get_effective_netclass(&self, net_name: &str) -> Arc<Netclass>;
-    pub fn get_cached_effective_netclass(&self, net_name: &str) -> Option<Arc<Netclass>>;
-    pub fn has_effective_netclass(&self, net_name: &str) -> bool;
-    pub fn get_net_class_by_name(&self, name: &str) -> Option<Arc<Netclass>>;
-    pub fn clear_all_caches(&mut self); pub fn clear_cache_for_net(&mut self, net_name: &str);
-    pub fn set_netclass_pattern_assignment(&mut self, pattern: &str, netclass: &str);
-}
-
-// ---- design settings, severities, exclusions, markers ----
-pub fn design_settings(&self) -> &BoardDesignSettings;
-pub fn design_settings_mut(&mut self) -> &mut BoardDesignSettings;   // bumps time stamp, rebuilds LayerEnv
-pub fn get_max_clearance_value(&self, ctx: &BoardCtx<'_>) -> i32;    // cached per time stamp
-pub fn resolve_drc_exclusions(&mut self, create_markers: bool) -> Vec<MarkerId>;
-pub fn record_drc_exclusions(&mut self);
-pub fn delete_markers(&mut self, warnings_and_errors: bool, exclusions: bool);
-impl BoardDesignSettings {
-    pub fn get_severity(&self, drc_error_code: i32) -> Severity;  pub fn ignore(&self, drc_error_code: i32) -> bool;
-    pub fn get_biggest_clearance_value(&self, rules: Option<&dyn RuleResolver>) -> i32;
-    pub fn get_smallest_clearance_value(&self) -> i32;  pub fn get_drc_epsilon(&self) -> i32;
-    pub fn get_hole_plating_thickness(&self) -> i32;    pub fn get_layer_class(&self, l: PcbLayerId) -> usize;
-    pub fn get_line_thickness(&self, l: PcbLayerId) -> i32;  pub fn get_text_size(&self, l: PcbLayerId) -> Vector2I;
-    pub fn get_text_thickness(&self, l: PcbLayerId) -> i32;
-    pub fn get_current_track_width(&self) -> i32;  pub fn get_current_via_size(&self) -> i32;
-}
-
-// ---- stackup and layers ----
-pub fn get_stackup_or_default(&self) -> BoardStackup;        // design_settings.stackup if has_stackup
-pub fn layer_depth(&self, start: PcbLayerId, end: PcbLayerId) -> i32;
-pub fn copper_layer_count(&self) -> i32;  pub fn set_copper_layer_count(&mut self, n: i32);
-pub fn enabled_layers(&self) -> Lset;     pub fn set_enabled_layers(&mut self, l: Lset);
-pub fn is_layer_enabled(&self, l: PcbLayerId) -> bool;
-pub fn layer_name(&self, l: PcbLayerId) -> String;           // user name or standard
-pub fn standard_layer_name(l: PcbLayerId) -> String;
-pub fn layer_id(&self, name: &str) -> PcbLayerId;            // GetLayerID
-pub fn layer_type(&self, l: PcbLayerId) -> LayerT;
-pub fn set_layer_descr(&mut self, l: PcbLayerId, d: Layer) -> bool;
-pub fn flip_layer(&self, l: PcbLayerId) -> PcbLayerId;       // copper-count aware
-pub fn copper_layer_stack_max_id(&self) -> PcbLayerId;
-pub fn is_front_layer(&self, l: PcbLayerId) -> bool;  pub fn is_back_layer(&self, l: PcbLayerId) -> bool;
-impl BoardStackup {
-    pub fn build_default_stackup_list(&mut self, settings: Option<&BoardDesignSettings>, copper_layers: i32);
-    pub fn build_board_thickness_from_stackup(&self) -> i32;
-    pub fn get_layer_distance(&self, a: PcbLayerId, b: PcbLayerId) -> i32;
-    pub fn synchronize_with_board(&mut self, settings: &BoardDesignSettings) -> bool;
-}
-
-// ---- title block, page, properties, variants, text variables ----
-// plain pub fields: titles, paper, plot_options, properties, current_variant, variant_names
-pub fn has_variant(&self, name: &str) -> bool;  pub fn add_variant(&mut self, name: &str);
-pub fn delete_variant(&mut self, name: &str);   pub fn rename_variant(&mut self, old: &str, new: &str);
-pub fn get_variant_description(&self, name: &str) -> String;  pub fn synchronize_properties(&mut self);
-/// BOARD::ResolveTextVar( token, variant, depth ): title block, board properties,
-/// built-ins, project text variables.
-pub fn resolve_text_var(&self, token: &mut String, variant: &str, depth: i32) -> bool;
-pub fn embedded_files(&self) -> &EmbeddedFiles;  pub fn fixup_embedded_data(&mut self);
-pub fn component_class_manager(&self) -> &ComponentClassManager;
-
-// ---- geometry ----
-pub fn compute_bounding_box(&self, ctx: &BoardCtx<'_>, board_edges_only: bool, physical_layers_only: bool) -> Box2I;
-pub fn board_edges_bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I;
-pub fn get_board_polygon_outlines(&self, ctx: &BoardCtx<'_>, infer_outline_if_necessary: bool,
-    error_handler: Option<&mut dyn OutlineErrorHandler>, allow_use_arcs_in_polygons: bool,
-    include_npth_as_outlines: bool) -> (ShapePolySet, bool);
-pub fn board_outline(&self, ctx: &BoardCtx<'_>) -> Arc<ShapePolySet>;    // PCB_BOARD_OUTLINE (cached)
-pub fn get_track_length(&self, ctx: &BoardCtx<'_>, track: TrackId) -> (i32, f64, f64, f64, f64);
-
-// ---- save-order comparators (free functions next to the C++ comparator's type) ----
-pub fn board_item_ptr_cmp(ctx: &BoardCtx<'_>, a: ItemId, b: ItemId) -> Ordering;  // BOARD_ITEM::ptr_cmp
-pub fn board_cmp_items(..); pub fn board_cmp_drawings(..); pub fn pcb_track_cmp_tracks(..);
-pub fn footprint_cmp_pads(..); pub fn footprint_cmp_drawings(..); pub fn footprint_cmp_zones(..);
-pub fn pcb_point_cmp_points(..);                                     // all: (ctx, a, b) -> Ordering
-```
 
 **Effective netclass, end to end**: the project-settings loader fills
 `design_settings.net_settings` (classes, label / pattern / chain assignments) from `.kicad_pro`;
@@ -792,38 +839,15 @@ net code -> `NetinfoItem::netclass` -> else `net_settings.default_netclass` -> e
 | `get_item_set()` | by UUID, ties by `ItemId` |
 | writer | the ported comparators; group members as sorted UUID strings |
 | group members (C++ `unordered_set`) | insertion order; record in `PORT_STATUS.md` |
-| any consumer map keyed by item and iterated | `BTreeMap<ItemId, _>`; record the deviation from pointer order |
+| anything C++ orders by pointer address | section 3.1 (analysis-doc order, else `ItemId` order); record it |
 
 ## 11. Module layout (`rust/crates/kicad-pcb/src/`)
 
 One module per C++ file; where one C++ file is split between work packages the Rust side is a
-directory whose files name the C++ function ranges they port.
-
-```
-lib.rs                     re-exports; `pub mod` list
-pending.rs                 port_pending!("CLASS::Method") macro (panics with the C++ name)
-arena.rs  ids.rs  items_macro.rs  side_table.rs  cache.rs           (kernel, new code)
-item.rs                    BoardItemBase, ConnectedItemBase, ParentRef, ItemFlags, small enums
-traits.rs                  BoardItem, BoardConnectedItem, BoardItemMut, Invalidate
-item_ref.rs                ItemRef, AnyItem, AnyItemMut, OwnedItem, FootprintTree
-ctx.rs                     BoardCtx, MutEnv, ParentFrame, LayerEnv, RuleResolver, ConnectivityQuery
-drc_api.rs                 DrcConstraintT, DrcConstraint, ErrorLoc, DRCE_* code table
-board/{mod,containers,index,journal,commit,nets,layers,queries,outline,text_vars,markers,compare}.rs
-board_item.rs  board_connected_item.rs  eda_item.rs
-netinfo.rs  netclass.rs  net_settings.rs  eda_pattern_match.rs
-board_design_settings.rs  zone_settings.rs  teardrop_parameters.rs  board_stackup.rs
-pcb_plot_params.rs  title_block.rs  page_info.rs  embedded_files.rs  component_class.rs
-pcb_track/{mod,arc,via,shapes}.rs  padstack.rs  pad/{mod,derive,shapes}.rs  pad_utils.rs
-footprint/{mod,transform,geometry,compare,shapes}.rs  footprint_courtyard_index.rs
-zone/{mod,shapes}.rs  zone_utils.rs
-eda_shape/{mod,geometry,shapes}.rs  line_ending.rs  stroke_params.rs  pcb_shape/{mod,lib_frame,shapes}.rs
-eda_text.rs  pcb_text.rs  pcb_field.rs  pcb_textbox.rs  pcb_tablecell.rs  pcb_table.rs
-pcb_generated_table.rs  pcb_dimension.rs  pcb_group.rs  pcb_generator.rs  pcb_target.rs
-pcb_point.rs  pcb_marker.rs  pcb_barcode.rs  pcb_reference_image.rs  pcb_constraint.rs
-pcb_3d_body.rs  pcb_grid_item.rs  pcb_drill_map.rs  convert_shape_list_to_polygon.rs
-io/kicad_sexpr/...         parser and writer (their own work packages, see pcb-io.md)
-project/...                .kicad_pro / settings loaders (see settings.md)
-```
+directory whose files name the C++ function ranges they port (`pad/{mod,derive,shapes}.rs`,
+`board/{mod,containers,index,journal,nets,layers,queries,outline,text_vars,markers,compare}.rs`).
+The complete tree is `board-model-types.md` section 19; `lib.rs` and the `mod.rs` files are
+written by M0 and then frozen (section 16).
 
 ## 12. Conventions
 
@@ -844,15 +868,19 @@ project/...                .kicad_pro / settings loaders (see settings.md)
 
 ## 13. How each consumer uses the model
 
-**Parser** (`pcb_io_kicad_sexpr_parser.cpp`, spec `analysis/pcb-io.md`). Journal off. Board-level
-items are built as values and added with `AddMode::BulkAppend`. A footprint is built as a
-`FootprintTree` value (children in C++ add order, lib-frame values as read; `(at)`/`(transform)`
-applied through the same functions C++ calls, in the same order, so the mandatory fields'
-hooks run) and moved in with `add_footprint`, which binds UUIDs in `BindSubtree` order. Nets are
-created by name on first use (`find_or_add_net`) so codes match C++. Group members, generator
-members and net-chain terminal pads are read as `Kiid`s and resolved after the loop
-(`resolve_groups`, `resolve_net_chain_terminal_pads`) like C++. Post-load fix-ups use
-`modify_*`.
+**Parser** (`pcb_io_kicad_sexpr_parser.cpp`, spec `analysis/pcb-io.md`). Holds `&mut Board`.
+Board-level leaf items are built as local values and added with `AddMode::BulkAppend`. A
+footprint follows the C++ statement order literally: `create_footprint()` where C++ does
+`make_unique<FOOTPRINT>( m_board )`; `(at)` / `(transform)` through `Board::footprint_*`; each
+child is a local value with `parent = Item(fp)`, read and converted with a short-lived
+`BoardCtx::bare(&board)` for getters and `board.child_env(..)` for the legacy
+`Rotate` / `Move` / `OverrideLibCoords` calls, then `footprint_add(fp, child, Append)`; finally
+`attach_footprint(fp, BulkAppend)` where C++ calls `m_board->Add`. Tables use
+`create_table` / `table_add_cell` / `attach_table` the same way. Arena indices therefore follow
+file order (3.1). Nets are created by name on first use (`find_or_add_net`) so codes match C++.
+Group members, generator members and net-chain terminal pads are read as `Kiid`s and resolved
+after the loop (`resolve_groups`, `resolve_net_chain_terminal_pads`) like C++. Post-load
+fix-ups use `modify_*`.
 
 **Writer** (`pcb_io_kicad_sexpr.cpp`). Takes `&BoardCtx` (bare). Builds `Vec<ItemId>` from the
 order lists, sorts with the ported comparators, formats; footprints from their child lists.
@@ -865,76 +893,90 @@ symbol profile) re-emitted as stored.
 `zone_layer_overrides`, mask expansion asks `ctx.rules`, exactly where C++ asks the board.
 
 **Connectivity + ratsnest** (`pcbnew/connectivity/`). `CN_ITEM::m_parent` -> `ItemId` (zone
-layers: `ZoneId` + layer + outline index); clusters, per-net lists and RN graphs hold handles.
-`ConnectivityData::build(&ctx)` walks `all_connected_items()`; `apply_changes(&ctx, changes)`
-consumes the journal (`Added` -> add, `Removed` -> invalidate by handle, `Modified` -> mark
-`net_before` dirty + re-add). Net propagation (`PropagateNets` -> `SetNetCode`) collects
-`(ItemId, NetCode)` pairs and applies them with `board.set_item_net` afterwards. Implements
-`ConnectivityQuery`.
+layers: `ZoneId` + layer + outline index); `CN_ITEM`s live in the algorithm's own vector and
+are named by their index (`CnItemId`), which is also the sort key of `m_connected` (R-1);
+clusters, per-net lists and RN graphs hold handles. `ConnectivityData::build(&mut self, ctx)`
+walks `all_connected_items()` (ctx without connectivity, see 6.1); it records
+`board.time_stamp()`. Tier 1/2 always rebuild in full after board edits (8.5). Net propagation
+(`PropagateNets` -> `SetNetCode`) collects `(ItemId, NetCode)` pairs and the caller applies
+them with `board.set_item_net` afterwards, then re-records the stamp (propagation does not
+change topology). Implements `ConnectivityQuery`.
 
 **DRC engine + providers** (`pcbnew/drc/`, spec `analysis/drc.md`). A run holds `&BoardCtx`
 (with connectivity and `rules = Some(&engine)`) for its whole duration, after a `&mut Board`
-preparation phase (`build_courtyard_caches`, `build_net_tie_cache`, triangulation,
-`synchronize_nets_and_netclasses`). `DRC_RTREE::ITEM_WITH_SHAPE` ->
-`{ parent: ItemId, shape: SharedShape, parent_shape: Option<SharedShape> }`; visitors resolve
-with `ctx.item(id)`. Pair caches key on `(ItemId, ItemId, PcbLayerId)`. Violations carry `Kiid`s
-(`RcItem::ids`); markers are added with `board.add_marker` after the providers ran. Dummy
-shapes are locals viewed with `ctx.detached`. The engine implements `RuleResolver`.
+preparation phase (`increment_time_stamp` where C++ does, `build_net_tie_cache`,
+triangulation, `synchronize_nets_and_netclasses`); run state is separate from the engine
+(section 7). `DRC_RTREE::ITEM_WITH_SHAPE` -> `{ parent: ItemId, parent_shape: SharedShape,
+sub: Option<u32> }`: C++ keeps a raw pointer into the parent shape's subshapes, Rust keeps the
+owner and the subshape index (needs the accessor `Shape::indexable_subshape(i) -> Option<&dyn
+Shape>` in `kicad-geom`; `indexable_subshapes()` allocates and is not for hot loops). Visitors
+resolve with `ctx.item(id)`. Pair caches key on `(ItemId, ItemId, PcbLayerId)`. Violations
+carry `Kiid`s (`RcItem::ids`) and a `DrcRuleInfo` copy of the violating rule (marker severity
+depends on it); the run collects them and the caller adds markers with `board.add_marker`
+afterwards (the C++ handler does it through a commit). Dummy shapes are locals viewed with
+`ctx.view`. The engine implements `RuleResolver`.
 
 **Zone filler** (`zone_filler.cpp`). Port pass by pass: each read pass is
 `fn pass_n(ctx: &BoardCtx, ..) -> PassNResult`, each write pass `apply_pass_n(&mut Board, ..)`
 through the section 8.4 writers (zone-layer overrides, fills, flags, islands, hashes). Earlier
 fills are visible to later passes because they are stored before the next read pass, exactly as
-the C++ ordering requires; never reorder a write relative to the reads that follow it. Dummy pads
-and vias for thermal spokes are clones viewed with `ctx.detached`. Teardrop zones are added with
-`add_zone` and removed with `remove_many`.
+the C++ ordering requires; never reorder a write relative to the reads that follow it. The
+C++ loops that write an override on the item they are reading (parallel, one item each) become
+"collect `(id, layer, value)`, then apply". Dummy pads and vias for thermal spokes are
+`detached_copy()` values viewed with `ctx.view`. Teardrop zones are added with `add_zone` and
+removed with `remove_many`. The filler takes `&mut Board`, `&mut ConnectivityData` and the
+`&dyn RuleResolver` as three separate arguments and builds a fresh `BoardCtx` per read pass.
 
 **Gerber / drill plotting** (`plot_board_layers.cpp`, `plot_brditems_plotter.cpp`, `gendrill_*`,
-spec `analysis/plot-fab.md`). Pure readers over a `BoardCtx` *with connectivity* (flashing of
-unconnected pad layers affects copper plots). Footprint graphics via `footprint_drawings` +
-`match AnyItem`; the "plot a modified copy of the pad" idiom is a clone + `detached`. Gerber X2
-attributes from `item.netname()`, `pad.number`, the parent footprint's reference field. Drill
-files iterate vias in `tracks()` and `get_pads()`, read padstack drills, `via_type`, `PadAttrib`.
+spec `analysis/plot-fab.md`). Pure readers over a `BoardCtx` *with connectivity and rules* (the
+CLI always has an engine: flashing of unconnected pad layers and rule-driven mask expansion
+affect plots). Footprint graphics via `footprint_drawings` + `match AnyItem`; the "plot a
+modified copy of the pad" idiom is `detached_copy()` + `ctx.view`. Gerber X2 attributes from
+`item.netname()`, `pad.number`, the parent footprint's reference field. Drill files iterate
+vias in `tracks()` and `get_pads()`, read padstack drills, `via_type`, `PadAttrib`.
 
 **Settings** (`analysis/settings.md`). The project-settings packages own JSON parsing and write
 into the plain-data structs here (`BoardDesignSettings`, `NetSettings`, severities, exclusions,
 `BoardProject::text_vars`); the model defines data, defaults (C++ constructors) and logic.
 
-**CLI** (`kicad-rs pcb drc | export gerbers | export drill`). Owns
-`Design { board, connectivity, drc }`; each sub-command is a sequence of borrow phases: load,
-`synchronize_nets_and_netclasses`, build connectivity, optional refill, run, write.
+**Session, CLI, wasm** (`kicad-session`, used by `kicad-cli` and `kicad-wasm`).
+`Session { board, connectivity, drc }` owns the peers and ports the `BOARD_LOADER` glue
+(`initializeLoadedBoard`: project settings, `board.project`, `synchronize_nets_and_netclasses`,
+connectivity build, engine init). Every operation is a sequence of borrow phases: mutate the
+board, rebuild what the time stamp says is stale, run with a `BoardCtx` that always carries
+both hooks. `kicad-fab` / `kicad-plot` receive the context and depend on neither peer crate.
 
 **External autorouter client.** Load -> enumerate (`tracks()`, `get_pads()`, `nets()`, zones,
-`board_outline`) -> `BoardCommit` with `add` / `remove` / `modify_track` (handles of untouched
-items stay valid) -> `drain_changes` into connectivity -> refill zones -> DRC -> export.
-Speculative passes use `BoardCommit::revert` (same handles come back) or `board.clone()`.
+`board_outline`) -> `add_track` / `remove` / `modify_track` (handles of untouched items stay
+valid) -> `session.rebuild_connectivity()` -> refill zones -> DRC -> export. Speculative passes
+work on `board.clone()` or remove what they added.
 
-**Push-and-shove router (stretch).** `PNS::ITEM::m_parent` -> `Option<ItemId>`;
+**Push-and-shove router (tier 3).** `PNS::ITEM::m_parent` -> `Option<ItemId>`;
 `PNS_KICAD_IFACE::SyncWorld` walks the board; the rule resolver adapter calls the same
-`RuleResolver`; `Commit()` maps to `BoardCommit`; interactive revert restores under the original
-handles so PNS parent links stay valid. `PNS::NODE` remains the router's own world.
+`RuleResolver`; `Commit()` needs the deferred `BoardCommit` (section 17).
 
 ## 14. wasm / JS
 
 wasm-bindgen cannot export references into Rust collections, so every design needs an id at the
-boundary; here the model's native id *is* that id. `kicad-wasm` exports one `Design` class:
+boundary; here the model's native id *is* that id. `kicad-wasm` wraps `kicad_session::Session`:
 
 ```ts
-class Design {                                   // Id = number (ItemId::to_bits); stale ids throw
-  static load(pcb: string, project?: string, rules?: string): Design;  save(): string;
-  resolve(uuid: string): Id | undefined;  uuidOf(id: Id): string;  isAlive(id: Id): boolean;  kindOf(id: Id): string;
-  trackIds(): Float64Array;  padIds(): Float64Array;  zoneIds(): Float64Array;  footprintIds(): Float64Array;
-  tracksPacked(): Int32Array;   // [kind, x1, y1, x2, y2, width, layer, net] * n, C++ order; also viasPacked, padsPacked
-  item(id: Id): object;  nets(): { code: number; name: string; netclass: string }[];   // JSON from ItemRef, board frame
-  addTrack(t: object): Id;  addArc(a: object): Id;  addVia(v: object): Id;  update(id: Id, patch: object): void;
-  remove(id: Id): boolean;  beginCommit(): void;  commit(): void;  revert(): void;
+class Session {                                  // Id = number (ItemId::to_bits); stale ids throw
+  static load(pcb: string, project?: string, rules?: string): Session;  save(): string;
+  resolve(uuid: string): Id | undefined;  uuidOf(id: Id): string;  isAlive(id: Id): boolean;
+  trackIds(): Float64Array;   // also padIds, zoneIds, footprintIds; kindOf(id), item(id): object (board frame)
+  tracksPacked(): Int32Array; // [kind, x1, y1, x2, y2, width, layer, net] * n, C++ order; also viasPacked, padsPacked
+  nets(): { code: number; name: string; netclass: string }[];
+  addTrack(t: object): Id;    // also addArc, addVia; update(id, patch); remove(id): boolean
+  snapshot(): Session;        // board.clone(): ids stay valid in the copy
   rebuildConnectivity(): void;  ratsnest(): Int32Array;  refillZones(ids?: Id[]): void;
   runDrc(options?: object): object[];   // violations carry UUIDs, positions, severities, texts
   plotGerber(layer: string, options?: object): string;  drillFiles(options?: object): object[];
 }
 ```
 
-Ids are valid for one `Design`; UUID strings are what JS keeps across `save()` / `load()`.
+Ids are valid for one `Session` (and its snapshots); UUID strings are what JS keeps across
+`save()` / `load()`.
 
 ## 15. Rules for implementers (checklist)
 
@@ -944,87 +986,161 @@ Ids are valid for one `Design`; UUID strings are what JS keeps across `save()` /
 3. Board-frame getters of footprint children take `ctx`; lib-frame values are `lib_*`. Never
    apply a footprint transform by hand outside `footprint/transform.rs` and the per-type
    derive functions.
-4. A method takes `ctx` iff its C++ body reaches the parent, the board, another item, the net
-   object or a hook (rule C1); trait methods always take it.
+4. Rule C1 (6.3): an inherent method backing a trait method has the trait's signature; other
+   inherent methods take `ctx` iff the C++ body reaches the parent, the board, another item, the
+   net object or a hook. Never put behaviour into an `impl Trait for T` block (6.2).
 5. Mutate only through `Board` methods; derived results through the section 8.4 writers. Do not
    add `pub` to arena fields or order lists.
 6. `rules == None` / `connectivity == None` must behave exactly like the C++ null branches; test
    each.
 7. Keep C++ container order: `push_front` where C++ does, `Append`-only exceptions of
    `FOOTPRINT::Add` included.
-8. `BTreeMap`/`BTreeSet` for anything iterated; pointer-order tie-breaks become `ItemId` order
-   and are recorded in `PORT_STATUS.md`.
+8. `BTreeMap`/`BTreeSet` for anything iterated; pointer-address order follows section 3.1 and
+   is recorded in `PORT_STATUS.md`.
 9. Default = C++ constructor with nil UUID; new UUIDs only from `board.kiid_generator`.
-10. Caches: per-item derived data in `OnceCache`/`KeyedCache` with every external input in the
-    key; nothing spanning items inside `Board`.
-11. Algorithm scratch flags go to side tables, not `base.flags`.
+10. Caches: per-item derived data in `KeyedCache` / `CacheCell` with every external input in
+    the key; nothing spanning items inside `Board`; consumers revalidate by time stamp.
+11. Algorithm scratch flags go to the algorithm's own maps, not `base.flags`.
 12. `Board::check_invariants()` after every mutating test step.
 13. Test frame-dependent behaviour with rotated, flipped and non-uniformly scaled footprints.
 14. Replace `port_pending!` markers of your package; leave none on reachable paths.
 15. Do not change a signature in this document or in `board-model-types.md` without the
     orchestrator; add new methods freely in your own modules.
+16. A C++ copy constructor is `detached_copy()`, never a bare `clone()`. Containers are created,
+    filled, attached; nothing in tier 1/2 uses the deferred items of section 17.
 
 ## 16. Work packages for the model
 
 Line counts are C++ lines actually ported (UI, property registration, protobuf, `View*`,
 `GetMsgPanelInfo`, `Serialize` excluded). Every package ports the matching `qa/tests/pcbnew`
 tests, keeps `check_invariants` green and replaces its `port_pending!` markers. File ownership is
-disjoint (Rust allows `impl` blocks for one type in several modules of the crate).
+disjoint: inherent `impl` blocks for one type may sit in several modules, trait `impl` blocks
+are delegation-only and belong to M0 (6.2). "M0" means M0a + M0b-e. "needs" names foundation
+work that must have landed (`G*` = kicad-geom packages of PLAN.md, `TF*` = text-font.md).
 
 | WP | Title | Rust modules | C++ sources | ~lines | depends on |
 |---|---|---|---|---|---|
-| **M0** | Types-only skeleton | every module of section 11 except `io/`, `project/`: all structs/enums of `board-model-types.md` with `Default` = C++ constructor defaults, the kernel (`arena`, `ids`, `items_macro`, `side_table`, `cache`, `ctx`, `item_ref`, `traits`, `drc_api`, `pending`), every public signature of this document with `port_pending!` bodies, trait impls for every type | all item/settings headers (`board.h`, `footprint.h`, `pad.h`, `padstack.h`, `pcb_track.h`, `zone.h`, `zone_settings.h`, `pcb_shape.h`, `eda_shape.h`, `eda_text.h`, `pcb_text.h`, `pcb_field.h`, `pcb_textbox.h`, `pcb_table*.h`, `pcb_dimension.h`, `pcb_group.h`, `eda_group.h`, `pcb_generator.h`, small items, `netinfo.h`, `netclass.h`, `net_settings.h`, `board_design_settings.h`, `board_stackup.h`, `pcb_plot_params.h`, `eda_item.h`, `board_item.h`, `drc_constraint_types.h`, `drc_rule.h`, `drc_item.h` code list), constructors | 3000 (headers) | foundation type names |
-| M1 | Containers, index, journal, commit | `board/{containers,index,journal,commit}.rs` | `board.cpp` Add/Remove/RemoveAll/FinalizeBulk*/ResolveItem/RepairDuplicateItemUuids/GetItemSet/collectOwnedItems/RunOnChildren/AllConnectedItems, `footprint.cpp` Add/Remove/RunOnChildren, `board_item_index.cpp`, `common/eda_group.cpp`, `board_commit.cpp` (semantics) | 1800 | M0 |
-| M2 | Item base | `board_item.rs`, `board_connected_item.rs`, `eda_item.rs`, `item_ref.rs` forwards | `board_item.cpp`, `board_connected_item.cpp`, `common/eda_item.cpp` (flags, custom properties) | 1100 | M0 |
+| **M0a** | Kernel and pattern (1 agent; reviewed before anything else starts) | `arena`, `ids`, `items_macro`, `cache`, `pending`, `item`, `traits` (all traits of 6.2 / 6.2a with full signatures), `ctx`, `item_ref`, `drc_api`, `board/mod.rs` (struct, `Index`, typed getters, order-list iterators, `check_invariants`); a **placeholder struct for every item and settings type** (base field + derives only) so that the item table compiles; and one family end to end as the pattern the others copy: `PcbTrack` / `PcbArc` / `PcbVia` / `Track` with all fields, constructor defaults, delegation shims, inherent stubs, `add_track`, `modify_track`, `tracks()`, a `BoardCtx` / `ItemRef` round-trip test, wasm32 build | `eda_item.h`, `board_item.h`, `board_connected_item.h`, `pcb_track.h`, `drc_constraint_types.h`, `drc_rule.h`, `drc_item.h` code list | 2500 (Rust) | kicad-core, kicad-geom type names (stubs per section 17) |
+| **M0b-e** | Type definitions (4 agents in parallel, disjoint files) | every struct / enum of `board-model-types.md` with `Default` = C++ constructor values, the delegation shims for exactly the virtuals the C++ class overrides, an inherent `port_pending!` stub for every signature of this document. **b**: padstack, pad, footprint, zone, zone settings, teardrop parameters. **c**: eda_shape, pcb_shape, line ending, eda_text, pcb_text, field, textbox, table, tablecell, dimension, barcode. **d**: `Board` fields, design settings, stackup, plot params, netinfo, netclass, net settings, embedded files, component classes, project data. **e**: group, generator, target, point, marker / `RcItem`, constraint, 3D body, grid item, drill map, reference image, generated-table data | the matching headers and constructors | 3000 (headers) | M0a |
+| M1 | Containers, index, journal | `board/{containers,index,journal}.rs` | `board.cpp` Add/Remove/RemoveAll/FinalizeBulk*/ResolveItem/RepairDuplicateItemUuids/GetItemSet/collectOwnedItems/RunOnChildren/AllConnectedItems, `footprint.cpp` constructor (mandatory fields) / Add / Remove / RunOnChildren as `create_footprint` / `footprint_add` / `attach_footprint`, table create / add cell / attach, `child_env`, `board_item_index.cpp`, `common/eda_group.cpp`; insertion-order arena indices (3.1); time stamp and journal | 1700 | M0 |
+| M2 | Item base | `board_item.rs`, `board_connected_item.rs`, `eda_item.rs`, `item_ref.rs` forwards | `board_item.cpp`, `board_connected_item.cpp`, `common/eda_item.cpp` (flags, custom properties), `BOARD_ITEM::ptr_cmp` | 1100 | M0 |
 | M3 | Nets and netclasses | `netinfo.rs`, `netclass.rs`, `board/nets.rs` | `netinfo_item.cpp`, `netinfo_list.cpp`, `common/netclass.cpp`, `board.cpp` net functions | 1500 | M0 |
-| M4 | Net settings logic | `net_settings.rs`, `eda_pattern_match.rs` | `common/project/net_settings.cpp` (non-JSON), `common/eda_pattern_match.cpp` | 2000 | M3 |
-| M5 | Design settings | `board_design_settings.rs`, `zone_settings.rs`, `teardrop_parameters.rs` | `board_design_settings.cpp` (defaults, getters, validation), `zone_settings.cpp`, `teardrop_parameters.cpp` | 2000 | M0 |
-| M6 | Stackup, plot params, page | `board_stackup.rs`, `pcb_plot_params.rs`, `title_block.rs`, `page_info.rs` | `board_stackup.cpp`, `stackup_predefined_prms.cpp`, `pcb_plot_params.cpp` (data), `title_block.cpp`, `page_info.cpp` | 2500 | M0 |
-| M7 | EdaShape core | `eda_shape/{mod,geometry}.rs`, `line_ending.rs` | `common/eda_shape.cpp` setters, arc/ellipse/rect/poly/bezier maths, move/rotate/flip/mirror/scale, bbox, Compare; `line_ending.cpp` data | 2800 | M0 |
-| M8 | EdaShape shapes | `eda_shape/shapes.rs`, `stroke_params.rs` | `eda_shape.cpp` makeEffectiveShapes, TransformShapeToPolygon, hatching, line endings; `stroke_params.cpp` | 2600 | M7 |
+| M4 | Net settings logic | `net_settings.rs` | `common/project/net_settings.cpp` (non-JSON); the pattern matcher is `kicad_core::eda_pattern_match` (already ported there, do not port it again) | 1400 | M3; needs kicad-core `eda_pattern_match` |
+| M5 | Design settings | `board_design_settings.rs`, `zone_settings.rs`, `teardrop_parameters.rs` | `board_design_settings.cpp` (defaults, getters, validation), `zone_settings.cpp`, `teardrop_parameters.cpp` | 2000 | M0; needs kicad-core JSON value type |
+| M6 | Stackup, plot params | `board_stackup.rs`, `pcb_plot_params.rs` | `board_stackup.cpp`, `stackup_predefined_prms.cpp`, `pcb_plot_params.cpp` (data); title block and page info are already in kicad-core | 2100 | M0; needs kicad-core plot enums |
+| M7 | EdaShape core | `eda_shape/{mod,geometry}.rs`, `line_ending.rs` | `common/eda_shape.cpp` setters, arc/ellipse/rect/poly/bezier maths, move/rotate/flip/mirror/scale, bbox, Compare; `line_ending.cpp` data | 2800 | M0; needs G2, G3, kicad-geom `Ellipse`, `TransformTrs` |
+| M8 | EdaShape shapes | `eda_shape/shapes.rs`, `stroke_params.rs` | `eda_shape.cpp` makeEffectiveShapes, TransformShapeToPolygon, hatching, line endings; `stroke_params.cpp` | 2600 | M7; needs G3-G6 |
 | M9 | PcbShape | `pcb_shape/*` | `pcb_shape.cpp` (lib-frame machinery, transforms, shapes, mask) | 2200 | M8 |
-| M10 | Text | `eda_text.rs`, `pcb_text.rs`, `pcb_field.rs` | `common/eda_text.cpp`, `pcb_text.cpp`, `pcb_field.cpp` | 2800 | M0, kicad-font |
+| M10 | Text | `eda_text.rs`, `pcb_text.rs`, `pcb_field.rs` | `common/eda_text.cpp`, `pcb_text.cpp`, `pcb_field.cpp` | 2800 | M0 (M2 at run time); needs TF1-TF3, G4 |
 | M11 | Text boxes, tables | `pcb_textbox.rs`, `pcb_table.rs`, `pcb_tablecell.rs`, `pcb_generated_table.rs` (data, defaults schema) | `pcb_textbox.cpp`, `pcb_table.cpp`, `pcb_tablecell.cpp`, `generated_table_schema.cpp` | 2800 | M9, M10 |
 | M12 | Dimensions | `pcb_dimension.rs` | `pcb_dimension.cpp` | 2550 | M10, M8 |
 | M13 | Padstack | `padstack.rs`, `pad_utils.rs` | `padstack.cpp`, `pad_utils.cpp` | 2400 | M0 |
 | M14 | Pad model | `pad/{mod,derive}.rs` | `pad.cpp`: frames, layers, attributes, FlashLayer, clearance/mask/paste/zone-connection overrides, flip/rotate/mirror, OnFootprint*, Compare, descriptions | 2200 | M13, M2 |
-| M15 | Pad shapes | `pad/shapes.rs` | `pad.cpp`: BuildEffectiveShapes/Polygon, TransformShapeToPolygon, TransformHoleToPolygon, mask shapes, MergePrimitivesAsPolygon | 1800 | M14, M9 |
-| M16 | Tracks and arcs | `pcb_track/{mod,arc}.rs` | `pcb_track.cpp`: PCB_TRACK, PCB_ARC, cmp_tracks, shapes | 1600 | M2 |
-| M17 | Vias | `pcb_track/via.rs`, `pcb_track/shapes.rs` | `pcb_track.cpp`: PCB_VIA layers, tenting/covering/plugging/capping/filling, backdrill, post-machining, FlashLayer, hole shapes, ValidateViaParameters | 2400 | M13, M16 |
-| M18 | Zones | `zone/*`, `zone_utils.rs` | `zone.cpp`, `zone_utils.cpp` | 2700 | M2, M5 |
-| M19 | Footprint A | `footprint/{mod,transform}.rs` | `footprint.cpp`: fields, variants, attributes, the `Board::footprint_*` cascade family, FootprintTree copy/remap, FixUuids, net-tie / jumper groups | 2500 | M14, M9, M10, M18 |
-| M20 | Footprint B | `footprint/{geometry,compare,shapes}.rs`, `footprint_courtyard_index.rs` | `footprint.cpp`: bbox/hull/courtyard caches, net-tie cache, cmp_*, TransformPadsToPolySet, TransformFPShapesToPolySet, text vars, FixUpPadsForBoard | 2500 | M19, M15, M21 |
-| M21 | Board outline | `convert_shape_list_to_polygon.rs`, `board/outline.rs` | `convert_shape_list_to_polygon.cpp`, `pcb_board_outline.cpp` | 2100 | M9 |
-| M22 | Board queries | `board/{layers,queries,text_vars,markers,compare}.rs` | `board.cpp` rest: layers, properties, variants, text vars, GetPad*, bbox, max clearance, exclusions/markers, groups sanity, comparators; `board_bounding_box.cpp`, `layer_utils.cpp` | 2600 | M1, M3 |
+| M15 | Pad shapes | `pad/shapes.rs` | `pad.cpp`: BuildEffectiveShapes/Polygon, TransformShapeToPolygon, TransformHoleToPolygon, mask shapes, MergePrimitivesAsPolygon | 1800 | M14, M9; needs G4-G6 |
+| M16 | Tracks and arcs | `pcb_track/{mod,arc}.rs` (track and arc shapes included) | `pcb_track.cpp`: PCB_TRACK, PCB_ARC, cmp_tracks, shapes | 1600 | M2 |
+| M17 | Vias | `pcb_track/via.rs`, `pcb_track/shapes.rs` (via and hole shapes) | `pcb_track.cpp`: PCB_VIA layers, tenting/covering/plugging/capping/filling, backdrill, post-machining, FlashLayer, hole shapes, ValidateViaParameters | 2400 | M13, M16 |
+| M18 | Zones | `zone/*`, `zone_utils.rs` | `zone.cpp`, `zone_utils.cpp` | 2700 | M2, M5; needs G4 (clipper), G6 |
+| M19 | Footprint A | `footprint/{mod,transform}.rs` | `footprint.cpp`: fields, variants, attributes, the `Board::footprint_*` cascade family (working on unattached footprints too), FixUuids, net-tie / jumper groups, `build_net_tie_cache` | 2500 | M1, M14, M9, M10, M18 |
+| M20 | Footprint B | `footprint/{geometry,compare,shapes}.rs`, `footprint_courtyard_index.rs` | `footprint.cpp`: bbox/hull/courtyard caches, net-tie cache, cmp_*, TransformPadsToPolySet, TransformFPShapesToPolySet, text vars, FixUpPadsForBoard | 2500 | M19, M15, M21; needs G6 |
+| M21 | Board outline | `convert_shape_list_to_polygon.rs`, `board/outline.rs` | `convert_shape_list_to_polygon.cpp`, `pcb_board_outline.cpp` | 2100 | M9; needs G4, G7 (nanoflann) |
+| M22 | Board queries | `board/{layers,queries,text_vars,markers,compare}.rs` | `board.cpp` rest: layers, properties, variants, text vars, GetPad*, bbox, max clearance, exclusions/markers, groups sanity, comparators; `board_bounding_box.cpp`, `layer_utils.cpp` | 2600 | M1, M3 (item `compare`s of M9-M12 at run time) |
 | M23 | Groups, generators, small items | `pcb_group.rs`, `pcb_generator.rs`, `pcb_point.rs`, `pcb_target.rs`, `pcb_marker.rs`, `pcb_constraint.rs`, `pcb_3d_body.rs`, `pcb_grid_item.rs`, `pcb_drill_map.rs` | the matching `.cpp`, `marker_base.cpp`, `rc_item.cpp` (data), tuning-pattern property normalisation | 2800 | M2 |
-| M24 | Images, embedded files, component classes | `pcb_reference_image.rs`, `embedded_files.rs`, `component_class.rs` | `pcb_reference_image.cpp`, `reference_image.cpp` (+ PNG/JPEG header probe), `embedded_files.cpp`, `component_classes/*.cpp` | 2200 | M0 |
-| M25 | Barcode (tier 2) | `pcb_barcode.rs` | `pcb_barcode.cpp` + encoder decision | 1100 | M10 |
+| M24 | Images, embedded files, component classes | `pcb_reference_image.rs`, `embedded_files.rs`, `component_class.rs` | `pcb_reference_image.cpp`, `reference_image.cpp` (+ PNG/JPEG header probe), `embedded_files.cpp`, `component_classes/*.cpp` | 2200 | M0; needs kicad-core MMH3 / `Hash128`, `base64`, `ruzstd` |
+| M25 | Barcode (tier 2) | `pcb_barcode.rs` | `pcb_barcode.cpp` + encoder decision | 1100 | M10; tier 2, data-only until then (section 17) |
 | M26 | Generated tables refresh (tier 2) | `pcb_generated_table.rs` | `pcb_generated_table.cpp`, `pcb_drill_chart.cpp`, `pcb_stackup_table.cpp` | 1900 | M11, drill writer |
 
 Order and parallelism:
 
 ```
-wave 0:  M0                                                          (1 agent; blocks everyone)
+wave 0a: M0a                                                         (1 agent, then review)
+wave 0b: M0b M0c M0d M0e                                             (4 agents)
 wave 1:  M1 M2 M3 M5 M6 M7 M10 M13 M24                               (9 agents)
 wave 2:  M4 M8 M14 M16 M18 M22 M23                                   (7)
 wave 3:  M9 M12 M17                                                  (3)
-wave 4:  M11 M15 M21 M19 M25                                         (5)
-wave 5:  M20 M26
+wave 4:  M11 M15 M21 M19                                             (4)
+wave 5:  M20            tier 2: M25 M26
 ```
 
-Downstream packages compile against M0 immediately. The parser and writer start after M0 + M1
-(board-level items) and need M19 for footprints at run time; connectivity after M14/M17/M18;
-DRC providers and plotting after their shape packages, with `port_pending!` making missing
-behaviour loud instead of wrong.
+M0a also ships `test_support.rs`: fixture builders that set the `pub(crate)` frame fields
+directly (a board with one rotated / flipped / scaled footprint and a child of each kind), so
+that wave 1-3 packages can run their frame tests before M1 and M19 land.
 
-## 17. Deviations to record and open questions
+The save-order comparators are model code (M2 `board_item_ptr_cmp`, M16 `pcb_track_cmp_tracks`,
+M20 `footprint_cmp_*`, M22 `board_cmp_*`, M23 `pcb_point_cmp_points`); pcb-io.md PCBIO-02
+consumes them and does not port them.
 
-Deviations (each into `kicad-pcb/PORT_STATUS.md`): pointer-order tie-breaks -> `ItemId` order;
-group member order -> insertion order; an item removed outside a commit and re-added gets a new
-handle (C++ keeps the address); the change journal replaces listeners; `BOARD` caches used only
-by DRC moved to `kicad-drc`; generated tables are not refreshed before save in tier 1 (C++
-`RefreshGeneratedTables`); barcode symbols and drill-map symbols are not drawn until their tier-2
-packages land; generator geometry is not regenerated.
+Downstream crates and the `io/` packages **compile** against the skeleton as soon as wave 0b is
+in, but they call setters and shape functions that are `port_pending!` until the owning package
+lands, so schedule them by this table, not by "after M0":
 
-Open questions are returned to the orchestrator with this document (foundation-type ownership,
-JSON crate, regex flavour for netclass patterns, barcode encoder, plot enums' crate).
+| downstream package | needs at run time |
+|---|---|
+| PCBIO-01 / 02 (parser and writer core, board skeleton), PCBIO-09 groups | M1, M2, M3, M22, M23 |
+| PCBIO-04 setup, stackup, plot params | M5, M6 |
+| PCBIO-03 tracks, vias, graphic shapes | M7, M9, M16, M17 |
+| PCBIO-05 text / PCBIO-10 dimensions | M10, M11 / M12 |
+| PCBIO-06 footprints / PCBIO-07 pads / PCBIO-08 zones | M19 / M13, M14 / M18 |
+| connectivity + ratsnest | M1-M3, M14, M16-M18, M9; pad and zone contact shapes: M15 |
+| DRC engine (rules, implicit rules) | M3-M5, M14, M17, M18 |
+| DRC providers, plotting, drill files | the shape packages M8, M9, M10-M12, M15, M17, M18, M20, M21 |
+| zone filler | M15, M17, M18, M20, M21, connectivity, DRC engine |
+
+Nine agents editing one crate at once will break each other's `cargo check` now and then
+(PORTING.md section 7 applies: small complete increments, wait and retry). `lib.rs`, the
+`pub mod` lines, the trait shim blocks and `Cargo.toml` are frozen after wave 0b; a package
+that needs a new module file or dependency asks the orchestrator.
+
+## 17. Deviations, deferred machinery, resolved decisions
+
+**Deviations** (each into `kicad-pcb/PORT_STATUS.md`): pointer-address order replaced per
+section 3.1; group member order -> insertion order; an item removed and re-added gets a new
+handle (C++ keeps the address); the board time stamp moves on every edit (C++: commit push,
+remove, DRC init); listeners replaced by time-stamp revalidation; `BOARD` caches used only by
+DRC moved to `kicad-drc`; generated tables are not refreshed before save in tier 1 (C++
+`RefreshGeneratedTables`); barcode symbols and drill-map symbols are not drawn until their
+tier-2 packages land; generator geometry is not regenerated; library footprints are parsed
+into a holder board instead of with a null board.
+
+**Deferred: not built in M0-M24, not to be used by any tier 1/2 package.** Each item was in
+revision 1; none is needed for load / save / connectivity / DRC / refill / plot / autorouter
+clients, and each can be added later without changing a signature above.
+
+| deferred | why it can wait | when it comes back |
+|---|---|---|
+| `BoardCommit` (add / modify / remove / push / revert) and arena *parking* (a removed item restorable under its handle) | nothing headless reverts; DRC markers and filler results are written directly; clients use `board.clone()` | tier 3 interactive router (`PNS_KICAD_IFACE::Commit`), undo in a GUI host |
+| change-journal consumers (`apply_changes` in connectivity, journal-driven cache updates) | full rebuild is equivalent (R-6) | incremental connectivity for interactive use |
+| `with_item_taken` / a `Taken` slot state | clone-edit-store covers it | never, unless profiling says so |
+| `SideTable<T, V>` | `HashMap<ItemId, V>` is enough | optimisation only |
+| `OnceCache` | `KeyedCache` with an always-valid predicate | - |
+| `FootprintTree` / `TableTree` behaviour (`footprint_take`, adding a tree, copy between boards) | the parser creates containers in place; the types exist as data only | placing library footprints, clipboard, footprint update from library |
+| `Similarity`, `NormalizeForCompare`, `Duplicate`, `swapData` | editor and library-parity operations | with their first consumer |
+
+**Decisions of the orchestrator (they close the open questions of revision 1).**
+
+* `kicad-geom` owns the kimath ports `TransformTrs`, `EdaOrientation` (already there),
+  `Ellipse<T>` / `ShapeEllipse`, `Vector3D`, `ShapeNull`, `ErrorLoc`. Until one lands, M0 may
+  carry a local stand-in in `kicad-pcb/src/foundation_stub.rs` (one module, each item marked
+  `// REMOVE when kicad-geom provides X`); `rg foundation_stub` must be empty before the crate
+  is declared done.
+* `kicad-geom` also owns the kimath hash helpers (`Hash128`, MMH3, MD5; package G6a).
+* `kicad-core` owns `UnitsProvider`, `CaseInsensitiveMap`, the shared plot
+  enums (`PlotFormat`, `DrillMarks`, `PlotTextMode`, `DxfOutlineMode`, `DxfUnits`) and the JSON
+  module (`serde_json` 1.0 with `preserve_order` + `float_roundtrip`, re-exported as
+  `kicad_core::json::Value`, plus the hand-written nlohmann-compatible formatter of
+  THIRD_PARTY_EQUIVALENTS.md 3.3). `TitleBlock`, `PageInfo`, `StrokeParams`,
+  `TextAttributes`, `MAX_CU_LAYERS` are the existing kicad-core types; nothing here redefines
+  them.
+* `trait Shape` is `Send + Sync` (it already is); `RuleResolver` and `ConnectivityQuery` are
+  `Sync`; `Board` is `Sync`.
+* Netclass pattern matching uses `kicad_core::eda_pattern_match` (port of
+  `common/eda_pattern_match.cpp`): wildcard patterns are hand-ported, regex patterns use the
+  pure-Rust `regress` engine, which was closest to wxRegEx (PCRE2) in the experiment of
+  THIRD_PARTY_EQUIVALENTS.md 3.7 (2 of 55 realistic patterns differ, against 14 for `regex`).
+  A pattern `regress` cannot compile is a non-match with a warning, a recorded deviation. The
+  M4 implementer greps every `.kicad_pro` of the corpus for netclass patterns and lists any
+  affected ones in `PORT_STATUS.md`.
+* Barcodes stay data-only until tier 2: round-tripped, bounding-rectangle shape, plotting
+  reports the gap (M25 decides the encoder).
+* `kicad-session` (new small crate, depends on kicad-pcb, kicad-connectivity, kicad-drc,
+  kicad-zone) owns `Session { board, connectivity, drc }` and the `BOARD_LOADER` glue;
+  `kicad-cli` and `kicad-wasm` are thin layers over it.

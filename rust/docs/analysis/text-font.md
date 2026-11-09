@@ -1,5 +1,9 @@
 # Text, fonts and text-to-geometry - porting analysis
 
+> **Precedence note (orchestrator).** Where the Rust layout proposed in this document conflicts
+> with `rust/docs/design/board-model.md` (revision 2, Fable-reviewed), the design document wins.
+> In particular: `TextAttributes` lives in `kicad-core` (not `kicad-font`); `EDA_TEXT` behaviour is reached through the `EdaTextItem` trait of board-model.md 6.2a, never by running an algorithm on the bare `EdaText` data struct; the stroke font, layout engine and markup parser (TF1-TF3) are already ported in `kicad-font`.
+
 Analyst document for the port of KiCad's text engine: the stroke ("KiCad Font") and outline
 (TrueType/OpenType) fonts in `common/font/`, the Newstroke glyph table, the markup parser
 (`~{overbar}`, `_{sub}`, `^{super}`), `EDA_TEXT` layout (justification, multi-line, bounding

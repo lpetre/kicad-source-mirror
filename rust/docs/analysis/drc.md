@@ -1,5 +1,9 @@
 # DRC (design rule checker) - porting analysis
 
+> **Precedence note (orchestrator).** Where the Rust layout proposed in this document conflicts
+> with `rust/docs/design/board-model.md` (revision 2, Fable-reviewed), the design document wins.
+> In particular: per-run board caches must be `Sync` (no `RefCell`); the engine is split into a shared rule resolver (`RuleResolver`, implemented by kicad-drc, `Sync`) and separate `&mut` run state; R-tree payloads are `{ parent: ItemId, parent_shape: SharedShape, sub: Option<u32> }` (board-model.md 13).
+
 Analyst document for the port of `pcbnew/drc/` (plus the expression language it uses) to the Rust
 crate `kicad-drc`. The C++ tree is the specification; all line numbers refer to the files in
 `<kicad>` as checked in (KiCad master, board file format 20261031, `KICAD_SEMANTIC_VERSION`

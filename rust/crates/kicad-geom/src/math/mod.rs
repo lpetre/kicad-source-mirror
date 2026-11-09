@@ -21,4 +21,5 @@ pub mod box2;
 pub mod box2_minmax;
 pub mod util;
 pub mod vector2;
+pub mod vector3;
 pub mod wide_int;

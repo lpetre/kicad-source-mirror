@@ -62,10 +62,18 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
       kicad-core; outline fonts (tier 2/3) via harfrust + skrifa; wasm-bindgen pinned =0.2.130
       (CLI installed).
 - [x] Analysis docs: pcb-io, drc, plot-fab, settings, connectivity-zones, text-font.
-- [ ] Board model design: Opus synthesis chose proposal B (typed arenas + Copy handles) with
-      grafts from A and C (docs/design/board-model.md + board-model-types.md). Dedicated Fable
-      review running; nothing is built on it until that verdict is in. Work packages M0..M26
-      (M0 = types-only skeleton, blocks everything).
+- [x] Board model design: Opus synthesis chose proposal B (typed arenas + Copy handles).
+      Dedicated Fable review: approve-with-changes; it found and fixed two blockers (items
+      could not identify themselves to connectivity; the parser's detached-footprint plan)
+      plus five major issues, deferred machinery not needed for tier 1/2, and split M0 into
+      M0a (kernel, reviewed) + M0b-e (four parallel type packages). Design docs are now
+      revision 2: docs/design/board-model.md + board-model-types.md.
+- [ ] Model: M0a kernel (Opus) -> Fable gate review (running). Then M0b-e, then waves 1-5
+      per board-model.md section 16.
+- [ ] pcb-dump: item-level C++ reference dump tool linking pcbnew (running, Opus); it will
+      be the ground truth for the M packages (rust/tools/pcb-dump, docs/PCB_DUMP_FORMAT.md).
+- Follow-ups owed to the design review: kicad-geom needs `Shape::indexable_subshape(i)`
+  (assign with G5); kicad-drc must split rule resolver from run state.
 - Foundation crates:
   - [x] kicad-sexpr (S1) - lexer, formatter, Prettify, tree; oracle goldens over 479 files.
   - [x] kicad-geom G1 math - 1M-case differential oracle bit-exact.

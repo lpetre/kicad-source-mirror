@@ -21,6 +21,7 @@
 
 use std::fmt;
 
+use crate::cmath::f64_to_i32_x86;
 use crate::geometry::approximation::ErrorLoc;
 use crate::geometry::circle::Circle;
 use crate::geometry::eda_angle::{ANGLE_0, ANGLE_90, ANGLE_360, EdaAngle};
@@ -295,7 +296,7 @@ impl ShapeArc {
         self.mid = a_start;
         self.end = a_end;
         // double to int conversion
-        self.width = a_width as i32;
+        self.width = f64_to_i32_x86(a_width);
 
         let center: Vector2I =
             calc_arc_center_from_angle(a_start.into(), a_end.into(), a_angle).cast();
@@ -415,7 +416,7 @@ impl ShapeArc {
             return 0;
         }
 
-        let circ = Circle::new(self.get_center(), self.get_radius() as i32);
+        let circ = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
 
         let intersections = circ.intersect_line(a_seg);
 
@@ -437,7 +438,7 @@ impl ShapeArc {
             return 0;
         }
 
-        let thiscirc = Circle::new(self.get_center(), self.get_radius() as i32);
+        let thiscirc = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
 
         let intersections = thiscirc.intersect(a_circle);
 
@@ -459,8 +460,8 @@ impl ShapeArc {
             return 0;
         }
 
-        let thiscirc = Circle::new(self.get_center(), self.get_radius() as i32);
-        let othercirc = Circle::new(a_arc.get_center(), a_arc.get_radius() as i32);
+        let thiscirc = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
+        let othercirc = Circle::new(a_arc.get_center(), f64_to_i32_x86(a_arc.get_radius()));
 
         let intersections = thiscirc.intersect(&othercirc);
 
@@ -525,7 +526,7 @@ impl ShapeArc {
     pub fn nearest_point(&self, a_p: Vector2I) -> Vector2I {
         const S_EPSILON: Ecoord = 8;
 
-        let full_circle = Circle::new(self.get_center(), self.get_radius() as i32);
+        let full_circle = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
         let nearest_pt = full_circle.nearest_point(a_p);
 
         if (nearest_pt - self.start).squared_euclidean_norm() <= S_EPSILON {
@@ -571,7 +572,7 @@ impl ShapeArc {
 
         *a_dist_sq = i64::MAX;
 
-        let circle1 = Circle::new(self.get_center(), self.get_radius() as i32);
+        let circle1 = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
         let circle2 = a_circle.get_circle();
         let intersections = circle1.intersect(&circle2);
 
@@ -626,7 +627,7 @@ impl ShapeArc {
         a_dist_sq: &mut i64,
     ) -> bool {
         *a_dist_sq = i64::MAX;
-        let circle = Circle::new(self.get_center(), self.get_radius() as i32);
+        let circle = Circle::new(self.get_center(), f64_to_i32_x86(self.get_radius()));
 
         // First check for intersections on the circle
         let intersections = circle.intersect_seg(a_seg);
@@ -777,7 +778,7 @@ impl ShapeArc {
 
         for pt in pts1 {
             if a_arc.slice_contains_point(pt) {
-                let circle = Circle::new(center2, a_arc.get_radius() as i32);
+                let circle = Circle::new(center2, f64_to_i32_x86(a_arc.get_radius()));
                 *a_pt_a = pt;
                 *a_pt_b = circle.nearest_point(pt);
                 *a_dist_sq = a_pt_a.squared_distance(*a_pt_b);
@@ -794,7 +795,7 @@ impl ShapeArc {
 
         for pt in pts2 {
             if self.slice_contains_point(pt) {
-                let circle = Circle::new(center1, self.get_radius() as i32);
+                let circle = Circle::new(center1, f64_to_i32_x86(self.get_radius()));
                 *a_pt_a = circle.nearest_point(pt);
                 *a_pt_b = pt;
                 *a_dist_sq = a_pt_a.squared_distance(*a_pt_b);
@@ -814,8 +815,8 @@ impl ShapeArc {
             return true;
         }
 
-        let circle1 = Circle::new(center1, self.get_radius() as i32);
-        let circle2 = Circle::new(center2, a_arc.get_radius() as i32);
+        let circle1 = Circle::new(center1, f64_to_i32_x86(self.get_radius()));
+        let circle2 = Circle::new(center2, f64_to_i32_x86(a_arc.get_radius()));
 
         // First check for intersections on the circles
         let intersections = circle1.intersect(&circle2);
@@ -999,12 +1000,12 @@ impl ShapeArc {
             n = 0;
             effective_error = external_radius;
         } else {
-            n = get_arc_to_segment_count(external_radius as i32, a_max_error, ca);
+            n = get_arc_to_segment_count(f64_to_i32_x86(external_radius), a_max_error, ca);
 
             // Recalculate the effective error of approximation, that can be < aMaxError
-            let seg360: i32 = (n as f64 * 360.0 / ca.as_degrees().abs()) as i32;
+            let seg360: i32 = f64_to_i32_x86(n as f64 * 360.0 / ca.as_degrees().abs());
             effective_error =
-                circle_to_end_segment_delta_radius(external_radius as i32, seg360) as f64;
+                circle_to_end_segment_delta_radius(f64_to_i32_x86(external_radius), seg360) as f64;
         }
 
         // Split the error on either side of the arc.  Since we want the start and end points
@@ -1177,7 +1178,7 @@ impl Shape for ShapeArc {
         }
 
         // SHAPE_CIRCLE( center, radius ): the double radius is truncated to int
-        let circle = ShapeCircle::new(center, radius as i32);
+        let circle = ShapeCircle::new(center, f64_to_i32_x86(radius));
         let clearance_sq: Ecoord = Seg::square(a_clearance);
 
         // Circle or at least an arc with less space remaining than the clearance
@@ -1187,7 +1188,7 @@ impl Shape for ShapeArc {
             let a_dist_sq: Ecoord = wrapping_sub(a_seg.a, center).squared_euclidean_norm();
             let b_dist_sq: Ecoord = wrapping_sub(a_seg.b, center).squared_euclidean_norm();
             // SEG::Square takes an int: the double difference is truncated
-            let radius_sq: Ecoord = Seg::square((radius - a_clearance as f64) as i32);
+            let radius_sq: Ecoord = Seg::square(f64_to_i32_x86(radius - a_clearance as f64));
 
             if a_dist_sq < radius_sq && b_dist_sq < radius_sq {
                 return false;
@@ -1277,7 +1278,7 @@ impl Shape for ShapeArc {
         }
 
         // CIRCLE( center, radius ): VECTOR2L to VECTOR2I conversion, double radius truncated
-        let full_circle = Circle::new(Vector2I::from_vec(center), radius as i32);
+        let full_circle = Circle::new(Vector2I::from_vec(center), f64_to_i32_x86(radius));
         let mut nearest_pt: Vector2D = full_circle.nearest_point_d(Vector2D::from(a_p));
         let mut dist: i32 = ki_round(nearest_pt.distance(Vector2D::from(a_p)));
         let mut angle_to_pt = EdaAngle::from_vector(a_p - full_circle.center); // Angle from center to the point
@@ -1287,7 +1288,7 @@ impl Shape for ShapeArc {
             // because this trucates the distance to an integer before subtracting
             dist = ki_round(radius - ((a_p - center).squared_euclidean_norm() as f64).sqrt());
             // VECTOR2I( radius, 0 ): the double radius is truncated to int
-            nearest_pt = Vector2D::from_vec(center + Vector2I::new(radius as i32, 0));
+            nearest_pt = Vector2D::from_vec(center + Vector2I::new(f64_to_i32_x86(radius), 0));
             rotate_point_around(&mut nearest_pt, Vector2D::from_vec(center), -angle_to_pt);
         }
 

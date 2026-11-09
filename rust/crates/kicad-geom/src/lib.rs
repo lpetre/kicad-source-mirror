@@ -49,14 +49,20 @@
 //!
 //! The most used items are re-exported at the crate root.
 
+pub mod bezier_curves;
 pub mod cmath;
 pub mod geometry;
+pub mod hash;
+pub mod hash_128;
 pub mod kicore;
 pub mod math;
+pub mod md5_hash;
+pub mod mmh3_hash;
 pub mod ostream;
 pub mod stdsort;
 pub mod test_utils;
 pub mod thirdparty;
+pub mod transform;
 pub mod trigo;
 
 pub use crate::geometry::eda_angle::{

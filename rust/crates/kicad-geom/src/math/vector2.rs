@@ -138,14 +138,18 @@ pub trait SignedCoord: Coord {
 
 /// The integral-target branches of the `VECTOR2` converting constructor.
 macro_rules! impl_cast_from_num_integral {
-    ($t:ty) => {
+    ($t:ty, $fconv:expr) => {
         #[inline]
         #[allow(clippy::unnecessary_cast)]
         fn cast_from_num(n: Num) -> $t {
             match n {
                 // else if constexpr( std::is_floating_point<CastingType>() )
-                Num::F64(v) => std_clamp(v, <$t>::MIN as f64, <$t>::MAX as f64) as $t,
-                Num::F32(v) => std_clamp(v, <$t>::MIN as f32, <$t>::MAX as f32) as $t,
+                // The final static_cast is the x86-64 cvttsd2si / cvttss2si conversion of the
+                // reference build: NaN, and a clamp limit that is not representable (2^63 for
+                // int64_t, 2^31 as float for int), give INT_MIN / INT64_MIN (PORTING.md
+                // section 9; floats convert exactly to double)
+                Num::F64(v) => $fconv(std_clamp(v, <$t>::MIN as f64, <$t>::MAX as f64)),
+                Num::F32(v) => $fconv(std_clamp(v, <$t>::MIN as f32, <$t>::MAX as f32) as f64),
                 // else if constexpr( std::is_integral<T>() && std::is_integral<CastingType>() )
                 Num::I32(v) => std_clamp(v as i64, <$t>::MIN as i64, <$t>::MAX as i64) as $t,
                 Num::I64(v) => std_clamp(v, <$t>::MIN as i64, <$t>::MAX as i64) as $t,
@@ -263,7 +267,7 @@ impl Coord for i32 {
         Num::I32(self)
     }
 
-    impl_cast_from_num_integral!(i32);
+    impl_cast_from_num_integral!(i32, crate::cmath::f64_to_i32_x86);
 
     #[inline]
     fn to_extended(self) -> i64 {
@@ -316,7 +320,7 @@ impl Coord for i64 {
         Num::I64(self)
     }
 
-    impl_cast_from_num_integral!(i64);
+    impl_cast_from_num_integral!(i64, crate::cmath::f64_to_i64_x86);
 
     #[inline]
     fn to_extended(self) -> i64 {
@@ -371,7 +375,9 @@ impl Coord for u32 {
         Num::U32(self)
     }
 
-    impl_cast_from_num_integral!(u32);
+    // (unsigned: the low 32 bits of the 64-bit conversion, which is `as u32` for every
+    // clamped value and 0 for NaN)
+    impl_cast_from_num_integral!(u32, |x: f64| x as u32);
 
     #[inline]
     fn to_extended(self) -> u32 {
@@ -685,8 +691,8 @@ impl<T: Coord> Vector2<T> {
     /// * Between integral types: the value is clamped to the range of the target type.
     ///
     /// Where the C++ result is undefined (NaN, or a clamp limit that is not representable in
-    /// the target type such as `2^63`), the port follows Rust's `as` conversion: NaN becomes 0
-    /// and out-of-range values saturate.
+    /// the target type such as `2^63`), the port yields what the reference build (x86-64)
+    /// does: `INT_MIN` / `INT64_MIN` for `int` / `int64_t` targets (PORTING.md section 9).
     #[inline]
     pub fn cast<U: Coord>(self) -> Vector2<U> {
         Vector2::new(

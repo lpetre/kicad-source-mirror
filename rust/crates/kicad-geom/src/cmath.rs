@@ -118,27 +118,57 @@ pub fn log10(x: f64) -> f64 {
     x.log10()
 }
 
-/// A plain C++ `(int)` / `static_cast<int>` of a `double`, as the reference binary executes it
-/// (x86-64 `cvttsd2si`): truncation towards zero, and `INT_MIN` for NaN and every value out of
-/// the `int` range (undefined behaviour in C++; Rust's `as` would saturate instead).  See
-/// `PORTING.md` section 9.
+/// A plain C++ `(int)` conversion (or implicit conversion) of a `double`, as the reference
+/// build (x86-64, `cvttsd2si`) executes it: truncation towards zero, and `INT_MIN` for NaN and
+/// for every value whose truncation is outside the `int` range.  The C++ behaviour is
+/// undefined in that case; Rust's `as` would saturate instead (PORTING.md section 9).
 #[inline]
 pub fn f64_to_i32_x86(x: f64) -> i32 {
-    if x > -2_147_483_649.0 && x < 2_147_483_648.0 {
+    if x > -2147483649.0 && x < 2147483648.0 {
         x as i32
     } else {
         i32::MIN
     }
 }
 
-/// Like [`f64_to_i32_x86`] for a 64-bit target type (`int64_t`, `long`): `i64::MIN` for NaN
-/// and out-of-range values.
+/// A plain C++ conversion of a `double` to `int64_t` / `long long`, as the reference build
+/// (x86-64, 64-bit `cvttsd2si`) executes it: truncation towards zero, and `INT64_MIN` for NaN
+/// and for every out-of-range value (see [`f64_to_i32_x86`]).
 #[inline]
 pub fn f64_to_i64_x86(x: f64) -> i64 {
-    if x >= -9_223_372_036_854_775_808.0 && x < 9_223_372_036_854_775_808.0 {
+    if x >= -9223372036854775808.0 && x < 9223372036854775808.0 {
         x as i64
     } else {
         i64::MIN
+    }
+}
+
+/// Plain C++ conversion of a coordinate type to `int` on the reference build: wrapping
+/// narrowing for integers (two's complement, as g++ defines it), [`f64_to_i32_x86`] for
+/// doubles.  Used by generic code (the `BOX2` methods) where the coordinate type varies.
+pub trait ToI32X86 {
+    /// `(int) self` as executed by the reference build.
+    fn to_i32_x86(self) -> i32;
+}
+
+impl ToI32X86 for i32 {
+    #[inline]
+    fn to_i32_x86(self) -> i32 {
+        self
+    }
+}
+
+impl ToI32X86 for i64 {
+    #[inline]
+    fn to_i32_x86(self) -> i32 {
+        self as i32
+    }
+}
+
+impl ToI32X86 for f64 {
+    #[inline]
+    fn to_i32_x86(self) -> i32 {
+        f64_to_i32_x86(self)
     }
 }
 
@@ -147,14 +177,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn x86_casts() {
-        assert_eq!(f64_to_i32_x86(-2_147_483_648.9), i32::MIN);
-        assert_eq!(f64_to_i32_x86(2_147_483_647.9), i32::MAX);
-        assert_eq!(f64_to_i32_x86(2_147_483_648.0), i32::MIN);
+    fn x86_conversions() {
+        assert_eq!(f64_to_i32_x86(1.9), 1);
+        assert_eq!(f64_to_i32_x86(-1.9), -1);
+        assert_eq!(f64_to_i32_x86(2147483647.9), i32::MAX);
+        assert_eq!(f64_to_i32_x86(-2147483648.9), i32::MIN);
+        assert_eq!(f64_to_i32_x86(2147483648.0), i32::MIN);
+        assert_eq!(f64_to_i32_x86(-2147483649.0), i32::MIN);
         assert_eq!(f64_to_i32_x86(f64::NAN), i32::MIN);
-        assert_eq!(f64_to_i32_x86(-1.5), -1);
-        assert_eq!(f64_to_i64_x86(1e19), i64::MIN);
-        assert_eq!(f64_to_i64_x86(-3.7), -3);
+        assert_eq!(f64_to_i32_x86(f64::INFINITY), i32::MIN);
+        assert_eq!(f64_to_i32_x86((i64::MAX as f64).sqrt()), i32::MIN);
+        assert_eq!(f64_to_i64_x86(-9223372036854775808.0), i64::MIN);
+        assert_eq!(f64_to_i64_x86(9223372036854775808.0), i64::MIN);
+        assert_eq!(f64_to_i64_x86(9223372036854774784.0), 9223372036854774784);
+        assert_eq!(f64_to_i64_x86(f64::NAN), i64::MIN);
+        assert_eq!(f64_to_i64_x86(-3.5), -3);
     }
 
     #[test]

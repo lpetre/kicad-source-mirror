@@ -51,6 +51,7 @@
 //! | `IsBOX2Safe( box )` | `is_box2_safe` (method) |
 //! | `KiROUND( BOX2D )` | [`crate::math::util::ki_round`] |
 
+use crate::cmath::ToI32X86;
 use crate::geometry::eda_angle::{
     ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_270, ANGLE_360, DEGREES_T, EdaAngle,
 };
@@ -312,7 +313,8 @@ macro_rules! impl_box2 {
             /// converted to `int` as the C++ return type does.
             #[inline]
             pub fn size_max(&self) -> i32 {
-                (if self.size.x > self.size.y { self.size.x } else { self.size.y }) as i32
+                // (int) conversion as on the reference build (INT_MIN for out-of-range doubles)
+                (if self.size.x > self.size.y { self.size.x } else { self.size.y }).to_i32_x86()
             }
 
             /// Port of `BOX2::SetOrigin( const Vec& pos )`.
@@ -535,10 +537,10 @@ macro_rules! impl_box2 {
 
                 /* Test A : Any corners exist in rotated rect? */
                 let mut corners: [Vector2I; 4] = [
-                    Vector2I::new(self.left() as i32, self.top() as i32),
-                    Vector2I::new(self.right() as i32, self.top() as i32),
-                    Vector2I::new(self.right() as i32, self.bottom() as i32),
-                    Vector2I::new(self.left() as i32, self.bottom() as i32),
+                    Vector2I::new(self.left().to_i32_x86(), self.top().to_i32_x86()),
+                    Vector2I::new(self.right().to_i32_x86(), self.top().to_i32_x86()),
+                    Vector2I::new(self.right().to_i32_x86(), self.bottom().to_i32_x86()),
+                    Vector2I::new(self.left().to_i32_x86(), self.bottom().to_i32_x86()),
                 ];
 
                 let r_centre: Vector2I = a_rect.centre().cast();

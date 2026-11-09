@@ -1,5 +1,9 @@
 # Board file reader and writer (`.kicad_pcb` / `.kicad_mod`) - porting spec
 
+> **Precedence note (orchestrator).** Where the Rust layout proposed in this document conflicts
+> with `rust/docs/design/board-model.md` (revision 2, Fable-reviewed), the design document wins.
+> In particular: library footprints (`.kicad_mod`) are parsed into a holder `Board` with one attached footprint, not into `Vec<Footprint>`; the save-order comparators are model code (packages M2, M16, M20, M22, M23) which PCBIO-02 consumes and does not port; the parser creates footprints and tables in place with `create_footprint` / `footprint_add` / `attach_footprint` (board-model.md 8.1).
+
 Analyst document for the port of `pcbnew/pcb_io/kicad_sexpr/` (KiCad master, board file format
 `SEXPR_BOARD_FILE_VERSION 20261031`). Everything below was verified against the C++ tree in this
 repository; line numbers refer to the files as checked in. Abbreviations used throughout:

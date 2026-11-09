@@ -285,7 +285,8 @@ pub trait Shape: Debug + Send + Sync {
     /// Port of `SHAPE::Distance()`: the minimum distance from a point to this shape.
     fn distance(&self, a_p: Vector2I) -> i32 {
         // C++: `return sqrt( SquaredDistance( aP, false ) );` (double truncated to int)
-        (self.squared_distance(a_p, false) as f64).sqrt() as i32
+        // (INT_MIN when nothing was measured: `ECOORD_MAX`, e.g. an empty outline)
+        crate::cmath::f64_to_i32_x86((self.squared_distance(a_p, false) as f64).sqrt())
     }
 
     /// Port of `SHAPE::SquaredDistance()`.

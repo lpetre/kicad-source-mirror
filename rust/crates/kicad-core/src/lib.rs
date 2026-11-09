@@ -41,14 +41,25 @@
 //! | [`stroke_params`] | `include/stroke_params.h`, `include/stroke_params_parser.h`, `common/stroke_params.cpp` (data part) |
 //! | [`title_block`] | `include/title_block.h`, `common/title_block.cpp` |
 //! | [`page_info`] | `include/page_info.h`, `common/page_info.cpp` |
+//! | [`json`] | nlohmann/json 3.11.3 parse / `dump()` / `get<T>()` / `json_pointer` as KiCad uses them |
+//! | [`json_settings`] | `common/settings/json_settings.cpp`, `nested_settings.cpp` (document, `Get<T>`, migrations, nested load/store) |
+//! | [`settings_parameters`] | `include/settings/parameters.h`, `common/settings/parameters.cpp` (`PARAM<T>` and friends) |
+//! | [`eda_pattern_match`] | `include/eda_pattern_match.h`, `common/eda_pattern_match.cpp` (regex via `regress`, see [`eda_pattern_match::pcre`]) |
+//! | [`text_vars`] | `ExpandTextVars` / `ResolveTextVars` / `FinalizeTextVarExpansion` / `NormalizeFilePathForTextVars` of `common/common.cpp` |
+//! | [`units_provider`] | `include/units_provider.h` |
+//! | [`case_insensitive_map`] | `include/case_insensitive_map.h` |
 //! | [`printf`] | re-export of `kicad_sexpr::formatter::cformat`: printf / `{fmt}` exact `%f`, `%e`, `%g` |
 //!
 //! The most used types are re-exported at the crate root.
 
 pub mod base_set;
 pub mod base_units;
+pub mod case_insensitive_map;
 pub mod color4d;
+pub mod eda_pattern_match;
 pub mod eda_units;
+pub mod json;
+pub mod json_settings;
 pub mod kiid;
 pub mod layer_ids;
 pub mod layer_range;
@@ -59,13 +70,17 @@ pub mod lset;
 pub mod minoptmax;
 pub mod mt19937;
 pub mod page_info;
+pub mod plot_enums;
 pub mod report_severity;
+pub mod settings_parameters;
 mod sha1;
 pub mod string_utils;
 pub mod stroke_params;
 pub mod text_attributes;
+pub mod text_vars;
 pub mod title_block;
 pub mod typeinfo;
+pub mod units_provider;
 mod wxstr;
 
 /// printf / `{fmt}` exact double formatting (`%f`, `%e`, `%g`), shared with `kicad-sexpr`.
