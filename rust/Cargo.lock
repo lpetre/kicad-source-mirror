@@ -17,6 +17,7 @@ name = "kicad-core"
 version = "0.1.0"
 dependencies = [
  "kicad-qa",
+ "kicad-sexpr",
 ]
 
 [[package]]
