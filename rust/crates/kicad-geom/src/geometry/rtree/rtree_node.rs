@@ -499,7 +499,10 @@ mod tests {
         assert_eq!(hilbert_xy2d(1, 1, 1), 2);
         assert_eq!(hilbert_xy2d(1, 1, 0), 3);
         assert_eq!(hilbert_xy2d(32, u32::MAX, 0), u64::MAX);
-        assert_eq!(hilbert_nd2d::<2>(32, &[123, 456]), hilbert_xy2d(32, 123, 456));
+        assert_eq!(
+            hilbert_nd2d::<2>(32, &[123, 456]),
+            hilbert_xy2d(32, 123, 456)
+        );
 
         // order 2 is a bijection onto 0..16
         let mut seen = [false; 16];

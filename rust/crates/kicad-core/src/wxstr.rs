@@ -173,9 +173,9 @@ pub(crate) struct Strtod {
 /// exponent.
 ///
 /// Leading white space, an optional sign, digits with an optional decimal point and an
-/// optional exponent are accepted.  Hexadecimal floats, `inf` and `nan` are not (see
-/// `PORT_STATUS.md`); the callers in KiCad pass user-entered numbers.  The conversion itself
-/// is correctly rounded, like glibc's.
+/// optional exponent are accepted, as are `inf`, `infinity`, `nan` (case-insensitive) and
+/// hexadecimal floats (`0x1.8p3`; their mantissa is accumulated in a double, which is exact
+/// up to 13 hex digits).  The decimal conversion is correctly rounded, like glibc's.
 pub(crate) fn strtod(s: &str) -> Strtod {
     let bytes = s.as_bytes();
     let mut i = 0;
@@ -185,9 +185,14 @@ pub(crate) fn strtod(s: &str) -> Strtod {
     }
 
     let start = i;
+    let negative = i < bytes.len() && bytes[i] == b'-';
 
     if i < bytes.len() && (bytes[i] == b'+' || bytes[i] == b'-') {
         i += 1;
+    }
+
+    if let Some(r) = strtod_special(bytes, i, negative) {
+        return r;
     }
 
     let mut digits = 0;
@@ -253,6 +258,106 @@ pub(crate) fn strtod(s: &str) -> Strtod {
         consumed: i,
         erange,
     }
+}
+
+/// The `inf` / `nan` / hexadecimal forms of `strtod`, after the sign at `i`.
+fn strtod_special(bytes: &[u8], i: usize, negative: bool) -> Option<Strtod> {
+    let rest = &bytes[i..];
+    let starts_ci = |w: &[u8]| rest.len() >= w.len() && rest[..w.len()].eq_ignore_ascii_case(w);
+    let sign = if negative { -1.0 } else { 1.0 };
+
+    if starts_ci(b"infinity") || starts_ci(b"inf") {
+        let n = if starts_ci(b"infinity") { 8 } else { 3 };
+        return Some(Strtod {
+            value: sign * f64::INFINITY,
+            consumed: i + n,
+            erange: false,
+        });
+    }
+
+    if starts_ci(b"nan") {
+        let mut n = 3;
+
+        // nan(n-char-sequence)
+        if rest.get(3) == Some(&b'(') {
+            let close = rest[4..]
+                .iter()
+                .position(|&c| !(c.is_ascii_alphanumeric() || c == b'_'));
+
+            if let Some(k) = close {
+                if rest[4 + k] == b')' {
+                    n = 4 + k + 1;
+                }
+            }
+        }
+
+        let nan = if negative { -f64::NAN } else { f64::NAN };
+        return Some(Strtod {
+            value: nan,
+            consumed: i + n,
+            erange: false,
+        });
+    }
+
+    let is_hex = rest.len() >= 3
+        && rest[0] == b'0'
+        && (rest[1] == b'x' || rest[1] == b'X')
+        && (rest[2].is_ascii_hexdigit()
+            || (rest[2] == b'.' && rest.get(3).is_some_and(|c| c.is_ascii_hexdigit())));
+
+    if !is_hex {
+        return None;
+    }
+
+    let mut j = 2;
+    let mut mantissa = 0.0f64;
+    let mut exp: i32 = 0;
+
+    while j < rest.len() && rest[j].is_ascii_hexdigit() {
+        mantissa = mantissa * 16.0 + (rest[j] as char).to_digit(16).unwrap_or(0) as f64;
+        j += 1;
+    }
+
+    if j < rest.len() && rest[j] == b'.' {
+        j += 1;
+
+        while j < rest.len() && rest[j].is_ascii_hexdigit() {
+            mantissa = mantissa * 16.0 + (rest[j] as char).to_digit(16).unwrap_or(0) as f64;
+            exp -= 4;
+            j += 1;
+        }
+    }
+
+    if j < rest.len() && (rest[j] == b'p' || rest[j] == b'P') {
+        let mut k = j + 1;
+        let mut eneg = false;
+
+        if k < rest.len() && (rest[k] == b'+' || rest[k] == b'-') {
+            eneg = rest[k] == b'-';
+            k += 1;
+        }
+
+        if k < rest.len() && rest[k].is_ascii_digit() {
+            let mut e: i32 = 0;
+
+            while k < rest.len() && rest[k].is_ascii_digit() {
+                e = e.saturating_mul(10).saturating_add((rest[k] - b'0') as i32);
+                k += 1;
+            }
+
+            exp = exp.saturating_add(if eneg { -e } else { e });
+            j = k;
+        }
+    }
+
+    let value = sign * mantissa * 2f64.powi(exp);
+    let erange = value.is_infinite() || (mantissa != 0.0 && (value == 0.0 || value.is_subnormal()));
+
+    Some(Strtod {
+        value,
+        consumed: i + j,
+        erange,
+    })
 }
 
 /// Port of the semantics of `wxString::ToDouble` / `ToCDouble` (the `WX_STRING_TO_X_TYPE_*`

@@ -96,7 +96,14 @@ impl<T, const D: usize, const FANOUT: usize> PackedRTree<T, D, FANOUT> {
 
         let mut found = 0;
         let root_level = self.level_offsets.len() - 1;
-        self.search_node(root_level, self.level_offsets[root_level], min, max, &mut visitor, &mut found);
+        self.search_node(
+            root_level,
+            self.level_offsets[root_level],
+            min,
+            max,
+            &mut visitor,
+            &mut found,
+        );
         found
     }
 
@@ -119,7 +126,9 @@ impl<T, const D: usize, const FANOUT: usize> PackedRTree<T, D, FANOUT> {
     /// Port of `MemoryUsage`: approximate memory usage in bytes.
     pub fn memory_usage(&self) -> usize {
         // One vector of ELEMTYPE per axis and side in the C++
-        let mut usage = (self.bounds_min.capacity() + self.bounds_max.capacity()) * D * std::mem::size_of::<i32>();
+        let mut usage = (self.bounds_min.capacity() + self.bounds_max.capacity())
+            * D
+            * std::mem::size_of::<i32>();
 
         usage += self.counts.capacity() * std::mem::size_of::<i32>();
         usage += self.data.capacity() * std::mem::size_of::<T>();

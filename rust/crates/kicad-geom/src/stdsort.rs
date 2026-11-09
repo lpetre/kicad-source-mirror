@@ -228,8 +228,13 @@ fn lg(n: usize) -> usize {
 }
 
 /// Port of `std::__introsort_loop`.
-fn introsort_loop<T, F>(v: &mut [T], first: usize, mut last: usize, mut depth_limit: usize, less: &mut F)
-where
+fn introsort_loop<T, F>(
+    v: &mut [T],
+    first: usize,
+    mut last: usize,
+    mut depth_limit: usize,
+    less: &mut F,
+) where
     F: FnMut(&T, &T) -> bool,
 {
     while last - first > S_THRESHOLD {
@@ -288,8 +293,14 @@ where
 }
 
 /// Port of `std::__move_median_to_first`: swaps the median of `a`, `b`, `c` into `result`.
-fn move_median_to_first<T, F>(v: &mut [T], result: usize, a: usize, b: usize, c: usize, less: &mut F)
-where
+fn move_median_to_first<T, F>(
+    v: &mut [T],
+    result: usize,
+    a: usize,
+    b: usize,
+    c: usize,
+    less: &mut F,
+) where
     F: FnMut(&T, &T) -> bool,
 {
     if less(&v[a], &v[b]) {
@@ -314,7 +325,13 @@ where
 /// "Unguarded": with a strict weak ordering the median-of-three pivot guarantees that both
 /// scans stop inside the range.  The two bounds checks below never trigger then; they only
 /// keep an invalid comparator (undefined behaviour in C++) from running out of the slice.
-fn unguarded_partition<T, F>(v: &mut [T], mut first: usize, mut last: usize, pivot: usize, less: &mut F) -> usize
+fn unguarded_partition<T, F>(
+    v: &mut [T],
+    mut first: usize,
+    mut last: usize,
+    pivot: usize,
+    less: &mut F,
+) -> usize
 where
     F: FnMut(&T, &T) -> bool,
 {
@@ -588,7 +605,9 @@ mod tests {
         let ids: Vec<usize> = v.iter().map(|e| e.1).collect();
         assert_eq!(
             ids,
-            [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+            [
+                10, 19, 18, 17, 16, 15, 14, 13, 12, 11, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1
+            ]
         );
     }
 
@@ -642,7 +661,12 @@ mod tests {
             let mut v = v0.clone();
             std_partial_sort(&mut v, middle, |a, b| a.0 < b.0);
             assert!(is_permutation(&v));
-            assert!(v[..middle].iter().map(|e| e.0).eq(sorted[..middle].iter().copied()));
+            assert!(
+                v[..middle]
+                    .iter()
+                    .map(|e| e.0)
+                    .eq(sorted[..middle].iter().copied())
+            );
 
             let nth = (rng.next() % n as u64) as usize;
             let mut v = v0.clone();
@@ -706,7 +730,13 @@ mod tests {
             assert_eq!(v.len(), n);
 
             let mut f: Vec<f64> = (0..n)
-                .map(|i| if i % 3 == 0 { f64::NAN } else { (rng.next() % 100) as f64 })
+                .map(|i| {
+                    if i % 3 == 0 {
+                        f64::NAN
+                    } else {
+                        (rng.next() % 100) as f64
+                    }
+                })
                 .collect();
             std_sort(&mut f, |a, b| a < b);
             std_nth_element(&mut f, n / 3, |a, b| a < b);

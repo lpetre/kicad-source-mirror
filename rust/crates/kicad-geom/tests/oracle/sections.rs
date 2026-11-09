@@ -52,16 +52,16 @@ use kicad_geom::trigo::{
 };
 
 /// `RNG` of the oracle: splitmix64 and the derived generators.
-struct Rng {
+pub(crate) struct Rng {
     s: u64,
 }
 
 impl Rng {
-    fn new(seed: u64) -> Self {
+    pub(crate) fn new(seed: u64) -> Self {
         Rng { s: seed }
     }
 
-    fn next(&mut self) -> u64 {
+    pub(crate) fn next(&mut self) -> u64 {
         self.s = self.s.wrapping_add(0x9E3779B97F4A7C15);
         let mut z = self.s;
         z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
@@ -70,24 +70,24 @@ impl Rng {
     }
 
     /// inclusive range
-    fn range(&mut self, lo: i64, hi: i64) -> i64 {
+    pub(crate) fn range(&mut self, lo: i64, hi: i64) -> i64 {
         lo + (self.next() % ((hi - lo + 1) as u64)) as i64
     }
 
     /// [0, 1)
-    fn unit(&mut self) -> f64 {
+    pub(crate) fn unit(&mut self) -> f64 {
         (self.next() >> 11) as f64 * (1.0 / 9007199254740992.0)
     }
 
-    fn dbl(&mut self, lo: f64, hi: f64) -> f64 {
+    pub(crate) fn dbl(&mut self, lo: f64, hi: f64) -> f64 {
         lo + (hi - lo) * self.unit()
     }
 
-    fn flag(&mut self) -> bool {
+    pub(crate) fn flag(&mut self) -> bool {
         (self.next() & 1) != 0
     }
 
-    fn coord(&mut self) -> i32 {
+    pub(crate) fn coord(&mut self) -> i32 {
         match self.next() % 4 {
             0 => self.range(-10, 10) as i32,
             1 => self.range(-1000, 1000) as i32,
@@ -96,7 +96,7 @@ impl Rng {
         }
     }
 
-    fn coord_mid(&mut self) -> i32 {
+    pub(crate) fn coord_mid(&mut self) -> i32 {
         match self.next() % 3 {
             0 => self.range(-20, 20) as i32,
             1 => self.range(-100000, 100000) as i32,
@@ -104,49 +104,49 @@ impl Rng {
         }
     }
 
-    fn pt(&mut self) -> Vector2I {
+    pub(crate) fn pt(&mut self) -> Vector2I {
         let x = self.coord();
         let y = self.coord();
         Vector2I::new(x, y)
     }
 
-    fn pt_mid(&mut self) -> Vector2I {
+    pub(crate) fn pt_mid(&mut self) -> Vector2I {
         let x = self.coord_mid();
         let y = self.coord_mid();
         Vector2I::new(x, y)
     }
 
-    fn pt_r(&mut self, lo: i64, hi: i64) -> Vector2I {
+    pub(crate) fn pt_r(&mut self, lo: i64, hi: i64) -> Vector2I {
         let x = self.range(lo, hi) as i32;
         let y = self.range(lo, hi) as i32;
         Vector2I::new(x, y)
     }
 
-    fn pt_l(&mut self, lo: i64, hi: i64) -> Vector2L {
+    pub(crate) fn pt_l(&mut self, lo: i64, hi: i64) -> Vector2L {
         let x = self.range(lo, hi);
         let y = self.range(lo, hi);
         Vector2L::new(x, y)
     }
 
-    fn pt_d(&mut self, lo: f64, hi: f64) -> Vector2D {
+    pub(crate) fn pt_d(&mut self, lo: f64, hi: f64) -> Vector2D {
         let x = self.dbl(lo, hi);
         let y = self.dbl(lo, hi);
         Vector2D::new(x, y)
     }
 
-    fn pt_d_scaled(&mut self, min_exp: i32, max_exp: i32) -> Vector2D {
+    pub(crate) fn pt_d_scaled(&mut self, min_exp: i32, max_exp: i32) -> Vector2D {
         let x = self.dbl_scaled(min_exp, max_exp);
         let y = self.dbl_scaled(min_exp, max_exp);
         Vector2D::new(x, y)
     }
 
-    fn seg(&mut self) -> Seg {
+    pub(crate) fn seg(&mut self) -> Seg {
         let a = self.pt();
         let b = self.pt();
         Seg::new(a, b)
     }
 
-    fn angle_deg(&mut self) -> f64 {
+    pub(crate) fn angle_deg(&mut self) -> f64 {
         match self.next() % 6 {
             0 => 45.0 * self.range(-16, 16) as f64,
             1 => self.range(-7200, 7200) as f64 / 10.0,
@@ -161,7 +161,7 @@ impl Rng {
     }
 
     /// unit() scaled by an exact power of two (std::ldexp)
-    fn dbl_scaled(&mut self, min_exp: i32, max_exp: i32) -> f64 {
+    pub(crate) fn dbl_scaled(&mut self, min_exp: i32, max_exp: i32) -> f64 {
         let u = self.unit();
         let e = self.range(min_exp as i64, max_exp as i64);
         let v = u * f64::from_bits(((1023 + e) as u64) << 52);
@@ -172,36 +172,36 @@ impl Rng {
 
 /// `REC` of the oracle: the textual record of one case.
 #[derive(Default)]
-struct Rec {
+pub(crate) struct Rec {
     line: String,
 }
 
 impl Rec {
-    fn sep(&mut self) {
+    pub(crate) fn sep(&mut self) {
         if !self.line.is_empty() {
             self.line.push(' ');
         }
     }
 
-    fn i(&mut self, v: impl Into<i64>) -> &mut Self {
+    pub(crate) fn i(&mut self, v: impl Into<i64>) -> &mut Self {
         self.sep();
         self.line.push_str(&v.into().to_string());
         self
     }
 
-    fn u(&mut self, v: u64) -> &mut Self {
+    pub(crate) fn u(&mut self, v: u64) -> &mut Self {
         self.sep();
         self.line.push_str(&v.to_string());
         self
     }
 
-    fn b(&mut self, v: bool) -> &mut Self {
+    pub(crate) fn b(&mut self, v: bool) -> &mut Self {
         self.sep();
         self.line.push(if v { '1' } else { '0' });
         self
     }
 
-    fn d(&mut self, v: f64) -> &mut Self {
+    pub(crate) fn d(&mut self, v: f64) -> &mut Self {
         self.sep();
 
         if v.is_nan() {
@@ -213,7 +213,7 @@ impl Rec {
         self
     }
 
-    fn s(&mut self, v: &str) -> &mut Self {
+    pub(crate) fn s(&mut self, v: &str) -> &mut Self {
         self.sep();
         self.line.push('"');
         self.line.push_str(v);
@@ -221,47 +221,47 @@ impl Rec {
         self
     }
 
-    fn v(&mut self, p: Vector2I) -> &mut Self {
+    pub(crate) fn v(&mut self, p: Vector2I) -> &mut Self {
         self.i(p.x).i(p.y)
     }
 
-    fn vl(&mut self, p: Vector2L) -> &mut Self {
+    pub(crate) fn vl(&mut self, p: Vector2L) -> &mut Self {
         self.i(p.x).i(p.y)
     }
 
-    fn vd(&mut self, p: Vector2D) -> &mut Self {
+    pub(crate) fn vd(&mut self, p: Vector2D) -> &mut Self {
         self.d(p.x).d(p.y)
     }
 
-    fn a(&mut self, p: EdaAngle) -> &mut Self {
+    pub(crate) fn a(&mut self, p: EdaAngle) -> &mut Self {
         self.d(p.as_degrees())
     }
 
-    fn seg(&mut self, p: &Seg) -> &mut Self {
+    pub(crate) fn seg(&mut self, p: &Seg) -> &mut Self {
         self.v(p.a).v(p.b)
     }
 
-    fn bx(&mut self, p: &Box2I) -> &mut Self {
+    pub(crate) fn bx(&mut self, p: &Box2I) -> &mut Self {
         self.v(p.position()).vl(p.size()).b(p.is_valid())
     }
 
-    fn bxd(&mut self, p: &Box2D) -> &mut Self {
+    pub(crate) fn bxd(&mut self, p: &Box2D) -> &mut Self {
         self.vd(p.position()).vd(p.size()).b(p.is_valid())
     }
 
-    fn bxl(&mut self, p: &Box2L) -> &mut Self {
+    pub(crate) fn bxl(&mut self, p: &Box2L) -> &mut Self {
         self.vl(p.position()).vl(p.size()).b(p.is_valid())
     }
 
-    fn vf(&mut self, p: Vector2<f32>) -> &mut Self {
+    pub(crate) fn vf(&mut self, p: Vector2<f32>) -> &mut Self {
         self.d(p.x as f64).d(p.y as f64)
     }
 
-    fn vu(&mut self, p: Vector2<u32>) -> &mut Self {
+    pub(crate) fn vu(&mut self, p: Vector2<u32>) -> &mut Self {
         self.u(p.x as u64).u(p.y as u64)
     }
 
-    fn opt(&mut self, p: Option<Vector2I>) -> &mut Self {
+    pub(crate) fn opt(&mut self, p: Option<Vector2I>) -> &mut Self {
         match p {
             Some(p) => self.b(true).v(p),
             None => self.b(false),
@@ -278,7 +278,7 @@ pub struct Results {
 }
 
 /// `SECTION` of the oracle.
-struct Section<'a> {
+pub(crate) struct Section<'a> {
     name: &'static str,
     hash: u64,
     count: u64,
@@ -286,7 +286,7 @@ struct Section<'a> {
 }
 
 impl<'a> Section<'a> {
-    fn new(results: &'a mut Results, name: &'static str) -> Self {
+    pub(crate) fn new(results: &'a mut Results, name: &'static str) -> Self {
         Section {
             name,
             hash: 1469598103934665603,
@@ -295,7 +295,7 @@ impl<'a> Section<'a> {
         }
     }
 
-    fn add(&mut self, rec: &Rec) {
+    pub(crate) fn add(&mut self, rec: &Rec) {
         for c in rec.line.bytes() {
             self.hash ^= c as u64;
             self.hash = self.hash.wrapping_mul(1099511628211);
@@ -320,7 +320,7 @@ impl Drop for Section<'_> {
 }
 
 /// `sectionLibmProbe`
-fn section_libm_probe(results: &mut Results) {
+pub(crate) fn section_libm_probe(results: &mut Results) {
     let mut sec = Section::new(results, "libm_probe");
     let mut rng = Rng::new(100);
 
@@ -843,7 +843,7 @@ fn section_rotate_libm(results: &mut Results) {
 }
 
 /// `arcPoints`
-fn arc_points(rng: &mut Rng) -> (Vector2I, Vector2I, Vector2I) {
+pub(crate) fn arc_points(rng: &mut Rng) -> (Vector2I, Vector2I, Vector2I) {
     match rng.next() % 8 {
         0 => {
             // axis-aligned points of a circle
@@ -938,7 +938,7 @@ fn section_arc_center(results: &mut Results) {
 }
 
 /// `segPair`
-fn seg_pair(rng: &mut Rng) -> (Seg, Seg) {
+pub(crate) fn seg_pair(rng: &mut Rng) -> (Seg, Seg) {
     let a = rng.seg();
 
     let in_range = |v: i64| (-500000000..=500000000).contains(&v);

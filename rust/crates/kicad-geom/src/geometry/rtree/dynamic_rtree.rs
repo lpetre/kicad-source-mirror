@@ -279,7 +279,8 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
                 if let Some(entry) = items[order[i + j].1].take() {
                     let min = entry.min;
                     let max = entry.max;
-                    self.node_mut(leaf).push_leaf_entry(&min, &max, &min, &max, entry.data);
+                    self.node_mut(leaf)
+                        .push_leaf_entry(&min, &max, &min, &max, entry.data);
                 }
             }
 
@@ -303,7 +304,8 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
                 for j in 0..cnt {
                     let child = current_level[i + j];
                     let (child_min, child_max) = self.node(child).compute_enclosing_bounds();
-                    self.node_mut(internal).push_child_entry(&child_min, &child_max, child);
+                    self.node_mut(internal)
+                        .push_child_entry(&child_min, &child_max, child);
                 }
 
                 next_level.push(internal);
@@ -362,9 +364,8 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         }
 
         // Min-heap: smallest distance first
-        let mut pq = PriorityQueue::new(|a: &(i64, (NodeId, usize)), b: &(i64, (NodeId, usize))| {
-            a.0 > b.0
-        });
+        let mut pq =
+            PriorityQueue::new(|a: &(i64, (NodeId, usize)), b: &(i64, (NodeId, usize))| a.0 > b.0);
 
         // Seed with root's children
         let root = self.node(self.root);
@@ -424,14 +425,21 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
     }
 
     /// Port of `insertImpl`: core insertion with forced reinsert tracking.
-    fn insert_impl(&mut self, min: &[i32; D], max: &[i32; D], data: T, reinserted_levels: &mut u32) {
+    fn insert_impl(
+        &mut self,
+        min: &[i32; D],
+        max: &[i32; D],
+        data: T,
+        reinserted_levels: &mut u32,
+    ) {
         // ChooseSubtree to find the leaf
         let mut path: Vec<NodeId> = Vec::new();
         let leaf = self.choose_subtree(self.root, min, max, &mut path);
 
         // Insert into leaf
         if !self.node(leaf).is_full() {
-            self.node_mut(leaf).push_leaf_entry(min, max, min, max, data);
+            self.node_mut(leaf)
+                .push_leaf_entry(min, max, min, max, data);
             self.adjust_path(&path, leaf);
         } else {
             self.overflow_treatment(leaf, min, max, data, &mut path, reinserted_levels);
@@ -630,6 +638,18 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         // Collect all entries including the new one
         let total_entries = self.node(node_id).count + 1;
 
+        // Keep close entries in the node, reinsert far ones.  (The C++ computes this after
+        // gathering and sorting the entries, which does not modify the node, so the early
+        // fallback is equivalent.)
+        let reinsert_count =
+            (Self::REINSERT_COUNT as i64).min(total_entries as i64 - Self::MINNODES as i64);
+
+        if reinsert_count <= 0 {
+            // Can't reinsert without underflow, fall back to split
+            self.split_node(node_id, min, max, data, path, reinserted_levels);
+            return;
+        }
+
         // Compute node center
         let (node_min, node_max) = self.node(node_id).compute_enclosing_bounds();
         let mut center = [0.0f64; D];
@@ -658,30 +678,6 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         // Sort by distance descending to find the farthest
         std_sort(&mut entries, |a, b| a.dist_sq > b.dist_sq);
 
-        // Keep close entries in the node, reinsert far ones
-        let reinsert_count =
-            (Self::REINSERT_COUNT as i64).min(total_entries as i64 - Self::MINNODES as i64);
-
-        if reinsert_count <= 0 {
-            // Can't reinsert without underflow, fall back to split.  The entries go back into
-            // the node first: the C++ node was never modified.
-            let leaf = self.node(node_id).is_leaf();
-            let original: Vec<SplitEntry<D>> = {
-                let mut v = entries.clone();
-                v.sort_by_key(|e| e.data);
-                v
-            };
-            let new_entry = original[total_entries - 1];
-            let data = pool[new_entry.data].take();
-            self.fill_node(node_id, &original[..total_entries - 1], leaf, &mut pool);
-
-            if let Some(data) = data {
-                self.split_node(node_id, min, max, data, path, reinserted_levels);
-            }
-
-            return;
-        }
-
         let reinsert_count = reinsert_count as usize;
 
         // Rebuild the node with the close entries
@@ -693,11 +689,22 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         for entry in &entries[..reinsert_count] {
             if self.node(node_id).is_leaf() {
                 if let Some(data) = pool[entry.data].take() {
-                    self.insert_impl(&entry.insert_min, &entry.insert_max, data, reinserted_levels);
+                    self.insert_impl(
+                        &entry.insert_min,
+                        &entry.insert_max,
+                        data,
+                        reinserted_levels,
+                    );
                 }
             } else {
                 let level = self.node(node_id).level - 1;
-                self.reinsert_node(entry.child, &entry.min, &entry.max, level, reinserted_levels);
+                self.reinsert_node(
+                    entry.child,
+                    &entry.min,
+                    &entry.max,
+                    level,
+                    reinserted_levels,
+                );
             }
         }
     }
@@ -814,7 +821,8 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         let best_split_max = Self::find_best_split_index(&entries_by_max, total_entries);
 
         let overlap_min = Self::compute_split_overlap(&entries, best_split, total_entries);
-        let overlap_max = Self::compute_split_overlap(&entries_by_max, best_split_max, total_entries);
+        let overlap_max =
+            Self::compute_split_overlap(&entries_by_max, best_split_max, total_entries);
 
         if overlap_max < overlap_min {
             entries = entries_by_max;
@@ -862,12 +870,14 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
                 // Update the existing child's bbox in parent
                 if let Some(child_slot) = self.find_child_slot(parent, node_id) {
                     let (node_min, node_max) = self.node(node_id).compute_enclosing_bounds();
-                    self.node_mut(parent).set_child_bounds(child_slot, &node_min, &node_max);
+                    self.node_mut(parent)
+                        .set_child_bounds(child_slot, &node_min, &node_max);
                 }
 
                 // Insert sibling into parent
                 if !self.node(parent).is_full() {
-                    self.node_mut(parent).push_child_entry(&sib_min, &sib_max, sibling);
+                    self.node_mut(parent)
+                        .push_child_entry(&sib_min, &sib_max, sibling);
                     path.pop();
                     self.adjust_path(path, parent);
                 } else {
@@ -1026,7 +1036,11 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
     }
 
     /// Port of `computeSplitOverlap`: the overlap area between two split groups.
-    fn compute_split_overlap(entries: &[SplitEntry<D>], split_idx: usize, total_entries: usize) -> i64 {
+    fn compute_split_overlap(
+        entries: &[SplitEntry<D>],
+        split_idx: usize,
+        total_entries: usize,
+    ) -> i64 {
         let (g1_min, g1_max) = Self::group_bounds(entries, 0, split_idx);
         let (g2_min, g2_max) = Self::group_bounds(entries, split_idx, total_entries);
 
@@ -1109,7 +1123,8 @@ impl<T, const D: usize, const M: usize> DynamicRTree<T, D, M> {
                 && let Some(slot) = self.find_child_slot(parent, child_to_update)
             {
                 let (child_min, child_max) = self.node(child_to_update).compute_enclosing_bounds();
-                self.node_mut(parent).set_child_bounds(slot, &child_min, &child_max);
+                self.node_mut(parent)
+                    .set_child_bounds(slot, &child_min, &child_max);
             }
 
             child_to_update = parent;
@@ -1275,7 +1290,8 @@ impl<T: PartialEq, const D: usize, const M: usize> DynamicRTree<T, D, M> {
                 // Update child's bbox in parent
                 if self.node(child).count > 0 {
                     let (child_min, child_max) = self.node(child).compute_enclosing_bounds();
-                    self.node_mut(node_id).set_child_bounds(i, &child_min, &child_max);
+                    self.node_mut(node_id)
+                        .set_child_bounds(i, &child_min, &child_max);
 
                     // Check for underflow
                     if self.node(child).count < Self::MINNODES && node_id != self.root {
@@ -1301,8 +1317,9 @@ impl<T: PartialEq, const D: usize, const M: usize> DynamicRTree<T, D, M> {
         for &orphan in reinsert_list {
             if self.node(orphan).is_leaf() {
                 let count = self.node(orphan).count;
-                let bounds: Vec<([i32; D], [i32; D])> =
-                    (0..count).map(|i| self.node(orphan).get_insert_bounds(i)).collect();
+                let bounds: Vec<([i32; D], [i32; D])> = (0..count)
+                    .map(|i| self.node(orphan).get_insert_bounds(i))
+                    .collect();
                 let data = std::mem::take(&mut self.node_mut(orphan).data);
 
                 for ((mn, mx), item) in bounds.into_iter().zip(data) {

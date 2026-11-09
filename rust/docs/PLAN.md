@@ -63,9 +63,11 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
   - [x] kicad-geom G1 math - 1M-case differential oracle bit-exact.
   - [ ] kicad-geom G2 shapes, G7 sort/rtree/delaunator (running), then G3 line chain,
         G4a poly set + clipper, G4b triangulation, G5 collisions, G6 shape utilities.
-  - [x] kicad-core C1 ids/layers; [ ] C2 units/strings/values (running).
-  - [ ] kicad-libeval (finishing run).
-  - [ ] kicad-font.
+  - [x] kicad-core C1 ids/layers; [x] C2 units/strings/values (Opus; 152k oracle cases
+        bit-exact; Fable-reviewed: deviations C2-1..9 accepted).
+  - [x] kicad-libeval (Opus finish; Lemon tables regenerated and identical, 39.5k oracle
+        cases; Fable-reviewed: binder API accepted, to be proven by the kicad-drc binding).
+  - [ ] kicad-font F1 stroke font (running, Opus).
 - [ ] Board model + parser + writer.
 - [ ] Connectivity, plot, fab, drc.
 - [ ] Zone filler, custom rules, remaining providers.

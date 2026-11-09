@@ -32,10 +32,23 @@
 //! | [`lib_id`] | `include/lib_id.h`, `common/lib_id.cpp`, `include/name_validation.h` |
 //! | [`typeinfo`] | `include/core/typeinfo.h` |
 //! | [`report_severity`] | `include/widgets/report_severity.h`, `common/widgets/report_severity.cpp` |
+//! | [`base_units`] | `include/base_units.h` |
+//! | [`minoptmax`] | `libs/core/include/core/minoptmax.h` |
+//! | [`eda_units`] | `include/eda_units.h`, `common/eda_units.cpp` |
+//! | [`string_utils`] | `include/string_utils.h`, `common/string_utils.cpp` |
+//! | [`color4d`] | `include/gal/color4d.h`, `common/gal/color4d.cpp` |
+//! | [`text_attributes`] | `include/font/text_attributes.h`, `common/font/text_attributes.cpp` |
+//! | [`stroke_params`] | `include/stroke_params.h`, `include/stroke_params_parser.h`, `common/stroke_params.cpp` (data part) |
+//! | [`title_block`] | `include/title_block.h`, `common/title_block.cpp` |
+//! | [`page_info`] | `include/page_info.h`, `common/page_info.cpp` |
+//! | [`printf`] | re-export of `kicad_sexpr::formatter::cformat`: printf / `{fmt}` exact `%f`, `%e`, `%g` |
 //!
 //! The most used types are re-exported at the crate root.
 
 pub mod base_set;
+pub mod base_units;
+pub mod color4d;
+pub mod eda_units;
 pub mod kiid;
 pub mod layer_ids;
 pub mod layer_range;
@@ -43,10 +56,30 @@ pub mod legacy_layers;
 pub mod lib_id;
 pub mod lseq;
 pub mod lset;
+pub mod minoptmax;
 pub mod mt19937;
+pub mod page_info;
 pub mod report_severity;
 mod sha1;
+pub mod string_utils;
+pub mod stroke_params;
+pub mod text_attributes;
+pub mod title_block;
 pub mod typeinfo;
+mod wxstr;
+
+/// printf / `{fmt}` exact double formatting (`%f`, `%e`, `%g`), shared with `kicad-sexpr`.
+pub use kicad_sexpr::formatter::cformat as printf;
+
+pub use base_units::{EdaIuScale, GERB_IU_SCALE, PCB_IU_SCALE, SCH_IU_SCALE};
+pub use color4d::{Color4D, EdaColorT};
+pub use eda_units::{EdaDataType, EdaUnits};
+pub use minoptmax::MinOptMax;
+pub use page_info::{PageInfo, PageSizeType};
+pub use string_utils::EscapeContext;
+pub use stroke_params::{LineStyle, StrokeParams};
+pub use text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
+pub use title_block::TitleBlock;
 
 pub use base_set::BaseSet;
 pub use kiid::{Kiid, KiidGenerator, KiidNilSetReset, KiidPath, NILUUID, Timestamp};

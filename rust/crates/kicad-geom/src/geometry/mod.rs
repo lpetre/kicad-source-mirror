@@ -17,6 +17,26 @@
 
 //! Ports of the headers in `libs/kimath/include/geometry` (and `libs/kimath/src/geometry`).
 
+pub mod approximation;
+pub mod arc_chord_params;
+pub mod arc_construction;
+pub mod circle;
 pub mod eda_angle;
+pub mod geometry_utils;
+pub mod half_line;
+pub mod line;
+pub mod rtree;
 pub mod seg;
+pub mod shape;
+pub mod shape_arc;
+pub mod shape_circle;
+pub mod shape_collisions;
+pub mod shape_compound;
+pub mod shape_line_chain;
+pub mod shape_null;
+pub mod shape_poly_set;
+pub mod shape_rect;
+pub mod shape_segment;
+pub mod shape_simple;
+pub mod shape_utils;
 pub mod vector_utils;

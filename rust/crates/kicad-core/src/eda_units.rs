@@ -1,4 +1,19 @@
-//@HEADER
+// This program source code file is part of KiCad, a free EDA CAD application.
+//
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `include/eda_units.h` and `common/eda_units.cpp`: the `EDA_UNITS` /
 //! `EDA_DATA_TYPE` enums and the `EDA_UNIT_UTILS` namespace (with its `UI` sub-namespace in
@@ -588,7 +603,8 @@ pub mod ui {
         value: &crate::minoptmax::MinOptMax<i32>,
     ) -> String {
         let mut msg = String::new();
-        let fmt = |v: i32| message_text_from_value_int(iu_scale, units, v, true, EdaDataType::Distance);
+        let fmt =
+            |v: i32| message_text_from_value_int(iu_scale, units, v, true, EdaDataType::Distance);
 
         if value.has_min() && value.min() > 0 {
             msg += &("min".to_string() + " " + &fmt(value.min()));
@@ -622,7 +638,13 @@ pub mod ui {
         // Convert any entered decimal point separators to the 'right' one
         let buf: Vec<char> = wxstr::strip_both(text_value)
             .chars()
-            .map(|c| if c == '.' || c == ',' { decimal_point } else { c })
+            .map(|c| {
+                if c == '.' || c == ',' {
+                    decimal_point
+                } else {
+                    c
+                }
+            })
             .collect();
 
         // Find the end of the numeric part
@@ -749,7 +771,10 @@ pub mod ui {
     /// Port of `EDA_UNIT_UTILS::UI::DoubleValueFromString( const EDA_IU_SCALE&, const
     /// wxString&, double& )`: the units designator is mandatory; returns `None` (C++: false,
     /// output untouched) without a number or with unknown units.
-    pub fn double_value_from_string_with_units(iu_scale: &EdaIuScale, text_value: &str) -> Option<f64> {
+    pub fn double_value_from_string_with_units(
+        iu_scale: &EdaIuScale,
+        text_value: &str,
+    ) -> Option<f64> {
         let (buf, brk_point) = numeric_prefix(text_value);
 
         if brk_point == 0 {

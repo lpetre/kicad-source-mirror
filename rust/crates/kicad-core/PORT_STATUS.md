@@ -1,10 +1,11 @@
 # kicad-core port status
 
-Port of the KiCad `common/` basics. This file covers work package **C1** (identifiers and
-layers). Units, number formatting, string utilities, text attributes and colours are a later
-work package and are not in the crate yet.
+Port of the KiCad `common/` basics: work package **C1** (identifiers and layers, the sections
+below up to "Known gaps") and work package **C2** (units, number formatting, strings, colours,
+text attributes, stroke, title block, page info: see "Work package C2" at the end).
 
-The crate has no dependencies (dev-dependency: `kicad-qa`) and builds for
+Dependencies: `kicad-sexpr` (printf-exact double formatting, `OutputFormatter`, the stroke
+lexer); dev-dependency `kicad-qa`. No `kicad-geom` dependency. Builds for
 `wasm32-unknown-unknown`.
 
 ## C++ to Rust map
@@ -321,3 +322,143 @@ The golden dumps were made with Boost 1.83 and wxWidgets 3.2.4 on x86-64 Linux;
 * A Rust program that creates items draws ids in its own order; reproducing the ids of a
   seeded C++ *session* additionally requires constructing items in the same order as C++
   (every `EDA_ITEM` constructor draws one id).
+
+
+---
+
+# Work package C2: units, number formatting, strings, shared value types
+
+## C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `include/base_units.h`: `EDA_IU_SCALE` (`IUTomm`, `mmToIU`, `MilsToIU`, `IUToMils`, `IUToNm`, `NmToIU`, `NmToIUD`), `pcbIUScale`, `schIUScale`, `gerbIUScale`, `drawSheetIUScale`, `unityScale`, `*_IU_PER_MM`, `ARC_LOW_DEF(_MM)`, `ARC_HIGH_DEF(_MM)` | `base_units::EdaIuScale` (`const fn`s), `PCB_IU_SCALE`, `SCH_IU_SCALE`, `GERB_IU_SCALE`, `DRAW_SHEET_IU_SCALE`, `UNITY_SCALE`, same constants | ported (out-of-range double to int saturates instead of UB) |
+| `libs/core/include/core/minoptmax.h` `MINOPTMAX<T>` | `minoptmax::MinOptMax<T>` | ported |
+| `printf` / `{fmt}` `%f %e %g` | `kicad_core::printf` = re-export of `kicad_sexpr::formatter::cformat` | reused, not duplicated |
+| `EDA_UNITS`, `EDA_DATA_TYPE` | `eda_units::EdaUnits`, `EdaDataType` (`#[repr(i32)]`, C++ values, `ALL`) | ported |
+| `EDA_UNIT_UTILS::IsImperialUnit`, `IsMetricUnit`, `Mm2mils`, `Mils2mm`, `Mils2IU`, `FetchUnitsFromString`, `GetText`, `GetLabel`, `GetScaleForInternalUnitType` | `eda_units::is_imperial_unit`, `is_metric_unit`, `mm2mils`, `mils2mm`, `mils2iu`, `fetch_units_from_string -> Option`, `get_text`, `get_label`, `get_scale_for_internal_unit_type` | ported |
+| `FormatAngle( EDA_ANGLE )` | `format_angle( degrees: f64 )` | ported |
+| `FormatInternalUnits( scale, int, type )`, `( scale, VECTOR2I )` | `format_internal_units`, `format_internal_units_distance`, `format_internal_units_point( scale, x, y )` | ported |
+| `ParseInternalUnits` x2 (`#if 0` in C++) | `parse_internal_units`, `parse_internal_units_point` | ported (semantics of the disabled code) |
+| `UI::ToUserUnit`, `FromUserUnit`, `StringFromValue`, `MessageTextFromValue` (double / int / long long / EDA_ANGLE), `MessageTextFromMinOptMax` | `eda_units::ui::to_user_unit`, `from_user_unit`, `string_from_value`, `message_text_from_value`, `message_text_from_value_int`, `message_text_from_value_i64`, `message_text_from_angle( degrees, bool )`, `message_text_from_min_opt_max` | ported |
+| `UI::DoubleValueFromString` x3, `UI::ValueFromString` x2, static `removeTrailingZeros` | `double_value_from_string`, `double_value_from_string_unscaled`, `double_value_from_string_with_units -> Option`, `value_from_string`, `value_from_string_unscaled`, private `remove_trailing_zeros` | ported |
+| `string_utils`: `ESCAPE_CONTEXT`, `EscapeString`, `UnescapeString` | `EscapeContext`, `escape_string`, `unescape_string` | ported (all 11 contexts) |
+| `ConvertToNewOverbarNotation`, `ConvertSmartQuotesAndDashes`, `TitleCaps`, `InitialCaps`, `wxStringSplit`, `ReadDelimitedText` x2, `EscapedUTF8`, `EscapeHTML`, `UnescapeHTML`, `RemoveHTMLTags`, `NoPrintableChars`, `PrintableCharCount`, `StrPurge` | same names in snake_case (`read_delimited_text`, `read_delimited_text_buf` on byte slices) | ported (`UnescapeHTML`'s regex matched by hand) |
+| `CMP_T`, `StrNumCmp`, `StrNumSort`, `WildCompareString`, `ValueStringCompare`, `QuacksLikeADuck`, `SplitString`, `GetTrailingInt`, file-local `ApplyModifier`, `convertSeparators`, `NUMERIC_EVALUATOR::IsOldSchoolDecimalSeparator` | `CmpT`, `str_num_cmp`, `str_num_sort`, `wild_compare_string`, `value_string_compare`, `quacks_like_a_duck -> Option<f64>`, `split_string -> (beg, digits, end)`, `get_trailing_int`, `apply_modifier`, `convert_separators`, `is_old_school_decimal_separator` | ported |
+| `IsFullFileNameValid`, `GetIllegalFileNameWxChars`, `ReplaceIllegalFileNameChars` (std::string / wxString) | `is_full_file_name_valid` (Linux forbidden set `*?`), `get_illegal_file_name_wx_chars`, `replace_illegal_file_name_chars_std`, `replace_illegal_file_name_chars` | ported |
+| `StripTrailingZeros`, `FormatDouble2Str`, `UIDouble2Str`, `FormatTrimmedDecimal`, `wxString::FromCDouble` | `strip_trailing_zeros`, `format_double2_str`, `ui_double2_str`, `format_trimmed_decimal`, `wx_from_c_double` | ported |
+| `From_UTF8` x2, `TO_UTF8` | identity on `&str`; `from_utf8_bytes` for raw bytes | ported |
+| `rsort_wxString`, `split`, `AccumulateDescription(s)` | `rsort_wx_string_less`, `split`, `accumulate_description(s)` | ported |
+| `ExpandStackedPinNotation`, `CountStackedPinNotation`, `EscapeStackedPinItem`, `SplitStackedPinDisplayItems` (+ file-local helpers) | same in snake_case; the `bool* aValid` out-parameter is returned in a tuple | ported |
+| `IsAutoGeneratedNetName`, `GetDefaultVariantName`, `GetVariantFileToken`, `ExpandVariantOutputPath`, `SortVariantNames` | same in snake_case | ported |
+| `SplitGraphemeClusters` | - | skipped: needs harfbuzz Unicode tables (general category, combining class) |
+| `LinkifyHTML`, `IsURL` | - | skipped: `wxRegEx` with `\w`, `\b`, `\s`; UI only |
+| `GetLine` (`FILE*`), `GetISO8601CurrentDateTime` (clock), `NormalizeFileUri`, `ConvertPathToFileUri` (file system), `ConvertMarkdown2Html`, `ExtractLibraryLoadException`, `PrettyPrintForMenu` | - | skipped: I/O, clock or UI (PORTING.md 5) |
+| `EDA_COLOR_T`, `StructColors`, `colorRefs()` | `color4d::EdaColorT` (newtype with the enumerators as consts), `StructColors`, `color_refs()` | ported |
+| `KIGFX::COLOR4D`: constructors (RGBA, `EDA_COLOR_T`, `wxString`, `wxColour`), `FromCSSRGBA`, `SetFromWxString`, `ToCSSString`, `SetFromHexString`, `ToHexString`, `ToColour`, `LegacyMix`, `ToHSL`, `FromHSL`, `ToHSV`, `FromHSV`, `Saturate`, `Desaturate`, `Brighten(ed)`, `Darken(ed)`, `Invert(ed)`, `Mix`, `WithAlpha`, `GetBrightness`, `Distance`, `Compare`, `RelativeLuminance`, `ContrastRatio`, `FindNearestLegacyColor`, `UNSPECIFIED`/`WHITE`/`BLACK`/`CLEAR`, `operator== != <`, `operator<<`, `to_json`/`from_json` | `Color4D` (`new`, `from_eda_color` / `From<EdaColorT>`, `from_string`, `from_wx_colour`, `from_css_rgba`, `set_from_wx_string`, `to_css_string`, `set_from_hex_string`, `to_hex_string`, `to_colour -> WxColour`, `legacy_mix`, `to_hsl`, `from_hsl`, `to_hsv`, `from_hsv`, `saturate`, ..., `distance`, `compare`, `less_than`, `PartialEq`, `PartialOrd`, `Display`, `to_json_string`, `from_json_string`) | ported (`m_text` is `Option<String>`, so `Color4D` is `Clone`, not `Copy`) |
+| `wxColour::Set( wxString )` on wxGTK 3.2: `gdk_rgba_parse` + `pango_color_parse` + `wxColourBase::FromString` | `color4d::wx_colour_from_string` (+ private ports) | partial: colour names not supported (see gaps) |
+| `std::hash<COLOR4D>` | `impl Hash for Color4D` (same components, different function) | partial |
+| `GR_TEXT_H_ALIGN_T`, `GR_TEXT_V_ALIGN_T` (values -1/0/1/2), `GetFlippedAlignment` x2, `ToHAlignment` | `text_attributes::GrTextHAlignT`, `GrTextVAlignT`, `.flipped()`, `GrTextHAlignT::from_sign` | ported |
+| `TEXT_ATTRIBUTES` (fields, constructor, `Compare`, `== < >`) | `TextAttributes` (`font: Option<String>` = font name, `angle: f64` degrees normalised like `EDA_ORIENTATION::SetAngle` via `set_angle`, `size: (i32, i32)`), `compare`, `PartialEq`, `PartialOrd` | ported |
+| `operator<<( TEXT_ATTRIBUTES )`, `std::hash<TEXT_ATTRIBUTES>` | - | skipped: debug output / hash of a font pointer |
+| `LINE_STYLE`, `WIRE_STYLE`, `lineTypeNames`, `DEFAULT_LINE_STYLE_LABEL`, `DEFAULT_WIRE_STYLE_LABEL`, `INDETERMINATE_STYLE` | `stroke_params::LineStyle`, `WireStyle`, `LINE_TYPE_NAMES` (names only, no bitmaps), constants | ported |
+| `STROKE_PARAMS` (accessors, `==`, `<`, `Format`, `GetLineStyleToken`, `GetMsgPanelInfo`) | `StrokeParams` (`format( &mut dyn OutputFormatter, &EdaIuScale )`, `get_msg_panel_info( scale, units, .. ) -> Vec<(label, text)>`) | ported |
+| `STROKE_PARAMS_PARSER::ParseStroke`, `parseInt`, `parseDouble` | `StrokeParamsParser::parse_stroke( &mut StrokeParamsLexer, &mut StrokeParams )` | ported (use with `DsnLexer::with_sub_lexer`) |
+| `STROKE_PARAMS::Stroke` (dash geometry) | - | not in this package (needs shapes; belongs with `kicad-geom` users) |
+| `TITLE_BLOCK` (all accessors, `Clear`, `GetStrings`, `Format`, `GetContextualTextVars`, `TextVarResolver`) | `title_block::TitleBlock`; `text_var_resolver( &mut String, &TitleBlockClock )` | ported (date/time passed in; no project `ExpandTextVars`) |
+| `TITLE_BLOCK::GetCurrentDate`, `GetCurrentTimeHHMMSS`, `GetCurrentTimeLocale` | fields of `TitleBlockClock` supplied by the caller | replaced (no clock in library crates) |
+| `PAGE_SIZE_TYPE`, `PAGE_INFO` (both `SetType`, `GetTypeAsString`, sizes in mils / mm / IU, `SetPortrait`, `IsCustom`, `IsDefault`, `Format`, `GetPageFormatsList`, `MIN/MAX_PAGE_SIZE_*`), `wxPaperSize` ids | `page_info::PageSizeType`, `PageInfo`, `WxPaperSize` (wx 3.2 values), constants | ported (see deviation C2-2) |
+
+## Ported C++ tests (C2)
+
+| C++ test file | Rust | Notes |
+|---|---|---|
+| `qa/tests/common/test_format_units.cpp` | `tests/test_format_units.rs` | run for all three scales (EESCHEMA/GERBVIEW/PCBNEW `#ifdef`s) |
+| `qa/tests/common/test_string_utils.cpp` | `tests/test_string_utils.rs` | all cases except `ConvertPathToFileUri_*` (file system) and `SplitGraphemeClustersKeepsCharactersWhole` (not ported) |
+| `qa/tests/common/test_kicad_string.cpp` | `tests/test_kicad_string.rs` | all cases |
+| `qa/tests/common/test_color4d.cpp` (+ `color4d_test_utils.h`) | `tests/test_color4d.rs` | all cases; hash checks use the Rust `Hash` |
+| `qa/tests/common/test_text_attributes.cpp` | `tests/test_text_attributes.rs` | all comparisons; the `std::hash` checks are left out |
+| `qa/tests/common/test_title_block.cpp` | `tests/test_title_block.rs` | all cases |
+
+Other `qa/tests/common` files that mention these functions test GUI / plotter / eval code
+(`test_eda_text`, `test_svg_plotter`, `text_eval/*`, ...) and belong to other packages.
+
+## Differential oracle (C2)
+
+`tests/oracle/units_strings_oracle.cpp` (built by `tests/oracle/build_c2_oracle.sh`, linked
+against `libkicommon.so` of the reference build, wxWidgets 3.2.4 / GTK 3) runs 152 252 cases:
+`FormatInternalUnits` (5 scales x 7 data types + points), `FormatAngle`, `FormatDouble2Str`,
+`UIDouble2Str`, `FormatTrimmedDecimal`, `StringFromValue` / `MessageTextFromValue` (5 scales x
+13 units x 7 types x both label flags), the int / long long / angle / MINOPTMAX overloads,
+`ToUserUnit` / `FromUserUnit`, `Mm2mils`, `GetText` / `GetLabel`, every
+`DoubleValueFromString` / `ValueFromString` / `FetchUnitsFromString` variant on generated
+user input, `EscapeString` (all contexts) + round trip, `UnescapeString`, `StrNumCmp`,
+`SortVariantNames`, `GetTrailingInt`, `ValueStringCompare`, `SplitString`, `QuacksLikeADuck`,
+`WildCompareString`, `ConvertToNewOverbarNotation`, `TitleCaps`, `InitialCaps`, `EscapedUTF8`,
+`EscapeHTML`, `UnescapeHTML`, `RemoveHTMLTags`, `PrintableCharCount`, `NoPrintableChars`,
+`IsFullFileNameValid`, `ConvertSmartQuotesAndDashes`, both `ReplaceIllegalFileNameChars`,
+`GetVariantFileToken`, both `ReadDelimitedText`, `StripTrailingZeros`, the stacked pin
+functions, `COLOR4D` (string parsing, CSS / hex output, HSV / HSL, saturate, mix, compare,
+luminance, nearest legacy colour, `EDA_COLOR_T` constructor), `PAGE_INFO` (all types,
+`SetType` by name, size setters, `Format`) and `TITLE_BLOCK::Format`.
+`tests/golden/c2_units_strings.txt` (13 KB) keeps the first 12 lines of each section and the
+count and FNV-1a hash of all lines; `tests/test_c2_oracle.rs` replays it. **All 13 sections
+match bit for bit.** The single input class excluded from the generator is a numeric HTML
+reference to a surrogate code point (deviation C2-1).
+
+## Deviations (C2)
+
+- **C2-1** `UnescapeHTML`: a numeric reference to a value that is not a Unicode scalar value
+  (a surrogate such as `&#xD800;`, or above 0x10FFFF) produces that raw value in a 32 bit
+  `wxString`; Rust strings cannot hold it, so the port inserts U+FFFD.
+- **C2-2** `PAGE_INFO::s_user_width` / `s_user_height` (static mutable state) are replaced by
+  an explicit `CustomPageSize` argument (`PageInfo::new`, `set_type`, `set_type_by_name`);
+  `CustomPageSize::default()` holds the C++ initial 17000 x 11000 mils.
+- **C2-3** `TITLE_BLOCK::GetCurrentDate` & co. read the clock in C++; the port takes the texts
+  from a caller-supplied `TitleBlockClock`, and `TextVarResolver` does not run the project's
+  `ExpandTextVars` (callers with a project do).
+- **C2-4** Locale: everything assumes KiCad's runtime setup, a UTF-8 `LC_CTYPE` and the "C"
+  `LC_NUMERIC` (decimal point `.`). `towupper` / `towlower` are Rust's Unicode simple case
+  mappings (`src/wxstr.rs`); glibc's tables could differ for exotic characters (the oracle
+  covers ASCII, Latin-1 and Greek letters, which agree).
+- **C2-5** Values the C++ converts with undefined behaviour (double to `int` / `unsigned char`
+  out of range, signed overflow in `StrNumCmp`, `GetTrailingInt`, `TEXT_ATTRIBUTES::Compare`)
+  saturate (`as`) or wrap (`wrapping_*`). The oracle includes `INT_MIN` / `INT_MAX` and
+  overflowing digit runs and matches.
+- **C2-6** `wxString` objects can contain embedded NULs; `WildCompareString` stops at the
+  first NUL like the C++ (`GetData()`), the other functions treat NUL as an ordinary
+  character (`CmpNoCase`'s chunk-wise NUL handling is not reproduced).
+- **C2-7** `std::hash<COLOR4D>` (libstdc++ `_Hash_bytes` + `hash_combine`) is not reproduced;
+  `Color4D` implements Rust `Hash` over the same components. No output depends on it.
+- **C2-8** `COLOR4D::RelativeLuminance` calls `pow` as `f64::powf` directly (this crate must
+  not depend on `kicad-geom`, which owns `cmath`); on wasm32 it may differ by one ulp.
+- **C2-9** `ReplaceIllegalFileNameChars( std::string&, int )` with a replacement byte >= 0x80
+  pushes that byte as a Latin-1 character (the C++ produces an invalid UTF-8 byte).
+
+## C++ quirks reproduced (C2)
+
+- `removeTrailingZeros` / `StripTrailingZeros` strip zeros even without a decimal separator;
+  `StripTrailingZeros` without a separator wraps `(unsigned) -1` around (`"100"` -> `"1"`).
+- `EscapedUTF8` prepares a copy with new lines replaced and then encodes the original.
+- `ConvertToNewOverbarNotation` returns its input for any `~~{`.
+- `DoubleValueFromString`: the `fs` check of the time units is a separate `if`;
+  radians use `180.0f / M_PI`.
+- `ApplyModifier`'s `if` chain (`a`/`f` and `p` are independent tests), `QuacksLikeADuck` /
+  `ValueStringCompare` store partially parsed numbers (`wxString::ToCDouble` semantics), and
+  `ValueStringCompare` returns the raw `CmpNoCase` difference in its last branch.
+- `COLOR4D::Compare` never returns 0 when either colour has a text.
+- `FindNearestLegacyColor` indexes `colorRefs()` with the enum value although the table is
+  in a different order.
+- `wxColour::Set` on wxGTK: GTK's parser first (channels go through 16 bit values: `#0FF000000`
+  gives red 15, `rgb(127.5,0,0)` gives 128), then `wxColourBase::FromString` (`sscanf`, so
+  `rgb(1,2,3` without `)` is accepted; `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`).
+
+## Known gaps (C2)
+
+- Colour names in `wxColour::Set` / `COLOR4D( wxString )` (`"red"`, X11 names via pango,
+  `wxTheColourDatabase`) are not supported: they return false / keep the text. KiCad files and
+  settings store colours as `rgb(...)` / `rgba(...)`, which are fully supported.
+- `SplitGraphemeClusters`, `LinkifyHTML`, `IsURL` and the file system / clock helpers listed in
+  the map are not ported.
+- `wxstr::strtod` hexadecimal floats accumulate the mantissa in a double (exact up to 13 hex
+  digits); decimal input is correctly rounded.

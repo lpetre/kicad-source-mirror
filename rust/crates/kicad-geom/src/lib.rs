@@ -33,6 +33,9 @@
 //! | [`geometry::seg`] | `geometry/seg.h`, `geometry/seg.cpp` |
 //! | [`geometry::vector_utils`] | `geometry/vector_utils.h`, `geometry/vector_utils.cpp` |
 //! | [`trigo`] | `trigo.h`, `trigo.cpp` |
+//! | [`geometry::rtree`] | `geometry/rtree/*.h` (`KIRTREE::PACKED_RTREE`, `DYNAMIC_RTREE`) |
+//! | [`thirdparty::delaunator`], [`thirdparty::nanoflann`] | `thirdparty/delaunator`, `thirdparty/nanoflann` |
+//! | [`stdsort`] | (support) libstdc++-exact `std::sort`, `std::partial_sort`, `std::nth_element`, heaps |
 //! | [`kicore::mirror`] | `include/core/mirror.h` |
 //! | [`cmath`] | (support) the libm functions the C++ code calls, in one place |
 //! | [`ostream`] | (support) default `std::ostream` number formatting |
@@ -45,7 +48,9 @@ pub mod geometry;
 pub mod kicore;
 pub mod math;
 pub mod ostream;
+pub mod stdsort;
 pub mod test_utils;
+pub mod thirdparty;
 pub mod trigo;
 
 pub use crate::geometry::eda_angle::{

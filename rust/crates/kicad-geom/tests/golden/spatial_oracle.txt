@@ -1,0 +1,9 @@
+std_sort 3040 39204080e04e6f1e
+std_partial_sort_nth_element 1500 55de411b06578764
+std_heap_priority_queue 1000 e0181954956fbcb3
+packed_rtree_2d 400 9672038481701a3e
+packed_rtree_3d 150 695b071943130516
+dynamic_rtree_2d 300 0e126723fd753c50
+dynamic_rtree_3d 150 cf1058c5a2751b55
+delaunator 2500 98eb1ae0c700c777
+nanoflann 1000 71edb32aa53489c0
