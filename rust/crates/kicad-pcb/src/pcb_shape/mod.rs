@@ -26,13 +26,16 @@ pub mod shapes;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId, StrokeParams};
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{ANGLE_0, Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
+use kicad_geom::{ANGLE_0, Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I, ki_round};
 
 use crate::board_design_settings::BoardDesignSettings;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::eda_shape::{EdaShape, FillT, ShapeT};
+use crate::footprint::Footprint;
+use crate::ids::ItemKind;
 use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
+use crate::item_ref::AnyItem;
 use crate::traits::{
     BoardConnectedItem, BoardItem, BoardItemMut, EdaShapeItem, Flashing, Invalidate,
 };
@@ -318,8 +321,8 @@ impl EdaShapeItem for PcbShape {
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 {
         PcbShape::shape_max_error(self, ctx)
     }
-    fn width(&self) -> i32 {
-        PcbShape::width(self)
+    fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        PcbShape::width(self, ctx)
     }
 }
 
@@ -404,9 +407,9 @@ impl PcbShape {
     }
 
     /// `PCB_SHAPE::GetStroke()`: `m_stroke` with the width of `GetWidth()`.
-    pub fn stroke(&self, _ctx: &BoardCtx<'_>) -> StrokeParams {
+    pub fn stroke(&self, ctx: &BoardCtx<'_>) -> StrokeParams {
         let mut s = self.shape.stroke.clone();
-        s.set_width(EdaShapeItem::width(self));
+        s.set_width(self.width(ctx));
         s
     }
 
@@ -545,9 +548,50 @@ impl PcbShape {
         crate::port_pending!("PCB_SHAPE::getMaxError", ctx)
     }
 
-    /// `PCB_SHAPE::GetWidth()`: the stroke width clamped to 0, scaled by the parent footprint's linear scale (`fpScaleLinear( transformFp() )`). The trait signature has no context, so the parent transform cannot be reached yet (reported to the orchestrator).
-    pub fn width(&self) -> i32 {
-        crate::port_pending!("PCB_SHAPE::GetWidth")
+    /// `PCB_SHAPE::transformFp()`: the footprint whose transform maps this shape's library
+    /// frame onto the board. `None` for a pad primitive (its frame is the pad's) and for a
+    /// shape outside a footprint; otherwise `GetParentFootprint()`, which walks the whole
+    /// parent chain (a table cell reaches the footprint through its table).
+    pub fn transform_fp<'a>(&self, ctx: &BoardCtx<'a>) -> Option<&'a Footprint> {
+        let mut parent = ctx.board.get(self.base.item.parent.item()?)?;
+
+        if parent.kind() == ItemKind::Pad {
+            return None;
+        }
+
+        loop {
+            if let AnyItem::Footprint(fp) = parent {
+                return Some(fp);
+            }
+
+            parent = ctx.board.get(parent.base().parent.item()?)?;
+        }
+    }
+
+    /// `PCB_SHAPE::GetWidth()`: the library stroke width, negative widths clamped to zero
+    /// (they mean something in eeschema but break plotters and exporters here), scaled by the
+    /// parent footprint's linear scale.
+    pub fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        let lib = self.shape.stroke.width().max(0);
+        let s = fp_scale_linear(self.transform_fp(ctx));
+
+        if s == 1.0 {
+            lib
+        } else {
+            ki_round(lib as f64 * s)
+        }
+    }
+}
+
+/// `fpScaleLinear( aFp )` (static, pcbnew/pcb_shape.cpp): the mean of the footprint's X and Y
+/// scale; 1.0 without a footprint.
+pub(crate) fn fp_scale_linear(fp: Option<&Footprint>) -> f64 {
+    match fp {
+        None => 1.0,
+        Some(fp) => {
+            let xform = fp.transform();
+            (xform.scale_x() + xform.scale_y()) * 0.5
+        }
     }
 }
 
@@ -589,5 +633,46 @@ mod tests {
         let added = fx.add_child(PcbShape::with_shape(ShapeT::Circle), |fp| &mut fp.drawings);
         fx.board.check_invariants().unwrap();
         assert_eq!(fx.board[added].type_(), KicadT::PcbShapeT);
+    }
+
+    /// `PCB_SHAPE::GetWidth` / `GetStroke` (pcbnew/pcb_shape.cpp): the library width, clamped
+    /// at zero and scaled by `fpScaleLinear( transformFp() )`; `PCB_TEXTBOX` and
+    /// `PCB_TABLECELL` inherit it (the cell reaches the footprint through its table). The
+    /// fixture footprint is scaled (1.5, 0.75): linear scale 1.125.
+    #[test]
+    fn width_scales_with_the_parent_footprint() {
+        let mut fx = rotated_flipped_scaled();
+        let shape_id = fx.child(ItemKind::Shape).typed::<PcbShape>().unwrap();
+        let textbox_id = fx.child(ItemKind::Textbox);
+        let textbox_id = textbox_id.typed::<crate::pcb_textbox::PcbTextbox>().unwrap();
+        let cell_id = fx.child(ItemKind::Tablecell);
+        let cell_id = cell_id.typed::<crate::pcb_tablecell::PcbTablecell>().unwrap();
+        let detached = PcbShape::default();
+
+        {
+            let ctx = &BoardCtx::bare(&fx.board);
+            let shape = &fx.board[shape_id];
+            assert_eq!(shape.transform_fp(ctx).unwrap().base.id(), Some(fx.footprint.into()));
+            assert_eq!(shape.shape.stroke.width(), 100_000);
+            assert_eq!(EdaShapeItem::width(shape, ctx), 112_500);
+            assert_eq!(shape.effective_width(ctx), 112_500);
+            assert_eq!(shape.hatch_line_width(ctx), 112_500);
+            assert_eq!(shape.hatch_line_spacing(ctx), 1_125_000);
+            assert_eq!(BoardItem::stroke(shape, ctx).width(), 112_500);
+
+            assert_eq!(EdaShapeItem::width(&fx.board[textbox_id], ctx), 112_500);
+            assert_eq!(EdaShapeItem::width(&fx.board[cell_id], ctx), 112_500);
+
+            // No parent: the stored value.
+            assert!(detached.transform_fp(ctx).is_none());
+            assert_eq!(EdaShapeItem::width(&detached, ctx), 100_000);
+        }
+
+        // Negative widths are clamped before scaling.
+        let mut negative = PcbShape::default();
+        negative.shape.stroke.set_width(-1);
+        fx.set_child(shape_id, negative);
+        let ctx = &BoardCtx::bare(&fx.board);
+        assert_eq!(EdaShapeItem::width(&fx.board[shape_id], ctx), 0);
     }
 }

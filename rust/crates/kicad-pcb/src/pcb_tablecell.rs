@@ -414,8 +414,8 @@ impl EdaShapeItem for PcbTablecell {
     fn top_left(&self) -> Vector2I {
         PcbTablecell::top_left(self)
     }
-    fn width(&self) -> i32 {
-        PcbTablecell::width(self)
+    fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        PcbTablecell::width(self, ctx)
     }
 }
 
@@ -721,8 +721,8 @@ impl PcbTablecell {
     }
 
     /// `PCB_SHAPE::GetWidth`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn width(&self) -> i32 {
-        self.textbox.width()
+    pub fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        self.textbox.width(ctx)
     }
 }
 

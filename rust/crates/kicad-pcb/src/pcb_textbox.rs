@@ -428,8 +428,8 @@ impl EdaShapeItem for PcbTextbox {
     fn top_left(&self) -> Vector2I {
         PcbTextbox::top_left(self)
     }
-    fn width(&self) -> i32 {
-        PcbTextbox::width(self)
+    fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        PcbTextbox::width(self, ctx)
     }
 }
 
@@ -719,8 +719,8 @@ impl PcbTextbox {
     }
 
     /// `PCB_SHAPE::GetWidth`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
-    pub fn width(&self) -> i32 {
-        self.shape.width()
+    pub fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        self.shape.width(ctx)
     }
 }
 

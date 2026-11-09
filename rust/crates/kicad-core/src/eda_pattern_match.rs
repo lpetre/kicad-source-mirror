@@ -97,14 +97,25 @@ fn wx_find(haystack: &str, needle: &str) -> Option<usize> {
     haystack.find(needle).map(|b| haystack[..b].chars().count())
 }
 
-/// Port of the `EDA_PATTERN_MATCH` interface.
-pub trait EdaPatternMatch {
+/// Port of the `EDA_PATTERN_MATCH` interface. `Send + Sync` and [`EdaPatternMatch::clone_box`]
+/// (no C++ counterpart: the C++ matchers live in `unique_ptr`s of objects that are never copied
+/// or shared between threads) let a compiled [`EdaCombinedMatcher`] be a member of plain data
+/// that is cloned and shared, e.g. the board's net settings.
+pub trait EdaPatternMatch: Send + Sync {
     /// `SetPattern()`: false if the pattern cannot be processed.
     fn set_pattern(&mut self, pattern: &str) -> bool;
     /// `GetPattern()`.
     fn pattern(&self) -> &str;
     /// `Find()`: location and possibly length of a match, or an invalid result.
     fn find(&self, candidate: &str) -> FindResult;
+    /// A copy of the matcher with its compiled pattern.
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch>;
+}
+
+impl Clone for Box<dyn EdaPatternMatch> {
+    fn clone(&self) -> Self {
+        self.clone_box()
+    }
 }
 
 /// Port of `EDA_PATTERN_MATCH_SUBSTR`.
@@ -132,11 +143,15 @@ impl EdaPatternMatch for EdaPatternMatchSubstr {
             },
         }
     }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
+    }
 }
 
 /// Port of `EDA_PATTERN_MATCH_REGEX`: a pattern of the form `^...$` or `/.../` (the closing
 /// slash optional) compiled as `wxRegEx( ..., wxRE_ADVANCED )`.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct EdaPatternMatchRegex {
     pattern: String,
     regex: Option<WxRegex>,
@@ -193,10 +208,14 @@ impl EdaPatternMatch for EdaPatternMatchRegex {
     fn find(&self, candidate: &str) -> FindResult {
         self.regex_find(candidate)
     }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
+    }
 }
 
 /// Port of `EDA_PATTERN_MATCH_REGEX_ANCHORED`: `^` and `$` are added unless present.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct EdaPatternMatchRegexAnchored {
     inner: EdaPatternMatchRegex,
 }
@@ -222,6 +241,10 @@ impl EdaPatternMatch for EdaPatternMatchRegexAnchored {
 
     fn find(&self, candidate: &str) -> FindResult {
         self.inner.regex_find(candidate)
+    }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
     }
 }
 
@@ -340,7 +363,7 @@ impl Glob {
 }
 
 /// Port of `EDA_PATTERN_MATCH_WILDCARD` (unanchored: the leftmost match anywhere).
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct EdaPatternMatchWildcard {
     inner: EdaPatternMatchRegex,
     wildcard_pattern: String,
@@ -394,10 +417,14 @@ impl EdaPatternMatch for EdaPatternMatchWildcard {
     fn find(&self, candidate: &str) -> FindResult {
         self.wildcard_find(candidate)
     }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
+    }
 }
 
 /// Port of `EDA_PATTERN_MATCH_WILDCARD_ANCHORED` (the whole candidate must match).
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct EdaPatternMatchWildcardAnchored {
     inner: EdaPatternMatchWildcard,
 }
@@ -413,6 +440,10 @@ impl EdaPatternMatch for EdaPatternMatchWildcardAnchored {
 
     fn find(&self, candidate: &str) -> FindResult {
         self.inner.wildcard_find(candidate)
+    }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
     }
 }
 
@@ -645,6 +676,10 @@ impl EdaPatternMatch for EdaPatternMatchRelational {
 
         FindResult::default()
     }
+
+    fn clone_box(&self) -> Box<dyn EdaPatternMatch> {
+        Box::new(self.clone())
+    }
 }
 
 /// Port of `enum COMBINED_MATCHER_CONTEXT`.
@@ -662,7 +697,8 @@ pub enum CombinedMatcherContext {
     Search,
 }
 
-/// Port of `EDA_COMBINED_MATCHER`.
+/// Port of `EDA_COMBINED_MATCHER`. `Clone + Send + Sync` (see [`EdaPatternMatch`]).
+#[derive(Clone)]
 pub struct EdaCombinedMatcher {
     matchers: Vec<Box<dyn EdaPatternMatch>>,
     pattern: String,

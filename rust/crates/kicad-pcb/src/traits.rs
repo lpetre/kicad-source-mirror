@@ -496,24 +496,28 @@ pub trait EdaShapeItem {
     /// Mutable `EDA_SHAPE` data members.
     fn eda_shape_mut(&mut self) -> &mut EdaShape;
 
-    /// `GetWidth()`.
-    fn width(&self) -> i32 {
-        eda_shape::width(self)
+    /// `GetWidth()` (virtual). Takes the context because `PCB_SHAPE::GetWidth` (inherited by
+    /// `PCB_TEXTBOX` / `PCB_TABLECELL`) scales the stored library width by the parent
+    /// footprint's linear scale (`fpScaleLinear( transformFp() )`). The stored value is
+    /// `eda_shape().stroke.width()`.
+    fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        eda_shape::width(self, ctx)
     }
 
-    /// `GetEffectiveWidth()`.
-    fn effective_width(&self) -> i32 {
-        self.width()
+    /// `GetEffectiveWidth()` (virtual; no PCB class overrides it): `GetWidth()`.
+    fn effective_width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        self.width(ctx)
     }
 
-    /// `GetHatchLineWidth()`.
-    fn hatch_line_width(&self) -> i32 {
-        self.effective_width()
+    /// `GetHatchLineWidth()` (virtual; no PCB class overrides it): `GetEffectiveWidth()`.
+    fn hatch_line_width(&self, ctx: &BoardCtx<'_>) -> i32 {
+        self.effective_width(ctx)
     }
 
-    /// `GetHatchLineSpacing()`.
-    fn hatch_line_spacing(&self) -> i32 {
-        self.hatch_line_width() * 10
+    /// `GetHatchLineSpacing()` (virtual; no PCB class overrides it):
+    /// `GetHatchLineWidth() * 10`.
+    fn hatch_line_spacing(&self, ctx: &BoardCtx<'_>) -> i32 {
+        self.hatch_line_width(ctx) * 10
     }
 
     /// `IsProxyItem()`.

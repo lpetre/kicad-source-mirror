@@ -132,6 +132,36 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 - [ ] Zone filler, custom rules, remaining providers.
 - [ ] CLI, wasm, demo.
 - [ ] Differential test campaign + adversarial review.
+- [ ] Performance phase (see below).
+
+## Performance phase (requested by the user; after the differential test campaign)
+
+Goal: hill-climb the speed of the Rust port without changing a single output byte.
+
+1. **Harness first.** A `kicad-bench` crate (or `benches/` in kicad-cli) timing, on a fixed
+   set of corpus boards (small / medium / the two large demos): parse, write, connectivity
+   build, DRC, zone refill, Gerber + drill export; natively (release profile) and as wasm
+   under node. Record the reference `kicad-cli` wall-clock for the same operations on the same
+   machine as the baseline. Results go to `docs/PERF.md` (table per commit).
+2. **Profile.** `perf` / flamegraphs natively; for wasm, node's profiler. Rank hotspots.
+3. **Loop until dry** (workflow): each round, Opus agents take the top hotspots (one each,
+   disjoint files), propose and implement one optimisation, and a change is kept only if
+   (a) every differential oracle and golden test still passes bit for bit and (b) the
+   benchmark improves beyond noise. Stop after two consecutive rounds with no kept change.
+   Fable reviews any change that touches a pinned behaviour.
+4. **Pinned, not negotiable:** libstdc++ sort tie order, r-tree visit order, Clipper2 output,
+   floating-point expression order, iteration orders listed in the analysis docs. Wins come
+   from allocation, caching, data layout and avoiding repeated work - not different algorithms.
+5. **Known suspects** (from reviews so far): `KeyedCache` costs a mutex lock + `Arc` clone per
+   read on hot paths (pad shapes in DRC and plotting); `Shape::indexable_subshapes()` allocates
+   a Vec per call; `Box<dyn Shape>` churn in collisions; the board time stamp invalidates all
+   stamp-keyed caches on every edit; netclass pattern matchers rebuilt per lookup; dev profile
+   uses opt-level 1.
+6. **Parallelism.** KiCad runs DRC, zone fill and connectivity on a thread pool; the port is
+   sequential by rule. Add optional `rayon` behind the non-default `parallel` feature only
+   where output order can be kept deterministic (collect per item, merge in item order).
+   wasm stays single-threaded.
+7. **wasm build tuning:** opt-level s vs 3, LTO, `wasm-opt`, panic=abort; report size and speed.
 
 ## Notes for the orchestrator
 

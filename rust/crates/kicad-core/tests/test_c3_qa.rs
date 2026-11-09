@@ -547,3 +547,36 @@ fn single_letter_search_matches_device_name_over_keyword_collision() {
         }
     }
 }
+
+/// New code, no C++ test corresponds: a compiled `EDA_COMBINED_MATCHER` is plain data
+/// (`Clone + Send + Sync`), so that the board's net settings can hold it; a clone matches like
+/// the original (regex and wildcard matchers keep their compiled pattern).
+#[test]
+fn combined_matcher_is_clone_send_sync() {
+    fn assert_plain<T: Clone + Send + Sync>() {}
+    assert_plain::<EdaCombinedMatcher>();
+    assert_plain::<Box<dyn EdaPatternMatch>>();
+
+    for (pattern, hit, miss) in [
+        ("HV*", "HV_BUS1", "LV_BUS1"),
+        // CTX_NETCLASS anchors the regular expression: `^A[0-9]+$`.
+        ("A[0-9]+", "A12", "A12B"),
+        ("^net-.*$", "net-(R1-Pad1)", "Net-x"),
+    ] {
+        let matcher = EdaCombinedMatcher::new(pattern, CombinedMatcherContext::Netclass);
+        let copy = matcher.clone();
+        assert_eq!(copy.pattern(), pattern);
+        assert_eq!(copy.matcher_count(), matcher.matcher_count());
+
+        for candidate in [hit, miss] {
+            assert_eq!(
+                copy.find_detailed(candidate),
+                matcher.find_detailed(candidate)
+            );
+            assert_eq!(copy.find(candidate), matcher.find(candidate));
+        }
+
+        assert!(copy.find(hit), "{pattern} / {hit}");
+        assert!(!copy.find(miss), "{pattern} / {miss}");
+    }
+}

@@ -339,8 +339,9 @@ impl EdaShape {
 
 // ---- base bodies of the EDA_SHAPE virtuals (EdaShapeItem defaults) -----------------------
 
-/// `EDA_SHAPE::GetWidth()`: `m_stroke.GetWidth()`.
-pub fn width<H: EdaShapeItem + ?Sized>(host: &H) -> i32 {
+/// `EDA_SHAPE::GetWidth()`: `m_stroke.GetWidth()` (the context is for the `PCB_SHAPE`
+/// override, which scales by the parent footprint).
+pub fn width<H: EdaShapeItem + ?Sized>(host: &H, _ctx: &BoardCtx<'_>) -> i32 {
     host.eda_shape().stroke.width()
 }
 

@@ -398,8 +398,12 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     let _ = (tb.font_metrics(ctx), tb.text_box(ctx, None));
 
     // EdaShapeItem + EdaShapeExt
-    let _ = (tb.width(), tb.effective_width(), tb.hatch_line_width());
-    let _ = (tb.hatch_line_spacing(), tb.is_proxy_item());
+    let _ = (
+        tb.width(ctx),
+        tb.effective_width(ctx),
+        tb.hatch_line_width(ctx),
+    );
+    let _ = (tb.hatch_line_spacing(ctx), tb.is_proxy_item());
     let _ = (
         tb.is_filled_for_hit_testing(),
         tb.top_left(),

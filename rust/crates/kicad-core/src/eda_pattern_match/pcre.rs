@@ -2127,7 +2127,7 @@ pub fn translate(pattern: &str) -> Result<(String, &'static str), PcreError> {
 }
 
 /// A compiled `wxRegEx`.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct WxRegex {
     re: regress::Regex,
 }
