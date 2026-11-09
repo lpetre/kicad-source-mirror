@@ -87,7 +87,7 @@ impl Mmh3Hash {
             remaining -= fill;
             self.len = self.len.wrapping_add(fill as u32);
 
-            if self.len % 16 != 0 {
+            if !self.len.is_multiple_of(16) {
                 return;
             }
 
@@ -152,7 +152,7 @@ impl Mmh3Hash {
         self.blocks[word..word + 4].copy_from_slice(&a_input.to_le_bytes());
         self.len = self.len.wrapping_add(4);
 
-        if self.len % 16 == 0 {
+        if self.len.is_multiple_of(16) {
             self.hash_block();
         }
     }

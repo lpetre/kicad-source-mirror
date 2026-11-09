@@ -40,10 +40,11 @@ for e in json.load(open(build + "/compile_commands.json")):
 else:
     sys.exit("board_loader.cpp.o not found in compile_commands.json")
 PY
-read -r -a CFLAGS < <(cat "$CFLAGS_FILE")
+eval "CFLAGS=( $(cat "$CFLAGS_FILE") )"
 QA="$KICAD_SRC/qa"
 CFLAGS+=( -I"$HERE" -I"$QA/qa_utils/include" -I"$QA/pcbnew_utils/include" -I"$QA/mocks/include"
           -I"$KICAD_SRC/thirdparty/turtle" -I"$KICAD_SRC/pcbnew/router" -I"$KICAD_SRC/pcbnew/tools"
+          $(pkg-config --cflags gtk+-3.0)
           -Wno-shadow -Wno-unused-variable -Wno-sign-compare
           "-DQA_DATA_ROOT=\"$QA/data\"" "-DQA_PCBNEW_DATA_LOCATION=\"$QA/data/pcbnew\"" )
 
@@ -53,6 +54,7 @@ SRCS=( "$HERE"/*.cpp
        "$QA/qa_utils/mock_utils.cpp"
        "$QA/qa_utils/stdstream_line_reader.cpp"
        "$QA/qa_utils/wx_utils/unit_test_utils.cpp"
+       "$QA/qa_utils/wx_utils/wx_assert.cpp"
        "$QA/pcbnew_utils/board_file_utils.cpp" )
 
 OBJS=()

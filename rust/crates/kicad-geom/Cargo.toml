@@ -11,6 +11,8 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+# Vendored, fidelity-patched Clipper2 port (PORTING.md section 9); KiCad builds Clipper2 with USINGZ.
+clipper2-rs = { path = "../../vendor/clipper2-rs", features = ["usingz"] }
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }

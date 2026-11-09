@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the C++ differential-test oracle for the kicad-geom helpers (package G6a: polygon-independent helpers) against the
+# Builds the C++ differential-test oracle for the kicad-geom helpers (package G6a) against the
 # static libraries of the reference KiCad build and regenerates ../golden/helpers_oracle.txt.
 # See helpers_oracle.cpp and rust/docs/ORACLE.md.
 #

@@ -186,6 +186,12 @@ pub trait Plotter {
     /// Mutable access to the shared base-class members.
     fn state_mut(&mut self) -> &mut PlotterState;
 
+    /// Down-cast to the Gerber engine (C++ `dynamic_cast<GERBER_PLOTTER*>`): `None` for every
+    /// other engine.
+    fn as_gerber_mut(&mut self) -> Option<&mut crate::plotter_gerber::GerberPlotter> {
+        None
+    }
+
     /// Port of `PLOTTER::GetPlotterType`: the effective plot engine in use.
     fn plotter_type(&self) -> PlotFormat;
 

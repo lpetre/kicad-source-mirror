@@ -305,22 +305,20 @@ impl<S> JsonSettings<S> {
 
     /// Port of `JSON_SETTINGS::formatFileContents`: the original document with the subtrees
     /// of "clear unknown keys" parameters emptied, merged (`update( ..., true )`) with the
-    /// current document, `dump( 2 ) + '\n'`.
-    pub fn format_file_contents(&self) -> String {
+    /// current document, `dump( 2 ) + '\n'`. `Err` where nlohmann throws (the original
+    /// document is not an object).
+    pub fn format_file_contents(&self) -> Result<String, JsonError> {
         let mut to_save = self.internals.original.clone();
 
         for param in &self.params {
             if param.clear_unknown_keys() {
                 let p = JsonSettingsInternals::pointer_from_string(param.json_path());
-
-                if let Ok(slot) = p.get_unchecked(&mut to_save) {
-                    *slot = Value::Object(json::Map::new());
-                }
+                *p.get_unchecked(&mut to_save)? = Value::Object(json::Map::new());
             }
         }
 
-        let _ = json::update(&mut to_save, &self.internals.doc, true);
-        json::dump(&to_save, Some(2), ObjectOrder::Sorted) + "\n"
+        json::update(&mut to_save, &self.internals.doc, true)?;
+        Ok(json::dump(&to_save, Some(2), ObjectOrder::Sorted) + "\n")
     }
 
     /// Port of `JSON_SETTINGS::FormatAsString`: `Store()`, then `std::setw( 2 ) << internals

@@ -396,7 +396,7 @@ fn section_ellipse(results: &mut Results) {
         let s = ellipse_angle(&mut rng);
         let mut e = ellipse_angle(&mut rng);
 
-        if rng.next() % 8 == 0 {
+        if rng.next().is_multiple_of(8) {
             e = s;
         }
 
@@ -467,7 +467,7 @@ fn hull_points(rng: &mut Rng, a_pts: &mut Vec<Vector2I>) {
             }
             2 => a_pts.push(rng.pt()),
             3 => {
-                let a = rng.dbl(0.0, 6.283185307179586);
+                let a = rng.dbl(0.0, std::f64::consts::TAU);
                 let rad = rng.range(1, 100000000) as i32;
                 a_pts.push(Vector2I::new(
                     (rad as f64 * kicad_geom::cmath::cos(a)) as i32,
@@ -478,7 +478,7 @@ fn hull_points(rng: &mut Rng, a_pts: &mut Vec<Vector2I>) {
             _ => a_pts.push(rng.pt_mid()),
         }
 
-        if !a_pts.is_empty() && rng.next() % 5 == 0 {
+        if !a_pts.is_empty() && rng.next().is_multiple_of(5) {
             let idx = (rng.next() % a_pts.len() as u64) as usize;
             a_pts.push(a_pts[idx]);
         }
@@ -535,7 +535,7 @@ fn scale_value(rng: &mut Rng) -> f64 {
         5 => 1.0 + 1e-6,
         6 => -rng.dbl(0.01, 10.0),
         7 => {
-            if rng.next() % 50 == 0 {
+            if rng.next().is_multiple_of(50) {
                 0.0
             } else {
                 rng.dbl(0.001, 0.1)
@@ -639,7 +639,7 @@ fn section_transform(results: &mut Results) {
         let mut a1 = EdaAngle::new(rng.angle_deg(), DEGREES_T);
         let mut a2 = EdaAngle::new(rng.angle_deg(), DEGREES_T);
 
-        if rng.next() % 6 == 0 {
+        if rng.next().is_multiple_of(6) {
             a2 = a1;
         }
 
@@ -742,7 +742,7 @@ fn section_grid_geometry(results: &mut Results) {
 
         g.orientation = if rng.flag() { 0.0 } else { rng.dbl(-7.0, 7.0) };
 
-        let ex = if rng.next() % 10 == 0 {
+        let ex = if rng.next().is_multiple_of(10) {
             -rng.dbl(0.0, 1e7)
         } else {
             rng.dbl(0.0, 5e7)
@@ -960,7 +960,7 @@ fn section_hashes(results: &mut Results) {
             while pos < bytes.len() {
                 let piece = (bytes.len() - pos).min(rng.range(0, 40) as usize);
 
-                if rng.next() % 4 == 0 && piece >= 4 && pos % 4 == 0 {
+                if rng.next().is_multiple_of(4) && piece >= 4 && pos.is_multiple_of(4) {
                     let v = i32::from_le_bytes([
                         bytes[pos],
                         bytes[pos + 1],
@@ -1027,12 +1027,12 @@ fn section_hashes(results: &mut Results) {
         {
             let i1: i32 = rng.next() as i32;
             let i2: i64 = rng.next() as i64;
-            let d1: f64 = if rng.next() % 8 == 0 {
+            let d1: f64 = if rng.next().is_multiple_of(8) {
                 0.0
             } else {
                 rng.dbl(-1e9, 1e9)
             };
-            let d2: f64 = if rng.next() % 8 == 0 {
+            let d2: f64 = if rng.next().is_multiple_of(8) {
                 -0.0
             } else {
                 rng.dbl_scaled(-60, 60)

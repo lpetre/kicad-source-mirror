@@ -139,18 +139,18 @@ fn plain_chain(rng: &mut Rng) -> ShapeLineChain {
     for _ in 0..n {
         let mut p = chain_pt(rng, mode);
 
-        if c.point_count() > 0 && rng.next() % 8 == 0 {
+        if c.point_count() > 0 && rng.next().is_multiple_of(8) {
             p = c.c_last_point();
         }
 
-        let dup = rng.next() % 4 == 0;
+        let dup = rng.next().is_multiple_of(4);
         c.append_point(p, dup);
     }
 
     let closed = rng.flag();
     c.set_closed(closed);
 
-    if rng.next() % 4 == 0 {
+    if rng.next().is_multiple_of(4) {
         let w = rng.range(0, 100000) as i32;
         c.set_width(w);
     }
@@ -471,7 +471,7 @@ fn section_edit(
                                 r.i(c.point_count());
                             }
 
-                            if rng.next() % 4 == 0 && other.point_count() > 0 {
+                            if rng.next().is_multiple_of(4) && other.point_count() > 0 {
                                 other.set_point(0, c.c_point(s));
                             }
 
@@ -739,7 +739,8 @@ fn section_query(
                     r.b(found).v(b0).v(b1);
                 }
 
-                r.s(&Shape::format(&c, true)).b(c != other).b(c != c);
+                let same = c.clone();
+                r.s(&Shape::format(&c, true)).b(c != other).b(c != same);
                 r.b(c.compare_geometry(&other, false, 0))
                     .b(c.compare_geometry(&c, false, thr));
 
@@ -933,7 +934,16 @@ fn run_case(
 
     match std::panic::catch_unwind(AssertUnwindSafe(|| f(&mut rng, &mut recs))) {
         Ok(()) => Some(recs),
-        Err(_) => {
+        Err(e) => {
+            if std::env::var_os("KICAD_SLC_ORACLE_SHOW_PANICS").is_some() {
+                let msg = e
+                    .downcast_ref::<&str>()
+                    .map(|s| s.to_string())
+                    .or_else(|| e.downcast_ref::<String>().cloned())
+                    .unwrap_or_default();
+                println!("case {name} {n} panics: {msg}");
+            }
+
             skips.found.push((name.to_string(), n));
             None
         }

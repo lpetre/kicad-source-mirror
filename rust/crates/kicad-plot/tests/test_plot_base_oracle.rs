@@ -601,7 +601,15 @@ fn section_bezier(o: &mut Out) {
 
         rec.bezier_curve(a, c1, c2, e, tol, w);
         let log = rec.take();
-        o.out(format!("{} {} {} {} {}{}", pt(a), pt(c1), pt(c2), pt(e), tol, log));
+        o.out(format!(
+            "{} {} {} {} {}{}",
+            pt(a),
+            pt(c1),
+            pt(c2),
+            pt(e),
+            tol,
+            log
+        ));
     }
 }
 

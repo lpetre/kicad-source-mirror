@@ -46,7 +46,7 @@ if [ "${2:-}" = "regen" ]; then
     echo "regenerated $GOLDEN/c3_json.txt"
 
     if [ -x "$OUT/pattern_oracle" ]; then
-        "$OUT/pattern_oracle" "$KICAD" > "$GOLDEN/c3_pattern.txt"
+        "$OUT/pattern_oracle" "$KICAD" "$OUT/c3_json_files.txt" > "$GOLDEN/c3_pattern.txt"
         echo "regenerated $GOLDEN/c3_pattern.txt"
     fi
 fi

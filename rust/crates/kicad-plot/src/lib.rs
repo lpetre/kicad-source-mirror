@@ -24,12 +24,15 @@ pub mod common_plot_functions;
 pub mod drill_markers;
 pub mod gbr_metadata;
 pub mod gbr_netlist_metadata;
+pub mod gbr_plotter_aperture_macros;
 pub mod gbr_plotter_apertures;
 pub mod plotter;
+pub mod plotter_gerber;
 pub mod render_settings;
 
 pub use kicad_core::plot_enums::{
     DrillMarks, DxfLayerOutputMode, DxfOutlineMode, DxfUnits, FillT, PlotFormat, PlotTextMode,
 };
 pub use plotter::{DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH};
+pub use plotter_gerber::GerberPlotter;
 pub use render_settings::RenderSettings;

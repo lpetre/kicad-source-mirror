@@ -643,6 +643,90 @@ pub fn pcb_mm_to_iu(mm: f64) -> i32 {
     }) as i32
 }
 
+/// Port of `GEOM_TEST::IsOutlineValid()` (`qa/tests/libs/kimath/geometry/geom_test_utils.h`):
+/// check that every arc point of the chain lies on its arc, that the arcs are contiguous and
+/// that they start and end on the chain points.
+pub fn is_outline_valid(a_chain: &crate::geometry::shape_line_chain::ShapeLineChain) -> bool {
+    use crate::geometry::shape::Shape;
+    use crate::geometry::shape_arc::ShapeArc;
+    use std::collections::BTreeSet;
+
+    let mut prev_arc_idx: isize = -1;
+    let mut tested_arcs: BTreeSet<isize> = BTreeSet::new();
+
+    if a_chain.point_count() > 0 && !a_chain.is_closed() && a_chain.is_shared_pt(0) {
+        return false; //can't have first point being shared on an open chain
+    }
+
+    for i in 0..a_chain.point_count() {
+        let arc_idx = a_chain.arc_index(i as usize);
+
+        if arc_idx >= 0 {
+            // Point on arc, lets make sure it collides with the arc shape and we haven't
+            // previously seen the same arc index
+
+            if prev_arc_idx != arc_idx && tested_arcs.contains(&arc_idx) {
+                return false; // we've already seen this arc before, not contiguous
+            }
+
+            if !a_chain.arc(arc_idx as usize).collide_point(
+                a_chain.c_point(i),
+                ShapeArc::default_accuracy_for_pcb(),
+                None,
+                None,
+            ) {
+                return false;
+            }
+
+            tested_arcs.insert(arc_idx);
+        }
+
+        if prev_arc_idx != arc_idx {
+            // we have changed arc shapes, run a few extra tests
+
+            if prev_arc_idx >= 0 {
+                // prev point on arc, test that the last arc point on the chain
+                // matches the end point of the arc
+                let mut point_to_test = a_chain.c_point(i);
+
+                if !a_chain.is_shared_pt(i as usize) {
+                    point_to_test = a_chain.c_point(i - 1);
+                }
+
+                if a_chain.arc(prev_arc_idx as usize).get_p1() != point_to_test {
+                    return false;
+                }
+            }
+
+            if arc_idx >= 0 {
+                // new arc, test that the start point of the arc matches the point on the chain
+                if a_chain.arc(arc_idx as usize).get_p0() != a_chain.c_point(i) {
+                    return false;
+                }
+            }
+        }
+
+        prev_arc_idx = arc_idx;
+    }
+
+    // Make sure last arc point matches the end of the arc
+    if prev_arc_idx >= 0 {
+        if a_chain.is_closed() && a_chain.is_shared_pt(0) {
+            if a_chain.c_shapes()[0].0 != prev_arc_idx {
+                return false;
+            }
+
+            if a_chain.arc(prev_arc_idx as usize).get_p1() != a_chain.c_point(0) {
+                return false;
+            }
+        } else if a_chain.arc(prev_arc_idx as usize).get_p1() != a_chain.c_last_point() {
+            return false;
+        }
+    }
+
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

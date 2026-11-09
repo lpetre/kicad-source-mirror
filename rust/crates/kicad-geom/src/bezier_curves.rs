@@ -753,17 +753,11 @@ impl<T: NumericType> Bezier<T> {
         let mut t0 = a_t0;
         let mut t1 = a_t1;
 
-        if t0 < 0.0 {
-            t0 = 0.0;
-        } else if t0 > 1.0 {
-            t0 = 1.0;
-        }
+        // `t < 0 ? 0 : t > 1 ? 1 : t`, NaN stays NaN
+        t0 = t0.clamp(0.0, 1.0);
 
-        if t1 < 0.0 {
-            t1 = 0.0;
-        } else if t1 > 1.0 {
-            t1 = 1.0;
-        }
+        // `t < 0 ? 0 : t > 1 ? 1 : t`, NaN stays NaN
+        t1 = t1.clamp(0.0, 1.0);
 
         if t1 <= t0 {
             let point = self.point_at(t0);

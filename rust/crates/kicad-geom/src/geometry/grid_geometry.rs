@@ -77,9 +77,7 @@ impl GridGeometry {
             a_point - self.origin,
             EdaAngle::new(-self.orientation, RADIANS_T),
         );
-        let candidate: Vector2D;
-
-        match self.kind {
+        let candidate: Vector2D = match self.kind {
             GridKind::Polar => {
                 let dr = self.pitch.x;
                 let d_phi = self.pitch.y;
@@ -108,8 +106,7 @@ impl GridGeometry {
                 let phi_q = p_idx as f64 * d_phi;
                 let r_snapped = r_idx as f64 * dr;
 
-                candidate =
-                    Vector2D::new(r_snapped * cmath::cos(phi_q), r_snapped * cmath::sin(phi_q));
+                Vector2D::new(r_snapped * cmath::cos(phi_q), r_snapped * cmath::sin(phi_q))
             }
             GridKind::Cartesian => {
                 let dx = self.pitch.x;
@@ -125,9 +122,9 @@ impl GridGeometry {
                 let x_idx = clamp_i(round_to_int(local.x / dx), n_x.wrapping_neg(), n_x);
                 let y_idx = clamp_i(round_to_int(local.y / dy), n_y.wrapping_neg(), n_y);
 
-                candidate = Vector2D::new(x_idx as f64 * dx, y_idx as f64 * dy);
+                Vector2D::new(x_idx as f64 * dx, y_idx as f64 * dy)
             }
-        }
+        };
 
         get_rotated(candidate, EdaAngle::new(self.orientation, RADIANS_T)) + self.origin
     }

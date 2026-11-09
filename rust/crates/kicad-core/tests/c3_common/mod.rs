@@ -161,3 +161,22 @@ pub fn check_golden(golden_path: &str, o: &Out, full_name: &str) {
         );
     }
 }
+
+/// The file list of `build_c3_oracle.sh`: every `.kicad_pro`, `.kicad_prl`, `.json` and
+/// `.gbrjob` file under `qa/data` and `demos`, relative to the source root, in byte order.
+pub fn json_files() -> Vec<String> {
+    let root = kicad_qa::kicad_source_root();
+    let mut out = Vec::new();
+
+    for dir in [kicad_qa::qa_data_dir(), kicad_qa::demos_dir()] {
+        for ext in ["kicad_pro", "kicad_prl", "json", "gbrjob"] {
+            for p in kicad_qa::files_with_extension(&dir, ext) {
+                let rel = p.strip_prefix(&root).unwrap().to_string_lossy().replace('\\', "/");
+                out.push(rel);
+            }
+        }
+    }
+
+    out.sort_by(|a, b| a.as_bytes().cmp(b.as_bytes()));
+    out
+}

@@ -35,13 +35,18 @@
 //! | [`trigo`] | `trigo.h`, `trigo.cpp` |
 //! | [`geometry::shape`] | `geometry/shape.h`, `geometry/shape.cpp` (`SHAPE`, `SHAPE_LINE_CHAIN_BASE`; see `docs/design/geom-shapes.md`) |
 //! | [`geometry::shape_arc`], [`geometry::shape_circle`], [`geometry::shape_rect`], [`geometry::shape_segment`], [`geometry::shape_simple`], [`geometry::shape_null`], [`geometry::shape_compound`] | `geometry/shape_arc.h` ... `shape_compound.h` and their `.cpp` |
-//! | [`geometry::shape_line_chain`], [`geometry::shape_poly_set`] | `geometry/shape_line_chain.h`, `geometry/shape_poly_set.h` (skeletons; packages G3 / G4) |
+//! | [`geometry::shape_line_chain`], [`geometry::shape_poly_set`] | `geometry/shape_line_chain.h`, `geometry/shape_poly_set.h` (line chain complete since G3; poly set skeleton, package G4) |
 //! | [`geometry::shape_collisions`] | `geometry/shape_collisions.cpp` (partial; package G5) |
 //! | [`geometry::circle`], [`geometry::arc_chord_params`], [`geometry::half_line`], [`geometry::line`], [`geometry::arc_construction`] | the files of the same name |
 //! | [`geometry::geometry_utils`], [`geometry::approximation`], [`geometry::shape_utils`] | `geometry/geometry_utils.h/.cpp`, `geometry/approximation.h`, part of `geometry/shape_utils.cpp` |
 //! | [`geometry::rtree`] | `geometry/rtree/*.h` (`KIRTREE::PACKED_RTREE`, `DYNAMIC_RTREE`) |
 //! | [`thirdparty::delaunator`], [`thirdparty::nanoflann`] | `thirdparty/delaunator`, `thirdparty/nanoflann` |
 //! | [`stdsort`] | (support) libstdc++-exact `std::sort`, `std::partial_sort`, `std::nth_element`, heaps |
+//! | [`math::vector3`] | `math/vector3.h` |
+//! | [`bezier_curves`], [`geometry::ellipse`] | `bezier_curves.h/.cpp`, `geometry/ellipse.h/.cpp` |
+//! | [`geometry::convex_hull`], [`geometry::transform_trs`], [`transform`] | `geometry/convex_hull.h/.cpp`, `geometry/transform_trs.h/.cpp`, `transform.h/.cpp` |
+//! | [`geometry::geometry_predicates`], [`geometry::point_types`], [`geometry::distribute`], [`geometry::grid_geometry`] | the files of the same name |
+//! | [`hash`], [`hash_128`], [`mmh3_hash`], [`md5_hash`] | `hash.h`, `hash_128.h`, `mmh3_hash.h`, `md5_hash.h/.cpp` |
 //! | [`kicore::mirror`] | `include/core/mirror.h` |
 //! | [`cmath`] | (support) the libm functions the C++ code calls, in one place |
 //! | [`ostream`] | (support) default `std::ostream` number formatting |

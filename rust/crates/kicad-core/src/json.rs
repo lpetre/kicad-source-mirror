@@ -1560,6 +1560,12 @@ impl ToJson for String {
     }
 }
 
+impl ToJson for str {
+    fn to_json(&self) -> Value {
+        Value::String(self.to_string())
+    }
+}
+
 impl ToJson for &str {
     fn to_json(&self) -> Value {
         Value::String((*self).to_string())

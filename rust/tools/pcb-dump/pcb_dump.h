@@ -63,9 +63,12 @@ public:
     std::string m_section;
     std::string m_key;
 
+    /// Prepended to every field name by Emit() (used by the defaults command).
+    std::string m_fieldPrefix;
+
     void Emit( const std::string& aField, const std::string& aValue )
     {
-        Line( m_section, m_key, aField, aValue );
+        Line( m_section, m_key, m_fieldPrefix + aField, aValue );
     }
 
     /// Report an error on an "error|..." line (never hashed).
@@ -164,6 +167,10 @@ void Guard( const std::string& aWhat, F&& aFn );
 /// The copper layers of the board in stack order (F_Cu, In1..., B_Cu).
 std::vector<PCB_LAYER_ID> CopperLayers( const BOARD* aBoard );
 
+/// Emit one field; an exception while computing the value (including a wx assertion) is reported
+/// on an error line for this field only and the dump continues with the next field.
+#define EMIT( aField, aValueExpr ) Guard( aField, [&]() { g_out.Emit( aField, aValueExpr ); } )
+
 // ---- sections (dump_*.cpp) ----------------------------------------------------------------
 
 struct DUMP_OPTIONS
@@ -177,7 +184,14 @@ struct DUMP_OPTIONS
     }
 };
 
+#include <functional>
+void ForEachBoardItem( BOARD* aBoard, const std::function<void( BOARD_ITEM* )>& aFn );
 void InitItemKeys( BOARD* aBoard );
+
+/// Collect the UUIDs written in the board file (36-char UUIDs and legacy 8-hex-digit tstamps).
+/// Items whose UUID is not in the file were given a generated one by the loader.
+void ScanFileUuids( const std::string& aPath );
+bool UuidInFile( const KIID& aId );
 void DumpBoard( BOARD* aBoard, const DUMP_OPTIONS& aOpts );
 void DumpDefaults();
 void DumpItemSections( BOARD* aBoard, BOARD_ITEM* aItem, const DUMP_OPTIONS& aOpts );
@@ -194,6 +208,7 @@ void DumpText( BOARD_ITEM* aItem );
 void DumpDimension( BOARD_ITEM* aItem );
 void DumpZone( BOARD_ITEM* aItem );
 void DumpFootprint( BOARD_ITEM* aItem );
+void DumpMisc( BOARD_ITEM* aItem );
 
 
 #include <stdexcept>

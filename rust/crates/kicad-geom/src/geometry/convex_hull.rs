@@ -19,7 +19,7 @@
 //! Port of `libs/kimath/include/geometry/convex_hull.h` and
 //! `libs/kimath/src/geometry/convex_hull.cpp`: Andrew's monotone chain 2D convex hull
 //! algorithm (asymptotic complexity: O(n log n), see
-//! http://www.algorithmist.com/index.php/Monotone_Chain_Convex_Hull).
+//! <http://www.algorithmist.com/index.php/Monotone_Chain_Convex_Hull>).
 //!
 //! Pseudo-code:
 //!
@@ -81,7 +81,7 @@ pub fn build_convex_hull(a_result: &mut Vec<Vector2I>, a_poly: &[Vector2I]) {
     // Sort points lexicographically
     // Andrew's monotone chain 2D convex hull algorithm needs that.
     // (`compare_point` only ties on identical points, so the sort algorithm does not matter.)
-    poly.sort_unstable_by(|r, p| (r.x, r.y).cmp(&(p.x, p.y)));
+    poly.sort_unstable_by_key(|p| (p.x, p.y));
 
     let mut k: usize = 0;
 

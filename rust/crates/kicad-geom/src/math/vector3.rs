@@ -101,7 +101,7 @@ impl Vector3Coord for u32 {
     }
 
     fn c_div(self, b: Self) -> Option<Self> {
-        if b == 0 { None } else { Some(self / b) }
+        self.checked_div(b)
     }
 
     fn dot3(a: [Self; 3], b: [Self; 3]) -> u32 {
@@ -213,7 +213,7 @@ impl<T: Vector3Coord> Vector3<T> {
     pub fn normalize(&mut self) -> Vector3<T> {
         let norm = self.euclidean_norm();
 
-        if !(norm > T::zero()) {
+        if norm.partial_cmp(&T::zero()) != Some(core::cmp::Ordering::Greater) {
             return *self;
         }
 

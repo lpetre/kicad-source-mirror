@@ -33,7 +33,7 @@ use kicad_core::json::{
 };
 
 mod c3_common;
-use c3_common::{Lcg, Out, check_golden, hex64};
+use c3_common::{Lcg, Out, check_golden, hex64, json_files};
 
 const P10: [f64; 23] = [
     1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16,
@@ -416,24 +416,6 @@ fn sorted(text: &str) -> Value {
 
 fn throw(e: &JsonError) -> String {
     format!("throw {}", e.id)
-}
-
-/// The file list of `build_c3_oracle.sh`: relative paths in byte order.
-fn json_files() -> Vec<String> {
-    let root = kicad_qa::kicad_source_root();
-    let mut out = Vec::new();
-
-    for dir in [kicad_qa::qa_data_dir(), kicad_qa::demos_dir()] {
-        for ext in ["kicad_pro", "kicad_prl", "json", "gbrjob"] {
-            for p in kicad_qa::files_with_extension(&dir, ext) {
-                let rel = p.strip_prefix(&root).unwrap().to_string_lossy().replace('\\', "/");
-                out.push(rel);
-            }
-        }
-    }
-
-    out.sort_by(|a, b| a.as_bytes().cmp(b.as_bytes()));
-    out
 }
 
 fn dump_all() -> Out {

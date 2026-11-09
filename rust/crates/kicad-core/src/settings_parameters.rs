@@ -72,11 +72,12 @@ impl<S, T> Clone for Field<S, T> {
 
 impl<S, T> Copy for Field<S, T> {}
 
-/// `Field { get: |s| &s.member, get_mut: |s| &mut s.member }`.
+/// `settings_field!( Struct, member )` is
+/// `Field { get: |s: &Struct| &s.member, get_mut: |s: &mut Struct| &mut s.member }`.
 #[macro_export]
 macro_rules! settings_field {
-    ($($member:tt)+) => {
-        $crate::settings_parameters::Field { get: |s| &s.$($member)+, get_mut: |s| &mut s.$($member)+ }
+    ($t:ty, $($member:tt)+) => {
+        $crate::settings_parameters::Field { get: |s: &$t| &s.$($member)+, get_mut: |s: &mut $t| &mut s.$($member)+ }
     };
 }
 

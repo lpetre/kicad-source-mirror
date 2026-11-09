@@ -144,13 +144,31 @@ macro_rules! impl_cast_from_num_integral {
         fn cast_from_num(n: Num) -> $t {
             match n {
                 // else if constexpr( std::is_floating_point<CastingType>() )
-                // The final static_cast is the x86-64 cvttsd2si / cvttss2si conversion of the
-                // reference build: NaN, and a clamp limit that is not representable (2^63 for
-                // int64_t, 2^31 as float for int), give INT_MIN / INT64_MIN (PORTING.md
-                // section 9; floats convert exactly to double)
-                Num::F64(v) => $fconv(std_clamp(v, <$t>::MIN as f64, <$t>::MAX as f64)),
-                Num::F32(v) => $fconv(std_clamp(v, <$t>::MIN as f32, <$t>::MAX as f32) as f64),
-                // else if constexpr( std::is_integral<T>() && std::is_integral<CastingType>() )
+                // std::clamp( v, lo, hi ) then static_cast, as the reference build executes it
+                // (verified by the x86_casts section of the line chain oracle): a value beyond
+                // a limit yields that limit, converted at compile time with saturation, so the
+                // maximum even where the limit is not representable (2^63 for int64_t, 2^31 as
+                // float for int); a value in [lo, hi] is converted at run time by x86-64
+                // cvttsd2si / cvttss2si: INT_MIN / INT64_MIN for NaN and for a value equal to
+                // such an unrepresentable limit (PORTING.md section 9)
+                Num::F64(v) => {
+                    if v < <$t>::MIN as f64 {
+                        <$t>::MIN
+                    } else if (<$t>::MAX as f64) < v {
+                        <$t>::MAX
+                    } else {
+                        $fconv(v)
+                    }
+                }
+                Num::F32(v) => {
+                    if v < <$t>::MIN as f32 {
+                        <$t>::MIN
+                    } else if (<$t>::MAX as f32) < v {
+                        <$t>::MAX
+                    } else {
+                        $fconv(v as f64)
+                    }
+                }
                 Num::I32(v) => std_clamp(v as i64, <$t>::MIN as i64, <$t>::MAX as i64) as $t,
                 Num::I64(v) => std_clamp(v, <$t>::MIN as i64, <$t>::MAX as i64) as $t,
                 Num::U32(v) => std_clamp(v as i64, <$t>::MIN as i64, <$t>::MAX as i64) as $t,
@@ -692,7 +710,9 @@ impl<T: Coord> Vector2<T> {
     ///
     /// Where the C++ result is undefined (NaN, or a clamp limit that is not representable in
     /// the target type such as `2^63`), the port yields what the reference build (x86-64)
-    /// does: `INT_MIN` / `INT64_MIN` for `int` / `int64_t` targets (PORTING.md section 9).
+    /// does: `INT_MIN` / `INT64_MIN` for NaN and for a value equal to the unrepresentable
+    /// limit, the limit for values beyond it (PORTING.md section 9; verified by the line chain
+    /// oracle).
     #[inline]
     pub fn cast<U: Coord>(self) -> Vector2<U> {
         Vector2::new(
