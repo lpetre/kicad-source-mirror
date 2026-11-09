@@ -53,11 +53,19 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 
 - [x] Workspace skeleton, porting rules (PORTING.md, incl. section 9 binding decisions).
 - [x] Oracle: reference kicad-cli 10.99.0 built from this tree, see docs/ORACLE.md.
-- [x] Research: Clipper2 (vendor patched clipper2-rs 0.3.0) and spatial/sort/delaunator
-      (hand ports) decided, see docs/research/. Report docs/THIRD_PARTY_EQUIVALENTS.md pending.
-- [x] Analysis docs: pcb-io, drc, plot-fab, settings. Pending: connectivity-zones, text-font.
-- [ ] Board model design: three proposals written, final synthesis pending
-      (docs/design/board-model.md + board-model-types.md).
+- [x] Research: docs/THIRD_PARTY_EQUIVALENTS.md written (Opus) and its decisions table
+      Fable-reviewed and accepted. Orchestrator decisions on its open points: netclass regex
+      patterns use `regress` 0.12 (closest to wxRegEx/PCRE2 in the experiment: 2/55 realistic
+      patterns differ vs 14/55 for `regex`), wildcard patterns are hand-ported; workspace
+      rust-version raised to 1.88 so current ruzstd/sha2 resolve; JSON via serde_json
+      (preserve_order + float_roundtrip) with a hand-ported nlohmann-compatible formatter in
+      kicad-core; outline fonts (tier 2/3) via harfrust + skrifa; wasm-bindgen pinned =0.2.130
+      (CLI installed).
+- [x] Analysis docs: pcb-io, drc, plot-fab, settings, connectivity-zones, text-font.
+- [ ] Board model design: Opus synthesis chose proposal B (typed arenas + Copy handles) with
+      grafts from A and C (docs/design/board-model.md + board-model-types.md). Dedicated Fable
+      review running; nothing is built on it until that verdict is in. Work packages M0..M26
+      (M0 = types-only skeleton, blocks everything).
 - Foundation crates:
   - [x] kicad-sexpr (S1) - lexer, formatter, Prettify, tree; oracle goldens over 479 files.
   - [x] kicad-geom G1 math - 1M-case differential oracle bit-exact.

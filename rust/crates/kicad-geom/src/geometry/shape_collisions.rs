@@ -67,7 +67,8 @@ fn collide_circle_circle(
     mut a_location: Option<&mut Vector2I>,
     mut a_mtv: Option<&mut Vector2I>,
 ) -> bool {
-    let min_dist: Ecoord = a_clearance as Ecoord + a_a.get_radius() as Ecoord + a_b.get_radius() as Ecoord;
+    // int additions, widened afterwards (as in C++)
+    let min_dist: Ecoord = (a_clearance + a_a.get_radius() + a_b.get_radius()) as Ecoord;
     let min_dist_sq: Ecoord = min_dist * min_dist;
 
     let delta = a_b.get_center() - a_a.get_center();
