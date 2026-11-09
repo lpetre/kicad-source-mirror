@@ -191,16 +191,17 @@ impl Shape for ShapeSegment {
         false
     }
 
-    /// Port of `SHAPE_SEGMENT::TransformToPolygon()`.
-    ///
-    /// The C++ calls `TransformOvalToPolygon()` (`convert_basic_shapes_to_polygon.cpp`), which is
-    /// not ported yet: the buffer is left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(
-        &self,
-        _a_buffer: &mut ShapePolySet,
-        _a_error: i32,
-        _a_error_loc: ErrorLoc,
-    ) {
+    /// Port of `SHAPE_SEGMENT::TransformToPolygon()`: `TransformOvalToPolygon()`.
+    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc) {
+        crate::convert_basic_shapes_to_polygon::transform_oval_to_polygon(
+            a_buffer,
+            self.seg.a,
+            self.seg.b,
+            self.width,
+            a_error,
+            a_error_loc,
+            0,
+        );
     }
 
     /// Port of `SHAPE_SEGMENT::Rotate()`.

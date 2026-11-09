@@ -56,6 +56,7 @@
 
 pub mod bezier_curves;
 pub mod cmath;
+pub mod convert_basic_shapes_to_polygon;
 pub mod geometry;
 pub mod hash;
 pub mod hash_128;

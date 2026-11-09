@@ -147,8 +147,8 @@ impl ShapeRect {
     /// (if any) inserted into the SHAPE_LINE_CHAIN.  They must NOT use the approximated segments
     /// because we don't know what IUScale to generate them in."
     ///
-    /// For a rectangle with rounded corners the C++ goes through `ROUNDRECT`, which is not
-    /// ported yet: the result is then an empty chain (see `PORT_STATUS.md`).
+    /// Where the C++ reads `Outline( 0 )` of an empty set (undefined behaviour: a degenerate
+    /// rounded rectangle) the result is an empty chain.
     pub fn outline(&self) -> ShapeLineChain {
         let mut buffer = ShapePolySet::new();
         self.transform_to_polygon(
@@ -286,18 +286,12 @@ impl Shape for ShapeRect {
         false
     }
 
-    /// Port of `SHAPE_RECT::TransformToPolygon()`.
-    ///
-    /// A rectangle with rounded corners goes through `ROUNDRECT` in C++, which is not ported
-    /// yet: the buffer is then left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(
-        &self,
-        a_buffer: &mut ShapePolySet,
-        _a_error: i32,
-        _a_error_loc: ErrorLoc,
-    ) {
+    /// Port of `SHAPE_RECT::TransformToPolygon()`.  A rectangle with rounded corners goes
+    /// through `ROUNDRECT` (which replaces the buffer).
+    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, _a_error_loc: ErrorLoc) {
         if self.radius > 0 {
-            // ROUNDRECT rr( *this, m_radius ); rr.TransformToPolygon( aBuffer, aError );
+            let rr = crate::geometry::roundrect::Roundrect::new(self.clone(), self.radius, false);
+            rr.transform_to_polygon(a_buffer, a_error);
             return;
         }
 

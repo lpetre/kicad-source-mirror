@@ -1330,16 +1330,17 @@ impl Shape for ShapeArc {
         false
     }
 
-    /// Port of `SHAPE_ARC::TransformToPolygon()`.
-    ///
-    /// The C++ calls `TransformArcToPolygon()` (`convert_basic_shapes_to_polygon.cpp`), which is
-    /// not ported yet: the buffer is left unchanged (see `PORT_STATUS.md`).
-    fn transform_to_polygon(
-        &self,
-        _a_buffer: &mut ShapePolySet,
-        _a_error: i32,
-        _a_error_loc: ErrorLoc,
-    ) {
+    /// Port of `SHAPE_ARC::TransformToPolygon()`: `TransformArcToPolygon()`.
+    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc) {
+        crate::convert_basic_shapes_to_polygon::transform_arc_to_polygon(
+            a_buffer,
+            self.start,
+            self.mid,
+            self.end,
+            self.width,
+            a_error,
+            a_error_loc,
+        );
     }
 
     /// Port of `SHAPE_ARC::Rotate()`: rotate the arc by a given angle about a point.

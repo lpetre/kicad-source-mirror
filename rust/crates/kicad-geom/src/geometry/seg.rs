@@ -33,6 +33,7 @@ use core::cmp::Ordering;
 use core::fmt;
 use core::hash::{Hash, Hasher};
 
+use crate::cmath;
 use crate::geometry::eda_angle::EdaAngle;
 use crate::math::util::{isqrt, ki_round, ki_round_i64, rescale};
 use crate::math::vector2::{Vector2, Vector2I, Vector2L, ki_round_xy};
@@ -460,8 +461,15 @@ impl Seg {
             return None;
         }
 
-        let line_dir: Vector2L = Vector2L::new(1000, (a_slope * 1000.0) as Ecoord);
-        let cross_product: Ecoord = seg_dir.cross(line_dir);
+        // `static_cast<ecoord>( aSlope * 1000 )` as the reference build executes it: INT64_MIN
+        // for an infinite, NaN or huge slope (PORTING.md section 9).  The cross product then
+        // overflows `int64_t` in C++ and wraps on x86-64, so it is computed with wrapping
+        // arithmetic (it is exact for every in-range slope).
+        let line_dir: Vector2L = Vector2L::new(1000, cmath::f64_to_i64_x86(a_slope * 1000.0));
+        let cross_product: Ecoord = seg_dir
+            .x
+            .wrapping_mul(line_dir.y)
+            .wrapping_sub(seg_dir.y.wrapping_mul(line_dir.x));
 
         if cross_product == 0 {
             // Parallel lines - check if segment lies on the line
