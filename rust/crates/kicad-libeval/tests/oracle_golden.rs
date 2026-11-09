@@ -28,10 +28,15 @@
 //!
 //! * `curated_cases_match_cpp`: the hand-written cases of `tests/golden/libeval_cases.txt`
 //!   against the full C++ output in `tests/golden/libeval_golden.txt`.
-//! * `generated_cases_match_cpp`: about fifteen thousand generated cases (every token
-//!   sequence of up to three tokens, random token sequences, random well-formed
-//!   expressions) against one 32 bit hash of the C++ output per case in
+//! * `generated_cases_match_cpp`: about twenty-eight thousand generated cases (every token
+//!   sequence of up to three tokens of a twenty token alphabet and of four tokens of a ten
+//!   token alphabet, random token sequences, random well-formed expressions, random
+//!   operator chains) against one 32 bit hash of the C++ output per case in
 //!   `tests/golden/libeval_fuzz_hashes.txt`.
+//!
+//! The C++ output includes the syntax tree built by the Lemon-generated parser, so these
+//! tests are also the differential test of the Rust parser (accept / reject, error position
+//! and tree shape) against real Lemon.
 //!
 //! See `tests/oracle/README.md` for how to regenerate the golden files.
 
@@ -196,6 +201,17 @@ const ATOMS: [&str; 40] = [
     "x",
 ];
 
+/// Tokens for the exhaustive enumeration of four token sequences.
+const GRAMMAR_TOKENS: [&str; 10] = ["1", "x", "mm", "+", "<", "!", "(", ")", ".", ","];
+
+const SOUP_OPERANDS: [&str; 12] = [
+    "1", "2mm", "3 mil", "x", "A", "B", "L", "'s'", "f", "Num", "one", "null",
+];
+
+const SOUP_BINARY_OPS: [&str; 14] = [
+    "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=", "&&", "||", ",", ".",
+];
+
 const BINARY_OPS: [&str; 13] = [
     "+", "-", "*", "/", "<", ">", "<=", ">=", "==", "!=", "&&", "||", ",",
 ];
@@ -280,6 +296,58 @@ fn generated_cases() -> Vec<String> {
             next_resolver(),
             random_expr(&mut rng, depth)
         ));
+    }
+
+    // 4. Every sequence of four tokens of a small alphabet that still reaches every kind of
+    //    grammar rule (value, unit, identifier, call, struct reference, argument list, unary
+    //    and binary operators of different precedence and associativity, parentheses).
+    for a in GRAMMAR_TOKENS {
+        for b in GRAMMAR_TOKENS {
+            for c in GRAMMAR_TOKENS {
+                for d in GRAMMAR_TOKENS {
+                    cases.push(format!("{}\t{a} {b} {c} {d}", next_resolver()));
+                }
+            }
+        }
+    }
+
+    // 5. Operator soup: operand / operator chains with random unary prefixes, parentheses and
+    //    calls.  Mostly syntactically valid, so that precedence, associativity and the
+    //    %nonassoc conflicts decide the shape of the tree; sometimes unbalanced.
+    for _ in 0..3000 {
+        let operands = 2 + rng.below(6);
+        let mut tokens: Vec<&str> = Vec::new();
+        let mut open = 0;
+
+        for i in 0..operands {
+            if i > 0 {
+                tokens.push(rng.pick(&SOUP_BINARY_OPS));
+            }
+
+            while rng.below(4) == 0 {
+                tokens.push(rng.pick(&UNARY_OPS));
+            }
+
+            if rng.below(5) == 0 {
+                tokens.push(if rng.below(3) == 0 { "f (" } else { "(" });
+                open += 1;
+            }
+
+            tokens.push(rng.pick(&SOUP_OPERANDS));
+
+            if open > 0 && rng.below(3) == 0 {
+                tokens.push(")");
+                open -= 1;
+            }
+        }
+
+        if rng.below(8) != 0 {
+            for _ in 0..open {
+                tokens.push(")");
+            }
+        }
+
+        cases.push(format!("{}\t{}", next_resolver(), tokens.join(" ")));
     }
 
     cases

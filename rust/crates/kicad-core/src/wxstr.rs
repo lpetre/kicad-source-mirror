@@ -1,0 +1,348 @@
+//@HEADER
+
+//! Private helpers reproducing the parts of `wxString`, the C library and `KiROUND` that the
+//! modules ported from `common/eda_units.cpp`, `common/string_utils.cpp` and
+//! `common/gal/color4d.cpp` rely on.
+//!
+//! A `wxString` on the reference platform (Linux, see `PORTING.md` section 9) is a sequence
+//! of 32 bit `wchar_t`, i.e. of Unicode code points, so every index and length of the C++ code
+//! is a count of `char`s here.  Locale dependent C functions are ported for a UTF-8 locale
+//! whose `LC_NUMERIC` is "C": the decimal separator is `.` and `towupper` / `towlower` are the
+//! Unicode simple case mappings.
+
+/// `localeconv()->decimal_point[0]`: always the "C" locale's.
+pub(crate) const LOCALE_DECIMAL_POINT: char = '.';
+
+/// `wxSafeIsspace` as used by `wxString::Trim` / `Strip`: the ASCII white space characters.
+pub(crate) fn is_space(c: char) -> bool {
+    matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
+}
+
+/// `wxIsdigit` (`iswdigit`): true for `0` .. `9` only, in every locale.
+pub(crate) fn is_digit(c: char) -> bool {
+    c.is_ascii_digit()
+}
+
+/// `towlower` (`wxTolower`, `wxString::Lower`, `CmpNoCase`): the Unicode *simple* lower-case
+/// mapping (one character in, one character out).
+pub(crate) fn to_lower(c: char) -> char {
+    if c.is_ascii() {
+        return c.to_ascii_lowercase();
+    }
+
+    let mut it = c.to_lowercase();
+
+    match (it.next(), it.next()) {
+        (Some(l), None) => l,
+        // U+0130 is the only character whose full lower-case mapping is longer than one
+        // character; its simple mapping is 'i'.
+        _ if c == '\u{130}' => 'i',
+        _ => c,
+    }
+}
+
+/// `towupper` (`wxToupper`, `wxString::MakeUpper`): the Unicode *simple* upper-case mapping.
+pub(crate) fn to_upper(c: char) -> char {
+    if c.is_ascii() {
+        return c.to_ascii_uppercase();
+    }
+
+    let mut it = c.to_uppercase();
+
+    match (it.next(), it.next()) {
+        (Some(u), None) => u,
+        _ => {
+            // The full mapping has several characters.  The simple mapping is the character
+            // itself (e.g. U+00DF) except for the Greek letters with ypogegrammeni, which map
+            // to their single-character "capital with prosgegrammeni" forms.
+            match c as u32 {
+                0x1F80..=0x1F87 | 0x1F90..=0x1F97 | 0x1FA0..=0x1FA7 => {
+                    char::from_u32(c as u32 + 8).unwrap_or(c)
+                }
+                0x1FB3 => '\u{1FBC}',
+                0x1FC3 => '\u{1FCC}',
+                0x1FF3 => '\u{1FFC}',
+                _ => c,
+            }
+        }
+    }
+}
+
+/// `wxString::Lower()`.
+pub(crate) fn lower(s: &str) -> String {
+    s.chars().map(to_lower).collect()
+}
+
+/// `wxString::Upper()` / `MakeUpper()`.
+pub(crate) fn upper(s: &str) -> String {
+    s.chars().map(to_upper).collect()
+}
+
+/// `wxString::Capitalize()`: first character upper-cased, the others lower-cased.
+pub(crate) fn capitalize(s: &str) -> String {
+    let mut chars = s.chars();
+    let mut out = String::with_capacity(s.len());
+
+    if let Some(first) = chars.next() {
+        out.push(to_upper(first));
+        out.extend(chars.map(to_lower));
+    }
+
+    out
+}
+
+/// `wxString::CmpNoCase` (`wcscasecmp`): the difference of the first pair of lower-cased
+/// characters that differ, 0 if the strings are equal ignoring case.
+pub(crate) fn cmp_no_case(a: &str, b: &str) -> i32 {
+    let mut ia = a.chars();
+    let mut ib = b.chars();
+
+    loop {
+        let c1 = ia.next().map_or(0, |c| to_lower(c) as i32);
+        let c2 = ib.next().map_or(0, |c| to_lower(c) as i32);
+
+        if c1 == 0 || c1 != c2 {
+            return c1 - c2;
+        }
+    }
+}
+
+/// `wxString::IsSameAs( other, false )`.
+pub(crate) fn is_same_as_no_case(a: &str, b: &str) -> bool {
+    cmp_no_case(a, b) == 0
+}
+
+/// `wxString::Trim( true )` / `Strip( wxString::trailing )`: remove trailing white space.
+pub(crate) fn trim_right(s: &str) -> &str {
+    s.trim_end_matches(is_space)
+}
+
+/// `wxString::Trim( false )` / `Strip( wxString::leading )`: remove leading white space.
+pub(crate) fn trim_left(s: &str) -> &str {
+    s.trim_start_matches(is_space)
+}
+
+/// `wxString::Strip( wxString::both )` / `Trim( true ).Trim( false )`.
+pub(crate) fn strip_both(s: &str) -> &str {
+    trim_left(trim_right(s))
+}
+
+/// `wxString::Left( count )` in characters.
+pub(crate) fn left(s: &str, count: usize) -> &str {
+    match s.char_indices().nth(count) {
+        Some((idx, _)) => &s[..idx],
+        None => s,
+    }
+}
+
+/// `wxString::Mid( start )` in characters.
+pub(crate) fn mid(s: &str, start: usize) -> &str {
+    match s.char_indices().nth(start) {
+        Some((idx, _)) => &s[idx..],
+        None => "",
+    }
+}
+
+/// Result of [`strtod`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Strtod {
+    /// The converted value (0.0 if nothing could be converted).
+    pub value: f64,
+    /// Number of bytes of the input that were consumed (0 if nothing could be converted).
+    pub consumed: usize,
+    /// True when C would set `errno` to `ERANGE` (overflow or underflow).
+    pub erange: bool,
+}
+
+/// C `strtod` / `wcstod` for the "C" locale, restricted to decimal notation with an optional
+/// exponent.
+///
+/// Leading white space, an optional sign, digits with an optional decimal point and an
+/// optional exponent are accepted.  Hexadecimal floats, `inf` and `nan` are not (see
+/// `PORT_STATUS.md`); the callers in KiCad pass user-entered numbers.  The conversion itself
+/// is correctly rounded, like glibc's.
+pub(crate) fn strtod(s: &str) -> Strtod {
+    let bytes = s.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() && is_space(bytes[i] as char) {
+        i += 1;
+    }
+
+    let start = i;
+
+    if i < bytes.len() && (bytes[i] == b'+' || bytes[i] == b'-') {
+        i += 1;
+    }
+
+    let mut digits = 0;
+    let mut nonzero = false;
+
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        nonzero |= bytes[i] != b'0';
+        digits += 1;
+        i += 1;
+    }
+
+    if i < bytes.len() && bytes[i] == b'.' {
+        let mut j = i + 1;
+        let mut frac = 0;
+
+        while j < bytes.len() && bytes[j].is_ascii_digit() {
+            nonzero |= bytes[j] != b'0';
+            frac += 1;
+            j += 1;
+        }
+
+        // "1." and ".5" are numbers, "." is not.
+        if digits + frac > 0 {
+            digits += frac;
+            i = j;
+        }
+    }
+
+    if digits == 0 {
+        return Strtod {
+            value: 0.0,
+            consumed: 0,
+            erange: false,
+        };
+    }
+
+    if i < bytes.len() && (bytes[i] == b'e' || bytes[i] == b'E') {
+        let mut j = i + 1;
+
+        if j < bytes.len() && (bytes[j] == b'+' || bytes[j] == b'-') {
+            j += 1;
+        }
+
+        let exp_start = j;
+
+        while j < bytes.len() && bytes[j].is_ascii_digit() {
+            j += 1;
+        }
+
+        if j > exp_start {
+            i = j;
+        }
+    }
+
+    // The accepted text is a subset of what Rust's (correctly rounded) parser accepts.
+    let value: f64 = s[start..i].parse().unwrap_or(0.0);
+
+    // glibc reports ERANGE on overflow (HUGE_VAL is returned) and when the result underflows.
+    let erange = value.is_infinite() || (nonzero && (value == 0.0 || value.is_subnormal()));
+
+    Strtod {
+        value,
+        consumed: i,
+        erange,
+    }
+}
+
+/// Port of the semantics of `wxString::ToDouble` / `ToCDouble` (the `WX_STRING_TO_X_TYPE_*`
+/// macros of wxWidgets' `string.cpp`).
+///
+/// Returns `(parsed, complete)`: `parsed` is the value C++ stores through the output pointer
+/// (`None` when it leaves the output untouched: nothing parsed, or `ERANGE`), `complete` is
+/// the function's boolean result (true only if the whole string was consumed).
+pub(crate) fn to_double(s: &str) -> (Option<f64>, bool) {
+    let r = strtod(s);
+
+    if r.consumed == 0 || r.erange {
+        return (None, false);
+    }
+
+    (Some(r.value), r.consumed == s.len())
+}
+
+/// Port of `KiROUND<double, int>( v )` (`libs/kimath/include/math/util.h`): round half away
+/// from zero and clamp to the limits of `int`; NaN gives 0.
+///
+/// The public port of `KiROUND` lives in `kicad_geom::math::util`; this crate must not depend
+/// on the geometry crate, so the two instantiations it needs are repeated here.
+pub(crate) fn ki_round_i32(v: f64) -> i32 {
+    if v.is_nan() {
+        return 0;
+    }
+
+    if v >= i32::MAX as f64 + 0.5 {
+        return i32::MAX;
+    }
+
+    // lowest - 0.5 can round to lowest itself, which llround still handles exactly
+    if v - (i32::MIN as f64) <= -0.5 {
+        return i32::MIN;
+    }
+
+    let rounded = v.round() as i64;
+
+    rounded.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+}
+
+/// Port of `KiROUND<double, long long int>( v )`.
+pub(crate) fn ki_round_i64(v: f64) -> i64 {
+    if v.is_nan() {
+        return 0;
+    }
+
+    if v >= i64::MAX as f64 + 0.5 {
+        return i64::MAX;
+    }
+
+    if v - (i64::MIN as f64) <= -0.5 {
+        return i64::MIN;
+    }
+
+    // `as` saturates, like the clamp of the C++ code.
+    v.round() as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn strtod_semantics() {
+        assert_eq!(strtod("1.5").value, 1.5);
+        assert_eq!(strtod("1.2.3").consumed, 3);
+        assert_eq!(strtod("-").consumed, 0);
+        assert_eq!(strtod("+-1").consumed, 0);
+        assert_eq!(strtod(".").consumed, 0);
+        assert_eq!(strtod(".5").value, 0.5);
+        assert_eq!(strtod("5.").consumed, 2);
+        assert_eq!(strtod("1e5").value, 1e5);
+        assert_eq!(strtod("1e").consumed, 1);
+        assert!(strtod("1e999").erange);
+        assert!(strtod("1e-999").erange);
+        assert_eq!(to_double("12abc"), (Some(12.0), false));
+        assert_eq!(to_double("abc"), (None, false));
+        assert_eq!(to_double("7"), (Some(7.0), true));
+    }
+
+    #[test]
+    fn ki_round() {
+        assert_eq!(ki_round_i32(0.5), 1);
+        assert_eq!(ki_round_i32(-0.5), -1);
+        assert_eq!(ki_round_i32(2.4), 2);
+        assert_eq!(ki_round_i32(f64::NAN), 0);
+        assert_eq!(ki_round_i32(1e20), i32::MAX);
+        assert_eq!(ki_round_i32(-1e20), i32::MIN);
+        assert_eq!(ki_round_i32(-2147483648.4), i32::MIN);
+        assert_eq!(ki_round_i64(1e30), i64::MAX);
+        assert_eq!(ki_round_i64(-1e30), i64::MIN);
+        assert_eq!(ki_round_i64(-2.5), -3);
+    }
+
+    #[test]
+    fn case_mapping() {
+        assert_eq!(capitalize("hELLO"), "Hello");
+        assert_eq!(upper("stra\u{df}e"), "STRA\u{df}E");
+        assert_eq!(cmp_no_case("abc", "ABC"), 0);
+        assert!(cmp_no_case("abc", "abd") < 0);
+        assert!(cmp_no_case("b", "") > 0);
+        assert_eq!(left("h\u{e9}llo", 2), "h\u{e9}");
+        assert_eq!(mid("h\u{e9}llo", 2), "llo");
+        assert_eq!(mid("ab", 5), "");
+    }
+}

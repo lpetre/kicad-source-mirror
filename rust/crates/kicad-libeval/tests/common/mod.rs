@@ -35,8 +35,8 @@ use kicad_libeval::eda_units::{
     EdaDataType, PCB_IU_SCALE, double_value_from_string, double_value_from_string_with_units,
 };
 use kicad_libeval::{
-    Compiler, Context, CustomValue, EdaUnits, FuncCallRef, Ucode, UcodeBinder, UnitResolver, Value,
-    VarRef, VarType,
+    Compiler, Context, CustomValue, EdaUnits, FuncCallRef, NodeId, Ucode, UcodeBinder,
+    UnitResolver, Value, VarRef, VarType,
 };
 
 /* --------------------------------------------------------------------------------------------
@@ -604,6 +604,41 @@ fn run_once(code: &Ucode<TestBinder>, with_callback: bool, tag: &str, out: &mut 
     }
 }
 
+/// Twin of `dumpTree` in the C++ driver: the syntax tree as the parser built it and the code
+/// generator left it.  For every node `(op:srcPos:flags:idx:str leaf0 leaf1)` with flags
+/// `v` = visited, `t` = terminal, `str` the quoted token text or `~` for none, and `-` for a
+/// missing leaf.
+fn dump_tree(compiler: &Compiler<'_>, node: Option<NodeId>, out: &mut String) {
+    let Some(node) = node.and_then(|id| compiler.node(id)) else {
+        out.push('-');
+        return;
+    };
+
+    out.push_str(&format!(
+        "({}:{}:{}{}:{}:",
+        node.op,
+        node.src_pos,
+        if node.is_visited { "v" } else { "" },
+        if node.is_terminal { "t" } else { "" },
+        node.value.idx
+    ));
+
+    match &node.value.str {
+        Some(text) => {
+            out.push('"');
+            out.push_str(&escape(text));
+            out.push('"');
+        }
+        None => out.push('~'),
+    }
+
+    out.push(' ');
+    dump_tree(compiler, node.leaf[0], out);
+    out.push(' ');
+    dump_tree(compiler, node.leaf[1], out);
+    out.push(')');
+}
+
 fn compile_one(
     compiler: &mut Compiler<'_>,
     errors: &RefCell<Vec<String>>,
@@ -645,6 +680,13 @@ fn compile_one(
     }
 
     out.push_str(&format!("U\t{}\n", escape(&normalize_dump(&ucode.dump()))));
+
+    // Only after a successful compile (see the C++ driver).
+    if ok {
+        let mut tree = String::new();
+        dump_tree(compiler, compiler.tree(), &mut tree);
+        out.push_str(&format!("T\t{tree}\n"));
+    }
 
     if ok && run {
         run_once(&ucode, true, "R", out);

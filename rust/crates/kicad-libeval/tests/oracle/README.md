@@ -24,7 +24,7 @@ exactly like the KiCad build does, and links two small command line programs aga
   test binding (`TEST_UCODE`: items `A`, `B`, `L`, a handful of properties and functions,
   two `VALUE` subclasses) and prints every observable: the result of `Compile()`, the pending
   error, each error callback with its offset, the `CreateVarRef` / `CreateFuncCall` calls,
-  the microcode dump, the results of `Run()` with and without a run-time error callback, the
+  the microcode dump, the syntax tree, the results of `Run()` with and without a run-time error callback, the
   run-time errors, and the side effects of deferred evaluations.  The Rust twin of the
   binding is `tests/common/mod.rs`; **the two must be changed together**.
 * `oracle_numeric` (`oracle_numeric.cpp`) feeds expressions to a `NUMERIC_EVALUATOR`.
@@ -102,6 +102,7 @@ Output: `EXPR <line>`, the result lines, `END`.  Result lines of `oracle_libeval
 | `E offset message` | a compiler error callback invocation |
 | `B var:<var>:<field>` / `B func:<name>` | a `CreateVarRef` / `CreateFuncCall` call |
 | `U dump` | `UCODE::Dump()` with addresses normalised |
+| `T tree` | after a successful `Compile()`: the syntax tree (`COMPILER::m_tree`) as the Lemon parser built it and `generateUCode` left it, every node as `(op:srcPos:flags:idx:str leaf0 leaf1)` (flags `v` = `isVisited`, `t` = `isTerminal`; `~` = no string; `-` = no leaf) |
 | `R type units bits string` | result of `Run()` with an error callback on the context: `GetType()`, `GetUnits()`, the IEEE bits of `AsDouble()`, `AsString()` |
 | `X offset message` | a run-time error callback invocation |
 | `L text` | a side effect of a deferred evaluation |

@@ -118,6 +118,9 @@ public:
         if( aUnitResolver )
             m_unitResolver.reset( aUnitResolver );
     }
+
+    // The syntax tree of the last Compile() (protected in COMPILER).
+    const TREE_NODE* Tree() const { return m_tree; }
 };
 
 
@@ -602,6 +605,41 @@ static wxString normalizeDump( const wxString& aDump )
 }
 
 
+// The syntax tree as the parser built it and the code generator left it: for every node
+// "(op:srcPos:flags:idx:str leaf0 leaf1)" with flags v = isVisited, t = isTerminal, str the
+// quoted token text or ~ for none, and - for a missing leaf.
+static void dumpTree( std::string& aOut, const TREE_NODE* aNode )
+{
+    if( !aNode )
+    {
+        aOut += "-";
+        return;
+    }
+
+    char buf[96];
+    snprintf( buf, sizeof( buf ), "(%d:%d:%s%s:%d:", aNode->op, aNode->srcPos,
+              aNode->isVisited ? "v" : "", aNode->isTerminal ? "t" : "", aNode->value.idx );
+    aOut += buf;
+
+    if( aNode->value.str )
+    {
+        aOut += '"';
+        aOut += escape( *aNode->value.str );
+        aOut += '"';
+    }
+    else
+    {
+        aOut += "~";
+    }
+
+    aOut += ' ';
+    dumpTree( aOut, aNode->leaf[0] );
+    aOut += ' ';
+    dumpTree( aOut, aNode->leaf[1] );
+    aOut += ')';
+}
+
+
 static UNIT_RESOLVER* makeResolver( const std::string& aName )
 {
     if( aName == "pcb" )
@@ -681,6 +719,15 @@ static void compileOne( TEST_COMPILER& aCompiler, const wxString& aExpr, bool aR
 
     wxString dump = normalizeDump( ucode.Dump() );
     printf( "U\t%s\n", escape( dump ).c_str() );
+
+    // Only after a successful Compile(): a compiler that has reported an error keeps stale
+    // parser state, and m_tree may then point to nodes of an earlier expression.
+    if( ok )
+    {
+        std::string tree;
+        dumpTree( tree, aCompiler.Tree() );
+        printf( "T\t%s\n", tree.c_str() );
+    }
 
     if( ok && aRun )
     {
