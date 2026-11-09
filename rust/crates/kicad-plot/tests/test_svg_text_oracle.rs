@@ -95,10 +95,14 @@ impl Lcg {
     fn angle(&mut self) -> String {
         match self.below(4) {
             0 => self
-                .pick(&["0", "90", "180", "270", "-90", "360", "450", "-180", "-270", "540"])
+                .pick(&[
+                    "0", "90", "180", "270", "-90", "360", "450", "-180", "-270", "540",
+                ])
                 .to_string(),
             1 => self
-                .pick(&["45", "30.5", "-12.3", "135", "0.05", "89.99", "200", "359.9", "-0"])
+                .pick(&[
+                    "45", "30.5", "-12.3", "135", "0.05", "89.99", "200", "359.9", "-0",
+                ])
                 .to_string(),
             _ => fmt_f(self.range(-7200, 7200) as f64 / 10.0),
         }
@@ -441,7 +445,11 @@ fn gen_svg_op(g: &mut Lcg, op: &str, out: &mut String) {
         }
         "FRR" => {
             // a small table so that the polygons in the golden file stay few
-            let sizes = [(1_000_000, 800_000), (2_000_000, 500_000), (600_005, 600_005)];
+            let sizes = [
+                (1_000_000, 800_000),
+                (2_000_000, 500_000),
+                (600_005, 600_005),
+            ];
             let s = sizes[g.below(3) as usize];
             let r = [0, 100_000, 250_000][g.below(3) as usize];
             let pos = [(0, 0), (1_000_005, -2_000_003)][g.below(2) as usize];
@@ -513,7 +521,10 @@ fn gen_svg_script(g: &mut Lcg, idx: usize, out: &mut String) {
     let ipd = g.pick(&["2540", "2540", "1", "254", "10"]);
     let scale = g.pick(&["1", "1", "0.5", "2", "1.3"]);
     let mirror = (idx % 4 == 1) as i32;
-    out.push_str(&format!("VIEW {} {} {ipd} {scale} {mirror}\n", off.0, off.1));
+    out.push_str(&format!(
+        "VIEW {} {} {ipd} {scale} {mirror}\n",
+        off.0, off.1
+    ));
 
     if g.below(2) == 0 {
         out.push_str(&format!("PREC {}\n", g.range(3, 6)));
@@ -529,7 +540,7 @@ fn gen_svg_script(g: &mut Lcg, idx: usize, out: &mut String) {
         ));
     }
 
-    out.push_str(&format!("CMODE {}\n", (idx / 2 % 3 != 0) as i32));
+    out.push_str(&format!("CMODE {}\n", !(idx / 2).is_multiple_of(3) as i32));
     out.push_str(&format!("NEG {}\n", (idx % 7 == 3) as i32));
     out.push_str(&format!(
         "CREATOR {}\n",
@@ -564,14 +575,20 @@ fn gen_svg_script(g: &mut Lcg, idx: usize, out: &mut String) {
     }
 }
 
-const NAMES: [&str; 8] = ["~", "R1", "U12", "GND", "Net-(U1-Pad3)", "A,B", "x*y", "\"q\""];
+const NAMES: [&str; 8] = [
+    "~",
+    "R1",
+    "U12",
+    "GND",
+    "Net-(U1-Pad3)",
+    "A,B",
+    "x*y",
+    "\"q\"",
+];
 
 fn gen_gbr_script(g: &mut Lcg, idx: usize, out: &mut String) {
     out.push_str("KIND GBR\n");
-    out.push_str(&format!(
-        "RS {} 12 3\n",
-        g.pick(&["0", "50000", "150000"])
-    ));
+    out.push_str(&format!("RS {} 12 3\n", g.pick(&["0", "50000", "150000"])));
     out.push_str("OPEN\n");
     let x2 = g.below(2);
     let net = g.below(3) != 0;

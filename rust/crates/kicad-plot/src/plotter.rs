@@ -56,11 +56,11 @@ use kicad_geom::{
 };
 
 use crate::drill_markers::{MarkerPartType, build_marker};
+use crate::gbr_metadata::GbrMetadata;
 use crate::plotter_text::{plot_text_base, text_base};
+use crate::render_settings::RenderSettings;
 use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
 use kicad_font::{Font, Metrics};
-use crate::gbr_metadata::GbrMetadata;
-use crate::render_settings::RenderSettings;
 
 /// `PLOTTER::DO_NOT_SET_LINE_WIDTH`: skip pen or aperture selection.
 pub const DO_NOT_SET_LINE_WIDTH: i32 = -2;

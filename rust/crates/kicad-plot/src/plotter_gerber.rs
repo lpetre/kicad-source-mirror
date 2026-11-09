@@ -51,13 +51,13 @@ use crate::gbr_plotter_aperture_macros::*;
 use crate::gbr_plotter_apertures::{
     AM_FREEPOLY_BASENAME, AperMacroFreepolyList, Aperture, ApertureType, poly_compare,
 };
-use crate::plotter_text::{plot_text_base, text_base};
-use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
-use kicad_font::{Font, Metrics};
 use crate::plotter::{
     DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH, thick_arc_base,
     thick_circle_base, thick_poly_base, thick_rect_base, thick_segment_base,
 };
+use crate::plotter_text::{plot_text_base, text_base};
+use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
+use kicad_font::{Font, Metrics};
 
 /// `GBR_MACRO_FOR_CUSTOM_PAD_MAX_CORNER_COUNT`: max count of corners to create a aperture
 /// macro for a custom shape.

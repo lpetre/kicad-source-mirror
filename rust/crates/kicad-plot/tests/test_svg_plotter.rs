@@ -309,9 +309,10 @@ fn dash_styles() {
     assert!(p.output().contains("stroke-dasharray:0.020000,0.400000;"));
     p.set_dash(100000, LineStyle::DashDotDot);
     p.thick_segment(Vector2I::new(0, 0), Vector2I::new(1000000, 0), 100000, None);
-    assert!(p.output().contains(
-        "stroke-dasharray:1.100000,0.400000,0.020000,0.400000,0.020000,0.400000;"
-    ));
+    assert!(
+        p.output()
+            .contains("stroke-dasharray:1.100000,0.400000,0.020000,0.400000,0.020000,0.400000;")
+    );
 }
 
 #[test]
@@ -328,7 +329,10 @@ fn colour_modes() {
     assert!(p.output().contains("fill:#FFFFFF; fill-opacity:1.0000;"));
     p.set_color(&Color4D::WHITE);
     p.circle(Vector2I::new(0, 0), 1000, FillT::FilledShape, 0);
-    assert!(p.output().ends_with("<circle cx=\"0.0000\" cy=\"0.0000\" r=\"0.0005\" /> \n"));
+    assert!(
+        p.output()
+            .ends_with("<circle cx=\"0.0000\" cy=\"0.0000\" r=\"0.0005\" /> \n")
+    );
     p.set_color_mode(true);
     p.set_color(&Color4D::new(0.2, 0.4, 0.6, 0.5));
     p.circle(Vector2I::new(0, 0), 1000, FillT::FilledShape, 0);
@@ -340,10 +344,17 @@ fn colour_modes() {
 fn rect_degenerate_is_a_line_and_regular_polygon_does_nothing() {
     let mut p = a4_plotter();
     p.start_plot("1");
-    p.rect(Vector2I::new(0, 0), Vector2I::new(1000000, 0), FillT::NoFill, 0, 0);
-    assert!(p.output().ends_with(
-        "<line x1=\"0.0000\" y1=\"0.0000\" x2=\"1.0000\" y2=\"0.0000\" />\n"
-    ));
+    p.rect(
+        Vector2I::new(0, 0),
+        Vector2I::new(1000000, 0),
+        FillT::NoFill,
+        0,
+        0,
+    );
+    assert!(
+        p.output()
+            .ends_with("<line x1=\"0.0000\" y1=\"0.0000\" x2=\"1.0000\" y2=\"0.0000\" />\n")
+    );
     let len = p.output().len();
     p.flash_regular_polygon(Vector2I::new(0, 0), 1000, 6, ANGLE_0, None);
     assert_eq!(p.output().len(), len);
@@ -362,7 +373,10 @@ fn arc_and_bezier() {
         100000,
     );
     let out = p.output().to_string();
-    assert!(out.ends_with("<path d=\"M0.0000 1.0000 A1.0000 1.0000 0.0 0 0 1.0000 0.0000\" />\n"), "{out}");
+    assert!(
+        out.ends_with("<path d=\"M0.0000 1.0000 A1.0000 1.0000 0.0 0 0 1.0000 0.0000\" />\n"),
+        "{out}"
+    );
     p.bezier_curve(
         Vector2I::new(0, 0),
         Vector2I::new(1000000, 0),
@@ -371,9 +385,11 @@ fn arc_and_bezier() {
         0,
         100000,
     );
-    assert!(p.output().ends_with(
-        "<path d=\"M0.0000,0.0000 C1.0000,0.0000 1.0000,1.0000 0.0000,1.0000\" />\n"
-    ));
+    assert!(
+        p.output().ends_with(
+            "<path d=\"M0.0000,0.0000 C1.0000,0.0000 1.0000,1.0000 0.0000,1.0000\" />\n"
+        )
+    );
 }
 
 #[test]
@@ -396,7 +412,9 @@ fn text_hidden_element_and_stroked_glyphs() {
     );
     let out = p.output();
     assert!(out.contains("<text x=\"10.0000\" y=\"10.0000\"\n"));
-    assert!(out.contains("text-anchor=\"start\" opacity=\"0\" stroke-opacity=\"0\">A&lt;&amp;&gt;</text>\n"));
+    assert!(out.contains(
+        "text-anchor=\"start\" opacity=\"0\" stroke-opacity=\"0\">A&lt;&amp;&gt;</text>\n"
+    ));
     assert!(out.contains("<g class=\"stroked-text\"><desc>A&lt;&amp;&gt;</desc>\n"));
     assert!(out.contains("<path d=\"M"));
     assert!(out.ends_with("\" />\n</g>"));
@@ -432,6 +450,12 @@ fn outline_default_font_falls_back_to_stroke_font() {
 
 #[test]
 fn xml_escaping() {
-    assert_eq!(xml_esc("a<b>&\r\"\t\n", false), "a&lt;b&gt;&amp;&#xD;\"\t\n");
-    assert_eq!(xml_esc("a<b>&\r\"\t\n", true), "a&lt;b&gt;&amp;&#xD;&quot;&#x9;&#xA;");
+    assert_eq!(
+        xml_esc("a<b>&\r\"\t\n", false),
+        "a&lt;b&gt;&amp;&#xD;\"\t\n"
+    );
+    assert_eq!(
+        xml_esc("a<b>&\r\"\t\n", true),
+        "a&lt;b&gt;&amp;&#xD;&quot;&#x9;&#xA;"
+    );
 }

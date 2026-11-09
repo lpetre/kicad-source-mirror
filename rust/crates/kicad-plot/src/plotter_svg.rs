@@ -149,7 +149,10 @@ impl fmt::Debug for SvgPlotter {
             .field("precision", &self.precision)
             .field("plot_bbox_iu", &self.plot_bbox_iu)
             .field("creation_date", &self.creation_date)
-            .field("round_rect_polygon_fn", &self.round_rect_polygon_fn.is_some())
+            .field(
+                "round_rect_polygon_fn",
+                &self.round_rect_polygon_fn.is_some(),
+            )
             .finish()
     }
 }
