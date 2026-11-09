@@ -87,6 +87,114 @@ pub const DEFAULT_SILKCLEARANCE: f64 = 0.0;
 pub const DEFAULT_MINGROOVEWIDTH: f64 = 0.0;
 /// Fewer resolved spokes indicates a starved thermal.
 pub const DEFAULT_MINRESOLVEDSPOKES: i32 = 2;
+/// For arc approximation.
+pub const MINIMUM_ERROR_SIZE_MM: f64 = 0.001;
+/// For arc approximation.
+pub const MAXIMUM_ERROR_SIZE_MM: f64 = 0.1;
+/// Min line width entered in a dialog.
+pub const MINIMUM_LINE_WIDTH_MM: f64 = 0.005;
+/// Max line width entered in a dialog.
+pub const MAXIMUM_LINE_WIDTH_MM: f64 = 100.0;
+
+/// `MAXIMUM_CLEARANCE` (`pcbIUScale.mmToIU( 500 )`): to prevent int-overflows.
+pub fn maximum_clearance() -> i32 {
+    PCB_IU_SCALE.mm_to_iu(500.0)
+}
+
+/// Default of `ADVANCED_CFG::m_DRCEpsilon` (mm): 0.5um is small enough not to materially
+/// violate any constraints (`common/advanced_config.cpp`).
+pub const ADVANCED_CFG_DRC_EPSILON_MM: f64 = 0.0005;
+/// Default of `ADVANCED_CFG::m_HoleWallThickness` (mm): IPC-6012 says 15-18um; Cadence says
+/// at least 0.020 for a Class 2 board and at least 0.025 for Class 3.
+pub const ADVANCED_CFG_HOLE_WALL_THICKNESS_MM: f64 = 0.020;
+
+/// `BOARD_DESIGN_SETTINGS::VALIDATION_ERROR`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ValidationError {
+    pub setting_name: String,  // setting_name
+    pub error_message: String, // error_message
+}
+
+impl ValidationError {
+    fn new(setting_name: &str, error_message: &str) -> Self {
+        ValidationError {
+            setting_name: setting_name.to_string(),
+            error_message: error_message.to_string(),
+        }
+    }
+}
+
+/// Port of the file-static `nextPredefinedIndex` (`board_design_settings.cpp`): compute the
+/// next index when cycling a predefined-size list whose index 0 is the synthetic "use
+/// netclass" placeholder. Roll-over skips that placeholder when real sizes exist so the cycle
+/// stays monotonic.
+fn next_predefined_index(index: i32, forward: bool, list_size: i32) -> i32 {
+    // Nothing to cycle when the list holds only the netclass placeholder (or is empty).
+    if list_size <= 1 {
+        return 0;
+    }
+
+    const LOWEST_REAL_INDEX: i32 = 1;
+    let mut next = index + if forward { 1 } else { -1 };
+
+    if next >= list_size {
+        next = LOWEST_REAL_INDEX;
+    } else if next < LOWEST_REAL_INDEX {
+        next = list_size - 1;
+    }
+
+    next
+}
+
+/// `EDA_UNIT_UTILS::UI::StringFromValue( pcbIUScale, aUnits, int aValue, true )`.
+fn string_from_iu(units: EdaUnits, value: i32) -> String {
+    string_from_value(
+        &PCB_IU_SCALE,
+        units,
+        value as f64,
+        true,
+        EdaDataType::Distance,
+    )
+}
+
+/// `GEOMETRY_MIN_SIZE` (`pcbnew/pcb_track.h`): `(int) ( 0.001 * pcbIUScale.IU_PER_MM )`.
+fn geometry_min_size() -> i32 {
+    (0.001 * PCB_IU_SCALE.iu_per_mm) as i32
+}
+
+/// `PCB_VIA::ValidateViaParameters( aDiameter, aPrimaryDrill )` with every other argument at
+/// its default (`std::nullopt`, copper layer count 0), the only form
+/// `ValidateDesignRules` uses: the layer, secondary and tertiary drill checks are all no-ops
+/// for those arguments. Returns the error message. (The full function belongs to the via
+/// package, `pcb_track/via.rs`, which has no port of it yet.)
+fn validate_via_diameter_and_drill(
+    diameter: Option<i32>,
+    primary_drill: Option<i32>,
+) -> Option<&'static str> {
+    if diameter.is_some_and(|d| d < geometry_min_size()) {
+        return Some("Via diameter is too small.");
+    }
+
+    if primary_drill.is_some_and(|d| d < geometry_min_size()) {
+        return Some("Via drill is too small.");
+    }
+
+    if diameter.is_some() && primary_drill.is_none() {
+        return Some("No via hole size defined.");
+    }
+
+    if primary_drill.is_some() && diameter.is_none() {
+        return Some("No via diameter defined.");
+    }
+
+    if let (Some(diameter), Some(drill)) = (diameter, primary_drill) {
+        if diameter <= drill {
+            return Some("Via hole size must be smaller than via diameter");
+        }
+    }
+
+    None
+}
 
 /// `VIA_DIMENSION`. `<= 0` means "use the netclass value".
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -1168,7 +1276,7 @@ impl BoardDesignSettings {
         let units = units.unwrap_or(EdaUnits::Mm);
         let mm = |v: f64| PCB_IU_SCALE.mm_to_iu(v);
 
-        let mut add_range_error = |errors: &mut Vec<ValidationError>,
+        let add_range_error = |errors: &mut Vec<ValidationError>,
                                    field: &str,
                                    value: i32,
                                    min: i32,

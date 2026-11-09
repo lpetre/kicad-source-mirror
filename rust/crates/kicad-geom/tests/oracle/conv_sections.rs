@@ -973,13 +973,14 @@ fn section_intersection(results: &mut Results, name: &'static str, seed: u64, co
     let mut sec = Section::new(results, name);
     let mut rng = Rng::new(seed);
 
-    for _ in 0..count {
+    for dbg_n in 0..count {
         let grid = rng.flag();
         let (ga, ka) = random_geom(&mut rng, grid);
         let (gb, kb) = random_geom(&mut rng, grid);
 
         let mut rec = Rec::default();
         rec.b(grid).i(ka).i(kb);
+        if dbg_n == 6176 || dbg_n == 10633 { eprintln!("DBG {dbg_n} {ga:?} || {gb:?}"); }
 
         let mut pts = Vec::new();
         let mut contact = IntersectionContact::default();
