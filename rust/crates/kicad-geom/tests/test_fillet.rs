@@ -33,7 +33,12 @@ use kicad_geom::test_utils::{
 /// Port of `TestFilletSegmentConstraints()`: a single segment of a fillet complies with the
 /// geometric constraints (end points at radius from the centre, acceptable mid point error,
 /// segment perpendicular to the radius at its mid point).
-fn test_fillet_segment_constraints(a_seg: &Seg, a_rad_centre: Vector2I, a_radius: i32, a_error: i32) {
+fn test_fillet_segment_constraints(
+    a_seg: &Seg,
+    a_rad_centre: Vector2I,
+    a_radius: i32,
+    a_error: i32,
+) {
     let diff_a = a_rad_centre - a_seg.a;
     let diff_b = a_rad_centre - a_seg.b;
     let diff_c = a_rad_centre - a_seg.center();
@@ -43,11 +48,19 @@ fn test_fillet_segment_constraints(a_seg: &Seg, a_rad_centre: Vector2I, a_radius
     assert!(is_within_and_below(diff_b.euclidean_norm(), a_radius, 1));
 
     // Check 2: Mid-point error
-    assert!(is_within_and_below(diff_c.euclidean_norm(), a_radius, a_error + 1));
+    assert!(is_within_and_below(
+        diff_c.euclidean_norm(),
+        a_radius,
+        a_error + 1
+    ));
 
     // Check 3: Mid-point -> radius centre perpendicular
     let perpendularity_max_error = ANGLE_90 / 10;
-    assert!(are_perpendicular(diff_c, a_seg.a - a_seg.b, perpendularity_max_error));
+    assert!(are_perpendicular(
+        diff_c,
+        a_seg.a - a_seg.b,
+        perpendularity_max_error
+    ));
 }
 
 /// Port of `TestSquareFillet()`: create a square, fillet it, and check a corner for correctness.

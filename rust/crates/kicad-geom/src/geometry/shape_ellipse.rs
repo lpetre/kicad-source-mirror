@@ -266,7 +266,11 @@ pub fn quartic_roots(a_a: f64, a_b: f64, a_c: f64, a_d: f64, a_e: f64) -> Vec<f6
 /// Port of the file-private `dedupePoints()`: sort by x then y, then drop duplicates.
 pub fn dedupe_points(a_points: &mut Vec<Vector2I>) {
     std_sort(a_points, |a_left, a_right| {
-        if a_left.x != a_right.x { a_left.x < a_right.x } else { a_left.y < a_right.y }
+        if a_left.x != a_right.x {
+            a_left.x < a_right.x
+        } else {
+            a_left.y < a_right.y
+        }
     });
 
     std_unique(a_points, |a, b| a == b);
@@ -322,15 +326,27 @@ impl Default for ShapeEllipse {
 
 impl ShapeEllipse {
     fn from_parts(a_ellipse: Ellipse<i32>, a_is_arc: bool) -> Self {
-        let mut s = ShapeEllipse { ellipse: a_ellipse, is_arc: a_is_arc, ..ShapeEllipse::default() };
+        let mut s = ShapeEllipse {
+            ellipse: a_ellipse,
+            is_arc: a_is_arc,
+            ..ShapeEllipse::default()
+        };
         s.normalize();
         s
     }
 
     /// Port of `SHAPE_ELLIPSE( aCenter, aMajorRadius, aMinorRadius, aRotation )`: a closed
     /// ellipse.
-    pub fn new(a_center: Vector2I, a_major_radius: i32, a_minor_radius: i32, a_rotation: EdaAngle) -> Self {
-        Self::from_parts(Ellipse::new_full(a_center, a_major_radius, a_minor_radius, a_rotation), false)
+    pub fn new(
+        a_center: Vector2I,
+        a_major_radius: i32,
+        a_minor_radius: i32,
+        a_rotation: EdaAngle,
+    ) -> Self {
+        Self::from_parts(
+            Ellipse::new_full(a_center, a_major_radius, a_minor_radius, a_rotation),
+            false,
+        )
     }
 
     /// Port of `SHAPE_ELLIPSE( aCenter, aMajorRadius, aMinorRadius, aRotation, aStartAngle,
@@ -344,16 +360,33 @@ impl ShapeEllipse {
         a_end_angle: EdaAngle,
     ) -> Self {
         Self::from_parts(
-            Ellipse::new(a_center, a_major_radius, a_minor_radius, a_rotation, a_start_angle, a_end_angle),
+            Ellipse::new(
+                a_center,
+                a_major_radius,
+                a_minor_radius,
+                a_rotation,
+                a_start_angle,
+                a_end_angle,
+            ),
             true,
         )
     }
 
     /// Port of `SHAPE_ELLIPSE( aCenter, aMajorEndpoint, aRatio )`: a closed ellipse whose major
     /// axis ends at `a_major_endpoint` (relative to the centre).
-    pub fn from_major_endpoint(a_center: Vector2I, a_major_endpoint: Vector2I, a_ratio: f64) -> Self {
+    pub fn from_major_endpoint(
+        a_center: Vector2I,
+        a_major_endpoint: Vector2I,
+        a_ratio: f64,
+    ) -> Self {
         Self::from_parts(
-            Ellipse::from_major_axis(a_center, a_major_endpoint, a_ratio, ANGLE_0, crate::geometry::eda_angle::FULL_CIRCLE),
+            Ellipse::from_major_axis(
+                a_center,
+                a_major_endpoint,
+                a_ratio,
+                ANGLE_0,
+                crate::geometry::eda_angle::FULL_CIRCLE,
+            ),
             false,
         )
     }
@@ -366,7 +399,16 @@ impl ShapeEllipse {
         a_start_angle: EdaAngle,
         a_end_angle: EdaAngle,
     ) -> Self {
-        Self::from_parts(Ellipse::from_major_axis(a_center, a_major_endpoint, a_ratio, a_start_angle, a_end_angle), true)
+        Self::from_parts(
+            Ellipse::from_major_axis(
+                a_center,
+                a_major_endpoint,
+                a_ratio,
+                a_start_angle,
+                a_end_angle,
+            ),
+            true,
+        )
     }
 
     /// Port of `GetCenter()`.
@@ -456,7 +498,10 @@ impl ShapeEllipse {
         self.ellipse.minor_radius = 1.max(self.ellipse.minor_radius);
 
         if self.ellipse.major_radius < self.ellipse.minor_radius {
-            std::mem::swap(&mut self.ellipse.major_radius, &mut self.ellipse.minor_radius);
+            std::mem::swap(
+                &mut self.ellipse.major_radius,
+                &mut self.ellipse.minor_radius,
+            );
             self.ellipse.rotation += ANGLE_90;
 
             if self.is_arc {
@@ -544,7 +589,9 @@ impl ShapeEllipse {
         let p_end = eval(t_end);
 
         out.append_point(p_start, false);
-        subdivide_ellipse_arc(t_start, p_start, t_end, p_end, max_err_sq, 20, &eval, &mut out);
+        subdivide_ellipse_arc(
+            t_start, p_start, t_end, p_end, max_err_sq, 20, &eval, &mut out,
+        );
 
         if !self.is_arc {
             if out.point_count() > 1 && out.c_point(0) == out.c_point(-1) {
@@ -605,7 +652,10 @@ impl ShapeEllipse {
         let dx = a_p.x as f64 - self.ellipse.center.x as f64;
         let dy = a_p.y as f64 - self.ellipse.center.y as f64;
 
-        Vector2D::new(dx * self.cos_rot + dy * self.sin_rot, -dx * self.sin_rot + dy * self.cos_rot)
+        Vector2D::new(
+            dx * self.cos_rot + dy * self.sin_rot,
+            -dx * self.sin_rot + dy * self.cos_rot,
+        )
     }
 
     /// Port of `toWorld()`.
@@ -656,7 +706,11 @@ impl ShapeEllipse {
                     let n0 = r0 * z0;
 
                     let mut s0 = z1 - 1.0;
-                    let mut s1 = if g < 0.0 { 0.0 } else { (n0 * n0 + z1 * z1).sqrt() - 1.0 };
+                    let mut s1 = if g < 0.0 {
+                        0.0
+                    } else {
+                        (n0 * n0 + z1 * z1).sqrt() - 1.0
+                    };
                     let mut s = 0.0;
 
                     for _iter in 0..64 {
@@ -719,7 +773,9 @@ impl ShapeEllipse {
                 let start = self.point_at_param(self.ellipse.start_angle.as_radians());
                 let end = self.point_at_param(self.ellipse.end_angle.as_radians());
 
-                return if (a_local - start).squared_euclidean_norm() <= (a_local - end).squared_euclidean_norm() {
+                return if (a_local - start).squared_euclidean_norm()
+                    <= (a_local - end).squared_euclidean_norm()
+                {
                     start
                 } else {
                     end
@@ -738,7 +794,13 @@ impl ShapeEllipse {
 
     /// Port of `conicOf()`: an ellipse with the given world placement as a conic in this local
     /// frame.
-    fn conic_of(&self, a_center: Vector2I, a_major_r: f64, a_minor_r: f64, a_rotation: EdaAngle) -> Conic {
+    fn conic_of(
+        &self,
+        a_center: Vector2I,
+        a_major_r: f64,
+        a_minor_r: f64,
+        a_rotation: EdaAngle,
+    ) -> Conic {
         // Take a point of this local frame across to the other curve's local frame, then
         // square out the other curve's own equation to get the coefficients.
         let delta = self.ellipse.rotation.as_radians() - a_rotation.as_radians();
@@ -872,7 +934,9 @@ impl ShapeEllipse {
         for theta in self.conic_roots(&conic) {
             let world = self.ellipse.point_at_angle(EdaAngle::new(theta, RADIANS_T));
 
-            if a_other.is_arc && !a_other.is_angle_in_sweep(a_other.ellipse.angle_at_point(world).as_radians()) {
+            if a_other.is_arc
+                && !a_other.is_angle_in_sweep(a_other.ellipse.angle_at_point(world).as_radians())
+            {
                 continue;
             }
 
@@ -911,7 +975,9 @@ impl ShapeEllipse {
 
         // Crossings of the full circle that miss the drawn part are pulled back to an end
         // of the arc, so they fail this test
-        points.retain(|a_point| a_arc.nearest_point(*a_point).distance(*a_point) <= MIN_PRECISION_IU as f64);
+        points.retain(|a_point| {
+            a_arc.nearest_point(*a_point).distance(*a_point) <= MIN_PRECISION_IU as f64
+        });
 
         points
     }
@@ -1027,7 +1093,10 @@ impl Shape for ShapeEllipse {
         let i_max_y = cmath::f64_to_i32_x86(max_y.ceil()) + a_clearance;
 
         Box2I::new(
-            Vector2I::new(self.ellipse.center.x + i_min_x, self.ellipse.center.y + i_min_y),
+            Vector2I::new(
+                self.ellipse.center.x + i_min_x,
+                self.ellipse.center.y + i_min_y,
+            ),
             Vector2I::new(i_max_x - i_min_x, i_max_y - i_min_y),
         )
     }
@@ -1215,7 +1284,12 @@ impl Shape for ShapeEllipse {
 
     /// Port of `SHAPE_ELLIPSE::TransformToPolygon()`: the tessellation points sit on the true
     /// ellipse curve (the error location is unused); an elliptical arc adds nothing.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         if self.is_arc {
             return;
         }
@@ -1270,7 +1344,8 @@ impl Shape for ShapeEllipse {
 
         // Interior of a closed ellipse if val < 1
         if !self.is_arc && !a_outline_only {
-            let val = local.x * local.x * self.inv_major_r_sq + local.y * local.y * self.inv_minor_r_sq;
+            let val =
+                local.x * local.x * self.inv_major_r_sq + local.y * local.y * self.inv_minor_r_sq;
 
             if val <= 1.0 {
                 return 0;

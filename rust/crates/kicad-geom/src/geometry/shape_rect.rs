@@ -288,7 +288,12 @@ impl Shape for ShapeRect {
 
     /// Port of `SHAPE_RECT::TransformToPolygon()`.  A rectangle with rounded corners goes
     /// through `ROUNDRECT` (which replaces the buffer).
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, _a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        _a_error_loc: ErrorLoc,
+    ) {
         if self.radius > 0 {
             let rr = crate::geometry::roundrect::Roundrect::new(self.clone(), self.radius, false);
             rr.transform_to_polygon(a_buffer, a_error);

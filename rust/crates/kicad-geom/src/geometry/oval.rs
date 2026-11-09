@@ -53,9 +53,19 @@ pub fn convert_to_chain(a_oval: &ShapeSegment) -> ShapeLineChain {
 
     let mut chain = ShapeLineChain::new();
     chain.append_point(seg.a - perp, false);
-    chain.append_arc(&ShapeArc::from_center_start_angle(seg.a, seg.a - perp, ANGLE_180, 0));
+    chain.append_arc(&ShapeArc::from_center_start_angle(
+        seg.a,
+        seg.a - perp,
+        ANGLE_180,
+        0,
+    ));
     chain.append_point(seg.b + perp, false);
-    chain.append_arc(&ShapeArc::from_center_start_angle(seg.b, seg.b + perp, ANGLE_180, 0));
+    chain.append_arc(&ShapeArc::from_center_start_angle(
+        seg.b,
+        seg.b + perp,
+        ANGLE_180,
+        0,
+    ));
     chain.set_closed(true);
     chain
 }
@@ -87,7 +97,11 @@ pub fn get_oval_key_points(a_oval: &ShapeSegment, a_flags: OvalKeyPointFlags) ->
 
     if a_flags & OVAL_CAP_TIPS != 0 {
         // If the oval is square-on, the tips are quadrants
-        let pt_type = if rotation.is_cardinal() { PT_QUADRANT } else { PT_END };
+        let pt_type = if rotation.is_cardinal() {
+            PT_QUADRANT
+        } else {
+            PT_END
+        };
 
         // Cap ends
         add(Vector2I::new(0, half_len), pt_type);
@@ -143,11 +157,23 @@ pub fn get_oval_key_points(a_oval: &ShapeSegment, a_flags: OvalKeyPointFlags) ->
         rotate_point(&mut cap_radial_to_y_axis, radial_line_rotation);
 
         // The quadrant points are then the relevant offsets from each cap centre
-        add(Vector2I::new(0, d_centre_to_cap_centre) + cap_radial_to_y_axis, PT_QUADRANT);
-        add(Vector2I::new(0, d_centre_to_cap_centre) + cap_radial_to_x_axis, PT_QUADRANT);
+        add(
+            Vector2I::new(0, d_centre_to_cap_centre) + cap_radial_to_y_axis,
+            PT_QUADRANT,
+        );
+        add(
+            Vector2I::new(0, d_centre_to_cap_centre) + cap_radial_to_x_axis,
+            PT_QUADRANT,
+        );
         // The opposite cap offsets go from the other cap centre, the other way
-        add(Vector2I::new(0, -d_centre_to_cap_centre) - cap_radial_to_y_axis, PT_QUADRANT);
-        add(Vector2I::new(0, -d_centre_to_cap_centre) - cap_radial_to_x_axis, PT_QUADRANT);
+        add(
+            Vector2I::new(0, -d_centre_to_cap_centre) - cap_radial_to_y_axis,
+            PT_QUADRANT,
+        );
+        add(
+            Vector2I::new(0, -d_centre_to_cap_centre) - cap_radial_to_x_axis,
+            PT_QUADRANT,
+        );
     }
 
     for pt in &mut pts {

@@ -50,8 +50,10 @@ fn generate_random_points(a_bbox: &Box2I, a_count: i32, a_seed: u32) -> Vec<Vect
     let mut points = Vec::with_capacity(a_count as usize);
 
     for _ in 0..a_count {
-        let y = uniform_int_libstdcxx(&mut gen_, a_bbox.top() as i64, a_bbox.bottom() as i64) as i32;
-        let x = uniform_int_libstdcxx(&mut gen_, a_bbox.left() as i64, a_bbox.right() as i64) as i32;
+        let y =
+            uniform_int_libstdcxx(&mut gen_, a_bbox.top() as i64, a_bbox.bottom() as i64) as i32;
+        let x =
+            uniform_int_libstdcxx(&mut gen_, a_bbox.left() as i64, a_bbox.right() as i64) as i32;
         points.push(Vector2I::new(x, y));
     }
 
@@ -75,7 +77,10 @@ fn correctness_all_strategies_agree() {
     let mut ystripes = PolyYStripesIndex::new();
     ystripes.build(&square);
 
-    let sample_area = Box2I::new(Vector2I::new(-SIZE / 2, -SIZE / 2), Vector2I::new(2 * SIZE, 2 * SIZE));
+    let sample_area = Box2I::new(
+        Vector2I::new(-SIZE / 2, -SIZE / 2),
+        Vector2I::new(2 * SIZE, 2 * SIZE),
+    );
 
     let mut tested = 0;
     let mut inside = 0;
@@ -138,7 +143,12 @@ fn correctness_polygon_with_holes() {
     let mut ystripes = PolyYStripesIndex::new();
     ystripes.build(&poly);
 
-    let cases = [((100, 100), true), ((500, 500), false), ((1500, 500), false), ((800, 200), true)];
+    let cases = [
+        ((100, 100), true),
+        ((500, 500), false),
+        ((1500, 500), false),
+        ((800, 200), true),
+    ];
 
     for ((x, y), expected) in cases {
         let pt = Vector2I::new(x, y);

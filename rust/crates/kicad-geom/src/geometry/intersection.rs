@@ -176,7 +176,11 @@ impl Circular for ShapeArc {
 
 /// Port of `checkCollinearOverlap()`: collinear and sharing more than a point (no single
 /// intersection).
-fn check_collinear_overlap<A: LineLike, B: LineLike>(a_a: &A, a_b: &B, a_contact: Option<&mut IntersectionContact>) {
+fn check_collinear_overlap<A: LineLike, B: LineLike>(
+    a_a: &A,
+    a_b: &B,
+    a_contact: Option<&mut IntersectionContact>,
+) {
     let Some(contact) = a_contact else {
         return;
     };
@@ -200,7 +204,11 @@ fn check_collinear_overlap<A: LineLike, B: LineLike>(a_a: &A, a_b: &B, a_contact
 }
 
 /// Port of `checkLineTangency()`: a graze touches the carrier circle once.
-fn check_line_tangency<L: LineLike, C: Circular>(a_line: &L, a_circular: &C, a_contact: Option<&mut IntersectionContact>) {
+fn check_line_tangency<L: LineLike, C: Circular>(
+    a_line: &L,
+    a_circular: &C,
+    a_contact: Option<&mut IntersectionContact>,
+) {
     let Some(contact) = a_contact else {
         return;
     };
@@ -209,9 +217,14 @@ fn check_line_tangency<L: LineLike, C: Circular>(a_line: &L, a_circular: &C, a_c
         return;
     }
 
-    let touches = a_circular.carrier_circle().intersect_line(a_line.carrier_seg());
+    let touches = a_circular
+        .carrier_circle()
+        .intersect_line(a_line.carrier_seg());
 
-    if touches.len() == 1 && a_line.extent_contains(touches[0]) && a_circular.extent_contains(touches[0]) {
+    if touches.len() == 1
+        && a_line.extent_contains(touches[0])
+        && a_circular.extent_contains(touches[0])
+    {
         contact.tangent = true;
     }
 }
@@ -229,7 +242,11 @@ fn shares_arc_extent<A: Circular, B: Circular>(a_a: &A, a_b: &B) -> bool {
 
 /// Port of `checkCircularContact()`: circular pairs graze at one point, or share a carrier and
 /// run together.
-fn check_circular_contact<A: Circular, B: Circular>(a_a: &A, a_b: &B, a_contact: Option<&mut IntersectionContact>) {
+fn check_circular_contact<A: Circular, B: Circular>(
+    a_a: &A,
+    a_b: &B,
+    a_contact: Option<&mut IntersectionContact>,
+) {
     let Some(contact) = a_contact else {
         return;
     };
@@ -322,7 +339,10 @@ fn line_half_line(a_line: &Line, a_half_line: &HalfLine, out: &mut Out, c: Conta
     check_collinear_overlap(a_line, a_half_line, c);
 
     // Intersect as two infinite lines
-    let intersection = a_half_line.contained_seg().intersect_with(a_line.contained_seg(), false, true);
+    let intersection =
+        a_half_line
+            .contained_seg()
+            .intersect_with(a_line.contained_seg(), false, true);
 
     // No intersection at all (parallel, or passes on the other side of the start point)
     let Some(intersection) = intersection else {
@@ -458,8 +478,15 @@ pub struct IntersectionVisitor<'a> {
 
 impl<'a> IntersectionVisitor<'a> {
     /// Port of `INTERSECTION_VISITOR( aOtherGeometry, aIntersections )`.
-    pub fn new(a_other_geometry: &'a IntersectableGeom, a_intersections: &'a mut Vec<Vector2I>) -> Self {
-        IntersectionVisitor { other_geometry: a_other_geometry, intersections: a_intersections, contact: None }
+    pub fn new(
+        a_other_geometry: &'a IntersectableGeom,
+        a_intersections: &'a mut Vec<Vector2I>,
+    ) -> Self {
+        IntersectionVisitor {
+            other_geometry: a_other_geometry,
+            intersections: a_intersections,
+            contact: None,
+        }
     }
 
     /// Port of `INTERSECTION_VISITOR( aOtherGeometry, aIntersections, aContact )`.
@@ -468,7 +495,11 @@ impl<'a> IntersectionVisitor<'a> {
         a_intersections: &'a mut Vec<Vector2I>,
         a_contact: &'a mut IntersectionContact,
     ) -> Self {
-        IntersectionVisitor { other_geometry: a_other_geometry, intersections: a_intersections, contact: Some(a_contact) }
+        IntersectionVisitor {
+            other_geometry: a_other_geometry,
+            intersections: a_intersections,
+            contact: Some(a_contact),
+        }
     }
 
     /// `std::visit( visitor, aGeom )`: dispatch to the `operator()` for the kind of `a_geom`.

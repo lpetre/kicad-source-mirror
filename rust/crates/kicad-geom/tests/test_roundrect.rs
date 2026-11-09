@@ -29,7 +29,11 @@ use kicad_geom::math::vector2::Vector2I;
 fn check_polygon_fits_rect(a_width: i32, a_height: i32, a_radius: i32) {
     let max_error = 100;
     let pos = Vector2I::new(1000, 2000);
-    let rr = Roundrect::new(ShapeRect::from_pos_size(pos, a_width, a_height), a_radius, false);
+    let rr = Roundrect::new(
+        ShapeRect::from_pos_size(pos, a_width, a_height),
+        a_radius,
+        false,
+    );
     let mut poly = ShapePolySet::new();
 
     rr.transform_to_polygon(&mut poly, max_error);
@@ -84,7 +88,10 @@ fn plain_rectangle_corner_order() {
     let h = 10000000;
 
     // Normalized rect plus negative extent variant hits normalization recursion
-    for rect in [ShapeRect::from_pos_size(pos, w, h), ShapeRect::from_pos_size(pos + Vector2I::new(w, h), -w, -h)] {
+    for rect in [
+        ShapeRect::from_pos_size(pos, w, h),
+        ShapeRect::from_pos_size(pos + Vector2I::new(w, h), -w, -h),
+    ] {
         let rr = Roundrect::new(rect, 0, false);
         let mut poly = ShapePolySet::new();
         rr.transform_to_polygon(&mut poly, 100);

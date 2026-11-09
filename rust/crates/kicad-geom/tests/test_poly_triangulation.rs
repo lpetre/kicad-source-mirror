@@ -103,7 +103,11 @@ fn create_serpentine_polygon(step: i32, teeth: i32) -> ShapeLineChain {
 }
 
 /// `validateTriangulation()`
-fn validate_triangulation(result: &TriangulatedPolygon, original: &ShapeLineChain, strict: bool) -> bool {
+fn validate_triangulation(
+    result: &TriangulatedPolygon,
+    original: &ShapeLineChain,
+    strict: bool,
+) -> bool {
     if result.vertex_count() == 0 {
         return false;
     }
@@ -280,7 +284,11 @@ fn basic_triangle_triangulation() {
     assert!(success);
     assert_eq!(triangulator.result().vertex_count(), 3);
     assert_eq!(triangulator.result().triangle_count(), 1);
-    assert!(validate_triangulation(triangulator.result(), &triangle, true));
+    assert!(validate_triangulation(
+        triangulator.result(),
+        &triangle,
+        true
+    ));
 }
 
 #[test]
@@ -328,7 +336,11 @@ fn concave_polygon_triangulation() {
     let success = triangulator.tesselate_chain(&concave, None);
 
     assert!(success);
-    assert!(validate_triangulation(triangulator.result(), &concave, true));
+    assert!(validate_triangulation(
+        triangulator.result(),
+        &concave,
+        true
+    ));
     // L-shaped concave polygons should have 4 triangles
     assert_eq!(triangulator.result().triangle_count(), 4);
 }
@@ -512,7 +524,11 @@ fn issue18083_indexed_self_touching_outline_area() {
         let b = corners[(i + 1) % corners.len()];
 
         for step in 0..8 {
-            outline.append_xy(a.x + (b.x - a.x) * step / 8, a.y + (b.y - a.y) * step / 8, false);
+            outline.append_xy(
+                a.x + (b.x - a.x) * step / 8,
+                a.y + (b.y - a.y) * step / 8,
+                false,
+            );
         }
     }
 
@@ -579,7 +595,16 @@ fn nearly_collinear_vertices() {
 fn duplicate_vertices() {
     let mut duplicate = ShapeLineChain::new();
 
-    for (x, y) in [(0, 0), (0, 0), (100, 0), (100, 0), (100, 100), (100, 100), (0, 100), (0, 100)] {
+    for (x, y) in [
+        (0, 0),
+        (0, 0),
+        (100, 0),
+        (100, 0),
+        (100, 100),
+        (100, 100),
+        (0, 100),
+        (0, 100),
+    ] {
         duplicate.append_xy(x, y, false);
     }
 
@@ -662,7 +687,11 @@ fn performance_regression() {
 
         for i in 0..size {
             let angle = 2.0 * PI * i as f64 / size as f64;
-            poly.append_xy((1000.0 * angle.cos()) as i32, (1000.0 * angle.sin()) as i32, false);
+            poly.append_xy(
+                (1000.0 * angle.cos()) as i32,
+                (1000.0 * angle.sin()) as i32,
+                false,
+            );
         }
 
         poly.set_closed(true);
@@ -933,7 +962,13 @@ fn refine_preserves_non_manifold_edge() {
     // must act as a boundary and never flip.
     let mut tp = TriangulatedPolygon::new(0);
 
-    for (x, y) in [(0, 0), (100000, 0), (50000, 30000), (50000, -30000), (50000, 60000)] {
+    for (x, y) in [
+        (0, 0),
+        (100000, 0),
+        (50000, 30000),
+        (50000, -30000),
+        (50000, 60000),
+    ] {
         tp.add_vertex(v(x, y));
     }
 
@@ -985,7 +1020,11 @@ fn decimate_removes_collinear_run() {
     assert!(PolygonTriangulation::new(&mut result).tesselate_chain(&chain, None));
 
     assert_eq!(result.triangle_count(), 2);
-    assert!(is_close_pct(mesh_area(&result), size as f64 * size as f64, 1e-6));
+    assert!(is_close_pct(
+        mesh_area(&result),
+        size as f64 * size as f64,
+        1e-6
+    ));
 }
 
 #[test]
@@ -1014,7 +1053,12 @@ fn decimate_keeps_vertices_beyond_band() {
 fn decimate_keeps_fracture_bridges() {
     let size = 1000000;
     let outline = subdivided_square(size, 25);
-    let hole = chain_of(&[(400000, 400000), (400000, 600000), (600000, 600000), (600000, 400000)]);
+    let hole = chain_of(&[
+        (400000, 400000),
+        (400000, 600000),
+        (600000, 600000),
+        (600000, 400000),
+    ]);
 
     let mut poly = ShapePolySet::new();
     poly.add_outline(&outline);

@@ -199,7 +199,8 @@ pub fn box_to_line_chain(a_box: &Box2I) -> ShapeLineChain {
 /// `Undefined` (C++: `wxASSERT( false )`).
 pub fn get_segs_in_direction(a_box: &Box2I, a_dir: Directions) -> Vec<Seg> {
     let (l, t, r, b) = (a_box.left(), a_box.top(), a_box.right(), a_box.bottom());
-    let seg = |x0: i32, y0: i32, x1: i32, y1: i32| Seg::new(Vector2I::new(x0, y0), Vector2I::new(x1, y1));
+    let seg =
+        |x0: i32, y0: i32, x1: i32, y1: i32| Seg::new(Vector2I::new(x0, y0), Vector2I::new(x1, y1));
 
     match a_dir {
         Directions::N => vec![seg(l, t, r, t)],
@@ -274,10 +275,22 @@ pub fn get_circle_key_points(a_circle: &Circle, a_include_center: bool) -> Vec<T
         pts.push(TypedPoint2I::new(Vector2I::new(0, 0), PT_CENTER as i32));
     }
 
-    pts.push(TypedPoint2I::new(Vector2I::new(0, a_circle.radius), PT_QUADRANT as i32));
-    pts.push(TypedPoint2I::new(Vector2I::new(a_circle.radius, 0), PT_QUADRANT as i32));
-    pts.push(TypedPoint2I::new(Vector2I::new(0, -a_circle.radius), PT_QUADRANT as i32));
-    pts.push(TypedPoint2I::new(Vector2I::new(-a_circle.radius, 0), PT_QUADRANT as i32));
+    pts.push(TypedPoint2I::new(
+        Vector2I::new(0, a_circle.radius),
+        PT_QUADRANT as i32,
+    ));
+    pts.push(TypedPoint2I::new(
+        Vector2I::new(a_circle.radius, 0),
+        PT_QUADRANT as i32,
+    ));
+    pts.push(TypedPoint2I::new(
+        Vector2I::new(0, -a_circle.radius),
+        PT_QUADRANT as i32,
+    ));
+    pts.push(TypedPoint2I::new(
+        Vector2I::new(-a_circle.radius, 0),
+        PT_QUADRANT as i32,
+    ));
 
     // Shift the points to the circle center
     for pt in &mut pts {
@@ -333,7 +346,11 @@ pub fn add_hole_if_valid(a_outline: &mut ShapePolySet, a_hole: ShapeLineChain) -
 
 /// Port of `KIGEOM::MakeRegularPolygonPoints( aCenter, aN, aPt0 )`: the corners of a regular
 /// polygon from its centre, one corner and the number of sides.
-pub fn make_regular_polygon_points(a_center: Vector2I, a_n: usize, a_pt0: Vector2I) -> Vec<Vector2I> {
+pub fn make_regular_polygon_points(
+    a_center: Vector2I,
+    a_n: usize,
+    a_pt0: Vector2I,
+) -> Vec<Vector2I> {
     let pt0_from_c: Vector2D = (a_pt0 - a_center).cast::<f64>();
     let mut pts = Vec::new();
 
@@ -359,9 +376,8 @@ pub fn make_regular_polygon_points_radius(
 
     if !a_across_corners {
         // if across flats, increase the radius
-        a_radius = crate::cmath::f64_to_i32_x86(
-            a_radius as f64 / (FULL_CIRCLE / (a_n * 2) as f64).cos(),
-        );
+        a_radius =
+            crate::cmath::f64_to_i32_x86(a_radius as f64 / (FULL_CIRCLE / (a_n * 2) as f64).cos());
     }
 
     let pt0 = a_center + get_rotated(Vector2I::new(a_radius, 0), a_angle);

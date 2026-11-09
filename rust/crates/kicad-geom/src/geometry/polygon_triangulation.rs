@@ -378,7 +378,12 @@ impl<'a> PolygonTriangulation<'a> {
 
     /// Port of `createSplitChild()`: the closed, simplified sub-chain from `a_start` to
     /// `a_end`.
-    fn create_split_child(&self, a_poly: &ShapeLineChain, a_start: i32, a_end: i32) -> ShapeLineChain {
+    fn create_split_child(
+        &self,
+        a_poly: &ShapeLineChain,
+        a_start: i32,
+        a_end: i32,
+    ) -> ShapeLineChain {
         let mut child = ShapeLineChain::new();
         let mut idx = a_start;
         let mut guard = 0;
@@ -455,7 +460,12 @@ impl<'a> PolygonTriangulation<'a> {
 
         let try_axis = |a_vertical: bool| -> Option<[ShapeLineChain; 2]> {
             let low = (if a_vertical { bbox.x() } else { bbox.y() }).wrapping_add(1);
-            let high = (if a_vertical { bbox.right() } else { bbox.bottom() }).wrapping_sub(1);
+            let high = (if a_vertical {
+                bbox.right()
+            } else {
+                bbox.bottom()
+            })
+            .wrapping_sub(1);
 
             if high <= low {
                 return None;
@@ -468,7 +478,8 @@ impl<'a> PolygonTriangulation<'a> {
 
             for ii in 1..=K_SAMPLES {
                 // int arithmetic: the product wraps on x86 for boxes wider than ~143 mm
-                let cut = low.wrapping_add(high.wrapping_sub(low).wrapping_mul(ii) / (K_SAMPLES + 1));
+                let cut =
+                    low.wrapping_add(high.wrapping_sub(low).wrapping_mul(ii) / (K_SAMPLES + 1));
 
                 let Some((candidate, area_a, area_b)) =
                     self.split_polygon_at_coordinate(a_poly, a_vertical, cut)
@@ -542,7 +553,9 @@ impl<'a> PolygonTriangulation<'a> {
         const K_MAX_LEAVES: usize = 8;
         let mut leaves = 1;
 
-        while leaves < K_MAX_LEAVES && (a_poly.point_count() as usize) / leaves > K_VERTICES_PER_LEAF {
+        while leaves < K_MAX_LEAVES
+            && (a_poly.point_count() as usize) / leaves > K_VERTICES_PER_LEAF
+        {
             leaves *= 2;
         }
 
@@ -1073,7 +1086,12 @@ impl<'a> PolygonTriangulation<'a> {
 
     /// Port of `createRing()`: a vertex ring from a line chain with a global index offset;
     /// the winding direction is controlled by `a_want_ccw`.
-    fn create_ring(&mut self, a_points: &ShapeLineChain, a_base_index: i32, a_want_ccw: bool) -> VertexId {
+    fn create_ring(
+        &mut self,
+        a_points: &ShapeLineChain,
+        a_base_index: i32,
+        a_want_ccw: bool,
+    ) -> VertexId {
         let mut tail = NIL;
         let mut sum = 0.0;
         let mut last_pt = Vector2I::new(0, 0);
@@ -1462,7 +1480,8 @@ impl<'a> PolygonTriangulation<'a> {
                     self.vs.update_list(orig_poly);
                     self.vs.update_list(new_poly);
 
-                    return self.earcut_list(orig_poly, a_pass) && self.earcut_list(new_poly, a_pass);
+                    return self.earcut_list(orig_poly, a_pass)
+                        && self.earcut_list(new_poly, a_pass);
                 }
 
                 marker = self.nx(marker);
@@ -1518,12 +1537,14 @@ impl<'a> PolygonTriangulation<'a> {
     fn good_split(&self, a: VertexId, b: VertexId) -> bool {
         let vs = &self.vs;
         let (av, bv) = (vs.v(a), vs.v(b));
-        let a_on_edge = (av.next_z != NIL && vs.eq(a, av.next_z)) || (av.prev_z != NIL && vs.eq(a, av.prev_z));
-        let b_on_edge = (bv.next_z != NIL && vs.eq(b, bv.next_z)) || (bv.prev_z != NIL && vs.eq(b, bv.prev_z));
-        let no_intersect = self.vi(av.next) != bv.i
-            && self.vi(av.prev) != bv.i
-            && !self.intersects_polygon(a, b);
-        let local_split = vs.locally_inside(a, b) && vs.locally_inside(b, a) && vs.middle_inside(a, b);
+        let a_on_edge =
+            (av.next_z != NIL && vs.eq(a, av.next_z)) || (av.prev_z != NIL && vs.eq(a, av.prev_z));
+        let b_on_edge =
+            (bv.next_z != NIL && vs.eq(b, bv.next_z)) || (bv.prev_z != NIL && vs.eq(b, bv.prev_z));
+        let no_intersect =
+            self.vi(av.next) != bv.i && self.vi(av.prev) != bv.i && !self.intersects_polygon(a, b);
+        let local_split =
+            vs.locally_inside(a, b) && vs.locally_inside(b, a) && vs.middle_inside(a, b);
         let same_dir = self.area(av.prev, a, bv.prev) != 0.0 || self.area(a, bv.prev, b) != 0.0;
         let has_len = vs.eq(a, b)
             && self.area(av.prev, a, av.next) > 0.0

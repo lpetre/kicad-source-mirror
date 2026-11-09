@@ -17,7 +17,9 @@
 
 //! Port of `qa/tests/libs/kimath/geometry/test_chamfer.cpp` (suite `Chamfer`).
 
-use kicad_geom::geometry::corner_operations::{ChamferParams, ChamferResult, compute_chamfer_points};
+use kicad_geom::geometry::corner_operations::{
+    ChamferParams, ChamferResult, compute_chamfer_points,
+};
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::math::vector2::Vector2I;
 use kicad_geom::test_utils::segments_have_same_end_points;
@@ -35,14 +37,21 @@ struct TwoLineChamferTestCase {
 
 fn do_chamfer_test_checks(a_test_case: &TwoLineChamferTestCase) {
     // Actally do the chamfer
-    let chamfer_result = compute_chamfer_points(&a_test_case.seg_a, &a_test_case.seg_b, &a_test_case.params);
+    let chamfer_result =
+        compute_chamfer_points(&a_test_case.seg_a, &a_test_case.seg_b, &a_test_case.params);
 
-    assert_eq!(chamfer_result.is_some(), a_test_case.expected_result.is_some());
+    assert_eq!(
+        chamfer_result.is_some(),
+        a_test_case.expected_result.is_some()
+    );
 
     if let Some(actual_result) = chamfer_result {
         let expected_result = a_test_case.expected_result.unwrap();
 
-        assert!(segments_have_same_end_points(&actual_result.chamfer, &expected_result.chamfer));
+        assert!(segments_have_same_end_points(
+            &actual_result.chamfer,
+            &expected_result.chamfer
+        ));
 
         let check_updated_seg = |updated_seg: Option<Seg>, expected_seg: Option<Seg>| {
             assert_eq!(updated_seg.is_some(), expected_seg.is_some());
@@ -58,7 +67,10 @@ fn do_chamfer_test_checks(a_test_case: &TwoLineChamferTestCase) {
 }
 
 fn params(a: i32, b: i32) -> ChamferParams {
-    ChamferParams { chamfer_setback_a: a, chamfer_setback_b: b }
+    ChamferParams {
+        chamfer_setback_a: a,
+        chamfer_setback_b: b,
+    }
 }
 
 #[test]
@@ -68,7 +80,7 @@ fn simple_chamfer_at_origin() {
         seg_b: seg(0, 0, 0, 1000),
         params: params(10, 10),
         expected_result: Some(ChamferResult {
-            chamfer: seg(10, 0, 0, 10),                 // chamfer
+            chamfer: seg(10, 0, 0, 10),               // chamfer
             updated_seg_a: Some(seg(10, 0, 1000, 0)), // rest of the line A
             updated_seg_b: Some(seg(0, 10, 0, 1000)), // rest of the line B
         }),

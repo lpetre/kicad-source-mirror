@@ -37,19 +37,33 @@ struct DogboneTestCase {
 
 fn do_dogbone_test_checks(a_test_case: &DogboneTestCase) {
     // Actally do the chamfer
-    let dogbone_result =
-        compute_dogbone(&a_test_case.seg_a, &a_test_case.seg_b, a_test_case.radius, a_test_case.add_slots);
+    let dogbone_result = compute_dogbone(
+        &a_test_case.seg_a,
+        &a_test_case.seg_b,
+        a_test_case.radius,
+        a_test_case.add_slots,
+    );
 
-    assert_eq!(dogbone_result.is_some(), a_test_case.expected_result.is_some());
+    assert_eq!(
+        dogbone_result.is_some(),
+        a_test_case.expected_result.is_some()
+    );
 
     if let Some(actual_result) = dogbone_result {
         let expected_result = a_test_case.expected_result.as_ref().unwrap();
 
-        let expected_arc_chord = Seg::new(expected_result.arc.get_p0(), expected_result.arc.get_p1());
+        let expected_arc_chord =
+            Seg::new(expected_result.arc.get_p0(), expected_result.arc.get_p1());
         let actual_arc_chord = Seg::new(actual_result.arc.get_p0(), actual_result.arc.get_p1());
 
-        assert!(segments_have_same_end_points(&actual_arc_chord, &expected_arc_chord));
-        assert_eq!(actual_result.arc.get_arc_mid(), expected_result.arc.get_arc_mid());
+        assert!(segments_have_same_end_points(
+            &actual_arc_chord,
+            &expected_arc_chord
+        ));
+        assert_eq!(
+            actual_result.arc.get_arc_mid(),
+            expected_result.arc.get_arc_mid()
+        );
 
         let check_updated_seg = |updated_seg: Option<Seg>, expected_seg: Option<Seg>| {
             assert_eq!(updated_seg.is_some(), expected_seg.is_some());
@@ -62,7 +76,10 @@ fn do_dogbone_test_checks(a_test_case: &DogboneTestCase) {
         check_updated_seg(actual_result.updated_seg_a, expected_result.updated_seg_a);
         check_updated_seg(actual_result.updated_seg_b, expected_result.updated_seg_b);
 
-        assert_eq!(actual_result.small_arc_mouth, expected_result.small_arc_mouth);
+        assert_eq!(
+            actual_result.small_arc_mouth,
+            expected_result.small_arc_mouth
+        );
     }
 }
 

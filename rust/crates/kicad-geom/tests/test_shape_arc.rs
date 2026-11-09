@@ -20,12 +20,12 @@
 use kicad_geom::convert_basic_shapes_to_polygon::transform_arc_to_polygon;
 use kicad_geom::geometry::approximation::ERROR_INSIDE;
 use kicad_geom::geometry::eda_angle::{ANGLE_90, DEGREES_T, EdaAngle};
-use kicad_geom::geometry::shape_poly_set::ShapePolySet;
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::geometry::shape::{Shape, ShapeLineChainBase, ShapeType};
 use kicad_geom::geometry::shape_arc::ShapeArc;
 use kicad_geom::geometry::shape_circle::ShapeCircle;
 use kicad_geom::geometry::shape_line_chain::ShapeLineChain;
+use kicad_geom::geometry::shape_poly_set::ShapePolySet;
 use kicad_geom::geometry::shape_segment::ShapeSegment;
 use kicad_geom::geometry::shape_simple::ShapeSimple;
 use kicad_geom::math::box2::Box2I;
@@ -1622,8 +1622,16 @@ fn transform_issue22475_arc_to_polygon() {
 
     // The bounding box should be reasonable - roughly chord + 2*width wide, 2*width high
     // Check that the polygon isn't ridiculously large
-    assert!(bbox.width() <= 3000000, "Polygon width {} is too large (expected ~2020000)", bbox.width());
-    assert!(bbox.height() <= 1000000, "Polygon height {} is too large (expected ~400000)", bbox.height());
+    assert!(
+        bbox.width() <= 3000000,
+        "Polygon width {} is too large (expected ~2020000)",
+        bbox.width()
+    );
+    assert!(
+        bbox.height() <= 1000000,
+        "Polygon height {} is too large (expected ~400000)",
+        bbox.height()
+    );
 }
 
 /// Test that SHAPE_ARC::Collide handles arcs with near-INT_MAX radius without crashing.

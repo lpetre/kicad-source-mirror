@@ -19,7 +19,9 @@
 
 use kicad_geom::geometry::eda_angle::ANGLE_45;
 use kicad_geom::geometry::oval::{OVAL_ALL_KEY_POINTS, get_oval_key_points};
-use kicad_geom::geometry::point_types::{PT_CENTER, PT_END, PT_MID, PT_QUADRANT, PointType, TypedPoint2I};
+use kicad_geom::geometry::point_types::{
+    PT_CENTER, PT_END, PT_MID, PT_QUADRANT, PointType, TypedPoint2I,
+};
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::geometry::shape_segment::ShapeSegment;
 use kicad_geom::math::vector2::Vector2I;
@@ -50,7 +52,10 @@ fn do_oval_point_test_checks(a_oval: &ShapeSegment, a_expected_points: &[TypedPo
 
 #[test]
 fn simple_oval_vertical() {
-    let oval = ShapeSegment::from_seg(Seg::new(Vector2I::new(0, -1000), Vector2I::new(0, 1000)), 1000);
+    let oval = ShapeSegment::from_seg(
+        Seg::new(Vector2I::new(0, -1000), Vector2I::new(0, 1000)),
+        1000,
+    );
     do_oval_point_test_checks(
         &oval,
         &[
@@ -75,7 +80,10 @@ fn simple_oval_vertical() {
 
 #[test]
 fn simple_oval_horizontal() {
-    let oval = ShapeSegment::from_seg(Seg::new(Vector2I::new(-1000, 0), Vector2I::new(1000, 0)), 1000);
+    let oval = ShapeSegment::from_seg(
+        Seg::new(Vector2I::new(-1000, 0), Vector2I::new(1000, 0)),
+        1000,
+    );
     do_oval_point_test_checks(
         &oval,
         &[
@@ -107,7 +115,10 @@ fn simple_oval_45_degrees() {
     // 1500 / sqrt(2) = 1061
     // 2000 / sqrt(2) = 1414
     let oval = ShapeSegment::from_seg(
-        Seg::new(get_rotated(Vector2I::new(-1500, 0), ANGLE_45), get_rotated(Vector2I::new(1500, 0), ANGLE_45)),
+        Seg::new(
+            get_rotated(Vector2I::new(-1500, 0), ANGLE_45),
+            get_rotated(Vector2I::new(1500, 0), ANGLE_45),
+        ),
         1000,
     );
     do_oval_point_test_checks(

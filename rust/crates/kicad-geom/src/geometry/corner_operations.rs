@@ -78,7 +78,11 @@ fn get_bisector_of_corner_segments(a_seg_a: &Seg, a_seg_b: &Seg, a_length: i32) 
 
         // If A is closer the segment is already pointing away from the corner
         // If B is closer, we need to reverse the segment
-        if dist_a < dist_b { a_seg.b - a_seg.a } else { a_seg.a - a_seg.b }
+        if dist_a < dist_b {
+            a_seg.b - a_seg.a
+        } else {
+            a_seg.a - a_seg.b
+        }
     };
 
     // The vectors have to be the same length
@@ -92,7 +96,11 @@ fn get_bisector_of_corner_segments(a_seg_a: &Seg, a_seg_b: &Seg, a_length: i32) 
 
 /// Port of `ComputeChamferPoints()`: the chamfer of two segments that share an end point,
 /// or `None` (no chamfer, chamfer too big, segments not coterminous).
-pub fn compute_chamfer_points(a_seg_a: &Seg, a_seg_b: &Seg, a_chamfer_params: &ChamferParams) -> Option<ChamferResult> {
+pub fn compute_chamfer_points(
+    a_seg_a: &Seg,
+    a_seg_b: &Seg,
+    a_chamfer_params: &ChamferParams,
+) -> Option<ChamferResult> {
     let line_a_setback = a_chamfer_params.chamfer_setback_a;
     let line_b_setback = a_chamfer_params.chamfer_setback_b;
 
@@ -128,10 +136,22 @@ pub fn compute_chamfer_points(a_seg_a: &Seg, a_seg_b: &Seg, a_chamfer_params: &C
     let chamfer = Seg::new(setback_a.b, setback_b.b);
 
     // The adjusted segments go from the old end points to the chamfer ends
-    let new_a = if a_end_pt != chamfer.a { Some(Seg::new(a_end_pt, chamfer.a)) } else { None };
-    let new_b = if b_end_pt != chamfer.b { Some(Seg::new(b_end_pt, chamfer.b)) } else { None };
+    let new_a = if a_end_pt != chamfer.a {
+        Some(Seg::new(a_end_pt, chamfer.a))
+    } else {
+        None
+    };
+    let new_b = if b_end_pt != chamfer.b {
+        Some(Seg::new(b_end_pt, chamfer.b))
+    } else {
+        None
+    };
 
-    Some(ChamferResult { chamfer, updated_seg_a: new_a, updated_seg_b: new_b })
+    Some(ChamferResult {
+        chamfer,
+        updated_seg_a: new_a,
+        updated_seg_b: new_b,
+    })
 }
 
 /// Port of `ComputeDogbone()`: turn a sharp internal corner into a "dogbone" shape, which allows
@@ -145,7 +165,12 @@ pub fn compute_chamfer_points(a_seg_a: &Seg, a_seg_b: &Seg, a_chamfer_params: &C
 ///           | |
 ///           | |
 /// ```
-pub fn compute_dogbone(a_seg_a: &Seg, a_seg_b: &Seg, a_dogbone_radius: i32, a_add_slots: bool) -> Option<DogboneResult> {
+pub fn compute_dogbone(
+    a_seg_a: &Seg,
+    a_seg_b: &Seg,
+    a_dogbone_radius: i32,
+    a_add_slots: bool,
+) -> Option<DogboneResult> {
     let corner = get_shared_endpoint(a_seg_a, a_seg_b);
 
     // Cannot handle parallel lines
@@ -170,12 +195,13 @@ pub fn compute_dogbone(a_seg_a: &Seg, a_seg_b: &Seg, a_dogbone_radius: i32, a_ad
     // There can be a little bit of error in the intersection calculation
     const S_EPSILON: i32 = 8;
 
-    let get_point_not_on_corner = |a_intersections: &[Vector2I], a_corner: Vector2I| -> Option<Vector2I> {
-        a_intersections
-            .iter()
-            .copied()
-            .find(|pt| a_corner.distance(*pt) > S_EPSILON as f64)
-    };
+    let get_point_not_on_corner =
+        |a_intersections: &[Vector2I], a_corner: Vector2I| -> Option<Vector2I> {
+            a_intersections
+                .iter()
+                .copied()
+                .find(|pt| a_corner.distance(*pt) > S_EPSILON as f64)
+        };
 
     let pt_on_seg_a = get_point_not_on_corner(&seg_a_intersections, corner);
     let pt_on_seg_b = get_point_not_on_corner(&seg_b_intersections, corner);
@@ -196,12 +222,25 @@ pub fn compute_dogbone(a_seg_a: &Seg, a_seg_b: &Seg, a_dogbone_radius: i32, a_ad
     {
         // See if we need to update the original segments
         // or if the dogbone consumed them
-        let new_a = if a_other_pt_a != pt_on_seg_a { Some(Seg::new(a_other_pt_a, pt_on_seg_a)) } else { None };
-        let new_b = if a_other_pt_b != pt_on_seg_b { Some(Seg::new(a_other_pt_b, pt_on_seg_b)) } else { None };
+        let new_a = if a_other_pt_a != pt_on_seg_a {
+            Some(Seg::new(a_other_pt_a, pt_on_seg_a))
+        } else {
+            None
+        };
+        let new_b = if a_other_pt_b != pt_on_seg_b {
+            Some(Seg::new(a_other_pt_b, pt_on_seg_b))
+        } else {
+            None
+        };
 
         // Nice and easy
         if !small_arc_mouth || !a_add_slots {
-            return Some(DogboneResult { arc, updated_seg_a: new_a, updated_seg_b: new_b, small_arc_mouth });
+            return Some(DogboneResult {
+                arc,
+                updated_seg_a: new_a,
+                updated_seg_b: new_b,
+                small_arc_mouth,
+            });
         }
     }
 
@@ -221,8 +260,14 @@ pub fn compute_dogbone(a_seg_a: &Seg, a_seg_b: &Seg, a_dogbone_radius: i32, a_ad
     }
 
     // Take the bisector and glue it to the arc ends
-    let arc_extension_a = HalfLine::new(slot_arc.get_p0(), slot_arc.get_p0() + (dogbone_center - corner));
-    let arc_extension_b = HalfLine::new(slot_arc.get_p1(), slot_arc.get_p1() + (dogbone_center - corner));
+    let arc_extension_a = HalfLine::new(
+        slot_arc.get_p0(),
+        slot_arc.get_p0() + (dogbone_center - corner),
+    );
+    let arc_extension_b = HalfLine::new(
+        slot_arc.get_p1(),
+        slot_arc.get_p1() + (dogbone_center - corner),
+    );
 
     let ext_a_intersect = arc_extension_a.intersect_seg(a_seg_a);
     let ext_b_intersect = arc_extension_b.intersect_seg(a_seg_b);
@@ -234,8 +279,21 @@ pub fn compute_dogbone(a_seg_a: &Seg, a_seg_b: &Seg, a_dogbone_radius: i32, a_ad
 
     // See if we need to update the original segments
     // or if the dogbone consumed them
-    let new_a = if a_other_pt_a != ext_a_intersect { Some(Seg::new(a_other_pt_a, ext_a_intersect)) } else { None };
-    let new_b = if a_other_pt_b != ext_b_intersect { Some(Seg::new(a_other_pt_b, ext_b_intersect)) } else { None };
+    let new_a = if a_other_pt_a != ext_a_intersect {
+        Some(Seg::new(a_other_pt_a, ext_a_intersect))
+    } else {
+        None
+    };
+    let new_b = if a_other_pt_b != ext_b_intersect {
+        Some(Seg::new(a_other_pt_b, ext_b_intersect))
+    } else {
+        None
+    };
 
-    Some(DogboneResult { arc: slot_arc, updated_seg_a: new_a, updated_seg_b: new_b, small_arc_mouth })
+    Some(DogboneResult {
+        arc: slot_arc,
+        updated_seg_a: new_a,
+        updated_seg_b: new_b,
+        small_arc_mouth,
+    })
 }

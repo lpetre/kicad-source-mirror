@@ -57,7 +57,10 @@ impl Roundrect {
     /// is clamped to `[0, |minor dimension| / 2]`; with `a_normalize_on_create` the rectangle is
     /// normalised first (positive width and height, which can move its origin).
     pub fn new(a_rect: ShapeRect, a_radius: i32, a_normalize_on_create: bool) -> Self {
-        let mut rr = Roundrect { rect: a_rect, radius: a_radius };
+        let mut rr = Roundrect {
+            rect: a_rect,
+            radius: a_radius,
+        };
 
         if a_normalize_on_create {
             rr.rect.normalize();
@@ -115,7 +118,11 @@ impl Roundrect {
     /// Port of `GetInflated()`: the roundrect grown by `a_outset` in all directions (the radius
     /// grows by `a_outset` as well).
     pub fn get_inflated(&self, a_outset: i32) -> Roundrect {
-        Roundrect::new(self.rect.get_inflated(a_outset), self.radius + a_outset, false)
+        Roundrect::new(
+            self.rect.get_inflated(a_outset),
+            self.radius + a_outset,
+            false,
+        )
     }
 
     /// Port of `ROUNDRECT::TransformToPolygon()`: replace `a_buffer` by the polygonal
@@ -176,7 +183,8 @@ impl Roundrect {
                     max_error,
                 );
             } else {
-                let inner_rect = ShapeRect::from_pos_size(m_p0 + Vector2I::new(r, r), x_edge, y_edge);
+                let inner_rect =
+                    ShapeRect::from_pos_size(m_p0 + Vector2I::new(r, r), x_edge, y_edge);
 
                 if x_edge > 0 {
                     // Either a normal roundrect or an oval with x_edge > 0
@@ -188,29 +196,53 @@ impl Roundrect {
                     outline.append_point(m_p0 + Vector2I::new(r + x_edge, 0), false);
 
                     if y_edge > 0 {
-                        outline.append_arc_with_error(&make_corner_arc_cw90(&inner_rect, r, Directions::NE), max_error);
+                        outline.append_arc_with_error(
+                            &make_corner_arc_cw90(&inner_rect, r, Directions::NE),
+                            max_error,
+                        );
                         outline.append_point(m_p0 + Vector2I::new(w, r + y_edge), false);
-                        outline.append_arc_with_error(&make_corner_arc_cw90(&inner_rect, r, Directions::SE), max_error);
+                        outline.append_arc_with_error(
+                            &make_corner_arc_cw90(&inner_rect, r, Directions::SE),
+                            max_error,
+                        );
                     } else {
-                        outline.append_arc_with_error(&make_side_arc_cw180(&inner_rect, r, Directions::E), max_error);
+                        outline.append_arc_with_error(
+                            &make_side_arc_cw180(&inner_rect, r, Directions::E),
+                            max_error,
+                        );
                     }
 
                     // Bottom side
                     outline.append_point(m_p0 + Vector2I::new(r, h), false);
 
                     if y_edge > 0 {
-                        outline.append_arc_with_error(&make_corner_arc_cw90(&inner_rect, r, Directions::SW), max_error);
+                        outline.append_arc_with_error(
+                            &make_corner_arc_cw90(&inner_rect, r, Directions::SW),
+                            max_error,
+                        );
                         outline.append_point(m_p0 + Vector2I::new(0, r), false);
-                        outline.append_arc_with_error(&make_corner_arc_cw90(&inner_rect, r, Directions::NW), max_error);
+                        outline.append_arc_with_error(
+                            &make_corner_arc_cw90(&inner_rect, r, Directions::NW),
+                            max_error,
+                        );
                     } else {
-                        outline.append_arc_with_error(&make_side_arc_cw180(&inner_rect, r, Directions::W), max_error);
+                        outline.append_arc_with_error(
+                            &make_side_arc_cw180(&inner_rect, r, Directions::W),
+                            max_error,
+                        );
                     }
                 } else {
                     // x_edge is 0 but y_edge is not, so it's an oval the other way up
                     outline.append_point(m_p0 + Vector2I::new(0, r), false);
-                    outline.append_arc_with_error(&make_side_arc_cw180(&inner_rect, r, Directions::N), max_error);
+                    outline.append_arc_with_error(
+                        &make_side_arc_cw180(&inner_rect, r, Directions::N),
+                        max_error,
+                    );
                     outline.append_point(m_p0 + Vector2I::new(w, r + y_edge), false);
-                    outline.append_arc_with_error(&make_side_arc_cw180(&inner_rect, r, Directions::S), max_error);
+                    outline.append_arc_with_error(
+                        &make_side_arc_cw180(&inner_rect, r, Directions::S),
+                        max_error,
+                    );
                 }
             }
 

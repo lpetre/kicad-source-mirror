@@ -492,7 +492,11 @@ fn section_chain(results: &mut Results, name: &'static str, seed: u64, count: u6
 
         if rng.range(0, 7) == 0 {
             // Hint data: from the same chain, or from another chain
-            let other = if rng.flag() { c.clone() } else { gen_chain(&mut rng) };
+            let other = if rng.flag() {
+                c.clone()
+            } else {
+                gen_chain(&mut rng)
+            };
             let mut hinted = TriangulatedPolygon::new(0);
             let ok = PolygonTriangulation::new(&mut hinted).tesselate_chain(&other, Some(&result));
             r.b(ok);
@@ -737,8 +741,8 @@ fn section_collide(results: &mut Results, name: &'static str, seed: u64, count: 
         let mut r = Rec::default();
 
         match rng.next() % 3 {
-            0 => {}                                                   // cold: Collide() triangulates
-            1 => set.cache_triangulation(false),                      // cached, no index yet
+            0 => {}                              // cold: Collide() triangulates
+            1 => set.cache_triangulation(false), // cached, no index yet
             _ => set.cache_triangulation_with(false, false, true),
         }
 
@@ -746,8 +750,14 @@ fn section_collide(results: &mut Results, name: &'static str, seed: u64, count: 
         let s = 10i64.max(bb.width().max(bb.height())) as i32;
 
         for _ in 0..8 {
-            let x = rng.range(bb.x() as i64 - (s / 4) as i64, bb.right() as i64 + (s / 4) as i64);
-            let y = rng.range(bb.y() as i64 - (s / 4) as i64, bb.bottom() as i64 + (s / 4) as i64);
+            let x = rng.range(
+                bb.x() as i64 - (s / 4) as i64,
+                bb.right() as i64 + (s / 4) as i64,
+            );
+            let y = rng.range(
+                bb.y() as i64 - (s / 4) as i64,
+                bb.bottom() as i64 + (s / 4) as i64,
+            );
             let p = v(x as i32, y as i32);
 
             let shape: Box<dyn Shape> = match rng.next() % 5 {
@@ -808,8 +818,16 @@ fn section_collide(results: &mut Results, name: &'static str, seed: u64, count: 
             let hit_c = set.collide_shape(
                 shape.as_ref(),
                 clearance,
-                if mode & 1 != 0 { Some(&mut actual_c) } else { None },
-                if mode & 2 != 0 { Some(&mut loc_c) } else { None },
+                if mode & 1 != 0 {
+                    Some(&mut actual_c)
+                } else {
+                    None
+                },
+                if mode & 2 != 0 {
+                    Some(&mut loc_c)
+                } else {
+                    None
+                },
             );
 
             let mut actual = -7;
@@ -817,7 +835,11 @@ fn section_collide(results: &mut Results, name: &'static str, seed: u64, count: 
             let hit = set.collide_shape_mut(
                 shape.as_ref(),
                 clearance,
-                if mode & 1 != 0 { Some(&mut actual) } else { None },
+                if mode & 1 != 0 {
+                    Some(&mut actual)
+                } else {
+                    None
+                },
                 if mode & 2 != 0 { Some(&mut loc) } else { None },
             );
 
@@ -828,7 +850,11 @@ fn section_collide(results: &mut Results, name: &'static str, seed: u64, count: 
             );
 
             r.b(hit).i(actual).v(loc);
-            r.b(any_triangle_hit_point(set.triangulation_index(), set.triangulated_polys(), p));
+            r.b(any_triangle_hit_point(
+                set.triangulation_index(),
+                set.triangulated_polys(),
+                p,
+            ));
         }
 
         rec_cache(&mut r, &set);

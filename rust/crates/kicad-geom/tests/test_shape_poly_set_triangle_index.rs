@@ -202,11 +202,17 @@ fn compound_near_miss_not_pruned() {
     compound.add_shape(Box::new(ShapeSegment::new(b, b + v(50000, 0), 0)));
 
     // Comfortably clear.
-    assert_eq!(probe(&poly, &compound, gap / 2), reference_scan(&poly, &compound, gap / 2));
+    assert_eq!(
+        probe(&poly, &compound, gap / 2),
+        reference_scan(&poly, &compound, gap / 2)
+    );
 
     // Clearance large enough that the near-miss triangles matter: a pruned candidate set
     // would report no collision here while the full scan reports one.
-    assert_eq!(probe(&poly, &compound, gap * 4), reference_scan(&poly, &compound, gap * 4));
+    assert_eq!(
+        probe(&poly, &compound, gap * 4),
+        reference_scan(&poly, &compound, gap * 4)
+    );
 
     assert!(probe(&poly, &compound, gap * 4).collides);
 }
@@ -216,12 +222,12 @@ fn min_distance_matches_full_scan() {
     let poly = make_blob();
 
     let cases = [
-        ((1000000, 0), 0),     // on the outline, between two triangles
-        ((1010000, 0), 10000), // exactly at clearance distance
-        ((1010000, 0), 9999),  // one IU inside
-        ((1010000, 0), 10001), // one IU outside
+        ((1000000, 0), 0),      // on the outline, between two triangles
+        ((1010000, 0), 10000),  // exactly at clearance distance
+        ((1010000, 0), 9999),   // one IU inside
+        ((1010000, 0), 10001),  // one IU outside
         ((-400000, 0), 100000), // inside a hole, reaching its rim
-        ((0, 999000), 5000),   // near the outline on another axis
+        ((0, 999000), 5000),    // near the outline on another axis
     ];
 
     for ((x, y), clearance) in cases {
@@ -239,7 +245,11 @@ fn sub_threshold_polygon_matches_full_scan() {
     poly.add_outline(&make_ngon(v(0, 0), 1000000, 8)); // 8 vertices -> ~6 triangles
     poly.cache_triangulation(false);
 
-    let triangles: usize = poly.triangulated_polys().iter().map(|t| t.triangle_count()).sum();
+    let triangles: usize = poly
+        .triangulated_polys()
+        .iter()
+        .map(|t| t.triangle_count())
+        .sum();
 
     // If this ever exceeds the threshold (RTREE_THRESHOLD, 32) the case stops testing what it
     // claims to.
@@ -247,8 +257,14 @@ fn sub_threshold_polygon_matches_full_scan() {
 
     for (x, y) in [(0, 0), (900000, 0), (1100000, 0), (0, 900000)] {
         let probe_rect = ShapeRect::from_pos_size(v(x, y), 1000, 1000);
-        assert_eq!(probe(&poly, &probe_rect, 0), reference_scan(&poly, &probe_rect, 0));
-        assert_eq!(probe_bool(&poly, &probe_rect, 0), reference_scan_bool(&poly, &probe_rect, 0));
+        assert_eq!(
+            probe(&poly, &probe_rect, 0),
+            reference_scan(&poly, &probe_rect, 0)
+        );
+        assert_eq!(
+            probe_bool(&poly, &probe_rect, 0),
+            reference_scan_bool(&poly, &probe_rect, 0)
+        );
     }
 }
 
@@ -265,8 +281,14 @@ fn check_index_dropped() {
     for (x, y) in G_PROBES {
         let pt = v(x, y);
         let shifted = ShapeRect::from_pos_size(pt + delta, 1000, 1000);
-        assert_eq!(probe(&poly, &shifted, 0), reference_scan(&poly, &shifted, 0));
-        assert_eq!(probe_bool(&poly, &shifted, 0), reference_scan_bool(&poly, &shifted, 0));
+        assert_eq!(
+            probe(&poly, &shifted, 0),
+            reference_scan(&poly, &shifted, 0)
+        );
+        assert_eq!(
+            probe_bool(&poly, &shifted, 0),
+            reference_scan_bool(&poly, &shifted, 0)
+        );
 
         // The old location must now be empty.
         let stale = ShapeRect::from_pos_size(pt, 1000, 1000);
@@ -288,13 +310,22 @@ fn check_index_dropped() {
 
     for (x, y) in G_PROBES {
         let probe_rect = ShapeRect::from_pos_size(v(x, y), 1000, 1000);
-        assert_eq!(probe(&poly, &probe_rect, 0), reference_scan(&poly, &probe_rect, 0));
-        assert_eq!(probe_bool(&poly, &probe_rect, 0), reference_scan_bool(&poly, &probe_rect, 0));
+        assert_eq!(
+            probe(&poly, &probe_rect, 0),
+            reference_scan(&poly, &probe_rect, 0)
+        );
+        assert_eq!(
+            probe_bool(&poly, &probe_rect, 0),
+            reference_scan_bool(&poly, &probe_rect, 0)
+        );
     }
 
     // The new hole must read as empty.
     let in_new_hole = ShapeRect::from_pos_size(v(0, -500000), 1000, 1000);
-    assert_eq!(probe(&poly, &in_new_hole, 0), reference_scan(&poly, &in_new_hole, 0));
+    assert_eq!(
+        probe(&poly, &in_new_hole, 0),
+        reference_scan(&poly, &in_new_hole, 0)
+    );
 
     // Copy assignment, against a blob far from the first.
     let mut target = make_blob();
@@ -309,9 +340,17 @@ fn check_index_dropped() {
     assert!(target.triangulated_poly_count() > 0);
     assert!(target.triangulation_index().is_none());
 
-    for (x, y) in [(8000000, 8000000), (8890000, 8000000), (8910000, 8000000), (0, 0)] {
+    for (x, y) in [
+        (8000000, 8000000),
+        (8890000, 8000000),
+        (8910000, 8000000),
+        (0, 0),
+    ] {
         let probe_rect = ShapeRect::from_pos_size(v(x, y), 1000, 1000);
-        assert_eq!(probe(&target, &probe_rect, 0), reference_scan(&target, &probe_rect, 0));
+        assert_eq!(
+            probe(&target, &probe_rect, 0),
+            reference_scan(&target, &probe_rect, 0)
+        );
         assert_eq!(
             probe_bool(&target, &probe_rect, 0),
             reference_scan_bool(&target, &probe_rect, 0)

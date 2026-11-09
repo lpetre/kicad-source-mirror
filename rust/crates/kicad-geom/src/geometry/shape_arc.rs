@@ -1331,7 +1331,12 @@ impl Shape for ShapeArc {
     }
 
     /// Port of `SHAPE_ARC::TransformToPolygon()`: `TransformArcToPolygon()`.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        a_error_loc: ErrorLoc,
+    ) {
         crate::convert_basic_shapes_to_polygon::transform_arc_to_polygon(
             a_buffer,
             self.start,

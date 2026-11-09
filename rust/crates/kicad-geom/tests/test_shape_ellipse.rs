@@ -38,7 +38,9 @@ use kicad_geom::kicore::mirror::FlipDirection;
 use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::util::ki_round;
 use kicad_geom::math::vector2::Vector2I;
-use kicad_geom::test_utils::{Mt19937, is_close_pct, uniform_int_libstdcxx, uniform_real_libstdcxx};
+use kicad_geom::test_utils::{
+    Mt19937, is_close_pct, uniform_int_libstdcxx, uniform_real_libstdcxx,
+};
 
 fn pt(x: i32, y: i32) -> Vector2I {
     Vector2I::new(x, y)
@@ -84,8 +86,16 @@ fn brute_force_ellipse_bbox(
     let cp = a_rotation.as_radians().cos();
     let sp = a_rotation.as_radians().sin();
 
-    let t_start = if a_is_arc { a_start_angle.as_radians() } else { 0.0 };
-    let mut t_end = if a_is_arc { a_end_angle.as_radians() } else { 2.0 * PI };
+    let t_start = if a_is_arc {
+        a_start_angle.as_radians()
+    } else {
+        0.0
+    };
+    let mut t_end = if a_is_arc {
+        a_end_angle.as_radians()
+    } else {
+        2.0 * PI
+    };
 
     if t_end < t_start {
         t_end += 2.0 * PI;
@@ -192,7 +202,8 @@ fn random_closed_ellipse_bbox_vs_brute_force() {
 
         let e = ShapeEllipse::new(center, r1, r2, rot);
         let analytic = e.bbox(0);
-        let brute = brute_force_ellipse_bbox(center, r1, r2, rot, deg(0.0), deg(360.0), false, 10000);
+        let brute =
+            brute_force_ellipse_bbox(center, r1, r2, rot, deg(0.0), deg(360.0), false, 10000);
 
         // Allow +/- 2 IU for integer rounding on either side.
         assert!(boxes_within(&analytic, &brute, 2));
@@ -504,8 +515,14 @@ fn collide_circle_degenerate_agrees_with_shape_circle() {
     ];
 
     for s in &segments {
-        assert_eq!(e.collide_seg(s, 0, None, None), c.collide_seg(s, 0, None, None));
-        assert_eq!(e.collide_seg(s, 100, None, None), c.collide_seg(s, 100, None, None));
+        assert_eq!(
+            e.collide_seg(s, 0, None, None),
+            c.collide_seg(s, 0, None, None)
+        );
+        assert_eq!(
+            e.collide_seg(s, 100, None, None),
+            c.collide_seg(s, 100, None, None)
+        );
     }
 }
 
@@ -700,7 +717,11 @@ fn mirror_twice_is_identity() {
 
         assert_eq!(e.get_center().x, orig_center.x);
         assert_eq!(e.get_center().y, orig_center.y);
-        assert!(is_close_pct(e.get_rotation().as_degrees(), orig_rotation, 1e-6));
+        assert!(is_close_pct(
+            e.get_rotation().as_degrees(),
+            orig_rotation,
+            1e-6
+        ));
     }
 }
 
@@ -722,7 +743,11 @@ fn mirror_arc_asymmetric_swaps_sweep() {
     let mut arc = ell_arc(pt(0, 0), 500, 300, 0.0, 20.0, 80.0);
     arc.mirror(pt(0, 0), FlipDirection::LeftRight);
 
-    assert!(is_close_pct(arc.get_start_angle().as_degrees(), 100.0, 1e-6)); // 180 - 80
+    assert!(is_close_pct(
+        arc.get_start_angle().as_degrees(),
+        100.0,
+        1e-6
+    )); // 180 - 80
     assert!(is_close_pct(arc.get_end_angle().as_degrees(), 160.0, 1e-6)); // 180 - 20
 }
 
@@ -741,7 +766,10 @@ fn format_contains_expected_fields() {
     assert!(plain.contains("300"));
 
     // Exact texts (not in the C++ test): the stream formatting of the reference build
-    assert_eq!(cpp, "SHAPE_ELLIPSE( VECTOR2I( 100, 200 ), 500, 300, EDA_ANGLE( 30, DEGREES_T ) );");
+    assert_eq!(
+        cpp,
+        "SHAPE_ELLIPSE( VECTOR2I( 100, 200 ), 500, 300, EDA_ANGLE( 30, DEGREES_T ) );"
+    );
     assert_eq!(plain, "shape 10 100 200 500 300 30 0");
 }
 
@@ -821,7 +849,10 @@ fn cross_check_segment_collide_against_tessellation() {
         // The tessellated chain's Collide does not model the closed ellipse interior.
         // Compensate: for a closed ellipse, a segment endpoint inside the interior is
         // a collision too.
-        if !brute_collide && !e.is_arc() && (e.point_inside(s.a, 0, false) || e.point_inside(s.b, 0, false)) {
+        if !brute_collide
+            && !e.is_arc()
+            && (e.point_inside(s.a, 0, false) || e.point_inside(s.b, 0, false))
+        {
             brute_collide = true;
         }
 
@@ -832,7 +863,10 @@ fn cross_check_segment_collide_against_tessellation() {
 
     // Near-threshold cases may disagree within the 2 IU tessellation budget.
     // Allow up to 1% boundary mismatches.
-    assert!(mismatches <= n / 100, "cross-check mismatches: {mismatches} / {n}");
+    assert!(
+        mismatches <= n / 100,
+        "cross-check mismatches: {mismatches} / {n}"
+    );
 }
 
 /// When minor > major, radii swap and rotation += 90.  For arcs, angles must shift by -90 to
@@ -954,7 +988,10 @@ fn intersect_ellipse_with_offset_circle() {
     assert_eq!(points.len(), 4);
 
     for p in &points {
-        assert!(ellipse.squared_distance(*p, true) <= 4, "point {p:?} is off the ellipse");
+        assert!(
+            ellipse.squared_distance(*p, true) <= 4,
+            "point {p:?} is off the ellipse"
+        );
 
         let radial = (circle.center.distance(*p) - circle.radius as f64).abs();
         assert!(radial <= 2.0, "point {p:?} is off the circle");
@@ -987,7 +1024,8 @@ fn intersect_ellipse_with_elliptical_arc() {
 #[test]
 fn intersection_visitor_handles_ellipses() {
     let first = IntersectableGeom::Ellipse(ShapeEllipse::new(pt(0, 0), 2000000, 1000000, ANGLE_0));
-    let second = IntersectableGeom::Ellipse(ShapeEllipse::new(pt(0, 0), 2000000, 1000000, ANGLE_90));
+    let second =
+        IntersectableGeom::Ellipse(ShapeEllipse::new(pt(0, 0), 2000000, 1000000, ANGLE_90));
     let circle = IntersectableGeom::Circle(Circle::new(pt(0, 300000), 1500000));
 
     let mut ellipse_to_ellipse = Vec::new();

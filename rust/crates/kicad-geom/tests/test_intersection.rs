@@ -18,7 +18,9 @@
 //! Port of `qa/tests/libs/kimath/geometry/test_intersection.cpp` (suite `Intersection`).
 
 use kicad_geom::geometry::circle::Circle;
-use kicad_geom::geometry::intersection::{IntersectableGeom as G, IntersectionContact, IntersectionVisitor};
+use kicad_geom::geometry::intersection::{
+    IntersectableGeom as G, IntersectionContact, IntersectionVisitor,
+};
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::geometry::shape_arc::ShapeArc;
 use kicad_geom::math::vector2::Vector2I;
@@ -36,7 +38,12 @@ fn circle(x: i32, y: i32, r: i32) -> G {
 }
 
 fn arc(a: (i32, i32), m: (i32, i32), e: (i32, i32)) -> G {
-    G::Arc(ShapeArc::from_start_mid_end(pt(a.0, a.1), pt(m.0, m.1), pt(e.0, e.1), 0))
+    G::Arc(ShapeArc::from_start_mid_end(
+        pt(a.0, a.1),
+        pt(m.0, m.1),
+        pt(e.0, e.1),
+        0,
+    ))
 }
 
 fn contact_of(a_a: &G, a_b: &G) -> IntersectionContact {
@@ -117,9 +124,11 @@ fn contact_accumulates_across_visits() {
     let mut contact = IntersectionContact::default();
     let source = seg(0, 0, 100, 0);
 
-    IntersectionVisitor::with_contact(&seg(50, -50, 50, 50), &mut intersections, &mut contact).visit(&source);
+    IntersectionVisitor::with_contact(&seg(50, -50, 50, 50), &mut intersections, &mut contact)
+        .visit(&source);
     assert!(!contact.overlapping);
 
-    IntersectionVisitor::with_contact(&seg(20, 0, 80, 0), &mut intersections, &mut contact).visit(&source);
+    IntersectionVisitor::with_contact(&seg(20, 0, 80, 0), &mut intersections, &mut contact)
+        .visit(&source);
     assert!(contact.overlapping);
 }

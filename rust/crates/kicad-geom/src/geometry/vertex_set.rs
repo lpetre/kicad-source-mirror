@@ -237,7 +237,10 @@ impl VertexSet {
         // VECTOR2I( x, y ): the coordinates came from integers, the conversion is exact
         let a2 = self.insert_vertex(
             ai,
-            Vector2I::new(crate::cmath::f64_to_i32_x86(ax), crate::cmath::f64_to_i32_x86(ay)),
+            Vector2I::new(
+                crate::cmath::f64_to_i32_x86(ax),
+                crate::cmath::f64_to_i32_x86(ay),
+            ),
             NIL,
             a_user,
         );
@@ -642,7 +645,8 @@ impl VertexSet {
             let pv = &self.vertices[p];
             let nv = &self.vertices[pv.next];
 
-            if ((pv.y > py) != (nv.y > py)) && (px < (nv.x - pv.x) * (py - pv.y) / (nv.y - pv.y) + pv.x)
+            if ((pv.y > py) != (nv.y > py))
+                && (px < (nv.x - pv.x) * (py - pv.y) / (nv.y - pv.y) + pv.x)
             {
                 inside = !inside;
             }

@@ -131,7 +131,12 @@ impl Shape for ShapeCircle {
 
     /// Port of `SHAPE_CIRCLE::TransformToPolygon()` (in `shape_segment.cpp`):
     /// `TransformCircleToPolygon()`.
-    fn transform_to_polygon(&self, a_buffer: &mut ShapePolySet, a_error: i32, a_error_loc: ErrorLoc) {
+    fn transform_to_polygon(
+        &self,
+        a_buffer: &mut ShapePolySet,
+        a_error: i32,
+        a_error_loc: ErrorLoc,
+    ) {
         crate::convert_basic_shapes_to_polygon::transform_circle_to_polygon(
             a_buffer,
             self.circle.center,

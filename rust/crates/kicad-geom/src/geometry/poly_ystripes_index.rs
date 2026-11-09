@@ -104,7 +104,10 @@ impl PolyYStripesIndex {
         let mut y_min: i64 = i32::MAX as i64;
         let mut y_max: i64 = i32::MIN as i64;
 
-        let mut add_chain = |edges: &mut Vec<Edge>, chain: &crate::geometry::shape_line_chain::ShapeLineChain, outline_idx: i32, is_hole: bool| {
+        let mut add_chain = |edges: &mut Vec<Edge>,
+                             chain: &crate::geometry::shape_line_chain::ShapeLineChain,
+                             outline_idx: i32,
+                             is_hole: bool| {
             let pt_count = chain.point_count();
 
             if pt_count < 3 {
@@ -132,10 +135,20 @@ impl PolyYStripesIndex {
         };
 
         for outline_idx in 0..self.outline_count {
-            add_chain(&mut self.edges, a_poly_set.c_outline(outline_idx), outline_idx, false);
+            add_chain(
+                &mut self.edges,
+                a_poly_set.c_outline(outline_idx),
+                outline_idx,
+                false,
+            );
 
             for hole_idx in 0..a_poly_set.hole_count(outline_idx) {
-                add_chain(&mut self.edges, a_poly_set.c_hole(outline_idx, hole_idx), outline_idx, true);
+                add_chain(
+                    &mut self.edges,
+                    a_poly_set.c_hole(outline_idx, hole_idx),
+                    outline_idx,
+                    true,
+                );
             }
         }
 

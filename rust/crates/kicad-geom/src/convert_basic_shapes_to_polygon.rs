@@ -37,7 +37,9 @@
 use crate::cmath;
 use crate::geometry::approximation::{ERROR_INSIDE, ERROR_OUTSIDE, ErrorLoc};
 use crate::geometry::arc_chord_params::ArcChordParams;
-use crate::geometry::eda_angle::{ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_360, EdaAngle, FULL_CIRCLE, RADIANS_T};
+use crate::geometry::eda_angle::{
+    ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_360, EdaAngle, FULL_CIRCLE, RADIANS_T,
+};
 use crate::geometry::geometry_utils::{
     circle_to_end_segment_delta_radius, get_arc_to_segment_count, get_circle_to_poly_correction,
 };
@@ -73,7 +75,12 @@ fn resize_d(a_vec: Vector2I, a_len: f64) -> Vector2I {
 
 /// Shared part of both `TransformCircleToPolygon` overloads: segment count, angle step and the
 /// corrected radius.
-fn circle_params(a_radius: i32, a_error: i32, a_error_loc: ErrorLoc, a_min_seg_count: i32) -> (i32, EdaAngle, i32) {
+fn circle_params(
+    a_radius: i32,
+    a_error: i32,
+    a_error_loc: ErrorLoc,
+    a_min_seg_count: i32,
+) -> (i32, EdaAngle, i32) {
     let mut num_segs = get_arc_to_segment_count(a_radius, a_error, FULL_CIRCLE);
     num_segs = a_min_seg_count.max(num_segs);
 
@@ -291,12 +298,18 @@ pub struct RoundedCorner {
 impl RoundedCorner {
     /// Port of `ROUNDED_CORNER( int x, int y )` (radius 0).
     pub fn new(x: i32, y: i32) -> Self {
-        RoundedCorner { position: Vector2I::new(x, y), radius: 0 }
+        RoundedCorner {
+            position: Vector2I::new(x, y),
+            radius: 0,
+        }
     }
 
     /// Port of `ROUNDED_CORNER( int x, int y, int radius )`.
     pub fn with_radius(x: i32, y: i32, radius: i32) -> Self {
-        RoundedCorner { position: Vector2I::new(x, y), radius }
+        RoundedCorner {
+            position: Vector2I::new(x, y),
+            radius,
+        }
     }
 }
 
@@ -339,7 +352,8 @@ pub fn corner_list_to_polygon(
                 end_angle = ANGLE_90;
                 tan_angle2 = 1.0;
             } else {
-                let cos_num = incoming.x as f64 * outgoing.x as f64 + incoming.y as f64 * outgoing.y as f64;
+                let cos_num =
+                    incoming.x as f64 * outgoing.x as f64 + incoming.y as f64 * outgoing.y as f64;
                 let cos_den = incoming.euclidean_norm() as f64 * outgoing.euclidean_norm() as f64;
                 let angle = cmath::acos(cos_num / cos_den);
                 tan_angle2 = cmath::tan((std::f64::consts::PI - angle) / 2.0);
@@ -367,9 +381,17 @@ pub fn corner_list_to_polygon(
                 }
             }
 
-            let mut ang_pos = if last_seg.is_zero() { ang_delta } else { (ang_delta + last_seg) / 2 };
+            let mut ang_pos = if last_seg.is_zero() {
+                ang_delta
+            } else {
+                (ang_delta + last_seg) / 2
+            };
 
-            let arc_transition_distance = if tan_angle2 > 0.0 { radius as f64 / tan_angle2 } else { 0.0 };
+            let arc_transition_distance = if tan_angle2 > 0.0 {
+                radius as f64 / tan_angle2
+            } else {
+                0.0
+            };
             let mut arc_start = corner_position - resize_d(incoming, arc_transition_distance);
             let arc_center = arc_start + incoming.perpendicular().resize(radius);
             let mut arc_end: Vector2I;
@@ -479,8 +501,9 @@ pub fn transform_trapezoid_to_polygon(
         } else if a_delta_x != 0 {
             // horizontal trapezoid
             let slope = a_delta_x as f64 / size.x as f64;
-            let y_shrink: i32 =
-                ki_round((cmath::hypot(size.x as f64, a_delta_x as f64) * a_inflate as f64) / size.x as f64);
+            let y_shrink: i32 = ki_round(
+                (cmath::hypot(size.x as f64, a_delta_x as f64) * a_inflate as f64) / size.x as f64,
+            );
             size.y = 1.max(size.y + y_shrink);
             size.x = 1.max(size.x + a_inflate);
             a_delta_x = ki_round(size.x as f64 * slope);
@@ -495,8 +518,9 @@ pub fn transform_trapezoid_to_polygon(
         } else {
             // vertical trapezoid
             let slope = a_delta_y as f64 / size.y as f64;
-            let x_shrink: i32 =
-                ki_round((cmath::hypot(size.y as f64, a_delta_y as f64) * a_inflate as f64) / size.y as f64);
+            let x_shrink: i32 = ki_round(
+                (cmath::hypot(size.y as f64, a_delta_y as f64) * a_inflate as f64) / size.y as f64,
+            );
             size.x = 1.max(size.x + x_shrink);
             size.y = 1.max(size.y + a_inflate);
             a_delta_y = ki_round(size.y as f64 * slope);
@@ -519,7 +543,9 @@ pub fn transform_trapezoid_to_polygon(
         corners.push(RoundedCorner::new(size.x + a_delta_y, size.y - a_delta_x));
         corners.push(RoundedCorner::new(-size.x - a_delta_y, size.y + a_delta_x));
 
-        if a_delta_y.wrapping_abs() == size.x.wrapping_abs() || a_delta_x.wrapping_abs() == size.y.wrapping_abs() {
+        if a_delta_y.wrapping_abs() == size.x.wrapping_abs()
+            || a_delta_x.wrapping_abs() == size.y.wrapping_abs()
+        {
             corner_list_remove_duplicates(&mut corners);
         }
     }
@@ -570,14 +596,20 @@ pub fn transform_round_chamfered_rect_to_polygon(
     }
 
     let mut corners: Vec<RoundedCorner> = Vec::with_capacity(4 + chamfer_cnt);
-    corners.push(RoundedCorner::with_radius(-size.x, -size.y, a_corner_radius));
+    corners.push(RoundedCorner::with_radius(
+        -size.x,
+        -size.y,
+        a_corner_radius,
+    ));
     corners.push(RoundedCorner::with_radius(size.x, -size.y, a_corner_radius));
     corners.push(RoundedCorner::with_radius(size.x, size.y, a_corner_radius));
     corners.push(RoundedCorner::with_radius(-size.x, size.y, a_corner_radius));
 
     if a_chamfer_corners != 0 {
         let shorter_side = a_size.x.min(a_size.y);
-        let chamfer = 0.max(ki_round(a_chamfer_ratio * shorter_side as f64 + chamfer_deduct));
+        let chamfer = 0.max(ki_round(
+            a_chamfer_ratio * shorter_side as f64 + chamfer_deduct,
+        ));
         let cham_id: [i32; 4] = [
             RECT_CHAMFER_TOP_LEFT,
             RECT_CHAMFER_TOP_RIGHT,
@@ -689,10 +721,17 @@ pub fn convert_arc_to_polyline_3pt(
 
     let arc_angle_eda = EdaAngle::new(arc_angle, RADIANS_T);
     let mut n: i32 = 2;
-    let radius_for_seg: i32 = ki_round(crate::math::util::std_min(effective_radius.abs(), MAX_COORD));
+    let radius_for_seg: i32 = ki_round(crate::math::util::std_min(
+        effective_radius.abs(),
+        MAX_COORD,
+    ));
 
     if radius_for_seg as f64 >= a_accuracy {
-        n = get_arc_to_segment_count(radius_for_seg, cmath::f64_to_i32_x86(a_accuracy), arc_angle_eda) + 1;
+        n = get_arc_to_segment_count(
+            radius_for_seg,
+            cmath::f64_to_i32_x86(a_accuracy),
+            arc_angle_eda,
+        ) + 1;
     }
 
     let half_angle = arc_angle / 2.0;
@@ -729,7 +768,11 @@ pub fn convert_arc_to_polyline_3pt(
         }
 
         for i in 0..n {
-            if !ap(a_polyline, -half_angle + delta * (i as f64 + 0.5), error_radius) {
+            if !ap(
+                a_polyline,
+                -half_angle + delta * (i as f64 + 0.5),
+                error_radius,
+            ) {
                 return 0;
             }
         }
@@ -825,7 +868,15 @@ pub fn transform_arc_to_polygon(
 
     if distance_to_mid <= 1 {
         // Not an arc but essentially a straight line with a small error
-        transform_oval_to_polygon(a_buffer, a_start, a_end, a_width + distance_to_mid, a_error, a_error_loc, 0);
+        transform_oval_to_polygon(
+            a_buffer,
+            a_start,
+            a_end,
+            a_width + distance_to_mid,
+            a_error,
+            a_error_loc,
+            0,
+        );
         return;
     }
 
@@ -833,7 +884,8 @@ pub fn transform_arc_to_polygon(
     // ensure we always process a CCW arc by swapping endpoints if needed.
     let start_to_mid = a_mid - a_start;
     let start_to_end_vec = a_end - a_start;
-    let cross: i64 = start_to_mid.x as i64 * start_to_end_vec.y as i64 - start_to_mid.y as i64 * start_to_end_vec.x as i64;
+    let cross: i64 = start_to_mid.x as i64 * start_to_end_vec.y as i64
+        - start_to_mid.y as i64 * start_to_end_vec.x as i64;
 
     let mut p0 = a_start;
     let mut p1 = a_end;
@@ -854,8 +906,16 @@ pub fn transform_arc_to_polygon(
 
     let radial_offset = a_width / 2;
     let arc_inner_radius = params.radius() - radial_offset as f64;
-    let error_loc_inner = if a_error_loc == ERROR_INSIDE { ERROR_OUTSIDE } else { ERROR_INSIDE };
-    let error_loc_outer = if a_error_loc == ERROR_INSIDE { ERROR_INSIDE } else { ERROR_OUTSIDE };
+    let error_loc_inner = if a_error_loc == ERROR_INSIDE {
+        ERROR_OUTSIDE
+    } else {
+        ERROR_INSIDE
+    };
+    let error_loc_outer = if a_error_loc == ERROR_INSIDE {
+        ERROR_INSIDE
+    } else {
+        ERROR_OUTSIDE
+    };
 
     let mut polyshape = ShapePolySet::new();
     polyshape.new_outline();
@@ -864,17 +924,49 @@ pub fn transform_arc_to_polygon(
         let outline = polyshape.outline(0);
 
         // Starting end cap (semicircle at p0)
-        convert_arc_to_polyline(outline, p0, radial_offset, start_angle - ANGLE_180, ANGLE_180, a_error as f64, a_error_loc);
+        convert_arc_to_polyline(
+            outline,
+            p0,
+            radial_offset,
+            start_angle - ANGLE_180,
+            ANGLE_180,
+            a_error as f64,
+            a_error_loc,
+        );
 
         // Outside edge
-        convert_arc_to_polyline_3pt(outline, p0, a_mid, p1, a_error as f64, error_loc_outer, radial_offset as f64);
+        convert_arc_to_polyline_3pt(
+            outline,
+            p0,
+            a_mid,
+            p1,
+            a_error as f64,
+            error_loc_outer,
+            radial_offset as f64,
+        );
 
         // Ending end cap (semicircle at p1)
-        convert_arc_to_polyline(outline, p1, radial_offset, end_angle, ANGLE_180, a_error as f64, a_error_loc);
+        convert_arc_to_polyline(
+            outline,
+            p1,
+            radial_offset,
+            end_angle,
+            ANGLE_180,
+            a_error as f64,
+            a_error_loc,
+        );
 
         // Inside edge (reversed direction)
         if arc_inner_radius > 0.0 {
-            convert_arc_to_polyline_3pt(outline, p1, a_mid, p0, a_error as f64, error_loc_inner, -radial_offset as f64);
+            convert_arc_to_polyline_3pt(
+                outline,
+                p1,
+                a_mid,
+                p0,
+                a_error as f64,
+                error_loc_inner,
+                -radial_offset as f64,
+            );
         }
     }
 
@@ -896,7 +988,14 @@ pub fn transform_ring_to_polygon(
 
     if inner_radius <= 0 {
         //In this case, the ring is just a circle (no hole inside)
-        transform_circle_to_polygon(a_buffer, a_centre, a_radius + (a_width / 2), a_error, a_error_loc, 0);
+        transform_circle_to_polygon(
+            a_buffer,
+            a_centre,
+            a_radius + (a_width / 2),
+            a_error,
+            a_error_loc,
+            0,
+        );
         return;
     }
 
@@ -907,8 +1006,19 @@ pub fn transform_ring_to_polygon(
     // Build the hole:
     buffer.new_hole(-1);
     // The circle is the hole, so the approximation error location is the opposite of aErrorLoc
-    let inner_err_loc = if a_error_loc == ERROR_OUTSIDE { ERROR_INSIDE } else { ERROR_OUTSIDE };
-    transform_circle_to_polygon_chain(buffer.hole(0, 0), a_centre, inner_radius, a_error, inner_err_loc, 0);
+    let inner_err_loc = if a_error_loc == ERROR_OUTSIDE {
+        ERROR_INSIDE
+    } else {
+        ERROR_OUTSIDE
+    };
+    transform_circle_to_polygon_chain(
+        buffer.hole(0, 0),
+        a_centre,
+        inner_radius,
+        a_error,
+        inner_err_loc,
+        0,
+    );
 
     buffer.fracture(true);
     a_buffer.append_set(&buffer);

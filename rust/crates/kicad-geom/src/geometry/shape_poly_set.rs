@@ -53,6 +53,9 @@ use crate::geometry::approximation::ErrorLoc;
 use crate::geometry::corner_strategy::CornerStrategy;
 use crate::geometry::eda_angle::{EdaAngle, FULL_CIRCLE, RADIANS_T};
 use crate::geometry::geometry_utils::get_arc_to_segment_count;
+use crate::geometry::polygon_triangulation::{
+    PolygonTriangulation, TRIANGULATE_SIMPLIFICATION_LEVEL,
+};
 use crate::geometry::seg::{Ecoord, Seg};
 use crate::geometry::segment_index::SegmentIndex;
 use crate::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef, ShapeType};
@@ -60,7 +63,6 @@ use crate::geometry::shape_arc::ShapeArc;
 use crate::geometry::shape_line_chain::{
     ClipperPoint64, ClipperZValue, ShapeLineChain, StringStream,
 };
-use crate::geometry::polygon_triangulation::{PolygonTriangulation, TRIANGULATE_SIMPLIFICATION_LEVEL};
 use crate::geometry::shape_poly_set_fracture::{fracture_single_cache_friendly, split_at_bridges};
 use crate::geometry::shape_poly_tri_index::{TriangulationIndex, any_triangle_hit};
 use crate::hash_128::Hash128;
@@ -415,8 +417,8 @@ impl TriangulatedPolygon {
             let from = he_vertex[edge as usize];
             let to = he_vertex[next_in_triangle(edge) as usize];
             let (key_low, key_high) = key(from, to);
-            let mut slot = (key_low.wrapping_mul(0x9e3779b1) ^ key_high.wrapping_mul(0x85ebca6b))
-                & table_mask;
+            let mut slot =
+                (key_low.wrapping_mul(0x9e3779b1) ^ key_high.wrapping_mul(0x85ebca6b)) & table_mask;
             let mut handled = false;
 
             while slot_edge[slot as usize] != -1 {
@@ -492,7 +494,8 @@ impl TriangulatedPolygon {
 
             // Prefer the diagonal with fewer slivers, Delaunay breaks ties. Each flip lowers
             // (slivers, then -min-angle) lexicographically, so the loop terminates.
-            let legal = in_circle_delaunay_legal(apex_a_pt, shared_from_pt, shared_to_pt, apex_b_pt);
+            let legal =
+                in_circle_delaunay_legal(apex_a_pt, shared_from_pt, shared_to_pt, apex_b_pt);
 
             let cur_slivers = is_sliver_triangle(apex_a_pt, shared_from_pt, shared_to_pt) as i32
                 + is_sliver_triangle(apex_b_pt, shared_to_pt, shared_from_pt) as i32;
@@ -2687,7 +2690,10 @@ impl ShapePolySet {
         a_actual: Option<&mut i32>,
         a_location: Option<&mut Vector2I>,
     ) -> bool {
-        if matches!(a_shape.as_shape_ref(), ShapeRef::Segment(_) | ShapeRef::Circle(_)) {
+        if matches!(
+            a_shape.as_shape_ref(),
+            ShapeRef::Segment(_) | ShapeRef::Circle(_)
+        ) {
             return self.collide_shape(a_shape, a_clearance, a_actual, a_location);
         }
 
@@ -3444,7 +3450,8 @@ impl ShapePolySet {
             if poly.len() > 1 {
                 tris.push(TriangulatedPolygon::new(ii));
 
-                if PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_polygon(poly, None) {
+                if PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_polygon(poly, None)
+                {
                     ii += 1;
                     continue;
                 }
@@ -3491,7 +3498,8 @@ impl ShapePolySet {
 
             tris.push(TriangulatedPolygon::new(ii));
 
-            let mut ok = PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_chain(&poly[0], None);
+            let mut ok =
+                PolygonTriangulation::new(tris.last_mut().unwrap()).tesselate_chain(&poly[0], None);
 
             // Self-touching outlines produce overlapping triangles; detect via area coverage
             if ok {
@@ -3582,8 +3590,13 @@ impl ShapePolySet {
                 fallback_set.split_self_touching_outlines();
 
                 // else: "Failed to triangulate polygon"
-                if Self::triangulate(&mut fallback_set, -1, &mut tris, a_hint_data, a_has_submitter)
-                {
+                if Self::triangulate(
+                    &mut fallback_set,
+                    -1,
+                    &mut tris,
+                    a_hint_data,
+                    a_has_submitter,
+                ) {
                     valid = true;
                 }
             } else {
@@ -3639,7 +3652,8 @@ impl ShapePolySet {
                 let partition_leaves = partitioner.suggested_partition_leaf_count(outline);
 
                 if partition_leaves > 1 {
-                    let partitions = partitioner.partition_polygon_balanced(outline, partition_leaves);
+                    let partitions =
+                        partitioner.partition_polygon_balanced(outline, partition_leaves);
 
                     if partitions.len() > 1 {
                         poly_set.delete_polygon(0);
@@ -3653,7 +3667,8 @@ impl ShapePolySet {
                             let mut all_ok = true;
 
                             for (result, leaf) in results.iter_mut().zip(partitions.iter()) {
-                                let ok = PolygonTriangulation::new(result).tesselate_chain(leaf, None);
+                                let ok =
+                                    PolygonTriangulation::new(result).tesselate_chain(leaf, None);
                                 all_ok = all_ok && ok;
                             }
 
