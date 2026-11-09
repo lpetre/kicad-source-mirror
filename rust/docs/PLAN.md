@@ -80,3 +80,14 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
 - Known duplication to consolidate later: printf-style formatting lives in
   kicad-sexpr/src/formatter/cformat.rs; kicad-libeval carries local copies of eda_units /
   string_utils helpers.
+
+## Model policy (standing instruction from the user)
+
+- Port, analysis and report agents run on Opus to save the Fable quota.
+- **Every decision an Opus agent makes is reviewed by Fable before others build on it**: the
+  board-model design choice, crate/dependency recommendations, each package's listed deviations
+  and known gaps, public API shapes that downstream crates will depend on, and any expectation
+  an agent changed in a ported test. The orchestrator (Fable) reads every structured result;
+  anything non-trivial gets a dedicated Fable review agent that checks the decision against the
+  C++ and either confirms it or sends it back. Reviews target decisions, not line-by-line code.
+- A package moves to Fable outright only if Opus gets stuck on it.

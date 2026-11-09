@@ -42,16 +42,77 @@ impl Rng {
 /// Fragments biased towards the interesting parts of both languages, plus characters that
 /// are special somewhere (NUL, control characters, multi-byte and astral code points).
 const FRAGMENTS: [&str; 64] = [
-    "0", "1", "9", "42", "1.5", "1,5", ".", ",", "..", "1e9", "007", "A", "B", "L", "AB", "x",
-    "null", "Num", "Str", "Undef", "Parent", "Code", "one", "isFoo", "add", "cat", "lazy",
-    "lazyStr", "nopush", "push2", "self", "mm", "mil", "in", "deg", "um", "k", "M", "'", "''",
-    "'a'", "'*'", "\\", "\\'", "+", "-", "*", "/", "<", ">", "=", "==", "!=", "<=", ">=", "!",
-    "&&", "||", "(", ")", ";", " ", "\u{0}", "\u{1F600}\u{e9}\t${",
+    "0",
+    "1",
+    "9",
+    "42",
+    "1.5",
+    "1,5",
+    ".",
+    ",",
+    "..",
+    "1e9",
+    "007",
+    "A",
+    "B",
+    "L",
+    "AB",
+    "x",
+    "null",
+    "Num",
+    "Str",
+    "Undef",
+    "Parent",
+    "Code",
+    "one",
+    "isFoo",
+    "add",
+    "cat",
+    "lazy",
+    "lazyStr",
+    "nopush",
+    "push2",
+    "self",
+    "mm",
+    "mil",
+    "in",
+    "deg",
+    "um",
+    "k",
+    "M",
+    "'",
+    "''",
+    "'a'",
+    "'*'",
+    "\\",
+    "\\'",
+    "+",
+    "-",
+    "*",
+    "/",
+    "<",
+    ">",
+    "=",
+    "==",
+    "!=",
+    "<=",
+    ">=",
+    "!",
+    "&&",
+    "||",
+    "(",
+    ")",
+    ";",
+    " ",
+    "\u{0}",
+    "\u{1F600}\u{e9}\t${",
 ];
 
 fn random_text(rng: &mut Rng) -> String {
     let len = rng.below(14);
-    (0..len).map(|_| FRAGMENTS[rng.below(FRAGMENTS.len())]).collect()
+    (0..len)
+        .map(|_| FRAGMENTS[rng.below(FRAGMENTS.len())])
+        .collect()
 }
 
 #[test]
@@ -180,7 +241,11 @@ fn ucode_is_send_and_sync() {
     let mut ucode = Ucode::new(TestBinder::default());
     let mut preflight: Context<'_, TestBinder> = Context::new(TestEnv::default());
 
-    assert!(compiler.compile("A.Num + B.Num == 30 && A.isFoo('foo')", &mut ucode, &mut preflight));
+    assert!(compiler.compile(
+        "A.Num + B.Num == 30 && A.isFoo('foo')",
+        &mut ucode,
+        &mut preflight
+    ));
 
     let ucode = &ucode;
 

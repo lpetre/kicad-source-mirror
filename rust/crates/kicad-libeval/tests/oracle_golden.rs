@@ -342,9 +342,7 @@ fn generated_cases() -> Vec<String> {
         }
 
         if rng.below(8) != 0 {
-            for _ in 0..open {
-                tokens.push(")");
-            }
+            tokens.extend(std::iter::repeat_n(")", open));
         }
 
         cases.push(format!("{}\t{}", next_resolver(), tokens.join(" ")));
