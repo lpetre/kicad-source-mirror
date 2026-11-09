@@ -118,9 +118,44 @@ pub fn log10(x: f64) -> f64 {
     x.log10()
 }
 
+/// A plain C++ `(int)` / `static_cast<int>` of a `double`, as the reference binary executes it
+/// (x86-64 `cvttsd2si`): truncation towards zero, and `INT_MIN` for NaN and every value out of
+/// the `int` range (undefined behaviour in C++; Rust's `as` would saturate instead).  See
+/// `PORTING.md` section 9.
+#[inline]
+pub fn f64_to_i32_x86(x: f64) -> i32 {
+    if x > -2_147_483_649.0 && x < 2_147_483_648.0 {
+        x as i32
+    } else {
+        i32::MIN
+    }
+}
+
+/// Like [`f64_to_i32_x86`] for a 64-bit target type (`int64_t`, `long`): `i64::MIN` for NaN
+/// and out-of-range values.
+#[inline]
+pub fn f64_to_i64_x86(x: f64) -> i64 {
+    if x >= -9_223_372_036_854_775_808.0 && x < 9_223_372_036_854_775_808.0 {
+        x as i64
+    } else {
+        i64::MIN
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn x86_casts() {
+        assert_eq!(f64_to_i32_x86(-2_147_483_648.9), i32::MIN);
+        assert_eq!(f64_to_i32_x86(2_147_483_647.9), i32::MAX);
+        assert_eq!(f64_to_i32_x86(2_147_483_648.0), i32::MIN);
+        assert_eq!(f64_to_i32_x86(f64::NAN), i32::MIN);
+        assert_eq!(f64_to_i32_x86(-1.5), -1);
+        assert_eq!(f64_to_i64_x86(1e19), i64::MIN);
+        assert_eq!(f64_to_i64_x86(-3.7), -3);
+    }
 
     #[test]
     fn exact_values() {

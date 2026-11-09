@@ -80,7 +80,10 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
         bit-exact; Fable-reviewed: deviations C2-1..9 accepted).
   - [x] kicad-libeval (Opus finish; Lemon tables regenerated and identical, 39.5k oracle
         cases; Fable-reviewed: binder API accepted, to be proven by the kicad-drc binding).
-  - [ ] kicad-font F1 stroke font (running, Opus).
+  - [x] kicad-font F1 stroke font, layout, markup (Opus; glyph table byte-identical, 8500
+        oracle cases bit-exact; Fable-reviewed: API accepted). Follow-ups: apply the x86
+        out-of-range cast rule (agent used saturating casts before the rule existed);
+        @{...} text evaluation (text_eval) and outline fonts are not ported (tier 2/3).
 - [ ] Board model + parser + writer.
 - [ ] kicad-plot P1 base+metadata -> P2 Gerber -> P3 text+SVG (running, Opus); kicad-core C3
       json / pattern match / helpers (running, Opus).
