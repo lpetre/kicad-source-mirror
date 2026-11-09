@@ -25,8 +25,16 @@ line chain cases and 6,000 conversion cases, bit for bit).  It also introduced t
 conversions of out-of-range doubles (`cmath::f64_to_i32_x86` / `f64_to_i64_x86`, PORTING.md
 section 9) at the G1/G2 sites (D4, D12).
 
-Everything in this crate builds for `wasm32-unknown-unknown`, has no dependencies and no
-`unsafe`.
+**Work package G4a** (`SHAPE_POLY_SET` without the triangulation) vendored the Clipper2 port
+(`rust/vendor/clipper2-rs`, see below) and ported `shape_poly_set.h/.cpp`: the Clipper2 bridge
+(booleans, offsets, `PolyTree` import), fracturing (with the Y-stripe edge index), unfracturing,
+simplification, chamfer / fillet, the vertex index machinery and iterators, distances, the
+non-triangulated collisions, hashing, `Format` / `Parse`; verified by the `sps_oracle` (328,146
+cases, bit for bit).  The triangulation is package G4b (GAP-P1).
+
+Everything in this crate builds for `wasm32-unknown-unknown` and has no `unsafe`.  Its only
+dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependency, feature
+`usingz`; pure Rust, BSL-1.0; PORTING.md section 9).
 
 ## C++ to Rust map
 
@@ -80,12 +88,21 @@ Everything in this crate builds for `wasm32-unknown-unknown`, has no dependencie
 | `geometry/shape_simple.h` (+ `TransformToPolygon` from `shape.cpp`) | `src/geometry/shape_simple.rs` | ported |
 | `geometry/shape_null.h` | `src/geometry/shape_null.rs` | ported |
 | `geometry/shape_compound.h`, `src/geometry/shape_compound.cpp` | `src/geometry/shape_compound.rs` | ported; `Distance( const SEG& )` (`assert( false )` in C++) skipped |
-| `geometry/shape_line_chain.h/.cpp` (`SHAPE_LINE_CHAIN`) | `src/geometry/shape_line_chain.rs` (`ShapeLineChain`) | ported (G3): every member of the header and the file, overloads as in the module docs' table; `OffsetLine` partial (GAP-S1); see D-S1..D-S8 |
+| `geometry/shape_line_chain.h/.cpp` (`SHAPE_LINE_CHAIN`) | `src/geometry/shape_line_chain.rs` (`ShapeLineChain`) | ported (G3): every member of the header and the file, overloads as in the module docs' table; `OffsetLine` completed in G4a (`offset_line`); see D-S1..D-S8 |
 | - `CLIPPER_Z_VALUE`, `INTERSECTION`, `POINT_INSIDE_TRACKER`, `SHAPE_LINE_CHAIN::compareOriginDistance` | `ClipperZValue`, `Intersection`, `PointInsideTracker`, `CompareOriginDistance` | ported.  `Intersect( SEG )` sorts with the nested functor (rounded `EuclideanNorm()`), which C++ name lookup picks over the file-scope `compareOriginDistance` (squared norms); that file-scope struct is therefore dead code and not ported |
 | - `Clipper2Lib::Path64` / `Point64` (constructor, `convertToClipper2`) | `ShapeLineChain::from_clipper2( &[P: ClipperPoint64], .. )`, `convert_to_clipper2() -> Vec<(i64, i64, i64)>` | ported; trait `ClipperPoint64` (implemented for `(x, y, z)` triples) so that the module needs no clipper dependency |
 | - protected helpers (`convertArc`, `splitArc`, `amendArc*`, `fixIndicesRotation`, `mergeFirstLastPointIfNeeded`, `reversedArcIndex`, `convertToClipper2`) | same names, `pub` (the C++ `friend SHAPE_POLY_SET` becomes visibility) | ported |
 | - `std::stringstream` of `Parse()` | `StringStream` | the `>>` extractions `Parse` uses (D-S6) |
-| `geometry/shape_poly_set.h/.cpp` (`SHAPE_POLY_SET`) | `src/geometry/shape_poly_set.rs` | **skeleton** (G4): `POLYGON`, constructors (empty, `BOX2D`, outline, polygon), `NewOutline`, `NewHole`, `AddOutline`, `AddHole`, `AddPolygon`, `Append` (x/y, point, set), `OutlineCount`, `HoleCount`, `Outline`/`COutline`, `Hole`/`CHole`, `Polygon`/`CPolygon`, `TotalVertices`, `IsEmpty`, `RemoveAllContours`, `BBox`, `Move`/`Rotate` of the contours, `TRIANGULATED_POLYGON` / `TRI` data (`TriangulatedPolygon`, `Tri`); `Collide( SEG )` returns false (G4) |
+| `geometry/shape_poly_set.h/.cpp` (`SHAPE_POLY_SET`) | `src/geometry/shape_poly_set.rs` (`ShapePolySet`, `Polygon`, `VertexIndex`, `PolySetIterator`, `SegmentIterator`, `Tri`, `TriangulatedPolygon`) and `src/geometry/shape_poly_set_fracture.rs` (file-local fracture helpers) | ported (G4a) except the triangulation (GAP-P1): every member of the header (overload table in the module docs) and every function of the `.cpp` outside `cacheTriangulation` / `TRIANGULATED_POLYGON::Refine`; see D-P1..D-P9 |
+| - `ITERATOR_TEMPLATE` (`ITERATOR`, `CONST_ITERATOR`), `SEGMENT_ITERATOR_TEMPLATE` | `PolySetIterator`, `SegmentIterator`: cursors with the C++ methods (`is_valid` = `operator bool`, `advance` = `operator++`, `get` = `operator*`, `get_index`, `is_end_contour`, `is_last_polygon`, `is_adjacent`) that also implement `Iterator` with the same traversal and end condition (D-P3) | ported |
+| - `TRIANGULATED_POLYGON` / `TRI` | `TriangulatedPolygon` (`new`, `clear`, `get_triangle`, `add_triangle`, `add_vertex`, `triangle_count`, `source_outline_index`, `set_source_outline_index`, `vertex_count`, `move_`; `Triangles()` / `Vertices()` / `SetTriangles()` / `SetVertices()` are the public fields), `Tri` (incl. `Area()`) | partial: data and accessors; `Refine()` and building triangulations are G4b |
+| - file-local helpers of `shape_poly_set.cpp`: `splitAtBridges`, `FractureEdge`, `FRACTURE_EDGE_INDEX`, `fractureIntersectX`, `processHole`, `fractureSingleCacheFriendly` | `shape_poly_set_fracture.rs` | ported; `FractureEdgeSlow` / `processEdge` / `fractureSingleSlow` (only selected by `ADVANCED_CFG::m_EnableCacheFriendlyFracture = false`) skipped, D-P7 |
+| - `SHAPE_LINE_CHAIN::OffsetLine()` | `ShapeLineChain::offset_line` (in `shape_poly_set.rs`) | ported (closes GAP-S1) |
+| `geometry/corner_operations.cpp`: `SHAPE_POLY_SET::chamferFilletPolygon` | `shape_poly_set.rs` | ported; the free functions `ComputeChamferPoints`, `ComputeDogbone` (`corner_operations.h`) are not part of this package (not started) |
+| `geometry/corner_strategy.h` (`CORNER_STRATEGY`) | `src/geometry/corner_strategy.rs` (`CornerStrategy`) | ported |
+| `geometry/segment_index.h` (`SEGMENT_INDEX`) | `src/geometry/segment_index.rs` (`SegmentIndex`) | ported (over the ported `PACKED_RTREE`, same visit order) |
+| `geometry/fracture_edge_index_utils.h` (`KIGEOM::FRACTURE_INDEX`) | `src/geometry/fracture_edge_index_utils.rs` | ported (`size_t` = `u64`) |
+| `thirdparty/clipper2` (Clipper2, built with `USINGZ`) | `rust/vendor/clipper2-rs` (crate `clipper2_rs` 0.3.0 + `clipper2-rs-0.3.0-kicad-fidelity.patch`, see its `README-KICAD.md`) | vendored, re-validated (see "Clipper2 re-validation") |
 | `src/geometry/shape_collisions.cpp` | `src/geometry/shape_collisions.rs` | **partial** (G5): `collideShapes` (compounds), the matrix `collideSingleShapes`, and every pair listed in GAP-4 as served |
 | `geometry/circle.h`, `src/geometry/circle.cpp` | `src/geometry/circle.rs` (`Circle`) | ported; the non-const `Contains()` overload is `contains_inside()` |
 | `geometry/arc_chord_params.h/.cpp` | `src/geometry/arc_chord_params.rs` (`ArcChordParams`) | ported |
@@ -209,6 +226,14 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/fixtures_geometry.h` | `test_utils::CommonTestData` (`unique_points`, `holey_points`, `holey_segments`) | the polygon sets are built by the shapes package |
 | `qa/tests/libs/kimath/geometry/test_packed_rtree.cpp` | `tests/test_packed_rtree.rs` | 11 of 11 |
 | `qa/tests/libs/kimath/geometry/test_dynamic_rtree.cpp` | `tests/test_dynamic_rtree.rs` | suite `DynamicRTree`: 22 of 22 (+1 extra: `Overlapping` order equals `Search` order); suite `CowRTree`: 0 of 6 (GAP-4) |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set.cpp` | `tests/test_shape_poly_set.rs` | 3 of 3 |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_arcs.cpp` | `tests/test_shape_poly_set_arcs.rs` | 3 of 3 (the C++ cases commented out stay commented out) |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_iterator.cpp` | `tests/test_shape_poly_set_iterator.rs` | 6 of 6 |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_distance.cpp` | `tests/test_shape_poly_set_distance.rs` | 1 of 1 (all 7 data cases) |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_split_outlines.cpp` | `tests/test_shape_poly_set_split_outlines.rs` | 2 of 2 |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_collision.cpp` | `tests/test_shape_poly_set_collision.rs` | 8 of 8 (none needs the triangulation, so nothing is `#[ignore]`d) |
+| `qa/tests/libs/kimath/geometry/test_shape_poly_set_triangle_index.cpp` | - | not ported: triangulation (G4b) |
+| `fixtures_geometry.h` (poly sets), `geom_test_utils.h` (`IsPolySetValid`, `FilletPolySet`), `qa_utils/geometry/poly_set_construction` / `line_chain_construction` (`BuildPolyset`, `BuildHollowSquare`, `BuildRectChain`, `BuildSquareChain`) | `tests/common_poly/mod.rs` | added in G4a (closes GAP-3 except `ChainsAreCyclicallyEqual`) |
 | (Clipper2 fidelity patch, `gnu_sort.rs`) | `tests/test_stdsort.rs` | `std_sort` and the vendored Clipper2's private libstdc++ sort copy give identical permutations on 4000 tie-heavy arrays |
 
 Notes on the ported tests:
@@ -232,6 +257,44 @@ In-module unit tests (`#[cfg(test)]`, 55 tests) cover additional behaviour of ev
 
 Two oracles: `geom_oracle` (package G1, compiles the kimath sources it needs with stub wx
 headers) and `shapes_oracle` (package G2, links the static libraries of the reference build).
+
+### `sps_oracle` (G4a)
+
+`tests/oracle/sps_oracle.cpp` links `libkimath.a` of the reference build (which contains the
+bundled Clipper2 built with `USINGZ`) and prints 9 sections, 328,146 cases (replay:
+`tests/oracle_sps_diff.rs` with `tests/oracle/sps_sections.rs`, golden
+`tests/golden/sps_oracle.txt`, 9 lines).  Every record holds the complete resulting polygon set
+(points, arc shape indices, arcs) and the other results.  All sections match bit for bit:
+
+| Section | Cases | Content |
+|---|---|---|
+| `sps_boolean` | 20000 | `BooleanAdd/Subtract/Intersection/Xor`, one- and two-argument overloads, `Simplify`, on random rings (degenerate grids, self-intersecting), grid-aligned pad rectangles (touching / overlapping, both orientations), zone rectangles with holes, combs, empty / one / two point sets; result, `Area`, `ArcCount` |
+| `libm:sps_boolean_kicad` | 20000 | the same plus round pads (8..64 segments), chained track ovals and outlines with arcs (Z callback / arc buffer path) |
+| `libm:sps_inflate` | 20000 | `Inflate` (with / without `aSimplify`), `Deflate`, `InflateWithLinkedHoles`, `OffsetLineChain`, `SHAPE_LINE_CHAIN::OffsetLine`; all five `CORNER_STRATEGY`s, max errors 500..25000, amounts from +-1 nm to +-2 mm |
+| `libm:sps_fracture` | 5000 | `Fracture( true / false )`, `Unfracture`, fracture round trips, booleans and `Simplify` on fractured sets; zones with up to 40 holes and outlines of up to 2500 points (89 cases use the fracture edge index, 58 the bridge removal of `booleanOp`) |
+| `sps_simplify` | 20000 | `Simplify`, `SimplifyOutlines`, `NormalizeAreaOutlines`, `RebuildHolesFromContours`, `BuildPolysetFromOrientedPaths` (NonZero / EvenOdd), `RemoveNullSegments`, `splitSelfTouchingOutlines`, exterior waists (`splitCollinearOutlines`) |
+| `libm:sps_chamfer_fillet` | 13146 | `Chamfer`, `Fillet`, `ChamferPolygon`, `FilletPolygon` (distances 0..2 mm), and the set afterwards (null segments removed) |
+| `libm:sps_query` | 10000 | `Area`, counts, `HasHoles`, `HasTouchingHoles`, self intersection, `BBox`, `BBoxFromCaches`, `GetHash`, `Format`, every global / relative vertex index (`GetRelativeIndices`, `GetGlobalIndex`, `CVertex`, `IsVertexInHole`, `GetNeighbourIndexes`), all iterators; per set 12 queries: `Contains` (with and without bbox caches), `PointInside`, `PointOnEdge`, `SquaredDistance` (+ nearest), `Collide` (point, segment, `SHAPE_SEGMENT`, `SHAPE_CIRCLE`; all out-parameter combinations), `CollideVertex` / `CollideEdge` (with / without closest index), `SquaredDistanceToSeg`, both `SquaredDistanceToPolygon`s; `GenerateHatchLines` |
+| `libm:sps_edit` | 20000 | `InsertVertex`, `RemoveVertex`, `SetVertex`, `RemoveOutline`, `RemoveContour`, `DeletePolygon`, `Append` (set, arc with / without max error, point), `Subset`, `UnitSet`, both `Mirror`s, `Move` (hash caching: stale hash after an edit, recomputed in copies, `CloneDropTriangulation`), `Scale`, `Rotate`, `NewHole`, `Parse` of round-trip and corrupted texts; then the set and its hash |
+
+- Regenerate: `tests/oracle/build_sps_oracle.sh`; find a mismatch with `--dump cpp.txt` and
+  `KICAD_GEOM_ORACLE_DUMP=rust.txt`.
+- Inputs avoid the C++ undefined behaviour (filtered identically on both sides): open-path
+  offsets without two distinct points (Clipper2 crashes in `DoBevel`), `NormalizeAreaOutlines` /
+  `RemoveNullSegments` of empty sets or sets with empty contours, chamfer / fillet of contours
+  with fewer than 3 distinct points (division by zero), hatch lines with a line length of 0
+  (`SEG::IntersectsLine` then sees an infinite slope, see GAP-P4).
+
+### Clipper2 re-validation (G4a)
+
+The vendored, patched crate was re-run against KiCad's bundled C++ Clipper2 (`thirdparty/clipper2`,
+g++ 13, `-DUSINGZ`) with the research harness of `docs/research/artifacts/polygon-clipping/`
+(driver `cpp/driver.cpp`, generator `gen_cases.py`, Rust driver `body_clipper2_rs.rs` built
+against `rust/vendor/clipper2-rs`; scratch project in `rust/target/revalidate-clipper`): the
+complete output files are byte-identical for seed 20261109 (9,867 cases) and seed 7 (9,873
+cases), i.e. every category including all `kicad_*` and random ones, and for the 12,780-line
+quirk set (zero-area offset groups).  The second quirk set contains the empty-path offset group
+on which the C++ driver segfaults (known upstream undefined behaviour) and was not compared.
 
 ### `slc_oracle` (G3)
 
@@ -487,7 +550,7 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **D14 `const` methods writing `mutable` members** take `&mut self`
   (`ShapeLineChain::generate_bbox_cache`), so that all shapes are `Send + Sync`.
 - **D15 Poly-set triangles** (`Tri`) store copies of their three vertices instead of a pointer to
-  the parent triangulation (skeleton, G4 decides).  `TRI` has no `Clone()` in C++ (it asserts);
+  the parent triangulation (kept in G4a; G4b may change it).  `TRI` has no `Clone()` in C++ (it asserts);
   `Tri::clone_shape` returns a copy.
 - **D16 `wxASSERT` / `wxCHECK` on input**: the tangent-arc constructor's "segments do not
   intersect" assertion and the "MTV not implemented" assertions of the collision matrix are not
@@ -541,6 +604,45 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **D-S8 `Length()`** adds the `double` arc lengths to a `long long` as C++ does (conversion to
   `double` and back, with `f64_to_i64_x86`).
 
+- **D-P1 C++ exceptions.** `CVertex( int )`, `RemoveVertex( int )`, `SetVertex( int, ... )` and
+  `IterateFromVertexWithHoles()` throw `std::out_of_range` for a vertex that does not exist;
+  the port panics with the same message (programmer error, not input).  `zValues.at()` in the
+  boolean Z callback cannot throw for indices produced by the port itself; an index outside the
+  buffer is treated as "no arc".
+- **D-P2 Undefined behaviour of the C++ on degenerate sets.** `RemoveNullSegments()` of an
+  empty set returns 0 (C++ dereferences the first vertex); `NormalizeAreaOutlines()` of an empty
+  set returns 0 (C++ `Polygon( 0 )`); `fractureSingle()` leaves a polygon with an empty contour
+  unchanged (C++ reads before the point array); `GetNeighbourIndexes()` reports -1 where the C++
+  leaves an output uninitialised (contours with fewer than 3 points).  Empty contours reached by
+  an iterator still panic in `c_point` (C++ reads out of bounds).  Clipper2 errors (C++: `bool`
+  result ignored) give an empty result.
+- **D-P3 Iterators.** `ITERATOR` and `CONST_ITERATOR` (and the segment pair) are one Rust type
+  each, borrowing the set immutably (the C++ `ITERATOR` only gives read access too).  The
+  `operator bool()` quirk is kept: a vertex iterator whose last polygon is not the last polygon
+  of the set ends as soon as it reaches its last polygon.
+- **D-P4 Copies.** `Clone` follows the copy constructor: the triangulation and hash are copied
+  only while the triangulation is up to date, otherwise the copy's hash is invalid (so a stale
+  cached hash is recomputed in copies, verified by `libm:sps_edit`).  `RebuildHolesFromContours`
+  reproduces the move assignment (the failed-hash state is kept).
+- **D-P5 `const` methods writing `mutable` state** take `&mut self`: `BuildBBoxCaches()`;
+  `CacheTriangulation()` (G4b).  `Area()` (non-`const` in C++) takes `&self`.
+- **D-P6 Release behaviour of assertions.** `wxFAIL_MSG` for booleans on curved polygons,
+  `wxASSERT`s of `RebuildHolesFromContours` / `SquaredDistance( aOutlineOnly )` and
+  `assert( aPoly.size() == 1 )` of `unfractureSingle` (compiled out with `NDEBUG`: a polygon
+  whose fracture failed keeps its holes) are not reproduced; `wxLogWarning`s are dropped.
+- **D-P7 Configuration.** The `ADVANCED_CFG` defaults are built in: cache-friendly fracture and
+  the fracture edge index enabled (the slow fracture variant is not ported).  The edge index is
+  output-neutral by construction and is used under the same conditions as in C++.
+- **D-P8 No-ops of the C++ left out.** `Clipper2Lib::SimplifyPaths()` in `inflate2` /
+  `inflateLine2` (its result is discarded), the `newIntersectPoints` map of the Z callback
+  (never read), the thread-local arc tolerance table (a cache of the same value), mutexes and
+  atomics (the port is sequential).
+- **D-P9 Overflow.** Arithmetic follows D3 (plain operators); `std::abs( int )` of the offset
+  amount and the negation in `Deflate` wrap like x86 (`INT_MIN`).  Double to `int` conversions
+  that the C++ does implicitly (`*aActual = sqrt( dist )`, the fillet radius passed to
+  `GetArcToSegmentCount`, `SHAPE_POLY_SET( BOX2D )`, `CollideVertex`'s squared norm) use
+  `cmath::f64_to_i32_x86` / `f64_to_i64_x86`.
+
 ## Known gaps
 
 - **GAP-1 libm on targets without glibc (notably wasm32).** Results that pass through `sin`,
@@ -584,14 +686,26 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   unchanged; consequently `ShapeRect::outline()` of a rounded rectangle is empty, and the
   default `Shape::squared_distance` / `point_inside` of those shapes see no outline (they return
   `ECOORD_MAX` / false).
-- **GAP-6 Skeleton.** Everything of `SHAPE_POLY_SET` not listed in the table above is G4
-  (poly-set collisions, triangulation, hashing, `Parse`).  (`SHAPE_LINE_CHAIN` is complete
-  since G3, apart from GAP-S1.)
-- **GAP-S1 `SHAPE_LINE_CHAIN::OffsetLine`** needs `SHAPE_POLY_SET::OffsetLineChain` (G4).  The
-  rest of the function (splitting the offset outline into the left and right lines) is
-  `ShapeLineChain::offset_line_from_poly( &poly )`; G4 adds `offset_line( amount,
-  corner_strategy, max_error, simplify )` as `offset_line_chain` followed by it.  Not covered by
-  the oracle yet.
+- **GAP-6** (closed in G4a) the `SHAPE_POLY_SET` skeleton; what is left is GAP-P1.
+- **GAP-S1** (closed in G4a) `SHAPE_LINE_CHAIN::OffsetLine` is `ShapeLineChain::offset_line`
+  (verified by `libm:sps_inflate`).
+- **GAP-P1 Triangulation (package G4b).** Not ported: `TRIANGULATED_POLYGON::Refine()`,
+  `cacheTriangulation()` / `CacheTriangulation()` (the Rust `cache_triangulation` is a hook that
+  only drops a triangulation; none can be built yet, so `Mirror` / `Rotate` / `Scale` never
+  reach it), `TRIANGULATION_INDEX` / `m_triIndex` / `TriangulationIndex()`, `TASK_SUBMITTER`, the
+  triangle-based branch of `Collide( const SHAPE* )` (`AnyTriangleHit`; `collide_shape` returns
+  false for shapes other than segments and circles), `IsTriangulationUpToDate()` is ported but
+  always false until then.  `qa/.../test_shape_poly_set_triangle_index.cpp` belongs to G4b.
+- **GAP-P2 Collision matrix.** `shape_collisions::collide_shapes` (G5) still routes poly-set
+  pairs to `unsupported_g5`; G5 should call `ShapePolySet::collide_shape` like the C++
+  `collideSingleShapes`.
+- **GAP-P3** `SHAPE_LINE_CHAIN` collision corpus tests (`test_shape_line_chain_collision.cpp`)
+  that need `SHAPE_POLY_SET::Parse` and `SEGMENT_INDEX` are now unblocked but not ported (G3/G5
+  test files).
+- **GAP-P4 Found in G1 code (not fixed, not owned):** `Seg::intersects_line` converts
+  `aSlope * 1000` with `as Ecoord` (saturating) where the C++ `static_cast<ecoord>` of an
+  infinite / NaN / huge slope yields `INT64_MIN` on x86 (PORTING.md section 9); reachable via
+  `GenerateHatchLines` with a line length of 0.
 - **GAP-4 `COW_RTREE`** (`dynamic_rtree_cow.h`, 834 lines) is not ported: its only user is
   `SHAPE_INDEX` in the interactive router, which is out of scope.  Its 6 tests (suite
   `CowRTree` of `test_dynamic_rtree.cpp`) are not ported either.

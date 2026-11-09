@@ -8,6 +8,10 @@ behaviour but do not change these definitions without the orchestrator. Revision
 review): `BoardItemBase::id`, cache cells (`KeyedCache` / `CacheCell` only), `NetinfoItem::base`,
 `RcItem::violating_rule`, the PDF members of `PcbPlotParams`, `Board::design_settings` behind
 accessors, foundation types resolved, deferred kernel parts removed, API index (section 18).
+Revision 2.1 (M0a gate review): `PcbTextbox::lib_text_angle` is `pub(crate)` like every `lib_*`
+field, `ComponentClassCache` defaults and `ComponentClassAssignmentRule` are spelled out, the
+foundation list reflects what the foundation crates provide, section 19 matches the tree, and
+the generated-table data types belong to package M0c (with `PcbTable`).
 
 Conventions:
 
@@ -34,10 +38,13 @@ Conventions:
   `Color4D`, `Hash128`, `CaseInsensitiveMap<V>`, `TitleBlock`, `PageInfo`, the plot enums
   (`PlotFormat`, `DrillMarks`, `PlotTextMode`, `DxfOutlineMode`, `DxfUnits`) and
   `json::Value` (written `JsonValue` below); `kicad-sexpr`: `Sexpr` (verbatim pass-through);
-  `kicad-font`: `FontRef`, `Glyph`, `Metrics`. For the ones that have not landed (`TransformTrs`,
-  `Ellipse`, `Vector3D`, `ShapeNull`, `Hash128`, `UnitsProvider`, `CaseInsensitiveMap`, plot
-  enums, JSON) M0 keeps local stand-ins in **one** module `foundation_stub.rs`, each marked
-  `// REMOVE when <crate> provides <Type>`; nothing else in kicad-pcb defines a foundation type.
+  `kicad-font`: `FontRef`, `Glyph`, `Metrics`. State at the M0a review: everything exists in
+  its crate (`UnitsProvider` is a struct, passed as `&UnitsProvider<'_>`; the map is
+  `kicad_core::case_insensitive_map::CaseInsensitiveMap`; `RESOLUTION_CONTEXT` is
+  `kicad_core::text_vars::ResolutionContext`) except `FontRef` and `ShapeEllipse`, whose
+  stand-ins are in **one** module `foundation_stub.rs`, each marked `// REMOVE when <crate>
+  provides <Type>`; nothing else in kicad-pcb defines a foundation type and packages do not
+  add stand-ins.
 
 ## 0 Kernel (`ids.rs`, `arena.rs`, `cache.rs`, `item.rs`, `item_ref.rs`)
 
@@ -945,7 +952,7 @@ pub struct PcbTextbox {
     pub margin_top: i32,                          // m_marginTop
     pub margin_right: i32,                        // m_marginRight
     pub margin_bottom: i32,                       // m_marginBottom
-    pub lib_text_angle: EdaOrientation,           // m_libTextAngle
+    pub(crate) lib_text_angle: EdaOrientation,    // m_libTextAngle
 }
 
 /// PCB_TABLECELL : PCB_TEXTBOX. `parent == ParentRef::Item(table)`.
@@ -1652,11 +1659,17 @@ pub struct ComponentClassManager {
     pub assignment_rules: Vec<ComponentClassAssignmentRule>,
     pub ticker: i64,                                                  // m_ticker
 }
-#[derive(Default)]
-pub struct ComponentClassCache {                                      // COMPONENT_CLASS_CACHE_PROXY (mutable part)
-    pub last_ticker_value: i64,
-    pub dynamic_component_class: Option<Arc<ComponentClass>>,
-    pub final_component_class: Option<Arc<ComponentClass>>,
+/// COMPONENT_CLASS_MANAGER::m_assignmentRules entry (COMPONENT_CLASS_ASSIGNMENT_RULE): the
+/// class name and the condition text as written; compiled by kicad-drc.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ComponentClassAssignmentRule { pub component_class: String, pub condition: String }
+/// COMPONENT_CLASS_CACHE_PROXY (mutable part). Manual `Default`: `last_ticker_value = -1`
+/// (the C++ member initialiser: cache invalid), no classes.
+#[derive(Clone, Debug)]
+pub struct ComponentClassCache {
+    pub last_ticker_value: i64,                               // m_lastTickerValue
+    pub dynamic_component_class: Option<Arc<ComponentClass>>, // m_dynamicComponentClass
+    pub final_component_class: Option<Arc<ComponentClass>>,   // m_finalComponentClass
 }
 ```
 
@@ -1977,12 +1990,14 @@ foundation_stub.rs         temporary stand-ins for foundation types (to be empti
 test_support.rs            fixture builders for frame tests (board-model.md 16)
 item.rs                    BoardItemBase, ConnectedItemBase, ParentRef, ItemFlags, small enums
 traits.rs                  BoardItem, BoardConnectedItem, BoardItemMut, EdaTextItem, EdaShapeItem, Invalidate
+                           (virtual interfaces only, frozen; EdaTextExt is in eda_text.rs, EdaShapeExt in eda_shape/mod.rs)
 item_ref.rs                ItemRef, AnyItem, AnyItemMut, OwnedItem, FootprintTree, TableTree
 ctx.rs                     BoardCtx, MutEnv, ParentFrame, LayerEnv, RuleResolver, ConnectivityQuery
 drc_api.rs                 DrcConstraintT, DrcConstraint, DrcRuleInfo, DRCE_* code table
 board/{mod,containers,index,journal,nets,layers,queries,outline,text_vars,markers,compare}.rs
 board_item.rs  board_connected_item.rs  eda_item.rs
-netinfo.rs  netclass.rs  net_settings.rs  eda_pattern_match.rs
+netinfo.rs  netclass.rs  net_settings.rs
+                           (the pattern matcher is kicad_core::eda_pattern_match, not a module here)
 board_design_settings.rs  zone_settings.rs  teardrop_parameters.rs  board_stackup.rs
 pcb_plot_params.rs  embedded_files.rs  component_class.rs
                            (TitleBlock, PageInfo: the existing kicad_core types, not redefined here)
@@ -1991,7 +2006,7 @@ footprint/{mod,transform,geometry,compare,shapes}.rs  footprint_courtyard_index.
 zone/{mod,shapes}.rs  zone_utils.rs
 eda_shape/{mod,geometry,shapes}.rs  line_ending.rs  stroke_params.rs  pcb_shape/{mod,lib_frame,shapes}.rs
 eda_text.rs  pcb_text.rs  pcb_field.rs  pcb_textbox.rs  pcb_tablecell.rs  pcb_table.rs
-pcb_generated_table.rs  pcb_dimension.rs  pcb_group.rs  pcb_generator.rs  pcb_target.rs
+pcb_generated_table.rs (types: M0c)  pcb_dimension.rs  pcb_group.rs  pcb_generator.rs  pcb_target.rs
 pcb_point.rs  pcb_marker.rs  pcb_barcode.rs  pcb_reference_image.rs  pcb_constraint.rs
 pcb_3d_body.rs  pcb_grid_item.rs  pcb_drill_map.rs  convert_shape_list_to_polygon.rs
 io/kicad_sexpr/...         parser and writer (their own work packages, see pcb-io.md)

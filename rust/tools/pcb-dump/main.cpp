@@ -280,6 +280,7 @@ int main( int argc, char** argv )
     }
 
     wxSetAssertHandler( &KI_TEST::wxAssertThrower );
+    InstallCrashGuard();
     KIID::SeedGenerator( 1 );   // generated UUIDs are reproducible from run to run
     g_out.m_hash = opts.hash;
     int failures = 0;

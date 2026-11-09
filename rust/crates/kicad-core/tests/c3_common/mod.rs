@@ -27,7 +27,10 @@ pub struct Lcg(pub u64);
 
 impl Lcg {
     pub fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        self.0 = self
+            .0
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         self.0 >> 33
     }
 
@@ -111,12 +114,18 @@ pub fn check_golden(golden_path: &str, o: &Out, full_name: &str) {
     for line in golden.lines() {
         if let Some(rest) = line.strip_prefix("E ") {
             let (section, text) = rest.split_once(' ').unwrap_or((rest, ""));
-            expected_lines.entry(section.to_string()).or_default().push(text.to_string());
+            expected_lines
+                .entry(section.to_string())
+                .or_default()
+                .push(text.to_string());
         } else if let Some(rest) = line.strip_prefix("S ") {
             let parts: Vec<&str> = rest.split(' ').collect();
             expected_summary.insert(
                 parts[0].to_string(),
-                (parts[1].parse().unwrap(), u64::from_str_radix(parts[2], 16).unwrap()),
+                (
+                    parts[1].parse().unwrap(),
+                    u64::from_str_radix(parts[2], 16).unwrap(),
+                ),
             );
         }
     }
@@ -124,7 +133,11 @@ pub fn check_golden(golden_path: &str, o: &Out, full_name: &str) {
     let mut failures = Vec::new();
 
     if o.sections.len() != expected_summary.len() {
-        failures.push(format!("section count {} (C++ {})", o.sections.len(), expected_summary.len()));
+        failures.push(format!(
+            "section count {} (C++ {})",
+            o.sections.len(),
+            expected_summary.len()
+        ));
     }
 
     for (name, lines) in &o.sections {
@@ -135,12 +148,18 @@ pub fn check_golden(golden_path: &str, o: &Out, full_name: &str) {
 
         for (i, exp) in expected_lines.get(name).into_iter().flatten().enumerate() {
             if lines.get(i) != Some(exp) {
-                failures.push(format!("{name} line {i}:\n  C++ : {exp}\n  Rust: {:?}", lines.get(i)));
+                failures.push(format!(
+                    "{name} line {i}:\n  C++ : {exp}\n  Rust: {:?}",
+                    lines.get(i)
+                ));
             }
         }
 
         if lines.len() != count || fnv_lines(lines) != hash {
-            failures.push(format!("{name}: {} lines (C++ {count}), hash mismatch", lines.len()));
+            failures.push(format!(
+                "{name}: {} lines (C++ {count}), hash mismatch",
+                lines.len()
+            ));
         }
     }
 
@@ -171,7 +190,11 @@ pub fn json_files() -> Vec<String> {
     for dir in [kicad_qa::qa_data_dir(), kicad_qa::demos_dir()] {
         for ext in ["kicad_pro", "kicad_prl", "json", "gbrjob"] {
             for p in kicad_qa::files_with_extension(&dir, ext) {
-                let rel = p.strip_prefix(&root).unwrap().to_string_lossy().replace('\\', "/");
+                let rel = p
+                    .strip_prefix(&root)
+                    .unwrap()
+                    .to_string_lossy()
+                    .replace('\\', "/");
                 out.push(rel);
             }
         }

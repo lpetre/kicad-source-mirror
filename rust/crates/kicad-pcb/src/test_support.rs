@@ -20,17 +20,26 @@
 //! `pub(crate)` frame fields and order lists directly, so that packages of waves 1-3 can test
 //! frame-dependent code before `create_footprint` (M1) and the footprint cascades (M19) exist.
 //!
-//! The children are the placeholder `Default` values until the type packages land; packages
-//! that need meaningful child data set it on the fixture (`board.<arena>.get_mut(id)`) or
-//! extend these builders with their own kind (each kind has its own builder function below,
-//! so packages do not collide).
+//! **This file is frozen (M0a review): no package edits it.** The children are `T::default()`
+//! values. A test that needs meaningful child data, in its own module, either
+//!
+//! * edits the fixture child field by field through the `pub(crate)` arena
+//!   (`fx.board.pads.get_mut(fx.child(ItemKind::Pad).typed().unwrap())`), or
+//! * replaces its value with `fx.set_child(id, my_pad)` (identity and parent are kept), or
+//! * adds its own child with `fx.add_child(value, |fp| &mut fp.pads)` /
+//!   `fx.add_cell(table, cell)`.
+//!
+//! Run `fx.board.check_invariants()` after building.
+
+use std::collections::VecDeque;
 
 use kicad_core::{Kiid, PcbLayerId};
 use kicad_geom::geometry::transform_trs::TransformTrs;
 use kicad_geom::{EdaAngle, Vector2I};
 
-use crate::board::Board;
-use crate::ids::{FootprintId, ItemId, TableId};
+use crate::board::{ArenaOf, Board};
+use crate::footprint::Footprint;
+use crate::ids::{ArenaItem, FootprintId, Id, ItemId, ItemKind, TableId, TablecellId};
 use crate::item::ParentRef;
 use crate::traits::BoardItem;
 
@@ -38,7 +47,7 @@ use crate::traits::BoardItem;
 pub(crate) struct FrameFixture {
     pub board: Board,
     pub footprint: FootprintId,
-    /// Every child created by the builder, in creation order.
+    /// Every child created by the builders, in creation order (the table's cell included).
     pub children: Vec<ItemId>,
 }
 
@@ -59,10 +68,12 @@ pub(crate) fn rotated_flipped_scaled() -> FrameFixture {
 }
 
 /// A board with one footprint placed with `transform` / `flipped` (side B_Cu when flipped)
-/// and one child of each footprint child kind.
+/// and one default-constructed child of each footprint child kind: field, pad, shape, text,
+/// textbox, table (with one cell), dimension, barcode, image, zone, group, point, constraint,
+/// 3D body.
 pub(crate) fn board_with_footprint(transform: TransformTrs, flipped: bool) -> FrameFixture {
     let mut board = Board::new();
-    let mut footprint = crate::footprint::Footprint::default();
+    let mut footprint = Footprint::default();
     footprint.base.uuid = Kiid::new(&mut board.kiid_generator);
     footprint.base.layer = if flipped {
         PcbLayerId::BCu
@@ -77,105 +88,123 @@ pub(crate) fn board_with_footprint(transform: TransformTrs, flipped: bool) -> Fr
     let uuid = board[fp].base.uuid;
     board.bind_uuid(uuid, fp.into());
 
-    let mut fixture = FrameFixture {
+    let mut fx = FrameFixture {
         board,
         footprint: fp,
         children: Vec::new(),
     };
-    add_field(&mut fixture);
-    add_pad(&mut fixture);
-    add_shape(&mut fixture);
-    add_text(&mut fixture);
-    add_textbox(&mut fixture);
-    add_table(&mut fixture);
-    add_dimension(&mut fixture);
-    add_barcode(&mut fixture);
-    add_image(&mut fixture);
-    add_zone(&mut fixture);
-    add_group(&mut fixture);
-    add_point(&mut fixture);
-    add_constraint(&mut fixture);
-    add_body(&mut fixture);
-    fixture
+    fx.add_child(crate::pcb_field::PcbField::default(), |fp| &mut fp.fields);
+    fx.add_child(crate::pad::Pad::default(), |fp| &mut fp.pads);
+    fx.add_child(crate::pcb_shape::PcbShape::default(), |fp| &mut fp.drawings);
+    fx.add_child(crate::pcb_text::PcbText::default(), |fp| &mut fp.drawings);
+    fx.add_child(crate::pcb_textbox::PcbTextbox::default(), |fp| {
+        &mut fp.drawings
+    });
+    let table = fx.add_child(crate::pcb_table::PcbTable::default(), |fp| &mut fp.drawings);
+    fx.add_cell(table, crate::pcb_tablecell::PcbTablecell::default());
+    fx.add_child(crate::pcb_dimension::PcbDimension::default(), |fp| {
+        &mut fp.drawings
+    });
+    fx.add_child(crate::pcb_barcode::PcbBarcode::default(), |fp| {
+        &mut fp.drawings
+    });
+    fx.add_child(
+        crate::pcb_reference_image::PcbReferenceImage::default(),
+        |fp| &mut fp.drawings,
+    );
+    fx.add_child(crate::zone::Zone::default(), |fp| &mut fp.zones);
+    fx.add_child(crate::pcb_group::PcbGroup::default(), |fp| &mut fp.groups);
+    fx.add_child(crate::pcb_point::PcbPoint::default(), |fp| &mut fp.points);
+    fx.add_child(crate::pcb_constraint::PcbConstraint::default(), |fp| {
+        &mut fp.constraints
+    });
+    fx.add_child(crate::pcb_3d_body::Pcb3dBody::default(), |fp| {
+        &mut fp.bodies
+    });
+    fx
 }
 
-/// Insert `item` as a child of the fixture footprint, draw its UUID, bind it.
-fn child<T>(fx: &mut FrameFixture, mut item: T) -> crate::ids::Id<T>
-where
-    T: crate::ids::ArenaItem + BoardItem,
-    Board: crate::board::ArenaOf<T>,
-{
-    item.base_mut().uuid = Kiid::new(&mut fx.board.kiid_generator);
-    let uuid = item.base().uuid;
-    let id = fx
-        .board
-        .insert_item(item, ParentRef::Item(fx.footprint.into()));
-    fx.board.bind_uuid(uuid, id.into());
-    fx.children.push(id.into());
-    id
-}
+impl FrameFixture {
+    /// The first fixture child of `kind` (panics if there is none).
+    pub(crate) fn child(&self, kind: ItemKind) -> ItemId {
+        *self
+            .children
+            .iter()
+            .find(|id| id.kind() == kind)
+            .unwrap_or_else(|| panic!("the fixture has no {} child", kind.name()))
+    }
 
-macro_rules! fp_child_builder {
-    ($(#[$doc:meta])* $name:ident, $ty:ty, $list:ident) => {
-        $(#[$doc])*
-        pub(crate) fn $name(fx: &mut FrameFixture) -> ItemId {
-            let id = child(fx, <$ty>::default());
-            let fp = fx.footprint;
-            fx.board.footprints.get_mut(fp).expect("fixture footprint").$list.push_back(id.into());
-            id.into()
-        }
-    };
-}
+    /// Add `item` as a child of the fixture footprint: `parent` and `base.id` stamped, a fresh
+    /// UUID drawn and bound, the handle appended to the child list `list` selects
+    /// (`|fp| &mut fp.pads`, `|fp| &mut fp.drawings`, ...).
+    pub(crate) fn add_child<T, L>(
+        &mut self,
+        mut item: T,
+        list: impl FnOnce(&mut Footprint) -> &mut VecDeque<L>,
+    ) -> Id<T>
+    where
+        T: ArenaItem + BoardItem,
+        Board: ArenaOf<T>,
+        Id<T>: Into<L>,
+    {
+        item.base_mut().uuid = Kiid::new(&mut self.board.kiid_generator);
+        let uuid = item.base().uuid;
+        let id = self
+            .board
+            .insert_item(item, ParentRef::Item(self.footprint.into()));
+        self.board.bind_uuid(uuid, id.item_id());
+        let fp = self
+            .board
+            .footprints
+            .get_mut(self.footprint)
+            .expect("fixture footprint");
+        list(fp).push_back(id.into());
+        self.children.push(id.item_id());
+        id
+    }
 
-fp_child_builder!(/// A field (`fields`).
-    add_field, crate::pcb_field::PcbField, fields);
-fp_child_builder!(/// A pad (`pads`).
-    add_pad, crate::pad::Pad, pads);
-fp_child_builder!(/// A graphic shape (`drawings`).
-    add_shape, crate::pcb_shape::PcbShape, drawings);
-fp_child_builder!(/// A text (`drawings`).
-    add_text, crate::pcb_text::PcbText, drawings);
-fp_child_builder!(/// A text box (`drawings`).
-    add_textbox, crate::pcb_textbox::PcbTextbox, drawings);
-fp_child_builder!(/// A dimension (`drawings`).
-    add_dimension, crate::pcb_dimension::PcbDimension, drawings);
-fp_child_builder!(/// A barcode (`drawings`).
-    add_barcode, crate::pcb_barcode::PcbBarcode, drawings);
-fp_child_builder!(/// A reference image (`drawings`).
-    add_image, crate::pcb_reference_image::PcbReferenceImage, drawings);
-fp_child_builder!(/// A zone (`zones`).
-    add_zone, crate::zone::Zone, zones);
-fp_child_builder!(/// A group (`groups`, no members).
-    add_group, crate::pcb_group::PcbGroup, groups);
-fp_child_builder!(/// A point (`points`).
-    add_point, crate::pcb_point::PcbPoint, points);
-fp_child_builder!(/// A constraint (`constraints`).
-    add_constraint, crate::pcb_constraint::PcbConstraint, constraints);
-fp_child_builder!(/// A 3D body (`bodies`).
-    add_body, crate::pcb_3d_body::Pcb3dBody, bodies);
+    /// Add `cell` to `table` (`ParentRef::Item(table)`, appended to `PcbTable::cells`).
+    pub(crate) fn add_cell(
+        &mut self,
+        table: TableId,
+        mut cell: crate::pcb_tablecell::PcbTablecell,
+    ) -> TablecellId {
+        cell.base_mut().uuid = Kiid::new(&mut self.board.kiid_generator);
+        let uuid = cell.base().uuid;
+        let id = self.board.insert_item(cell, ParentRef::Item(table.into()));
+        self.board.bind_uuid(uuid, id.into());
+        self.board
+            .tables
+            .get_mut(table)
+            .expect("fixture table")
+            .cells
+            .push(id);
+        self.children.push(id.into());
+        id
+    }
 
-/// A table (`drawings`) with one cell (`ParentRef::Item(table)`).
-pub(crate) fn add_table(fx: &mut FrameFixture) -> TableId {
-    let table = child(fx, crate::pcb_table::PcbTable::default());
-    let fp = fx.footprint;
-    fx.board
-        .footprints
-        .get_mut(fp)
-        .expect("fixture footprint")
-        .drawings
-        .push_back(table.into());
-
-    let mut cell = crate::pcb_tablecell::PcbTablecell::default();
-    cell.base_mut().uuid = Kiid::new(&mut fx.board.kiid_generator);
-    let uuid = cell.base().uuid;
-    let cell = fx.board.insert_item(cell, ParentRef::Item(table.into()));
-    fx.board.bind_uuid(uuid, cell.into());
-    fx.board
-        .tables
-        .get_mut(table)
-        .expect("fixture table")
-        .cells
-        .push(cell);
-    fx.children.push(cell.into());
-    table
+    /// Replace the value of a fixture child, keeping what makes it that child (`base.id`,
+    /// `parent`, `group`, UUID): the bookkeeping of `Board::modify_*`, usable before the
+    /// type's mutators exist.
+    pub(crate) fn set_child<T>(&mut self, id: Id<T>, mut value: T)
+    where
+        T: ArenaItem + BoardItem,
+        Board: ArenaOf<T>,
+    {
+        let slot = self
+            .board
+            .arena_mut()
+            .get_mut(id)
+            .expect("live fixture child");
+        let (own_id, parent, group, uuid) = {
+            let old = slot.base();
+            (old.id, old.parent, old.group, old.uuid)
+        };
+        let base = value.base_mut();
+        base.id = own_id;
+        base.parent = parent;
+        base.group = group;
+        base.uuid = uuid;
+        *slot = value;
+    }
 }

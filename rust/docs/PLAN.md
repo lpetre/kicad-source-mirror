@@ -68,8 +68,14 @@ kicad-sexpr   kicad-geom   kicad-core   kicad-libeval
       plus five major issues, deferred machinery not needed for tier 1/2, and split M0 into
       M0a (kernel, reviewed) + M0b-e (four parallel type packages). Design docs are now
       revision 2: docs/design/board-model.md + board-model-types.md.
-- [ ] Model: M0a kernel (Opus) -> Fable gate review (running). Then M0b-e, then waves 1-5
-      per board-model.md section 16.
+- [x] Model M0a kernel (Opus) + Fable gate review: approve-with-changes. The review fixed
+      9 major issues in the kernel (a trait signature taken from KiCad 9, lost EDA_TEXT /
+      EDA_SHAPE overrides for fields/dimensions/table cells, overrides unable to call base
+      bodies, shared files that four agents would have edited) and added
+      crates/kicad-pcb/tools/check_item_shims.py. Design docs are at revision 2.1.
+- [ ] Model wave 0b: M0b (pad/footprint/zone), M0c (shape/text/table/dimension), M0d
+      (board/settings/nets), M0e (small items) running on Opus. Orchestrator reviews their
+      `decisions` and runs the shim checker before wave 1.
 - [ ] pcb-dump: item-level C++ reference dump tool linking pcbnew (running, Opus); it will
       be the ground truth for the M packages (rust/tools/pcb-dump, docs/PCB_DUMP_FORMAT.md).
 - Follow-ups owed to the design review: kicad-geom needs `Shape::indexable_subshape(i)`

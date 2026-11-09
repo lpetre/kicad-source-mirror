@@ -42,7 +42,10 @@ pub struct UnitsProvider<'a> {
 impl<'a> UnitsProvider<'a> {
     /// `UNITS_PROVIDER( aIuScale, aUnits )`.
     pub fn new(iu_scale: &'a EdaIuScale, units: EdaUnits) -> Self {
-        Self { iu_scale, user_units: units }
+        Self {
+            iu_scale,
+            user_units: units,
+        }
     }
 
     /// `GetUserUnits()`.
@@ -63,51 +66,116 @@ impl<'a> UnitsProvider<'a> {
     /// Port of the default `GetUnitPair`: (user units, mm for imperial / mils for metric).
     pub fn unit_pair(&self) -> (EdaUnits, EdaUnits) {
         let primary = self.user_units;
-        let secondary = if eda_units::is_imperial_unit(primary) { EdaUnits::Mm } else { EdaUnits::Mils };
+        let secondary = if eda_units::is_imperial_unit(primary) {
+            EdaUnits::Mm
+        } else {
+            EdaUnits::Mils
+        };
         (primary, secondary)
     }
 
     /// Port of `StringFromValue( double, bool, EDA_DATA_TYPE )`.
-    pub fn string_from_value(&self, value: f64, add_unit_label: bool, type_: EdaDataType) -> String {
-        ui::string_from_value(self.iu_scale, self.units_from_type(type_), value, add_unit_label, type_)
+    pub fn string_from_value(
+        &self,
+        value: f64,
+        add_unit_label: bool,
+        type_: EdaDataType,
+    ) -> String {
+        ui::string_from_value(
+            self.iu_scale,
+            self.units_from_type(type_),
+            value,
+            add_unit_label,
+            type_,
+        )
     }
 
     /// Port of `StringFromOptionalValue`: [`NULL_UI_STRING`] for `None`.
-    pub fn string_from_optional_value(&self, value: Option<i32>, add_unit_label: bool, type_: EdaDataType) -> String {
+    pub fn string_from_optional_value(
+        &self,
+        value: Option<i32>,
+        add_unit_label: bool,
+        type_: EdaDataType,
+    ) -> String {
         match value {
             None => NULL_UI_STRING.to_string(),
-            Some(v) => ui::string_from_value(self.iu_scale, self.units_from_type(type_), f64::from(v), add_unit_label, type_),
+            Some(v) => ui::string_from_value(
+                self.iu_scale,
+                self.units_from_type(type_),
+                f64::from(v),
+                add_unit_label,
+                type_,
+            ),
         }
     }
 
     /// Port of `StringFromValue( const EDA_ANGLE&, bool )` (angle in degrees).
     pub fn string_from_angle(&self, degrees: f64, add_unit_label: bool) -> String {
-        ui::string_from_value(&UNITY_SCALE, EdaUnits::Degrees, degrees, add_unit_label, EdaDataType::Distance)
+        ui::string_from_value(
+            &UNITY_SCALE,
+            EdaUnits::Degrees,
+            degrees,
+            add_unit_label,
+            EdaDataType::Distance,
+        )
     }
 
     /// Port of `MessageTextFromValue( double, bool, EDA_DATA_TYPE )`.
-    pub fn message_text_from_value(&self, value: f64, add_unit_label: bool, type_: EdaDataType) -> String {
-        ui::message_text_from_value(self.iu_scale, self.units_from_type(type_), value, add_unit_label, type_)
+    pub fn message_text_from_value(
+        &self,
+        value: f64,
+        add_unit_label: bool,
+        type_: EdaDataType,
+    ) -> String {
+        ui::message_text_from_value(
+            self.iu_scale,
+            self.units_from_type(type_),
+            value,
+            add_unit_label,
+            type_,
+        )
     }
 
     /// Port of `MessageTextFromValue( const EDA_ANGLE&, bool )` (angle in degrees).
     pub fn message_text_from_angle(&self, degrees: f64, add_unit_label: bool) -> String {
-        ui::message_text_from_value(&UNITY_SCALE, EdaUnits::Degrees, degrees, add_unit_label, EdaDataType::Distance)
+        ui::message_text_from_value(
+            &UNITY_SCALE,
+            EdaUnits::Degrees,
+            degrees,
+            add_unit_label,
+            EdaDataType::Distance,
+        )
     }
 
     /// Port of `MessageTextFromUnscaledValue`.
-    pub fn message_text_from_unscaled_value(&self, value: f64, add_unit_label: bool, type_: EdaDataType) -> String {
-        ui::message_text_from_value(&UNITY_SCALE, EdaUnits::Unscaled, value, add_unit_label, type_)
+    pub fn message_text_from_unscaled_value(
+        &self,
+        value: f64,
+        add_unit_label: bool,
+        type_: EdaDataType,
+    ) -> String {
+        ui::message_text_from_value(
+            &UNITY_SCALE,
+            EdaUnits::Unscaled,
+            value,
+            add_unit_label,
+            type_,
+        )
     }
 
     /// Port of `MessageTextFromMinOptMax`.
-    pub fn message_text_from_min_opt_max(&self, value: &MinOptMax<i32>, type_: EdaDataType) -> String {
+    pub fn message_text_from_min_opt_max(
+        &self,
+        value: &MinOptMax<i32>,
+        type_: EdaDataType,
+    ) -> String {
         ui::message_text_from_min_opt_max(self.iu_scale, self.units_from_type(type_), value)
     }
 
     /// Port of `ValueFromString`: `KiROUND<double, int>( DoubleValueFromString( ... ) )`.
     pub fn value_from_string(&self, text: &str, type_: EdaDataType) -> i32 {
-        let value = ui::double_value_from_string(self.iu_scale, self.units_from_type(type_), text, type_);
+        let value =
+            ui::double_value_from_string(self.iu_scale, self.units_from_type(type_), text, type_);
         ki_round_i32(value)
     }
 
@@ -122,7 +190,12 @@ impl<'a> UnitsProvider<'a> {
 
     /// Port of `AngleValueFromString` (degrees).
     pub fn angle_value_from_string(&self, text: &str) -> f64 {
-        ui::double_value_from_string(self.iu_scale, EdaUnits::Degrees, text, EdaDataType::Distance)
+        ui::double_value_from_string(
+            self.iu_scale,
+            EdaUnits::Degrees,
+            text,
+            EdaDataType::Distance,
+        )
     }
 
     /// Port of `GetUnitsFromType`.
@@ -130,7 +203,11 @@ impl<'a> UnitsProvider<'a> {
         if type_ == EdaDataType::Time {
             EdaUnits::Ps
         } else if type_ == EdaDataType::LengthDelay {
-            if eda_units::is_metric_unit(self.user_units) { EdaUnits::PsPerCm } else { EdaUnits::PsPerInch }
+            if eda_units::is_metric_unit(self.user_units) {
+                EdaUnits::PsPerCm
+            } else {
+                EdaUnits::PsPerInch
+            }
         } else {
             self.user_units
         }
@@ -139,7 +216,9 @@ impl<'a> UnitsProvider<'a> {
     /// Port of `GetTypeFromUnits`.
     pub fn type_from_units(units: EdaUnits) -> EdaDataType {
         match units {
-            EdaUnits::Inch | EdaUnits::Mm | EdaUnits::Um | EdaUnits::Cm | EdaUnits::Mils => EdaDataType::Distance,
+            EdaUnits::Inch | EdaUnits::Mm | EdaUnits::Um | EdaUnits::Cm | EdaUnits::Mils => {
+                EdaDataType::Distance
+            }
             EdaUnits::Degrees => EdaDataType::Angle,
             EdaUnits::Percent | EdaUnits::Unscaled => EdaDataType::Unitless,
             EdaUnits::Fs | EdaUnits::Ps => EdaDataType::Time,
@@ -157,20 +236,38 @@ mod tests {
     fn units_from_type_and_pairs() {
         let mut p = UnitsProvider::new(&PCB_IU_SCALE, EdaUnits::Mm);
         assert_eq!(p.unit_pair(), (EdaUnits::Mm, EdaUnits::Mils));
-        assert_eq!(p.units_from_type(EdaDataType::LengthDelay), EdaUnits::PsPerCm);
+        assert_eq!(
+            p.units_from_type(EdaDataType::LengthDelay),
+            EdaUnits::PsPerCm
+        );
         assert_eq!(p.units_from_type(EdaDataType::Time), EdaUnits::Ps);
         p.set_user_units(EdaUnits::Inch);
         assert_eq!(p.unit_pair(), (EdaUnits::Inch, EdaUnits::Mm));
-        assert_eq!(p.units_from_type(EdaDataType::LengthDelay), EdaUnits::PsPerInch);
-        assert_eq!(UnitsProvider::type_from_units(EdaUnits::PsPerMm), EdaDataType::LengthDelay);
+        assert_eq!(
+            p.units_from_type(EdaDataType::LengthDelay),
+            EdaUnits::PsPerInch
+        );
+        assert_eq!(
+            UnitsProvider::type_from_units(EdaUnits::PsPerMm),
+            EdaDataType::LengthDelay
+        );
     }
 
     #[test]
     fn value_round_trip() {
         let p = UnitsProvider::new(&PCB_IU_SCALE, EdaUnits::Mm);
         assert_eq!(p.value_from_string("1.5", EdaDataType::Distance), 1_500_000);
-        assert_eq!(p.optional_value_from_string("", EdaDataType::Distance), None);
-        assert_eq!(p.string_from_optional_value(None, true, EdaDataType::Distance), "");
-        assert_eq!(p.string_from_value(1_500_000.0, true, EdaDataType::Distance), "1.5 mm");
+        assert_eq!(
+            p.optional_value_from_string("", EdaDataType::Distance),
+            None
+        );
+        assert_eq!(
+            p.string_from_optional_value(None, true, EdaDataType::Distance),
+            ""
+        );
+        assert_eq!(
+            p.string_from_value(1_500_000.0, true, EdaDataType::Distance),
+            "1.5 mm"
+        );
     }
 }

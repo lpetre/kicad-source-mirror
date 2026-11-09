@@ -18,14 +18,14 @@
 //! Temporary stand-ins for foundation types that `kicad-geom` / `kicad-core` / `kicad-font` do
 //! not provide yet (`board-model.md` 17). Each item is marked with the crate that will provide
 //! it; `rg foundation_stub crates/kicad-pcb` must be empty before the crate is declared done.
-//! Nothing else in kicad-pcb defines a foundation type. Checked at M0a against the
-//! PORT_STATUS.md of kicad-geom (TransformTrs, Ellipse, Vector3D, ShapeNull, ErrorLoc,
-//! Hash128 exist), kicad-core (UnitsProvider, plot enums, json::Value, KicadT exist) and
-//! kicad-font (Font, Metrics exist).
+//! Nothing else in kicad-pcb defines a foundation type, and packages do not add stand-ins here
+//! (a missing foundation type is reported to the orchestrator). Checked at the M0a review
+//! against the foundation crates: `TransformTrs`, `Ellipse`, `Vector3D`, `ShapeNull`,
+//! `ErrorLoc`, `EdaOrientation`, `Hash128` (kicad-geom), `UnitsProvider`,
+//! `case_insensitive_map::CaseInsensitiveMap`, `text_vars::ResolutionContext`, the plot enums,
+//! `json::Value`, `KicadT` (kicad-core) and `Font`, `Glyph`, `Metrics` (kicad-font) exist and
+//! are used directly.
 
-use std::collections::BTreeMap;
-
-use kicad_core::case_insensitive_map::CaseInsensitiveKey;
 use kicad_geom::geometry::ellipse::Ellipse;
 
 // REMOVE when kicad-font provides FontRef
@@ -44,7 +44,3 @@ pub struct FontRef {
 pub struct ShapeEllipse {
     pub ellipse: Ellipse<i32>,
 }
-
-// REMOVE when kicad-core provides CaseInsensitiveMap
-/// Stand-in for `CASE_INSENSITIVE_MAP<V>` (`std::map<wxString, V, CASE_INSENSITIVE_LESS>`).
-pub type CaseInsensitiveMap<V> = BTreeMap<CaseInsensitiveKey, V>;

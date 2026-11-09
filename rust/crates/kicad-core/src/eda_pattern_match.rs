@@ -53,7 +53,12 @@ pub struct SearchTerm {
 impl SearchTerm {
     /// `SEARCH_TERM( aText, aScore, aIsName = false )`.
     pub fn new(text: &str, score: i32, is_name: bool) -> Self {
-        Self { text: text.to_string(), score, normalized: false, is_name }
+        Self {
+            text: text.to_string(),
+            score,
+            normalized: false,
+            is_name,
+        }
     }
 }
 
@@ -68,7 +73,10 @@ pub struct FindResult {
 
 impl Default for FindResult {
     fn default() -> Self {
-        Self { start: EDA_PATTERN_NOT_FOUND, length: 0 }
+        Self {
+            start: EDA_PATTERN_NOT_FOUND,
+            length: 0,
+        }
     }
 }
 
@@ -118,7 +126,10 @@ impl EdaPatternMatch for EdaPatternMatchSubstr {
     fn find(&self, candidate: &str) -> FindResult {
         match wx_find(candidate, &self.pattern) {
             None => FindResult::default(),
-            Some(loc) => FindResult { start: clamp_int(loc), length: clamp_int(self.pattern.chars().count()) },
+            Some(loc) => FindResult {
+                start: clamp_int(loc),
+                length: clamp_int(self.pattern.chars().count()),
+            },
         }
     }
 }
@@ -153,12 +164,18 @@ impl EdaPatternMatchRegex {
     fn regex_find(&self, candidate: &str) -> FindResult {
         match &self.regex {
             Some(re) => match re.find(candidate) {
-                Some((start, len)) => FindResult { start: clamp_int(start), length: clamp_int(len) },
+                Some((start, len)) => FindResult {
+                    start: clamp_int(start),
+                    length: clamp_int(len),
+                },
                 None => FindResult::default(),
             },
             None => match wx_find(candidate, &self.pattern) {
                 None => FindResult::default(),
-                Some(loc) => FindResult { start: clamp_int(loc), length: clamp_int(self.pattern.chars().count()) },
+                Some(loc) => FindResult {
+                    start: clamp_int(loc),
+                    length: clamp_int(self.pattern.chars().count()),
+                },
             },
         }
     }
@@ -261,7 +278,14 @@ impl Glob {
     }
 
     /// End of the first match (in backtracking order) of `toks[k..]` at `pos`.
-    fn match_from(&self, s: &[char], k: usize, pos: usize, anchored_end: bool, failed: &mut Vec<bool>) -> Option<usize> {
+    fn match_from(
+        &self,
+        s: &[char],
+        k: usize,
+        pos: usize,
+        anchored_end: bool,
+        failed: &mut Vec<bool>,
+    ) -> Option<usize> {
         let w = s.len() + 1;
 
         if failed[k * w + pos] {
@@ -269,7 +293,11 @@ impl Glob {
         }
 
         let r = if k == self.toks.len() {
-            if !anchored_end || pos == s.len() || (pos + 1 == s.len() && s[pos] == '\n') { Some(pos) } else { None }
+            if !anchored_end || pos == s.len() || (pos + 1 == s.len() && s[pos] == '\n') {
+                Some(pos)
+            } else {
+                None
+            }
         } else {
             match self.toks[k] {
                 GlobTok::Lit(c) => {
@@ -286,7 +314,9 @@ impl Glob {
                         None
                     }
                 }
-                GlobTok::Star => (pos..=s.len()).rev().find_map(|j| self.match_from(s, k + 1, j, anchored_end, failed)),
+                GlobTok::Star => (pos..=s.len())
+                    .rev()
+                    .find_map(|j| self.match_from(s, k + 1, j, anchored_end, failed)),
             }
         };
 
@@ -302,7 +332,10 @@ impl Glob {
         let mut failed = vec![false; (self.toks.len() + 1) * (s.len() + 1)];
         let last_start = if anchored { 0 } else { s.len() };
 
-        (0..=last_start).find_map(|start| self.match_from(&s, 0, start, anchored, &mut failed).map(|end| (start, end - start)))
+        (0..=last_start).find_map(|start| {
+            self.match_from(&s, 0, start, anchored, &mut failed)
+                .map(|end| (start, end - start))
+        })
     }
 }
 
@@ -338,7 +371,10 @@ impl EdaPatternMatchWildcard {
     fn wildcard_find(&self, candidate: &str) -> FindResult {
         match &self.glob {
             Some(g) => match g.find(candidate, self.anchored) {
-                Some((start, len)) => FindResult { start: clamp_int(start), length: clamp_int(len) },
+                Some((start, len)) => FindResult {
+                    start: clamp_int(start),
+                    length: clamp_int(len),
+                },
                 None => FindResult::default(),
             },
             None => self.inner.regex_find(candidate),
@@ -416,12 +452,14 @@ fn relational_units() -> &'static BTreeMap<&'static str, f64> {
 
 fn relational_search_regex() -> Option<&'static WxRegex> {
     static RE: OnceLock<Option<WxRegex>> = OnceLock::new();
-    RE.get_or_init(|| WxRegex::compile(r"^(\w+)(<|<=|=|>=|>)([-+]?[\d.]*)(\w*)$")).as_ref()
+    RE.get_or_init(|| WxRegex::compile(r"^(\w+)(<|<=|=|>=|>)([-+]?[\d.]*)(\w*)$"))
+        .as_ref()
 }
 
 fn relational_description_regex() -> Option<&'static WxRegex> {
     static RE: OnceLock<Option<WxRegex>> = OnceLock::new();
-    RE.get_or_init(|| WxRegex::compile(r"(\w+)[=:]([-+]?[\d.]+)(\w*)")).as_ref()
+    RE.get_or_init(|| WxRegex::compile(r"(\w+)[=:]([-+]?[\d.]+)(\w*)"))
+        .as_ref()
 }
 
 /// `wxRegEx::GetMatch( text, n )`: the text of capture group `n` (empty when unset).
@@ -441,7 +479,12 @@ pub struct EdaPatternMatchRelational {
 
 impl Default for EdaPatternMatchRelational {
     fn default() -> Self {
-        Self { pattern: String::new(), key: String::new(), relation: None, value: 0.0 }
+        Self {
+            pattern: String::new(),
+            key: String::new(),
+            relation: None,
+            value: 0.0,
+        }
     }
 }
 
@@ -457,7 +500,9 @@ impl EdaPatternMatchRelational {
             return EDA_PATTERN_NOT_FOUND;
         };
 
-        let start = caps[0].clone().map_or(0, |r| candidate[..r.start].chars().count());
+        let start = caps[0]
+            .clone()
+            .map_or(0, |r| candidate[..r.start].chars().count());
         let key = group_text(candidate, &caps, 1);
         let val = group_text(candidate, &caps, 2);
         let unit = group_text(candidate, &caps, 3);
@@ -562,7 +607,10 @@ impl EdaPatternMatch for EdaPatternMatchRelational {
         while chars[pos..].iter().any(|&c| !is_delim(c)) {
             // GetNextToken(): skip empty tokens.
             let token: String = loop {
-                let end = chars[pos..].iter().position(|&c| is_delim(c)).map(|p| p + pos);
+                let end = chars[pos..]
+                    .iter()
+                    .position(|&c| is_delim(c))
+                    .map(|p| p + pos);
 
                 let tok: String = match end {
                     None => {
@@ -586,7 +634,10 @@ impl EdaPatternMatch for EdaPatternMatchRelational {
 
             if found_delta != EDA_PATTERN_NOT_FOUND {
                 let found = found_delta as usize + lastpos;
-                return FindResult { start: clamp_int(found), length: 0 };
+                return FindResult {
+                    start: clamp_int(found),
+                    length: 0,
+                };
             }
 
             lastpos = pos;
@@ -619,7 +670,10 @@ pub struct EdaCombinedMatcher {
 
 impl std::fmt::Debug for EdaCombinedMatcher {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EdaCombinedMatcher").field("pattern", &self.pattern).field("matchers", &self.matchers.len()).finish()
+        f.debug_struct("EdaCombinedMatcher")
+            .field("pattern", &self.pattern)
+            .field("matchers", &self.matchers.len())
+            .finish()
     }
 }
 
@@ -627,7 +681,10 @@ impl EdaCombinedMatcher {
     /// Port of the constructor: the matchers of the context whose `SetPattern` succeeds, in
     /// order.
     pub fn new(pattern: &str, context: CombinedMatcherContext) -> Self {
-        let mut m = Self { matchers: Vec::new(), pattern: pattern.to_string() };
+        let mut m = Self {
+            matchers: Vec::new(),
+            pattern: pattern.to_string(),
+        };
 
         match context {
             CombinedMatcherContext::LibItem => {
@@ -640,7 +697,9 @@ impl EdaCombinedMatcher {
                 // syntax does not match, the substring will try its best.
                 m.add_matcher(pattern, Box::<EdaPatternMatchSubstr>::default());
             }
-            CombinedMatcherContext::Net | CombinedMatcherContext::Signal | CombinedMatcherContext::Search => {
+            CombinedMatcherContext::Net
+            | CombinedMatcherContext::Signal
+            | CombinedMatcherContext::Search => {
                 m.add_matcher(pattern, Box::<EdaPatternMatchRegex>::default());
                 m.add_matcher(pattern, Box::<EdaPatternMatchWildcard>::default());
                 m.add_matcher(pattern, Box::<EdaPatternMatchSubstr>::default());

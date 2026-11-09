@@ -100,7 +100,12 @@ pub struct JsonError {
 
 impl JsonError {
     fn new(kind: JsonErrorKind, id: i32, message: String) -> Self {
-        Self { kind, id, byte: 0, message }
+        Self {
+            kind,
+            id,
+            byte: 0,
+            message,
+        }
     }
 
     /// `type_error::create( 302, "type must be <what>, but is <type>" )`.
@@ -190,7 +195,9 @@ pub fn is_number_float(v: &Value) -> bool {
 /// NaN/infinity and dumps them as `null`; `serde_json` cannot hold them, so they become `null`
 /// directly (identical `dump()` output).
 pub fn float_value(v: f64) -> Value {
-    Number::from_f64(v).map(Value::Number).unwrap_or(Value::Null)
+    Number::from_f64(v)
+        .map(Value::Number)
+        .unwrap_or(Value::Null)
 }
 
 // ------------------------------------------------------------------------------------------
@@ -298,11 +305,9 @@ impl<'a> Lexer<'a> {
             Some(b'*') => loop {
                 match self.bump() {
                     None => return Err("invalid comment; missing closing '*/'".into()),
-                    Some(b'*') => {
-                        if self.peek() == Some(b'/') {
-                            self.bump();
-                            return Ok(());
-                        }
+                    Some(b'*') if self.peek() == Some(b'/') => {
+                        self.bump();
+                        return Ok(());
                     }
                     _ => {}
                 }
@@ -422,8 +427,9 @@ impl<'a> Lexer<'a> {
                         Some(b't') => buf.push(b'\t'),
                         Some(b'u') => {
                             let Some(cp1) = self.hex4() else {
-                                return Err("invalid string: '\\u' must be followed by 4 hex digits"
-                                    .into());
+                                return Err(
+                                    "invalid string: '\\u' must be followed by 4 hex digits".into(),
+                                );
                             };
 
                             let mut cp = cp1;
@@ -449,16 +455,22 @@ impl<'a> Lexer<'a> {
                                         .into());
                                 }
                             } else if (0xDC00..=0xDFFF).contains(&cp1) {
-                                return Err("invalid string: surrogate U+DC00..U+DFFF must follow \
+                                return Err(
+                                    "invalid string: surrogate U+DC00..U+DFFF must follow \
                                             U+D800..U+DBFF"
-                                    .into());
+                                        .into(),
+                                );
                             }
 
                             let ch = char::from_u32(cp).unwrap_or('\u{FFFD}');
                             let mut tmp = [0u8; 4];
                             buf.extend_from_slice(ch.encode_utf8(&mut tmp).as_bytes());
                         }
-                        _ => return Err("invalid string: forbidden character after backslash".into()),
+                        _ => {
+                            return Err(
+                                "invalid string: forbidden character after backslash".into()
+                            );
+                        }
                     }
                 }
                 0x00..=0x1F => {
@@ -595,7 +607,11 @@ impl<'a> Lexer<'a> {
 ///
 /// `input` is the raw file content (bytes, so that invalid UTF-8 is reported like nlohmann
 /// does). KiCad always passes `ignore_comments = true`.
-pub fn parse_bytes(input: &[u8], order: ObjectOrder, ignore_comments: bool) -> Result<Value, JsonError> {
+pub fn parse_bytes(
+    input: &[u8],
+    order: ObjectOrder,
+    ignore_comments: bool,
+) -> Result<Value, JsonError> {
     let mut lexer = Lexer {
         input,
         pos: 0,
@@ -613,7 +629,11 @@ pub fn parse_bytes(input: &[u8], order: ObjectOrder, ignore_comments: bool) -> R
             lexer.pos = 3;
             lexer.line_start = 3;
         } else {
-            return Err(parse_error(&lexer, "invalid BOM; must be 0xEF 0xBB 0xBF if given".into(), None));
+            return Err(parse_error(
+                &lexer,
+                "invalid BOM; must be 0xEF 0xBB 0xBF if given".into(),
+                None,
+            ));
         }
     }
 
@@ -624,7 +644,10 @@ pub fn parse_bytes(input: &[u8], order: ObjectOrder, ignore_comments: bool) -> R
     if tok != Token::EndOfInput {
         return Err(parse_error(
             &lexer,
-            format!("syntax error while parsing value - unexpected {}; expected end of input", tok.name()),
+            format!(
+                "syntax error while parsing value - unexpected {}; expected end of input",
+                tok.name()
+            ),
             Some(tok),
         ));
     }
@@ -664,7 +687,10 @@ fn parse_error(lexer: &Lexer<'_>, message: String, _tok: Option<Token>) -> JsonE
         kind: JsonErrorKind::ParseError,
         id: 101,
         byte: lexer.pos,
-        message: format!("parse error at line {}, column {column}: {message}", lexer.line),
+        message: format!(
+            "parse error at line {}, column {column}: {message}",
+            lexer.line
+        ),
     }
 }
 
@@ -735,7 +761,10 @@ fn parse_value_iterative(lexer: &mut Lexer<'_>) -> Result<Value, JsonError> {
             other => {
                 return Err(parse_error(
                     lexer,
-                    format!("syntax error while parsing value - unexpected {}; expected '[', '{{', or a literal", other.name()),
+                    format!(
+                        "syntax error while parsing value - unexpected {}; expected '[', '{{', or a literal",
+                        other.name()
+                    ),
                     Some(other),
                 ));
             }
@@ -757,7 +786,9 @@ fn parse_value_iterative(lexer: &mut Lexer<'_>) -> Result<Value, JsonError> {
                             break;
                         }
                         Token::EndArray => {
-                            let Some(Frame::Array(items)) = stack.pop() else { unreachable!() };
+                            let Some(Frame::Array(items)) = stack.pop() else {
+                                unreachable!()
+                            };
                             value = Value::Array(items);
                         }
                         other => {
@@ -800,7 +831,9 @@ fn parse_value_iterative(lexer: &mut Lexer<'_>) -> Result<Value, JsonError> {
                             break;
                         }
                         Token::EndObject => {
-                            let Some(Frame::Object(map, _)) = stack.pop() else { unreachable!() };
+                            let Some(Frame::Object(map, _)) = stack.pop() else {
+                                unreachable!()
+                            };
                             value = Value::Object(map);
                         }
                         other => {
@@ -875,7 +908,7 @@ fn push_indent(out: &mut Vec<u8>, n: usize) {
     out.extend(std::iter::repeat_n(b' ', n));
 }
 
-fn sorted_entries<'v>(map: &'v Map<String, Value>, order: ObjectOrder) -> Vec<(&'v String, &'v Value)> {
+fn sorted_entries(map: &Map<String, Value>, order: ObjectOrder) -> Vec<(&String, &Value)> {
     let mut entries: Vec<(&String, &Value)> = map.iter().collect();
 
     if order == ObjectOrder::Sorted {
@@ -885,7 +918,13 @@ fn sorted_entries<'v>(map: &'v Map<String, Value>, order: ObjectOrder) -> Vec<(&
     entries
 }
 
-fn dump_value(out: &mut Vec<u8>, value: &Value, indent: Option<usize>, order: ObjectOrder, current: usize) {
+fn dump_value(
+    out: &mut Vec<u8>,
+    value: &Value,
+    indent: Option<usize>,
+    order: ObjectOrder,
+    current: usize,
+) {
     match value {
         Value::Object(map) => {
             if map.is_empty() {
@@ -1020,7 +1059,9 @@ fn dump_escaped(out: &mut Vec<u8>, s: &str) {
 pub fn json_eq(a: &Value, b: &Value) -> bool {
     match (a, b) {
         (Value::Object(x), Value::Object(y)) => {
-            x.len() == y.len() && x.iter().all(|(k, v)| y.get(k).is_some_and(|w| json_eq(v, w)))
+            x.len() == y.len()
+                && x.iter()
+                    .all(|(k, v)| y.get(k).is_some_and(|w| json_eq(v, w)))
         }
         (Value::Array(x), Value::Array(y)) => {
             x.len() == y.len() && x.iter().zip(y).all(|(v, w)| json_eq(v, w))
@@ -1119,7 +1160,10 @@ impl JsonPointer {
             let bytes = token.as_bytes();
 
             for (pos, &b) in bytes.iter().enumerate() {
-                if b == b'~' && (pos + 1 == bytes.len() || (bytes[pos + 1] != b'0' && bytes[pos + 1] != b'1')) {
+                if b == b'~'
+                    && (pos + 1 == bytes.len()
+                        || (bytes[pos + 1] != b'0' && bytes[pos + 1] != b'1'))
+                {
                     return Err(JsonError::new(
                         JsonErrorKind::ParseError,
                         108,
@@ -1249,12 +1293,20 @@ impl JsonPointer {
         for token in &self.tokens {
             ptr = match ptr {
                 Value::Object(map) => map.get_mut(token).ok_or_else(|| {
-                    JsonError::new(JsonErrorKind::OutOfRange, 403, format!("key '{token}' not found"))
+                    JsonError::new(
+                        JsonErrorKind::OutOfRange,
+                        403,
+                        format!("key '{token}' not found"),
+                    )
                 })?,
                 Value::Array(items) => {
                     let idx = array_index(token)?;
                     items.get_mut(idx).ok_or_else(|| {
-                        JsonError::new(JsonErrorKind::OutOfRange, 401, format!("array index {idx} is out of range"))
+                        JsonError::new(
+                            JsonErrorKind::OutOfRange,
+                            401,
+                            format!("array index {idx} is out of range"),
+                        )
                     })?
                 }
                 _ => {
@@ -1281,13 +1333,21 @@ impl JsonPointer {
             if ptr.is_null() {
                 let nums = token.bytes().all(|b| b.is_ascii_digit());
 
-                *ptr = if nums || token == "-" { Value::Array(Vec::new()) } else { Value::Object(Map::new()) };
+                *ptr = if nums || token == "-" {
+                    Value::Array(Vec::new())
+                } else {
+                    Value::Object(Map::new())
+                };
             }
 
             ptr = match ptr {
                 Value::Object(map) => map.entry(token.clone()).or_insert(Value::Null),
                 Value::Array(items) => {
-                    let idx = if token == "-" { items.len() } else { array_index(token)? };
+                    let idx = if token == "-" {
+                        items.len()
+                    } else {
+                        array_index(token)?
+                    };
 
                     if idx >= items.len() {
                         items.resize(idx + 1, Value::Null);
@@ -1322,7 +1382,11 @@ fn array_index(s: &str) -> Result<usize, JsonError> {
     }
 
     if b.len() > 1 && !(b'1'..=b'9').contains(&b[0]) {
-        return Err(JsonError::new(JsonErrorKind::ParseError, 109, format!("array index '{s}' is not a number")));
+        return Err(JsonError::new(
+            JsonErrorKind::ParseError,
+            109,
+            format!("array index '{s}' is not a number"),
+        ));
     }
 
     // strtoull with full-length and range checks.
@@ -1336,9 +1400,17 @@ fn array_index(s: &str) -> Result<usize, JsonError> {
 
     match s.parse::<u64>() {
         Ok(v) if v < u64::MAX => usize::try_from(v).map_err(|_| {
-            JsonError::new(JsonErrorKind::OutOfRange, 410, format!("array index {s} exceeds size_type"))
+            JsonError::new(
+                JsonErrorKind::OutOfRange,
+                410,
+                format!("array index {s} exceeds size_type"),
+            )
         }),
-        Ok(_) => Err(JsonError::new(JsonErrorKind::OutOfRange, 410, format!("array index {s} exceeds size_type"))),
+        Ok(_) => Err(JsonError::new(
+            JsonErrorKind::OutOfRange,
+            410,
+            format!("array index {s} exceeds size_type"),
+        )),
         Err(_) => Err(JsonError::new(
             JsonErrorKind::OutOfRange,
             404,
@@ -1434,7 +1506,13 @@ impl FromJson for u32 {
     /// Generic arithmetic `from_json` for `unsigned int` (accepts booleans).
     fn from_json(value: &Value) -> Result<Self, JsonError> {
         // g++ converts through a 64 bit cvttsd2si and keeps the low 32 bits.
-        arithmetic(value, true, |u| u as u32, |i| i as u32, |f| f64_to_i64_x86(f) as u32)
+        arithmetic(
+            value,
+            true,
+            |u| u as u32,
+            |i| i as u32,
+            |f| f64_to_i64_x86(f) as u32,
+        )
     }
 }
 

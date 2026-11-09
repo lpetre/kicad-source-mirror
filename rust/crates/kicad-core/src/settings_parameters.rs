@@ -37,7 +37,12 @@ pub trait Param<S> {
     fn json_path(&self) -> &str;
 
     /// `Load( settings, aResetIfMissing )`.
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset_if_missing: bool) -> Result<(), JsonError>;
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset_if_missing: bool,
+    ) -> Result<(), JsonError>;
 
     /// `Store( settings )`.
     fn store(&self, settings: &mut JsonSettingsInternals, target: &S) -> Result<(), JsonError>;
@@ -47,8 +52,12 @@ pub trait Param<S> {
 
     /// `MatchesFile( settings )`; `resets_params_if_missing` is the owner's
     /// `ResetsParamsIfMissing()`.
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets_params_if_missing: bool)
-    -> Result<bool, JsonError>;
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets_params_if_missing: bool,
+    ) -> Result<bool, JsonError>;
 
     /// `ClearUnknownKeys()`.
     fn clear_unknown_keys(&self) -> bool {
@@ -85,7 +94,8 @@ macro_rules! settings_field {
 /// them.
 pub trait ParamValue: Clone + PartialOrd + ToJson + 'static {
     /// `JSON_SETTINGS::Get<T>( path )`.
-    fn get_setting(settings: &JsonSettingsInternals, path: &str) -> Result<Option<Self>, JsonError>;
+    fn get_setting(settings: &JsonSettingsInternals, path: &str)
+    -> Result<Option<Self>, JsonError>;
 
     /// `operator==`.
     fn same(&self, other: &Self) -> bool;
@@ -111,7 +121,10 @@ generic_param_value!(bool, i32, u32, i64, u64, f64, f32);
 impl ParamValue for String {
     /// `JSON_SETTINGS::Get<wxString>` (a non-string value throws out of `Get`) - the same for
     /// `std::string` parameters in KiCad's use, which only ever hold strings.
-    fn get_setting(settings: &JsonSettingsInternals, path: &str) -> Result<Option<Self>, JsonError> {
+    fn get_setting(
+        settings: &JsonSettingsInternals,
+        path: &str,
+    ) -> Result<Option<Self>, JsonError> {
         settings.get_wx_string(path)
     }
 
@@ -143,7 +156,10 @@ impl ToJson for JsonValue {
 }
 
 impl ParamValue for JsonValue {
-    fn get_setting(settings: &JsonSettingsInternals, path: &str) -> Result<Option<Self>, JsonError> {
+    fn get_setting(
+        settings: &JsonSettingsInternals,
+        path: &str,
+    ) -> Result<Option<Self>, JsonError> {
         Ok(settings.get_json(path)?.map(JsonValue))
     }
 
@@ -166,12 +182,24 @@ pub struct ParamT<S, T: ParamValue> {
 impl<S, T: ParamValue> ParamT<S, T> {
     /// `PARAM( path, ptr, default, readOnly = false )`.
     pub fn new(path: &str, field: Field<S, T>, default: T) -> Self {
-        Self { path: path.to_string(), read_only: false, min_max: None, field, default }
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            min_max: None,
+            field,
+            default,
+        }
     }
 
     /// `PARAM( path, ptr, default, min, max, readOnly = false )`.
     pub fn with_range(path: &str, field: Field<S, T>, default: T, min: T, max: T) -> Self {
-        Self { path: path.to_string(), read_only: false, min_max: Some((min, max)), field, default }
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            min_max: Some((min, max)),
+            field,
+            default,
+        }
     }
 
     /// Sets `m_readOnly`.
@@ -193,7 +221,12 @@ impl<S, T: ParamValue> Param<S> for ParamT<S, T> {
 
     /// Port of `PARAM::Load`: an out-of-range value (`m_max < val || val < m_min`) becomes the
     /// default; a missing / unconvertible value assigns the default only when resetting.
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset_if_missing: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset_if_missing: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -221,7 +254,12 @@ impl<S, T: ParamValue> Param<S> for ParamT<S, T> {
         *(self.field.get_mut)(target) = self.default.clone();
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(v) = T::get_setting(settings, &self.path)? {
             return Ok(v.same((self.field.get)(target)));
         }
@@ -244,7 +282,9 @@ pub struct ParamPath<S> {
 impl<S> ParamPath<S> {
     /// `PARAM_PATH( path, ptr, default, readOnly = false )`.
     pub fn new(path: &str, field: Field<S, String>, default: &str) -> Self {
-        Self { inner: ParamT::new(path, field, default.to_string()) }
+        Self {
+            inner: ParamT::new(path, field, default.to_string()),
+        }
     }
 }
 
@@ -253,19 +293,32 @@ impl<S> Param<S> for ParamPath<S> {
         &self.inner.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         self.inner.load(settings, target, reset)
     }
 
     fn store(&self, settings: &mut JsonSettingsInternals, target: &S) -> Result<(), JsonError> {
-        settings.set(&self.inner.path, &to_file_format((self.inner.field.get)(target)))
+        settings.set(
+            &self.inner.path,
+            &to_file_format((self.inner.field.get)(target)),
+        )
     }
 
     fn set_default(&self, target: &mut S) {
         self.inner.set_default(target);
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(v) = settings.get_wx_string(&self.inner.path)? {
             return Ok(&v == (self.inner.field.get)(target));
         }
@@ -289,8 +342,25 @@ pub struct ParamEnum<S, E: Copy + PartialEq + 'static> {
 impl<S, E: Copy + PartialEq + 'static> ParamEnum<S, E> {
     /// `PARAM_ENUM( path, ptr, default, min, max )`; `to_int` / `from_int` are the
     /// `static_cast`s between the enum and `int`.
-    pub fn new(path: &str, field: Field<S, E>, default: E, min: E, max: E, to_int: fn(E) -> i32, from_int: fn(i32) -> E) -> Self {
-        Self { path: path.to_string(), read_only: false, field, min: to_int(min), max: to_int(max), default, to_int, from_int }
+    pub fn new(
+        path: &str,
+        field: Field<S, E>,
+        default: E,
+        min: E,
+        max: E,
+        to_int: fn(E) -> i32,
+        from_int: fn(i32) -> E,
+    ) -> Self {
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            min: to_int(min),
+            max: to_int(max),
+            default,
+            to_int,
+            from_int,
+        }
     }
 }
 
@@ -299,7 +369,12 @@ impl<S, E: Copy + PartialEq + 'static> Param<S> for ParamEnum<S, E> {
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -325,7 +400,12 @@ impl<S, E: Copy + PartialEq + 'static> Param<S> for ParamEnum<S, E> {
         *(self.field.get_mut)(target) = self.default;
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(v) = settings.get::<i32>(&self.path)? {
             return Ok(v == (self.to_int)(*(self.field.get)(target)));
         }
@@ -347,8 +427,19 @@ pub struct ParamLambda<S, T: ParamValue> {
 impl<S, T: ParamValue> ParamLambda<S, T> {
     /// `PARAM_LAMBDA( path, getter, setter, default, readOnly = false )`. For
     /// `T = nlohmann::json` use [`JsonValue`]; C++'s `{}` default is a null value.
-    pub fn new(path: &str, getter: impl Fn(&S) -> T + 'static, setter: impl Fn(&mut S, T) + 'static, default: T) -> Self {
-        Self { path: path.to_string(), read_only: false, default, getter: Box::new(getter), setter: Box::new(setter) }
+    pub fn new(
+        path: &str,
+        getter: impl Fn(&S) -> T + 'static,
+        setter: impl Fn(&mut S, T) + 'static,
+        default: T,
+    ) -> Self {
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            default,
+            getter: Box::new(getter),
+            setter: Box::new(setter),
+        }
     }
 }
 
@@ -357,7 +448,12 @@ impl<S, T: ParamValue> Param<S> for ParamLambda<S, T> {
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, _reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        _reset: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -380,7 +476,12 @@ impl<S, T: ParamValue> Param<S> for ParamLambda<S, T> {
         (self.setter)(target, self.default.clone());
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(v) = T::get_setting(settings, &self.path)? {
             return Ok(v.same(&(self.getter)(target)));
         }
@@ -400,7 +501,9 @@ impl<S, T: ParamValue> Param<S> for ParamLambda<S, T> {
         let default_json = self.default.to_json();
 
         if std::any::TypeId::of::<T>() == std::any::TypeId::of::<JsonValue>() {
-            return Ok(json_empty(&current_json) && (default_json.is_null() || json_empty(&default_json)));
+            return Ok(
+                json_empty(&current_json) && (default_json.is_null() || json_empty(&default_json))
+            );
         }
 
         Ok(false)
@@ -459,12 +562,33 @@ pub struct ParamScaled<S, T: ScaledValue> {
 impl<S, T: ScaledValue> ParamScaled<S, T> {
     /// `PARAM_SCALED( path, ptr, default, scale = 1.0 )`.
     pub fn new(path: &str, field: Field<S, T>, default: T, scale: f64) -> Self {
-        Self { path: path.to_string(), read_only: false, field, default, min_max: None, inv_scale: 1.0 / scale }
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            default,
+            min_max: None,
+            inv_scale: 1.0 / scale,
+        }
     }
 
     /// `PARAM_SCALED( path, ptr, default, min, max, scale = 1.0 )`.
-    pub fn with_range(path: &str, field: Field<S, T>, default: T, min: T, max: T, scale: f64) -> Self {
-        Self { path: path.to_string(), read_only: false, field, default, min_max: Some((min, max)), inv_scale: 1.0 / scale }
+    pub fn with_range(
+        path: &str,
+        field: Field<S, T>,
+        default: T,
+        min: T,
+        max: T,
+        scale: f64,
+    ) -> Self {
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            default,
+            min_max: Some((min, max)),
+            inv_scale: 1.0 / scale,
+        }
     }
 }
 
@@ -473,7 +597,12 @@ impl<S, T: ScaledValue> Param<S> for ParamScaled<S, T> {
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -499,7 +628,10 @@ impl<S, T: ScaledValue> Param<S> for ParamScaled<S, T> {
     }
 
     fn store(&self, settings: &mut JsonSettingsInternals, target: &S) -> Result<(), JsonError> {
-        settings.set(&self.path, &((self.field.get)(target).to_f64() / self.inv_scale))
+        settings.set(
+            &self.path,
+            &((self.field.get)(target).to_f64() / self.inv_scale),
+        )
     }
 
     fn set_default(&self, target: &mut S) {
@@ -507,7 +639,12 @@ impl<S, T: ScaledValue> Param<S> for ParamScaled<S, T> {
     }
 
     #[allow(clippy::float_cmp)]
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(v) = settings.get::<f64>(&self.path)? {
             return Ok(v == (self.field.get)(target).to_f64() / self.inv_scale);
         }
@@ -529,7 +666,13 @@ pub struct ParamList<S, T: FromJson + ToJson + Clone + PartialEq + 'static> {
 impl<S, T: FromJson + ToJson + Clone + PartialEq + 'static> ParamList<S, T> {
     /// `PARAM_LIST( path, ptr, default, resetIfEmpty = false )`.
     pub fn new(path: &str, field: Field<S, Vec<T>>, default: Vec<T>, reset_if_empty: bool) -> Self {
-        Self { path: path.to_string(), field, default, reset_if_empty, path_format: false }
+        Self {
+            path: path.to_string(),
+            field,
+            default,
+            reset_if_empty,
+            path_format: false,
+        }
     }
 
     fn read(&self, js: &Value) -> Result<Vec<T>, JsonError> {
@@ -548,7 +691,13 @@ impl<S, T: FromJson + ToJson + Clone + PartialEq + 'static> ParamList<S, T> {
 impl<S> ParamList<S, String> {
     /// Port of `PARAM_PATH_LIST`: a `PARAM_LIST<wxString>` storing paths with forward slashes.
     pub fn path_list(path: &str, field: Field<S, Vec<String>>, default: Vec<String>) -> Self {
-        Self { path: path.to_string(), field, default, reset_if_empty: false, path_format: true }
+        Self {
+            path: path.to_string(),
+            field,
+            default,
+            reset_if_empty: false,
+            path_format: true,
+        }
     }
 }
 
@@ -557,7 +706,12 @@ impl<S, T: FromJson + ToJson + Clone + PartialEq + 'static> Param<S> for ParamLi
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         if let Some(js) = settings.get_json(&self.path)? {
             let val = self.read(&js)?;
 
@@ -593,12 +747,17 @@ impl<S, T: FromJson + ToJson + Clone + PartialEq + 'static> Param<S> for ParamLi
         *(self.field.get_mut)(target) = self.default.clone();
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
-        if let Some(js) = settings.get_json(&self.path)? {
-            if let Value::Array(items) = &js {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
+        if let Some(Value::Array(items)) = settings.get_json(&self.path)? {
+            {
                 let mut val = Vec::new();
 
-                for el in items {
+                for el in &items {
                     if self.path_format {
                         // PARAM_PATH_LIST::MatchesFile: no try, a non-string throws.
                         val.push(T::from_json(el)?);
@@ -628,7 +787,12 @@ pub struct ParamSet<S, T: FromJson + ToJson + Ord + Clone + 'static> {
 impl<S, T: FromJson + ToJson + Ord + Clone + 'static> ParamSet<S, T> {
     /// `PARAM_SET( path, ptr, default, readOnly = false )`.
     pub fn new(path: &str, field: Field<S, BTreeSet<T>>, default: BTreeSet<T>) -> Self {
-        Self { path: path.to_string(), read_only: false, field, default }
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            default,
+        }
     }
 
     fn read(js: &Value) -> Result<BTreeSet<T>, JsonError> {
@@ -649,7 +813,12 @@ impl<S, T: FromJson + ToJson + Ord + Clone + 'static> Param<S> for ParamSet<S, T
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -664,7 +833,10 @@ impl<S, T: FromJson + ToJson + Ord + Clone + 'static> Param<S> for ParamSet<S, T
     }
 
     fn store(&self, settings: &mut JsonSettingsInternals, target: &S) -> Result<(), JsonError> {
-        let items: Vec<Value> = (self.field.get)(target).iter().map(ToJson::to_json).collect();
+        let items: Vec<Value> = (self.field.get)(target)
+            .iter()
+            .map(ToJson::to_json)
+            .collect();
         settings.set(&self.path, &Value::Array(items))
     }
 
@@ -672,7 +844,12 @@ impl<S, T: FromJson + ToJson + Ord + Clone + 'static> Param<S> for ParamSet<S, T
         *(self.field.get_mut)(target) = self.default.clone();
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(js) = settings.get_json(&self.path)? {
             if js.is_array() {
                 return Ok(Self::read(&js)? == *(self.field.get)(target));
@@ -698,8 +875,18 @@ pub struct ParamMap<S, V: FromJson + ToJson + Clone + PartialEq + 'static> {
 
 impl<S, V: FromJson + ToJson + Clone + PartialEq + 'static> ParamMap<S, V> {
     /// `PARAM_MAP( path, ptr, default, readOnly = false )`.
-    pub fn new(path: &str, field: Field<S, BTreeMap<String, V>>, default: BTreeMap<String, V>) -> Self {
-        Self { path: path.to_string(), read_only: false, field, default, clear_unknown_keys: true }
+    pub fn new(
+        path: &str,
+        field: Field<S, BTreeMap<String, V>>,
+        default: BTreeMap<String, V>,
+    ) -> Self {
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            default,
+            clear_unknown_keys: true,
+        }
     }
 
     fn read_into(js: &Value, out: &mut BTreeMap<String, V>) -> Result<(), JsonError> {
@@ -725,7 +912,13 @@ impl<S> ParamMap<S, String> {
         default: BTreeMap<String, String>,
         array_behavior: bool,
     ) -> Self {
-        Self { path: path.to_string(), read_only: false, field, default, clear_unknown_keys: array_behavior }
+        Self {
+            path: path.to_string(),
+            read_only: false,
+            field,
+            default,
+            clear_unknown_keys: array_behavior,
+        }
     }
 }
 
@@ -734,7 +927,12 @@ impl<S, V: FromJson + ToJson + Clone + PartialEq + 'static> Param<S> for ParamMa
         &self.path
     }
 
-    fn load(&self, settings: &JsonSettingsInternals, target: &mut S, reset: bool) -> Result<(), JsonError> {
+    fn load(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &mut S,
+        reset: bool,
+    ) -> Result<(), JsonError> {
         if self.read_only {
             return Ok(());
         }
@@ -753,8 +951,10 @@ impl<S, V: FromJson + ToJson + Clone + PartialEq + 'static> Param<S> for ParamMa
     }
 
     fn store(&self, settings: &mut JsonSettingsInternals, target: &S) -> Result<(), JsonError> {
-        let obj: crate::json::Map<String, Value> =
-            (self.field.get)(target).iter().map(|(k, v)| (k.clone(), v.to_json())).collect();
+        let obj: crate::json::Map<String, Value> = (self.field.get)(target)
+            .iter()
+            .map(|(k, v)| (k.clone(), v.to_json()))
+            .collect();
         settings.set(&self.path, &Value::Object(obj))
     }
 
@@ -762,7 +962,12 @@ impl<S, V: FromJson + ToJson + Clone + PartialEq + 'static> Param<S> for ParamMa
         *(self.field.get_mut)(target) = self.default.clone();
     }
 
-    fn matches_file(&self, settings: &JsonSettingsInternals, target: &S, resets: bool) -> Result<bool, JsonError> {
+    fn matches_file(
+        &self,
+        settings: &JsonSettingsInternals,
+        target: &S,
+        resets: bool,
+    ) -> Result<bool, JsonError> {
         if let Some(js) = settings.get_json(&self.path)? {
             if let Value::Object(obj) = &js {
                 if (self.field.get)(target).len() != obj.len() {

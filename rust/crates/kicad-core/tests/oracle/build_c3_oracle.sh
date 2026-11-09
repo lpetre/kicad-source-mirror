@@ -4,13 +4,12 @@
 #
 #   json_oracle.cpp     bundled nlohmann/json 3.11.3     -> tests/golden/c3_json.txt
 #   pattern_oracle.cpp  libkicommon.so (eda_pattern_match.cpp, wxRegEx/PCRE2, common.cpp,
-#                       json_settings.cpp, parameters.h)  -> tests/golden/c3_pattern.txt,
-#                                                           tests/golden/c3_settings.txt
+#                       json_settings.cpp, parameters.h)  -> tests/golden/c3_pattern.txt
 #
 #   tests/oracle/build_c3_oracle.sh [outdir] [regen]
 #
 # Replayed by tests/test_c3_json_oracle.rs and tests/test_c3_pattern_oracle.rs.  For debugging,
-# "<outdir>/json_oracle <kicad root> <list> full" prints every line.
+# "<outdir>/json_oracle <kicad root> <list> full" prints every line (same for pattern_oracle).
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)

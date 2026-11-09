@@ -76,3 +76,42 @@ ninja -C /home/user/kicad-oracle/build kicad-cli pcbnew_kiface
 Build dependencies come from the Ubuntu 24.04 archive (wxWidgets 3.2, OCCT, ngspice, boost,
 protobuf, nng, libgit2, ...); see `/home/user/kicad-oracle/logs/` for the exact configure and
 apt logs of the build used here.
+
+## pcb-dump (board data model below the CLI level)
+
+`/home/user/kicad-oracle/bin/pcb-dump` is a C++ tool linked against the real pcbnew code of the
+reference build. It loads boards headlessly (QA harness initialisation) and prints the board data
+model, one `SECTION|KEY|FIELD=VALUE` line per value: item basics, bounding boxes, track/via/pad
+geometry and padstacks, `GetEffectiveShape` per layer, `FlashLayer`, effective polygons,
+`TransformShapeToPolygon` for fixed (clearance, maxError, errorLoc) combos, shapes, text
+attributes and stroke segments, dimensions, zones and fills, footprints (transform, courtyards,
+hulls), board settings/nets/netclasses/stackup/outline, the writer's save order, and
+default-constructed values of every item and settings class. Format specification:
+[`PCB_DUMP_FORMAT.md`](PCB_DUMP_FORMAT.md); source, build details and the exact load path:
+`rust/tools/pcb-dump/` (`README.md` there).
+
+Build (about 2 minutes, `nice -n 15`, 2 jobs; objects in `/home/user/kicad-oracle/build-pcb-dump`):
+
+```
+rust/tools/pcb-dump/build.sh
+```
+
+Run (**copy the inputs to a scratch directory first**, as for kicad-cli):
+
+```
+pcb-dump defaults [--hash]                              default-constructed classes
+pcb-dump board [--sections LIST] [--hash] FILE...       QA KI_TEST::LoadBoard path (default)
+pcb-dump board --no-init FILE                           parser only
+pcb-dump board --loader FILE                            kicad-cli path (BOARD_LOADER::Load)
+```
+
+* `--hash` replaces each value by its 64-bit FNV-1a hash (`#<16 hex>`), keeping goldens small; rerun
+  without it to see the values of a mismatching line. Commit hashed goldens of *small* boards only:
+  a large demo board produces hundreds of MB even hashed.
+* Compare as a map keyed by `SECTION|KEY|FIELD` so that fields not yet ported can be skipped;
+  `error|` lines mean "no value".
+* Keys are UUIDs when unique and present in the file, else `#<ordinal>` in the documented walk
+  order; Rust must walk the board the same way.
+* Output is deterministic (verified over the corpus: two runs, identical SHA-256 per file).
+* To extend it with a new field or section see `rust/tools/pcb-dump/README.md` ("Extending");
+  rebuild with `build.sh` and regenerate the affected goldens.

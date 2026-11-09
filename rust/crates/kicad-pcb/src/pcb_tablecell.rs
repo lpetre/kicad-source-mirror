@@ -20,11 +20,17 @@
 //! Placeholder written by M0a; the type package M0c fills in the fields, `Default` and the
 //! delegation shims (`board-model.md` 6.2, 16).
 
+use crate::ctx::BoardCtx;
+use crate::eda_shape::EdaShape;
+use crate::eda_text::EdaText;
+use crate::ids::ItemId;
 use crate::item::BoardItemBase;
 use crate::item::ConnectedItemBase;
 use crate::pcb_textbox::PcbTextbox;
 use crate::traits::BoardConnectedItem;
 use crate::traits::BoardItemMut;
+use crate::traits::EdaShapeItem;
+use crate::traits::EdaTextItem;
 use crate::traits::{BoardItem, Invalidate};
 use kicad_core::KicadT;
 
@@ -67,8 +73,49 @@ impl BoardItem for PcbTablecell {
     fn connected_mut(&mut self) -> Option<&mut ConnectedItemBase> {
         Some(&mut self.textbox.shape.base)
     }
+
+    fn parent_group(&self, ctx: &BoardCtx<'_>) -> Option<ItemId> {
+        PcbTablecell::parent_group(self, ctx)
+    }
 }
 
 impl BoardConnectedItem for PcbTablecell {}
 
 impl BoardItemMut for PcbTablecell {}
+
+/// A cell is its own `EDA_TEXT` host (PCB_TABLECELL overrides `GetShownText`), so that
+/// `ItemRef::as_eda_text()` and the generic `eda_text` functions dispatch to the cell's
+/// overrides and not to the embedded `PcbTextbox`. M0c adds a shim for every `EDA_TEXT`
+/// virtual that PCB_TABLECELL or PCB_TEXTBOX overrides, each forwarding to an inherent
+/// `PcbTablecell` method.
+impl EdaTextItem for PcbTablecell {
+    fn eda_text(&self) -> &EdaText {
+        &self.textbox.text
+    }
+
+    fn eda_text_mut(&mut self) -> &mut EdaText {
+        &mut self.textbox.text
+    }
+}
+
+/// A cell is its own `EDA_SHAPE` host (PCB_TABLECELL overrides `IsFilledForHitTesting`);
+/// M0c adds the shims for the `EDA_SHAPE` virtuals that PCB_TABLECELL, PCB_TEXTBOX or
+/// PCB_SHAPE override.
+impl EdaShapeItem for PcbTablecell {
+    fn eda_shape(&self) -> &EdaShape {
+        &self.textbox.shape.shape
+    }
+
+    fn eda_shape_mut(&mut self) -> &mut EdaShape {
+        &mut self.textbox.shape.shape
+    }
+}
+
+impl PcbTablecell {
+    /// `PCB_TABLECELL::GetParentGroup()`: the group of the parent table (a cell is never a
+    /// group member itself).
+    pub fn parent_group(&self, ctx: &BoardCtx<'_>) -> Option<ItemId> {
+        let table = ctx.board.get(self.textbox.shape.base.item.parent.item()?)?;
+        table.as_dyn().parent_group(ctx)
+    }
+}

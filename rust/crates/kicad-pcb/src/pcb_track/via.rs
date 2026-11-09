@@ -21,13 +21,35 @@
 //! `PCB_TRACK` bodies as they run for a via. Via shapes are in `shapes.rs`.
 
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{Lset, PcbLayerId};
+use kicad_core::{Lset, MinOptMax, PcbLayerId};
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, Vector2I};
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::pcb_track::{PcbVia, Viatype};
 
 impl PcbVia {
+    /// `PCB_VIA::GetWidth()` (the override without a layer argument): `wxCHECK_MSG( false, .. )`
+    /// answering with the `PADSTACK::ALL_LAYERS` size. Use `width( layer )`.
+    pub fn width_no_layer(&self) -> i32 {
+        crate::port_pending!("PCB_VIA::GetWidth()")
+    }
+
+    /// `PCB_VIA::SetWidth( aWidth )` (the override without a layer argument): sets the
+    /// `PADSTACK::ALL_LAYERS` size and asserts. Use `set_width( layer, width )`.
+    pub fn set_width_no_layer(&mut self, width: i32) {
+        crate::port_pending!("PCB_VIA::SetWidth( aWidth )", width)
+    }
+
+    /// `PCB_VIA::GetWidthConstraint( aSource )`: `VIA_DIAMETER_CONSTRAINT` merged over the
+    /// via's layer range.
+    pub fn width_constraint(
+        &self,
+        ctx: &BoardCtx<'_>,
+        want_source: bool,
+    ) -> (MinOptMax<i32>, Option<String>) {
+        crate::port_pending!("PCB_VIA::GetWidthConstraint", ctx, want_source)
+    }
+
     /// `PCB_VIA::GetPosition()`: `m_Start`.
     pub fn position(&self, _ctx: &BoardCtx<'_>) -> Vector2I {
         self.track.start

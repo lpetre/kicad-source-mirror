@@ -211,26 +211,49 @@ void DumpFootprint( BOARD_ITEM* aItem );
 void DumpMisc( BOARD_ITEM* aItem );
 
 
+#include <csetjmp>
 #include <stdexcept>
 #include <ki_exception.h>
+
+/// Stack of recovery points for SIGSEGV/SIGFPE/SIGBUS inside Guard() (see InstallCrashGuard).
+extern std::vector<sigjmp_buf*> g_crashJumps;
+void InstallCrashGuard();
 
 template <typename F>
 void Guard( const std::string& aWhat, F&& aFn )
 {
+    sigjmp_buf env;
+
+    if( sigsetjmp( env, 1 ) != 0 )
+    {
+        // A crash inside aFn: report it and carry on.  Destructors of the aborted frames do not
+        // run (leaks are acceptable for a dump tool).
+        g_crashJumps.pop_back();
+        g_out.Error( g_out.m_section, g_out.m_key, aWhat + ": crashed (signal)" );
+        return;
+    }
+
+    g_crashJumps.push_back( &env );
+
     try
     {
         aFn();
+        g_crashJumps.pop_back();
+        return;
     }
     catch( const IO_ERROR& e )
     {
+        g_crashJumps.pop_back();
         g_out.Error( g_out.m_section, g_out.m_key, aWhat + ": " + e.What().ToStdString() );
     }
     catch( const std::exception& e )
     {
+        g_crashJumps.pop_back();
         g_out.Error( g_out.m_section, g_out.m_key, aWhat + ": " + e.what() );
     }
     catch( ... )
     {
+        g_crashJumps.pop_back();
         g_out.Error( g_out.m_section, g_out.m_key, aWhat + ": unknown exception" );
     }
 }

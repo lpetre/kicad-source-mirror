@@ -20,8 +20,10 @@
 //!
 //! Part of the Rust port of KiCad core features; see `rust/PORTING.md`. The architecture is
 //! `rust/docs/design/board-model.md`, the data model `rust/docs/design/board-model-types.md`.
-//! The module tree below is complete and frozen after work package M0 (`board-model.md` 16):
-//! packages add code to their modules, not modules to this file.
+//! The module tree below is complete and this file is frozen since the M0a review
+//! (`board-model.md` 16): packages add code to their modules, not modules or re-exports to
+//! this file. Also frozen: `items_macro.rs`, `ids.rs`, `arena.rs`, `cache.rs`, `item.rs`,
+//! `traits.rs`, `ctx.rs`, `item_ref.rs`, `pending.rs`, `test_support.rs` and `Cargo.toml`.
 
 // A trait shim whose inherent method is missing recurses into itself; make that a build error
 // (board-model.md 6.2).
@@ -102,6 +104,8 @@ pub mod project;
 
 pub use board::{AddMode, Board, RemoveMode};
 pub use ctx::{BoardCtx, ConnectivityQuery, LayerEnv, MutEnv, ParentFrame, RuleResolver};
+pub use eda_shape::EdaShapeExt;
+pub use eda_text::EdaTextExt;
 pub use ids::{ArenaItem, Id, ItemId, ItemKind, NetCode};
 pub use item::{BoardItemBase, ConnectedItemBase, DetachedCopy, ParentRef};
 pub use item_ref::{AnyItem, AnyItemMut, ItemRef, OwnedItem};

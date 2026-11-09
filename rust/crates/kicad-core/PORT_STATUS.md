@@ -462,3 +462,153 @@ reference to a surrogate code point (deviation C2-1).
   the map are not ported.
 - `wxstr::strtod` hexadecimal floats accumulate the mantissa in a double (exact up to 13 hex
   digits); decimal input is correctly rounded.
+
+# Work package C3: JSON, pattern matching, settings parameters, small helpers
+
+## C++ to Rust map (C3)
+
+| C++ | Rust | State |
+|---|---|---|
+| nlohmann 3.11.3 `parse( ..., ALLOW_EXCEPTIONS, IGNORE_COMMENTS )` (lexer + parser: BOM, `//` `/* */`, strict UTF-8, escapes and surrogates, number classification, duplicate keys) | `json::parse_bytes`, `json::parse` | ported |
+| `basic_json::dump( indent )`, `operator<<` with `std::setw`, `serializer::dump_escaped` (`ensure_ascii = false`), `dump_float` | `json::dump`, `json::dump_stream`, `json::dump_float` | ported |
+| `detail::to_chars` (Grisu2) + `format_buffer` | `json/to_chars.rs` (`json::to_chars`) | ported (from the research prototype) |
+| `nlohmann::json` vs `ordered_json` | `json::ObjectOrder` (`Sorted` = byte order of keys, `Insertion`), `json::sort_objects` | ported |
+| `json_pointer` (`split`, `contains`, `get_checked`, `get_unchecked`, `array_index`) | `json::JsonPointer` | ported |
+| `from_json` for bool / int / unsigned / int64 / uint64 / double / float / string / vector / map (`get<T>()`) and `to_json` | `json::FromJson`, `json::ToJson` | ported |
+| `operator==`, `update( j, merge_objects )`, `type_name`, `clear` | `json::json_eq`, `json::update`, `json::type_name`, `json_settings::clear_value` | ported |
+| `JSON_SETTINGS_INTERNALS` (`PointerFromString`, `Get`, `At`, `operator[]`, `m_original`) | `json_settings::JsonSettingsInternals` | ported |
+| `JSON_SETTINGS::Load`, `LoadFromBuffer`, `parseAndMigrate`, `Migrate`, `registerMigration`, `Store`, `ResetToDefaults`, `formatFileContents`, `FormatAsString`, `GetJson`, `Get<T>`, `Get<wxString>`, `Set<T>`, `Contains`, `SetIfPresent` (4), `fetchOrDefault` | `json_settings::JsonSettings`, `json_settings::set_if_present` | ported |
+| `NESTED_SETTINGS::LoadFromFile`, `SaveToFile` | `json_settings::NestedSettings::{load_from_parent, save_to_parent}` | ported (in memory) |
+| `PARAM_BASE`, `PARAM<T>`, `PARAM_PATH`, `PARAM_ENUM`, `PARAM_LAMBDA`, `PARAM_SCALED`, `PARAM_LIST`, `PARAM_PATH_LIST`, `PARAM_SET`, `PARAM_MAP`, `PARAM_WXSTRING_MAP` | `settings_parameters::{Param, ParamT, ParamPath, ParamEnum, ParamLambda, ParamScaled, ParamList (+ path_list), ParamSet, ParamMap (+ wx_string_map)}`, `settings_field!` | ported |
+| `JSON_SETTINGS::LoadFromFile` / `SaveToFile` (disk), `MigrateFromLegacy`, `fromLegacy*`, settings manager, `GetFileHistories`, `PARAM_LAYER_PRESET` & other board/UI specific params | - | skipped: file I/O and wxConfig are out of scope; board-specific parameters belong to the settings port |
+| `eda_pattern_match.h/.cpp`: `SEARCH_TERM`, `FIND_RESULT`, `EDA_PATTERN_MATCH_SUBSTR`, `_REGEX`, `_REGEX_ANCHORED`, `_WILDCARD`, `_WILDCARD_ANCHORED`, `_RELATIONAL`, `EDA_COMBINED_MATCHER` (all contexts, `Find` x2, `StartsWith`, `ScoreTerms`) | `eda_pattern_match` | ported |
+| `wxRegEx::Compile( p, wxRE_ADVANCED )` / `Matches` / `GetMatch` (wxWidgets 3.2.4 `regex.cpp`: `ConvertMetasyntax`, `ConvertWordBoundaries`, PCRE2 10.42 with `UTF | ALT_BSUX | DOTALL`) | `eda_pattern_match::pcre` (`translate`, `WxRegex`) on `regress` 0.12 | ported (see deviations) |
+| `common/common.cpp`: `ExpandTextVars( src, resolver, ctx, depth )`, `ResolveTextVars`, `FinalizeTextVarExpansion`, `NormalizeFilePathForTextVars`, `enum RESOLUTION_CONTEXT` | `text_vars` | ported (`EXPRESSION_EVALUATOR` is a callback) |
+| `ExpandTextVars( src, PROJECT*, ctx )`, `KIwxExpandEnvVars`, `ExpandEnvVarSubstitutions` | - | skipped: need PROJECT / environment (later packages) |
+| `include/units_provider.h` | `units_provider::UnitsProvider` | ported (no `ORIGIN_TRANSFORMS`; angles as degrees) |
+| `include/case_insensitive_map.h` (`CASE_INSENSITIVE_COMPARER`, `CASE_INSENSITIVE_MAP`) | `case_insensitive_map` | ported |
+
+## Design notes (C3)
+
+- `serde_json` 1.0.154 with `preserve_order` + `float_roundtrip` is the value model only; the
+  parser and writer are hand ports of nlohmann's (never `serde_json::from_str` /
+  `to_string_pretty`). A `Value` keeps insertion order; `ObjectOrder::Sorted` sorts keys by
+  bytes when dumping (and after parsing), which is `std::map<std::string, json>` order.
+- C++ parameters hold member pointers; the port's parameters hold accessor fns
+  (`settings_field!( Struct, member )`) and every operation takes the settings struct. A
+  parameter `load` returns `Err` exactly where the C++ lets a nlohmann exception escape, and
+  `JsonSettings::load` skips that parameter like the `catch( ... )` in `JSON_SETTINGS::Load`
+  (for example a non-string value of a `PARAM<wxString>` keeps the member unchanged, while a
+  non-number value of a `PARAM<int>` resets it to the default when `m_resetParamsIfMissing`).
+- The implicit `PARAM<int>( "meta.version", &m_schemaVersion, ..., readOnly )` of the C++
+  constructor is handled inside `JsonSettings::store`.
+- Net class wildcards (`EDA_PATTERN_MATCH_WILDCARD[_ANCHORED]`) are matched by a hand port of the
+  regex the C++ builds (greedy `.*`, leftmost start, DOTALL, `$` before a final newline), with a
+  failure memo; the regex path is used only for patterns containing NUL.
+- Regex patterns: the wx rewrites are ported literally, then a PCRE2 10.42 parser emits an
+  ECMAScript pattern for `regress` (flags `u`, plus `i` when the whole pattern is caseless).
+  Reproduced explicitly: ASCII `\d \w \s` and POSIX classes, `\h \v \R \N \C`, `$` / `\Z`
+  before a final newline, multiline `^ $`, `.` with and without DOTALL, `ALT_BSUX` (`\x41`,
+  `A`; `\x`, `\u`, `\U` alone are letters), octal vs backreference numbering, `\o{}`,
+  `\N{U+..}`, `\cX`, `\Q..\E`, `(?#..)`, inline options `i m n s x U ^` (scoped and unscoped),
+  wx's leading `(?b e q m n p w c t s i x)` letters and `***:` / `***=`, `\m \M \y \Y`,
+  `[[:<:]] [[:>:]]`, named groups (three syntaxes) and `\k \g (?P=)` references, references to
+  groups that are not set yet (always fail), atomic groups and possessive quantifiers
+  (`(?=(X))\N` emulation), fixed-length lookbehind check, callouts (ignored), `(*UTF)` and
+  harmless start-of-pattern settings, `(*FAIL)`, quantifier limits (65535, order), `{,n}`
+  literal (10.42), and every compile error class the oracle exercises.
+- `RELATIONAL` mirrors two C++ quirks: the reported position adds the matched token's offset to
+  `wxStringTokenizer::GetPosition()` *before* that token (so leading delimiters are not
+  counted), and a failed `SetPattern` keeps the key / relation / value parsed so far.
+
+## Ported C++ tests (C3)
+
+- `qa/tests/common/test_expand_text_vars.cpp`: suites `ExpandTextVarsTests` (14 cases) and
+  `NormalizeFilePathForTextVarsTests` (4) in `tests/test_c3_qa.rs`. Not ported:
+  `JobResolveOutputPath` (jobs), the environment-variable suites, and
+  `ParallelResolveTextVarsWithMathExpressions` (needs `EXPRESSION_EVALUATOR`).
+- `qa/tests/common/test_nested_settings.cpp`: `ReleaseDoesNotMarkParentModified`,
+  `ExplicitSaveDetectsModifications`, `ReleaseFlushesDataToParent`,
+  `AbsentDefaultIsModifiedWhenNotResetIfMissing`, `MigrationFlushesToParent`. Not ported: the
+  three on-disk cases (`SaveToFileSkipsWriteWhenContentsMatch`,
+  `ReleasedNestedChangePersistsToDisk`, `DefaultFillDoesNotChurnExistingFile`).
+- `qa/tests/common/test_lib_tree_model_adapter.cpp`:
+  `SingleLetterSearchMatchesDeviceNameOverKeywordCollision`, reduced to the `ScoreTerms`
+  exact-match tier (the LIB_TREE node sorting is not part of this crate).
+- Additional unit tests: JSON dump/parse rules, net class facts of `docs/analysis/settings.md`
+  4.6, relational matcher, settings round trip, `UnitsProvider`, `CaseInsensitiveMap`.
+
+## Differential oracle (C3)
+
+Built by `tests/oracle/build_c3_oracle.sh` (`regen` rewrites the goldens).
+
+- `tests/oracle/json_oracle.cpp` (bundled nlohmann 3.11.3) -> `tests/golden/c3_json.txt`
+  (17 KB), replayed by `tests/test_c3_json_oracle.rs`: all 413 `.kicad_pro` / `.kicad_prl` /
+  `.json` / `.gbrjob` files of `qa/data` and `demos` (sorted `dump(2)`, `dump()`, `setw(4)`,
+  `setw(0)`, `dump(0)`; ordered `dump(2)`, `dump()`), 200 000 pseudo-random doubles, 50 000
+  number texts (including malformed ones), 20 000 random documents (BOMs, comments, escapes,
+  surrogates, invalid UTF-8, truncation, garbage; 5 843 of them invalid), 50 x 12 `get<T>()`
+  conversions (including out-of-range casts), 37 dotted paths (`contains`, `at`, `operator[]`),
+  `==` and `update()`. **All 7 sections identical.**
+- `tests/oracle/pattern_oracle.cpp` (links `libkicommon.so`) -> `tests/golden/c3_pattern.txt`
+  (39 KB), replayed by `tests/test_c3_pattern_oracle.rs`: 2 194 patterns (295 hand-written
+  probes incl. every PCRE2 construct above, plus all 1 899 distinct net class patterns of the
+  `.kicad_pro` files of `qa/data` and `demos`) x 181 subjects through all seven matcher kinds
+  (15 358 lines) and `EDA_COMBINED_MATCHER` in all five contexts with `Find`, `StartsWith` and
+  `ScoreTerms` (10 970 lines); 22 settings documents x 2 reset modes through a 24-parameter
+  `JSON_SETTINGS` (every PARAM class, migrations, future / missing / wrong-typed versions,
+  wrong types, nulls, out of range values, comments, BOM, non-object roots;
+  values after load, `Store()`, `formatFileContents()`, `FormatAsString()`); 9 parent
+  documents x 2 modes through `NESTED_SETTINGS` (load, migration incl. a throwing migrator,
+  two `SaveToFile` rounds); 3 770 random texts through `ExpandTextVars` (8 contexts),
+  `FinalizeTextVarExpansion`, `ResolveTextVars` and `NormalizeFilePathForTextVars`.
+  **All sections identical**, except the four patterns listed in deviation C3-1, which the
+  test checks separately (`deviations` section: the port must reject exactly those).
+
+## Deviations (C3)
+
+- C3-1: regex constructs PCRE2 accepts but the port rejects (the matcher is then not created,
+  as for an invalid pattern): `\K`, `\X`, `(?R)` / `(?1)` / `(?&name)` / `(?P>name)` / `\g<..>`
+  subroutine calls, conditionals `(?(..)..)`, `(?|..)` with capture groups, `(?J)`, `(?xx)`,
+  `(?b)` (wx basic syntax), backtracking verbs other than `(*FAIL)`, start-of-pattern newline
+  conventions other than LF, `(*UCP)`, `(*NOTEMPTY)`, quantified lookaround assertions,
+  backreferences inside lookbehind, a backreference to a group that is still open inside a
+  repetition, PCRE2 special properties `\p{Xan}` etc., caseless properties / large caseless
+  ranges / caseless backreferences in patterns that also have case-sensitive parts. The oracle
+  probes `\K`, `\X`, `(*ANY)a`, `(?R)`; none of them occurs in any project file.
+- C3-2: a backreference to a group that is closed but did not participate (`(a)?\1`,
+  `(a)|\1`) matches empty in ECMAScript and fails in PCRE2.
+- C3-3: case-insensitive matching uses ECMAScript (`u` + `i`) simple case folding, or for
+  mixed patterns an explicit variant list (simple upper/lower mapping plus the common
+  multi-member orbits such as `k K U+212A`, `s S U+017F`); with `i`, `\w`, `\b` and `[a-z]`
+  also match U+017F and U+212A (PCRE2: only through literal letters).
+- C3-4: PCRE2's match limits (backtracking / heap) are not reproduced; a pathological pattern
+  that makes PCRE2 give up (no match) may match or take long with `regress`.
+- C3-5: nlohmann distinguishes a non-negative `number_integer` (created from a C++ `int`) from
+  `number_unsigned`; `serde_json` cannot (`-0` parses to an integer 0 that the port classifies
+  as unsigned). Output and comparisons are identical; only `is_number_unsigned()` /
+  `SetIfPresent( unsigned& )` differ for values KiCad itself stored as `int`. The oracle prints
+  integer kinds without that distinction.
+- C3-6: parse error messages: the id (101) and position are reported, the message text is not
+  nlohmann's verbatim (KiCad only logs id and byte). nlohmann's `out_of_range.406` (number
+  overflow, which escapes KiCad's `parse_error` handler) is treated as a parse error by
+  `JsonSettings::load_from_buffer`. Nesting deeper than 4 096 levels is rejected (nlohmann has
+  no limit) so that dropping a document cannot overflow the stack.
+- C3-7: a `std::exception` thrown by a `JSON_SETTINGS` migrator escapes `parseAndMigrate` in C++
+  (only `parse_error` is caught); the port treats it as a failed migration. (In
+  `NESTED_SETTINGS` both behave the same: the chain stops, modifications are kept.)
+- C3-8: `NaN` / infinity stored with `Set<double>` become `null` immediately (nlohmann keeps the
+  double and dumps `null`); the dump is identical.
+- C3-9: `ExpandTextVars` / `ResolveTextVars` take `m_ResolveTextRecursionDepth` (default 6) and
+  the math evaluator as `TextVarOptions`; without an evaluator `@{...}` is left unevaluated.
+
+## Known gaps (C3)
+
+- No file I/O for settings (`LoadFromFile`, `SaveToFile`, file-exists / modified-time logic,
+  settings manager, legacy wxConfig migration).
+- `EXPRESSION_EVALUATOR` (`common/text_eval/`) is not ported; `PROJECT`-based text variable
+  resolvers come with the project / board ports.
+- `UNITS_PROVIDER::GetOriginTransforms` is not ported.
+- `PARAM_LIST<T>` / `PARAM_MAP<T>` work for every `FromJson` + `ToJson` type; the KiCad structs
+  with their own `to_json` / `from_json` (`COLOR4D`, `GRID`, `BOM_*`, `JOBSET_*`, ...) need those
+  conversions in their own ports.

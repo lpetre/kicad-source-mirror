@@ -23,6 +23,7 @@
 //!   settings manager and file I/O),
 //! - the pattern matching part of `qa/tests/common/test_lib_tree_model_adapter.cpp`
 //!   (`SingleLetterSearchMatchesDeviceNameOverKeywordCollision`, reduced to `ScoreTerms`),
+//!
 //! plus unit tests of the JSON helpers and the net class matcher facts of
 //! `rust/docs/analysis/settings.md` section 4.6.
 
@@ -96,8 +97,14 @@ fn regular_then_escaped_variable() {
 #[test]
 fn escaped_inside_math_expression() {
     let r = expand("@{\\${X}+${Y}}", Internal);
-    assert!(r.contains("<<<ESC_DOLLAR:"), "Expected escape marker in result");
-    assert!(r.contains("+2"), "Expected '+2' (from ${{Y}} expansion) in result");
+    assert!(
+        r.contains("<<<ESC_DOLLAR:"),
+        "Expected escape marker in result"
+    );
+    assert!(
+        r.contains("+2"),
+        "Expected '+2' (from ${{Y}} expansion) in result"
+    );
     assert_eq!(r, "@{<<<ESC_DOLLAR:X}+2}");
 }
 
@@ -109,7 +116,10 @@ fn escaped_inside_variable_reference() {
 #[test]
 fn multiple_escaped_in_math_expression() {
     let r = expand("@{\\${A}+\\${B}+${Y}}", Internal);
-    assert!(r.contains("+2"), "Expected '+2' (from ${{Y}} expansion) in: {r}");
+    assert!(
+        r.contains("+2"),
+        "Expected '+2' (from ${{Y}} expansion) in: {r}"
+    );
     assert_eq!(r.matches("<<<ESC_DOLLAR:").count(), 2);
 }
 
@@ -122,7 +132,12 @@ fn escaped_at_in_expression() {
 
 #[test]
 fn consecutive_escaped() {
-    assert_eq!(expand("\\${A}\\${B}", Internal).matches("<<<ESC_DOLLAR:").count(), 2);
+    assert_eq!(
+        expand("\\${A}\\${B}", Internal)
+            .matches("<<<ESC_DOLLAR:")
+            .count(),
+        2
+    );
 }
 
 #[test]
@@ -132,14 +147,20 @@ fn backslash_before_variable_is_escape() {
 
 #[test]
 fn forward_slash_before_variable_expands() {
-    assert_eq!(expand("subdir/${VAR}_file.txt", Internal), "subdir/value_file.txt");
+    assert_eq!(
+        expand("subdir/${VAR}_file.txt", Internal),
+        "subdir/value_file.txt"
+    );
 }
 
 #[test]
 fn normalize_backslash_separator_before_var_expands() {
     let path = normalize_file_path_for_text_vars("Output\\BoM\\${VAR}_file.csv");
     let r = expand(&path, Internal);
-    assert!(!r.contains("<<<ESC_DOLLAR:"), "Variable after backslash separator should expand, not escape. Got: {r}");
+    assert!(
+        !r.contains("<<<ESC_DOLLAR:"),
+        "Variable after backslash separator should expand, not escape. Got: {r}"
+    );
     assert_eq!(r, "Output\\BoM/value_file.csv");
 }
 
@@ -157,7 +178,10 @@ fn normalize_forward_slash_path_unchanged() {
 
 #[test]
 fn normalize_non_variable_backslashes_are_preserved() {
-    assert_eq!(normalize_file_path_for_text_vars("Output\\BoM\\literal.csv"), "Output\\BoM\\literal.csv");
+    assert_eq!(
+        normalize_file_path_for_text_vars("Output\\BoM\\literal.csv"),
+        "Output\\BoM\\literal.csv"
+    );
 }
 
 #[test]
@@ -173,9 +197,15 @@ fn finalize_restores_escapes_per_context() {
 #[test]
 fn resolve_text_vars_uses_the_evaluator_when_given() {
     let eval = |s: &str| s.replace("@{5-1}", "4");
-    let opts = TextVarOptions { max_depth: 6, evaluator: Some(&eval) };
+    let opts = TextVarOptions {
+        max_depth: 6,
+        evaluator: Some(&eval),
+    };
     let mut depth = 0;
-    assert_eq!(resolve_text_vars("@{${X}-1}", Some(&resolver), &mut depth, &opts), "4");
+    assert_eq!(
+        resolve_text_vars("@{${X}-1}", Some(&resolver), &mut depth, &opts),
+        "4"
+    );
     assert_eq!(depth, 1);
 }
 
@@ -187,20 +217,36 @@ struct NestedValues {
     extra_value: i32,
 }
 
-fn test_nested(parent: &JsonSettingsInternals, reset: bool) -> (NestedSettings<NestedValues>, NestedValues) {
+fn test_nested(
+    parent: &JsonSettingsInternals,
+    reset: bool,
+) -> (NestedSettings<NestedValues>, NestedValues) {
     let mut n = NestedSettings::new(0, "test_nested");
     n.settings.reset_params_if_missing = reset;
-    n.settings.add_param(Box::new(ParamT::new("test_value", settings_field!(NestedValues, test_value), 0)));
-    n.settings.add_param(Box::new(ParamT::new("extra_value", settings_field!(NestedValues, extra_value), 42)));
-    let mut v = NestedValues { test_value: 0, extra_value: 42 };
+    n.settings.add_param(Box::new(ParamT::new(
+        "test_value",
+        settings_field!(NestedValues, test_value),
+        0,
+    )));
+    n.settings.add_param(Box::new(ParamT::new(
+        "extra_value",
+        settings_field!(NestedValues, extra_value),
+        42,
+    )));
+    let mut v = NestedValues {
+        test_value: 0,
+        extra_value: 42,
+    };
     n.load_from_parent(Some(parent), &mut v);
     (n, v)
 }
 
 fn parent_with(nested: &str) -> JsonSettingsInternals {
     let mut p = JsonSettingsInternals::new(Value::Object(json::Map::new()));
-    *JsonPointer::parse("/test_nested").unwrap().get_unchecked(&mut p.doc).unwrap() =
-        json::parse(nested, ObjectOrder::Sorted).unwrap();
+    *JsonPointer::parse("/test_nested")
+        .unwrap()
+        .get_unchecked(&mut p.doc)
+        .unwrap() = json::parse(nested, ObjectOrder::Sorted).unwrap();
     p
 }
 
@@ -229,7 +275,10 @@ fn explicit_save_detects_modifications() {
 
     v.test_value = 99;
     assert!(nested.save_to_parent(&mut parent, &v, false));
-    assert_eq!(parent.get::<i32>("test_nested.test_value").unwrap(), Some(99));
+    assert_eq!(
+        parent.get::<i32>("test_nested.test_value").unwrap(),
+        Some(99)
+    );
 }
 
 #[test]
@@ -238,7 +287,10 @@ fn release_flushes_data_to_parent() {
     let (mut nested, mut v) = test_nested(&parent, true);
     v.test_value = 77;
     nested.save_to_parent(&mut parent, &v, false);
-    assert_eq!(parent.get::<i32>("test_nested.test_value").unwrap(), Some(77));
+    assert_eq!(
+        parent.get::<i32>("test_nested.test_value").unwrap(),
+        Some(77)
+    );
 }
 
 #[test]
@@ -249,7 +301,10 @@ fn absent_default_is_modified_when_not_reset_if_missing() {
     assert_eq!(v.extra_value, 42);
     // The absent default must be reported as a change so it is persisted.
     assert!(nested.save_to_parent(&mut parent, &v, false));
-    assert_eq!(parent.get::<i32>("test_nested.extra_value").unwrap(), Some(42));
+    assert_eq!(
+        parent.get::<i32>("test_nested.extra_value").unwrap(),
+        Some(42)
+    );
 }
 
 #[test]
@@ -267,8 +322,14 @@ fn migration_flushes_to_parent() {
     nested.load_from_parent(Some(&parent), &mut ());
 
     assert!(nested.save_to_parent(&mut parent, &(), false));
-    assert_eq!(parent.get::<i32>("test_nested.meta.version").unwrap(), Some(1));
-    assert_eq!(parent.get::<i32>("test_nested.migrated_field").unwrap(), Some(7));
+    assert_eq!(
+        parent.get::<i32>("test_nested.meta.version").unwrap(),
+        Some(1)
+    );
+    assert_eq!(
+        parent.get::<i32>("test_nested.migrated_field").unwrap(),
+        Some(7)
+    );
 }
 
 #[test]
@@ -279,11 +340,27 @@ fn settings_load_store_round_trip() {
     }
 
     let mut js: JsonSettings<S> = JsonSettings::new(1, Some("x.json"));
-    js.add_param(Box::new(ParamT::with_range("a.b", settings_field!(S, a), 3, 0, 10)));
-    js.add_param(Box::new(ParamT::new("name", settings_field!(S, name), "n".to_string())));
-    let mut s = S { a: 0, name: String::new() };
+    js.add_param(Box::new(ParamT::with_range(
+        "a.b",
+        settings_field!(S, a),
+        3,
+        0,
+        10,
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "name",
+        settings_field!(S, name),
+        "n".to_string(),
+    )));
+    let mut s = S {
+        a: 0,
+        name: String::new(),
+    };
 
-    assert!(js.load_from_buffer(b"{\"meta\":{\"version\":1},\"a\":{\"b\":11},\"name\":\"x\"}", &mut s));
+    assert!(js.load_from_buffer(
+        b"{\"meta\":{\"version\":1},\"a\":{\"b\":11},\"name\":\"x\"}",
+        &mut s
+    ));
     assert_eq!((s.a, s.name.as_str()), (3, "x"));
     s.a = 4;
     assert_eq!(
@@ -297,10 +374,27 @@ fn settings_load_store_round_trip() {
 /// Grisu2 is not always shortest: nlohmann prints 1e23 as 9.999999999999999e+22.
 #[test]
 fn nlohmann_dump_forms() {
-    let v = json::parse(r#"{"b":[],"a":{},"c":[1,2.0,-0.0,1e23,"\u0001\"\\/é"],"d":null}"#, ObjectOrder::Insertion).unwrap();
-    assert_eq!(dump(&v, None, ObjectOrder::Sorted), r#"{"a":{},"b":[],"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#);
-    assert_eq!(dump(&v, None, ObjectOrder::Insertion), r#"{"b":[],"a":{},"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#);
-    assert_eq!(dump(&json::parse("[1,[]]", ObjectOrder::Sorted).unwrap(), Some(2), ObjectOrder::Sorted), "[\n  1,\n  []\n]");
+    let v = json::parse(
+        r#"{"b":[],"a":{},"c":[1,2.0,-0.0,1e23,"\u0001\"\\/é"],"d":null}"#,
+        ObjectOrder::Insertion,
+    )
+    .unwrap();
+    assert_eq!(
+        dump(&v, None, ObjectOrder::Sorted),
+        r#"{"a":{},"b":[],"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#
+    );
+    assert_eq!(
+        dump(&v, None, ObjectOrder::Insertion),
+        r#"{"b":[],"a":{},"c":[1,2.0,-0.0,9.999999999999999e+22,"\u0001\"\\/é"],"d":null}"#
+    );
+    assert_eq!(
+        dump(
+            &json::parse("[1,[]]", ObjectOrder::Sorted).unwrap(),
+            Some(2),
+            ObjectOrder::Sorted
+        ),
+        "[\n  1,\n  []\n]"
+    );
     assert_eq!(json::dump_float(1e-5), "1e-05");
     assert_eq!(json::dump_float(f64::NAN), "null");
 }
@@ -308,14 +402,35 @@ fn nlohmann_dump_forms() {
 #[test]
 fn nlohmann_parse_rules() {
     // "-0" is the integer 0 (dumped as 0), "-0.0" stays a float.
-    assert_eq!(dump(&json::parse("[-0,-0.0]", ObjectOrder::Sorted).unwrap(), None, ObjectOrder::Sorted), "[0,-0.0]");
+    assert_eq!(
+        dump(
+            &json::parse("[-0,-0.0]", ObjectOrder::Sorted).unwrap(),
+            None,
+            ObjectOrder::Sorted
+        ),
+        "[0,-0.0]"
+    );
     // Comments and a BOM are accepted (ignore_comments), trailing garbage is not.
-    assert!(json::parse_bytes(b"\xEF\xBB\xBF/* x */ {\"a\":1} // y", ObjectOrder::Sorted, true).is_ok());
+    assert!(
+        json::parse_bytes(
+            b"\xEF\xBB\xBF/* x */ {\"a\":1} // y",
+            ObjectOrder::Sorted,
+            true
+        )
+        .is_ok()
+    );
     assert!(json::parse_bytes(b"{\"a\":1} // y", ObjectOrder::Sorted, false).is_err());
     assert!(json::parse("{\"a\":1} x", ObjectOrder::Sorted).is_err());
     assert!(json::parse("1e400", ObjectOrder::Sorted).is_err());
     // Duplicate keys: the last value wins.
-    assert_eq!(dump(&json::parse(r#"{"a":1,"a":2}"#, ObjectOrder::Sorted).unwrap(), None, ObjectOrder::Sorted), r#"{"a":2}"#);
+    assert_eq!(
+        dump(
+            &json::parse(r#"{"a":1,"a":2}"#, ObjectOrder::Sorted).unwrap(),
+            None,
+            ObjectOrder::Sorted
+        ),
+        r#"{"a":2}"#
+    );
     assert!(json::parse_bytes(b"\"\xC0\xAF\"", ObjectOrder::Sorted, true).is_err());
     assert!(json::parse("\"\\ud800\"", ObjectOrder::Sorted).is_err());
 }
@@ -373,17 +488,32 @@ fn single_letter_search_matches_device_name_over_keyword_collision() {
     // (library, name, keywords, description) as in the C++ test.
     let items = [
         ("Device", "R", "R res resistor", "Resistor"),
-        ("Device", "L", "inductor choke coil reactor magnetic", "Inductor"),
+        (
+            "Device",
+            "L",
+            "inductor choke coil reactor magnetic",
+            "Inductor",
+        ),
         ("Device", "C", "cap capacitor", "Unpolarized capacitor"),
         ("Device", "D", "diode", "Diode"),
-        ("Potentiometer_Digital", "AD5293", "R POT", "Digital potentiometer 1024 pos (SPI), TSSOP-14"),
+        (
+            "Potentiometer_Digital",
+            "AD5293",
+            "R POT",
+            "Digital potentiometer 1024 pos (SPI), TSSOP-14",
+        ),
         (
             "Interface_USB",
             "AP33771",
             "USB Type C PD Sink Converter Controller CMOS Clock capacitor charger coupled",
             "USB Type-C PD Sink Controller, QFN-24",
         ),
-        ("74xGxx", "74AUC1G74", "Single D Flip-Flop D CMOS", "Single D Flip-Flop, Low-Voltage CMOS"),
+        (
+            "74xGxx",
+            "74AUC1G74",
+            "Single D Flip-Flop D CMOS",
+            "Single D Flip-Flop, Low-Voltage CMOS",
+        ),
     ];
 
     for letter in ["r", "l", "c", "d"] {
@@ -396,7 +526,12 @@ fn single_letter_search_matches_device_name_over_keyword_collision() {
                 SearchTerm::new(name, 8, true),
                 SearchTerm::new(&format!("{lib}:{name}"), 16, true),
             ];
-            terms.extend(keywords.split([' ', '\t', '\r', '\n']).filter(|t| !t.is_empty()).map(|t| SearchTerm::new(t, 4, false)));
+            terms.extend(
+                keywords
+                    .split([' ', '\t', '\r', '\n'])
+                    .filter(|t| !t.is_empty())
+                    .map(|t| SearchTerm::new(t, 4, false)),
+            );
             terms.push(SearchTerm::new(keywords, 1, false));
             terms.push(SearchTerm::new(desc, 1, false));
 
@@ -405,7 +540,10 @@ fn single_letter_search_matches_device_name_over_keyword_collision() {
             let expected = lib == "Device" && name == letter.to_uppercase();
 
             assert!(score > 0 || !expected);
-            assert_eq!(exact, expected, "search letter '{letter}', item {lib}:{name}");
+            assert_eq!(
+                exact, expected,
+                "search letter '{letter}', item {lib}:{name}"
+            );
         }
     }
 }

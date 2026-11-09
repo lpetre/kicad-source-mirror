@@ -56,6 +56,9 @@ use kicad_geom::{
 };
 
 use crate::drill_markers::{MarkerPartType, build_marker};
+use crate::plotter_text::{plot_text_base, text_base};
+use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
+use kicad_font::{Font, Metrics};
 use crate::gbr_metadata::GbrMetadata;
 use crate::render_settings::RenderSettings;
 
@@ -126,6 +129,11 @@ pub struct PlotterState {
     pub render_settings: Option<RenderSettings>,
     /// `m_layer`
     pub layer: PcbLayerId,
+    /// Port-only: the outline (TrueType) font names that `Text` / `PlotText` were asked to use
+    /// through the render settings' default font and that were replaced by the stroke font,
+    /// because this port has no outline font engine (`kicad-font` D1). Empty for every plot
+    /// that only uses the stroke font. Callers report these substitutions.
+    pub outline_font_fallbacks: Vec<String>,
 }
 
 impl Default for PlotterState {
@@ -163,6 +171,7 @@ impl PlotterState {
             header_extra_lines: Vec::new(),
             render_settings: None,
             layer: UNDEFINED_LAYER,
+            outline_font_fallbacks: Vec::new(),
         }
     }
 
@@ -619,6 +628,76 @@ pub trait Plotter {
         a_data: PlotData,
     );
 
+    /// Port of `PLOTTER::Text`: draw a text with the stroke font (or the polygons of an
+    /// outline font) through the plotter primitives.
+    ///
+    /// `a_size.x < 0` means mirrored text (there is no other parameter for it).
+    /// `a_pen_width` is the stroke width (0 and bold: the default bold pen; negative: its
+    /// absolute value). `a_multiline_allowed` is unused, as in C++ (the attributes keep their
+    /// default `m_Multiline = true`). `a_font` `None` means the render settings' default font.
+    /// `a_data` is the Gerber metadata, given to the polygons of outline glyphs only.
+    #[allow(clippy::too_many_arguments)]
+    fn text(
+        &mut self,
+        a_pos: Vector2I,
+        a_color: &Color4D,
+        a_text: &str,
+        a_orient: EdaAngle,
+        a_size: Vector2I,
+        a_h_justify: GrTextHAlignT,
+        a_v_justify: GrTextVAlignT,
+        a_pen_width: i32,
+        a_italic: bool,
+        a_bold: bool,
+        a_multiline_allowed: bool,
+        a_font: Option<&dyn Font>,
+        a_font_metrics: &Metrics,
+        a_data: PlotData,
+    ) {
+        text_base(
+            self,
+            a_pos,
+            a_color,
+            a_text,
+            a_orient,
+            a_size,
+            a_h_justify,
+            a_v_justify,
+            a_pen_width,
+            a_italic,
+            a_bold,
+            a_multiline_allowed,
+            a_font,
+            a_font_metrics,
+            a_data,
+        );
+    }
+
+    /// Port of `PLOTTER::PlotText`: draw a text described by its attributes. The pen
+    /// (aperture) is selected with `a_attributes.stroke_width` and `a_data` *before* the bold
+    /// / negative width adjustment.
+    fn plot_text(
+        &mut self,
+        a_pos: Vector2I,
+        a_color: &Color4D,
+        a_text: &str,
+        a_attributes: &TextAttributes,
+        a_font: Option<&dyn Font>,
+        a_font_metrics: &Metrics,
+        a_data: PlotData,
+    ) {
+        plot_text_base(
+            self,
+            a_pos,
+            a_color,
+            a_text,
+            a_attributes,
+            a_font,
+            a_font_metrics,
+            a_data,
+        );
+    }
+
     /// Port of `PLOTTER::Marker` (non-virtual): draw a pattern shape number `a_shape_id`, to
     /// coord position (used for the drill map).
     fn marker(&mut self, position: Vector2I, diametre: i32, a_shape_id: u32) {
@@ -844,7 +923,12 @@ pub trait Plotter {
 
 /// Port of the base implementation of `PLOTTER::userToDeviceCoordinates`.
 pub fn user_to_device_coordinates_base(s: &PlotterState, a_coordinate: Vector2I) -> Vector2D {
-    let pos = a_coordinate - s.plot_offset;
+    // int subtraction: wraps on the reference build (x86-64) for the clamped VECTOR2I of a far
+    // away arc centre (`Arc( start, mid, end )` of nearly collinear points)
+    let pos = Vector2I::new(
+        a_coordinate.x.wrapping_sub(s.plot_offset.x),
+        a_coordinate.y.wrapping_sub(s.plot_offset.y),
+    );
 
     let mut x = pos.x as f64 * s.plot_scale;
     let mut y = s.paper_size.y as f64 - pos.y as f64 * s.plot_scale;

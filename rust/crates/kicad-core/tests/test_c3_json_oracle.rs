@@ -182,13 +182,19 @@ const KEYS: [&[u8]; 17] = [
     b"classes",
 ];
 
-const WS: [&[u8]; 10] = [b" ", b"\n  ", b"\t", b"/*c*/", b"// x\n", b"\r\n", b"", b"", b"", b""];
+const WS: [&[u8]; 10] = [
+    b" ", b"\n  ", b"\t", b"/*c*/", b"// x\n", b"\r\n", b"", b"", b"", b"",
+];
 
 fn digits(g: &mut Lcg, n: u32, first_non_zero: bool) -> String {
     let mut s = String::new();
 
     for i in 0..n {
-        let d = if i == 0 && first_non_zero { 1 + g.below(9) } else { g.below(10) };
+        let d = if i == 0 && first_non_zero {
+            1 + g.below(9)
+        } else {
+            g.below(10)
+        };
         s.push((b'0' + d as u8) as char);
     }
 
@@ -265,7 +271,11 @@ fn gen_string(g: &mut Lcg) -> Vec<u8> {
 
     for _ in 0..n {
         let k = g.below(STR_PARTS.len() as u32 + 8) as usize;
-        s.extend_from_slice(if k < STR_PARTS.len() { STR_PARTS[k] } else { b"x" });
+        s.extend_from_slice(if k < STR_PARTS.len() {
+            STR_PARTS[k]
+        } else {
+            b"x"
+        });
     }
 
     s.push(b'"');
@@ -382,7 +392,12 @@ fn dumps(text: &[u8], order: ObjectOrder, with_streams: bool) -> String {
     if with_streams {
         let s4 = json::dump_stream(&j, 4, order);
         let s0 = json::dump_stream(&j, 0, order);
-        r += &format!(" {} {} {}", fnv_str(&s4), fnv_str(&s0), fnv_str(&dump(&j, Some(0), order)));
+        r += &format!(
+            " {} {} {}",
+            fnv_str(&s4),
+            fnv_str(&s0),
+            fnv_str(&dump(&j, Some(0), order))
+        );
     }
 
     r
@@ -439,7 +454,11 @@ fn dump_all() -> Out {
 
         for _ in 0..200000 {
             let d = rdouble(&mut g);
-            o.out(format!("{} {}", f_dbl(&d), dump(&float_value(d), None, ObjectOrder::Sorted)));
+            o.out(format!(
+                "{} {}",
+                f_dbl(&d),
+                dump(&float_value(d), None, ObjectOrder::Sorted)
+            ));
         }
     }
 
@@ -451,7 +470,11 @@ fn dump_all() -> Out {
             let t = gen_number(&mut g);
 
             match json::parse(&t, ObjectOrder::Sorted) {
-                Ok(j) => o.out(format!("{t} {} {}", kind(&j), dump(&j, None, ObjectOrder::Sorted))),
+                Ok(j) => o.out(format!(
+                    "{t} {} {}",
+                    kind(&j),
+                    dump(&j, None, ObjectOrder::Sorted)
+                )),
                 Err(_) => o.out(format!("{t} ERR")),
             }
         }
@@ -471,7 +494,10 @@ fn dump_all() -> Out {
 
             if i < 300 {
                 if let Ok(j) = json::parse_bytes(&t, ObjectOrder::Sorted, true) {
-                    line += &format!(" {}", c3_common::esc(dump(&j, None, ObjectOrder::Sorted).as_bytes()));
+                    line += &format!(
+                        " {}",
+                        c3_common::esc(dump(&j, None, ObjectOrder::Sorted).as_bytes())
+                    );
                 }
             }
 
@@ -546,13 +572,33 @@ fn dump_all() -> Out {
                 conv::<f64>(&j, f_dbl),
                 conv::<f32>(&j, |x| format!("{:08x}", x.to_bits())),
                 conv::<String>(&j, |s| format!("\"{}\"", c3_common::esc(s.as_bytes()))),
-                conv::<Vec<i32>>(&j, |v| format!("[{}]", v.iter().map(|x| format!("{x};")).collect::<String>())),
-                conv::<Vec<String>>(&j, |v| format!("[{}]", v.iter().map(|x| format!("{x};")).collect::<String>())),
+                conv::<Vec<i32>>(&j, |v| {
+                    format!(
+                        "[{}]",
+                        v.iter().map(|x| format!("{x};")).collect::<String>()
+                    )
+                }),
+                conv::<Vec<String>>(&j, |v| {
+                    format!(
+                        "[{}]",
+                        v.iter().map(|x| format!("{x};")).collect::<String>()
+                    )
+                }),
                 conv::<BTreeMap<String, i32>>(&j, |m| {
-                    format!("{{{}}}", m.iter().map(|(k, x)| format!("{k}={x};")).collect::<String>())
+                    format!(
+                        "{{{}}}",
+                        m.iter()
+                            .map(|(k, x)| format!("{k}={x};"))
+                            .collect::<String>()
+                    )
                 }),
                 conv::<BTreeMap<String, f64>>(&j, |m| {
-                    format!("{{{}}}", m.iter().map(|(k, x)| format!("{k}={};", f_dbl(x))).collect::<String>())
+                    format!(
+                        "{{{}}}",
+                        m.iter()
+                            .map(|(k, x)| format!("{k}={};", f_dbl(x)))
+                            .collect::<String>()
+                    )
                 }),
             ]
             .join(" | ");
@@ -659,7 +705,10 @@ fn dump_all() -> Out {
         }
 
         let upd = [
-            ("{\"a\":{\"x\":1,\"y\":2},\"b\":1}", "{\"a\":{\"x\":3,\"z\":4},\"c\":5}"),
+            (
+                "{\"a\":{\"x\":1,\"y\":2},\"b\":1}",
+                "{\"a\":{\"x\":3,\"z\":4},\"c\":5}",
+            ),
             ("null", "{\"a\":1}"),
             ("{\"a\":1}", "{\"a\":{\"b\":2}}"),
             ("{\"a\":{\"b\":2}}", "{\"a\":1}"),

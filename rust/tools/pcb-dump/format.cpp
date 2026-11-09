@@ -19,6 +19,7 @@
 
 #include "pcb_dump.h"
 
+#include <csignal>
 #include <cstdio>
 #include <map>
 
@@ -47,6 +48,30 @@
 
 
 DUMP_OUT g_out;
+
+std::vector<sigjmp_buf*> g_crashJumps;
+
+
+static void crashHandler( int aSig )
+{
+    if( !g_crashJumps.empty() )
+        siglongjmp( *g_crashJumps.back(), 1 );
+
+    signal( aSig, SIG_DFL );
+    raise( aSig );
+}
+
+
+void InstallCrashGuard()
+{
+    struct sigaction sa = {};
+    sa.sa_handler = crashHandler;
+    sigemptyset( &sa.sa_mask );
+    sa.sa_flags = SA_NODEFER;
+    sigaction( SIGSEGV, &sa, nullptr );
+    sigaction( SIGBUS, &sa, nullptr );
+    sigaction( SIGFPE, &sa, nullptr );
+}
 
 
 uint64_t Fnv1a64( const std::string& aData )

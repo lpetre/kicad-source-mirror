@@ -537,7 +537,8 @@ void DumpShape( BOARD_ITEM* aItem )
                                            + V( s->GetLibraryEllipseEndAngle() ) );
     }
 
-    if( s->GetShape() == SHAPE_T::RECTANGLE || s->GetShape() == SHAPE_T::POLY )
+    if( s->GetShape() == SHAPE_T::RECTANGLE
+        || ( s->GetShape() == SHAPE_T::POLY && s->GetPolyShape().TotalVertices() > 0 ) )
         EMIT( "corners", VPoints( s->GetCorners() ) );
 
     for( PCB_LAYER_ID l : s->GetLayerSet().Seq() )

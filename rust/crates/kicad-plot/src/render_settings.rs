@@ -42,6 +42,9 @@ pub struct RenderSettings {
     pub dash_length_ratio: f64,
     /// `m_gapLengthRatio` (from ISO 128-2)
     pub gap_length_ratio: f64,
+    /// `m_defaultFont`: the font name used by `PLOTTER::Text` / `PlotText` when no font is
+    /// given (empty = the stroke font).
+    pub default_font: String,
 }
 
 impl Default for RenderSettings {
@@ -52,6 +55,7 @@ impl Default for RenderSettings {
             min_pen_width: 0,
             dash_length_ratio: 12.0,
             gap_length_ratio: 3.0,
+            default_font: String::new(),
         }
     }
 }
@@ -95,6 +99,16 @@ impl RenderSettings {
     /// Port of `RENDER_SETTINGS::SetGapLengthRatio`.
     pub fn set_gap_length_ratio(&mut self, a_ratio: f64) {
         self.gap_length_ratio = a_ratio;
+    }
+
+    /// Port of `RENDER_SETTINGS::GetDefaultFont`.
+    pub fn default_font(&self) -> &str {
+        &self.default_font
+    }
+
+    /// Port of `RENDER_SETTINGS::SetDefaultFont`.
+    pub fn set_default_font(&mut self, a_font: &str) {
+        self.default_font = a_font.to_string();
     }
 
     /// Port of `RENDER_SETTINGS::GetDashLength`.

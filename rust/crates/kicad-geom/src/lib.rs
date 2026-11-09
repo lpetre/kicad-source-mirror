@@ -35,7 +35,7 @@
 //! | [`trigo`] | `trigo.h`, `trigo.cpp` |
 //! | [`geometry::shape`] | `geometry/shape.h`, `geometry/shape.cpp` (`SHAPE`, `SHAPE_LINE_CHAIN_BASE`; see `docs/design/geom-shapes.md`) |
 //! | [`geometry::shape_arc`], [`geometry::shape_circle`], [`geometry::shape_rect`], [`geometry::shape_segment`], [`geometry::shape_simple`], [`geometry::shape_null`], [`geometry::shape_compound`] | `geometry/shape_arc.h` ... `shape_compound.h` and their `.cpp` |
-//! | [`geometry::shape_line_chain`], [`geometry::shape_poly_set`] | `geometry/shape_line_chain.h`, `geometry/shape_poly_set.h` (line chain complete since G3; poly set skeleton, package G4) |
+//! | [`geometry::shape_line_chain`], [`geometry::shape_poly_set`] | `geometry/shape_line_chain.h`, `geometry/shape_poly_set.h` (line chain complete since G3; poly set since G4a, triangulation G4b) |
 //! | [`geometry::shape_collisions`] | `geometry/shape_collisions.cpp` (partial; package G5) |
 //! | [`geometry::circle`], [`geometry::arc_chord_params`], [`geometry::half_line`], [`geometry::line`], [`geometry::arc_construction`] | the files of the same name |
 //! | [`geometry::geometry_utils`], [`geometry::approximation`], [`geometry::shape_utils`] | `geometry/geometry_utils.h/.cpp`, `geometry/approximation.h`, part of `geometry/shape_utils.cpp` |

@@ -24,8 +24,20 @@
 //!   drawing a UUID;
 //! * one `impl Trait for T` block per trait in this file, containing only one-line shims that
 //!   forward to an inherent method of the same name and signature, for exactly the virtuals the
-//!   C++ class overrides (for `PcbArc` / `PcbVia` also the `PCB_TRACK` overrides they inherit,
-//!   forwarded to their own inherent method because the `PCB_TRACK` bodies test `Type()`);
+//!   C++ class overrides;
+//! * a C++ class derived from another item class embeds the base struct (`PcbArc::track`,
+//!   `PcbVia::track`) and has a shim for every virtual that it **or its base** overrides
+//!   (a Rust `PcbArc` is not a `PcbTrack`, so nothing is inherited), each forwarding to its
+//!   **own** inherent method. For an inherited virtual that method is the base body as it
+//!   runs for the derived class (`PCB_TRACK::GetBoundingBox (PCB_ARC)`: the `PCB_TRACK` bodies
+//!   test `Type()`); where a base body is identical for the derived class, the derived method
+//!   calls the base's (`self.track.x( .. )`), and where the base body calls a virtual that the
+//!   derived class overrides, the owning package writes the base body once as a generic
+//!   function over the host and both call it;
+//! * virtuals that the C++ class itself introduces (`PCB_TRACK::GetWidth`, `SetWidth`,
+//!   `GetLength`, `GetWidthConstraint`) are not in the traits: they are inherent methods of
+//!   each struct plus a dispatching method on the enum (`Track::width`), see "virtuals
+//!   introduced by PCB_TRACK" below;
 //! * the inherent methods in the module of the owning package: `PcbTrack` here (M16), `PcbArc`
 //!   in `arc.rs` (M16), `PcbVia` in `via.rs` and its shapes in `shapes.rs` (M17); bodies are
 //!   `port_pending!` stubs unless trivial.
@@ -36,7 +48,8 @@ pub mod via;
 
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{
-    KicadT, Kiid, KiidGenerator, Lset, MAX_CU_LAYERS, PCB_IU_SCALE, PcbLayerId, StrokeParams,
+    KicadT, Kiid, KiidGenerator, Lset, MAX_CU_LAYERS, MinOptMax, PCB_IU_SCALE, PcbLayerId,
+    StrokeParams,
 };
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, ShapeSegment, Vector2I};
@@ -45,7 +58,7 @@ use std::sync::Arc;
 use crate::board_design_settings::BoardDesignSettings;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
-use crate::ids::NetCode;
+use crate::ids::{ItemId, NetCode};
 use crate::item::{BoardItemBase, ConnectedItemBase, RecurseMode, SharedShape};
 use crate::item_ref::ItemRef;
 use crate::netclass::Netclass;
@@ -314,6 +327,51 @@ impl Track {
     /// `Type()`.
     pub fn type_(&self) -> KicadT {
         on_track!(self, t => BoardItem::type_(t))
+    }
+
+    // ---- virtuals introduced by PCB_TRACK (dispatch to the variant) ----
+
+    /// `GetWidth()` (virtual in `PCB_TRACK`): the width of a segment or arc. `PCB_VIA`
+    /// overrides it with an assertion ("called without a layer argument"); use
+    /// `PcbVia::width( layer )` for vias.
+    pub fn width(&self) -> i32 {
+        match self {
+            Track::Trace(t) => t.width(),
+            Track::Arc(a) => a.track.width(),
+            Track::Via(v) => v.width_no_layer(),
+        }
+    }
+
+    /// `SetWidth( aWidth )` (virtual in `PCB_TRACK`; `PCB_VIA` overrides it like `GetWidth`).
+    pub fn set_width(&mut self, width: i32) {
+        match self {
+            Track::Trace(t) => t.set_width(width),
+            Track::Arc(a) => a.track.set_width(width),
+            Track::Via(v) => v.set_width_no_layer(width),
+        }
+    }
+
+    /// `GetLength()` (virtual in `PCB_TRACK`; `PCB_ARC` overrides it, a via inherits it).
+    pub fn length(&self) -> f64 {
+        match self {
+            Track::Trace(t) => t.length(),
+            Track::Arc(a) => a.length(),
+            Track::Via(v) => v.track.length(),
+        }
+    }
+
+    /// `GetWidthConstraint( aSource )` (virtual in `PCB_TRACK`; `PCB_VIA` overrides it, an arc
+    /// inherits it): the value and, if asked, the name of the constraint.
+    pub fn width_constraint(
+        &self,
+        ctx: &BoardCtx<'_>,
+        want_source: bool,
+    ) -> (MinOptMax<i32>, Option<String>) {
+        match self {
+            Track::Trace(t) => t.width_constraint(ctx, want_source),
+            Track::Arc(a) => a.track.width_constraint(ctx, want_source),
+            Track::Via(v) => v.width_constraint(ctx, want_source),
+        }
     }
 }
 
@@ -756,6 +814,9 @@ impl BoardItem for Track {
     fn uuid(&self) -> &Kiid {
         on_track!(self, t => BoardItem::uuid(t))
     }
+    fn parent_group(&self, ctx: &BoardCtx<'_>) -> Option<ItemId> {
+        on_track!(self, t => BoardItem::parent_group(t, ctx))
+    }
     fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
         on_track!(self, t => BoardItem::layer(t, ctx))
     }
@@ -993,6 +1054,22 @@ impl PcbTrack {
     /// `PCB_TRACK::SetWidth()`.
     pub fn set_width(&mut self, width: i32) {
         self.width = width;
+    }
+
+    /// `PCB_TRACK::GetLength()`: `m_Start.Distance( m_End )`.
+    pub fn length(&self) -> f64 {
+        self.start.distance(self.end)
+    }
+
+    /// `PCB_TRACK::GetWidthConstraint( aSource )`: `TRACK_WIDTH_CONSTRAINT` from `ctx.rules`
+    /// on the track's layer, a null constraint without rules; (value, constraint name if
+    /// asked).
+    pub fn width_constraint(
+        &self,
+        ctx: &BoardCtx<'_>,
+        want_source: bool,
+    ) -> (MinOptMax<i32>, Option<String>) {
+        crate::port_pending!("PCB_TRACK::GetWidthConstraint", ctx, want_source)
     }
 
     /// `PCB_TRACK::GetPosition()`: `m_Start`.

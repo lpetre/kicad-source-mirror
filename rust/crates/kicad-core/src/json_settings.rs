@@ -30,9 +30,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::json::{
-    self, FromJson, JsonError, JsonPointer, ObjectOrder, ToJson, Value, json_eq,
-};
+use crate::json::{self, FromJson, JsonError, JsonPointer, ObjectOrder, ToJson, Value, json_eq};
 use crate::settings_parameters::Param;
 
 /// Port of `JSON_SETTINGS_INTERNALS`: the document plus the copy of what was loaded.
@@ -47,7 +45,10 @@ pub struct JsonSettingsInternals {
 impl JsonSettingsInternals {
     /// An internals object holding `doc`.
     pub fn new(doc: Value) -> Self {
-        Self { doc, original: Value::Null }
+        Self {
+            doc,
+            original: Value::Null,
+        }
     }
 
     /// Port of `JSON_SETTINGS_INTERNALS::PointerFromString`.
@@ -126,7 +127,11 @@ pub fn clear_value(v: &mut Value) {
         Value::String(s) => s.clear(),
         Value::Bool(b) => *b = false,
         Value::Number(n) => {
-            *n = if n.is_f64() { json::Number::from_f64(0.0).unwrap_or(0.into()) } else { 0.into() };
+            *n = if n.is_f64() {
+                json::Number::from_f64(0.0).unwrap_or(0.into())
+            } else {
+                0.into()
+            };
         }
         Value::Null => {}
     }
@@ -285,7 +290,9 @@ impl<S> JsonSettings<S> {
         let _ = self.internals.set("meta.version", &self.schema_version);
 
         for param in &self.params {
-            let Ok(matches) = param.matches_file(&self.internals, target, self.reset_params_if_missing) else {
+            let Ok(matches) =
+                param.matches_file(&self.internals, target, self.reset_params_if_missing)
+            else {
                 continue;
             };
 
@@ -332,7 +339,10 @@ impl<S> JsonSettings<S> {
     /// `key`, `default` otherwise or when the conversion throws.
     pub fn fetch_or_default<T: FromJson>(json: &Value, key: &str, default: T) -> T {
         match json {
-            Value::Object(map) => map.get(key).and_then(|v| T::from_json(v).ok()).unwrap_or(default),
+            Value::Object(map) => map
+                .get(key)
+                .and_then(|v| T::from_json(v).ok())
+                .unwrap_or(default),
             _ => default,
         }
     }
@@ -347,7 +357,11 @@ pub mod set_if_present {
     fn value_at<'v>(obj: &'v Value, path: &str) -> Option<&'v Value> {
         let ptr = JsonSettingsInternals::pointer_from_string(path);
 
-        if ptr.contains(obj).unwrap_or(false) { ptr.at(obj).ok() } else { None }
+        if ptr.contains(obj).unwrap_or(false) {
+            ptr.at(obj).ok()
+        } else {
+            None
+        }
     }
 
     /// `SetIfPresent( obj, path, wxString& )`.
@@ -414,14 +428,21 @@ pub struct NestedSettings<S> {
 impl<S> NestedSettings<S> {
     /// A nested settings object at `path` (`NESTED_SETTINGS( name, schema, parent, path )`).
     pub fn new(schema_version: i32, path: &str) -> Self {
-        Self { settings: JsonSettings::new(schema_version, None), path: path.to_string() }
+        Self {
+            settings: JsonSettings::new(schema_version, None),
+            path: path.to_string(),
+        }
     }
 
     /// Port of `NESTED_SETTINGS::LoadFromFile`: copy the parent's sub-object, migrate (a
     /// migrator error aborts the chain but keeps its modifications), then load all parameters
     /// (always, also without a parent object). Returns whether the object was found and is
     /// at the current schema version or was migrated to it.
-    pub fn load_from_parent(&mut self, parent: Option<&JsonSettingsInternals>, target: &mut S) -> bool {
+    pub fn load_from_parent(
+        &mut self,
+        parent: Option<&JsonSettingsInternals>,
+        target: &mut S,
+    ) -> bool {
         let s = &mut self.settings;
         s.internals.clear();
         let mut success = false;
@@ -468,7 +489,12 @@ impl<S> NestedSettings<S> {
     /// Port of `NESTED_SETTINGS::SaveToFile`: reports whether the nested object differs from
     /// the parent's copy or a parameter changed, and if so (or with `force`) merges it into
     /// the parent (`parent[path].update( internals )`).
-    pub fn save_to_parent(&mut self, parent: &mut JsonSettingsInternals, target: &S, force: bool) -> bool {
+    pub fn save_to_parent(
+        &mut self,
+        parent: &mut JsonSettingsInternals,
+        target: &S,
+        force: bool,
+    ) -> bool {
         let s = &mut self.settings;
 
         let Ok(in_parent) = parent.get_json(&self.path) else {
@@ -487,7 +513,11 @@ impl<S> NestedSettings<S> {
                 continue;
             }
 
-            let ptr = JsonSettingsInternals::pointer_from_string(&format!("{}.{}", self.path, param.json_path()));
+            let ptr = JsonSettingsInternals::pointer_from_string(&format!(
+                "{}.{}",
+                self.path,
+                param.json_path()
+            ));
 
             if ptr.contains(&parent.original).unwrap_or(false) {
                 if let Ok(slot) = ptr.get_unchecked(&mut parent.original) {
@@ -510,4 +540,3 @@ impl<S> NestedSettings<S> {
         modified
     }
 }
-

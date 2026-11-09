@@ -12,7 +12,7 @@
 //   SCRIPTS <count> <fnv64 of the script file>
 //   CH <key> <n> <x y>...      one line per distinct TransformRoundChamferedRectToPolygon call
 //   F <idx> ... F-END          the complete file of the first FULL_COUNT scripts
-//   R <idx> <fnv64 of the file>
+//   R <idx> <low 32 bits of the fnv64 of the file>
 // "full" prints the complete file of every script instead of its hash.
 //
 // The "G04 Created by KiCad (...)" line holds the build version and the wall clock; it is
@@ -597,7 +597,7 @@ int main( int argc, char** argv )
                 continue;
         }
 
-        printf( "R %zu %016" PRIx64 "\n", i, fnv( results[i] ) );
+        printf( "R %zu %08" PRIx64 "\n", i, fnv( results[i] ) & 0xffffffffULL );
     }
 
     return 0;

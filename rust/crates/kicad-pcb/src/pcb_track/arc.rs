@@ -31,6 +31,11 @@ use crate::pcb_track::PcbArc;
 use crate::traits::Flashing;
 
 impl PcbArc {
+    /// `PCB_ARC::GetLength()`: `GetRadius() * std::abs( GetAngle().AsRadians() )`.
+    pub fn length(&self) -> f64 {
+        crate::port_pending!("PCB_ARC::GetLength")
+    }
+
     /// `PCB_ARC::SetPosition()`: `m_Start = aPos`.
     pub fn set_position(&mut self, _env: &MutEnv, pos: Vector2I) {
         self.track.start = pos;

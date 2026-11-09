@@ -20,6 +20,7 @@
 //! Placeholder written by M0a; the type package fills in the definitions and `Default`
 //! (`board-model.md` 16).
 
+use kicad_core::text_vars::ResolutionContext;
 use kicad_geom::{Box2I, EdaAngle, Vector2I};
 
 use crate::ctx::{BoardCtx, MutEnv};
@@ -58,15 +59,10 @@ pub fn text_angle<H: EdaTextItem + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> EdaA
 pub fn shown_text<H: EdaTextItem + ?Sized>(
     host: &H,
     ctx: &BoardCtx<'_>,
-    allow_extra_text: bool,
+    context: ResolutionContext,
     depth: i32,
 ) -> String {
-    crate::port_pending!("EDA_TEXT::GetShownText", host, ctx, allow_extra_text, depth)
-}
-
-/// Port of `EDA_TEXT::GetTextBox` (the base-class body the `EdaTextItem` default forwards to).
-pub fn text_box<H: EdaTextItem + ?Sized>(host: &H, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I {
-    crate::port_pending!("EDA_TEXT::GetTextBox", host, ctx, line)
+    crate::port_pending!("EDA_TEXT::GetShownText", host, ctx, context, depth)
 }
 
 /// Port of `EDA_TEXT::SetTextPos` (the base-class body the `EdaTextItem` default forwards to).
@@ -98,3 +94,28 @@ pub fn set_text_angle<H: EdaTextItem + ?Sized>(host: &mut H, env: &MutEnv, angle
 pub fn offset<H: EdaTextItem + ?Sized>(host: &mut H, env: &MutEnv, delta: Vector2I) {
     crate::port_pending!("EDA_TEXT::Offset", host, env, delta)
 }
+
+// ---- non-virtual EDA_TEXT members that call the virtuals (board-model.md 6.2a) ----
+//
+// Each is a generic function over the host plus a forwarder in `EdaTextExt`, which gives it
+// method syntax on every host and on `&dyn EdaTextItem`. M0c adds the remaining signatures of
+// board-model.md 6.2a here (effective_text_pen_width, effective_text_shape, line_positions,
+// interline, compare_text, ...); M10 ports the bodies. `traits.rs` is not edited for them.
+
+/// Port of `EDA_TEXT::GetTextBox( aSettings, aLine )` (`aSettings` is null on every headless
+/// path; `line == None` is the C++ default `-1`: the whole text).
+pub fn text_box<H: EdaTextItem + ?Sized>(host: &H, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I {
+    crate::port_pending!("EDA_TEXT::GetTextBox", host, ctx, line)
+}
+
+/// Method syntax for the non-virtual `EDA_TEXT` members that call the virtuals. Implemented
+/// for every `EdaTextItem` (also `dyn EdaTextItem`) by the blanket impl below and nowhere
+/// else, so these methods cannot be overridden - like the non-virtual C++ members they port.
+pub trait EdaTextExt: EdaTextItem {
+    /// `GetTextBox( aSettings, aLine )`.
+    fn text_box(&self, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I {
+        text_box(self, ctx, line)
+    }
+}
+
+impl<T: EdaTextItem + ?Sized> EdaTextExt for T {}

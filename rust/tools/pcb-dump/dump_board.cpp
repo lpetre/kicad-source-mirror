@@ -169,7 +169,9 @@ void DumpItemBase( BOARD_ITEM* aItem )
     EMIT( "group", group ? ItemKey( static_cast<PCB_GROUP*>( group->AsEdaItem() ) )
                                : std::string( "null" ) );
 
-    EMIT( "layer", VLayer( aItem->GetLayer() ) );
+    // PCB_GROUP::GetLayer() asserts ("isn't well-defined"); groups have no layer.
+    if( aItem->Type() != PCB_GROUP_T )
+        EMIT( "layer", VLayer( aItem->GetLayer() ) );
     LSET ls = aItem->GetLayerSet();
     EMIT( "layerset", V( ls ) );
     EMIT( "layers", VLayerNames( ls ) );

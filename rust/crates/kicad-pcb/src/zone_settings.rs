@@ -18,8 +18,12 @@
 //! Port of `pcbnew/zone_settings.h` and `pcbnew/zone_settings.cpp` (`ZONE_SETTINGS`) and of
 //! `ZONE_CONNECTION` (`pcbnew/zones.h`).
 //!
-//! Placeholder written by M0a (`ZoneConnection` is complete: `drc_api` needs it); M0b fills in
-//! `ZoneSettings` and the other zone enums (`board-model.md` 16).
+//! Placeholder written by M0a; M0b fills in `ZoneSettings` and the other zone enums
+//! (`board-model.md` 16). Complete already, because other packages need them during wave 0b:
+//! `ZoneConnection` (`drc_api`, pad stacks) and `ZoneLayerProperties`
+//! (`BoardDesignSettings::zone_layer_properties`, package M0d).
+
+use kicad_geom::Vector2I;
 
 /// `ZONE_CONNECTION`; the values are written to files.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
@@ -36,6 +40,12 @@ pub enum ZoneConnection {
     Full,
     /// `ZONE_CONNECTION::THT_THERMAL`: thermal relief only for THT pads.
     ThtThermal,
+}
+
+/// `ZONE_LAYER_PROPERTIES` (`pcbnew/zone_settings.h`). Complete.
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct ZoneLayerProperties {
+    pub hatching_offset: Option<Vector2I>, // hatching_offset
 }
 
 /// `ZONE_SETTINGS`.

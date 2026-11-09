@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `pcbnew/pcb_constraint.h` and `pcbnew/pcb_constraint.cpp` (`PCB_CONSTRAINT`).
+//! Port of `pcbnew/constraints/pcb_constraint.h` and `pcbnew/constraints/pcb_constraint.cpp` (`PCB_CONSTRAINT`).
 //!
 //! Placeholder written by M0a; the type package M0e fills in the fields, `Default` and the
 //! delegation shims (`board-model.md` 6.2, 16).

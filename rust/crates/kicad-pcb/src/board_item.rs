@@ -15,20 +15,77 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `pcbnew/board_item.cpp` and the non-inline parts of `include/board_item.h`
-//! (`BOARD_ITEM`): the base-class bodies the `BoardItem` trait defaults forward to
-//! (`board-model.md` 6.2), generic over the item. Package M2 ports the bodies; M0a wrote the
-//! signatures.
+//! Port of `pcbnew/board_item.cpp` and of the bodies in `include/board_item.h`
+//! (`BOARD_ITEM`): the base-class bodies the `BoardItem` / `BoardItemMut` trait defaults
+//! forward to (`board-model.md` 6.2), generic over the item. Package M2 ports the bodies; M0a
+//! wrote the signatures and the header-inline ones.
+//!
+//! An override that calls its base class explicitly (C++ `BOARD_ITEM::FitsEnabledLayers( .. )`
+//! inside `PCB_VIA::FitsEnabledLayers`) calls the function here
+//! (`board_item::fits_enabled_layers( self, .. )`).
 
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{PcbLayerId, StrokeParams};
+use kicad_core::{Lset, PcbLayerId, StrokeParams};
 use kicad_geom::ShapePolySet;
 use kicad_geom::geometry::approximation::ErrorLoc;
 
-use crate::ctx::BoardCtx;
+use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::item::SharedShape;
-use crate::traits::{BoardItem, Flashing};
+use crate::traits::{BoardItem, BoardItemMut, Flashing};
+
+/// Port of `BOARD_ITEM::GetLayerSet` (header inline): `LSET( { m_layer } )`, empty for
+/// `UNDEFINED_LAYER`.
+pub fn layer_set<B: BoardItem + ?Sized>(item: &B, _ctx: &BoardCtx<'_>) -> Lset {
+    let layer = item.base().layer;
+
+    if layer == PcbLayerId::UndefinedLayer {
+        Lset::new()
+    } else {
+        Lset::from_layers(&[layer])
+    }
+}
+
+/// Port of `BOARD_ITEM::IsOnLayer` (header inline): `m_layer == aLayer`.
+pub fn is_on_layer<B: BoardItem + ?Sized>(
+    item: &B,
+    _ctx: &BoardCtx<'_>,
+    layer: PcbLayerId,
+) -> bool {
+    item.base().layer == layer
+}
+
+/// Port of `BOARD_ITEM::FitsEnabledLayers`:
+/// `IsLayerAgnostic() || ( GetLayerSet() & aEnabledLayers ).any()`.
+pub fn fits_enabled_layers<B: BoardItem + ?Sized>(
+    item: &B,
+    ctx: &BoardCtx<'_>,
+    enabled: Lset,
+    _copper_layer_count: i32,
+) -> bool {
+    if item.is_layer_agnostic() {
+        return true;
+    }
+
+    let mut layers = item.layer_set(ctx);
+    layers &= &enabled;
+    layers.any()
+}
+
+/// Port of `BOARD_ITEM::SetLayer` (header inline): `m_layer = aLayer`.
+pub fn set_layer<B: BoardItemMut + ?Sized>(item: &mut B, _env: &MutEnv, layer: PcbLayerId) {
+    item.base_mut().layer = layer;
+}
+
+/// Port of `BOARD_ITEM::SetLayerSet` (header inline): a single-layer set becomes `SetLayer`
+/// (the virtual one); anything else is `UNIMPLEMENTED_FOR` in C++ (ignored).
+pub fn set_layer_set<B: BoardItemMut + ?Sized>(item: &mut B, env: &MutEnv, layers: Lset) {
+    if layers.count() == 1 {
+        if let Some(layer) = layers.seq().first().copied() {
+            item.set_layer(env, layer);
+        }
+    }
+}
 
 /// Port of `BOARD_ITEM::IsOnCopperLayer` (header inline, uses `IsSingleLayerType`).
 pub fn is_on_copper_layer<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -> bool {

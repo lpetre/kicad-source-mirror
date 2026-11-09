@@ -15,10 +15,40 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `pcbnew/component_classes/component_class.h` and `component_class_manager.cpp`.
+//! Port of `pcbnew/component_classes/component_class.h`, `component_class_cache_proxy.h` and
+//! `component_class_manager.cpp`.
 //!
-//! Placeholder written by M0a; the type package fills in the definitions and `Default`
-//! (`board-model.md` 16).
+//! Placeholder written by M0a; the type package M0d fills in the definitions and `Default`
+//! (`board-model.md` 16). `ComponentClass` and `ComponentClassCache` exist already because
+//! `Footprint` (package M0b) holds them: M0b uses them as they are, M0d completes them here.
+
+use std::sync::Arc;
+
+/// `COMPONENT_CLASS`.
+///
+/// PLACEHOLDER (M0a review): M0d replaces the body with all fields of `board-model-types.md`
+/// (and adds `ComponentClassUsage`).
+#[derive(Clone, Debug, Default)]
+pub struct ComponentClass {}
+
+/// The mutable part of `COMPONENT_CLASS_CACHE_PROXY` (held by a footprint in a `CacheCell`).
+/// Complete; `Default` = the C++ member initialisers (`m_lastTickerValue{ -1 }`: invalid).
+#[derive(Clone, Debug)]
+pub struct ComponentClassCache {
+    pub last_ticker_value: i64, // m_lastTickerValue
+    pub dynamic_component_class: Option<Arc<ComponentClass>>, // m_dynamicComponentClass
+    pub final_component_class: Option<Arc<ComponentClass>>, // m_finalComponentClass
+}
+
+impl Default for ComponentClassCache {
+    fn default() -> Self {
+        ComponentClassCache {
+            last_ticker_value: -1,
+            dynamic_component_class: None,
+            final_component_class: None,
+        }
+    }
+}
 
 /// `COMPONENT_CLASS_MANAGER`.
 ///

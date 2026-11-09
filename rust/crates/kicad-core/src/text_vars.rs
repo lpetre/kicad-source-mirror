@@ -64,7 +64,10 @@ pub struct TextVarOptions<'a> {
 
 impl Default for TextVarOptions<'_> {
     fn default() -> Self {
-        Self { max_depth: 6, evaluator: None }
+        Self {
+            max_depth: 6,
+            evaluator: None,
+        }
     }
 }
 
@@ -115,7 +118,11 @@ fn copy_marker(s: &[char], mut i: usize, out: &mut String) -> usize {
 
 /// Port of `ExpandTextVars( aSource, aResolver, aContext, aDepth = 0 )` with the default
 /// options (recursion depth 6, no math evaluator).
-pub fn expand_text_vars(source: &str, resolver: Option<&TextVarResolver<'_>>, context: ResolutionContext) -> String {
+pub fn expand_text_vars(
+    source: &str,
+    resolver: Option<&TextVarResolver<'_>>,
+    context: ResolutionContext,
+) -> String {
     expand_text_vars_ext(source, resolver, context, 0, &TextVarOptions::default())
 }
 

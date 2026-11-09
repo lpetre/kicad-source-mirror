@@ -17,6 +17,18 @@ own traits (6.2a); pointer-order replacements are spelled out (3.1); `BoardCommi
 engine is the crate `kicad-session`; M0 is split into a reviewed kernel and parallel type
 packages (section 16); the orchestrator's foundation decisions are recorded in section 17.
 
+Revision 2.1 (review of the M0a kernel, the gate before the type packages). Corrections to
+revision 2, all reflected in the code: `EdaTextItem::shown_text` takes the `RESOLUTION_CONTEXT`
+of this tree, not the KiCad 9 flag (6.2a); `BoardItem::parent_group` is a virtual
+(`PCB_TABLECELL` overrides `GetParentGroup`, 6.2); every non-constant base-class body is a free
+generic function, so that an override can call its base class (6.2); a derived class (arc, via,
+field, dimension, textbox, cell, generator) gets a shim for every virtual it or its base
+overrides and is its own `EDA_TEXT` / `EDA_SHAPE` host (6.2, 6.2a); the non-virtual mixin
+members live in the extension traits `EdaTextExt` / `EdaShapeExt`, not in `traits.rs`, which is
+frozen (6.2a); virtuals introduced by a concrete class are inherent methods plus an enum
+dispatcher (6.3); `modify_*` also re-stamps `base.group` (8.2); `UnitsProvider` is a struct;
+the kernel files are frozen from wave 0b on and the wave-0b ownership rules are in section 16.
+
 ## 0. The design on one screen
 
 | Topic | Decision |
@@ -296,12 +308,41 @@ its members, needs no special case). Implemented for every arena type, for `PcbT
 virtual the C++ class overrides it has a one-line shim `fn layer_set(&self, ctx: &BoardCtx<'_>)
 -> Lset { T::layer_set(self, ctx) }` that forwards to an **inherent method with the same name
 and the same signature** (inherent methods win name resolution; if the inherent method is
-missing the shim recurses and rustc's `unconditional_recursion` warning fails the clippy gate).
-The impl blocks are written once by M0 in the type's main module file (`pad/mod.rs`,
-`pcb_text.rs`) and are not edited afterwards; the inherent methods live in whichever module the
-owning package has (`pad/shapes.rs` for `Pad::effective_shape`), first as `port_pending!` stubs. Consumers holding a concrete type
-call the inherent method (`pad.layer_set(ctx)`), consumers holding `ItemRef` / `dyn BoardItem`
-get the same code through the shim.
+missing the shim recurses, and `#![deny(unconditional_recursion)]` in `lib.rs` makes that a
+build error). The impl blocks are written once by M0 in the type's main module file
+(`pad/mod.rs`, `pcb_text.rs`) and are not edited afterwards; the inherent methods live in
+whichever module the owning package has (`pad/shapes.rs` for `Pad::effective_shape`), first as
+`port_pending!` stubs. Consumers holding a concrete type call the inherent method
+(`pad.layer_set(ctx)`), consumers holding `ItemRef` / `dyn BoardItem` get the same code
+through the shim. A *forgotten* shim is not detected by the compiler (the trait default, i.e.
+the base-class body, is used silently): each type package lists the `override`s of its headers
+and the wave-0b review checks the list against the impl blocks. `pcb_track/mod.rs` is the
+worked example of everything in this section.
+
+Three consequences of "a Rust struct does not inherit" (binding):
+
+* **Base-class bodies are free functions.** A trait default that is more than a constant
+  forwards to a generic function in the module that ports the base class
+  (`board_item::fits_enabled_layers(item, ctx, ..)`, `board_connected_item::own_clearance`,
+  `eda_text::text_pos(host, ctx)`). An override that calls its base class explicitly (C++
+  `BOARD_ITEM::FitsEnabledLayers( .. ) && HasValidLayerPair( .. )`) calls that function; a
+  trait default cannot be called from the type that overrides it.
+* **Derived classes** (`PCB_ARC`, `PCB_VIA` : `PCB_TRACK`; `PCB_FIELD`,
+  `PCB_DIMENSION_BASE` : `PCB_TEXT`; `PCB_TEXTBOX` : `PCB_SHAPE`; `PCB_TABLECELL` :
+  `PCB_TEXTBOX`; `PCB_GENERATOR` : `PCB_GROUP`) embed the base struct and get a shim for every
+  virtual that the class **or any of its bases** overrides, each forwarding to the derived
+  type's **own** inherent method. For an inherited virtual that method is one line calling
+  the base (`self.text.x(ctx)`) when the base body calls no virtual the derived class
+  overrides; otherwise the owning package writes the base body once as a generic function
+  over the host (`fn bounding_box<H: ..>(host: &H, ctx)`) and base and derived methods both
+  call it, so that the derived overrides are reached exactly as C++ virtual dispatch reaches
+  them. The embedded base struct returned by a downcast (`ItemRef::as_shape()` of a textbox)
+  is for data and non-virtual members only.
+* **Virtuals introduced by a concrete class** (`PCB_TRACK::GetWidth` / `SetWidth` /
+  `GetLength` / `GetWidthConstraint`, overridden by `PCB_VIA` / `PCB_ARC`;
+  `PCB_SHAPE::GetCorners`, overridden by `PCB_TEXTBOX`) are not in the traits: each struct has
+  the inherent method and the tagged form dispatches (`Track::width()`); a base body that
+  calls one follows the generic-function rule above.
 
 ```rust
 pub trait BoardItem: Invalidate {
@@ -313,6 +354,8 @@ pub trait BoardItem: Invalidate {
     fn connected(&self) -> Option<&ConnectedItemBase> { None }    // BOARD_CONNECTED_ITEM part
     fn connected_mut(&mut self) -> Option<&mut ConnectedItemBase> { None }
     fn uuid(&self) -> &Kiid { &self.base().uuid }
+    /// GetParentGroup() as a handle; PCB_TABLECELL answers with its table's group.
+    fn parent_group(&self, ctx: &BoardCtx<'_>) -> Option<ItemId> { self.base().group }
     // layers
     fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId { self.base().layer }        // GetLayer
     fn layer_set(&self, ctx: &BoardCtx<'_>) -> Lset;                               // GetLayerSet
@@ -348,7 +391,7 @@ pub trait BoardItem: Invalidate {
     // structure
     fn run_on_children(&self, ctx: &BoardCtx<'_>, mode: RecurseMode, f: &mut dyn FnMut(ItemRef<'_>)) {}
     // text used verbatim in DRC reports
-    fn item_description(&self, ctx: &BoardCtx<'_>, units: &dyn UnitsProvider, full: bool) -> String;
+    fn item_description(&self, ctx: &BoardCtx<'_>, units: &UnitsProvider<'_>, full: bool) -> String;
     fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String;
     fn layer_mask_describe(&self, ctx: &BoardCtx<'_>) -> String;
 }
@@ -366,13 +409,14 @@ pub trait BoardConnectedItem: BoardItem {
 /// Mutating virtuals of leaf items. Containers (footprint, group, generator, table) cascade
 /// through `Board` methods instead (section 8.3).
 pub trait BoardItemMut: BoardItem {
+    // The base bodies of the next five are no-ops (C++: nothing, wxFAIL or a message box).
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I);
     fn move_by(&mut self, env: &MutEnv, delta: Vector2I);                              // Move
     fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle);
     fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection);
     fn mirror(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection);
     fn set_layer(&mut self, env: &MutEnv, layer: PcbLayerId);
-    fn set_layer_set(&mut self, env: &MutEnv, layers: Lset) {}
+    fn set_layer_set(&mut self, env: &MutEnv, layers: Lset);   // base: one layer -> set_layer
     fn normalize(&mut self) {}
     fn on_footprint_transformed(&mut self, env: &MutEnv) {}
     fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64,
@@ -394,8 +438,10 @@ interface is a trait implemented by the **host** item, and the base-class algori
 generic functions over the host. Never call an algorithm on the bare data struct.
 
 ```rust
-/// Virtual interface of EDA_TEXT. Hosts: PcbText (PcbField, PcbDimension, the barcode text
-/// delegate to it), PcbTextbox (PcbTablecell delegates). Defaults = the EDA_TEXT bodies.
+/// Virtual interface of EDA_TEXT. Hosts: every type whose C++ class is an EDA_TEXT, each with
+/// its own impl so that its overrides apply: PcbText, PcbField, PcbDimension, PcbTextbox,
+/// PcbTablecell (the barcode's text is a member object: its inner PcbText is the host).
+/// Defaults = the EDA_TEXT bodies (generic functions in eda_text.rs).
 pub trait EdaTextItem {
     fn eda_text(&self) -> &EdaText;
     fn eda_text_mut(&mut self) -> &mut EdaText;
@@ -405,22 +451,29 @@ pub trait EdaTextItem {
     fn text_angle(&self, ctx: &BoardCtx<'_>) -> EdaAngle;           // GetTextAngle
     fn draw_pos(&self, ctx: &BoardCtx<'_>) -> Vector2I { self.text_pos(ctx) }        // GetDrawPos
     fn draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { self.text_angle(ctx) } // GetDrawRotation
-    fn shown_text(&self, ctx: &BoardCtx<'_>, allow_extra_text: bool, depth: i32) -> String; // GetShownText
+    /// GetShownText( aContext, aDepth ): this tree passes a RESOLUTION_CONTEXT
+    /// (`kicad_core::text_vars::ResolutionContext`), not the `aAllowExtraText` flag of KiCad 9.
+    fn shown_text(&self, ctx: &BoardCtx<'_>, context: ResolutionContext, depth: i32) -> String;
     fn font_metrics(&self, ctx: &BoardCtx<'_>) -> &'static kicad_font::Metrics;      // getFontMetrics
     fn set_text_pos(&mut self, env: &MutEnv, pos: Vector2I);        // SetTextPos, Offset, SetTextSize,
     fn set_text_size(&mut self, env: &MutEnv, size: Vector2I, enforce_min: bool);  // SetTextThickness,
     fn set_text_thickness(&mut self, env: &MutEnv, width: i32);     // SetTextAngle: the overrides
     fn set_text_angle(&mut self, env: &MutEnv, angle: EdaAngle);    // convert board -> lib frame
     fn offset(&mut self, env: &MutEnv, delta: Vector2I);
-    // Non-virtual EDA_TEXT members that call the virtuals: provided methods whose bodies are
-    // generic functions in eda_text.rs (package M10), e.g.
+}
+/// Non-virtual EDA_TEXT members that call the virtuals: generic functions over the host in
+/// eda_text.rs (signatures M0c, bodies M10) with method syntax through this extension trait,
+/// which is defined in eda_text.rs and blanket-implemented (`impl<T: EdaTextItem + ?Sized>
+/// EdaTextExt for T {}`), so that the methods cannot be overridden and `traits.rs` stays frozen.
+pub trait EdaTextExt: EdaTextItem {
     fn text_box(&self, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I { eda_text::text_box(self, ctx, line) }
-    // likewise: effective_text_pen_width, effective_text_shape, line_positions, draw_font,
-    // text_hit_test, text_hit_test_rect, interline, compare_text, format-relevant getters.
+    // likewise: effective_text_pen_width, effective_text_shape, line_positions, interline,
+    // compare_text, format-relevant getters. (TextHitTest is virtual and overridden by
+    // PCB_TEXT only: an inherent method there.)
 }
 
-/// Virtual interface of EDA_SHAPE. Hosts: PcbShape (PcbTextbox, PcbTablecell delegate, with
-/// the PCB_TEXTBOX overrides). Defaults = the EDA_SHAPE bodies.
+/// Virtual interface of EDA_SHAPE. Hosts, each with its own impl: PcbShape, PcbTextbox,
+/// PcbTablecell. Defaults = the EDA_SHAPE bodies (generic functions in eda_shape/mod.rs).
 pub trait EdaShapeItem {
     fn eda_shape(&self) -> &EdaShape;
     fn eda_shape_mut(&mut self) -> &mut EdaShape;
@@ -429,23 +482,30 @@ pub trait EdaShapeItem {
     fn hatch_line_width(&self) -> i32 { self.effective_width() }
     fn hatch_line_spacing(&self) -> i32 { self.hatch_line_width() * 10 }
     fn is_proxy_item(&self) -> bool { self.eda_shape().proxy_item }
+    fn is_filled_for_hit_testing(&self) -> bool;                    // IsSolidFill(); PCB_TABLECELL: true
     fn top_left(&self) -> Vector2I;  fn bot_right(&self) -> Vector2I;   // PCB_TEXTBOX overrides
     fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I>;
     fn shape_draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { ANGLE_0 }   // getDrawRotation
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 { 100 }    // getMaxError (PCB_SHAPE: board)
     fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet { ShapePolySet::new() } // PCB_SHAPE reads other items
-    // Provided (bodies in eda_shape/{geometry,shapes}.rs, packages M7 / M8):
-    // make_effective_shapes(ctx, edge_only), hatching(ctx), shape_bounding_box(ctx),
-    // shape_hit_test(..), shape_transform_to_polygon(..), ...
 }
+/// The non-virtual EDA_SHAPE members that call the virtuals, like `EdaTextExt`: defined and
+/// blanket-implemented in eda_shape/mod.rs, forwarding to generic functions in
+/// eda_shape/{mod,geometry,shapes}.rs (signatures M0c, bodies M7 / M8):
+/// make_effective_shapes(ctx, edge_only), hatching(ctx), shape_bounding_box(ctx),
+/// shape_hit_test(..), shape_transform_to_polygon(..), ...
+pub trait EdaShapeExt: EdaShapeItem {}
 ```
 
 Methods shown without a body have the base-class body as their default in the real trait
 (the stored value; for a footprint child that is the library-frame value, which is why every
-PCB host overrides them). The host `impl` blocks follow the shim rule of 6.2. Mutators:
+PCB host overrides them). The host `impl` blocks follow the shim rule of 6.2, including its
+derived-class rule: `PcbField`, `PcbDimension` and `PcbTablecell` have a shim for every
+`EDA_TEXT` / `EDA_SHAPE` virtual that their class or its base overrides. Mutators:
 `EdaShape` has plain inherent setters (the `EDA_SHAPE` bodies); `PcbShape` setters take
 `&MutEnv`, call them and then `sync_lib_coords(env)`, as each C++ override does.
-`ItemRef::as_eda_text()` / `as_eda_shape()` return `&dyn EdaTextItem` / `&dyn EdaShapeItem`.
+`ItemRef::as_eda_text()` / `as_eda_shape()` return `&dyn EdaTextItem` / `&dyn EdaShapeItem`
+of the item itself (the real host), never of an embedded base struct.
 
 ### 6.3 `ItemRef` and `AnyItem`
 
@@ -490,7 +550,7 @@ impl<'a> ItemRef<'a> {
     pub fn transform_shape_to_polygon(&self, buf: &mut ShapePolySet, layer: PcbLayerId, clearance: i32,
                                       error: i32, error_loc: ErrorLoc, ignore_line_width: bool);
     pub fn has_hole(&self) -> bool;  pub fn is_locked(&self) -> bool;  pub fn is_tented(&self, l: PcbLayerId) -> bool;
-    pub fn item_description(&self, units: &dyn UnitsProvider, full: bool) -> String;
+    pub fn item_description(&self, units: &UnitsProvider<'_>, full: bool) -> String;
     pub fn max_error(&self) -> i32;  pub fn flipped_layer(&self, l: PcbLayerId) -> PcbLayerId;
     pub fn board_copper_layer_count(&self) -> i32;  pub fn layer_name(&self) -> String;
     pub fn fp_relative_position(&self) -> Vector2I;
@@ -504,11 +564,26 @@ impl<'a> ItemRef<'a> {
     pub fn as_hole_proxy(self) -> ItemRef<'a>;          pub fn is_hole_proxy(&self) -> bool;
 }
 impl PartialEq for ItemRef<'_> { /* same id (or same address for detached); = pointer equality */ }
+impl AnyItemMut<'_> {
+    /// The mutating virtuals of a leaf item; None for footprint, table, group, generator
+    /// (they cascade through Board methods, 8.3). Used by `Board::move_item` etc.
+    pub fn as_leaf_mut(&mut self) -> Option<&mut dyn BoardItemMut>;
+}
 ```
+
+The downcasts that also accept a derived kind (`as_shape()` on a textbox or cell, `as_text()` on
+a field or dimension, `as_textbox()` on a cell, `as_group()` on a generator) return the
+**embedded base struct**. It is for reading the base's data and calling its non-virtual
+members; virtual behaviour (bounding box, shapes, hit tests, shown text, the mixin virtuals)
+must go through the `ItemRef`, `as_dyn()`, `as_eda_text()` or `as_eda_shape()`, which dispatch
+on the real type. Calling `PcbShape::bounding_box` on the box of a textbox is the C++
+`PCB_SHAPE::GetBoundingBox` called non-virtually.
 
 Typed per-class behaviour (`pad.flash_layer(ctx, layer)`, `via.layer_pair()`,
 `zone.filled_polys_list(layer)`, `padstack.for_each_unique_layer(..)`) is inherent methods on
-the structs, in the module that ports the C++ file. Rule C1: an inherent method that backs a
+the structs, in the module that ports the C++ file. A virtual that a concrete class introduces
+is such an inherent method on every struct of the family plus a dispatcher on the tagged form
+(`Track::width()`, `Track::length()`, `Track::width_constraint(ctx, want_source)`). Rule C1: an inherent method that backs a
 trait method has **exactly the trait's signature** (so it always takes `ctx`, see 6.2); any
 other inherent method takes `ctx` iff the C++ body reaches beyond `self`. A method that must
 name its own item (`this`) uses `self.base().id` or `ctx.view(AnyItem::Pad(self))`.
@@ -661,9 +736,12 @@ impl MutEnv { pub fn detached() -> MutEnv; }   // no board: the C++ null-board d
 
 impl Board {
     pub fn mut_env(&self, id: ItemId) -> MutEnv;
-    /// Invalidate the item's caches, run `f`, re-stamp `base.id` and `base.parent` (so `f` may
-    /// assign a whole new value), bump the time stamp, invalidate the parent footprint's
-    /// geometry caches, journal `Modified` if the journal is on.
+    /// Invalidate the item's caches, run `f`, invalidate them again, re-stamp `base.id`,
+    /// `base.parent` and `base.group` (so `f` may assign a whole new value: the three are
+    /// relations only `Board` writes; a changed UUID is re-bound in the index), bump the time
+    /// stamp, invalidate the parent footprint's geometry caches, journal `Modified` if the
+    /// journal is on. Child and member lists of containers are not protected: never replace
+    /// a footprint, table or group wholesale.
     pub fn modify<R>(&mut self, id: ItemId, f: impl FnOnce(AnyItemMut<'_>, &MutEnv) -> R) -> Option<R>;
     pub fn modify_track<R>(&mut self, id: TrackId, f: impl FnOnce(&mut Track, &MutEnv) -> R) -> Option<R>;
     pub fn modify_pad<R>(&mut self, id: PadId, f: impl FnOnce(&mut Pad, &MutEnv) -> R) -> Option<R>;
@@ -988,7 +1066,9 @@ Ids are valid for one `Session` (and its snapshots); UUID strings are what JS ke
    derive functions.
 4. Rule C1 (6.3): an inherent method backing a trait method has the trait's signature; other
    inherent methods take `ctx` iff the C++ body reaches the parent, the board, another item, the
-   net object or a hook. Never put behaviour into an `impl Trait for T` block (6.2).
+   net object or a hook. Never put behaviour into an `impl Trait for T` block (6.2). An
+   override that calls its base class calls the base's free function (`board_item::x(self, ..)`);
+   virtual behaviour of a derived kind is never reached through its embedded base struct.
 5. Mutate only through `Board` methods; derived results through the section 8.4 writers. Do not
    add `pub` to arena fields or order lists.
 6. `rules == None` / `connectivity == None` must behave exactly like the C++ null branches; test
@@ -1021,7 +1101,7 @@ work that must have landed (`G*` = kicad-geom packages of PLAN.md, `TF*` = text-
 | WP | Title | Rust modules | C++ sources | ~lines | depends on |
 |---|---|---|---|---|---|
 | **M0a** | Kernel and pattern (1 agent; reviewed before anything else starts) | `arena`, `ids`, `items_macro`, `cache`, `pending`, `item`, `traits` (all traits of 6.2 / 6.2a with full signatures), `ctx`, `item_ref`, `drc_api`, `board/mod.rs` (struct, `Index`, typed getters, order-list iterators, `check_invariants`); a **placeholder struct for every item and settings type** (base field + derives only) so that the item table compiles; and one family end to end as the pattern the others copy: `PcbTrack` / `PcbArc` / `PcbVia` / `Track` with all fields, constructor defaults, delegation shims, inherent stubs, `add_track`, `modify_track`, `tracks()`, a `BoardCtx` / `ItemRef` round-trip test, wasm32 build | `eda_item.h`, `board_item.h`, `board_connected_item.h`, `pcb_track.h`, `drc_constraint_types.h`, `drc_rule.h`, `drc_item.h` code list | 2500 (Rust) | kicad-core, kicad-geom type names (stubs per section 17) |
-| **M0b-e** | Type definitions (4 agents in parallel, disjoint files) | every struct / enum of `board-model-types.md` with `Default` = C++ constructor values, the delegation shims for exactly the virtuals the C++ class overrides, an inherent `port_pending!` stub for every signature of this document. **b**: padstack, pad, footprint, zone, zone settings, teardrop parameters. **c**: eda_shape, pcb_shape, line ending, eda_text, pcb_text, field, textbox, table, tablecell, dimension, barcode. **d**: `Board` fields, design settings, stackup, plot params, netinfo, netclass, net settings, embedded files, component classes, project data. **e**: group, generator, target, point, marker / `RcItem`, constraint, 3D body, grid item, drill map, reference image, generated-table data | the matching headers and constructors | 3000 (headers) | M0a |
+| **M0b-e** | Type definitions (4 agents in parallel, disjoint files) | every struct / enum of `board-model-types.md` with `Default` = C++ constructor values, the delegation shims for exactly the virtuals the C++ class overrides, an inherent `port_pending!` stub for every signature of this document. **b**: padstack, pad, footprint, zone, zone settings, teardrop parameters. **c**: eda_shape, pcb_shape, line ending, eda_text, pcb_text, field, textbox, table, tablecell, generated-table data (`pcb_generated_table.rs`, held by `PcbTable`), dimension, barcode. **d**: `Board::default`, design settings, stackup, plot params, netinfo, netclass, net settings, embedded files, component classes, project data, and the `impl Board` stubs of sections 8 and 18. **e**: group, generator, target, point, marker / `RcItem`, constraint, 3D body, grid item, drill map, reference image | the matching headers and constructors | 3000 (headers) | M0a |
 | M1 | Containers, index, journal | `board/{containers,index,journal}.rs` | `board.cpp` Add/Remove/RemoveAll/FinalizeBulk*/ResolveItem/RepairDuplicateItemUuids/GetItemSet/collectOwnedItems/RunOnChildren/AllConnectedItems, `footprint.cpp` constructor (mandatory fields) / Add / Remove / RunOnChildren as `create_footprint` / `footprint_add` / `attach_footprint`, table create / add cell / attach, `child_env`, `board_item_index.cpp`, `common/eda_group.cpp`; insertion-order arena indices (3.1); time stamp and journal | 1700 | M0 |
 | M2 | Item base | `board_item.rs`, `board_connected_item.rs`, `eda_item.rs`, `item_ref.rs` forwards | `board_item.cpp`, `board_connected_item.cpp`, `common/eda_item.cpp` (flags, custom properties), `BOARD_ITEM::ptr_cmp` | 1100 | M0 |
 | M3 | Nets and netclasses | `netinfo.rs`, `netclass.rs`, `board/nets.rs` | `netinfo_item.cpp`, `netinfo_list.cpp`, `common/netclass.cpp`, `board.cpp` net functions | 1500 | M0 |
@@ -1063,7 +1143,46 @@ wave 5:  M20            tier 2: M25 M26
 
 M0a also ships `test_support.rs`: fixture builders that set the `pub(crate)` frame fields
 directly (a board with one rotated / flipped / scaled footprint and a child of each kind), so
-that wave 1-3 packages can run their frame tests before M1 and M19 land.
+that wave 1-3 packages can run their frame tests before M1 and M19 land. Tests customise the
+fixture from their own module (`fx.add_child(value, |fp| &mut fp.pads)`, `fx.set_child(id,
+value)`, or the `pub(crate)` arenas); nobody edits `test_support.rs`.
+
+**Wave 0b rules (fixed by the M0a review).** The four type packages edit disjoint files:
+
+* *Frozen for everybody from now on:* `lib.rs`, `items_macro.rs`, `ids.rs`, `arena.rs`,
+  `cache.rs`, `item.rs`, `traits.rs`, `ctx.rs`, `item_ref.rs`, `pending.rs`, `drc_api.rs`,
+  `test_support.rs`, `foundation_stub.rs`, `pcb_track/*`, `Cargo.toml`. A package that needs a
+  change there (a missing virtual, a foundation type, a dependency) reports it to the
+  orchestrator and continues with a `port_pending!`.
+* *A package edits only the main module files of its own types* (list in the M0b-e row),
+  plus the sibling files of those modules (`pad/derive.rs`, `footprint/transform.rs`, ...)
+  for the inherent stubs. Structural fields of the placeholders keep their names (`base`,
+  `text`, `shape`, `textbox`, `group`, `members`, `cells`, the footprint child lists,
+  `transform`, `flipped`, `NetinfoItem::net_code`, `NetinfoList::nets`): kernel code reads
+  them.
+* *Types that cross package borders exist already and are used as they are:*
+  `ZoneConnection`, `ZoneLayerProperties` (zone_settings.rs), `TeardropParameters` /
+  `TeardropParametersList` and `ZoneSettings` (placeholders M0b fills),
+  `ComponentClass` / `ComponentClassCache` / `EmbeddedFiles` (placeholders M0d fills), the
+  `Dim*` enums (pcb_dimension.rs), every item placeholder. A test of constructor defaults
+  asserts only fields whose type belongs to the package.
+* *`impl Board` stubs are written by the package that owns the file they belong to:* M0b the
+  `Board::footprint_*` cascade family (footprint/transform.rs), `build_net_tie_cache`
+  (footprint/mod.rs), `zone_fill_mut` (zone/mod.rs), `set_zone_layer_override` /
+  `clear_zone_layer_overrides` (pad/mod.rs, for pads and vias); M0d everything else of
+  sections 8.1, 8.2, 8.5 and of the types document's section 18: `add_*` / `add` /
+  `add_marker` / `remove*` / `add_to_group` / `remove_from_group` in board/containers.rs,
+  `rebind_item_uuid` in board/index.rs, `add_net` and the net functions in board/nets.rs,
+  `move_item` / `rotate_item` / `flip_item` / `mirror_item` / `set_item_layer` /
+  `set_item_locked` in board_item.rs, `set_item_net` in board_connected_item.rs, the rest in
+  board/{layers,queries,text_vars,markers,compare,outline}.rs. M0d also makes the three
+  kernel hooks real, because they are field reads in C++: `Board::copper_layer_count`,
+  `Board::flip_layer`, `Board::build_layer_env` (board/layers.rs) and
+  `BoardDesignSettings::max_error`, and ends `Board::default()` with
+  `layer_env = build_layer_env()`.
+* *Shims.* In the existing `impl` blocks of a type, one line per virtual that its C++ class
+  or a base below the trait's class overrides (6.2); each package reports the list it derived
+  from the headers.
 
 The save-order comparators are model code (M2 `board_item_ptr_cmp`, M16 `pcb_track_cmp_tracks`,
 M20 `footprint_cmp_*`, M22 `board_cmp_*`, M23 `pcb_point_cmp_points`); pcb-io.md PCBIO-02
@@ -1086,9 +1205,9 @@ lands, so schedule them by this table, not by "after M0":
 | zone filler | M15, M17, M18, M20, M21, connectivity, DRC engine |
 
 Nine agents editing one crate at once will break each other's `cargo check` now and then
-(PORTING.md section 7 applies: small complete increments, wait and retry). `lib.rs`, the
-`pub mod` lines, the trait shim blocks and `Cargo.toml` are frozen after wave 0b; a package
-that needs a new module file or dependency asks the orchestrator.
+(PORTING.md section 7 applies: small complete increments, wait and retry). The kernel files
+listed under "Wave 0b rules" stay frozen; the trait shim blocks are frozen after wave 0b; a
+package that needs a new module file, a new virtual or a dependency asks the orchestrator.
 
 ## 17. Deviations, deferred machinery, resolved decisions
 

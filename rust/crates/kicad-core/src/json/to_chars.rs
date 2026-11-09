@@ -37,7 +37,10 @@ impl DiyFp {
     fn sub(x: DiyFp, y: DiyFp) -> DiyFp {
         debug_assert!(x.e == y.e);
         debug_assert!(x.f >= y.f);
-        DiyFp { f: x.f - y.f, e: x.e }
+        DiyFp {
+            f: x.f - y.f,
+            e: x.e,
+        }
     }
 
     fn mul(x: DiyFp, y: DiyFp) -> DiyFp {
@@ -61,7 +64,10 @@ impl DiyFp {
         q += 1u64 << (64 - 32 - 1); // round, ties up
 
         let h = p3 + p2_hi + p1_hi + (q >> 32);
-        DiyFp { f: h, e: x.e + y.e + 64 }
+        DiyFp {
+            f: h,
+            e: x.e + y.e + 64,
+        }
     }
 
     fn normalize(mut x: DiyFp) -> DiyFp {
@@ -77,7 +83,10 @@ impl DiyFp {
         let delta = x.e - target_exponent;
         debug_assert!(delta >= 0);
         debug_assert!(((x.f << delta) >> delta) == x.f);
-        DiyFp { f: x.f << delta, e: target_exponent }
+        DiyFp {
+            f: x.f << delta,
+            e: target_exponent,
+        }
     }
 }
 
@@ -101,21 +110,37 @@ fn compute_boundaries(value: f64) -> Boundaries {
     let v = if is_denormal {
         DiyFp { f, e: K_MIN_EXP }
     } else {
-        DiyFp { f: f + K_HIDDEN_BIT, e: e as i32 - K_BIAS }
+        DiyFp {
+            f: f + K_HIDDEN_BIT,
+            e: e as i32 - K_BIAS,
+        }
     };
 
     let lower_boundary_is_closer = f == 0 && e > 1;
-    let m_plus = DiyFp { f: 2 * v.f + 1, e: v.e - 1 };
+    let m_plus = DiyFp {
+        f: 2 * v.f + 1,
+        e: v.e - 1,
+    };
     let m_minus = if lower_boundary_is_closer {
-        DiyFp { f: 4 * v.f - 1, e: v.e - 2 }
+        DiyFp {
+            f: 4 * v.f - 1,
+            e: v.e - 2,
+        }
     } else {
-        DiyFp { f: 2 * v.f - 1, e: v.e - 1 }
+        DiyFp {
+            f: 2 * v.f - 1,
+            e: v.e - 1,
+        }
     };
 
     let w_plus = DiyFp::normalize(m_plus);
     let w_minus = DiyFp::normalize_to(m_minus, w_plus.e);
 
-    Boundaries { w: DiyFp::normalize(v), minus: w_minus, plus: w_plus }
+    Boundaries {
+        w: DiyFp::normalize(v),
+        minus: w_minus,
+        plus: w_plus,
+    }
 }
 
 const K_ALPHA: i32 = -60;
@@ -223,7 +248,8 @@ fn get_cached_power_for_binary_exponent(e: i32) -> &'static CachedPower {
     // C++ integer division truncates toward zero, as does Rust's `/` on i32.
     let k = (f * 78913) / (1 << 18) + i32::from(f > 0);
 
-    let index = (-K_CACHED_POWERS_MIN_DEC_EXP + k + (K_CACHED_POWERS_DEC_STEP - 1)) / K_CACHED_POWERS_DEC_STEP;
+    let index = (-K_CACHED_POWERS_MIN_DEC_EXP + k + (K_CACHED_POWERS_DEC_STEP - 1))
+        / K_CACHED_POWERS_DEC_STEP;
     debug_assert!(index >= 0);
     let cached = &K_CACHED_POWERS[index as usize];
     debug_assert!(K_ALPHA <= cached.e + e + 64);
@@ -261,7 +287,10 @@ fn grisu2_round(buf: &mut [u8], len: usize, dist: u64, delta: u64, mut rest: u64
     debug_assert!(rest <= delta);
     debug_assert!(ten_k > 0);
 
-    while rest < dist && delta - rest >= ten_k && (rest + ten_k < dist || dist - rest > rest + ten_k - dist) {
+    while rest < dist
+        && delta - rest >= ten_k
+        && (rest + ten_k < dist || dist - rest > rest + ten_k - dist)
+    {
         debug_assert!(buf[len - 1] != b'0');
         buf[len - 1] -= 1;
         rest += ten_k;
@@ -282,7 +311,10 @@ fn grisu2_digit_gen(
     let mut delta = DiyFp::sub(m_plus, m_minus).f;
     let mut dist = DiyFp::sub(m_plus, w).f;
 
-    let one = DiyFp { f: 1u64 << (-m_plus.e), e: m_plus.e };
+    let one = DiyFp {
+        f: 1u64 << (-m_plus.e),
+        e: m_plus.e,
+    };
 
     let mut p1 = (m_plus.f >> (-one.e)) as u32;
     let mut p2 = m_plus.f & (one.f - 1);
@@ -355,18 +387,34 @@ fn grisu2(buf: &mut [u8], value: f64) -> (usize, i32) {
     debug_assert!(m_plus.e == v.e);
 
     let cached = get_cached_power_for_binary_exponent(m_plus.e);
-    let c_minus_k = DiyFp { f: cached.f, e: cached.e };
+    let c_minus_k = DiyFp {
+        f: cached.f,
+        e: cached.e,
+    };
 
     let w = DiyFp::mul(v, c_minus_k);
     let w_minus = DiyFp::mul(m_minus, c_minus_k);
     let w_plus = DiyFp::mul(m_plus, c_minus_k);
 
-    let big_m_minus = DiyFp { f: w_minus.f + 1, e: w_minus.e };
-    let big_m_plus = DiyFp { f: w_plus.f - 1, e: w_plus.e };
+    let big_m_minus = DiyFp {
+        f: w_minus.f + 1,
+        e: w_minus.e,
+    };
+    let big_m_plus = DiyFp {
+        f: w_plus.f - 1,
+        e: w_plus.e,
+    };
 
     let mut decimal_exponent = -cached.k;
     let mut len = 0usize;
-    grisu2_digit_gen(buf, &mut len, &mut decimal_exponent, big_m_minus, w, big_m_plus);
+    grisu2_digit_gen(
+        buf,
+        &mut len,
+        &mut decimal_exponent,
+        big_m_minus,
+        w,
+        big_m_plus,
+    );
     (len, decimal_exponent)
 }
 
@@ -400,7 +448,13 @@ fn append_exponent(out: &mut Vec<u8>, mut e: i32) {
 }
 
 /// Port of `dtoa_impl::format_buffer` (builds the text instead of shuffling bytes in place).
-fn format_buffer(out: &mut Vec<u8>, digits: &[u8], decimal_exponent: i32, min_exp: i32, max_exp: i32) {
+fn format_buffer(
+    out: &mut Vec<u8>,
+    digits: &[u8],
+    decimal_exponent: i32,
+    min_exp: i32,
+    max_exp: i32,
+) {
     debug_assert!(min_exp < 0);
     debug_assert!(max_exp > 0);
 
@@ -467,4 +521,3 @@ pub fn to_chars(out: &mut Vec<u8>, mut value: f64) {
 
     format_buffer(out, &buf[..len], decimal_exponent, K_MIN_EXP, K_MAX_EXP);
 }
-

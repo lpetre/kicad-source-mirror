@@ -20,9 +20,11 @@
 //! Placeholder written by M0a; the type package M0c fills in the fields, `Default` and the
 //! delegation shims (`board-model.md` 6.2, 16).
 
+use crate::eda_text::EdaText;
 use crate::item::BoardItemBase;
 use crate::pcb_text::PcbText;
 use crate::traits::BoardItemMut;
+use crate::traits::EdaTextItem;
 use crate::traits::{BoardItem, Invalidate};
 use kicad_core::KicadT;
 
@@ -60,3 +62,17 @@ impl BoardItem for PcbField {
 }
 
 impl BoardItemMut for PcbField {}
+
+/// A field is its own `EDA_TEXT` host (PCB_FIELD overrides `GetShownText`), so that
+/// `ItemRef::as_eda_text()` and the generic `eda_text` functions dispatch to the field's
+/// overrides and not to the embedded `PcbText`. M0c adds a shim for every `EDA_TEXT` virtual
+/// that PCB_FIELD or PCB_TEXT overrides, each forwarding to an inherent `PcbField` method.
+impl EdaTextItem for PcbField {
+    fn eda_text(&self) -> &EdaText {
+        &self.text.text
+    }
+
+    fn eda_text_mut(&mut self) -> &mut EdaText {
+        &mut self.text.text
+    }
+}

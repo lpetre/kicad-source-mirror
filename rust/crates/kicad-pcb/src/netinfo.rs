@@ -20,6 +20,8 @@
 //! Placeholder written by M0a; the type package M0d fills in the fields, `Default` and the
 //! delegation shims (`board-model.md` 6.2, 16).
 
+use std::collections::BTreeMap;
+
 use crate::ids::NetCode;
 use crate::item::BoardItemBase;
 use crate::traits::{BoardItem, Invalidate};
@@ -62,7 +64,11 @@ impl BoardItem for NetinfoItem {
 
 /// `NETINFO_LIST`.
 ///
-/// PLACEHOLDER (M0a): M0d fills in the fields (`nets` by code, `names` by name) and `Default`;
-/// the lookups of `board/nets.rs` (M3) read them.
+/// PLACEHOLDER (M0a): M0d fills in the remaining fields (`names` by name, ...) and `Default`;
+/// the lookups of `board/nets.rs` (M3) read them. `nets` is structural (`Board::get` of an
+/// `ItemKind::Net` handle and `check_invariants` read it) and stays.
 #[derive(Clone, Debug, Default)]
-pub struct NetinfoList {}
+pub struct NetinfoList {
+    /// m_netCodes (+ ownership of m_netNames): the owner map, by code.
+    pub(crate) nets: BTreeMap<NetCode, NetinfoItem>,
+}

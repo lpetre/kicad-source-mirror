@@ -58,7 +58,9 @@ use crate::pcb_target::PcbTarget;
 use crate::pcb_text::PcbText;
 use crate::pcb_textbox::PcbTextbox;
 use crate::pcb_track::{PcbArc, PcbVia, Track};
-use crate::traits::{BoardConnectedItem, BoardItem, EdaShapeItem, EdaTextItem, Flashing};
+use crate::traits::{
+    BoardConnectedItem, BoardItem, BoardItemMut, EdaShapeItem, EdaTextItem, Flashing,
+};
 use crate::zone::Zone;
 
 board_items!(gen_any_item);
@@ -75,6 +77,39 @@ impl<'a> AnyItem<'a> {
             AnyItem::Textbox(x) => Some(x),
             AnyItem::Tablecell(x) => Some(x),
             _ => None,
+        }
+    }
+}
+
+impl AnyItemMut<'_> {
+    /// The mutating virtuals of a leaf item (`BoardItemMut`: `SetPosition`, `Move`, `Rotate`,
+    /// `Flip`, `Mirror`, `SetLayer`, ...); `None` for the containers (footprint, table, group,
+    /// generator), which cascade through `Board` methods (`board-model.md` 8.3). This is what
+    /// the polymorphic `Board::move_item` / `rotate_item` / ... use for every other kind.
+    pub fn as_leaf_mut(&mut self) -> Option<&mut dyn BoardItemMut> {
+        match self {
+            AnyItemMut::Footprint(_)
+            | AnyItemMut::Table(_)
+            | AnyItemMut::Group(_)
+            | AnyItemMut::Generator(_) => None,
+            AnyItemMut::Pad(x) => Some(&mut **x),
+            AnyItemMut::Track(x) => Some(&mut **x),
+            AnyItemMut::Zone(x) => Some(&mut **x),
+            AnyItemMut::Shape(x) => Some(&mut **x),
+            AnyItemMut::Text(x) => Some(&mut **x),
+            AnyItemMut::Field(x) => Some(&mut **x),
+            AnyItemMut::Textbox(x) => Some(&mut **x),
+            AnyItemMut::Tablecell(x) => Some(&mut **x),
+            AnyItemMut::Dimension(x) => Some(&mut **x),
+            AnyItemMut::Barcode(x) => Some(&mut **x),
+            AnyItemMut::Image(x) => Some(&mut **x),
+            AnyItemMut::Target(x) => Some(&mut **x),
+            AnyItemMut::Point(x) => Some(&mut **x),
+            AnyItemMut::Marker(x) => Some(&mut **x),
+            AnyItemMut::Constraint(x) => Some(&mut **x),
+            AnyItemMut::Body3d(x) => Some(&mut **x),
+            AnyItemMut::GridItem(x) => Some(&mut **x),
+            AnyItemMut::DrillMap(x) => Some(&mut **x),
         }
     }
 }
@@ -254,7 +289,12 @@ impl<'a> ItemRef<'a> {
         }
     }
 
-    /// `PCB_SHAPE*`: also the box of a textbox / table cell.
+    /// `PCB_SHAPE*`: also the box of a textbox / table cell. For those two the result is the
+    /// **embedded base struct**: read its data and call its non-virtual members, but reach
+    /// virtual behaviour (bounding box, shapes, hit tests, `EDA_SHAPE` virtuals) through this
+    /// `ItemRef`, `as_dyn()` or `as_eda_shape()`, which dispatch on the real type. Calling
+    /// `PcbShape::bounding_box` on the box of a textbox is the C++ `PCB_SHAPE::GetBoundingBox`
+    /// called non-virtually.
     pub fn as_shape(&self) -> Option<&'a PcbShape> {
         match self.item {
             AnyItem::Shape(x) => Some(x),
@@ -264,7 +304,9 @@ impl<'a> ItemRef<'a> {
         }
     }
 
-    /// `PCB_TEXT*`: also field and dimension text.
+    /// `PCB_TEXT*`: also field and dimension text. For those two the result is the
+    /// **embedded base struct** (see [`ItemRef::as_shape`]): virtual behaviour goes through
+    /// this `ItemRef`, `as_dyn()` or `as_eda_text()`.
     pub fn as_text(&self) -> Option<&'a PcbText> {
         match self.item {
             AnyItem::Text(x) => Some(x),
@@ -274,31 +316,33 @@ impl<'a> ItemRef<'a> {
         }
     }
 
-    /// `EDA_TEXT*` (`board-model.md` 6.2a): texts, fields, dimensions, textboxes, cells and the
-    /// barcode's text.
+    /// `EDA_TEXT*` (`board-model.md` 6.2a): texts, fields, dimensions, textboxes, cells (each
+    /// its own host, so that the overrides of the real class apply) and the barcode's text
+    /// (a member object in C++, hence the inner `PcbText`).
     pub fn as_eda_text(&self) -> Option<&'a dyn EdaTextItem> {
         match self.item {
             AnyItem::Text(x) => Some(x),
-            AnyItem::Field(x) => Some(&x.text),
-            AnyItem::Dimension(x) => Some(&x.text),
+            AnyItem::Field(x) => Some(x),
+            AnyItem::Dimension(x) => Some(x),
             AnyItem::Textbox(x) => Some(x),
-            AnyItem::Tablecell(x) => Some(&x.textbox),
+            AnyItem::Tablecell(x) => Some(x),
             AnyItem::Barcode(x) => Some(&x.text),
             _ => None,
         }
     }
 
-    /// `EDA_SHAPE*` (`board-model.md` 6.2a): shapes, textboxes, cells.
+    /// `EDA_SHAPE*` (`board-model.md` 6.2a): shapes, textboxes, cells (each its own host).
     pub fn as_eda_shape(&self) -> Option<&'a dyn EdaShapeItem> {
         match self.item {
             AnyItem::Shape(x) => Some(x),
             AnyItem::Textbox(x) => Some(x),
-            AnyItem::Tablecell(x) => Some(&x.textbox),
+            AnyItem::Tablecell(x) => Some(x),
             _ => None,
         }
     }
 
-    /// `PCB_TEXTBOX*`: also table cell.
+    /// `PCB_TEXTBOX*`: also table cell (then the **embedded base struct**, see
+    /// [`ItemRef::as_shape`]).
     pub fn as_textbox(&self) -> Option<&'a PcbTextbox> {
         match self.item {
             AnyItem::Textbox(x) => Some(x),
@@ -323,7 +367,8 @@ impl<'a> ItemRef<'a> {
         }
     }
 
-    /// `EDA_GROUP*`: group, or a generator's group.
+    /// `EDA_GROUP*`: group, or a generator's group (then the **embedded base struct**, see
+    /// [`ItemRef::as_shape`]; the `EDA_GROUP` members are data, so this is the usual access).
     pub fn as_group(&self) -> Option<&'a PcbGroup> {
         match self.item {
             AnyItem::Group(x) => Some(x),
@@ -373,9 +418,9 @@ impl<'a> ItemRef<'a> {
         self.parent_footprint()?.id()?.typed()
     }
 
-    /// `GetParentGroup()`.
+    /// `GetParentGroup()` (virtual: a table cell answers with its table's group).
     pub fn parent_group(&self) -> Option<ItemRef<'a>> {
-        self.ctx.item(self.base().group?)
+        self.ctx.item(self.as_dyn().parent_group(self.ctx)?)
     }
 
     /// `RunOnChildren` collected into a vector.

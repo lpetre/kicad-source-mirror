@@ -76,7 +76,7 @@ board_items!(gen_board, {
     /// `BOARD`. `Clone` copies every item (caches and journal start empty in the clone; every
     /// handle stays valid in it); `Sync`. C++ forbids copying a BOARD.
     #[derive(Clone)]
-    #[allow(dead_code)] // `net_info`, `layers`: read by M3 / M22
+    #[allow(dead_code)] // `layers`: read by M22
     pub struct Board {
         // ---- board-level order lists (C++ member containers, C++ element order) ----
         pub(crate) marker_list: Vec<MarkerId>,     // m_markers
@@ -242,9 +242,11 @@ impl Board {
         self.time_stamp
     }
 
-    /// `BOARD::IncrementTimeStamp()`; also clears `BoardCaches`.
+    /// `BOARD::IncrementTimeStamp()`; also clears `BoardCaches`. The stamp only ever has to
+    /// differ from the one a consumer recorded, so it wraps instead of overflowing (the model
+    /// bumps it on every edit, `board-model.md` 8.5).
     pub fn increment_time_stamp(&mut self) {
-        self.time_stamp += 1;
+        self.time_stamp = self.time_stamp.wrapping_add(1);
         self.caches = BoardCaches::default();
     }
 
@@ -713,7 +715,7 @@ impl Board {
 
                 if net != NetCode::UNCONNECTED
                     && net != NetCode::ORPHANED
-                    && self.find_net(net).is_none()
+                    && !self.net_info.nets.contains_key(&net)
                 {
                     errors.push(format!("{id:?}: unknown net {net:?}"));
                 }

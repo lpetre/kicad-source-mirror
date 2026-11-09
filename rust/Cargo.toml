@@ -35,6 +35,8 @@ large_enum_variant = "allow"
 comparison_chain = "allow"
 should_implement_trait = "allow"
 wrong_self_convention = "allow"
+# `let mut x = T::default(); x.field = ..;` is the natural shape of ported constructors.
+field_reassign_with_default = "allow"
 
 [profile.dev]
 opt-level = 1

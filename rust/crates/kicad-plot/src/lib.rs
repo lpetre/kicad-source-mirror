@@ -28,6 +28,9 @@ pub mod gbr_plotter_aperture_macros;
 pub mod gbr_plotter_apertures;
 pub mod plotter;
 pub mod plotter_gerber;
+pub mod plotter_svg;
+pub mod plotter_text;
+pub mod plotters_pslike;
 pub mod render_settings;
 
 pub use kicad_core::plot_enums::{
@@ -35,4 +38,5 @@ pub use kicad_core::plot_enums::{
 };
 pub use plotter::{DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH};
 pub use plotter_gerber::GerberPlotter;
+pub use plotter_svg::SvgPlotter;
 pub use render_settings::RenderSettings;

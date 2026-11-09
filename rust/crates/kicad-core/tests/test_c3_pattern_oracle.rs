@@ -43,10 +43,18 @@ mod c3_common;
 use c3_common::{Out, check_golden, esc, json_files};
 
 fn res(r: FindResult) -> String {
-    if r.valid() { format!("{},{}", r.start, r.length) } else { "-".into() }
+    if r.valid() {
+        format!("{},{}", r.start, r.length)
+    } else {
+        "-".into()
+    }
 }
 
-fn matcher_line<M: EdaPatternMatch + Default>(name: &str, pattern: &str, subjects: &[String]) -> String {
+fn matcher_line<M: EdaPatternMatch + Default>(
+    name: &str,
+    pattern: &str,
+    subjects: &[String],
+) -> String {
     let mut m = M::default();
     let ok = m.set_pattern(pattern);
     let mut line = format!(
@@ -65,12 +73,19 @@ fn matcher_line<M: EdaPatternMatch + Default>(name: &str, pattern: &str, subject
 }
 
 fn oracle_file(name: &str) -> String {
-    std::fs::read_to_string(format!("{}/tests/oracle/{name}", env!("CARGO_MANIFEST_DIR"))).expect("oracle data file")
+    std::fs::read_to_string(format!(
+        "{}/tests/oracle/{name}",
+        env!("CARGO_MANIFEST_DIR")
+    ))
+    .expect("oracle data file")
 }
 
 /// Patterns of `c3_patterns.txt` followed by the net class patterns of the project files.
 pub fn patterns() -> Vec<String> {
-    let mut patterns: Vec<String> = oracle_file("c3_patterns.txt").lines().map(String::from).collect();
+    let mut patterns: Vec<String> = oracle_file("c3_patterns.txt")
+        .lines()
+        .map(String::from)
+        .collect();
     let mut seen: BTreeSet<String> = patterns.iter().cloned().collect();
     let root = kicad_qa::kicad_source_root();
 
@@ -80,11 +95,20 @@ pub fn patterns() -> Vec<String> {
         }
 
         let bytes = std::fs::read(root.join(&rel)).expect("readable file");
-        let Ok(doc) = json::parse_bytes(&bytes, ObjectOrder::Sorted, true) else { continue };
-        let Some(Value::Array(a)) = doc.get("net_settings").and_then(|n| n.get("netclass_patterns")) else { continue };
+        let Ok(doc) = json::parse_bytes(&bytes, ObjectOrder::Sorted, true) else {
+            continue;
+        };
+        let Some(Value::Array(a)) = doc
+            .get("net_settings")
+            .and_then(|n| n.get("netclass_patterns"))
+        else {
+            continue;
+        };
 
         for e in a {
-            let Some(Value::String(p)) = e.get("pattern") else { break };
+            let Some(Value::String(p)) = e.get("pattern") else {
+                break;
+            };
 
             if seen.insert(p.clone()) {
                 patterns.push(p.clone());
@@ -99,7 +123,10 @@ pub fn patterns() -> Vec<String> {
 
 /// Patterns PCRE2 accepts but the port rejects (`PORT_STATUS.md`, `c3_pattern_deviations.txt`).
 fn deviations() -> Vec<String> {
-    oracle_file("c3_pattern_deviations.txt").lines().map(String::from).collect()
+    oracle_file("c3_pattern_deviations.txt")
+        .lines()
+        .map(String::from)
+        .collect()
 }
 
 pub fn subjects() -> Vec<String> {
@@ -111,7 +138,6 @@ pub fn subjects() -> Vec<String> {
         })
         .collect()
 }
-
 
 // ---- settings (mirrors TEST_SETTINGS / TEST_NESTED of pattern_oracle.cpp) ----
 
@@ -221,11 +247,17 @@ impl TestSettings {
         o += " set=";
         self.set.iter().for_each(|x| o += &format!("{};", e(x)));
         o += " mi=";
-        self.mi.iter().for_each(|(k, v)| o += &format!("{}:{v};", e(k)));
+        self.mi
+            .iter()
+            .for_each(|(k, v)| o += &format!("{}:{v};", e(k)));
         o += " md=";
-        self.md.iter().for_each(|(k, v)| o += &format!("{}:{};", e(k), hd(*v)));
+        self.md
+            .iter()
+            .for_each(|(k, v)| o += &format!("{}:{};", e(k), hd(*v)));
         o += " ms=";
-        self.ms.iter().for_each(|(k, v)| o += &format!("{}:{};", e(k), e(v)));
+        self.ms
+            .iter()
+            .for_each(|(k, v)| o += &format!("{}:{};", e(k), e(v)));
         o += &format!(
             " lam={} lj={} path={} ns={}",
             self.lam,
@@ -241,14 +273,50 @@ fn test_settings(reset: bool) -> JsonSettings<TestSettings> {
     let mut js = JsonSettings::new(2, Some("test.json"));
     js.reset_params_if_missing = reset;
 
-    js.add_param(Box::new(ParamT::new("b", settings_field!(TestSettings, b), false)));
-    js.add_param(Box::new(ParamT::new("i", settings_field!(TestSettings, i), 5)));
-    js.add_param(Box::new(ParamT::with_range("ir", settings_field!(TestSettings, ir), 10, 0, 100)));
-    js.add_param(Box::new(ParamT::new("d", settings_field!(TestSettings, d), 1.5)));
-    js.add_param(Box::new(ParamT::with_range("dr", settings_field!(TestSettings, dr), 0.5, 0.0, 1.0)));
-    js.add_param(Box::new(ParamT::new("s", settings_field!(TestSettings, s), "def".to_string())));
-    js.add_param(Box::new(ParamT::new("u", settings_field!(TestSettings, u), 7u32)));
-    js.add_param(Box::new(ParamT::new("f", settings_field!(TestSettings, f), 2.5f32)));
+    js.add_param(Box::new(ParamT::new(
+        "b",
+        settings_field!(TestSettings, b),
+        false,
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "i",
+        settings_field!(TestSettings, i),
+        5,
+    )));
+    js.add_param(Box::new(ParamT::with_range(
+        "ir",
+        settings_field!(TestSettings, ir),
+        10,
+        0,
+        100,
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "d",
+        settings_field!(TestSettings, d),
+        1.5,
+    )));
+    js.add_param(Box::new(ParamT::with_range(
+        "dr",
+        settings_field!(TestSettings, dr),
+        0.5,
+        0.0,
+        1.0,
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "s",
+        settings_field!(TestSettings, s),
+        "def".to_string(),
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "u",
+        settings_field!(TestSettings, u),
+        7u32,
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "f",
+        settings_field!(TestSettings, f),
+        2.5f32,
+    )));
     js.add_param(Box::new(ParamEnum::new(
         "e",
         settings_field!(TestSettings, e),
@@ -266,22 +334,68 @@ fn test_settings(reset: bool) -> JsonSettings<TestSettings> {
         1000000000,
         PCB_IU_SCALE.mm_per_iu,
     )));
-    js.add_param(Box::new(ParamScaled::new("mils", settings_field!(TestSettings, mils), 100, 0.001)));
-    js.add_param(Box::new(ParamScaled::new("sl", settings_field!(TestSettings, sl), 5i64, 1.0 / 1000.0)));
-    js.add_param(Box::new(ParamList::new("li", settings_field!(TestSettings, li), vec![1, 2], false)));
-    js.add_param(Box::new(ParamList::new("ls", settings_field!(TestSettings, ls), vec!["x".to_string()], false)));
-    js.add_param(Box::new(ParamList::new("ld", settings_field!(TestSettings, ld), vec![0.5], true)));
-    js.add_param(Box::new(ParamList::path_list("lp", settings_field!(TestSettings, lp), vec!["a\\b".to_string()])));
-    js.add_param(Box::new(ParamSet::new("set", settings_field!(TestSettings, set), BTreeSet::from(["q".to_string()]))));
-    js.add_param(Box::new(ParamMap::new("mi", settings_field!(TestSettings, mi), BTreeMap::from([("k".to_string(), 1)]))));
-    js.add_param(Box::new(ParamMap::new("md", settings_field!(TestSettings, md), BTreeMap::from([("k".to_string(), 1.5)]))));
+    js.add_param(Box::new(ParamScaled::new(
+        "mils",
+        settings_field!(TestSettings, mils),
+        100,
+        0.001,
+    )));
+    js.add_param(Box::new(ParamScaled::new(
+        "sl",
+        settings_field!(TestSettings, sl),
+        5i64,
+        1.0 / 1000.0,
+    )));
+    js.add_param(Box::new(ParamList::new(
+        "li",
+        settings_field!(TestSettings, li),
+        vec![1, 2],
+        false,
+    )));
+    js.add_param(Box::new(ParamList::new(
+        "ls",
+        settings_field!(TestSettings, ls),
+        vec!["x".to_string()],
+        false,
+    )));
+    js.add_param(Box::new(ParamList::new(
+        "ld",
+        settings_field!(TestSettings, ld),
+        vec![0.5],
+        true,
+    )));
+    js.add_param(Box::new(ParamList::path_list(
+        "lp",
+        settings_field!(TestSettings, lp),
+        vec!["a\\b".to_string()],
+    )));
+    js.add_param(Box::new(ParamSet::new(
+        "set",
+        settings_field!(TestSettings, set),
+        BTreeSet::from(["q".to_string()]),
+    )));
+    js.add_param(Box::new(ParamMap::new(
+        "mi",
+        settings_field!(TestSettings, mi),
+        BTreeMap::from([("k".to_string(), 1)]),
+    )));
+    js.add_param(Box::new(ParamMap::new(
+        "md",
+        settings_field!(TestSettings, md),
+        BTreeMap::from([("k".to_string(), 1.5)]),
+    )));
     js.add_param(Box::new(ParamMap::wx_string_map(
         "ms",
         settings_field!(TestSettings, ms),
         BTreeMap::from([("k".to_string(), "v".to_string())]),
         false,
     )));
-    js.add_param(Box::new(ParamLambda::new("lam", |s: &TestSettings| s.lam, |s: &mut TestSettings, v: i32| s.lam = v.wrapping_mul(2), 9)));
+    js.add_param(Box::new(ParamLambda::new(
+        "lam",
+        |s: &TestSettings| s.lam,
+        |s: &mut TestSettings, v: i32| s.lam = v.wrapping_mul(2),
+        9,
+    )));
     js.add_param(Box::new(ParamLambda::new(
         "lj",
         |s: &TestSettings| JsonValue(s.lj.clone()),
@@ -294,8 +408,16 @@ fn test_settings(reset: bool) -> JsonSettings<TestSettings> {
         },
         JsonValue(Value::Null),
     )));
-    js.add_param(Box::new(ParamPath::new("path", settings_field!(TestSettings, path), "c:\\x")));
-    js.add_param(Box::new(ParamT::new("nested.deep.s", settings_field!(TestSettings, ns), "n".to_string())));
+    js.add_param(Box::new(ParamPath::new(
+        "path",
+        settings_field!(TestSettings, path),
+        "c:\\x",
+    )));
+    js.add_param(Box::new(ParamT::new(
+        "nested.deep.s",
+        settings_field!(TestSettings, ns),
+        "n".to_string(),
+    )));
 
     js.register_migration(
         0,
@@ -449,7 +571,11 @@ fn settings_sections(o: &mut Out) {
                 Ok(c) => esc(c.as_bytes()),
                 Err(e) => format!("throw {}", e.id),
             };
-            line += &format!(" | store={} | {contents} | {}", u8::from(modified), esc(js.format_as_string(&t).as_bytes()));
+            line += &format!(
+                " | store={} | {contents} | {}",
+                u8::from(modified),
+                esc(js.format_as_string(&t).as_bytes())
+            );
             o.out(line);
         }
     }
@@ -458,11 +584,21 @@ fn settings_sections(o: &mut Out) {
 
     for doc in NESTED_DOCS {
         for reset in [true, false] {
-            let mut parent = JsonSettingsInternals::new(json::parse_bytes(doc.as_bytes(), ObjectOrder::Sorted, false).unwrap());
+            let mut parent = JsonSettingsInternals::new(
+                json::parse_bytes(doc.as_bytes(), ObjectOrder::Sorted, false).unwrap(),
+            );
             let mut n: NestedSettings<TestNested> = NestedSettings::new(1, "sub");
             n.settings.reset_params_if_missing = reset;
-            n.settings.add_param(Box::new(ParamT::new("a", settings_field!(TestNested, a), 3)));
-            n.settings.add_param(Box::new(ParamMap::new("m", settings_field!(TestNested, m), BTreeMap::from([("z".to_string(), 26)]))));
+            n.settings.add_param(Box::new(ParamT::new(
+                "a",
+                settings_field!(TestNested, a),
+                3,
+            )));
+            n.settings.add_param(Box::new(ParamMap::new(
+                "m",
+                settings_field!(TestNested, m),
+                BTreeMap::from([("z".to_string(), 26)]),
+            )));
             n.settings.register_migration(
                 0,
                 1,
@@ -477,15 +613,31 @@ fn settings_sections(o: &mut Out) {
                 }),
             );
 
-            let mut t = TestNested { a: -77, m: BTreeMap::from([("sentinel".to_string(), 77)]) };
+            let mut t = TestNested {
+                a: -77,
+                m: BTreeMap::from([("sentinel".to_string(), 77)]),
+            };
             let loaded = n.load_from_parent(Some(&parent), &mut t);
-            let mut line = format!("{} {} a={} m=", if reset { "R" } else { "K" }, if loaded { "ok" } else { "fail" }, t.a);
+            let mut line = format!(
+                "{} {} a={} m=",
+                if reset { "R" } else { "K" },
+                if loaded { "ok" } else { "fail" },
+                t.a
+            );
             t.m.iter().for_each(|(k, v)| line += &format!("{k}:{v};"));
             let modified = n.save_to_parent(&mut parent, &t, false);
-            line += &format!(" | save={} | {}", u8::from(modified), esc(dump(&parent.doc, None, ObjectOrder::Sorted).as_bytes()));
+            line += &format!(
+                " | save={} | {}",
+                u8::from(modified),
+                esc(dump(&parent.doc, None, ObjectOrder::Sorted).as_bytes())
+            );
             t.a = 41;
             let modified = n.save_to_parent(&mut parent, &t, false);
-            line += &format!(" | save2={} | {}", u8::from(modified), esc(dump(&parent.doc, None, ObjectOrder::Sorted).as_bytes()));
+            line += &format!(
+                " | save2={} | {}",
+                u8::from(modified),
+                esc(dump(&parent.doc, None, ObjectOrder::Sorted).as_bytes())
+            );
             o.out(line);
         }
     }
@@ -495,7 +647,9 @@ fn settings_sections(o: &mut Out) {
     let resolver = test_resolver;
     let mut state: u64 = 0xC3E0;
     let mut next = || -> u32 {
-        state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         (state >> 33) as u32
     };
 
@@ -524,11 +678,19 @@ fn settings_sections(o: &mut Out) {
 
         if !src.contains('@') {
             let mut depth = 0;
-            let r = resolve_text_vars(&src, Some(&resolver), &mut depth, &TextVarOptions::default());
+            let r = resolve_text_vars(
+                &src,
+                Some(&resolver),
+                &mut depth,
+                &TextVarOptions::default(),
+            );
             line += &format!(" || {} {depth}", esc(r.as_bytes()));
         }
 
-        line += &format!(" || {}", esc(normalize_file_path_for_text_vars(&src).as_bytes()));
+        line += &format!(
+            " || {}",
+            esc(normalize_file_path_for_text_vars(&src).as_bytes())
+        );
         o.out(line);
     }
 }
@@ -547,13 +709,33 @@ fn dump_all() -> Out {
     o.begin("matchers");
 
     for p in &patterns {
-        o.out(matcher_line::<EdaPatternMatchSubstr>("SUBSTR", p, &subjects));
+        o.out(matcher_line::<EdaPatternMatchSubstr>(
+            "SUBSTR", p, &subjects,
+        ));
         o.out(matcher_line::<EdaPatternMatchRegex>("REGEX", p, &subjects));
-        o.out(matcher_line::<EdaPatternMatchRegex>("REGEX/", &format!("/{p}/"), &subjects));
-        o.out(matcher_line::<EdaPatternMatchRegexAnchored>("REGEX_ANCHORED", p, &subjects));
-        o.out(matcher_line::<EdaPatternMatchWildcard>("WILDCARD", p, &subjects));
-        o.out(matcher_line::<EdaPatternMatchWildcardAnchored>("WILDCARD_ANCHORED", p, &subjects));
-        o.out(matcher_line::<EdaPatternMatchRelational>("RELATIONAL", p, &subjects));
+        o.out(matcher_line::<EdaPatternMatchRegex>(
+            "REGEX/",
+            &format!("/{p}/"),
+            &subjects,
+        ));
+        o.out(matcher_line::<EdaPatternMatchRegexAnchored>(
+            "REGEX_ANCHORED",
+            p,
+            &subjects,
+        ));
+        o.out(matcher_line::<EdaPatternMatchWildcard>(
+            "WILDCARD", p, &subjects,
+        ));
+        o.out(matcher_line::<EdaPatternMatchWildcardAnchored>(
+            "WILDCARD_ANCHORED",
+            p,
+            &subjects,
+        ));
+        o.out(matcher_line::<EdaPatternMatchRelational>(
+            "RELATIONAL",
+            p,
+            &subjects,
+        ));
     }
 
     o.begin("combined");
@@ -581,17 +763,27 @@ fn dump_all() -> Out {
                 );
             }
 
-            let mut terms: Vec<SearchTerm> =
-                subjects.iter().enumerate().map(|(i, s)| SearchTerm::new(s, (i % 7) as i32 + 1, i % 3 == 0)).collect();
+            let mut terms: Vec<SearchTerm> = subjects
+                .iter()
+                .enumerate()
+                .map(|(i, s)| SearchTerm::new(s, (i % 7) as i32 + 1, i % 3 == 0))
+                .collect();
             let mut exact = false;
             let score = m.score_terms(&mut terms, Some(&mut exact));
             line += &format!(" | {score} {}", u8::from(exact));
 
             let upper: String = p.chars().flat_map(char::to_uppercase).collect();
-            let mut own = vec![SearchTerm::new(p, 3, true), SearchTerm::new(&format!("{upper}  "), 2, false)];
+            let mut own = vec![
+                SearchTerm::new(p, 3, true),
+                SearchTerm::new(&format!("{upper}  "), 2, false),
+            ];
             exact = false;
             let score = m.score_terms(&mut own, Some(&mut exact));
-            line += &format!(" {score} {} [{}]", u8::from(exact), esc(own[1].text.as_bytes()));
+            line += &format!(
+                " {score} {} [{}]",
+                u8::from(exact),
+                esc(own[1].text.as_bytes())
+            );
             o.out(line);
         }
     }
@@ -602,8 +794,15 @@ fn dump_all() -> Out {
     // the C++ lines, which are taken from the golden file after that check.
     o.begin("deviations");
 
-    let golden = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/golden/c3_pattern.txt")).unwrap_or_default();
-    let cpp: Vec<&str> = golden.lines().filter_map(|l| l.strip_prefix("E deviations ")).collect();
+    let golden = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/golden/c3_pattern.txt"
+    ))
+    .unwrap_or_default();
+    let cpp: Vec<&str> = golden
+        .lines()
+        .filter_map(|l| l.strip_prefix("E deviations "))
+        .collect();
 
     for (k, p) in deviations().iter().enumerate() {
         for (j, line) in [
@@ -616,7 +815,10 @@ fn dump_all() -> Out {
             let c = cpp.get(2 * k + j).copied().unwrap_or("");
 
             if c.contains(" ok [") {
-                assert!(line.contains(" fail ["), "deviation pattern {p:?} unexpectedly compiles: {line}");
+                assert!(
+                    line.contains(" fail ["),
+                    "deviation pattern {p:?} unexpectedly compiles: {line}"
+                );
             } else {
                 assert_eq!(line, c, "deviation pattern {p:?}");
             }

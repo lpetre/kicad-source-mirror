@@ -46,6 +46,11 @@ pub fn is_proxy_item<H: EdaShapeItem + ?Sized>(host: &H) -> bool {
     crate::port_pending!("EDA_SHAPE::IsProxyItem", host)
 }
 
+/// Port of `EDA_SHAPE::IsFilledForHitTesting` (the base-class body the `EdaShapeItem` default forwards to).
+pub fn is_filled_for_hit_testing<H: EdaShapeItem + ?Sized>(host: &H) -> bool {
+    crate::port_pending!("EDA_SHAPE::IsFilledForHitTesting", host)
+}
+
 /// Port of `EDA_SHAPE::GetTopLeft` (the base-class body the `EdaShapeItem` default forwards to).
 pub fn top_left<H: EdaShapeItem + ?Sized>(host: &H) -> Vector2I {
     crate::port_pending!("EDA_SHAPE::GetTopLeft", host)
@@ -60,3 +65,19 @@ pub fn bot_right<H: EdaShapeItem + ?Sized>(host: &H) -> Vector2I {
 pub fn corners_in_sequence<H: EdaShapeItem + ?Sized>(host: &H, angle: EdaAngle) -> Vec<Vector2I> {
     crate::port_pending!("EDA_SHAPE::GetCornersInSequence", host, angle)
 }
+
+// ---- non-virtual EDA_SHAPE members that call the virtuals (board-model.md 6.2a) ----
+//
+// Each is a generic function over the host (here, in `geometry.rs` or in `shapes.rs`, by the
+// package that ports it) plus a forwarder in `EdaShapeExt`, which gives it method syntax on
+// every host and on `&dyn EdaShapeItem`. M0c adds the signatures of board-model.md 6.2a
+// (make_effective_shapes, hatching, shape_bounding_box, shape_hit_test,
+// shape_transform_to_polygon, ...) with `port_pending!` bodies in the file of the owning
+// package (M7: mod.rs / geometry.rs, M8: shapes.rs). `traits.rs` is not edited for them.
+
+/// Method syntax for the non-virtual `EDA_SHAPE` members that call the virtuals. Implemented
+/// for every `EdaShapeItem` (also `dyn EdaShapeItem`) by the blanket impl below and nowhere
+/// else, so these methods cannot be overridden - like the non-virtual C++ members they port.
+pub trait EdaShapeExt: EdaShapeItem {}
+
+impl<T: EdaShapeItem + ?Sized> EdaShapeExt for T {}

@@ -20,18 +20,30 @@
 //! (`include/eda_item.h`, `include/board_item.h`, `pcbnew/board_connected_item.h`) and of the
 //! `EDA_TEXT` / `EDA_SHAPE` mixin virtuals (`include/eda_text.h`, `include/eda_shape.h`).
 //!
-//! Default bodies are the C++ base-class bodies. Header-inline one-liners are written here;
-//! every other base body is a generic function in the module that ports its C++ file
-//! (`board_item.rs`, `board_connected_item.rs`, `eda_text.rs`, `eda_shape/mod.rs`), which the
-//! default forwards to, so that the owning package can port it without touching this file.
+//! Default bodies are the C++ base-class bodies. A base body that only returns a constant is
+//! written here; every other base body is a generic function in the module that ports its C++
+//! file (`board_item.rs`, `board_connected_item.rs`, `eda_text.rs`, `eda_shape/mod.rs`), which
+//! the default forwards to. That is what lets the owning package port it without touching this
+//! file, and what lets an override call its base class explicitly (C++
+//! `BOARD_ITEM::FitsEnabledLayers( .. ) && ..` is `board_item::fits_enabled_layers( self, .. )
+//! && ..`): a trait default cannot be called from the type that overrides it.
 //!
 //! Rule (binding, 6.2): an `impl Trait for T` block contains no behaviour. For each virtual the
-//! C++ class overrides it has a one-line shim forwarding to an inherent method with the same
-//! name and signature; a missing inherent method makes the shim recurse, which the crate-level
+//! C++ class (or one of its C++ bases below the class the trait ports) overrides it has a
+//! one-line shim forwarding to an inherent method of `T` with the same name and signature; a
+//! missing inherent method makes the shim recurse, which the crate-level
 //! `#![deny(unconditional_recursion)]` turns into a build error.
+//!
+//! This file is **frozen** (M0a review): the traits are the virtual interfaces only.
+//! Non-virtual members of `EDA_TEXT` / `EDA_SHAPE` that call the virtuals are generic
+//! functions over the host in `eda_text.rs` / `eda_shape/`, with method syntax through the
+//! blanket-implemented extension traits `EdaTextExt` / `EdaShapeExt` defined there (so they
+//! cannot be overridden, exactly like a non-virtual C++ member). A virtual that turns out to
+//! be missing here is added by the orchestrator, never by a package.
 
 use std::sync::Arc;
 
+use kicad_core::text_vars::ResolutionContext;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, Lset, PcbLayerId, StrokeParams};
 use kicad_geom::geometry::approximation::ErrorLoc;
@@ -42,7 +54,7 @@ use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::eda_shape::EdaShape;
 use crate::eda_text::EdaText;
-use crate::ids::NetCode;
+use crate::ids::{ItemId, NetCode};
 use crate::item::{BoardItemBase, ConnectedItemBase, RecurseMode, SharedShape};
 use crate::item_ref::ItemRef;
 use crate::netclass::Netclass;
@@ -87,6 +99,12 @@ pub trait BoardItem: Invalidate {
         &self.base().uuid
     }
 
+    /// `GetParentGroup()` as a handle (`m_group`; `PCB_TABLECELL` answers with its table's
+    /// group).
+    fn parent_group(&self, _ctx: &BoardCtx<'_>) -> Option<ItemId> {
+        self.base().group
+    }
+
     // ---- layers ----
 
     /// `GetLayer()`.
@@ -95,19 +113,13 @@ pub trait BoardItem: Invalidate {
     }
 
     /// `GetLayerSet()`: `LSET( { m_layer } )`, empty for `UNDEFINED_LAYER`.
-    fn layer_set(&self, _ctx: &BoardCtx<'_>) -> Lset {
-        let layer = self.base().layer;
-
-        if layer == PcbLayerId::UndefinedLayer {
-            Lset::new()
-        } else {
-            Lset::from_layers(&[layer])
-        }
+    fn layer_set(&self, ctx: &BoardCtx<'_>) -> Lset {
+        board_item::layer_set(self, ctx)
     }
 
     /// `IsOnLayer( aLayer )`: `m_layer == aLayer`.
-    fn is_on_layer(&self, _ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
-        self.base().layer == layer
+    fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
+        board_item::is_on_layer(self, ctx, layer)
     }
 
     /// `IsOnCopperLayer()`.
@@ -130,15 +142,9 @@ pub trait BoardItem: Invalidate {
         &self,
         ctx: &BoardCtx<'_>,
         enabled: Lset,
-        _copper_layer_count: i32,
+        copper_layer_count: i32,
     ) -> bool {
-        if self.is_layer_agnostic() {
-            return true;
-        }
-
-        let mut layers = self.layer_set(ctx);
-        layers &= &enabled;
-        layers.any()
+        board_item::fits_enabled_layers(self, ctx, enabled, copper_layer_count)
     }
 
     // ---- geometry (board frame) ----
@@ -366,18 +372,14 @@ pub trait BoardItemMut: BoardItem {
 
     /// `SetLayer()`: `m_layer = aLayer`. (`BOARD_CONNECTED_ITEM::SetLayer` additionally calls
     /// `InvalidateClearanceCache`, which has no model-side counterpart: `board-model.md` 7.)
-    fn set_layer(&mut self, _env: &MutEnv, layer: PcbLayerId) {
-        self.base_mut().layer = layer;
+    fn set_layer(&mut self, env: &MutEnv, layer: PcbLayerId) {
+        board_item::set_layer(self, env, layer)
     }
 
     /// `SetLayerSet()`: a single-layer set becomes `SetLayer`; anything else is
     /// `UNIMPLEMENTED_FOR` in C++ (ignored).
     fn set_layer_set(&mut self, env: &MutEnv, layers: Lset) {
-        if layers.count() == 1 {
-            if let Some(layer) = layers.seq().first().copied() {
-                self.set_layer(env, layer);
-            }
-        }
+        board_item::set_layer_set(self, env, layers)
     }
 
     /// `Normalize()`.
@@ -442,9 +444,10 @@ pub trait EdaTextItem {
         self.text_angle(ctx)
     }
 
-    /// `GetShownText( aAllowExtraText, aDepth )`.
-    fn shown_text(&self, ctx: &BoardCtx<'_>, allow_extra_text: bool, depth: i32) -> String {
-        eda_text::shown_text(self, ctx, allow_extra_text, depth)
+    /// `GetShownText( aContext, aDepth )` (this tree: a `RESOLUTION_CONTEXT`, not the
+    /// `aAllowExtraText` flag of KiCad 9).
+    fn shown_text(&self, ctx: &BoardCtx<'_>, context: ResolutionContext, depth: i32) -> String {
+        eda_text::shown_text(self, ctx, context, depth)
     }
 
     /// `getFontMetrics()` (`EDA_TEXT`: `KIFONT::METRICS::Default()`).
@@ -477,16 +480,10 @@ pub trait EdaTextItem {
         eda_text::offset(self, env, delta)
     }
 
-    // Non-virtual EDA_TEXT members that call the virtuals are provided methods forwarding to
-    // generic functions in eda_text.rs (package M10). M0c adds the rest of the list of
-    // board-model.md 6.2a (effective_text_pen_width, effective_text_shape, line_positions,
-    // draw_font, text_hit_test, text_hit_test_rect, interline, compare_text, ...) here as
-    // forwarders, before the trait is frozen.
-
-    /// `GetTextBox( aLine )`.
-    fn text_box(&self, ctx: &BoardCtx<'_>, line: Option<i32>) -> Box2I {
-        eda_text::text_box(self, ctx, line)
-    }
+    // Non-virtual EDA_TEXT members that call the virtuals (GetTextBox,
+    // GetEffectiveTextPenWidth, GetEffectiveTextShape, GetLinePositions, GetInterline, Compare,
+    // ...) are not here: they are generic functions in eda_text.rs with method syntax through
+    // `eda_text::EdaTextExt` (see the module comment).
 }
 
 /// Virtual interface of `EDA_SHAPE`. Hosts: `PcbShape` (`PcbTextbox`, `PcbTablecell` delegate,
@@ -524,6 +521,11 @@ pub trait EdaShapeItem {
         eda_shape::is_proxy_item(self)
     }
 
+    /// `IsFilledForHitTesting()` (`EDA_SHAPE`: `IsSolidFill()`; PCB_TABLECELL: true).
+    fn is_filled_for_hit_testing(&self) -> bool {
+        eda_shape::is_filled_for_hit_testing(self)
+    }
+
     /// `GetTopLeft()` (PCB_TEXTBOX overrides).
     fn top_left(&self) -> Vector2I {
         eda_shape::top_left(self)
@@ -554,8 +556,8 @@ pub trait EdaShapeItem {
         ShapePolySet::default()
     }
 
-    // Provided methods (bodies in eda_shape/{geometry,shapes}.rs, packages M7 / M8) are added
-    // here by M0c as forwarders before the trait is frozen: make_effective_shapes(ctx,
-    // edge_only), hatching(ctx), shape_bounding_box(ctx), shape_hit_test(..),
-    // shape_transform_to_polygon(..), ...
+    // Non-virtual EDA_SHAPE members that call the virtuals (makeEffectiveShapes, hatching,
+    // getBoundingBox, hitTest, TransformShapeToPolygon, ...) are not here: they are generic
+    // functions in eda_shape/{mod,geometry,shapes}.rs with method syntax through
+    // `eda_shape::EdaShapeExt` (see the module comment).
 }

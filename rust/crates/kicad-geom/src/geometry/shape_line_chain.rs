@@ -378,6 +378,12 @@ impl<'a> StringStream<'a> {
         Some(&self.text[start..start + len])
     }
 
+    /// `>>` into a `std::string`: the next whitespace-separated token, or `None` (failed
+    /// state) at the end of the text.  Used by `SHAPE_POLY_SET::Parse()`.
+    pub fn read_token(&mut self) -> Option<&'a str> {
+        self.next_token()
+    }
+
     /// `>>` into an `int`.
     pub fn read_i32(&mut self) -> i32 {
         match self.next_token().and_then(|t| t.parse::<i32>().ok()) {

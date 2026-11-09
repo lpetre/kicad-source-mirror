@@ -28,7 +28,8 @@
 //! (`GetBuildVersion()`) and the creation date (`wxDateTime::Now()`), see
 //! [`GerberPlotter::set_build_version`] and [`GerberPlotter::set_creation_date`].
 //!
-//! Not here: `Text` / `PlotText` overrides (PLOT-05). `FlashPadChamferRoundRect` takes the
+//! `Text` / `PlotText` (`GERBER_plotter.cpp` L1807-1846) only emit the net attributes and
+//! forward to the base implementation (`plotter_text.rs`). `FlashPadChamferRoundRect` takes the
 //! polygon generator (`TransformRoundChamferedRectToPolygon`) as a parameter until
 //! `kicad-geom` provides it (see `PORT_STATUS.md`).
 
@@ -42,16 +43,20 @@ use kicad_geom::{
     Vector2I, ki_round, rotate_point,
 };
 
-use crate::gbr_metadata::{GbrApertureAttrib, GbrApertureMetadata, GbrMetadata, format_net_attribute};
+use crate::gbr_metadata::{
+    GbrApertureAttrib, GbrApertureMetadata, GbrMetadata, format_net_attribute,
+};
 use crate::gbr_netlist_metadata::GbrNetlistMetadata;
 use crate::gbr_plotter_aperture_macros::*;
 use crate::gbr_plotter_apertures::{
     AM_FREEPOLY_BASENAME, AperMacroFreepolyList, Aperture, ApertureType, poly_compare,
 };
+use crate::plotter_text::{plot_text_base, text_base};
+use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
+use kicad_font::{Font, Metrics};
 use crate::plotter::{
-    DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH,
-    thick_arc_base, thick_circle_base, thick_poly_base, thick_rect_base,
-    thick_segment_base,
+    DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH, thick_arc_base,
+    thick_circle_base, thick_poly_base, thick_rect_base, thick_segment_base,
 };
 
 /// `GBR_MACRO_FOR_CUSTOM_PAD_MAX_CORNER_COUNT`: max count of corners to create a aperture
@@ -458,7 +463,10 @@ impl GerberPlotter {
                 a_aperture_attribute,
                 a_custom_attribute,
             );
-            let line = format!("D{}*", self.apertures[self.current_aperture_idx as usize].d_code);
+            let line = format!(
+                "D{}*",
+                self.apertures[self.current_aperture_idx as usize].d_code
+            );
             self.println(&line);
         }
     }
@@ -486,7 +494,10 @@ impl GerberPlotter {
 
         if !change && let Some(cur) = self.current() {
             // Compare corner lists
-            change = a_corners.iter().zip(cur.corners.iter()).any(|(a, b)| a != b);
+            change = a_corners
+                .iter()
+                .zip(cur.corners.iter())
+                .any(|(a, b)| a != b);
         }
 
         if !change && let Some(cur) = self.current() {
@@ -503,7 +514,10 @@ impl GerberPlotter {
                 a_aperture_attribute,
                 a_custom_attribute,
             );
-            let line = format!("D{}*", self.apertures[self.current_aperture_idx as usize].d_code);
+            let line = format!(
+                "D{}*",
+                self.apertures[self.current_aperture_idx as usize].d_code
+            );
             self.println(&line);
         }
     }
@@ -636,10 +650,8 @@ impl GerberPlotter {
                 ApertureType::AmRoundRect => {
                     // Aperture macro for round rect pads
                     // The aperture macro needs coordinates of the centers of the 4 corners
-                    let mut half_size = Vector2I::new(
-                        tool.size.x / 2 - tool.radius,
-                        tool.size.y / 2 - tool.radius,
-                    );
+                    let mut half_size =
+                        Vector2I::new(tool.size.x / 2 - tool.radius, tool.size.y / 2 - tool.radius);
 
                     // Ensure half_size.x and half_size.y > minimal value to avoid shapes
                     // with null size (especially the rectangle with coordinates corners)
@@ -1342,7 +1354,10 @@ impl Plotter for GerberPlotter {
         // In gerber files, ASCII7 chars only are allowed.
         // So use a ISO date format (using a space as separator between date and time),
         // not a localized date format
-        let line = format!("G04 Created by KiCad ({}) date {}*", title, self.creation_date);
+        let line = format!(
+            "G04 Created by KiCad ({}) date {}*",
+            title, self.creation_date
+        );
         self.println(&line);
 
         // Mass parameter: unit = IN/MM
@@ -1470,6 +1485,76 @@ impl Plotter for GerberPlotter {
     /// RS274X has no colors.
     fn set_color(&mut self, _color: &Color4D) {}
 
+    /// Port of `GERBER_PLOTTER::Text`: the net attributes of `a_data`, then `PLOTTER::Text`.
+    #[allow(clippy::too_many_arguments)]
+    fn text(
+        &mut self,
+        a_pos: Vector2I,
+        a_color: &Color4D,
+        a_text: &str,
+        a_orient: EdaAngle,
+        a_size: Vector2I,
+        a_h_justify: GrTextHAlignT,
+        a_v_justify: GrTextVAlignT,
+        a_width: i32,
+        a_italic: bool,
+        a_bold: bool,
+        a_multiline_allowed: bool,
+        a_font: Option<&dyn Font>,
+        a_font_metrics: &Metrics,
+        a_data: PlotData,
+    ) {
+        if let Some(gbr_metadata) = a_data {
+            self.format_net_attribute(Some(&gbr_metadata.netlist_metadata));
+        }
+
+        text_base(
+            self,
+            a_pos,
+            a_color,
+            a_text,
+            a_orient,
+            a_size,
+            a_h_justify,
+            a_v_justify,
+            a_width,
+            a_italic,
+            a_bold,
+            a_multiline_allowed,
+            a_font,
+            a_font_metrics,
+            a_data,
+        );
+    }
+
+    /// Port of `GERBER_PLOTTER::PlotText`: the net attributes of `a_data`, then
+    /// `PLOTTER::PlotText`.
+    fn plot_text(
+        &mut self,
+        a_pos: Vector2I,
+        a_color: &Color4D,
+        a_text: &str,
+        a_attributes: &TextAttributes,
+        a_font: Option<&dyn Font>,
+        a_font_metrics: &Metrics,
+        a_data: PlotData,
+    ) {
+        if let Some(gbr_metadata) = a_data {
+            self.format_net_attribute(Some(&gbr_metadata.netlist_metadata));
+        }
+
+        plot_text_base(
+            self,
+            a_pos,
+            a_color,
+            a_text,
+            a_attributes,
+            a_font,
+            a_font_metrics,
+            a_data,
+        );
+    }
+
     /// RS274X has no dashing.
     fn set_dash(&mut self, _a_line_width: i32, _a_line_style: LineStyle) {}
 
@@ -1492,8 +1577,8 @@ impl Plotter for GerberPlotter {
 
         // gives now a default value to iuPerDeviceUnit (because the units of the caller is
         // now known) which could be modified later by calling SetGerberCoordinatesFormat()
-        self.state.iu_per_device_unit = 10.0_f64.powi(self.gerber_unit_fmt)
-            / (self.state.ius_per_decimil * 10000.0);
+        self.state.iu_per_device_unit =
+            10.0_f64.powi(self.gerber_unit_fmt) / (self.state.ius_per_decimil * 10000.0);
 
         // We don't handle the filmbox, and it's more useful to keep the
         // origin at the origin
@@ -1509,8 +1594,8 @@ impl Plotter for GerberPlotter {
         self.gerber_unit_inch = a_use_inches;
         self.gerber_unit_fmt = a_resolution;
 
-        self.state.iu_per_device_unit = 10.0_f64.powi(self.gerber_unit_fmt)
-            / (self.state.ius_per_decimil * 10000.0);
+        self.state.iu_per_device_unit =
+            10.0_f64.powi(self.gerber_unit_fmt) / (self.state.ius_per_decimil * 10000.0);
 
         if !self.gerber_unit_inch {
             self.state.iu_per_device_unit *= 25.4; // gerber output in mm
@@ -1891,7 +1976,14 @@ impl Plotter for GerberPlotter {
                 std::mem::swap(&mut size.x, &mut size.y);
             }
 
-            self.select_aperture_with_attributes(pos, a_data, size, 0, ANGLE_0, ApertureType::AtRect);
+            self.select_aperture_with_attributes(
+                pos,
+                a_data,
+                size,
+                0,
+                ANGLE_0,
+                ApertureType::AtRect,
+            );
         } else if !self.gerber_disable_apert_macros {
             self.has_aperture_rot_rect = true;
 

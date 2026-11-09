@@ -97,7 +97,9 @@ enum Syntax {
 /// Port of `ConvertMetasyntax( expr, flags )` (the `flags` start as `wxRE_ADVANCED`).
 fn convert_metasyntax(mut expr: Vec<char>) -> (Vec<char>, Syntax) {
     let mut syntax = Syntax::Advanced;
-    let starts = |e: &[char], p: &str| e.len() >= p.chars().count() && e.iter().copied().take(p.chars().count()).eq(p.chars());
+    let starts = |e: &[char], p: &str| {
+        e.len() >= p.chars().count() && e.iter().copied().take(p.chars().count()).eq(p.chars())
+    };
 
     if expr.len() > 3 && starts(&expr, "***") {
         match expr[3] {
@@ -140,16 +142,14 @@ fn convert_metasyntax(mut expr: Vec<char>) -> (Vec<char>, Syntax) {
                     opts_string += &pcre_options_to_string(negopts);
                 }
 
-                let pos_after_opts;
-
-                if opts_string.is_empty() {
+                let pos_after_opts = if opts_string.is_empty() {
                     expr.drain(0..=it);
-                    pos_after_opts = 0;
+                    0
                 } else {
                     let n = opts_string.chars().count();
                     expr.splice(2..it, opts_string.chars());
-                    pos_after_opts = n + 3;
-                }
+                    n + 3 // (?opts)
+                };
 
                 syntax = match sel {
                     Sel::None => Syntax::Advanced,
@@ -286,12 +286,22 @@ enum Node {
     Empty,
     /// A literal code point; `caseless` per PCRE2_CASELESS at that point.
     Char(u32, bool),
-    Class { negated: bool, items: Vec<ClassItem>, caseless: bool },
+    Class {
+        negated: bool,
+        items: Vec<ClassItem>,
+        caseless: bool,
+    },
     Assert(Assert),
     Seq(Vec<Node>),
     Alt(Vec<Node>),
     Group(GroupKind, Box<Node>),
-    Repeat { body: Box<Node>, min: u32, max: Option<u32>, greedy: bool, possessive: bool },
+    Repeat {
+        body: Box<Node>,
+        min: u32,
+        max: Option<u32>,
+        greedy: bool,
+        possessive: bool,
+    },
     /// Backreference by group number (resolved), caseless flag.
     Backref(usize, bool),
     /// Backreference by name (resolved after parsing).
@@ -383,8 +393,9 @@ fn posix_class(name: &str) -> Option<Vec<(u32, u32)>> {
 }
 
 const GENERAL_CATEGORIES: &[&str] = &[
-    "C", "Cc", "Cf", "Cn", "Co", "Cs", "L", "Ll", "Lm", "Lo", "Lt", "Lu", "M", "Mc", "Me", "Mn", "N", "Nd", "Nl",
-    "No", "P", "Pc", "Pd", "Pe", "Pf", "Pi", "Po", "Ps", "S", "Sc", "Sk", "Sm", "So", "Z", "Zl", "Zp", "Zs",
+    "C", "Cc", "Cf", "Cn", "Co", "Cs", "L", "Ll", "Lm", "Lo", "Lt", "Lu", "M", "Mc", "Me", "Mn",
+    "N", "Nd", "Nl", "No", "P", "Pc", "Pd", "Pe", "Pf", "Pi", "Po", "Ps", "S", "Sc", "Sk", "Sm",
+    "So", "Z", "Zl", "Zp", "Zs",
 ];
 
 /// `\p{name}` of PCRE2 10.42 (loose matching: case, spaces, `_` and `-` ignored) as an
@@ -395,18 +406,29 @@ fn unicode_property(name: &str, negated: bool) -> Result<ClassItem, PcreError> {
         None => (false, name),
     };
     let negated = negated ^ neg2;
-    let loose: String = name.chars().filter(|c| !matches!(c, ' ' | '_' | '-')).collect::<String>().to_lowercase();
+    let loose: String = name
+        .chars()
+        .filter(|c| !matches!(c, ' ' | '_' | '-'))
+        .collect::<String>()
+        .to_lowercase();
     let p = if negated { 'P' } else { 'p' };
 
     if loose == "any" {
-        return Ok(if negated { ClassItem::Set(Vec::new()) } else { ClassItem::Set(vec![(0, MAX_CP)]) });
+        return Ok(if negated {
+            ClassItem::Set(Vec::new())
+        } else {
+            ClassItem::Set(vec![(0, MAX_CP)])
+        });
     }
 
     if loose == "l&" || loose == "lc" {
         return Ok(ClassItem::Prop(format!("\\{p}{{LC}}")));
     }
 
-    if let Some(gc) = GENERAL_CATEGORIES.iter().find(|g| g.to_lowercase() == loose) {
+    if let Some(gc) = GENERAL_CATEGORIES
+        .iter()
+        .find(|g| g.to_lowercase() == loose)
+    {
         return Ok(ClassItem::Prop(format!("\\{p}{{{gc}}}")));
     }
 
@@ -493,9 +515,10 @@ impl Parser {
 
         loop {
             match self.peek() {
-                Some(c) if matches!(c, ' ' | '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | '\u{85}' | '\u{200E}' | '\u{200F}' | '\u{2028}' | '\u{2029}') => {
-                    self.i += 1
-                }
+                Some(
+                    ' ' | '\t' | '\n' | '\u{0B}' | '\u{0C}' | '\r' | '\u{85}' | '\u{200E}'
+                    | '\u{200F}' | '\u{2028}' | '\u{2029}',
+                ) => self.i += 1,
                 Some('#') => {
                     while let Some(c) = self.peek() {
                         self.i += 1;
@@ -520,7 +543,11 @@ impl Parser {
         }
 
         self.opts = saved;
-        Ok(if alts.len() == 1 { alts.pop().unwrap_or(Node::Empty) } else { Node::Alt(alts) })
+        Ok(if alts.len() == 1 {
+            alts.pop().unwrap_or(Node::Empty)
+        } else {
+            Node::Alt(alts)
+        })
     }
 
     /// Reads a `{n}`, `{n,}`, `{n,m}` quantifier at the current position (PCRE2 10.42: no
@@ -658,11 +685,19 @@ impl Parser {
         // A further quantifier is an error ("a**", "a{1}{2}").
         self.skip_extended();
 
-        if matches!(self.peek(), Some('*' | '+' | '?')) || (self.peek() == Some('{') && self.read_repeat_counts()?.is_some()) {
+        if matches!(self.peek(), Some('*' | '+' | '?'))
+            || (self.peek() == Some('{') && self.read_repeat_counts()?.is_some())
+        {
             return invalid("quantifier does not follow a repeatable item");
         }
 
-        Ok(Node::Repeat { body: Box::new(atom), min, max, greedy, possessive })
+        Ok(Node::Repeat {
+            body: Box::new(atom),
+            min,
+            max,
+            greedy,
+            possessive,
+        })
     }
 
     fn literal(&self, c: u32) -> Node {
@@ -681,7 +716,11 @@ impl Parser {
 
                 match self.parse_escape(false)? {
                     Esc::Char(ch) => Ok(Some(self.literal(ch))),
-                    Esc::Item(item) => Ok(Some(Node::Class { negated: false, items: vec![item], caseless: self.opts.caseless })),
+                    Esc::Item(item) => Ok(Some(Node::Class {
+                        negated: false,
+                        items: vec![item],
+                        caseless: self.opts.caseless,
+                    })),
                     Esc::Node(n) => Ok(Some(n)),
                     Esc::Nothing => Ok(None),
                     Esc::Quote => {
@@ -717,7 +756,9 @@ impl Parser {
                 }
 
                 // POSIX class syntax outside a class is an error.
-                if matches!(self.peek_at(1), Some(':' | '.' | '=')) && self.check_posix_syntax(self.i + 1).is_some() {
+                if matches!(self.peek_at(1), Some(':' | '.' | '='))
+                    && self.check_posix_syntax(self.i + 1).is_some()
+                {
                     return invalid("POSIX named classes are supported only within a class");
                 }
 
@@ -732,18 +773,30 @@ impl Parser {
                 self.i += 1;
 
                 Ok(Some(if self.opts.dotall {
-                    Node::Class { negated: false, items: vec![ClassItem::Set(vec![(0, MAX_CP)])], caseless: false }
+                    Node::Class {
+                        negated: false,
+                        items: vec![ClassItem::Set(vec![(0, MAX_CP)])],
+                        caseless: false,
+                    }
                 } else {
-                    Node::Class { negated: true, items: vec![ClassItem::Range(0x0A, 0x0A)], caseless: false }
+                    Node::Class {
+                        negated: true,
+                        items: vec![ClassItem::Range(0x0A, 0x0A)],
+                        caseless: false,
+                    }
                 }))
             }
             '^' => {
                 self.i += 1;
-                Ok(Some(Node::Assert(Assert::Circumflex { multiline: self.opts.multiline })))
+                Ok(Some(Node::Assert(Assert::Circumflex {
+                    multiline: self.opts.multiline,
+                })))
             }
             '$' => {
                 self.i += 1;
-                Ok(Some(Node::Assert(Assert::Dollar { multiline: self.opts.multiline })))
+                Ok(Some(Node::Assert(Assert::Dollar {
+                    multiline: self.opts.multiline,
+                })))
             }
             _ => {
                 self.i += 1;
@@ -890,7 +943,9 @@ impl Parser {
                     }
                     Esc::Quote => in_quote = true,
                     Esc::Nothing => {}
-                    Esc::Node(_) => return invalid("escape sequence is invalid in character class"),
+                    Esc::Node(_) => {
+                        return invalid("escape sequence is invalid in character class");
+                    }
                 }
 
                 continue;
@@ -902,7 +957,11 @@ impl Parser {
             last_was_type = false;
         }
 
-        Ok(Node::Class { negated, items, caseless: self.opts.caseless })
+        Ok(Node::Class {
+            negated,
+            items,
+            caseless: self.opts.caseless,
+        })
     }
 
     /// After a class type (`\d`, `[:alpha:]`): a `-` that is not followed by `]` is an
@@ -921,7 +980,10 @@ impl Parser {
             return invalid("missing terminating ] for character class");
         };
 
-        if c == '[' && matches!(self.peek_at(1), Some(':' | '.' | '=')) && self.check_posix_syntax(self.i + 1).is_some() {
+        if c == '['
+            && matches!(self.peek_at(1), Some(':' | '.' | '='))
+            && self.check_posix_syntax(self.i + 1).is_some()
+        {
             return Ok(None);
         }
 
@@ -1079,7 +1141,9 @@ impl Parser {
                 }
 
                 let v = u32::from_str_radix(&self.p[start..j].iter().collect::<String>(), 8)
-                    .map_err(|_| PcreError::Invalid("character code point value too large".into()))?;
+                    .map_err(|_| {
+                        PcreError::Invalid("character code point value too large".into())
+                    })?;
                 self.i = j + 1;
                 Esc::Char(Self::check_cp(v)?)
             }
@@ -1143,8 +1207,13 @@ impl Parser {
                         }
 
                         if j > start && self.p.get(j) == Some(&'}') {
-                            let v = u32::from_str_radix(&self.p[start..j].iter().collect::<String>(), 16)
-                                .map_err(|_| PcreError::Invalid("character code point value too large".into()))?;
+                            let v = u32::from_str_radix(
+                                &self.p[start..j].iter().collect::<String>(),
+                                16,
+                            )
+                            .map_err(|_| {
+                                PcreError::Invalid("character code point value too large".into())
+                            })?;
                             self.i = j + 1;
                             return Ok(Esc::Char(Self::check_cp(v)?));
                         }
@@ -1159,7 +1228,11 @@ impl Parser {
                 GroupKind::Atomic,
                 Box::new(Node::Alt(vec![
                     Node::Seq(vec![Node::Char(0x0D, false), Node::Char(0x0A, false)]),
-                    Node::Class { negated: false, items: vec![ClassItem::Set(VSPACE.to_vec())], caseless: false },
+                    Node::Class {
+                        negated: false,
+                        items: vec![ClassItem::Set(VSPACE.to_vec())],
+                        caseless: false,
+                    },
                 ])),
             )),
             'X' => return unsupported("\\X"),
@@ -1178,7 +1251,11 @@ impl Parser {
                     Some('<') => '>',
                     Some('\'') => '\'',
                     Some('{') => '}',
-                    _ => return invalid("\\k is not followed by a braced, angle-bracketed, or quoted name"),
+                    _ => {
+                        return invalid(
+                            "\\k is not followed by a braced, angle-bracketed, or quoted name",
+                        );
+                    }
                 };
                 self.i += 1;
                 let name = self.read_name(term)?;
@@ -1209,16 +1286,23 @@ impl Parser {
                 let term = if self.peek() == Some('<') { '>' } else { '\'' };
                 let start = self.i + 1;
                 let Some(end) = self.p[start..].iter().position(|&c| c == term) else {
-                    return invalid("\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number");
+                    return invalid(
+                        "\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number",
+                    );
                 };
                 let body: String = self.p[start..start + end].iter().collect();
                 self.i = start + end + 1;
-                Ok(Esc::Node(Node::Group(GroupKind::NonCapture, Box::new(Node::NamedBackref(format!("\u{0}sub:{body}"), caseless)))))
+                Ok(Esc::Node(Node::Group(
+                    GroupKind::NonCapture,
+                    Box::new(Node::NamedBackref(format!("\u{0}sub:{body}"), caseless)),
+                )))
             }
             Some('{') => {
                 let start = self.i + 1;
                 let Some(end) = self.p[start..].iter().position(|&c| c == '}') else {
-                    return invalid("\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number");
+                    return invalid(
+                        "\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number",
+                    );
                 };
                 let body: String = self.p[start..start + end].iter().collect();
                 self.i = start + end + 1;
@@ -1239,7 +1323,9 @@ impl Parser {
                 let body: String = self.p[start..j].iter().collect();
 
                 if body.is_empty() || body == "-" || body == "+" {
-                    return invalid("\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number");
+                    return invalid(
+                        "\\g is not followed by a braced, angle-bracketed, or quoted name/number or by a plain number",
+                    );
                 }
 
                 self.i = j;
@@ -1250,7 +1336,9 @@ impl Parser {
 
     fn g_number_or_name(&mut self, body: &str, caseless: bool) -> Result<Esc, PcreError> {
         if let Some(rel) = body.strip_prefix('-') {
-            let n: usize = rel.parse().map_err(|_| PcreError::Invalid("invalid \\g".into()))?;
+            let n: usize = rel
+                .parse()
+                .map_err(|_| PcreError::Invalid("invalid \\g".into()))?;
 
             if n == 0 || n > self.group_count {
                 return invalid("reference to non-existent subpattern");
@@ -1375,7 +1463,9 @@ impl Parser {
                 let name = self.read_name(')')?;
                 Ok(Some(Node::NamedBackref(format!("\u{0}sub:{name}"), false)))
             }
-            'R' | '0'..='9' | '+' | '-' if c != '-' || self.peek_at(1).is_some_and(|d| d.is_ascii_digit()) => {
+            'R' | '0'..='9' | '+' | '-'
+                if c != '-' || self.peek_at(1).is_some_and(|d| d.is_ascii_digit()) =>
+            {
                 // Recursion / subroutine call by number.
                 let start = self.i;
 
@@ -1508,8 +1598,22 @@ impl Parser {
 fn is_start_setting(name: &str) -> bool {
     matches!(
         name,
-        "UTF" | "UCP" | "CR" | "LF" | "CRLF" | "ANY" | "ANYCRLF" | "NUL" | "BSR_ANYCRLF" | "BSR_UNICODE"
-            | "NO_AUTO_POSSESS" | "NO_DOTSTAR_ANCHOR" | "NO_JIT" | "NO_START_OPT" | "NOTEMPTY" | "NOTEMPTY_ATSTART"
+        "UTF"
+            | "UCP"
+            | "CR"
+            | "LF"
+            | "CRLF"
+            | "ANY"
+            | "ANYCRLF"
+            | "NUL"
+            | "BSR_ANYCRLF"
+            | "BSR_UNICODE"
+            | "NO_AUTO_POSSESS"
+            | "NO_DOTSTAR_ANCHOR"
+            | "NO_JIT"
+            | "NO_START_OPT"
+            | "NOTEMPTY"
+            | "NOTEMPTY_ATSTART"
     ) || name.starts_with("LIMIT_DEPTH=")
         || name.starts_with("LIMIT_HEAP=")
         || name.starts_with("LIMIT_MATCH=")
@@ -1533,8 +1637,10 @@ fn strip_start_settings(p: &mut Vec<char>) -> Result<(), PcreError> {
             return Ok(());
         }
 
-        if !matches!(name.as_str(), "UTF" | "LF" | "NO_AUTO_POSSESS" | "NO_DOTSTAR_ANCHOR" | "NO_JIT" | "NO_START_OPT")
-            && !name.starts_with("LIMIT_")
+        if !matches!(
+            name.as_str(),
+            "UTF" | "LF" | "NO_AUTO_POSSESS" | "NO_DOTSTAR_ANCHOR" | "NO_JIT" | "NO_START_OPT"
+        ) && !name.starts_with("LIMIT_")
         {
             return unsupported("start-of-pattern setting that changes matching");
         }
@@ -1650,7 +1756,9 @@ fn fixed_width(n: &Node) -> Result<Option<usize>, PcreError> {
                 None
             }
         }
-        Node::Backref(..) | Node::NamedBackref(..) => return unsupported("backreference in lookbehind"),
+        Node::Backref(..) | Node::NamedBackref(..) => {
+            return unsupported("backreference in lookbehind");
+        }
     })
 }
 
@@ -1671,22 +1779,38 @@ fn check_lookbehind(body: &Node) -> Result<(), PcreError> {
 
 /// Resolves named backrefs, validates group references and the lookbehind rule, and collects
 /// the caseless state of every cased atom.
-fn check(n: &mut Node, names: &[(String, usize)], groups: usize, case: &mut (bool, bool)) -> Result<(), PcreError> {
+fn check(
+    n: &mut Node,
+    names: &[(String, usize)],
+    groups: usize,
+    case: &mut (bool, bool),
+) -> Result<(), PcreError> {
     match n {
         Node::Char(c, ci) => {
             if is_cased(*c) {
                 if *ci { case.0 = true } else { case.1 = true }
             }
         }
-        Node::Class { items, caseless, .. } => {
+        Node::Class {
+            items, caseless, ..
+        } => {
             let cased = items.iter().any(|it| match it {
                 ClassItem::Range(a, b) => (*a..=*b).take(512).any(is_cased) || (*b - *a) >= 512,
                 ClassItem::Set(_) => false,
-                ClassItem::Prop(p) => p.contains("{Lu}") || p.contains("{Ll}") || p.contains("{Lt}") || p.contains("{LC}"),
+                ClassItem::Prop(p) => {
+                    p.contains("{Lu}")
+                        || p.contains("{Ll}")
+                        || p.contains("{Lt}")
+                        || p.contains("{LC}")
+                }
             });
 
             if cased {
-                if *caseless { case.0 = true } else { case.1 = true }
+                if *caseless {
+                    case.0 = true
+                } else {
+                    case.1 = true
+                }
             }
         }
         Node::NamedBackref(name, ci) => {
@@ -1695,7 +1819,11 @@ fn check(n: &mut Node, names: &[(String, usize)], groups: usize, case: &mut (boo
                 let exists = body == "R"
                     || body == "0"
                     || body.parse::<usize>().is_ok_and(|g| g <= groups)
-                    || body.strip_prefix('+').or(body.strip_prefix('-')).and_then(|g| g.parse::<usize>().ok()).is_some_and(|g| g >= 1 && g <= groups)
+                    || body
+                        .strip_prefix('+')
+                        .or(body.strip_prefix('-'))
+                        .and_then(|g| g.parse::<usize>().ok())
+                        .is_some_and(|g| g >= 1 && g <= groups)
                     || names.iter().any(|(nm, _)| nm == body);
 
                 if !exists {
@@ -1785,7 +1913,11 @@ impl Emitter {
                     push_cp(&mut self.out, *c);
                 }
             }
-            Node::Class { negated, items, caseless } => {
+            Node::Class {
+                negated,
+                items,
+                caseless,
+            } => {
                 self.out.push('[');
 
                 if *negated {
@@ -1867,9 +1999,21 @@ impl Emitter {
                     self.out.push(')');
                 }
             },
-            Node::Repeat { body, min, max, greedy, possessive } => {
+            Node::Repeat {
+                body,
+                min,
+                max,
+                greedy,
+                possessive,
+            } => {
                 if *possessive {
-                    let inner = Node::Repeat { body: body.clone(), min: *min, max: *max, greedy: true, possessive: false };
+                    let inner = Node::Repeat {
+                        body: body.clone(),
+                        min: *min,
+                        max: *max,
+                        greedy: true,
+                        possessive: false,
+                    };
                     return self.emit_atomic(&inner);
                 }
 
@@ -1942,7 +2086,14 @@ pub fn translate(pattern: &str) -> Result<(String, &'static str), PcreError> {
     let mut parser = Parser {
         p: expr,
         i: 0,
-        opts: Opts { caseless: false, multiline: false, dotall: true, extended: false, no_auto_capture: false, ungreedy: false },
+        opts: Opts {
+            caseless: false,
+            multiline: false,
+            dotall: true,
+            extended: false,
+            no_auto_capture: false,
+            ungreedy: false,
+        },
         group_count: 0,
         names: Vec::new(),
     };
@@ -1959,7 +2110,14 @@ pub fn translate(pattern: &str) -> Result<(String, &'static str), PcreError> {
     check(&mut tree, &parser.names, groups, &mut case)?;
 
     let mixed_case = case.0 && case.1;
-    let mut em = Emitter { out: String::new(), mixed_case, map: vec![0; groups + 1], next_es_group: 0, closed: vec![false; groups + 1], repeat_depth: 0 };
+    let mut em = Emitter {
+        out: String::new(),
+        mixed_case,
+        map: vec![0; groups + 1],
+        next_es_group: 0,
+        closed: vec![false; groups + 1],
+        repeat_depth: 0,
+    };
 
     // ECMAScript numbers groups by opening parenthesis; the emitter assigns numbers in the
     // same order (user groups and the groups of the atomic-group emulation).
@@ -1979,7 +2137,9 @@ impl WxRegex {
     /// unsupported pattern).
     pub fn compile(pattern: &str) -> Option<Self> {
         let (es, flags) = translate(pattern).ok()?;
-        regress::Regex::with_flags(&es, flags).ok().map(|re| Self { re })
+        regress::Regex::with_flags(&es, flags)
+            .ok()
+            .map(|re| Self { re })
     }
 
     /// `Matches( text )` then `GetMatch( &start, &len, 0 )`: the leftmost match as

@@ -18,13 +18,91 @@
 //! Port of `pcbnew/pcb_dimension.h` and `pcbnew/pcb_dimension.cpp` (`PCB_DIMENSION_BASE and the five PCB_DIM_* classes`).
 //!
 //! Placeholder written by M0a; the type package M0c fills in the fields, `Default` and the
-//! delegation shims (`board-model.md` 6.2, 16).
+//! delegation shims (`board-model.md` 6.2, 16). The `DIM_*` enums below are complete already
+//! because `BoardDesignSettings` (package M0d) holds four of them.
 
+use crate::eda_text::EdaText;
 use crate::item::BoardItemBase;
 use crate::pcb_text::PcbText;
 use crate::traits::BoardItemMut;
+use crate::traits::EdaTextItem;
 use crate::traits::{BoardItem, Invalidate};
 use kicad_core::KicadT;
+
+/// `DIM_UNITS_FORMAT`: how to display the units in a dimension's text; the values are written
+/// to files.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimUnitsFormat {
+    /// `1234.0`
+    NoSuffix = 0,
+    /// `1234.0 mm`
+    BareSuffix,
+    /// `1234.0 (mm)`
+    ParenSuffix,
+}
+
+/// `DIM_PRECISION`; the values are written to files. The names are the digit patterns of the
+/// C++ enumerators (`V_*`: 0.00 / 0 / 0.0 depending on the units).
+#[allow(non_camel_case_types)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimPrecision {
+    X = 0,
+    X_X,
+    X_XX,
+    X_XXX,
+    X_XXXX,
+    X_XXXXX,
+    V_VV,
+    V_VVV,
+    V_VVVV,
+    V_VVVVV,
+}
+
+/// `DIM_TEXT_POSITION`: where to place the text on a dimension; the values are written to
+/// files.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimTextPosition {
+    /// Text appears outside the dimension line (default).
+    Outside = 0,
+    /// Text appears in line with the dimension line.
+    Inline,
+    /// Text placement is manually set by the user.
+    Manual,
+}
+
+/// `DIM_UNITS_MODE`: the units selection as stored in the file (`EDA_UNITS` alone does not
+/// cut it).
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimUnitsMode {
+    Inch = 0,
+    Mils,
+    Mm,
+    Automatic,
+}
+
+/// `DIM_ARROW_DIRECTION`.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimArrowDirection {
+    /// `>-----<`
+    Inward = 0,
+    /// `<----->`
+    Outward,
+}
+
+/// `DIM_TEXT_BORDER`: frame to show around dimension text.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+#[repr(i32)]
+pub enum DimTextBorder {
+    None = 0,
+    Rectangle,
+    Circle,
+    Roundrect,
+}
 
 /// `PCB_DIMENSION_BASE and the five PCB_DIM_* classes`.
 ///
@@ -60,3 +138,17 @@ impl BoardItem for PcbDimension {
 }
 
 impl BoardItemMut for PcbDimension {}
+
+/// A dimension is its own `EDA_TEXT` host (PCB_DIMENSION_BASE : PCB_TEXT), so that
+/// `ItemRef::as_eda_text()` and the generic `eda_text` functions see the dimension and not
+/// the embedded `PcbText`. M0c adds a shim for every `EDA_TEXT` virtual that PCB_TEXT
+/// overrides, each forwarding to an inherent `PcbDimension` method.
+impl EdaTextItem for PcbDimension {
+    fn eda_text(&self) -> &EdaText {
+        &self.text.text
+    }
+
+    fn eda_text_mut(&mut self) -> &mut EdaText {
+        &mut self.text.text
+    }
+}

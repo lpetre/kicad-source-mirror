@@ -241,20 +241,27 @@ macro_rules! gen_board {
 
                 #[doc = concat!("Edit one `", stringify!($ty), "` (`board-model.md` 8.2): ")]
                 /// invalidates its caches, runs `f` with the item and a `MutEnv` snapshot,
-                /// re-stamps `base.id` / `base.parent` (so `f` may assign a whole new value; a
-                /// changed UUID is re-bound in the index like `BOARD_ITEM::SetUuid`),
-                /// bumps the time stamp and invalidates the parent footprint's geometry
-                /// caches. `None` for a stale handle.
+                /// invalidates the caches again (so `f` may read derived data before it
+                /// writes, or store a value that carries caches), re-stamps `base.id`,
+                /// `base.parent` and `base.group` (so `f` may assign a whole new value: the
+                /// three are relations that only `Board` writes; a changed UUID is re-bound
+                /// in the index like `BOARD_ITEM::SetUuid`), bumps the time stamp and
+                /// invalidates the parent footprint's geometry caches. `None` for a stale
+                /// handle. Child and member lists (`Footprint`, `PcbTable`, `PcbGroup`) are
+                /// not protected: do not replace a container wholesale.
                 pub fn $modify<R>(&mut self, id: crate::ids::$handle, f: impl FnOnce(&mut $ty, &MutEnv) -> R) -> Option<R> {
                     let env = self.mut_env_refreshed(id.into())?;
                     let item = self.$arena.get_mut(id)?;
                     let parent = BoardItem::base(item).parent;
+                    let group = BoardItem::base(item).group;
                     let old_uuid = BoardItem::base(item).uuid;
                     Invalidate::invalidate_caches(item);
                     let result = f(item, &env);
+                    Invalidate::invalidate_caches(item);
                     let base = BoardItem::base_mut(item);
                     base.id = Some(id.into());
                     base.parent = parent;
+                    base.group = group;
                     let new_uuid = base.uuid;
 
                     if new_uuid != old_uuid {
@@ -267,11 +274,14 @@ macro_rules! gen_board {
             )*
 
             /// `board.get(id)`: the item of a handle that may be stale (`None` then). Nets
-            /// (`ItemKind::Net`) resolve through the net list.
+            /// (`ItemKind::Net`, index = net code) resolve through the net list.
             pub fn get(&self, id: ItemId) -> Option<AnyItem<'_>> {
                 match id.kind() {
                     $( ItemKind::$kind => self.$arena.get(id.typed::<$ty>()?).map(AnyItem::$kind), )*
-                    ItemKind::Net => self.find_net(NetCode(id.index() as i32)).map(AnyItem::Net),
+                    ItemKind::Net => {
+                        let code = NetCode(i32::try_from(id.index()).ok()?);
+                        self.net_info.nets.get(&code).map(AnyItem::Net)
+                    }
                 }
             }
 
