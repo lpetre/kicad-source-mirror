@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 #include <convert_basic_shapes_to_polygon.h>
 #include <gbr_metadata.h>
 #include <geometry/shape_arc.h>
@@ -196,6 +198,7 @@ static std::string runScript( const std::vector<std::vector<std::string>>& aLine
     std::map<int, GBR_METADATA> mds;
     std::string          creator;
     bool                 started = false;
+    bool                 nomacros = false;
 
     plotter.SetRenderSettings( &rs );
     plotter.OpenFile( wxString::FromUTF8( aPath ) );
@@ -228,6 +231,7 @@ static std::string runScript( const std::vector<std::vector<std::string>>& aLine
             plotter.UseX2format( x2 );
             plotter.UseX2NetAttributes( net );
             plotter.DisableApertMacros( nomacro );
+            nomacros = nomacro;
         }
         else if( op == "CREATOR" )
         {
@@ -466,12 +470,10 @@ static std::string runScript( const std::vector<std::vector<std::string>>& aLine
             int       pos = t.n();
             EDA_ANGLE o = t.ang();
 
-            if( r != 0 && pos != 15 )
+            if( ( r != 0 && pos != 15 ) || nomacros )
                 recordChamfer( p, s, o, r, ratio, pos, plotter.HighDef() );
-            else if( plotter_disabled_macros( line ) )
-                recordChamfer( p, s, o, r, ratio, pos, plotter.HighDef() );
-
-            recordChamfer( VECTOR2I( 0, 0 ), s, ANGLE_0, 0, ratio, pos, plotter.HighDef() );
+            else
+                recordChamfer( VECTOR2I( 0, 0 ), s, ANGLE_0, 0, ratio, pos, plotter.HighDef() );
             plotter.FlashPadChamferRoundRect( p, s, r, ratio, pos, o, md( t ) );
         }
         else if( op == "FPOLY" )
@@ -531,4 +533,72 @@ static std::string runScript( const std::vector<std::vector<std::string>>& aLine
     }
 
     return file;
+}
+
+
+int main( int argc, char** argv )
+{
+    if( argc < 2 )
+    {
+        fprintf( stderr, "usage: %s SCRIPTS [full]\n", argv[0] );
+        return 2;
+    }
+
+    bool full = argc > 2 && strcmp( argv[2], "full" ) == 0;
+
+    std::ifstream in( argv[1], std::ios::binary );
+    std::stringstream ss;
+    ss << in.rdbuf();
+    std::string all = ss.str();
+
+    std::string tmp = std::string( "/tmp/gerber_oracle_" ) + std::to_string( getpid() ) + ".gbr";
+
+    std::vector<std::vector<std::vector<std::string>>> scripts;
+    std::istringstream lines( all );
+    std::string        line;
+
+    while( std::getline( lines, line ) )
+    {
+        std::vector<std::string> tok;
+        std::istringstream       ls( line );
+        std::string              w;
+
+        while( ls >> w )
+            tok.push_back( w );
+
+        if( tok.empty() )
+            continue;
+
+        if( tok[0] == "BEGIN" )
+            scripts.emplace_back();
+        else if( tok[0] != "END" )
+            scripts.back().push_back( tok );
+    }
+
+    std::vector<std::string> results;
+
+    for( size_t i = 0; i < scripts.size(); i++ )
+        results.push_back( runScript( scripts[i], tmp ) );
+
+    remove( tmp.c_str() );
+
+    printf( "SCRIPTS %zu %016" PRIx64 "\n", scripts.size(), fnv( all ) );
+
+    for( const auto& [key, val] : g_chamfer )
+        printf( "CH %s %s\n", key.c_str(), val.c_str() );
+
+    for( size_t i = 0; i < results.size(); i++ )
+    {
+        if( full || (int) i < FULL_COUNT )
+        {
+            printf( "F %zu\n%sF-END\n", i, results[i].c_str() );
+
+            if( full )
+                continue;
+        }
+
+        printf( "R %zu %016" PRIx64 "\n", i, fnv( results[i] ) );
+    }
+
+    return 0;
 }
