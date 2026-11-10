@@ -219,7 +219,17 @@ pub fn get_board(path: &str) -> Result<Session, i32> {
 
     match Session::load_board_with(&inputs) {
         Ok(mut session) => {
-            session.apply_host_inputs(&host_clock(), uuid_seed());
+            let clock = host_clock();
+
+            // LOAD_INFO_REPORTER -> wxLogWarning: "<HH:MM:SS>: Warning: <text>" on stderr
+            for warning in &session.parse_warnings {
+                eprintln!(
+                    "{:02}:{:02}:{:02}: Warning: {warning}",
+                    clock.hour, clock.minute, clock.second
+                );
+            }
+
+            session.apply_host_inputs(&clock, uuid_seed());
 
             for warning in session.outline_font_warnings() {
                 eprintln!("Warning: {warning}");

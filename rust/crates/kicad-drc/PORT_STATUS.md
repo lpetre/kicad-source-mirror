@@ -1822,3 +1822,69 @@ messages.
   session (see Verification).
 - The shared harness `tests/drc_harness` now builds the connectivity
   (`build_connectivity`) and runs the providers with it (orchestrator note).
+
+## DRC-32: creepage utilities, part 1 (`drc_creepage_utils.h`, `drc_creepage_utils.cpp`)
+
+Module `src/creepage_utils.rs` with `src/creepage_utils/{shapes,paths,board_edges,graph,pending}.rs`.
+
+| C++ | Rust | State |
+|---|---|---|
+| `CREEP_SHAPE`, `CU_SHAPE*`, `BE_SHAPE*` (classes, virtual accessors) | `shapes::{CreepShape, CuShapeSegment, CuShapeCircle, CuShapeArc, BeShapePoint, BeShapeCircle, BeShapeArc}` | ported |
+| `BOARD_ITEM*` of shapes / board edges | `shapes::CreepItem` (`Item(ItemId)` or `OwnedEdge(index into m_ownedBoardEdges)`) | ported |
+| `compareShapes`, `areEquivalent`, `segmentIntersectsArc`, `segments_intersect`, `BE_SHAPE_ARC::IsThereATangentPassingThroughPoint`, `AngleBetweenStartAndEnd` | `shapes` | ported |
+| `PATH_CONNECTION` (+ `isValid`), `CREEPAGE_TRACK_ENTRY`, `TRACK_RTREE`, `ReversePaths` | `paths::{PathConnection, CreepageTrackEntry, TrackRtree, reverse_paths}` | ported; `is_valid` calls `SegmentIntersectsBoard` (DRC-33, pending) |
+| all 23 `<shape>::Paths( <shape> )` bodies (cpp L272-606, L1075-1961, incl. the L1611-1961 ones of the DRC-33 range, needed by the circle-prune test), `closestPointOnSegment` | `paths::paths_<receiver>_<argument>`, `CreepShape::paths` (the virtual table = `GetPaths` dispatch) | ported |
+| `BuildCreepageBoardEdges` | `board_edges::build_creepage_board_edges` | ported |
+| `GRAPH_NODE`, `GRAPH_CONNECTION` (+ `GetShapes`), `CREEPAGE_GRAPH` model, `TransformEdgeToCreepShapes`, `RemoveDuplicatedShapes`, `TransformCreepShapesToNodes`, `ConnectChildren` (circle, arc), `ShortenChildDueToGV`, `SetTarget`; graph management of cpp L3016-3118 (`detachConnection`, `TruncateToPrefix`, `AddNode`, `AddNodeVirtual`, `AddConnection` x2, `FindNode`) | `graph::{GraphNode, GraphConnection, CreepageGraph}` (`connection_shapes` = `GetShapes`) | ported |
+| `SegmentIntersectsBoard` | `pending::segment_intersects_board` | stub (DRC-33) |
+| `segmentIntersectsCircle`, `GetPaths`, `Solve`, `Addshape`, `GeneratePaths`, `AddNetElements` | - | DRC-33 (`CreepShape::paths` already is the `GetPaths` dispatch) |
+
+Model: shapes live in an arena (`CreepageGraph::shapes`, `ShapeId` = `CREEP_SHAPE*` identity,
+never reordered); `shape_collection` is `m_shapeCollection` (sorted / deduplicated as ids).
+Nodes and connections are `Vec`s indexed by `NodeId` / `ConnId`; `truncate_to_prefix` drops the
+tails. `m_nodeset` is a `BTreeMap` lookup keyed (type, parent, x, y) that keeps the first equal
+node (as the `unordered_set` insert does; relevant for virtual nodes). The graph borrows the
+`BoardCtx`; `board_outline` is an owned copy (the C++ points to the caller's set). Board-edge
+items resolve to their `PCB_SHAPE` through `board_edges::board_edge_shape` (shape, text box or
+table cell base); `GetBoundingBox` is the virtual one (`ItemRef`).
+
+Tests ported: `test_drc_creepage_circle_prune.cpp` (2 cases), `test_drc_creepage_issue24524.cpp`
+(`CreepageStadiumCapsArcOutward`; `CreepageStadiumCapsBlockOuterSide` is `#[ignore]` until
+DRC-33 ports `SegmentIntersectsBoard`), in `tests/drc32_creepage_utils.rs`.
+
+Verification (`tests/oracle/creepage32_oracle.cpp` + `build_creepage32_oracle.sh`, one driver
+linking the reference build; goldens `tests/golden/creepage32_{paths,boards}.txt`, replayed by
+`tests/drc32_creepage_utils.rs`):
+- `paths`: 42 generated shapes (7 per class: coincident centres, zero radius, degenerate
+  segment, arcs across +-180 and over 180 degrees), every ordered pair through the C++ static
+  overloads, two max weights: 3528 results, count + FNV hash of the bit-exact points and
+  weights. All equal except the 68 segment x arc results of the reference-UB case below (path
+  counts equal there).
+- `boards`: the 19 QA creepage boards (`creepage`, `creepage_malformed_edge`, `creepage_slots`,
+  the `issueNNNNN` boards of the creepage tests): outline flag, board-edge list (items by UUID,
+  owned Bezier / NPTH pieces by geometry), overlapping-cutout flag, shapes after
+  `RemoveDuplicatedShapes` (libstdc++ sort order), nodes, then for two (target, groove) configs
+  child points on every board-edge circle / arc, the engine's connectChildren pair loop
+  (`ConnectChildren`, `ShortenChildDueToGV`, the overlapping-cutout outline sampling of 4
+  boards), the connections and their `GetShapes`, and `TruncateToPrefix`: 1996 lines, all equal.
+
+Deviations:
+- `CU_SHAPE_SEGMENT::Paths( const CU_SHAPE_ARC& )` (fallback branch) keeps `bestPath` pointing
+  into the temporary vectors of its range-for loops and reads it after they are destroyed: the
+  reference returns freed heap memory (glibc tcache pointers in `a1`, the path of a later
+  vector that reused the chunk). The port returns the path the pointer referred to when it was
+  taken (the intended value). Reference results there are not reproducible (ASLR); the replay
+  compares the path count only for segment x arc pairs. Downstream (DRC-33): creepage paths
+  between a track segment and an arc track inherit this.
+- `GRAPH_NODE::m_node_conns` is a `std::set` of `shared_ptr` (heap-address order); the port
+  orders it by connection index. Whatever iterates it (DRC-33 `Solve`) must treat ties as
+  unordered in the reference.
+- `BuildCreepageBoardEdges` flattens Bezier edges with `build_bezier_to_segments_points_list`
+  instead of rebuilding the board item's cached list (same points; the board stays immutable).
+- `ShortenChildDueToGV` calls `asin` on a `float` (`asinf` in the reference): the port uses
+  `f32::asin`, the platform `asinf` natively (glibc, matched by the goldens); wasm32 uses
+  Rust's libm (the documented wasm-only libm deviation).
+
+Known gaps: `PATH_CONNECTION::isValid` is unverified (needs `SegmentIntersectsBoard`, DRC-33);
+the `aExclude` set of `BuildCreepageBoardEdges` and `AddNodeVirtual` / `AddConnection( n1, n2 )`
+have no oracle coverage yet (used by DRC-33's engine).

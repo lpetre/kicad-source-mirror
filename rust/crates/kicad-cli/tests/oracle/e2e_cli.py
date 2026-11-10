@@ -72,6 +72,8 @@ DATE_RES = [
     (re.compile(rb"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}([+-]\d{2}:?\d{2}|Z)?"), b"<DATE>"),
     # G04 Created by KiCad (PCBNEW ...) date 2026-11-10 05:24:54*
     (re.compile(rb"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"), b"<DATE>"),
+    # wxLog time stamp of the load warnings on stderr
+    (re.compile(rb"(?m)^\d{2}:\d{2}:\d{2}: "), b"<TIME>: "),
 ]
 
 

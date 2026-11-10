@@ -374,7 +374,8 @@ impl Board {
     ) -> Board {
         let clock = fixed_date.unwrap_or_else(browser_clock);
         session.apply_host_inputs(&clock, uuid_seed.unwrap_or_else(random_u32));
-        let warnings = session.outline_font_warnings();
+        let mut warnings = session.parse_warnings.clone();
+        warnings.extend(session.outline_font_warnings());
 
         Board {
             session,
@@ -397,8 +398,8 @@ impl Board {
 
 #[wasm_bindgen]
 impl Board {
-    /// `warnings`: the load warnings (text drawn with the stroke font because its outline font
-    /// has no usable stored glyphs).
+    /// `warnings`: the load warnings: the parser's (`GetParseWarnings()`), then one per text
+    /// drawn with the stroke font because its outline font has no usable stored glyphs.
     #[wasm_bindgen(getter)]
     pub fn warnings(&self) -> Vec<String> {
         self.warnings.clone()
