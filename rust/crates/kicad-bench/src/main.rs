@@ -387,6 +387,8 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
         report_all_track_errors: false,
         test_footprints: false,
         tuning_profiles: &tuning_profiles,
+        // no footprint library tables (the hermetic kicad-cli home has none either)
+        footprint_libraries: None,
     };
 
     let events: Events = RefCell::new(Vec::new());
