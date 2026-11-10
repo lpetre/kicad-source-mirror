@@ -77,6 +77,49 @@ use crate::stdsort::std_sort;
 /// spatial index.
 const RTREE_THRESHOLD: i32 = 32;
 
+/// Port-only: outlines of at most this many points get the exact brute-force pre-check of
+/// `split_collinear_outlines` (no `SEGMENT_INDEX` unless some pair is a candidate).
+const SPLIT_COLLINEAR_PRECHECK_MAX: i64 = 64;
+
+/// Port-only: extent of one outline's points, used to skip `SHAPE_LINE_CHAIN::PointInside()`
+/// calls that provably return false (`ShapePolySet::point_inside_with_extents`).
+#[derive(Clone, Copy, Debug)]
+struct OutlineExtent {
+    min: Vector2I,
+    max: Vector2I,
+    /// All points lie within +-`EXTENT_BOUND`: the ray-cast `int` arithmetic cannot wrap.
+    in_bound: bool,
+}
+
+/// Bound for [`OutlineExtent::in_bound`]: differences of two such values (and `p1.x + d`)
+/// fit an `i32`.
+const EXTENT_BOUND: i32 = (1 << 30) - 1;
+
+impl OutlineExtent {
+    fn of(a_points: &[Vector2I]) -> Self {
+        let mut ext = OutlineExtent {
+            min: Vector2I::new(i32::MAX, i32::MAX),
+            max: Vector2I::new(i32::MIN, i32::MIN),
+            in_bound: true,
+        };
+
+        for p in a_points {
+            ext.min.x = ext.min.x.min(p.x);
+            ext.min.y = ext.min.y.min(p.y);
+            ext.max.x = ext.max.x.max(p.x);
+            ext.max.y = ext.max.y.max(p.y);
+            ext.in_bound &= Self::in_bound(*p);
+        }
+
+        ext
+    }
+
+    fn in_bound(a_pt: Vector2I) -> bool {
+        (-EXTENT_BOUND..=EXTENT_BOUND).contains(&a_pt.x)
+            && (-EXTENT_BOUND..=EXTENT_BOUND).contains(&a_pt.y)
+    }
+}
+
 /// Port of `SHAPE_POLY_SET::POLYGON`: the outline (index 0) followed by the holes.
 pub type Polygon = Vec<ShapeLineChain>;
 
@@ -2061,7 +2104,14 @@ impl ShapePolySet {
 
     /// Port of `SHAPE_POLY_SET::isExteriorWaist()`: whether the overlapping part of two
     /// (collinear) segments has no polygon material on either side.
-    fn is_exterior_waist(&self, a_seg_a: &Seg, a_seg_b: &Seg) -> bool {
+    ///
+    /// `a_point_inside` stands for `this->PointInside( pt, 0, false )`: the plain
+    /// [`Shape::point_inside`] of the set, or [`Self::point_inside_with_extents`], which gives
+    /// the same answer.
+    fn is_exterior_waist<F>(&self, a_seg_a: &Seg, a_seg_b: &Seg, mut a_point_inside: F) -> bool
+    where
+        F: FnMut(Vector2I) -> bool,
+    {
         let da = a_seg_a.b - a_seg_a.a;
 
         let axis = if da.x.abs() >= da.y.abs() { 0 } else { 1 };
@@ -2102,9 +2152,7 @@ impl ShapePolySet {
 
             // Both sides must be outside for this to be an exterior waist. Short-circuit if
             // either side is inside the polygon to avoid the second O(N) point-in-polygon test.
-            if !self.point_inside(wadd(midpoint, perp), 0, false)
-                && !self.point_inside(wsub(midpoint, perp), 0, false)
-            {
+            if !a_point_inside(wadd(midpoint, perp)) && !a_point_inside(wsub(midpoint, perp)) {
                 return true;
             }
         }
@@ -2112,15 +2160,80 @@ impl ShapePolySet {
         false
     }
 
+    /// Fills `a_extents` with one [`OutlineExtent`] per outline (`polys[k][0]`), in outline
+    /// order.
+    fn build_outline_extents(&self, a_extents: &mut Vec<OutlineExtent>) {
+        a_extents.clear();
+        a_extents.extend(self.polys.iter().map(|paths| OutlineExtent::of(paths[0].c_points())));
+    }
+
+    /// `PointInside( a_pt, 0, false )` of the set (any outline's ray-cast parity, holes not
+    /// considered), skipping outlines whose extent proves that their parity is even.
+    ///
+    /// `a_extents` must describe the current outlines (see [`Self::build_outline_extents`]).
+    /// The outlines are tested in the same order and with the unchanged
+    /// `SHAPE_LINE_CHAIN::PointInside()`; a skipped outline is one for which that call returns
+    /// false (accuracy 0, so the result is the crossing parity alone):
+    ///
+    /// * an edge toggles only if `(p1.y >= pt.y) != (p2.y >= pt.y)`.  With `pt.y <= min_y`
+    ///   every term is true, with `pt.y > max_y` every term is false: nothing toggles, whatever
+    ///   x is, even with wrapping `int` arithmetic.
+    /// * without wrap-around (all coordinates and `pt` within +-(2^30 - 1)) a straddling edge
+    ///   toggles iff `pt.x < p1.x + d`, and `rescale` keeps `p1.x + d` in
+    ///   `[min(p1.x, p2.x), max(p1.x, p2.x)]`.  So `pt.x >= max_x` toggles no edge and
+    ///   `pt.x < min_x` toggles every straddling edge, of which a closed ring has an even
+    ///   number.  Both give false.
+    fn point_inside_with_extents(&self, a_pt: Vector2I, a_extents: &[OutlineExtent]) -> bool {
+        let pt_in_bound = OutlineExtent::in_bound(a_pt);
+
+        self.polys.iter().zip(a_extents).any(|(paths, ext)| {
+            if a_pt.y <= ext.min.y || a_pt.y > ext.max.y {
+                return false;
+            }
+
+            if ext.in_bound && pt_in_bound && (a_pt.x < ext.min.x || a_pt.x >= ext.max.x) {
+                return false;
+            }
+
+            paths[0].point_inside(a_pt, 0, false)
+        })
+    }
+
     /// Port of `SHAPE_POLY_SET::splitCollinearOutlines()`: split outlines at exterior waists
     /// (collinear overlapping edges with no material on either side).
+    ///
+    /// Two shortcuts that leave the result unchanged (see `split_collinear_tests`):
+    ///
+    /// * outlines of at most [`SPLIT_COLLINEAR_PRECHECK_MAX`] points first test every segment
+    ///   pair with the visitor's order-free conditions (index skips, closed-interval overlap of
+    ///   the endpoint boxes - exactly the `SEGMENT_INDEX` candidate set of a zero-padding
+    ///   query -, shared-endpoint skips, `ApproxCollinear`).  The visitor can only set `found`
+    ///   for such a pair, so when there is none the outline is left untouched without building
+    ///   the index; otherwise the r-tree path below runs unchanged and picks the same pair.
+    /// * `isExteriorWaist()`'s `PointInside` calls use [`Self::point_inside_with_extents`].
+    ///   The extent table is built on the first call and must be dropped whenever an outline
+    ///   is replaced or appended.
     fn split_collinear_outlines(&mut self) {
         let mut poly_idx = 0;
+
+        // Endpoint boxes (min x, min y, max x, max y) of the current outline's segments, for
+        // the small-outline pre-check; reused across outlines.
+        let mut boxes: Vec<[i32; 4]> = Vec::new();
+
+        // Per-outline extents for point_inside_with_extents(); empty = not built yet (the set
+        // has at least one outline while this runs, so a built table is never empty).
+        let mut extents: Vec<OutlineExtent> = Vec::new();
 
         while poly_idx < self.polys.len() {
             loop {
                 let outline = &self.polys[poly_idx][0];
                 let count = outline.point_count() as i64;
+
+                if count <= SPLIT_COLLINEAR_PRECHECK_MAX
+                    && !Self::has_collinear_candidate(outline, &mut boxes)
+                {
+                    break;
+                }
 
                 let mut segs: Vec<Seg> = Vec::with_capacity(count as usize);
 
@@ -2166,7 +2279,13 @@ impl ShapePolySet {
                         }
 
                         if seg.approx_collinear_with_threshold(&other, 10)
-                            && self.is_exterior_waist(&seg, &other)
+                            && self.is_exterior_waist(&seg, &other, |pt| {
+                                if extents.is_empty() {
+                                    self.build_outline_extents(&mut extents);
+                                }
+
+                                self.point_inside_with_extents(pt, &extents)
+                            })
                         {
                             seg_a = i;
                             seg_b = j;
@@ -2212,12 +2331,68 @@ impl ShapePolySet {
 
                 lc2.set_closed(true);
 
+                // The outlines change: the extent table no longer describes them.
+                extents.clear();
+
                 self.polys[poly_idx][0] = lc1;
                 self.polys.push(vec![lc2]);
             }
 
             poly_idx += 1;
         }
+    }
+
+    /// Pre-check of [`Self::split_collinear_outlines`]: whether any ordered segment pair
+    /// `(i, j)` of `a_outline` passes the visitor's tests other than `isExteriorWaist()`.
+    ///
+    /// Mirrors the visitor literally: `j` is not `i` or a neighbour of `i` (modulo the point
+    /// count), the endpoint boxes overlap as closed intervals on both axes (the candidate set
+    /// of `SEGMENT_INDEX::VisitCandidates( seg, 0 )`: the index stores the endpoint min / max
+    /// and the packed r-tree reports every item with `!(b_min > q_max || b_max < q_min)`), the
+    /// segments do not share both endpoints, and `ApproxCollinear( other, 10 )` holds.
+    fn has_collinear_candidate(a_outline: &ShapeLineChain, a_boxes: &mut Vec<[i32; 4]>) -> bool {
+        let pts = a_outline.c_points();
+        let count = pts.len();
+
+        a_boxes.clear();
+        a_boxes.extend((0..count).map(|i| {
+            let a = pts[i];
+            let b = pts[(i + 1) % count];
+            [a.x.min(b.x), a.y.min(b.y), a.x.max(b.x), a.y.max(b.y)]
+        }));
+
+        for i in 0..count {
+            let bi = a_boxes[i];
+            let a = pts[i];
+            let b = pts[(i + 1) % count];
+            let next = (i + 1) % count;
+            let prev = (i + count - 1) % count;
+
+            for j in 0..count {
+                if j == i || j == next || j == prev {
+                    continue;
+                }
+
+                let bj = a_boxes[j];
+
+                if bj[0] > bi[2] || bj[2] < bi[0] || bj[1] > bi[3] || bj[3] < bi[1] {
+                    continue;
+                }
+
+                let oa = pts[j];
+                let ob = pts[(j + 1) % count];
+
+                if (oa == a && ob == b) || (oa == b && ob == a) {
+                    continue;
+                }
+
+                if Seg::new(a, b).approx_collinear_with_threshold(&Seg::new(oa, ob), 10) {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     /// Port of `SHAPE_POLY_SET::splitSelfTouchingOutlines()`: split outline segments at
@@ -4692,5 +4867,416 @@ impl Shape for ShapePolySet {
         }
 
         ss
+    }
+}
+
+#[cfg(test)]
+mod split_collinear_tests {
+    //! Differential tests of the `split_collinear_outlines` shortcuts (small-outline
+    //! pre-check, extent-filtered `PointInside`) against the plain r-tree implementation.
+
+    use super::*;
+
+    /// xorshift64* - deterministic test data without a dependency.
+    struct Rng(u64);
+
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 ^= self.0 >> 12;
+            self.0 ^= self.0 << 25;
+            self.0 ^= self.0 >> 27;
+            self.0.wrapping_mul(0x2545_F491_4F6C_DD1D)
+        }
+
+        fn range(&mut self, lo: i64, hi: i64) -> i64 {
+            lo + (self.next() % ((hi - lo + 1) as u64)) as i64
+        }
+    }
+
+    /// The body of `split_collinear_outlines` before the shortcuts: index for every outline,
+    /// plain `PointInside` in `isExteriorWaist()`.
+    fn split_reference(set: &mut ShapePolySet) {
+        let mut poly_idx = 0;
+
+        while poly_idx < set.polys.len() {
+            loop {
+                let outline = &set.polys[poly_idx][0];
+                let count = outline.point_count() as i64;
+
+                let mut segs: Vec<Seg> = Vec::with_capacity(count as usize);
+
+                for i in 0..count {
+                    segs.push(Seg::new(
+                        outline.c_point(i as i32),
+                        outline.c_point(((i + 1) % count) as i32),
+                    ));
+                }
+
+                let index = SegmentIndex::new(segs);
+
+                let mut found = false;
+                let mut seg_a: i64 = -1;
+                let mut seg_b: i64 = -1;
+                let mut i: i64 = 0;
+
+                while i < count && !found {
+                    let a = outline.c_point(i as i32);
+                    let b = outline.c_point(((i + 1) % count) as i32);
+                    let seg = Seg::new(a, b);
+
+                    index.visit_candidates(&seg, 0, |j: i32| {
+                        let j = j as i64;
+
+                        if j == i || j == ((i + 1) % count) || j == ((i + count - 1) % count) {
+                            return true;
+                        }
+
+                        let oa = outline.c_point(j as i32);
+                        let ob = outline.c_point(((j + 1) % count) as i32);
+                        let other = Seg::new(oa, ob);
+
+                        if oa == a && ob == b {
+                            return true;
+                        }
+
+                        if oa == b && ob == a {
+                            return true;
+                        }
+
+                        if seg.approx_collinear_with_threshold(&other, 10)
+                            && set.is_exterior_waist(&seg, &other, |pt| {
+                                set.point_inside(pt, 0, false)
+                            })
+                        {
+                            seg_a = i;
+                            seg_b = j;
+                            found = true;
+                            return false;
+                        }
+
+                        true
+                    });
+
+                    i += 1;
+                }
+
+                if !found {
+                    break;
+                }
+
+                let n = outline.point_count() as i64;
+                let a0 = seg_a;
+                let a1 = (seg_a + 1) % n;
+                let b0 = seg_b;
+                let b1 = (seg_b + 1) % n;
+
+                let mut lc1 = ShapeLineChain::new();
+                let mut idx = a1;
+                lc1.append_point(outline.c_point(idx as i32), false);
+
+                while idx != b0 {
+                    idx = (idx + 1) % n;
+                    lc1.append_point(outline.c_point(idx as i32), false);
+                }
+
+                lc1.set_closed(true);
+
+                let mut lc2 = ShapeLineChain::new();
+                idx = b1;
+                lc2.append_point(outline.c_point(idx as i32), false);
+
+                while idx != a0 {
+                    idx = (idx + 1) % n;
+                    lc2.append_point(outline.c_point(idx as i32), false);
+                }
+
+                lc2.set_closed(true);
+
+                set.polys[poly_idx][0] = lc1;
+                set.polys.push(vec![lc2]);
+            }
+
+            poly_idx += 1;
+        }
+    }
+
+    fn chain(pts: &[Vector2I]) -> ShapeLineChain {
+        let mut lc = ShapeLineChain::new();
+
+        for p in pts {
+            lc.append_point(*p, false);
+        }
+
+        lc.set_closed(true);
+        lc
+    }
+
+    /// Star-shaped (simple) polygon with `n` vertices around `c`.
+    fn star(rng: &mut Rng, c: Vector2I, n: usize, r: i64) -> Vec<Vector2I> {
+        (0..n)
+            .map(|k| {
+                let ang = (k as f64 + 0.3 * (rng.range(0, 100) as f64 / 100.0))
+                    * std::f64::consts::TAU
+                    / n as f64;
+                let rad = rng.range(r / 3, r) as f64;
+                Vector2I::new(c.x + (rad * ang.cos()) as i32, c.y + (rad * ang.sin()) as i32)
+            })
+            .collect()
+    }
+
+    /// Insert spike excursions (waists): v, v + L u, v + L u + w, v + s u + w, back to v's
+    /// successor, with `w` a perpendicular offset of 0..=20 (around the 10 nm threshold).
+    fn add_spikes(rng: &mut Rng, pts: &[Vector2I], spikes: usize) -> Vec<Vector2I> {
+        let mut out = pts.to_vec();
+
+        for _ in 0..spikes {
+            if out.len() < 3 {
+                break;
+            }
+
+            let k = rng.range(0, out.len() as i64 - 1) as usize;
+            let v = out[k];
+            let dir = match rng.range(0, 3) {
+                0 => Vector2I::new(1, 0),
+                1 => Vector2I::new(0, 1),
+                2 => Vector2I::new(-1, 0),
+                _ => Vector2I::new(0, -1),
+            };
+            let perp = Vector2I::new(-dir.y, dir.x);
+            let len = rng.range(40, 400) as i32;
+            let s = rng.range(0, len as i64 - 10) as i32;
+            let w = [0, 0, 1, 5, 9, 10, 11, 15, 20][rng.range(0, 8) as usize];
+            let tip = v + dir * len;
+            let ins = [tip, tip + perp * w, v + dir * s + perp * w];
+            for (m, p) in ins.iter().enumerate() {
+                out.insert(k + 1 + m, *p);
+            }
+        }
+
+        out
+    }
+
+    /// Random points on a coarse grid: self-intersecting outlines with many collinear
+    /// overlaps.
+    fn grid_poly(rng: &mut Rng, n: usize, step: i64, off: Vector2I) -> Vec<Vector2I> {
+        (0..n)
+            .map(|_| {
+                Vector2I::new(
+                    off.x + (rng.range(0, 8) * step) as i32,
+                    off.y + (rng.range(0, 8) * step) as i32,
+                )
+            })
+            .collect()
+    }
+
+    fn gen_set(rng: &mut Rng, case: usize) -> ShapePolySet {
+        let mut set = ShapePolySet::new();
+        let outlines = rng.range(1, 4) as usize;
+
+        for o in 0..outlines {
+            let c = Vector2I::new((o as i32) * 1500 + rng.range(-300, 300) as i32, 0);
+            let n = match case % 5 {
+                0 => rng.range(0, 3) as usize,
+                1 => rng.range(28, 34) as usize,
+                2 => rng.range(55, 70) as usize,
+                3 => rng.range(120, 140) as usize,
+                _ => rng.range(3, 20) as usize,
+            };
+
+            let pts = match rng.range(0, 3) {
+                0 => star(rng, c, n.max(3), 600),
+                1 => add_spikes(rng, &star(rng, c, n.max(3), 600), rng.range(1, 4) as usize),
+                2 => grid_poly(rng, n, 50, c),
+                _ => {
+                    let base = star(rng, c, n.max(3), 600);
+                    let mut p = add_spikes(rng, &base, 2);
+                    p.truncate(n.max(p.len().min(n)));
+                    p
+                }
+            };
+
+            let pts = if case % 5 == 0 { pts[..n.min(pts.len())].to_vec() } else { pts };
+            set.add_outline(&chain(&pts));
+
+            // Holes, fractured below into bridged outlines.
+            if case % 3 == 0 && n >= 3 {
+                let idx = set.outline_count() - 1;
+                let hole = star(rng, c, rng.range(3, 12) as usize, 120);
+                let mut h = chain(&hole);
+                h.reverse();
+                set.add_hole(&h, idx);
+            }
+        }
+
+        if case % 3 == 0 {
+            set.fracture(false);
+        }
+
+        set
+    }
+
+    fn assert_same(a: &ShapePolySet, b: &ShapePolySet, case: usize) {
+        assert_eq!(a.polys.len(), b.polys.len(), "case {case}: outline count");
+
+        for (pa, pb) in a.polys.iter().zip(&b.polys) {
+            assert_eq!(pa.len(), pb.len(), "case {case}");
+
+            for (ca, cb) in pa.iter().zip(pb) {
+                assert_eq!(ca.c_points(), cb.c_points(), "case {case}");
+                assert_eq!(ca.is_closed(), cb.is_closed(), "case {case}");
+            }
+        }
+    }
+
+    #[test]
+    fn split_matches_reference() {
+        let mut rng = Rng(0x9E37_79B9_7F4A_7C15);
+        let mut splits = 0;
+
+        for case in 0..6000 {
+            let set = gen_set(&mut rng, case);
+            let mut want = set.clone();
+            split_reference(&mut want);
+            let mut got = set.clone();
+            got.split_collinear_outlines();
+            assert_same(&want, &got, case);
+            splits += want.polys.len() - set.polys.len();
+        }
+
+        // The generator must exercise the split path.
+        assert!(splits > 100, "only {splits} splits");
+    }
+
+    #[test]
+    fn split_matches_reference_near_int_limits() {
+        let mut rng = Rng(0x1234_5678_9ABC_DEF1);
+
+        for case in 0..2000 {
+            let off = match case % 4 {
+                0 => Vector2I::new(EXTENT_BOUND - 200, -EXTENT_BOUND - 100),
+                1 => Vector2I::new(i32::MAX - 400, i32::MIN + 10),
+                2 => Vector2I::new(i32::MIN + 10, i32::MAX - 400),
+                _ => Vector2I::new((1 << 30) - 200, (1 << 30) - 200),
+            };
+            let mut set = ShapePolySet::new();
+
+            for _ in 0..rng.range(1, 3) {
+                let n = rng.range(3, 12) as usize;
+                set.add_outline(&chain(&grid_poly(&mut rng, n, 50, off)));
+            }
+
+            let mut want = set.clone();
+            split_reference(&mut want);
+            let mut got = set.clone();
+            got.split_collinear_outlines();
+            assert_same(&want, &got, case);
+        }
+    }
+
+    /// The pre-check's box-overlap test is the `SegmentIndex` candidate set.
+    #[test]
+    fn box_overlap_equals_index_candidates() {
+        let mut rng = Rng(0xDEAD_BEEF_0BAD_F00D);
+
+        for case in 0..400 {
+            let n = rng.range(1, 150) as usize;
+            let pts = if case % 2 == 0 {
+                grid_poly(&mut rng, n, 50, Vector2I::new(0, 0))
+            } else {
+                add_spikes(&mut rng, &star(&mut rng, Vector2I::new(0, 0), n.max(3), 600), 3)
+            };
+            let count = pts.len();
+            let segs: Vec<Seg> =
+                (0..count).map(|i| Seg::new(pts[i], pts[(i + 1) % count])).collect();
+            let index = SegmentIndex::new(segs.clone());
+
+            for s in &segs {
+                let mut got = Vec::new();
+                index.visit_candidates(s, 0, |j| {
+                    got.push(j as usize);
+                    true
+                });
+                got.sort_unstable();
+
+                let bx = |t: &Seg| {
+                    [t.a.x.min(t.b.x), t.a.y.min(t.b.y), t.a.x.max(t.b.x), t.a.y.max(t.b.y)]
+                };
+                let bi = bx(s);
+                let want: Vec<usize> = (0..count)
+                    .filter(|&j| {
+                        let bj = bx(&segs[j]);
+                        !(bj[0] > bi[2] || bj[2] < bi[0] || bj[1] > bi[3] || bj[3] < bi[1])
+                    })
+                    .collect();
+
+                assert_eq!(got, want, "case {case}");
+            }
+        }
+    }
+
+    #[test]
+    fn extent_filtered_point_inside_matches_plain() {
+        let mut rng = Rng(0x0F0F_1234_5555_AAAA);
+
+        for case in 0..600 {
+            let off = match case % 5 {
+                0 => Vector2I::new(0, 0),
+                1 => Vector2I::new(EXTENT_BOUND - 300, EXTENT_BOUND - 300),
+                2 => Vector2I::new(-EXTENT_BOUND - 100, -EXTENT_BOUND + 50),
+                3 => Vector2I::new(i32::MAX - 400, i32::MIN + 1),
+                _ => Vector2I::new(i32::MIN, i32::MAX - 400),
+            };
+            let mut set = ShapePolySet::new();
+
+            for _ in 0..rng.range(1, 4) {
+                let n = rng.range(0, 14) as usize;
+                let pts = if rng.range(0, 1) == 0 {
+                    grid_poly(&mut rng, n, 50, off)
+                } else {
+                    star(&mut rng, Vector2I::new(off.x / 2 * 2, off.y), n, 150)
+                        .into_iter()
+                        .map(|p| Vector2I::new(p.x.max(off.x), p.y))
+                        .collect()
+                };
+                set.add_outline(&chain(&pts));
+            }
+
+            let mut extents = Vec::new();
+            set.build_outline_extents(&mut extents);
+
+            let mut probes: Vec<Vector2I> = Vec::new();
+
+            for e in &extents {
+                if e.min.x > e.max.x {
+                    continue;
+                }
+
+                for &x in &[e.min.x.wrapping_sub(1), e.min.x, e.max.x, e.max.x.wrapping_add(1)] {
+                    for &y in &[e.min.y, e.max.y, e.min.y.wrapping_add(1), e.max.y.wrapping_sub(1)]
+                    {
+                        probes.push(Vector2I::new(x, y));
+                    }
+                }
+            }
+
+            for _ in 0..200 {
+                probes.push(Vector2I::new(
+                    off.x.wrapping_add(rng.range(-60, 460) as i32),
+                    off.y.wrapping_add(rng.range(-60, 460) as i32),
+                ));
+            }
+
+            for &x in &[i32::MIN, i32::MAX, EXTENT_BOUND, -EXTENT_BOUND, EXTENT_BOUND + 1] {
+                probes.push(Vector2I::new(x, off.y.wrapping_add(100)));
+            }
+
+            for pt in probes {
+                assert_eq!(
+                    set.point_inside_with_extents(pt, &extents),
+                    set.point_inside(pt, 0, false),
+                    "case {case} pt {pt:?}"
+                );
+            }
+        }
     }
 }

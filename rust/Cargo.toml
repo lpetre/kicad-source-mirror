@@ -52,10 +52,12 @@ opt-level = 3
 lto = "thin"
 codegen-units = 4
 
-# Size-optimised profile for the WebAssembly build (see crates/kicad-wasm).
+# Speed-optimised profile for the WebAssembly build (see crates/kicad-wasm). opt-level 3
+# instead of "s": 15-30 % faster on every wasm stage for a ~22 % larger .wasm (docs/PERF.md).
+# Output-neutral: no fast-math, f64 operations are never reassociated or contracted to FMA.
 [profile.wasm-release]
 inherits = "release"
-opt-level = "s"
+opt-level = 3
 lto = true
 codegen-units = 1
 panic = "abort"

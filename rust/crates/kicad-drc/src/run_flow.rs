@@ -44,6 +44,7 @@ use kicad_core::eda_units::EdaUnits;
 use kicad_core::json::{ObjectOrder, Value, dump_stream};
 use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
+use kicad_pcb::board::index::UuidPresence;
 use kicad_pcb::drc_api::{
     DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS, DRCE_MISSING_FOOTPRINT,
     DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY, DRCE_SCHEMATIC_PARITY,
@@ -557,15 +558,22 @@ pub fn run_drc_job(
     // from the board's generator (review R2-11), which never returns the UUIDs of the loaded
     // file nor the board's own; the loop only guards against an item UUID a host assigned by
     // hand.
+    //
+    // `presence.resolves( board, uuid )` is `board.resolve_item( &uuid ).is_some()` without a
+    // linear scan of the board per marker (a fresh UUID always misses the index). It stays
+    // exact because the loop only adds markers, each noted right after `add_marker`.
+    let mut presence = UuidPresence::new(board);
+
     for Found { mut marker } in found {
         let mut uuid = Kiid::new(&mut board.kiid_generator);
 
-        while board.resolve_item(&uuid).is_some() || uuid == board.uuid() {
+        while presence.resolves(board, &uuid) || uuid == board.uuid() {
             uuid = Kiid::new(&mut board.kiid_generator);
         }
 
         marker.base.uuid = uuid;
         board.add_marker(marker);
+        presence.note_added(uuid);
     }
 
     // Update the exclusion status on any excluded markers that still exist.

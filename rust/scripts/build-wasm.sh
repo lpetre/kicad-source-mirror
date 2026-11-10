@@ -44,13 +44,13 @@ echo "  after wasm-bindgen  $(size "$RUST/web/pkg/kicad_wasm_bg.wasm") bytes  we
 
 if command -v wasm-opt >/dev/null 2>&1; then
     for d in pkg pkg-node; do
-        wasm-opt -Os --enable-bulk-memory --enable-sign-ext --enable-mutable-globals \
+        wasm-opt -O3 --enable-bulk-memory --enable-sign-ext --enable-mutable-globals \
             --enable-nontrapping-float-to-int --enable-reference-types --enable-multivalue \
             "$RUST/web/$d/kicad_wasm_bg.wasm" -o "$RUST/web/$d/kicad_wasm_bg.wasm"
     done
-    echo "  after wasm-opt -Os  $(size "$RUST/web/pkg/kicad_wasm_bg.wasm") bytes"
+    echo "  after wasm-opt -O3  $(size "$RUST/web/pkg/kicad_wasm_bg.wasm") bytes"
 else
-    echo "  wasm-opt not installed: size optimisation skipped (optional, see docs/THIRD_PARTY_EQUIVALENTS.md 4)"
+    echo "  wasm-opt not installed: speed optimisation pass skipped (optional, see docs/THIRD_PARTY_EQUIVALENTS.md 4)"
 fi
 
 if [ "${1:-}" = "--test" ]; then

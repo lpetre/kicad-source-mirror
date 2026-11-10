@@ -24,7 +24,8 @@
 //! current UUID and `modify_*` re-binds a changed one, so the forward map alone answers both:
 //! "the reverse entry of `id`" is "the forward entry of `id`'s UUID, if it names `id`".
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap, HashSet};
+use std::ops::ControlFlow;
 
 use kicad_core::{Kiid, NILUUID};
 
@@ -59,27 +60,53 @@ impl Board {
     /// The linear-scan fallback of `BOARD::ResolveItem` (groups, constraints, generators,
     /// tracks, footprints with their children, zones, drawings, markers, points, nets).
     fn resolve_item_scan(&self, uuid: &Kiid) -> Option<ItemId> {
-        let hit = |id: ItemId| self.uuid_of(id) == Some(*uuid);
-
-        // findTableCell( drawing, aID ), then the drawing itself.
-        let drawing_hit = |id: ItemId| -> Option<ItemId> {
-            if let Some(AnyItem::Table(table)) = self.get(id) {
-                if let Some(&cell) = table.cells.iter().find(|&&c| hit(c.into())) {
-                    return Some(cell.into());
-                }
+        let found = self.visit_scan_items(|id| {
+            if self.uuid_of(id) == Some(*uuid) {
+                ControlFlow::Break(id)
+            } else {
+                ControlFlow::Continue(())
             }
+        });
 
-            hit(id).then_some(id)
-        };
+        if let ControlFlow::Break(id) = found {
+            return Some(id);
+        }
 
+        self.net_info
+            .nets
+            .values()
+            .find(|net| net.base.uuid == *uuid)
+            .and_then(|net| ItemId::net(net.net_code))
+    }
+
+    /// The item walk of the `BOARD::ResolveItem` linear scan, in its order: groups,
+    /// constraints, generators, tracks; per footprint the footprint, its pads, fields,
+    /// drawings (`findTableCell`: a table's cells before the table), zones, groups,
+    /// constraints, points and bodies; board zones; board drawings (cells first); markers;
+    /// points. The nets are not part of it (see [`Board::resolve_item_scan`]). `visit` may
+    /// stop the walk with `Break`. [`UuidPresence`] relies on this being the one walk the
+    /// scan does.
+    fn visit_scan_items<B>(
+        &self,
+        mut visit: impl FnMut(ItemId) -> ControlFlow<B>,
+    ) -> ControlFlow<B> {
         macro_rules! scan {
             ($iter:expr) => {
                 for id in $iter {
-                    let id: ItemId = id.into();
+                    visit(id.into())?;
+                }
+            };
+        }
 
-                    if hit(id) {
-                        return Some(id);
+        // findTableCell( drawing, aID ), then the drawing itself.
+        macro_rules! scan_drawings {
+            ($iter:expr) => {
+                for &drawing in $iter {
+                    if let Some(AnyItem::Table(table)) = self.get(drawing) {
+                        scan!(table.cells.iter().copied());
                     }
+
+                    visit(drawing)?;
                 }
             };
         }
@@ -97,13 +124,7 @@ impl Board {
             scan!(std::iter::once(fp_id));
             scan!(fp.pads.iter().copied());
             scan!(fp.fields.iter().copied());
-
-            for &drawing in &fp.drawings {
-                if let Some(found) = drawing_hit(drawing) {
-                    return Some(found);
-                }
-            }
-
+            scan_drawings!(&fp.drawings);
             scan!(fp.zones.iter().copied());
             scan!(fp.groups.iter().copied());
             scan!(fp.constraints.iter().copied());
@@ -112,21 +133,11 @@ impl Board {
         }
 
         scan!(self.zone_list.iter().copied());
-
-        for &drawing in &self.drawing_list {
-            if let Some(found) = drawing_hit(drawing) {
-                return Some(found);
-            }
-        }
-
+        scan_drawings!(&self.drawing_list);
         scan!(self.marker_list.iter().copied());
         scan!(self.point_list.iter().copied());
 
-        self.net_info
-            .nets
-            .values()
-            .find(|net| net.base.uuid == *uuid)
-            .and_then(|net| ItemId::net(net.net_code))
+        ControlFlow::Continue(())
     }
 
     /// `BOARD::IsItemIndexedById( aId )`: a forward index entry exists for `uuid` (it may name
@@ -363,5 +374,190 @@ impl Board {
         }
 
         duplicates
+    }
+}
+
+/// A snapshot of which UUIDs [`Board::resolve_item`] can resolve, for a caller that asks
+/// "does this UUID resolve?" many times while only adding items whose UUIDs it reports with
+/// [`UuidPresence::note_added`] (the DRC job drawing marker UUIDs). It answers exactly
+/// `resolve_item(uuid).is_some()` without one linear scan per question.
+///
+/// Invariant: between [`UuidPresence::new`] and a [`UuidPresence::resolves`] call the board
+/// must not change except by adding items whose UUIDs were passed to `note_added`, and the
+/// UUIDs of existing items must not change. The index branch is evaluated live, as
+/// `resolve_item` does. The containers are only used for membership, never iterated.
+#[derive(Debug, Clone, Default)]
+pub struct UuidPresence {
+    /// `uuid_of( id )` of every item of the scan walk ([`Board::visit_scan_items`]) and of
+    /// every item noted since.
+    scanned: HashSet<Kiid>,
+    /// The scan's net tail: for the first net with a UUID (in `net_info.nets` order), whether
+    /// it has a handle (`ItemId::net`).
+    nets: HashMap<Kiid, bool>,
+}
+
+impl UuidPresence {
+    /// One walk over the items and nets the `BOARD::ResolveItem` scan visits.
+    pub fn new(board: &Board) -> Self {
+        let mut scanned = HashSet::new();
+        let _ = board.visit_scan_items(|id| {
+            if let Some(uuid) = board.uuid_of(id) {
+                scanned.insert(uuid);
+            }
+
+            ControlFlow::<()>::Continue(())
+        });
+
+        let mut nets = HashMap::new();
+
+        for net in board.net_info.nets.values() {
+            // The scan stops at the first net carrying the UUID.
+            nets.entry(net.base.uuid)
+                .or_insert_with(|| ItemId::net(net.net_code).is_some());
+        }
+
+        UuidPresence { scanned, nets }
+    }
+
+    /// `board.resolve_item( uuid ).is_some()` for the board this snapshot was taken of (see
+    /// the type's invariant).
+    pub fn resolves(&self, board: &Board, uuid: &Kiid) -> bool {
+        if *uuid == NILUUID {
+            return false;
+        }
+
+        // The index branch of `resolve_item`.
+        if let Some(&id) = board.uuid_index.get(uuid) {
+            if board.uuid_of(id) == Some(*uuid) {
+                return true;
+            }
+        }
+
+        self.scanned.contains(uuid) || self.nets.get(uuid).copied().unwrap_or(false)
+    }
+
+    /// Record an item added to the board after the snapshot (for example a marker appended
+    /// to `marker_list`, which the scan visits).
+    pub fn note_added(&mut self, uuid: Kiid) {
+        self.scanned.insert(uuid);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use kicad_core::{Kiid, NILUUID};
+    use kicad_geom::Vector2I;
+
+    use super::UuidPresence;
+    use crate::board::Board;
+    use crate::ids::{ItemId, ItemKind, NetCode};
+    use crate::netinfo::NetinfoItem;
+    use crate::pcb_marker::{PcbMarker, RcItem};
+    use crate::test_support;
+
+    /// `resolves` agrees with `resolve_item( .. ).is_some()` for every UUID of `uuids`.
+    fn assert_agrees(presence: &UuidPresence, board: &Board, uuids: &[Kiid]) {
+        for uuid in uuids {
+            assert_eq!(
+                presence.resolves(board, uuid),
+                board.resolve_item(uuid).is_some(),
+                "uuid {uuid:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn uuid_presence_matches_resolve_item() {
+        let mut fx = test_support::rotated_flipped_scaled();
+        let pad = fx.child(ItemKind::Pad);
+        let shape = fx.child(ItemKind::Shape);
+        let text = fx.child(ItemKind::Text);
+        let cell = fx.child(ItemKind::Tablecell);
+        let zone = fx.child(ItemKind::Zone);
+        let board = &mut fx.board;
+        let uuid = |board: &Board, id: ItemId| board.uuid_of(id).unwrap();
+
+        // An indexed item: the pad keeps its entry.
+        let pad_uuid = uuid(board, pad);
+
+        // A footprint child only the scan finds.
+        let zone_uuid = uuid(board, zone);
+        board.unbind_uuid(&zone_uuid);
+
+        // A table cell only the scan finds (findTableCell).
+        let cell_uuid = uuid(board, cell);
+        board.unbind_uuid(&cell_uuid);
+
+        // A duplicate UUID whose index entry was dropped.
+        let dup_uuid = uuid(board, shape);
+        board.set_uuid_direct(text, dup_uuid);
+        board.unbind_uuid(&dup_uuid);
+
+        // A stale index entry: the entry names an item that does not carry the UUID.
+        let stale_uuid = Kiid::new(&mut board.kiid_generator);
+        board.bind_uuid(stale_uuid, pad);
+
+        // Net UUIDs: the first net carrying a UUID decides, even when it has no handle.
+        let net_uuid = Kiid::new(&mut board.kiid_generator);
+        let shadowed_net_uuid = Kiid::new(&mut board.kiid_generator);
+        let mut net = |code: i32, uuid: Kiid| {
+            let mut net = NetinfoItem {
+                net_code: NetCode(code),
+                ..NetinfoItem::default()
+            };
+            net.base.uuid = uuid;
+            board.net_info.nets.insert(NetCode(code), net);
+        };
+        net(-1, shadowed_net_uuid);
+        net(3, net_uuid);
+        net(7, shadowed_net_uuid);
+
+        let unknown = Kiid::new(&mut board.kiid_generator);
+        let mut uuids = vec![
+            pad_uuid,
+            zone_uuid,
+            cell_uuid,
+            dup_uuid,
+            stale_uuid,
+            net_uuid,
+            shadowed_net_uuid,
+            NILUUID,
+            unknown,
+            board.uuid(),
+        ];
+        uuids.extend(fx.children.iter().map(|&id| uuid(&fx.board, id)));
+        uuids.push(uuid(&fx.board, fx.footprint.into()));
+
+        let board = &mut fx.board;
+        assert!(board.resolve_item(&zone_uuid).is_some());
+        assert!(board.resolve_item(&cell_uuid).is_some());
+        assert!(board.resolve_item(&dup_uuid).is_some());
+        assert!(board.resolve_item(&stale_uuid).is_none());
+        assert!(board.resolve_item(&net_uuid).is_some());
+        assert!(board.resolve_item(&shadowed_net_uuid).is_none());
+
+        let mut presence = UuidPresence::new(board);
+        assert_agrees(&presence, board, &uuids);
+
+        // A marker added after the snapshot and noted.
+        let marker = PcbMarker::new(
+            &mut board.kiid_generator,
+            Arc::new(RcItem::default()),
+            Vector2I::new(0, 0),
+            0,
+        );
+        let marker_uuid = marker.base.uuid;
+        assert!(!presence.resolves(board, &marker_uuid));
+        board.add_marker(marker);
+        presence.note_added(marker_uuid);
+        uuids.push(marker_uuid);
+        assert!(board.resolve_item(&marker_uuid).is_some());
+        assert_agrees(&presence, board, &uuids);
+
+        // The same marker once the index forgot it: only the scan (and the note) find it.
+        board.unbind_uuid(&marker_uuid);
+        assert_agrees(&presence, board, &uuids);
     }
 }

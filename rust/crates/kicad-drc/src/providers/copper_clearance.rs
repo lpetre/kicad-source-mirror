@@ -38,7 +38,9 @@
 //! (`drc.md` 4.12). The free-pad claims of `testTrackClearances` (`freePadsUsageMap`,
 //! first track net to touch a free pad wins) follow the same order.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::rc::Rc;
 use std::sync::Arc;
 
 use kicad_core::Severity;
@@ -114,6 +116,12 @@ pub struct DrcTestProviderCopperClearance<'c> {
     drc_epsilon: i32,
     /// `m_zoneIndex`
     zone_index: DrcZoneIndex,
+    /// `FOOTPRINT::MapPadNumbersToNetTieGroups()` per parent footprint, memoised for one
+    /// `run` (`testPadAgainstItem` asks it for every pad / same-footprint item pair). The map
+    /// is a pure function of the footprint's pads and net-tie groups and the board is only
+    /// borrowed shared during a run, so it is emptied at the start and the end of `run` and
+    /// never outlives one. Lookup only; never iterated.
+    net_tie_groups: RefCell<HashMap<ItemId, Rc<BTreeMap<String, i32>>>>,
 }
 
 impl<'c> DrcTestProviderCopperClearance<'c> {
@@ -124,6 +132,7 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
             caches,
             drc_epsilon: 0,
             zone_index: DrcZoneIndex::new(),
+            net_tie_groups: RefCell::new(HashMap::new()),
         }
     }
 
@@ -155,10 +164,14 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
                     .bounding_box()
             });
 
+        self.net_tie_groups.get_mut().clear();
+
         let result = self.run_phases(engine, &mut RunHost(run), ctx);
 
         // ZONE_INDEX_GUARD
         self.zone_index.clear();
+        // The memo belongs to this run only (see `net_tie_groups`).
+        self.net_tie_groups.get_mut().clear();
 
         result
     }
@@ -1494,9 +1507,18 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
         if pad_parent.is_some()
             && other.parent().and_then(|p| p.id()) == pad_parent
-            && let Some(fp) = pad_ref.parent_footprint().and_then(|f| f.as_footprint())
+            && let Some(fp_ref) = pad_ref.parent_footprint()
+            && let Some(fp) = fp_ref.as_footprint()
         {
-            let pad_to_net_tie_group_map = fp.map_pad_numbers_to_net_tie_groups(ctx);
+            let pad_to_net_tie_group_map = match fp_ref.id() {
+                Some(fp_id) => Rc::clone(
+                    self.net_tie_groups
+                        .borrow_mut()
+                        .entry(fp_id)
+                        .or_insert_with(|| Rc::new(fp.map_pad_numbers_to_net_tie_groups(ctx))),
+                ),
+                None => Rc::new(fp.map_pad_numbers_to_net_tie_groups(ctx)),
+            };
             // std::map::operator[] inserts 0 for a number that is not in the map
             let group_of =
                 |number: &str| pad_to_net_tie_group_map.get(number).copied().unwrap_or(0);
