@@ -26,6 +26,12 @@
  * forEachGeometryItem( {}, AllLayersMask ).
  *
  *   drc-rtree-oracle [--global] FILE...
+ *   drc-rtree-oracle --cachegen FILE...
+ *
+ * --cachegen (work package DRC-05) loads each board like KI_TEST::LoadBoard (sibling project,
+ * InitEngine with the sibling rule file, nets, connectivity), runs the real
+ * DRC_CACHE_GENERATOR::Run() and prints the BOARD caches it filled (runCacheGen below).
+ * The Rust twin is tests/cache_generator_oracle.rs.
  */
 
 #include <cstdio>
@@ -54,6 +60,8 @@
 #include <drc/drc_rtree.h>
 #include <drc/drc_zone_index.h>
 #include <drc/drc_test_provider.h>
+#include <drc/drc_cache_generator.h>
+#include <wx/filename.h>
 
 
 static bool initPgm( int argc, char** argv )
@@ -641,6 +649,169 @@ static void runGlobal()
 }
 
 
+/// FNV-1a 64 of a string (keeps the zone tree entry lists of large fills small).
+static std::string fnv( const std::string& aText )
+{
+    uint64_t h = 0xcbf29ce484222325ULL;
+
+    for( unsigned char c : aText )
+    {
+        h ^= c;
+        h *= 0x100000001b3ULL;
+    }
+
+    char buf[20];
+    snprintf( buf, sizeof( buf ), "%016llx", (unsigned long long) h );
+    return buf;
+}
+
+
+static std::string zoneKeys( const std::vector<ZONE*>& aZones )
+{
+    std::vector<std::string> list;
+
+    for( ZONE* zone : aZones )
+        list.push_back( key( zone ) );
+
+    return join( list );
+}
+
+
+/// DRC-05: the BOARD caches after DRC_CACHE_GENERATOR::Run() on a board loaded like
+/// KI_TEST::LoadBoard.
+static void runCacheGen( const std::string& aPath )
+{
+    SETTINGS_MANAGER& mgr = Pgm().GetSettingsManager();
+    std::string       base = aPath.substr( 0, aPath.rfind( '.' ) );
+    wxFileName        projectFile( base + ".kicad_pro" );
+    wxFileName        rulesFile( base + ".kicad_dru" );
+
+    if( projectFile.Exists() )
+        mgr.LoadProject( projectFile.GetFullPath() );
+
+    std::unique_ptr<BOARD> board = KI_TEST::ReadBoardFromFileOrStream( aPath );
+
+    std::string name = aPath.substr( aPath.find_last_of( '/' ) + 1 );
+    printf( "board|%s\n", name.c_str() );
+
+    if( projectFile.Exists() )
+        board->SetProject( &mgr.Prj() );
+
+    auto engine = std::make_shared<DRC_ENGINE>( board.get(), &board->GetDesignSettings() );
+
+    try
+    {
+        engine->InitEngine( rulesFile.Exists() ? rulesFile : wxFileName() );
+    }
+    catch( ... )
+    {
+        printf( "cg|init_error\n" );
+    }
+
+    board->GetDesignSettings().m_DRCEngine = engine;
+    board->BuildListOfNets();
+    board->BuildConnectivity();
+
+    ORACLE_PROVIDER prov;
+    prov.SetDRCEngine( engine.get() );
+
+    g_key.clear();
+
+    std::vector<std::string> types;
+
+    prov.forEachGeometryItem( {}, LSET::AllLayersMask(),
+            [&]( BOARD_ITEM* aItem ) -> bool
+            {
+                int ord = (int) g_key.size();
+                g_key[aItem] = ord;
+                types.push_back( std::to_string( (int) aItem->Type() ) );
+                return true;
+            } );
+
+    printf( "cg|keys|%s\n", join( types ).c_str() );
+
+    DRC_CACHE_GENERATOR gen;
+    gen.SetDRCEngine( engine.get() );
+    bool ok = gen.Run();
+
+    printf( "cg|run|%d\n", ok ? 1 : 0 );
+    printf( "cg|bds_biggest|%d\n", board->GetDesignSettings().GetBiggestClearanceValue() );
+    printf( "cg|board_max|%d\n", board->GetMaxClearanceValue() );
+    printf( "cg|max_clearance|%d\n", board->m_DRCMaxClearance );
+    printf( "cg|max_physical|%d\n", board->m_DRCMaxPhysicalClearance );
+    printf( "cg|zones|%s\n", zoneKeys( board->m_DRCZones ).c_str() );
+    printf( "cg|copper_zones|%s\n", zoneKeys( board->m_DRCCopperZones ).c_str() );
+
+    for( const auto& [layer, zones] : board->m_DRCCopperZonesByLayer )
+        printf( "cg|zones_by_layer|%d|%s\n", (int) layer, zoneKeys( zones ).c_str() );
+
+    std::shared_ptr<DRC_RTREE> tree = board->m_CopperItemRTreeCache;
+    LSET boardCopper = LSET::AllCuMask( board->GetCopperLayerCount() );
+
+    printf( "cg|tree|%zu|%d\n", tree->size(), tree->empty() ? 1 : 0 );
+
+    boardCopper.RunOnLayers(
+            [&]( PCB_LAYER_ID layer )
+            {
+                std::vector<std::string> list;
+
+                for( DRC_RTREE::ITEM_WITH_SHAPE* e : tree->OnLayer( layer ) )
+                    list.push_back( entry( e ) );
+
+                printf( "cg|onlayer|%d|%s\n", (int) layer, join( list ).c_str() );
+            } );
+
+    std::vector<ZONE*> allZones( board->Zones().begin(), board->Zones().end() );
+
+    for( FOOTPRINT* fp : board->Footprints() )
+        allZones.insert( allZones.end(), fp->Zones().begin(), fp->Zones().end() );
+
+    for( ZONE* zone : allZones )
+    {
+        printf( "cg|zbbox|%s|%s\n", key( zone ).c_str(), boxStr( zone->GetBoundingBox() ).c_str() );
+
+        DRC_RTREE* ztree = board->GetCopperZoneRTree( zone );
+
+        if( !ztree )
+            continue;
+
+        printf( "cg|ztree|%s|%zu\n", key( zone ).c_str(), ztree->size() );
+
+        for( int l = 0; l < PCB_LAYER_ID_COUNT; ++l )
+        {
+            std::vector<std::string> list;
+
+            for( DRC_RTREE::ITEM_WITH_SHAPE* e : ztree->OnLayer( (PCB_LAYER_ID) l ) )
+                list.push_back( entry( e ) );
+
+            if( !list.empty() )
+            {
+                printf( "cg|ztree_layer|%s|%d|%zu|%s\n", key( zone ).c_str(), l, list.size(),
+                        fnv( join( list ) ).c_str() );
+            }
+        }
+    }
+
+    for( ZONE* zone : board->Zones() )
+    {
+        auto it = board->m_ZoneIsolatedIslandsMap.find( zone );
+
+        if( it == board->m_ZoneIsolatedIslandsMap.end() )
+            continue;
+
+        std::vector<std::string> layers;
+
+        for( const auto& [layer, islands] : it->second )
+            layers.push_back( std::to_string( (int) layer ) );
+
+        printf( "cg|islands|%s|%s\n", key( zone ).c_str(), join( layers ).c_str() );
+    }
+
+    board->GetDesignSettings().m_DRCEngine = nullptr;
+    board->SetProject( nullptr );
+}
+
+
 int main( int argc, char** argv )
 {
     setenv( "LC_ALL", "C.UTF-8", 1 );
@@ -650,6 +821,7 @@ int main( int argc, char** argv )
 
     std::vector<std::string> files;
     bool                     global = false;
+    bool                     cachegen = false;
 
     for( int i = 1; i < argc; ++i )
     {
@@ -657,6 +829,8 @@ int main( int argc, char** argv )
 
         if( a == "--global" )
             global = true;
+        else if( a == "--cachegen" )
+            cachegen = true;
         else
             files.push_back( a );
     }
@@ -668,7 +842,12 @@ int main( int argc, char** argv )
         runGlobal();
 
     for( const std::string& f : files )
-        runBoard( f, global );
+    {
+        if( cachegen )
+            runCacheGen( f );
+        else
+            runBoard( f, global );
+    }
 
     fflush( stdout );
     _exit( 0 );

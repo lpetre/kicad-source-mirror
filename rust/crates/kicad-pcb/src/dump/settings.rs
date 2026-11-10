@@ -20,7 +20,8 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use kicad_core::PcbLayerId;
+use kicad_core::{PCB_IU_SCALE, PcbLayerId};
+use kicad_core::json::Value as JsonValue;
 
 use super::format::{
     Out, board_items, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer,
@@ -35,13 +36,26 @@ use crate::pcb_plot_params::PcbPlotParams;
 use crate::teardrop_parameters::{TargetTd, TeardropParameters};
 use crate::zone_settings::ZoneSettings;
 
-/// `dumpMeander`: `PNS::MEANDER_SETTINGS` is not modelled (the Rust settings keep the JSON of
-/// `tuning_pattern_settings`), so every field is pending.
-fn dump_meander(o: &mut Out, p: &str) {
+/// `dumpMeander`. The model keeps each `PNS::MEANDER_SETTINGS` as the JSON object of the
+/// `tuning_pattern_settings` parameter (`BoardDesignSettings::meander_settings`), which holds
+/// the six members `read_settings` (`board_design_settings.cpp`) restores; they are emitted as
+/// `read_settings` would set them on a default-constructed `MEANDER_SETTINGS`. The other
+/// members are not modelled (PNS router, not ported) and stay pending.
+fn dump_meander(o: &mut Out, p: &str, entry: &JsonValue) {
+    // read_settings(): a member is taken from the entry when present, else the
+    // MEANDER_SETTINGS() constructor value stays.
+    let mm = |key: &str, default: i32| -> i32 {
+        entry
+            .get(key)
+            .and_then(JsonValue::as_f64)
+            .map_or(default, |v| PCB_IU_SCALE.mm_to_iu(v))
+    };
+
+    emit!(o, format!("{p}min_amplitude"), v_int(mm("min_amplitude", 200_000)));
+    emit!(o, format!("{p}max_amplitude"), v_int(mm("max_amplitude", 1_000_000)));
+    emit!(o, format!("{p}spacing"), v_int(mm("spacing", 600_000)));
+
     for f in [
-        "min_amplitude",
-        "max_amplitude",
-        "spacing",
         "step",
         "len_pad_to_die",
         "signal_extra_length",
@@ -53,14 +67,35 @@ fn dump_meander(o: &mut Out, p: &str) {
         "target_skew",
         "target_skew_delay",
         "override_custom_rules",
-        "corner_style",
-        "corner_radius_percentage",
-        "single_sided",
-        "initial_side",
-        "length_tolerance",
-        "keep_endpoints",
-        "is_time_domain",
     ] {
+        emit!(o, format!("{p}{f}"), no_api("PNS::MEANDER_SETTINGS"));
+    }
+
+    // entry["corner_style"] == 0 ? MEANDER_STYLE_CHAMFER : MEANDER_STYLE_ROUND
+    emit!(o, format!("{p}corner_style"), {
+        match entry.get("corner_style") {
+            Some(v) if v.as_f64() == Some(0.0) => "MEANDER_STYLE_CHAMFER".to_string(),
+            _ => "MEANDER_STYLE_ROUND".to_string(),
+        }
+    });
+    emit!(o, format!("{p}corner_radius_percentage"), {
+        // get<int>(): a floating point value is truncated.
+        let pct = entry.get("corner_radius_percentage").map_or(80, |v| {
+            v.as_i64()
+                .map_or_else(|| v.as_f64().unwrap_or(80.0) as i64, |i| i)
+        });
+        v_int(pct)
+    });
+    emit!(o, format!("{p}single_sided"), {
+        v_bool(
+            entry
+                .get("single_sided")
+                .and_then(JsonValue::as_bool)
+                .unwrap_or(false),
+        )
+    });
+
+    for f in ["initial_side", "length_tolerance", "keep_endpoints", "is_time_domain"] {
         emit!(o, format!("{p}{f}"), no_api("PNS::MEANDER_SETTINGS"));
     }
 }
@@ -626,9 +661,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
         }
     }
 
-    dump_meander(o, &format!("{p}meander.single."));
-    dump_meander(o, &format!("{p}meander.diff_pair."));
-    dump_meander(o, &format!("{p}meander.skew."));
+    // m_SingleTrackMeanderSettings, m_DiffPairMeanderSettings, m_SkewMeanderSettings
+    let [single, diff_pair, skew] = &b.meander_settings;
+    dump_meander(o, &format!("{p}meander.single."), single);
+    dump_meander(o, &format!("{p}meander.diff_pair."), diff_pair);
+    dump_meander(o, &format!("{p}meander.skew."), skew);
 
     emit!(
         o,
@@ -926,7 +963,7 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     emit!(o, "copper_layer_count", v_int(b.copper_layer_count()));
     emit!(o, "enabled_layers", v_lset(&b.enabled_layers()));
     emit!(o, "enabled_layer_names", v_layer_names(&b.enabled_layers()));
-    emit!(o, "visible_layers", no_api("BOARD::GetVisibleLayers"));
+    emit!(o, "visible_layers", v_lset(&b.visible_layers()));
     emit!(o, "has_project", v_bool(b.project.is_some()));
 
     if let Some(ls) = o.cond("layer.*", || b.enabled_layers()) {

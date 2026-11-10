@@ -132,7 +132,8 @@ impl Stats {
         self.fields += 1;
 
         if rust != cpp {
-            self.mismatches.push(format!("{what}: rust {rust} != c++ {cpp}"));
+            self.mismatches
+                .push(format!("{what}: rust {rust} != c++ {cpp}"));
         }
     }
 }
@@ -232,7 +233,11 @@ fn check_board(name: &str, stats: &mut Stats) -> Option<bool> {
     }
 
     let list = algo.item_list();
-    assert_eq!(list.size() as usize, golden_items.len(), "{name}: item count");
+    assert_eq!(
+        list.size() as usize,
+        golden_items.len(),
+        "{name}: item count"
+    );
 
     // golden ref -> Rust list position
     let pos_of: HashMap<&str, usize> = golden_items
@@ -315,7 +320,11 @@ fn check_board(name: &str, stats: &mut Stats) -> Option<bool> {
             for (k, &cl) in clusters.iter().enumerate() {
                 let key = format!("{label}#{k}");
                 let Some(g) = golden.get("cn_cluster", &key) else {
-                    stats.check(format!("{name} cn_cluster {key}"), "present".into(), "absent");
+                    stats.check(
+                        format!("{name} cn_cluster {key}"),
+                        "present".into(),
+                        "absent",
+                    );
                     continue;
                 };
                 let (c, items) = cluster_fields(cl);
@@ -425,7 +434,11 @@ fn check_board(name: &str, stats: &mut Stats) -> Option<bool> {
             for (layer, isl) in layers {
                 let key = format!("{zone_key}/{}", layer_name(*layer));
                 let Some(g) = golden.get("cn_island", &key) else {
-                    stats.check(format!("{name} cn_island {key}"), "present".into(), "absent");
+                    stats.check(
+                        format!("{name} cn_island {key}"),
+                        "present".into(),
+                        "absent",
+                    );
                     continue;
                 };
                 let mut isolated = isl.isolated_outlines.clone();
@@ -435,7 +448,10 @@ fn check_board(name: &str, stats: &mut Stats) -> Option<bool> {
                 let fmt = |v: &[i32]| {
                     format!(
                         "[{}]",
-                        v.iter().map(|i| i.to_string()).collect::<Vec<_>>().join(";")
+                        v.iter()
+                            .map(|i| i.to_string())
+                            .collect::<Vec<_>>()
+                            .join(";")
                     )
                 };
                 stats.check(

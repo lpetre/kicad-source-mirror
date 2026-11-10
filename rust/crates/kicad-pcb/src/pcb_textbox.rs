@@ -16,29 +16,50 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcb_textbox.h` and `pcbnew/pcb_textbox.cpp` (`PCB_TEXTBOX : PCB_SHAPE,
-//! EDA_TEXT`): data, constructors and delegation shims (package M0c), the overrides (stubs for
-//! package M11).
+//! EDA_TEXT`): data, constructors and delegation shims (package M0c), the overrides (package
+//! M11).
 //!
 //! `PcbTextbox` is its own host of both mixins and has a shim for every virtual that
 //! `PCB_TEXTBOX` or `PCB_SHAPE` overrides. An inherited `PCB_SHAPE` body calls the embedded
-//! `PcbShape` where it reaches no virtual that `PCB_TEXTBOX` overrides; the others are stubs.
+//! `PcbShape` where it reaches no virtual that `PCB_TEXTBOX` overrides; where it does (the
+//! virtual `syncLibCoords()`, `GetCorners()`, `GetBoundingBox()`, `GetShownText()`), the body is
+//! written here over the host so that the override applies.
+//!
+//! The read-only `PCB_TEXTBOX` bodies are generic functions over [`TextboxHost`], implemented
+//! by `PcbTextbox` and `PcbTablecell`: `PCB_TABLECELL` overrides `GetShownText()` and
+//! `IsFilledForHitTesting()`, which these bodies reach virtually.
 
-use kicad_core::StrokeParams;
-use kicad_core::text_vars::ResolutionContext;
+use std::cell::{Cell, RefCell};
+use std::sync::Arc;
+
+use kicad_core::layer_ids::{is_back_layer, is_copper_layer, is_solder_mask_layer};
+use kicad_core::text_vars::{ResolutionContext, finalize_text_var_expansion};
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{GrTextHAlignT, GrTextVAlignT, KicadT, Kiid, KiidGenerator, Lset, PcbLayerId};
-use kicad_geom::geometry::approximation::ErrorLoc;
+use kicad_core::{
+    GrTextHAlignT, GrTextVAlignT, KicadT, Kiid, KiidGenerator, Lset, PcbLayerId, StrokeParams,
+};
+use kicad_font::{CallbackGal, FontExt, TextGal};
+use kicad_geom::convert_basic_shapes_to_polygon::transform_oval_to_polygon;
+use kicad_geom::geometry::approximation::{ERROR_OUTSIDE, ErrorLoc};
+use kicad_geom::geometry::corner_strategy::CornerStrategy;
+use kicad_geom::geometry::geometry_utils::ARC_LOW_DEF;
 use kicad_geom::{
-    Box2I, EdaAngle, EdaOrientation, FlipDirection, ShapePolySet, Vector2I, ki_round,
+    ANGLE_0, ANGLE_90, ANGLE_180, ANGLE_270, Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg,
+    Shape, ShapeCompound, ShapePolySet, Vector2D, Vector2I, ki_round, rotate_point_around,
 };
 
 use crate::board_design_settings::BoardDesignSettings;
+use crate::board_item;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
+use crate::eda_shape::shapes::make_effective_shapes_with_line_endings;
 use crate::eda_shape::{EdaShape, ShapeT};
-use crate::eda_text::EdaText;
-use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
+use crate::eda_text::{self, EdaText, outline_glyph_triangulate, resolve_text_vars_shared_depth};
+use crate::ids::ItemId;
+use crate::item::{BoardItemBase, ConnectedItemBase, RecurseMode, SharedShape};
+use crate::item_ref::{AnyItem, ItemRef};
 use crate::pcb_shape::PcbShape;
+use crate::pcb_text::{ellipsize_menu_text, footprint_resolve_text_var};
 use crate::traits::{
     BoardConnectedItem, BoardItem, BoardItemMut, EdaShapeItem, EdaTextItem, Flashing, Invalidate,
 };
@@ -109,80 +130,384 @@ impl PcbTextbox {
         self.lib_text_angle = EdaOrientation::new(angle);
     }
 
-    /// `GetLegacyTextMargin()`: `KiROUND( GetStroke().GetWidth() / 2.0 ) +
+    /// `IsBorderEnabled()`.
+    pub fn is_border_enabled(&self) -> bool {
+        self.border_enabled
+    }
+
+    /// `SetBorderEnabled()`.
+    pub fn set_border_enabled(&mut self, enabled: bool) {
+        self.border_enabled = enabled;
+    }
+
+    /// `GetBorderWidth()`: the stored (library) stroke width `m_stroke.GetWidth()`.
+    pub fn border_width(&self) -> i32 {
+        self.shape.shape.stroke.width()
+    }
+
+    /// `SetBorderWidth()`: `m_stroke.SetWidth( aSize )` (no footprint scaling).
+    pub fn set_border_width(&mut self, size: i32) {
+        self.shape.shape.stroke.set_width(size);
+    }
+
+    /// Port of `GetLegacyTextMargin()`: `KiROUND( GetStroke().GetWidth() / 2.0 ) +
     /// KiROUND( GetTextSize().y * 0.75 )`.
     pub fn legacy_text_margin(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TEXTBOX::GetLegacyTextMargin", ctx)
+        ki_round(self.stroke(ctx).width() as f64 / 2.0)
+            + ki_round(self.text_size(ctx).y as f64 * 0.75)
     }
 
-    /// `GetMinSize()`.
+    /// Port of `GetMinSize()`.
     pub fn min_size(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetMinSize", ctx)
+        min_size(self, ctx)
     }
 
-    /// `GetDrawPos( aIsFlipped )`.
+    /// Port of `GetDrawPos( aIsFlipped )`.
     pub fn draw_pos_flipped(&self, ctx: &BoardCtx<'_>, is_flipped: bool) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetDrawPos (flipped)", ctx, is_flipped)
+        draw_pos_flipped(self, ctx, is_flipped)
     }
 
-    /// `GetPolygonalBoxShape()`.
+    /// Port of `GetPolygonalBoxShape()`: a `PCB_SHAPE` polygon of the (rotated) box with the
+    /// textbox's parent, stroke and layer.
     pub fn polygonal_box_shape(&self, ctx: &BoardCtx<'_>) -> PcbShape {
-        crate::port_pending!("PCB_TEXTBOX::GetPolygonalBoxShape", ctx)
+        // Build a PCB_SHAPE type POLYGON of the TEXTBOX, according to the box shape and the
+        // textbox rotation
+        let parent = self.shape.base.item.parent;
+        let env = ctx.board.child_env(parent);
+        let mut dummy = PcbShape::with_shape(ShapeT::Poly);
+        dummy.base.item.parent = parent;
+        dummy.set_width(&env, self.border_width());
+        dummy.set_stroke(&env, self.stroke(ctx));
+        dummy.set_layer(&env, self.shape.base.item.layer);
+        let poly = self.corners(ctx); // Already rotated
+        dummy.shape.set_poly_points(&poly);
+
+        dummy
     }
 
-    /// `PCB_TEXTBOX::GetCorners()` (overrides the virtual introduced by `PCB_SHAPE`).
+    /// Port of `PCB_TEXTBOX::GetCorners()` (overrides the virtual introduced by `PCB_SHAPE`):
+    /// `GetCornersInSequence( GetDrawRotation() )`.
     pub fn corners(&self, ctx: &BoardCtx<'_>) -> Vec<Vector2I> {
-        crate::port_pending!("PCB_TEXTBOX::GetCorners", ctx)
+        corners(self, ctx)
     }
 
-    /// `PCB_TEXTBOX::syncLibCoords()`.
+    /// Port of `PCB_TEXTBOX::TransformTextToPolySet()`.
+    pub fn transform_text_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        clearance: i32,
+        max_error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        transform_text_to_poly_set(self, ctx, buffer, clearance, max_error, error_loc)
+    }
+
+    /// `GetTextAngle()` as a mutator sees it (the parent frame of `env`).
+    pub(crate) fn text_angle_env(&self, env: &MutEnv) -> EdaAngle {
+        match env.parent.as_ref() {
+            Some(parent) => {
+                let mut angle = self.lib_text_angle.angle() + parent.transform.rotate();
+                angle.normalize()
+            }
+            None => self.lib_text_angle.angle(),
+        }
+    }
+
+    /// Port of `PCB_TEXTBOX::syncLibCoords()`: the inverse of `OnFootprintTransformed` (move
+    /// centre, scale half-extents, keep the box axis-aligned). A true inverse at any angle.
     pub fn sync_lib_coords(&mut self, env: &MutEnv) {
-        crate::port_pending!("PCB_TEXTBOX::syncLibCoords", env)
+        // Only the axis-aligned rectangle case needs the textbox-specific inverse.
+        // Poly textboxes and standalone (non-FP) boxes use the base shape mapping.
+        let Some(frame) = env.parent.as_ref() else {
+            self.shape.sync_lib_coords(env);
+            return;
+        };
+
+        if self.shape.shape.shape() != ShapeT::Rectangle {
+            self.shape.sync_lib_coords(env);
+            return;
+        }
+
+        let xform = &frame.transform;
+        let start = self.shape.shape.start();
+        let end = self.shape.shape.end();
+
+        let board_center = Vector2I::new(
+            start.x.wrapping_add(end.x) / 2,
+            start.y.wrapping_add(end.y) / 2,
+        );
+        let board_half_w = end.x.wrapping_sub(start.x).wrapping_abs() / 2;
+        let board_half_h = end.y.wrapping_sub(start.y).wrapping_abs() / 2;
+
+        let lib_center = xform.inverse_apply(board_center);
+        let lib_half_w = ki_round(board_half_w as f64 / xform.scale_x()).wrapping_abs();
+        let lib_half_h = ki_round(board_half_h as f64 / xform.scale_y()).wrapping_abs();
+
+        self.shape.lib.start = Vector2I::new(lib_center.x - lib_half_w, lib_center.y - lib_half_h);
+        self.shape.lib.end = Vector2I::new(lib_center.x + lib_half_w, lib_center.y + lib_half_h);
     }
 
-    /// `PCB_TEXTBOX::SetShape()`.
+    /// Port of `PCB_TEXTBOX::SetShape()`: keep the lib shape as the runtime shape (the
+    /// `EDA_SHAPE` body and `m_libShape = aShape`).
     pub fn set_shape(&mut self, env: &MutEnv, shape: ShapeT) {
-        crate::port_pending!("PCB_TEXTBOX::SetShape", env, shape)
+        self.shape.set_shape(env, shape);
     }
 
-    /// `PCB_TEXTBOX::SetTop()`.
+    /// Port of `PCB_TEXTBOX::SetTop()`.
     pub fn set_top(&mut self, env: &MutEnv, value: i32) {
-        crate::port_pending!("PCB_TEXTBOX::SetTop", env, value)
+        let rotation = self.text_angle_env(env);
+        let (start, end) = (self.shape.shape.start(), self.shape.shape.end());
+
+        if rotation == ANGLE_90 || rotation == ANGLE_180 {
+            self.set_end(env, Vector2I::new(end.x, value));
+        } else {
+            self.set_start(env, Vector2I::new(start.x, value));
+        }
     }
 
-    /// `PCB_TEXTBOX::SetLeft()`.
+    /// Port of `PCB_TEXTBOX::SetLeft()`.
     pub fn set_left(&mut self, env: &MutEnv, value: i32) {
-        crate::port_pending!("PCB_TEXTBOX::SetLeft", env, value)
+        let rotation = self.text_angle_env(env);
+        let (start, end) = (self.shape.shape.start(), self.shape.shape.end());
+
+        if rotation == ANGLE_180 || rotation == ANGLE_270 {
+            self.set_end(env, Vector2I::new(value, end.y));
+        } else {
+            self.set_start(env, Vector2I::new(value, start.y));
+        }
     }
 
-    /// `PCB_TEXTBOX::SetRight()`.
+    /// Port of `PCB_TEXTBOX::SetRight()`.
     pub fn set_right(&mut self, env: &MutEnv, value: i32) {
-        crate::port_pending!("PCB_TEXTBOX::SetRight", env, value)
+        let rotation = self.text_angle_env(env);
+        let (start, end) = (self.shape.shape.start(), self.shape.shape.end());
+
+        if rotation == ANGLE_180 || rotation == ANGLE_270 {
+            self.set_start(env, Vector2I::new(value, start.y));
+        } else {
+            self.set_end(env, Vector2I::new(value, end.y));
+        }
     }
 
-    /// `PCB_TEXTBOX::SetBottom()`.
+    /// Port of `PCB_TEXTBOX::SetBottom()`.
     pub fn set_bottom(&mut self, env: &MutEnv, value: i32) {
-        crate::port_pending!("PCB_TEXTBOX::SetBottom", env, value)
+        let rotation = self.text_angle_env(env);
+        let (start, end) = (self.shape.shape.start(), self.shape.shape.end());
+
+        if rotation == ANGLE_90 || rotation == ANGLE_180 {
+            self.set_start(env, Vector2I::new(start.x, value));
+        } else {
+            self.set_end(env, Vector2I::new(end.x, value));
+        }
     }
 
-    /// `PCB_SHAPE::SetStart (PCB_TEXTBOX)`: ends with the textbox's `syncLibCoords()`.
+    /// Port of `PCB_SHAPE::SetStart()` on a text box: the `EDA_SHAPE` body, then the textbox's
+    /// `syncLibCoords()`.
     pub fn set_start(&mut self, env: &MutEnv, start: Vector2I) {
-        crate::port_pending!("PCB_SHAPE::SetStart (PCB_TEXTBOX)", env, start)
+        self.shape.shape.set_start(start);
+        self.sync_lib_coords(env);
     }
 
-    /// `PCB_SHAPE::SetEnd (PCB_TEXTBOX)`.
+    /// Port of `PCB_SHAPE::SetEnd()` on a text box.
     pub fn set_end(&mut self, env: &MutEnv, end: Vector2I) {
-        crate::port_pending!("PCB_SHAPE::SetEnd (PCB_TEXTBOX)", env, end)
+        self.shape.shape.set_end(end);
+        self.sync_lib_coords(env);
     }
 
-    /// `PCB_SHAPE::SetStroke (PCB_TEXTBOX)`.
+    /// Port of `PCB_SHAPE::SetCenter()` on a text box.
+    pub fn set_center(&mut self, env: &MutEnv, center: Vector2I) {
+        self.shape.shape.set_center(center);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetCornerRadius()` on a text box.
+    pub fn set_corner_radius(&mut self, env: &MutEnv, corner_radius: i32) {
+        self.shape.shape.set_corner_radius(corner_radius);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetArcGeometry()` on a text box.
+    pub fn set_arc_geometry(
+        &mut self,
+        env: &MutEnv,
+        start: Vector2I,
+        mid: Vector2I,
+        end: Vector2I,
+    ) {
+        self.shape.shape.set_arc_geometry(start, mid, end);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetArcAngleAndEnd()` on a text box.
+    pub fn set_arc_angle_and_end(&mut self, env: &MutEnv, angle: EdaAngle, check_negative: bool) {
+        self.shape
+            .shape
+            .set_arc_angle_and_end(angle, check_negative);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetBezierC1()` on a text box.
+    pub fn set_bezier_c1(&mut self, env: &MutEnv, pt: Vector2I) {
+        self.shape.shape.set_bezier_c1(pt);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetBezierC2()` on a text box.
+    pub fn set_bezier_c2(&mut self, env: &MutEnv, pt: Vector2I) {
+        self.shape.shape.set_bezier_c2(pt);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseCenter()` on a text box.
+    pub fn set_ellipse_center(&mut self, env: &MutEnv, pt: Vector2I) {
+        self.shape.shape.set_ellipse_center(pt);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseMajorRadius()` on a text box.
+    pub fn set_ellipse_major_radius(&mut self, env: &MutEnv, r: i32) {
+        self.shape.shape.set_ellipse_major_radius(r);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseMinorRadius()` on a text box.
+    pub fn set_ellipse_minor_radius(&mut self, env: &MutEnv, r: i32) {
+        self.shape.shape.set_ellipse_minor_radius(r);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseRotation()` on a text box.
+    pub fn set_ellipse_rotation(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.shape.shape.set_ellipse_rotation(a);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseStartAngle()` on a text box.
+    pub fn set_ellipse_start_angle(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.shape.shape.set_ellipse_start_angle(a);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseEndAngle()` on a text box.
+    pub fn set_ellipse_end_angle(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.shape.shape.set_ellipse_end_angle(a);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::SetStroke()` on a text box: `m_stroke = aStroke;
+    /// SetWidth( aStroke.GetWidth() )` (no sync; `SetWidth` is not overridden).
     pub fn set_stroke(&mut self, env: &MutEnv, stroke: StrokeParams) {
-        crate::port_pending!("PCB_SHAPE::SetStroke (PCB_TEXTBOX)", env, stroke)
+        self.shape.set_stroke(env, stroke);
     }
 
-    /// `PCB_SHAPE::SetPolyShape (PCB_TEXTBOX)`.
+    /// Port of `PCB_SHAPE::SetWidth()` on a text box (not overridden).
+    pub fn set_width(&mut self, env: &MutEnv, width: i32) {
+        self.shape.set_width(env, width);
+    }
+
+    /// Port of `PCB_SHAPE::SetPolyShape()` on a text box.
     pub fn set_poly_shape(&mut self, env: &MutEnv, poly: ShapePolySet) {
-        crate::port_pending!("PCB_SHAPE::SetPolyShape (PCB_TEXTBOX)", env, poly)
+        self.shape.shape.set_poly_shape(poly);
+        self.sync_lib_coords(env);
+    }
+
+    /// Port of `PCB_SHAPE::Normalize()` on a text box with its environment: the `EDA_SHAPE`
+    /// geometry normalized through the virtual setters (the textbox's `syncLibCoords()`).
+    pub fn normalize_env(&mut self, env: &MutEnv) {
+        if self.shape.shape.shape() == ShapeT::Rectangle {
+            let start = self.shape.shape.start();
+            let end = self.shape.shape.end();
+
+            let mut rect = Box2I::new(start, end - start);
+            rect.normalize();
+
+            self.set_start(env, rect.position());
+            self.set_end(env, rect.end());
+        } else if self.shape.shape.shape() == ShapeT::Poly {
+            let horizontal = |seg: &Seg| seg.a.y == seg.b.y;
+            let vertical = |seg: &Seg| seg.a.x == seg.b.x;
+
+            // Convert a poly back to a rectangle if appropriate
+            let poly = self.shape.shape.poly_shape();
+
+            if poly.outline_count() == 1 && poly.c_outline(0).segment_count() == 4 {
+                let outline = poly.c_outline(0);
+                let (s0, s1, s2, s3) = (
+                    outline.segment(0),
+                    outline.segment(1),
+                    outline.segment(2),
+                    outline.segment(3),
+                );
+
+                if horizontal(&s0) && vertical(&s1) && horizontal(&s2) && vertical(&s3) {
+                    self.set_shape(env, ShapeT::Rectangle);
+                    self.set_start(env, Vector2I::new(s0.a.x.min(s0.b.x), s1.a.y.min(s1.b.y)));
+                    self.set_end(env, Vector2I::new(s0.a.x.max(s0.b.x), s1.a.y.max(s1.b.y)));
+                } else if vertical(&s0) && horizontal(&s1) && vertical(&s2) && horizontal(&s3) {
+                    self.set_shape(env, ShapeT::Rectangle);
+                    self.set_start(env, Vector2I::new(s1.a.x.min(s1.b.x), s0.a.y.min(s0.b.y)));
+                    self.set_end(env, Vector2I::new(s1.a.x.max(s1.b.x), s0.a.y.max(s0.b.y)));
+                }
+            }
+        }
+    }
+
+    /// Port of `PCB_TEXTBOX::Mirror( const SEG& aAxis )`: the position and justification are
+    /// mirrored, but not the text itself.
+    pub fn mirror_seg(&mut self, env: &MutEnv, axis: &Seg) {
+        if self.shape.shape.shape() == ShapeT::Rectangle {
+            let start = self.shape.shape.start();
+            let end = self.shape.shape.end();
+            let centre = Vector2I::new(
+                start.x.wrapping_add(end.x) / 2,
+                start.y.wrapping_add(end.y) / 2,
+            );
+            let delta = axis.reflect_point(centre) - centre;
+
+            self.set_start(env, start + delta);
+            let end = self.shape.shape.end();
+            self.set_end(env, end + delta);
+
+            self.sync_lib_coords(env);
+        } else {
+            // A polygon is the drawn box already, so its vertices are what gets mirrored.
+            // (PCB_SHAPE::Mirror: its virtual syncLibCoords() is the base one for a polygon.)
+            self.shape.mirror_seg(env, axis);
+        }
+
+        let axis_angle = -EdaAngle::from_vector(axis.b - axis.a);
+        let new_angle = self.text_angle_env(env).reflect(axis_angle);
+
+        match env.parent.as_ref() {
+            Some(parent) => self.set_lib_text_angle(new_angle - parent.transform.rotate()),
+            None => self.set_lib_text_angle(new_angle),
+        }
+
+        let angle = self.text_angle_env(env);
+        eda_text::set_text_angle(self, env, angle);
+    }
+
+    /// The `PCB_TEXTBOX` part of `IsSideSpecific()` a mutator can answer: the layer set
+    /// (`PCB_SHAPE::GetLayerSet()`) against `LSET::SideSpecificMask()`. The board layer-type
+    /// part needs layer types that `MutEnv` does not carry (as `PcbText::flip`,
+    /// `PORT_STATUS.md`).
+    fn is_side_specific_env(&self) -> bool {
+        let layer = self.shape.base.item.layer;
+        let mut layers = Lset::from_layers(&[layer]);
+
+        if self.shape.has_solder_mask {
+            if layers.contains(PcbLayerId::FCu) {
+                layers.set(PcbLayerId::FMask);
+            }
+
+            if layers.contains(PcbLayerId::BCu) {
+                layers.set(PcbLayerId::BMask);
+            }
+        }
+
+        layers &= Lset::side_specific_mask();
+        layers.any()
     }
 }
 
@@ -436,17 +761,17 @@ impl EdaShapeItem for PcbTextbox {
 // ---- overrides and inherited PCB_SHAPE bodies (package M11) ------------------------------
 
 impl PcbTextbox {
-    /// `PCB_TEXTBOX::GetBoundingBox`.
+    /// Port of `PCB_TEXTBOX::GetBoundingBox`.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_TEXTBOX::GetBoundingBox", ctx)
+        bounding_box(self, ctx)
     }
 
-    /// `PCB_SHAPE::GetCenter (PCB_TEXTBOX)`.
-    pub fn center(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_SHAPE::GetCenter (PCB_TEXTBOX)", ctx)
+    /// `PCB_SHAPE::GetCenter (PCB_TEXTBOX)`: `getCenter()`.
+    pub fn center(&self, _ctx: &BoardCtx<'_>) -> Vector2I {
+        crate::eda_shape::shape_center(self)
     }
 
-    /// `PCB_TEXTBOX::GetEffectiveShape`.
+    /// Port of `PCB_TEXTBOX::GetEffectiveShape`.
     pub fn effective_shape(
         &self,
         ctx: &BoardCtx<'_>,
@@ -454,7 +779,7 @@ impl PcbTextbox {
         flash: Flashing,
         usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_TEXTBOX::GetEffectiveShape", ctx, layer, flash, usage)
+        effective_shape(self, ctx, layer, flash, usage)
     }
 
     /// `PCB_TEXTBOX::GetFriendlyName()`: "Text Box" (untranslated).
@@ -467,12 +792,12 @@ impl PcbTextbox {
         self.shape.has_line_stroke()
     }
 
-    /// `PCB_TEXTBOX::HitTest`.
+    /// Port of `PCB_TEXTBOX::HitTest( aPosition, aAccuracy )`.
     pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXTBOX::HitTest", ctx, pos, accuracy)
+        hit_test(self, ctx, pos, accuracy)
     }
 
-    /// `PCB_TEXTBOX::HitTest`.
+    /// Port of `PCB_TEXTBOX::HitTest( aRect, aContained, aAccuracy )`.
     pub fn hit_test_rect(
         &self,
         ctx: &BoardCtx<'_>,
@@ -480,7 +805,7 @@ impl PcbTextbox {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!("PCB_TEXTBOX::HitTest", ctx, rect, contained, accuracy)
+        hit_test_rect(self, ctx, rect, contained, accuracy)
     }
 
     /// `PCB_SHAPE::IsOnLayer`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
@@ -488,14 +813,24 @@ impl PcbTextbox {
         self.shape.is_on_layer(ctx, layer)
     }
 
-    /// `PCB_TEXTBOX::GetItemDescription`.
+    /// Port of `PCB_TEXTBOX::GetItemDescription` (untranslated).
     pub fn item_description(
         &self,
         ctx: &BoardCtx<'_>,
-        units: &UnitsProvider<'_>,
+        _units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("PCB_TEXTBOX::GetItemDescription", ctx, units, full)
+        let content = if full {
+            self.shown_text(ctx, ResolutionContext::ForGui, 0)
+        } else {
+            ellipsize_menu_text(self.text.text())
+        };
+
+        format!(
+            "PCB text box '{}' on {}",
+            content,
+            board_item::layer_name(self, ctx)
+        )
     }
 
     /// `PCB_SHAPE::GetLayer`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
@@ -518,7 +853,8 @@ impl PcbTextbox {
         self.shape.stroke(ctx)
     }
 
-    /// `PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)`.
+    /// Port of `PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)`: `EDA_SHAPE::
+    /// TransformShapeToPolygon( .., false, true )` over the text box host.
     pub fn transform_shape_to_poly_set(
         &self,
         ctx: &BoardCtx<'_>,
@@ -528,18 +864,11 @@ impl PcbTextbox {
         error: i32,
         error_loc: ErrorLoc,
     ) {
-        crate::port_pending!(
-            "PCB_SHAPE::TransformShapeToPolySet (PCB_TEXTBOX)",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc
-        )
+        transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
     }
 
-    /// `PCB_TEXTBOX::TransformShapeToPolygon`.
+    /// Port of `PCB_TEXTBOX::TransformShapeToPolygon`.
+    #[allow(clippy::too_many_arguments)]
     pub fn transform_shape_to_polygon(
         &self,
         ctx: &BoardCtx<'_>,
@@ -550,15 +879,15 @@ impl PcbTextbox {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_TEXTBOX::TransformShapeToPolygon",
+        transform_shape_to_polygon(
+            self,
             ctx,
             buffer,
             layer,
             clearance,
             error,
             error_loc,
-            ignore_line_width
+            ignore_line_width,
         )
     }
 
@@ -567,55 +896,145 @@ impl PcbTextbox {
         self.shape.is_connected(ctx)
     }
 
-    /// `PCB_TEXTBOX::Flip`.
+    /// Port of `PCB_TEXTBOX::Flip`: `PCB_SHAPE::Flip` (whose closing `syncLibCoords()` is the
+    /// base one: it is reached only without a parent footprint), then the lib text angle
+    /// reflected with an added half turn.
     pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_TEXTBOX::Flip", env, centre, dir)
+        self.shape.flip(env, centre, dir);
+
+        // A flip changes the side it is read from, so add a half turn on top of the
+        // reflection.
+        let axis = kicad_geom::mirror_axis(dir);
+        self.lib_text_angle = self.lib_text_angle.reflect(axis) + ANGLE_180;
+
+        let angle = self.text_angle_env(env);
+        eda_text::set_text_angle(self, env, angle);
+
+        if self.is_side_specific_env() {
+            let mirrored = !self.text.is_mirrored();
+            self.text.set_mirrored(mirrored);
+        }
     }
 
-    /// `PCB_TEXTBOX::Mirror`.
+    /// Port of `PCB_TEXTBOX::Mirror( aCentre, aFlipDirection )`: `Mirror( MIRROR_AXIS( .. ) )`.
     pub fn mirror(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_TEXTBOX::Mirror", env, centre, dir)
+        self.mirror_seg(env, &board_item::mirror_axis(centre, dir));
     }
 
-    /// `PCB_TEXTBOX::Move`.
+    /// Port of `PCB_TEXTBOX::Move`: `PCB_SHAPE::Move` (with the textbox's `syncLibCoords()`),
+    /// then `EDA_TEXT::Offset`.
     pub fn move_by(&mut self, env: &MutEnv, delta: Vector2I) {
-        crate::port_pending!("PCB_TEXTBOX::Move", env, delta)
+        self.shape.shape.move_(delta);
+        self.sync_lib_coords(env);
+        eda_text::offset(self, env, delta);
     }
 
-    /// `PCB_SHAPE::Normalize (PCB_TEXTBOX)`.
+    /// `PCB_SHAPE::Normalize (PCB_TEXTBOX)` for an item whose environment follows from its
+    /// parent link alone (as [`PcbShape::normalize`]): a board-level or detached text box gets
+    /// [`PcbTextbox::normalize_env`] with no parent frame; for a footprint child (or a cell)
+    /// the board-frame geometry is normalized and the library frame kept (`PORT_STATUS.md`,
+    /// M9 / M11). Table code and the board pass the environment to `normalize_env`.
     pub fn normalize(&mut self) {
-        crate::port_pending!("PCB_SHAPE::Normalize (PCB_TEXTBOX)")
+        if self.shape.base.item.parent.item().is_none() {
+            self.normalize_env(&MutEnv::detached());
+            return;
+        }
+
+        let lib = self.shape.lib.clone();
+        self.normalize_env(&MutEnv::detached());
+        self.shape.lib = lib;
     }
 
-    /// `PCB_TEXTBOX::OnFootprintRescaled`.
+    /// Port of `PCB_TEXTBOX::OnFootprintRescaled`: `OnFootprintTransformed()`.
     pub fn on_footprint_rescaled(
         &mut self,
         env: &MutEnv,
-        ratio_x: f64,
-        ratio_y: f64,
-        linear_factor: f64,
-        anchor: Vector2I,
-        parent_rotate: EdaAngle,
+        _ratio_x: f64,
+        _ratio_y: f64,
+        _linear_factor: f64,
+        _anchor: Vector2I,
+        _parent_rotate: EdaAngle,
     ) {
-        crate::port_pending!(
-            "PCB_TEXTBOX::OnFootprintRescaled",
-            env,
-            ratio_x,
-            ratio_y,
-            linear_factor,
-            anchor,
-            parent_rotate
-        )
+        self.on_footprint_transformed(env);
     }
 
-    /// `PCB_TEXTBOX::OnFootprintTransformed`.
+    /// Port of `PCB_TEXTBOX::OnFootprintTransformed`: an axis-aligned library rectangle is
+    /// re-baked by centre and half-extents (it stays a rectangle; the rotation lives in the
+    /// text angle), anything else through `PCB_SHAPE::OnFootprintTransformed`.
     pub fn on_footprint_transformed(&mut self, env: &MutEnv) {
-        crate::port_pending!("PCB_TEXTBOX::OnFootprintTransformed", env)
+        match env.parent.as_ref() {
+            Some(frame) if self.shape.lib_shape() == ShapeT::Rectangle => {
+                let xform = &frame.transform;
+                self.shape.shape.shape = ShapeT::Rectangle;
+
+                let lib_start = self.shape.lib.start;
+                let lib_end = self.shape.lib.end;
+                let lib_center = Vector2I::new(
+                    lib_start.x.wrapping_add(lib_end.x) / 2,
+                    lib_start.y.wrapping_add(lib_end.y) / 2,
+                );
+                let lib_half_w = lib_end.x.wrapping_sub(lib_start.x).wrapping_abs() / 2;
+                let lib_half_h = lib_end.y.wrapping_sub(lib_start.y).wrapping_abs() / 2;
+
+                let new_center = xform.apply(lib_center);
+                let new_half_w = ki_round(lib_half_w as f64 * xform.scale_x()).wrapping_abs();
+                let new_half_h = ki_round(lib_half_h as f64 * xform.scale_y()).wrapping_abs();
+
+                self.shape.shape.set_start(Vector2I::new(
+                    new_center.x - new_half_w,
+                    new_center.y - new_half_h,
+                ));
+                self.shape.shape.set_end(Vector2I::new(
+                    new_center.x + new_half_w,
+                    new_center.y + new_half_h,
+                ));
+            }
+            _ => self.shape.on_footprint_transformed(env),
+        }
+
+        let angle = self.text_angle_env(env);
+        eda_text::set_text_angle(self, env, angle);
+        self.text.clear_render_cache();
+        self.text.clear_bounding_box_cache();
     }
 
-    /// `PCB_TEXTBOX::Rotate`.
+    /// Port of `PCB_TEXTBOX::Rotate`: slide the axis-aligned box, the rotation lives in the
+    /// text angle.
     pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_TEXTBOX::Rotate", env, centre, angle)
+        // Slide the axis-aligned box, rotation lives in the text angle.
+        let start = self.shape.shape.start();
+        let end = self.shape.shape.end();
+        let old_center = Vector2D::new(
+            start.x.wrapping_add(end.x) as f64 * 0.5,
+            start.y.wrapping_add(end.y) as f64 * 0.5,
+        );
+        let mut new_center = old_center;
+        rotate_point_around(
+            &mut new_center,
+            Vector2D::new(centre.x as f64, centre.y as f64),
+            angle,
+        );
+
+        let delta = Vector2I::new(
+            ki_round(new_center.x - old_center.x),
+            ki_round(new_center.y - old_center.y),
+        );
+        self.shape.shape.set_start(start + delta);
+        let end = self.shape.shape.end();
+        self.shape.shape.set_end(end + delta);
+
+        self.sync_lib_coords(env);
+
+        let mut new_abs = self.text_angle_env(env) + angle;
+        let new_abs = new_abs.normalize();
+        eda_text::set_text_angle(self, env, new_abs);
+
+        match env.parent.as_ref() {
+            Some(parent) => {
+                self.lib_text_angle = EdaOrientation::new(new_abs - parent.transform.rotate())
+            }
+            None => self.lib_text_angle = EdaOrientation::new(new_abs),
+        }
     }
 
     /// `PCB_SHAPE::SetLayer`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
@@ -628,74 +1047,190 @@ impl PcbTextbox {
         self.shape.set_layer_set(env, layers)
     }
 
-    /// `PCB_SHAPE::SetPosition (PCB_TEXTBOX)`.
-    pub fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
-        crate::port_pending!("PCB_SHAPE::SetPosition (PCB_TEXTBOX)", env, pos)
+    /// `PCB_SHAPE::SetPosition (PCB_TEXTBOX)`: `setPosition()` (no lib-frame sync in C++
+    /// either).
+    pub fn set_position(&mut self, _env: &MutEnv, pos: Vector2I) {
+        self.shape.shape.set_position(pos);
     }
 
-    /// `PCB_TEXTBOX::StyleFromSettings`.
+    /// Port of `PCB_TEXTBOX::StyleFromSettings`. Without a board environment (as
+    /// `PcbText::style_from_settings`): the size and thickness are stored as given (the
+    /// footprint scale is not stripped), the parent footprint is the direct parent (a cell
+    /// of a footprint table is not seen as in a footprint) and the side is
+    /// `IsBackLayer( GetLayer() )` (`PORT_STATUS.md`).
     pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        crate::port_pending!("PCB_TEXTBOX::StyleFromSettings", settings, check_side)
+        self.shape.style_from_settings(settings, check_side);
+
+        let env = MutEnv::detached();
+        let layer = self.shape.base.item.layer;
+
+        self.set_text_size(&env, settings.get_text_size(layer), true);
+        self.set_text_thickness(&env, settings.get_text_thickness(layer));
+        self.text.set_italic(settings.get_text_italic(layer));
+
+        let in_footprint = self
+            .shape
+            .base
+            .item
+            .parent
+            .item()
+            .is_some_and(|id| id.kind() == crate::ids::ItemKind::Footprint);
+
+        if in_footprint {
+            self.text.set_keep_upright(settings.get_text_upright(layer));
+        }
+
+        if check_side {
+            self.text.set_mirrored(is_back_layer(layer));
+        }
     }
 
-    /// `PCB_TEXTBOX::GetDrawPos`.
+    /// Port of `PCB_TEXTBOX::GetDrawPos()`: `GetDrawPos( false )`.
     pub fn draw_pos(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetDrawPos", ctx)
+        draw_pos_flipped(self, ctx, false)
     }
 
-    /// `PCB_TEXTBOX::getFontMetrics`.
-    pub fn font_metrics(&self, ctx: &BoardCtx<'_>) -> &'static kicad_font::Metrics {
-        crate::port_pending!("PCB_TEXTBOX::getFontMetrics", ctx)
+    /// `PCB_TEXTBOX::getFontMetrics()`: `GetFontMetrics()` (the default metrics).
+    pub fn font_metrics(&self, _ctx: &BoardCtx<'_>) -> &'static kicad_font::Metrics {
+        kicad_font::Metrics::default_metrics()
     }
 
-    /// `PCB_TEXTBOX::SetTextAngle`.
+    /// Port of `PCB_TEXTBOX::SetTextAngle`: rotate the box about its position by the change.
     pub fn set_text_angle(&mut self, env: &MutEnv, angle: EdaAngle) {
-        crate::port_pending!("PCB_TEXTBOX::SetTextAngle", env, angle)
+        let delta = angle.normalized() - self.text_angle_env(env);
+        let position = crate::eda_shape::shape_position(self);
+        self.rotate(env, position, delta);
     }
 
-    /// `PCB_TEXTBOX::SetTextSize`.
+    /// Port of `PCB_TEXTBOX::SetTextSize`: the parent footprint's scales are stripped.
     pub fn set_text_size(&mut self, env: &MutEnv, size: Vector2I, enforce_min: bool) {
-        crate::port_pending!("PCB_TEXTBOX::SetTextSize", env, size, enforce_min)
+        let mut new_size = size;
+
+        if let Some(parent) = env.parent.as_ref() {
+            let xf = &parent.transform;
+            new_size = Vector2I::new(
+                ki_round(new_size.x as f64 / xf.scale_x().abs()),
+                ki_round(new_size.y as f64 / xf.scale_y().abs()),
+            );
+        }
+
+        eda_text::set_text_size(self, env, new_size, enforce_min);
     }
 
-    /// `PCB_TEXTBOX::SetTextThickness`.
+    /// Port of `PCB_TEXTBOX::SetTextThickness`: the parent footprint's mean scale is
+    /// stripped.
     pub fn set_text_thickness(&mut self, env: &MutEnv, width: i32) {
-        crate::port_pending!("PCB_TEXTBOX::SetTextThickness", env, width)
+        let mut width = width;
+
+        if let Some(parent) = env.parent.as_ref() {
+            let xf = &parent.transform;
+            let factor = (xf.scale_x().abs() + xf.scale_y().abs()) * 0.5;
+            width = ki_round(width as f64 / factor);
+        }
+
+        eda_text::set_text_thickness(self, env, width);
     }
 
-    /// `PCB_TEXTBOX::GetShownText`.
+    /// Port of `PCB_TEXTBOX::GetShownText`: the resolved text, line-broken to the box width.
     pub fn shown_text(&self, ctx: &BoardCtx<'_>, context: ResolutionContext, depth: i32) -> String {
-        crate::port_pending!("PCB_TEXTBOX::GetShownText", ctx, context, depth)
+        let parent_footprint = board_item::parent_footprint(self, ctx);
+        let has_board = board_item::has_board(self, ctx);
+        let depth_cell = Cell::new(depth);
+
+        let resolver = |token: &mut String| -> bool {
+            if token == "LAYER" {
+                *token = board_item::layer_name(self, ctx);
+                return true;
+            }
+
+            if let Some(fp) = parent_footprint {
+                if footprint_resolve_text_var(fp, ctx, token, None, depth_cell.get() + 1) {
+                    return true;
+                }
+            }
+
+            if has_board
+                && ctx.board.resolve_text_var(
+                    token,
+                    &ctx.board.current_variant,
+                    depth_cell.get() + 1,
+                )
+            {
+                return true;
+            }
+
+            false
+        };
+
+        let mut text = eda_text::shown_text(self, ctx, context, depth);
+
+        if self.text.has_text_vars() && context != ResolutionContext::RawValue {
+            text = resolve_text_vars_shared_depth(&text, &resolver, &depth_cell);
+            finalize_text_var_expansion(&mut text, context);
+        }
+
+        linebreak_to_box(self, ctx, &mut text);
+
+        text
     }
 
-    /// `PCB_TEXTBOX::GetTextAngle`.
+    /// Port of `PCB_TEXTBOX::GetTextAngle`: the lib angle plus the parent footprint's
+    /// orientation, normalised; the lib angle without one.
     pub fn text_angle(&self, ctx: &BoardCtx<'_>) -> EdaAngle {
-        crate::port_pending!("PCB_TEXTBOX::GetTextAngle", ctx)
+        match board_item::parent_footprint(self, ctx) {
+            Some(fp) => {
+                let angle = self.lib_text_angle.angle() + fp.orientation();
+                angle.normalized()
+            }
+            None => self.lib_text_angle.angle(),
+        }
     }
 
-    /// `PCB_TEXTBOX::GetTextSize`.
+    /// Port of `PCB_TEXTBOX::GetTextSize`: the stored size scaled by the parent footprint's
+    /// scales.
     pub fn text_size(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetTextSize", ctx)
+        let lib_size = eda_text::text_size(self, ctx);
+
+        match board_item::parent_footprint(self, ctx) {
+            Some(fp) => {
+                let xf = fp.transform();
+                Vector2I::new(
+                    ki_round(lib_size.x as f64 * xf.scale_x().abs()),
+                    ki_round(lib_size.y as f64 * xf.scale_y().abs()),
+                )
+            }
+            None => lib_size,
+        }
     }
 
-    /// `PCB_TEXTBOX::GetTextThickness`.
+    /// Port of `PCB_TEXTBOX::GetTextThickness`: the stored thickness scaled by the parent
+    /// footprint's mean scale.
     pub fn text_thickness(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TEXTBOX::GetTextThickness", ctx)
+        let lib_thickness = eda_text::text_thickness(self, ctx);
+
+        match board_item::parent_footprint(self, ctx) {
+            Some(fp) => {
+                let xf = fp.transform();
+                let factor = (xf.scale_x().abs() + xf.scale_y().abs()) * 0.5;
+                ki_round(lib_thickness as f64 * factor)
+            }
+            None => lib_thickness,
+        }
     }
 
-    /// `PCB_TEXTBOX::GetBotRight`.
+    /// Port of `PCB_TEXTBOX::GetBotRight`.
     pub fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetBotRight", ctx)
+        bot_right(self, ctx)
     }
 
-    /// `PCB_TEXTBOX::GetCornersInSequence`.
+    /// Port of `PCB_TEXTBOX::GetCornersInSequence`.
     pub fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        crate::port_pending!("PCB_TEXTBOX::GetCornersInSequence", angle)
+        corners_in_sequence(self, angle)
     }
 
-    /// `PCB_SHAPE::getHatchingKnockouts (PCB_TEXTBOX)`.
+    /// Port of `PCB_SHAPE::getHatchingKnockouts (PCB_TEXTBOX)`.
     pub fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
-        crate::port_pending!("PCB_SHAPE::getHatchingKnockouts (PCB_TEXTBOX)", ctx)
+        hatching_knockouts(self, ctx)
     }
 
     /// `PCB_SHAPE::IsProxyItem`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
@@ -713,15 +1248,629 @@ impl PcbTextbox {
         self.shape.shape_max_error(ctx)
     }
 
-    /// `PCB_TEXTBOX::GetTopLeft`.
+    /// Port of `PCB_TEXTBOX::GetTopLeft`.
     pub fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetTopLeft", ctx)
+        top_left(self, ctx)
     }
 
     /// `PCB_SHAPE::GetWidth`, inherited by `PCB_TEXTBOX` (the base body reaches no virtual that `PCB_TEXTBOX` overrides).
     pub fn width(&self, ctx: &BoardCtx<'_>) -> i32 {
         self.shape.width(ctx)
     }
+}
+
+// ---- PCB_TEXTBOX bodies as generic functions over the host (PcbTextbox, PcbTablecell) ----
+
+/// A `PCB_TEXTBOX` host: the text box itself or a table cell (which overrides
+/// `GetShownText()` and `IsFilledForHitTesting()`).
+pub(crate) trait TextboxHost: BoardItem + EdaTextItem + EdaShapeItem {
+    /// The `PCB_TEXTBOX` part.
+    fn textbox(&self) -> &PcbTextbox;
+    /// `this` as an `AnyItem` (for rule evaluation and `ctx.view`).
+    fn any_item(&self) -> AnyItem<'_>;
+}
+
+impl TextboxHost for PcbTextbox {
+    fn textbox(&self) -> &PcbTextbox {
+        self
+    }
+    fn any_item(&self) -> AnyItem<'_> {
+        AnyItem::Textbox(self)
+    }
+}
+
+/// Port of `PCB_TEXTBOX::GetCornersInSequence( angle )`: the four corners of the box, in
+/// reading order for the text angle; `EDA_SHAPE::GetCornersInSequence` for a polygon box.
+pub(crate) fn corners_in_sequence<H: TextboxHost + ?Sized>(
+    host: &H,
+    mut angle: EdaAngle,
+) -> Vec<Vector2I> {
+    let es = host.eda_shape();
+
+    if es.shape() != ShapeT::Rectangle {
+        return crate::eda_shape::corners_in_sequence(host, angle);
+    }
+
+    let (start, end) = (es.start(), es.end());
+    let left = start.x.min(end.x);
+    let right = start.x.max(end.x);
+    let top = start.y.min(end.y);
+    let bottom = start.y.max(end.y);
+
+    let center = Vector2I::new(left.wrapping_add(right) / 2, top.wrapping_add(bottom) / 2);
+
+    let mut pts = vec![
+        Vector2I::new(left, top),
+        Vector2I::new(right, top),
+        Vector2I::new(right, bottom),
+        Vector2I::new(left, bottom),
+    ];
+
+    angle.normalize();
+
+    if !angle.is_zero() {
+        for p in pts.iter_mut() {
+            rotate_point_around(p, center, angle);
+        }
+    }
+
+    pts
+}
+
+/// Port of `PCB_TEXTBOX::GetCorners()`: `GetCornersInSequence( GetDrawRotation() )`.
+pub(crate) fn corners<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vec<Vector2I> {
+    host.corners_in_sequence(host.draw_rotation(ctx))
+}
+
+/// Port of `PCB_TEXTBOX::GetTopLeft()`.
+pub(crate) fn top_left<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vector2I {
+    let rotation = host.draw_rotation(ctx);
+    let es = host.eda_shape();
+    let (start, end) = (es.start(), es.end());
+
+    if rotation == ANGLE_90 {
+        Vector2I::new(start.x, end.y)
+    } else if rotation == ANGLE_180 {
+        end
+    } else if rotation == ANGLE_270 {
+        Vector2I::new(end.x, start.y)
+    } else {
+        start
+    }
+}
+
+/// Port of `PCB_TEXTBOX::GetBotRight()`.
+pub(crate) fn bot_right<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vector2I {
+    let rotation = host.draw_rotation(ctx);
+    let es = host.eda_shape();
+    let (start, end) = (es.start(), es.end());
+
+    if rotation == ANGLE_90 {
+        Vector2I::new(end.x, start.y)
+    } else if rotation == ANGLE_180 {
+        start
+    } else if rotation == ANGLE_270 {
+        Vector2I::new(start.x, end.y)
+    } else {
+        end
+    }
+}
+
+/// Port of `PCB_TEXTBOX::GetMinSize()`: only the height is constrained (the text height plus
+/// the margins across it); the width is 0 so that the text can rewrap.
+pub(crate) fn min_size<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vector2I {
+    let tb = host.textbox();
+
+    if host.eda_text().text().is_empty() {
+        return Vector2I::new(0, 0);
+    }
+
+    let text_box = eda_text::text_box(host, ctx, None);
+
+    let mut text_height = (text_box.height().wrapping_abs()) as i32;
+
+    if host.text_angle(ctx).is_horizontal() {
+        text_height += tb.margin_top + tb.margin_bottom;
+    } else {
+        text_height += tb.margin_left + tb.margin_right;
+    }
+
+    // Only enforce minimum height. Width returns 0 so the user can freely shrink width
+    // (text rewraps) while height is constrained to fit the wrapped text content.
+    // GetTextBox returns dimensions in text-local coordinates. For 90/270 degree rotations,
+    // the text's natural height maps to screen x-axis.
+    let rotation = host.draw_rotation(ctx);
+
+    if rotation == ANGLE_90 || rotation == ANGLE_270 {
+        return Vector2I::new(text_height, 0);
+    }
+
+    Vector2I::new(0, text_height)
+}
+
+/// Port of `PCB_TEXTBOX::GetDrawPos( aIsFlipped )`: the anchor on the (rotated) box for the
+/// justification, moved inwards by the margins.
+pub(crate) fn draw_pos_flipped<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    is_flipped: bool,
+) -> Vector2I {
+    let tb = host.textbox();
+    let et = host.eda_text();
+    let draw_angle = host.draw_rotation(ctx);
+    let corners = host.corners_in_sequence(draw_angle);
+    let mut horizontal_alignment = et.horiz_justify();
+    let vertical_alignment = et.vert_justify();
+    let mut text_anchor = Vector2I::default();
+    let mut offset = Vector2I::default();
+
+    // Calculate midpoints
+    let mid_top = (corners[0] + corners[1]) / 2;
+    let mid_bottom = (corners[3] + corners[2]) / 2;
+    let mid_left = (corners[0] + corners[3]) / 2;
+    let mid_right = (corners[1] + corners[2]) / 2;
+    let center = (corners[0] + corners[1] + corners[2] + corners[3]) / 4;
+
+    if et.is_mirrored() != is_flipped {
+        horizontal_alignment = match et.horiz_justify() {
+            GrTextHAlignT::Left => GrTextHAlignT::Right,
+            GrTextHAlignT::Center => GrTextHAlignT::Center,
+            GrTextHAlignT::Right => GrTextHAlignT::Left,
+            GrTextHAlignT::Indeterminate => GrTextHAlignT::Indeterminate,
+        };
+    }
+
+    // wxASSERT_MSG: "Indeterminate state legal only in dialogs."
+    if horizontal_alignment == GrTextHAlignT::Indeterminate
+        || vertical_alignment == GrTextVAlignT::Indeterminate
+    {
+        return center;
+    }
+
+    use GrTextHAlignT as H;
+    use GrTextVAlignT as V;
+
+    match (horizontal_alignment, vertical_alignment) {
+        (H::Left, V::Top) => text_anchor = corners[0],
+        (H::Center, V::Top) => text_anchor = mid_top,
+        (H::Right, V::Top) => text_anchor = corners[1],
+        (H::Left, V::Center) => text_anchor = mid_left,
+        (H::Center, V::Center) => text_anchor = center,
+        (H::Right, V::Center) => text_anchor = mid_right,
+        (H::Left, V::Bottom) => text_anchor = corners[3],
+        (H::Center, V::Bottom) => text_anchor = mid_bottom,
+        (H::Right, V::Bottom) => text_anchor = corners[2],
+        _ => {}
+    }
+
+    if horizontal_alignment == H::Left {
+        offset.x = tb.margin_left;
+    } else if horizontal_alignment == H::Right {
+        offset.x = -tb.margin_right;
+    }
+
+    if vertical_alignment == V::Top {
+        offset.y = tb.margin_top;
+    } else if vertical_alignment == V::Bottom {
+        offset.y = -tb.margin_bottom;
+    }
+
+    kicad_geom::rotate_point(&mut offset, host.draw_rotation(ctx));
+    text_anchor + offset
+}
+
+/// The line breaking that closes `PCB_TEXTBOX::GetShownText` / `PCB_TABLECELL::GetShownText`:
+/// `LinebreakText` to the width between the margins across the reading direction.
+pub(crate) fn linebreak_to_box<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    text: &mut String,
+) {
+    let tb = host.textbox();
+    let et = host.eda_text();
+    let lookup = et.draw_font_lookup();
+    let font = lookup.font();
+    let draw_angle = host.draw_rotation(ctx);
+    let corners = host.corners_in_sequence(draw_angle);
+    let mut col_width: i32 = (corners[1] - corners[0]).euclidean_norm();
+
+    if host.text_angle(ctx).is_horizontal() {
+        col_width -= tb.margin_left + tb.margin_right;
+    } else {
+        col_width -= tb.margin_top + tb.margin_bottom;
+    }
+
+    font.linebreak_text(
+        text,
+        col_width,
+        host.text_size(ctx),
+        eda_text::effective_text_pen_width(host, ctx, 0),
+        et.is_bold(),
+        et.is_italic(),
+    );
+}
+
+/// Port of `PCB_TEXTBOX::GetBoundingBox()`: the corners, inflated by half the border width.
+pub(crate) fn bounding_box<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Box2I {
+    let mut bbox = Box2I::default();
+
+    for pt in corners(host, ctx) {
+        bbox.merge_point(pt);
+    }
+
+    bbox.inflate(0.max(host.width(ctx)) / 2);
+    bbox.normalize();
+
+    bbox
+}
+
+/// Port of `PCB_TEXTBOX::HitTest( aPosition, aAccuracy )`.
+pub(crate) fn hit_test<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    pos: Vector2I,
+    accuracy: i32,
+) -> bool {
+    let mut rect = bounding_box(host, ctx);
+
+    rect.inflate(accuracy);
+
+    rect.contains(pos)
+}
+
+/// Port of `PCB_TEXTBOX::HitTest( aRect, aContained, aAccuracy )`.
+pub(crate) fn hit_test_rect<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    rect: &Box2I,
+    contained: bool,
+    accuracy: i32,
+) -> bool {
+    let mut rect = *rect;
+
+    rect.inflate(accuracy);
+
+    if contained {
+        return rect.contains_box(&bounding_box(host, ctx));
+    }
+
+    rect.intersects(&bounding_box(host, ctx))
+}
+
+/// Port of `PCB_SHAPE::GetSolderMaskExpansion()` with the text box host as `this` (rule
+/// evaluation sees the text box or cell).
+fn solder_mask_expansion<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> i32 {
+    let shape = &host.textbox().shape;
+    let mut margin = 0;
+    let has_board = board_item::has_board(host, ctx);
+    let drc_engine = ctx.rules.filter(|engine| {
+        has_board
+            && engine.has_rules_for_constraint_type(DrcConstraintT::SolderMaskExpansionConstraint)
+    });
+
+    if let Some(drc_engine) = drc_engine {
+        let this = ctx.view(host.any_item());
+        let constraint = drc_engine.eval_rules(
+            ctx,
+            DrcConstraintT::SolderMaskExpansionConstraint,
+            Some(this),
+            None,
+            shape.base.item.layer,
+        );
+
+        if constraint.value.has_opt() {
+            margin = constraint.value.opt();
+        }
+    } else if let Some(local) = shape.solder_mask_margin {
+        margin = local;
+    } else if has_board {
+        margin = ctx.board.design_settings().solder_mask_expansion;
+    }
+
+    // Ensure the resulting mask opening has a non-negative size
+    if margin < 0 && !shape.shape.is_solid_fill() {
+        margin = margin.max(-host.width(ctx) / 2);
+    }
+
+    margin
+}
+
+/// Port of `PCB_SHAPE::GetEffectiveShape()` over the text box host.
+fn pcb_shape_effective_shape<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    layer: PcbLayerId,
+) -> SharedShape {
+    let shape = &host.textbox().shape;
+    let mut width = host.effective_width(ctx);
+
+    if is_solder_mask_layer(layer) && shape.has_solder_mask && is_copper_layer(shape.base.item.layer)
+    {
+        width += 2 * solder_mask_expansion(host, ctx);
+    }
+
+    Arc::new(ShapeCompound::from_shapes(
+        make_effective_shapes_with_line_endings(host, ctx, width),
+    ))
+}
+
+/// Port of `PCB_TEXTBOX::GetEffectiveShape()`: the text shape plus, with a non-negative
+/// `PCB_SHAPE::GetStroke()` width (always: `GetWidth()` clamps at 0), the box shapes.
+pub(crate) fn effective_shape<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    layer: PcbLayerId,
+    _flash: Flashing,
+    _usage: DrcConstraintT,
+) -> SharedShape {
+    let text_shape = eda_text::effective_text_shape(host, ctx, true, None, ANGLE_0);
+    let mut shape: ShapeCompound = Arc::unwrap_or_clone(text_shape);
+
+    if host.width(ctx) >= 0 {
+        shape.add_shape_shared(&pcb_shape_effective_shape(host, ctx, layer));
+    }
+
+    Arc::new(shape)
+}
+
+/// Port of `PCB_TEXTBOX::TransformTextToPolySet()`: the raw attributes (stored size and
+/// angle, unlike `PCB_TEXT`), the knockout box rotated by the text angle, `Inflate` with
+/// `simplify = true`.
+pub(crate) fn transform_text_to_poly_set<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    buffer: &mut ShapePolySet,
+    clearance: i32,
+    max_error: i32,
+    error_loc: ErrorLoc,
+) {
+    let et = host.eda_text();
+    let lookup = et.draw_font_lookup();
+    let font = lookup.font();
+    let pen_width = eda_text::effective_text_pen_width(host, ctx, 0);
+    let attrs = et.attributes.clone();
+    let shown_text = host.shown_text(ctx, ResolutionContext::ForCanvas, 0);
+    let mut clearance = clearance;
+
+    // The polygonal shape of a text can have many basic shapes, so combining these shapes can
+    // be very useful to create a final shape with a lot less vertices to speedup calculations.
+    // Simplify shapes is not usually always efficient, but in this case it is.
+    let text_shape = RefCell::new(ShapePolySet::new());
+
+    {
+        let mut callback_gal = CallbackGal::new(
+            // Stroke callback
+            |pt1, pt2| {
+                transform_oval_to_polygon(
+                    &mut text_shape.borrow_mut(),
+                    pt1,
+                    pt2,
+                    pen_width,
+                    max_error,
+                    error_loc,
+                    0,
+                );
+            },
+            // Triangulation callback
+            |glyph| {
+                outline_glyph_triangulate(glyph, &mut |pt1, pt2, pt3| {
+                    let mut shape = text_shape.borrow_mut();
+                    shape.new_outline();
+
+                    for point in [pt1, pt2, pt3] {
+                        shape.append(point.x, point.y, -1, -1, false);
+                    }
+                });
+            },
+        );
+
+        match eda_text::render_cache(host, ctx, &shown_text, Vector2I::default()) {
+            Some(cache) => callback_gal.draw_glyphs(&cache.glyphs),
+            None => font.draw(
+                &mut callback_gal,
+                &shown_text,
+                host.draw_pos(ctx),
+                &attrs,
+                host.font_metrics(ctx),
+            ),
+        }
+    }
+
+    let mut text_shape = text_shape.into_inner();
+    text_shape.simplify();
+
+    if host.is_knockout() {
+        let mut final_poly = ShapePolySet::new();
+
+        host.transform_shape_to_polygon(
+            ctx,
+            &mut final_poly,
+            host.base().layer,
+            clearance,
+            max_error,
+            error_loc,
+            false,
+        );
+
+        // A TEXTBOX can be rotated, but TransformShapeToPolygon does not handle the text
+        // rotation. so rotate the finalPoly by the text rotation
+        let angle = host.text_angle(ctx);
+
+        if angle != ANGLE_0 {
+            final_poly.rotate(angle, crate::eda_shape::shape_center(host));
+        }
+
+        final_poly.boolean_subtract(&text_shape);
+
+        buffer.append_set(&final_poly);
+    } else {
+        if clearance > 0 || error_loc == ERROR_OUTSIDE {
+            if error_loc == ERROR_OUTSIDE {
+                clearance += max_error;
+            }
+
+            text_shape.inflate(clearance, CornerStrategy::RoundAllCorners, max_error, true);
+        }
+
+        buffer.append_set(&text_shape);
+    }
+}
+
+/// Port of `PCB_TEXTBOX::TransformShapeToPolygon()`: the box treated as filled even without
+/// a background colour, plus the border segments when the border is enabled.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn transform_shape_to_polygon<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    buffer: &mut ShapePolySet,
+    _layer: PcbLayerId,
+    clearance: i32,
+    max_error: i32,
+    error_loc: ErrorLoc,
+    _ignore_line_width: bool,
+) {
+    // Don't use PCB_SHAPE::TransformShapeToPolygon.  We want to treat the textbox as filled
+    // even if there's no background colour.
+    let tb = host.textbox();
+    let es = host.eda_shape();
+    let width = host.width(ctx) + (2 * clearance);
+
+    if es.shape() == ShapeT::Rectangle {
+        let pts = es.rect_corners();
+
+        buffer.new_outline();
+
+        for pt in &pts {
+            buffer.append(pt.x, pt.y, -1, -1, false);
+        }
+
+        if tb.border_enabled && width > 0 {
+            // Add in segments
+            for (a, b) in [(0, 1), (1, 2), (2, 3), (3, 0)] {
+                transform_oval_to_polygon(buffer, pts[a], pts[b], width, max_error, error_loc, 0);
+            }
+        }
+    } else if es.shape() == ShapeT::Poly {
+        // Non-cardinally-rotated rect
+        buffer.new_outline();
+
+        let poly = es.poly_shape().c_outline(0);
+
+        for ii in 0..poly.point_count() {
+            let pt = poly.c_point(ii);
+            buffer.append(pt.x, pt.y, -1, -1, false);
+        }
+
+        if tb.border_enabled && width > 0 {
+            for ii in 0..poly.segment_count() {
+                let seg = poly.segment(ii);
+                transform_oval_to_polygon(buffer, seg.a, seg.b, width, max_error, error_loc, 0);
+            }
+        }
+    }
+}
+
+/// Port of `PCB_SHAPE::TransformShapeToPolySet()` over the text box host:
+/// `EDA_SHAPE::TransformShapeToPolygon( .., false, true )`.
+pub(crate) fn transform_shape_to_poly_set<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    buffer: &mut ShapePolySet,
+    _layer: PcbLayerId,
+    clearance: i32,
+    error: i32,
+    error_loc: ErrorLoc,
+) {
+    crate::eda_shape::shape_transform_to_polygon(
+        host, ctx, buffer, clearance, error, error_loc, false, true,
+    )
+}
+
+/// Port of `PCB_SHAPE::getHatchingKnockouts()` over the text box host (`this`, the virtual
+/// `GetBoundingBox()` and the parent footprint are the text box's / cell's).
+pub(crate) fn hatching_knockouts<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+) -> ShapePolySet {
+    let mut knockouts = ShapePolySet::new();
+
+    if !board_item::has_board(host, ctx) {
+        return knockouts;
+    }
+
+    let layer = host.base().layer;
+    let bbox = host.bounding_box(ctx);
+    let max_error = ARC_LOW_DEF;
+    let this_id = host.base().id();
+
+    let knockout_item = |item: ItemRef<'_>, knockouts: &mut ShapePolySet| {
+        let mut margin = host.hatch_line_spacing(ctx) / 2;
+
+        if item.type_() == KicadT::PcbTextboxT {
+            margin = 0;
+        }
+
+        item.transform_shape_to_polygon(
+            knockouts,
+            layer,
+            margin,
+            max_error,
+            ErrorLoc::Outside,
+            false,
+        );
+    };
+
+    for (id, _) in ctx.board.drawings() {
+        if Some(id) == this_id {
+            continue;
+        }
+
+        let Some(item) = ctx.item(id) else {
+            continue;
+        };
+
+        if matches!(
+            item.type_(),
+            KicadT::PcbFieldT | KicadT::PcbTextT | KicadT::PcbTextboxT | KicadT::PcbShapeT
+        ) && item.layer() == layer
+            && item.bounding_box().intersects(&bbox)
+        {
+            knockout_item(item, &mut knockouts);
+        }
+    }
+
+    let parent_fp = board_item::parent_footprint(host, ctx).and_then(|fp| fp.base.id());
+
+    for (fp_id, footprint) in ctx.board.footprints() {
+        if Some(ItemId::from(fp_id)) == parent_fp {
+            continue;
+        }
+
+        // GetCourtyard() returns the front courtyard for any non-back layer, so only knock it
+        // out when the hatched shape actually lives on a courtyard layer.
+        if layer == PcbLayerId::FCrtYd || layer == PcbLayerId::BCrtYd {
+            knockouts.append_set(&footprint.courtyard(ctx, layer));
+        }
+
+        // Knockout footprint fields
+        footprint.run_on_children(ctx, RecurseMode::Recurse, &mut |item: ItemRef<'_>| {
+            let kind = item.type_();
+            let invisible_field = kind == KicadT::PcbFieldT
+                && !item
+                    .as_eda_text()
+                    .is_some_and(|text| text.eda_text().is_visible());
+
+            if (kind == KicadT::PcbFieldT || kind == KicadT::PcbShapeT)
+                && item.layer() == layer
+                && !invisible_field
+                && item.bounding_box().intersects(&bbox)
+            {
+                knockout_item(item, &mut knockouts);
+            }
+        });
+    }
+
+    knockouts
 }
 
 #[cfg(test)]

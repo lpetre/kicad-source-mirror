@@ -2103,3 +2103,79 @@ the `ResolveFont` stub replaced by a call to `resolve_child_font`, see below).
   `golden_text_blocks` (the two `textboxes*` boards then compare) and
   `non_cardinal_rotation_keeps_lib_shape_rectangle`.
 - Footprint text / fields (`fp_text`, `property`) are exercised by PCBIO-06.
+
+## Package SET-5: project file, project binding (BOARD::SetProject), the two load sequences
+
+Files: `src/project/{project,project_file,project_local_settings,board_project,board_loader}.rs`
+(mod lines in `src/project/mod.rs`), `tests/set5_project.rs`,
+`tests/oracle/set5_dump_compare.sh` + `set5_board_compare.py`; minimal edits in
+`src/dump/mod.rs` (`DumpLoadMode`, `load_board_for_dump_mode`) and `src/bin/pcb_dump_rs.rs`
+(`--loader`); additive fields in `src/board/mod.rs` (`BoardProject.project_name`,
+`visible_layers`, `full_name`, `board_drawing_sheet_file`, `document`, `file_synced`;
+`Board::text_var_clock`, host-settable clock for `CURRENT_DATE` / `CURRENT_TIME_*`).
+
+### C++ to Rust map
+
+| C++ | Rust | state |
+|---|---|---|
+| `PROJECT_FILE` ctor (ported params: `text_variables`, `pcbnew.page_layout_descr_file`), migrations 1->2, 2->3 (layer presets: version only), 3->4 (`schematic.bus_aliases`), `LoadFromFile` (+ nested `NET_SETTINGS`) | `project_file.rs` `ProjectFile::load_from_str` | ported (load side) |
+| `PROJECT_LOCAL_SETTINGS` (`board.visible_layers`, `board.prototype_zone_fills`) | `project_local_settings.rs` | partial (only what the board reads) |
+| `PROJECT::setProjectFullName`, `GetProjectFullName/Name/Path/Directory`, `IsNullProject`, `GetTextVars`, `ApplyTextVars`, `AbsolutePath`, `TextVarResolver`; `SETTINGS_MANAGER::LoadProject` (in-memory) | `project.rs` `Project`, `load_project(pro, prl, name)`, `BoardProject::text_var_resolver` | ported (git hash: ""; env / cwd expansion in `AbsolutePath` not ported) |
+| `BOARD::SetProject` (legacy design settings guard, legacy `(net_class)` transfer, net settings ownership), `ClearProject`, `GetDesignRulesPath`, `SynchronizeComponentClasses`, `UpdateUserUnits( board, nullptr )` | `board_project.rs` | ported (`aReferenceOnly` not ported) |
+| `BOARD_LOADER::initializeLoadedBoard`, `KI_TEST::LoadBoard` (post-parse order) | `board_loader.rs` `LoadPath::{Cli,Qa}.steps()`, `run_model_step`, `initialize_loaded_board` | ported; session steps (`InitDrcEngine`, `ResolveDrcExclusions`, `BuildConnectivity`) are returned as `StepOutcome::Session` for PCBIO-15 |
+
+Step order (documented in `board_loader.rs`): CLI = BindProject, InitDrcEngine*,
+ResolveDrcExclusions*, BuildConnectivity*, BuildListOfNets, SynchronizeNetsAndNetClasses(true),
+SynchronizeComponentClasses (warning on failure), SynchronizeTuningProfileProperties,
+UpdateUserUnits. QA = BindProject (only with a `.kicad_pro` / `.pro`), InitDrcEngine*,
+BuildListOfNets, BuildConnectivity*, SynchronizeTuningProfileProperties,
+SynchronizeComponentClasses (only with a project). `*` = session step.
+
+### Tests
+
+- Unit tests in the five files (24): names / paths / `AbsolutePath`, `ApplyTextVars`, text
+  variables (partial load on a bad value), root migrations and versions, nested net settings,
+  `.kicad_prl` hex parsing corner cases, `SetProject` (design + net settings, legacy design
+  settings guard, legacy net classes replace the project's, rebinding), `ClearProject`, step
+  order, QA without project binds nothing, CLI binds the empty project.
+- `tests/set5_project.rs`: `test_project_file.cpp` `LoadProjectByAbsolutePathIsStable` (naming
+  part) and `AliasMigrationPreservesNonemptyDefinitions` (load side); `test_board_loader.cpp`
+  `BoardLoaderWithInit` (model side, `reference_images_load_save`) and `BoardLoaderWithoutInit`;
+  corpus smoke test of every `.kicad_pro` in `qa/data` and `demos` (`settings.md` 9.3 (7)).
+  Not applicable: the sheet / manager / save cases of `test_project_file.cpp` (schematic,
+  SETTINGS_MANAGER, writer SET-13), `CollinearTrackArcLoadsAsTrack` (parser, 48 MB board).
+- Oracle: `tests/oracle/set5_dump_compare.sh` (reference `pcb-dump board` = QA path and
+  `--loader` = kicad-cli path vs `pcb-dump-rs` on the same path) over every corpus board with a
+  sibling `.kicad_pro` (<= 6 MB, large demos excluded). Compared per board: `has_project`, all
+  `ds.*` (except `ds.meander.*`), `title_block.*`, `composite_netclass.*`, and per net *name*
+  the stored and the effective net class. Result: see "Oracle result" below.
+
+### Oracle result
+
+SET5_RESULT_PLACEHOLDER
+
+### Deviations
+
+- The project is moved into the board (`Board::set_project` takes it, `clear_project` gives it
+  back); C++ shares it by pointer, so its `m_project == aProject` early return has no
+  counterpart (a bound project is released first).
+- After `ClearProject` C++ leaves `bds.m_NetSettings` null; the board keeps a default
+  `NetSettings`.
+- If `BOARD_DESIGN_SETTINGS::LoadFromFile` throws inside `SetProject`, the project stays bound
+  and the error is returned (as the C++ exception escapes); the project's net settings are
+  dropped (C++ keeps them in the settings manager).
+- A `.kicad_pro` that does not parse counts as no file (C++ retries it as a legacy INI, which
+  reads nothing). The legacy `.pro` migration is not ported: the QA path binds an empty project
+  for a lone `.pro`.
+- `CURRENT_DATE` / `CURRENT_TIME_*` resolve from `Board::text_var_clock` (host-set, empty by
+  default); `VCSHASH` / `VCSSHORTHASH` resolve to "".
+
+### Known gaps
+
+- Not loaded from the project: `board.layer_presets` / `viewports` / `layer_pairs`,
+  `board.ipc2581.*`, `pcbnew.last_paths.*`, `COMPONENT_CLASS_SETTINGS` (SET-10),
+  `TUNING_PROFILES` (SET-11), `.kicad_prl` `visible_items` (SET-9); no writer (SET-13).
+- `SynchronizeComponentClasses` reaches the `port_pending!`
+  `COMPONENT_CLASS_MANAGER::SyncDynamicComponentClassAssignments` (SET-10) on every bound board;
+  `pcb-dump-rs` reports it as a pending step and continues.
+- Text variables are verified by unit tests only (the dump has no text-variable field).

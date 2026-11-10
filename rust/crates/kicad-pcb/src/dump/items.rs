@@ -475,11 +475,11 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         let (sx, sy) = pad.primitive_lib_scale(ctx);
         format!("{},{}", v_f64(sx), v_f64(sy))
     });
-    emit!(o, "flipped", no_api("PAD::IsFlipped"));
+    emit!(o, "flipped", v_bool(pad.is_flipped(ctx)));
     emit!(o, "aperture", v_bool(pad.is_aperture_pad()));
-    emit!(o, "npth_no_copper", no_api("PAD::IsNPTHWithNoCopper"));
+    emit!(o, "npth_no_copper", v_bool(pad.is_npth_with_no_copper(ctx)));
     emit!(o, "no_connect", v_bool(pad.is_no_connect_pad()));
-    emit!(o, "free", v_bool(pad.is_free_pad()));
+    emit!(o, "free", v_bool(pad.is_free_pad_ctx(ctx)));
     emit!(o, "can_have_number", v_bool(pad.can_have_number()));
     emit!(o, "principal_layer", v_layer(pad.principal_layer(ctx)));
     emit!(o, "drill_size", v_vec(pad.drill_size(ctx)));
@@ -520,7 +520,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
     emit!(
         o,
         "local_zone_connection",
-        no_api("PAD::GetLocalZoneConnection")
+        v_enum(pad.local_zone_connection())
     );
     emit!(
         o,
@@ -535,7 +535,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
     emit!(
         o,
         "local_thermal_spoke_width",
-        no_api("PAD::GetLocalThermalSpokeWidthOverride")
+        v_opt_int(pad.local_thermal_spoke_width_override())
     );
     emit!(
         o,
@@ -543,11 +543,12 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         v_int(pad.local_spoke_width_override(false).0)
     );
     emit!(o, "thermal_spoke_angle", v_angle(pad.thermal_spoke_angle()));
-    emit!(o, "thermal_gap", no_api("PAD::GetThermalGap"));
+    emit!(o, "thermal_gap", v_int(pad.thermal_gap()));
     emit!(
         o,
         "local_thermal_gap",
-        no_api("PAD::GetLocalThermalGapOverride")
+        // The std::optional overload: m_padStack.ThermalGap() (F_Cu).
+        v_opt_int(ps.thermal_gap(PcbLayerId::FCu))
     );
     emit!(
         o,
@@ -585,7 +586,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, format!("{lp}anchor_shape"), v_enum(ps.anchor_shape(l)));
             emit!(o, format!("{lp}size"), v_vec(pad.size(ctx, l)));
             emit!(o, format!("{lp}offset"), v_vec(pad.offset(ctx, l)));
-            emit!(o, format!("{lp}delta"), no_api("PAD::GetDelta"));
+            emit!(o, format!("{lp}delta"), v_vec(pad.delta(l)));
             emit!(
                 o,
                 format!("{lp}round_rect_radius_ratio"),
@@ -594,7 +595,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
             emit!(
                 o,
                 format!("{lp}round_rect_corner_radius"),
-                no_api("PAD::GetRoundRectCornerRadius")
+                v_int(pad.round_rect_corner_radius(l))
             );
             emit!(o, format!("{lp}chamfer_ratio"), v_f64(ps.chamfer_ratio(l)));
             emit!(
@@ -954,7 +955,7 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
         emit!(
             o,
             "textbox.border_width",
-            no_api("PCB_TEXTBOX::GetBorderWidth")
+            v_int(tb.border_width())
         );
         emit!(
             o,
@@ -982,7 +983,28 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
 
     emit!(o, "text_polys.c0_e5000_in", {
         if matches!(ty, KicadT::PcbTextboxT | KicadT::PcbTablecellT) {
-            no_api("PCB_TEXTBOX::TransformTextToPolySet")
+            // PCB_TEXTBOX::TransformTextToPolySet on the real host (a cell is its own host).
+            let mut buf = ShapePolySet::new();
+
+            match it.any() {
+                AnyItem::Tablecell(c) => crate::pcb_textbox::transform_text_to_poly_set(
+                    c,
+                    ctx,
+                    &mut buf,
+                    0,
+                    5000,
+                    ErrorLoc::Inside,
+                ),
+                _ => it.as_textbox().expect("textbox").transform_text_to_poly_set(
+                    ctx,
+                    &mut buf,
+                    0,
+                    5000,
+                    ErrorLoc::Inside,
+                ),
+            }
+
+            v_polyset(&buf)
         } else {
             let mut buf = ShapePolySet::new();
             it.as_text().expect("text").transform_text_to_poly_set(
@@ -1029,7 +1051,7 @@ pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "suffix", v_str(&d.suffix));
     emit!(o, "arrow_direction", v_enum(d.arrow_direction));
     emit!(o, "units", v_enum(d.units));
-    emit!(o, "units_mode", no_api("PCB_DIMENSION_BASE::GetUnitsMode"));
+    emit!(o, "units_mode", v_enum(d.units_mode()));
     emit!(o, "units_format", v_enum(d.units_format));
     emit!(o, "precision", v_enum(d.precision));
     emit!(o, "suppress_zeroes", v_bool(d.suppress_zeroes));
@@ -1053,7 +1075,7 @@ pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
             );
             emit!(o, "height", v_int(a.height));
             emit!(o, "extension_height", v_int(a.extension_height));
-            emit!(o, "angle", no_api("PCB_DIM_ALIGNED::GetAngle"));
+            emit!(o, "angle", v_f64(d.angle(ctx)));
 
             if let DimensionKind::Orthogonal { orientation, .. } = &d.kind {
                 emit!(o, "orientation", v_enum(*orientation));
@@ -1061,7 +1083,7 @@ pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
         }
         DimensionKind::Radial { leader_length } => {
             emit!(o, "leader_length", v_int(*leader_length));
-            emit!(o, "knee", no_api("PCB_DIM_RADIAL::GetKnee"));
+            emit!(o, "knee", v_vec(d.knee(ctx)));
         }
         DimensionKind::Leader { text_border } => {
             emit!(o, "text_border", v_enum(*text_border));
@@ -1100,7 +1122,7 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "keepout.tracks", v_bool(z.do_not_allow_tracks));
     emit!(o, "keepout.pads", v_bool(z.do_not_allow_pads));
     emit!(o, "keepout.footprints", v_bool(z.do_not_allow_footprints));
-    emit!(o, "teardrop_area", no_api("ZONE::IsTeardropArea"));
+    emit!(o, "teardrop_area", v_bool(z.is_teardrop_area()));
     emit!(o, "teardrop_type", v_enum(z.teardrop_type));
     emit!(o, "fill_mode", v_enum(z.fill_mode()));
     emit!(o, "local_clearance", v_opt_int(z.local_clearance()));
@@ -1135,7 +1157,7 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "border_hatch_pitch", v_int(z.border_hatch_pitch));
     emit!(o, "is_filled", v_bool(z.is_filled()));
     emit!(o, "need_refill", v_bool(z.need_refill()));
-    emit!(o, "num_corners", no_api("ZONE::GetNumCorners"));
+    emit!(o, "num_corners", v_int(z.num_corners()));
     emit!(o, "first_layer", v_layer(z.first_layer()));
     emit!(o, "outline", v_polyset(&z.board_outline(ctx)));
     emit!(o, "library_outline", v_polyset(z.library_outline()));

@@ -16,16 +16,19 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcb_tablecell.h` and `pcbnew/pcb_tablecell.cpp` (`PCB_TABLECELL :
-//! PCB_TEXTBOX`): data, constructor and delegation shims (package M0c), the overrides (stubs
-//! for package M11).
+//! PCB_TEXTBOX`): data, constructor and delegation shims (package M0c), the overrides
+//! (package M11).
 //!
 //! A cell is its own `EDA_TEXT` / `EDA_SHAPE` host (it overrides `GetShownText` and
 //! `IsFilledForHitTesting`), so `ItemRef::as_eda_text()` and the generic mixin functions
 //! dispatch to the cell's overrides and not to the embedded `PcbTextbox`. An inherited
 //! `PCB_TEXTBOX` / `PCB_SHAPE` body calls the embedded `PcbTextbox` where it reaches no virtual
-//! that `PCB_TABLECELL` overrides; the others (text shapes, hit tests) are stubs here.
+//! that `PCB_TABLECELL` overrides; the others (text shapes, hit tests) run the generic
+//! `PCB_TEXTBOX` bodies of `pcb_textbox.rs` over the cell (`TextboxHost`).
 
-use kicad_core::text_vars::ResolutionContext;
+use std::cell::Cell;
+
+use kicad_core::text_vars::{ResolutionContext, finalize_text_var_expansion};
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PcbLayerId, StrokeParams};
 use kicad_geom::geometry::approximation::ErrorLoc;
@@ -35,10 +38,14 @@ use crate::board_design_settings::BoardDesignSettings;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::eda_shape::EdaShape;
-use crate::eda_text::EdaText;
+use crate::eda_text::{self, EdaText, resolve_text_vars_shared_depth};
+use crate::item_ref::AnyItem;
+use crate::pcb_table::PcbTable;
+use crate::pcb_text::footprint_resolve_text_var;
+use crate::board_item;
 use crate::ids::ItemId;
 use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
-use crate::pcb_textbox::PcbTextbox;
+use crate::pcb_textbox::{self, PcbTextbox, TextboxHost};
 use crate::traits::{
     BoardConnectedItem, BoardItem, BoardItemMut, EdaShapeItem, EdaTextItem, Flashing, Invalidate,
 };
@@ -111,19 +118,49 @@ impl PcbTablecell {
         self.row_span = span;
     }
 
-    /// `GetRow()`: from the cell's index in the parent table.
+    /// The parent table (`static_cast<PCB_TABLE*>( GetParent() )`), if it resolves.
+    fn parent_table<'a>(&self, ctx: &BoardCtx<'a>) -> Option<&'a PcbTable> {
+        match ctx.board.get(self.textbox.shape.base.item.parent.item()?)? {
+            AnyItem::Table(table) => Some(table),
+            _ => None,
+        }
+    }
+
+    /// The `( row, column )` search of `GetRow()` / `GetColumn()`: the first grid position
+    /// whose `GetCell()` is this cell; `( -1, -1 )` when there is none (also for a cell that
+    /// is not stored or has no parent table, where the C++ would dereference null).
+    fn grid_position(&self, ctx: &BoardCtx<'_>) -> (i32, i32) {
+        let (Some(table), Some(me)) = (self.parent_table(ctx), self.textbox.shape.base.item.id())
+        else {
+            return (-1, -1);
+        };
+
+        for row in 0..table.row_count() {
+            for col in 0..table.col_count() {
+                if table.cell(row, col).map(ItemId::from) == Some(me) {
+                    return (row, col);
+                }
+            }
+        }
+
+        (-1, -1)
+    }
+
+    /// Port of `GetRow()`: from the cell's index in the parent table.
     pub fn row(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TABLECELL::GetRow", ctx)
+        self.grid_position(ctx).0
     }
 
-    /// `GetColumn()`.
+    /// Port of `GetColumn()`.
     pub fn column(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TABLECELL::GetColumn", ctx)
+        self.grid_position(ctx).1
     }
 
-    /// `GetAddr()`.
+    /// Port of `GetAddr()`: the spreadsheet nomenclature for the cell (ie: B3 for 2nd column,
+    /// 3rd row): `wxString::Format( "%c%d", 'A' + GetColumn() % 26, GetRow() + 1 )`.
     pub fn addr(&self, ctx: &BoardCtx<'_>) -> String {
-        crate::port_pending!("PCB_TABLECELL::GetAddr", ctx)
+        let letter = (b'A' as i32 + self.column(ctx) % 26) as u8 as char;
+        format!("{}{}", letter, self.row(ctx) + 1)
     }
 
     /// `GetUnwrappedShownText( aContext, aDepth )`.
@@ -133,17 +170,144 @@ impl PcbTablecell {
         context: ResolutionContext,
         depth: i32,
     ) -> String {
-        crate::port_pending!("PCB_TABLECELL::GetUnwrappedShownText", ctx, context, depth)
+        let parent_footprint = board_item::parent_footprint(self, ctx);
+        let has_board = board_item::has_board(self, ctx);
+        let depth_cell = Cell::new(depth);
+
+        let table_cell_resolver = |token: &mut String| -> bool {
+            if token == "ROW" {
+                *token = format!("{}", self.row(ctx) + 1); // 1-based
+                return true;
+            } else if token == "COL" {
+                *token = format!("{}", self.column(ctx) + 1); // 1-based
+                return true;
+            } else if token == "ADDR" {
+                *token = self.addr(ctx);
+                return true;
+            } else if token == "LAYER" {
+                *token = board_item::layer_name(self, ctx);
+                return true;
+            }
+
+            if let Some(fp) = parent_footprint {
+                if footprint_resolve_text_var(fp, ctx, token, None, depth_cell.get() + 1) {
+                    return true;
+                }
+            }
+
+            if has_board
+                && ctx.board.resolve_text_var(
+                    token,
+                    &ctx.board.current_variant,
+                    depth_cell.get() + 1,
+                )
+            {
+                return true;
+            }
+
+            false
+        };
+
+        let mut text = eda_text::shown_text(self, ctx, context, depth);
+
+        if self.textbox.text.has_text_vars() && context != ResolutionContext::RawValue {
+            text = resolve_text_vars_shared_depth(&text, &table_cell_resolver, &depth_cell);
+            finalize_text_var_expansion(&mut text, context);
+        }
+
+        text
     }
 
-    /// `GetRowHeight()`.
+    /// Port of `GetRowHeight()`: the parent table's height of the cell's row.
     pub fn row_height(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TABLECELL::GetRowHeight", ctx)
+        self.parent_table(ctx)
+            .map_or(0, |table| table.row_height(self.row(ctx)))
     }
 
-    /// `GetColumnWidth()`.
+    /// Port of `GetColumnWidth()`: the parent table's width of the cell's column.
     pub fn column_width(&self, ctx: &BoardCtx<'_>) -> i32 {
-        crate::port_pending!("PCB_TABLECELL::GetColumnWidth", ctx)
+        self.parent_table(ctx)
+            .map_or(0, |table| table.col_width(self.column(ctx)))
+    }
+
+    /// Port of `PCB_TABLECELL::TransformTextToPolySet` (`PCB_TEXTBOX`'s body over the cell, which
+    /// reaches the cell's `GetShownText()`).
+    pub fn transform_text_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        clearance: i32,
+        max_error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        pcb_textbox::transform_text_to_poly_set(self, ctx, buffer, clearance, max_error, error_loc)
+    }
+
+    /// Port of `PCB_TEXTBOX::GetMinSize()` on a cell.
+    pub fn min_size(&self, ctx: &BoardCtx<'_>) -> Vector2I {
+        pcb_textbox::min_size(self, ctx)
+    }
+
+    /// Port of `PCB_SHAPE::SetCenter()` on a cell (the textbox's `syncLibCoords()`).
+    pub fn set_center(&mut self, env: &MutEnv, center: Vector2I) {
+        self.textbox.set_center(env, center)
+    }
+
+    /// Port of `PCB_SHAPE::SetCornerRadius()` on a cell.
+    pub fn set_corner_radius(&mut self, env: &MutEnv, corner_radius: i32) {
+        self.textbox.set_corner_radius(env, corner_radius)
+    }
+
+    /// Port of `PCB_SHAPE::SetArcGeometry()` on a cell.
+    pub fn set_arc_geometry(
+        &mut self,
+        env: &MutEnv,
+        start: Vector2I,
+        mid: Vector2I,
+        end: Vector2I,
+    ) {
+        self.textbox.set_arc_geometry(env, start, mid, end)
+    }
+
+    /// Port of `PCB_SHAPE::SetArcAngleAndEnd()` on a cell.
+    pub fn set_arc_angle_and_end(&mut self, env: &MutEnv, angle: EdaAngle, check_negative: bool) {
+        self.textbox
+            .set_arc_angle_and_end(env, angle, check_negative)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseCenter()` on a cell.
+    pub fn set_ellipse_center(&mut self, env: &MutEnv, pt: Vector2I) {
+        self.textbox.set_ellipse_center(env, pt)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseMajorRadius()` on a cell.
+    pub fn set_ellipse_major_radius(&mut self, env: &MutEnv, r: i32) {
+        self.textbox.set_ellipse_major_radius(env, r)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseMinorRadius()` on a cell.
+    pub fn set_ellipse_minor_radius(&mut self, env: &MutEnv, r: i32) {
+        self.textbox.set_ellipse_minor_radius(env, r)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseRotation()` on a cell.
+    pub fn set_ellipse_rotation(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.textbox.set_ellipse_rotation(env, a)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseStartAngle()` on a cell.
+    pub fn set_ellipse_start_angle(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.textbox.set_ellipse_start_angle(env, a)
+    }
+
+    /// Port of `PCB_SHAPE::SetEllipseEndAngle()` on a cell.
+    pub fn set_ellipse_end_angle(&mut self, env: &MutEnv, a: EdaAngle) {
+        self.textbox.set_ellipse_end_angle(env, a)
+    }
+
+    /// Port of `PCB_SHAPE::SetPolyShape()` on a cell.
+    pub fn set_poly_shape(&mut self, env: &MutEnv, poly: ShapePolySet) {
+        self.textbox.set_poly_shape(env, poly)
     }
 
     /// `PCB_TEXTBOX::GetCorners (PCB_TABLECELL)`.
@@ -164,6 +328,15 @@ impl PcbTablecell {
     /// `PCB_SHAPE::SetEnd (PCB_TABLECELL)`.
     pub fn set_end(&mut self, env: &MutEnv, end: Vector2I) {
         self.textbox.set_end(env, end)
+    }
+}
+
+impl TextboxHost for PcbTablecell {
+    fn textbox(&self) -> &PcbTextbox {
+        &self.textbox
+    }
+    fn any_item(&self) -> AnyItem<'_> {
+        AnyItem::Tablecell(self)
     }
 }
 
@@ -422,9 +595,9 @@ impl EdaShapeItem for PcbTablecell {
 // ---- overrides and inherited PCB_TEXTBOX / PCB_SHAPE bodies (package M11) ----------------
 
 impl PcbTablecell {
-    /// `PCB_TEXTBOX::GetBoundingBox (PCB_TABLECELL)`.
+    /// Port of `PCB_TEXTBOX::GetBoundingBox (PCB_TABLECELL)` over the cell host.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_TEXTBOX::GetBoundingBox (PCB_TABLECELL)", ctx)
+        pcb_textbox::bounding_box(self, ctx)
     }
 
     /// `PCB_SHAPE::GetCenter`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -440,13 +613,7 @@ impl PcbTablecell {
         flash: Flashing,
         usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!(
-            "PCB_TEXTBOX::GetEffectiveShape (PCB_TABLECELL)",
-            ctx,
-            layer,
-            flash,
-            usage
-        )
+        pcb_textbox::effective_shape(self, ctx, layer, flash, usage)
     }
 
     /// `PCB_TABLECELL::GetFriendlyName()`: "Table Cell" (untranslated).
@@ -461,7 +628,7 @@ impl PcbTablecell {
 
     /// `PCB_TEXTBOX::HitTest (PCB_TABLECELL)`.
     pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXTBOX::HitTest (PCB_TABLECELL)", ctx, pos, accuracy)
+        pcb_textbox::hit_test(self, ctx, pos, accuracy)
     }
 
     /// `PCB_TEXTBOX::HitTest (PCB_TABLECELL)`.
@@ -472,13 +639,7 @@ impl PcbTablecell {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!(
-            "PCB_TEXTBOX::HitTest (PCB_TABLECELL)",
-            ctx,
-            rect,
-            contained,
-            accuracy
-        )
+        pcb_textbox::hit_test_rect(self, ctx, rect, contained, accuracy)
     }
 
     /// `PCB_SHAPE::IsOnLayer`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -493,7 +654,8 @@ impl PcbTablecell {
         units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("PCB_TABLECELL::GetItemDescription", ctx, units, full)
+        let _ = (units, full);
+        format!("Table cell {}", self.addr(ctx))
     }
 
     /// `PCB_SHAPE::GetLayer`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -526,15 +688,7 @@ impl PcbTablecell {
         error: i32,
         error_loc: ErrorLoc,
     ) {
-        crate::port_pending!(
-            "PCB_SHAPE::TransformShapeToPolySet (PCB_TABLECELL)",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc
-        )
+        pcb_textbox::transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
     }
 
     /// `PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)`.
@@ -548,16 +702,7 @@ impl PcbTablecell {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc,
-            ignore_line_width
-        )
+        pcb_textbox::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
     }
 
     /// `PCB_SHAPE::IsConnected`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -635,9 +780,9 @@ impl PcbTablecell {
         self.textbox.style_from_settings(settings, check_side)
     }
 
-    /// `PCB_TEXTBOX::GetDrawPos (PCB_TABLECELL)`.
+    /// Port of `PCB_TEXTBOX::GetDrawPos (PCB_TABLECELL)`: `GetDrawPos( false )` over the cell.
     pub fn draw_pos(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_TEXTBOX::GetDrawPos (PCB_TABLECELL)", ctx)
+        pcb_textbox::draw_pos_flipped(self, ctx, false)
     }
 
     /// `PCB_TEXTBOX::getFontMetrics`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -662,7 +807,9 @@ impl PcbTablecell {
 
     /// `PCB_TABLECELL::GetShownText`.
     pub fn shown_text(&self, ctx: &BoardCtx<'_>, context: ResolutionContext, depth: i32) -> String {
-        crate::port_pending!("PCB_TABLECELL::GetShownText", ctx, context, depth)
+        let mut text = self.unwrapped_shown_text(ctx, context, depth);
+        pcb_textbox::linebreak_to_box(self, ctx, &mut text);
+        text
     }
 
     /// `PCB_TEXTBOX::GetTextAngle`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
@@ -692,7 +839,7 @@ impl PcbTablecell {
 
     /// `PCB_SHAPE::getHatchingKnockouts (PCB_TABLECELL)`.
     pub fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
-        crate::port_pending!("PCB_SHAPE::getHatchingKnockouts (PCB_TABLECELL)", ctx)
+        pcb_textbox::hatching_knockouts(self, ctx)
     }
 
     /// `PCB_TABLECELL::IsFilledForHitTesting()`: true.

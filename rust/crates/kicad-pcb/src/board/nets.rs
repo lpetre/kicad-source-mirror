@@ -414,38 +414,43 @@ impl Board {
         }
 
         let net_settings = &self.design_settings.net_settings;
-
-        // HasChainPatternAssignments( NET_CHAIN_SOURCE::BOARD ) (inline in net_settings.h)
-        let has_board_chain_patterns = net_settings
-            .netclass_chain_pattern_assignments
-            .get(&NetChainSource::Board)
-            .is_some_and(|v| !v.is_empty());
+        let chain_netclasses = &net_settings.net_chain_net_classes;
 
         // Nothing to derive and nothing left from a prior pass, so skip the cache wipe a
         // rebuild would cost on every resync of a board without chain overrides.
-        if net_settings.net_chain_net_classes.is_empty() && !has_board_chain_patterns {
+        if chain_netclasses.is_empty()
+            && !net_settings.has_chain_pattern_assignments(NetChainSource::Board)
+        {
             return;
         }
 
-        // ClearChainPatternAssignments( BOARD ) and SetChainPatternAssignment( BOARD, net,
-        // class ) for every net (name order) whose chain has a known class
-        // (`HasNetclass`): NET_SETTINGS functions of package M4 that have no Rust signature yet.
+        // The loop over m_NetInfo (name order) only reads the nets and HasNetclass(), which
+        // ClearChainPatternAssignments() does not change: collect first, then mutate.
         let assignments: Vec<(String, String)> = self
             .nets()
-            .filter(|net| !net.net_chain.is_empty())
             .filter_map(|net| {
-                let class = net_settings.net_chain_net_classes.get(&net.net_chain)?;
-                net_settings
-                    .netclasses
-                    .contains_key(class)
-                    .then(|| (net.netname.clone(), class.clone()))
+                let chain_name = &net.net_chain;
+
+                if chain_name.is_empty() {
+                    return None;
+                }
+
+                let class = chain_netclasses.get(chain_name)?;
+
+                if !net_settings.has_netclass(class) {
+                    return None;
+                }
+
+                Some((net.netname.clone(), class.clone()))
             })
             .collect();
 
-        crate::port_pending!(
-            "NET_SETTINGS::ClearChainPatternAssignments / SetChainPatternAssignment (package M4)",
-            assignments
-        )
+        let net_settings = &mut self.design_settings.net_settings;
+        net_settings.clear_chain_pattern_assignments(NetChainSource::Board);
+
+        for (net_name, class) in &assignments {
+            net_settings.set_chain_pattern_assignment(NetChainSource::Board, net_name, class);
+        }
     }
 
     /// The terminal-pad resolution loop at the end of the parser

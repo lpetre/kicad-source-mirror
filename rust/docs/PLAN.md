@@ -172,7 +172,15 @@ Progress log:
   corpus boards (256 board-kind pairs), shape formatter identical on 276 boards, text blocks
   identical wherever reachable; 0 real differences. Launched: GLUE-1 (wire finished ports
   into stale stubs, dump no_api calls, stale staging-stub tests) and PCBIO-12 other items
-  (w3ztkctur).
+  (w3ztkctur). Heartbeat 01:18 UTC: also done M9, M18, M12, M15 (or nearly), CN-01, DRC-02,
+  PCBIO-04, PCBIO-09, PCBIO-17 (corpus scoreboard: 375 boards, 34 byte-identical to the
+  reference re-save, 159 identical modulo pending constructs, 287 fixed points) and W1
+  (session / cli / wasm: `kicad-rs pcb upgrade` byte-identical to kicad-cli on issue10697;
+  every library crate builds for wasm32; orchestrator re-ran scripts/build-wasm.sh (5.0 MB
+  module) and web/test/smoke.mjs: 49 checks pass, wasm == native). Launched: M19 -> PCBIO-06
+  -> PCBIO-07 and M21 -> M20 (w3kdexuvx). Package files exist for PCBIO-13 (launch after
+  PCBIO-09/11 chain ends). Still to write: PCBIO-14, PCBIO-15, DRC-06..10, DRC-12,
+  FAB-03..09, ZF-*, TD-*.
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
   real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12

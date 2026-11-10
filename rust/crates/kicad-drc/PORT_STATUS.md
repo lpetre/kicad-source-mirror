@@ -301,7 +301,7 @@ constraint with min/opt/max, flags, name, severity), both constraint maps (with 
 flags and keepout zones) and the netclass clearance table. Rust twin: `dump_engine` in
 `tests/engine_oracle.rs`; compact golden `tests/golden/engine_corpus.txt` (FNV-1a per board,
 `tests/oracle/gen_engine_goldens.py`, 367 boards: every `.kicad_pcb` < 5 MB under `qa/data/pcbnew`
-and `demos`; re-generation spot-checked identical).
+and `demos`; re-generation spot-checked identical on 2 boards).
 
 `engine_corpus_matches_cxx`: 0 mismatches. With the parser state of 2026-11-10 309 boards
 matched (incl. 85 user rules with conditions, compiled with the DRC-20 stand-in binding

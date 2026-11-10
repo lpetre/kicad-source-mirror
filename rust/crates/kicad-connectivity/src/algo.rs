@@ -242,7 +242,8 @@ impl CnConnectivityAlgo {
             return false;
         }
 
-        self.dirty_nets[net as usize]
+        // (C++ indexes the vector unchecked; a net beyond the table is not dirty)
+        self.dirty_nets.get(net as usize).copied().unwrap_or(false)
     }
 
     /// Port of `ClearDirtyFlags()` (of the nets).
@@ -259,7 +260,7 @@ impl CnConnectivityAlgo {
         for &cl in &self.ratsnest_clusters {
             let net = self.cluster(cl).origin_net();
 
-            if net >= 0 && self.dirty_nets[net as usize] {
+            if self.is_net_dirty(net) {
                 clusters.push(cl);
             }
         }
