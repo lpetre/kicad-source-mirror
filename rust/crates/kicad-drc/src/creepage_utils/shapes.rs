@@ -688,6 +688,15 @@ pub fn segment_intersects_arc(
     end_angle: EdaAngle,
     a_intersection_points: Option<&mut Vec<Vector2I>>,
 ) -> bool {
+    // A path end converted from a NaN (overlapping circles in the tangent constructions) is
+    // INT_MIN: the C++ runs the intersection on it with overflowing `int` arithmetic
+    // (undefined behaviour, a checked build panics). Such a path has NaN weight and is never
+    // used (DRC-33 rejects it before validation): report a crossing so it is dropped here
+    // as well. Deviation recorded in PORT_STATUS.md (DRC-33).
+    if [p1.x, p1.y, p2.x, p2.y].contains(&i32::MIN) {
+        return true;
+    }
+
     let segment = Seg::new(p1, p2);
     let start_point = Vector2I::new(
         to_int(radius * cmath::cos(start_angle.as_radians())),

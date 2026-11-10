@@ -161,7 +161,12 @@ fn plot_layer_items(ctx: &BoardCtx<'_>, opts: &PcbPlotParams, layer: PcbLayerId)
     // PlotStandardLayer (subtract-mask-from-silk is off in the CLI defaults)
     let layer_mask = Lset::from_layers(&[layer]);
     {
-        let mut itemplotter = BrditemsPlotter::new(plotter.as_mut(), ctx, &plot_opt);
+        let mut itemplotter = BrditemsPlotter::new(
+            plotter.as_mut(),
+            ctx,
+            &plot_opt,
+            kicad_fab::color_settings::ColorSettings::builtin_default(),
+        );
         itemplotter.set_layer_set(&layer_mask);
         let flags = StandardLayerFlags::new(ctx, &layer_mask, &plot_opt);
         plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);
@@ -481,7 +486,12 @@ fn svg_items_match_cli() {
 
         let layer_mask = Lset::from_layers(&[layer]);
         {
-            let mut itemplotter = BrditemsPlotter::new(plotter.as_mut(), &ctx, &plot_opt);
+            let mut itemplotter = BrditemsPlotter::new(
+                plotter.as_mut(),
+                &ctx,
+                &plot_opt,
+                kicad_fab::color_settings::ColorSettings::builtin_default(),
+            );
             itemplotter.set_layer_set(&layer_mask);
             let flags = StandardLayerFlags::new(&ctx, &layer_mask, &plot_opt);
             plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);

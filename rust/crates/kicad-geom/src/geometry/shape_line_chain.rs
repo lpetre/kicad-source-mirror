@@ -3730,9 +3730,12 @@ impl Shape for ShapeLineChain {
                 continue;
             }
 
-            let d: i32 = rescale(diff.x, a_pt.y - p1.y, diff.y);
+            // `int` subtractions: a point converted from a NaN (INT_MIN, PORTING.md section 9)
+            // overflows them, which wraps on x86-64 (the creepage path validation tests such
+            // points).
+            let d: i32 = rescale(diff.x, a_pt.y.wrapping_sub(p1.y), diff.y);
 
-            if ((p1.y >= a_pt.y) != (p2.y >= a_pt.y)) && (a_pt.x - p1.x < d) {
+            if ((p1.y >= a_pt.y) != (p2.y >= a_pt.y)) && (a_pt.x.wrapping_sub(p1.x) < d) {
                 inside = !inside;
             }
         }

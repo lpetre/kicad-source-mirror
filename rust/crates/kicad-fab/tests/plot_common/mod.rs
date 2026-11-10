@@ -49,6 +49,7 @@ pub fn env() -> PlotEnv {
             second: 3,
             utc_offset_minutes: 60,
         },
+        drawing_sheet: Default::default(),
     }
 }
 

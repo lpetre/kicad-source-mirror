@@ -142,13 +142,17 @@ for (const j of ref.jobs) {
          `exportDrill gerber ${j.file}`);
 }
 
-// Not yet ported: the SVG plot names its subsystem (FAB-11).
+// plotSvg (FAB-11 is wiring it): SVG text, or an error naming the subsystem.
 {
     const fresh = k.newBoard('job.kicad_pcb');
-    assert.throws(() => fresh.plotSvg({}),
-                  (e) => (e.name === 'NotYetPortedError' && typeof e.subsystem === 'string')
-                         || e instanceof WebAssembly.RuntimeError,
-                  'plotSvg');
+    let svg = null;
+    try {
+        svg = fresh.plotSvg({});
+    } catch (e) {
+        assert.ok((e.name === 'NotYetPortedError' && typeof e.subsystem === 'string')
+                  || e instanceof WebAssembly.RuntimeError, String(e));
+    }
+    if (svg !== null) assert.match(svg, /<svg/);
     checks++;
 }
 

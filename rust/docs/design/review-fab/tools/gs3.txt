@@ -1,0 +1,5 @@
+default|
+sm_noam_p5|--subtract-soldermask --disable-aperture-macros --precision 5
+fab|--sp --spn --cdnp --hdnp --no-netlist
+nox2|--no-x2 --use-drill-file-origin
+bpp|--board-plot-params

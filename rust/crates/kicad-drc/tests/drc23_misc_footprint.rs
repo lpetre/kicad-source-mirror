@@ -23,23 +23,18 @@
 //! `test_drc_invalid_outline_issue24241.cpp`, `test_drc_text_var_issue24442.cpp`,
 //! `test_drc_netclass_literal.cpp` and `test_drc_tuning_profiles.cpp` (the misc part).
 
-// The harness includes `common` privately; this test needs its `SyntaxBinder` for InitEngine.
-#[allow(clippy::duplicate_mod)]
-mod common;
 mod drc_harness;
 
 use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::path::Path;
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, Loaded, cli_report_entries, diff_entries, load_board, panic_text, quiet,
-    read_tuning_profiles, run_providers,
+    Entry, Loaded, cli_report_entries_flow, diff_entries, load_board, panic_text, quiet,
+    run_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_core::json::{self, ObjectOrder};
 use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::engine::{DrcEngine, DrcTestProviderRun};
 use kicad_drc::providers::footprint_checks::DrcTestProviderFootprintChecks;
@@ -107,35 +102,6 @@ fn golden() -> BTreeMap<String, Vec<Entry>> {
     }
 
     boards
-}
-
-/// The project's tuning profiles (`TUNING_PROFILES` of the `.kicad_pro`).
-fn tuning_profiles(path: &Path) -> TuningProfiles {
-    let pro = path.with_extension("kicad_pro");
-
-    if !pro.exists() {
-        return TuningProfiles::default();
-    }
-
-    match json::parse_bytes(&std::fs::read(&pro).unwrap(), ObjectOrder::Sorted, true) {
-        Ok(doc) => read_tuning_profiles(&doc),
-        Err(_) => TuningProfiles::default(),
-    }
-}
-
-/// The two providers in registry order (footprint checks before misc).
-struct FootprintAndMisc {
-    footprint_checks: DrcTestProviderFootprintChecks,
-    misc: DrcTestProviderMisc,
-}
-
-impl FootprintAndMisc {
-    fn new(path: &Path) -> Self {
-        FootprintAndMisc {
-            footprint_checks: DrcTestProviderFootprintChecks::default(),
-            misc: DrcTestProviderMisc::new(tuning_profiles(path)),
-        }
-    }
 }
 
 /// True for a `shorting_items` entry of the footprint checks provider (net ties): every item
@@ -226,11 +192,10 @@ fn misc_and_footprint_checks_match_reference_corpus() {
                 || -> Result<(Vec<Entry>, Vec<Entry>, Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-                    let mut providers = FootprintAndMisc::new(&path);
-                    let mine: Vec<Entry> = cli_report_entries(
+                    let mine: Vec<Entry> = cli_report_entries_flow(
                         &mut loaded,
                         false,
-                        &mut [&mut providers.footprint_checks, &mut providers.misc],
+                        &["footprint checks", "miscellaneous"],
                     )
                     .into_iter()
                     .filter(|e| TYPES.contains(&e.type_.as_str()))
@@ -381,7 +346,8 @@ fn misc_and_footprint_checks_match_reference_corpus() {
 fn load_qa(name: &str) -> (Loaded, TuningProfiles) {
     let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
     let loaded = load_board(&path).unwrap_or_else(|e| panic!("load {name}: {e}"));
-    (loaded, tuning_profiles(&path))
+    let tuning = loaded.tuning_profiles.clone();
+    (loaded, tuning)
 }
 
 /// Every code `DRCE_FIRST ..= DRCE_LAST` ignored, then `enabled` set.
@@ -568,7 +534,7 @@ fn drc_netclass_name_ending_in_backslash() {
     let dru_path = dru.to_string_lossy().to_string();
     let mut engine = DrcEngine::new();
     engine
-        .init_engine_with::<common::SyntaxBinder>(
+        .init_engine(
             &mut loaded.board,
             Some((&dru_text, &dru_path)),
             default_layer_choices(),

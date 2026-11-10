@@ -21,6 +21,7 @@
 //! `rust/docs/design/plot-engines.md` and `PORT_STATUS.md`.
 
 pub mod common_plot_functions;
+pub mod drawing_sheet;
 pub mod drill_markers;
 pub mod gbr_metadata;
 pub mod gbr_netlist_metadata;

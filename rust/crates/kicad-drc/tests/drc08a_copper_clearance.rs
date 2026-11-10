@@ -215,17 +215,11 @@ fn origin(types: [Option<KicadT>; 2], description: &str, physical: &[String]) ->
 /// Boards whose differences come from the evaluation of their user rule conditions (outside
 /// this provider; the entries are DRC-08a phase entries whose constraint resolves to another
 /// rule than in C++). Listed, not failed; they leave this list when the cause is fixed.
-const KNOWN_RULE_GAPS: &[(&str, &str)] = &[
-    (
-        "qa/data/pcbnew/issue16566.kicad_pcb",
-        "`A.Pad_Shape == 'Oval'` does not match the oval pad, the 5 mm rule is not applied",
-    ),
-    (
-        "qa/data/pcbnew/issue23469/issue23469.kicad_pcb",
-        "`A.Reference == 'J1' && B.Reference == 'J1'` does not match a pad against the NPTH \
-         pad of J1 for hole_clearance, the board default is applied",
-    ),
-];
+// Empty since STAB-DRC: issue16566 (`A.Pad_Shape == 'Oval'`) and issue23469
+// (`A.Reference == 'J1' && B.Reference == 'J1'`, hole proxy) match the reference with the
+// real expression binding and the QA load steps; their differences came from the stand-in
+// binding of the harness.
+const KNOWN_RULE_GAPS: &[(&str, &str)] = &[];
 
 /// Per-type score.
 #[derive(Default)]

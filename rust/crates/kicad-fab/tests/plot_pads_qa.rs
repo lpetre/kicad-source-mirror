@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Ports of the FAB-04 cases of `qa/tests/pcbnew/test_plot_edge_cuts_drill_marks.cpp`
-//! (`NoDrillFlashesOnEdgeCuts`, `NoDrillMarksOnGerberFromStoredOptions`) and
-//! `qa/tests/pcbnew/test_plot_pad_mask.cpp` (`RoundRectGerberMaskApertureHasCorrectRadius`).
+//! Ports of `qa/tests/pcbnew/test_plot_edge_cuts_drill_marks.cpp` (`NoDrillFlashesOnEdgeCuts`,
+//! `NoDrillMarksOnGerberFromStoredOptions`: FAB-04; `DrillMarksPlottedOnEdgeCutsSvg`: FAB-11)
+//! and `qa/tests/pcbnew/test_plot_pad_mask.cpp` (`RoundRectGerberMaskApertureHasCorrectRadius`).
 //!
 //! The C++ tests call `PlotBoardLayers` / `PlotStandardLayer`; each test here makes that call
 //! and checks it, then checks the same plot through the FAB-04 part alone
@@ -40,7 +40,7 @@ use kicad_pcb::item_ref::OwnedItem;
 use kicad_pcb::pad::Pad;
 use kicad_pcb::padstack::{PadAttrib, PadDrillShape, PadShape, Padstack, PadstackMode};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
-use kicad_plot::{GerberPlotter, Plotter, RenderSettings};
+use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 
 /// `new FOOTPRINT( &board )` at `fp_pos` with one pad built by `make` (its padstack and
 /// attributes), placed at `pad_pos` (`pad->SetPosition`), added to the board.
@@ -109,7 +109,12 @@ fn gerber_plotter(x2: bool, no_macros: bool) -> GerberPlotter {
 
 /// The FAB-04 part of `PlotStandardLayer` for `layers` (see the module comment).
 fn plot_items(ctx: &BoardCtx<'_>, plotter: &mut dyn Plotter, layers: &Lset, opts: &PcbPlotParams) {
-    let mut itemplotter = BrditemsPlotter::new(plotter, ctx, opts);
+    let mut itemplotter = BrditemsPlotter::new(
+        plotter,
+        ctx,
+        opts,
+        kicad_fab::color_settings::ColorSettings::default(),
+    );
     itemplotter.set_layer_set(layers);
     let flags = StandardLayerFlags::new(ctx, layers, opts);
     plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);
@@ -153,7 +158,13 @@ fn no_drill_flashes_on_edge_cuts() {
 
     let text = {
         let mut plotter = gerber_plotter(false, false);
-        plot_board_layers(&ctx, &mut plotter, &[PcbLayerId::EdgeCuts], &plot_opts);
+        plot_board_layers(
+            &ctx,
+            &mut plotter,
+            &[PcbLayerId::EdgeCuts],
+            &plot_opts,
+            kicad_fab::color_settings::ColorSettings::default(),
+        );
         assert!(plotter.end_plot());
         plotter.output().to_string()
     };
@@ -175,6 +186,46 @@ fn no_drill_flashes_on_edge_cuts() {
         flashes(plotter.output()),
         0,
         "Edge_Cuts gerber flashes (#24416)"
+    );
+}
+
+/// `DrillMarksPlottedOnEdgeCutsSvg` (issue 24867): an SVG Edge_Cuts plot with full drill marks
+/// keeps the drill mark of a pad that is not on Edge_Cuts (a drill map, not a knockout).
+#[test]
+fn drill_marks_plotted_on_edge_cuts_svg() {
+    let board = tht_board();
+    let ctx = BoardCtx::bare(&board);
+
+    // SVG_PLOTTER with SIMPLE_RENDER_SETTINGS, OpenFile, SetViewport, StartPlot( "1" )
+    let mut plotter = SvgPlotter::new();
+    plotter.set_render_settings(Some(RenderSettings::default()));
+    assert!(plotter.open_file("kicad_svg_24867"));
+    plotter.set_viewport(
+        Vector2I::new(0, 0),
+        PCB_IU_SCALE.iu_per_mils / 10.0,
+        1.0,
+        false,
+    );
+    assert!(plotter.start_plot("1"));
+
+    let mut plot_opts = PcbPlotParams::default();
+    plot_opts.format = PlotFormat::Svg;
+    plot_opts.drill_marks = DrillMarks::FullDrillShape; // Actual Size
+
+    plot_board_layers(
+        &ctx,
+        &mut plotter,
+        &[PcbLayerId::EdgeCuts],
+        &plot_opts,
+        kicad_fab::color_settings::ColorSettings::default(),
+    );
+    assert!(plotter.end_plot());
+
+    // the drill mark is the only circle on Edge_Cuts
+    let circles = plotter.output().matches("<circle").count();
+    assert!(
+        circles >= 1,
+        "Edge_Cuts SVG is missing the drill-mark circle (#24867)"
     );
 }
 
@@ -204,7 +255,13 @@ fn no_drill_marks_on_gerber_from_stored_options() {
 
     let text = {
         let mut plotter = gerber_plotter(false, false);
-        plot_board_layers(&ctx, &mut plotter, &[PcbLayerId::FCu], &plot_opts);
+        plot_board_layers(
+            &ctx,
+            &mut plotter,
+            &[PcbLayerId::FCu],
+            &plot_opts,
+            kicad_fab::color_settings::ColorSettings::default(),
+        );
         assert!(plotter.end_plot());
         plotter.output().to_string()
     };
@@ -325,7 +382,13 @@ fn round_rect_gerber_mask_aperture_has_correct_radius() {
 
     let text = {
         let mut plotter = gerber_plotter(true, true);
-        plot_standard_layer(&ctx, &mut plotter, &layers, &plot_opts);
+        plot_standard_layer(
+            &ctx,
+            &mut plotter,
+            &layers,
+            &plot_opts,
+            kicad_fab::color_settings::ColorSettings::default(),
+        );
         assert!(plotter.end_plot());
         plotter.output().to_string()
     };

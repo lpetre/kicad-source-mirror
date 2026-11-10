@@ -1,0 +1,24 @@
+sm|--subtract-soldermask
+noam|--disable-aperture-macros
+nonet|--no-netlist
+nox2|--no-x2
+nox2nonet|--no-x2 --no-netlist
+ev|--ev
+erd|--erd
+everd|--ev --erd
+hdnp|--hdnp
+sdnp|--sdnp
+cdnp|--cdnp
+sp|--sp
+spn|--sp --spn
+spnonly|--spn
+ibt|--ibt
+p5|--precision 5
+noprotel|--no-protel-ext
+checkzones|--check-zones
+dfo|--use-drill-file-origin
+cl1|-l F.Cu,B.Cu,F.Silkscreen --cl Edge.Cuts,F.Fab
+cl2|-l F.Mask,B.Mask,F.Paste --cl F.Cu,Edge.Cuts
+cl3|-l F.Cu,F.Fab,Edge.Cuts --cl F.Cu,B.Silkscreen,F.Courtyard
+combo1|--subtract-soldermask --disable-aperture-macros --precision 5 --no-x2
+combo2|--sdnp --cdnp --sp --spn --ev --no-netlist --no-protel-ext

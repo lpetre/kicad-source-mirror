@@ -1,0 +1,6 @@
+zone all FCu outlines 1
+  0 pts 699 island 0 hash b90a70ffad6aeda1
+zone all BCu outlines 1
+  0 pts 219 island 0 hash 7d270b5afb2f2cc6
+zone all In1Cu outlines 1
+  0 pts 446 island 0 hash bb4abb3f64205f4f

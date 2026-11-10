@@ -1,0 +1,5 @@
+(rule drc31_chaintime
+    (condition "A.hasNetChain()")
+    (constraint net_chain_length (max 1ps))
+    (constraint stub_length (max 0.5ps))
+    (constraint skew (max 0.1mm)))

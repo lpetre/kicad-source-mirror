@@ -1,0 +1,8 @@
+(rule "dp30_gap_ignored_back"
+	(layer "B.Cu")
+	(severity ignore)
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_gap (min 0.2mm)))
+(rule "dp30_unc"
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_uncoupled (max 0.5mm)))

@@ -233,6 +233,8 @@ const UNARY_TYPES: [DrcConstraintT; 15] = [
 #[derive(Default)]
 struct Cat {
     keys: usize,
+    /// The previous key (see [`Cat::key`]).
+    last_key: Option<(Option<ItemId>, Option<ItemId>)>,
     lines: usize,
     hash: u64,
     /// The unhashed "field=value" lines, kept only while `EVALRULES_RAW_DIR` is set (to diff
@@ -244,14 +246,21 @@ impl Cat {
     fn new() -> Self {
         Cat {
             keys: 0,
+            last_key: None,
             lines: 0,
             hash: FNV_OFFSET,
             raw: std::env::var_os("EVALRULES_RAW_DIR").map(|_| Vec::new()),
         }
     }
 
-    fn key(&mut self) {
-        self.keys += 1;
+    /// A new key (item or item pair). As `gen_evalrules_goldens.py` counts them: a key equal to
+    /// the previous one of the category (the same pad drawn again for a track by `pair_tp`
+    /// when the board has few pads) is not counted again; its lines are.
+    fn key(&mut self, ids: (Option<ItemId>, Option<ItemId>)) {
+        if self.last_key != Some(ids) {
+            self.keys += 1;
+            self.last_key = Some(ids);
+        }
     }
 
     fn emit(&mut self, field: &str, value: &str) {
@@ -323,7 +332,7 @@ fn walk(board: &Board, ctx: &BoardCtx<'_>) -> Walk {
 
 /// `dumpUnary` without the disallow line.
 fn unary(engine: &DrcEngine, ctx: &BoardCtx<'_>, item: ItemRef<'_>, cat: &mut Cat) {
-    cat.key();
+    cat.key((item.id(), None));
 
     for layer in copper_seq(ctx.board, item.layer_set()) {
         let c = engine.eval_rules(
@@ -350,7 +359,7 @@ fn unary(engine: &DrcEngine, ctx: &BoardCtx<'_>, item: ItemRef<'_>, cat: &mut Ca
 }
 
 fn disallow(engine: &DrcEngine, ctx: &BoardCtx<'_>, item: ItemRef<'_>, cat: &mut Cat) {
-    cat.key();
+    cat.key((item.id(), None));
     let layer = kicad_core::layer_ids::UNDEFINED_LAYER;
     let c = engine.eval_rules(
         ctx,
@@ -374,7 +383,7 @@ fn pair(
     zone_connection: bool,
     cat: &mut Cat,
 ) {
-    cat.key();
+    cat.key((a.id(), b.id()));
     let mut shared = a.layer_set();
     shared &= &b.layer_set();
 

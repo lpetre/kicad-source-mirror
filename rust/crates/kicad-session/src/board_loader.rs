@@ -215,9 +215,7 @@ pub fn load_guarded(
         None => with_extension(inputs.source_name, "kicad_pro"),
     };
 
-    let mut parse_warnings = Vec::new();
-
-    let (board, project) = match path {
+    let (board, project, parse_warnings) = match path {
         LoadPath::Cli => {
             // getProjectForBoard: <board>.kicad_pro made absolute (by the host, see
             // LoadInputs::project_path); SETTINGS_MANAGER::LoadProject also reads the .kicad_prl
@@ -225,9 +223,8 @@ pub fn load_guarded(
 
             // PCB_IO::LoadBoard: newBoard->SetFileName( aFileName ), then loadBoard()
             let (mut board, warnings) = parse(inputs)?;
-            parse_warnings = warnings;
             board.file_name = inputs.source_name.to_string();
-            (board, Some(project))
+            (board, Some(project), warnings)
         }
         LoadPath::Qa => {
             // projectFile.Exists() / legacyProject.Exists(): LoadProject
@@ -236,8 +233,7 @@ pub fn load_guarded(
 
             // ReadBoardFromFileOrStream: the parser alone, no SetFileName
             let (board, warnings) = parse(inputs)?;
-            parse_warnings = warnings;
-            (board, project)
+            (board, project, warnings)
         }
     };
 

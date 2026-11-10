@@ -1,0 +1,11 @@
+demos/pic_programmer/pic_programmer.kicad_pcb
+demos/interf_u/interf_u.kicad_pcb
+qa/data/pcbnew/issue5830.kicad_pcb
+qa/data/pcbnew/issue12609.kicad_pcb
+qa/data/cli/basic_test/basic_test.kicad_pcb
+demos/ecc83/ecc83-pp.kicad_pcb
+qa/data/eeschema/variants/variants.kicad_pcb
+qa/data/pcbnew/issue6945.kicad_pcb
+demos/microwave/microwave.kicad_pcb
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+qa/data/pcbnew/issue22267.kicad_pcb

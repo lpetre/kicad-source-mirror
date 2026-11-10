@@ -792,3 +792,29 @@ None known.
   overload; no corpus board exercises it (unverified against the oracle).
 * SVG `--subtract-soldermask` reaches the same code; it is verified only through Gerber here
   (SVG plotting is FAB-11).
+
+## REV-FAB (review, 2026-11-10)
+
+Reviewer pass, no source change in this crate. Report: `rust/docs/design/review-fab.md`
+(option, stored-parameter and item coverage tables, findings, harness in
+`rust/docs/design/review-fab/`). About 2 300 differential runs of `kicad-rs` against the
+reference kicad-cli: every `pcb export gerbers` / `pcb export drill` option, 31 variants of the
+stored plot parameters, all 256 Excellon option combinations on three boards, nine crafted
+boards (996 pads in rotated / flipped footprints, 1008 shapes, 786 text / dimension / table
+items, zones, vias, exotic names, extreme coordinates).
+
+### Deviations found (open)
+
+* F-03 (`plot_board_layers.rs` `plot_pad_layer`): the C++ plots the board's pad in place and
+  restores it through the board-frame `PAD::SetSize`, which is lossy under a footprint scale
+  and persists into the layers plotted later; the port's detached copy does not. Visible as
+  1 to 3 nm in the `F.Mask` macro of a chamfered pad in a non-uniformly scaled footprint when
+  `F.Cu` or `F.Paste` is plotted first. `docs/packages/FIX-FAB-1.md`.
+* F-01 (accepted, already listed under FAB-03 / FAB-07): `--board-plot-params` with a stored
+  non-Gerber `outputformat`: the reference writes that format into the `.gbr` files (HPGL:
+  `Failed to plot`, job file, exit code 4); the port stops with an error (exit code 2).
+
+### Known gaps confirmed by the review
+
+`--variant` (model stub), `--ibt` / `plotframeref` (drawing sheet), `--generate-map` (FAB-12),
+drill chart symbols (FAB-13): the boards and option sets to rerun are in the report.

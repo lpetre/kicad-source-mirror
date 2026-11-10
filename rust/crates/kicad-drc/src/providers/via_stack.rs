@@ -52,7 +52,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use kicad_core::eda_units::EdaUnits;
-use kicad_core::layer_ids::{PCB_LAYER_ID_COUNT, is_external_copper_layer};
+use kicad_core::layer_ids::is_external_copper_layer;
 use kicad_core::layer_range::LayerRange;
 use kicad_core::{Lset, PcbLayerId, Severity};
 use kicad_pcb::board::Board;
@@ -63,6 +63,7 @@ use kicad_pcb::drc_api::{
 };
 use kicad_pcb::ids::TrackId;
 use kicad_pcb::padstack::PadAttrib;
+use kicad_pcb::pcb_generator::ViaStackData;
 use kicad_pcb::pcb_generator::{GENERATOR_TYPE_VIA_STACK, PcbGenerator};
 use kicad_pcb::pcb_track::{PcbVia, Track, Viatype};
 use kicad_pcb::{AnyItem, BoardCtx};
@@ -86,18 +87,6 @@ impl Default for DrcTestProviderViaStack {
             base: DrcTestProviderBase::new("microvia_stack"),
         }
     }
-}
-
-/// Port of the static `PCB_VIA_STACK::IsSpanValid( aBoard, aStart, aEnd )`
-/// (`pcbnew/generators/pcb_via_stack.cpp`; not in kicad-pcb yet): both ends are copper layers
-/// enabled on the board and they differ.
-pub fn is_span_valid(board: &Board, start: PcbLayerId, end: PcbLayerId) -> bool {
-    let enabled = Lset::all_cu_mask_n(board.copper_layer_count());
-
-    let present =
-        |layer: PcbLayerId| layer.0 >= 0 && layer.0 < PCB_LAYER_ID_COUNT && enabled.contains(layer);
-
-    present(start) && present(end) && start != end
 }
 
 /// `stackThickness( aStack, aFirst, aLast )`: copper and dielectric only, so soldermask does
@@ -167,7 +156,7 @@ impl DrcTestProviderViaStack {
         // span with single layer steps and no gap. A span naming layers absent from the board
         // is broken by definition, and iterating it would never terminate.
         if !host.is_error_limit_exceeded(DRCE_MALFORMED_MICROVIA_STACK_SPAN) {
-            if !is_span_valid(ctx.board, data.start_layer, data.end_layer) {
+            if !ViaStackData::is_span_valid(Some(ctx.board), data.start_layer, data.end_layer) {
                 let mut drc_item =
                     item::create(DRCE_MALFORMED_MICROVIA_STACK_SPAN).expect("span item");
                 drc_item.set_item_ids(vec![stack_ref.uuid()]);

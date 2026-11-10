@@ -313,3 +313,49 @@ Verification (reference kicad-cli `pcb drc --refill-zones --save-board`, 2026-11
   checked by reading.
 - Thieving zones with two copper layers in the file are reduced to one layer by the model
   (`SetLayerSet`), so the board-default offset was only exercised on F.Cu.
+
+## REV-ZF: review of the zone filler port
+
+Findings, coverage map and method: `rust/docs/design/review-zone-fill.md`. The reading of
+`zone_filler.cpp` against `filler.rs`, `copper_fill.rs`, `knockouts.rs`, `thermal.rs`,
+`connect.rs`, `refill.rs`, `index.rs`, `tool.rs` found no deviation on inputs the reference
+survives.
+
+Crafted boards (`tests/data/rev_zf/`, generator `tests/oracle/gen_rev_zf.py`, goldens from
+the reference through `tests/oracle/make_rev_zf_goldens.sh`, replay `tests/rev_zf_crafted.rs`):
+15 boards, 65 zone layers, all vertex-identical to `kicad-cli pcb drc --refill-zones
+--save-board`: custom-pad spoke templates and convex-hull knockouts (`custom_spokes`), hatch
+thermal rings / spokes of vias and every pad shape, smoothing levels 2 and 3, hatch offsets
+(`hatch_vias`), non-copper hatch / zero min thickness / knockout text (`hatch_noncu`),
+conditional flashing against hatch fills incl. `START_END_ONLY` (`hatch_flashing`), island
+removal by area and unconnected pours (`islands`), zones owned by footprints (`fp_zones`),
+a zone on copper and technical layers, Margin graphics (`mixed_layers`), rule-driven zone
+connections and thermal constraints (`rules_conn`), backdrilled / post-machined pads and vias
+(`backdrill`), arc outlines, chamfer / fillet, out-of-board fills (`arcs_smooth`,
+`arcs_extfillet`), priorities and the UUID tie-break (`priority`), zones too thin for the
+min-width cycle (`thin`), the prototype zone fill setting (`prototype`), courtyard knockouts,
+coincident item deduplication, net ties (`dedupe_courtyard`). The same boards through
+`kicad-rs pcb drc --refill-zones --save-board`: DRC reports identical as sets, saved boards
+identical except generated UUIDs.
+
+### Deviations (REV-ZF)
+
+- F-1: an island index the fill no longer has is skipped in `remove_islands`. The C++
+  indexes unchecked (undefined behaviour; the reference segfaults on `mixed_isolated`: a zone
+  on F.Cu and F.SilkS with isolated copper, whose outline index is listed twice because the
+  connectivity maps a technical layer to copper ordinal 0). While the index exists the C++
+  double deletion is reproduced.
+- F-2: a dependency cycle of the fill DAG (interacting different-net zones with equal
+  priority and equal UUID) is broken by filling the remaining items in `toFill` order, with a
+  warning in `ZoneFiller::warnings()`. The reference never returns on such a board
+  (`dup_uuid`).
+
+### Known gaps (REV-ZF)
+
+- F-3: interacting equal-priority zones of different nets without a UUID in the file have a
+  random result in the reference (random UUIDs decide `HigherPriority`); the port's
+  generated UUIDs give one of the possible results.
+- Not exercised by any board: knockouts of tables / drill charts / stackup tables, the
+  non-convergence warning of the iterative refill (FIX-ZF-1).
+- The ZF-01 gap "`GetFilledPolysList( layer )` ... throws in C++" cannot occur: every layer
+  of the layer set has a fill entry (`ZONE::SetLayerSet`), the fallbacks are unreachable.

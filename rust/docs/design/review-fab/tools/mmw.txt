@@ -1,0 +1,3 @@
+mask|-l F.Mask,B.Mask
+mask_noam_p5|-l F.Mask,B.Mask,F.Cu --disable-aperture-macros --precision 5 --no-x2
+mask_sm|-l F.Mask,F.Silkscreen,B.Silkscreen --subtract-soldermask --cl Edge.Cuts

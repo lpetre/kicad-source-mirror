@@ -143,6 +143,11 @@ pub struct Session {
     /// The parser's non-fatal warnings (`LoadedBoard::parse_warnings`); kicad-cli prints them
     /// as `wxLogWarning`s.
     pub parse_warnings: Vec<String>,
+    /// `DS_DATA_MODEL::GetTheInstance()`, the drawing sheet plots (`plotframeref`) and DRC
+    /// (`SetDrawingSheet`) use. [`Session::default_drawing_sheet`]: the default sheet; a host
+    /// that resolves the project's drawing sheet file (`BOARD_LOADER::initializeLoadedBoard`)
+    /// loads it here with `DsDataModel::load_drawing_sheet`.
+    pub drawing_sheet: kicad_plot::drawing_sheet::DrawingSheetEnv,
 }
 
 /// A net as the item access API returns it.
@@ -283,6 +288,7 @@ impl Session {
             drc_init_error: loaded.drc_init_error,
             load_warnings: loaded.warnings,
             parse_warnings: loaded.parse_warnings,
+            drawing_sheet: Session::default_drawing_sheet(),
         };
 
         session.initialize_loaded_board();
@@ -303,7 +309,30 @@ impl Session {
             drc_init_error: None,
             load_warnings: Vec::new(),
             parse_warnings: Vec::new(),
+            drawing_sheet: Session::default_drawing_sheet(),
         }
+    }
+
+    /// The drawing sheet of a kicad-cli run without a drawing sheet file: an empty
+    /// `DS_DATA_MODEL` (the default sheet is built on first use), the bitmap header probe of
+    /// the board crate (`wxImage::LoadFile`) and `GetBaseVersion()` (a `PGM_BASE` exists).
+    pub fn default_drawing_sheet() -> kicad_plot::drawing_sheet::DrawingSheetEnv {
+        fn probe(data: &[u8]) -> Option<kicad_plot::drawing_sheet::ImageInfo> {
+            kicad_pcb::pcb_reference_image::probe_image_header(data).map(|h| {
+                kicad_plot::drawing_sheet::ImageInfo {
+                    width: h.width,
+                    height: h.height,
+                    ppi: h.update_ppi(300),
+                }
+            })
+        }
+
+        let mut sheet = kicad_plot::drawing_sheet::DrawingSheetEnv {
+            base_version: Some(crate::build_version::build_version().to_string()),
+            ..Default::default()
+        };
+        sheet.model.image_probe = Some(probe);
+        sheet
     }
 
     /// Records the `initializeLoadedBoard` steps that did not run (none: the sequence itself

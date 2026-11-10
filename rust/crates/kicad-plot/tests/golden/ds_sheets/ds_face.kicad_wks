@@ -1,0 +1,5 @@
+(kicad_wks (version 20231118) (generator "pl_editor") (generator_version "8.0")
+  (setup (textsize 1.5 1.5) (linewidth 0.15) (textlinewidth 0.15) (left_margin 10) (right_margin 10) (top_margin 10) (bottom_margin 10))
+  (tbtext "Face ${TITLE}" (pos 50 80 ltcorner) (font (face "DejaVu Sans") (size 2 2)))
+  (tbtext "Stroke" (pos 50 90 ltcorner) (font (face "KiCad Font") (size 2 2) bold))
+)

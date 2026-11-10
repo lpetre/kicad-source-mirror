@@ -61,4 +61,53 @@ jobs run in `kicad-session`; this crate does the file I/O and the terminal outpu
 ## Known gaps
 
 * Only the commands above; everything else of the reference CLI is out of scope.
-* Board jobs cannot complete until the parser, kicad-drc and kicad-fab land.
+* `pcb export svg` stops at kicad-fab (FAB-11 is wiring it: drawing sheet pending).
+* DRC differences inside kicad-drc (see the scoreboard below).
+
+## Package WIRE-1: host inputs and the end-to-end differential test
+
+Host (`host.rs`):
+* `getBoard`: the project path made absolute (`wxFileName::MakeAbsolute`, `.`/`..`
+  normalised) and the `.kicad_prl` passed (`LoadInputs::project_path`, `local_settings_json`);
+  the board path stays as given (C++ `SetFileName( aFileName )`).
+* `CLI_REPORTER::Report`: a `\n` is appended to a message without one (the drill writer's
+  "Created file ..." / "Done.").
+* Parser warnings (`LOAD_INFO_REPORTER`) on stderr as `HH:MM:SS: Warning: <text>` (wxLog).
+* Outline font fallbacks (FONT-RC-1) on stderr as `Warning: text uses font ...` (new; the
+  reference has no counterpart; the e2e comparison ignores these lines).
+* Clock and UUIDs: `JobPcbDrc::report_date` (ISO 8601), the Gerber / drill creation date, the
+  `CURRENT_DATE` / `CURRENT_TIME_*` clock from the system time; the UUID generator and the DRC
+  marker seed from `/dev/urandom`. `KICAD_RS_DATE=YYYY-MM-DDTHH:MM:SS` and
+  `KICAD_RS_UUID_SEED=<u32>` fix them for reproducible runs (environment variables rather than
+  options so that the argparse-compatible option set and help stay those of the reference).
+* `JobPcbDrc::schematic_exists`: `<board>.kicad_sch` / `.sch` next to the absolute board path.
+
+End-to-end test: `tests/oracle/e2e_cli.py` (reference results cached under
+`rust/target/e2e/ref/`), golden `tests/golden/e2e_cli.txt` (board, command, status, hash of
+the normalised reference outputs), replay `tests/e2e_cli.rs` (default: the `identical` pairs of
+the boards under 60 KB for upgrade / gerbers / drill, 1005 pairs; `--ignored`: all 1263
+`identical` pairs incl. DRC). Normalisations: dates (ISO, Gerber `G04` date, wxLog time
+stamps), the scratch directory; masks (status `identical-masked`): the port's list of DRC checks
+it cannot run, the DRC report's item line of the board itself (`@(..): PCB`, kicad-drc DRC-23
+gap: no `BOARD::m_Uuid`), random UUIDs of legacy files (FIX-RESAVE-1).
+
+Scoreboard (308 corpus boards under 300 KB, every one loads; exit code, stdout, stderr and every
+output file compared):
+
+| command | identical | identical after masking | differing | not runnable |
+|---|---|---|---|---|
+| `pcb upgrade --force` | 253 | 54 (random UUIDs) | 1 | 0 |
+| `pcb drc --format report` | 43 | 79 | 186 | 0 |
+| `pcb drc --format json --severity-all` | 43 | 20 | 245 | 0 |
+| `pcb export gerbers` | 308 | 0 | 0 | 0 |
+| `pcb export drill` (Excellon) | 308 | 0 | 0 | 0 |
+| `pcb export drill --format gerber` | 308 | 0 | 0 | 0 |
+| `pcb export svg --mode-multi` | 0 | 0 | 0 | 308 (kicad-fab SVG, FAB-11) |
+
+Differences (all inside subsystems): `upgrade` `issue25580` (teardrop zone order, a random
+UUID per reference run, FIX-RESAVE-1); DRC: 175 boards whose reference reports
+`lib_footprint_issues` / `lib_footprint_mismatch` (library parity, DRC-34, e.g.
+`demos/ecc83/ecc83-pp.kicad_pcb`), the JSON item of the board itself (DRC-23, e.g.
+`qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb`), and 10 boards with other
+entry / count differences (`connection_width_rules`, `issue5854`, `issue24525`, `issue24935`,
+`microwave`, `severities`, `issue24853`, `issue25439`, `two_segment_teardrop`, `issue24078`).

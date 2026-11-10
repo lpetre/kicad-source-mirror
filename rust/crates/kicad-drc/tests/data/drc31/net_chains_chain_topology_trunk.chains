@@ -1,0 +1,12 @@
+	(net_chains
+		(net_chain
+			(name "FastTopo")
+			(members
+				(net "/NET_A")
+				(net "/NET_B")
+				(net "/NET_C")
+			)
+			(terminal_pad "1b008cae-e371-452a-b228-678ed5b72fb0")
+			(terminal_pad "1b008cae-e371-452a-b228-678ed5b72fb0")
+		)
+	)

@@ -24,21 +24,29 @@
 //! Part 1 (work package DRC-32): the shape classes ([`shapes`]), every shape-pair path
 //! construction and `PATH_CONNECTION` ([`paths`]), `BuildCreepageBoardEdges`
 //! ([`board_edges`]) and the graph model with the board-edge graph construction
-//! ([`graph`]). Part 2 (DRC-33): `SegmentIntersectsBoard`, `segmentIntersectsCircle`,
-//! `GetPaths`, `CREEPAGE_GRAPH::Solve`, `Addshape`, `GeneratePaths`, `AddNetElements`
-//! ([`pending`] holds the placeholders part 1 calls).
+//! ([`graph`]). Part 2 (DRC-33): `SegmentIntersectsBoard`, `segmentIntersectsCircle`
+//! ([`board_intersect`]), `GetPaths`, `CREEPAGE_GRAPH::Solve`, `Addshape`, `GeneratePaths`,
+//! `AddNetElements` ([`solve`]).
 
 pub mod board_edges;
+pub mod board_intersect;
 pub mod graph;
 pub mod paths;
-pub mod pending;
 pub mod shapes;
+pub mod solve;
+
+/// The placeholder module of part 1 (DRC-32), kept as an alias so its callers keep compiling.
+pub mod pending {
+    pub use super::board_intersect::segment_intersects_board;
+}
 
 pub use board_edges::build_creepage_board_edges;
+pub use board_intersect::{segment_intersects_board, segment_intersects_circle};
 pub use graph::{
     ConnId, CreepageGraph, GraphConnection, GraphNode, GraphNodeType, NodeId, ShapeId,
 };
 pub use paths::{CreepageTrackEntry, PathConnection, TrackRtree};
+pub use solve::get_paths;
 pub use shapes::{
     BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CreepShapeBase, CreepShapeType,
     CuShapeArc, CuShapeCircle, CuShapeSegment,

@@ -14,6 +14,7 @@ workspace = true
 kicad-geom = { path = "../kicad-geom" }
 kicad-core = { path = "../kicad-core" }
 kicad-font = { path = "../kicad-font" }
+kicad-sexpr = { path = "../kicad-sexpr" }
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }

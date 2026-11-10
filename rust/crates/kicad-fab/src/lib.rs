@@ -24,6 +24,7 @@
 //! produce [`OutputFile`] values and report through a [`Reporter`]; the host (`kicad-cli`,
 //! wasm bindings) writes the files and prints the messages.
 
+pub mod color_settings;
 pub mod drill;
 pub mod exporters;
 pub mod jobs;

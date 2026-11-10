@@ -27,8 +27,8 @@ pub mod api;
 
 use js_sys::{Error as JsError, Reflect};
 use kicad_session::jobs::{
-    DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, JobExportPcbGerbers, JobExportPcbSvg, JobPcbDrc,
-    RcOutputFormat, RcUnits, SvgGenMode, ZerosFormat,
+    DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, JobExportPcbGerbers, JobExportPcbSvg,
+    JobPcbDrc, RcOutputFormat, RcUnits, SvgGenMode, ZerosFormat,
 };
 use kicad_session::{
     HostClock, JobOutcome, LoadInputs, Reporter, Session, SessionError, TrackSpec, ViaSpec,

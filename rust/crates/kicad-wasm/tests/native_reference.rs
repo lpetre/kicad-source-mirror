@@ -171,9 +171,9 @@ fn job_value(outcome: JobOutcome, reporter: Reporter) -> Value {
     let files: Vec<Value> = outcome
         .files
         .iter()
-        .map(|f| {
-            json!({ "name": f.name, "content": hashed(&String::from_utf8_lossy(&f.contents)) })
-        })
+        .map(
+            |f| json!({ "name": f.name, "content": hashed(&String::from_utf8_lossy(&f.contents)) }),
+        )
         .collect();
     json!({ "exitCode": outcome.exit_code, "files": files,
             "report": outcome.report_text.as_deref().map(hashed),

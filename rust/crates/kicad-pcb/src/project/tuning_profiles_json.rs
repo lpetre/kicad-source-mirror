@@ -182,9 +182,7 @@ fn read_via_override_configuration_line(
 }
 
 /// `readUserDefinedProfileConfigurationLine`.
-fn read_user_defined_profile_configuration_line(
-    entry: &Value,
-) -> Result<TuningProfile, JsonError> {
+fn read_user_defined_profile_configuration_line(entry: &Value) -> Result<TuningProfile, JsonError> {
     let profile_name: String = field(entry, "profile_name")?;
     let profile_type: i32 = field(entry, "type")?;
     let target_impedance: f64 = field(entry, "target_impedance")?;
@@ -341,8 +339,7 @@ mod tests {
 
     fn doc(text: &str) -> JsonSettingsInternals {
         JsonSettingsInternals::new(
-            kicad_core::json::parse(text, kicad_core::json::ObjectOrder::Sorted)
-                .expect("json"),
+            kicad_core::json::parse(text, kicad_core::json::ObjectOrder::Sorted).expect("json"),
         )
     }
 
@@ -355,8 +352,7 @@ mod tests {
 
     #[test]
     fn profiles_are_read_and_migrated() {
-        let d = doc(
-            r#"{ "tuning_profiles": { "meta": { "version": 0 },
+        let d = doc(r#"{ "tuning_profiles": { "meta": { "version": 0 },
                  "tuning_profiles_impedance_geometric": [
                    { "profile_name": "P1", "type": 1, "target_impedance": 90.0,
                      "enable_time_domain_tuning": true, "via_prop_delay": 3,
@@ -365,8 +361,7 @@ mod tests {
                          "bottom_reference_layer": "", "width": 100000,
                          "diff_pair_gap": 120000, "delay": 7 } ],
                      "via_overrides": [] },
-                   { "no_name": 1 } ] } }"#,
-        );
+                   { "no_name": 1 } ] } }"#);
         let (p, ok) = load_tuning_profiles(Some(&d));
         assert!(ok);
         assert_eq!(p.tuning_profiles.len(), 1);
@@ -381,13 +376,15 @@ mod tests {
         assert_eq!(e.signal_layer, PcbLayerId::FCu);
         assert_eq!(e.top_reference_layer, PcbLayerId::In1Cu);
         assert_eq!(e.bottom_reference_layer, PcbLayerId::UndefinedLayer);
-        assert_eq!((e.width, e.diff_pair_gap, e.delay(false)), (100000, 120000, 7));
+        assert_eq!(
+            (e.width, e.diff_pair_gap, e.delay(false)),
+            (100000, 120000, 7)
+        );
     }
 
     #[test]
     fn a_bad_entry_ends_the_load() {
-        let d = doc(
-            r#"{ "tuning_profiles": { "meta": { "version": 2 },
+        let d = doc(r#"{ "tuning_profiles": { "meta": { "version": 2 },
                  "tuning_profiles_impedance_geometric": [
                    { "profile_name": "A", "type": 0, "target_impedance": 50.0,
                      "frequency": 1e9, "model_solder_mask": false,
@@ -399,10 +396,13 @@ mod tests {
                      "frequency": 1e9, "model_solder_mask": false,
                      "enable_time_domain_tuning": false, "via_prop_delay": 0,
                      "net_chain_bridge_prop_delay": 0, "layer_entries": [],
-                     "via_overrides": [] } ] } }"#,
-        );
+                     "via_overrides": [] } ] } }"#);
         let (p, _) = load_tuning_profiles(Some(&d));
-        let names: Vec<_> = p.tuning_profiles.iter().map(|t| t.profile_name.as_str()).collect();
+        let names: Vec<_> = p
+            .tuning_profiles
+            .iter()
+            .map(|t| t.profile_name.as_str())
+            .collect();
         assert_eq!(names, vec!["A"]);
     }
 }

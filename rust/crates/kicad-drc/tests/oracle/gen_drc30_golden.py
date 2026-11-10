@@ -53,7 +53,7 @@ BOARDS = [
     "qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb",
     "qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb",
 ]
-VARIANTS = ["base", "gap", "unc", "both", "layer"]
+VARIANTS = ["base", "gap", "unc", "both", "layer", "mixed"]
 # The large board keeps the golden small with two cases: its own rules, and the variant whose
 # keys mix an empty and a set gap rule name.
 BOARD_VARIANTS = {"qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb": ["base", "layer"]}

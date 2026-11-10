@@ -122,6 +122,7 @@ impl<'a> GerberWriter<'a> {
         PlotEnv {
             build_version: self.build_version.clone(),
             creation_date: self.creation_date,
+            drawing_sheet: Default::default(),
         }
     }
 

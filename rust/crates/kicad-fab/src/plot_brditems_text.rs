@@ -46,7 +46,7 @@ use kicad_pcb::item_ref::{AnyItem, ItemRef};
 use kicad_plot::PlotData;
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 
-use crate::plot_brditems_plotter::{BrditemsPlotter, fab_port_pending};
+use crate::plot_brditems_plotter::BrditemsPlotter;
 
 /// `plotMetadata( m_plotter, gbr_metadata, this )` (the `getMetadata()` macro): the Gerber
 /// metadata for a Gerber plotter, nothing for SVG (DXF is out of scope).
@@ -79,13 +79,9 @@ fn pcb_text_transform_text_to_poly_set(
             field.transform_text_to_poly_set(ctx, a_buffer, a_clearance, a_max_error, a_error_loc);
             true
         }
-        AnyItem::Dimension(_) => {
-            // The model keeps `pcb_text::transform_text_to_poly_set` crate-private and has no
-            // `PcbDimension` wrapper (change request). Reached only by a knockout or
-            // struck-out dimension text inside a footprint.
-            fab_port_pending!(
-                "PCB_TEXT::TransformTextToPolySet for PCB_DIMENSION_BASE (model accessor)"
-            )
+        AnyItem::Dimension(dim) => {
+            dim.transform_text_to_poly_set(ctx, a_buffer, a_clearance, a_max_error, a_error_loc);
+            true
         }
         _ => false,
     }

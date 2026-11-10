@@ -1,0 +1,8 @@
+default|
+hdnp|--hdnp
+sdnp|--sdnp
+cdnp|--cdnp
+sdnpcdnp|--sdnp --cdnp
+hdnpcdnp|--hdnp --cdnp --sdnp
+bpp|--board-plot-params
+combo2|--sdnp --cdnp --sp --spn --ev --no-netlist --no-protel-ext

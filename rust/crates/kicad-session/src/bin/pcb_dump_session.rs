@@ -38,11 +38,11 @@ use std::io::Write;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 
+use kicad_pcb::NetCode;
 use kicad_pcb::dump::format::{Out, v_int, v_str};
 use kicad_pcb::dump::{DumpOptions, SilentPanics, dump_board_ctx, scan_file_uuids};
 use kicad_pcb::io::ParseOptions;
 use kicad_pcb::project::{LoadPath, LoadStep};
-use kicad_pcb::NetCode;
 use kicad_session::board_loader::load_guarded;
 use kicad_session::{LoadInputs, Session};
 
@@ -235,8 +235,8 @@ fn main() -> std::process::ExitCode {
         );
         // The board with the state the C++ tool dumps through: connectivity (via flashing)
         // and the DRC engine (BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue)
-        let mut ctx = kicad_pcb::ctx::BoardCtx::bare(&session.board)
-            .with_connectivity(&session.connectivity);
+        let mut ctx =
+            kicad_pcb::ctx::BoardCtx::bare(&session.board).with_connectivity(&session.connectivity);
 
         if let Some(engine) = session.drc_engine.as_ref() {
             ctx = ctx.with_rules(engine);

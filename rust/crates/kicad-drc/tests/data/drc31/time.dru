@@ -1,0 +1,3 @@
+(rule drc31_time
+    (constraint length (min 1ps) (max 10ps))
+    (constraint skew (max 0.1ps)))

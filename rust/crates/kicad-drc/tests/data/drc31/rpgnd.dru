@@ -1,0 +1,4 @@
+(rule "ReturnPath"
+    (condition "A.NetClass == 'Default'")
+    (constraint length (min 0mm) (max 200mm))
+    (constraint return_path (layer "B.Cu") (net "GND")))

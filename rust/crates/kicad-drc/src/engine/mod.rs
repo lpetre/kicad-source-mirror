@@ -250,6 +250,9 @@ pub struct DrcEngine {
     /// How `compileRules` compiles a non-implicit condition (`condition->Compile(
     /// &error_semaphore )`); see [`DrcEngine::set_condition_compiler`].
     condition_compiler: ConditionCompiler,
+    /// `m_drawingSheet` (`SetDrawingSheet`): the drawing sheet texts of the misc provider's
+    /// text variable test, `None` without a drawing sheet.
+    drawing_sheet: Option<crate::providers::misc::DrawingSheetTexts>,
 }
 
 /// `DRC_RULE_CONDITION::Compile( aReporter )` as the engine calls it for rule conditions
@@ -591,7 +594,23 @@ impl DrcEngine {
             has_geometry_dependent_rules: false,
             has_diff_pair_clearance_overrides: false,
             condition_compiler: compile_with_binding::<PcbExprUcode>,
+            drawing_sheet: None,
         }
+    }
+
+    /// Port of `DRC_ENGINE::SetDrawingSheet( DS_PROXY_VIEW_ITEM* aDrawingSheet )`: the drawing
+    /// sheet as the misc provider reads it (built by the host, see
+    /// [`crate::providers::misc::DrawingSheetTexts`]).
+    pub fn set_drawing_sheet(
+        &mut self,
+        drawing_sheet: Option<crate::providers::misc::DrawingSheetTexts>,
+    ) {
+        self.drawing_sheet = drawing_sheet;
+    }
+
+    /// Port of `DRC_ENGINE::GetDrawingSheet()`.
+    pub fn drawing_sheet(&self) -> Option<&crate::providers::misc::DrawingSheetTexts> {
+        self.drawing_sheet.as_ref()
     }
 
     /// Port of `DRC_ENGINE::InitEngine( const wxFileName& aRulePath )`.

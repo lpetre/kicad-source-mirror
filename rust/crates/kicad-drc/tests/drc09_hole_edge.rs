@@ -36,19 +36,13 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, diff_entries, golden, load_board,
-    panic_text, quiet, run_providers,
+    Entry, Loaded, cached_entries, cli_report_entries_flow, diff_entries, golden, load_board,
+    panic_text, quiet, run_flow_providers,
 };
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::base_units::PCB_IU_SCALE;
 use kicad_core::eda_units::{EdaDataType, EdaUnits, ui};
 use kicad_core::kiid::Kiid;
-use kicad_drc::cache_generator::prepare_board;
-use kicad_drc::engine::implicit_condition::EngineCondition;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::edge_clearance::DrcTestProviderEdgeClearance;
-use kicad_drc::providers::hole_to_hole::DrcTestProviderHoleToHole;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{
     DRCE_COPPER_OUTSIDE_BOARD, DRCE_DRILLED_HOLES_COLOCATED, DRCE_DRILLED_HOLES_TOO_CLOSE,
@@ -66,63 +60,9 @@ const EDGE_TYPES: &[&str] = &[
     "copper_outside_board",
 ];
 
-/// Both providers in registry order (edge clearance before hole to hole), run with the
-/// connectivity of the load (`FlashLayer` of pads and vias).
-struct HoleAndEdge<'a> {
-    connectivity: &'a ConnectivityData,
-}
-
-impl DrcTestProviderRun for HoleAndEdge<'_> {
-    fn name(&self) -> &str {
-        "edge_clearance"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let cctx = BoardCtx {
-            board: ctx.board,
-            rules: ctx.rules,
-            connectivity: Some(self.connectivity),
-        };
-
-        DrcTestProviderEdgeClearance::default().run_tests(engine, run, &cctx, units)
-            && DrcTestProviderHoleToHole::default().run_tests(engine, run, &cctx, units)
-    }
-}
-
-/// `BuildConnectivity` at load time, then the board-writing part of the cache generator and
-/// its `connectivity->Build( board )` (as `drc08a_copper_clearance.rs`).
-fn prepare(loaded: &mut Loaded) -> ConnectivityData {
-    let mut connectivity = ConnectivityData::new();
-    connectivity.build_connectivity(&mut loaded.board);
-    prepare_board(&mut loaded.board);
-    connectivity.clear_ratsnest();
-    connectivity.build_board(&mut loaded.board);
-    connectivity
-}
-
-/// Whether a user rule condition of the engine calls a function (stubs until DRC-22; as
-/// `drc08a_copper_clearance.rs`).
-fn conditions_call_functions(engine: &DrcEngine) -> bool {
-    engine.constraint_map().values().flatten().any(|c| {
-        !c.parent_rule.is_implicit()
-            && matches!(&c.condition, Some(EngineCondition::Compiled(cond)) if cond.expression().contains('('))
-    })
-}
-
 /// The report entries of both providers' types.
 fn report(loaded: &mut Loaded) -> Vec<Entry> {
-    let connectivity = prepare(loaded);
-    let mut provider = HoleAndEdge {
-        connectivity: &connectivity,
-    };
-
-    cli_report_entries(loaded, false, &mut [&mut provider])
+    cli_report_entries_flow(loaded, false, &["edge_clearance", "hole_to_hole_clearance"])
         .into_iter()
         .filter(|e| {
             HOLE_TYPES.contains(&e.type_.as_str()) || EDGE_TYPES.contains(&e.type_.as_str())
@@ -145,15 +85,15 @@ fn run_only(loaded: &mut Loaded, codes: &[i32]) -> Vec<drc_harness::Reported> {
         }
     }
 
-    let connectivity = prepare(loaded);
-    let mut provider = HoleAndEdge {
-        connectivity: &connectivity,
-    };
-
-    run_providers(loaded, EdaUnits::Mm, true, &mut [&mut provider])
-        .into_iter()
-        .filter(|r| codes.contains(&r.item.error_code()))
-        .collect()
+    run_flow_providers(
+        loaded,
+        EdaUnits::Mm,
+        true,
+        &["edge_clearance", "hole_to_hole_clearance"],
+    )
+    .into_iter()
+    .filter(|r| codes.contains(&r.item.error_code()))
+    .collect()
 }
 
 /// Loads a QA board; `None` (with a note) when the port does not load it completely yet.
@@ -161,11 +101,9 @@ fn load_qa(name: &str) -> Option<Loaded> {
     let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
 
     match quiet(|| catch_unwind(AssertUnwindSafe(|| load_board(&path)))) {
-        Ok(Ok(l)) if l.report.skipped.is_empty() && !conditions_call_functions(&l.engine) => {
-            Some(l)
-        }
+        Ok(Ok(l)) if l.report.skipped.is_empty() => Some(l),
         Ok(Ok(_)) => {
-            eprintln!("{name}: pending (skipped items or rule conditions)");
+            eprintln!("{name}: pending (skipped items)");
             None
         }
         Ok(Err(e)) => {
@@ -231,10 +169,6 @@ fn compare_corpus(filter: &str) -> Score {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
-
-                    if conditions_call_functions(&loaded.engine) {
-                        return Err("rule conditions call functions (DRC-22)".to_string());
-                    }
 
                     let entries = report(&mut loaded);
                     Ok((entries, loaded.report.skipped.is_empty()))

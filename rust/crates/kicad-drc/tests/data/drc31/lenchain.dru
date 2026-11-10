@@ -1,0 +1,4 @@
+(rule "LengthWithChain"
+    (condition "A.NetClass == 'Default'")
+    (constraint length (min 0mm) (max 5mm))
+    (constraint net_chain_length (min 0mm) (max 200mm)))

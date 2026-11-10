@@ -1,0 +1,4 @@
+(rule drc31_all
+    (constraint length (min 5mm) (max 20mm))
+    (constraint skew (max 0.5mm))
+    (constraint via_count (min 1) (max 2)))

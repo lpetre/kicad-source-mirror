@@ -53,6 +53,10 @@ pub struct PlotEnv {
     /// `wxDateTime::Now()` and the local UTC offset. One timestamp feeds every date format of
     /// a plot (`TF.CreationDate`, the `G04 Created by` comment, the SVG title).
     pub creation_date: GbrCreationDate,
+    /// The drawing sheet (`DS_DATA_MODEL::GetTheInstance()`) and `GetBaseVersion()` that
+    /// `PlotDrawingSheet` reads (plots with `plotframeref`); the default builds the default
+    /// sheet.
+    pub drawing_sheet: kicad_plot::drawing_sheet::DrawingSheetEnv,
 }
 
 impl PlotEnv {

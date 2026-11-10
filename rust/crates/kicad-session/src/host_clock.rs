@@ -120,14 +120,8 @@ impl HostClock {
     pub fn title_block_clock(&self) -> TitleBlockClock {
         TitleBlockClock {
             current_date: format!("{:04}-{:02}-{:02}", self.year, self.month, self.day),
-            current_time_hhmmss: format!(
-                "{:02}h{:02}m{:02}s",
-                self.hour, self.minute, self.second
-            ),
-            current_time_locale: format!(
-                "{:02}:{:02}:{:02}",
-                self.hour, self.minute, self.second
-            ),
+            current_time_hhmmss: format!("{:02}h{:02}m{:02}s", self.hour, self.minute, self.second),
+            current_time_locale: format!("{:02}:{:02}:{:02}", self.hour, self.minute, self.second),
         }
     }
 

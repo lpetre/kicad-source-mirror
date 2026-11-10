@@ -1,0 +1,547 @@
+SHEET	default
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	empty
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+SHEET	demos/interf_u/pagelayout_logo.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	demos/vme-wren/cern-ohl-left.kicad_wks
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	qa/data/cli/basic_test/custom_ds.kicad_wks
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB													
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	qa/data/eeschema/issue16836/Zeichnungsblatt_kreuz_cross.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	qa/data/eeschema/issue16836/pagelayout_default_ibfeew_logo.kicad_wks
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	qa/data/eeschema/netlists/issue24220/cartiglio_IPSES.kicad_wks
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB													
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_all_items.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_bitmaps.kicad_wks
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_bitmaps_ok.kicad_wks
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_bitmap_legacy.kicad_wks
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB													
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_legacy_drawing_sheet.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_err_future.kicad_wks
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_err_token.kicad_wks
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_err_noversion.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_err_number.kicad_wks
+PAGE	A4	0	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_void.kicad_wks
+PAGE	A4	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB													
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/ds_face.kicad_wks
+PAGE	A4	0	0	0
+TB	t												
+RUN	list	1	1	1	F.Cu			b.kicad_pcb
+RUN	gbr	1	1	1	F.Cu			b.kicad_pcb
+SHEET	rust/crates/kicad-plot/tests/golden/ds_sheets/missing_file.kicad_wks
+PAGE	A4	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	A3	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	USLetter	0	0	0
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	0	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A0	0	0	0
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	A5	1	0	0
+TB													
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+PAGE	User	0	5000	3000
+TB	My ${REVISION} board	2024-05-17	B.2	ACME ${TITLE}	first comment	second	c3	c4	c5	c6	c7	c8	ninth ${COMMENT1}
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1
+RUN	gbr	1	1	1	F.Silkscreen			board.kicad_pcb
+RUN	svg	1	2	2	B.Cu	name	path	dir/board.kicad_pcb
+RUN	svgc	1	1	1	User.1			b.kicad_pcb
+PAGE	User	1	2000	1500
+TB	T\with"quote	date	${COMPANY}	${#}co									
+RUN	list	1	3	7	F.Cu	sub sheet	/root/sub/	/tmp/x/board.kicad_pcb
+RUN	drc	1

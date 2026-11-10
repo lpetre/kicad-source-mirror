@@ -1,0 +1,10 @@
+	(net_chains
+		(net_chain
+			(name "SIG")
+			(members
+				(net "/TRUNK_A")
+				(net "/MID_B")
+				(net "/TRUNK_C")
+			)
+		)
+	)

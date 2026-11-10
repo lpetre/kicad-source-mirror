@@ -60,18 +60,6 @@ pub(crate) const TEXT_ITEM_TYPES: [KicadT; 5] = [
     KicadT::PcbDimensionT,
 ];
 
-/// Port of `BOARD::IsLayerVisible`: an enabled layer that is visible in the project's local
-/// settings (always visible without a project).
-pub(crate) fn board_is_layer_visible(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
-    // If there is no project, assume layer is visible always
-    ctx.board.design_settings().is_layer_enabled(layer)
-        && ctx
-            .board
-            .project
-            .as_ref()
-            .is_none_or(|p| p.visible_layers.contains(layer))
-}
-
 impl DrcTestProviderTextMirroring {
     /// Port of `DRC_TEST_PROVIDER_TEXT_MIRRORING::Run`: false when the run was cancelled.
     pub fn run(&self, _engine: &DrcEngine, run: &mut DrcRunState<'_>, ctx: &BoardCtx<'_>) -> bool {
@@ -130,7 +118,7 @@ impl DrcTestProviderTextMirroring {
 
                 if !text.eda_text().is_visible()
                     || !ctx.board.is_layer_enabled(layer)
-                    || !board_is_layer_visible(ctx, layer)
+                    || !ctx.board.is_layer_visible(layer)
                 {
                     return true;
                 }

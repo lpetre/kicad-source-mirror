@@ -1,0 +1,7 @@
+(rule same
+    (condition "A.Type == 'Track'")
+    (constraint length (max 1mm)))
+(rule same
+    (condition "A.Type == 'Via' || A.Type == 'Pad'")
+    (constraint length (min 1000mm))
+    (constraint via_count (max 0)))

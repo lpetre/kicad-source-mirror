@@ -367,29 +367,431 @@ pub struct DiffPairItems {
     pub total_length_p: i32,
 }
 
-/// `std::map<DIFF_PAIR_KEY, DIFF_PAIR_ITEMS>` with the comparator [`key_less`]: the entries
-/// in map order. `operator[]` is [`DpRuleMatches::entry`].
-#[derive(Clone, Debug, Default)]
+/// Null link of [`DpRuleMatches`].
+const RB_NIL: usize = usize::MAX;
+
+/// The header node index of [`DpRuleMatches`] (`_M_impl._M_header`).
+const RB_HEADER: usize = 0;
+
+/// A node of [`DpRuleMatches`] (`_Rb_tree_node_base` plus the value; the header has none).
+#[derive(Clone, Debug)]
+struct RbNode {
+    entry: Option<(DiffPairKey, DiffPairItems)>,
+    parent: usize,
+    left: usize,
+    right: usize,
+    red: bool,
+}
+
+/// `std::map<DIFF_PAIR_KEY, DIFF_PAIR_ITEMS>` with the comparator [`key_less`].
+///
+/// `DIFF_PAIR_KEY::operator<` is not a strict weak ordering (a key with an empty gap rule name
+/// and one with a gap rule and a different uncoupled rule name are each less than the other),
+/// so which entry `operator[]` finds depends on the shape of the libstdc++ red-black tree and
+/// on its exact sequence of comparisons. Both are reproduced: `operator[]` (`lower_bound`,
+/// then `_M_emplace_hint_unique`) and `_Rb_tree_insert_and_rebalance` of GCC 13
+/// (`bits/stl_map.h`, `bits/stl_tree.h`, `src/c++98/tree.cc`), on an index arena. The
+/// rebalancing is the one of `kicad_geom::stdsort::StdSet` (verified against libstdc++ there),
+/// which has no `lower_bound` / hinted insertion.
+#[derive(Clone, Debug)]
 pub struct DpRuleMatches {
-    /// The entries in iteration order.
-    pub entries: Vec<(DiffPairKey, DiffPairItems)>,
+    nodes: Vec<RbNode>,
+}
+
+impl Default for DpRuleMatches {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl DpRuleMatches {
-    /// `operator[]( key )`: `lower_bound( key )`, and a new entry (with a copy of `key`) unless
-    /// the found one is equivalent. An existing entry keeps the key it was created with.
-    ///
-    /// `lower_bound` is a binary search here and a tree descent in libstdc++: the same entry
-    /// as long as the comparator orders the keys present consistently (see PORT_STATUS.md).
-    pub fn entry(&mut self, key: &DiffPairKey) -> &mut DiffPairItems {
-        let i = self.entries.partition_point(|(k, _)| key_less(k, key));
+    /// An empty map (`_M_reset()`: the header is red and links to itself as leftmost and
+    /// rightmost).
+    pub fn new() -> Self {
+        DpRuleMatches {
+            nodes: vec![RbNode {
+                entry: None,
+                parent: RB_NIL,
+                left: RB_HEADER,
+                right: RB_HEADER,
+                red: true,
+            }],
+        }
+    }
 
-        if i == self.entries.len() || key_less(key, &self.entries[i].0) {
-            self.entries
-                .insert(i, (key.clone(), DiffPairItems::default()));
+    /// `size()`
+    pub fn len(&self) -> usize {
+        self.nodes.len() - 1
+    }
+
+    /// `empty()`
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    fn key(&self, n: usize) -> &DiffPairKey {
+        &self.nodes[n].entry.as_ref().expect("value node").0
+    }
+
+    fn root(&self) -> usize {
+        self.nodes[RB_HEADER].parent
+    }
+
+    fn leftmost(&self) -> usize {
+        self.nodes[RB_HEADER].left
+    }
+
+    fn rightmost(&self) -> usize {
+        self.nodes[RB_HEADER].right
+    }
+
+    /// Port of `map::operator[]( k )`: `lower_bound( k )`; unless the found entry is
+    /// equivalent (`!comp( k, found )`), a new entry with a copy of `k` is inserted with that
+    /// position as hint (`_M_emplace_hint_unique`). An existing entry keeps the key it was
+    /// created with.
+    pub fn entry(&mut self, k: &DiffPairKey) -> &mut DiffPairItems {
+        let mut i = self.lower_bound(k);
+
+        if i == RB_HEADER || key_less(k, self.key(i)) {
+            i = self.emplace_hint_unique(i, k);
         }
 
-        &mut self.entries[i].1
+        &mut self.nodes[i].entry.as_mut().expect("value node").1
+    }
+
+    /// `_M_lower_bound( _M_begin(), _M_end(), k )`.
+    fn lower_bound(&self, k: &DiffPairKey) -> usize {
+        let mut x = self.root();
+        let mut y = RB_HEADER;
+
+        while x != RB_NIL {
+            if !key_less(self.key(x), k) {
+                y = x;
+                x = self.nodes[x].left;
+            } else {
+                x = self.nodes[x].right;
+            }
+        }
+
+        y
+    }
+
+    /// `_M_emplace_hint_unique( pos, k )`: the node of `k` (new, or the equivalent one the
+    /// hint search found).
+    fn emplace_hint_unique(&mut self, pos: usize, k: &DiffPairKey) -> usize {
+        match self.get_insert_hint_unique_pos(pos, k) {
+            (x, Some(p)) => self.insert_node(x, p, k.clone()),
+            (existing, None) => existing,
+        }
+    }
+
+    /// `_M_get_insert_hint_unique_pos( position, k )`: `(x, Some( p ))` of the insert position,
+    /// or `(node, None)` for an equivalent node.
+    fn get_insert_hint_unique_pos(&self, pos: usize, k: &DiffPairKey) -> (usize, Option<usize>) {
+        if pos == RB_HEADER {
+            // end()
+            if !self.is_empty() && key_less(self.key(self.rightmost()), k) {
+                return (RB_NIL, Some(self.rightmost()));
+            }
+
+            return self.get_insert_unique_pos(k);
+        }
+
+        if key_less(k, self.key(pos)) {
+            // First, try before...
+            if pos == self.leftmost() {
+                // begin()
+                return (self.leftmost(), Some(self.leftmost()));
+            }
+
+            let before = self.decrement(pos);
+
+            if key_less(self.key(before), k) {
+                if self.nodes[before].right == RB_NIL {
+                    return (RB_NIL, Some(before));
+                }
+
+                return (pos, Some(pos));
+            }
+
+            return self.get_insert_unique_pos(k);
+        }
+
+        if key_less(self.key(pos), k) {
+            // ... then try after.
+            if pos == self.rightmost() {
+                return (RB_NIL, Some(self.rightmost()));
+            }
+
+            let after = self.increment(pos);
+
+            if key_less(k, self.key(after)) {
+                if self.nodes[pos].right == RB_NIL {
+                    return (RB_NIL, Some(pos));
+                }
+
+                return (after, Some(after));
+            }
+
+            return self.get_insert_unique_pos(k);
+        }
+
+        // Equivalent keys.
+        (pos, None)
+    }
+
+    /// `_M_get_insert_unique_pos( k )`.
+    fn get_insert_unique_pos(&self, k: &DiffPairKey) -> (usize, Option<usize>) {
+        let mut x = self.root();
+        let mut y = RB_HEADER;
+        let mut comp = true;
+
+        while x != RB_NIL {
+            y = x;
+            comp = key_less(k, self.key(x));
+            x = if comp {
+                self.nodes[x].left
+            } else {
+                self.nodes[x].right
+            };
+        }
+
+        let mut j = y;
+
+        if comp {
+            if j == self.leftmost() {
+                // j == begin()
+                return (x, Some(y));
+            }
+
+            j = self.decrement(j);
+        }
+
+        if key_less(self.key(j), k) {
+            return (x, Some(y));
+        }
+
+        (j, None)
+    }
+
+    /// `_M_insert_node( x, p, z )` with a new node for `k`: its index.
+    fn insert_node(&mut self, x: usize, p: usize, k: DiffPairKey) -> usize {
+        let insert_left = x != RB_NIL || p == RB_HEADER || key_less(&k, self.key(p));
+        self.nodes.push(RbNode {
+            entry: Some((k, DiffPairItems::default())),
+            parent: RB_NIL,
+            left: RB_NIL,
+            right: RB_NIL,
+            red: true,
+        });
+        let z = self.nodes.len() - 1;
+        self.insert_and_rebalance(insert_left, z, p);
+        z
+    }
+
+    /// `_Rb_tree_increment( x )`.
+    fn increment(&self, mut x: usize) -> usize {
+        if self.nodes[x].right != RB_NIL {
+            x = self.nodes[x].right;
+
+            while self.nodes[x].left != RB_NIL {
+                x = self.nodes[x].left;
+            }
+
+            return x;
+        }
+
+        let mut y = self.nodes[x].parent;
+
+        while x == self.nodes[y].right {
+            x = y;
+            y = self.nodes[y].parent;
+        }
+
+        if self.nodes[x].right != y {
+            x = y;
+        }
+
+        x
+    }
+
+    /// `_Rb_tree_decrement( x )`.
+    fn decrement(&self, mut x: usize) -> usize {
+        if self.nodes[x].red
+            && self.nodes[x].parent != RB_NIL
+            && self.nodes[self.nodes[x].parent].parent == x
+        {
+            // x is the header (end()): its predecessor is the rightmost node
+            return self.nodes[x].right;
+        }
+
+        if self.nodes[x].left != RB_NIL {
+            let mut y = self.nodes[x].left;
+
+            while self.nodes[y].right != RB_NIL {
+                y = self.nodes[y].right;
+            }
+
+            return y;
+        }
+
+        let mut y = self.nodes[x].parent;
+
+        while x == self.nodes[y].left {
+            x = y;
+            y = self.nodes[y].parent;
+        }
+
+        y
+    }
+
+    /// `local_Rb_tree_rotate_left( x, root )`.
+    fn rotate_left(&mut self, x: usize) {
+        let y = self.nodes[x].right;
+        self.nodes[x].right = self.nodes[y].left;
+
+        if self.nodes[y].left != RB_NIL {
+            let yl = self.nodes[y].left;
+            self.nodes[yl].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].left {
+            self.nodes[xp].left = y;
+        } else {
+            self.nodes[xp].right = y;
+        }
+
+        self.nodes[y].left = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `local_Rb_tree_rotate_right( x, root )`.
+    fn rotate_right(&mut self, x: usize) {
+        let y = self.nodes[x].left;
+        self.nodes[x].left = self.nodes[y].right;
+
+        if self.nodes[y].right != RB_NIL {
+            let yr = self.nodes[y].right;
+            self.nodes[yr].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].right {
+            self.nodes[xp].right = y;
+        } else {
+            self.nodes[xp].left = y;
+        }
+
+        self.nodes[y].right = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `_Rb_tree_insert_and_rebalance( insert_left, x, p, header )`.
+    fn insert_and_rebalance(&mut self, insert_left: bool, mut x: usize, p: usize) {
+        // Initialize fields in new node to insert.
+        self.nodes[x].parent = p;
+        self.nodes[x].left = RB_NIL;
+        self.nodes[x].right = RB_NIL;
+        self.nodes[x].red = true;
+
+        // Insert.
+        // Make new node child of parent and maintain root, leftmost and rightmost nodes.
+        // N.B. First node is always inserted left.
+        if insert_left {
+            self.nodes[p].left = x; // also makes leftmost = x when p == &header
+
+            if p == RB_HEADER {
+                self.nodes[RB_HEADER].parent = x;
+                self.nodes[RB_HEADER].right = x;
+            } else if p == self.nodes[RB_HEADER].left {
+                self.nodes[RB_HEADER].left = x; // maintain leftmost pointing to min node
+            }
+        } else {
+            self.nodes[p].right = x;
+
+            if p == self.nodes[RB_HEADER].right {
+                self.nodes[RB_HEADER].right = x; // maintain rightmost pointing to max node
+            }
+        }
+
+        // Rebalance.
+        while x != self.root() && self.nodes[self.nodes[x].parent].red {
+            let xp = self.nodes[x].parent;
+            let xpp = self.nodes[xp].parent;
+
+            if xp == self.nodes[xpp].left {
+                let y = self.nodes[xpp].right;
+
+                if y != RB_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].right {
+                        x = xp;
+                        self.rotate_left(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_right(xpp);
+                }
+            } else {
+                let y = self.nodes[xpp].left;
+
+                if y != RB_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].left {
+                        x = xp;
+                        self.rotate_right(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_left(xpp);
+                }
+            }
+        }
+
+        let root = self.root();
+        self.nodes[root].red = false;
+    }
+
+    /// The node indices in iteration order (`begin()` .. `end()`).
+    fn in_order(&self) -> Vec<usize> {
+        let mut out = Vec::with_capacity(self.len());
+        let mut x = self.leftmost();
+
+        while x != RB_HEADER && !self.is_empty() {
+            out.push(x);
+            x = self.increment(x);
+        }
+
+        out
+    }
+
+    /// The entries in iteration order, consuming the map.
+    pub fn into_entries(mut self) -> Vec<(DiffPairKey, DiffPairItems)> {
+        self.in_order()
+            .into_iter()
+            .map(|n| self.nodes[n].entry.take().expect("value node"))
+            .collect()
     }
 }
 
@@ -753,7 +1155,7 @@ impl<'c> DrcTestProviderDiffPairCoupling<'c> {
         let units = self.base.units_provider();
         let mut host = RunHost(run);
 
-        for (key, item_set) in dp_rule_matches.entries.iter_mut() {
+        for (key, item_set) in dp_rule_matches.into_entries().iter_mut() {
             let ni_p = board.find_net(kicad_pcb::NetCode(key.net_p));
             let ni_n = board.find_net(kicad_pcb::NetCode(key.net_n));
 
@@ -1058,16 +1460,15 @@ mod tests {
     #[test]
     fn dp_rule_matches_order() {
         let mut m = DpRuleMatches::default();
-        m.entry(&key(3, 4, "g", ""))
-            .items_p
-            .insert(ItemId::net(kicad_pcb::NetCode(1)).unwrap());
+        let net = ItemId::net(kicad_pcb::NetCode(1)).unwrap();
+        m.entry(&key(3, 4, "g", "")).items_p.insert(net);
         m.entry(&key(3, 4, "g", "u"));
         m.entry(&key(1, 2, "g", ""));
         m.entry(&key(3, 4, "g", ""));
         m.entry(&key(3, 4, "x", ""));
 
-        let order: Vec<(i32, i32, &str, &str)> = m
-            .entries
+        let entries = m.into_entries();
+        let order: Vec<(i32, i32, &str, &str)> = entries
             .iter()
             .map(|(k, _)| {
                 (
@@ -1084,7 +1485,7 @@ mod tests {
             order,
             vec![(1, 2, "g", ""), (3, 4, "g", ""), (3, 4, "g", "u")]
         );
-        assert_eq!(m.entries[1].1.items_p.len(), 1);
+        assert_eq!(entries[1].1.items_p.len(), 1);
     }
 
     /// Two parallel horizontal segments: the facing parts.

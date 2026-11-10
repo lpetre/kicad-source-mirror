@@ -1,0 +1,10 @@
+	(net_chains
+		(net_chain
+			(name "DISC")
+			(members
+				(net "/NET_A")
+			)
+			(terminal_pad "0f92ae9d-c281-4d09-af9f-79a9c0c654be")
+			(terminal_pad "0f92ae9d-c281-4d09-af9f-79a9c0c654be")
+		)
+	)

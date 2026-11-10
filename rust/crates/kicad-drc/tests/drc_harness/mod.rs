@@ -48,7 +48,6 @@ use std::sync::Arc;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::json::{self, ObjectOrder};
-use kicad_core::json_settings::JsonSettingsInternals;
 use kicad_core::kiid::KiidGenerator;
 use kicad_drc::engine::implicit_condition::EngineCondition;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
@@ -60,11 +59,9 @@ use kicad_drc::pcbexpr::functions::PcbExprCacheScope;
 use kicad_drc::report::DrcReport;
 use kicad_drc::rule_parser::default_layer_choices;
 use kicad_drc::run_flow::{RunTestsOptions, run_tests_selected};
-use kicad_pcb::board::BoardProject;
 use kicad_pcb::io::{ParseOptions, ParseReport, parse_board_report};
 use kicad_pcb::pcb_marker::{MarkerT, PcbMarker, RcItem};
-use kicad_pcb::project::board_design_settings_json::load_board_design_settings;
-use kicad_pcb::project::net_settings_json::load_net_settings;
+use kicad_pcb::project::LoadStep;
 use kicad_pcb::{Board, BoardCtx};
 
 #[path = "../common/mod.rs"]
@@ -291,47 +288,6 @@ pub fn diff_entries(reference: &[Entry], rust: &[Entry]) -> (usize, Vec<String>,
     (matched, missing, remaining.into_iter().flatten().collect())
 }
 
-/// The part of `TUNING_PROFILES` that `loadImplicitRules` reads (see `evalrules_oracle.rs`).
-pub fn read_tuning_profiles(doc: &json::Value) -> TuningProfiles {
-    use kicad_core::{Lset, PcbLayerId};
-    use kicad_drc::engine::implicit_rules::{
-        DelayProfileTrackPropagationEntry, TuningProfile, TuningProfileType,
-    };
-
-    let mut profiles = Vec::new();
-    let list = doc
-        .pointer("/tuning_profiles/tuning_profiles_impedance_geometric")
-        .and_then(|v| v.as_array());
-
-    for entry in list.into_iter().flatten() {
-        let int = |v: &json::Value, key: &str| v[key].as_i64().unwrap_or(0) as i32;
-        let entries = entry["layer_entries"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .map(|layer| DelayProfileTrackPropagationEntry {
-                signal_layer: PcbLayerId::from(Lset::name_to_layer(
-                    layer["signal_layer"].as_str().unwrap_or(""),
-                )),
-                width: int(layer, "width"),
-                diff_pair_gap: int(layer, "diff_pair_gap"),
-            })
-            .collect();
-
-        profiles.push(TuningProfile {
-            profile_name: entry["profile_name"].as_str().unwrap_or("").to_string(),
-            type_: if int(entry, "type") == 1 {
-                TuningProfileType::Differential
-            } else {
-                TuningProfileType::Single
-            },
-            track_propagation_entries: entries,
-        });
-    }
-
-    TuningProfiles::new(profiles)
-}
-
 /// A board loaded for a DRC run.
 pub struct Loaded {
     pub board: Board,
@@ -341,11 +297,16 @@ pub struct Loaded {
     pub tuning_profiles: TuningProfiles,
 }
 
-/// The QA load path (`KI_TEST::LoadBoard`): parser, project file (design settings, net
-/// settings, tuning profiles), rule file, `InitEngine` with the real expression binding, the
-/// zone fill triangulation of `BuildConnectivity`.
+/// The QA load path (`KI_TEST::LoadBoard`, `kicad_pcb::project::LoadPath::Qa`, as
+/// `kicad-session`'s board loader runs it): the parser, then the steps of `QA_LOAD_STEPS` in
+/// C++ order - `BOARD::SetProject` (when a `.kicad_pro` exists: design settings, net settings,
+/// component class settings, tuning profiles), `InitEngine` with the real expression binding
+/// and the rule file, `BuildListOfNets`, `BuildConnectivity` (which also triangulates the zone
+/// fills), `SynchronizeTuningProfileProperties`, `SynchronizeComponentClasses`.
 pub fn load_board(path: &Path) -> Result<Loaded, String> {
-    let mut tuning_profiles = TuningProfiles::default();
+    use kicad_pcb::project::board_design_settings_json::DrcExclusionCodec;
+    use kicad_pcb::project::{LoadPath, StepOutcome, load_project, run_model_step};
+
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let text = String::from_utf8_lossy(&bytes);
     let name = path.file_name().unwrap().to_string_lossy().to_string();
@@ -356,56 +317,68 @@ pub fn load_board(path: &Path) -> Result<Loaded, String> {
         parse_board_report(&text, &name, &options).map_err(|e| e.to_string())?;
 
     let pro = path.with_extension("kicad_pro");
+    let read = |p: &Path| {
+        p.exists()
+            .then(|| String::from_utf8_lossy(&std::fs::read(p).unwrap()).to_string())
+    };
 
-    if pro.exists() {
-        let doc = json::parse_bytes(&std::fs::read(&pro).unwrap(), ObjectOrder::Sorted, true)
-            .map_err(|e| format!("project: {e:?}"))?;
-        let mut parent = JsonSettingsInternals {
-            original: doc.clone(),
-            doc,
-        };
-
-        if !board.legacy_design_settings_loaded {
-            let _ = load_board_design_settings(
-                &mut parent,
-                board.design_settings_mut(),
-                std::rc::Rc::new(KiapiDrcExclusionCodec::default()),
-            );
-        }
-
-        let (net_settings, _) = load_net_settings(Some(&parent));
-        board.design_settings_mut().net_settings = net_settings;
-        board.project = Some(BoardProject::default());
-
-        tuning_profiles = read_tuning_profiles(&parent.doc);
-    } else if path.with_extension("pro").exists() {
+    if !pro.exists() && path.with_extension("pro").exists() {
         return Err("legacy .pro project (not readable by the port)".to_string());
     }
 
+    let mut project = read(&pro).map(|pro_text| {
+        load_project(
+            Some(&pro_text),
+            read(&path.with_extension("kicad_prl")).as_deref(),
+            &pro.to_string_lossy(),
+        )
+    });
+
     let dru = path.with_extension("kicad_dru");
-    let dru_text = dru
-        .exists()
-        .then(|| String::from_utf8_lossy(&std::fs::read(&dru).unwrap()).to_string());
+    let dru_text = read(&dru);
     let dru_path = dru.to_string_lossy().to_string();
 
+    let codec: std::rc::Rc<dyn DrcExclusionCodec> =
+        std::rc::Rc::new(KiapiDrcExclusionCodec::default());
+    kicad_drc::component_class_rules::install(&mut board);
+
     let mut engine = DrcEngine::new();
-    // The real expression binding (DRC-21) compiles and evaluates the user rule conditions.
-    let result = engine.init_engine(
-        &mut board,
-        dru_text.as_deref().map(|t| (t, dru_path.as_str())),
-        default_layer_choices(),
-        &tuning_profiles,
-        None,
-    );
+    let mut tuning_profiles = TuningProfiles::default();
 
-    if result.is_err() {
-        return Err("InitEngine failed".to_string());
+    for &step in LoadPath::Qa.steps() {
+        match run_model_step(&mut board, LoadPath::Qa, step, &mut project, &codec) {
+            Ok(StepOutcome::Session) => {}
+            Ok(_) => continue,
+            Err(e) => return Err(format!("SetProject: {e:?}")),
+        }
+
+        match step {
+            LoadStep::InitDrcEngine => {
+                // m_project->GetProjectFile().TuningProfileParameters()
+                tuning_profiles = project_tuning_profiles(&board);
+
+                // The real expression binding (DRC-21) compiles the user rule conditions.
+                let result = engine.init_engine(
+                    &mut board,
+                    dru_text.as_deref().map(|t| (t, dru_path.as_str())),
+                    default_layer_choices(),
+                    &tuning_profiles,
+                    None,
+                );
+
+                if result.is_err() {
+                    return Err("InitEngine failed".to_string());
+                }
+            }
+            LoadStep::BuildConnectivity => {
+                // BOARD::BuildConnectivity(): CONNECTIVITY_DATA::Build triangulates the zone
+                // fills (BOARD::CacheTriangulation), which the keepout predicates of the
+                // expression functions query (DRC-22). The run builds its own connectivity.
+                kicad_connectivity::data::ConnectivityData::new().build_connectivity(&mut board);
+            }
+            _ => {}
+        }
     }
-
-    // KI_TEST::LoadBoard then calls BOARD::BuildConnectivity(), whose CONNECTIVITY_DATA::Build
-    // triangulates the board zone fills (BOARD::CacheTriangulation); the keepout predicates of
-    // the expression functions query the fills through those triangles (DRC-22).
-    kicad_connectivity::data::cache_board_triangulation(&mut board);
 
     Ok(Loaded {
         board,
@@ -413,6 +386,42 @@ pub fn load_board(path: &Path) -> Result<Loaded, String> {
         engine,
         tuning_profiles,
     })
+}
+
+/// `PROJECT_FILE::TuningProfileParameters()` of the bound project, as `kicad-session`'s
+/// `board_loader::tuning_profiles` reads it.
+pub fn project_tuning_profiles(board: &Board) -> TuningProfiles {
+    use kicad_drc::engine::implicit_rules::{
+        DelayProfileTrackPropagationEntry, TuningProfile, TuningProfileType,
+    };
+
+    let parent = board.project.as_ref().map(|p| &p.document);
+    let (loaded, _) = kicad_pcb::project::tuning_profiles_json::load_tuning_profiles(parent);
+
+    TuningProfiles::new(
+        loaded
+            .tuning_profiles
+            .iter()
+            .map(|p| TuningProfile {
+                profile_name: p.profile_name.clone(),
+                // static_cast<PROFILE_TYPE>( int ): DIFFERENTIAL is 1
+                type_: if p.type_ == 1 {
+                    TuningProfileType::Differential
+                } else {
+                    TuningProfileType::Single
+                },
+                track_propagation_entries: p
+                    .track_propagation_entries
+                    .iter()
+                    .map(|e| DelayProfileTrackPropagationEntry {
+                        signal_layer: e.signal_layer,
+                        width: e.width,
+                        diff_pair_gap: e.diff_pair_gap,
+                    })
+                    .collect(),
+            })
+            .collect(),
+    )
 }
 
 /// True when the engine holds a compiled user rule condition. Since STAB-DRC the harness

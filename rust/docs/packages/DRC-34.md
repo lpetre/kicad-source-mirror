@@ -9,10 +9,8 @@ the texts with a C++ driver through DRC_ENGINE::EvalRules with a WX_STRING_REPOR
 EvalRules oracle boards), drc_engine.cpp L3267-3410 (the own-clearance cache and the
 remaining engine helpers not yet ported: list what the engine core left as gaps in
 PORT_STATUS.md and close them), drc_test_provider_net_chain_tuning_profiles.cpp,
-drc_test_provider_via_stitch.cpp, the stub of drc_test_provider_library_parity.cpp
-(L1154-1216: what the provider does in kicad-cli where no library table is loaded - port
-that behaviour, i.e. which violations and messages appear, with the raw zone_connect
-accessors the model review asks for), drc_item.cpp L628-710 (`GetViolationLayers`).
+drc_test_provider_via_stitch.cpp, (library parity is NOT yours: package DRC-LP ports that provider completely),
+drc_item.cpp L628-710 (`GetViolationLayers`).
 Tests: test_drc_net_chain_tuning_profiles.cpp, test_drc_violation_layers_issue24941.cpp;
 corpus replay for the error codes these providers emit.
 

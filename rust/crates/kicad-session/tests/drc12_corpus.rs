@@ -354,18 +354,6 @@ const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
         "one connection_width entry names other items (C++ std::set of item pointers, address order)",
     ),
     (
-        "qa/data/pcbnew/issue14549_2.kicad_pcb",
-        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
-    ),
-    (
-        "qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb",
-        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
-    ),
-    (
-        "qa/data/pcbnew/two_segment_teardrop.kicad_pcb",
-        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
-    ),
-    (
         "qa/data/pcbnew/issue22475/issue22475.kicad_pcb",
         "text_thickness of a TrueType text missing (outline-font branch of the text_dims provider, DRC-24 gap)",
     ),

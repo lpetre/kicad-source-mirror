@@ -1,0 +1,2 @@
+(rule drc31_dp
+    (constraint skew (min 0.001mm) (max 0.01mm) (within_diff_pairs)))

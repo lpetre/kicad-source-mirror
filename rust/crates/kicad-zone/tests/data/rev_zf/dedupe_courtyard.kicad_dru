@@ -1,0 +1,3 @@
+(version 1)
+(rule "courtyard gap" (condition "B.Reference == 'C1' || B.Reference == 'C3'") (constraint physical_clearance (min 0.3mm)))
+(rule "courtyard touch" (condition "B.Reference == 'C2'") (constraint physical_clearance (min 0mm)))

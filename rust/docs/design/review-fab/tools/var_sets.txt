@@ -1,0 +1,6 @@
+default|
+v1|--variant V1
+v2|--variant V2 --cdnp --hdnp
+v1c|--variant V1 --cdnp --sdnp --sp
+vnone|--variant Nope --cdnp
+v12|--variant V1 --variant V2 --cdnp

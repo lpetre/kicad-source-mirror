@@ -57,8 +57,8 @@ pub mod caches;
 pub mod exclusion;
 pub mod footprint_utils;
 pub mod report;
-pub mod run_flow;
 pub mod rtree;
+pub mod run_flow;
 pub mod test_provider;
 pub mod zone_index;
 
@@ -68,7 +68,9 @@ pub mod providers;
 pub mod chain_topology;
 pub mod creepage_engine;
 pub mod creepage_utils;
+pub mod length_delay_calculation;
 pub mod length_report;
+pub mod net_chain_bridging;
 
 pub use constraint_types::{DrcConstraintT, DrcImplicitSource};
 pub use reporter::{Reporter, WxStringReporter};

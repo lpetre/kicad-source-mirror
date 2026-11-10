@@ -206,7 +206,13 @@ fn svg_start_plot_board_matches_cli() {
         )
         .unwrap();
         plotter.set_title("");
-        plot_board_layers(&ctx, plotter.as_mut(), &[layer], &opts);
+        plot_board_layers(
+            &ctx,
+            plotter.as_mut(),
+            &[layer],
+            &opts,
+            kicad_fab::color_settings::ColorSettings::builtin_default(),
+        );
         plotter.end_plot();
 
         let golden =

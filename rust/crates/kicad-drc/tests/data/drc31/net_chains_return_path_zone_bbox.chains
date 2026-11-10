@@ -1,0 +1,14 @@
+	(net_chains
+		(net_chain
+			(name "COVERED")
+			(members
+				(net "/CHAIN_COVERED")
+			)
+		)
+		(net_chain
+			(name "UNCOVERED")
+			(members
+				(net "/CHAIN_UNCOVERED")
+			)
+		)
+	)

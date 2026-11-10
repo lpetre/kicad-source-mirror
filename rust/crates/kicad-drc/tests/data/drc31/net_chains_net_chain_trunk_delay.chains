@@ -1,0 +1,11 @@
+	(net_chains
+		(net_chain
+			(name "DLY")
+			(members
+				(net "/NET_A")
+				(net "/NET_B")
+			)
+			(terminal_pad "00000000-0000-0000-0000-000000000a02")
+			(terminal_pad "00000000-0000-0000-0000-000000000a02")
+		)
+	)

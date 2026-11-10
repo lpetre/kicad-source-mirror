@@ -27,23 +27,26 @@
 //! that package lands.
 
 use kicad_core::color4d::{Color4D, EdaColorT};
-use kicad_core::plot_enums::{FillT, PlotFormat};
+use kicad_core::plot_enums::{DrillMarks, DxfOutlineMode, FillT, PlotFormat};
 use kicad_core::string_utils::{printable_char_count, unescape_string};
 use kicad_core::text_attributes::TextAttributes;
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_font::Metrics;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::trigo::rotate_point;
-use kicad_geom::{ANGLE_90, ShapePolySet, Vector2I, ki_round};
+use kicad_geom::{ANGLE_0, ANGLE_90, EdaAngle, ShapePolySet, Vector2I, ki_round};
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::eda_shape::ShapeT;
 use kicad_pcb::item_ref::ItemRef;
-use kicad_pcb::padstack::{PadAttrib, PadProp, PadShape, Padstack};
+use kicad_pcb::padstack::{PadAttrib, PadDrillShape, PadProp, PadShape, Padstack};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
+use kicad_pcb::pcb_track::Track;
 use kicad_pcb::traits::EdaShapeItem;
 use kicad_plot::Plotter;
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
+
+use crate::color_settings::ColorSettings;
 
 /// Panic with a "port pending" message naming the C++ function and the work package that
 /// ports it (the plotting counterpart of `kicad_pcb::port_pending!`).
@@ -72,20 +75,26 @@ pub struct BrditemsPlotter<'a, 'p> {
     pub ctx: &'a BoardCtx<'a>,
     /// `m_layerMask`: the layers being plotted (`SetLayerSet`).
     pub layer_mask: Lset,
+    /// `ColorSettings()` of the `PCB_PLOT_PARAMS` base (the port's `PcbPlotParams` has no
+    /// colour settings; the caller supplies them).
+    pub colors: ColorSettings,
 }
 
 impl<'a, 'p> BrditemsPlotter<'a, 'p> {
-    /// `BRDITEMS_PLOTTER( PLOTTER* aPlotter, const BOARD* aBoard, const PCB_PLOT_PARAMS& )`.
+    /// `BRDITEMS_PLOTTER( PLOTTER* aPlotter, const BOARD* aBoard, const PCB_PLOT_PARAMS& )`;
+    /// `a_colors` is the `ColorSettings()` of the options.
     pub fn new(
         a_plotter: &'p mut dyn Plotter,
         a_board: &'a BoardCtx<'a>,
         a_plot_opts: &PcbPlotParams,
+        a_colors: ColorSettings,
     ) -> Self {
         BrditemsPlotter {
             opts: a_plot_opts.clone(),
             plotter: a_plotter,
             ctx: a_board,
             layer_mask: Lset::new(),
+            colors: a_colors,
         }
     }
 
@@ -547,9 +556,134 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         );
     }
 
-    /// `BRDITEMS_PLOTTER::PlotDrillMarks` (FAB-11).
+    /// Port of `BRDITEMS_PLOTTER::plotOneDrillMark` (private in C++): flash one hole of
+    /// `a_drill_shape` at `a_drill_pos`, shrunk to `a_small_drill` for round holes when
+    /// non-zero and kept inside the pad.
+    fn plot_one_drill_mark(
+        &mut self,
+        a_drill_shape: PadDrillShape,
+        a_drill_pos: Vector2I,
+        a_drill_size: Vector2I,
+        a_pad_size: Vector2I,
+        a_orientation: EdaAngle,
+        a_small_drill: i32,
+    ) {
+        let mut drill_size = a_drill_size;
+
+        // Small drill marks have no significance when applied to slots
+        if a_small_drill != 0 && a_drill_shape == PadDrillShape::Circle {
+            drill_size.x = a_small_drill.min(drill_size.x);
+        }
+
+        // Round holes only have x diameter, slots have both
+        drill_size.x -= self.fine_width_adj();
+        drill_size.x = std_clamp(drill_size.x, 1, a_pad_size.x - 1);
+
+        if a_drill_shape == PadDrillShape::Oblong {
+            drill_size.y -= self.fine_width_adj();
+            drill_size.y = std_clamp(drill_size.y, 1, a_pad_size.y - 1);
+
+            self.plotter
+                .flash_pad_oval(a_drill_pos, drill_size, a_orientation, None);
+        } else {
+            self.plotter
+                .flash_pad_circle(a_drill_pos, drill_size.x, None);
+        }
+    }
+
+    /// Port of `BRDITEMS_PLOTTER::PlotDrillMarks`: the via and pad holes of the board as
+    /// filled marks (`GetDrillMarksType()`: small or full size), in white where they knock out
+    /// a plotted pad.
     pub fn plot_drill_marks(&mut self) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotDrillMarks (FAB-11)")
+        let ctx = self.ctx;
+        let board = ctx.board;
+        let mut small_drill = 0;
+
+        if self.opts.drill_marks == DrillMarks::SmallDrillShape {
+            small_drill = PCB_IU_SCALE.mm_to_iu(SMALL_DRILL_MARK_SIZE);
+        }
+
+        // Drill marks are drawn white-on-black to knock-out the underlying pad.  This works
+        // only for drivers supporting color change, obviously... it means that:
+        //   - PS, SVG and PDF output is correct (i.e. you have a 'donut' pad)
+        //   - In gerbers you can't see them. This is arguably the right thing to do since
+        //     having drill marks and high speed drill stations is a sure recipe for broken
+        //     tools and angry manufacturers. If you *really* want them you could start a layer
+        //     with negative polarity to knock-out the film.
+        //   - In DXF they go into the 'WHITE' layer. This could be useful.
+        let dxf_filled = self.plotter.plotter_type() != PlotFormat::Dxf
+            || self.opts.dxf_plot_mode == DxfOutlineMode::Filled;
+
+        if dxf_filled {
+            self.plotter.set_color(&Color4D::WHITE);
+        }
+
+        for (_, track) in board.tracks() {
+            if let Track::Via(via) = track {
+                // Via are not always on all layers
+                if !(&via.layer_set(ctx) & &self.layer_mask).any() {
+                    continue;
+                }
+
+                self.plot_one_drill_mark(
+                    PadDrillShape::Circle,
+                    via.track.start(),
+                    Vector2I::new(via.drill_value(ctx), 0),
+                    Vector2I::new(via.width(Padstack::TEMP_ALL_LAYERS), 0),
+                    ANGLE_0,
+                    small_drill,
+                );
+            }
+        }
+
+        for (footprint, _) in board.footprints() {
+            for (_, pad) in board.footprint_pads(footprint) {
+                let drill_size = pad.drill_size(ctx);
+
+                if drill_size.x == 0 {
+                    continue;
+                }
+
+                // Skip marks on layers the pad isn't on for Gerber only (24416). Other
+                // formats keep them as a drill map, e.g. Edge.Cuts (24867).
+                if self.plotter.plotter_type() == PlotFormat::Gerber
+                    && !(&pad.layer_set(ctx) & &self.layer_mask).any()
+                {
+                    continue;
+                }
+
+                if dxf_filled {
+                    // Drill mark is in black unless we can find something to knock it out of
+                    self.plotter.set_color(&Color4D::BLACK);
+
+                    for layer in self.layer_mask.iter() {
+                        if !pad.is_on_layer(ctx, layer) {
+                            continue;
+                        }
+
+                        let pad_size = pad.size(ctx, layer);
+
+                        if pad_size.x > drill_size.x || pad_size.y > drill_size.y {
+                            self.plotter.set_color(&Color4D::WHITE);
+                            break;
+                        }
+                    }
+                }
+
+                self.plot_one_drill_mark(
+                    pad.drill_shape(),
+                    pad.position(ctx),
+                    drill_size,
+                    pad.size(ctx, Padstack::TEMP_ALL_LAYERS),
+                    pad.orientation(ctx),
+                    small_drill,
+                );
+            }
+        }
+
+        if dxf_filled {
+            self.plotter.set_color(&Color4D::BLACK);
+        }
     }
 
     /// `BRDITEMS_PLOTTER::PlotDrillSymbols` (FAB-13, tier 3).
@@ -575,19 +709,20 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
     }
 
     /// `ColorSettings()->GetColor( aLayer )` of the plot options (`PCB_PLOT_PARAMS::
-    /// ColorSettings`).
-    ///
-    /// The colour themes are not ported (FAB-11): the port has no `COLOR_SETTINGS`. Gerber
-    /// ignores colours and a black and white plot only distinguishes "white or not"
-    /// (`PSLIKE_PLOTTER::SetColor`), so the theme colour is replaced by BLACK there (see
-    /// `PORT_STATUS.md`, FAB-04 deviations); a colour plot needs the theme and is pending.
+    /// ColorSettings`, [`ColorSettings::get_color`]).
     pub fn color_settings_color(&self, a_layer: i32) -> Color4D {
-        if self.plotter.plotter_type() != PlotFormat::Gerber && self.plotter.color_mode() {
-            fab_port_pending!("COLOR_SETTINGS::GetColor (colour themes, FAB-11)", a_layer)
-        }
-
-        Color4D::BLACK
+        self.colors.get_color(a_layer)
     }
+}
+
+/// `ADVANCED_CFG::m_SmallDrillMarkSize` (mm; default of `common/advanced_config.cpp`, the
+/// port reads no `kicad_advanced` file).
+pub const SMALL_DRILL_MARK_SIZE: f64 = 0.35;
+
+/// libstdc++ `std::clamp( v, lo, hi )` (`std::min( std::max( v, lo ), hi )` without the debug
+/// assertion `lo <= hi`): a pad narrower than 2 nm yields `hi`.
+fn std_clamp(v: i32, lo: i32, hi: i32) -> i32 {
+    v.max(lo).min(hi)
 }
 
 /// `VECTOR2I( BOX2I::GetSize() )`: the int64 size clamped to `int`.

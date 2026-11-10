@@ -149,15 +149,40 @@ impl Job {
         path_is_directory: bool,
         project_vars: Option<&BTreeMap<String, String>>,
     ) -> String {
-        let clock = TitleBlockClock::default();
+        let project = |token: &mut String| -> bool {
+            match project_vars.and_then(|vars| vars.get(token.as_str())) {
+                Some(value) => {
+                    *token = value.clone();
+                    true
+                }
+                None => false,
+            }
+        };
+
+        self.resolve_output_path_with(
+            path,
+            path_is_directory,
+            &TitleBlockClock::default(),
+            project_vars.map(|_| &project as &dyn Fn(&mut String) -> bool),
+        )
+    }
+
+    /// [`Job::resolve_output_path`] with the title block clock (`CURRENT_DATE`, ...) and the
+    /// project's `PROJECT::TextVarResolver` (`None`: no project).
+    pub fn resolve_output_path_with(
+        &self,
+        path: &str,
+        path_is_directory: bool,
+        clock: &TitleBlockClock,
+        project: Option<&dyn Fn(&mut String) -> bool>,
+    ) -> String {
         let text_resolver = |token: &mut String| -> bool {
-            if self.title_block.text_var_resolver(token, &clock) {
+            if self.title_block.text_var_resolver(token, clock) {
                 return true;
             }
 
-            if let Some(vars) = project_vars {
-                if let Some(value) = vars.get(token.as_str()) {
-                    *token = value.clone();
+            if let Some(project) = project {
+                if project(token) {
                     return true;
                 }
             }
@@ -205,6 +230,21 @@ impl Job {
         };
 
         self.resolve_output_path(path, self.output_path_is_directory, project_vars)
+    }
+
+    /// [`Job::full_output_path`] through [`Job::resolve_output_path_with`].
+    pub fn full_output_path_with(
+        &self,
+        clock: &TitleBlockClock,
+        project: Option<&dyn Fn(&mut String) -> bool>,
+    ) -> String {
+        let path = if self.working_output_path.is_empty() {
+            &self.output_path
+        } else {
+            &self.working_output_path
+        };
+
+        self.resolve_output_path_with(path, self.output_path_is_directory, clock, project)
     }
 }
 

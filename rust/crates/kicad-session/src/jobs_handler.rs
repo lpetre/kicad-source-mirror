@@ -319,16 +319,34 @@ pub fn drill_default_report_path(out_path: &str, board_file_name: &str) -> Strin
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::resolveJobOutputPath( aJob, aBoard, aDrawingSheet )`: copy
-/// the title block into the job, apply the `-D` overrides to the project text variables and
-/// resolve the output path.
+/// the title block into the job, apply the `-D` overrides to the project text variables
+/// (`PROJECT::ApplyTextVars`: they stay applied, so board texts resolve them too),
+/// `BOARD::SynchronizeProperties`, and resolve the output path with the project's
+/// `TextVarResolver`.
 ///
-/// The override drawing sheet (`loadOverrideDrawingSheet`) and `BOARD::SynchronizeProperties`
-/// are not ported yet; the project text variables are the job's overrides only until the
-/// project binding lands (`PORT_STATUS.md`).
-fn resolve_job_output_path(job: &mut crate::jobs::Job, session: &Session) -> String {
+/// The override drawing sheet (`loadOverrideDrawingSheet`, `--drawing-sheet`) is not ported
+/// (no drawing sheet model; `PORT_STATUS.md`).
+fn resolve_job_output_path(job: &mut crate::jobs::Job, session: &mut Session) -> String {
     job.set_title_block(session.board.titles.clone());
-    let project_vars = job.var_overrides.clone();
-    job.full_output_path(Some(&project_vars))
+
+    let board = &mut session.board;
+
+    if let Some(project) = board.project.as_mut() {
+        project.apply_text_vars(&job.var_overrides);
+    }
+
+    board.synchronize_properties();
+
+    let clock = board.text_var_clock.clone();
+
+    match board.project.as_ref() {
+        Some(project) => {
+            let resolver = |token: &mut String| project.text_var_resolver(&clock, token);
+            job.full_output_path_with(&clock, Some(&resolver))
+        }
+        // GetFullOutputPath( nullptr ): no project (Session::new_empty)
+        None => job.full_output_path_with(&clock, None),
+    }
 }
 
 /// The C++ `EDA_UNITS` of `JobExportDrc`'s `switch( drcJob->m_units )`.
@@ -415,8 +433,43 @@ pub fn run_drc(
         }
     }
 
-    // drcEngine->SetDrawingSheet( getDrawingSheetProxyView( brd ) ): the drawing sheet text
-    // variable test of the misc provider is not wired (kicad-drc PORT_STATUS.md, DRC-12).
+    // drcEngine->SetDrawingSheet( getDrawingSheetProxyView( brd ) ): the page settings, project
+    // and title block of the board; the misc provider builds the draw item list
+    // (`kicad_plot::drawing_sheet::drc_drawing_sheet_texts`).
+    {
+        let board = &session.board;
+        let project = |token: &mut String| -> bool {
+            board
+                .project
+                .as_ref()
+                .is_some_and(|p| p.text_var_resolver(&board.text_var_clock, token))
+        };
+        let project: Option<&kicad_core::text_vars::TextVarResolver<'_>> =
+            board.project.as_ref().map(|_| &project as _);
+        let texts = kicad_plot::drawing_sheet::drc_drawing_sheet_texts(
+            &mut session.drawing_sheet,
+            &board.paper,
+            &board.titles,
+            project,
+            &board.text_var_clock,
+        );
+        let drawing_sheet = kicad_drc::providers::misc::DrawingSheetTexts {
+            // The DS_PROXY_VIEW_ITEM's own (random) KIID
+            proxy_uuid: Default::default(),
+            texts: texts
+                .into_iter()
+                .map(|t| kicad_drc::providers::misc::DrawingSheetText {
+                    text: t.text,
+                    shown_text: t.shown_text,
+                    position: t.position,
+                })
+                .collect(),
+        };
+
+        if let Some(engine) = session.drc_engine.as_mut() {
+            engine.set_drawing_sheet(Some(drawing_sheet));
+        }
+    }
 
     let mut check_parity = job.parity;
 
@@ -593,6 +646,7 @@ pub fn run_export_gerbers(
     let env = kicad_fab::pcbplot::PlotEnv {
         build_version: crate::build_version::build_version().to_string(),
         creation_date: job.gerber.plot.creation_date,
+        drawing_sheet: session.drawing_sheet.clone(),
     };
 
     let mut ctx =
@@ -656,9 +710,27 @@ fn fab_gerbers_job(
     job: &JobExportPcbGerbers,
 ) -> kicad_fab::jobs::job_export_pcb_gerbers::JobExportPcbGerbers {
     use kicad_fab::jobs::job_export_pcb_gerbers as fab;
+
+    let plot = fab_plot_job(&job.gerber.plot);
+
+    fab::JobExportPcbGerbers {
+        gerber: fab::JobExportPcbGerber {
+            plot,
+            include_netlist_attributes: job.gerber.include_netlist_attributes,
+            use_x2_format: job.gerber.use_x2_format,
+            disable_aperture_macros: job.gerber.disable_aperture_macros,
+            use_protel_file_extension: job.gerber.use_protel_file_extension,
+            precision: job.gerber.precision,
+        },
+        use_board_plot_params: job.use_board_plot_params,
+        create_jobs_file: job.create_jobs_file,
+    }
+}
+
+/// The session's `JOB_EXPORT_PCB_PLOT` as kicad-fab's option struct (same members).
+fn fab_plot_job(p: &JobExportPcbPlot) -> kicad_fab::jobs::job_export_pcb_plot::JobExportPcbPlot {
     use kicad_fab::jobs::job_export_pcb_plot as fab_plot;
 
-    let p = &job.gerber.plot;
     let plot_format = match p.plot_format {
         crate::jobs::JobPlotFormat::Hpgl => fab_plot::JobPlotFormat::Hpgl,
         crate::jobs::JobPlotFormat::Gerber => fab_plot::JobPlotFormat::Gerber,
@@ -669,7 +741,7 @@ fn fab_gerbers_job(
         crate::jobs::JobPlotFormat::Png => fab_plot::JobPlotFormat::Png,
     };
 
-    let plot = fab_plot::JobExportPcbPlot {
+    fab_plot::JobExportPcbPlot {
         plot_format,
         color_theme: p.color_theme.clone(),
         mirror: p.mirror,
@@ -692,19 +764,6 @@ fn fab_gerbers_job(
         use_drill_origin: p.use_drill_origin,
         configured_output_path: p.job.configured_output_path().to_string(),
         var_overrides: p.job.var_overrides.clone(),
-    };
-
-    fab::JobExportPcbGerbers {
-        gerber: fab::JobExportPcbGerber {
-            plot,
-            include_netlist_attributes: job.gerber.include_netlist_attributes,
-            use_x2_format: job.gerber.use_x2_format,
-            disable_aperture_macros: job.gerber.disable_aperture_macros,
-            use_protel_file_extension: job.gerber.use_protel_file_extension,
-            precision: job.gerber.precision,
-        },
-        use_board_plot_params: job.use_board_plot_params,
-        create_jobs_file: job.create_jobs_file,
     }
 }
 
@@ -774,10 +833,20 @@ pub fn run_export_drill(
     };
 
     // aDrillJob->ResolveOutputPath( reportPathSetting, false, brd->GetProject() ): the
-    // project text variables are the -D overrides (resolveJobOutputPath applied them)
-    let project_vars = job.job.var_overrides.clone();
-    let resolver_job = job.job.clone();
-    let resolve = move |path: &str| resolver_job.resolve_output_path(path, false, Some(&project_vars));
+    // project's text variables (with the -D overrides resolveJobOutputPath applied)
+    let board = &session.board;
+    let resolver_job = &job.job;
+    let resolve = |path: &str| {
+        let clock = &board.text_var_clock;
+
+        match board.project.as_ref() {
+            Some(project) => {
+                let resolver = |token: &mut String| project.text_var_resolver(clock, token);
+                resolver_job.resolve_output_path_with(path, false, clock, Some(&resolver))
+            }
+            None => resolver_job.resolve_output_path_with(path, false, clock, None),
+        }
+    };
 
     let mut ctx =
         kicad_pcb::ctx::BoardCtx::bare(&session.board).with_connectivity(&session.connectivity);
@@ -842,7 +911,10 @@ pub fn run_export_svg(
         job.plot.job.set_working_output_path(&name);
     }
 
-    let _out_path = resolve_job_output_path(&mut job.plot.job, session);
+    let out_path = resolve_job_output_path(&mut job.plot.job, session);
+
+    // PATHS::EnsurePathExists( outPath, isSingle ): the host creates the directory when it
+    // writes the files.
 
     if job.plot.check_zones_before_plot {
         session.refill_zones()?;
@@ -852,13 +924,79 @@ pub fn run_export_svg(
     let board = &session.board;
     let user_name = |layer: PcbLayerId| board.layer_name(layer);
 
-    if prepare_plot_layers(&mut job.plot, &enabled, Some(&user_name), reporter).is_none() {
+    let Some(layers_to_plot) =
+        prepare_plot_layers(&mut job.plot, &enabled, Some(&user_name), reporter)
+    else {
         return Ok(JobOutcome::exit(exit_codes::ERR_ARGS));
+    };
+
+    // PCB_PLOTTER::Plot: RefreshGeneratedTables( *m_board ) before plotting (it needs the
+    // mutable board, so it runs here)
+    crate::board_loader::refresh_generated_tables(&mut session.board)?;
+
+    let fab_job = kicad_fab::jobs::job_export_pcb_svg::JobExportPcbSvg {
+        plot: fab_plot_job(&job.plot),
+        fit_page_to_board: job.fit_page_to_board,
+        precision: job.precision,
+        gen_mode: match job.gen_mode {
+            crate::jobs::SvgGenMode::Single => {
+                kicad_fab::jobs::job_export_pcb_svg::SvgGenMode::Single
+            }
+            crate::jobs::SvgGenMode::Multi => {
+                kicad_fab::jobs::job_export_pcb_svg::SvgGenMode::Multi
+            }
+        },
+    };
+    let env = kicad_fab::pcbplot::PlotEnv {
+        build_version: crate::build_version::build_version().to_string(),
+        creation_date: job.plot.creation_date,
+        drawing_sheet: session.drawing_sheet.clone(),
+    };
+
+    let mut ctx =
+        kicad_pcb::ctx::BoardCtx::bare(&session.board).with_connectivity(&session.connectivity);
+
+    if let Some(engine) = session.drc_engine.as_ref() {
+        ctx = ctx.with_rules(engine);
     }
 
-    Err(SessionError::not_yet_ported(
-        "kicad-fab: PCB_PLOTTER::PlotJobToPlotOpts / PCB_PLOTTER::Plot (SVG)",
-    ))
+    let mut fab_reporter = FabReporter(reporter);
+    let result = kicad_fab::jobs_handler::job_export_svg(
+        ctx,
+        &fab_job,
+        &layers_to_plot.0,
+        &out_path,
+        &env,
+        Some(&mut fab_reporter),
+    );
+
+    if let Some(err) = result.error {
+        return Err(SessionError::not_yet_ported(format!("kicad-fab: {err}")));
+    }
+
+    // plotJob: a failed plot returns before AddOutput
+    if !result.success {
+        return Ok(JobOutcome::exit(exit_codes::ERR_UNKNOWN));
+    }
+
+    for output in &result.outputs {
+        job.plot.job.add_output(output);
+    }
+
+    let files: Vec<OutputFile> = result
+        .files
+        .into_iter()
+        .map(|f| OutputFile {
+            name: f.name,
+            contents: f.contents,
+        })
+        .collect();
+
+    Ok(JobOutcome {
+        exit_code: exit_codes::OK,
+        files,
+        report_text: None,
+    })
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobUpgrade` for a loaded session (`getBoard`:

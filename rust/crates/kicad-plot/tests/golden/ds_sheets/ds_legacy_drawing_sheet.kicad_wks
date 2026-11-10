@@ -1,0 +1,5 @@
+(drawing_sheet (version 20210606)
+  (setup (textsize 1.5 1.5)(linewidth 0.15)(textlinewidth 0.15))
+  (rect (start 110 34) (end 2 2))
+  (tbtext "Rev: ${REVISION} ~{bar}" (pos 24 6.9) (font bold))
+)

@@ -503,6 +503,99 @@ def prototype():
     return b
 
 
+def hatch_flashing():
+    """Conditional flashing against hatch fills: pre-pass (keepouts, outline test), the
+    START_END_ONLY mode, the second pass on a hatched fill."""
+    b = Board("hatch_flashing", layers=4)
+    hf = ("(mode hatch) (hatch_thickness 0.35) (hatch_gap 1.9) (hatch_orientation 15) (hatch_smoothing_level 0) "
+          "(hatch_smoothing_value 0.1) (hatch_border_algorithm hatch_thickness) (hatch_min_hole_area 0.3)")
+    b.zone(FULL, ("In1.Cu", "In2.Cu"), net="A", name="hatch", fill=hf)
+    b.zone(box(101, 101, 139, 112), "F.Cu", net="A", name="top")
+    b.zone(box(101, 114, 139, 129), "B.Cu", net="B", name="bottom", connect="yes")
+    b.zone(box(126, 102, 138, 110), ("In2.Cu", "F.Cu"), name="ko", keepout="not_allowed")
+    modes = ["(remove_unused_layers yes) (keep_end_layers no)", "(remove_unused_layers yes) (keep_end_layers yes)",
+             "(start_end_only yes)", ""]
+    k = 0
+    for row, y in enumerate((104, 107.3, 110.1, 116.4, 119.7, 123.2, 126.6)):
+        for col in range(9):
+            x = 103.1 + col * 4.07 + row * 0.37
+            net = "A" if (row + col) % 4 != 3 else "B"
+            mode = modes[k % 4]
+            k += 1
+            if col == 7:
+                b.via(x, y, net, extra=mode, layers=("F.Cu", "In1.Cu"), kind="blind")
+            elif col == 8:
+                b.via(x, y, net, size=0.4, drill=0.2, extra=mode, layers=("In2.Cu", "B.Cu"), kind="micro")
+            else:
+                b.via(x, y, net, extra=mode)
+    pads = []
+    for i, extra in enumerate(("(remove_unused_layers yes) (keep_end_layers no)",
+                               "(remove_unused_layers yes) (keep_end_layers yes)", "",
+                               "(remove_unused_layers yes) (keep_end_layers yes) (zone_connect 2)")):
+        pads.append(b.pad(str(i + 1), "thru_hole", "circle", (0, i * 3.1), (1.7, 1.7), "A" if i != 2 else "B", THT,
+                          drill=0.9, extra=extra))
+    b.footprint("J1", 121.6, 113.2, pads, attr="through_hole")
+    return b
+
+
+def dedupe_courtyard():
+    """Courtyard knockouts (physical clearance against footprints, per side and on an inner
+    layer), coincident pad / via / track deduplication (an arc shares a straight track's
+    key), net-tie graphics."""
+    b = Board("dedupe_courtyard", layers=4)
+    b.zone(FULL, ("F.Cu", "In1.Cu", "B.Cu"), net="A", name="all")
+
+    def cy(layer, x1, y1, x2, y2):
+        return (f'(fp_rect (start {x1} {y1}) (end {x2} {y2}) (stroke (width 0.05) (type default)) (fill no) '
+                f'(layer "{layer}") (uuid "{b.uuid()}"))')
+
+    b.footprint("C1", 107, 106, [cy("F.CrtYd", -3, -2, 3, 2),
+                                 b.pad("1", "smd", "rect", (-1.5, 0), (1, 1.2), "B", SMD, rot=20),
+                                 b.pad("2", "smd", "rect", (1.5, 0), (1, 1.2), "A", SMD, rot=20)], rot=20)
+    b.footprint("C2", 117, 106, [cy("F.CrtYd", -3, -2, 3, 2),
+                                 b.pad("1", "smd", "rect", (-1.5, 0), (1, 1.2), "B", SMD)])
+    b.footprint("C3", 127, 106, [cy("B.CrtYd", -3, -2, 3, 2), cy("F.CrtYd", -1, -1, 1, 1),
+                                 b.pad("1", "smd", "rect", (-1.5, 0), (1, 1.2), "B", ("B.Cu", "B.Mask"), rot=180)],
+                rot=180, layer="B.Cu")
+    b.footprint("C4", 135, 106, [b.pad("1", "smd", "rect", (0, 0), (1, 1.2), "B", SMD)])  # no courtyard
+    # coincident items
+    for _ in range(2):
+        b.via(105, 114, "B")
+        b.seg(108, 113, 114, 113, "F.Cu", "B")
+    b.via(105, 114, "B", size=0.9, drill=0.3)
+    b.via(105, 117, "A")
+    b.via(105, 117, "B")
+    b.seg(114, 113, 108, 113, "F.Cu", "B")                  # reversed ends: same key
+    b.seg(108, 113, 114, 113, "F.Cu", "B", width=0.4)       # other width: own key
+    b.seg(117, 113, 123, 113, "In1.Cu", "B")
+    b.add(f'(arc (start 117 113) (mid 120 116) (end 123 113) (width 0.25) (layer "In1.Cu") (net "B") (uuid "{b.uuid()}"))')
+    b.add(f'(arc (start 126 113) (mid 129 116) (end 132 113) (width 0.25) (layer "In1.Cu") (net "B") (uuid "{b.uuid()}"))')
+    b.add(f'(arc (start 126 113) (mid 129 111) (end 132 113) (width 0.25) (layer "In1.Cu") (net "B") (uuid "{b.uuid()}"))')
+    for ref, net in (("D1", "B"), ("D2", "B"), ("D3", "A")):
+        b.footprint(ref, 136, 114, [b.pad("1", "thru_hole", "circle", (0, 0), (1.8, 1.8), net, THT, drill=0.9)],
+                    attr="through_hole")
+    # net tie: the bar joins pad 1 (zone net) and pad 2; the stub touches no pad
+    def gfx(x1, y1, x2, y2, w):
+        return (f'(fp_line (start {x1} {y1}) (end {x2} {y2}) (stroke (width {w}) (type default)) '
+                f'(layer "F.Cu") (uuid "{b.uuid()}"))')
+    b.footprint("NT1", 110, 123, [gfx(-2, 0, 2, 0, 0.5), gfx(-2, 2.5, 2, 2.5, 0.3),
+                                  b.pad("1", "smd", "rect", (-2, 0), (1, 1), "A", SMD),
+                                  b.pad("2", "smd", "rect", (2, 0), (1, 1), "B", SMD)],
+                extra='(net_tie_pad_groups "1, 2")')
+    b.footprint("NT2", 124, 123, [gfx(-2, 0, 2, 0, 0.5),
+                                  b.pad("1", "smd", "rect", (-2, 0), (1, 1), "B", SMD, rot=90),
+                                  b.pad("2", "smd", "rect", (2, 0), (1, 1), "C", SMD, rot=90)],
+                rot=90, extra='(net_tie_pad_groups "1, 2")')
+    b.footprint("NT3", 133, 123, [gfx(-2, 0, 2, 0, 0.5),
+                                  b.pad("1", "smd", "rect", (-2, 0), (1, 1), "A", SMD),
+                                  b.pad("2", "smd", "rect", (2, 0), (1, 1), "B", SMD)])  # not a net tie
+    b.side["kicad_dru"] = '''(version 1)
+(rule "courtyard gap" (condition "B.Reference == 'C1' || B.Reference == 'C3'") (constraint physical_clearance (min 0.3mm)))
+(rule "courtyard touch" (condition "B.Reference == 'C2'") (constraint physical_clearance (min 0mm)))
+'''
+    return b
+
+
 def mixed_isolated():
     """F-1: the reference segfaults (double deletion of outline 0); no golden."""
     b = Board("mixed_isolated")
@@ -530,7 +623,7 @@ def main():
     os.makedirs(out, exist_ok=True)
     for b in (custom_spokes(), hatch_vias(), hatch_noncu(), islands(), fp_zones(), mixed_layers(), rules_conn(),
               backdrill(), arcs_smooth("arcs_smooth", False), arcs_smooth("arcs_extfillet", True), priority(),
-              thin(), prototype(), mixed_isolated(), dup_uuid()):
+              thin(), prototype(), hatch_flashing(), dedupe_courtyard(), mixed_isolated(), dup_uuid()):
         b.write(out)
 
 

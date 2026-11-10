@@ -1,0 +1,8 @@
+zone bottom BCu outlines 1
+  0 pts 1068 island 0 hash 477a6e26639f1d06
+zone hatch In1Cu outlines 1
+  0 pts 8527 island 0 hash b33e40777fd43ef8
+zone hatch In2Cu outlines 1
+  0 pts 8131 island 0 hash e1a866717a0dee47
+zone top FCu outlines 1
+  0 pts 198 island 0 hash 720f18d103ff790f

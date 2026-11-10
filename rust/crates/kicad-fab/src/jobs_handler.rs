@@ -20,7 +20,7 @@
 //!
 //! Work packages FAB-02 (`JobExportDrill`: [`job_export_drill`]), FAB-07 (`JobExportGerbers`:
 //! [`job_export_gerbers`], and `PCB_PLOTTER::PlotJobToPlotOpts` of `pcbnew/pcb_plotter.cpp`:
-//! [`plot_job_to_plot_opts`]), FAB-11 (`docs/analysis/plot-fab.md` 10.2; not started).
+//! [`plot_job_to_plot_opts`]), FAB-11 (`JobExportSvg` with `plotJob`: [`job_export_svg`]).
 //!
 //! `convertLayerArg` and the layer selection of `JobExportGerbers` (L1784-1830) are ported in
 //! `kicad-session` (`jobs_handler::convert_layer_arg`, `gerbers_layers_to_plot`), which owns
@@ -38,6 +38,7 @@ use kicad_pcb::BoardCtx;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_plot::GerberPlotter;
 
+use crate::color_settings::{ColorSettings, get_color_settings};
 use crate::exporters::gendrill_excellon_writer::{ExcellonWriter, reborrow};
 use crate::exporters::gendrill_gerber_writer::GerberWriter;
 use crate::exporters::gendrill_report::{BoardHoleSource, HoleListSource};
@@ -48,7 +49,9 @@ use crate::jobs::job_export_pcb_drill::{
 };
 use crate::jobs::job_export_pcb_gerbers::JobExportPcbGerbers;
 use crate::jobs::job_export_pcb_plot::{JobExportPcbPlot, JobPlotFormat};
+use crate::jobs::job_export_pcb_svg::{JobExportPcbSvg, SvgGenMode};
 use crate::pcb_plotter::build_plot_file_name;
+use crate::pcb_plotter::{PlotOutcome, plot};
 use crate::pcbplot::{PlotEnv, gerber_protel_extension};
 use crate::plot_board_layers::{plot_board_layers, start_plot_board};
 use crate::wx_file_name::WxFileName;
@@ -280,15 +283,7 @@ pub fn job_export_drill_from(
     outcome
 }
 
-/// `COLOR_SETTINGS::COLOR_BUILTIN_DEFAULT`.
-pub const COLOR_BUILTIN_DEFAULT: &str = "_builtin_default";
-
-/// `COLOR_SETTINGS::COLOR_BUILTIN_CLASSIC`.
-pub const COLOR_BUILTIN_CLASSIC: &str = "_builtin_classic";
-
-/// `DEFAULT_THEME` (`settings_manager.h`): the file name `SETTINGS_MANAGER::GetColorSettings`
-/// gives a theme it could not find.
-pub const DEFAULT_THEME: &str = "user";
+pub use crate::color_settings::{COLOR_BUILTIN_CLASSIC, COLOR_BUILTIN_DEFAULT, DEFAULT_THEME};
 
 /// `FILEEXT::GerberJobFileExtension`.
 pub const GERBER_JOB_FILE_EXTENSION: &str = "gbrjob";
@@ -328,32 +323,23 @@ pub fn scale_to_selection(scale: f64) -> i32 {
     selection
 }
 
-/// `::GetColorSettings( theme )->GetFilename()` as far as the port has colour themes: the two
-/// built-in themes (found by their key, file name = key) and the `user` theme. Every other name
-/// (a display name, a user theme file) is "not found": `SETTINGS_MANAGER` then registers a copy
-/// of the default theme whose file name is [`DEFAULT_THEME`]. The port has no settings files
-/// (`PORT_STATUS.md`).
-fn color_settings_filename(theme: &str) -> &str {
-    match theme {
-        COLOR_BUILTIN_DEFAULT | COLOR_BUILTIN_CLASSIC | DEFAULT_THEME => theme,
-        _ => DEFAULT_THEME,
-    }
-}
-
 /// Port of `PCB_PLOTTER::PlotJobToPlotOpts( aOpts, aJob, aReporter )`
 /// (`pcbnew/pcb_plotter.cpp` L426-555): copy the job options into `a_opts`.
 ///
 /// `a_format_options` is the derived job part read for the Gerber and SVG formats. The DXF,
-/// PDF, PostScript and PNG branches are not ported (formats out of scope), nor is
-/// `SetColorSettings` (`PCB_PLOT_PARAMS` of the port has no colour settings; FAB-11). An empty
-/// theme takes the PCB editor theme, which is [`COLOR_BUILTIN_DEFAULT`] in a fresh
-/// configuration (`APP_SETTINGS_BASE::m_ColorTheme` default).
+/// PDF, PostScript and PNG branches are not ported (formats out of scope). An empty theme
+/// takes the PCB editor theme, which is [`COLOR_BUILTIN_DEFAULT`] in a fresh configuration
+/// (`APP_SETTINGS_BASE::m_ColorTheme` default).
+///
+/// `aOpts.SetColorSettings( colors )`: the port's `PcbPlotParams` has no colour settings, so
+/// the theme (`::GetColorSettings( theme )`, [`get_color_settings`]) is returned; the caller
+/// passes it to the plot functions.
 pub fn plot_job_to_plot_opts(
     a_opts: &mut PcbPlotParams,
     a_job: &JobExportPcbPlot,
     a_format_options: PlotJobFormatOptions<'_>,
     a_reporter: Option<&mut dyn Reporter>,
-) {
+) -> ColorSettings {
     if a_job.plot_format == JobPlotFormat::Gerber {
         if let PlotJobFormatOptions::Gerber(g_job) = a_format_options {
             a_opts.gerber_disable_apert_macros = g_job.gerber.disable_aperture_macros;
@@ -398,7 +384,9 @@ pub fn plot_job_to_plot_opts(
         theme = COLOR_BUILTIN_DEFAULT;
     }
 
-    if color_settings_filename(theme) != theme && !a_opts.black_and_white {
+    let colors = get_color_settings(theme);
+
+    if colors.filename() != theme && !a_opts.black_and_white {
         if let Some(reporter) = a_reporter {
             reporter.report(
                 &format!("Color theme '{theme}' not found, will use theme from PCB Editor.\n"),
@@ -436,6 +424,8 @@ pub fn plot_job_to_plot_opts(
     }
 
     a_opts.output_directory = a_job.configured_output_path.clone();
+
+    colors
 }
 
 /// The result of [`job_export_gerbers`].
@@ -517,11 +507,14 @@ pub fn job_export_gerbers(
         let mut sheet_name = String::new();
         let mut sheet_path = String::new();
         let mut plot_opts = PcbPlotParams::default();
+        // `plotOpts.ColorSettings()`: the options' own (never loaded) colour settings unless
+        // PlotJobToPlotOpts installs the job's theme
+        let mut colors = ColorSettings::default();
 
         if a_gerber_job.use_board_plot_params {
             plot_opts = board_plot_options.clone();
         } else {
-            plot_job_to_plot_opts(
+            colors = plot_job_to_plot_opts(
                 &mut plot_opts,
                 &a_gerber_job.gerber.plot,
                 PlotJobFormatOptions::Gerber(a_gerber_job),
@@ -566,6 +559,9 @@ pub fn job_export_gerbers(
             &sheet_name,
             &sheet_path,
             "1",
+            "",
+            1,
+            &colors,
             a_env,
         );
 
@@ -575,7 +571,7 @@ pub fn job_export_gerbers(
                     reporter.report(&format!("Plotted to '{full_path}'.\n"), Severity::Action);
                 }
 
-                plot_board_layers(&a_ctx, plotter.as_mut(), &plot_sequence, &plot_opts);
+                plot_board_layers(&a_ctx, plotter.as_mut(), &plot_sequence, &plot_opts, colors);
                 plotter.end_plot();
 
                 outcome.files.push(OutputFile {
@@ -606,6 +602,70 @@ pub fn job_export_gerbers(
     }
 
     outcome
+}
+
+/// Port of `PCBNEW_JOBS_HANDLER::JobExportSvg( aJob )` (L1542-1579) from
+/// `PCB_PLOT_PARAMS plotOpts` on, with the static `plotJob` (L1506-1539): the plot options
+/// from the job (`PlotJobToPlotOpts`), then `PCB_PLOTTER::Plot` into `a_out_path` (a file in
+/// single mode, a directory in multi mode); the `LAYER` / `SHEETNAME` / `SHEETPATH` variable
+/// overrides are used in single mode only.
+///
+/// The caller (the session) has loaded the board (`getBoard`), set the variant, resolved the
+/// output path (`resolvePlotOutputPath`), created the directory, refilled the zones,
+/// converted the layer arguments (`preparePlotLayers`: `a_layers_to_plot` is
+/// `ResolvePlotLayers( enabled )`, not empty) and run `RefreshGeneratedTables` (see
+/// [`plot`]).
+///
+/// `success == false` is `CLI::EXIT_CODES::ERR_UNKNOWN`; `outputs` are the `AddOutput` calls.
+pub fn job_export_svg(
+    a_ctx: BoardCtx<'_>,
+    a_svg_job: &JobExportPcbSvg,
+    a_layers_to_plot: &[PcbLayerId],
+    a_out_path: &str,
+    a_env: &PlotEnv,
+    mut a_reporter: Option<&mut dyn Reporter>,
+) -> PlotOutcome {
+    let is_single = a_svg_job.gen_mode == SvgGenMode::Single;
+
+    let mut plot_opts = PcbPlotParams::default();
+    let colors = plot_job_to_plot_opts(
+        &mut plot_opts,
+        &a_svg_job.plot,
+        PlotJobFormatOptions::Svg {
+            precision: a_svg_job.precision,
+            fit_page_to_board: a_svg_job.fit_page_to_board,
+        },
+        reborrow(&mut a_reporter),
+    );
+
+    // plotJob( aSvgJob, plotter, layersToPlot, outPath, isSingle, isSingle )
+    let use_overrides = is_single;
+    let overrides = &a_svg_job.plot.var_overrides;
+    let mut layer_name: Option<&str> = None;
+    let mut sheet_name: Option<&str> = None;
+    let mut sheet_path: Option<&str> = None;
+
+    if use_overrides {
+        layer_name = overrides.get("LAYER").map(String::as_str);
+        sheet_name = overrides.get("SHEETNAME").map(String::as_str);
+        sheet_path = overrides.get("SHEETPATH").map(String::as_str);
+    }
+
+    plot(
+        &a_ctx,
+        &mut plot_opts,
+        colors,
+        a_out_path,
+        a_layers_to_plot,
+        &a_svg_job.plot.plot_on_all_layers_sequence.0,
+        false,
+        is_single,
+        layer_name,
+        sheet_name,
+        sheet_path,
+        a_env,
+        a_reporter,
+    )
 }
 
 #[cfg(test)]

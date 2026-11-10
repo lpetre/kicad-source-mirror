@@ -39,7 +39,7 @@ use kicad_pcb::BoardCtx;
 use kicad_pcb::pcb_shape::PcbShape;
 use kicad_pcb::pcb_track::Track;
 
-use super::pending::segment_intersects_board;
+use super::board_intersect::segment_intersects_board;
 use super::shapes::{
     BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CuShapeArc, CuShapeCircle,
     CuShapeSegment, segment_intersects_arc, to_int, vd, vi,

@@ -24,10 +24,10 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
 | `PCBNEW_JOBS_HANDLER::convertLayerArg` | `jobs_handler::convert_layer_arg` | ported, oracle-verified |
 | `JobExportGerbers` layer selection (L1784-1830) | `jobs_handler::gerbers_layers_to_plot` | ported, oracle-verified |
 | `preparePlotLayers` | `jobs_handler::prepare_plot_layers` | ported (zone refill done by the caller first, as in C++) |
-| `resolveJobOutputPath` | `jobs_handler::resolve_job_output_path` | partial: `loadOverrideDrawingSheet` and `BOARD::SynchronizeProperties` not called yet; project vars = the `-D` overrides |
+| `resolveJobOutputPath` | `jobs_handler::resolve_job_output_path` | ported (WIRE-1) except `loadOverrideDrawingSheet` (no drawing sheet model) |
 | `JobExportDrc` | `run_drc` | ported (DRC-12): DRC itself in `kicad_drc::run_flow::run_drc_job`; see the DRC-12 section |
 | `JobExportGerbers` | `run_export_gerbers` | ported (FAB-07, `kicad_fab::jobs_handler::job_export_gerbers`); the Gerber job file (FAB-09) is missing: layer files + exit `NOT_YET_PORTED`; verified in `tests/gerbers_job.rs` (see kicad-fab `PORT_STATUS.md` FAB-07) |
-| `JobExportDrill` | `run_export_drill` | stub after the report path logic: `NotYetPorted("kicad-fab ...")` |
+| `JobExportDrill` | `run_export_drill` | ported (WIRE-1) onto `kicad_fab::jobs_handler::job_export_drill`; e2e-verified (below) |
 | `JobExportSvg` (+ `resolvePlotOutputPath`) | `run_export_svg` | stub after layer preparation: `NotYetPorted("kicad-fab ...")` |
 | `JobUpgrade` | `run_pcb_upgrade` | ported (a board holding a generated table is `NotYetPorted`: `RefreshGeneratedTables`, M26); oracle-verified over the corpus (PCBIO-15) |
 | `JobExportFpUpgrade` | `run_fp_upgrade` + the filesystem checks in `kicad-cli` | stub: footprint library parser/writer pending |
@@ -77,7 +77,7 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
 * Everything behind the parser: no job can run end to end yet; `NotYetPorted` names the
   subsystem (`kicad-pcb` parser/writer, `kicad-drc`, `kicad-fab`, `kicad-zone`,
   `kicad-connectivity`).
-* Variants (`BOARD::SetCurrentVariant`) and the override drawing sheet are not wired.
+* The override drawing sheet (`--drawing-sheet`) is not wired.
 * Footprint library loading for DRC library parity is out of scope.
 
 ## Package PCBIO-15: load / save orchestration
@@ -254,3 +254,39 @@ pre-2022 boards, where even two reference runs differ from each other.
   `TUNING_PROFILES` (SET-11: default profiles are passed), footprint library loading.
 * Tests: `tests/drc12_regressions.rs` (port of `test_drc_regressions.cpp`),
   `tests/drc12_corpus.rs` (reference report replay).
+
+## Package WIRE-1: end-to-end wiring of the session, CLI and WebAssembly API
+
+* `run_export_drill`: `JobExportDrill` mapped onto `kicad_fab::jobs_handler::job_export_drill`
+  (options, `DrillExportEnv { build_version, creation_date }`, the report path through
+  `JOB::ResolveOutputPath( .., false, project )`, the fab reporter: "Created file" Action,
+  "Done." Info; a writer failure returns `ERR_INVALID_OUTPUT_CONFLICT`, an unported fab part
+  `NotYetPorted`). `JobExportPcbDrill::creation_date` (new, host input) carries the clock.
+* `resolve_job_output_path`: `PROJECT::ApplyTextVars( -D overrides )` on the bound project
+  (they stay applied, so board texts see them), `BOARD::SynchronizeProperties`, the project's
+  `TextVarResolver` (PROJECTNAME, CURRENT_DATE, project variables, ...) with the board's
+  `text_var_clock`; `Job::resolve_output_path_with` / `full_output_path_with` take a resolver.
+* Variants: `--variant` of gerbers / svg calls `BOARD::SetCurrentVariant` (was NotYetPorted).
+* `run_drc`: the rule file of the re-init is `BOARD::GetDesignRulesPath()` (project path).
+* SET-11: `board_loader::tuning_profiles( board )` reads the project's `TUNING_PROFILES`
+  (kicad-pcb `project::tuning_profiles_json`) for `InitEngine` (load step, `run_drc`,
+  `fill_all_zones`) and `RunTestsOptions::tuning_profiles`. The 7 `missing_tuning_profile`
+  entries of `tests/drc12_corpus.rs` KNOWN_DIFFERENCES are gone (6 boards now exact).
+* Load: `LoadInputs::project_path` (`getProjectForBoard`'s absolute `.kicad_pro`; the board's
+  file name stays as given, as in C++), `LoadedBoard::parse_warnings` / `Session::
+  parse_warnings` (`GetParseWarnings()`, printed by kicad-cli as `wxLogWarning`s).
+  `PENDING_LOAD_STEPS` is empty: every `initializeLoadedBoard` step runs; the drawing sheet
+  load and the `ENUM_MAP` fill are skipped as documented in PCBIO-15.
+* Host inputs: `HostClock` (`host_clock.rs`: `GetISO8601CurrentDateTime`, the
+  `CURRENT_DATE` / `CURRENT_TIME_*` values, the Gerber / drill creation date),
+  `Session::apply_host_inputs( clock, uuid_seed )` (reseeds the board's `KiidGenerator` in
+  place, keeping the reservation of the file's UUIDs), `Session::outline_font_warnings()`.
+* `pcb-dump-session` dumps through `kicad_pcb::dump::dump_board_ctx` with connectivity and the
+  DRC engine (the `ds.biggest_clearance` rewrite is gone). Checked against the reference
+  `pcb-dump board [--loader] --sections board,item,track,connectivity` on issue10697,
+  drc_missing_tuning_profile, api_kitchen_sink, component_classes_drc: 0 mismatches on both
+  paths (the 14 `flash.In1.Cu` / `shape.In1.Cu` mismatches of issue10697 are gone).
+
+Verification: kicad-cli's end-to-end differential test (`kicad-cli/tests/oracle/e2e_cli.py`,
+golden `kicad-cli/tests/golden/e2e_cli.txt`, replay `kicad-cli/tests/e2e_cli.rs`), 308 corpus
+boards under 300 KB, scoreboard in kicad-cli `PORT_STATUS.md`.

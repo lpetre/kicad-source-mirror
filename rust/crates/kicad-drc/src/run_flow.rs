@@ -45,11 +45,11 @@ use kicad_core::json::{ObjectOrder, Value, dump_stream};
 use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
-    DRCE_CREEPAGE, DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
-    DRCE_LENGTH_OUT_OF_RANGE, DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH,
-    DRCE_MISSING_FOOTPRINT, DRCE_NET_CHAIN_RETURN_PATH_BREAK, DRCE_NET_CHAIN_STUB_TOO_LONG,
+    DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
+    DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH,
+    DRCE_MISSING_FOOTPRINT,
     DRCE_NET_CHAIN_TUNING_PROFILES, DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY,
-    DRCE_SCHEMATIC_PARITY, DRCE_SKEW_OUT_OF_RANGE, DRCE_VIA_COUNT_OUT_OF_RANGE,
+    DRCE_SCHEMATIC_PARITY,
     DRCE_VIA_STITCH_OVERLAP,
 };
 use kicad_pcb::pcb_marker::{MarkerT, PcbMarker, RcItem};
@@ -57,7 +57,6 @@ use kicad_pcb::{Board, BoardCtx, ConnectivityQuery};
 
 use crate::cache_generator::{CacheGeneratorConnectivity, DrcCacheGenerator};
 use crate::caches::{DrcBoardCaches, ZoneIslandsMap};
-use crate::constraint_types::DrcConstraintT;
 use crate::engine::implicit_rules::TuningProfiles;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun, PROVIDER_ORDER};
 use crate::exclusion::{record_drc_exclusions, resolve_drc_exclusions};
@@ -68,12 +67,14 @@ use crate::providers::connection_width::DrcTestProviderConnectionWidth;
 use crate::providers::connectivity::DrcTestProviderConnectivity;
 use crate::providers::copper_clearance::DrcTestProviderCopperClearance;
 use crate::providers::courtyard_clearance::DrcTestProviderCourtyardClearance;
+use crate::providers::creepage::DrcTestProviderCreepage;
 use crate::providers::diff_pair_coupling::DrcTestProviderDiffPairCoupling;
 use crate::providers::disallow::DrcTestProviderDisallow;
 use crate::providers::edge_clearance::DrcTestProviderEdgeClearance;
 use crate::providers::footprint_checks::DrcTestProviderFootprintChecks;
 use crate::providers::hole_size::DrcTestProviderHoleSize;
 use crate::providers::hole_to_hole::DrcTestProviderHoleToHole;
+use crate::providers::matched_length::DrcTestProviderMatchedLength;
 use crate::providers::misc::DrcTestProviderMisc;
 use crate::providers::physical_clearance::DrcTestProviderPhysicalClearance;
 use crate::providers::run_host::RunHost;
@@ -103,12 +104,7 @@ pub struct UnportedProvider {
 }
 
 /// The providers of [`PROVIDER_ORDER`] that are not ported yet (registry order).
-pub const UNPORTED_PROVIDERS: [UnportedProvider; 6] = [
-    UnportedProvider {
-        name: "creepage",
-        package: "DRC-33",
-        codes: &[DRCE_CREEPAGE],
-    },
+pub const UNPORTED_PROVIDERS: [UnportedProvider; 4] = [
     UnportedProvider {
         name: "library_parity",
         package: "DRC-34",
@@ -136,17 +132,6 @@ pub const UNPORTED_PROVIDERS: [UnportedProvider; 6] = [
         name: "via_stitch_overlap",
         package: "DRC-34",
         codes: &[DRCE_VIA_STITCH_OVERLAP],
-    },
-    UnportedProvider {
-        name: "length",
-        package: "DRC-31",
-        codes: &[
-            DRCE_LENGTH_OUT_OF_RANGE,
-            DRCE_NET_CHAIN_RETURN_PATH_BREAK,
-            DRCE_NET_CHAIN_STUB_TOO_LONG,
-            DRCE_SKEW_OUT_OF_RANGE,
-            DRCE_VIA_COUNT_OUT_OF_RANGE,
-        ],
     },
 ];
 
@@ -239,7 +224,7 @@ impl CacheGeneratorConnectivity for GeneratorConnectivity<'_> {
 /// return without testing, else the reason for the [`CheckNotRun`].
 pub fn unported_check_would_run(
     p: &UnportedProvider,
-    engine: &DrcEngine,
+    _engine: &DrcEngine,
     run: &DrcRunState<'_>,
     board: &Board,
 ) -> Option<String> {
@@ -255,14 +240,6 @@ pub fn unported_check_would_run(
     }
 
     match p.name {
-        // if( !m_drcEngine->HasRulesForConstraintType( CREEPAGE_CONSTRAINT ) ) return true;
-        "creepage" => {
-            if !engine.has_rules_for_constraint_type(DrcConstraintT::CreepageConstraint) {
-                return None;
-            }
-
-            not_ported()
-        }
         // if( !project ) return true; then every footprint is looked up in the library table.
         "library_parity" => {
             if board.project.is_none() || board.footprints().next().is_none() {
@@ -297,26 +274,6 @@ pub fn unported_check_would_run(
                 || board
                     .generators()
                     .all(|(_, g)| g.generator_type != "via_stitch")
-            {
-                return None;
-            }
-
-            not_ported()
-        }
-        // Every report needs a resolved length, skew, via count or net chain constraint.
-        "length" => {
-            let types = [
-                DrcConstraintT::LengthConstraint,
-                DrcConstraintT::NetChainLengthConstraint,
-                DrcConstraintT::NetChainStubLengthConstraint,
-                DrcConstraintT::NetChainReturnPathConstraint,
-                DrcConstraintT::SkewConstraint,
-                DrcConstraintT::ViaCountConstraint,
-            ];
-
-            if !types
-                .iter()
-                .any(|&t| engine.has_rules_for_constraint_type(t))
             {
                 return None;
             }
@@ -360,6 +317,15 @@ fn run_provider(
             return DrcTestProviderDiffPairCoupling::new(caches)
                 .run_tests(engine, run, &ctx, units);
         }
+        "length" => {
+            // runInternal() rebuilds the from-to cache (GetFromToCache()->Rebuild( m_board )),
+            // which needs the connectivity mutably.
+            conn.rebuild_from_to_cache(&BoardCtx::bare(board));
+            let ctx = BoardCtx::bare(board)
+                .with_rules(engine)
+                .with_connectivity(&*conn);
+            return DrcTestProviderMatchedLength::new(conn).run_tests(engine, run, &ctx, units);
+        }
         "zone connections" => {
             let mut query = ConnectivityData::new();
 
@@ -382,6 +348,7 @@ fn run_provider(
 
     let mut provider: Box<dyn DrcTestProviderRun + '_> = match name {
         "annular_width" => Box::new(DrcTestProviderAnnularWidth::default()),
+        "creepage" => Box::new(DrcTestProviderCreepage::default()),
         "disallow" => Box::new(DrcTestProviderDisallow::new(caches)),
         "copper width" => Box::new(DrcTestProviderConnectionWidth::new(caches)),
         "clearance" => Box::new(DrcTestProviderCopperClearance::new(caches)),
@@ -391,7 +358,12 @@ fn run_provider(
         "footprint checks" => Box::new(DrcTestProviderFootprintChecks::default()),
         "hole_to_hole_clearance" => Box::new(DrcTestProviderHoleToHole::default()),
         "hole_size" => Box::new(DrcTestProviderHoleSize::default()),
-        "miscellaneous" => Box::new(DrcTestProviderMisc::new(options.tuning_profiles.clone())),
+        "miscellaneous" => {
+            let mut misc = DrcTestProviderMisc::new(options.tuning_profiles.clone());
+            // m_drcEngine->GetDrawingSheet()
+            misc.drawing_sheet = engine.drawing_sheet().cloned();
+            Box::new(misc)
+        }
         "text_dimensions" => Box::new(DrcTestProviderTextDims::default()),
         "track angle" => Box::new(DrcTestProviderTrackAngle::new(&*conn)),
         "width" => Box::new(DrcTestProviderTrackWidth::default()),

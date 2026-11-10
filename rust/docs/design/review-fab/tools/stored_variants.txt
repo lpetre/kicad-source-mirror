@@ -1,0 +1,33 @@
+neg psnegative=yes
+mirror mirror=yes
+a4 psa4output=yes
+scale0 scaleselection=0
+scale2 scaleselection=2
+scale3 scaleselection=3
+scale4 scaleselection=4
+drill0 drillshape=0
+drill2 drillshape=2
+sketch sketchpadsonfab=yes plotpadnumbers=yes
+padnum sketchpadsonfab=no plotpadnumbers=yes
+dnphide hidednponfab=yes sketchdnponfab=no crossoutdnponfab=no @dnp=8
+dnpsk hidednponfab=no sketchdnponfab=yes crossoutdnponfab=no @dnp=8
+dnpx hidednponfab=no sketchdnponfab=no crossoutdnponfab=yes @dnp=8
+dnpnone hidednponfab=no sketchdnponfab=no crossoutdnponfab=no @dnp=8
+submask subtractmaskfromsilk=yes
+noaper disableapertmacros=yes
+x1 usegerberattributes=no
+nonet usegerberadvancedattributes=no
+x1nonet usegerberattributes=no usegerberadvancedattributes=no
+nojob creategerberjobfile=no
+p5 gerberprecision=5
+noext usegerberextensions=no
+aux useauxorigin=yes
+fmt4 outputformat=4
+fmt0 outputformat=0
+outdir outputdirectory="gerb/"
+layers layerselection=0x00000000_00000000_55555555_5755f5ff plot_on_all_layers_selection=0x00000000_00000000_00000000_02000000
+layers2 layerselection=0x00000000_00000000_00000000_000000a0 plot_on_all_layers_selection=0x00000000_00000000_00000010_00000001
+legacy excludeedgelayer=no viasonmask=yes plotreference=no plotvalue=no plotfptext=no padsonsilk=yes plotinvisibletext=yes linewidth=0.5
+legacy2 excludeedgelayer=yes viasonmask=no plotreference=yes plotvalue=yes plotfptext=yes padsonsilk=no svguseinch=yes
+negmira4 psnegative=yes psa4output=yes scaleselection=3 drillshape=2
+combo psnegative=yes disableapertmacros=yes gerberprecision=5 usegerberattributes=no subtractmaskfromsilk=yes sketchpadsonfab=yes useauxorigin=yes

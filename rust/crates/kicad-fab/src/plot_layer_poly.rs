@@ -47,6 +47,7 @@ use kicad_pcb::zone::Zone;
 use kicad_pcb::{AnyItem, ItemRef};
 use kicad_plot::{Plotter, RenderSettings};
 
+use crate::color_settings::ColorSettings;
 use crate::plot_brditems_plotter::BrditemsPlotter;
 
 /// `lineStyle <= LINE_STYLE::FIRST_TYPE` (`DEFAULT` and `SOLID`).
@@ -71,10 +72,11 @@ pub fn plot_poly_set(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
     a_poly_set: &mut ShapePolySet,
     a_layer: PcbLayerId,
 ) {
-    let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt);
+    let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt, a_colors);
     let layers = Lset::from_layers(&[a_layer]);
 
     itemplotter.set_layer_set(&layers);
@@ -105,6 +107,7 @@ pub fn plot_solder_mask_layer_min_width(
     a_plotter: &mut dyn Plotter,
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     let mut solder_mask = ShapePolySet::new();
     let layer = if a_layer_mask.contains(PcbLayerId::BMask) {
@@ -123,7 +126,14 @@ pub fn plot_solder_mask_layer_min_width(
         a_plot_opt.plot_value,
     );
 
-    plot_poly_set(a_board, a_plotter, a_plot_opt, &mut solder_mask, layer);
+    plot_poly_set(
+        a_board,
+        a_plotter,
+        a_plot_opt,
+        a_colors,
+        &mut solder_mask,
+        layer,
+    );
 }
 
 /// Port of `PlotClippedSilkLayer`: the silk layer polygon minus the solder mask polygon of the
@@ -134,6 +144,7 @@ pub fn plot_clipped_silk_layer(
     a_plotter: &mut dyn Plotter,
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     let mut silkscreen = ShapePolySet::new();
     let mut solder_mask = ShapePolySet::new();
@@ -169,7 +180,14 @@ pub fn plot_clipped_silk_layer(
     );
 
     silkscreen.boolean_subtract(&solder_mask);
-    plot_poly_set(a_board, a_plotter, a_plot_opt, &mut silkscreen, silk_layer);
+    plot_poly_set(
+        a_board,
+        a_plotter,
+        a_plot_opt,
+        a_colors,
+        &mut silkscreen,
+        silk_layer,
+    );
 }
 
 /// The state the lambdas of `GenerateLayerPoly` capture (`handlePcbShape`,

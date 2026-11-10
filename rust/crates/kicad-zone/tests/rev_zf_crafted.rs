@@ -23,7 +23,9 @@
 //! hatch smoothing levels, non-copper hatch zones, island removal by area, zones owned by
 //! footprints, zones on copper and technical layers, rule-driven zone connections,
 //! backdrilled and post-machined pads / vias, arc outlines, the UUID priority tie-break,
-//! zones too thin for the min-width cycle, the prototype zone fill setting).
+//! zones too thin for the min-width cycle, the prototype zone fill setting, conditional
+//! flashing against hatch fills, courtyard knockouts, coincident item deduplication, net
+//! ties).
 //!
 //! Each board is loaded like kicad-cli (`BOARD_LOADER::Load`, with its `.kicad_pro`,
 //! `.kicad_prl` and `.kicad_dru`), refilled like `ZONE_FILLER_TOOL::FillAllZones` and compared
@@ -59,7 +61,9 @@ const BOARDS: &[&str] = &[
     "arcs_smooth",
     "backdrill",
     "custom_spokes",
+    "dedupe_courtyard",
     "fp_zones",
+    "hatch_flashing",
     "hatch_noncu",
     "hatch_vias",
     "islands",
@@ -245,7 +249,7 @@ fn rev_zf_crafted_boards_match_the_reference() {
         } else {
             println!(
                 "{name}: {} zone layers identical",
-                golden.matches("zone ").count()
+                golden.lines().filter(|l| l.starts_with("zone ")).count()
             );
         }
     }

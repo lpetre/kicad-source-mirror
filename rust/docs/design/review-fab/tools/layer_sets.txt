@@ -1,0 +1,17 @@
+dup|-l F.Cu,F.Cu,B.Cu
+canon|-l F.SilkS,B.SilkS,F.CrtYd
+bogus|-l Bogus,F.Cu
+allbogus|-l Bogus
+empty|-l ""
+clbogus|-l F.Cu --cl Bogus,Edge.Cuts
+clsame|-l F.Cu,Edge.Cuts --cl F.Cu,Edge.Cuts
+lower|-l f.cu,b.cu
+spaces|-l "F.Cu, B.Cu"
+inner|-l In1.Cu,In2.Cu,In30.Cu,User.1,User.9
+order|-l Edge.Cuts,B.Cu,F.Cu,B.Mask
+clorder|-l F.Cu --cl F.Fab,Edge.Cuts,B.Cu,F.Mask
+user|-l "top_layer,User.Drawings,F.Silkscreen"
+p7|--precision 7
+p4|--precision 4
+bppl|--board-plot-params -l F.Cu --cl Edge.Cuts
+nox2net|--no-x2 --precision 5 --subtract-soldermask --use-drill-file-origin --no-protel-ext

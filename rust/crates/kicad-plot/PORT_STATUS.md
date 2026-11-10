@@ -20,7 +20,7 @@ Design: `rust/docs/design/plot-engines.md`. Analysis: `rust/docs/analysis/plot-f
 | `KIGFX::RENDER_SETTINGS` (pen widths, `GetDashLength/GetDotLength/GetGapLength`) | `render_settings.rs` | partial: plotter subset only |
 | `include/plotters/drill_markers.h`, `common/plotters/drill_markers.cpp` | `drill_markers.rs` | ported |
 | `GetDefaultPlotExtension` (`common_plot_functions.cpp` L34-46) | `common_plot_functions.rs` | ported |
-| `PlotDrawingSheet` | - | PLOT-08 (tier 3) |
+| `PlotDrawingSheet` (`common_plot_functions.cpp` L49-207) | `common_plot_functions::plot_drawing_sheet` (`PlotDrawingSheetArgs`) | ported (DS-1), see the DS-1 section |
 | `include/gbr_metadata.h`, `common/gbr_metadata.cpp` | `gbr_metadata.rs` | ported (except below) |
 | `GbrMakeCreationDateAttributeString` | `gbr_make_creation_date_attribute_string( format, &GbrCreationDate )` | ported; date/time zone supplied by the caller |
 | `FormatStringFromGerber`, `GBR_CMP_PNP_METADATA` | - | skipped: Gerber reader / placement files |
@@ -187,3 +187,78 @@ Design: `rust/docs/design/plot-engines.md`. Analysis: `rust/docs/analysis/plot-f
   random, degenerate boxes) and round rect pads (1,540 `RRECT`, 215 `FRR` operations), all
   match. `round_rect_polygons_match_cpp` (both oracles) compares every recorded C++ polygon
   with the Rust generator point for point.
+
+## REV-FAB (review, 2026-11-10)
+
+Statement-level reading of the Gerber engine against `GERBER_plotter.cpp`, `plotter.cpp` and
+`gbr_metadata.cpp` (aperture list and D-code assignment, aperture attributes and their
+clearing, `FormatNetAttribute` and the object attribute dictionary, coordinate conversion and
+`emitDcode`, both `plotArc` overloads, `Arc` / `Circle`, regions and `PlotPoly`): no deviation
+found, no source change. Exercised through `kicad-rs` against the reference kicad-cli in about
+2 300 runs (`rust/docs/design/review-fab.md`): all aperture macro kinds at arbitrary rotations
+with and without `--disable-aperture-macros`, both precisions, X1 / X2, net attributes with
+reserved and non-BMP characters, arcs from 0.02 to 359.99 degrees. wasm output equals native
+output on 8 boards (178 Gerber / job files).
+
+Note: `set_viewport` / `set_gerber_coordinates_format` use `10.0_f64.powi( n )` for the C++
+`pow( 10.0, n )`; exact for the formats in use (n = 5, 6).
+
+## DS-1 (drawing sheet)
+
+| C++ | Rust | State |
+|---|---|---|
+| `common/drawing_sheet/ds_data_item.cpp`, `ds_data_item.h` (`DS_DATA_ITEM`, `_POLYGONS`, `_TEXT`, `_BITMAP`, `POINT_COORD`) | `drawing_sheet::ds_data_item` (`DsDataItem` + `DsDataItemKind`, `DsDrawEnv` = the singleton members the items read) | ported (editor-only `MoveToIU` / `MoveStartPointToIU` / `MoveEndPointToIU` skipped) |
+| `ds_data_model.cpp`, `ds_data_model.h` | `drawing_sheet::ds_data_model::DsDataModel` | ported; no singleton (the host owns the model); `LoadDrawingSheet` takes the file the host read (`DrawingSheetFile`); `LoadFromName` / `ResolvePath` (FILENAME_RESOLVER) are host work |
+| `drawing_sheet_parser.cpp`, `drawing_sheet.keywords`, `ds_file_versions.h` | `drawing_sheet::drawing_sheet_parser` | ported (legacy `page_layout` / `drawing_sheet` headers, `%` codes, overbar conversion, `pngdata`, base64 `data`, error texts) |
+| `drawing_sheet_default_description.cpp` | `drawing_sheet::drawing_sheet_default_description` | ported (byte-identical texts) |
+| `ds_draw_item.cpp` / `.h` (`DS_DRAW_ITEM_*`, `BuildDrawItemsList`), `SyncDrawItems`, `SetConstrainedTextSize`, `ds_painter.cpp` `BuildFullText` / `GetTextVars` | `drawing_sheet::ds_draw_item` (`DsDrawItemList`, `DsDrawItemShape`) | ported; the `EDA_TEXT` members of `DS_DRAW_ITEM_TEXT` (`SetTextSize` clamping, `GetTextBox`, `GetEffectiveTextPenWidth`, `GetLinePositions`, `GetShownText`) for the stroke font; GUI members (print, hit tests, message panel, `DS_DRAW_ITEM_PAGE`) skipped |
+| `common/increment.cpp` (`STRING_INCREMENTER`, `IndexFromAlphabetic`, `AlphabeticFromIndex`) | `drawing_sheet::increment` | ported (used only here; `IncrementString` not needed) |
+| `DRC_TEST_PROVIDER_MISC::testTextVars` draw list | `drawing_sheet::drc_drawing_sheet_texts` | ported (the provider loop itself is kicad-drc) |
+| `ds_data_model_io.cpp` (writer), `ds_proxy_*`, `ds_painter.cpp` drawing | - | skipped: no caller in the port (no sheet is written; the proxy view item is the host's `DrawingSheetEnv`) |
+
+Not in C++: `DrawingSheetEnv` (model + `GetBaseVersion()`), `ImageProbe` (the bitmap header
+reader the host supplies; kicad-session passes kicad-pcb's PNG / JPEG probe).
+
+Verification: `tests/test_drawing_sheet_oracle.rs` replays `tests/oracle/ds_cases.txt` against
+`tests/golden/drawing_sheet.txt`, produced by `tests/oracle/ds_oracle.cpp` (built by
+`tests/oracle/build_ds_oracle.sh [outdir] regen` against the kicad-cli link libraries) on the
+real `DS_DATA_MODEL`, `DS_DRAW_ITEM_LIST` and `PlotDrawingSheet`: 20 sheets (default, empty,
+the 6 `.kicad_wks` of demos / qa, 12 crafted ones under `tests/golden/ds_sheets/` covering every
+item kind, corner anchor, repeat / page culling, page1only / notonpage1, incrlabel with letters,
+numbers, padding and negative steps, maxlen / maxheight constraints, multiline, rotation,
+justification, colour, line widths, polygons, base64 and legacy hex bitmaps, the legacy
+`page_layout` / `drawing_sheet` headers and `%` codes, and the load errors: future version,
+unexpected token, missing version, bad number, invalid image, missing file) x 7 page formats
+(A4, A3 portrait, USLetter as subsequent page, A0, A5 portrait, two custom sizes) x 3 title
+blocks: the model after each load (every field bit for bit), every draw item of the plot list
+and of the DRC list (positions, pens, texts, shown texts, sizes, angles, justification, colours,
+effective pen widths, bounding boxes, line positions) and the data items' state after the build,
+and the Gerber, SVG and colour SVG files of `PlotDrawingSheet` (hash). 1080 golden lines
+identical; differences: the 18 SVG plots of sheets with bitmaps (`NotPorted`, below) and the
+outline font sheet `ds_face.kicad_wks` (below).
+
+### Deviations
+
+* Outline fonts: a `(font (face "..."))` text is drawn with the stroke font (the reference
+  draws it with the outline font fontconfig finds); its bounding box and plot differ. The
+  plotter records the face in `PlotterState::outline_font_fallbacks` (a stroke face such as
+  `KiCad Font` is not recorded: it is identical).
+* `@{...}` expressions in sheet texts are not evaluated (`EXPRESSION_EVALUATOR` / text_eval
+  not ported; `DsDrawItemList::set_evaluator` takes one when it exists).
+* Bitmaps: kept as data (image bytes, scale, PPI and the probed size). Without an
+  `ImageProbe` any PNG / JPEG signature is accepted with an unknown size. Gerber plots plot the
+  base `PLOTTER::PlotImage` rectangle (identical to the reference); an SVG plot of a sheet with
+  a bitmap returns `PlotDrawingSheetError::NotPorted` (the reference embeds the image re-encoded
+  by wxImage / libpng).
+* `LoadDrawingSheet` reads the file as UTF-8 (lossy); the C++ lexer works on bytes.
+* The C++ singleton keeps margins and defaults of a previously loaded sheet when the next load
+  does not set them; a host that reuses one `DsDataModel` gets the same, a fresh model starts
+  from the constructor values.
+
+### Known gaps
+
+* `FILENAME_RESOLVER::ResolvePath` of the project's sheet file (`${KIPRJMOD}`, environment
+  variables, relative paths, `kicad-embed://` embedded files): the host must resolve and read
+  the file and call `DsDataModel::load_drawing_sheet` (kicad-session: `Session::drawing_sheet`;
+  the CLI does not do it yet, so boards whose project names a sheet file use the default sheet).
+* `DS_DATA_MODEL::LoadFromName` (the `empty.kicad_wks` name) is host work as well.

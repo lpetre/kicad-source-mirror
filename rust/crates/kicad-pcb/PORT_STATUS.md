@@ -3732,3 +3732,24 @@ table marks the board as changed). The SVG job's refresh belongs to `PCB_PLOTTER
   `GeneratedTableKind::DrillChart { row_shapes, symbol_column }` with the cell geometry.
 * Editor-only parts listed in the map (column editing, templates as files, board
   characteristics table, protobuf).
+
+## Package SET-11 (done by WIRE-1): `TUNING_PROFILES` load
+
+| C++ | Rust | State |
+|---|---|---|
+| `common/project/tuning_profiles.cpp` `TUNING_PROFILES` (constructor parameter `tuning_profiles_impedance_geometric`, `readUserDefinedProfileConfigurationLine`, `readViaOverrideConfigurationLine`, `migrateSchema0to1`, `migrateSchema1to2`, `GetTuningProfile`), `include/project/tuning_profiles.h` (`TUNING_PROFILE`, `DELAY_PROFILE_TRACK_PROPAGATION_ENTRY`, `DELAY_PROFILE_VIA_OVERRIDE_ENTRY`) | `project/tuning_profiles_json.rs` (`load_tuning_profiles( parent document )`) | ported, load side only (writer: SET-13) |
+
+* Additive: `ProjectFile` is unchanged; the nested object is read from the project document
+  (`BoardProject::document` / `ProjectFile::internals`) by the caller (kicad-session's
+  `board_loader::tuning_profiles`, which maps it onto kicad-drc's `TuningProfiles` for
+  `InitEngine` and `RunTests`).
+* A profile entry whose conversion throws in C++ (`entry["x"]` of the wrong type) ends the
+  load with the profiles read before it (`JSON_SETTINGS::Load` catches the exception); a
+  missing key (undefined behaviour on a `const json&` in C++) is treated the same way.
+* Verification: through the DRC result. With the loaded profiles the 6 corpus boards whose
+  reference reports have no `missing_tuning_profile` entries for their profiles now equal the
+  reference exactly (`kicad-session/tests/drc12_corpus.rs`: `drc_missing_tuning_profile`,
+  `test_drc_net_chain_tuning_profiles`, `issue23868`, `issue25065`,
+  `net_chain_bridging_tuning_profiles`, `time_calculations`), and `fw16_MCIO8i` lost those
+  entries too (one unrelated difference left). pcb-dump has no tuning-profile section.
+  Unit tests: migration 0 -> 2, entry filtering, the throw-ends-the-load rule.

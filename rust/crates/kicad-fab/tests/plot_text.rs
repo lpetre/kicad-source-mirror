@@ -191,6 +191,7 @@ fn plot_f_silks(board: &Board, mm6: bool) -> String {
         &mut plotter,
         &Lset::from_layers(&[PcbLayerId::FSilkS]),
         &plot_opts,
+        kicad_fab::color_settings::ColorSettings::default(),
     );
     assert!(plotter.end_plot());
     plotter.output().to_string()

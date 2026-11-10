@@ -1,0 +1,8 @@
+	(net_chains
+		(net_chain
+			(name "RN")
+			(members
+				(net "/CHAIN_RN")
+			)
+		)
+	)

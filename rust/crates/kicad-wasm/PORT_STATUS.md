@@ -16,19 +16,20 @@ ported libraries. API surface and status per call: `README.md`.
 | `newBoard`, `Board.nets/tracks/addTrack/addVia/remove/save` | `kicad_session::Session` on the kicad-pcb model | item lists and saved text native == wasm |
 | `loadBoard` + `nets/tracks/save` | `Session::load_board` (`kicad_pcb::io::parse_board`), `format_board` | `qa/data/pcbnew/issue10697.kicad_pcb`: native == wasm, and the saved text is byte-identical to the reference `kicad-cli pcb upgrade --force` (`loaded_board_save_matches_cpp`) |
 
-Pending (typed `NotYetPortedError`): `loadBoard` of boards with constructs the parser has not
-landed yet (footprints, ...), `runDrc`, `exportGerbers`, `exportDrill`, `plotSvg`, `ratsnest`,
-`refillZones`.
+| `runDrc`, `exportGerbers`, `exportDrill` (+ `loadBoard` with project / rules, fixed `uuidSeed` / `date`) | `kicad_session::run_drc`, `run_export_gerbers`, `run_export_drill` | report + JSON, every Gerber (with the job file) and drill file of 3 corpus boards native == wasm (`jobs` in the golden, 15 checks in `smoke.mjs`); the browser test compares the page's DRC report and 22 fab files of `demos/ecc83/ecc83-pp.kicad_pcb` with the native `kicad-rs` CLI (which the e2e test compares with the reference) |
+
+`plotSvg` is being wired by FAB-11 (the smoke test accepts SVG text or a typed error).
 
 ## Pipeline
 
 `rust/scripts/build-wasm.sh [--test]`: `cargo build -p kicad-wasm --target
 wasm32-unknown-unknown --profile wasm-release`, `wasm-bindgen` 0.2.130 for `--target nodejs`
 (`web/pkg-node`) and `--target web` (`web/pkg`), sizes, optional `wasm-opt`, then
-`web/test/smoke.mjs` (49 checks) and `web/test/browser.mjs` (Playwright/Chromium on a local
+`web/test/smoke.mjs` (58 checks) and `web/test/browser.mjs` (Playwright/Chromium on a local
 static server, `web/index.html` + `web/app.js`).
 
-Size (wasm-release, no wasm-opt): 4,757,372 bytes from cargo, 4,230,850 after wasm-bindgen.
+Size (wasm-release, no wasm-opt): 8,496,478 bytes from cargo, 7,715,653 after wasm-bindgen
+(WIRE-1, with DRC, zone fill and the fabrication writers linked in).
 
 ## Deviations / notes
 
@@ -38,7 +39,11 @@ Size (wasm-release, no wasm-opt): 4,757,372 bytes from cargo, 4,230,850 after wa
   stub traps (`WebAssembly.RuntimeError`); the message goes to `console.error` through
   `console_error_panic_hook`. `exportGerbers` / `plotSvg` on a `newBoard()` board do this today
   (`BOARD::GetLayerName` is pending).
-* No `getrandom`: UUIDs come from the board's deterministic `KiidGenerator`.
+* UUIDs: `loadBoard` / `newBoard` reseed the board's `KiidGenerator` with 32 bits from
+  `crypto.getRandomValues` (`Math.random` without `crypto`), or the `uuidSeed` option; the DRC
+  marker seed likewise. Dates: the browser clock in local time with its UTC offset
+  (`Date.getTimezoneOffset`), or the `date` option.
+* `Board.warnings`: parser warnings, then outline font fallbacks.
 * `wasm-bindgen` warns that the `target_features` section is missing because the workspace
   `wasm-release` profile sets `strip = true` (harmless; see change requests).
 

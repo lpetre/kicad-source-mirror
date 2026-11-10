@@ -1888,3 +1888,164 @@ Deviations:
 Known gaps: `PATH_CONNECTION::isValid` is unverified (needs `SegmentIntersectsBoard`, DRC-33);
 the `aExclude` set of `BuildCreepageBoardEdges` and `AddNodeVirtual` / `AddConnection( n1, n2 )`
 have no oracle coverage yet (used by DRC-33's engine).
+
+## DRC-30: differential pair coupling (`drc_test_provider_diff_pair_coupling.cpp`)
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `DRC_TEST_PROVIDER_DIFF_PAIR_COUPLING::Run` | `src/providers/diff_pair_coupling.rs` `DrcTestProviderDiffPairCoupling::run` (takes the run's `&DrcBoardCaches` for `m_CopperItemRTreeCache`) | ported |
+| `commonParallelProjection( SEG, SEG, ... )` / `( PCB_ARC, PCB_ARC, ... )` | `common_parallel_projection_seg` / `common_parallel_projection_arc` | ported |
+| `DIFF_PAIR_KEY` (+ `operator<`), `DIFF_PAIR_COUPLED_SEGMENTS`, `DIFF_PAIR_ITEMS` | `DiffPairKey` (+ `key_less`), `DiffPairCoupledSegments`, `DiffPairItems` | ported |
+| `std::map<DIFF_PAIR_KEY, DIFF_PAIR_ITEMS> dpRuleMatches` | `DpRuleMatches`: the libstdc++ red-black tree of `operator[]` (`lower_bound`, `_M_emplace_hint_unique`, `_Rb_tree_insert_and_rebalance`) on an index arena | ported (exact) |
+| `extractDiffPairCoupledItems`, `isInTuningPattern` | same names, snake_case | ported |
+| `GetFromToCache()->Rebuild( m_board )` (first statement of `Run`) | `run_flow::run_provider` calls `ConnectivityData::rebuild_from_to_cache` right before the provider (needs `&mut`) | ported |
+| `ADVANCED_CFG::m_MinParallelAngle` | `ADVANCED_CFG_MIN_PARALLEL_ANGLE` (default 0.001 deg) | default only |
+| debug overlay (`GetDebugOverlay`) | - | skipped: GUI only |
+| registry wiring | `run_flow.rs`: removed from `UNPORTED_PROVIDERS`, `"diff_pair_coupling"` arm in `run_provider` | done |
+
+Rule identity: the key keeps copies of the gap / uncoupled `DrcRuleInfo` (with `rule_index`,
+FIX-DRC-1) for `SetViolatingRule`; as in C++ they are not part of the key ordering (names are).
+Numeric conversions follow the C++ exactly: `int += double` lengths and `int length` of the
+arc case through `f64_to_i32_x86`, `computedGap = sqrt( int64 )` truncated through
+`f64_to_i64_x86`, the half-width sum in `int` division, the rescaled clip points `int + int64`
+truncated to `int`.
+
+### Verification
+
+- Reference cases (`tests/drc30_diff_pair_coupling.rs`, golden `tests/golden/drc30/reference.txt`
+  from `tests/oracle/gen_drc30_golden.py`): the QA diff pair boards `issue7975`, `issue8407`,
+  `issue17967/issue17967`, `diff_pair_uncoupled_tuning_drc`, `skew_within_diff_pairs_drc` (each
+  with its own rules and with five rule variants appended from `tests/data/drc30/`: tight gap
+  only, uncoupled only, both, gap rule restricted to F.Cu + uncoupled, and `mixed`: the gap
+  rule ignored on B.Cu + uncoupled) and `issue24772/fw16_MCIO8i` (own rules, layer variant):
+  32 cases, 630 entries of `kicad-cli pcb drc --format json --severity-all`, all matched
+  (message bytes, items, item positions); 29 cases in exactly the reference order, the other
+  3 (issue17967 gap / both / layer) differ only in the order of the negative items of one
+  positive item (see deviations).
+  The provider runs with the copper item tree of the cache generator and the run's
+  connectivity.
+- End to end (`kicad-rs pcb drc` vs the reference, 35 cases: the above plus fw16 gap / unc /
+  both, where the gap code reaches the 199 error limit): 35 / 35 identical as multisets, 32 in
+  reference order.
+- `kicad-session/tests/drc12_regressions.rs` `drc_false_positive_regressions` now runs the
+  provider (21 / 21 boards pass, the diff pair boards without a "not run" note).
+- Arc coupling (issue8407, issue17967, fw16) and the tuning-pattern exclusion
+  (`diff_pair_uncoupled_tuning_drc`) are covered by those cases. The `mixed` variant makes
+  keys with an empty gap rule name next to keys with one (`DIFF_PAIR_KEY::operator<` is then
+  not a strict weak ordering): with a sorted vector instead of the tree emulation issue17967
+  gave 3 uncoupled entries instead of the reference's 2; with the tree emulation all match.
+
+### Ported C++ tests
+
+- `test_drc_regressions.cpp` `DRCFalsePositiveRegressions`, the four diff pair boards, provider
+  only: `drc_false_positive_regressions_diff_pair` (0 errors each); the whole test runs in
+  `kicad-session/tests/drc12_regressions.rs`.
+- Unit tests in the module: `DIFF_PAIR_KEY` map order, segment parallel projection.
+
+### Deviations
+
+- `itemsP` / `itemsN` are `std::set<BOARD_CONNECTED_ITEM*>` (heap-address order) in C++ and
+  `BTreeSet<ItemId>` (board track order) in the port. Not reproducible in the reference and
+  compared tie-aware: the order of the gap entries of one positive item (follows the negative
+  items), which two items an uncoupled-length entry shows (the first positive and the first
+  negative item: compared by their nets), the order of its remaining items and its marker
+  position (position of the first negative item, else of the first positive).
+
+### Known gaps
+
+- `ADVANCED_CFG::m_MinParallelAngle` is fixed at its default (no advanced config in the port).
+
+## STAB-DRC: DRC against the reference with pads (fix loop, shared harness)
+
+### Harness (consolidated)
+
+`tests/drc_harness` now loads boards the way `KI_TEST::LoadBoard` / kicad-session's QA path
+does: parser, then `kicad_pcb::project::LoadPath::Qa` steps through `run_model_step`
+(`SetProject` with the full project: design / net / component class settings, tuning
+profiles), `InitEngine` with the real binding (`PcbExprUcode`), `BuildListOfNets`,
+`BuildConnectivity` (zone fill triangulation), `SynchronizeTuningProfileProperties`,
+`SynchronizeComponentClasses`. No test skips boards with user rule conditions any more
+(the `has_compiled_conditions` / `conditions_call_functions` / DRC-21 skips are gone).
+Providers run through the real run path: `run_flow::run_tests_selected` (new, `run_tests`
+with a registry-slot filter; `run_tests` calls it with every slot) via
+`drc_harness::run_flow_providers` / `cli_report_entries_flow` / `compare_corpus_flow`:
+cache generator, connectivity rebuild and net propagation, `PcbExprCacheScope`. The private
+per-test wrappers (`ConnectivityWithCaches`, `CopperWithCaches`, `HoleAndEdge`,
+`DisallowWithCaches`, `ZoneConnectionsWithCaches`, `FootprintAndMisc`) are removed;
+`run_providers` (provider objects, no generator) still holds the expression cache scope.
+Remaining test-private wrappers: drc06/26/27/28/29 (they build the generator caches
+themselves; equal results) and `ThicknessOfOneItem` (one item).
+
+### Fixed (each with its board / error code)
+
+- courtyard `malformed_courtyard` missing (single_footprint_disjoint/unclosed_courtyard,
+  two_footprints_one_malformed, issue2568): the test ran the provider without the cache
+  generator, whose `BuildCourtyardCaches` sets the MALFORMED flags the provider reads
+  (C++ `drc_cache_generator.cpp:242`); not a provider or model defect.
+- `starved_thermal` extra on the drc25 synthetic board `thermals` (TP5 pad 5): the test added
+  the side-table pads on top of the pads the parser now reads (every pad twice); the side
+  table is now checked against the parsed pads instead.
+- `unconnected_items` issue25580: the teardrop zone is saved without a UUID and gets a random
+  KIID per load (also in the reference): `drc_harness::mask_generated_uuids` compares report
+  items whose UUID is absent from the board file by description and position.
+- `text_thickness` outline font: orchestrator decision implemented in `text_dims.rs` (the
+  TrueType branch measures an unfractured copy of the stored glyphs). Crafted board
+  `kicad-pcb/tests/data/font_rc1/frc.kicad_pcb` at min 0.1 / 0.15 / 0.2 / 0.25 mm: text_height
+  and text_thickness entries identical to the reference in order (40 entries,
+  `tests/golden/stab_drc_frc.txt`, `tests/oracle/gen_stab_drc_frc.py`,
+  `drc24::text_thickness_outline_font_thresholds_match_reference`).
+- KNOWN_RULE_GAPS of drc08a (issue16566 `A.Pad_Shape == 'Oval'`, issue23469
+  `A.Reference == 'J1'`): match with the real binding; list emptied.
+- `clearance` issue24211 (rules on `hasComponentClass('Inductor')`): matched once the harness
+  ran `SynchronizeComponentClasses` (harness defect).
+- EvalRules oracle: `pair_tp` key count on 15 boards with few pads (the same pad drawn twice
+  in a row is one key in `gen_evalrules_goldens.py`): `Cat::key` counts consecutive distinct
+  items; all 364 boards match (pair_tp 179 categories) except the known issue24735 deviation.
+- Local copies replaced: `text_mirroring::board_is_layer_visible` -> `Board::is_layer_visible`,
+  `via_stack::is_span_valid` -> `ViaStackData::is_span_valid`.
+
+### Set / tie-aware comparisons (reference not deterministic)
+
+- `assertion_failure` (misc `testAssertions` runs on the thread pool, `submit_loop`): order
+  not compared (component_classes_drc: Rule2/R2 before Rule5/R4 in the reference, file order
+  R4 first).
+- `connection_width` on `issue24772/fw16_MCIO8i` (`POINTER_ORDER_BOARDS` in drc29): the
+  net/layer polygon is merged from a `std::set<BOARD_ITEM*>`, so the neck reported and the
+  items hit-tested at it follow heap order; compared without the items (description incl.
+  actual width and layer equal).
+- Unchanged from the provider packages: copper clearance, edge clearance, disallow, zone
+  connections between tasks, isolated_copper between zones (thread pool / `ZONE*` order);
+  error-limit types by count (issue832, stickhub-extra-via).
+
+### Scoreboard (provider corpus replays, 365 golden boards)
+
+Baseline: drc07 361 compared (unconnected_items 1325 matched / 1 missing / 1 extra), drc24
+malformed_courtyard 0 / 4 missing, text_thickness 10 / 1 missing, drc25 synthetic 1 extra,
+drc08a and drc09 332 compared (33 pending: rule conditions), the other replays skipped every
+board with a user rule condition; 5 red tests.
+Final: every replay compares 362 boards (366 for drc29), pending only issue4257 / issue7004
+(legacy `.pro`) and plugins/fakeboard (reference fails). Matched / missing / extra per code:
+all 0 missing / 0 extra (e.g. clearance 2084 + error-limit boards by count, hole_clearance
+1413, shorting_items 371, unconnected_items 1326, via_dangling 426, track_dangling 532,
+isolated_copper 198, drill_out_of_range 1645, via_diameter 1217, track_width 907,
+silk_over_copper 918, silk_overlap 658, solder_mask_bridge 668, courtyards_overlap 135,
+pth_inside_courtyard 86, malformed_courtyard 4, copper_edge_clearance 283,
+silk_edge_clearance 175, copper_outside_board 217, text_height 227, invalid_outline 105,
+items_not_allowed 66, starved_thermal 95, connection_width 22, copper_sliver 6), except the
+expected difference below. All kicad-drc tests green.
+
+### Open / expected differences
+
+- issue22475 `text_thickness` on ff749b73 (`Franklin Gothic Medium`): font not installed on
+  the oracle machine, the reference measures fontconfig's substitute, the port the stored
+  glyphs (orchestrator decision; asserted as expected in drc24).
+- api_kitchen_sink `clearance` 'acode' vs Edge.Cuts polygon ('barcode visual separation'):
+  matches now (kicad-zint landed; drc26 physical clearance replay on the board: 1 / 0 / 0);
+  kicad-session's `drc12_corpus` KNOWN_DIFFERENCES entry should be dropped.
+- `fromTo()` rules in the corpus (CN-05 pending): via_stack_track_width.kicad_dru,
+  via_stack_uvia_rule.kicad_dru, demos/vme-wren/vme-wren.kicad_dru.
+- Raw zone_connect values: the `PrintZoneConnection` REPORT texts are not ported (DRC-34);
+  `DrcConstraint::zone_connection` is an enum, so an out-of-range pad / footprint value reads
+  as FULL (C++ keeps the raw value); not reachable from the corpus.

@@ -34,112 +34,21 @@ mod drc_harness;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, diff_entries, golden, load_board,
-    panic_text, quiet, read_tuning_profiles, run_providers,
+    Entry, Loaded, cached_entries, cli_report_entries_flow, diff_entries, golden, load_board,
+    panic_text, quiet, run_flow_providers,
 };
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_core::json::{self, ObjectOrder};
 use kicad_core::typeinfo::KicadT;
-use kicad_drc::cache_generator::{compute_max_clearances, prepare_board};
-use kicad_drc::caches::DrcBoardCaches;
-use kicad_drc::engine::implicit_rules::TuningProfiles;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::pcbexpr::functions::PcbExprCacheScope;
-use kicad_drc::providers::disallow::DrcTestProviderDisallow;
-use kicad_drc::rule_parser::default_layer_choices;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{DRCE_ALLOWED_ITEMS, DRCE_TEXT_ON_EDGECUTS};
 
 /// The error types of the provider.
 const TYPES: &[&str] = &["items_not_allowed", "text_on_edge_cuts"];
 
-/// The provider with the run's `m_DRCMaxPhysicalClearance` (the part of
-/// `DRC_CACHE_GENERATOR::Run()` it reads), the connectivity of the load and the board's
-/// expression caches.
-struct DisallowWithCaches<'a> {
-    connectivity: &'a ConnectivityData,
-}
-
-impl DrcTestProviderRun for DisallowWithCaches<'_> {
-    fn name(&self) -> &str {
-        "disallow"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let cctx = BoardCtx {
-            board: ctx.board,
-            rules: ctx.rules,
-            connectivity: Some(self.connectivity),
-        };
-        let _scope = PcbExprCacheScope::enter(ctx.board);
-        let mut caches = DrcBoardCaches::new();
-        (caches.max_clearance, caches.max_physical_clearance) =
-            compute_max_clearances(&cctx, engine);
-
-        DrcTestProviderDisallow::new(&caches).run_tests(engine, run, &cctx, units)
-    }
-}
-
-/// `BuildConnectivity` at load time, then the board-writing part of the cache generator and
-/// its `connectivity->Build( board )` (as `drc09_hole_edge.rs`).
-fn prepare(loaded: &mut Loaded) -> ConnectivityData {
-    let mut connectivity = ConnectivityData::new();
-    connectivity.build_connectivity(&mut loaded.board);
-    prepare_board(&mut loaded.board);
-    connectivity.clear_ratsnest();
-    connectivity.build_board(&mut loaded.board);
-    connectivity
-}
-
-/// The shared harness load, with `InitEngine` repeated with the real expression binding so
-/// that user rule conditions (e.g. `A.insideArea('x')`) evaluate.
-fn load(path: &std::path::Path) -> Result<Loaded, String> {
-    let mut loaded = load_board(path)?;
-    let pro = path.with_extension("kicad_pro");
-    let tuning_profiles = if pro.exists() {
-        let doc = json::parse_bytes(&std::fs::read(&pro).unwrap(), ObjectOrder::Sorted, true)
-            .map_err(|e| format!("project: {e:?}"))?;
-        read_tuning_profiles(&doc)
-    } else {
-        TuningProfiles::default()
-    };
-    let dru = path.with_extension("kicad_dru");
-    let dru_text = dru
-        .exists()
-        .then(|| String::from_utf8_lossy(&std::fs::read(&dru).unwrap()).to_string());
-    let dru_path = dru.to_string_lossy().to_string();
-
-    let mut engine = DrcEngine::new();
-    engine
-        .init_engine(
-            &mut loaded.board,
-            dru_text.as_deref().map(|t| (t, dru_path.as_str())),
-            default_layer_choices(),
-            &tuning_profiles,
-            None,
-        )
-        .map_err(|_| "InitEngine failed".to_string())?;
-    loaded.engine = engine;
-
-    Ok(loaded)
-}
-
 /// The report entries of the provider's types.
 fn report(loaded: &mut Loaded) -> Vec<Entry> {
-    let connectivity = prepare(loaded);
-    let mut provider = DisallowWithCaches {
-        connectivity: &connectivity,
-    };
-
-    cli_report_entries(loaded, false, &mut [&mut provider])
+    cli_report_entries_flow(loaded, false, &["disallow"])
         .into_iter()
         .filter(|e| TYPES.contains(&e.type_.as_str()))
         .collect()
@@ -156,19 +65,14 @@ fn run_with(loaded: &mut Loaded, severities: &[(i32, Severity)]) -> Vec<drc_harn
         }
     }
 
-    let connectivity = prepare(loaded);
-    let mut provider = DisallowWithCaches {
-        connectivity: &connectivity,
-    };
-
-    run_providers(loaded, EdaUnits::Mm, true, &mut [&mut provider])
+    run_flow_providers(loaded, EdaUnits::Mm, true, &["disallow"])
 }
 
 /// Loads a QA board; `None` (with a note) when the port does not load it completely yet.
 fn load_qa(name: &str) -> Option<Loaded> {
     let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
 
-    match quiet(|| catch_unwind(AssertUnwindSafe(|| load(&path)))) {
+    match quiet(|| catch_unwind(AssertUnwindSafe(|| load_board(&path)))) {
         Ok(Ok(l)) if l.report.skipped.is_empty() => Some(l),
         Ok(Ok(_)) => {
             eprintln!("{name}: pending (skipped items)");
@@ -236,7 +140,7 @@ fn compare_corpus(filter: &str) -> Score {
         let result = quiet(|| {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, bool), String> {
-                    let mut loaded = load(&path)?;
+                    let mut loaded = load_board(&path)?;
                     let entries = report(&mut loaded);
                     Ok((entries, loaded.report.skipped.is_empty()))
                 },

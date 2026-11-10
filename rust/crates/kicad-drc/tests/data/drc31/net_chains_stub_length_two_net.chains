@@ -1,0 +1,11 @@
+	(net_chains
+		(net_chain
+			(name "SIG")
+			(members
+				(net "/A")
+				(net "/B")
+			)
+			(terminal_pad "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02")
+			(terminal_pad "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbb02")
+		)
+	)

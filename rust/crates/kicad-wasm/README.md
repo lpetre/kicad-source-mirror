@@ -35,8 +35,8 @@ import init, * as kicad from './pkg/kicad_wasm.js'; await init();
 | `strokeText(text, sizeMm)` | `{ path, strokeWidth, segments }`: KiCad stroke font, left/bottom aligned at the origin, SVG path data in nm | works |
 | `polygonBoolean(a, b, op)` | polygons: `[[ring0, ring1, ...], ...]`, ring = `[[x, y], ...]`, ring 0 the outline, others holes; `op` = `union`, `difference`, `intersection`, `xor` (`SHAPE_POLY_SET` + vendored Clipper2) | works |
 | `plotDemoGerber(date?)` | a small Gerber X2 file from the Rust `GERBER_PLOTTER` (byte-identical to the C++ plotter, `tests/golden/demo_gerber_cpp.gbr`) | works |
-| `loadBoard(text, { project, rules, name })` | a `Board`; `project` / `rules` are the `.kicad_pro` / `.kicad_dru` texts, `name` the file name (default output names derive from it) | works for boards whose constructs the parser has landed for (e.g. `qa/data/pcbnew/issue10697.kicad_pcb`); otherwise `NotYetPortedError` (`kicad-pcb parser: port pending: <construct>`). The post-load steps (project binding, connectivity, DRC engine) are pending |
-| `newBoard(name?)` | an empty `Board` (`new BOARD()`) for clients that build a board item by item | works |
+| `loadBoard(text, { project, localSettings, rules, name, uuidSeed, date })` | a `Board` after the full `BOARD_LOADER::Load` sequence (project binding, DRC engine with the rules, exclusions, connectivity); `project` / `localSettings` / `rules` are the `.kicad_pro` / `.kicad_prl` / `.kicad_dru` texts, `name` the file name (default output names derive from it); `uuidSeed` fixes the UUIDs the session generates (default: `crypto.getRandomValues`), `date` (`YYYY-MM-DDTHH:MM:SS`) every date the jobs write (default: the browser clock, local time) | works |
+| `newBoard(name?, { uuidSeed, date }?)` | an empty `Board` (`new BOARD()`) for clients that build a board item by item | works |
 
 ## `Board`
 
@@ -46,18 +46,19 @@ Item handles are `ItemId::to_bits()` numbers (< 2^53, exact as JS numbers), vali
 | Method | Returns | Status |
 |---|---|---|
 | `name` (getter) | the board file name | works |
+| `warnings` (getter) | the load warnings: parser warnings (`GetParseWarnings()`), then texts drawn with the stroke font because their outline font has no usable stored glyphs | works |
 | `nets()` | `[{ code, name, netclass }]` in net code order | works |
 | `tracks()` | `[{ id, kind: "track"\|"arc"\|"via", uuid, start, end, mid, width, layer, bottomLayer, drill, net }]` in `BOARD::Tracks()` order; for a via `width` is the diameter | works |
 | `addTrack({ start, end, width, layer, net })` | id; `layer` a canonical copper layer name (`"F.Cu"`); a non-copper layer throws `InvalidArgumentError` (`Cannot place Track on non-copper layer`) | works |
 | `addVia({ at, diameter, drill, net })` | id (through via F.Cu - B.Cu) | works |
 | `remove(id)` | `true` if the item existed | works |
-| `runDrc({ units, format, severities, allTrackErrors, refillZones })` | `{ exitCode, files, report, messages }` as `kicad-cli pcb drc` | pending (kicad-drc) |
-| `exportGerbers({ layers, commonLayers, precision, noX2, noNetlist, noProtelExt, disableApertureMacros, useDrillFileOrigin, subtractSoldermask, boardPlotParams, checkZones })` | `{ exitCode, files: [{ name, content }], messages }` as `kicad-cli pcb export gerbers` | pending (kicad-fab) |
-| `exportDrill({ format, units, separateTh, generateReport })` | `{ exitCode, files, report, messages }` as `kicad-cli pcb export drill` | pending (kicad-fab) |
+| `runDrc({ units, format, severities, allTrackErrors, refillZones })` | `{ exitCode, files, report, messages }` as `kicad-cli pcb drc` | works (checks kicad-drc cannot run yet are listed in the report) |
+| `exportGerbers({ layers, commonLayers, precision, noX2, noNetlist, noProtelExt, disableApertureMacros, useDrillFileOrigin, subtractSoldermask, boardPlotParams, checkZones, variant })` | `{ exitCode, files: [{ name, content }], messages }` as `kicad-cli pcb export gerbers` (with the `.gbrjob` job file) | works |
+| `exportDrill({ format, units, separateTh, generateReport, drillOrigin, zerosFormat, ovalFormat, mirrorY, minHeader, gerberPrecision, generateTenting })` | `{ exitCode, files, report, messages }` as `kicad-cli pcb export drill` | works (drill maps are not ported) |
 | `plotSvg({ layers, fitPageToBoard, blackAndWhite })` | SVG text (`pcb export svg --mode-single --exclude-drawing-sheet`) | pending (kicad-fab) |
 | `save()` | `.kicad_pcb` text (`PCB_IO_KICAD_SEXPR::SaveBoard`; byte-identical to `kicad-cli pcb upgrade --force` on the loadable corpus boards) | works (items whose writer package has not landed: `NotYetPortedError`) |
-| `ratsnest()` | `Int32Array` `[x1, y1, x2, y2] * n` | pending (kicad-connectivity) |
-| `refillZones()` | - | pending (kicad-zone) |
+| `ratsnest()` | `Int32Array` `[x1, y1, x2, y2] * n` | works |
+| `refillZones()` | - | works |
 
 `messages` are the C++ `REPORTER` lines: `[{ severity: "error"|"warning"|"info"|"action"|..., text }]`.
 
@@ -80,6 +81,11 @@ All failures are JavaScript `Error`s with a `name`:
   upgrade --force` output (kicad-session's golden).
 * `web/test/smoke.mjs` (node): the same calls on the wasm module must give the same results;
   `newBoard` + items + `save()` and `loadBoard` + `nets()` / `tracks()` / `save()` equal the
-  native results; the pending calls must throw `NotYetPortedError`.
+  native results, and so do `runDrc` (report and JSON), `exportGerbers` and `exportDrill`
+  (Excellon and Gerber) on three corpus boards with their project and rule files (fixed date
+  and UUID seed); `plotSvg` must throw `NotYetPortedError`.
 * `web/test/browser.mjs` (Playwright + Chromium): serves `web/`, loads `index.html`, checks the
-  page loads the module and computes the same token statistics as the native build.
+  page loads the module and computes the same token statistics as the native build, then
+  loads `demos/ecc83/ecc83-pp.kicad_pcb` with its project, clicks "Run DRC" and "Export
+  Gerbers + drill", and compares the DRC report and every Gerber / drill file with the native
+  `kicad-rs` CLI run on the same files (same date and UUID seed).

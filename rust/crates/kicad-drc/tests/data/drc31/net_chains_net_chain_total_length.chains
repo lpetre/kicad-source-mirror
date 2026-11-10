@@ -1,0 +1,13 @@
+	(net_chains
+		(net_chain
+			(name "TOT")
+			(members
+				(net "Net-(R1-Pad1)")
+				(net "Net-(R1-Pad2)")
+				(net "Net-(R2-Pad2)")
+				(net "Net-(R3-Pad2)")
+			)
+			(terminal_pad "3e68362c-9db5-4525-9535-94b8c95fc2aa")
+			(terminal_pad "3e68362c-9db5-4525-9535-94b8c95fc2aa")
+		)
+	)

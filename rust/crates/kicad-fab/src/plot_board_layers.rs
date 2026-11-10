@@ -30,9 +30,12 @@
 //! `PlotInteractiveLayer`, `ClearPlottedFootprints`), the drawing sheet (PLOT-08).
 
 use kicad_core::color4d::{Color4D, EdaColorT};
-use kicad_core::layer_ids::{Flashing, LAYER_DNP_MARKER, LAYER_VIAS, is_copper_layer};
+use kicad_core::layer_ids::{
+    Flashing, LAYER_DNP_MARKER, LAYER_DRAWINGSHEET, LAYER_VIAS, is_copper_layer,
+};
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
+use kicad_core::text_vars::TextVarResolver;
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::geometry::approximation::ErrorLoc;
@@ -49,12 +52,14 @@ use kicad_pcb::pad::Pad;
 use kicad_pcb::padstack::{PadAttrib, PadShape};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_track::Track;
+use kicad_plot::common_plot_functions::{PlotDrawingSheetArgs, plot_drawing_sheet};
 use kicad_plot::gbr_metadata::GbrApertureAttrib;
 use kicad_plot::gbr_metadata::GbrMetadata;
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
 use kicad_plot::plotter::PlotData;
 use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 
+use crate::color_settings::ColorSettings;
 use crate::pcb_plotter::build_plot_file_name;
 use crate::pcbplot::{PlotEnv, add_gerber_x2_attribute, gerber_protel_extension};
 use crate::plot_brditems_plotter::{BrditemsPlotter, fab_port_pending};
@@ -69,6 +74,7 @@ pub fn plot_board_layers(
     a_plotter: &mut dyn Plotter,
     a_layers: &[PcbLayerId],
     a_plot_options: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     if a_layers.is_empty() {
         return;
@@ -90,6 +96,7 @@ pub fn plot_board_layers(
             a_plotter,
             layer,
             &plot_options,
+            a_colors,
             layer == a_layers[0],
         );
     }
@@ -99,7 +106,7 @@ pub fn plot_board_layers(
     let map_layers = a_board.board.drill_symbol_layers() & Lset::from_layers(a_layers);
 
     if map_layers.any() {
-        let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, &plot_options);
+        let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, &plot_options, a_colors);
         itemplotter.set_layer_set(&Lset::from_layers(a_layers));
 
         for layer in map_layers.seq().0 {
@@ -114,7 +121,7 @@ pub fn plot_board_layers(
     // One global knockout pass, so a plotted layer carrying a map skips them rather than
     // punching through the symbols they would annotate
     if plot_options.drill_marks != DrillMarks::NoDrillShape && !map_layers.any() {
-        let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, &plot_options);
+        let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, &plot_options, a_colors);
         itemplotter.set_layer_set(&Lset::from_layers(a_layers));
         itemplotter.plot_drill_marks();
     }
@@ -128,6 +135,7 @@ pub fn plot_one_board_layer(
     a_plotter: &mut dyn Plotter,
     a_layer: PcbLayerId,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
     is_primary_layer: bool,
 ) {
     let mut plot_opt = a_plot_opt.clone();
@@ -149,7 +157,7 @@ pub fn plot_one_board_layer(
             plot_opt.skip_npth_pads = true;
         }
 
-        plot_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+        plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
     } else {
         match a_layer {
             PcbLayerId::BMask | PcbLayerId::FMask => {
@@ -157,7 +165,7 @@ pub fn plot_one_board_layer(
                 plot_opt.dxf_polygon_mode = true;
 
                 // Plot solder mask:
-                plot_solder_mask_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                plot_solder_mask_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
             }
 
             PcbLayerId::BAdhes | PcbLayerId::FAdhes | PcbLayerId::BPaste | PcbLayerId::FPaste => {
@@ -167,7 +175,7 @@ pub fn plot_one_board_layer(
                 // Use outline mode for DXF
                 plot_opt.dxf_polygon_mode = true;
 
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
             }
 
             PcbLayerId::FSilkS | PcbLayerId::BSilkS => {
@@ -179,7 +187,7 @@ pub fn plot_one_board_layer(
                         // will also knockout any other (non-silk) layers that were plotted
                         // before the silk layer.
 
-                        plot_standard_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                        plot_standard_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
 
                         // Create the mask to subtract by creating a negative layer polarity
                         a_plotter.set_layer_polarity(false);
@@ -193,22 +201,34 @@ pub fn plot_one_board_layer(
                         } else {
                             Lset::from_layers(&[PcbLayerId::BMask])
                         };
-                        plot_solder_mask_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                        plot_solder_mask_layer(
+                            a_board,
+                            a_plotter,
+                            &layer_mask,
+                            &plot_opt,
+                            a_colors,
+                        );
 
                         // Disable the negative polarity
                         a_plotter.set_layer_polarity(true);
                     } else {
-                        plot_clipped_silk_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                        plot_clipped_silk_layer(
+                            a_board,
+                            a_plotter,
+                            &layer_mask,
+                            &plot_opt,
+                            a_colors,
+                        );
                     }
                 } else {
-                    plot_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                    plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
                 }
             }
 
             // Dwgs_User, Cmts_User, Eco1_User, Eco2_User, Edge_Cuts, Margin, F/B_CrtYd,
             // F/B_Fab and every other layer
             _ => {
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt);
+                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
             }
         }
     }
@@ -221,11 +241,12 @@ fn plot_layer(
     a_plotter: &mut dyn Plotter,
     layer_mask: &Lset,
     plot_opts: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     if plot_opts.format == PlotFormat::Dxf && plot_opts.dxf_polygon_mode {
         fab_port_pending!("PlotLayerOutlines (DXF, out of scope)")
     } else {
-        plot_standard_layer(a_board, a_plotter, layer_mask, plot_opts);
+        plot_standard_layer(a_board, a_plotter, layer_mask, plot_opts, a_colors);
     }
 }
 
@@ -237,13 +258,14 @@ fn plot_solder_mask_layer(
     a_plotter: &mut dyn Plotter,
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     if a_board.board.design_settings().solder_mask_min_width == 0 {
-        plot_layer(a_board, a_plotter, a_layer_mask, a_plot_opt);
+        plot_layer(a_board, a_plotter, a_layer_mask, a_plot_opt, a_colors);
         return;
     }
 
-    plot_solder_mask_layer_min_width(a_board, a_plotter, a_layer_mask, a_plot_opt);
+    plot_solder_mask_layer_min_width(a_board, a_plotter, a_layer_mask, a_plot_opt, a_colors);
 }
 
 /// The layer flags `PlotStandardLayer` computes once (L361-371) and its per-item bodies read.
@@ -309,9 +331,10 @@ pub fn plot_standard_layer(
     a_plotter: &mut dyn Plotter,
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
+    a_colors: ColorSettings,
 ) {
     let board = a_board.board;
-    let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt);
+    let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt, a_colors);
 
     itemplotter.set_layer_set(a_layer_mask);
 
@@ -1205,7 +1228,10 @@ fn fill_negative_knockout(a_plotter: &mut dyn Plotter, a_bbbox: &Box2I) {
 ///
 /// `a_layer_name`, `a_sheet_name`, `a_sheet_path`, `a_page_number` and `a_page_count` are
 /// only used by the drawing sheet in C++ (`RENDER_SETTINGS::SetLayerName`,
-/// `PlotDrawingSheet`); `a_env` replaces `GetBuildVersion()` and the clock.
+/// `PlotDrawingSheet`; the C++ defaults are `wxEmptyString` and 1); `a_env` replaces
+/// `GetBuildVersion()`, the clock and the drawing sheet singleton; `a_colors` is
+/// `aPlotOpts->ColorSettings()` (the port's `PcbPlotParams` has none), read for the drawing
+/// sheet colour.
 #[allow(clippy::too_many_arguments)]
 pub fn start_plot_board(
     a_board: &BoardCtx<'_>,
@@ -1216,10 +1242,12 @@ pub fn start_plot_board(
     a_sheet_name: &str,
     a_sheet_path: &str,
     a_page_name: &str,
+    a_page_number: &str,
+    a_page_count: i32,
+    a_colors: &ColorSettings,
     a_env: &PlotEnv,
 ) -> Result<Box<dyn Plotter>, FabError> {
     let board = a_board.board;
-    let _ = (a_layer_name, a_sheet_name, a_sheet_path);
 
     // Create the plotter driver and set the few plotter specific options
     let mut plotter: Box<dyn Plotter> = match a_plot_opts.format {
@@ -1316,9 +1344,52 @@ pub fn start_plot_board(
 
             // Plot the frame reference if requested
             if a_plot_opts.plot_drawing_sheet {
-                return Err(FabError::NotPorted(
-                    "PlotDrawingSheet (drawing sheet / title block, PLOT-07 / PLOT-08)",
-                ));
+                let variant_name = board.get_current_variant().to_string();
+                let variant_desc = board.get_variant_description(&variant_name);
+
+                // renderSettings->GetLayerColor( LAYER_DRAWINGSHEET ): PCB_RENDER_SETTINGS::
+                // LoadColors copies the GAL layer colours of the theme unchanged.
+                let color = a_colors.get_color(LAYER_DRAWINGSHEET);
+
+                let project = |token: &mut String| -> bool {
+                    board
+                        .project
+                        .as_ref()
+                        .is_some_and(|p| p.text_var_resolver(&board.text_var_clock, token))
+                };
+                let mut sheet = a_env.drawing_sheet.clone();
+                let base_version = sheet.base_version.clone();
+                let args = PlotDrawingSheetArgs {
+                    project: board
+                        .project
+                        .as_ref()
+                        .map(|_| &project as &TextVarResolver<'_>),
+                    title_block: &board.titles,
+                    page_info: &board.paper,
+                    properties: Some(&board.properties),
+                    sheet_number: a_page_number,
+                    sheet_count: a_page_count,
+                    sheet_name: a_sheet_name,
+                    sheet_path: a_sheet_path,
+                    filename: &board.file_name,
+                    color,
+                    is_first_page: true,
+                    variant_name: &variant_name,
+                    variant_desc: &variant_desc,
+                    layer_name: a_layer_name,
+                    kicad_version: base_version.as_deref(),
+                    clock: &board.text_var_clock,
+                };
+
+                if plot_drawing_sheet(plotter.as_mut(), &mut sheet.model, &args).is_err() {
+                    return Err(FabError::NotPorted(
+                        "PlotDrawingSheet: a drawing sheet bitmap in a plot that embeds images (SVG)",
+                    ));
+                }
+
+                if a_plot_opts.mirror || a_plot_opts.scale != 1.0 || a_plot_opts.auto_scale {
+                    initialize_plotter(plotter.as_mut(), a_board, a_plot_opts);
+                }
             }
 
             // When plotting a negative board: draw a black rectangle (background for plot board
@@ -1379,10 +1450,20 @@ pub fn plot_gerber_layer_file(
         "",
         "",
         "1",
+        "",
+        1,
+        &ColorSettings::builtin_default(),
         a_env,
     )?;
 
-    plot_board_layers(a_board, plotter.as_mut(), a_plot_sequence, a_plot_opts);
+    // The colour theme of `kicad-cli` (`_builtin_default`); Gerber output ignores colours
+    plot_board_layers(
+        a_board,
+        plotter.as_mut(),
+        a_plot_sequence,
+        a_plot_opts,
+        ColorSettings::builtin_default(),
+    );
     plotter.end_plot();
 
     Ok(OutputFile {
