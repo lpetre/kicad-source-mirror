@@ -1,0 +1,10 @@
+error	track_segment_length	Track segment length (rule 'drc28' min length 2.0000 mm; actual 0.5000 mm)	00000000-0000-0000-0028-00000000006c	Track [N1] on F.Cu, length 0.5000 mm	10.0	10.0
+error	track_segment_length	Track segment length (rule 'drc28' min length 2.0000 mm; actual 1.9999 mm)	00000000-0000-0000-0028-00000000006d	Track [N1] on F.Cu, length 1.9999 mm	10.0	13.0
+error	track_segment_length	Track segment length (rule 'drc28' min length 2.0000 mm; actual 0.0005 mm)	00000000-0000-0000-0028-000000000077	Track [N1] on F.Cu, length 0.0005 mm	40.0	20.0
+error	track_segment_length	Track segment length (rule 'drc28' max length 8.0000 mm; actual 10.0000 mm)	00000000-0000-0000-0028-000000000078	Track [N1] on B.Cu, length 10.0000 mm	60.0	10.0
+error	track_segment_length	Track segment length (rule 'drc28' min length 2.0000 mm; actual 1.0000 mm)	00000000-0000-0000-0028-000000000079	Track [N1] on B.Cu, length 1.0000 mm	60.0	20.0
+error	track_segment_length	Track segment length (rule 'drc28' max length 8.0000 mm; actual 12.2495 mm)	00000000-0000-0000-0028-00000000007b	Track (arc) [N1] on F.Cu, length 12.2495 mm	45.0	47.333333
+error	track_segment_length	Track segment length (rule 'drc28' max length 8 mm; actual 8.00001 mm)	00000000-0000-0000-0028-000000000073	Track [N1] on F.Cu, length 8.0000 mm	10.0	31.0
+error	track_segment_length	Track segment length (rule 'drc28' max length 8.0000 mm; actual 9.0000 mm)	00000000-0000-0000-0028-000000000074	Track [N1] on F.Cu, length 9.0000 mm	10.0	34.0
+error	track_segment_length	Track segment length (rule 'drc28' max length 8.0000 mm; actual 25.0000 mm)	00000000-0000-0000-0028-000000000075	Track [N1] on F.Cu, length 25.0000 mm	10.0	37.0
+error	track_segment_length	Track segment length (rule 'drc28' max length 8.0000 mm; actual 12.5664 mm)	00000000-0000-0000-0028-00000000007d	Track (arc) [N1] on F.Cu, length 12.5664 mm	64.0	60.0

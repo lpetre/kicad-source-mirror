@@ -51,7 +51,6 @@ use super::run_host::{RunHost, report_aux};
 use crate::constraint_types::DrcConstraintT;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
-use crate::rule::DrcConstraintExt;
 use crate::test_provider::{DrcTestProviderBase, no_path};
 
 /// Port of `DRC_TEST_PROVIDER_COURTYARD_CLEARANCE`.

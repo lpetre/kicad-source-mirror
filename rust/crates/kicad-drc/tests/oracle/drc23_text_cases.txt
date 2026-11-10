@@ -1,0 +1,49 @@
+plain text
+${DRC_ERROR start_of_text}
+Fill in: ${DRC_ERROR placeholder_text}
+Note: ${DRC_ERROR text_box_error}
+${DRC_WARNING this_is_warning} trailing
+prefix ${DRC_WARNING embedded_warning} suffix
+literal: \\${DRC_ERROR not_a_real_error}
+${DRC_ERROR a}${DRC_ERROR b}
+x${DRC_ERROR a} y${DRC_WARNING b} ${DRC_ERROR c}
+${DRC_ERROR}
+${DRC_ERROR   }
+${DRC_ERROR\n  multi\nline}
+${DRC_WARNINGnospace}
+${DRC_ERROR unterminated
+${DRC_ERROR a\\}b}
+$${DRC_ERROR dollar}
+\\\\${DRC_ERROR double_backslash}
+${UNKNOWN}
+${UNKNOWN} and more
+abc ${X} def
+\\${ESCAPED}
+${ONLY_OPEN
+}${
+${}
+$(PAREN)
+$(PAREN
+$NOBRACKET text
+$
+${
+${DRC23_VAR}
+$(DRC23_VAR)
+$DRC23_VAR/x
+${KICAD10_FOOTPRINT_DIR}/lib
+${KICAD9_FOOTPRINT_DIR}/lib
+${KICAD9_3DMODEL_DIR}/x
+${KISYS3DMOD}/x
+${KICAD_SYMBOL_DIR}/x
+${KICAD8_3RD_PARTY}/x
+${ERC_WARNING foo}
+${DRC_WARNING}
+a ${DRC_ERROR x} ${UNRESOLVED}
+{(}
+%TEMP% ${A}
+ä ${ÜMLAUT} ö
+${a:b}
+${a.b}
+${a b}
+${A}${B}
+${A}\n${B}

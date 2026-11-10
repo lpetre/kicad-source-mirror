@@ -28,7 +28,7 @@ netclasses assigned by pattern, one net in two classes = a composite class) and:
     rev_implicit   no rule file; netclass DP has a diff-pair gap below its clearance, which
                    adds the implicit "diff pair" clearance override and disables the fast path
     rev_fastpath   no rule file, no override: the netclass clearance fast path
-    rev_explicit   unconditional user rules of 20 constraint types (layer clauses, several
+    rev_explicit   23 unconditional user rules of 17 constraint types (layer clauses, several
                    rules per type, severities, a value above MAXIMUM_CLEARANCE, disallow)
     rev_clearance  unconditional user clearance rules (per layer, clamped, opt only)
 

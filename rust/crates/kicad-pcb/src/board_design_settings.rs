@@ -159,45 +159,6 @@ fn string_from_iu(units: EdaUnits, value: i32) -> String {
     )
 }
 
-/// `GEOMETRY_MIN_SIZE` (`pcbnew/pcb_track.h`): `(int) ( 0.001 * pcbIUScale.IU_PER_MM )`.
-fn geometry_min_size() -> i32 {
-    (0.001 * PCB_IU_SCALE.iu_per_mm) as i32
-}
-
-/// `PCB_VIA::ValidateViaParameters( aDiameter, aPrimaryDrill )` with every other argument at
-/// its default (`std::nullopt`, copper layer count 0), the only form
-/// `ValidateDesignRules` uses: the layer, secondary and tertiary drill checks are all no-ops
-/// for those arguments. Returns the error message. (The full function belongs to the via
-/// package, `pcb_track/via.rs`, which has no port of it yet.)
-fn validate_via_diameter_and_drill(
-    diameter: Option<i32>,
-    primary_drill: Option<i32>,
-) -> Option<&'static str> {
-    if diameter.is_some_and(|d| d < geometry_min_size()) {
-        return Some("Via diameter is too small.");
-    }
-
-    if primary_drill.is_some_and(|d| d < geometry_min_size()) {
-        return Some("Via drill is too small.");
-    }
-
-    if diameter.is_some() && primary_drill.is_none() {
-        return Some("No via hole size defined.");
-    }
-
-    if primary_drill.is_some() && diameter.is_none() {
-        return Some("No via diameter defined.");
-    }
-
-    if let (Some(diameter), Some(drill)) = (diameter, primary_drill) {
-        if diameter <= drill {
-            return Some("Via hole size must be smaller than via diameter");
-        }
-    }
-
-    None
-}
-
 /// `VIA_DIMENSION`. `<= 0` means "use the netclass value".
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct ViaDimension {
@@ -1495,10 +1456,22 @@ impl BoardDesignSettings {
             let via_diameter = (via_dim.diameter > 0).then_some(via_dim.diameter);
             let via_drill = (via_dim.drill > 0).then_some(via_dim.drill);
 
-            if let Some(message) = validate_via_diameter_and_drill(via_diameter, via_drill) {
+            if let Some(error) = crate::pcb_track::PcbVia::validate_via_parameters(
+                via_diameter,
+                via_drill,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                0,
+            ) {
                 e.push(ValidationError::new(
                     &format!("via_dimensions_list[{ii}]"),
-                    message,
+                    &error.message,
                 ));
             }
         }
@@ -1546,9 +1519,413 @@ impl BoardDesignSettings {
     }
 }
 
+impl BoardDesignSettings {
+    /// `GetDrillSymbolProfile().GetSymbolWidth()`: `DRILL_SYMBOL_PROFILE::m_symbolWidth`, read
+    /// from the canonical `(width N)` entry of the stored profile (`io/parser/
+    /// setup_drill_profile.rs`); the constructor value 0.15 mm for a default profile (`None`)
+    /// or a profile without the entry.
+    pub fn drill_symbol_width(&self) -> i32 {
+        let default_width = PCB_IU_SCALE.mm_to_iu(0.15);
+
+        let Some(Sexpr::List(list)) = self.drill_symbol_profile.as_ref() else {
+            return default_width;
+        };
+
+        for child in list.children.iter().skip(1) {
+            let Sexpr::List(entry) = child else {
+                continue;
+            };
+
+            if !matches!(entry.children.first(), Some(Sexpr::Symbol(s)) if s.value == "width") {
+                continue;
+            }
+
+            if let Some(Sexpr::Integer(i)) = entry.children.get(1) {
+                if let Ok(width) = i32::try_from(i.value) {
+                    return width;
+                }
+            }
+        }
+
+        default_width
+    }
+}
+
+impl PartialEq for BoardDesignSettings {
+    /// Port of `BOARD_DESIGN_SETTINGS::operator==`: the members C++ compares, in its order.
+    /// Not compared, as in C++: teardrop parameters, the tuning pattern (meander) settings,
+    /// the zone layer properties, the drill symbol profile. The BOM members of the C++
+    /// comparison are not modelled.
+    fn eq(&self, other: &Self) -> bool {
+        if self.track_width_list != other.track_width_list {
+            return false;
+        }
+
+        if self.vias_dimensions_list != other.vias_dimensions_list {
+            return false;
+        }
+
+        if self.via_stack_presets != other.via_stack_presets {
+            return false;
+        }
+
+        if self.diff_pair_dimensions_list != other.diff_pair_dimensions_list {
+            return false;
+        }
+
+        if self.current_via_type != other.current_via_type {
+            return false;
+        }
+
+        if self.use_connected_track_width != other.use_connected_track_width {
+            return false;
+        }
+
+        if self.temp_override_track_width != other.temp_override_track_width {
+            return false;
+        }
+
+        if self.min_clearance != other.min_clearance {
+            return false;
+        }
+
+        if self.min_groove_width != other.min_groove_width {
+            return false;
+        }
+
+        if self.min_conn != other.min_conn {
+            return false;
+        }
+
+        if self.track_min_width != other.track_min_width {
+            return false;
+        }
+
+        if self.vias_min_annular_width != other.vias_min_annular_width {
+            return false;
+        }
+
+        if self.vias_min_size != other.vias_min_size {
+            return false;
+        }
+
+        if self.min_through_drill != other.min_through_drill {
+            return false;
+        }
+
+        if self.micro_vias_min_size != other.micro_vias_min_size {
+            return false;
+        }
+
+        if self.micro_vias_min_drill != other.micro_vias_min_drill {
+            return false;
+        }
+
+        if self.copper_edge_clearance != other.copper_edge_clearance {
+            return false;
+        }
+
+        if self.hole_clearance != other.hole_clearance {
+            return false;
+        }
+
+        if self.hole_to_hole_min != other.hole_to_hole_min {
+            return false;
+        }
+
+        if self.silk_clearance != other.silk_clearance {
+            return false;
+        }
+
+        if self.min_resolved_spokes != other.min_resolved_spokes {
+            return false;
+        }
+
+        if self.min_silk_text_height != other.min_silk_text_height {
+            return false;
+        }
+
+        if self.min_silk_text_thickness != other.min_silk_text_thickness {
+            return false;
+        }
+
+        if self.drc_severities != other.drc_severities {
+            return false;
+        }
+
+        if self.drc_exclusions != other.drc_exclusions {
+            return false;
+        }
+
+        if self.zone_keep_external_fillets != other.zone_keep_external_fillets {
+            return false;
+        }
+
+        if self.max_error != other.max_error {
+            return false;
+        }
+
+        if self.solder_mask_expansion != other.solder_mask_expansion {
+            return false;
+        }
+
+        if self.solder_mask_min_width != other.solder_mask_min_width {
+            return false;
+        }
+
+        if self.solder_mask_to_copper_clearance != other.solder_mask_to_copper_clearance {
+            return false;
+        }
+
+        if self.solder_paste_margin != other.solder_paste_margin {
+            return false;
+        }
+
+        if self.solder_paste_margin_ratio != other.solder_paste_margin_ratio {
+            return false;
+        }
+
+        if self.allow_soldermask_bridges_in_fps != other.allow_soldermask_bridges_in_fps {
+            return false;
+        }
+
+        if self.tent_vias_front != other.tent_vias_front {
+            return false;
+        }
+
+        if self.tent_vias_back != other.tent_vias_back {
+            return false;
+        }
+
+        if self.cover_vias_front != other.cover_vias_front {
+            return false;
+        }
+
+        if self.cover_vias_back != other.cover_vias_back {
+            return false;
+        }
+
+        if self.plug_vias_front != other.plug_vias_front {
+            return false;
+        }
+
+        if self.plug_vias_back != other.plug_vias_back {
+            return false;
+        }
+
+        if self.cap_vias != other.cap_vias {
+            return false;
+        }
+
+        if self.fill_vias != other.fill_vias {
+            return false;
+        }
+
+        if self.default_fp_text_items != other.default_fp_text_items {
+            return false;
+        }
+
+        if self.user_layer_names != other.user_layer_names {
+            return false;
+        }
+
+        if self.line_thickness != other.line_thickness {
+            return false;
+        }
+
+        if self.text_size != other.text_size {
+            return false;
+        }
+
+        if self.text_thickness != other.text_thickness {
+            return false;
+        }
+
+        if self.text_italic != other.text_italic {
+            return false;
+        }
+
+        if self.text_upright != other.text_upright {
+            return false;
+        }
+
+        if self.dimension_units_mode != other.dimension_units_mode {
+            return false;
+        }
+
+        if self.dimension_precision != other.dimension_precision {
+            return false;
+        }
+
+        if self.dimension_units_format != other.dimension_units_format {
+            return false;
+        }
+
+        if self.dimension_suppress_zeroes != other.dimension_suppress_zeroes {
+            return false;
+        }
+
+        if self.dimension_text_position != other.dimension_text_position {
+            return false;
+        }
+
+        if self.dimension_keep_text_aligned != other.dimension_keep_text_aligned {
+            return false;
+        }
+
+        if self.dimension_arrow_length != other.dimension_arrow_length {
+            return false;
+        }
+
+        if self.dimension_extension_offset != other.dimension_extension_offset {
+            return false;
+        }
+
+        if self.aux_origin != other.aux_origin {
+            return false;
+        }
+
+        if self.grid_origin != other.grid_origin {
+            return false;
+        }
+
+        if self.has_stackup != other.has_stackup {
+            return false;
+        }
+
+        if self.use_height_for_length_calcs != other.use_height_for_length_calcs {
+            return false;
+        }
+
+        // m_BomExportFileName, m_BomSettings, m_BomPresets, m_BomFmtSettings, m_BomFmtPresets:
+        // the FIELDS_TABLE_BOM_SETTINGS base is not part of the model (see the struct doc).
+
+        if self.track_width_index != other.track_width_index {
+            return false;
+        }
+
+        if self.via_size_index != other.via_size_index {
+            return false;
+        }
+
+        if self.via_stack_index != other.via_stack_index {
+            return false;
+        }
+
+        if self.diff_pair_index != other.diff_pair_index {
+            return false;
+        }
+
+        if self.use_custom_track_via != other.use_custom_track_via {
+            return false;
+        }
+
+        if self.custom_track_width != other.custom_track_width {
+            return false;
+        }
+
+        if self.custom_via_size != other.custom_via_size {
+            return false;
+        }
+
+        if self.use_custom_diff_pair != other.use_custom_diff_pair {
+            return false;
+        }
+
+        if self.custom_diff_pair != other.custom_diff_pair {
+            return false;
+        }
+
+        if self.copper_layer_count != other.copper_layer_count {
+            return false;
+        }
+
+        if self.user_defined_layer_count != other.user_defined_layer_count {
+            return false;
+        }
+
+        if self.enabled_layers != other.enabled_layers {
+            return false;
+        }
+
+        if self.board_thickness != other.board_thickness {
+            return false;
+        }
+
+        if self.current_net_class_name != other.current_net_class_name {
+            return false;
+        }
+
+        if self.stackup != other.stackup {
+            return false;
+        }
+
+        if self.net_settings != other.net_settings {
+            return false;
+        }
+
+        if self.default_zone_settings != other.default_zone_settings {
+            return false;
+        }
+
+        if self.style_fp_fields != other.style_fp_fields {
+            return false;
+        }
+
+        if self.style_fp_text != other.style_fp_text {
+            return false;
+        }
+
+        if self.style_fp_shapes != other.style_fp_shapes {
+            return false;
+        }
+
+        if self.style_fp_dimensions != other.style_fp_dimensions {
+            return false;
+        }
+
+        if self.style_fp_barcodes != other.style_fp_barcodes {
+            return false;
+        }
+
+        true
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `BOARD_DESIGN_SETTINGS::operator==`: equal defaults; a compared member (track width
+    /// list, net settings, stackup, a text class size) makes two settings differ; a member
+    /// C++ does not compare (teardrop parameters) does not.
+    #[test]
+    fn operator_eq_compares_the_members_of_the_cxx_operator() {
+        let a = BoardDesignSettings::default();
+        let mut b = BoardDesignSettings::default();
+        assert!(a == b);
+
+        b.track_width_list.push(250_000);
+        assert!(a != b);
+
+        let mut b = BoardDesignSettings::default();
+        b.text_size[LAYER_CLASS_FAB].x += 1;
+        assert!(a != b);
+
+        let mut b = BoardDesignSettings::default();
+        b.stackup.edge_plating = !b.stackup.edge_plating;
+        assert!(a != b);
+
+        let mut b = BoardDesignSettings::default();
+        b.solder_paste_margin_ratio = -0.1;
+        assert!(a != b);
+
+        let mut b = BoardDesignSettings::default();
+        b.meander_settings[0] = JsonValue::from(1);
+        b.drill_symbol_profile = None;
+        b.zone_layer_properties.clear();
+        assert!(a == b);
+    }
 
     /// `BOARD_DESIGN_SETTINGS::BOARD_DESIGN_SETTINGS` (`pcbnew/board_design_settings.cpp:47`),
     /// checked against the verified tables of `rust/docs/analysis/settings.md` 3.6 / 3.7.

@@ -25,7 +25,7 @@ use kicad_geom::Vector2I;
 use crate::board::{AddMode, Board};
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::ids::{ItemId, ItemKind, NetCode, PadId, TrackId};
-use crate::item::{DetachedCopy, ParentRef};
+use crate::item::ParentRef;
 use crate::item_ref::AnyItem;
 use crate::netinfo::NetinfoItem;
 use crate::pad::Pad;
@@ -409,7 +409,10 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
         tb.top_left(ctx),
         tb.bot_right(ctx),
     );
-    let _ = (tb.corners_in_sequence(ctx, ANGLE_0), tb.shape_draw_rotation(ctx));
+    let _ = (
+        tb.corners_in_sequence(ctx, ANGLE_0),
+        tb.shape_draw_rotation(ctx),
+    );
     let _ = (tb.shape_max_error(ctx), tb.hatching_knockouts(ctx));
     ext_only(tb);
     mutators(tb);

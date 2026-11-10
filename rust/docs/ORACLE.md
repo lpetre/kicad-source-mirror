@@ -121,3 +121,15 @@ pcb-dump board --loader FILE                            kicad-cli path (BOARD_LO
 * Output is deterministic (verified over the corpus: two runs, identical SHA-256 per file).
 * To extend it with a new field or section see `rust/tools/pcb-dump/README.md` ("Extending");
   rebuild with `build.sh` and regenerate the affected goldens.
+
+## cn-order-oracle (heap-order measurements of connectivity)
+
+`/home/user/kicad-oracle/bin/cn-order-oracle` (source and build script:
+`rust/crates/kicad-connectivity/tests/oracle/cn_order_oracle.cpp`, `build_order_oracle.sh`;
+one compile against the pcb-dump objects, under the C++ lock) measures, in the phases `load`,
+`rebuild` and `drc` (after a real `DRC_ENGINE::RunTests`), the order of every pointer-ordered
+connectivity container of the reference, prints the DRC violations whose items follow that
+order, hashes of the ratsnest and of `TestTrackEndpointDangling`, and with `--queries` every
+`CONNECTIVITY_DATA` query that has no pcb-dump line. Findings: `docs/design/review-connectivity.md`
+(the reference's heap order is neither file order nor stable between runs; results that take
+"the first" of such a container must be compared tie-aware).

@@ -1302,6 +1302,10 @@ impl ConnectivityQuery for ConnectivityData {
         self.node_count_of(net.map_or(-1, |n| n.0))
     }
 
+    fn net_items(&self, net: NetCode, types: &[KicadT]) -> Vec<ItemId> {
+        ConnectivityData::net_items(self, net.0, types)
+    }
+
     fn pad_count(&self, net: Option<NetCode>) -> u32 {
         // GetPadCount compares the pads' own net codes; the cached connectivity net is the
         // same value once the propagation has been applied (pads never change net).

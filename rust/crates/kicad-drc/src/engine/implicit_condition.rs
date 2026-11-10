@@ -185,12 +185,14 @@ impl ImplicitCondition {
             ImplicitAtom::TypeIsBarcode => type_is_barcode(a),
             ImplicitAtom::LayerIs(name) => {
                 // PCBEXPR_VAR_REF::GetValue for the "Layer" property (property availability,
-                // parent-footprint fallback, PCBEXPR_LAYER_VALUE matching) is part of the
-                // expression binding.
-                crate::port_pending!(
-                    "PCBEXPR_VAR_REF::GetValue (Layer property, DRC-21)",
+                // parent-footprint fallback, PCBEXPR_LAYER_VALUE matching) through the
+                // expression binding (DRC-21). The context layer does not enter `A.Layer`.
+                crate::pcbexpr::evaluator::item_field_equals(
                     a,
-                    name
+                    "Layer",
+                    name,
+                    constraint,
+                    PcbLayerId::FCu,
                 )
             }
             ImplicitAtom::IntersectsKeepout(uuid) => {

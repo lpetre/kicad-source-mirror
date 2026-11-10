@@ -650,7 +650,7 @@ fn chamfer_key(
     )
 }
 
-fn run_script(lines: &[&str], chamfer: &BTreeMap<String, Vec<Vector2I>>) -> String {
+fn run_script(lines: &[&str]) -> String {
     let mut plotter = GerberPlotter::new();
     let mut mds: BTreeMap<i32, GbrMetadata> = BTreeMap::new();
     let mut creator = String::new();
@@ -660,27 +660,6 @@ fn run_script(lines: &[&str], chamfer: &BTreeMap<String, Vec<Vector2I>>) -> Stri
     plotter.open_file("plot.gbr");
     plotter.set_build_version("@VERSION@");
     plotter.set_creation_date("@DATE@");
-
-    let transform = |pos: Vector2I,
-                     size: Vector2I,
-                     rot: EdaAngle,
-                     radius: i32,
-                     ratio: f64,
-                     positions: i32,
-                     err: i32|
-     -> ShapePolySet {
-        let key = chamfer_key(pos, size, rot, radius, ratio, positions, err);
-        let pts = chamfer
-            .get(&key)
-            .unwrap_or_else(|| panic!("chamfer polygon {key} missing in the golden file"));
-        let mut ps = ShapePolySet::new();
-
-        if !pts.is_empty() {
-            ps.add_outline(&ShapeLineChain::from_points(pts, true));
-        }
-
-        ps
-    };
 
     for line in lines {
         let mut t = Tok {
@@ -937,16 +916,9 @@ fn run_script(lines: &[&str], chamfer: &BTreeMap<String, Vec<Vector2I>>) -> Stri
                 let pos = t.n();
                 let o = t.ang();
                 let m = md!();
-                plotter.flash_pad_chamfer_round_rect(
-                    p,
-                    s,
-                    r,
-                    ratio,
-                    pos,
-                    o,
-                    m.as_ref(),
-                    &transform,
-                );
+                // the default TransformRoundChamferedRectToPolygon (kicad-geom); the C++
+                // polygons of the golden file are checked by round_rect_polygons_match_cpp
+                plotter.flash_pad_chamfer_round_rect_default(p, s, r, ratio, pos, o, m.as_ref());
             }
             "FPOLY" => {
                 let p = t.pt();
@@ -1101,7 +1073,7 @@ fn gerber_plotter_matches_oracle() {
     let mut mismatches = Vec::new();
 
     for (idx, script) in scripts.iter().enumerate() {
-        let out = run_script(script, &golden.chamfer);
+        let out = run_script(script);
 
         let ok = match golden.full.get(&idx) {
             Some(text) => *text == out,
@@ -1125,4 +1097,42 @@ fn gerber_plotter_matches_oracle() {
         scripts.len(),
         &mismatches[..mismatches.len().min(20)]
     );
+}
+
+/// Every `TransformRoundChamferedRectToPolygon` result recorded by the C++ driver (the `CH`
+/// lines of the golden file, keyed by [`chamfer_key`]) is reproduced by the default generator
+/// of the plotters, [`kicad_plot::plotter_gerber::round_chamfered_rect_to_polygon`], point for
+/// point.
+#[test]
+fn round_rect_polygons_match_cpp() {
+    let golden = parse_golden();
+    assert!(!golden.chamfer.is_empty());
+
+    for (key, pts) in &golden.chamfer {
+        let f: Vec<&str> = key.split(',').collect();
+        let n = |i: usize| f[i].parse::<i32>().unwrap();
+        let hex = |i: usize| f64::from_bits(u64::from_str_radix(f[i], 16).unwrap());
+        let (pos, size, rot) = (
+            Vector2I::new(n(0), n(1)),
+            Vector2I::new(n(2), n(3)),
+            EdaAngle::new(hex(4), DEGREES_T),
+        );
+        assert_eq!(chamfer_key(pos, size, rot, n(5), hex(6), n(7), n(8)), *key);
+        let outline = kicad_plot::plotter_gerber::round_chamfered_rect_to_polygon(
+            pos,
+            size,
+            rot,
+            n(5),
+            hex(6),
+            n(7),
+            n(8),
+        );
+        let got: Vec<Vector2I> = if outline.outline_count() == 0 {
+            Vec::new()
+        } else {
+            outline.c_outline(0).c_points().to_vec()
+        };
+
+        assert_eq!(&got, pts, "polygon {key}");
+    }
 }

@@ -1,0 +1,1 @@
+error	hole_aspect_ratio	Aspect ratio 3.40 exceeds the 3.00 limit	00000000-0000-0000-0028-0000000000a3	Buried via [<no net>] on In1.Cu - In2.Cu	10.0	10.0

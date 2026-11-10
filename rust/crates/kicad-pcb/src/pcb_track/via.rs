@@ -2817,6 +2817,9 @@ mod tests {
         fn pad_count(&self, _net: Option<NetCode>) -> u32 {
             0
         }
+        fn net_items(&self, _net: NetCode, _types: &[KicadT]) -> Vec<ItemId> {
+            Vec::new()
+        }
     }
 
     /// `test_issue25621_via_flashing_contact_layer.cpp`: the via side. Connectivity is a

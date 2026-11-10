@@ -163,6 +163,12 @@ pub trait ConnectivityQuery: Sync {
 
     /// `CONNECTIVITY_DATA::GetPadCount`.
     fn pad_count(&self, net: Option<NetCode>) -> u32;
+
+    /// `CONNECTIVITY_DATA::GetNetItems( aNetCode, aTypes )` (rev 2.3;
+    /// `NETINFO_ITEM::GetBoundingBox`): the valid items of the net whose type is in `types`,
+    /// each once. C++ sorts the item pointers; the replacement is `ItemId` order
+    /// (`board-model.md` 3.1).
+    fn net_items(&self, net: NetCode, types: &[KicadT]) -> Vec<ItemId>;
 }
 
 /// The board facts leaf mutators need (shared by every `MutEnv`): a snapshot of the design

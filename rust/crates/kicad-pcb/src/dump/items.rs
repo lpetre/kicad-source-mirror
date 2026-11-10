@@ -723,7 +723,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
 // ---- shape --------------------------------------------------------------------------------
 
 /// `VEnum( LINE_STYLE )`: the magic_enum names (`DASHDOT`, not the derived `DASH_DOT`).
-fn v_line_style(style: kicad_core::stroke_params::LineStyle) -> String {
+pub(crate) fn v_line_style(style: kicad_core::stroke_params::LineStyle) -> String {
     use kicad_core::stroke_params::LineStyle;
 
     match style {
@@ -1244,7 +1244,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "position", v_vec(fp.position(ctx)));
     emit!(o, "orientation", v_angle(fp.orientation()));
     emit!(o, "layer", v_layer(fp.layer(ctx)));
-    emit!(o, "side", no_api("FOOTPRINT::GetSide"));
+    emit!(o, "side", v_layer(fp.side(ctx)));
     emit!(o, "flipped", v_bool(fp.is_flipped()));
 
     let tr = fp.transform();
@@ -1259,11 +1259,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
 
     emit!(o, "attributes", v_int(fp.attributes()));
     emit!(o, "footprint_type", v_enum(fp.footprint_type()));
-    emit!(
-        o,
-        "likely_attribute",
-        no_api("FOOTPRINT::GetLikelyAttribute")
-    );
+    emit!(o, "likely_attribute", v_int(fp.likely_attribute(ctx)));
     emit!(o, "board_only", v_bool(fp.is_board_only()));
     emit!(
         o,
@@ -1271,11 +1267,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
         v_bool(fp.is_excluded_from_pos_files())
     );
     emit!(o, "exclude_from_bom", v_bool(fp.is_excluded_from_bom()));
-    emit!(
-        o,
-        "exclude_from_sim",
-        no_api("FOOTPRINT::IsExcludedFromSim")
-    );
+    emit!(o, "exclude_from_sim", v_bool(fp.is_excluded_from_sim()));
     emit!(o, "dnp", v_bool(fp.is_dnp()));
     emit!(
         o,
@@ -1329,16 +1321,16 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
         "file_format_version_at_load",
         v_int(fp.file_format_version_at_load)
     );
-    emit!(o, "pad_count", no_api("FOOTPRINT::GetPadCount"));
+    emit!(o, "pad_count", v_int(fp.pad_count()));
     emit!(
         o,
         "has_through_hole_pads",
-        no_api("FOOTPRINT::HasThroughHolePads")
+        v_bool(fp.has_through_hole_pads(ctx))
     );
     emit!(
         o,
         "component_class",
-        no_api("FOOTPRINT::GetComponentClassAsString")
+        v_str(&fp.component_class_as_string(ctx))
     );
     emit!(o, "net_tie_pad_groups", {
         let v: Vec<String> = fp.net_tie_pad_groups.iter().map(|g| v_str(g)).collect();
@@ -1441,7 +1433,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
             v_polyset(&fp.bounding_hull_on_layer(ctx, PcbLayerId::BCu))
         );
     });
-    emit!(o, "area", no_api("FOOTPRINT::GetArea"));
+    emit!(o, "area", v_f64(fp.area(ctx, 0)));
 }
 
 /// Keep the trait in scope for `local_clearance()` on concrete types.

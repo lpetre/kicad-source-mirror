@@ -30,7 +30,6 @@
 //! a mismatch the Rust files are written next to it.
 
 use std::collections::BTreeMap;
-use std::sync::Arc;
 
 use kicad_core::color4d::Color4D;
 use kicad_core::page_info::PageInfo;
@@ -43,7 +42,11 @@ use kicad_geom::{
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::{FillT, GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 
-const SCRIPT_COUNT: usize = 1500;
+const SCRIPT_COUNT: usize = 1700;
+/// Scripts from this index on (package CLEAN-1) are SVG scripts that concentrate on rounded
+/// rectangles (`Rect` with a corner radius, `RRECT`) and round rect pads (`FRR`) through the
+/// default `TransformRoundChamferedRectToPolygon` path.
+const ROUND_RECT_FROM: usize = 1500;
 const FULL_COUNT: usize = 4;
 const GOLDEN: &str = include_str!("golden/svg_text.txt");
 
@@ -394,6 +397,21 @@ fn gen_svg_op(g: &mut Lcg, op: &str, out: &mut String) {
             pt(g, &mut l);
             l += &format!(" {} -1", g.width());
         }
+        "RRECT" => {
+            pt(g, &mut l);
+            if g.below(6) == 0 {
+                let p: Vec<String> = l.split(' ').map(str::to_string).collect();
+                l += &format!(" {} {}", p[1], g.coord());
+            } else {
+                pt(g, &mut l);
+            }
+            let r = match g.below(4) {
+                0 => g.pick(&["0", "1", "-5", "2000000000"]).to_string(),
+                1 => g.range(1, 1000).to_string(),
+                _ => g.range(1000, 3_000_000).to_string(),
+            };
+            l += &format!(" {} {} {r}", g.fill(), g.width());
+        }
         "CIRC" => {
             pt(g, &mut l);
             l += &format!(" {} {} {}", g.size(), g.fill(), g.width());
@@ -559,6 +577,8 @@ fn gen_svg_script(g: &mut Lcg, idx: usize, out: &mut String) {
     for k in 0..op_count {
         let op = if idx < FULL_COUNT {
             SVG_OPS[(idx * 20 + k as usize) % SVG_OPS.len()]
+        } else if idx >= ROUND_RECT_FROM {
+            g.pick(&["RRECT", "RRECT", "RRECT", "FRR", "FRR", "RECT", "W", "PEN", "TEXT"])
         } else if g.below(3) == 0 {
             g.pick(&["TEXT", "PTEXT"])
         } else {
@@ -648,7 +668,7 @@ fn generate() -> String {
         let mut g = Lcg(0x7e47_0000 + idx as u64 * 104_729);
         out.push_str(&format!("BEGIN {idx}\n"));
 
-        if idx % 5 == 4 {
+        if idx % 5 == 4 && idx < ROUND_RECT_FROM {
             gen_gbr_script(&mut g, idx, &mut out);
         } else {
             gen_svg_script(&mut g, idx, &mut out);
@@ -828,40 +848,14 @@ impl Engine {
     }
 }
 
-fn run_script(lines: &[&str], chamfer: &Arc<BTreeMap<String, Vec<Vector2I>>>) -> String {
+fn run_script(lines: &[&str]) -> String {
     let is_svg = lines[0] == "KIND SVG";
     let mut eng = if is_svg {
         let mut p = SvgPlotter::new();
         p.set_creation_date("@DATE@");
-        let map = Arc::clone(chamfer);
-        p.set_round_rect_polygon_fn(Some(Arc::new(
-            move |pos: Vector2I,
-                  size: Vector2I,
-                  rot: EdaAngle,
-                  radius: i32,
-                  ratio: f64,
-                  positions: i32,
-                  err: i32|
-                  -> ShapePolySet {
-                let key = chamfer_key(pos, size, rot, radius, ratio, positions, err);
-                let pts = map
-                    .get(&key)
-                    .unwrap_or_else(|| panic!("round rect polygon {key} missing in the golden"));
-                let mut ps = ShapePolySet::new();
-
-                // the C++ outline keeps a closing point equal to the first one (CornerList-
-                // ToPolygon appends without merging): no SetClosed( true ) merge here
-                if !pts.is_empty() {
-                    ps.new_outline();
-
-                    for q in pts {
-                        ps.append(q.x, q.y, -1, -1, true);
-                    }
-                }
-
-                ps
-            },
-        )));
+        // FlashPadRoundRect through the default TransformRoundChamferedRectToPolygon
+        // (kicad-geom); the C++ polygons of the golden file are checked separately
+        // (round_rect_polygons_match_cpp)
         Engine::Svg(Box::new(p))
     } else {
         let mut p = GerberPlotter::new();
@@ -1051,6 +1045,14 @@ fn run_script(lines: &[&str], chamfer: &Arc<BTreeMap<String, Vec<Vector2I>>>) ->
                 let f = t.fill();
                 let w = t.n();
                 p.rect(a, b, f, w, 0);
+            }
+            "RRECT" => {
+                let a = t.pt();
+                let b = t.pt();
+                let f = t.fill();
+                let w = t.n();
+                let r = t.n();
+                p.rect(a, b, f, w, r);
             }
             "TRECT" => {
                 let a = t.pt();
@@ -1348,7 +1350,6 @@ fn svg_and_text_match_oracle() {
          (tests/oracle/build_svg_text_oracle.sh \"\" regen)"
     );
 
-    let chamfer = Arc::new(golden.chamfer);
     let mut mismatches = Vec::new();
 
     for (idx, script) in scripts.iter().enumerate() {
@@ -1356,7 +1357,7 @@ fn svg_and_text_match_oracle() {
             eprintln!("script {idx}");
         }
 
-        let out = run_script(script, &chamfer);
+        let out = run_script(script);
 
         let ok = match golden.full.get(&idx) {
             Some(text) => *text == out,
@@ -1380,4 +1381,42 @@ fn svg_and_text_match_oracle() {
         scripts.len(),
         &mismatches[..mismatches.len().min(20)]
     );
+}
+
+/// Every `TransformRoundChamferedRectToPolygon` result recorded by the C++ driver (the `CH`
+/// lines of the golden file, keyed by [`chamfer_key`]) is reproduced by the default generator
+/// of the plotters, [`kicad_plot::plotter_gerber::round_chamfered_rect_to_polygon`], point for
+/// point.
+#[test]
+fn round_rect_polygons_match_cpp() {
+    let golden = parse_golden();
+    assert!(!golden.chamfer.is_empty());
+
+    for (key, pts) in &golden.chamfer {
+        let f: Vec<&str> = key.split(',').collect();
+        let n = |i: usize| f[i].parse::<i32>().unwrap();
+        let hex = |i: usize| f64::from_bits(u64::from_str_radix(f[i], 16).unwrap());
+        let (pos, size, rot) = (
+            Vector2I::new(n(0), n(1)),
+            Vector2I::new(n(2), n(3)),
+            EdaAngle::new(hex(4), DEGREES_T),
+        );
+        assert_eq!(chamfer_key(pos, size, rot, n(5), hex(6), n(7), n(8)), *key);
+        let outline = kicad_plot::plotter_gerber::round_chamfered_rect_to_polygon(
+            pos,
+            size,
+            rot,
+            n(5),
+            hex(6),
+            n(7),
+            n(8),
+        );
+        let got: Vec<Vector2I> = if outline.outline_count() == 0 {
+            Vec::new()
+        } else {
+            outline.c_outline(0).c_points().to_vec()
+        };
+
+        assert_eq!(&got, pts, "polygon {key}");
+    }
 }

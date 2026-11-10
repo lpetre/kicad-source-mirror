@@ -43,7 +43,6 @@ use super::via_diameter::padstack_layer_desc;
 use crate::constraint_types::DrcConstraintT;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
-use crate::rule::DrcConstraintExt;
 use crate::test_provider::DrcTestProviderBase;
 
 /// Port of `DRC_TEST_PROVIDER_ANNULAR_WIDTH`.

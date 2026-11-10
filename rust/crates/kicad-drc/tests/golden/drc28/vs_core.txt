@@ -1,0 +1,2 @@
+warning	microvia_crosses_core	The stackup gives the dielectric between In1.Cu and In2.Cu as core	00000000-0000-0000-0028-00000000009a	Micro via [<no net>] on In1.Cu - In2.Cu	10.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In2.Cu as core	00000000-0000-0000-0028-00000000009c	Micro via [<no net>] on F.Cu - In2.Cu	50.0	10.0

@@ -60,7 +60,7 @@ use crate::constraint_types::DrcConstraintT;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
 use crate::rtree::DrcRtree;
-use crate::rule::{DrcConstraintExt, DrcRuleInfo};
+use crate::rule::DrcRuleInfo;
 use crate::test_provider::{
     DrcTestProviderBase, all_basic_items, all_basic_items_but_zones, for_each_geometry_item,
     is_invisible_text, no_path,

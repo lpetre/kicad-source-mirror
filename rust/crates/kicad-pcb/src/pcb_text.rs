@@ -239,8 +239,8 @@ pub(crate) fn ellipsize_menu_text(text: &str) -> String {
     msg
 }
 
-/// `FOOTPRINT::ResolveTextVar( aToken, aDepth )` / `( aToken, aVariantName, aDepth )`
-/// (package M19; the method is not declared on `Footprint` yet).
+/// `FOOTPRINT::ResolveTextVar( aToken, aDepth )` (`variant == None`) /
+/// `( aToken, aVariantName, aDepth )`.
 pub(crate) fn footprint_resolve_text_var(
     fp: &Footprint,
     ctx: &BoardCtx<'_>,
@@ -248,7 +248,10 @@ pub(crate) fn footprint_resolve_text_var(
     variant: Option<&str>,
     depth: i32,
 ) -> bool {
-    crate::port_pending!("FOOTPRINT::ResolveTextVar", fp, ctx, token, variant, depth)
+    match variant {
+        Some(v) => fp.resolve_text_var_for_variant(ctx, token, v, depth),
+        None => fp.resolve_text_var(ctx, token, depth),
+    }
 }
 
 /// `PCB_TEXT::getKnockoutMargin()`.

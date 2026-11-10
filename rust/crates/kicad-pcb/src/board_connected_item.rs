@@ -25,9 +25,9 @@ use kicad_core::string_utils::unescape_string;
 use crate::board_item::has_board;
 use crate::ctx::BoardCtx;
 use crate::ids::{ItemId, NetCode};
+use crate::item_ref::AnyItem;
 use crate::netclass::Netclass;
 use crate::netinfo::NetinfoItem;
-use crate::item_ref::AnyItem;
 use crate::traits::BoardConnectedItem;
 
 /// `m_netinfo` of an item: the board's net of its net code (`None` for a negative code, which

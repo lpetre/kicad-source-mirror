@@ -83,21 +83,14 @@ pub fn get_user_field_name(field_ndx: i32) -> String {
     format!("Field{field_ndx}")
 }
 
-/// `FOOTPRINT::GetFieldValueForVariant( aVariantName, aFieldName )` (package M19; not
-/// declared on `Footprint` yet).
+/// `FOOTPRINT::GetFieldValueForVariant( aVariantName, aFieldName )`.
 fn footprint_field_value_for_variant(
     fp: &Footprint,
     ctx: &BoardCtx<'_>,
     variant_name: &str,
     field_name: &str,
 ) -> String {
-    crate::port_pending!(
-        "FOOTPRINT::GetFieldValueForVariant",
-        fp,
-        ctx,
-        variant_name,
-        field_name
-    )
+    fp.field_value_for_variant(ctx, variant_name, field_name)
 }
 
 /// `PCB_FIELD : PCB_TEXT`.
@@ -241,7 +234,11 @@ impl PcbField {
         if let Some(fp) = parent_footprint {
             if has_board
                 && !variant_name.is_empty()
-                && !variant_name.eq_ignore_ascii_case(&get_default_variant_name())
+                && kicad_core::case_insensitive_map::case_insensitive_cmp(
+                    variant_name,
+                    &get_default_variant_name(),
+                )
+                .is_ne()
             {
                 if let Some(variant) = fp.variant(variant_name) {
                     if variant.has_field_value(&self.name(true)) {

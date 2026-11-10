@@ -40,6 +40,7 @@ pub mod items;
 pub mod ratsnest;
 pub mod rtree;
 
+pub use data::ConnectivityData;
 pub use items::{
     CnAnchor, CnAnchorRef, CnCluster, CnClusterId, CnItem, CnItemId, CnList, CnZoneLayer,
 };

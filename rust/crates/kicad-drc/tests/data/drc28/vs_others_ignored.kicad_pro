@@ -1,0 +1,15 @@
+{
+  "board": {
+    "design_settings": {
+      "rule_severities": {
+        "malformed_microvia_stack_span": "ignore",
+        "microvia_stack_not_filled": "ignore",
+        "microvia_stack_depth": "ignore"
+      }
+    }
+  },
+  "meta": {
+    "filename": "vs_others_ignored.kicad_pro",
+    "version": 3
+  }
+}

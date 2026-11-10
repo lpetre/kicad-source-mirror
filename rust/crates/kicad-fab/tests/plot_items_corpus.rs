@@ -32,6 +32,7 @@
 //! `KICAD_FAB_CORPUS_DUMP=<dir>` writes the port's output of differing files.
 
 mod plot_common;
+mod plot_items_fixture;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -75,7 +76,8 @@ fn skip_reason(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> Option<Skip> {
 
     let on_layer = |id| {
         catch_unwind(AssertUnwindSafe(|| {
-            ctx.item(id).is_none_or(|item| item.layer_set().contains(layer))
+            ctx.item(id)
+                .is_none_or(|item| item.layer_set().contains(layer))
         }))
         .unwrap_or(true)
     };
@@ -91,8 +93,9 @@ fn skip_reason(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> Option<Skip> {
     }
 
     for (fp, _) in board.footprints() {
-        for (id, _) in board.footprint_fields(fp) {
-            if on_layer(id.into()) {
+        // PlotFootprintTextItems plots visible fields only
+        for (id, field) in board.footprint_fields(fp) {
+            if field.text.text.is_visible() && on_layer(id.into()) {
                 return Some(Skip::Graphics);
             }
         }
@@ -114,12 +117,12 @@ fn plot_layer_items(ctx: &BoardCtx<'_>, opts: &PcbPlotParams, layer: PcbLayerId)
     let board = ctx.board;
     let layer_name = board.layer_name(layer);
     let mut fn_ = WxFileName::new(&board.file_name);
-    build_plot_file_name(
-        &mut fn_,
-        "out",
-        &layer_name,
-        &gerber_protel_extension(layer.0),
-    );
+    let ext = if opts.use_gerber_protel_extensions {
+        gerber_protel_extension(layer.0)
+    } else {
+        "gbr".to_string()
+    };
+    build_plot_file_name(&mut fn_, "out", &layer_name, &ext);
 
     let mut plotter = start_plot_board(
         ctx,
@@ -201,21 +204,35 @@ fn replay_board(
         return;
     };
     let ctx = BoardCtx::bare(board).with_connectivity(&connectivity);
-    let opts = cli_gerber_opts(false, 6, false, false);
+    // `bp_*` crafted boards are plotted with `--board-plot-params` (generate.py)
+    let board_params = std::path::Path::new(label)
+        .file_name()
+        .is_some_and(|n| n.to_string_lossy().starts_with("bp_"));
+    let opts = if board_params {
+        board.plot_options.clone()
+    } else {
+        cli_gerber_opts(false, 6, false, false)
+    };
     let mut line = String::new();
     let mut compared = false;
 
     for (name_hash, file_hash) in files {
-        let Some(layer) = board.enabled_layers().ui_order().0.into_iter().find(|&layer| {
-            let mut fn_ = WxFileName::new(&board.file_name);
-            build_plot_file_name(
-                &mut fn_,
-                "",
-                &board.layer_name(layer),
-                &gerber_protel_extension(layer.0),
-            );
-            fnv(&fn_.full_name())[..8] == *name_hash
-        }) else {
+        let Some(layer) = board
+            .enabled_layers()
+            .ui_order()
+            .0
+            .into_iter()
+            .find(|&layer| {
+                let mut fn_ = WxFileName::new(&board.file_name);
+                let ext = if opts.use_gerber_protel_extensions {
+                    gerber_protel_extension(layer.0)
+                } else {
+                    "gbr".to_string()
+                };
+                build_plot_file_name(&mut fn_, "", &board.layer_name(layer), &ext);
+                fnv(&fn_.full_name())[..8] == *name_hash
+            })
+        else {
             score
                 .failures
                 .push(format!("{label}: no layer gives the file name {name_hash}"));
@@ -265,14 +282,8 @@ fn replay_board(
             .footprints()
             .map(|(fp, _)| board.footprint_pads(fp).count())
             .sum();
-        let vias = board
-            .tracks()
-            .filter(|(_, t)| t.as_via().is_some())
-            .count();
-        let arcs = board
-            .tracks()
-            .filter(|(_, t)| t.as_arc().is_some())
-            .count();
+        let vias = board.tracks().filter(|(_, t)| t.as_via().is_some()).count();
+        let arcs = board.tracks().filter(|(_, t)| t.as_arc().is_some()).count();
         println!(
             "{label}: {line} (pads {pads}, vias {vias}, tracks {}, arcs {arcs}, zones {})",
             board.tracks().count() - vias - arcs,
@@ -283,10 +294,8 @@ fn replay_board(
 
 /// The `B <path>` / `<name> <header> <file>` golden format of `generate.py`.
 fn read_golden(rel: &str) -> Vec<(String, Vec<(String, String)>)> {
-    let text = std::fs::read_to_string(
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(rel),
-    )
-    .unwrap();
+    let text = std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(rel))
+        .unwrap();
     let mut cases: Vec<(String, Vec<(String, String)>)> = Vec::new();
 
     for line in text.lines() {
@@ -306,7 +315,11 @@ fn read_golden(rel: &str) -> Vec<(String, Vec<(String, String)>)> {
     cases
 }
 
-fn run(golden: &str, root: &std::path::Path) -> Score {
+fn run(
+    golden: &str,
+    root: &std::path::Path,
+    loader: fn(&std::path::Path) -> Result<Board, String>,
+) -> Score {
     let report = std::env::var_os("KICAD_FAB_CORPUS_REPORT").is_some();
     let mut score = Score::default();
 
@@ -315,7 +328,7 @@ fn run(golden: &str, root: &std::path::Path) -> Score {
             continue;
         }
 
-        let mut board = match catch_unwind(|| load_board(&root.join(&path))) {
+        let mut board = match catch_unwind(|| loader(&root.join(&path))) {
             Ok(Ok(board)) => board,
             _ => {
                 if report {
@@ -357,6 +370,7 @@ fn corpus_items_replay() {
     let score = run(
         "tests/golden/plot_driver/corpus.txt",
         &kicad_qa::kicad_source_root(),
+        load_board,
     );
     let _ = std::panic::take_hook();
     finish("plot items corpus", &score);
@@ -365,13 +379,117 @@ fn corpus_items_replay() {
 #[test]
 fn crafted_items_replay() {
     std::panic::set_hook(Box::new(|_| {}));
+    // The crafted boards have footprints: the pad parser (PCBIO-07) is pending, so they are
+    // built by the fixture until it lands (then `load_board` takes over).
+    let loader: fn(&std::path::Path) -> Result<Board, String> = |path| {
+        load_board(path).or_else(|_| {
+            let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+            Ok(plot_items_fixture::load_with_fixture_footprints(
+                &text,
+                path.to_str().unwrap(),
+            ))
+        })
+    };
     let score = run(
         "tests/golden/plot_items/crafted.txt",
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")),
+        loader,
     );
     let _ = std::panic::take_hook();
     finish("plot items crafted", &score);
 
     // Every crafted board is fully loadable and every layer of it is compared.
     assert_eq!(score.files_pending, 0);
+}
+
+/// The FAB-04 part of `PlotStandardLayer` on the SVG engine (black and white): pads of every
+/// shape (chamfered pads through the custom-shape fallback), margins on mask and paste, mirror.
+/// Against `kicad-cli pcb export svg --mode-single --exclude-drawing-sheet --drill-shape-opt 0
+/// --black-and-white` (`tests/golden/plot_items/svg_*.svg`, `generate.py`); the calls are
+/// those of the FAB-03 SVG test (`PCB_PLOTTER::Plot` for one layer), the board graphics of
+/// `pads.kicad_pcb` are on Edge.Cuts only and plot nothing on these layers.
+#[test]
+fn svg_items_match_cli() {
+    use kicad_core::plot_enums::PlotFormat;
+
+    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = dir.join("tests/data/plot_items/pads.kicad_pcb");
+    let mut board = load_board(&path).unwrap_or_else(|_| {
+        plot_items_fixture::load_with_fixture_footprints(
+            &std::fs::read_to_string(&path).unwrap(),
+            path.to_str().unwrap(),
+        )
+    });
+    let connectivity = build_connectivity(&mut board).expect("connectivity");
+    let ctx = BoardCtx::bare(&board).with_connectivity(&connectivity);
+
+    for (case, layer, mirror) in [
+        ("f_cu", PcbLayerId::FCu, false),
+        ("f_mask_mirror", PcbLayerId::FMask, true),
+        ("f_paste", PcbLayerId::FPaste, false),
+    ] {
+        let mut opts = PcbPlotParams::default();
+        opts.format = PlotFormat::Svg;
+        opts.scale = 1.0;
+        opts.auto_scale = false;
+        opts.drill_marks = DrillMarks::NoDrillShape;
+        opts.set_svg_precision(4);
+        opts.svg_fit_page_to_board = false;
+        opts.black_and_white = true;
+        opts.mirror = mirror;
+        opts.sketch_dnp_fps_on_fab_layers = false;
+        opts.crossout_dnp_fps_on_fab_layers = false;
+
+        let layer_name = board.layer_name(layer);
+        let mut plotter = start_plot_board(
+            &ctx,
+            &opts,
+            layer.0,
+            &layer_name,
+            "a.svg",
+            &layer_name,
+            "",
+            &layer_name,
+            &env(),
+        )
+        .unwrap();
+        plotter.set_title("");
+
+        // PlotBoardLayers / PlotOneBoardLayer / PlotStandardLayer, FAB-04 part
+        let mut plot_opt = opts.clone();
+        plotter.set_color(&Color4D::BLACK);
+        plotter.set_text_mode(plot_opt.text_mode);
+
+        if is_copper_layer(layer) {
+            plot_opt.skip_npth_pads = true;
+        } else if layer == PcbLayerId::FPaste {
+            plot_opt.drill_marks = DrillMarks::NoDrillShape;
+        }
+
+        let layer_mask = Lset::from_layers(&[layer]);
+        {
+            let mut itemplotter = BrditemsPlotter::new(plotter.as_mut(), &ctx, &plot_opt);
+            itemplotter.set_layer_set(&layer_mask);
+            let flags = StandardLayerFlags::new(&ctx, &layer_mask, &plot_opt);
+            plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);
+        }
+
+        plotter.end_plot();
+
+        let golden = std::fs::read_to_string(
+            dir.join("tests/golden/plot_items")
+                .join(format!("svg_{case}.svg")),
+        )
+        .unwrap();
+        let strip_date = |t: &str| -> String {
+            t.lines()
+                .map(|l| match l.find(" date ") {
+                    Some(i) if l.starts_with("<title>") => format!("{}<date>", &l[..i]),
+                    _ => l.to_string(),
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        };
+        assert_eq!(strip_date(plotter.output()), strip_date(&golden), "{case}");
+    }
 }

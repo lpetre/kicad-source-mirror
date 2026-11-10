@@ -171,8 +171,8 @@ impl Board {
         true
     }
 
-    /// `FOOTPRINT::ResolveTextVar( token, variant, depth )`: the footprint package (M20) has
-    /// no Rust counterpart yet.
+    /// `FOOTPRINT::ResolveTextVar( token, variant, depth )` on a stored footprint; `false`
+    /// for a stale handle.
     fn footprint_resolve_text_var(
         &self,
         footprint: FootprintId,
@@ -180,13 +180,10 @@ impl Board {
         variant: &str,
         depth: i32,
     ) -> bool {
-        crate::port_pending!(
-            "FOOTPRINT::ResolveTextVar",
-            footprint,
-            token,
-            variant,
-            depth
-        )
+        let ctx = BoardCtx::bare(self);
+
+        self.footprint(footprint)
+            .is_some_and(|fp| fp.resolve_text_var_for_variant(&ctx, token, variant, depth))
     }
 
     /// `FOOTPRINT::GetReference()` of a footprint of this board.

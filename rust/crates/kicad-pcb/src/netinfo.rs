@@ -234,14 +234,30 @@ impl NetinfoItem {
     }
 
     /// `NETINFO_ITEM::GetBoundingBox` override: the union of the bounding boxes of the
-    /// board's tracks, vias, zones and pads in this net.
-    /// Not ported (GUI, `settings.md` 2.3): needs `CONNECTIVITY_DATA::GetNetItems`, which
-    /// `ConnectivityQuery` does not offer.
+    /// board's tracks, arcs, vias, zones, pads and shapes in this net
+    /// (`CONNECTIVITY_DATA::GetNetItems`). Without a connectivity query the board's
+    /// `CONNECTIVITY_DATA` is empty (`board-model.md` 6.1): the default box.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!(
-            "NETINFO_ITEM::GetBoundingBox (GUI only, needs CONNECTIVITY_DATA::GetNetItems)",
-            ctx
-        )
+        const NET_ITEM_TYPES: [KicadT; 6] = [
+            KicadT::PcbTraceT,
+            KicadT::PcbArcT,
+            KicadT::PcbViaT,
+            KicadT::PcbZoneT,
+            KicadT::PcbPadT,
+            KicadT::PcbShapeT,
+        ];
+
+        let mut bbox = Box2I::default();
+
+        if let Some(conn) = ctx.connectivity {
+            for id in conn.net_items(self.net_code, &NET_ITEM_TYPES) {
+                if let Some(item) = ctx.item(id) {
+                    bbox.merge(&item.bounding_box());
+                }
+            }
+        }
+
+        bbox
     }
 }
 

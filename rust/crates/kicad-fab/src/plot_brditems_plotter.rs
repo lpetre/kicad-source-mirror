@@ -30,11 +30,11 @@ use kicad_core::string_utils::{printable_char_count, unescape_string};
 use kicad_core::text_attributes::TextAttributes;
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_font::Metrics;
-use kicad_pcb::eda_shape::ShapeT;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::trigo::rotate_point;
 use kicad_geom::{ANGLE_90, ShapePolySet, Vector2I, ki_round};
 use kicad_pcb::ctx::BoardCtx;
+use kicad_pcb::eda_shape::ShapeT;
 use kicad_pcb::ids::FootprintId;
 use kicad_pcb::item_ref::ItemRef;
 use kicad_pcb::padstack::{PadAttrib, PadProp, PadShape, Padstack};
@@ -484,19 +484,10 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
                 let trap_delta = pad.delta(a_layer) / 2;
 
                 let coord = [
-                    Vector2I::new(
-                        -half_size.x - trap_delta.y,
-                        half_size.y + trap_delta.x,
-                    ),
+                    Vector2I::new(-half_size.x - trap_delta.y, half_size.y + trap_delta.x),
                     Vector2I::new(half_size.x + trap_delta.y, half_size.y - trap_delta.x),
-                    Vector2I::new(
-                        half_size.x - trap_delta.y,
-                        -half_size.y + trap_delta.x,
-                    ),
-                    Vector2I::new(
-                        -half_size.x + trap_delta.y,
-                        -half_size.y - trap_delta.x,
-                    ),
+                    Vector2I::new(half_size.x - trap_delta.y, -half_size.y + trap_delta.x),
+                    Vector2I::new(-half_size.x + trap_delta.y, -half_size.y - trap_delta.x),
                 ];
 
                 self.plotter
@@ -507,8 +498,7 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
                 if shape == PadShape::ChamferedRect
                     && self.plotter.plotter_type() == PlotFormat::Gerber
                 {
-                    let gerber_plotter =
-                        self.plotter.as_gerber_mut().expect("a Gerber plotter");
+                    let gerber_plotter = self.plotter.as_gerber_mut().expect("a Gerber plotter");
 
                     gerber_plotter.flash_pad_chamfer_round_rect(
                         shape_pos,

@@ -1,0 +1,3 @@
+(version 1)
+(rule "hole clearance"
+	(constraint hole_clearance (min 0.4mm)))

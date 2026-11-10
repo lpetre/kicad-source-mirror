@@ -25,10 +25,8 @@
 //!
 //! Differences (see `PORT_STATUS.md`): the date of the `<title>` comes from
 //! [`SvgPlotter::set_creation_date`] instead of the wall clock; `PlotImage` of a non-empty
-//! bitmap plots the base placeholder rectangle (no PNG encoder); `FlashPadRoundRect` needs the
-//! `TransformRoundChamferedRectToPolygon` generator ([`SvgPlotter::set_round_rect_polygon_fn`]);
-//! `Rect` with a corner radius gives no output while `kicad-geom`'s `SHAPE_RECT::Outline` lacks
-//! rounded corners; `@{...}` text expressions are not evaluated.
+//! bitmap plots the base placeholder rectangle (no PNG encoder); `@{...}` text expressions are
+//! not evaluated.
 
 // Note:
 // During tests, we (JPC) found issues when the coordinates used 6 digits in mantissa
@@ -56,7 +54,7 @@ use crate::plotter::{
     DO_NOT_SET_LINE_WIDTH, PlotData, Plotter, PlotterState, USE_DEFAULT_LINE_WIDTH,
     plot_image_base, plot_poly_chain_base, user_to_device_coordinates_base,
 };
-use crate::plotter_gerber::RoundChamferedRectToPolygonFn;
+use crate::plotter_gerber::{RoundChamferedRectToPolygonFn, round_chamfered_rect_to_polygon};
 use crate::plotter_text::text_base;
 use crate::plotters_pslike::{
     PsLikePlotter, pslike_flash_pad_circle, pslike_flash_pad_custom, pslike_flash_pad_oval,
@@ -197,10 +195,11 @@ impl SvgPlotter {
         self.creation_date = a_date.to_string();
     }
 
-    /// Install `TransformRoundChamferedRectToPolygon` (arguments: position, size, rotation,
-    /// corner radius, chamfer ratio, chamfer corners, max error; inflate 0, `ERROR_INSIDE`)
-    /// for `FlashPadRoundRect`. Without it a round rect pad is plotted as a rectangle (see
-    /// `PORT_STATUS.md`).
+    /// Override the `TransformRoundChamferedRectToPolygon` generator (arguments: position,
+    /// size, rotation, corner radius, chamfer ratio, chamfer corners, max error; inflate 0,
+    /// `ERROR_INSIDE`) used by `FlashPadRoundRect`.  `None` (the default) uses
+    /// [`crate::plotter_gerber::round_chamfered_rect_to_polygon`]; the oracle tests install
+    /// one that replays the C++ polygons.
     pub fn set_round_rect_polygon_fn(
         &mut self,
         a_fn: Option<Arc<RoundChamferedRectToPolygonFn<'static>>>,
@@ -968,9 +967,9 @@ version=\"1.1\"\n";
         pslike_flash_pad_rect(self, a_pad_pos, a_size, a_pad_orient, a_data);
     }
 
-    /// Port of `PSLIKE_PLOTTER::FlashPadRoundRect` through the installed
-    /// `TransformRoundChamferedRectToPolygon` ([`SvgPlotter::set_round_rect_polygon_fn`]).
-    /// Without it the pad is plotted as `FlashPadRect` (documented gap).
+    /// Port of `PSLIKE_PLOTTER::FlashPadRoundRect`: the outline of
+    /// `TransformRoundChamferedRectToPolygon` ([`round_chamfered_rect_to_polygon`], or the
+    /// generator installed with [`SvgPlotter::set_round_rect_polygon_fn`]).
     fn flash_pad_round_rect(
         &mut self,
         a_pad_pos: Vector2I,
@@ -979,21 +978,29 @@ version=\"1.1\"\n";
         a_orient: EdaAngle,
         a_data: PlotData,
     ) {
-        match self.round_rect_polygon_fn.clone() {
-            Some(transform) => {
-                let outline: ShapePolySet = transform(
-                    a_pad_pos,
-                    a_size,
-                    a_orient,
-                    a_corner_radius,
-                    0.0,
-                    0,
-                    self.plotter_arc_high_def(),
-                );
-                pslike_flash_pad_round_rect_from_outline(self, &outline, a_data);
-            }
-            None => pslike_flash_pad_rect(self, a_pad_pos, a_size, a_orient, a_data),
-        }
+        let error = self.plotter_arc_high_def();
+        let outline: ShapePolySet = match self.round_rect_polygon_fn.clone() {
+            Some(transform) => transform(
+                a_pad_pos,
+                a_size,
+                a_orient,
+                a_corner_radius,
+                0.0,
+                0,
+                error,
+            ),
+            None => round_chamfered_rect_to_polygon(
+                a_pad_pos,
+                a_size,
+                a_orient,
+                a_corner_radius,
+                0.0,
+                0,
+                error,
+            ),
+        };
+
+        pslike_flash_pad_round_rect_from_outline(self, &outline, a_data);
     }
 
     /// Port of `PSLIKE_PLOTTER::FlashPadCustom`.

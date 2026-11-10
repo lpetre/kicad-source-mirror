@@ -1,0 +1,197 @@
+(kicad_pcb
+	(version 20250901)
+	(generator "pcbnew")
+	(generator_version "9.99")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(4 "In1.Cu" signal)
+		(6 "In2.Cu" signal)
+		(2 "B.Cu" signal)
+		(25 "Edge.Cuts" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+	)
+	(net 0 "")
+	(net 1 "N1")
+	(net 2 "N2")
+	(net 3 "N3")
+	(via
+		(at 10 10)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 1)
+		(uuid "07158ab7-95f3-4183-8b69-13cd87684f34")
+	)
+	(via
+		(at 20 10)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 1)
+		(uuid "07a81949-e60d-4347-8ab4-34fed7e439fe")
+	)
+	(segment
+		(start 10.05 10)
+		(end 19.95 10)
+		(width 0.2)
+		(layer "F.Cu")
+		(net 1)
+		(uuid "f45ed8c5-5d5c-4422-8399-227ae1d6f9f5")
+	)
+	(zone
+		(net 2)
+		(net_name "N2")
+		(layer "F.Cu")
+		(uuid "f49b2084-6c90-45f8-8087-97d6f2e7351d")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.2)
+		)
+		(min_thickness 0.2)
+		(fill yes
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 30 25) (xy 50 25) (xy 50 35) (xy 30 35)
+			)
+		)
+		(filled_polygon
+			(layer "F.Cu")
+			(pts
+				(xy 30 25) (xy 50 25) (xy 50 35) (xy 30 35)
+			)
+		)
+	)
+	(zone
+		(net 2)
+		(net_name "N2")
+		(layer "B.Cu")
+		(uuid "95843756-1833-4edc-8754-8d5f4e620f38")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.2)
+		)
+		(min_thickness 0.2)
+		(fill yes
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 30 25) (xy 50 25) (xy 50 35) (xy 30 35)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 30 25) (xy 50 25) (xy 50 35) (xy 30 35)
+			)
+		)
+	)
+	(via
+		(at 10 28)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 2)
+		(uuid "18b3cf35-27a2-40cc-8291-a42182fd5645")
+	)
+	(via
+		(at 40 30)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 2)
+		(uuid "006037d0-9c4f-4255-88d9-e5b64633e8a5")
+	)
+	(zone
+		(net 3)
+		(net_name "N3")
+		(layer "F.Cu")
+		(uuid "861abd5d-c0ae-4995-87aa-e362c6c0ac72")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.2)
+		)
+		(min_thickness 0.2)
+		(fill yes
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 10 50) (xy 50 50) (xy 50 60) (xy 10 60)
+			)
+		)
+		(filled_polygon
+			(layer "F.Cu")
+			(pts
+				(xy 10 50) (xy 20 50) (xy 20 60) (xy 10 60)
+			)
+		)
+		(filled_polygon
+			(layer "F.Cu")
+			(pts
+				(xy 40 50) (xy 50 50) (xy 50 60) (xy 40 60)
+			)
+		)
+	)
+	(zone
+		(net 3)
+		(net_name "N3")
+		(layer "B.Cu")
+		(uuid "5e841616-0fac-4b49-8d1d-47f2161e84d3")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0.2)
+		)
+		(min_thickness 0.2)
+		(fill yes
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 10 50) (xy 50 50) (xy 50 60) (xy 10 60)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 10 50) (xy 18 50) (xy 20 55) (xy 18 60) (xy 10 60)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 40 57) (xy 42 50) (xy 50 50) (xy 50 60) (xy 42 60)
+			)
+		)
+	)
+	(via
+		(at 12 55)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 3)
+		(uuid "b477a077-8d4d-45d6-8d64-b0f24155e48a")
+	)
+	(via
+		(at 48 55)
+		(size 0.6)
+		(drill 0.3)
+		(layers "F.Cu" "B.Cu")
+		(net 3)
+		(uuid "63015710-cceb-48b3-8f4a-8a18d6be75b0")
+	)
+	(embedded_fonts no)
+)

@@ -1,0 +1,5 @@
+(version 1)
+(rule "drc28"
+    (condition "A.isStackedVia()")
+    (constraint microvia_stack_depth (max 2))
+)

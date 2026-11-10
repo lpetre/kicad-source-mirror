@@ -40,6 +40,7 @@
 #include <font/glyph_types.h>
 #include <font/text_attributes.h>
 #include <gr_text.h>
+#include <wx/debug.h>
 #include <markup_parser.h>
 #include <newstroke_font.h>
 
@@ -138,6 +139,14 @@ static int genExtremeInt()
         return TABLE[r];
 
     return (int) ( rnd( 4294967296LL ) - 2147483648LL );
+}
+
+// A tab advances the cursor in steps of 4 * size.x until it passes the cursor: near INT_MAX
+// that loop never ends (also in the C++), so the out-of-range kinds replace tabs by spaces.
+static void noTabsIfExtreme( std::vector<uint32_t>& aCps )
+{
+    if( g_extreme )
+        std::replace( aCps.begin(), aCps.end(), (uint32_t) '\t', (uint32_t) ' ' );
 }
 
 static int genSize()
@@ -341,12 +350,9 @@ static void caseMarkup()
 static void caseGlyphs()
 {
     std::vector<uint32_t> cps = genText( 12 );
+    noTabsIfExtreme( cps );
     wxString text = toWx( cps );
     int      sx = genSize();
-
-    // a tab advances in steps of 4 * size.x until it passes the cursor: keep that loop short
-    if( g_extreme && std::find( cps.begin(), cps.end(), '\t' ) != cps.end() )
-        sx = 4000000;
     int      sy = rnd( 4 ) == 0 ? genSize() : sx;
     // (every random draw is its own statement: the evaluation order of function arguments
     // is unspecified)
@@ -403,12 +409,10 @@ static void caseDraw()
         cps.insert( cps.end(), part.begin(), part.end() );
     }
 
+    noTabsIfExtreme( cps );
     wxString        text = toWx( cps );
     TEXT_ATTRIBUTES attrs;
     int             sx = rnd( 8 ) == 0 ? genSize() : (int) ( 500000 + rnd( 4500001 ) );
-
-    if( g_extreme && std::find( cps.begin(), cps.end(), '\t' ) != cps.end() )
-        sx = 4000000;
     int             sy = rnd( 4 ) == 0 ? (int) ( 500000 + rnd( 4500001 ) ) : sx;
     static const double SPACING[] = { 1.0, 1.0, 1.5, 0.8 };
     int64_t         sw = rnd( 4 );
@@ -627,6 +631,10 @@ static void dumpTable( bool aFull )
 int main( int argc, char** argv )
 {
     std::string mode = argc > 1 ? argv[1] : "golden";
+
+    // KiROUND's overflow report (kimathLogOverflow -> wxFAIL_MSG) only logs; the default
+    // handler is very slow, and the out-of-range kinds 'O' / 'E' trigger it a lot.
+    wxSetAssertHandler( nullptr );
 
     g_font = STROKE_FONT::LoadFont( wxEmptyString );
 

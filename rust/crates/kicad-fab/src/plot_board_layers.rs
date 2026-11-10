@@ -35,16 +35,14 @@ use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::layer_ids::{Flashing, LAYER_DNP_MARKER, LAYER_VIAS, is_copper_layer};
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
-use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_core::stroke_params::{LineStyle, StrokeParams};
+use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
-use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::approximation::ErrorLoc;
+use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::trigo::rotate_point_around;
-use kicad_geom::{
-    ANGLE_0, Box2I, EdaAngle, Shape, ShapePolySet, Vector2D, Vector2I, ki_round,
-};
+use kicad_geom::{ANGLE_0, Box2I, EdaAngle, Shape, ShapePolySet, Vector2D, Vector2I, ki_round};
 use kicad_pcb::AnyItem;
 use kicad_pcb::board_design_settings::LAYER_CLASS_FAB;
 use kicad_pcb::ctx::{BoardCtx, MutEnv};

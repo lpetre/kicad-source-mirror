@@ -1,0 +1,7 @@
+error	malformed_microvia_stack_span	Microvia stack has malformed span	00000000-0000-0000-0028-00000000008c	Microvia Stack	30.0	10.0
+error	malformed_microvia_stack_span	Microvia stack has malformed span	00000000-0000-0000-0028-00000000008d	Microvia Stack	40.0	10.0
+error	microvia_stack_depth	Stack is 2 hops deep, limit is 1	00000000-0000-0000-0028-00000000008b	Micro via [<no net>] on In1.Cu - In2.Cu	60.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	00000000-0000-0000-0028-000000000086	Micro via [<no net>] on F.Cu - In1.Cu	30.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	00000000-0000-0000-0028-000000000087	Micro via [<no net>] on F.Cu - In1.Cu	40.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between In2.Cu and B.Cu as core	00000000-0000-0000-0028-000000000088	Micro via [<no net>] on In2.Cu - B.Cu	40.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between In2.Cu and B.Cu as core	00000000-0000-0000-0028-00000000008a	Micro via [<no net>] on In2.Cu - B.Cu	60.0	10.0

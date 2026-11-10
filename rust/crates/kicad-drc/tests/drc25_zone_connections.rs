@@ -34,8 +34,8 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, has_compiled_conditions,
-    load_board, panic_text, quiet, run_providers, summarize,
+    Entry, Loaded, cached_entries, cli_report_entries, golden, has_compiled_conditions, load_board,
+    panic_text, quiet, run_providers, summarize,
 };
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
@@ -362,7 +362,10 @@ fn check_table(test: &str, table: &[(&str, usize)]) {
     for &(rel, expected) in table {
         match quiet(|| catch_unwind(AssertUnwindSafe(|| starved_thermal_errors(rel)))) {
             Ok(Ok(n)) => {
-                assert_eq!(n, expected, "{test}: {rel}: {n} violations found (expected {expected})");
+                assert_eq!(
+                    n, expected,
+                    "{test}: {rel}: {n} violations found (expected {expected})"
+                );
                 println!("{test}: {rel}, passed");
             }
             Ok(Err(e)) => println!("{test}: {rel}: pending: {e}"),
@@ -500,8 +503,7 @@ fn synthetic_golden(text: &str) -> Vec<Entry> {
 /// (zone, layer) task (the interleaving of the tasks is scheduling dependent in C++).
 #[test]
 fn synthetic_boards_match_reference() {
-    let data =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/zone_connections");
+    let data = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/zone_connections");
     let cases: &[(&str, &str, &str)] = &[
         (
             "thermals",

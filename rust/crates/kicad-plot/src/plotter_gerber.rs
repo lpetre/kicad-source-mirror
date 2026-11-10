@@ -38,6 +38,8 @@ use kicad_core::plot_enums::{FillT, PlotFormat};
 use kicad_core::printf::format_f;
 use kicad_core::stroke_params::LineStyle;
 use kicad_geom::cmath::f64_to_i32_x86;
+use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
+use kicad_geom::geometry::approximation::ERROR_INSIDE;
 use kicad_geom::{
     ANGLE_0, ANGLE_90, ANGLE_180, EdaAngle, ShapeArc, ShapeLineChain, ShapePolySet, Vector2D,
     Vector2I, ki_round, rotate_point,
@@ -78,6 +80,35 @@ const APERTURE_LIST_MARKER: &[u8] = b"G04 APERTURE LIST*";
 /// chamfer ratio, chamfer corners, max error) -> polygon set`.
 pub type RoundChamferedRectToPolygonFn<'a> =
     dyn Fn(Vector2I, Vector2I, EdaAngle, i32, f64, i32, i32) -> ShapePolySet + 'a;
+
+/// `TransformRoundChamferedRectToPolygon( outline, aPosition, aSize, aRotation,
+/// aCornerRadius, aChamferRatio, aChamferCorners, 0, aError, ERROR_INSIDE )` in the shape of
+/// [`RoundChamferedRectToPolygonFn`]: the generator the plotters use by default
+/// ([`kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon`]).
+pub fn round_chamfered_rect_to_polygon(
+    a_position: Vector2I,
+    a_size: Vector2I,
+    a_rotation: EdaAngle,
+    a_corner_radius: i32,
+    a_chamfer_ratio: f64,
+    a_chamfer_corners: i32,
+    a_error: i32,
+) -> ShapePolySet {
+    let mut outline = ShapePolySet::new();
+    transform_round_chamfered_rect_to_polygon(
+        &mut outline,
+        a_position,
+        a_size,
+        a_rotation,
+        a_corner_radius,
+        a_chamfer_ratio,
+        a_chamfer_corners,
+        0,
+        a_error,
+        ERROR_INSIDE,
+    );
+    outline
+}
 
 /// Port of `GERBER_PLOTTER`.
 #[derive(Clone, Debug)]
@@ -1134,10 +1165,63 @@ impl GerberPlotter {
     /// (ratio < 0.5 between smallest size and chamfer), `a_chamfer_positions` the identifier
     /// of the corners to chamfer (0 = no chamfer, 1 = TOP_LEFT, 2 = TOP_RIGHT, 4 =
     /// BOTTOM_LEFT, 8 = BOTTOM_RIGHT), `a_pad_orient` the rotation of the shape, `a_data` the
-    /// Gerber attributes. `a_transform` is `TransformRoundChamferedRectToPolygon` (see
-    /// [`RoundChamferedRectToPolygonFn`]).
+    /// Gerber attributes.  The polygon comes from `TransformRoundChamferedRectToPolygon`
+    /// ([`round_chamfered_rect_to_polygon`]).
+    #[allow(clippy::too_many_arguments)]
+    pub fn flash_pad_chamfer_round_rect_default(
+        &mut self,
+        a_shape_pos: Vector2I,
+        a_pad_size: Vector2I,
+        a_corner_radius: i32,
+        a_chamfer_ratio: f64,
+        a_chamfer_positions: i32,
+        a_pad_orient: EdaAngle,
+        a_data: PlotData,
+    ) {
+        self.flash_pad_chamfer_round_rect_impl(
+            a_shape_pos,
+            a_pad_size,
+            a_corner_radius,
+            a_chamfer_ratio,
+            a_chamfer_positions,
+            a_pad_orient,
+            a_data,
+            &round_chamfered_rect_to_polygon,
+        );
+    }
+
+    /// [`GerberPlotter::flash_pad_chamfer_round_rect_default`] with a caller-supplied polygon
+    /// generator `a_transform` in place of `TransformRoundChamferedRectToPolygon` (see
+    /// [`RoundChamferedRectToPolygonFn`]; the oracle tests replay the C++ polygons with it).
+    /// Kept for the callers written before `kicad-geom` had the generator.
     #[allow(clippy::too_many_arguments)]
     pub fn flash_pad_chamfer_round_rect(
+        &mut self,
+        a_shape_pos: Vector2I,
+        a_pad_size: Vector2I,
+        a_corner_radius: i32,
+        a_chamfer_ratio: f64,
+        a_chamfer_positions: i32,
+        a_pad_orient: EdaAngle,
+        a_data: PlotData,
+        a_transform: &RoundChamferedRectToPolygonFn,
+    ) {
+        self.flash_pad_chamfer_round_rect_impl(
+            a_shape_pos,
+            a_pad_size,
+            a_corner_radius,
+            a_chamfer_ratio,
+            a_chamfer_positions,
+            a_pad_orient,
+            a_data,
+            a_transform,
+        );
+    }
+
+    /// The body of `GERBER_PLOTTER::FlashPadChamferRoundRect`, with the polygon generator as
+    /// a parameter.
+    #[allow(clippy::too_many_arguments)]
+    fn flash_pad_chamfer_round_rect_impl(
         &mut self,
         a_shape_pos: Vector2I,
         a_pad_size: Vector2I,
@@ -1461,7 +1545,9 @@ impl Plotter for GerberPlotter {
             a_width = self.state.render_settings_or_default().default_pen_width();
         }
 
-        debug_assert!(a_width >= 0, "Plotter called to set negative pen width");
+        // wxASSERT_MSG( aWidth >= 0, "Plotter called to set negative pen width" ): the C++
+        // only asserts and continues (negative widths reach here from PlotText), so no
+        // assertion here.
 
         let mut aperture_attribute = 0;
         let mut custom_attribute = String::new();

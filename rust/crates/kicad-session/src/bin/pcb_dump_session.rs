@@ -38,11 +38,11 @@ use std::io::Write;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 
-use kicad_pcb::NetCode;
 use kicad_pcb::dump::format::{Out, v_int, v_str};
 use kicad_pcb::dump::{DumpOptions, SilentPanics, dump_board, scan_file_uuids};
 use kicad_pcb::io::ParseOptions;
 use kicad_pcb::project::{LoadPath, LoadStep};
+use kicad_pcb::{NetCode, RuleResolver};
 use kicad_session::board_loader::load_guarded;
 use kicad_session::{LoadInputs, Session};
 
@@ -157,6 +157,38 @@ fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {
         .unwrap_or_else(|| "(non-string panic)".to_string())
 }
 
+/// `dump_board` evaluates the board without the session's DRC engine (`BoardCtx::bare`); the
+/// C++ tool's `BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue()` asks `m_DRCEngine`. Replaces
+/// that line with the value through the engine the load sequence created.
+fn with_engine_values(text: String, session: &Session, hash: bool) -> String {
+    const PREFIX: &str = "board|board|ds.biggest_clearance=";
+
+    let Some(engine) = session.drc_engine.as_ref() else {
+        return text;
+    };
+
+    let value = session
+        .board
+        .design_settings()
+        .get_biggest_clearance_value(Some(engine as &dyn RuleResolver));
+    let mut o = Out::new(hash);
+    o.line("board", "board", "ds.biggest_clearance", &v_int(value));
+
+    text.lines()
+        .map(|l| {
+            if l.starts_with(PREFIX) {
+                o.text.trim_end().to_string()
+            } else {
+                l.to_string()
+            }
+        })
+        .fold(String::with_capacity(text.len()), |mut acc, l| {
+            acc.push_str(&l);
+            acc.push('\n');
+            acc
+        })
+}
+
 fn main() -> std::process::ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
@@ -232,7 +264,8 @@ fn main() -> std::process::ExitCode {
                 .map(|t| scan_file_uuids(&t))
                 .unwrap_or_default(),
         );
-        let _ = out.write_all(dump_board(&session.board, &o).as_bytes());
+        let text = with_engine_values(dump_board(&session.board, &o), &session, opts.hash);
+        let _ = out.write_all(text.as_bytes());
 
         if connectivity {
             let _ = out.write_all(dump_rn_net_summary(&session, opts.hash).as_bytes());

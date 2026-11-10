@@ -78,6 +78,8 @@ FNV-1a (`tests/golden/font_oracle.txt`, 200 KB). Doubles are compared as bit pat
 | T | 2000 | `GetTextAsGlyphs`: return value, bbox, every glyph (bbox, points), random style bits, sizes incl. 0/tiny/negative/non-square, tabs, angles, mirror | match |
 | D | 3000 | multi-line marked-up text with random attributes (all justifications, angle, mirror, italic, bold, underline, stroke width 0/1/large, line spacing, cursor): `getLinePositions` lines/positions/extents, `Draw` through a recording `CALLBACK_GAL` (each glyph's points + the `VECTOR2I` stroke segments, final line width), `StringBoundaryLimits`, `GetAlignedDrawPosition`, `GetInterline`, `GRTextWidth`, `LinebreakText` (random column width) | match |
 | H | 500 | pen size helpers, all `ClampTextPenSize` overloads, `GetKnockoutTextMargin` | match |
+| O | 600 | `T` with out-of-range sizes / coordinates (`INT_MAX`, `INT_MIN`, +-2e9, full range; tabs replaced by spaces) | match |
+| E | 600 | `D` with out-of-range sizes, coordinates, stroke widths and line spacings (1e9, +-3e9, +-1e300, inf, NaN) | match |
 
 ## Deviations
 
@@ -97,9 +99,11 @@ FNV-1a (`tests/golden/font_oracle.txt`, 200 KB). Doubles are compared as bit pat
   result. `parse()` returns `None` only where PEGTL would fail, which cannot happen for valid
   UTF-8 (Rust `&str`).
 - **D3 - integer overflow.** Where the C++ does plain `int` arithmetic that can overflow for
-  absurd inputs (tab stops `aSize.x * char_count`, cursor advances, line offsets) the port uses
-  `wrapping_*` (x86 behaviour of the g++ build) so it never panics; `int = double`
-  conversions use Rust's saturating `as` where C++ is undefined out of range.
+  absurd inputs (tab stops `aSize.x * char_count`, cursor advances, line offsets, the
+  `VECTOR2I` sums of `getLinePositions` / `drawMarkup`) the port uses `wrapping_*` (x86
+  behaviour of the g++ build) so it never panics; plain `int = double` conversions use
+  `kicad_geom::cmath::f64_to_i32_x86` (`INT_MIN` out of range / NaN, PORTING.md section 9),
+  see "CLEAN-1" below.
 - **D4 - no global caches.** `s_fontMap` / `MARKUP_CACHE` are memoisation only; not ported.
   The decoded glyph table is a process-wide `OnceLock` (C++: mutex-guarded globals).
 - **D5 - `_( "Default Font" )`** is compared untranslated (no i18n in the port).
@@ -117,3 +121,28 @@ FNV-1a (`tests/golden/font_oracle.txt`, 200 KB). Doubles are compared as bit pat
 - Outline font engine (FreeType/HarfBuzz/fontconfig), `OUTLINE_FONT::GetTextAsGlyphs`,
   render caches: see D1 and `docs/analysis/text-font.md` 4.14/4.15 (TF9/TF10).
 - `wasm32`: glyph rotation uses `kicad_geom` sin/cos (libm), see PORTING.md section 9.
+
+## CLEAN-1 (out-of-range conversions, `FontRef`)
+
+The `double` to `int` conversions of `font.cpp` / `stroke_font.cpp` that are plain C++
+conversions use `f64_to_i32_x86`. Each site was checked against the extended oracle (kinds
+`O` / `E`) by replacing it alone with Rust's saturating `as` (number of oracle cases that then
+differ from the reference build):
+
+| Site (C++) | Rust | cases differing with `as` |
+|---|---|---|
+| `int interline = GetInterline( .. ) * m_LineSpacing` (`getLinePositions`) | `font.rs` | 170 |
+| `height += aSize.y * 1.17` | `font.rs` | 5 |
+| `offset.x += m_StrokeWidth / 1.52` | `font.rs` | 0: cannot leave the `int` range (`0 + int / 1.52`) |
+| `offset.y -= m_StrokeWidth * 0.052` | `font.rs` | 1 |
+| `cursor.y += glyphSize.y * GetSuperSubBaselineOffset()` | `stroke_font.rs` | 13 |
+| tab stop `int new_cursor = .. + aSize.x * space_width` | `stroke_font.rs` | not reachable: with an out-of-range result the C++ tab loop never ends near `INT_MAX`, so the out-of-range kinds contain no tabs (in-range tabs: kinds `T` / `D`) |
+| `aBBox->SetEnd( .., cursor.y - glyphSize.y )` | `stroke_font.rs` | 47 |
+
+The extended inputs also showed `VECTOR2I` overflow panics in `getLinePositions` /
+`drawMarkup` (`aPosition - aCursor`, `end - pos`, `aPosition + lineOffset`); they wrap now
+(D3).
+
+`FontRef` (`font.rs`, re-exported at the crate root): the identity of a `KIFONT::FONT*`
+(face name, bold, italic: the `FONT::GetFont` arguments), with `lookup()` (`get_font`) and
+`is_stroke()`; same fields and derives as the stand-in in `kicad-pcb/src/foundation_stub.rs`.

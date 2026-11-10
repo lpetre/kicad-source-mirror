@@ -29,3 +29,27 @@ Verification is against the reference kicad-cli DRC reports (rust/docs/ORACLE.md
   are landing now. As soon as boards with footprints load, the pad paths of every provider
   become comparable: run your corpus replay again at the end and report pad-related
   mismatches of YOUR error codes with their cause.
+
+- From the Fable reviews of the DRC core and of connectivity (docs/design/review-drc-core.md,
+  docs/design/review-connectivity.md - read their "notes" sections if your provider touches
+  the topic):
+  - Run sequence: `prepare_run`, then `DrcCacheGenerator::run`, then construct providers,
+    then `run_providers` in `engine::PROVIDER_ORDER` (nothing enforces the order; it decides
+    report order and which provider loses at shared error limits). `DrcEngine::run_tests` is
+    not usable with cache-borrowing providers.
+  - `DrcConstraint` carries rule copies (`DrcRuleInfo`: name, severity, implicit). Never use
+    `DrcRuleInfo` equality as rule identity (same-named rules are equal); a `rule_index`
+    field is coming (package FIX-DRC-1).
+  - The reference is NOT reproducible in these places, so compare them as sets / by count /
+    tie-aware and say so in your report instead of chasing a mismatch: providers the C++ runs
+    on the thread pool when a board exceeds an error limit (199; 499 for clearance and
+    unconnected items); consumers of `DRC_RTREE::GetObjectsAt` (hash order in C++); maps
+    keyed by pointer (`m_CopperZoneRTreeCache`, the isolated-islands map, rule-keyed maps);
+    everything that takes "the first" of `connected_items()` / `connected_tracks` /
+    `connected_pads` / `net_items` / `zone_island_connections` (heap order in C++, changes
+    between the load build and the DRC rebuild and between runs: e.g. the second item of
+    `track_not_centered_on_via` / `track_on_post_machined_layer`, the far end of an
+    unconnected-items violation under ties - package FIX-CN-1 adds a tie flag to ratsnest
+    edges for exactly this comparison).
+  - `for_each_geometry_item`: track callbacks cannot stop the walk (as in C++); every other
+    item kind can.

@@ -612,3 +612,21 @@ Built by `tests/oracle/build_c3_oracle.sh` (`regen` rewrites the goldens).
 - `PARAM_LIST<T>` / `PARAM_MAP<T>` work for every `FromJson` + `ToJson` type; the KiCad structs
   with their own `to_json` / `from_json` (`COLOR4D`, `GRID`, `BOM_*`, `JOBSET_*`, ...) need those
   conversions in their own ports.
+
+## CLEAN-1 (consolidation)
+
+- `string_utils::wx_string_matches`: canonical port of `wxString::Matches` (wx 3.2, non-regex
+  branch; quirks kept: `*` / `?` runs after `*` skipped, first `wxStrstr` occurrence, only the
+  last `*` backtracked to, C string semantics at embedded NULs). Verified against libwx_baseu
+  by `tests/test_wx_matches_oracle.rs` (51,200 random text / mask pairs over wildcards,
+  non-ASCII, non-BMP and NUL; driver `tests/oracle/wx_matches_oracle.cpp`, golden
+  `tests/golden/wx_matches_oracle.txt`): all match.
+- `wxstr` is a public module now (shared with `kicad-libeval`); the `KiROUND` helpers stay
+  private.
+- Fixed `wxstr::cmp_no_case` (`wxString::CmpNoCase`): now the chunked wx 3.2 algorithm,
+  normalised to -1/0/1 (before: stopped at the first embedded NUL and returned the raw
+  `towlower` difference, which `ValueStringCompare` passed through).
+- `unescape_string` uses an explicit stack instead of recursion (same algorithm, taken from
+  `kicad-libeval`; deeply nested braces cannot overflow the call stack).
+- `EdaUnits::as_i32` / `from_i32`, `Default` for `EdaUnits` (`Unscaled`) and `EdaDataType`
+  (`Distance`), for `kicad-libeval`'s re-exports.

@@ -84,21 +84,19 @@ impl ZoneFiller {
 
         let mut fill_polys = ShapePolySet::new();
 
-        let ok = if zone.is_on_copper_layer(ctx) {
-            if self.trivial_copper_fill {
-                self.trivial_fill(zone_id, layer, &smoothed_poly, &mut fill_polys)
-            } else {
-                self.fill_copper_zone(
-                    ctx,
-                    zone,
-                    zone_id,
-                    layer,
-                    debug_layer,
-                    &smoothed_poly,
-                    &max_extents,
-                    &mut fill_polys,
-                )
-            }
+        let ok = if self.trivial_copper_fill {
+            self.trivial_fill(zone_id, layer, &smoothed_poly, &mut fill_polys)
+        } else if zone.is_on_copper_layer(ctx) {
+            self.fill_copper_zone(
+                ctx,
+                zone,
+                zone_id,
+                layer,
+                debug_layer,
+                &smoothed_poly,
+                &max_extents,
+                &mut fill_polys,
+            )
         } else {
             self.fill_non_copper_zone(ctx, zone, layer, &smoothed_poly, &mut fill_polys)
         };
@@ -174,7 +172,7 @@ impl ZoneFiller {
         )
     }
 
-    /// Test stand-in for `fillCopperZone` (not a C++ function; enabled only by
+    /// Test stand-in for `fillCopperZone` / `fillNonCopperZone` (not a C++ function; enabled only by
     /// [`ZoneFiller::set_trivial_copper_fill`]): the fill is the smoothed outline, fractured,
     /// with no knockouts, and the pre-knockout cache holds it so that the iterative refill can
     /// run. It lets the driver be tested before package ZF-03 lands.

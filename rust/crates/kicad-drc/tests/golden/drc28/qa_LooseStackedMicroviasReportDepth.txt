@@ -1,0 +1,3 @@
+error	microvia_stack_depth	Stack is 3 hops deep, limit is 2	a8a4ed00-c080-4d03-8aae-c0299cd0e975	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	a8a4ed00-c080-4d03-8aae-c0299cd0e975	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+warning	microvia_crosses_core	The stackup gives the dielectric between In2.Cu and In3.Cu as core	5b53c11a-8aa9-46b5-9439-1705df50f41c	Micro via [<no net>] on In2.Cu - In3.Cu	110.0	110.0

@@ -40,6 +40,8 @@ pub mod ctx;
 pub mod drc_api;
 pub mod foundation_stub;
 pub mod ids;
+#[cfg(all(test, feature = "dump"))]
+mod integration2_tests;
 pub mod item;
 pub mod item_ref;
 #[cfg(test)]

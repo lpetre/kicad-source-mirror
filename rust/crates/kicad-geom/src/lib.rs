@@ -87,7 +87,9 @@ pub use crate::geometry::shape_poly_set::ShapePolySet;
 pub use crate::geometry::shape_rect::ShapeRect;
 pub use crate::geometry::shape_segment::ShapeSegment;
 pub use crate::geometry::shape_simple::ShapeSimple;
-pub use crate::kicore::mirror::{FlipDirection, mirror, mirror_axis, mirror_point, mirror_val};
+pub use crate::kicore::mirror::{
+    FlipDirection, MirrorValue, mirror, mirror_axis, mirror_point, mirror_val,
+};
 pub use crate::math::box2::{
     Box2, Box2D, Box2I, Box2L, OptBox2I, box2i_safe, box2i_safe_from_int, box2i_safe_from_pos_size,
 };

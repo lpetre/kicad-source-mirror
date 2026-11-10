@@ -64,6 +64,17 @@ impl PcbWriter<'_> {
             return Ok(());
         };
 
+        self.format_track_item(item)
+    }
+
+    /// The body of `format( const PCB_TRACK* aTrack )` for a track value that need not be
+    /// stored in the board arena: a generator's template via is owned by the generator
+    /// (`PCB_GENERATOR::GetTemplateItems`) and written through the same function.
+    ///
+    /// # Errors
+    ///
+    /// As [`format_track`](Self::format_track).
+    pub(crate) fn format_track_item(&mut self, item: &Track) -> Result<(), IoError> {
         let ctx = self.ctx;
 
         if let Track::Via(via) = item {

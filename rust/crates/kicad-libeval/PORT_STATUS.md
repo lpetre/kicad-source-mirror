@@ -79,14 +79,32 @@ and checked identical to the embedded ones (2026-11-09).
 - The pcbnew binding (`PCBEXPR_*`, property introspection, `pcbexpr_functions.cpp`) is the
   job of `kicad-drc`; 20 ported C++ test cases wait for it.
 
-## Duplicates to consolidate
+## Duplicates to consolidate (done in CLEAN-1)
 
-These are local copies of helpers that belong in `kicad-core` (being ported there in
-parallel). Replace them with the `kicad-core` versions once those exist and pass the same
-oracle:
+`kicad-libeval` depends on `kicad-core` and uses its ports; the local copies are gone:
 
-- `src/eda_units.rs` (`EDA_UNITS`, `EDA_IU_SCALE`, `EDA_UNIT_UTILS::UI::FromUserUnit`,
-  `DoubleValueFromString`)
-- `src/string_utils.rs` (`WildCompareString`, `UnescapeString`, `ApplyModifier`,
-  `convertSeparators`, `SplitString`, `QuacksLikeADuck`, `UIDouble2Str`)
-- `src/crt.rs` (`strtod`/`ToDouble`, `printf %f/%g`, ctype, case mapping emulation)
+- `src/eda_units.rs` re-exports `kicad_core`'s `EdaUnits`, `EdaDataType`, `EdaIuScale`,
+  `PCB_IU_SCALE` and `eda_units::ui::from_user_unit`; `double_value_from_string` /
+  `double_value_from_string_with_units` keep their names and signatures as one-line wrappers
+  of `kicad_core::eda_units::ui::double_value_from_string_unscaled` /
+  `double_value_from_string` (the names differ between the crates). `kicad-core` gained
+  `EdaUnits::as_i32` / `from_i32` and the `Default`s (`Unscaled`, `Distance`) this crate's
+  types had.
+- `src/string_utils.rs` re-exports `kicad_core::string_utils`' `wild_compare_string`,
+  `unescape_string`, `apply_modifier`, `convert_separators`, `split_string`,
+  `quacks_like_a_duck`, `ui_double2_str`. Two differences were resolved in `kicad-core`
+  rather than by keeping copies: `UnescapeString` there now uses this crate's explicit-stack
+  form (same algorithm; deep nesting cannot overflow the stack), and `wxString::CmpNoCase` /
+  `IsSameAs( .., false )` there is now the chunked wx 3.2 algorithm (it compares past embedded
+  NULs, as this crate's copy did; the old `kicad-core` one stopped at the first NUL and
+  returned the raw difference instead of -1/0/1).
+- `src/crt.rs` re-exports `kicad_core::wxstr` (`strtod`, `to_double`, case mapping,
+  `IsSameAs`) and `kicad_core::printf::format_f`; only `isalpha` / `isalnum` / `atof` (not in
+  `kicad-core`) are local. `kicad-core`'s `strtod` also accepts `inf` / `nan` / hex floats;
+  every call site here filters its input to digits, separators and signs first, so this does
+  not change results.
+- `NumericEvaluator::is_old_school_decimal_separator` stays here (it is part of the ported
+  class; `kicad-core` has an equal free-function copy for `QuacksLikeADuck`).
+
+Proof: all oracle goldens of this crate still match (`oracle_golden`: curated and generated
+cases; `test_numeric_evaluator`, `libeval_*`), as do `kicad-core`'s tests.

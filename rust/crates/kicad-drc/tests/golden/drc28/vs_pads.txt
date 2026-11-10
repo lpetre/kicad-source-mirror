@@ -1,0 +1,1 @@
+error	hole_aspect_ratio	Aspect ratio 8.80 exceeds the 6.00 limit	00000000-0000-0000-0028-0000000000a5	PTH pad 1 [<no net>] of 	10.0	10.0

@@ -51,7 +51,6 @@ use crate::ids::{Body3dId, FootprintId, ItemId};
 use crate::io::{FIRST_FP_AFFINE_TRANSFORM, LEGACY_NET_TIES, SEXPR_FOOTPRINT_LIB_FILE_VERSION};
 use crate::item::ParentRef;
 use crate::item_ref::OwnedItem;
-use crate::padstack::PadAttrib;
 use crate::pcb_3d_body::{ExtrusionMaterial, Pcb3dBody};
 use crate::pcb_field::{FieldT, PcbField};
 use crate::traits::BoardItemMut;
@@ -728,8 +727,9 @@ impl PcbParser {
             token = self.lexer.next_tok()?;
         }
 
+        // footprint->FixUpPadsForBoard( m_board ): a no-op without a board
         if self.board_present {
-            self.fix_up_pads_for_board(fp);
+            self.board.footprint_fix_up_pads_for_board(fp);
         }
 
         // In legacy files the lack of attributes indicated a through-hole component which was
@@ -1196,33 +1196,6 @@ impl PcbParser {
         }
 
         self.add_fp_child(fp, OwnedItem::Zone(Box::new(zone)));
-    }
-
-    /// Port of `FOOTPRINT::FixUpPadsForBoard( BOARD* aBoard )` (`pcbnew/footprint.cpp`), called
-    /// at the end of `parseFOOTPRINT_unchecked` with a board: in `EXPAND_INNER_LAYERS` mode
-    /// every PTH pad gets all copper layers of the board. Not on the footprint model yet
-    /// (change request); the caller tests `aBoard`.
-    fn fix_up_pads_for_board(&mut self, fp: FootprintId) {
-        if self.fp_mut(fp).stackup_mode != FootprintStackup::ExpandInnerLayers {
-            return;
-        }
-
-        let board_copper = Lset::all_cu_mask_n(self.board.copper_layer_count());
-
-        let pth_pads: Vec<_> = self
-            .board
-            .footprint_pads(fp)
-            .filter(|(_, pad)| pad.attribute() == PadAttrib::Pth)
-            .map(|(id, _)| id)
-            .collect();
-
-        for pad in pth_pads {
-            self.board.modify_pad(pad, |p, env| {
-                let mut pad_layers = p.padstack.layer_set().clone();
-                pad_layers |= &board_copper;
-                p.set_layer_set(env, pad_layers);
-            });
-        }
     }
 
     /// Port of `parse3DModel( bool aFileNameAlreadyParsed )`: `(model "file" (hide ..)

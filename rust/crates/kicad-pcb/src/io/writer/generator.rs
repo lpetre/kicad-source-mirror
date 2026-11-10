@@ -163,15 +163,14 @@ impl PcbWriter<'_> {
     }
 
     /// `Format( item )` of a generator template item (`PCB_VIA_STITCH`'s via template), which
-    /// is owned by the generator and not stored in the board arena.
-    ///
-    /// The track formatter of PCBIO-03 (`format_track`) only accepts arena handles; until it
-    /// gains a variant taking a `&Track` (change request of PCBIO-13) the template is a
-    /// staging skip: "port pending: generator template (PCBIO-13)", or nothing written with
-    /// `allow_pending`.
+    /// is owned by the generator and not stored in the board arena: the track formatter
+    /// (`format_track_item`). No generator of this tree holds a template of another type; one
+    /// would be a staging skip ("port pending: generator template (PCBIO-13)").
     fn format_template_item(&mut self, template: &OwnedItem) -> Result<(), IoError> {
-        let _ = template;
-        self.pending("generator template", "PCBIO-13")
+        match template {
+            OwnedItem::Track(track) => self.format_track_item(track),
+            _ => self.pending("generator template", "PCBIO-13"),
+        }
     }
 
     /// Port of `format( const PCB_CONSTRAINT* aConstraint )`: `(constraint (type t) (uuid ..)

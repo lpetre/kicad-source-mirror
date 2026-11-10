@@ -408,6 +408,15 @@ static std::string runScript( const std::vector<std::vector<std::string>>& aLine
             int      w = t.n();
             base->Rect( a, b, f, w, 0 );
         }
+        else if( op == "RRECT" )
+        {
+            VECTOR2I a = t.pt();
+            VECTOR2I b = t.pt();
+            FILL_T   f = t.fill();
+            int      w = t.n();
+            int      r = t.n();
+            base->Rect( a, b, f, w, r );
+        }
         else if( op == "TRECT" )
         {
             VECTOR2I a = t.pt();

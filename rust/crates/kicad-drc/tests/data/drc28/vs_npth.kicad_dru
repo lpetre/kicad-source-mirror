@@ -1,0 +1,4 @@
+(version 1)
+(rule "drc28"
+    (constraint hole_aspect_ratio (max 6.0))
+)

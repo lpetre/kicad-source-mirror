@@ -42,7 +42,7 @@ use kicad_drc::engine::implicit_condition::EngineCondition;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::engine::{ConstraintMap, DrcEngine, PROVIDER_ORDER};
 use kicad_drc::exclusion::KiapiDrcExclusionCodec;
-use kicad_drc::rule::{DrcConstraintExt, DrcRule};
+use kicad_drc::rule::DrcRule;
 use kicad_drc::rule_parser::default_layer_choices;
 use kicad_drc::{DrcConstraintT, DrcImplicitSource};
 use kicad_pcb::Board;

@@ -30,7 +30,7 @@ INC="-I$BUILD -I$BUILD/common -I$KICAD/include -I$KICAD/libs/core/include -I$KIC
 LIBS=$(cd "$BUILD" && grep -A3 "^build kicad/kicad-cli:" build.ninja | grep LINK_LIBRARIES | sed 's/^ *LINK_LIBRARIES = //')
 
 # shellcheck disable=SC2086
-(cd "$BUILD" && ${CXX:-c++} -std=c++20 -O1 -w -DNDEBUG $(wx-config --cxxflags core,base) $INC \
+(cd "$BUILD" && flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 ${CXX:-c++} -std=c++20 -O1 -w -DNDEBUG $(wx-config --cxxflags core,base) $INC \
     -o "$OUT/svg_text_oracle" "$HERE/svg_text_oracle.cpp" -Wl,--start-group $LIBS -Wl,--end-group)
 
 echo "built $OUT/svg_text_oracle"

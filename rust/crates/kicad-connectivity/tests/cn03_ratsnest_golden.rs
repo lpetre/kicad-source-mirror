@@ -99,13 +99,22 @@ fn cache_triangulation(board: &mut Board) {
     }
 }
 
+/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
+/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+fn board_path(name: &str) -> std::path::PathBuf {
+    if name.starts_with("rev_") {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/golden/cn04")
+            .join(format!("{name}.kicad_pcb"))
+    } else {
+        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
+    }
+}
+
 /// Parses a board completely; `None` (with a message) when the parser reached a model stub or
 /// skipped footprints / zones.
 fn load(name: &str) -> Option<Board> {
-    load_path(
-        name,
-        &kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb")),
-    )
+    load_path(name, &board_path(name))
 }
 
 fn load_path(name: &str, path: &std::path::Path) -> Option<Board> {
@@ -407,6 +416,12 @@ const BOARDS: &[&str] = &[
     "via_stack_track_width",
     "zone_thieving_track_bisection",
     "bad_triangulation_case",
+    // REV-CN: synthetic boards of gen_cn04.py (tests/golden/cn04/): zone contact paths, the
+    // via-net rule, islands, a teardrop zone, copper graphics, pad-less net propagation
+    "rev_zone_contacts",
+    "rev_ratsnest_zones",
+    "rev_shapes",
+    "rev_order_probe",
 ];
 
 #[test]
@@ -553,7 +568,14 @@ fn cn03_ratsnest_spans_clusters() {
     let mut boards = 0;
     let mut nets_checked = 0;
 
-    for name in cpp_boards.iter().chain(BOARDS) {
+    // The REV-CN boards are left out: they hold clusters made of zone outlines only, which a
+    // full build gives no anchor (connectivity-zones.md R-5), so the reference build has fewer
+    // edges than `clusters - 1` there too (their `rn_net` goldens say so). The C++ test runs
+    // after FillZones, which re-adds the zones with anchors.
+    for name in cpp_boards
+        .iter()
+        .chain(BOARDS.iter().filter(|n| !n.starts_with("rev_")))
+    {
         let Some(board) = load(name) else {
             continue;
         };

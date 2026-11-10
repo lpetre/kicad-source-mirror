@@ -230,7 +230,26 @@ Progress log:
   and REV-DRC (DRC engine core: EvalRules, rule parser, report order) (wh0st1sds); they write
   docs/design/review-connectivity.md and review-drc-core.md and may write FIX-CN-<n> /
   FIX-DRC-<n> packages to launch.
-  READY TO LAUNCH (package files written): after PCBIO-07 finishes (workflow w3kdexuvx):
+  02:50 UTC: the two dedicated Fable reviews are back (wh0st1sds).
+  REV-CN (docs/design/review-connectivity.md): 0 blockers. A new C++ driver
+  (/home/user/kicad-oracle/bin/cn-order-oracle) measured the reference's heap order at all 25
+  pointer-ordered sites: it is neither file order nor stable between runs (2-12 % of the
+  connected lists deviate after load, 24-56 % after the DRC rebuild), so there is no reference
+  order to reproduce; the port's list / ItemId order stays and such results are compared
+  tie-aware. One real bug found and fixed (F-2: SHAPE_SEGMENT collision is asymmetric and the
+  C++ tests a dirty pair from both sides; the port missed an odd-width / even-width track
+  pair). Open: F-1 ratsnest ends under ties -> FIX-CN-1 (launched, Opus); minor F-6..F-10.
+  REV-DRC (docs/design/review-drc-core.md): 0 blockers, no port code had to change; the
+  user-rule half of EvalRules got differential coverage (4 review boards x 1570 lines,
+  identical). Open: R-01 rule identity behind GetParentRule -> FIX-DRC-1 (launch after INT-2a,
+  it needs kernel file drc_api.rs); R-02 DrcEngine::run_tests cannot drive a real run (DRC-12
+  settles it); R-06 pad branches unverified until the pad parser lands. Lists of places where
+  the reference itself is not reproducible (thread pool at error limits, GetObjectsAt hash
+  order, pointer-keyed maps) are in both documents: the campaign compares those as sets.
+  Tests of other packages failing at review time (to recheck in the campaign):
+  drc21_pcbexpr (8), drc24_courtyard_text (2: courtyard cases once footprints started to
+  load).
+  READY TO LAUNCH (package files written): after INT-2a: [FIX-DRC-1]; after PCBIO-07 finishes (workflow w3kdexuvx):
   [PCBIO-14]; after the FAB chain (wb9xlvw89): [FAB-10], [FAB-11], [FAB-12] (one agent at a
   time in kicad-fab: chain them); after DRC-12, FAB-07 / 08 and PCBIO-15: [WIRE-1]
   (session / CLI / wasm end-to-end wiring + e2e differential scoreboard + browser demo). After pads parse: the dedicated Fable reviews (connectivity, DRC resolver /

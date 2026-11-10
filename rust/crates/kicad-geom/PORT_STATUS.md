@@ -891,7 +891,8 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   `SHAPE_INDEX` in the interactive router, which is out of scope (the port's `ShapeIndex` uses
   `DynamicRTree`, D-C2).  Its 6 tests (suite `CowRTree` of `test_dynamic_rtree.cpp`) are not
   ported either.
-- **GAP-5 `polygon_triangulation.h`** (closed in G4b).
+- **GAP-T5 `polygon_triangulation.h`** (closed in G4b; listed as GAP-5 in the G4b summary
+  above, a different gap from the `TransformToPolygon` GAP-5 closed in G6b).
 - **GAP-6 nanoflann subset.** Only what KiCad uses is ported: the static single-index kd-tree
   with the L2 metric (`L2_Simple_Adaptor`), `KNNResultSet` (without `NANOFLANN_FIRST_MATCH`),
   `RadiusResultSet`, `knnSearch`, `radiusSearch`, `findNeighbors` with `SearchParameters`.
@@ -902,3 +903,26 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   `std::sort` tie order, and therefore r-tree visit orders and delaunator outputs, match KiCad
   built with g++/libstdc++; KiCad builds with libc++ or MSVC differ from it (and from each
   other) in those cases.
+
+## CLEAN-1 (consolidation)
+
+- `stdsort::StdSet` / `stdsort::std_set_order`: the libstdc++ red-black tree insertion of
+  `std::set` (`_M_insert_unique`, the hinted `_M_insert_unique_( end(), v )` of the range
+  constructor, `_Rb_tree_insert_and_rebalance`), moved here from `kicad-pcb`'s writer, for
+  `std::set<T, CMP>` with comparators that are not strict weak orderings
+  (`EDA_SHAPE::Compare`). Verified against g++ 13 / libstdc++ by `tests/oracle_stdset.rs`
+  (6,000 random sequences, hinted and plain insertion, transitive / epsilon / tournament /
+  cyclic / neighbour-only comparators; driver `tests/oracle/stdset_oracle.cpp`): all match.
+  Comparators must be irreflexive and asymmetric (otherwise libstdc++ itself has undefined
+  behaviour).
+- `mirror_val` / `mirror` / `mirror_point` (`MIRRORVAL` / `MIRROR`) wrap on `int` overflow
+  like the reference build (trait `MirrorValue`: wrapping for the integer types, the plain
+  expression for `f32` / `f64`); `ShapeLineChain::mirror` and `ShapeArc::mirror`
+  (`-p + 2 * ref`) wrap as well. Verified by `tests/oracle_mirror.rs` against `MIRROR()` and
+  libkimath's `SHAPE_LINE_CHAIN::Mirror` / `SHAPE_ARC::Mirror` (4,000 cases with coordinates
+  whose mirror image leaves the `int` range; driver `tests/oracle/mirror_oracle.cpp`): all
+  match. Known gap: `ShapeArc::update_values` (the arc constructor) still panics on overflow
+  for points near the `int` limits (C++: undefined behaviour), so the arc cases of that oracle
+  use in-range arcs.
+- Docs: `docs/design/geom-shapes.md` no longer describes `unsupported_g5` as the route of
+  not-yet-ported pairs; the second GAP-5 entry (triangulation) is renamed GAP-T5.

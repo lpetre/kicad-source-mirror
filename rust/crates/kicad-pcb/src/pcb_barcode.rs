@@ -274,7 +274,12 @@ impl BoardItemMut for PcbBarcode {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbBarcode::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, _env: &MutEnv, settings: &BoardDesignSettings, check_side: bool) {
+    fn style_from_settings(
+        &mut self,
+        _env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
         PcbBarcode::style_from_settings(self, settings, check_side)
     }
 }
@@ -1464,7 +1469,13 @@ mod tests {
     }
 
     fn v_box(b: &Box2I) -> String {
-        format!("{},{},{},{}", b.origin().x, b.origin().y, b.width(), b.height())
+        format!(
+            "{},{},{},{}",
+            b.origin().x,
+            b.origin().y,
+            b.width(),
+            b.height()
+        )
     }
 
     fn barcode_of<'a>(board: &'a Board, uuid: &str) -> &'a PcbBarcode {
@@ -1578,7 +1589,8 @@ mod tests {
         assert_eq!(b.text.base.layer, PcbLayerId::DwgsUser);
         assert_ne!(b.angle(&ctx), angle_before);
 
-        fx.board.modify_barcode(id, |b, env| b.set_layer(env, PcbLayerId::FSilkS));
+        fx.board
+            .modify_barcode(id, |b, env| b.set_layer(env, PcbLayerId::FSilkS));
         fx.board.modify_barcode(id, |b, env| {
             let p = b.position_env(env);
             b.flip(env, p, FlipDirection::LeftRight);
@@ -1606,7 +1618,7 @@ mod tests {
         barcode.set_text_size(&env, 1_500_000);
         barcode.set_kind(BarcodeT::QrCode);
         barcode.set_error_correction(BarcodeEccT::M);
-        let uuid = barcode.base.uuid.clone();
+        let uuid = barcode.base.uuid;
         let id = board.add_barcode(barcode, crate::board::AddMode::Append);
 
         let text = format_board(&board, &FormatOptions::default()).unwrap();
@@ -1731,7 +1743,7 @@ mod tests {
                 canonical_poly.is_empty(),
                 "Test case {i} ({text}): barcode poly isn't aligned with canonical shape"
             );
-    
+
             board.add_barcode(barcode, crate::board::AddMode::Append);
         }
 
@@ -1777,7 +1789,10 @@ mod tests {
             "PN12345_1.0"
         );
 
-        let (a, b) = (board[var].symbol_poly(&ctx), board[reference].symbol_poly(&ctx));
+        let (a, b) = (
+            board[var].symbol_poly(&ctx),
+            board[reference].symbol_poly(&ctx),
+        );
         assert_eq!(a.outline_count(), b.outline_count());
         assert_eq!(a.bbox(0).width(), b.bbox(0).width());
         assert_eq!(a.bbox(0).height(), b.bbox(0).height());
@@ -1853,7 +1868,11 @@ mod tests {
         assert!(PcbBarcode::compare(&ctx, &c, &b) > 0);
         b.set_text("A");
         assert_eq!(
-            b.item_description(&ctx, &UnitsProvider::new(&PCB_IU_SCALE, kicad_core::eda_units::EdaUnits::Mm), false),
+            b.item_description(
+                &ctx,
+                &UnitsProvider::new(&PCB_IU_SCALE, kicad_core::eda_units::EdaUnits::Mm),
+                false
+            ),
             "Barcode 'A' on User.Drawings"
         );
 
@@ -1863,5 +1882,198 @@ mod tests {
         assert_eq!((mqr.symbology, mqr.option_1, mqr.eci), (97, 3, 0));
         let c39 = zint_options(BarcodeT::Code39, "AB", BarcodeEccT::L);
         assert_eq!((c39.symbology, c39.option_1, c39.eci), (8, -1, 0));
+    }
+
+    /// The `(barcode ..)` blocks of `kicad-cli pcb upgrade --force` of `FRAMES_BOARD`
+    /// (reference build), one trimmed line per token line.
+    const FRAMES_RESAVE: &str = r#"(barcode
+(at 2 3 15)
+(layer "F.SilkS")
+(size 6 6)
+(text "")
+(text_height 1)
+(type qr)
+(ecc_level M)
+(hide no)
+(knockout yes)
+(margins 0.5 0.7)
+(uuid "10000000-0000-0000-0000-000000000004")
+)
+(barcode
+(at -4 1 0)
+(layer "F.SilkS")
+(size 8 3)
+(text "FPCODE")
+(text_height 1)
+(type code128)
+(hide no)
+(knockout no)
+(uuid "10000000-0000-0000-0000-000000000005")
+)
+(barcode
+(at 3.3 -1.7 33)
+(layer "F.SilkS")
+(size 7 7)
+(text "")
+(text_height 1.2)
+(type microqr)
+(ecc_level Q)
+(hide no)
+(knockout yes)
+(margins 1.1 0.3)
+(uuid "30000000-0000-0000-0000-000000000004")
+)
+(barcode
+(at -2 1 0)
+(layer "F.Fab")
+(size 9 2)
+(text "SCALE")
+(text_height 1.2)
+(type code39)
+(hide yes)
+(knockout no)
+(uuid "30000000-0000-0000-0000-000000000005")
+)
+(barcode
+(at 1.5 -2 45)
+(layer "B.SilkS")
+(size 5 5)
+(text "")
+(text_height 0.8)
+(type datamatrix)
+(hide no)
+(knockout yes)
+(uuid "20000000-0000-0000-0000-000000000004")
+)
+(barcode
+(at -1 2.5 340)
+(layer "B.SilkS")
+(size 4 4)
+(text "BACK")
+(text_height 0.8)
+(type qr)
+(ecc_level H)
+(hide no)
+(knockout yes)
+(uuid "20000000-0000-0000-0000-000000000005")
+)
+(barcode
+(at 60 20 90)
+(layer "F.Cu")
+(size 10 10)
+(text "")
+(text_height 1)
+(type qr)
+(ecc_level L)
+(hide no)
+(knockout no)
+(uuid "40000000-0000-0000-0000-000000000003")
+)
+(barcode
+(at 80 20 315)
+(layer "B.Cu")
+(size 10 10)
+(text "HELLO")
+(text_height 1)
+(type qr)
+(ecc_level L)
+(hide no)
+(knockout yes)
+(uuid "40000000-0000-0000-0000-000000000004")
+)
+(barcode
+(at 20 20 0)
+(layer "F.SilkS")
+(size 10 10)
+(text "")
+(text_height 1)
+(type qr)
+(ecc_level L)
+(hide no)
+(knockout yes)
+(uuid "40000000-0000-0000-0000-000000000001")
+)
+(barcode
+(at 40 20 37.5)
+(layer "B.SilkS")
+(size 12 8)
+(text "")
+(text_height 1)
+(type code39)
+(hide no)
+(knockout yes)
+(margins 2 3)
+(uuid "40000000-0000-0000-0000-000000000002")
+)
+(barcode
+(at 80.123456 21.654321 0)
+(layer "Dwgs.User")
+(size 0 0)
+(text "")
+(text_height 1)
+(type datamatrix)
+(hide no)
+(knockout yes)
+(uuid "40000000-0000-0000-0000-000000000005")
+)"#;
+
+    /// The `(barcode` blocks of a prettified board file, lines trimmed.
+    fn barcode_blocks(text: &str) -> Vec<String> {
+        let lines: Vec<&str> = text.lines().collect();
+        let mut out = Vec::new();
+        let mut i = 0;
+
+        while i < lines.len() {
+            if lines[i].trim() == "(barcode" {
+                let indent = &lines[i][..lines[i].len() - lines[i].trim_start().len()];
+                let mut j = i;
+
+                while lines[j] != format!("{indent})") {
+                    j += 1;
+                }
+
+                let block: Vec<&str> = lines[i..=j].iter().map(|l| l.trim()).collect();
+                out.push(block.join("\n"));
+                i = j + 1;
+            } else {
+                i += 1;
+            }
+        }
+
+        out
+    }
+
+    /// Byte level: the Rust parser + writer re-save the barcodes of `FRAMES_BOARD` like the
+    /// reference `pcb upgrade --force` (position and angle from `GetPosition` / `GetAngle`
+    /// through the footprint frames). The scaled footprint's two blocks differ in
+    /// `text_height` until the writer writes the board-frame `GetTextSize()` (change request
+    /// of package M25a); they are checked apart from that line.
+    #[test]
+    fn resave_matches_oracle() {
+        let board = parse_board(FRAMES_BOARD, "barcode_frames", &ParseOptions::default()).unwrap();
+        let text = format_board(&board, &FormatOptions::default()).unwrap();
+        let got = barcode_blocks(&text);
+        let want: Vec<&str> = FRAMES_RESAVE.split("\n)\n").collect();
+        assert_eq!(got.len(), want.len());
+
+        for (g, w) in got.iter().zip(want) {
+            let w = if w.ends_with("\n)") {
+                w.to_string()
+            } else {
+                format!("{w}\n)")
+            };
+
+            if w.contains("30000000-0000-0000-0000-00000000000") {
+                let strip = |b: &str| {
+                    b.lines()
+                        .filter(|l| !l.starts_with("(text_height"))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                };
+                assert_eq!(strip(g), strip(&w));
+            } else {
+                assert_eq!(g, &w);
+            }
+        }
     }
 }

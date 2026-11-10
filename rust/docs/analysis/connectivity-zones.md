@@ -1135,6 +1135,14 @@ deleting teardrops.
   sort), so use the creation index as the key. glibc may reuse freed buffers (the `clusters`
   vector growth, `m_items.reserve( 64 )`), so the C++ order is not guaranteed - document
   mismatches found by the oracle.
+  **Measured (review REV-CN, `docs/design/review-connectivity.md` section 2):** the
+  reference's heap order is neither list / file order nor stable. After loading, 2-12 % of the
+  `m_connected` vectors of six demo boards deviate from list order; after the rebuild a DRC
+  run performs, 24-56 %; identical runs give different address orders. There is no reference
+  order to reproduce for R-1 / R-2: the port keeps list index / `ItemId` / cluster creation
+  order, and every differential comparison of a result that takes "the first" of such a
+  container (or emits markers in such an order) must be tie-aware / set-based (25-site table
+  in the review; ratsnest ties: package FIX-CN-1).
 * **R-3 Unstable `std::sort`** in `SearchClusters` (OriginNet ties) and
   `optimizeZoneToZoneAnchors` (distance ties): use `kicad_geom::stdsort` (PORTING.md 9).
 * **R-4 Layer ordinals.** Connectivity layer ranges are copper ordinals (B_Cu = 31), not layer

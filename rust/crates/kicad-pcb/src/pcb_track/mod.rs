@@ -70,9 +70,7 @@ use crate::item::{BoardItemBase, ConnectedItemBase, ItemFlags, RecurseMode, Shar
 use crate::item_ref::{AnyItem, ItemRef};
 use crate::netclass::Netclass;
 use crate::padstack::Padstack;
-use crate::traits::{
-    AsAnyItem, BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate,
-};
+use crate::traits::{AsAnyItem, BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate};
 use crate::{board_connected_item, board_item};
 
 /// Element type of `Board::tracks` (C++ `TRACKS` holds `PCB_TRACK*`, `PCB_ARC*` and

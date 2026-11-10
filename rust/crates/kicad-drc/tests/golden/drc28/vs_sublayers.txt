@@ -1,0 +1,1 @@
+error	hole_aspect_ratio	Aspect ratio 1.57 exceeds the 1.20 limit	00000000-0000-0000-0028-000000000098	Micro via [<no net>] on F.Cu - In1.Cu	10.0	10.0

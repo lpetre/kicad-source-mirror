@@ -1,0 +1,2 @@
+error	hole_aspect_ratio	Aspect ratio 2.06 exceeds the 1.00 limit	00000000-0000-0000-0028-000000000090	Micro via [<no net>] on F.Cu - In1.Cu	10.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	00000000-0000-0000-0028-000000000090	Micro via [<no net>] on F.Cu - In1.Cu	10.0	10.0

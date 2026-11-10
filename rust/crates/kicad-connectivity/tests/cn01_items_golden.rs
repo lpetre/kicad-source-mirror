@@ -206,9 +206,21 @@ fn item_fields(ctx: &BoardCtx<'_>, item: &CnItem) -> BTreeMap<&'static str, Stri
     f
 }
 
+/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
+/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+fn board_path(name: &str) -> std::path::PathBuf {
+    if name.starts_with("rev_") {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/golden/cn04")
+            .join(format!("{name}.kicad_pcb"))
+    } else {
+        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
+    }
+}
+
 fn check_board(name: &str) -> Option<usize> {
     let golden = read_golden(name);
-    let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
+    let path = board_path(name);
     let text = std::fs::read_to_string(&path).unwrap();
     // Constructs whose parser package has not landed yet are skipped (and reported below); the
     // comparison then leaves out the golden items of those kinds.
@@ -335,6 +347,12 @@ const BOARDS: &[&str] = &[
     "issue14334",
     "notched_zones",
     "issue9870",
+    // REV-CN: synthetic boards of gen_cn04.py (tests/golden/cn04/): zone contact paths, the
+    // via-net rule, islands, a teardrop zone, copper graphics, pad-less net propagation
+    "rev_zone_contacts",
+    "rev_ratsnest_zones",
+    "rev_shapes",
+    "rev_order_probe",
 ];
 
 /// Every golden board whose parse does not reach a model stub is compared field by field;

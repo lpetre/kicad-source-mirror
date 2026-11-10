@@ -84,7 +84,12 @@ impl<'c> DrcTestProviderZoneConnections<'c> {
     /// The C++ submits one task per (zone, layer) to the thread pool and polls the progress
     /// every 250 ms; the port runs the tasks in list order (a cancelled run skips the remaining
     /// ones, as the C++ tasks do) and does not reproduce the timing-dependent progress calls.
-    pub fn run(&mut self, engine: &DrcEngine, run: &mut DrcRunState<'_>, ctx: &BoardCtx<'_>) -> bool {
+    pub fn run(
+        &mut self,
+        engine: &DrcEngine,
+        run: &mut DrcRunState<'_>,
+        ctx: &BoardCtx<'_>,
+    ) -> bool {
         let mut host = RunHost(run);
 
         if !self
@@ -345,9 +350,11 @@ impl<'c> DrcTestProviderZoneConnections<'c> {
                     }
                 }
 
-                let connected: Vec<ItemId> =
-                    self.connectivity
-                        .connected_items(&BoardCtx::bare(board), pad_item_id, EXCLUDE_ZONES);
+                let connected: Vec<ItemId> = self.connectivity.connected_items(
+                    &BoardCtx::bare(board),
+                    pad_item_id,
+                    EXCLUDE_ZONES,
+                );
 
                 for item_id in connected {
                     let Some(shape_ref) = ctx.item(item_id) else {

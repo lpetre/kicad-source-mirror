@@ -2564,8 +2564,7 @@ impl ShapePolySet {
     /// VECTOR2I* aLocation )`.
     ///
     /// Segments and circles are handled directly.  Every other shape is tested against the
-    /// cached triangulation in C++ (`AnyTriangleHit`), which is package G4b: until then the
-    /// port returns false for them (like `shape_collisions::unsupported_g5`).
+    /// cached triangulation (`AnyTriangleHit`).
     pub fn collide_shape(
         &self,
         a_shape: &dyn Shape,

@@ -12,7 +12,7 @@ Crate layout (connectivity-zones.md 10.1): one module per C++ file. `algo`, `edg
 | `CN_ZONE_LAYER` (`BuildIndexes`, `ContainsPoint`, `Collide`, `HasSingleConnection`, anchors) | `items::CnZoneLayer` (the zone part of a `CnItem`) | ported |
 | `CN_LIST` (`Add` for pad / track / arc / via / zone / zone layer / shape, bulk add, `RemoveInvalidItems`, `ClearDirtyFlags`, `FindNearby`, `appendItem` / list indices) | `items::CnList` | ported |
 | `CN_CLUSTER` (`Add` net ranking, origin pad, conflicting, `Contains`) | `items::CnCluster` | ported |
-| `PCB_SHAPE::GetConnectionPoints` (board-level shapes) | `items::pcb_shape_connection_points` | ported here temporarily (belongs to kicad-pcb, change request) |
+| `PCB_SHAPE::GetConnectionPoints` (board-level shapes) | moved to kicad-pcb (`PcbShape::connection_points`, the CN-01 change request); `CnList::add_shape` calls it | ported (in kicad-pcb); verified through the anchors of the `rev_shapes` / `test_copper_graphics` goldens |
 | `connectivity_rtree.h` `CN_RTREE` | `rtree::CnRtree` over `kicad_geom` `DynamicRTree<_, 3>` | ported |
 
 Ported tests / verification:
@@ -39,7 +39,8 @@ Ported tests / verification:
 
 - `CN_ITEM::m_connected` is sorted by `CnItemId` (= list order) instead of heap address
   (connectivity-zones.md R-1, board-model.md 3.1). The dump prints `connected` in list order
-  for the same reason.
+  for the same reason. REV-CN measured the reference: its order is neither list order nor
+  stable (see "REV-CN" below and `docs/design/review-connectivity.md`).
 - `CnItem::bbox()` has no side effect: C++ `BBox()` recomputes the box lazily and clears the
   dirty flag; the parent cannot change while the list lives, so the value is identical; the
   only effect of the flag in C++ is a symmetric pair being tested from both sides
@@ -88,10 +89,10 @@ Verification:
   parse skipped footprints are compared on `connected` (restricted to items both sides have)
   and on the propagation clusters whose golden members all exist on the Rust side. Every
   board with a zone currently stops in the parser at the `ZONE::SetLayerSetAndRemoveUnusedFills`
-  model stub, so **the zone contact paths (`checkZoneItemConnection`,
-  `checkZoneZoneConnection`), the deferred via-net rule and the island map are not yet
-  verified against C++**; pads (footprint parser) likewise. The test compares them
-  automatically once those parser packages land.
+  model stub, so at CN-02 hand-over the zone contact paths (`checkZoneItemConnection`,
+  `checkZoneZoneConnection`), the deferred via-net rule and the island map were not
+  verified against C++. **They are now** (zone parser landed; REV-CN boards `rev_*`, see
+  "REV-CN" below); pads still wait for the pad parser (PCBIO-07).
 - `tests/cn02_union_find.rs`: port of `qa/tests/common/test_union_find.cpp` (7 cases; the
   two threaded cases interleave the edges serially as 4 threads would).
 - `cn02_clusters_are_connected_components` (same file as the golden test): port of the
@@ -101,11 +102,17 @@ Verification:
 
 ### Deviations (CN-02)
 
-- Contact search: C++ skips a dirty candidate whose *address* is below the visiting item's
-  (and `BBox()` clears the dirty flag of items already visited, so some pairs are tested from
-  both sides); the port compares `CnItemId` (list order) and keeps the flags until the end of
-  the search, so each dirty pair is tested once. Contact tests are symmetric and `Connect()`
-  is order-normalising, so the graph is the same (R-1).
+- Contact search: C++ skips a dirty candidate whose *address* is below the visiting item's;
+  `BBox()` clears the dirty flag of an item when its own search starts, so a pair of dirty
+  items is always tested by the visitor that runs later and also by the earlier one unless
+  the later item has the lower address. The port compares `CnItemId` (list order), keeps the
+  flags until the end of the search and visits each dirty pair once. The zone tests are
+  symmetric; the item / item test is **not** (`SHAPE_SEGMENT` collision rounds the half
+  widths as `( wA + 1 ) / 2 + wB / 2`), so for a pair of dirty items the port evaluates
+  `ItemsTouchOnLayer` with both operand orders (REV-CN finding F-2; before that fix an
+  odd-width track 1 nm inside the touching distance of an even-width one was left
+  unconnected when it came first in the board). Where the C++ runs only one of the two
+  visitors on such a pair its result depends on the heap; the port gives the result of both.
 - Candidates of one r-tree query are collected before being visited (the visitor mutates the
   list); nothing the visitor reads changes during a search, so the order is irrelevant.
 - Deferred via nets are grouped by `CnItemId` instead of sorted by pointer (groups are
@@ -127,7 +134,7 @@ Verification:
 
 ### Known gaps (CN-02)
 
-- See verification: zones, pads and the via-net rule await the parser packages.
+- Pads await the pad parser (PCBIO-07); zones and the via-net rule are verified (REV-CN).
 - `ZONE::CacheTriangulation` is a model stub: callers (and the tests) triangulate the fills
   before `build`.
 
@@ -177,8 +184,11 @@ Ported tests / verification:
 
 - R-2: coincident-anchor chains are `std::sort`ed (libstdc++ port) by `CnClusterId` (cluster
   creation order) instead of `CN_CLUSTER*` heap address. The synthetic coincident board
-  matches the reference build; glibc may reuse freed blocks so the address order is not
-  guaranteed in general (connectivity-zones.md R-2).
+  matches the reference build after loading (measured by REV-CN: 0 of its 41 multi-cluster
+  chains have an address order other than the creation order). In a DRC run of the reference
+  (connectivity rebuilt by `DRC_CACHE_GENERATOR`) 17 to 32 of the 41 chains come out in
+  another order, differently from run to run: there the C++ result is not reproducible
+  (review-connectivity.md P7, F-1).
 - `kruskalMST` computes each candidate's `orderKey` once instead of on every comparison
   (positions and tags do not change during the MST: identical results).
 - Delaunator failure (`std::runtime_error` in C++, swallowed by the thread pool's `wait()` in
@@ -243,17 +253,16 @@ the existing pcb-dump):
   (vme-wren 3.3 s, jetson 1.3 s, VCU118 1.2 s; test profile). Footprints are still skipped by
   the parser, so these boards have no pads.
 
-### Pointer-order replacements (CN-04, for the reviewer)
+### Pointer-order replacements (CN-04)
 
-| C++ (`connectivity_data.cpp`) | C++ order | Port | Goldens |
-|---|---|---|---|
-| L631 `GetNetItems`: `std::sort` + `unique` of `BOARD_CONNECTED_ITEM*` | address | `ItemId` order (board-model.md 3.1 rule 2: file order within a kind; across kinds footprints, pads, tracks, zones, graphics) | no dump line: not confirmed |
-| L642 `GetConnectedTracks`: `std::set<PCB_TRACK*>` | address | `BTreeSet<ItemId>` (tracks / arcs / vias share one arena: board track order) | not confirmed |
-| L664 / L680 `GetConnectedPads`: `std::set<PAD*>` | address | `BTreeSet<ItemId>` (pad arena order = footprint / file order) | not confirmed (no pads load yet) |
-| L690 `GetConnectedPadsAndVias`: `ConnectedItems()` order | address (`m_connected` sorted by `CN_ITEM*`) | list index (CN-01, R-1) | not confirmed (teardrop order consumer is TD-01) |
-| L723 `GetZoneIslandConnections`: `std::set<const BOARD_ITEM*>` | address | `BTreeSet<ItemId>` | not confirmed |
-| L1025 / L1106 `GetRatsnestForItems` / `ForComponent`: `std::set` of items / pads | address | `BTreeSet<ItemId>` | membership only: no order effect |
-| L424 `IsConnectedOnLayer`, L805 `TestTrackEndpointDangling`: iterate `ConnectedItems()` | address | list index | order-independent results (any-true; counts, `aPos` written only on true); confirmed by the flash and `cn_dangling` goldens |
+Reviewed by REV-CN: the complete site table with what the reference build does at each site
+is in `docs/design/review-connectivity.md` (P13 .. P20 are the sites of
+`connectivity_data.cpp`). In short: `GetNetItems`, `GetConnectedTracks`, `GetConnectedPads`,
+`GetZoneIslandConnections` return `ItemId` order, `GetConnectedPadsAndVias` and
+`GetConnectedItemsAtAnchor` list order; the members are verified against the reference
+(`tests/rev_order_golden.rs`); the reference's own order is heap order, which the measurements
+show to be neither the port's order nor stable. `IsConnectedOnLayer` and
+`TestTrackEndpointDangling` do not depend on the order.
 
 ### Deviations (CN-04)
 
@@ -271,11 +280,79 @@ the existing pcb-dump):
 
 ### Known gaps (CN-04)
 
-- Pads and footprint boards are not compared until the footprint parser lands; rerun
-  `cargo test -p kicad-connectivity --test cn04_data_golden -- --nocapture` then (the pad
-  `flash` lines of `tests/golden/cn04_flash/` are compared automatically).
+- Pads and footprint boards are not compared until the pad parser (PCBIO-07) lands; the
+  goldens are in place and are compared automatically then (`cn_item` pads, the pad `flash`
+  lines of `tests/golden/cn04_flash/`, the pad queries of `tests/golden/order/`).
 - No compared board has an excluded ratsnest marker, so `UpdateRatsnestExclusions` hiding an
-  edge is not verified against C++; the zone R-tree path of `TestTrackEndpointDangling` (DRC
-  cache) is not exercised by the dump (pcb-dump boards have no DRC cache).
-- `IsConnectedOnLayer` zone-island branches only run with an empty type list (FlashLayer
-  excludes zones); not reached by any oracle case.
+  edge is not verified against C++ (it needs the project loader to create the markers; the
+  code was compared by reading, review-connectivity.md F-9). The zone R-tree path of
+  `TestTrackEndpointDangling` is implemented in `kicad-drc` (`CopperZoneRtrees`); in the
+  reference both paths give the same answers on the boards measured (review-connectivity.md 2.3).
+
+## REV-CN: review of CN-01 .. CN-04
+
+Findings, the pointer-order site table and the measurements of the reference build:
+`docs/design/review-connectivity.md`. Follow-up package: `docs/packages/FIX-CN-1.md`.
+
+Changes made by the review:
+
+| What | Where | Why |
+|---|---|---|
+| A pair of dirty items is tested with both operand orders of `ItemsTouchOnLayer` | `algo::cn_visit`, `algo::items_touch_from_both_visitors` | F-2: `SHAPE::Collide` is not symmetric and C++ tests such a pair from both visitors |
+| Golden tests accept the parser's skipped `pad` constructs (pads dropped from the comparison) | `tests/cn0[1-4]_*.rs` | F-3: the footprint parser landed before the pad parser; 6 tests failed on the tree as found |
+| Two self-consistency assertions restricted to what C++ guarantees | `tests/cn03_ratsnest_golden.rs` (`cn03_ratsnest_spans_clusters`), `tests/cn04_data_golden.rs` (`cn04_queries_are_consistent`) | F-4: the reference build violates them on boards with pad-less zone clusters / shorted zones |
+
+New oracle and coverage:
+
+- `tests/oracle/cn_order_oracle.cpp` + `build_order_oracle.sh` (binary
+  `/home/user/kicad-oracle/bin/cn-order-oracle`): links the reference pcbnew; per board and per
+  phase (after load, after a second `Build`, after a real `DRC_ENGINE::RunTests`) it measures
+  the heap order at every pointer-ordered site (CN_ITEM and BOARD_ITEM addresses against list /
+  board order, `m_connected` as stored, cluster addresses, the chains of `rn.cpp:253`), prints
+  hashes of the ratsnest and of `TestTrackEndpointDangling`, the DRC violations that follow the
+  connected order, and with `--queries` every query of `CONNECTIVITY_DATA` that has no pcb-dump
+  line (pointer-ordered results in the port's order, so that the goldens do not depend on the
+  heap).
+- Four synthetic boards in `tests/oracle/gen_cn04.py` (`tests/golden/cn04/rev_*.kicad_pcb`):
+  `rev_zone_contacts` (zone / item contact by anchor and by shape incl. exact-touch and 1 nm
+  cases, conditionally flashed, blind and buried vias, arcs; the deferred via-net rule in all
+  its branches incl. free vias; zone / zone contact incl. shared corner, shared edge, crossing
+  bars, other net, other layer; several fill outlines per layer and a two-layer zone; a net-less
+  zone; a teardrop zone, whose contact tests use the outline), `rev_ratsnest_zones`
+  (`OptimizeRNEdges`: both lambdas, more than three candidate pairs, zone-only nets),
+  `rev_shapes` (copper graphics of every kind as items, net propagation of pad-less clusters,
+  free vias, the asymmetric track pairs of F-2), `rev_order_probe` (results that follow
+  `m_connected`). Their full pcb-dump `connectivity` sections (`tests/golden/rev_*.txt`) are
+  replayed by the CN-01 .. CN-04 tests.
+- `tests/rev_order_golden.rs` replays `tests/golden/order/*.txt` (cn-order-oracle
+  `--queries`, load phase): `GetConnectedTracks`, `GetConnectedPads`,
+  `GetConnectedPadsAndVias`, `GetConnectedItems` (3 flag sets), `GetNetItems`,
+  `GetZoneIslandConnections`, `IsConnectedOnLayer` per copper layer without a type filter
+  (the zone island branches) and with the `FlashLayer` types, the ratsnest with the items of
+  the edge ends, `FillIsolatedIslandsMap( map, true )` (the DRC path) in push order. 22 boards
+  (6 synthetic, 16 corpus boards with pads); 7 load today (841 lines, 0 mismatches), the
+  others wait for the pad parser.
+
+State after the review (`cargo test -p kicad-connectivity`): cn01 23 of 23 boards, 2578 fields;
+cn02 34 of 34 boards (19 fully), 2711 fields; cn03 19 boards, 185 fields + 7 random boards,
+141 fields; cn04 15 golden boards, 931 fields + 8 synthetic boards, 3538 fields; rev order 7
+boards, 841 lines; 0 mismatches everywhere. `cn04_corpus_build`: 375 files, 374 built, 0 panics.
+
+### Deviations (REV-CN)
+
+- Every result that follows the order of `CN_ITEM::m_connected`, of `std::set` / `std::sort`
+  of item pointers or of `CN_CLUSTER` addresses is heap dependent in the reference build and
+  cannot be reproduced: the port uses list / `ItemId` / cluster creation order. Outputs this
+  reaches (review-connectivity.md, F-1): the item and position of a ratsnest edge end moved by
+  `OptimizeRNEdges` when candidates tie, the edges between coincident anchors of different
+  clusters, and in the consumers the "first connected item" choices of the DRC connectivity
+  provider, the first pad of a via in the length calculation and the creation order of
+  teardrops.
+
+### Known gaps (REV-CN)
+
+- Pads (PCBIO-07): contact rules of pads, `CN_LIST::Add( PAD* )` anchors, the origin pad
+  ranking and conflicting clusters, `HasSingleConnection` (a zone island is only not orphaned
+  with a pad), jumper pads, the pad branches of `IsConnectedOnLayer`: verified by unit tests
+  only; goldens waiting.
+- Ratsnest exclusions (F-9), `NearestBicoloredPair`, `CN_ANCHOR::IsDangling` (tier 3).

@@ -129,9 +129,12 @@ fn eda_shape_compare(a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32 {
     }
 }
 
-/// `PCB_TABLE::Compare`: the table package (M11) has no Rust counterpart yet.
+/// `PCB_TABLE::Compare( aTable, aOther )` (0 if either item is not a table).
 fn pcb_table_compare(a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32 {
-    crate::port_pending!("PCB_TABLE::Compare", a, b)
+    match (a.as_table(), b.as_table()) {
+        (Some(ta), Some(tb)) => crate::pcb_table::PcbTable::compare(a.ctx, ta, tb),
+        _ => 0,
+    }
 }
 
 /// `PCB_BARCODE::Compare`: the barcode package (M25) has no Rust counterpart yet.

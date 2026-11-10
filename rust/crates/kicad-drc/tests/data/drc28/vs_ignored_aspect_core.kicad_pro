@@ -1,0 +1,13 @@
+{
+  "board": {
+    "design_settings": {
+      "rule_severities": {
+        "hole_aspect_ratio": "ignore"
+      }
+    }
+  },
+  "meta": {
+    "filename": "vs_ignored_aspect_core.kicad_pro",
+    "version": 3
+  }
+}

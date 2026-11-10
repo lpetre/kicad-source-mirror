@@ -188,7 +188,8 @@ impl DrcConstraint {
     /// Port of `DRC_CONSTRAINT::Merge`: the tighter minimum and maximum win (each remembers
     /// the rule it came from), an optimum is taken only when this constraint has none.
     pub fn merge(&mut self, other: &DrcConstraint) {
-        if other.value.has_min() && (!self.value.has_min() || (other.value.min() > self.value.min()))
+        if other.value.has_min()
+            && (!self.value.has_min() || (other.value.min() > self.value.min()))
         {
             self.value.set_min(other.value.min());
             self.min_rule = if other.min_rule.is_some() {

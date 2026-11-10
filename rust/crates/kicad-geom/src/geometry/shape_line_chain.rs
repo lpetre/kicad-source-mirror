@@ -3337,11 +3337,12 @@ impl ShapeLineChain {
     /// Port of `SHAPE_LINE_CHAIN::Mirror( const VECTOR2I& aRef, FLIP_DIRECTION )`: mirror the
     /// line points about `a_ref`.
     pub fn mirror(&mut self, a_ref: Vector2I, a_flip_direction: FlipDirection) {
+        // `-pt.x + 2 * aRef.x`: wraps on overflow like the reference build (x86-64)
         for pt in &mut self.points {
             if a_flip_direction == FlipDirection::LeftRight {
-                pt.x = -pt.x + 2 * a_ref.x;
+                pt.x = pt.x.wrapping_neg().wrapping_add(a_ref.x.wrapping_mul(2));
             } else {
-                pt.y = -pt.y + 2 * a_ref.y;
+                pt.y = pt.y.wrapping_neg().wrapping_add(a_ref.y.wrapping_mul(2));
             }
         }
 

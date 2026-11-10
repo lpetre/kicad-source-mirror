@@ -43,7 +43,6 @@ use kicad_drc::engine::DrcEngine;
 use kicad_drc::engine::implicit_condition::EngineCondition;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::exclusion::KiapiDrcExclusionCodec;
-use kicad_drc::rule::DrcConstraintExt;
 use kicad_drc::rule_parser::default_layer_choices;
 use kicad_pcb::board::BoardProject;
 use kicad_pcb::drc_api::DrcConstraint;
@@ -100,7 +99,8 @@ fn load_board_qa(path: &Path) -> Result<(Board, ParseReport, DrcEngine, bool), S
     let dru_path = dru.to_string_lossy().to_string();
 
     let mut engine = DrcEngine::new();
-    let result = engine.init_engine_with::<SyntaxBinder>(
+    // The real expression binding (DRC-21) compiles and evaluates the user rule conditions.
+    let result = engine.init_engine(
         &mut board,
         dru_text.as_deref().map(|t| (t, dru_path.as_str())),
         default_layer_choices(),
@@ -573,10 +573,41 @@ fn panic_text(e: &(dyn std::any::Any + Send)) -> String {
         .unwrap_or_default()
 }
 
-/// True when the engine holds a user rule whose condition needs the expression binding.
+/// True when the engine holds a user rule whose condition or assertion calls a function of
+/// `pcbexpr_functions.cpp` (`A.name( ... )`): the function bodies are package DRC-22 (stubs
+/// returning 0 until then), so such boards are only counted. Conditions without function
+/// calls are evaluated by the expression binding (DRC-21) and compared.
 fn has_compiled_conditions(engine: &DrcEngine) -> bool {
+    let calls_function = |expr: &str| {
+        let bytes = expr.as_bytes();
+
+        // a '(' that directly follows an identifier which follows a '.'
+        (0..bytes.len()).any(|i| {
+            if bytes[i] != b'(' {
+                return false;
+            }
+
+            let mut j = i;
+
+            while j > 0 && (bytes[j - 1] == b' ' || bytes[j - 1] == b'\t') {
+                j -= 1;
+            }
+
+            let end = j;
+
+            while j > 0 && (bytes[j - 1].is_ascii_alphanumeric() || bytes[j - 1] == b'_') {
+                j -= 1;
+            }
+
+            j < end && j > 0 && bytes[j - 1] == b'.'
+        })
+    };
+
     engine.constraint_map().values().flatten().any(|c| {
-        !c.parent_rule.is_implicit() && matches!(c.condition, Some(EngineCondition::Compiled(_)))
+        !c.parent_rule.is_implicit()
+            && (matches!(&c.condition, Some(EngineCondition::Compiled(cond))
+                    if calls_function(cond.expression()))
+                || c.test.as_ref().is_some_and(|t| calls_function(t.expression())))
     })
 }
 
@@ -677,7 +708,13 @@ fn replay_golden(golden: &str) -> Replay {
             let mut text = String::new();
 
             for (cat, r) in &rust {
-                for line in r.as_ref().ok().and_then(|c| c.raw.as_ref()).into_iter().flatten() {
+                for line in r
+                    .as_ref()
+                    .ok()
+                    .and_then(|c| c.raw.as_ref())
+                    .into_iter()
+                    .flatten()
+                {
                     text += &format!("{cat}|{line}\n");
                 }
             }
@@ -755,7 +792,7 @@ fn evalrules_corpus_matches_cxx() {
 
     eprintln!(
         "evalrules corpus: {} categories match ({} boards completely), {} pending, {} mismatch; \
-         {} boards need DRC-21 (user rule conditions)",
+         {} boards need DRC-22 (user rule conditions calling functions)",
         matched.len(),
         matched_boards,
         pending.len(),
@@ -778,7 +815,7 @@ fn evalrules_corpus_matches_cxx() {
     }
 
     for b in &needs_drc21 {
-        eprintln!("needs DRC-21: {b}");
+        eprintln!("needs DRC-22: {b}");
     }
 
     assert!(

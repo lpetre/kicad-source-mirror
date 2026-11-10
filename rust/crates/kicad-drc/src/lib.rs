@@ -54,6 +54,7 @@ pub mod engine;
 pub mod cache_generator;
 pub mod caches;
 pub mod exclusion;
+pub mod footprint_utils;
 pub mod report;
 pub mod rtree;
 pub mod test_provider;

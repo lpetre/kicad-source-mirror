@@ -69,7 +69,7 @@ pub fn query_index(index: &ItemRtree, bbox: &Box2I) -> Vec<IndexedItem> {
     // std::sort by m_seq: the sequence numbers inside one index are unique (a track or zone
     // on several layers is in several per-layer indexes, once each), so the unstable sort
     // has no ties and any sort gives the same order.
-    result.sort_by(|a, b| a.seq.cmp(&b.seq));
+    result.sort_by_key(|a| a.seq);
     result
 }
 

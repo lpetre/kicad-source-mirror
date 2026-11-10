@@ -1,0 +1,5 @@
+(version 1)
+(rule "drc28"
+    (severity ignore)
+    (constraint microvia_stack_depth (max 1))
+)

@@ -2815,8 +2815,8 @@ skipped (dynamic properties, see gaps).
   all properties with order, owner, base, type, display, coordinate type, group, choices, flags,
   `ClassifyProperty` kind and `GetProperty` result; 44 enum maps). Committed hashed:
   `tests/golden/props_table.txt`, test `tests/props_oracle.rs`.
-* `--sections props` on copies of 140 corpus boards (`qa/data/pcbnew`): 0 mismatches caused by
-  this package; every remaining mismatch is on an item whose other sections (`item`, `track`,
+* `--sections props` on copies of 140 corpus boards (`qa/data/pcbnew`), about 670 000 matching
+  values: 113 boards without any mismatch, 0 mismatches caused by this package; every remaining mismatch is on an item whose other sections (`item`, `track`,
   `shape`, `text`, `zone`, `pad`, `footprint`, `dim`) mismatch too or that is keyed by an
   ordinal shifted by items the Rust loader does not build yet (checked per key). 10 boards are
   committed hashed (`tests/golden/props_values.txt`, generator `tests/oracle/props_golden.sh`).
@@ -2845,3 +2845,235 @@ skipped (dynamic properties, see gaps).
 - Pending getters (see the map above) print `pending|props|...` in the dump.
 - The variant overrides of `PCBEXPR_VAR_REF::GetValue` for footprint attributes and the
   "number in a string" conversion belong to DRC-21 (`pcbexpr_evaluator.cpp`).
+
+## Package M20: footprint B (geometry, courtyard and hull caches, comparators, polygons)
+
+| C++ | Rust | State |
+|---|---|---|
+| `GetBoundingBox()`, `GetBoundingBox( aIncludeText )` (cache per board time stamp), `GetCenter`, `GetLayerBoundingBox`, `TextOnly`, `GetArea` | `footprint/geometry.rs` `Footprint::{bounding_box, bounding_box_with_text, center, layer_bounding_box, text_only, area}` | ported |
+| `GetFpPadsLocalBbox` | `Footprint::fp_pads_local_bbox` | ported; the C++ footprint copy is placed in a **clone of the board** (a footprint cannot exist outside its board): correct, but costs a board clone per call (only the placement-file writer calls it) |
+| `GetBoundingHull()` (cached), `GetBoundingHull( aLayer )` | `bounding_hull`, `bounding_hull_on_layer` | ported |
+| `GetEffectiveShape` | `effective_shape` | ported |
+| `HitTest( pos )`, `HitTestAccurate`, `HitTest( rect )`, both `HitTestOnLayer` | `hit_test`, `hit_test_accurate`, `hit_test_rect`, `hit_test_on_layer`, `hit_test_rect_on_layer` | ported |
+| `HitTest( SHAPE_LINE_CHAIN )` | - | skipped: lasso selection (editor), no `hit_test_poly` virtual in the trait |
+| `BuildCourtyardCaches`, `GetCourtyard`, `GetCachedCourtyard`, MALFORMED_F/B_COURTYARD flags | `build_courtyard_caches`, `courtyard`, `cached_courtyard`, `courtyard_flags` | ported (flags live in the cache value, see deviations) |
+| `FixUpPadsForBoard` | `Board::footprint_fix_up_pads_for_board` | ported; the parser must not call it for a `.kicad_mod` holder board (C++ passes a null board there) |
+| `TransformPadsToPolySet`, `TransformFPShapesToPolySet` | `footprint/shapes.rs` | ported (`PAD dummy( *pad )` = `detached_copy()` + `set_size` through the parent's `MutEnv`) |
+| `cmp_drawings`, `cmp_pads`, `cmp_zones` (and `cmp_points_opt`) | `footprint/compare.rs` `footprint_cmp_{drawings,pads,zones}` | ported; pointer tie-break = `ItemId` order (`board-model.md` 3.1) |
+| `operator==( const FOOTPRINT& )` | `Footprint::eq_item` | partial: pads (`PAD::operator==( const PAD& )` body inline), shapes, zones, groups, points compared; other children (texts, text boxes, dimensions, tables, barcodes, images, 3D bodies) and `PCB_FIELD::operator==` are `port_pending!` (no Rust `operator==` for those types yet) |
+| `FOOTPRINT_COURTYARD_INDEX`, `BOARD::GetFootprintCourtyardIndex` | `footprint_courtyard_index.rs` (`FootprintCourtyardIndex::{new, query_overlapping}`, `Board::footprint_courtyard_index`, cached in `BoardCaches` until the next time stamp bump) | ported |
+| `GetCoverageArea`, `CoverageRatio` | - | skipped: selection disambiguation (GUI, needs `GENERAL_COLLECTOR`) |
+
+### Deviations
+
+- `MALFORMED_F/B_COURTYARD` are stored in the courtyard cache value (`&self` build): they read
+  as cleared once the cache is dropped (`Board::modify_*` of the footprint or a child), where
+  C++ keeps the last flags on the item until the next `BuildCourtyardCaches`. Every C++ reader
+  (DRC courtyard tests, placement writer) builds the caches right before reading the flags.
+- `BOARD::IsElementVisible( LAYER_FP_VALUES / LAYER_FP_REFERENCES / LAYER_FP_TEXT )` in
+  `GetBoundingBox` is always true: the `.kicad_prl` `visible_items` are not modelled (the C++
+  default `GAL_SET::DefaultVisible()` has all three visible). `IsLayerVisible` uses
+  `Board::visible_layers()` (every layer, same reason).
+- The early return of `BuildCourtyardCaches` (no courtyard shapes) leaves the hashes at their
+  defaults on a fresh cache value instead of the previous build's: `GetCourtyard` may rebuild
+  more often; results are identical.
+
+### Tests
+
+`footprint::geometry::tests` (10): ports of `test_footprint.cpp` `FootprintCourtyardAndHull`
+(move / rotate / flip through the `Board::footprint_*` cascades) and the first half of
+`FootprintBoundingBoxWithoutMandatoryFields` (hidden mandatory fields; removing them needs the
+non-const `Remove` path), `test_footprint_pad_fixup.cpp` `PthPadExpandsToAllCopperLayers`,
+`drc/test_footprint_courtyard_chaining.cpp` `ClosesFromEverySeedShape` and
+`ClosesInArbitraryShapeOrder` (Fisher-Yates over `Mt19937( 42 )` instead of libstdc++
+`std::shuffle`: other permutations, same property), `drc/test_footprint_courtyard_index.cpp`
+`MatchesBruteForceScan`; new: malformed-courtyard flags with an error handler, `cmp_pads` order.
+
+Oracle (`tests/oracle/m20_footprint_golden.sh` -> `tests/golden/m20_footprints.txt`):
+`tests/data/m20/m20_footprints.kicad_pcb`, four footprints: A rotated 30 degrees and scaled
+1.5 x 0.75 with a closed F.CrtYd outline (segments and an arc, two stroke widths), a Cmts.User
+line, a user text; B its flipped copy with an open (malformed) B.CrtYd outline; C fields only
+(hidden value: the no-draw-items paths and the hull fallback square); D rotated 90 degrees with
+a private-layer line, a circle courtyard and a roundrect pad. `pcb-dump --sections
+bbox,footprint,order`. The Rust tests rebuild the footprints from library-frame values (the
+footprint parser, PCBIO-06, is pending) and place them with the cascades:
+`m20_oracle_footprint_geometry` (feature `dump`) compares all 48 footprint values (`bbox`,
+with / without text, `fp_pads_local_bbox`, bounding hull, F/B copper layer boxes, F/B
+courtyards, F/B copper hulls, area) as formatted strings: **48 of 48 equal**;
+`m20_oracle_save_order` sorts the footprint pad / drawing lists with the ported comparators:
+6 of 6 lists in the C++ save order. Not yet verified: footprint zones (fills), text boxes,
+barcodes and dimensions in footprints, `HitTest*`, `GetEffectiveShape`, the
+`Transform*ToPolySet` functions (no dump section prints them) and the 20-board corpus
+comparison through `pcb-dump-rs` (needs PCBIO-06 / 07; `pcb-dump-rs` still prints `no_api`
+for `fp_pads_local_bbox` and `area`, now available).
+
+## Package M25a: barcode model without symbol encoding (PCB_BARCODE)
+
+Port of `pcbnew/pcb_barcode.cpp` / `pcb_barcode.h` except the zint encoding itself, all in
+`src/pcb_barcode.rs`.
+
+| C++ | Rust | state |
+|---|---|---|
+| `GetPosition`, `SetPosition`, `GetAngle`, `SetOrientation` / `GetOrientation`, `Move`, `Rotate`, `Flip`, `OnFootprintRescaled` (no-op), `SetLayer` (+ `m_text`), `StyleFromSettings` | `position`, `set_position`, `angle`, `set_orientation` / `orientation`, `move_by`, `rotate`, `flip`, `on_footprint_rescaled`, `set_layer`, `style_from_settings` (+ `position_env` / `angle_env` for mutators) | ported |
+| `SetText` / `GetText` / `SetBarcodeText` / `GetShownText`, `SetTextSize` / `GetTextSize`, `SetShowText` / `GetShowText`, `SetIsKnockout`, `SetKind` / `SetBarcodeKind`, `SetErrorCorrection` / `SetBarcodeErrorCorrection` (Micro QR: no H), `KeepSquare`, `SetBarcodeWidth` / `Height`, `SetMarginX` / `Y` (>= 1 mm), `GetPolyShape` / `GetSymbolPoly` / `GetTextPoly` / `GetLastError` | same names snake_case (`poly_shape`, `symbol_poly`, `text_poly`, `last_error` take `ctx`) | ported |
+| `AssembleBarcode`, `computeCacheKey`, `ComputeBarcode` (around the encoder), `rescaleSymbolPoly`, `ComputeTextPoly` | `assemble_barcode` (`KeyedCache` keyed by an FNV-1a hash of the C++ key inputs), `compute_barcode`, `rescale_symbol_poly`, `compute_text_poly` | ported; symbol = `encode_symbol` (none yet) |
+| the zint call (`ZBarcode_Create` / settings / `ZBarcode_Encode` / `ZBarcode_Buffer_Vector`) | `encode_symbol(kind, text, ecc) -> Option<ModuleMatrix>` (always `None`), `zint_options` (the ported `switch( m_kind )` + ECI choice) | gap (see below) |
+| `GetBoundingBox`, `ViewBBox`, `HitTest` (point, rect), `GetBoundingHull`, `TransformShapeToPolygon`, `GetEffectiveShape` | `bounding_box`, `hit_test`, `hit_test_rect`, `bounding_hull`, `transform_shape_to_polygon`, `effective_shape` | ported |
+| `GetItemDescription`, `Compare`, `Similarity`, `operator==` | `item_description`, `PcbBarcode::compare(ctx, a, b)`, `similarity`, `eq_item` | ported |
+| `GetMsgPanelInfo`, `ViewGetLOD`, `GetMenuImage`, `Serialize` / `Deserialize`, property registration | - | skipped: GUI / API |
+
+Tests (`pcb_barcode::tests`): ports of `qa/tests/pcbnew/test_barcode_load_save.cpp`
+`BarcodeWriteRead`, `BarcodePositioningAlignment`, `BarcodeTextVariableExpansion`,
+`BarcodeCode39UndefinedVariable` (complete; the symbol comparisons hold trivially without an
+encoder), `BarcodeUndefinedVariable` (texts only: `OutlineCount() > 0` needs a QR encoder),
+`BarcodeFootprintWriteRead` (through a board file instead of a `.kicad_mod`); oracle tests
+`assemble_matches_oracle_without_symbol` (bbox + `GetPolyShape` of 7 barcodes whose symbol is
+empty in C++ too: knockout box, back mirror, rotation, rotated / back / non-uniformly scaled
+footprints, degenerate size), `frames_match_oracle`, `resave_matches_oracle` (byte level vs
+`kicad-cli pcb upgrade --force`), plus mutator / setter / `Compare` / zint-option tests.
+
+Verification (pcb-dump `board --no-init --sections item,misc,bbox` vs pcb-dump-rs, scratch
+copies): a crafted board with 11 barcodes (3 footprints: rotated 30, back side -60, transform
+rotate 12.5 scale 1.5 x 0.75; board barcodes front / back / copper / zero size): item 494/494,
+bbox 25 match, misc 85 match; every mismatch is the encoded symbol (bbox of the 4 non-empty
+barcodes and of their footprints) or a dump-side gap (below). `api_kitchen_sink` and
+`issue24525` barcodes: all item / misc fields match, `bbox` differs (symbol). io-corpus:
+`api_kitchen_sink` now loads and is identical modulo pending pads (barcode blocks identical).
+
+Fields that depend on the encoded symbol (differ for non-empty texts until an encoder lands):
+`GetBoundingBox` / `ViewBBox`, `GetPolyShape`, `GetSymbolPoly`, `GetTextPoly` (empty whenever
+the symbol is), `GetLastError` (zint's `errtxt`), `GetEffectiveShape`,
+`TransformShapeToPolygon`, `HitTest`, `GetBoundingHull`, and through them the footprint
+bounding boxes / hulls and everything plotted or DRC-checked from a barcode.
+
+What a faithful encoder needs (zint 2.15.0 is bundled in `thirdparty/zint`, BSD-3-Clause):
+`ZBarcode_Create` defaults (`scale` 1, `option_1` -1, no border / whitespace, default heights),
+`input_mode = UNICODE_MODE`, `show_hrt = 0`, then per kind:
+* `CODE_39` -> `BARCODE_CODE39` (8): `code.c` `code39()` (no check digit, `option_2` 0);
+* `CODE_128` -> `BARCODE_CODE128` (20): `code128.c` (automatic code-set selection, as zint);
+* `QR_CODE` -> `BARCODE_QRCODE` (58), `option_1` = ECC 1..4: `qr.c` (mode optimisation, mask
+  selection, version choice), `reedsol.c`; non-ASCII text sets `eci = 26` (`eci.c`, UTF-8);
+* `MICRO_QR_CODE` -> `BARCODE_MICROQR` (97), `option_1` = ECC 1..3: `qr.c` micro path;
+* `DATA_MATRIX` -> `BARCODE_DATAMATRIX` (71): `dmatrix.c` (ECC200, automatic size and
+  encodation), `reedsol.c`; non-ASCII text sets `eci = 26`.
+Common: `library.c` (`ZBarcode_Encode` input checks and `errtxt` texts), `common.c`, and
+`vector.c` `ZBarcode_Buffer_Vector( symbol, 0 )` (the rectangle list with quiet zones and the
+float coordinates `ComputeBarcode` rounds with `KiROUND( rect->x * scale )`). The encoder
+fills `ModuleMatrix { scale, rectangles, hexagons }` in zint's list order; everything after
+that is already ported.
+
+Deviations:
+- No symbol encoder: `encode_symbol` returns `None`, so a non-empty barcode assembles like a C++
+  barcode zint rejects (empty symbol and text polygon; with knockout the box around the
+  *origin* inflated by the margins, mirrored / rotated about the position, as in C++);
+  `last_error` is `ENCODER_NOT_AVAILABLE` (the international-characters text for non-ASCII).
+- Cache: rebuilt lazily when the C++ key changes (and cleared on every `modify_*` and by the
+  setters that call `AssembleBarcode()` in C++). C++ can keep a stale cache when a non-key
+  input changes (board max error, user layer type, footprint scale); the port rebuilds from
+  the current state, i.e. like a freshly loaded C++ board.
+- `m_text`'s parent is the barcode in C++; the inline `PcbText` usually has `ParentRef::None`,
+  so the text is viewed with the barcode's parent (same `GetParentFootprint` / `GetBoard`).
+- `StyleFromSettings`: the trait method has no `MutEnv`, the text size is set without the
+  parent frame (as `PcbText::style_from_settings`).
+
+Known gaps / change requests (other packages' files):
+- Writer (`io/writer/misc_items.rs` `format_barcode`) writes the stored lib height for
+  `(text_height ..)`; C++ writes `GetTextSize()` = `m_text.GetTextHeight()`, the virtual
+  `GetTextSize().y` in the board frame: use `b.text_size(&ctx)`. Differs in non-uniformly
+  scaled footprints (1.6 vs 1.2 mm in the test board).
+- Parser (`io/parser/misc_items.rs`): `SetTextSize` computes the pen width from
+  `m_text.GetTextHeight()` (board frame), the port from the lib height; call
+  `barcode.set_text_size(&env, h)`, `barcode.set_kind`, `barcode.set_error_correction`,
+  `barcode.set_orientation(&env, deg)` instead of the inlined copies.
+- `board/compare.rs` `pcb_barcode_compare`: replace the stub with
+  `PcbBarcode::compare(ctx, a, b)` (needs the two `AnyItem::Barcode` values and `ctx`).
+- `dump/defaults.rs`: `barcode.show_text` -> `b.show_text()`, `barcode.text_size` ->
+  `b.text_size(ctx)`, `barcode.poly` / `symbol_poly` / `text_poly` / `last_error` ->
+  `b.poly_shape(ctx)` etc.; `barcode.kind` prints `CODE39` / `CODE128` where C++ prints the
+  ENUM_MAP names `CODE_39` / `CODE_128`.
+
+## Package PCBIO-06: board file footprints (parse + write)
+
+Files: `src/io/parser/footprint.rs`, `src/io/writer/footprint.rs`, `tests/pcbio06_footprints.rs`,
+`tests/data/pcbio06/`, `tests/golden/pcbio06/`, `tests/oracle/pcbio06_golden.sh`,
+`tests/oracle/pcbio06_strip.py`.
+
+### C++ to Rust map
+
+| C++ (`pcb_io_kicad_sexpr_parser.cpp` P:, `pcb_io_kicad_sexpr.cpp` W:) | Rust | State |
+|---|---|---|
+| `parseFOOTPRINT` (P:6234, `FUTURE_FORMAT_ERROR` conversion) | `parser/footprint.rs` `parse_footprint` | ported |
+| `parseFOOTPRINT_unchecked` (P:6250-7254: every token incl. `version` / `generator*` with the version check, `locked`, `placed`, `layer`, `tedit`, `tstamp` / `uuid`, `at`, `transform`, `descr`, `tags`, `height`, `property` with the < 20230620 legacy keys, `ki_fp_filters`, `Footprint`, existing / new fields and `StyleFromSettings`, `path`, `sheetname`, `sheetfile`, `units`, `autoplace_cost*`, `private_layers` (< 20220427), `net_tie_pad_groups`, `duplicate_pad_numbers_are_jumpers`, `jumper_pad_groups`, the four overrides (<= 20240201 zero = unset), `zone_connect`, `thermal_*`, `attr`, `fp_text` (legacy reference / value overwrite, hidden user text as field), `fp_text_box`, `table`, `fp_*` shapes, `image`, `barcode`, `dimension`, `pad`, `model` (file and extruded), `zone` (< 20260616 board frame), `group`, `constraint`, `point` (< 20260616 board frame), `embedded_fonts`, `embedded_files`, `component_classes`, `variant`, `custom_property`; post-processing: `FixUpPadsForBoard`, < 20200826 attributes, `LEGACY_NET_TIES` keyword groups, `SetFPID`) | `parse_footprint_unchecked`, `parse_footprint_property`, `parse_footprint_units`, `parse_extruded_body`, `add_footprint_zone` | ported |
+| `parse3DModel` (P:954, legacy inch `at` with the `25.4f` float factor) | `parse_3d_model` | ported |
+| `parseFootprintStackup` (P:7257) | `parse_footprint_stackup` | ported |
+| `parseFootprintVariant` (P:594) | `parse_footprint_variant` | ported |
+| `formatInitialComments` (W:1452) | `writer/footprint.rs` `format_initial_comments` | ported |
+| `format( const FOOTPRINT*, bool aInLibFile )` (W:1466-1884: header, version for stand-alone footprints, flags, transform, fields as properties, component classes, filters, path, sheet, units, overrides, attributes, stackup, private layers, net ties, jumper groups, children in `std::set` order, variants (only values differing from the base), embedded fonts / files, extruded bodies, 3D models, custom properties) | `format_footprint` | ported; child order through `footprint_cmp_{drawings,pads,zones}` (M20), `pcb_point_cmp_points`, `board_item_ptr_cmp` |
+
+### Tests and verification
+
+- Byte level, `tests/pcbio06_footprints.rs` `golden_footprints` (default run, strict: no staging):
+  23 boards in `tests/data/pcbio06`: two hand-made (`handmade_current`: every footprint token of
+  the current format incl. scale transform, stackup, units, jumper / net-tie groups, variants,
+  extruded bodies, 3D models with opacity / legacy `at`, component classes, custom properties,
+  footprint zone and points, a property without effects; `handmade_v6`: a 20211014 file with
+  bare `locked`, `tedit` / `tstamp`, `(at x y angle)`, the legacy `Sheetfile` / `Sheetname` /
+  `ki_description` / `ki_keywords` properties, `Footprint` property, `autoplace_cost*`,
+  `solder_paste_ratio`, zero overrides, `thermal_*`, Edge.Cuts in private layers, a hidden
+  `fp_text user`, a board-frame footprint zone, a hidden inch-offset model, a footprint without
+  attributes) and 21 corpus boards of the versions 20200119 .. 20261022 reduced by
+  `pcbio06_strip.py` (no pads, at most one drawing / zone per footprint, so no footprint child
+  sort is needed), re-saved by the reference `kicad-cli pcb upgrade --force`
+  (`pcbio06_golden.sh`). Parse + format of every input reproduces the oracle's re-save O1, and
+  parse + format of O1 reproduces O2 (O1 for fixed points): 46 of 46 re-saves byte-identical
+  (UUIDs the C++ draws at random for UUID-less legacy items masked with
+  `kicad_qa::uuid_canon`; footprint blocks ordered by such UUIDs compared sorted).
+- Item level: `pcb-dump board --no-init --sections item,footprint,text,shape,zone` vs
+  `pcb-dump-rs` (`tools/io-corpus/run.sh --dump`) on the 23 data boards and
+  `tests/data/m19/m19_cascade.kicad_pcb`: 0 mismatches in footprint members and in the item /
+  text / shape values of their children, except (a) footprint zones on 5 boards: `outline` /
+  `hatch_lines` frames swapped by the Rust dump (`dump/items.rs` prints `board_outline` where
+  the C++ prints `Outline()`, and the raw lib-frame hatch lines where the C++ prints
+  `GetHatchLines()`; change requested), (b) `strip_microwave` `lib.poly` of two `fp_poly`
+  (the Rust library polygon keeps a duplicated closing vertex, `parsePCB_SHAPE`, PCBIO-03;
+  output bytes unaffected), (c) pad-derived values (`m19_cascade` has pads: PCBIO-07).
+  On full corpus boards the remaining differences are pad-derived only (pads, hulls, areas,
+  `#ordinal` keys shifted by the missing pads).
+- Corpus scoreboard (`tools/io-corpus/run.sh`): before this package 92 identical / 198
+  identical-modulo-pending / 78 differs / 2 model-pending with `footprint (PCBIO-06)` pending on
+  276 boards (first full-text difference `footprint` on all of them); after (370 compared):
+  98 identical / 21 identical-modulo-pending / 4 differs (first differences in `arc`,
+  `segment`, `zone > priority`: not footprint code) / 247 model-pending (245 stop at the
+  `FOOTPRINT::cmp_drawings` stub of M20, landing in parallel; 2 at `PCB_BARCODE::SetPosition`),
+  no footprint construct pending (pads, PCBIO-07, on 257 boards), no parse error. Rerun once
+  M20 / PCBIO-07 land.
+- Ported C++ tests: `test_footprint_load_save.cpp` `FootprintLoadSave`,
+  `FootprintFieldLockRoundTrip`, `FootprintUserFieldKeepsAutoThickness`,
+  `LegacyFootprintPropertyTakesBoardDefaults` (the QA-board round trips run their save half
+  once the footprint child sort is ported; the load halves run now);
+  `test_extruded_body_load_save.cpp` `FullRoundTrip`, `DefaultsRoundTrip`,
+  `NoExtrudedBodyRoundTrip` as board round trips (the `.kicad_mod` path is PCBIO-14), plus
+  `extruded_body_without_height_is_not_saved`, `parsed_footprints_are_attached`. Not ported:
+  `test_footprint_rescue_layer.cpp` (`.kicad_mod` files, PCBIO-14, and the
+  `LAYER_UTILS::GetOrphanedFootprintLayers` dialog helper).
+
+### Deviations / notes
+
+- `(zone_connect N)` with N outside -1..3: the C++ cast keeps the integer (written back as
+  is); the Rust `ZoneConnection` cannot hold it, it reads as `INHERITED` (not written).
+- `SetTransientComponentClassNames` (read only by the paste tool) has no counterpart: the
+  Rust footprint keeps no transient class names.
+- `FOOTPRINT::Add` of a point: `PCB_POINT::SetParent` recomputes the board position; the
+  parser calls `on_footprint_transformed` after `footprint_add` for that (idempotent if the
+  model's `footprint_add` does it one day).
+- `(model (type extruded) ...)` edits a copy of the footprint's first body and stores it back
+  with `modify_body3d` (the C++ edits it in place; same final state, UUID included).
+- `fmt::format( "(opacity {:.4f})" )` is ported as Rust `{:.4}` (both correctly rounded).
+
+### Known gaps
+
+- The footprint child sort (`FOOTPRINT::cmp_drawings` / `cmp_pads` / `cmp_zones`, M20) was a
+  `port_pending!` stub when this package was verified: footprints with two or more drawings,
+  pads or zones cannot be written until it lands; the goldens avoid that case.
+- Pads (`parsePAD` / `format( PAD* )`, PCBIO-07) are staging stubs: footprints lose their pads
+  with `allow_pending`, and the `LEGACY_NET_TIES` pad group of a `net tie` footprint is empty.

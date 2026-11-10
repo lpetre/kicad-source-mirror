@@ -138,10 +138,22 @@ impl Stats {
     }
 }
 
+/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
+/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+fn board_path(name: &str) -> std::path::PathBuf {
+    if name.starts_with("rev_") {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/golden/cn04")
+            .join(format!("{name}.kicad_pcb"))
+    } else {
+        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
+    }
+}
+
 /// Parses a board; `None` (with a message) when the parser reached a model stub. Returns the
 /// board and whether footprints / zones were skipped.
 fn load(name: &str) -> Option<(Board, bool, bool)> {
-    let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
+    let path = board_path(name);
     let text = std::fs::read_to_string(&path).unwrap();
     let options = ParseOptions {
         allow_pending: true,
@@ -518,6 +530,12 @@ const BOARDS: &[&str] = &[
     "via_stack_track_width",
     "zone_thieving_track_bisection",
     "bad_triangulation_case",
+    // REV-CN: synthetic boards of gen_cn04.py (tests/golden/cn04/): zone contact paths, the
+    // via-net rule, islands, a teardrop zone, copper graphics, pad-less net propagation
+    "rev_zone_contacts",
+    "rev_ratsnest_zones",
+    "rev_shapes",
+    "rev_order_probe",
 ];
 
 #[test]

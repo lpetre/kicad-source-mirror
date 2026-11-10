@@ -45,7 +45,6 @@ use super::text_mirroring::TEXT_ITEM_TYPES;
 use crate::constraint_types::DrcConstraintT;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
-use crate::rule::DrcConstraintExt;
 use crate::test_provider::{DrcTestProviderBase, for_each_geometry_item, no_path};
 
 /// Port of `DRC_TEST_PROVIDER_TEXT_DIMS`.

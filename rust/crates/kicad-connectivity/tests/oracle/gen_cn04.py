@@ -22,6 +22,11 @@ Four copper layers. Hand-placed cases for IsConnectedOnLayer through PCB_VIA::Fl
 that do not count, nets that do not match) and for TestTrackEndpointDangling (free ends, ends
 on vias, short tracks inside one via, tracks inside a zone fill, vias connected on one or two
 layers, net-less vias), plus a random part. gen_cn04.sh runs the reference pcb-dump on them.
+
+REV-CN added the rev_* boards: zone contact paths, the deferred via-net rule, islands, a
+teardrop zone, the ratsnest next to zones, copper graphics, net propagation without pads and
+the results that follow the order of CN_ITEM::m_connected
+(rust/docs/design/review-connectivity.md).
 """
 import os
 import random
@@ -472,6 +477,14 @@ def rev_shapes():
     # two lines of different nets touching: the first drawing wins (no track in the cluster)
     b.gr_line(30 * MM, 30 * MM, 40 * MM, 30 * MM, "B.Cu", 3)
     b.gr_line(40 * MM, 30 * MM, 50 * MM, 30 * MM, "B.Cu", 1)
+    # SHAPE_SEGMENT / SHAPE_SEGMENT collision rounds the two half widths differently
+    # ((wA + 1) / 2 + wB / 2): parallel tracks 200000 nm apart with an odd and an even width
+    # touch only with the odd one as the first operand. C++ tests a pair from both sides.
+    for k, (w1, w2) in enumerate([("0.200001", "0.2"), ("0.2", "0.200001"), ("0.200001", "0.200001"),
+                                  ("0.2", "0.2")]):
+        yy = (40 + 2 * k) * MM
+        b.seg(10 * MM, yy, 20 * MM, yy, "In1.Cu", 1, width=w1)
+        b.seg(10 * MM, yy + 200000, 20 * MM, yy + 200000, "In1.Cu", 1, width=w2)
     return b
 
 
@@ -492,10 +505,10 @@ def rev_order_probe():
     # optimizeZoneToZoneAnchors: four candidate pairs with one centre distance, different outlines
     zp = rect(10, 50, 50, 60)
     b.zone_ex(zp, [("F.Cu", rect(10, 50, 20, 60)), ("F.Cu", rect(40, 50, 50, 60))], 3)
-    qa = [(10 * MM, 50 * MM), (20 * MM, 50 * MM), (20 * MM, 52 * MM), (15 * MM, 55 * MM),
-          (20 * MM, 58 * MM), (20 * MM, 60 * MM), (10 * MM, 60 * MM)]
-    qb = [(40 * MM, 50 * MM), (50 * MM, 50 * MM), (50 * MM, 60 * MM), (40 * MM, 60 * MM),
-          (40 * MM, 58 * MM), (45 * MM, 55 * MM), (40 * MM, 52 * MM)]
+    qa = [(10 * MM, 50 * MM), (18 * MM, 50 * MM), (20 * MM, 55 * MM), (18 * MM, 60 * MM),
+          (10 * MM, 60 * MM)]
+    qb = [(40 * MM, 57 * MM), (42 * MM, 50 * MM), (50 * MM, 50 * MM), (50 * MM, 60 * MM),
+          (42 * MM, 60 * MM)]
     b.zone_ex(zp, [("B.Cu", qa), ("B.Cu", qb)], 3)
     b.via(12 * MM, 55 * MM, 3)
     b.via(48 * MM, 55 * MM, 3)

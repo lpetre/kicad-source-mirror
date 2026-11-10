@@ -1,0 +1,3 @@
+error	malformed_microvia_stack_span	Microvia stack has malformed span	00000000-0000-0000-0028-000000000085	Microvia Stack	10.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	00000000-0000-0000-0028-000000000082	Micro via [<no net>] on F.Cu - In1.Cu	10.0	10.0
+warning	microvia_crosses_core	The stackup gives the dielectric between F.Cu and In1.Cu as core	00000000-0000-0000-0028-000000000084	Micro via [<no net>] on F.Cu - In1.Cu	10.0	10.0

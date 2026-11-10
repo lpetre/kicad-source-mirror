@@ -149,7 +149,7 @@ runs). Rust twin: `tests/report_oracle.rs::report_oracle_replay`.
 | `report_sections_noitems.scn` | 15 markers (all marker types, rule severities incl. exclusion, generic codes, excluded with / without comment, markup in messages, UTF-8), severity overrides, 5 reports (mm / mils / in, masks 48, 52, 4, 0, 32), ignored-check lists | identical (text and JSON) |
 | `exclusions_noitems.scn` | 39 exclusions: canonical ProtoJSON, lowerCamel names, numbers / strings for int64 and enums, nulls, unknown fields / enum names (rejected), floats, spaces, `+`, overflow, items given as an object, unknown enum numbers, missing marker, legacy strings; matching against 7 markers; `ResolveDRCExclusions( true )` (created markers, set order), record, reports | identical |
 | `exclusions_cli_noitems.scn` | the same with `ResolveDRCExclusions( false )` (the CLI flow) | identical |
-| `report_sections.scn`, `exclusions.scn`, `pending_items.scn` | the same on `qa/data/pcbnew/issue8003.kicad_pcb`, whose items resolve (item lines `@(x, y): description`, item JSON, creation of exclusion markers whose items exist) | pending: the Rust board parser still skips footprints and tracks (PCBIO-03, PCBIO-06), and the footprint / shape descriptions are `port_pending!`; the test reports them as pending and compares them automatically once the board loads completely |
+| `report_sections.scn`, `exclusions.scn`, `pending_items.scn` | the same on `qa/data/pcbnew/issue8003.kicad_pcb`, whose items resolve (item lines `@(x, y): description`, item JSON, creation of exclusion markers whose items exist) | `pending_items.scn`: identical. `report_sections.scn`, `exclusions.scn`: pending on the pad parser only (PCBIO-07; state of 2026-11-10, REV-DRC); the test reports them as pending and compares them automatically once the board loads completely |
 
 Unit tests (`src/*.rs`) cover the item table against `drc_api` and the `allItemTypes` order of
 `drc.md` 3.6, the report line formats derived from the C++ format strings, the JSON layout
@@ -237,7 +237,7 @@ fast path, and the `DRC_ZONE_INDEX` queries. Golden: `tests/golden/rtree_oracle.
 |---|---|
 | board-independent sections (registry, type lists, 1096 `formatMsg`, 3 `CollectOverlappingPairs` sets) | identical |
 | `tests/data/rtree/rtree_small`, `rtree_ties` (Hilbert centre ties), `rtree_4layer` (multi-level trees, blind / buried / micro vias); `gen_rtree_boards.py` | identical (5855 lines) |
-| `qa/data/pcbnew` `issue7267`, `issue18203`, `issue16566`, `net_tie_hole_clearance`, `via_stacks`, `connection_width_rules`, `issue24649` (pads, holes, graphics, fields, zones), `two_segment_teardrop`, `issue18142`, `fill_bad`, `issue14334` (filled zones: triangle entries, `actual` / position, polygon fast path) | pending: the board parser does not load footprints / zones yet (PCBIO-06, PCBIO-08); the replay reports them as pending and compares them automatically once they load |
+| `qa/data/pcbnew` `issue7267`, `issue18203`, `issue16566`, `net_tie_hole_clearance`, `via_stacks`, `connection_width_rules`, `issue24649` (pads, holes, graphics, fields, zones), `two_segment_teardrop`, `issue18142`, `fill_bad`, `issue14334` (filled zones: triangle entries, `actual` / position, polygon fast path) | `connection_width_rules`, `issue24649`, `issue18142`, `two_segment_teardrop`, `via_stacks` (zones, triangulated fills, graphics): identical (1076 lines; state of 2026-11-10, REV-DRC). `issue7267`, `issue18203`, `issue16566`, `net_tie_hole_clearance`, `fill_bad`, `issue14334`: pending on the pad parser (PCBIO-07); the replay reports them as pending and compares them automatically once they load |
 
 ### Ported C++ tests
 
@@ -386,7 +386,7 @@ Golden `tests/golden/cachegen_oracle.txt` (`tests/oracle/gen_cachegen_goldens.sh
 |---|---|
 | `tests/data/rtree/rtree_small`, `rtree_ties`, `rtree_4layer` (tracks, arcs, vias, 2 and 4 layers) | identical |
 | `tests/data/cachegen/phys_cond` (only conditional user physical rules: conditional maximum incl. the implicit barcode rule, 1 mm), `phys_uncond` (unconditional 0.3 mm beats conditional 0.9 mm; clearance 2 mm; conditional hole-to-hole 2.5 mm reaches `GetBiggestClearanceValue`), `huge` (600 mm clearance clipped to `MAXIMUM_CLEARANCE`, 800 mm physical clamped to `INT_MAX / 3`) | identical |
-| `qa/data/pcbnew` `issue4139`, `fill_bad`, `intersectingzones`, `issue7267`, `issue18203`, `net_tie_hole_clearance`, `via_stacks`, `issue14334`, `connection_width_rules`, `issue24649`, `issue5750` (pads, footprint zones, filled zones, projects, rule file) | pending: footprints (PCBIO-06), generated items (PCBIO-13), `ZONE::SetLayerSetAndRemoveUnusedFills`; compared automatically once they load |
+| `qa/data/pcbnew` `issue4139`, `fill_bad`, `intersectingzones`, `issue7267`, `issue18203`, `net_tie_hole_clearance`, `via_stacks`, `issue14334`, `connection_width_rules`, `issue24649`, `issue5750` (pads, footprint zones, filled zones, projects, rule file) | `connection_width_rules`, `issue24649`, `via_stacks`: identical (state of 2026-11-10, REV-DRC). The other eight: pending on the pad parser (PCBIO-07); compared automatically once they load |
 
 Not verifiable yet: `DrcCacheGenerator::run` end to end (it calls `Board::board_outline`,
 `Footprint::build_courtyard_caches` and `Board::build_net_tie_cache`, all `port_pending!` in
@@ -462,12 +462,14 @@ caches, zone trees, islands maps and pad hole entries wait for the QA boards abo
   corpus boards < 5 MB, `--hash`, streamed): per board and category the key count, line count
   and a hash; replay `tests/evalrules_oracle.rs`. A category is compared when the Rust board
   yields the same number of keys.
-* Result today: **1128 categories match on 98 boards fully, 0 mismatches** (arc 23, disallow 93,
-  drawing 269, pair_tt 122, pair_zt 98, pair_zz 90, track 163, via 122, zone 148). Pending: every
-  pad-based category (the parser does not load pads yet, PCBIO-07), DISALLOW on 22 boards whose
-  items overlap a keepout (`intersectsKeepout`, DRC-10), 2 legacy `.pro` boards, 2 boards with a
-  `kicad-pcb` stub on the load path. 55 boards with user rule conditions are reported as
-  "needs DRC-21" and not compared.
+* Result (2026-11-10, REV-DRC): **1148 categories match on 99 boards fully, 0 mismatches** (arc
+  23, disallow 94, drawing 270, fpzone 18, pair_tt 122, pair_zt 98, pair_zz 90, track 163, via
+  122, zone 148). Pending: every pad-based category (620 categories; the parser does not load
+  pads yet, PCBIO-07), DISALLOW on 36 boards whose items overlap a keepout
+  (`intersectsKeepout`, DRC-10), 2 legacy `.pro` boards. 56 boards with user rule conditions
+  are reported as "needs DRC-21" and not compared.
+* User rules without conditions: the four review boards of REV-DRC (see its section) are
+  compared completely (`evalrules_review_boards_match_cxx`).
 * `fast_path_equals_general_path`: on three boards the netclass fast path (no reporter) equals
   the general path (forced by a reporter) for every item alone and two partners per item.
 * `last_rule_wins_per_field_and_board_minimum`: per-field override by later rules (min/max from
@@ -734,3 +736,254 @@ with a web width of 0, i.e. in the silk clearance provider, not here.
   them automatically once they load.
 * The runs use a context without connectivity (like the shared harness): conditionally
   flashed vias / pads are not flashed on unconnected layers there.
+
+## DRC-07: connectivity provider (dangling, isolated copper, unconnected items)
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_test_provider_connectivity.cpp` `DRC_TEST_PROVIDER_CONNECTIVITY::Run` (dangling tracks / vias incl. `VIA_DANGLING_CONSTRAINT`, track on post-machined / backdrilled layer, track not centered on via, isolated copper, unconnected items) | `src/providers/connectivity.rs` `DrcTestProviderConnectivity` | ported |
+| `BOARD::GetCopperZoneRTree( zone )->QueryColliding( bbox, shape, layer )` as `TestTrackEndpointDangling` reads it | `connectivity::DrcZoneRtrees` (`kicad_connectivity::data::CopperZoneRtrees` over `DrcBoardCaches`) | ported |
+
+API: `DrcTestProviderConnectivity::new( &mut ConnectivityData, &DrcBoardCaches )` borrows the
+run's connectivity (rebuilt by the cache generator: `Build`, then
+`FillIsolatedIslandsMap( m_ZoneIsolatedIslandsMap, true )`) and the cache generator's caches
+(islands map, copper zone trees). The item shapes of the track loops are read with that
+connectivity as `ctx.connectivity` (FlashLayer of vias / pads). `tests/drc07_connectivity.rs`
+`ConnectivityWithCaches` shows the wiring until `DrcEngine::run_tests` runs the cache generator
+(DRC-05 known gap).
+
+### Verification
+
+* `connectivity_matches_reference_corpus`: the reference `kicad-cli pcb drc --format json
+  --severity-all --units mm` reports of the shared corpus (`violations` in
+  `tests/golden/drc_corpus.txt`, DRC-07 types added to `gen_drc_corpus.py`; the
+  `unconnected_items` array in `tests/golden/drc07_unconnected.txt`,
+  `tests/oracle/gen_drc07_unconnected.py`, same format, same cached reports). Run path as the
+  CLI: `BuildConnectivity` at load, `prepare_board` + `connectivity->Build`, zone lists / zone
+  trees / islands map, the provider, exclusions, the JSON report. State 2026-11-10: 111 boards
+  compared (254 pending: 250 footprints skipped by the parser, 2 legacy `.pro`, 1 reference
+  failure, 1 board whose `VIA_DANGLING` rules have user conditions, DRC-21; user conditions
+  of other constraint types are never evaluated by this provider and do not gate): isolated_copper 167 matched, track_dangling 36, via_dangling 96,
+  unconnected_items 30, 0 missing, 0 extra. Report order equal except `isolated_copper` on
+  `bad_triangulation_case` and `issue23790`: the zones come in a different order (C++
+  `ZONE*` address order, port board order; confirmed against the file order: the entries of
+  each zone are identical and contiguous) - the documented `drc.md` 4.12 deviation; the test
+  reports it without failing.
+* `synthetic_post_machined_board_matches_reference`: `tests/data/drc07/post_machined.kicad_pcb`
+  (generator `tests/oracle/gen_drc07_boards.py`, reference report through the same cache):
+  backdrilled / tertiary-drilled vias, tracks on drilled and undrilled layers, off-centre ends
+  alone on the layer / next to a centred track / both ends in one via, dangling items, an
+  unconnected net: 23 entries (4 `track_on_post_machined_layer`, 5
+  `track_not_centered_on_via`, 11 `track_dangling`, 2 `via_dangling`, 1 unconnected),
+  identical including order. No corpus board the port loads has those two types.
+
+### Ported C++ tests
+
+| C++ | Rust (`tests/drc07_connectivity.rs`) |
+|---|---|
+| `qa/tests/pcbnew/drc/test_drc_copper_thieving.cpp` `ThievingZoneProducesNoIsolatedCopperViolations` | `thieving_zone_produces_no_isolated_copper_violations` |
+| `test_drc_regressions.cpp` `issue14334` (2 violations of all providers) | covered by the corpus replay (the board's connectivity entries match); the all-provider count needs the other providers |
+
+### Deviations
+
+* `ConnectedItems()` order is item-list order instead of `CN_ITEM*` address order
+  (kicad-connectivity R-1): it decides which via / pad is named when a track touches several
+  post-machined / off-centre candidates (none of the compared boards has such a track).
+* `m_ZoneIsolatedIslandsMap` is iterated in board zone order instead of `ZONE*` address order
+  (`drc.md` 4.12, see verification).
+* `ItemEntry( item )` of an item unknown to the connectivity yields no items (C++
+  `operator[]` inserts an empty entry: same result).
+* The `wxCHECK`s of the unconnected-edge callback are `debug_assert!` + the same early return.
+
+### Known gaps
+
+* The harness reproduces the cache generator's connectivity rebuild before the run (it mutates
+  the board: net propagation), not inside `RunTests`; equivalent because nothing between
+  `prepare_run` and the cache generator reads nets.
+* Boards with footprints (pads) wait for the footprint parser; the corpus replay compares
+  them automatically once they load.
+
+## DRC-26: silk clearance and physical clearance
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_test_provider_silk_clearance.cpp` `DRC_TEST_PROVIDER_SILK_CLEARANCE::Run` (silk / target trees, rule-area skip, 18 layer pairs through `QueryCollidingPairs`, tented items by their hole, board-outline filter with the per-subshape collision cache of issue 24007, mask layers as `silk_over_copper`, UUID order on same-layer pairs) | `providers/silk_clearance.rs` `DrcTestProviderSilkClearance` (`Default`, `DrcTestProviderRun`) | ported |
+| `drc_test_provider_physical_clearance.cpp` `DRC_TEST_PROVIDER_PHYSICAL_CLEARANCE` (`Run`, `testItemAgainstItem`, `testItemAgainstZones`, `testShapeLineChain`, `testZoneLayer`) | `providers/physical_clearance.rs` `DrcTestProviderPhysicalClearance::new(&DrcBoardCaches)` (`DrcTestProviderRun`) | ported |
+| `ADVANCED_CFG::m_SliverAngleTolerance` | `physical_clearance::ADVANCED_CFG_SLIVER_ANGLE_TOLERANCE` (default 20) | constant (no advanced config in the port) |
+
+### Verification
+
+* Synthetic boards against the reference `kicad-cli pcb drc --format json --severity-all`:
+  `tests/oracle/gen_drc26_boards.py` writes `tests/data/silk_physical/*` and the goldens
+  `tests/golden/drc26/*.txt` (every entry of the two providers in report order: `silk_overlap`,
+  two-item `silk_over_copper`, `clearance` / `hole_clearance` naming the physical rules or
+  "Internal clearance violation"). Boards: `silk_default`, `silk_setup` (board setup silk
+  clearance), `silk_rule_web` (rule + solder mask min width > 0) with silk against silk, every
+  target layer, tented / untented vias, mask openings, the board edge and silk outside it, a
+  silk rule area (issue 24177), board-level compound graphics; `physical` / `physical_small`
+  (unconditional `physical_clearance` / `physical_hole_clearance`) with tracks, vias (hole
+  layers), edge cuts, a notched copper polygon, arcs, a hairpin bezier, a zone with two fill
+  islands and a fractured hole, a copper text. Result (`synthetic_boards_match_reference`):
+  **41 / 41 entries identical, same order** (silk 3 + 3 + 8, physical 24 + 3).
+* Corpus (`silk_and_physical_match_reference_corpus`, shared harness golden + cached raw
+  reports): 104 boards load completely and were compared: `silk_overlap` 6 / 6 matched,
+  `silk_over_copper` (two-item) 1 / 1, physical `clearance` / `hole_clearance` 0 / 0 (no
+  loadable corpus board has a physical violation), 0 missing, 0 extra, same order. Pending 261:
+  151 panic in the `FOOTPRINT::ResolveTextVar` stub of kicad-pcb, 51 parser skips, 56 need
+  DRC-21 (rule conditions; this includes `keepout_no_clearance`, `issue2512` and the other
+  physical-rule boards), 2 legacy `.pro`, 1 failed reference run. Physical entries of the
+  reference are told apart from the copper / hole clearance providers' by the constraint names
+  of the engine's physical constraints in the description.
+* Not verified yet: everything that needs footprints or pads (pad holes on all layers, the
+  `FlashLayer` branch of `testItemAgainstZones`, footprint courtyards in the physical tree,
+  the footprint rotation of `testShapeLineChain` positions, footprint zones via
+  `GetBoardOutline`, footprint graphics as compound silk), barcodes (implicit physical rule),
+  tables / table cells (atomic tables). These tighten automatically as the boards load.
+
+### Ported C++ tests
+
+* `test_drc_silk_rule_area_issue24177.cpp` `RuleAreaDoesNotCauseSilkOrMaskViolationsIssue24177`
+  -> `rule_area_does_not_cause_silk_or_mask_violations_issue24177` (silk provider part: 0
+  `silk_overlap` / `silk_over_copper`; the solder mask part is DRC-27's, the silk edge part
+  the edge clearance provider's).
+* `test_drc_physical_clearance.cpp` is a cache-generator test (DRC-05, already ported).
+  `DRCKeepoutNoClearanceInflation` (`keepout_no_clearance`) checks `items_not_allowed` only
+  (disallow provider, DRC-10) and its rule needs DRC-21.
+
+### Deviations
+
+* `checkedPairs` (`std::unordered_map<PTR_PTR_CACHE_KEY, LSET>`, lookups only) is keyed by the
+  two `ItemId`s in handle order instead of addresses; the silk outline collision cache is keyed
+  by the tree entry instead of its `const SHAPE*` (a pure memo; same results).
+* Silk: `BoardOutline()->GetOutline()` is `Board::board_outline` (rebuilt per time stamp);
+  `BBoxFromCaches()` is taken from a copy with `build_bbox_caches()` (C++: the caches built by
+  the cache generator), same box.
+* Physical: `RebuildBezierToSegmentsPointsList( errorMax )` runs on a copy of the shape (C++
+  rewrites the board item's derived bezier cache; same points).
+* `testShapeLineChain` on a chain of one short segment reads past the end of `angles` in C++;
+  the value is never compared then (no candidate range), the port uses 0.
+* `UNIMPLEMENTED_FOR` (an undefined shape) is a debug assertion.
+
+### Known gaps
+
+* `testItemAgainstItem` / `testItemAgainstZones` reach `FOOTPRINT::GetEffectiveShape` /
+  courtyards (kicad-pcb M20) for footprints; physical rules with conditions need DRC-21.
+
+## DRC-25: zone connections (starved thermal reliefs)
+
+### File / class map
+
+| C++ (`pcbnew/drc/drc_test_provider_zone_connections.cpp`) | Rust (`src/providers/zone_connections.rs`) | State |
+|---|---|---|
+| `DRC_TEST_PROVIDER_ZONE_CONNECTIONS` (`Run`, `testZoneLayer`: quick tests, `EvalZoneConnection`, `MIN_RESOLVED_SPOKES` / `THERMAL_RELIEF_GAP`, spoke counting from the fill outlines with unique intersection points, single-connection islands as ignored spokes, custom-pad proxy spokes, manual spokes from `GetConnectedTracks` / `GetConnectedItems( EXCLUDE_ZONES )` copper shapes, both messages) | `DrcTestProviderZoneConnections<'c>` (implements `DrcTestProviderRun`) | ported |
+
+API: `DrcTestProviderZoneConnections::new(&mut connectivity, &caches)` with the run's
+`ConnectivityData` (built; an empty one reproduces a board without connectivity) and a
+`DrcBoardCaches` with `build_zone_lists` run and `zone_isolated_islands` filled
+(`init_zone_islands_map`, then `FillIsolatedIslandsMap( map, true )`).
+
+### Verification
+
+* Synthetic boards (`tests/data/zone_connections/`, `tests/oracle/gen_drc25_boards.py`): GND
+  zones on F.Cu / B.Cu filled by the reference (`--refill-zones --save-board` on a copy), 13
+  single-pad footprints (pads inside, on the edges and corner of the zone, just outside it,
+  spokes blocked by SIG tracks, a closed SIG ring (island only), pockets closed by the pad's
+  antipad, a GND track and a GND copper line as manual spokes, PTH pads on both layers, an
+  other-net pad), once with the default spoke count and once with an unconditional
+  `min_resolved_spokes 3` rule (the message names the `THERMAL_RELIEF_GAP` constraint, as in
+  C++): **9 of 9 `starved_thermal` entries identical** (description, item UUIDs, item
+  descriptions and positions), order identical within every (zone, layer) task
+  (`synthetic_boards_match_reference`). The pads are added through the model API from a
+  sidecar table because the parser does not read pads yet (PCBIO-07).
+* Shared corpus (`zone_connections_match_reference_corpus`, `DRC25_FILTER=<substring>`):
+  104 boards compare today, none with `starved_thermal` entries on either side; every board
+  with pads is pending (pad parser, PCBIO-07) or needs DRC-21. The 10 corpus boards with
+  reference `starved_thermal` entries (`test_starved_thermal`, `issue14334`, `issue18`,
+  `issue3812`, `interf_u`, ...) compare automatically once they load.
+* Not reached by the verification data yet: the "spokes connected to isolated island"
+  message (both sides count the pocket boards identically, but no reference entry carries
+  it), custom pads with proxy spokes, conditionally flashed pads.
+
+### Ported C++ tests (`tests/drc25_zone_connections.rs`)
+
+`test_drc_starved_thermal.cpp` (`DRCStarvedThermal`: `test_starved_thermal` 2, `issue19090` 0)
+and the zone connection boards of `test_drc_regressions.cpp` (`issue14334` 2, `issue19090` 0,
+`issue15280` 0 - the latter is the reference CLI's count: the C++ false-positive test ignores
+`starved_thermal`). All have pads, so they report themselves as pending until PCBIO-07. The
+C++ refills the zones in `DRCStarvedThermal` / `DRCZoneFalsePositiveRegressions`; the port
+runs on the saved fills until the zone filler is ported (the reference CLI, which does not
+refill, reports the same counts for these boards).
+
+### Deviations
+
+* **Thread pool**: the (zone, layer) tasks run in list order (`m_DRCCopperZones` order, layers
+  in `LSET` order), i.e. the single-threaded order. In C++ the interleaving of different
+  tasks in the report depends on scheduling (seen on `thermals_rule`: the B.Cu task's entries
+  come between the F.Cu task's); the tests compare the set and the order within each task.
+  The set can differ only when the per-code error limit is reached. The 250 ms progress
+  polling is not reproduced.
+* **Connectivity**: `GetConnectedItems` needs `&mut ConnectivityData` in the port (it stores
+  its clusters), so the provider takes the connectivity separately from `ctx.connectivity`;
+  the tests build a second copy for the context (see change requests). `GetConnectedTracks`
+  is ordered by `ItemId` instead of address (only counted).
+* **Board caches**: `m_DRCCopperZones` / `m_ZoneIsolatedIslandsMap` come from the
+  `&DrcBoardCaches` given to `new` (`DrcTestProviderRun::run_tests` has no caches parameter).
+
+### Known gaps
+
+* Verification of real boards waits for the pad parser (PCBIO-07); DRC-21 for boards with
+  rule conditions.
+
+## REV-DRC: review of the engine core
+
+Reviewer pass over DRC-20, DRC-11, DRC-02, DRC-03, DRC-04 and DRC-05 against the C++
+(`rust/docs/design/review-drc-core.md`: findings R-01 .. R-09, the table of order-sensitive
+sites, the list of unverified pad branches). No port code had to change: the reading found no
+deviation that is not already listed in the sections above.
+
+### Files
+
+| File | What |
+|---|---|
+| `tests/oracle/gen_review_boards.py` | writes the review boards `tests/data/review/rev_{implicit,fastpath,explicit,clearance}.kicad_pcb` / `.kicad_pro` / `.kicad_dru` |
+| `tests/oracle/gen_evalrules_goldens.py` | new option `--out GOLDEN` (the corpus golden is unchanged) |
+| `tests/golden/evalrules_review.txt` | reference `EvalRules` results of the review boards (compact format of the corpus golden) |
+| `tests/evalrules_oracle.rs` | the replay is a function (`replay_golden`) used by the corpus test and by the new `evalrules_review_boards_match_cxx`; `EVALRULES_RAW_DIR=<dir>` writes the unhashed Rust lines per board for diffing against `pcb-dump board --sections evalrules` |
+
+### Verification
+
+`pcb-dump board --hash --sections evalrules` (the DRC-04 oracle) on the four review boards:
+one pad-less 4-layer board (36 tracks of nine nets, through / blind / buried / micro vias,
+copper and silk graphics and texts, three copper zones with local clearances, two keepouts
+that no item reaches), five netclasses assigned by pattern (one net in two classes: a
+composite class; equal clearances: `std::sort` ties), and
+
+| Board | Exercises | Result |
+|---|---|---|
+| `rev_implicit` | implicit rules only, diff-pair gap below the class clearance (the `AB.isCoupledDiffPair()` override, general path) | 8 categories identical |
+| `rev_fastpath` | implicit rules only, no override (netclass fast path) | 8 categories identical |
+| `rev_explicit` | 23 unconditional user rules of 17 constraint types: `(layer inner / outer / "B.Cu")`, several rules per type (min / max from one rule, opt from another), `(severity ...)`, 600 mm hole clearance (clamped), `disallow` masks and layers, hole-to-hole, diff-pair gap raised to the pair clearance, two rules with the same name | 8 categories identical |
+| `rev_clearance` | user clearance rules per layer, 700 mm clamped to `MAXIMUM_CLEARANCE`, an opt-only rule, against zone local clearances and the board minimum | 8 categories identical |
+
+(1570 result lines per board; categories track, via, zone, drawing, disallow, pair_tt,
+pair_zt, pair_zz.) This is the first differential coverage of the user-rule half of
+`EvalRules`: the corpus boards whose rule files have conditions need the expression binding
+and are skipped as a whole.
+
+### Deviations
+
+None added.
+
+### Known gaps (open findings)
+
+- R-01: a constraint's rule copy (`DrcRuleInfo`) has no identity; providers that group by
+  `DRC_RULE*` (matched length) cannot tell two same-named rules apart
+  (`rust/docs/packages/FIX-DRC-1.md`).
+- R-02: `DrcEngine::run_tests` cannot drive a run with providers that borrow the cache
+  generator's caches, and nothing enforces `PROVIDER_ORDER` on the provider slice (DRC-12).
+- R-06: every pad-related branch (list in the review document, section 4) is unverified until
+  PCBIO-07; the oracles compare them by themselves once pads load.

@@ -1,0 +1,165 @@
+input plain text
+expand plain text
+varref 0
+input ${DRC_ERROR start_of_text}
+expand $125DRC_ERROR start_of_text}
+varref 1
+DRC_ERROR 0 26 start_of_text
+input Fill in: ${DRC_ERROR placeholder_text}
+expand Fill in: $125DRC_ERROR placeholder_text}
+varref 1
+DRC_ERROR 8 30 placeholder_text
+input Note: ${DRC_ERROR text_box_error}
+expand Note: $125DRC_ERROR text_box_error}
+varref 1
+DRC_ERROR 5 28 text_box_error
+input ${DRC_WARNING this_is_warning} trailing
+expand $125DRC_WARNING this_is_warning} trailing
+varref 1
+DRC_WARNING 0 30 this_is_warning
+input prefix ${DRC_WARNING embedded_warning} suffix
+expand prefix $125DRC_WARNING embedded_warning} suffix
+varref 1
+DRC_WARNING 6 32 embedded_warning
+input literal: \\${DRC_ERROR not_a_real_error}
+expand literal: \\${DRC_ERROR not_a_real_error}
+varref 0
+input ${DRC_ERROR a}${DRC_ERROR b}
+expand $125DRC_ERROR a}$125DRC_ERROR b}
+varref 1
+DRC_ERROR 0 14 a
+DRC_ERROR 0 14 b
+input x${DRC_ERROR a} y${DRC_WARNING b} ${DRC_ERROR c}
+expand x$125DRC_ERROR a} y$125DRC_WARNING b} $125DRC_ERROR c}
+varref 1
+DRC_WARNING 16 17 b
+DRC_ERROR 0 15 a
+DRC_ERROR 18 15 c
+input ${DRC_ERROR}
+expand $125DRC_ERROR}
+varref 1
+DRC_ERROR 0 12 
+input ${DRC_ERROR   }
+expand $125DRC_ERROR   }
+varref 1
+DRC_ERROR 0 15 
+input ${DRC_ERROR\n  multi\nline}
+expand $125DRC_ERROR\n  multi\nline}
+varref 1
+DRC_ERROR 0 25 multi\nline
+input ${DRC_WARNINGnospace}
+expand ${DRC_WARNINGnospace}
+varref 1
+DRC_WARNING 0 21 nospace
+input ${DRC_ERROR unterminated
+expand $125DRC_ERROR unterminated
+varref 0
+input ${DRC_ERROR a\\}b}
+expand $125DRC_ERROR a\\}b}
+varref 1
+DRC_ERROR 0 15 a\\
+input $${DRC_ERROR dollar}
+expand $$125DRC_ERROR dollar}
+varref 1
+DRC_ERROR 0 20 dollar
+input \\\\${DRC_ERROR double_backslash}
+expand \\\\${DRC_ERROR double_backslash}
+varref 0
+input ${UNKNOWN}
+expand ${UNKNOWN}
+varref 1
+input ${UNKNOWN} and more
+expand ${UNKNOWN} and more
+varref 1
+input abc ${X} def
+expand abc ${X} def
+varref 1
+input \\${ESCAPED}
+expand \\${ESCAPED}
+varref 0
+input ${ONLY_OPEN
+expand ${ONLY_OPEN
+varref 0
+input }${
+expand }
+varref 0
+input ${}
+expand ${}
+varref 1
+input $(PAREN)
+expand $(PAREN)
+varref 0
+input $(PAREN
+expand $(PAREN
+varref 0
+input $NOBRACKET text
+expand $NOBRACKET text
+varref 0
+input $
+expand 
+varref 0
+input ${
+expand 
+varref 0
+input ${DRC23_VAR}
+expand value
+varref 1
+input $(DRC23_VAR)
+expand value
+varref 0
+input $DRC23_VAR/x
+expand value/x
+varref 0
+input ${KICAD10_FOOTPRINT_DIR}/lib
+expand /fp/lib
+varref 1
+input ${KICAD9_FOOTPRINT_DIR}/lib
+expand /fp/lib
+varref 1
+input ${KICAD9_3DMODEL_DIR}/x
+expand ${KICAD9_3DMODEL_DIR}/x
+varref 1
+input ${KISYS3DMOD}/x
+expand ${KISYS3DMOD}/x
+varref 1
+input ${KICAD_SYMBOL_DIR}/x
+expand ${KICAD_SYMBOL_DIR}/x
+varref 1
+input ${KICAD8_3RD_PARTY}/x
+expand ${KICAD8_3RD_PARTY}/x
+varref 1
+input ${ERC_WARNING foo}
+expand $125ERC_WARNING foo}
+varref 1
+input ${DRC_WARNING}
+expand $125DRC_WARNING}
+varref 1
+DRC_WARNING 0 14 
+input a ${DRC_ERROR x} ${UNRESOLVED}
+expand a $125DRC_ERROR x} ${UNRESOLVED}
+varref 1
+DRC_ERROR 1 15 x
+input {(}
+expand {(}
+varref 0
+input %TEMP% ${A}
+expand %TEMP% ${A}
+varref 1
+input ä ${ÜMLAUT} ö
+expand ä ${ÜMLAUT} ö
+varref 1
+input ${a:b}
+expand ${a:b}
+varref 1
+input ${a.b}
+expand ${a.b}
+varref 1
+input ${a b}
+expand ${a b}
+varref 1
+input ${A}${B}
+expand ${A}${B}
+varref 1
+input ${A}\n${B}
+expand ${A}\n${B}
+varref 1

@@ -1184,6 +1184,7 @@ pub(crate) fn fill_outline_count(board: &Board, zone_id: ZoneId, layer: PcbLayer
 /// valid); `ALWAYS` deletes, `AREA` deletes outlines smaller than the minimum island area, the
 /// others are flagged with `SetIsIsland` (not renumbered after later deletions, R-10). Then
 /// `UpdateTriangulationDataHash()`. Returns true if a polygon was deleted.
+#[allow(clippy::if_same_then_else)] // keeps the C++ statement structure
 pub(crate) fn remove_islands(
     board: &mut Board,
     zone_id: ZoneId,

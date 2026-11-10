@@ -19,9 +19,15 @@
 //! against the reference `kicad-cli pcb upgrade --force` (`tests/oracle/gen_upgrade_golden.sh`,
 //! goldens `tests/golden/upgrade/<board>.kicad_pcb` and `.out`): the re-saved board must be
 //! byte-identical, the message and the exit code equal.
+//!
+//! The load is the kicad-cli sequence (`BOARD_LOADER::Load`, package PCBIO-15) with the steps
+//! that still reach a known `port_pending!` stub skipped (`common::KNOWN_PENDING_STEPS`).
 
+mod common;
+
+use kicad_pcb::project::LoadPath;
 use kicad_session::jobs::JobPcbUpgrade;
-use kicad_session::{Reporter, Session, SessionError, exit_codes, run_pcb_upgrade};
+use kicad_session::{LoadInputs, Reporter, SessionError, exit_codes, run_pcb_upgrade};
 
 /// Boards whose every construct the parser and the writer support today.
 const BOARDS: &[&str] = &["qa/data/pcbnew/issue10697.kicad_pcb"];
@@ -33,7 +39,13 @@ fn golden(name: &str) -> std::path::PathBuf {
 }
 
 fn upgrade(text: &str, name: &str, force: bool) -> Result<(i32, Reporter, Vec<u8>), SessionError> {
-    let mut session = Session::load_board(text, name, None, None)?;
+    let inputs = LoadInputs {
+        text,
+        source_name: name,
+        ..LoadInputs::default()
+    };
+    let (mut session, _skipped) = common::load_staged(LoadPath::Cli, &inputs)?;
+    assert!(session.pending_load_steps.is_empty());
     let mut job = JobPcbUpgrade::new();
     job.filename = name.to_string();
     job.force = force;

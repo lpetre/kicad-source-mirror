@@ -28,7 +28,7 @@ Design: `rust/docs/design/plot-engines.md`. Analysis: `rust/docs/analysis/plot-f
 | `include/gbr_netlist_metadata.h` (`GBR_DATA_FIELD`, `GBR_NETLIST_METADATA`, `GBR_NETINFO_ALL`) | `gbr_netlist_metadata.rs` | ported |
 | `include/plotters/gbr_plotter_apertures.h` (`APERTURE`, `APER_MACRO_FREEPOLY(_LIST)`), `GERBER_plotter.cpp` L74-91, L1858-1919 | `gbr_plotter_apertures.rs` | ported |
 | `include/plotters/plotter_gerber.h`, `common/plotters/GERBER_plotter.cpp` L1-1805, L1849-1856 (`GERBER_PLOTTER`) | `plotter_gerber.rs` (`GerberPlotter`, `Plotter::as_gerber_mut`) | ported (PLOT-03, PLOT-04) except below |
-| `GERBER_PLOTTER::FlashPadChamferRoundRect` | `GerberPlotter::flash_pad_chamfer_round_rect( ..., &RoundChamferedRectToPolygonFn )` | ported; `TransformRoundChamferedRectToPolygon` is a parameter (not in `kicad-geom` yet) |
+| `GERBER_PLOTTER::FlashPadChamferRoundRect` | `GerberPlotter::flash_pad_chamfer_round_rect_default` (`TransformRoundChamferedRectToPolygon` = `plotter_gerber::round_chamfered_rect_to_polygon`, kicad-geom); `flash_pad_chamfer_round_rect( ..., &RoundChamferedRectToPolygonFn )` takes the generator as a parameter (kept for existing callers) | ported |
 | `GERBER_PLOTTER::Text`, `PlotText` (`GERBER_plotter.cpp` L1807-1846) | `impl Plotter for GerberPlotter` `text` / `plot_text` | ported |
 | `include/plotters/gbr_plotter_aperture_macros.h` | `gbr_plotter_aperture_macros.rs` | ported (byte-identical literals) |
 | `include/plotters/plotters_pslike.h` L41-143, `PS_plotter.cpp` L45-226 (`PSLIKE_PLOTTER`: `SetTextMode`, `SetColor`, `FlashPadOval/Circle/Rect/RoundRect/Custom/Trapez`, `FlashRegularPolygon`) | `plotters_pslike.rs` (trait `PsLikePlotter` = `emitSetRGBColor`, `pslike_*` free functions) | ported; `FlashPadRoundRect` takes the polygon (below) |
@@ -146,14 +146,14 @@ Design: `rust/docs/design/plot-engines.md`. Analysis: `rust/docs/analysis/plot-f
 * `SVG_PLOTTER::StartPlot` takes the `<title>` date from `SvgPlotter::set_creation_date`
   instead of `GetISO8601CurrentDateTime()`. `EndPlot` does not close a file (`output_open`
   becomes false).
-* `SVG_PLOTTER::SetCurrentLineWidth` does not `debug_assert` on negative widths (C++
-  `wxASSERT_MSG`): `SVG_PLOTTER::Text` passes the caller's pen width (negative allowed by the
-  `Text` API) before the absolute value is taken. `GerberPlotter` keeps its `debug_assert`
-  (so a negative `PlotText` stroke width panics in debug builds; the oracle avoids it).
-* `PSLIKE_PLOTTER::FlashPadRoundRect` needs `TransformRoundChamferedRectToPolygon`, not in
-  `kicad-geom` yet: `SvgPlotter::set_round_rect_polygon_fn` installs it (the oracle replays
-  the C++ polygons); without it the pad is plotted as `FlashPadRect` (sharp corners).
-  Undefined behaviour avoided: an empty generator result / empty custom outline plots nothing.
+* `SVG_PLOTTER::SetCurrentLineWidth` and `GERBER_PLOTTER::SetCurrentLineWidth` do not
+  assert on negative widths (C++ `wxASSERT_MSG`, which only reports and continues):
+  `SVG_PLOTTER::Text` / `PlotText` pass the caller's pen width (negative allowed by the `Text`
+  API). (CLEAN-1 removed the former Gerber `debug_assert`.)
+* `PSLIKE_PLOTTER::FlashPadRoundRect` uses `TransformRoundChamferedRectToPolygon`
+  (`plotter_gerber::round_chamfered_rect_to_polygon`) unless another generator is installed
+  with `SvgPlotter::set_round_rect_polygon_fn`. Undefined behaviour avoided: an empty
+  generator result / empty custom outline plots nothing.
 * `emitSetRGBColor` converts `255.0 * c` like g++ on x86-64 (`cvttsd2si` to 64 bits, then the
   low 32 bits) for out-of-range components; `int` overflows in `userToDeviceCoordinates`
   (clamped far arc centres), the text v-justify offset and `aSize.x * 4 / 3` wrap as on x86.
@@ -163,20 +163,27 @@ Design: `rust/docs/design/plot-engines.md`. Analysis: `rust/docs/analysis/plot-f
 ## Known gaps
 
 * `SVG_PLOTTER::PlotImage` bitmap embedding (wxImage PNG encoding, greyscale conversion).
-* `SVG_PLOTTER::Rect` with a corner radius: `kicad-geom`'s `SHAPE_RECT::Outline()` returns an
-  empty chain for rounded corners (`ROUNDRECT` not ported), so nothing is plotted (C++: a
-  rounded polygon). Not reached by board SVG plots of pads (they use `FlashPadRoundRect`).
-* `SvgPlotter` round-rect pads depend on `TransformRoundChamferedRectToPolygon` (see
-  Deviations), like Gerber chamfered pads.
 * `rust/docs/design/plot-engines.md` still describes PLOT-05 as "to do"; the design is as
   announced there (`text` / `plot_text` provided trait methods through `kicad-font`).
-* `TransformRoundChamferedRectToPolygon` is not in `kicad-geom` yet: callers of
-  `flash_pad_chamfer_round_rect` pass it (the oracle replays the C++ polygons). The FreePoly
-  macros of chamfered / custom pads therefore depend on that port and on `kicad-geom`'s
-  polygon code (analysis 11.1 items 4 and 5).
 * Line chains with arcs are verified through `kicad-geom`'s `ShapeLineChain::append_arc` /
   `ShapeArc` (all oracle scripts match today); they follow that crate's state.
 * `RenderSettings` carries only the members the plotters read; the default font is
   there since PLOT-05. If `kicad-pcb`'s `STROKE_PARAMS::Stroke` needs the same dash settings, the struct may move to `kicad-core`.
 * `FillT` is defined in `kicad_core::plot_enums`; the board model (`kicad-pcb`) should use it
   instead of defining its own copy.
+
+## CLEAN-1 (consolidation)
+
+* `TransformRoundChamferedRectToPolygon` comes from `kicad-geom` by default:
+  `plotter_gerber::round_chamfered_rect_to_polygon` (inflate 0, `ERROR_INSIDE`),
+  `GerberPlotter::flash_pad_chamfer_round_rect_default`, and `SvgPlotter`'s
+  `FlashPadRoundRect` when no generator is installed. The closure-taking
+  `flash_pad_chamfer_round_rect` / `set_round_rect_polygon_fn` stay as overrides.
+* `SVG_PLOTTER::Rect` with a corner radius plots the `SHAPE_RECT::Outline()` polygon
+  (`ROUNDRECT`, kicad-geom G6b) like the C++.
+* Oracles: the Gerber scripts (`FCH`: 42 round / chamfered combinations) and the SVG scripts
+  (`FRR`) now run through the default generator, with identical bytes; the SVG oracle has 200
+  new scripts (1500..1699) of rounded rectangles (`RRECT`: `Rect` with radii 0, 1, -5, huge and
+  random, degenerate boxes) and round rect pads (1,540 `RRECT`, 215 `FRR` operations), all
+  match. `round_rect_polygons_match_cpp` (both oracles) compares every recorded C++ polygon
+  with the Rust generator point for point.

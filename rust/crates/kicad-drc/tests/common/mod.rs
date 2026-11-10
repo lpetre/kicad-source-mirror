@@ -530,12 +530,15 @@ fn dump_error(out: &mut Out, error: &IoError) {
     }
 }
 
-fn dump_parse(
+fn dump_parse<B: PcbExprBinder>(
     text: &str,
     source: &str,
     with_reporter: bool,
     component_classes: bool,
-) -> Vec<String> {
+) -> Vec<String>
+where
+    B::VarRef: Send + Sync,
+{
     let mut out = Out {
         prefix: format!("rules|{}|", if with_reporter { "report" } else { "throw" }),
         lines: Vec::new(),
@@ -545,7 +548,7 @@ fn dump_parse(
     let mut cc_rules: Vec<Option<ComponentClassAssignmentRule>> = Vec::new();
 
     let result = {
-        let mut parser = TestParser::new(text, source);
+        let mut parser = DrcRulesParser::<B>::new(text, source);
         let reporter_arg = if with_reporter {
             Some(&mut reporter as &mut dyn kicad_drc::Reporter)
         } else {
@@ -596,8 +599,21 @@ fn dump_parse(
 /// The output of `pcb-dump rules [--component-classes] <source>` for one file with content
 /// `text` (without the `file|...|` line): the "report" lines, then the "throw" lines.
 pub fn dump_rules(text: &str, source: &str, component_classes: bool) -> Vec<String> {
-    let mut lines = dump_parse(text, source, true, component_classes);
-    lines.extend(dump_parse(text, source, false, component_classes));
+    dump_rules_with::<SyntaxBinder>(text, source, component_classes)
+}
+
+/// [`dump_rules`] with the expression binding `B` (DRC-21: the real `PcbExprUcode`).
+#[allow(dead_code)] // not every test binary uses it
+pub fn dump_rules_with<B: PcbExprBinder>(
+    text: &str,
+    source: &str,
+    component_classes: bool,
+) -> Vec<String>
+where
+    B::VarRef: Send + Sync,
+{
+    let mut lines = dump_parse::<B>(text, source, true, component_classes);
+    lines.extend(dump_parse::<B>(text, source, false, component_classes));
     lines
 }
 

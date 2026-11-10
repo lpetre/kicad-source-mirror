@@ -1169,9 +1169,13 @@ fn layers_of(set: &Lset) -> Vec<PcbLayerId> {
 /// Port of `CN_VISITOR::operator()( aCandidate )` for the visitor of `item`: tests the pair for
 /// contact and connects it; via-zone contacts are queued in `deferred` (`m_deferredNetCodes`).
 ///
-/// The C++ skips a dirty candidate whose address is below the visiting item's, so each pair
-/// of dirty items is tested once; the port compares `CnItemId`s (list order). All contact
-/// tests are symmetric and `Connect()` normalises the order, so the side does not matter.
+/// The C++ skips a candidate that is still dirty and whose address is below the visiting
+/// item's. A dirty item stops being dirty when its own search starts (`FindNearby` calls
+/// `BBox()`, which clears the flag), so a pair of dirty items is always tested by the visitor
+/// that runs later, and also by the earlier one unless the later item has the lower address.
+/// The port visits each pair of dirty items once (from the lower `CnItemId`) and makes up for
+/// the second visit where it can change the result: the zone tests are symmetric, but
+/// `SHAPE::Collide` of two item shapes is not (see [`items_touch_from_both_visitors`]).
 pub fn cn_visit(
     ctx: &BoardCtx<'_>,
     list: &mut CnList,
@@ -1234,8 +1238,18 @@ pub fn cn_visit(
         common_layers &= &ctx.board.enabled_layers();
     }
 
+    // A dirty candidate runs (or has run) its own search and tests the pair with the operands
+    // the other way round; a candidate that is not dirty is only ever tested from here.
+    let both_visitors = cand.dirty();
+
     for layer in layers_of(&common_layers) {
-        if items_touch_on_layer(&ref_a, &ref_b, layer) {
+        let touch = if both_visitors {
+            items_touch_from_both_visitors(&ref_a, &ref_b, layer)
+        } else {
+            items_touch_on_layer(&ref_a, &ref_b, layer)
+        };
+
+        if touch {
             list.connect_pair(item, candidate);
             return true;
         }
@@ -1423,4 +1437,30 @@ pub fn items_touch_on_layer(a: &ItemRef<'_>, b: &ItemRef<'_>, layer: PcbLayerId)
     );
 
     shape_a.collide(&*shape_b, 0, None, None)
+}
+
+/// `ItemsTouchOnLayer( a, b, layer ) || ItemsTouchOnLayer( b, a, layer )`: what the two
+/// `CN_VISITOR`s of a pair of dirty items compute between them in C++ (each visitor passes its
+/// candidate first).
+///
+/// The order matters because `SHAPE::Collide` is not symmetric: for two `SHAPE_SEGMENT`s the
+/// minimum distance is `( wA + 1 ) / 2 + wB / 2`, so two tracks whose axes are exactly that far
+/// apart touch only with the odd-width one as the first operand (1 nm band, odd widths only).
+/// The reference build connects such a pair whichever of the two comes first in the board
+/// (`rev_shapes` golden); on the rare pair that only one C++ visitor tests (the later item has
+/// the lower heap address) the C++ result depends on the heap, see
+/// `rust/docs/design/review-connectivity.md` F-2.
+fn items_touch_from_both_visitors(a: &ItemRef<'_>, b: &ItemRef<'_>, layer: PcbLayerId) -> bool {
+    let shape_a = a.effective_shape(
+        layer,
+        flashing_for(a, layer),
+        DrcConstraintT::NullConstraint,
+    );
+    let shape_b = b.effective_shape(
+        layer,
+        flashing_for(b, layer),
+        DrcConstraintT::NullConstraint,
+    );
+
+    shape_a.collide(&*shape_b, 0, None, None) || shape_b.collide(&*shape_a, 0, None, None)
 }

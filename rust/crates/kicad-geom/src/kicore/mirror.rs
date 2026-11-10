@@ -21,8 +21,6 @@
 //! kimath types, and the kimath shapes (`SHAPE_ARC::Mirror`, `SHAPE_LINE_CHAIN::Mirror`,
 //! `SHAPE_POLY_SET::Mirror`, ...) take a `FLIP_DIRECTION`, so it is ported here.
 
-use core::ops::{Add, Neg, Sub};
-
 use crate::geometry::eda_angle::{ANGLE_0, ANGLE_90, EdaAngle};
 use crate::math::vector2::{Coord, Vector2};
 
@@ -35,15 +33,55 @@ pub enum FlipDirection {
     TopBottom,
 }
 
+/// The arithmetic of `MIRRORVAL` for one coordinate type: `-( aPoint - aMirrorRef ) +
+/// aMirrorRef`.  For the integer types it wraps, as the reference build (x86-64) does for
+/// out-of-range coordinates (signed overflow is undefined behaviour in C++, the generated
+/// `sub` / `neg` / `add` wrap); a plain Rust expression would panic in debug builds.  For the
+/// floating point types it is the plain expression.
+pub trait MirrorValue: Copy {
+    /// `-( self - a_mirror_ref ) + a_mirror_ref`
+    fn mirror_value(self, a_mirror_ref: Self) -> Self;
+}
+
+macro_rules! mirror_value_wrapping {
+    ($($t:ty),*) => {
+        $(
+            impl MirrorValue for $t {
+                #[inline]
+                fn mirror_value(self, a_mirror_ref: Self) -> Self {
+                    self.wrapping_sub(a_mirror_ref).wrapping_neg().wrapping_add(a_mirror_ref)
+                }
+            }
+        )*
+    };
+}
+
+mirror_value_wrapping!(i8, i16, i32, i64, i128, isize);
+
+impl MirrorValue for f64 {
+    #[inline]
+    fn mirror_value(self, a_mirror_ref: Self) -> Self {
+        -(self - a_mirror_ref) + a_mirror_ref
+    }
+}
+
+impl MirrorValue for f32 {
+    #[inline]
+    fn mirror_value(self, a_mirror_ref: Self) -> Self {
+        -(self - a_mirror_ref) + a_mirror_ref
+    }
+}
+
 /// Port of `MIRRORVAL`.
 ///
-/// Returns the mirror of aPoint relative to the aMirrorRef.
+/// Returns the mirror of aPoint relative to the aMirrorRef (wrapping for integers, see
+/// [`MirrorValue`]).
 #[inline]
 pub fn mirror_val<T>(a_point: T, a_mirror_ref: T) -> T
 where
-    T: Copy + Sub<Output = T> + Add<Output = T> + Neg<Output = T>,
+    T: MirrorValue,
 {
-    -(a_point - a_mirror_ref) + a_mirror_ref
+    a_point.mirror_value(a_mirror_ref)
 }
 
 /// Port of `MIRROR( T& aPoint, const T& aMirrorRef )`.
@@ -52,7 +90,7 @@ where
 #[inline]
 pub fn mirror<T>(a_point: &mut T, a_mirror_ref: T)
 where
-    T: Copy + Sub<Output = T> + Add<Output = T> + Neg<Output = T>,
+    T: MirrorValue,
 {
     *a_point = mirror_val(*a_point, a_mirror_ref);
 }
@@ -67,7 +105,7 @@ pub fn mirror_point<T>(
     a_mirror_ref: Vector2<T>,
     a_flip_direction: FlipDirection,
 ) where
-    T: Coord + Sub<Output = T> + Add<Output = T> + Neg<Output = T>,
+    T: Coord + MirrorValue,
 {
     if a_flip_direction == FlipDirection::LeftRight {
         mirror(&mut a_point.x, a_mirror_ref.x);
@@ -113,5 +151,17 @@ mod tests {
 
         assert_eq!(mirror_axis(FlipDirection::LeftRight), ANGLE_90);
         assert_eq!(mirror_axis(FlipDirection::TopBottom), ANGLE_0);
+    }
+
+    /// Out-of-range results wrap like the reference build (`tests/oracle_mirror.rs` checks
+    /// this against libkimath).
+    #[test]
+    fn mirror_wraps_like_x86() {
+        assert_eq!(mirror_val(i32::MIN, 0), i32::MIN);
+        assert_eq!(mirror_val(-2_000_000_000, 1_000_000_000), -294_967_296);
+
+        let mut p = Vector2I::new(i32::MAX, 0);
+        mirror_point(&mut p, Vector2I::new(-10, 0), FlipDirection::LeftRight);
+        assert_eq!(p, Vector2I::new(i32::MAX.wrapping_neg().wrapping_sub(20), 0));
     }
 }

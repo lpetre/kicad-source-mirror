@@ -1,0 +1,655 @@
+demos/complex_hierarchy/complex_hierarchy.kicad_pcb	cached
+demos/constraints/constraints.kicad_pcb	cached
+demos/constraints/constraints.kicad_pcb	0	error	invalid_outline	Board has malformed outline (not a closed shape)	26564f38-97ad-4769-a48c-c14c481bfbd0	Arc on Edge.Cuts	170.8145	147.6467	c50a1504-e93a-4dc7-abe4-9d0a6c918687	Segment on Edge.Cuts	172.46219	153.843146
+demos/ecc83/ecc83-pp.kicad_pcb	cached
+demos/ecc83/ecc83-pp_v2.kicad_pcb	cached
+demos/interf_u/interf_u.kicad_pcb	cached
+demos/kit-dev-coldfire-xilinx_5213/kit-dev-coldfire-xilinx_5213.kicad_pcb	cached
+demos/microwave/microwave.kicad_pcb	cached
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	cached
+demos/multichannel/multichannel_mixer.kicad_pcb	cached
+demos/pic_programmer/pic_programmer.kicad_pcb	cached
+demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	cached
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	cached
+demos/sonde xilinx/sonde xilinx.kicad_pcb	cached
+demos/stickhub/StickHub.kicad_pcb	cached
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb	cached
+qa/data/pcbnew/bad_triangulation_case.kicad_pcb	cached
+qa/data/pcbnew/bad_triangulation_case.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/complex_hierarchy.kicad_pcb	cached
+qa/data/pcbnew/component_classes.kicad_pcb	cached
+qa/data/pcbnew/component_classes.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/component_classes_drc.kicad_pcb	cached
+qa/data/pcbnew/component_classes_drc.kicad_pcb	0	error	assertion_failure	Assertion failure (rule 'Rule2')	4bc5e5de-57df-4365-88c3-46134594e0c1	Footprint R2	95.0	70.0
+qa/data/pcbnew/component_classes_drc.kicad_pcb	1	error	assertion_failure	Assertion failure (rule 'Rule5')	1592fdd4-fb11-495e-9939-50648af3aa9d	Footprint R4	101.0	70.0
+qa/data/pcbnew/connect/connect.kicad_pcb	cached
+qa/data/pcbnew/connection_width_rules.kicad_pcb	cached
+qa/data/pcbnew/creepage/creepage.kicad_pcb	cached
+qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb	cached
+qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb	1	error	invalid_outline	Board has malformed outline (not a closed shape) (gap 36.9792 mm)	deadbeef-dead-beef-dead-beefdeadbeef	Segment on Edge.Cuts	100.0	80.0	b3ec0a9e-cef1-4117-a550-40cc220a66fe	Segment on Edge.Cuts	74.06	106.53
+qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb	cached
+qa/data/pcbnew/custom_fields.kicad_pcb	cached
+qa/data/pcbnew/custom_pads.kicad_pcb	cached
+qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb	cached
+qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb	cached
+qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb	cached
+qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb	cached
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb	cached
+qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb	1	warning	missing_tuning_profile	Missing tuning profile (Net Class: CLASS2, Tuning Profile: PROFILE2)
+qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb	cached
+qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	cached
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb	cached
+qa/data/pcbnew/fill_bad.kicad_pcb	cached
+qa/data/pcbnew/footprints_load_save.kicad_pcb	cached
+qa/data/pcbnew/footprints_load_save.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb	cached
+qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/groups_load_save.kicad_pcb	cached
+qa/data/pcbnew/groups_load_save.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb	cached
+qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	cached
+qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb	cached
+qa/data/pcbnew/intersectingzones.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	15	warning	padstack	Padstack is questionable (negative solder paste margin is larger than pad; no solder paste mask will be generated)	f98951ae-c7c4-445b-a39a-a4d57888a02e	Pad 2 [<no net>] of P5 on F.Cu	137.0	89.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	16	warning	padstack	Padstack is questionable (negative solder paste margin is larger than pad; no solder paste mask will be generated)	bd1ca0c2-74bb-4a01-94e6-11796af0cb7e	PTH pad 1 [<no net>] of P1	121.0	89.0
+qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/user10-content.kicad_pcb	cached
+qa/data/pcbnew/ipc2581/user10-content.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb	cached
+qa/data/pcbnew/issue10697.kicad_pcb	cached
+qa/data/pcbnew/issue10697.kicad_pcb	66	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue10906.kicad_pcb	cached
+qa/data/pcbnew/issue10916.kicad_pcb	cached
+qa/data/pcbnew/issue10916.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue11814.kicad_pcb	cached
+qa/data/pcbnew/issue12109.kicad_pcb	cached
+qa/data/pcbnew/issue12609.kicad_pcb	cached
+qa/data/pcbnew/issue12831.kicad_pcb	cached
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	cached
+qa/data/pcbnew/issue1358.kicad_pcb	cached
+qa/data/pcbnew/issue14008.kicad_pcb	cached
+qa/data/pcbnew/issue14130.kicad_pcb	cached
+qa/data/pcbnew/issue14294.kicad_pcb	cached
+qa/data/pcbnew/issue14334.kicad_pcb	cached
+qa/data/pcbnew/issue14412.kicad_pcb	cached
+qa/data/pcbnew/issue14449.kicad_pcb	cached
+qa/data/pcbnew/issue14549.kicad_pcb	cached
+qa/data/pcbnew/issue14549_2.kicad_pcb	cached
+qa/data/pcbnew/issue14549_2.kicad_pcb	4	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/issue14549_2.kicad_pcb	5	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/issue14549_2.kicad_pcb	6	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/issue14549_2.kicad_pcb	7	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/issue14559.kicad_pcb	cached
+qa/data/pcbnew/issue14559.kicad_pcb	0	error	footprint_type_mismatch	Footprint component type doesn't match footprint pads (expected 'Through hole'; actual 'SMD')	2db81e4a-19a5-4b44-a72c-05bfd1e53a60	Footprint SPACER105	157.0	85.0
+qa/data/pcbnew/issue14559.kicad_pcb	1	error	footprint_type_mismatch	Footprint component type doesn't match footprint pads (expected 'Through hole'; actual 'SMD')	3ef3652a-8194-4a40-b51f-8b46d2ef751c	Footprint SPACER103	222.0	85.0
+qa/data/pcbnew/issue14559.kicad_pcb	2	error	footprint_type_mismatch	Footprint component type doesn't match footprint pads (expected 'Through hole'; actual 'SMD')	41c7a65a-95f7-4529-a470-e14c9eb274ff	Footprint SPACER102	92.0	110.0
+qa/data/pcbnew/issue14559.kicad_pcb	3	error	footprint_type_mismatch	Footprint component type doesn't match footprint pads (expected 'Through hole'; actual 'SMD')	7ee7e501-f284-4d8c-b2d4-f70298f96ced	Footprint SPACER101	92.0	85.0
+qa/data/pcbnew/issue14559.kicad_pcb	4	error	footprint_type_mismatch	Footprint component type doesn't match footprint pads (expected 'Through hole'; actual 'SMD')	d57859fe-cef3-480e-b8f5-be4da069f07a	Footprint SPACER104	222.0	110.0
+qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb	cached
+qa/data/pcbnew/issue15280.kicad_pcb	cached
+qa/data/pcbnew/issue16182.kicad_pcb	cached
+qa/data/pcbnew/issue16566.kicad_pcb	cached
+qa/data/pcbnew/issue16658/issue16658.kicad_pcb	cached
+qa/data/pcbnew/issue17429.kicad_pcb	cached
+qa/data/pcbnew/issue17559.kicad_pcb	cached
+qa/data/pcbnew/issue17967/issue17967.kicad_pcb	cached
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	cached
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue18.kicad_pcb	cached
+qa/data/pcbnew/issue18.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue18045/test_proj.kicad_pcb	cached
+qa/data/pcbnew/issue18142.kicad_pcb	cached
+qa/data/pcbnew/issue18203.kicad_pcb	cached
+qa/data/pcbnew/issue18839.kicad_pcb	cached
+qa/data/pcbnew/issue18839.kicad_pcb	0	error	invalid_outline	Board has malformed outline (not a closed shape)	00000000-0000-0000-0000-000000000001	Arc on Edge.Cuts	100.0	100.0	00000000-0000-0000-0000-000000000001	Arc on Edge.Cuts	100.0	100.0
+qa/data/pcbnew/issue18878.kicad_pcb	cached
+qa/data/pcbnew/issue19090/issue19090.kicad_pcb	cached
+qa/data/pcbnew/issue19325/issue19325.kicad_pcb	cached
+qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb	cached
+qa/data/pcbnew/issue19574.kicad_pcb	cached
+qa/data/pcbnew/issue19956/issue19956.kicad_pcb	cached
+qa/data/pcbnew/issue20249/dimension.kicad_pcb	cached
+qa/data/pcbnew/issue20480/issue20480.kicad_pcb	cached
+qa/data/pcbnew/issue21184/issue21184.kicad_pcb	cached
+qa/data/pcbnew/issue21184/issue21184.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue21564/issue21564.kicad_pcb	cached
+qa/data/pcbnew/issue21564/issue21564.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	cached
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	cached
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	cached
+qa/data/pcbnew/issue22102.kicad_pcb	cached
+qa/data/pcbnew/issue22267.kicad_pcb	cached
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	cached
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	cached
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	cached
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	42	error	shorting_items	Items shorting two nets (nets GND and /B1_OUT)	e4d5b25d-4f36-418e-86f7-1cd8c3258028	Via [GND] on F.Cu - B.Cu	141.0	100.0	ff379af5-0650-4586-82e8-51804d5f5dfc	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2138	80.6306
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	45	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	6b2044eb-0707-4b12-8906-278861a5d292	Track (arc) [/B1_OUT] on In2.Cu, length 0.1574 mm	145.7029	163.5873	a00db400-2fd3-49cb-9811-d9d095ec192e	Track (arc) [/A2_OUT] on In2.Cu, length 0.1764 mm	140.0865	83.9075
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	51	error	shorting_items	Items shorting two nets (nets unconnected-(H5-Pad1) and /B1_OUT)	a773e739-9938-467f-a0ac-47e05c90ba6d	PTH pad 1 [unconnected-(H5-Pad1)] of H5	102.275	79.625	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	53	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	e531d80d-67e9-480e-a575-7b439e91458e	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13099	82.59357	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	57	error	shorting_items	Items shorting two nets (nets unconnected-(H5-Pad1) and /B1_OUT)	a773e739-9938-467f-a0ac-47e05c90ba6d	PTH pad 1 [unconnected-(H5-Pad1)] of H5	102.275	79.625	dc423b4d-f7c2-4862-90ad-e3e34129c856	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7111	110.0294
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	59	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	dae680fb-0731-41f2-9123-53d510f387c6	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.14126	82.59037	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	61	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	cc5ba1fd-43c7-42ba-bc09-a9e3de0b8be1	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1327	82.5946	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	63	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	c4663619-3727-48e2-a2f7-dbf4d586df22	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1362	82.5831	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	65	error	shorting_items	Items shorting two nets (nets /B1_OUT and /G2_OUT)	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779	cea87563-60e5-4f15-8fe0-1ccc2b3b05ec	Via [/G2_OUT] on F.Cu - B.Cu	136.1	127.4
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	68	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	bc874b41-abc6-4971-b7a7-d398f8f4eff5	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.21254	80.61998	d6bdd188-d0d9-40cf-9047-6e4d8bfb63e0	Via [/A2_OUT] on F.Cu - B.Cu	82.304321	60.263323
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	69	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	b1c11c23-d786-434c-b039-8c716ab69230	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13494	82.59371	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	71	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	a2df6c66-5acf-4349-919e-2a8101a021ea	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13356	82.59416	f8d68248-a1ce-453e-abea-0781c4fac1a9	Via [/A2_OUT] on F.Cu - B.Cu	208.889058	90.001627
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	73	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	9d104ae7-4065-4df4-9221-55b03750413f	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13193	82.59473	a1d04041-0a73-4cb6-8048-2aef9d394642	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	193.894497	106.616984
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	75	error	shorting_items	Items shorting two nets (nets /B1_OUT and /G2_OUT)	93463d41-691c-454a-a8be-8b5a9ed75228	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.18005	106.87213	cea87563-60e5-4f15-8fe0-1ccc2b3b05ec	Via [/G2_OUT] on F.Cu - B.Cu	136.1	127.4
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	77	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	92e2cdb6-d350-4772-994a-93ca30002cb4	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1347	82.5924	a1d04041-0a73-4cb6-8048-2aef9d394642	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	193.894497	106.616984
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	79	error	shorting_items	Items shorting two nets (nets /B1_OUT and /G2_OUT)	91e35a3e-a9ff-4f82-9f62-9627be1e37d7	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1799	106.8748	cea87563-60e5-4f15-8fe0-1ccc2b3b05ec	Via [/G2_OUT] on F.Cu - B.Cu	136.1	127.4
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	81	error	shorting_items	Items shorting two nets (nets /B1_OUT and unconnected-(H5-Pad1))	8f578de5-fc3d-4616-85a0-b3caf10e54d0	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7107	110.0231	a773e739-9938-467f-a0ac-47e05c90ba6d	PTH pad 1 [unconnected-(H5-Pad1)] of H5	102.275	79.625
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	83	error	shorting_items	Items shorting two nets (nets /B1_OUT and unconnected-(H5-Pad1))	8d4c1654-c772-44d8-8e4a-4a3345f47081	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.71005	110.02539	a773e739-9938-467f-a0ac-47e05c90ba6d	PTH pad 1 [unconnected-(H5-Pad1)] of H5	102.275	79.625
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	85	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	89cfc517-ec7e-40ef-b421-39560cec9620	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.21225	80.62619	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	87	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	887611a7-8cd8-450f-965a-062a0bd919ae	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1343	82.589	8e4d4fef-bd6b-41d1-ab10-a09f0b27073f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	202.827636	112.745017
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	90	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	754cdc55-24c3-4ad1-a79a-00044a58749a	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1816	106.8753	919d2115-bb42-4d1c-a5d8-6e81a7878a1e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	139.784251	139.326045
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	92	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956	7cd97a57-2239-42be-9262-f248d1409a9c	Track (arc) [/A2_OUT] on In1.Cu, length 1.8172 mm	140.2932	83.8989
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	95	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	676e1ae6-3538-4708-a2e4-68c3b6a39692	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1341	82.5941	7cd97a57-2239-42be-9262-f248d1409a9c	Track (arc) [/A2_OUT] on In1.Cu, length 1.8172 mm	140.2932	83.8989
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	97	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641	919d2115-bb42-4d1c-a5d8-6e81a7878a1e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	139.784251	139.326045
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	99	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	5d5f344c-e9a9-4993-851d-34d77a94a1a2	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2127	80.6275	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	100	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	5e22b86b-6f11-4772-867e-73ebd88fc58f	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1329	82.5987	7cd97a57-2239-42be-9262-f248d1409a9c	Track (arc) [/A2_OUT] on In1.Cu, length 1.8172 mm	140.2932	83.8989
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	102	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	58c3b2ae-175d-48b4-b6c6-a1586ca467d3	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.21418	80.62872	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	104	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	50a633ae-53ee-41c2-bc3d-16118ffe5938	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.17854	106.86799	919d2115-bb42-4d1c-a5d8-6e81a7878a1e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	139.784251	139.326045
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	109	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	28e7aa0f-5b4b-4658-a445-19cd2621777c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1352 mm	174.1352	82.5936	53185604-5f63-4dbc-95a8-30d759ae104d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	190.648034	113.115382
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	111	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	23648418-426c-4349-9ad5-dae3a3f1c0ff	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2118	80.6249	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	112	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	1c69f8c2-c00f-4fd7-bd47-8ec807e63d7a	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.21424	80.62312	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	115	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	084ff9fe-ec2f-4cb4-b0ce-dd1c299c6978	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1315	82.5979	53185604-5f63-4dbc-95a8-30d759ae104d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	190.648034	113.115382
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	117	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	003c5e5f-5aaf-4947-b7f4-617040a7f419	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2116	80.6317	15e11408-6e8a-4ffd-98c2-f7606d3d09df	Via [/A2_OUT] on F.Cu - B.Cu	79.626945	63.768795
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	119	error	shorting_items	Items shorting two nets (nets /B1_OUT and /A2_OUT)	4b003d88-a74a-442f-a2b2-de98d6526587	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13325	82.58904	53185604-5f63-4dbc-95a8-30d759ae104d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	190.648034	113.115382
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	123	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	87153d9a-45e2-40f7-b1ab-9e4636a6d310	Track (arc) [/A2_OUT] on In1.Cu, length 1.7534 mm	122.17234	93.48805	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	124	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	7cd97a57-2239-42be-9262-f248d1409a9c	Track (arc) [/A2_OUT] on In1.Cu, length 1.8172 mm	140.2932	83.8989	dae680fb-0731-41f2-9123-53d510f387c6	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.14126	82.59037
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	125	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	2619143d-0ae4-4a38-911d-cf42260cbae7	Track (arc) [/A2_OUT] on In1.Cu, length 1.7534 mm	122.17028	93.48867	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	126	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	200b04ae-591e-468f-be18-47146d90435c	Track (arc) [/A2_OUT] on In1.Cu, length 1.8172 mm	140.2976	83.9002	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	127	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	044d4925-b99f-44ea-b09d-38d9c9994676	Track (arc) [/A2_OUT] on In1.Cu, length 2.3691 mm	144.26878	30.55434	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	128	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	eb1492dc-f91a-4390-a373-7f0e658ce757	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	81.341494	87.639638	ff379af5-0650-4586-82e8-51804d5f5dfc	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2138	80.6306
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	129	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e9d440be-43a9-44fd-a0f5-73422e79085b	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	88.671626	117.551747	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	130	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e4eca519-228c-4520-bc1e-3c2a203320eb	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	136.782692	65.409199	ff379af5-0650-4586-82e8-51804d5f5dfc	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2138	80.6306
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	131	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e39989fb-1ac2-46b1-a380-3d2c63b53735	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	90.745786	134.788377	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	132	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e2aa2848-3740-4216-a8c2-7814184fcf43	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	155.485226	64.393588	e531d80d-67e9-480e-a575-7b439e91458e	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13099	82.59357
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	133	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e1b12e2a-df1d-45cc-b8b4-8b957bdada8b	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	188.727147	116.200058	f4db43e2-b690-422c-8407-9fce684583ad	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.17933	106.87199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	134	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	dbbe9210-2e1e-44f6-ba8b-3530519c9906	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	143.969042	55.55226	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	135	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	da451892-4979-45c8-8b7d-2c01464b260a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	89.395519	68.447474	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	136	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	d5b6563e-c938-4174-b08b-b5a0410fc206	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	72.994902	110.069334	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	137	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	d002a780-bb68-46d0-8781-4d0275da50e7	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	83.684076	108.321002	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	139	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	ce981da2-22c0-4545-87cc-235de638f90b	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	149.034913	128.124932	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	140	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	c556edba-a51b-47c1-b0ba-0d1381e5384e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	87.38751	71.321215	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	141	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	c330e158-9141-4eaa-8ae4-975f7c6d6e80	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	86.7492	114.620064	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	146	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	bab782f1-1741-4831-ac22-7658f3c151b8	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	196.363019	123.884277	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	153	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	aac8022b-500f-4238-8a97-e11d49f00c4a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	90.83606	120.309593	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	155	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	a6c3f3e6-ed05-42a2-b87d-1d05cd55f176	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	80.940657	94.633385	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	157	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	a1d04041-0a73-4cb6-8048-2aef9d394642	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	193.894497	106.616984	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	160	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	9bac66b4-4b24-4992-9f4b-099082ef4b63	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	101.577388	129.22593	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	161	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	964be35b-6bb8-4fbe-8d08-893bb39cc47a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	98.187933	139.510726	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	165	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	910fdabf-4849-419b-9025-9c51b2dc52da	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	140.65903	55.292078	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	166	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	919d2115-bb42-4d1c-a5d8-6e81a7878a1e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	139.784251	139.326045	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	167	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	90b6ac8f-2c5c-4334-9d83-95dc56e21f09	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	102.182703	141.381151	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	168	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	8fa7259f-1393-45b8-91a6-1ebe4a116629	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	91.640307	65.754629	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	169	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	8e4d4fef-bd6b-41d1-ab10-a09f0b27073f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	202.827636	112.745017	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	170	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	8d331aa4-1bca-490a-8eba-399b668accfb	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	81.34226	125.523311	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	173	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	8601e022-34d5-4b2e-b6a2-8b4dbdba5f04	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	70.40237	97.125358	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	175	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	81653ec9-f4bc-4645-890e-945b20718dbc	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	82.920048	80.814586	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	178	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	7f05cf7c-2081-47f3-8df5-c2a665d6df28	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	143.055407	138.757354	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	179	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	7d57327c-61d4-4ba3-a829-4b6b3428151d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	147.28434	55.371519	dae680fb-0731-41f2-9123-53d510f387c6	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.14126	82.59037
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	180	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	77ef71f8-cd85-4f3b-92fc-9b799a676d40	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	132.229858	64.109784	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	184	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	6d02aa31-80a7-4d85-af10-1b5d220feb61	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	107.922031	132.195554	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	187	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	67fc5d3c-0143-4aee-a646-4ff45e03acdb	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	153.697832	53.707739	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	189	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	64b3aa25-f29f-4add-9d93-a3bf1cdc2523	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	146.373075	138.627159	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	191	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	649100e1-2b12-4b96-8caf-5c97aa770a68	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	73.509967	75.451242	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	193	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	62b37046-6a2c-4116-b542-a5039a32c68a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	134.287276	53.474998	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	195	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	6023de67-842a-4689-9288-637cd3b0ca96	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	197.187106	96.239339	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	196	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	5e5ce5ee-46e5-4f5a-9c24-947bdd82ee5e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	153.70881	128.880884	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	197	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	5d0c0071-ddb6-4740-abc5-50b035db9c01	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	198.748453	120.308223	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	200	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	5aee5eef-40da-44d7-af9e-49319a602b4c	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	85.630786	74.355092	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	201	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	5982b9e1-8c41-4d65-a66d-53bed7ab0f85	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	76.510043	118.152027	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	202	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	592f0ca8-09e7-4359-bd68-3891472c1496	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	134.99297	129.611352	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	204	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	57d7b403-a2d1-4ee4-aa2b-2df103f3874d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	94.366425	137.30783	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	205	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	56f3f6b0-9f24-4bf6-b772-092c7b9f70c3	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	85.08267	111.535722	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	207	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	55d9564d-8bf7-4ed9-9b69-ec176b5e876f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	204.505491	108.787333	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	210	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	53185604-5f63-4dbc-95a8-30d759ae104d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	190.648034	113.115382	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	211	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4fa2c9f1-d79a-46bb-a262-ef6192b14fc4	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	75.217389	71.384132	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	213	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4dc42d27-4754-4740-af72-98989a36e5bb	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	150.546449	54.753042	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	214	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4d3317cb-fbe3-4991-8c69-a34c5057cf78	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	144.30206	127.995013	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	215	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4a20e93a-a5ae-43c3-be08-9923825365a5	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	81.186838	98.13051	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	217	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	45e258a2-1ed5-4c97-9ebb-02c26625e183	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	71.159529	83.946039	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	218	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4599500a-2f11-41e2-89d8-6c6bafba22aa	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	87.352171	131.970567	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	220	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	4205e955-c516-4783-a94d-2a85908464dd	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	196.306386	99.76487	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	221	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	41078246-cfcc-447b-99fb-215e6b18d413	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	127.889369	62.218506	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	223	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3f930854-8d9e-45b9-b7c0-f50667970d67	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	77.264015	67.476703	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	224	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3e4d384b-2e77-475d-a98b-9c2bb74829a2	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	70.280498	92.71607	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	226	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3dd85347-c581-4805-a25e-c6fbe21eede3	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	93.226866	122.873679	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	227	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3b061c37-0436-4eb4-bcb1-b7b7766ad208	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	207.105063	100.596847	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	228	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3a665328-0667-4d59-85b2-71d9b2bbf79a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	72.154082	79.648652	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	229	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	39d6a9bd-9986-4c70-ba76-48edb0be40b6	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	70.898228	101.508371	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	230	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	39404290-c94c-47be-abd7-6d48a3fbdff5	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	186.617547	119.158879	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	231	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	38782307-f7bc-4833-b233-ab2c8bd1fbfb	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	104.686552	130.845679	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	232	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	36db8a66-69ed-480a-b7fe-92e6b537cc0a	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	139.59373	128.493416	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	236	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	3283f688-6bae-4cae-98e8-5614d78220a8	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	205.933154	104.732677	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	237	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	2fa68483-3dee-4551-9cee-7deb4d2793bf	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	149.678737	138.937755	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	239	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	2f34f662-652d-425d-b6c9-563977c90e0f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	70.533494	88.31236	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	240	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	2cd78bc7-1b1d-4dbb-8844-575dfc293f60	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	141.467566	66.093833	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	241	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	2c73507c-4723-4c4d-9a09-e505383b655e	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	84.138037	77.527188	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	243	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	26c3290d-7162-495c-8346-1924ded5e90f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	80.992333	91.127987	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	244	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	270ce5c6-2511-4254-8ee2-ee2d0aa08fde	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	209.04569	87.864669	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	245	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	25eb3fdf-78a1-4c4c-8073-2c040f657d3d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	146.201849	66.15161	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	246	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	23efd790-f7f8-4f2d-97fe-987a376287f4	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	192.372724	109.91687	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	247	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	250b7d04-b667-44a4-94ce-8e8fe30cc99d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	79.635058	63.757183	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	248	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	20b005c7-923d-4b70-aca6-810fa1c1910b	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	150.902037	65.581509	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	249	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	20103b9d-e2be-4817-be2a-a6093e9fb7a9	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	82.313391	60.252442	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	252	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	1c6f8852-2ad4-4496-ae3a-8fafd70f134d	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	195.207423	103.228584	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	253	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	19e37f5e-f1ee-47cf-8a87-10208c9e49c8	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	78.76938	121.94044	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	254	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	18c001a6-31ed-496d-93d6-0713db502fa2	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	81.985617	84.19354	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	255	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	1c52b718-82c7-49dc-a9f3-53c824725874	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	208.664369	92.14638	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	256	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	1441f213-9919-444c-9a05-f96a5487cb38	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	137.412689	54.595562	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	259	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	11412566-6a65-44b8-9aed-a7121d9cfc49	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	98.616999	127.348009	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	262	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	0c16fa94-8119-46d2-be35-bd75e69ddd8f	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	197.846149	92.665728	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	263	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	096a8283-38a2-449d-9619-4e3eaccfd07c	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	198.280948	89.057961	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	267	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	0495560a-aa5e-4350-bbc6-3d737e97ae3c	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	74.580571	114.18544	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	268	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	044d184d-9f09-48f1-9332-23b19393dd07	Track [/A2_OUT] on In1.Cu, length 10.6500 mm	200.906128	116.590308	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	270	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e90ab64d-029d-44d4-a1c0-18961fafb0f6	Via [/A2_OUT] on F.Cu - B.Cu	196.371032	123.873038	f4db43e2-b690-422c-8407-9fce684583ad	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.17933	106.87199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	271	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	e3dbff66-4ffa-4a3c-8eb7-a074aa3b30e3	Via [/A2_OUT] on F.Cu - B.Cu	139.794616	139.323526	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	272	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	debc7bc9-8aef-462e-a322-7a2327f990b3	Via [/A2_OUT] on F.Cu - B.Cu	209.046483	87.85089	e531d80d-67e9-480e-a575-7b439e91458e	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.13099	82.59357
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	274	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	d85da960-8ba3-49f9-9741-20113040823b	Via [/A2_OUT] on F.Cu - B.Cu	83.757065	58.593834	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	275	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	d6bdd188-d0d9-40cf-9047-6e4d8bfb63e0	Via [/A2_OUT] on F.Cu - B.Cu	82.304321	60.263323	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	280	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	c2bab3df-01a2-46f1-b1b2-379b31bff975	Via [/A2_OUT] on F.Cu - B.Cu	102.195776	141.386605	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	286	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	b63c8122-eeac-49e4-9a5e-fd5782ff133e	Via [/A2_OUT] on F.Cu - B.Cu	78.406195	65.597714	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	287	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	b561b680-a445-4051-8199-d4ccbe03775d	Via [/A2_OUT] on F.Cu - B.Cu	104.242732	142.189815	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	289	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	af9014aa-2d3a-4481-8d79-737eb2bc48ae	Via [/A2_OUT] on F.Cu - B.Cu	153.687952	53.71176	dae680fb-0731-41f2-9123-53d510f387c6	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.14126	82.59037
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	293	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	aae078af-bc2c-4ecc-8ca7-37afb0e37935	Via [/A2_OUT] on F.Cu - B.Cu	80.932672	61.981972	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	294	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	a9dd3f07-651b-415f-9331-bf6f43189c62	Via [/A2_OUT] on F.Cu - B.Cu	134.277497	53.470737	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	295	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	a8119590-d564-4bbc-83a3-42abab19d1b9	Via [/A2_OUT] on F.Cu - B.Cu	98.200496	139.517271	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	314	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	673b139f-74b7-4664-b303-334bd959e21c	Via [/A2_OUT] on F.Cu - B.Cu	100.171851	140.491402	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	317	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	5b479f03-258a-4fc5-acfe-b521b7ea8f8b	Via [/A2_OUT] on F.Cu - B.Cu	151.314005	139.258138	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	320	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	510dd5f0-82d1-41b5-8bb4-806318215b86	Via [/A2_OUT] on F.Cu - B.Cu	208.66602	92.132677	74cf70d1-2470-4061-b479-d23518d82c42	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	174.1293	82.5956
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	333	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	39d262c9-6c8c-4c57-8cf8-72065a4f4d28	Via [/A2_OUT] on F.Cu - B.Cu	131.325	94.675	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	334	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	399f5789-8df2-42c1-b867-480c98703cce	Via [/A2_OUT] on F.Cu - B.Cu	149.689267	138.939458	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	345	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	1e425300-63bb-4aaf-b9fa-7c71a93a7495	Via [/A2_OUT] on F.Cu - B.Cu	195.091943	125.609237	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	347	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	15e11408-6e8a-4ffd-98c2-f7606d3d09df	Via [/A2_OUT] on F.Cu - B.Cu	79.626945	63.768795	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	348	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	10d2439e-caad-4f92-b4f3-a71c10f6a30d	Via [/A2_OUT] on F.Cu - B.Cu	132.782518	52.75914	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	352	error	shorting_items	Items shorting two nets (nets /A2_OUT and /B1_OUT)	01656360-c387-469f-9df5-9463e3e17cc7	Via [/A2_OUT] on F.Cu - B.Cu	197.587475	122.109126	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	354	error	shorting_items	Items shorting two nets (nets /G2_OUT and /B1_OUT)	cea87563-60e5-4f15-8fe0-1ccc2b3b05ec	Via [/G2_OUT] on F.Cu - B.Cu	136.1	127.4	f4db43e2-b690-422c-8407-9fce684583ad	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.17933	106.87199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	355	error	shorting_items	Items shorting two nets (nets /G2_OUT and /B1_OUT)	85d7e12c-754c-4330-8978-17a807fc020f	Via [/G2_OUT] on F.Cu - B.Cu	135.1	126.4	bd9bb4be-3e06-47a7-8710-77ada8c5ce85	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.1797	106.8779
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	356	error	shorting_items	Items shorting two nets (nets /G2_OUT and /B1_OUT)	175aaf03-b103-424a-9479-183eb728b0e7	Via [/G2_OUT] on F.Cu - B.Cu	135.6	126.9	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	358	error	shorting_items	Items shorting two nets (nets +5V and /B1_OUT)	dd6b7138-b6d1-49aa-911d-bde5630f0d7f	Via [+5V] on F.Cu - B.Cu	164.7	70.9	f4db43e2-b690-422c-8407-9fce684583ad	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	165.17933	106.87199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	361	error	shorting_items	Items shorting two nets (nets GND and /B1_OUT)	5a571872-470e-4f4a-a195-1d746d9c0e53	Via [GND] on F.Cu - B.Cu	147.0	85.34	dda2a262-97d9-4e02-b18d-da3bf28c794c	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	111.2143	80.6367
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	363	error	shorting_items	Items shorting two nets (nets GND and /B1_OUT)	2e2f20fb-2ca8-491e-9424-a374092b18a1	Via [GND] on F.Cu - B.Cu	147.0	88.34	f27c9ceb-82c6-4614-8655-3d8ef3a31f81	Track (arc) [/B1_OUT] on In1.Cu, length 1.1845 mm	118.7087	110.0199
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	364	error	shorting_items	Items shorting two nets (nets GND and /B1_OUT)	24bb6823-e7a9-4b42-b1ba-11baa5962dd4	Via [GND] on F.Cu - B.Cu	186.0	78.0	5d8bb12e-f958-4098-a115-c9ead6e76ba8	Track (arc) [/B1_OUT] on In1.Cu, length 1.1024 mm	165.18505	106.87641
+qa/data/pcbnew/issue22536.kicad_pcb	cached
+qa/data/pcbnew/issue22548/issue22548.kicad_pcb	cached
+qa/data/pcbnew/issue22548/issue22548.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue22597/issue22597.kicad_pcb	cached
+qa/data/pcbnew/issue22751/issue22751.kicad_pcb	cached
+qa/data/pcbnew/issue22751/issue22751.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue22794.kicad_pcb	cached
+qa/data/pcbnew/issue22794.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue22798.kicad_pcb	cached
+qa/data/pcbnew/issue22798.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue22809/issue22809.kicad_pcb	cached
+qa/data/pcbnew/issue22826/issue22826.kicad_pcb	cached
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	cached
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	cached
+qa/data/pcbnew/issue23123_minimal.kicad_pcb	cached
+qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb	cached
+qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb	cached
+qa/data/pcbnew/issue23389/issue23389.kicad_pcb	cached
+qa/data/pcbnew/issue23418/testing.kicad_pcb	cached
+qa/data/pcbnew/issue23418/testing.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb	cached
+qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb	cached
+qa/data/pcbnew/issue23467/issue23467.kicad_pcb	cached
+qa/data/pcbnew/issue23469/issue23469.kicad_pcb	cached
+qa/data/pcbnew/issue23515/issue23515.kicad_pcb	cached
+qa/data/pcbnew/issue23515/issue23515.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb	cached
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb	cached
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb	25	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23578/issue23578.kicad_pcb	cached
+qa/data/pcbnew/issue23658/issue23658.kicad_pcb	cached
+qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	cached
+qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23704/issue23704.kicad_pcb	cached
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	cached
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23790/touching_zones.kicad_pcb	cached
+qa/data/pcbnew/issue23790/touching_zones.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue23851/issue23851.kicad_pcb	cached
+qa/data/pcbnew/issue23868/issue23868.kicad_pcb	cached
+qa/data/pcbnew/issue24078/issue24078.kicad_pcb	cached
+qa/data/pcbnew/issue24078/issue24078.kicad_pcb	2	error	invalid_outline	Board has malformed outline (self-intersecting) (gap 1.4000 mm)	19387b6c-66fe-4234-b465-31ccd855f55f	Rectangle on Edge.Cuts	120.15	63.4	4f2a43e9-e535-4608-b9c3-af10fcb9a11f	Curve on Edge.Cuts	118.5	64.1
+qa/data/pcbnew/issue24089/issue24089.kicad_pcb	cached
+qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	cached
+qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	cached
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue24211/issue24211.kicad_pcb	cached
+qa/data/pcbnew/issue24241/issue24241.kicad_pcb	cached
+qa/data/pcbnew/issue24241/issue24241.kicad_pcb	0	error	invalid_outline	Board has malformed outline (arc has null or very small size: 0 nm)	00000000-0000-0000-0000-deadbeefbad0	Arc on Edge.Cuts	115.0	110.0
+qa/data/pcbnew/issue24264/issue24264.kicad_pcb	cached
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	cached
+qa/data/pcbnew/issue24312/issue24312.kicad_pcb	cached
+qa/data/pcbnew/issue24340/issue24340.kicad_pcb	cached
+qa/data/pcbnew/issue24355/issue24355.kicad_pcb	cached
+qa/data/pcbnew/issue24442.kicad_pcb	cached
+qa/data/pcbnew/issue24442.kicad_pcb	0	error	generic_error	start_of_text	aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa01	PCB text '' on F.Silkscreen	60.0	60.0
+qa/data/pcbnew/issue24442.kicad_pcb	1	error	generic_error	placeholder_text	aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa02	PCB text 'Fill in: ' on F.Silkscreen	90.043	61.595
+qa/data/pcbnew/issue24442.kicad_pcb	2	error	generic_error	text_box_error	aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa05	PCB text box 'Note:' on F.Fab	60.0	100.0
+qa/data/pcbnew/issue24442.kicad_pcb	3	warning	generic_warning	this_is_warning	aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa03	PCB text ' trailing' on F.Silkscreen	93.472	72.517
+qa/data/pcbnew/issue24442.kicad_pcb	4	warning	generic_warning	embedded_warning	aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaa04	PCB text 'prefix  suffix' on F.Silkscreen	93.599	81.915
+qa/data/pcbnew/issue24474/issue24474.kicad_pcb	cached
+qa/data/pcbnew/issue24523/issue24523.kicad_pcb	cached
+qa/data/pcbnew/issue24525/issue24525.kicad_pcb	cached
+qa/data/pcbnew/issue24541/issue24541.kicad_pcb	cached
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	cached
+qa/data/pcbnew/issue24544/issue24544.kicad_pcb	cached
+qa/data/pcbnew/issue24597/issue24597.kicad_pcb	cached
+qa/data/pcbnew/issue24643/issue24643.kicad_pcb	cached
+qa/data/pcbnew/issue24649.kicad_pcb	cached
+qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb	cached
+qa/data/pcbnew/issue24735/issue24735.kicad_pcb	cached
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	cached
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	cached
+qa/data/pcbnew/issue24799/issue24799.kicad_pcb	cached
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	cached
+qa/data/pcbnew/issue24853/issue24853.kicad_pcb	cached
+qa/data/pcbnew/issue24865/issue24865.kicad_pcb	cached
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	cached
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	1	error	invalid_outline	Board has malformed outline (self-intersecting)	5941557a-333d-4833-a5e0-1e55150be146	Rectangle on Edge.Cuts	120.24	63.25	0e37a07e-0f19-45a1-83c4-c89298a74b95	Rectangle on Edge.Cuts	130.31	62.6
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	cached
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	3	error	invalid_outline	Board has malformed outline (self-intersecting)	5941557a-333d-4833-a5e0-1e55150be146	Rectangle on Edge.Cuts	120.24	63.25	0e37a07e-0f19-45a1-83c4-c89298a74b95	Rectangle on Edge.Cuts	123.31	62.6
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	cached
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	1	error	invalid_outline	Board has malformed outline (self-intersecting)	5941557a-333d-4833-a5e0-1e55150be146	Rectangle on Edge.Cuts	120.24	63.25	0e37a07e-0f19-45a1-83c4-c89298a74b95	Rectangle on Edge.Cuts	130.31	62.6
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	cached
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	1	error	invalid_outline	Board has malformed outline (self-intersecting)	050c30e5-fcf9-4e34-a6de-4825aa0785b7	Circle on Edge.Cuts	120.29	63.79	537513bb-687a-4aec-8360-814f0103b65c	Circle on Edge.Cuts	121.32	63.77
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	2	error	invalid_outline	Board has malformed outline (self-intersecting)	537513bb-687a-4aec-8360-814f0103b65c	Circle on Edge.Cuts	121.32	63.77	bc8111e7-9451-441b-8f6a-de4c93edcff4	Circle on Edge.Cuts	122.35	63.78
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	3	error	invalid_outline	Board has malformed outline (self-intersecting)	bc8111e7-9451-441b-8f6a-de4c93edcff4	Circle on Edge.Cuts	122.35	63.78	43304791-903e-4256-a18b-b016ef409f42	Circle on Edge.Cuts	123.33	63.78
+qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	cached
+qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	12	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue24935/issue24935.kicad_pcb	cached
+qa/data/pcbnew/issue24951/issue24951.kicad_pcb	cached
+qa/data/pcbnew/issue24974.kicad_pcb	cached
+qa/data/pcbnew/issue25021/backdrill.kicad_pcb	cached
+qa/data/pcbnew/issue25065/issue25065.kicad_pcb	cached
+qa/data/pcbnew/issue25065/issue25065.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb	cached
+qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb	cached
+qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue25089/odb_circles.kicad_pcb	cached
+qa/data/pcbnew/issue25101.kicad_pcb	cached
+qa/data/pcbnew/issue25107/issue25107.kicad_pcb	cached
+qa/data/pcbnew/issue2512.kicad_pcb	cached
+qa/data/pcbnew/issue25265.kicad_pcb	cached
+qa/data/pcbnew/issue2528.kicad_pcb	cached
+qa/data/pcbnew/issue25303.kicad_pcb	cached
+qa/data/pcbnew/issue25439/issue25439.kicad_pcb	cached
+qa/data/pcbnew/issue25521_zone_names.kicad_pcb	cached
+qa/data/pcbnew/issue25580.kicad_pcb	cached
+qa/data/pcbnew/issue25650/issue25650.kicad_pcb	cached
+qa/data/pcbnew/issue25650/issue25650.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue2568.kicad_pcb	cached
+qa/data/pcbnew/issue2904.kicad_pcb	cached
+qa/data/pcbnew/issue3812.kicad_pcb	cached
+qa/data/pcbnew/issue4139.kicad_pcb	cached
+qa/data/pcbnew/issue4257.kicad_pcb	cached
+qa/data/pcbnew/issue4257.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue4257.kicad_pcb	1	error	unresolved_variable	Unresolved text variable	21cf189f-36ce-4abc-bbe3-71829307bad8	Value field of U1 (DIP-40_W15.24mm${stuff})	164.719	73.877
+qa/data/pcbnew/issue4774.kicad_pcb	cached
+qa/data/pcbnew/issue5093.kicad_pcb	cached
+qa/data/pcbnew/issue5093.kicad_pcb	120	error	unresolved_variable	Unresolved text variable	3d9cb47e-a660-407a-8b90-5500c219e908	Footprint text of REF** (${REF})	149.18	155.65
+qa/data/pcbnew/issue5102.kicad_pcb	cached
+qa/data/pcbnew/issue5313.kicad_pcb	cached
+qa/data/pcbnew/issue5320.kicad_pcb	cached
+qa/data/pcbnew/issue5567.kicad_pcb	cached
+qa/data/pcbnew/issue5750.kicad_pcb	cached
+qa/data/pcbnew/issue5830.kicad_pcb	cached
+qa/data/pcbnew/issue5854.kicad_pcb	cached
+qa/data/pcbnew/issue5978.kicad_pcb	cached
+qa/data/pcbnew/issue5978.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/issue5990.kicad_pcb	cached
+qa/data/pcbnew/issue6039.kicad_pcb	cached
+qa/data/pcbnew/issue6260.kicad_pcb	cached
+qa/data/pcbnew/issue6284.kicad_pcb	cached
+qa/data/pcbnew/issue6443.kicad_pcb	cached
+qa/data/pcbnew/issue6879.kicad_pcb	cached
+qa/data/pcbnew/issue6945.kicad_pcb	cached
+qa/data/pcbnew/issue7004.kicad_pcb	cached
+qa/data/pcbnew/issue7086.kicad_pcb	cached
+qa/data/pcbnew/issue7241.kicad_pcb	cached
+qa/data/pcbnew/issue7267.kicad_pcb	cached
+qa/data/pcbnew/issue7325.kicad_pcb	cached
+qa/data/pcbnew/issue7567.kicad_pcb	cached
+qa/data/pcbnew/issue7975.kicad_pcb	cached
+qa/data/pcbnew/issue8003.kicad_pcb	cached
+qa/data/pcbnew/issue832.kicad_pcb	cached
+qa/data/pcbnew/issue8407.kicad_pcb	cached
+qa/data/pcbnew/issue8629/issue8629.kicad_pcb	cached
+qa/data/pcbnew/issue8883.kicad_pcb	cached
+qa/data/pcbnew/issue8909.kicad_pcb	cached
+qa/data/pcbnew/issue9081.kicad_pcb	cached
+qa/data/pcbnew/issue9870.kicad_pcb	cached
+qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb	cached
+qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	cached
+qa/data/pcbnew/large_circle_teardrop.kicad_pcb	cached
+qa/data/pcbnew/length_calculations.kicad_pcb	cached
+qa/data/pcbnew/line_ending_drc/line_ending_drc_fail.kicad_pcb	cached
+qa/data/pcbnew/line_ending_drc/line_ending_drc_pass.kicad_pcb	cached
+qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb	cached
+qa/data/pcbnew/multichannel_nested.kicad_pcb	cached
+qa/data/pcbnew/multichannel_nested.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/multinetclasses_drc.kicad_pcb	cached
+qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb	cached
+qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb	cached
+qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb	cached
+qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb	cached
+qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb	cached
+qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb	cached
+qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb	cached
+qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb	cached
+qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb	cached
+qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	cached
+qa/data/pcbnew/net_chains/stub_length.kicad_pcb	cached
+qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	cached
+qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	cached
+qa/data/pcbnew/net_tie_drc.kicad_pcb	cached
+qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb	cached
+qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/notched_zones.kicad_pcb	cached
+qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb	cached
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	cached
+qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb	cached
+qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	cached
+qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	cached
+qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	cached
+qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	0	warning	padstack	Padstack is questionable ('press-fit' pads are normally PTH with round holes)	ab1fc839-4908-4cb4-8969-fde56629e5d3	NPTH pad of MNT_1	137.75	111.0
+qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb	cached
+qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb	0	warning	padstack	Padstack is questionable ('press-fit' pads are normally PTH with round holes)	ab1fc839-4908-4cb4-8969-fde56629e5d3	NPTH pad of MNT_1	137.75	111.0
+qa/data/pcbnew/odbpp/pad_backdrill.kicad_pcb	cached
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	cached
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	15	warning	padstack	Padstack is questionable (negative solder paste margin is larger than pad; no solder paste mask will be generated)	f98951ae-c7c4-445b-a39a-a4d57888a02e	Pad 2 [<no net>] of P5 on F.Cu	137.0	89.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	16	warning	padstack	Padstack is questionable (negative solder paste margin is larger than pad; no solder paste mask will be generated)	bd1ca0c2-74bb-4a01-94e6-11796af0cb7e	Pad 1 [<no net>] of P1 on F.Cu	121.0	89.0
+qa/data/pcbnew/odbpp/pad_roles.kicad_pcb	cached
+qa/data/pcbnew/odbpp/reverse_backdrill.kicad_pcb	cached
+qa/data/pcbnew/odbpp/slot_machining.kicad_pcb	cached
+qa/data/pcbnew/odbpp/slot_machining.kicad_pcb	588	warning	padstack	Padstack is questionable ('press-fit' pads are normally PTH with round holes)	0010b9df-b350-4dc0-85b9-3281ae35b7e4	PTH pad 7 [GND] of J201	77.11	97.07
+qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb	cached
+qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb	cached
+qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	cached
+qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	2	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/off_center_teardrop.kicad_pcb	cached
+qa/data/pcbnew/orientation_drc.kicad_pcb	cached
+qa/data/pcbnew/orientation_drc.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/orientation_drc.kicad_pcb	1	error	assertion_failure	Assertion failure (rule 'A')	3d7ab994-f1c8-44d1-94f5-40e16d2bdd66	Footprint R1	145.5875	111.5
+qa/data/pcbnew/oval_teardrop.kicad_pcb	cached
+qa/data/pcbnew/padstacks.kicad_pcb	cached
+qa/data/pcbnew/padstacks_complex.kicad_pcb	cached
+qa/data/pcbnew/padstacks_complex.kicad_pcb	4	warning	padstack	Padstack is questionable (PTH pad hole leaves no copper)	073fbd1f-fe6f-43a2-b6dd-bb6db17d1841	PTH pad 4 [<no net>] of 	151.1046	108.6231
+qa/data/pcbnew/padstacks_normal.kicad_pcb	cached
+qa/data/pcbnew/padstacks_normal.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb	cached
+qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	cached
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	cached
+qa/data/pcbnew/prettifier/group_and_image.kicad_pcb	cached
+qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb	cached
+qa/data/pcbnew/reference_images_load_save.kicad_pcb	cached
+qa/data/pcbnew/reference_images_load_save.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/reverse_via.kicad_pcb	cached
+qa/data/pcbnew/severities.kicad_pcb	cached
+qa/data/pcbnew/skew_group_matched_drc.kicad_pcb	cached
+qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb	cached
+qa/data/pcbnew/sliver.kicad_pcb	cached
+qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb	cached
+qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	cached
+qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	cached
+qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/stacked/stacked.kicad_pcb	cached
+qa/data/pcbnew/stacked/stacked.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	cached
+qa/data/pcbnew/stonehenge.kicad_pcb	cached
+qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb	cached
+qa/data/pcbnew/teardrop_close_via.kicad_pcb	cached
+qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb	cached
+qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb	cached
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	cached
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	1	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	2	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	cached
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	cached
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	cached
+qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	cached
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	17	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/teardrop_spike.kicad_pcb	cached
+qa/data/pcbnew/teardrop_spike.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	cached
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	2	error	shorting_items	Items shorting two nets (nets Test2 and Test3)	6c4f9b12-5489-4923-9fc0-4f8130f1cb8b	PCB text 'Otherwise' on B.Cu	155.194	89.281	d8faf083-2cf6-4659-b189-791fef968e17	Zone [Test3] on B.Cu, priority 0	157.4	82.05
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	3	error	shorting_items	Items shorting two nets (nets Test2 and Test3)	6c4f9b12-5489-4923-9fc0-4f8130f1cb8b	PCB text 'Otherwise' on B.Cu	155.194	89.281	e7fb42af-8060-4e89-b56c-5293c80f1b68	Zone [Test3] on B.Cu, priority 1	159.385	89.154
+qa/data/pcbnew/test_starved_thermal.kicad_pcb	cached
+qa/data/pcbnew/time_calculations.kicad_pcb	cached
+qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	cached
+qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	cached
+qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	cached
+qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/tuning_path_through_pad.kicad_pcb	cached
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	cached
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	2	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	3	error	unresolved_variable	Unresolved text variable
+qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb	cached
+qa/data/pcbnew/variant_test/variant_test.kicad_pcb	cached
+qa/data/pcbnew/variant_test/variant_test.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/via_dangling.kicad_pcb	cached
+qa/data/pcbnew/via_off_center.kicad_pcb	cached
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	cached
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	3	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	cached
+qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	1	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/via_stacks.kicad_pcb	cached
+qa/data/pcbnew/via_stacks.kicad_pcb	4	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0
+qa/data/pcbnew/zone_filler.kicad_pcb	cached
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	cached
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	cached
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	cached
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	0	error	invalid_outline	Board has malformed outline (no edges found on Edge.Cuts layer)	board	PCB	0.0	0.0

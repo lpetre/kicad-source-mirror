@@ -1,0 +1,37 @@
+(version 1)
+(rule r0
+  (condition "L == 'F.Cu' && L.Layer == '*.Cu'")
+  (constraint clearance (min 0.1mm)))
+(rule r1
+  (condition "L.layer == '*.Mask'")
+  (constraint clearance (min 0.1mm)))
+(rule r2
+  (condition "A.Parent.NetClass == 'x'")
+  (constraint clearance (min 0.1mm)))
+(rule r3
+  (condition "B.Parent.Parent.Type == 'Pad'")
+  (constraint clearance (min 0.1mm)))
+(rule r4
+  (condition "A.parent.Type == 'Footprint'")
+  (constraint clearance (min 0.1mm)))
+(rule r5
+  (condition "A.PARENT.Reference == 'J1'")
+  (constraint clearance (min 0.1mm)))
+(rule r6
+  (condition "A.Parent == 'J1'")
+  (constraint clearance (min 0.1mm)))
+(rule r7
+  (condition "A.Parent.getField('Reference') == A.Text")
+  (constraint clearance (min 0.1mm)))
+(rule r8
+  (condition "AB.isCoupledDiffPair()")
+  (constraint clearance (min 0.1mm)))
+(rule r9
+  (condition "AB")
+  (constraint clearance (min 0.1mm)))
+(rule r10
+  (condition "A")
+  (constraint clearance (min 0.1mm)))
+(rule r11
+  (condition "B")
+  (constraint clearance (min 0.1mm)))

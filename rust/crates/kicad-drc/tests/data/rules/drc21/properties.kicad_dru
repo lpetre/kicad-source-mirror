@@ -1,0 +1,46 @@
+(version 1)
+(rule r0
+  (condition "A.Shape == 'Circle'")
+  (constraint clearance (min 0.1mm)))
+(rule r1
+  (condition "A.Origin_X == 1mm && A.origin_y == 2mm")
+  (constraint clearance (min 0.1mm)))
+(rule r2
+  (condition "A.NETCLASS == 'x' && B.netname == 'y' && A.componentclass == 'z' && B.TYPE == 'Via'")
+  (constraint clearance (min 0.1mm)))
+(rule r3
+  (condition "A.Width == 1")
+  (constraint clearance (min 0.1mm)))
+(rule r4
+  (condition "A.Net_Class == 'x'")
+  (constraint clearance (min 0.1mm)))
+(rule r5
+  (condition "A.Pad_Type == 'SMD'")
+  (constraint clearance (min 0.1mm)))
+(rule r6
+  (condition "A.Layer == 'F.Cu' && B.Layer_Top == 'In1.Cu'")
+  (constraint clearance (min 0.1mm)))
+(rule r7
+  (condition "A.Hole_Size_X > 1mm")
+  (constraint clearance (min 0.1mm)))
+(rule r8
+  (condition "A.Border_Color == 'rgb(255, 0, 0)'")
+  (constraint clearance (min 0.1mm)))
+(rule r9
+  (condition "A.Do_not_Populate == 1")
+  (constraint clearance (min 0.1mm)))
+(rule r10
+  (condition "A.Solderpaste_Margin_Ratio_Override == null")
+  (constraint clearance (min 0.1mm)))
+(rule r11
+  (condition "null == A.Width")
+  (constraint clearance (min 0.1mm)))
+(rule r12
+  (condition "NULL")
+  (constraint clearance (min 0.1mm)))
+(rule r13
+  (condition "A.Priority == 7 && A.Minimum_Island_Area > 10")
+  (constraint clearance (min 0.1mm)))
+(rule r14
+  (condition "A.Hatch_Orientation == 45deg")
+  (constraint clearance (min 0.1mm)))

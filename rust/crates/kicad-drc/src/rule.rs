@@ -290,21 +290,14 @@ impl DrcConstraintExt for DrcConstraint {
         self.max_rule = max_rule.cloned();
     }
 
+    // GetName, GetRuleName and Merge are inherent methods of `DrcConstraint`
+    // (`kicad_pcb::drc_api`, integration step 2); the trait methods forward to them.
     fn name(&self) -> String {
-        self.rule_name(self.parent_rule.as_ref())
+        DrcConstraint::name(self)
     }
 
     fn rule_name(&self, rule: Option<&DrcRuleInfo>) -> String {
-        if let Some(rule) = rule {
-            if rule.implicit {
-                return rule.name.clone();
-            } else {
-                // wxString::Format( _( "rule '%s'" ), aRule->m_Name )
-                return format!("rule '{}'", rule.name);
-            }
-        }
-
-        self.name.clone()
+        DrcConstraint::rule_name(self, rule)
     }
 
     fn set_options_from_other(&mut self, other: &DrcConstraint) {
@@ -312,21 +305,6 @@ impl DrcConstraintExt for DrcConstraint {
     }
 
     fn merge(&mut self, other: &DrcConstraint) {
-        if other.value.has_min() && (!self.value.has_min() || other.value.min() > self.value.min())
-        {
-            self.value.set_min(other.value.min());
-            self.min_rule = other.min_rule.clone().or_else(|| other.parent_rule.clone());
-        }
-
-        if other.value.has_max() && (!self.value.has_max() || other.value.max() < self.value.max())
-        {
-            self.value.set_max(other.value.max());
-            self.max_rule = other.max_rule.clone().or_else(|| other.parent_rule.clone());
-        }
-
-        if other.value.has_opt() && !self.value.has_opt() {
-            self.value.set_opt(other.value.opt());
-            self.parent_rule = other.parent_rule.clone();
-        }
+        DrcConstraint::merge(self, other)
     }
 }

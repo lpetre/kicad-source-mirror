@@ -31,24 +31,19 @@ use std::collections::{BTreeSet, HashMap};
 
 use kicad_core::layer_ids::{MAX_CU_LAYERS, copper_layer_to_ordinal, to_layer_id};
 use kicad_core::{KicadT, PcbLayerId};
-use kicad_geom::cmath;
-use kicad_geom::geometry::circle::Circle;
 use kicad_geom::geometry::shape::Shape;
 use kicad_geom::geometry::shape_line_chain::ShapeLineChain;
 use kicad_geom::geometry::shape_poly_set::TriangulatedPolygon;
 use kicad_geom::geometry::shape_poly_tri_index::{
     TriangulationIndex, any_triangle_hit, any_triangle_hit_point,
 };
-use kicad_geom::geometry::shape_utils::get_circle_key_points;
 use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::util::ki_round;
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::ctx::BoardCtx;
-use kicad_pcb::eda_shape::ShapeT;
 use kicad_pcb::ids::{ItemId, PadId, TrackId, ZoneId};
 use kicad_pcb::item_ref::ItemRef;
 use kicad_pcb::padstack::PadAttrib;
-use kicad_pcb::pcb_shape::PcbShape;
 use kicad_pcb::teardrop_parameters::TeardropType;
 
 use crate::rtree::{CnBulkEntry, CnRtree};
@@ -791,113 +786,6 @@ fn net_of(item: &ItemRef<'_>) -> i32 {
     item.net_code().map_or(0, |n| n.0)
 }
 
-/// Port of `PCB_SHAPE::GetConnectionPoints()` for a board-level shape (stored coordinates are
-/// board coordinates; the getters it calls are not overridden by `PCB_SHAPE`).
-///
-/// The model crate has no port of this member yet (change request: move it to
-/// `kicad_pcb::pcb_shape` as `PcbShape::connection_points`).
-pub fn pcb_shape_connection_points(shape: &PcbShape) -> Vec<Vector2I> {
-    let s = &shape.shape;
-    let mut ret = Vec::new();
-
-    // For filled shapes, we may as well use a centroid
-    if s.is_solid_fill() {
-        ret.push(s.center());
-        return ret;
-    }
-
-    match s.shape() {
-        ShapeT::Circle => {
-            let circle = Circle::new(s.center(), s.radius());
-
-            for pt in get_circle_key_points(&circle, false) {
-                ret.push(pt.point);
-            }
-        }
-        ShapeT::Arc => {
-            ret.push(s.arc_mid());
-            ret.push(s.start());
-            ret.push(s.end());
-        }
-        ShapeT::Segment | ShapeT::Bezier => {
-            ret.push(s.start());
-            ret.push(s.end());
-        }
-        ShapeT::Poly => {
-            for pt in s.poly_shape().c_iterate() {
-                ret.push(pt);
-            }
-        }
-        ShapeT::Rectangle => {
-            for pt in s.rect_corners() {
-                ret.push(pt);
-            }
-        }
-        ShapeT::Ellipse => {
-            let e = s.ellipse();
-            let phi = e.rotation.as_radians();
-            let cos_phi = cmath::cos(phi);
-            let sin_phi = cmath::sin(phi);
-            let a = e.major_radius;
-            let b = e.minor_radius;
-            let c = e.center;
-
-            ret.push(c + Vector2I::new(ki_round(a as f64 * cos_phi), ki_round(a as f64 * sin_phi)));
-            ret.push(
-                c + Vector2I::new(
-                    ki_round(-(a as f64) * cos_phi),
-                    ki_round(-(a as f64) * sin_phi),
-                ),
-            );
-            ret.push(
-                c + Vector2I::new(
-                    ki_round(-(b as f64) * sin_phi),
-                    ki_round(b as f64 * cos_phi),
-                ),
-            );
-            ret.push(
-                c + Vector2I::new(
-                    ki_round(b as f64 * sin_phi),
-                    ki_round(-(b as f64) * cos_phi),
-                ),
-            );
-        }
-        ShapeT::EllipseArc => {
-            let e = s.ellipse();
-            let a = e.major_radius as f64;
-            let b = e.minor_radius as f64;
-            let phi = e.rotation.as_radians();
-            let cos_phi = cmath::cos(phi);
-            let sin_phi = cmath::sin(phi);
-            let c = e.center;
-
-            let eval = |theta: f64| -> Vector2I {
-                let lx = a * cmath::cos(theta);
-                let ly = b * cmath::sin(theta);
-                c + Vector2I::new(
-                    ki_round(lx * cos_phi - ly * sin_phi),
-                    ki_round(lx * sin_phi + ly * cos_phi),
-                )
-            };
-
-            let theta_start = e.start_angle.as_radians();
-            let mut theta_end = e.end_angle.as_radians();
-
-            if theta_end < theta_start {
-                theta_end += 2.0 * std::f64::consts::PI;
-            }
-
-            ret.push(eval(theta_start));
-            ret.push(eval(theta_end));
-            ret.push(eval(0.5 * (theta_start + theta_end)));
-        }
-        // UNIMPLEMENTED_FOR( SHAPE_T_asString() )
-        ShapeT::Undefined => {}
-    }
-
-    ret
-}
-
 // =================================================================================================
 // CN_LIST
 // =================================================================================================
@@ -1280,7 +1168,7 @@ impl CnList {
             true,
         );
 
-        for point in pcb_shape_connection_points(shape) {
+        for point in shape.connection_points(ctx) {
             item.add_anchor(point);
         }
 

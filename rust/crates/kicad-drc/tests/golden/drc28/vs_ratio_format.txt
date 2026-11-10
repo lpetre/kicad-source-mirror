@@ -1,0 +1,5 @@
+error	hole_aspect_ratio	Aspect ratio 11.00 exceeds the 4.12 limit	00000000-0000-0000-0028-0000000000ac	Via [<no net>] on F.Cu - B.Cu	10.0	10.0
+error	hole_aspect_ratio	Aspect ratio 7.04 exceeds the 4.12 limit	00000000-0000-0000-0028-0000000000ad	Via [<no net>] on F.Cu - B.Cu	15.0	10.0
+error	hole_aspect_ratio	Aspect ratio 5.50 exceeds the 4.12 limit	00000000-0000-0000-0028-0000000000ae	Via [<no net>] on F.Cu - B.Cu	20.0	10.0
+error	hole_aspect_ratio	Aspect ratio 5.00 exceeds the 4.12 limit	00000000-0000-0000-0028-0000000000af	Via [<no net>] on F.Cu - B.Cu	25.0	10.0
+error	hole_aspect_ratio	Aspect ratio 4.40 exceeds the 4.12 limit	00000000-0000-0000-0028-0000000000b0	Via [<no net>] on F.Cu - B.Cu	30.0	10.0

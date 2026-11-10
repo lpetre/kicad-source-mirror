@@ -20,8 +20,8 @@
 use kicad_core::{KicadT, Lset, PcbLayerId};
 
 use super::format::{
-    Out, attempt, board_items, copper_layers, emit, init_item_keys, no_api, v_bool, v_box, v_enum,
-    v_int, v_kiid, v_layer, v_layer_names, v_lset, v_opt_int, v_polyset, v_str, v_vec,
+    Out, attempt, board_items, copper_layers, emit, init_item_keys, v_bool, v_box, v_enum, v_int,
+    v_kiid, v_layer, v_layer_names, v_lset, v_opt_int, v_polyset, v_str, v_vec,
 };
 use super::{DumpOptions, defaults, items, settings};
 use crate::board::Board;
@@ -167,7 +167,12 @@ pub(crate) fn dump_item_base(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "position", v_vec(it.position()));
     emit!(o, "fp_relative_position", v_vec(it.fp_relative_position()));
     emit!(o, "locked", v_bool(it.is_locked()));
-    emit!(o, "locked_flag", v_bool(base.is_locked));
+    // aItem->BOARD_ITEM::IsLocked(): the base body, called non-virtually
+    emit!(
+        o,
+        "locked_flag",
+        v_bool(crate::board_item::is_locked(d, ctx))
+    );
     emit!(o, "on_copper", v_bool(d.is_on_copper_layer(ctx)));
     emit!(o, "has_hole", v_bool(it.has_hole()));
     emit!(o, "has_drilled_hole", v_bool(d.has_drilled_hole(ctx)));
@@ -229,11 +234,7 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
                 "bbox_without_text",
                 v_box(fp.bounding_box_with_text(ctx, false))
             );
-            emit!(
-                o,
-                "fp_pads_local_bbox",
-                no_api("FOOTPRINT::GetFpPadsLocalBbox")
-            );
+            emit!(o, "fp_pads_local_bbox", v_box(fp.fp_pads_local_bbox(ctx)));
             emit!(o, "bounding_hull", v_polyset(&fp.bounding_hull(ctx)));
             emit!(
                 o,

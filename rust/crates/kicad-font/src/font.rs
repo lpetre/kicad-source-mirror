@@ -323,7 +323,7 @@ fn draw_impl<F: Font + ?Sized>(
         return;
     }
 
-    let position: Vector2I = a_position - a_cursor;
+    let position: Vector2I = wrapping_sub(a_position, a_cursor);
 
     // Split multiline strings into separate ones and draw them line by line
     let (strings_list, positions, _extents) =
@@ -388,7 +388,7 @@ fn line_positions_impl<F: Font + ?Sized>(
             a_attrs.italic,
             a_font_metrics,
         );
-        let b_box: Vector2I = end - pos;
+        let b_box: Vector2I = wrapping_sub(end, pos);
 
         extents.push(b_box);
 
@@ -433,7 +433,7 @@ fn line_positions_impl<F: Font + ?Sized>(
             GrTextHAlignT::Indeterminate => {}
         }
 
-        positions.push(a_position + line_offset);
+        positions.push(wrapping_add(a_position, line_offset));
     }
 
     (text_lines, positions, extents)
@@ -1188,6 +1188,16 @@ impl<F: Font + ?Sized> FontExt for F {
             wordbreak_markup_node(a_words, &root, self, a_size, a_text_style, false);
         }
     }
+}
+
+/// `VECTOR2I + VECTOR2I` as the reference build executes it: wrapping on overflow (D3).
+pub(crate) fn wrapping_add(a: Vector2I, b: Vector2I) -> Vector2I {
+    Vector2I::new(a.x.wrapping_add(b.x), a.y.wrapping_add(b.y))
+}
+
+/// `VECTOR2I - VECTOR2I` as the reference build executes it: wrapping on overflow (D3).
+pub(crate) fn wrapping_sub(a: Vector2I, b: Vector2I) -> Vector2I {
+    Vector2I::new(a.x.wrapping_sub(b.x), a.y.wrapping_sub(b.y))
 }
 
 /// Port of the static `FONT::IsStroke( const wxString& aFontName )`: whether a face name

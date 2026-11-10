@@ -274,11 +274,16 @@ impl PcbDrillMap {
     }
 
     /// `GetSymbolExtent()`: `3 * m_symbolSize + 2 * width`, the width being the board drill
-    /// symbol profile's `GetSymbolWidth()` (0 without a board). Not ported yet: the profile is
-    /// kept verbatim (`BoardDesignSettings::drill_symbol_profile`) until the tier-2 drill
-    /// symbol package lands, and the signature has no `ctx` to reach the board.
-    pub fn symbol_extent(&self) -> i32 {
-        crate::port_pending!("PCB_DRILL_MAP::GetSymbolExtent (DRILL_SYMBOL_PROFILE)")
+    /// symbol profile's `GetSymbolWidth()` (0 without a board).
+    pub fn symbol_extent(&self, ctx: &BoardCtx<'_>) -> i32 {
+        let width = if board_item::has_board(self, ctx) {
+            ctx.board.design_settings().drill_symbol_width()
+        } else {
+            0
+        };
+
+        // Numeric marks can reach three character sizes either side of their hole.
+        3 * self.symbol_size + 2 * width
     }
 
     /// `GetOutlineSlots()`.

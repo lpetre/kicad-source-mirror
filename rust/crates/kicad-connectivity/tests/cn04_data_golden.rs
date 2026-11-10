@@ -443,6 +443,11 @@ const SYNTHETIC: &[&str] = &[
     "cn04_dangling",
     "cn04_random1",
     "cn04_random2",
+    // REV-CN
+    "rev_zone_contacts",
+    "rev_ratsnest_zones",
+    "rev_shapes",
+    "rev_order_probe",
 ];
 
 fn report(what: &str, compared: &[&str], stats: &Stats) {
@@ -529,13 +534,25 @@ fn cn04_queries_are_consistent() {
         assert_eq!(data.node_count_of(-1), all_nodes, "{name}");
 
         for edge in data.unconnected_edges() {
-            // GetRatsnestForPad only compares the edge ends' parents with the item
-            assert!(
-                !data.ratsnest_for_pad(&ctx, edge.source_item).is_empty(),
-                "{name}: the edge ends on its source item"
-            );
-            let both = data.ratsnest_for_items(&ctx, &[edge.source_item, edge.target_item]);
-            assert!(!both.is_empty(), "{name}: the edge joins its two items");
+            // GetRatsnestForPad only compares the edge ends' parents with the item. It reads
+            // the ratsnest of the item's own net: OptimizeRNEdges can move an edge end onto a
+            // zone of another net (optimizeZoneToZoneAnchors does not look at nets; the
+            // rev_zone_contacts golden has such an edge), which that query then does not see.
+            let source_net = ctx.item(edge.source_item).unwrap().net_code().unwrap().0;
+
+            if source_net == edge.net {
+                assert!(
+                    !data.ratsnest_for_pad(&ctx, edge.source_item).is_empty(),
+                    "{name}: the edge ends on its source item: {edge:?}"
+                );
+            }
+
+            let target_net = ctx.item(edge.target_item).unwrap().net_code().unwrap().0;
+
+            if source_net == edge.net || target_net == edge.net {
+                let both = data.ratsnest_for_items(&ctx, &[edge.source_item, edge.target_item]);
+                assert!(!both.is_empty(), "{name}: the edge joins its two items");
+            }
         }
 
         let tracks: Vec<ItemId> = board.tracks().map(|(id, _)| id.into()).collect();

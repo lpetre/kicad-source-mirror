@@ -36,7 +36,6 @@ use crate::constraint_types::DrcConstraintT;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
 use crate::providers::run_host::RunHost;
-use crate::rule::DrcConstraintExt;
 use crate::test_provider::DrcTestProviderBase;
 
 /// Port of `DRC_TEST_PROVIDER_HOLE_SIZE`.

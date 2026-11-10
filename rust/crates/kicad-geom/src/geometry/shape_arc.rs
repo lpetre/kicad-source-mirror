@@ -1039,14 +1039,17 @@ impl ShapeArc {
 
     /// Port of `SHAPE_ARC::Mirror( const VECTOR2I&, FLIP_DIRECTION )`.
     pub fn mirror(&mut self, a_vector: Vector2I, a_flip_direction: FlipDirection) {
+        // `-p + 2 * aVector`: wraps on overflow like the reference build (x86-64)
+        let m = |p: i32, r: i32| p.wrapping_neg().wrapping_add(r.wrapping_mul(2));
+
         if a_flip_direction == FlipDirection::LeftRight {
-            self.start.x = -self.start.x + 2 * a_vector.x;
-            self.end.x = -self.end.x + 2 * a_vector.x;
-            self.mid.x = -self.mid.x + 2 * a_vector.x;
+            self.start.x = m(self.start.x, a_vector.x);
+            self.end.x = m(self.end.x, a_vector.x);
+            self.mid.x = m(self.mid.x, a_vector.x);
         } else {
-            self.start.y = -self.start.y + 2 * a_vector.y;
-            self.end.y = -self.end.y + 2 * a_vector.y;
-            self.mid.y = -self.mid.y + 2 * a_vector.y;
+            self.start.y = m(self.start.y, a_vector.y);
+            self.end.y = m(self.end.y, a_vector.y);
+            self.mid.y = m(self.mid.y, a_vector.y);
         }
 
         self.update_values();

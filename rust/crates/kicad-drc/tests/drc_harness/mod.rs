@@ -255,7 +255,7 @@ pub fn cached_entries(rel: &str, type_: &str) -> Option<Vec<Entry>> {
 }
 
 /// Multiset difference of two entry lists: (matched, missing, extra) with the texts.
-fn diff_entries(reference: &[Entry], rust: &[Entry]) -> (usize, Vec<String>, Vec<String>) {
+pub fn diff_entries(reference: &[Entry], rust: &[Entry]) -> (usize, Vec<String>, Vec<String>) {
     let mut remaining: Vec<Option<String>> = rust.iter().map(|e| Some(e.key())).collect();
     let mut matched = 0;
     let mut missing = Vec::new();
@@ -275,7 +275,7 @@ fn diff_entries(reference: &[Entry], rust: &[Entry]) -> (usize, Vec<String>, Vec
 }
 
 /// The part of `TUNING_PROFILES` that `loadImplicitRules` reads (see `evalrules_oracle.rs`).
-fn read_tuning_profiles(doc: &json::Value) -> TuningProfiles {
+pub fn read_tuning_profiles(doc: &json::Value) -> TuningProfiles {
     use kicad_core::{Lset, PcbLayerId};
     use kicad_drc::engine::implicit_rules::{
         DelayProfileTrackPropagationEntry, TuningProfile, TuningProfileType,

@@ -19,7 +19,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `jobs/job_export_pcb_drill.rs`, `jobs_handler.rs` (`job_export_drill`) | `job_export_pcb_drill.*` (options), `pcbnew_jobs_handler.cpp` `JobExportDrill` | FAB-02 | ported (Excellon); Gerber branch waits for FAB-08 |
 | `exporters/gendrill_gerber_writer.rs` | `gendrill_gerber_writer.*` | FAB-08 | not started |
 | `exporters/gerber_jobfile_writer.rs` | `gerber_jobfile_writer.*` | FAB-09 | not started |
-| `pcbplot.rs`, `pcb_plotter.rs` (FAB-03 part), `plot_board_layers.rs` (driver + `PlotStandardLayer` skeleton), `plot_brditems_plotter.rs` (struct, pending entry points) | see "FAB-03" below | FAB-03 | ported (driver); item bodies pending (FAB-04/05/06/10/11/13) |
+| `pcbplot.rs`, `pcb_plotter.rs` (FAB-03 part), `plot_board_layers.rs` (driver + `PlotStandardLayer` skeleton), `plot_brditems_plotter.rs` (struct, pending entry points) | see "FAB-03" below | FAB-03 | ported (driver); item bodies see FAB-04 and FAB-05/06/10/11/13 |
+| `plot_board_layers.rs` (`PlotStandardLayer` L383-930: pads, DNP cross, vias, tracks, zones), `plot_brditems_plotter.rs` (`getColor`, `PlotPadNumber`, `PlotPad`, `PlotZone`) | see "FAB-04" below | FAB-04 | ported |
 | `plot_layer_poly.rs`, `plot_brditems_shapes.rs`, `plot_brditems_text.rs`, `line_ending_plot.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the item bodies of `plot_board_layers.rs` / `plot_brditems_plotter.rs` | see each module header | FAB-04..11 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
@@ -263,3 +264,85 @@ maps onto (see the change request in the FAB-02 result).
 * `GerberPlotter::set_viewport` has `debug_assert!(!a_mirror)` (C++ `wxASSERT`, which only
   logs): a board with stored `(mirror yes)` plotted with `--board-plot-params` panics in debug
   builds (change request to kicad-plot); the crafted board therefore stores `mirror no`.
+
+## FAB-04: standard layer items (pads, vias, tracks, zones)
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `PlotStandardLayer` preamble (L361-371) | `StandardLayerFlags::new` |
+| `PlotStandardLayer` L383-930 (footprint pad blocks, via block, track block, zone block) | `plot_standard_layer_pads_vias_tracks_zones` (called by `plot_standard_layer` after the FAB-05 / FAB-06 loops; public for the verification below) |
+| footprint loop body L387-740 (sketch pads, colour, `PlotPadNumber`, DNP cross) | `plot_standard_layer_footprint` |
+| `plotPadLayer` lambda (L446-681) | private `plot_pad_layer` |
+| via / track / zone loop bodies, `getMetadata` lambda | `plot_standard_layer_via`, `plot_standard_layer_track`, `plot_standard_layer_zone`, private `plot_metadata` |
+| `PAD::DeletePrimitivesList`, `PAD::AddPrimitivePoly( SHAPE_POLY_SET )` + `AddPrimitive` + `rebakePrimitiveToFootprint` | private `pad_delete_primitives_list`, `pad_add_primitive_poly` (local ports through `Pad::set_padstack`: the model has no mutable primitive access, change request) |
+| `BRDITEMS_PLOTTER::getColor`, `PlotPadNumber`, `PlotPad`, `PlotZone` | `BrditemsPlotter::get_color`, `plot_pad_number`, `plot_pad`, `plot_zone` |
+| `PCB_PLOT_PARAMS::ColorSettings()->GetColor( layer )` | `BrditemsPlotter::color_settings_color` (see deviations) |
+
+`PAD dummy( *pad )` and the in-place "modify the board pad, plot, restore" of `plotPadLayer`
+are both a `detached_copy()` of the pad viewed with `ctx.view` (`board-model.md` 13). Setters
+take the pad's `board.mut_env(pad)` (its footprint frame). `ZONE dummy( *zone ); SetNet( &nonet
+)` is a detached copy with net code -1 (no board net carries it: empty net name).
+
+### Tests and verification
+
+* `tests/plot_items_corpus.rs::corpus_items_replay`: the FAB-04 part on every layer of the
+  loadable corpus boards (`tests/golden/plot_driver/corpus.txt`, reference kicad-cli, CLI
+  defaults) that carries no FAB-05 / FAB-06 content (no board drawing, no visible footprint
+  field, no footprint graphic on the layer; no drill map; no mask minimum width): the driver
+  of `plot_gerber_layer_file` around `plot_standard_layer_pads_vias_tracks_zones`, whole file
+  compared. Today **3118 files of 157 boards, all byte-identical** (205 layers skipped for
+  graphics, 4 for the mask minimum width). The loadable boards have no footprints yet (the pad
+  parser PCBIO-07 is pending: 222 corpus boards fail on it): this covers 202 vias (copper and
+  mask layers, flashing through connectivity), 111 track segments, 49 arcs and 117 zones
+  (Gerber regions with net attributes).
+* `crafted_items_replay`: two crafted boards (`tests/data/plot_items`, re-saved with
+  `kicad-cli pcb upgrade --force`; goldens `tests/golden/plot_items/crafted.txt` +
+  `crafted_files.txt`, `generate.py`): `pads.kicad_pcb` (4 copper layers, 20 pads in two
+  footprints at 0 and 90 degrees: every pad shape, PTH / SMD / CONN / NPTH incl. the
+  "size == drill" NPTH skip, every fabrication property, pin function, local mask margins
+  (rect -> round rect, trapezoid and chamfered rect -> inflated custom copy), paste margin
+  and ratio (asymmetric round rect, negative custom), remove-unused-layers) with the CLI
+  defaults, and `bp_fab.kicad_pcb` with `--board-plot-params` (sketch pads and pad numbers on
+  F.Fab / B.Fab). **26 files, all byte-identical** (copper, mask, paste, adhesive, fab). The
+  footprints are built through the model API by `tests/plot_items_fixture` from the same file
+  text while PCBIO-07 is pending (the rest of the board goes through the real parser).
+* `svg_items_match_cli`: the same through the SVG engine (black and white; F.Cu, F.Mask
+  mirrored, F.Paste) against `kicad-cli pcb export svg --mode-single ... --black-and-white`:
+  identical except the `<title>` date.
+* `tests/plot_pads_qa.rs`: ports of `NoDrillFlashesOnEdgeCuts`,
+  `NoDrillMarksOnGerberFromStoredOptions` (`test_plot_edge_cuts_drill_marks.cpp`) and
+  `RoundRectGerberMaskApertureHasCorrectRadius` (`test_plot_pad_mask.cpp`): pass on the FAB-04
+  part; the literal C++ call (`PlotBoardLayers` / `PlotStandardLayer`) is reported pending
+  until FAB-06 (`PlotFootprintTextItems`) lands, then it is asserted too.
+* `tests/plot_driver_corpus.rs` now builds connectivity (`BOARD::BuildConnectivity`, as
+  `BOARD_LOADER` does) and passes it in the `BoardCtx`: 1202 whole files match, 0 differ.
+
+Not verified yet: the DNP cross (needs `FOOTPRINT::GetCourtyard` / `GetEffectiveShape`, M19
+stubs, and a board option), back-side and non-orthogonal footprints (the fixture builds
+front footprints only; they are covered automatically by the corpus tests once PCBIO-07
+lands), rule-driven mask / paste margins (the tests pass no `RuleResolver`: there is no DRC
+engine yet; the C++ `!m_DRCEngine` branches give the same values for boards without
+custom rules).
+
+### Deviations
+
+* Colour themes (`COLOR_SETTINGS`, FAB-11) are not ported: `color_settings_color` returns
+  BLACK for Gerber and for black and white plots, and is a pending panic for colour plots.
+  Gerber ignores colours and `PSLIKE_PLOTTER::SetColor` in black and white only
+  distinguishes WHITE from the rest, so the output is identical unless a theme colour is
+  exactly WHITE where the C++ does not map it to LIGHTGRAY (pad number text, DNP cross).
+* `MarkFootprintPlotted` (PDF bookmarks) is not called (PDF is out of scope).
+* DXF branches (`getMetadata` returning the plot options, `PlotZone` DXF fill mode) are out of
+  scope: no metadata / pending panic.
+* The local `pad_add_primitive_poly` gives the new primitives `ParentRef::None` (C++: the
+  copy's address); pad primitives are never transformed by the footprint frame and the
+  board's `maxError` comes from the pad's environment, so the shapes are the same.
+
+### Known gaps
+
+* `PlotStandardLayer` as a whole still reaches the FAB-05 / FAB-06 stubs for any board with
+  drawings or footprints.
+* Change request: `Pad::delete_primitives_list` / `Pad::add_primitive_poly` in the model
+  (then the two local ports go).

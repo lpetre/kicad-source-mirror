@@ -1,0 +1,40 @@
+(version 1)
+(rule r0
+  (condition "A.Bogus_Property == 1")
+  (constraint clearance (min 0.1mm)))
+(rule r1
+  (condition "C.Width > 1mm")
+  (constraint clearance (min 0.1mm)))
+(rule r2
+  (condition "AB.Width == A.Width")
+  (constraint clearance (min 0.1mm)))
+(rule r3
+  (condition "L.Width == 1mm")
+  (constraint clearance (min 0.1mm)))
+(rule r4
+  (condition "AB.Parent.Reference == 'J1'")
+  (constraint clearance (min 0.1mm)))
+(rule r5
+  (condition "A.Parent.bogusProperty")
+  (constraint clearance (min 0.1mm)))
+(rule r6
+  (condition "A.bogus.Reference == 'J1'")
+  (constraint clearance (min 0.1mm)))
+(rule r7
+  (condition "L.Parent.Type == 'Footprint'")
+  (constraint clearance (min 0.1mm)))
+(rule r8
+  (condition "A.x.y.z == 1")
+  (constraint clearance (min 0.1mm)))
+(rule r9
+  (condition "AB.NetClass == 'x'")
+  (constraint clearance (min 0.1mm)))
+(rule r10
+  (condition "L.NetClass == 'x'")
+  (constraint clearance (min 0.1mm)))
+(rule r11
+  (condition "L.Type == 'Track'")
+  (constraint clearance (min 0.1mm)))
+(rule r12
+  (condition "Parent.Type == 'Pad'")
+  (constraint clearance (min 0.1mm)))

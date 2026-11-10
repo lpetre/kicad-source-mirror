@@ -142,6 +142,15 @@ impl Gen {
         s
     }
 
+    /// `noTabsIfExtreme` of the driver.
+    fn no_tabs_if_extreme(&self, text: String) -> String {
+        if self.extreme {
+            text.replace('\t', " ")
+        } else {
+            text
+        }
+    }
+
     fn gen_extreme_int(&mut self) -> i32 {
         let r = self.rnd(16);
 
@@ -331,12 +340,8 @@ fn case_markup(g: &mut Gen, o: &mut Out) {
 fn case_glyphs(g: &mut Gen, o: &mut Out) {
     let font = default_font();
     let text = g.gen_text(12);
-    let mut sx = g.gen_size();
-
-    // a tab advances in steps of 4 * size.x until it passes the cursor: keep that loop short
-    if g.extreme && text.contains('\t') {
-        sx = 4000000;
-    }
+    let text = g.no_tabs_if_extreme(text);
+    let sx = g.gen_size();
     let sy = if g.rnd(4) == 0 { g.gen_size() } else { sx };
     let px = g.gen_coord();
     let py = g.gen_coord();
@@ -400,16 +405,13 @@ fn case_draw(g: &mut Gen, o: &mut Out) {
         text.push_str(&g.gen_text(10));
     }
 
+    let text = g.no_tabs_if_extreme(text);
     let mut attrs = TextAttributes::default();
-    let mut sx = if g.rnd(8) == 0 {
+    let sx = if g.rnd(8) == 0 {
         g.gen_size()
     } else {
         (500000 + g.rnd(4500001)) as i32
     };
-
-    if g.extreme && text.contains('\t') {
-        sx = 4000000;
-    }
     let sy = if g.rnd(4) == 0 {
         (500000 + g.rnd(4500001)) as i32
     } else {
@@ -500,7 +502,12 @@ fn case_draw(g: &mut Gen, o: &mut Out) {
     o.i(column as i64);
 
     let (line_strs, positions, extents) =
-        font.line_positions(&text, pos - cursor, &attrs, &metrics);
+        font.line_positions(
+            &text,
+            Vector2I::new(pos.x.wrapping_sub(cursor.x), pos.y.wrapping_sub(cursor.y)),
+            &attrs,
+            &metrics,
+        );
 
     for i in 0..line_strs.len() {
         o.s("\nP");

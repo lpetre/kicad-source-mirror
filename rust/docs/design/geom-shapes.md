@@ -33,6 +33,7 @@ Decision for package G2 (binding for G3-G5 and the board model). C++: `libs/kima
   `GenerateBBoxCache()`) take `&mut self` instead, so every shape is `Send + Sync` without interior mutability.
 - **Poly-set triangles.** `TRIANGULATED_POLYGON::TRI` points into its parent's vertex list; the G4 skeleton stores the
   three vertices next to the indices (`Tri`), G4 may replace this as long as `ShapeRef::PolySetTriangle(&Tri)` stays.
-- **Not-yet-ported pairs** of the collision matrix go to `shape_collisions::unsupported_g5()` (returns false like the
-  C++ fallback); `TransformToPolygon` of round shapes waits for `convert_basic_shapes_to_polygon`. Both are listed in
-  `crates/kicad-geom/PORT_STATUS.md`.
+- **Unsupported collision pairs.** The collision matrix is complete since G5; the pairs the C++ matrix has no case for
+  (compounds nested in compounds, the poly-set fallbacks: "Unsupported collision", `wxFAIL_MSG`) go to
+  `shape_collisions::unsupported_g5()`, which returns false like the C++. `TransformToPolygon` of round shapes goes
+  through `convert_basic_shapes_to_polygon` (G6b). See `crates/kicad-geom/PORT_STATUS.md`.

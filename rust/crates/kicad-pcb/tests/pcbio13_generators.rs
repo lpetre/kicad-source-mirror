@@ -145,31 +145,6 @@ fn fnv(bytes: &[u8]) -> String {
     format!("{h:016x}")
 }
 
-/// Removes the `(templates ...)` sub-block of a prettified `(generated ...)` block (the
-/// template via is a staging skip until the track formatter takes a `&Track`, see
-/// `PORT_STATUS.md`).
-fn strip_templates(block: &str) -> String {
-    let lines: Vec<&str> = block.split_inclusive('\n').collect();
-    let mut out = String::new();
-    let mut i = 0;
-
-    while i < lines.len() {
-        if lines[i].starts_with("\t\t(templates") {
-            while i < lines.len() && lines[i] != "\t\t)\n" {
-                i += 1;
-            }
-
-            i += 1;
-            continue;
-        }
-
-        out.push_str(lines[i]);
-        i += 1;
-    }
-
-    out
-}
-
 /// The corpus boards with generators or constraints whose reference re-save is small enough
 /// for the default test run (the large demos are covered by `pcbio13_golden.sh` only).
 fn corpus_golden() -> Vec<(String, usize, String, String)> {
@@ -192,15 +167,16 @@ fn corpus_golden() -> Vec<(String, usize, String, String)> {
 
 /// Byte level, corpus: every `(generated ..)` / `(constraint ..)` block of the reference
 /// re-save of each corpus board with generators or constraints (`pcbio13_corpus.txt`: count,
-/// FNV of the blocks, FNV of the blocks without their `(templates ..)`) is reproduced by the
-/// Rust re-save of the original board.
+/// FNV of the blocks, FNV of the blocks without their `(templates ..)`, which is no longer
+/// needed: the template via is written since integration step 2) is reproduced by the Rust
+/// re-save of the original board.
 #[test]
 fn oracle_corpus_generators() {
     let kicad = crate_dir().join("../../..");
     let mut checked = 0;
     let mut pending = Vec::new();
 
-    for (path, count, all_fnv, untemplated_fnv) in corpus_golden() {
+    for (path, count, all_fnv, _untemplated_fnv) in corpus_golden() {
         let file = kicad.join(&path);
         let Ok(text) = std::fs::read_to_string(&file) else {
             continue;
@@ -223,14 +199,11 @@ fn oracle_corpus_generators() {
 
         let joined = got.concat();
 
-        if fnv(joined.as_bytes()) != all_fnv {
-            let stripped: String = got.iter().map(|b| strip_templates(b)).collect();
-            assert_eq!(
-                fnv(stripped.as_bytes()),
-                untemplated_fnv,
-                "{path}: generator / constraint blocks differ from the reference re-save:\n{joined}"
-            );
-        }
+        assert_eq!(
+            fnv(joined.as_bytes()),
+            all_fnv,
+            "{path}: generator / constraint blocks differ from the reference re-save:\n{joined}"
+        );
 
         checked += 1;
     }
@@ -266,11 +239,9 @@ fn oracle_resave_handmade() {
             let out = resave(&text, &name).unwrap_or_else(|stub| panic!("{name}: {stub}"));
             let got = blocks(&out);
 
-            // The template via is a staging skip (see `strip_templates`).
-            let strip = |v: &[String]| v.iter().map(|b| strip_templates(b)).collect::<String>();
             assert_eq!(
-                strip(&got),
-                strip(&expected),
+                got.concat(),
+                expected.concat(),
                 "{name} ({label}): generator / constraint blocks"
             );
         }
@@ -646,10 +617,9 @@ fn oracle_large_board() {
     let expected = blocks(&std::fs::read_to_string(&reference).expect("reference"));
     let out = resave(&text, &board).unwrap_or_else(|stub| panic!("pending: {stub}"));
     let got = blocks(&out);
-    let strip = |v: &[String]| v.iter().map(|b| strip_templates(b)).collect::<String>();
 
     assert_eq!(got.len(), expected.len());
-    assert!(strip(&got) == strip(&expected), "{board}: blocks differ");
+    assert!(got.concat() == expected.concat(), "{board}: blocks differ");
     eprintln!(
         "{board}: {} generator / constraint blocks identical",
         got.len()

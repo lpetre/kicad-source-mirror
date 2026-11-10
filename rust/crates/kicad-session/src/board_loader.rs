@@ -413,6 +413,58 @@ pub fn save_board(
 mod tests {
     use super::*;
 
+    const BOARD: &str = "(kicad_pcb (version 20240108) (generator \"pcbnew\") (generator_version \"8.0\")\n\
+        (general (thickness 1.6) (legacy_teardrops no))\n\
+        (paper \"A4\")\n\
+        (layers (0 \"F.Cu\" signal) (31 \"B.Cu\" signal) (44 \"Edge.Cuts\" user))\n\
+        (net 0 \"\") (net 1 \"A\")\n\
+        (segment (start 0 0) (end 1 0) (width 0.25) (layer \"F.Cu\") (net 1) (uuid \"00000000-0000-0000-0000-000000000001\"))\n\
+        )\n";
+
+    fn inputs(rules: Option<&'static str>) -> LoadInputs<'static> {
+        LoadInputs {
+            text: BOARD,
+            source_name: "/tmp/x/board.kicad_pcb",
+            rules_text: rules,
+            ..LoadInputs::default()
+        }
+    }
+
+    /// Skips the steps stopped by a `port_pending!` stub (see tests/common).
+    fn skip_pending(_: LoadStep, run: &mut dyn FnMut()) {
+        let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(run));
+    }
+
+    /// `KI_TEST::LoadBoard` without a project file: no project, no file name, engine and
+    /// connectivity built (and no step reaches a stub: component classes need a project).
+    #[test]
+    fn qa_load_without_project() {
+        let loaded = load_qa(&inputs(None)).unwrap();
+        assert!(loaded.board.project.is_none());
+        assert!(loaded.board.file_name.is_empty());
+        assert!(!loaded.connectivity.is_stale(&loaded.board));
+        assert!(loaded.drc_init_error.is_none());
+    }
+
+    /// The QA harness lets a rule file error escape; the CLI loader swallows it.
+    #[test]
+    fn rule_errors() {
+        let bad = Some("(version 1)\n(rule x (constraint nonsense))\n");
+        assert!(matches!(
+            load_qa(&inputs(bad)),
+            Err(SessionError::Load { .. })
+        ));
+
+        let loaded = load_guarded(LoadPath::Cli, &inputs(bad), Some(&mut skip_pending)).unwrap();
+        assert!(loaded.drc_init_error.is_some());
+        assert_eq!(loaded.board.file_name, "/tmp/x/board.kicad_pcb");
+        let project = loaded.board.project.as_ref().unwrap();
+        assert_eq!(project.project_name, "board");
+        // BuildListOfNets and SynchronizeNetsAndNetClasses run after BuildConnectivity on the
+        // CLI path and bump the board time stamp: the connectivity counts as stale then.
+        assert!(loaded.connectivity.time_stamp().is_some());
+    }
+
     #[test]
     fn set_ext() {
         assert_eq!(

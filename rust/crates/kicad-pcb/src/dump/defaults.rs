@@ -213,9 +213,13 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
         AnyItem::Table(t) => {
             emit!(o, "table.cols", v_int(t.col_count()));
             emit!(o, "table.rows", v_int(t.row_count()));
-            emit!(o, "table.end", no_api("PCB_TABLE::GetEnd"));
+            emit!(o, "table.end", v_vec(t.end(ctx)));
             emit!(o, "table.border_width", v_int(t.border_stroke.width()));
-            emit!(o, "table.border_style", no_api("PCB_TABLE::GetBorderStyle"));
+            emit!(
+                o,
+                "table.border_style",
+                items::v_line_style(t.border_style())
+            );
             emit!(
                 o,
                 "table.separators_width",
@@ -224,7 +228,7 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(
                 o,
                 "table.separators_style",
-                no_api("PCB_TABLE::GetSeparatorsStyle")
+                items::v_line_style(t.separators_style())
             );
             emit!(o, "table.stroke_external", v_bool(t.stroke_external));
             emit!(o, "table.stroke_header", v_bool(t.stroke_header_separator));
