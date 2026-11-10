@@ -48,7 +48,7 @@ use super::board_edges::{board_edge_bounding_box, board_edge_shape};
 use super::paths::PathConnection;
 use super::shapes::{
     BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CreepShapeType, are_equivalent,
-    compare_shapes, to_int, vd,
+    compare_shapes, std_max, to_int, vd,
 };
 
 /// Index of a shape in the graph's shape arena (the `CREEP_SHAPE*` identity).
@@ -570,7 +570,7 @@ impl<'a> CreepageGraph<'a> {
             let pc = PathConnection {
                 a1: vd(a1_pos),
                 a2: vd(a2_pos),
-                weight: weight.max(0.0),
+                weight: std_max(weight, 0.0),
                 ..PathConnection::default()
             };
 

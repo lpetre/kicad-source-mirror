@@ -42,7 +42,7 @@ use kicad_pcb::pcb_track::Track;
 use super::board_intersect::segment_intersects_board;
 use super::shapes::{
     BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CuShapeArc, CuShapeCircle,
-    CuShapeSegment, segment_intersects_arc, to_int, vd, vi,
+    CuShapeSegment, segment_intersects_arc, std_max, to_int, vd, vi,
 };
 
 /// Port of `CREEPAGE_TRACK_ENTRY`: a track segment in the [`TrackRtree`].
@@ -1110,7 +1110,7 @@ pub fn paths_cu_circle_be_point(
     }
 
     let pc = PathConnection {
-        weight: weight.max(0.0),
+        weight: std_max(weight, 0.0),
         a2: vd(point),
         a1: vd(center + (point - center).resize(to_int(r))),
         ..PathConnection::default()
@@ -1146,7 +1146,7 @@ pub fn paths_cu_circle_cu_circle(
     }
 
     let pc = PathConnection {
-        weight: weight.max(0.0),
+        weight: std_max(weight, 0.0),
         a1: vd((c2 - c1).resize(to_int(r1)) + c1),
         a2: vd((c1 - c2).resize(to_int(r2)) + c2),
         ..PathConnection::default()
@@ -1264,10 +1264,10 @@ pub fn paths_cu_circle_cu_arc(
 
             if test_angle < a_s2.end_angle() {
                 let pc3 = PathConnection {
-                    weight: (arc_radius
-                        - (circle_pos - arc_pos).euclidean_norm() as f64
-                        - circle_radius)
-                        .max(0.0),
+                    weight: std_max(
+                        arc_radius - (circle_pos - arc_pos).euclidean_norm() as f64 - circle_radius,
+                        0.0,
+                    ),
                     a1: vd(circle_pos + (circle_pos - arc_pos).resize(to_int(circle_radius))),
                     a2: vd(arc_pos
                         + (circle_pos - arc_pos).resize(to_int(arc_radius - a_s2.width() / 2.0))),
@@ -1452,7 +1452,7 @@ pub fn paths_cu_segment_cu_segment(
     let pc = PathConnection {
         a1: vd(closest1 + (closest2 - closest1).resize(to_int(half_width1))),
         a2: vd(closest2 + (closest1 - closest2).resize(to_int(half_width2))),
-        weight: (min_dist.sqrt() - half_width1 - half_width2).max(0.0),
+        weight: std_max(min_dist.sqrt() - half_width1 - half_width2, 0.0),
         ..PathConnection::default()
     };
 
@@ -1491,7 +1491,7 @@ pub fn paths_cu_circle_be_circle(
     if dist <= r2 {
         // Copper circle center is inside the board-edge circle so external tangent lines
         // don't exist. The nearest gap is the radial distance between circle boundaries.
-        let weight = (r2 - dist - r1).max(0.0);
+        let weight = std_max(r2 - dist - r1, 0.0);
 
         if weight > a_max_weight {
             return result;
@@ -1526,7 +1526,7 @@ pub fn paths_cu_circle_be_circle(
     }
 
     let mut pc = PathConnection {
-        weight: weight.max(0.0),
+        weight: std_max(weight, 0.0),
         ..PathConnection::default()
     };
 
@@ -1585,8 +1585,10 @@ pub fn paths_cu_arc_be_point(
             paths_cu_circle_be_point(&circle, a_s2, a_max_weight, a_max_squared_weight)
         } else {
             let pc = PathConnection {
-                weight: ((radius - width / 2.0) - (point - arc_center).euclidean_norm() as f64)
-                    .max(0.0),
+                weight: std_max(
+                    (radius - width / 2.0) - (point - arc_center).euclidean_norm() as f64,
+                    0.0,
+                ),
                 a1: vd((point - arc_center).resize(to_int(radius - width / 2.0)) + arc_center),
                 a2: vd(point),
                 ..PathConnection::default()

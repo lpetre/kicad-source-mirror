@@ -87,6 +87,29 @@ fn print_solve(
         uuid(item2)
     ));
 
+    if std::env::var("DRC33_VERBOSE").is_ok() {
+        for &gc in path {
+            let c = &graph.connections[gc.0];
+            let desc = |n: kicad_drc::creepage_utils::NodeId| {
+                let node = &graph.nodes[n.0];
+                format!(
+                    "{:?}@{} {:?}",
+                    node.type_,
+                    pt(node.pos),
+                    node.parent.map(|p| graph.shape(p).clone())
+                )
+            };
+            eprintln!(
+                "  V {} -> {} w={} straight={} conn={}",
+                desc(c.n1),
+                desc(c.n2),
+                c.path.weight,
+                c.force_straight_line,
+                gc.0
+            );
+        }
+    }
+
     for (k, &gc) in path.iter().enumerate() {
         let c = &graph.connections[gc.0];
         out.push(format!(

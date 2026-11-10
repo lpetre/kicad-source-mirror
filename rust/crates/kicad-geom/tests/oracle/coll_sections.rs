@@ -669,6 +669,7 @@ fn section_far(results: &mut Results, name: &'static str, seed: u64, count: u64)
         let kb = rng.next() % K_COUNT;
         let o = far_origin(&mut rng);
         let s = scale(&mut rng).min(200000);
+        if std::env::var_os("FAR_TRACE").is_some() { eprintln!("FARCASE {n} {ka} {kb} {o:?} {s}"); }
         // no effectively straight arcs (see the C++ driver)
         let opts = Opts {
             degenerate: false,
@@ -703,6 +704,7 @@ fn section_far(results: &mut Results, name: &'static str, seed: u64, count: u64)
         let mut rb = Rng::new(seed_b);
         let b = gen_shape(&mut rb, kb, s, o + v(dx as i32, dy as i32), opts);
         let cl = clearance(&mut rng, s);
+        if n == 7788 && std::env::var_os("FAR_TRACE").is_some() { eprintln!("A={:?}\nB={:?}\ncl={cl}", a.as_shape_ref(), b.as_shape_ref()); }
 
         let mut r = Rec::default();
         r.i(ka as i64)

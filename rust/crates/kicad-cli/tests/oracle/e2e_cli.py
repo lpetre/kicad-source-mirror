@@ -39,6 +39,7 @@ test tests/e2e_cli.rs checks without the oracle.
 """
 
 import argparse
+import json
 import os
 import re
 import shutil
@@ -220,25 +221,84 @@ def compare(ref, rs):
     def strip_not_run(v):
         return NOT_RUN_STDOUT_RE.sub(b"", NOT_RUN_JSON_RE.sub(b"", NOT_RUN_REPORT_RE.sub(b"", v)))
 
-    stripped = mask(rs, strip_not_run)
-    if stripped != rs and first_difference(ref, stripped) is None:
-        return "identical-masked", "unported DRC checks listed"
+    # The documented masks, applied cumulatively (both sides; the not-run list only exists in
+    # kicad-rs outputs). The detail names every mask that was needed.
+    steps = [
+        ("unported DRC checks listed", strip_not_run),
+        # The UUID of the board itself in a DRC JSON item (`"description": "PCB"`):
+        # BOARD::m_Uuid is a random KIID per run in the reference (kicad-drc STAB-DRC-2)
+        ("board UUID", lambda v: BOARD_ITEM_UUID_RE.sub(rb'\1<BOARD>"', v)),
+        # Random UUIDs of items without one in the file (legacy boards; FIX-RESAVE-1)
+        ("random UUIDs", lambda v: UUID_RE.sub(b"<UUID>", v)),
+    ]
+    used = []
+    cur_ref, cur_rs = ref, rs
+    for name, fn in steps:
+        m_ref, m_rs = mask(cur_ref, fn), mask(cur_rs, fn)
+        if (m_ref, m_rs) == (cur_ref, cur_rs):
+            continue
+        used.append(name)
+        cur_ref, cur_rs = m_ref, m_rs
+        if first_difference(cur_ref, cur_rs) is None:
+            return "identical-masked", "; ".join(used)
 
-    # The UUID of the board itself in a DRC JSON item (`"description": "PCB"`): BOARD::m_Uuid
-    # is a random KIID per run in the reference (kicad-drc PORT_STATUS STAB-DRC-2)
-    def board_uuid(v):
-        return BOARD_ITEM_UUID_RE.sub(rb'\1<BOARD>"', v)
-
-    if first_difference(mask(ref, board_uuid), mask(stripped, board_uuid)) is None:
-        return "identical-masked", "board UUID" + (
-            "; unported DRC checks listed" if stripped != rs else "")
-
-    # Random UUIDs of items without one in the file (legacy boards; FIX-RESAVE-1)
-    if first_difference(mask(ref, lambda v: UUID_RE.sub(b"<UUID>", v)),
-                        mask(stripped, lambda v: UUID_RE.sub(b"<UUID>", v))) is None:
-        return "identical-masked", "random UUIDs"
+    # The entry order of a DRC report: the reference runs most providers on its thread pool
+    # and merges some polygons from pointer-ordered sets (kicad-drc PORT_STATUS DRC-12 /
+    # STAB-DRC: compared as sets there too).
+    o_ref = {k: drc_entries_sorted(k, v) for k, v in cur_ref.items()}
+    o_rs = {k: drc_entries_sorted(k, v) for k, v in cur_rs.items()}
+    if o_ref != cur_ref or o_rs != cur_rs:
+        if first_difference(o_ref, o_rs) is None:
+            return "identical-masked", "; ".join(used + ["report order (thread pool)"])
 
     return "differing", diff
+
+
+def drc_entries_sorted(key, v):
+    """A DRC report / JSON report with the entries of every section sorted (the item lines of
+    `connection_width` too); other outputs unchanged."""
+    if key.endswith(".rpt") and v.startswith(b"** Drc report"):
+        out, blocks = [], None
+
+        def flush():
+            if blocks:
+                out.extend(sorted(sort_items(b) for b in blocks))
+
+        for line in v.split(b"\n"):
+            if line.startswith(b"["):
+                if blocks is None:
+                    blocks = []
+                blocks.append([line])
+                continue
+            if line.startswith(b"    ") and blocks:
+                blocks[-1].append(line)
+                continue
+            flush()
+            blocks = None
+            out.append(line)
+        flush()
+        return b"\n".join(out)
+    if key.endswith(".json") and v.lstrip().startswith(b"{"):
+        try:
+            doc = json.loads(v)
+        except ValueError:
+            return v
+        for k in ("violations", "unconnected_items", "schematic_parity"):
+            for e in doc.get(k, []):
+                if e.get("type") == "connection_width":
+                    e["items"].sort(key=lambda i: json.dumps(i, sort_keys=True))
+            doc[k] = sorted(doc.get(k, []), key=lambda e: json.dumps(e, sort_keys=True))
+        return json.dumps(doc, sort_keys=True).encode()
+    return v
+
+
+def sort_items(block):
+    """The text lines of one report entry; the `@(..)` item lines of `connection_width` sorted."""
+    if block[0].startswith(b"[connection_width]"):
+        items = sorted(l for l in block[1:] if l.startswith(b"    @"))
+        rest = [l for l in block[1:] if not l.startswith(b"    @")]
+        block = block[:1] + rest + items
+    return b"\n".join(block)
 
 
 def golden_hash(ref):

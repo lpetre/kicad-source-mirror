@@ -33,12 +33,25 @@ use kicad_core::Severity;
 use kicad_session::jobs::{JobPcbDrc, RcOutputFormat, RcUnits};
 use kicad_session::{Reporter, Session, run_drc};
 
+/// The settings keys of the providers whose packages are still running, filtered like the
+/// unported ones (`UNPORTED` of `drc12_cli_compare.py` lists them too).
+const IN_PROGRESS_KEYS: &[&str] = &[
+    "creepage",
+    "length_out_of_range",
+    "net_chain_return_path",
+    "net_chain_stub_length",
+    "skew_out_of_range",
+    "too_many_vias",
+    "diff_pair_gap_out_of_range",
+    "diff_pair_uncoupled_length_too_long",
+];
+
 /// `UNPORTED` of `drc12_cli_compare.py`: the settings keys of the codes of
-/// `kicad_drc::run_flow::UNPORTED_PROVIDERS`.
+/// `kicad_drc::run_flow::UNPORTED_PROVIDERS` and [`IN_PROGRESS_KEYS`].
 fn unported_keys() -> Vec<&'static str> {
     use kicad_drc::run_flow::UNPORTED_PROVIDERS;
 
-    let mut keys = Vec::new();
+    let mut keys = IN_PROGRESS_KEYS.to_vec();
 
     for p in &UNPORTED_PROVIDERS {
         for &code in p.codes {

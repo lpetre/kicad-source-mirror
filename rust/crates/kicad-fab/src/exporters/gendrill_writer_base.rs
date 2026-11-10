@@ -557,12 +557,15 @@ impl<'a> GendrillWriterBase<'a> {
     /// drill map per drill file (`<drill file name without extension>-drl_map.<ext>`), in the
     /// format of `map_file_fmt`.
     ///
-    /// The drill map itself (`genDrillMapFile`, FAB-12) is not ported yet: the first map
-    /// returns `Err(FabError::NotPorted)` after reporting the C++ failure message. C++
-    /// returns `false` on failure; the port returns the error that caused it.
+    /// `env` gives the build version and creation date of the maps (see
+    /// [`super::gendrill_map::gen_drill_map_file`]). A map format without a plot engine in
+    /// the port (PDF, PostScript, DXF) fails with `FabError::Unsupported` after the C++
+    /// failure message is reported. C++ returns `false` on failure; the port returns the
+    /// error that caused it.
     pub fn create_map_files_set(
         &mut self,
         plot_directory: &str,
+        env: &crate::pcbplot::PlotEnv,
         mut reporter: Option<&mut dyn Reporter>,
     ) -> Result<(), FabError> {
         let mut hole_sets = enumerate_drill_spans(&self.pcb, false);
@@ -600,6 +603,7 @@ impl<'a> GendrillWriterBase<'a> {
                     self,
                     &fullfilename,
                     self.map_file_fmt,
+                    env,
                 ) {
                     Err(err) => {
                         if let Some(rep) = reporter.as_deref_mut() {
@@ -1073,20 +1077,22 @@ mod tests {
     }
 
     #[test]
-    fn map_files_report_not_ported() {
-        // The map writer is FAB-12; the loop reports the C++ failure message and stops.
+    fn map_files_report_unsupported_format() {
+        // A map format without a plot engine in the port (FAB-12: PDF); the loop reports the
+        // C++ failure message and stops.
         // Enumerating spans needs the via model when the board has vias; this board has none.
         let b = board("/p/demo.kicad_pcb", 2);
         let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
         w.drill_file_extension = "drl".to_string();
-        w.set_map_file_format(PlotFormat::Svg);
+        w.set_map_file_format(PlotFormat::Pdf);
         let mut rep = crate::VecReporter::default();
-        let res = w.create_map_files_set("out", Some(&mut rep));
-        assert!(matches!(res, Err(FabError::NotPorted(_))));
+        let env = crate::pcbplot::PlotEnv::default();
+        let res = w.create_map_files_set("out", &env, Some(&mut rep));
+        assert!(matches!(res, Err(FabError::Unsupported(_))));
         assert_eq!(
             rep.messages,
             vec![(
-                "Failed to create file 'out/demo-PTH-drl_map.svg'.".to_string(),
+                "Failed to create file 'out/demo-PTH-drl_map.pdf'.".to_string(),
                 Severity::Error
             )]
         );

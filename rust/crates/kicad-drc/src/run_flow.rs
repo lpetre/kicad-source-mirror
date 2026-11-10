@@ -46,7 +46,7 @@ use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
     DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
-    DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH, DRCE_MISSING_FOOTPRINT,
+    DRCE_MISSING_FOOTPRINT,
     DRCE_NET_CHAIN_TUNING_PROFILES, DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY,
     DRCE_SCHEMATIC_PARITY, DRCE_VIA_STITCH_OVERLAP,
 };
@@ -72,6 +72,7 @@ use crate::providers::edge_clearance::DrcTestProviderEdgeClearance;
 use crate::providers::footprint_checks::DrcTestProviderFootprintChecks;
 use crate::providers::hole_size::DrcTestProviderHoleSize;
 use crate::providers::hole_to_hole::DrcTestProviderHoleToHole;
+use crate::providers::library_parity::DrcTestProviderLibraryParity;
 use crate::providers::matched_length::DrcTestProviderMatchedLength;
 use crate::providers::misc::DrcTestProviderMisc;
 use crate::providers::physical_clearance::DrcTestProviderPhysicalClearance;
@@ -102,12 +103,7 @@ pub struct UnportedProvider {
 }
 
 /// The providers of [`PROVIDER_ORDER`] that are not ported yet (registry order).
-pub const UNPORTED_PROVIDERS: [UnportedProvider; 4] = [
-    UnportedProvider {
-        name: "library_parity",
-        package: "DRC-34",
-        codes: &[DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH],
-    },
+pub const UNPORTED_PROVIDERS: [UnportedProvider; 3] = [
     UnportedProvider {
         name: "schematic_parity",
         package: "out of scope",
@@ -159,6 +155,9 @@ pub struct RunTestsOptions<'a> {
     pub test_footprints: bool,
     /// The project's `TUNING_PROFILES` (misc provider).
     pub tuning_profiles: &'a TuningProfiles,
+    /// `PROJECT_PCB::FootprintLibAdapter( project )` after `AsyncLoad()` +
+    /// `BlockUntilLoaded()` (library parity provider); `None` behaves as no library tables.
+    pub footprint_libraries: Option<&'a kicad_pcb::libraries::FootprintLibraryAdapter>,
 }
 
 /// The result of [`run_tests`].
@@ -238,14 +237,6 @@ pub fn unported_check_would_run(
     }
 
     match p.name {
-        // if( !project ) return true; then every footprint is looked up in the library table.
-        "library_parity" => {
-            if board.project.is_none() || board.footprints().next().is_none() {
-                return None;
-            }
-
-            not_ported()
-        }
         // if( m_drcEngine->GetTestFootprints() ) { ... }
         "schematic_parity" => {
             if !run.test_footprints() {
@@ -376,6 +367,7 @@ fn run_provider(
         "silk_clearance" => Box::new(DrcTestProviderSilkClearance::default()),
         "sliver checker" => Box::new(DrcTestProviderSliverChecker::default()),
         "text_mirroring" => Box::new(DrcTestProviderTextMirroring::default()),
+        "library_parity" => Box::new(DrcTestProviderLibraryParity::new(options.footprint_libraries)),
         _ => unreachable!("provider '{name}' is neither ported nor in UNPORTED_PROVIDERS"),
     };
 

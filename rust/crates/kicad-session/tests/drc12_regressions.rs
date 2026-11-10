@@ -121,6 +121,7 @@ fn run(
                 report_all_track_errors: true,
                 test_footprints: false,
                 tuning_profiles: &tuning_profiles,
+                footprint_libraries: None,
             },
         )
     }));

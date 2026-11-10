@@ -117,6 +117,13 @@ pub(crate) fn to_int(x: f64) -> i32 {
     cmath::f64_to_i32_x86(x)
 }
 
+/// `std::max( a, b )` for doubles: `( a < b ) ? b : a`, so a NaN `a` is returned (unlike
+/// `f64::max`, which drops the NaN).
+#[inline]
+pub(crate) fn std_max(a: f64, b: f64) -> f64 {
+    if a < b { b } else { a }
+}
+
 /// `VECTOR2I` -> `VECTOR2D` (lossless implicit conversion).
 #[inline]
 pub(crate) fn vd(v: Vector2I) -> Vector2D {

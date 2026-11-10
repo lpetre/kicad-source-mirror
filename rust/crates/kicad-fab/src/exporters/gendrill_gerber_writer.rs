@@ -134,7 +134,7 @@ impl<'a> GerberWriter<'a> {
     /// The files are appended to `base.outputs` (with `plot_directory` as directory part) and
     /// their names to `base.created_files` (in the C++ `AddCreatedFile` order). C++ returns
     /// `false` on failure; the port returns the error. Without a file system, only the drill
-    /// map can fail (FAB-12 is not ported: `FabError::NotPorted`); as in C++ the other files
+    /// map can fail (a map format without a plot engine in the port: `FabError::Unsupported`); as in C++ the other files
     /// are kept and `Done.` is reported before returning the failure.
     pub fn create_drill_and_map_files_set(
         &mut self,
@@ -271,9 +271,12 @@ impl<'a> GerberWriter<'a> {
         std::mem::swap(&mut self.base.hole_list_buffer, &mut side_protection_holes);
 
         if gen_map {
+            // The build version and creation date of the map plots (C++: the environment).
+            let map_env = self.plot_env();
+
             if let Err(err) = self
                 .base
-                .create_map_files_set(plot_directory, reborrow(&mut reporter))
+                .create_map_files_set(plot_directory, &map_env, reborrow(&mut reporter))
             {
                 success = Err(err);
             }

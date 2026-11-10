@@ -1,0 +1,29 @@
+[package]
+name = "kicad-bench"
+description = "Benchmark harness of the KiCad Rust port: per-stage wall-clock, peak RSS and allocation counts through the kicad-session API (performance phase, docs/PERF.md)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "kicad-bench"
+path = "src/main.rs"
+
+[features]
+# Counting global allocator (allocation calls and bytes per stage). Off by default: it adds a
+# few atomic increments to every allocation, so the timing runs are taken without it.
+count-alloc = ["dep:stats_alloc"]
+
+[dependencies]
+kicad-core = { path = "../kicad-core" }
+kicad-pcb = { path = "../kicad-pcb" }
+kicad-drc = { path = "../kicad-drc" }
+kicad-geom = { path = "../kicad-geom" }
+kicad-session = { path = "../kicad-session" }
+stats_alloc = { version = "0.1.10", optional = true }

@@ -570,6 +570,7 @@ pub fn run_flow_providers(
         report_all_track_errors,
         test_footprints: false,
         tuning_profiles: &loaded.tuning_profiles,
+        footprint_libraries: None,
     };
 
     run_tests_selected(

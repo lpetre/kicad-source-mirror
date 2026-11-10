@@ -504,16 +504,23 @@ impl ShapeArc {
             let radius: i32 = ki_round(self.radius);
 
             // count through quadrants included in arc
-            for quad_angle in quad_angle_start..=quad_angle_end {
-                let mut quad_pt = self.center;
+            // quad_pt += { radius, 0 } etc.: int additions.  For a (clamped) centre near the
+            // coordinate limits and a radius below INT_MAX / 2 they overflow; the reference
+            // build wraps (x86), so the port wraps explicitly (FIX-FAB-3, verified by the
+            // `coll_far` oracle section of `tests/oracle/coll_oracle.cpp`)
+            let c = self.center;
 
-                match quad_angle % 4 {
-                    0 => quad_pt += Vector2I::new(radius, 0),
-                    1 | -3 => quad_pt += Vector2I::new(0, radius),
-                    2 | -2 => quad_pt += Vector2I::new(-radius, 0),
-                    3 | -1 => quad_pt += Vector2I::new(0, -radius),
-                    _ => debug_assert!(false),
-                }
+            for quad_angle in quad_angle_start..=quad_angle_end {
+                let quad_pt = match quad_angle % 4 {
+                    0 => Vector2I::new(c.x.wrapping_add(radius), c.y),
+                    1 | -3 => Vector2I::new(c.x, c.y.wrapping_add(radius)),
+                    2 | -2 => Vector2I::new(c.x.wrapping_add(-radius), c.y),
+                    3 | -1 => Vector2I::new(c.x, c.y.wrapping_add(-radius)),
+                    _ => {
+                        debug_assert!(false);
+                        c
+                    }
+                };
 
                 points.push(quad_pt);
             }

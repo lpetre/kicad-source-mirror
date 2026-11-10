@@ -490,6 +490,15 @@ Progress log:
   generator and dimension items, router-style item creation with incremental connectivity)
   and PERF-1 (new crate kicad-bench: per-stage timings and memory, reference baseline,
   profiles, ranked hotspot list in docs/PERF.md; changes no library code) (wpwj3zgx6).
+  06:55 UTC: done DS-1 drawing sheet (kicad-plot src/drawing_sheet: data model, .kicad_wks
+  parser incl. legacy forms, default and empty sheet, draw item list with text variables,
+  PlotDrawingSheet; wired into fab plotting, the DRC misc provider, session and CLI incl.
+  `--drawing-sheet` and project sheets): unit oracle 21 sheets x 7 page formats x 3 title
+  blocks identical (model, draw items, Gerber / SVG plot hashes); the 3 DRC boards with
+  drawing-sheet text variables now match; SVG job corpus 490 of 492 runs identical incl.
+  the runs with the sheet; a 120-run CLI comparison with `--ibt` and SVG matched except
+  creation-date seconds. Open: outline-font sheet text (stroke fallback), bitmaps in SVG
+  sheets, `@{}` expressions (text_eval not ported).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

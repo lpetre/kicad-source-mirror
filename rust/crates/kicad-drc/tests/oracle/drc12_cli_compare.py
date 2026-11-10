@@ -65,7 +65,9 @@ REF_CLI = "/home/user/kicad-oracle/bin/kicad-cli"
 RS_CLI = os.path.join(KICAD, "rust", "target", "debug", "kicad-rs")
 
 # Settings keys of the error codes of the providers that are not ported
-# (kicad_drc::run_flow::UNPORTED_PROVIDERS).
+# (kicad_drc::run_flow::UNPORTED_PROVIDERS) and of the providers whose packages are still
+# running (creepage: DRC-33, length / skew / via count / net chain: DRC-31, diff pair:
+# DRC-30 follow-ups); kicad-session/tests/drc12_corpus.rs filters the same keys.
 UNPORTED = {
     "creepage", "lib_footprint_issues", "lib_footprint_mismatch", "duplicate_footprints",
     "extra_footprint", "footprint_filters_mismatch", "missing_footprint", "net_conflict",

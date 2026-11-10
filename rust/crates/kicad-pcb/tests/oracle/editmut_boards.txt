@@ -1,0 +1,16 @@
+pcbio03/shapes.kicad_pcb
+pcbio03/tracks_vias.kicad_pcb
+pcbio05/texts_current.kicad_pcb
+pcbio05/textboxes_current.kicad_pcb
+pcbio06/handmade_current.kicad_pcb
+pcbio07/handmade_pads_current.kicad_pcb
+pcbio08/zones_modern.kicad_pcb
+pcbio09/groups.kicad_pcb
+pcbio10/dims_current.kicad_pcb
+pcbio12/misc_items.kicad_pcb
+pcbio12/barcodes.kicad_pcb
+pcbio12/tables.kicad_pcb
+pcbio13/generators.kicad_pcb
+m20/m20_footprints.kicad_pcb
+stabpcb/scaled_custom_pads.kicad_pcb
+glue2/scaled_fp_items.kicad_pcb

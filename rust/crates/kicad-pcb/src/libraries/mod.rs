@@ -30,7 +30,7 @@ pub mod library_table;
 
 use std::collections::BTreeMap;
 
-pub use footprint_library_adapter::{FootprintLibraryAdapter, LibStatus, LoadStatus};
+pub use footprint_library_adapter::{FootprintLibraryAdapter, LibStatus, LoadStatus, SharedLibrarySource};
 pub use library_manager::{LibraryEnv, LibraryManager};
 pub use library_table::{LibraryTable, LibraryTableRow, LibraryTableScope, LibraryTableType};
 

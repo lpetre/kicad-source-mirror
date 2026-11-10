@@ -27,6 +27,7 @@
 //! port; see `PORT_STATUS.md`.
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
 
 use super::LibrarySource;
 use super::library_manager::{LibraryManager, join_path};
@@ -97,8 +98,11 @@ const PLUGIN_NAMES: [&str; 24] = [
 /// `FILEEXT::KiCadFootprintFileExtension`.
 const FOOTPRINT_FILE_EXTENSION: &str = "kicad_mod";
 
+/// The host's file access, shared by the adapter and its users.
+pub type SharedLibrarySource = Arc<dyn LibrarySource + Send + Sync>;
+
 /// The footprint library adapter after `AsyncLoad()` + `BlockUntilLoaded()`.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Default)]
 pub struct FootprintLibraryAdapter {
     /// `m_manager`.
     pub manager: LibraryManager,
@@ -108,22 +112,56 @@ pub struct FootprintLibraryAdapter {
     global_libs: BTreeMap<String, LibData>,
     /// The parser options the host loads its board with (the port's staging switch).
     parse_options: ParseOptions,
+    /// Where the library files are read (`None`: no file is readable).
+    source: Option<SharedLibrarySource>,
+}
+
+impl std::fmt::Debug for FootprintLibraryAdapter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FootprintLibraryAdapter")
+            .field("manager", &self.manager)
+            .field("libraries", &self.libraries)
+            .field("global_libs", &self.global_libs)
+            .finish_non_exhaustive()
+    }
+}
+
+/// The source of no files.
+struct NoFiles;
+
+impl LibrarySource for NoFiles {
+    fn read_file(&self, _path: &str) -> Option<Vec<u8>> {
+        None
+    }
+
+    fn list_dir(&self, _path: &str) -> Option<Vec<String>> {
+        None
+    }
 }
 
 impl FootprintLibraryAdapter {
-    /// An adapter over `manager` with nothing loaded; [`Self::load`] runs the preload.
-    pub fn new(manager: LibraryManager, parse_options: ParseOptions) -> Self {
+    /// An adapter over `manager` reading the libraries through `source`, with nothing
+    /// loaded; [`Self::load`] runs the preload.
+    pub fn new(manager: LibraryManager, source: SharedLibrarySource, parse_options: ParseOptions) -> Self {
         FootprintLibraryAdapter {
             manager,
             parse_options,
+            source: Some(source),
             ..Default::default()
         }
+    }
+
+    fn source(&self) -> SharedLibrarySource {
+        self.source.clone().unwrap_or_else(|| Arc::new(NoFiles))
     }
 
     /// Port of `adapter->AsyncLoad(); adapter->BlockUntilLoaded();` (`JobExportDrc`), run
     /// sequentially in row order: every enabled row of `Rows()` is loaded through
     /// `loadQueuedRow`.
-    pub fn load(&mut self, source: &dyn LibrarySource) {
+    pub fn load(&mut self) {
+        let source = self.source();
+        let source: &dyn LibrarySource = &*source;
+
         struct Work {
             nickname: String,
             scope: LibraryTableScope,
@@ -370,15 +408,11 @@ impl FootprintLibraryAdapter {
     /// Port of `FOOTPRINT_LIBRARY_ADAPTER::LoadFootprint( aNickname, aName, aKeepUUID = true )`:
     /// a holder board (`BoardUse::FpHolder`) with the library footprint, its `LIB_ID` set to
     /// `nickname:name`; `None` when the library is not loaded or has no such footprint.
-    pub fn load_footprint(
-        &self,
-        source: &dyn LibrarySource,
-        nickname: &str,
-        name: &str,
-    ) -> Option<Board> {
+    pub fn load_footprint(&self, nickname: &str, name: &str) -> Option<Board> {
         let lib = self.fetch_if_loaded(nickname)?;
         let path = lib.footprints.get(name)?;
-        let mut board = self.parse_footprint(source, path).ok()?;
+        let source = self.source();
+        let mut board = self.parse_footprint(&*source, path).ok()?;
 
         let fp = board.footprints().next().map(|(id, _)| id)?;
 
@@ -448,8 +482,9 @@ mod tests {
         manager.load_global_tables(&src, "/cfg");
         manager.load_project_tables(&src, "/p");
 
-        let mut adapter = FootprintLibraryAdapter::new(manager, ParseOptions::default());
-        adapter.load(&src);
+        let mut adapter =
+            FootprintLibraryAdapter::new(manager, Arc::new(src), ParseOptions::default());
+        adapter.load();
 
         assert!(adapter.get_row("a").is_some());
         assert!(adapter.has_library("a", true));
@@ -461,10 +496,10 @@ mod tests {
         assert!(adapter.has_library("n", true), "nested table row");
         assert!(adapter.get_row("missing").is_none());
 
-        let board = adapter.load_footprint(&src, "a", "R1").expect("footprint");
+        let board = adapter.load_footprint("a", "R1").expect("footprint");
         let (_, fp) = board.footprints().next().unwrap();
         assert_eq!(fp.fpid.lib_nickname(), "a");
         assert_eq!(fp.fpid.lib_item_name(), "R1");
-        assert!(adapter.load_footprint(&src, "a", "R2").is_none());
+        assert!(adapter.load_footprint("a", "R2").is_none());
     }
 }
