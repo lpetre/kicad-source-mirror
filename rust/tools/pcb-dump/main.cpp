@@ -74,7 +74,8 @@ static void usage()
              "       pcb-dump board [--sections LIST] [--hash] [--loader] [--no-init] FILE...\n"
              "       pcb-dump rules [--component-classes] FILE...\n"
              "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n"
-             "          connectivity (opt-in: printed only when listed explicitly)\n" );
+             "          connectivity (opt-in: printed only when listed explicitly)\n"
+             "          engine (opt-in: DRC engine rules and constraint lists)\n" );
 }
 
 
@@ -205,6 +206,7 @@ static std::unique_ptr<BOARD> loadBoardCli( const wxString& aPath )
 
 
 int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses ); // dump_rules.cpp
+void DumpEngineSection( BOARD* aBoard );                                          // dump_engine.cpp
 void DumpConnectivity( BOARD* aBoard ); // dump_connectivity.cpp
 
 
@@ -347,6 +349,10 @@ int main( int argc, char** argv )
 
             ScanFileUuids( std::string( file.ToUTF8() ) );
             Guard( "dump", [&]() { DumpBoard( board.get(), opts ); } );
+
+            // Opt-in (not part of "all sections"): the DRC engine of the load path.
+            if( opts.sections.count( "engine" ) )
+                Guard( "engine", [&]() { DumpEngineSection( board.get() ); } );
 
             if( opts.sections.count( "connectivity" ) )
                 Guard( "connectivity", [&]() { DumpConnectivity( board.get() ); } );

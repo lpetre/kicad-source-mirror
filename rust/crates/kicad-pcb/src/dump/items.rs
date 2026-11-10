@@ -339,82 +339,78 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
         emit!(o, "length", v_f64(t.length()));
     }
 
-    emit!(o, "is_null", no_api("PCB_TRACK::IsNull"));
+    emit!(o, "is_null", v_bool(t.is_null()));
     emit!(o, "has_solder_mask", v_bool(tr.has_solder_mask));
     emit!(
         o,
         "local_solder_mask_margin",
         v_opt_int(tr.solder_mask_margin)
     );
+    // Non-virtual PCB_TRACK member called through a PCB_TRACK*: the track part also for vias.
     emit!(
         o,
         "solder_mask_expansion",
-        no_api("PCB_TRACK::GetSolderMaskExpansion")
+        v_int(match t.as_arc() {
+            Some(a) => a.solder_mask_expansion(ctx),
+            None => tr.solder_mask_expansion(ctx),
+        })
     );
 
     if let Some(_a) = t.as_arc() {
         emit!(o, "mid", v_vec(_a.mid));
         emit!(o, "center", v_vec(it.as_dyn().center(ctx)));
-        emit!(o, "radius", no_api("PCB_ARC::GetRadius"));
-        emit!(o, "angle", no_api("PCB_ARC::GetAngle"));
-        emit!(o, "angle_start", no_api("PCB_ARC::GetArcAngleStart"));
-        emit!(o, "angle_end", no_api("PCB_ARC::GetArcAngleEnd"));
-        emit!(o, "ccw", no_api("PCB_ARC::IsCCW"));
-        emit!(o, "degenerated", no_api("PCB_ARC::IsDegenerated"));
+        emit!(o, "radius", v_f64(_a.radius()));
+        emit!(o, "angle", v_angle(_a.angle()));
+        emit!(o, "angle_start", v_angle(_a.arc_angle_start()));
+        emit!(o, "angle_end", v_angle(_a.arc_angle_end()));
+        emit!(o, "ccw", v_bool(_a.is_ccw()));
+        emit!(o, "degenerated", v_bool(_a.is_degenerated(5)));
     }
 
     if let Some(v) = t.as_via() {
         emit!(o, "via_type", v_enum(v.via_type));
-        emit!(o, "top_layer", no_api("PCB_VIA::TopLayer"));
-        emit!(o, "bottom_layer", no_api("PCB_VIA::BottomLayer"));
-        emit!(o, "drill", no_api("PCB_VIA::GetDrill"));
-        emit!(o, "drill_value", no_api("PCB_VIA::GetDrillValue"));
-        emit!(o, "front_width", no_api("PCB_VIA::GetFrontWidth"));
-        emit!(o, "micro", no_api("PCB_VIA::IsMicroVia"));
-        emit!(o, "blind", no_api("PCB_VIA::IsBlindVia"));
-        emit!(o, "buried", no_api("PCB_VIA::IsBuriedVia"));
+        emit!(o, "top_layer", v_layer(v.top_layer()));
+        emit!(o, "bottom_layer", v_layer(v.bottom_layer()));
+        emit!(o, "drill", v_int(v.drill()));
+        emit!(o, "drill_value", v_int(v.drill_value(ctx)));
+        emit!(o, "front_width", v_int(v.front_width()));
+        emit!(o, "micro", v_bool(v.is_micro_via()));
+        emit!(o, "blind", v_bool(v.is_blind_via()));
+        emit!(o, "buried", v_bool(v.is_buried_via()));
         emit!(o, "is_free", v_bool(v.is_free));
-        emit!(
-            o,
-            "remove_unconnected",
-            no_api("PCB_VIA::GetRemoveUnconnected")
-        );
-        emit!(o, "keep_start_end", no_api("PCB_VIA::GetKeepStartEnd"));
+        emit!(o, "remove_unconnected", v_bool(v.remove_unconnected()));
+        emit!(o, "keep_start_end", v_bool(v.keep_start_end()));
 
-        for (f, n) in [
-            ("front_tenting", "PCB_VIA::GetFrontTentingMode"),
-            ("back_tenting", "PCB_VIA::GetBackTentingMode"),
-            ("front_covering", "PCB_VIA::GetFrontCoveringMode"),
-            ("back_covering", "PCB_VIA::GetBackCoveringMode"),
-            ("front_plugging", "PCB_VIA::GetFrontPluggingMode"),
-            ("back_plugging", "PCB_VIA::GetBackPluggingMode"),
-            ("capping", "PCB_VIA::GetCappingMode"),
-            ("filling", "PCB_VIA::GetFillingMode"),
-        ] {
-            emit!(o, f, no_api(n));
-        }
+        emit!(o, "front_tenting", v_enum(v.front_tenting_mode()));
+        emit!(o, "back_tenting", v_enum(v.back_tenting_mode()));
+        emit!(o, "front_covering", v_enum(v.front_covering_mode()));
+        emit!(o, "back_covering", v_enum(v.back_covering_mode()));
+        emit!(o, "front_plugging", v_enum(v.front_plugging_mode()));
+        emit!(o, "back_plugging", v_enum(v.back_plugging_mode()));
+        emit!(o, "capping", v_enum(v.capping_mode()));
+        emit!(o, "filling", v_enum(v.filling_mode()));
 
         emit!(o, "is_tented.F", v_bool(it.is_tented(PcbLayerId::FMask)));
         emit!(o, "is_tented.B", v_bool(it.is_tented(PcbLayerId::BMask)));
 
-        for (f, n) in [
-            ("primary_drill_filled", "PCB_VIA::GetPrimaryDrillFilled"),
-            ("primary_drill_capped", "PCB_VIA::GetPrimaryDrillCapped"),
-            ("secondary_drill_size", "PCB_VIA::GetSecondaryDrillSize"),
-            ("tertiary_drill_size", "PCB_VIA::GetTertiaryDrillSize"),
-            ("backdrill_mode", "PCB_VIA::GetBackdrillMode"),
-            ("bottom_backdrill_size", "PCB_VIA::GetBottomBackdrillSize"),
-            ("bottom_backdrill_layer", "PCB_VIA::GetBottomBackdrillLayer"),
-            ("top_backdrill_size", "PCB_VIA::GetTopBackdrillSize"),
-            ("top_backdrill_layer", "PCB_VIA::GetTopBackdrillLayer"),
-            ("front_post_machining", "PCB_VIA::GetFrontPostMachining"),
-            ("back_post_machining", "PCB_VIA::GetBackPostMachining"),
-        ] {
-            emit!(o, f, no_api(n));
-        }
+        emit!(o, "primary_drill_filled", v_opt_bool(v.primary_drill_filled()));
+        emit!(o, "primary_drill_capped", v_opt_bool(v.primary_drill_capped()));
+        emit!(o, "secondary_drill_size", v_opt_int(v.secondary_drill_size()));
+        emit!(o, "tertiary_drill_size", v_opt_int(v.tertiary_drill_size()));
+        emit!(o, "backdrill_mode", v_enum(v.backdrill_mode()));
+        emit!(o, "bottom_backdrill_size", v_opt_int(v.bottom_backdrill_size()));
+        emit!(o, "bottom_backdrill_layer", v_layer(v.bottom_backdrill_layer()));
+        emit!(o, "top_backdrill_size", v_opt_int(v.top_backdrill_size()));
+        emit!(o, "top_backdrill_layer", v_layer(v.top_backdrill_layer()));
+        emit!(o, "front_post_machining", v_opt_enum(v.front_post_machining()));
+        emit!(o, "back_post_machining", v_opt_enum(v.back_post_machining()));
 
         if it.has_board() {
-            emit!(o, "valid_layer_pair", no_api("PCB_VIA::HasValidLayerPair"));
+            emit!(
+                o,
+                "valid_layer_pair",
+                v_bool(v.has_valid_layer_pair(ctx.board.copper_layer_count()))
+            );
         }
 
         dump_padstack(o, "padstack.", &v.padstack);
@@ -427,12 +423,8 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
                 continue;
             }
 
-            emit!(
-                o,
-                format!("width.{ln}"),
-                no_api("PCB_VIA::GetWidth (aLayer)")
-            );
-            emit!(o, format!("flash.{ln}"), no_api("PCB_VIA::FlashLayer"));
+            emit!(o, format!("width.{ln}"), v_int(v.width(l)));
+            emit!(o, format!("flash.{ln}"), v_bool(v.flash_layer(ctx, l)));
             dump_effective_shape(o, &format!("shape.{ln}"), it, l, Flashing::Default);
             dump_effective_shape(
                 o,

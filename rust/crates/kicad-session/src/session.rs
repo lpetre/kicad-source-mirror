@@ -38,16 +38,41 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::SessionError;
 
-/// Parse the text of a `.kicad_pcb` file into a board: `PCB_IO_KICAD_SEXPR::LoadBoard`.
+/// Map an `IO_ERROR` of the board reader / writer: a staging stub of the PCBIO packages
+/// ("port pending: ...") is `NotYetPorted`, anything else the C++ error text.
+fn io_error(err: &kicad_sexpr::IoError, load: bool) -> SessionError {
+    let what = err.what().to_string();
+
+    if what.contains("port pending") {
+        let side = if load { "parser" } else { "writer" };
+        return SessionError::not_yet_ported(format!("kicad-pcb {side}: {what}"));
+    }
+
+    if load {
+        SessionError::Load { message: what }
+    } else {
+        SessionError::Save { message: what }
+    }
+}
+
+/// Parse the text of a `.kicad_pcb` file into a board: `PCB_IO_KICAD_SEXPR::LoadBoard`
+/// (`kicad_pcb::io::parse_board` with the strict default options) plus `SetFileName`.
 ///
-/// This is the one place that names the parser; it returns `NotYetPorted` until
-/// `kicad_pcb::io::parse_board` (package PCBIO-01, `docs/analysis/pcb-io.md` 10.1) lands, and
-/// then becomes a call to it with the default `LoadOptions` (deterministic UUID generator).
+/// The one place that names the parser. A construct whose parser package has not landed yet
+/// is reported as `NotYetPorted`.
 pub fn parse_board_text(text: &str, source_name: &str) -> Result<Board, SessionError> {
-    let _ = (text, source_name);
-    Err(SessionError::not_yet_ported(
-        "kicad-pcb: .kicad_pcb parser (PCB_IO_KICAD_SEXPR_PARSER::Parse, kicad_pcb::io::parse_board)",
-    ))
+    let options = kicad_pcb::io::ParseOptions::default();
+    let mut board =
+        kicad_pcb::io::parse_board(text, source_name, &options).map_err(|e| io_error(&e, true))?;
+    board.file_name = source_name.to_string();
+    Ok(board)
+}
+
+/// Format a board as `.kicad_pcb` text: `PCB_IO_KICAD_SEXPR::SaveBoard` without the file
+/// (`kicad_pcb::io::format_board`, default options).
+pub fn format_board_text(board: &mut Board) -> Result<String, SessionError> {
+    let options = kicad_pcb::io::FormatOptions::default();
+    kicad_pcb::io::format_board(board, &options).map_err(|e| io_error(&e, false))
 }
 
 /// Port of `PCB_IO_KICAD_SEXPR::CanReadBoard( aFileName )` on the file's name and text: the
@@ -80,16 +105,6 @@ pub fn can_read_board(file_name: &str, text: &str) -> bool {
     }
 
     matches!(lexer.next_tok(), Ok(T::T_kicad_pcb))
-}
-
-/// Format a board as `.kicad_pcb` text: `PCB_IO_KICAD_SEXPR::SaveBoard` without the file.
-///
-/// The single switch for the writer (package PCBIO-02, `kicad_pcb::io::format_board`).
-pub fn format_board_text(board: &mut Board) -> Result<String, SessionError> {
-    let _ = board;
-    Err(SessionError::not_yet_ported(
-        "kicad-pcb: .kicad_pcb writer (PCB_IO_KICAD_SEXPR::Format, kicad_pcb::io::format_board)",
-    ))
 }
 
 /// One step of `BOARD_LOADER::initializeLoadedBoard` the session has not run because the
@@ -448,10 +463,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn load_reports_pending_parser() {
-        let err = Session::load_board("(kicad_pcb)", "x.kicad_pcb", None, None).unwrap_err();
-        assert!(err.is_not_yet_ported(), "{err}");
-        assert!(err.to_string().contains("parser"));
+    fn load_reports_bad_board() {
+        let err = Session::load_board("(kicad_pcb", "x.kicad_pcb", None, None).unwrap_err();
+        assert!(
+            matches!(
+                err,
+                SessionError::Load { .. } | SessionError::NotYetPorted { .. }
+            ),
+            "{err}"
+        );
     }
 
     #[test]

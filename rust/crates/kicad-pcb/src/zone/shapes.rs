@@ -106,7 +106,10 @@ impl Zone {
     ) {
         let _ = ctx;
         // wxASSERT_MSG: IgnoreLineWidth has no meaning for zones.
-        debug_assert!(!ignore_line_width, "IgnoreLineWidth has no meaning for zones.");
+        debug_assert!(
+            !ignore_line_width,
+            "IgnoreLineWidth has no meaning for zones."
+        );
 
         let Some(fill_polys) = self.fill.filled_polys_list.get(&layer) else {
             return;
@@ -464,7 +467,12 @@ impl Zone {
     }
 
     /// Port of `ZONE::HitTest( const SHAPE_LINE_CHAIN& aPoly, bool aContained )`.
-    pub fn hit_test_poly(&self, ctx: &BoardCtx<'_>, poly: &ShapeLineChain, contained: bool) -> bool {
+    pub fn hit_test_poly(
+        &self,
+        ctx: &BoardCtx<'_>,
+        poly: &ShapeLineChain,
+        contained: bool,
+    ) -> bool {
         let outline = self.board_outline(ctx);
 
         if contained {
@@ -533,7 +541,11 @@ impl Zone {
         // each hole it has to see if the point is in it.
         for i in 0..self.lib_outline.outline_count() {
             for j in 0..self.lib_outline.hole_count(i) {
-                if self.lib_outline.c_hole(i, j).point_inside(lib_pos, 0, false) {
+                if self
+                    .lib_outline
+                    .c_hole(i, j)
+                    .point_inside(lib_pos, 0, false)
+                {
                     return Some((i, j));
                 }
             }

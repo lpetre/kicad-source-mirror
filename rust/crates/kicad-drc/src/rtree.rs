@@ -35,7 +35,7 @@ use std::sync::Arc;
 use kicad_core::layer_ids::{Flashing, PcbLayerId, UNDEFINED_LAYER};
 use kicad_core::typeinfo::KicadT;
 use kicad_geom::geometry::rtree::{PackedRTree, PackedRTreeBuilder};
-use kicad_geom::geometry::shape::{Shape, ShapeRef, ShapeType};
+use kicad_geom::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef, ShapeType};
 use kicad_geom::geometry::shape_poly_set::Tri;
 use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::vector2::Vector2I;

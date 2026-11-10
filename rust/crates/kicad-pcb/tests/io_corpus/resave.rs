@@ -21,7 +21,7 @@
 
 #![allow(dead_code)]
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Once;
 
@@ -30,7 +30,7 @@ use kicad_pcb::io::{
     parse_board_report,
 };
 use kicad_qa::sexpr_text::{FirstDifference, SexprNode, first_difference, keyword_path_at};
-use kicad_qa::uuid_canon::canonicalise_uuids;
+use kicad_qa::uuid_canon::{canonicalise_uuids, find_uuids};
 
 /// The prefix of a `port_pending!` panic of the board model.
 pub const PENDING_PANIC: &str = "kicad-pcb: port pending: ";
@@ -269,6 +269,10 @@ pub struct Evaluation {
     pub error: Option<String>,
     /// The Rust text, when written.
     pub rust_text: Option<String>,
+    /// For a `Differs` board that is not a fixed point: the Rust text equals O1 modulo
+    /// pending, i.e. the difference to O2 comes from the oracle's post-load steps
+    /// (`BOARD_LOADER::initializeLoadedBoard`, PCBIO-15), not from the reader / writer.
+    pub matches_o1: bool,
 }
 
 /// The board-file keywords a writer staging stub name stands for (`SkippedFormat::item`).
@@ -357,6 +361,48 @@ fn pending_kinds(
         }
     }
 
+    // A block that references (by UUID: group members, generator members, ...) an item inside
+    // a removed block depends on pending constructs too; repeat for groups of groups.
+    let parsed: Vec<Vec<SexprNode>> = [o2, rust]
+        .iter()
+        .map(|t| {
+            kicad_qa::sexpr_text::parse_lists(t)
+                .into_iter()
+                .flat_map(|r| r.children)
+                .collect()
+        })
+        .collect();
+
+    loop {
+        let mut owned: HashSet<&str> = HashSet::new();
+
+        for (text, nodes) in [o2, rust].iter().zip(&parsed) {
+            for n in nodes.iter().filter(|n| kinds.contains(&n.keyword)) {
+                owned.extend(find_uuids(n.text(text)).into_iter().map(|(_, u)| u));
+            }
+        }
+
+        let mut added = Vec::new();
+
+        for (text, nodes) in [o2, rust].iter().zip(&parsed) {
+            for n in nodes.iter().filter(|n| !kinds.contains(&n.keyword)) {
+                if find_uuids(n.text(text))
+                    .iter()
+                    .any(|(_, u)| owned.contains(u))
+                    && !added.contains(&n.keyword)
+                {
+                    added.push(n.keyword.clone());
+                }
+            }
+        }
+
+        if added.is_empty() {
+            break;
+        }
+
+        kinds.extend(added);
+    }
+
     kinds.sort();
     kinds
 }
@@ -387,6 +433,7 @@ pub fn evaluate(o1: &str, o2: &str, source_name: &str) -> Evaluation {
         model_pending: None,
         error: None,
         rust_text: None,
+        matches_o1: false,
     };
 
     let set_parse_pending = |ev: &mut Evaluation, skipped: &[SkippedItem]| {
@@ -447,6 +494,12 @@ pub fn evaluate(o1: &str, o2: &str, source_name: &str) -> Evaluation {
                 } else {
                     Status::Differs
                 };
+
+                // Not a fixed point: the oracle changed O1 once more on re-save (post-load
+                // steps, e.g. `BuildListOfNets` renumbering nets and so reordering tracks).
+                if ev.status == Status::Differs && o1 != o2 {
+                    ev.matches_o1 = strip(o1) == strip(&text);
+                }
             }
 
             ev.rust_text = Some(text);

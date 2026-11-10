@@ -897,3 +897,64 @@ impl PcbParser {
         self.parse_text_box_content_with(textbox, None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::board::Board;
+    use crate::io::parser::ParseOptions;
+
+    /// A parser positioned on the keyword of `item` (`(gr_text ...)` etc.), file version
+    /// `version`.
+    fn parser_on(item: &str, version: i32) -> PcbParser {
+        let mut p = PcbParser::new(item, "", Board::new(), true, ParseOptions::default());
+        p.required_version = version;
+        p.lexer.need_left().unwrap();
+        p.lexer.next_tok().unwrap();
+        p
+    }
+
+    /// `finishItem` -> `ResolveFont( nullptr )` on a parsed text (the board package calls it
+    /// after the whole board).
+    fn resolved(mut text: PcbText) -> PcbText {
+        text.text.resolve_font(None);
+        text
+    }
+
+    const CACHED: &str = r#"(at 168.66 96.63 0) (layer "F.SilkS")
+            (uuid "098c9e31-c76b-43cb-bd92-64c51eee7bbe")
+            (effects (font (face "Ubuntu Sans") (size 0.8 0.7) (thickness 0.16) (bold yes)))
+            (render_cache "SCL" 0 (polygon (pts (xy 1 1) (xy 2 1) (xy 2 2)))))"#;
+
+    /// Board text: `parsePCB_TEXT` ends with `SetVisible( true )` ("Hidden PCB text is no
+    /// longer supported"), and `EDA_TEXT::SetVisible` clears the render cache, so the C++
+    /// drops the cache of every board-level text at load.
+    #[test]
+    fn board_text_drops_render_cache() {
+        let mut p = parser_on(&format!("(gr_text \"SCL\" {CACHED}"), 20241229);
+        let text = resolved(p.parse_pcb_text(ParentRef::Board, None).unwrap().unwrap());
+        assert!(text.text.render_cache_data().is_none());
+        assert_eq!(text.text.font_name(), "Ubuntu Sans");
+        assert!(text.text.is_bold());
+        assert_eq!(text.text.attributes.size, (700_000, 800_000));
+        assert_eq!(text.text.attributes.stroke_width, 160_000);
+    }
+
+    /// Footprint text loses its render cache as well: new files end with `SetLibTextSize`
+    /// (`EDA_TEXT::SetTextSize` clears it), legacy files with `SetTextAngle` / `Rotate`.
+    #[test]
+    fn footprint_text_drops_render_cache() {
+        for version in [20241229, 20261031] {
+            let mut p = parser_on(&format!("(fp_text user \"SCL\" {CACHED}"), version);
+            let fp = p.board.create_footprint();
+            let parsed = p.parse_pcb_text_item(ParentRef::Item(fp.into()), None).unwrap();
+            let ParsedText::Text(text) = parsed else {
+                panic!("expected a PCB_TEXT");
+            };
+            let text = resolved(text);
+            assert!(text.text.render_cache_data().is_none());
+            assert!(text.text.is_keep_upright());
+            assert_eq!(text.base.layer, kicad_core::PcbLayerId::FSilkS);
+        }
+    }
+}

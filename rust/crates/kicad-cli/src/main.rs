@@ -212,7 +212,38 @@ fn run(args: Vec<String>) -> i32 {
     }
 }
 
+/// The text of a panic payload.
+fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {
+    if let Some(s) = payload.downcast_ref::<&str>() {
+        (*s).to_string()
+    } else if let Some(s) = payload.downcast_ref::<String>() {
+        s.clone()
+    } else {
+        "unknown panic".to_string()
+    }
+}
+
 fn main() {
-    let code = run(std::env::args().collect());
+    // A `port_pending!` stub of the board model panics with "kicad-pcb: port pending: X"; the
+    // host reports it like any other missing subsystem (exit NOT_YET_PORTED).
+    std::panic::set_hook(Box::new(|info| {
+        let text = panic_text(info.payload());
+
+        if text.contains("port pending") {
+            eprintln!("kicad-rs: not yet ported: {text}");
+        } else {
+            eprintln!("kicad-rs: internal error: {text}");
+        }
+    }));
+
+    let args: Vec<String> = std::env::args().collect();
+    let code = match std::panic::catch_unwind(|| run(args)) {
+        Ok(code) => code,
+        Err(payload) if panic_text(payload.as_ref()).contains("port pending") => {
+            exit_codes::NOT_YET_PORTED
+        }
+        Err(_) => exit_codes::ERR_UNKNOWN,
+    };
+
     std::process::exit(code);
 }

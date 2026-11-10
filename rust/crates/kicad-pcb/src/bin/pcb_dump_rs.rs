@@ -27,12 +27,13 @@ use std::io::Write;
 use std::path::Path;
 
 use kicad_pcb::dump::{
-    DumpOptions, dump_board, dump_defaults, load_board_for_dump, scan_file_uuids,
+    DumpLoadMode, DumpOptions, dump_board, dump_defaults, load_board_for_dump_mode,
+    scan_file_uuids,
 };
 
 fn usage() -> std::process::ExitCode {
     eprintln!(
-        "usage: pcb-dump-rs defaults [--hash]\n       pcb-dump-rs board [--sections LIST] [--hash] FILE..."
+        "usage: pcb-dump-rs defaults [--hash]\n       pcb-dump-rs board [--sections LIST] [--hash] [--loader | --no-init] FILE..."
     );
     std::process::ExitCode::from(2)
 }
@@ -44,11 +45,14 @@ fn main() -> std::process::ExitCode {
     };
     let mut opts = DumpOptions::default();
     let mut files = Vec::new();
+    let mut mode = DumpLoadMode::Qa;
     let mut i = 1;
 
     while i < args.len() {
         match args[i].as_str() {
             "--hash" => opts.hash = true,
+            "--loader" => mode = DumpLoadMode::Loader,
+            "--no-init" => mode = DumpLoadMode::NoInit,
             "--sections" if i + 1 < args.len() => {
                 i += 1;
                 opts.sections = args[i]
@@ -82,8 +86,13 @@ fn main() -> std::process::ExitCode {
                     .map_or_else(|| file.clone(), |n| n.to_string_lossy().into_owned());
                 let _ = writeln!(out, "file|{name}|");
 
-                let board = match load_board_for_dump(path) {
-                    Ok(b) => b,
+                let board = match load_board_for_dump_mode(path, mode) {
+                    Ok((b, warnings)) => {
+                        for w in warnings {
+                            let _ = writeln!(out, "warn|load|{name}|{}", w.replace('\n', " "));
+                        }
+                        b
+                    }
                     Err(e) => {
                         let _ = writeln!(out, "error|load|{name}|{}", e.replace('\n', " "));
                         failures += 1;

@@ -224,7 +224,10 @@ impl Pad {
                 let c = |i: i32| corners.c_point(i);
 
                 if corners.point_count() == 4
-                    && ((c(0).y == c(1).y && c(1).x == c(2).x && c(2).y == c(3).y && c(3).x == c(0).x)
+                    && ((c(0).y == c(1).y
+                        && c(1).x == c(2).x
+                        && c(2).y == c(3).y
+                        && c(3).x == c(0).x)
                         || (c(0).x == c(1).x
                             && c(1).y == c(2).y
                             && c(2).x == c(3).x
@@ -266,7 +269,8 @@ impl Pad {
                 // C++ reads COutline( 0 ) unconditionally (undefined behaviour on an empty
                 // set); a degenerate outline adds nothing here.
                 if outline.outline_count() > 0 {
-                    compound.add_shape(Box::new(ShapeSimple::from_line_chain(outline.c_outline(0))));
+                    compound
+                        .add_shape(Box::new(ShapeSimple::from_line_chain(outline.c_outline(0))));
                 }
             }
 
@@ -448,7 +452,10 @@ impl Pad {
         // wxCHECK_MSG( ..contains( effectiveLayer ), nullptr, "Missing shape in
         // PAD::GetEffectiveShape" ): C++ returns a null pointer, the port a null shape.
         let Some(cached) = draw_cache.shapes.get(&effective_layer) else {
-            debug_assert!(false, "Missing shape in PAD::GetEffectiveShape for layer {effective_layer:?}.");
+            debug_assert!(
+                false,
+                "Missing shape in PAD::GetEffectiveShape for layer {effective_layer:?}."
+            );
             return Arc::new(ShapeNull::new());
         };
 
@@ -478,7 +485,12 @@ impl Pad {
     }
 
     /// `GetEffectiveHoleShape( aLayer, aUsage )` as a shape pointer (always present for a pad).
-    fn hole_shape_for(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId, usage: DrcConstraintT) -> SharedShape {
+    fn hole_shape_for(
+        &self,
+        ctx: &BoardCtx<'_>,
+        layer: PcbLayerId,
+        usage: DrcConstraintT,
+    ) -> SharedShape {
         self.hole_segment(ctx, layer, usage)
     }
 
@@ -491,9 +503,8 @@ impl Pad {
     ) -> Arc<ShapeSegment> {
         let draw_cache = self.effective_shapes(ctx);
 
-        let machined = |usage_matches: bool| {
-            usage_matches && self.is_backdrilled_or_post_machined(ctx, layer)
-        };
+        let machined =
+            |usage_matches: bool| usage_matches && self.is_backdrilled_or_post_machined(ctx, layer);
 
         if usage == DrcConstraintT::HoleToHoleConstraint
             || machined(usage == DrcConstraintT::HoleClearanceConstraint)
@@ -578,7 +589,9 @@ impl Pad {
         let mut shape = ShapeCompound::new();
 
         for ii in 0..aperture.outline_count() {
-            shape.add_shape(Box::new(ShapeSimple::from_line_chain(aperture.c_outline(ii))));
+            shape.add_shape(Box::new(ShapeSimple::from_line_chain(
+                aperture.c_outline(ii),
+            )));
         }
 
         let shape = Arc::new(shape);
@@ -730,7 +743,12 @@ impl Pad {
                     // don't worry ourselves overly about which side the error is on.
 
                     // aClearance is negative so this is actually a deflate
-                    outline.inflate(clearance, CornerStrategy::AllowAcuteCorners, max_error, false);
+                    outline.inflate(
+                        clearance,
+                        CornerStrategy::AllowAcuteCorners,
+                        max_error,
+                        false,
+                    );
                     outline.fracture(true);
                 }
 
@@ -755,7 +773,11 @@ impl Pad {
             return false;
         }
 
-        let slot = self.hole_segment(ctx, PcbLayerId::UndefinedLayer, DrcConstraintT::NullConstraint);
+        let slot = self.hole_segment(
+            ctx,
+            PcbLayerId::UndefinedLayer,
+            DrcConstraintT::NullConstraint,
+        );
 
         transform_oval_to_polygon(
             buffer,
@@ -790,12 +812,8 @@ impl Pad {
 
         match self.anchor_pad_shape(layer) {
             PadShape::Rectangle => {
-                let rect = ShapeRect::from_xywh(
-                    -pad_size.x / 2,
-                    -pad_size.y / 2,
-                    pad_size.x,
-                    pad_size.y,
-                );
+                let rect =
+                    ShapeRect::from_xywh(-pad_size.x / 2, -pad_size.y / 2, pad_size.x, pad_size.y);
                 merged_polygon.add_outline(&rect.outline());
             }
 
@@ -886,7 +904,11 @@ impl Pad {
         });
 
         contains |= self
-            .hole_segment(ctx, PcbLayerId::UndefinedLayer, DrcConstraintT::NullConstraint)
+            .hole_segment(
+                ctx,
+                PcbLayerId::UndefinedLayer,
+                DrcConstraintT::NullConstraint,
+            )
             .collide_point(pos, accuracy, None, None);
 
         contains
@@ -947,10 +969,884 @@ impl Pad {
         if !hit {
             let rect = ShapeRect::from_box(&arect);
             hit |= self
-                .hole_segment(ctx, PcbLayerId::UndefinedLayer, DrcConstraintT::NullConstraint)
+                .hole_segment(
+                    ctx,
+                    PcbLayerId::UndefinedLayer,
+                    DrcConstraintT::NullConstraint,
+                )
                 .collide(&rect, 0, None, None);
         }
 
         hit
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::{BTreeMap, BTreeSet};
+    use std::sync::Arc;
+
+    use kicad_core::{Kiid, Lset, PCB_IU_SCALE, PCB_LAYER_ID_COUNT, PcbLayerId};
+    use kicad_geom::geometry::approximation::ErrorLoc;
+    use kicad_geom::geometry::transform_trs::TransformTrs;
+    use kicad_geom::{
+        Box2I, EdaAngle, EdaOrientation, Shape, ShapeArc, ShapeLineChain, ShapePolySet, ShapeRef,
+        Vector2I,
+    };
+
+    use crate::board::Board;
+    use crate::ctx::BoardCtx;
+    use crate::drc_api::DrcConstraintT;
+    use crate::eda_shape::{EdaShape, FillT, ShapeT};
+    use crate::footprint::Footprint;
+    use crate::ids::{FootprintId, PadId};
+    use crate::item::{BoardUse, ParentRef};
+    use crate::pad::Pad;
+    use crate::padstack::{
+        PadAttrib, PadDrillPostMachiningMode, PadDrillShape, PadShape, Padstack, PadstackMode,
+        UnconnectedLayerMode,
+    };
+    use crate::pcb_shape::PcbShape;
+    use crate::traits::Flashing;
+
+    // ---- the pcb-dump value formats (docs/PCB_DUMP_FORMAT.md; dump/format.rs is behind the
+    // `dump` feature) ---------------------------------------------------------------------
+
+    fn v_vec(v: Vector2I) -> String {
+        format!("{},{}", v.x, v.y)
+    }
+
+    fn v_box(b: Box2I) -> String {
+        format!("{},{},{}", v_vec(b.position()), b.size().x, b.size().y)
+    }
+
+    fn v_arc(a: &ShapeArc) -> String {
+        format!(
+            "A({} {} {} w={})",
+            v_vec(a.get_p0()),
+            v_vec(a.get_arc_mid()),
+            v_vec(a.get_p1()),
+            a.get_width()
+        )
+    }
+
+    fn v_chain(c: &ShapeLineChain) -> String {
+        let pts: Vec<String> = c.c_points().iter().map(|p| v_vec(*p)).collect();
+        let mut r = format!(
+            "C({} w={} n={} [{}]",
+            if c.is_closed() { "closed" } else { "open" },
+            c.width(),
+            c.point_count(),
+            pts.join(" ")
+        );
+
+        if c.arc_count() > 0 {
+            let arcs: Vec<String> = (0..c.arc_count()).map(|i| v_arc(c.arc(i))).collect();
+            let shapes: Vec<String> = c
+                .c_shapes()
+                .iter()
+                .map(|&(a, b)| {
+                    if b >= 0 {
+                        format!("{a}/{b}")
+                    } else {
+                        a.to_string()
+                    }
+                })
+                .collect();
+            r.push_str(&format!(
+                " arcs=[{}] shapes=[{}]",
+                arcs.join(" "),
+                shapes.join(" ")
+            ));
+        }
+
+        r.push(')');
+        r
+    }
+
+    fn v_polyset(s: &ShapePolySet) -> String {
+        let mut r = format!("P({}", s.outline_count());
+
+        for i in 0..s.outline_count() {
+            r.push_str(" {");
+            r.push_str(&v_chain(s.c_outline(i)));
+
+            for h in 0..s.hole_count(i) {
+                r.push_str(" hole ");
+                r.push_str(&v_chain(s.c_hole(i, h)));
+            }
+
+            r.push('}');
+        }
+
+        r.push(')');
+        r
+    }
+
+    fn v_shape(s: &dyn Shape) -> String {
+        match s.as_shape_ref() {
+            ShapeRef::Rect(r) => format!(
+                "SH_RECT(p={} size={} r={} w={})",
+                v_vec(r.get_position()),
+                v_vec(r.get_size()),
+                r.get_radius(),
+                r.get_width()
+            ),
+            ShapeRef::Segment(g) => format!(
+                "SH_SEGMENT(a={} b={} w={})",
+                v_vec(g.get_seg().a),
+                v_vec(g.get_seg().b),
+                g.get_width()
+            ),
+            ShapeRef::LineChain(c) => format!("SH_LINE_CHAIN({})", v_chain(c)),
+            ShapeRef::Circle(c) => {
+                format!(
+                    "SH_CIRCLE(c={} r={})",
+                    v_vec(c.get_center()),
+                    c.get_radius()
+                )
+            }
+            ShapeRef::Simple(c) => format!("SH_SIMPLE({})", v_chain(c.vertices())),
+            ShapeRef::PolySet(p) => format!("SH_POLY_SET({})", v_polyset(p)),
+            ShapeRef::Compound(c) => {
+                let mut r = format!("SH_COMPOUND({}", c.shapes().len());
+
+                for sub in c.shapes() {
+                    r.push(' ');
+                    r.push_str(&v_shape(sub.as_ref()));
+                }
+
+                r.push(')');
+                r
+            }
+            ShapeRef::Arc(a) => format!("SH_ARC({})", v_arc(a)),
+            ShapeRef::Null(_) => "SH_NULL()".to_string(),
+            _ => format!("{}(?)", s.type_name()),
+        }
+    }
+
+    /// `--hash`: FNV-1a 64 of the value text.
+    fn hash(s: &str) -> String {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+
+        for b in s.bytes() {
+            h ^= u64::from(b);
+            h = h.wrapping_mul(0x0000_0100_0000_01b3);
+        }
+
+        format!("#{h:016x}")
+    }
+
+    // ---- golden -------------------------------------------------------------------------
+
+    const GOLDEN: &str = include_str!("../../tests/golden/m15_pad_shapes.txt");
+
+    /// `(board, section, key)` -> fields.
+    type Golden = BTreeMap<(String, String, String), BTreeMap<String, String>>;
+
+    fn golden() -> Golden {
+        let mut map: Golden = BTreeMap::new();
+
+        for line in GOLDEN.lines() {
+            let mut parts = line.splitn(4, '|');
+            let (Some(board), Some(section), Some(key), Some(rest)) =
+                (parts.next(), parts.next(), parts.next(), parts.next())
+            else {
+                continue;
+            };
+            let (field, value) = rest.split_once('=').expect("FIELD=VALUE");
+            map.entry((board.to_string(), section.to_string(), key.to_string()))
+                .or_default()
+                .insert(field.to_string(), value.to_string());
+        }
+
+        map
+    }
+
+    fn v_layer(l: PcbLayerId) -> String {
+        if l == PcbLayerId::UndefinedLayer {
+            return "UNDEFINED_LAYER".to_string();
+        }
+
+        Lset::name(l)
+    }
+
+    fn layer(name: &str) -> PcbLayerId {
+        (-1..PCB_LAYER_ID_COUNT)
+            .map(PcbLayerId)
+            .find(|l| v_layer(*l) == name)
+            .unwrap_or_else(|| panic!("unknown layer {name}"))
+    }
+
+    fn vec(s: &str) -> Vector2I {
+        let (x, y) = s.split_once(',').expect("x,y");
+        Vector2I::new(x.parse().unwrap(), y.parse().unwrap())
+    }
+
+    fn opt_i32(s: &str) -> Option<i32> {
+        (s != "none").then(|| s.parse().unwrap())
+    }
+
+    fn layer_names(s: &str) -> Lset {
+        s.trim_matches(['[', ']'])
+            .split(',')
+            .filter(|n| !n.is_empty())
+            .map(layer)
+            .collect()
+    }
+
+    fn pick<E: std::fmt::Debug + Copy>(s: &str, candidates: &[E]) -> E {
+        *candidates
+            .iter()
+            .find(|e| upper_snake(&format!("{e:?}")) == s)
+            .unwrap_or_else(|| panic!("unknown enum value {s}"))
+    }
+
+    fn upper_snake(name: &str) -> String {
+        let chars: Vec<char> = name.chars().collect();
+        let mut r = String::new();
+
+        for (i, &c) in chars.iter().enumerate() {
+            if i > 0 && c.is_ascii_uppercase() && chars[i - 1].is_ascii_lowercase() {
+                r.push('_');
+            }
+
+            r.push(c.to_ascii_uppercase());
+        }
+
+        r
+    }
+
+    const SHAPES: [PadShape; 7] = [
+        PadShape::Circle,
+        PadShape::Rectangle,
+        PadShape::Oval,
+        PadShape::Trapezoid,
+        PadShape::Roundrect,
+        PadShape::ChamferedRect,
+        PadShape::Custom,
+    ];
+
+    fn pts(s: &str) -> Vec<Vector2I> {
+        s.trim_start_matches('[')
+            .trim_end_matches(']')
+            .split_whitespace()
+            .map(vec)
+            .collect()
+    }
+
+    /// A dumped polygon set without holes or arcs.
+    fn polyset(s: &str) -> ShapePolySet {
+        let mut set = ShapePolySet::new();
+
+        for part in s.split("{C(").skip(1) {
+            let closed = part.starts_with("closed");
+            let open = part.find('[').unwrap();
+            let close = part.find(']').unwrap();
+            set.add_outline(&ShapeLineChain::from_points(
+                &pts(&part[open..=close]),
+                closed,
+            ));
+        }
+
+        set
+    }
+
+    /// A custom-shape primitive from its dumped members (the baked, pad-frame values).
+    fn primitive(f: &BTreeMap<String, String>, prefix: &str, proxy: bool) -> PcbShape {
+        let g = |n: &str| f[&format!("{prefix}{n}")].as_str();
+        let shape = match g("shape") {
+            "SEGMENT" => ShapeT::Segment,
+            "RECTANGLE" => ShapeT::Rectangle,
+            "ARC" => ShapeT::Arc,
+            "CIRCLE" => ShapeT::Circle,
+            "POLY" => ShapeT::Poly,
+            "BEZIER" => ShapeT::Bezier,
+            s => panic!("primitive shape {s}"),
+        };
+        let fill = match g("fill") {
+            "NO_FILL" => FillT::NoFill,
+            "FILLED_SHAPE" => FillT::FilledShape,
+            s => panic!("fill {s}"),
+        };
+        let mut prim = PcbShape::with_shape(shape);
+        let mut es = EdaShape::new(shape, g("width").parse().unwrap(), fill);
+
+        match shape {
+            ShapeT::Arc => es.set_arc_geometry(vec(g("start")), vec(g("mid")), vec(g("end"))),
+            ShapeT::Poly => es.poly = polyset(g("poly")),
+            _ => {
+                es.set_start(vec(g("start")));
+                es.set_end(vec(g("end")));
+            }
+        }
+
+        if shape == ShapeT::Rectangle {
+            es.corner_radius = g("corner_radius").parse().unwrap();
+        }
+
+        es.proxy_item = proxy;
+        prim.shape = es;
+        prim
+    }
+
+    /// Insert a footprint built from its dumped members.
+    fn add_footprint(board: &mut Board, f: &BTreeMap<String, String>) -> FootprintId {
+        let (sx, sy) = f["transform.scale"].split_once(',').unwrap();
+        let mut footprint = Footprint::default();
+        footprint.base.uuid = Kiid::new(&mut board.kiid_generator);
+        footprint.base.layer = layer(&f["layer"]);
+        footprint.transform = TransformTrs::new(
+            vec(&f["transform.translate"]),
+            EdaAngle::from_degrees(f["transform.rotate"].parse().unwrap()),
+            sx.parse().unwrap(),
+            sy.parse().unwrap(),
+        );
+        footprint.flipped = f["flipped"] == "true";
+        footprint.solder_mask_margin = opt_i32(&f["local_solder_mask_margin"]);
+
+        let fp = board.insert_item(footprint, ParentRef::Board);
+        board.footprint_list.push_back(fp);
+        fp
+    }
+
+    /// The pad as `pcb-dump` saw its members (library frame, padstack as stored).
+    fn pad_from_members(
+        f: &BTreeMap<String, String>,
+        item: &BTreeMap<String, String>,
+        proxies: &BTreeSet<usize>,
+    ) -> Pad {
+        let g = |k: &str| -> &str { &f[k] };
+        let mut pad = Pad::default();
+        pad.attribute = pick(
+            g("attribute"),
+            &[
+                PadAttrib::Pth,
+                PadAttrib::Smd,
+                PadAttrib::Conn,
+                PadAttrib::Npth,
+                PadAttrib::NonComponent,
+            ],
+        );
+        pad.lib_pos = vec(g("library_position"));
+        pad.lib_orientation = EdaOrientation::new(EdaAngle::from_degrees(
+            g("fp_relative_orientation").parse().unwrap(),
+        ));
+        pad.base.item.layer = layer(&item["layer"]);
+
+        let ps = &mut pad.padstack;
+        ps.set_mode(pick(
+            g("padstack.mode"),
+            &[
+                PadstackMode::Normal,
+                PadstackMode::FrontInnerBack,
+                PadstackMode::Custom,
+            ],
+        ));
+        ps.set_layer_set(layer_names(g("padstack.layers")));
+        ps.set_unconnected_layer_mode(pick(
+            g("unconnected_layer_mode"),
+            &[
+                UnconnectedLayerMode::KeepAll,
+                UnconnectedLayerMode::StartEndOnly,
+                UnconnectedLayerMode::RemoveAll,
+                UnconnectedLayerMode::RemoveExceptStartAndEnd,
+            ],
+        ));
+        ps.drill_mut().size = vec(g("padstack.drill.size"));
+        ps.drill_mut().shape = pick(
+            g("padstack.drill.shape"),
+            &[
+                PadDrillShape::Undefined,
+                PadDrillShape::Circle,
+                PadDrillShape::Oblong,
+            ],
+        );
+        ps.drill_mut().start = layer(g("padstack.drill.start"));
+        ps.drill_mut().end = layer(g("padstack.drill.end"));
+        ps.secondary_drill.size = vec(g("padstack.secondary_drill.size"));
+        ps.tertiary_drill.size = vec(g("padstack.tertiary_drill.size"));
+
+        for (side, pm) in [
+            ("front", &mut ps.front_post_machining),
+            ("back", &mut ps.back_post_machining),
+        ] {
+            pm.size = g(&format!("padstack.{side}_post_machining.size"))
+                .parse()
+                .unwrap();
+            let mode = g(&format!("padstack.{side}_post_machining.mode"));
+            pm.mode = (mode != "none").then(|| {
+                pick(
+                    mode,
+                    &[
+                        PadDrillPostMachiningMode::Unknown,
+                        PadDrillPostMachiningMode::NotPostMachined,
+                        PadDrillPostMachiningMode::Counterbore,
+                        PadDrillPostMachiningMode::Countersink,
+                    ],
+                )
+            });
+        }
+
+        for (side, props) in [
+            ("front_outer", PcbLayerId::FCu),
+            ("back_outer", PcbLayerId::BCu),
+        ] {
+            *ps.solder_mask_margin_mut(props) =
+                opt_i32(g(&format!("padstack.{side}.solder_mask_margin")));
+        }
+
+        let copper_layers: Vec<String> = f
+            .keys()
+            .filter_map(|k| k.strip_prefix("padstack.copper."))
+            .filter_map(|k| k.strip_suffix(".anchor_shape"))
+            .map(str::to_string)
+            .collect();
+
+        for name in copper_layers {
+            let c = |field: &str| -> &str { &f[&format!("padstack.copper.{name}.{field}")] };
+            let props = ps.copper_props_mut(layer(&name));
+            props.shape.shape = pick(c("shape"), &SHAPES);
+            props.shape.anchor_shape = pick(c("anchor_shape"), &SHAPES);
+            props.shape.size = vec(c("size"));
+            props.shape.offset = vec(c("offset"));
+            props.shape.round_rect_radius_ratio = c("round_rect_radius_ratio").parse().unwrap();
+            props.shape.chamfered_rect_ratio = c("chamfered_rect_ratio").parse().unwrap();
+            props.shape.chamfered_rect_positions = c("chamfered_rect_positions").parse().unwrap();
+            props.shape.trapezoid_delta_size = vec(c("trapezoid_delta_size"));
+            props.custom_shapes.clear();
+
+            for n in 0.. {
+                let prefix = format!("padstack.copper.{name}.primitive.{n}.");
+
+                if !f.contains_key(&format!("{prefix}shape")) {
+                    break;
+                }
+
+                props
+                    .custom_shapes
+                    .push(primitive(f, &prefix, proxies.contains(&n)));
+            }
+        }
+
+        pad
+    }
+
+    /// The pad shape values `pcb-dump` prints (`dump_items.cpp` `DumpPad`, `dump_board.cpp`
+    /// `DumpBBox`), unhashed.
+    fn derived(ctx: &BoardCtx<'_>, pad: &Pad, section: &str, field: &str) -> Option<String> {
+        const COMBOS: [(&str, i32, i32, ErrorLoc); 3] = [
+            ("c0_e5000_in", 0, 5000, ErrorLoc::Inside),
+            ("c0_e1000_out", 0, 1000, ErrorLoc::Outside),
+            ("c100000_e5000_out", 100000, 5000, ErrorLoc::Outside),
+        ];
+        let null = DrcConstraintT::NullConstraint;
+
+        if section == "bbox" {
+            return Some(match field {
+                "bbox" => v_box(pad.bounding_box(ctx)),
+                "bounding_radius" => pad.bounding_radius(ctx).to_string(),
+                _ => v_box(pad.bounding_box_layer(ctx, layer(field.strip_prefix("bbox.")?))),
+            });
+        }
+
+        if let Some(l) = field.strip_prefix("shape.") {
+            let s = pad.effective_shape(ctx, layer(l), Flashing::Default, null);
+            return Some(v_shape(s.as_ref()));
+        }
+        if let Some(l) = field.strip_prefix("shape_flashed.") {
+            let s = pad.effective_shape(ctx, layer(l), Flashing::AlwaysFlashed, null);
+            return Some(v_shape(s.as_ref()));
+        }
+        if let Some(l) = field.strip_prefix("effective_polygon.") {
+            return Some(v_polyset(&pad.effective_polygon(
+                ctx,
+                layer(l),
+                ErrorLoc::Inside,
+            )));
+        }
+        if let Some(l) = field.strip_prefix("effective_polygon_out.") {
+            return Some(v_polyset(&pad.effective_polygon(
+                ctx,
+                layer(l),
+                ErrorLoc::Outside,
+            )));
+        }
+        if field == "hole_shape" {
+            let hole = pad.effective_hole_shape(ctx, PcbLayerId::UndefinedLayer, null)?;
+            return Some(v_shape(hole.as_ref()));
+        }
+        if let Some(name) = field.strip_prefix("hole_poly.") {
+            let &(_, clearance, error, loc) = COMBOS.iter().find(|c| c.0 == name)?;
+            let mut buf = ShapePolySet::new();
+            let ok = pad.transform_hole_to_polygon(ctx, &mut buf, clearance, error, loc);
+            return Some(if ok {
+                v_polyset(&buf)
+            } else {
+                "none".to_string()
+            });
+        }
+        if let Some(rest) = field.strip_prefix("tpoly.") {
+            let (l, name) = rest.rsplit_once('.')?;
+            let &(_, clearance, error, loc) = COMBOS.iter().find(|c| c.0 == name)?;
+            let mut buf = ShapePolySet::new();
+            pad.transform_shape_to_polygon(ctx, &mut buf, layer(l), clearance, error, loc, false);
+            return Some(v_polyset(&buf));
+        }
+
+        None
+    }
+
+    /// Package M15 differential test: every pad of `tests/oracle/m15_pad_shapes.kicad_pcb`
+    /// (28 pads covering every pad shape, custom pads with circle / rectangle anchors and
+    /// every primitive kind incl. a proxy, NORMAL / FRONT_INNER_BACK / CUSTOM padstacks, mask
+    /// margins of both signs, offsets, oblong drills, in four footprints: identity, rotated 30
+    /// and scaled 1.5 x 0.75, flipped + rotated -90 + scaled 2 x 1, rotated 45) and of five
+    /// `qa/data/pcbnew` boards, rebuilt from the dumped members and compared with the
+    /// reference `pcb-dump` (`tests/oracle/m15_pad_shapes_golden.py`) bit for bit: effective
+    /// shapes per layer (default and forced flashing), effective polygons (inside / outside),
+    /// hole shape, `TransformHoleToPolygon` and `TransformShapeToPolygon` (three clearance /
+    /// error / location combos), the all-layer and per-layer bounding boxes and the bounding
+    /// radius. `shape.<L>` with default flashing is compared where the Rust `FlashLayer`
+    /// without connectivity agrees with the dumped one.
+    #[test]
+    fn oracle_pad_shapes() {
+        let golden = golden();
+        let boards: BTreeSet<String> = golden.keys().map(|k| k.0.clone()).collect();
+        let mut pads_checked = 0;
+        let mut checked = 0;
+        let mut skipped_flash = 0;
+        let mut skipped_ellipse = 0;
+        let mut mismatches = Vec::new();
+        let mut shapes_seen: BTreeSet<String> = BTreeSet::new();
+
+        for tag in &boards {
+            let fields = |section: &str, key: &str| {
+                golden.get(&(tag.clone(), section.to_string(), key.to_string()))
+            };
+            let settings = fields("board", "board").expect("board section");
+            let mut board = Board::new();
+            board.set_copper_layer_count(settings["copper_layer_count"].parse().unwrap());
+            {
+                let bds = board.design_settings_mut();
+                bds.max_error = settings["ds.max_error"].parse().unwrap();
+                bds.solder_mask_expansion = settings["ds.solder_mask_expansion"].parse().unwrap();
+            }
+
+            let mut footprints: BTreeMap<String, FootprintId> = BTreeMap::new();
+
+            for ((b, section, key), f) in &golden {
+                if b == tag && section == "footprint" {
+                    footprints.insert(key.clone(), add_footprint(&mut board, f));
+                }
+            }
+
+            let mut pads: Vec<(String, PadId)> = Vec::new();
+
+            for ((b, section, key), f) in &golden {
+                if b != tag || section != "pad" {
+                    continue;
+                }
+
+                // A circle / arc primitive of a non-uniformly scaled footprint is re-baked into
+                // an ellipse (arc), whose parameters the dump does not print: not rebuilt.
+                if f.iter()
+                    .any(|(k, v)| k.contains(".primitive.") && v.starts_with("ELLIPSE"))
+                {
+                    skipped_ellipse += 1;
+                    continue;
+                }
+
+                let item = fields("item", key).expect("item section");
+                let proxies: BTreeSet<usize> = fields("proxy", key)
+                    .map(|p| {
+                        p.keys()
+                            .map(|k| k.trim_start_matches("primitive.").parse().unwrap())
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let fp = footprints[&item["parent"]];
+                let pad = pad_from_members(f, item, &proxies);
+                let id = board.insert_item(pad, ParentRef::Item(fp.into()));
+                board.footprints.get_mut(fp).unwrap().pads.push_back(id);
+
+                // The C++ AddPrimitive owner: the pad.
+                let pad = board.pads.get_mut(id).unwrap();
+                for l in pad.padstack.unique_layers() {
+                    for prim in pad.padstack.primitives_mut(l) {
+                        prim.base.item.parent = ParentRef::Item(id.into());
+                    }
+                }
+
+                pads.push((key.clone(), id));
+            }
+
+            board.check_invariants().unwrap();
+            let ctx = BoardCtx::bare(&board);
+
+            for (key, id) in &pads {
+                let pad = &board[*id];
+                let pf = fields("pad", key).unwrap();
+                pads_checked += 1;
+                let first = v_layer(pad.padstack.unique_layers()[0]);
+                shapes_seen.insert(pf[&format!("padstack.copper.{first}.shape")].clone());
+
+                // The rebuild itself: mask expansion and flashing.
+                for (field, expected) in pf {
+                    let actual = if let Some(l) = field.strip_prefix("solder_mask_expansion.") {
+                        pad.solder_mask_expansion(&ctx, layer(l)).to_string()
+                    } else if let Some(l) = field.strip_prefix("flash.") {
+                        pad.flash_layer(&ctx, layer(l)).to_string()
+                    } else {
+                        continue;
+                    };
+
+                    if field.starts_with("solder_mask_expansion.") && actual != *expected {
+                        mismatches.push(format!("{tag}|pad|{key}|{field}: {actual} != {expected}"));
+                    }
+                }
+
+                for section in ["pad", "bbox"] {
+                    let Some(f) = fields(section, key) else {
+                        continue;
+                    };
+
+                    for (field, expected) in f {
+                        if !expected.starts_with('#') {
+                            continue;
+                        }
+
+                        if let Some(l) = field.strip_prefix("shape.")
+                            && let Some(dumped) = pf.get(&format!("flash.{l}"))
+                            && *dumped != pad.flash_layer(&ctx, layer(l)).to_string()
+                        {
+                            skipped_flash += 1;
+                            continue;
+                        }
+
+                        let Some(actual) = derived(&ctx, pad, section, field) else {
+                            mismatches.push(format!("{tag}|{section}|{key}|{field}: not derived"));
+                            continue;
+                        };
+
+                        checked += 1;
+
+                        if hash(&actual) != *expected {
+                            mismatches.push(format!("{tag}|{section}|{key}|{field}: {actual}"));
+                        }
+                    }
+                }
+            }
+        }
+
+        eprintln!(
+            "m15 oracle: {pads_checked} pads, {checked} values, {skipped_flash} shape.<L> skipped \
+             (FlashLayer), {skipped_ellipse} pads skipped (ellipse primitives)"
+        );
+        assert!(
+            mismatches.is_empty(),
+            "{} mismatches of {checked}:\n{}",
+            mismatches.len(),
+            mismatches.join("\n")
+        );
+        assert!(pads_checked >= 130, "only {pads_checked} pads");
+        assert!(checked > 2500, "only {checked} values compared");
+        assert!(skipped_flash < 20, "{skipped_flash} shapes skipped");
+        assert_eq!(skipped_ellipse, 2);
+        assert_eq!(shapes_seen.len(), 7, "{shapes_seen:?}");
+    }
+
+    // ---- unit cases ---------------------------------------------------------------------
+
+    /// A footprint holder board with one unrotated footprint and a pad of it (local value).
+    fn holder_pad() -> (Board, Pad) {
+        let mut board = Board::new();
+        board.board_use = BoardUse::FpHolder;
+        let fp = board.insert_item(Footprint::default(), ParentRef::Board);
+        board.footprint_list.push_back(fp);
+        let mut pad = Pad::default();
+        pad.base.item.parent = ParentRef::Item(fp.into());
+        (board, pad)
+    }
+
+    /// `qa/tests/pcbnew/test_pad_flashing.cpp` `TechLayersPullFromAppropriateSide`.
+    #[test]
+    fn tech_layers_pull_from_appropriate_side() {
+        let (board, mut pad) = holder_pad();
+        let d1 = PCB_IU_SCALE.mm_to_iu(1.0);
+        let d2 = PCB_IU_SCALE.mm_to_iu(2.0);
+        let drill = PCB_IU_SCALE.mm_to_iu(0.5);
+
+        pad.set_attribute(PadAttrib::Pth);
+        let mut layers = Lset::all_cu_mask().clone();
+        layers |= Lset::all_board_tech_mask().clone();
+        pad.padstack.set_layer_set(layers);
+        pad.padstack.set_mode(PadstackMode::Custom);
+        pad.padstack.drill_mut().size = Vector2I::new(drill, drill);
+        pad.padstack
+            .set_size(Vector2I::new(d1, d1), PcbLayerId::FCu);
+        pad.padstack
+            .set_size(Vector2I::new(d2, d2), PcbLayerId::BCu);
+
+        let ctx = BoardCtx::bare(&board);
+        let null = DrcConstraintT::NullConstraint;
+
+        for (mask, d) in [(PcbLayerId::FMask, d1), (PcbLayerId::BMask, d2)] {
+            let shape = pad.effective_shape(&ctx, mask, Flashing::Default, null);
+            let ShapeRef::Compound(compound) = shape.as_shape_ref() else {
+                panic!("not a compound");
+            };
+            assert!(!compound.empty());
+            let ShapeRef::Circle(circle) = compound.shapes()[0].as_shape_ref() else {
+                panic!("not a circle");
+            };
+            assert_eq!(circle.get_radius(), d / 2);
+        }
+
+        assert_eq!(pad.size(&ctx, PcbLayerId::FMask).x, d1);
+        assert_eq!(pad.size(&ctx, PcbLayerId::BMask).x, d2);
+    }
+
+    /// `qa/tests/pcbnew/test_plot_pad_mask.cpp` `RoundRectMaskMatchesInflatedOutline`.
+    #[test]
+    fn round_rect_mask_matches_inflated_outline() {
+        let pad_w = PCB_IU_SCALE.mm_to_iu(2.0);
+        let pad_h = PCB_IU_SCALE.mm_to_iu(2.0);
+        let mask_clearance = PCB_IU_SCALE.mm_to_iu(1.0);
+        let radius_ratio = 0.125;
+        let original_radius = kicad_geom::ki_round(f64::from(pad_w.min(pad_h)) * radius_ratio);
+        let max_error = PCB_IU_SCALE.mm_to_iu(0.005);
+
+        let mut board = Board::new();
+        let fp = board.insert_item(Footprint::default(), ParentRef::Board);
+        board.footprint_list.push_back(fp);
+        let mut pad = Pad::default();
+        pad.base.item.parent = ParentRef::Item(fp.into());
+        pad.padstack.set_mode(PadstackMode::Normal);
+        pad.set_attribute(PadAttrib::Smd);
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Roundrect);
+        pad.set_lib_size(Padstack::ALL_LAYERS, Vector2I::new(pad_w, pad_h));
+        pad.set_round_rect_radius_ratio(Padstack::ALL_LAYERS, radius_ratio);
+        pad.padstack
+            .set_layer_set(Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::FMask]));
+
+        let ctx = BoardCtx::bare(&board);
+        let mut expected = ShapePolySet::new();
+        pad.transform_shape_to_polygon(
+            &ctx,
+            &mut expected,
+            PcbLayerId::FMask,
+            mask_clearance,
+            max_error,
+            ErrorLoc::Inside,
+            false,
+        );
+
+        pad.set_lib_size(
+            Padstack::ALL_LAYERS,
+            Vector2I::new(pad_w + 2 * mask_clearance, pad_h + 2 * mask_clearance),
+        );
+        pad.set_round_rect_corner_radius(
+            Padstack::ALL_LAYERS,
+            f64::from(original_radius + mask_clearance),
+        );
+
+        let mut produced = ShapePolySet::new();
+        pad.transform_shape_to_polygon(
+            &ctx,
+            &mut produced,
+            PcbLayerId::FMask,
+            0,
+            max_error,
+            ErrorLoc::Inside,
+            false,
+        );
+
+        let expected_bb = expected.bbox(0);
+        let produced_bb = produced.bbox(0);
+        assert_eq!(expected_bb.width(), produced_bb.width());
+        assert_eq!(expected_bb.height(), produced_bb.height());
+
+        let mut diff = expected.clone();
+        diff.boolean_subtract(&produced);
+        let mut reverse_diff = produced.clone();
+        reverse_diff.boolean_subtract(&expected);
+
+        // Tolerance is 1 IU^2-equivalent (chord/arc approximation slack)
+        let tolerance = f64::from(PCB_IU_SCALE.mm_to_iu(0.001)).powf(2.0);
+        assert!(diff.area().abs() <= tolerance);
+        assert!(reverse_diff.area().abs() <= tolerance);
+    }
+
+    /// Caches: repeated reads share the cached value, `set_dirty()` and a changed parent
+    /// transform rebuild it, the mask shape is cached per expansion.
+    #[test]
+    fn caches_follow_dirty_and_key() {
+        let (mut board, mut pad) = holder_pad();
+        pad.set_attribute(PadAttrib::Smd);
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Rectangle);
+        pad.set_lib_size(Padstack::ALL_LAYERS, Vector2I::new(1_000_000, 500_000));
+        pad.lib_pos = Vector2I::new(2_000_000, 0);
+        let fp = pad
+            .base
+            .item
+            .parent
+            .item()
+            .unwrap()
+            .typed::<Footprint>()
+            .unwrap();
+
+        {
+            let ctx = BoardCtx::bare(&board);
+            let null = DrcConstraintT::NullConstraint;
+            let a = pad.effective_shape(&ctx, PcbLayerId::FCu, Flashing::AlwaysFlashed, null);
+            let b = pad.effective_shape(&ctx, PcbLayerId::In1Cu, Flashing::AlwaysFlashed, null);
+            assert!(Arc::ptr_eq(&a, &b));
+            assert_eq!(
+                pad.bounding_box(&ctx),
+                Box2I::new(
+                    Vector2I::new(1_500_000, -250_000),
+                    Vector2I::new(1_000_000, 500_000)
+                )
+            );
+
+            let m1 = pad.mask_shape(&ctx, PcbLayerId::FMask, 50_000);
+            let m2 = pad.mask_shape(&ctx, PcbLayerId::FMask, 50_000);
+            assert!(Arc::ptr_eq(&m1, &m2));
+            let m3 = pad.mask_shape(&ctx, PcbLayerId::FMask, 60_000);
+            assert!(!Arc::ptr_eq(&m1, &m3));
+            assert!(pad.hit_test(&ctx, Vector2I::new(2_400_000, 200_000), 0));
+            assert!(!pad.hit_test(&ctx, Vector2I::new(2_600_000, 0), 0));
+            assert!(pad.hit_test(&ctx, Vector2I::new(2_600_000, 0), 100_001));
+            let r = Box2I::new(
+                Vector2I::new(2_400_000, 0),
+                Vector2I::new(1_000_000, 1_000_000),
+            );
+            assert!(pad.hit_test_rect(&ctx, &r, false, 0));
+            assert!(!pad.hit_test_rect(&ctx, &r, true, 0));
+        }
+
+        // Move the footprint: the cached shapes are keyed by the parent transform.
+        board.footprints.get_mut(fp).unwrap().transform = TransformTrs::new(
+            Vector2I::new(10_000_000, 0),
+            EdaAngle::from_degrees(90.0),
+            1.0,
+            1.0,
+        );
+        let ctx = BoardCtx::bare(&board);
+        let centre = pad.position(&ctx);
+        assert_ne!(centre, Vector2I::new(2_000_000, 0));
+        assert_eq!(
+            pad.bounding_box(&ctx),
+            Box2I::by_center(centre, Vector2I::new(500_000, 1_000_000))
+        );
+
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Circle);
+        // ERROR_OUTSIDE polygon of a 1 mm circle: the vertices lie outside the radius.
+        let radius = pad.bounding_radius(&ctx);
+        assert!(
+            (500_000..=500_000 + ctx.max_error()).contains(&radius),
+            "{radius}"
+        );
     }
 }

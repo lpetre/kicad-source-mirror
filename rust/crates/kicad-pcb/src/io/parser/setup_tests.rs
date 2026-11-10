@@ -179,13 +179,27 @@ fn issue24133_duplicated_stackup_not_inflated() {
 /// oracle output itself.
 #[test]
 fn oracle_resave_setup() {
-    let mut inputs: Vec<PathBuf> = std::fs::read_dir(manifest_path("tests/data/pcbio04"))
+    check_resave_dir("tests/data/pcbio04", "tests/golden/pcbio04", 5);
+}
+
+/// The same check on the hand-made boards of PCBIO-02 (`tests/data/pcbio02/`, golden
+/// `tests/golden/pcbio02/`, whose `(setup ..)` sections that package left out of its
+/// comparison).
+#[test]
+fn oracle_resave_setup_pcbio02_boards() {
+    check_resave_dir("tests/data/pcbio02", "tests/golden/pcbio02", 8);
+}
+
+/// Parse + format of every board of `data`, and of its oracle re-save in `golden`, must give
+/// the setup section of the oracle re-save.
+fn check_resave_dir(data: &str, golden_dir: &str, min_count: usize) {
+    let mut inputs: Vec<PathBuf> = std::fs::read_dir(manifest_path(data))
         .unwrap()
         .map(|e| e.unwrap().path())
         .filter(|p| p.extension().is_some_and(|e| e == "kicad_pcb"))
         .collect();
     inputs.sort();
-    assert!(inputs.len() >= 5, "{inputs:?}");
+    assert!(inputs.len() >= min_count, "{inputs:?}");
 
     let mut failures = Vec::new();
 
@@ -193,7 +207,7 @@ fn oracle_resave_setup() {
         let name = input.file_name().unwrap().to_str().unwrap().to_string();
         let text = std::fs::read_to_string(input).unwrap();
         let golden =
-            std::fs::read_to_string(manifest_path("tests/golden/pcbio04").join(&name)).unwrap();
+            std::fs::read_to_string(manifest_path(golden_dir).join(&name)).unwrap();
         let expected = setup_section(&golden);
         assert!(!expected.is_empty(), "{name}");
 

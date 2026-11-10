@@ -28,6 +28,7 @@ use crate::board::Board;
 use crate::ctx::BoardCtx;
 use crate::item::ParentRef;
 use crate::item_ref::{AnyItem, ItemRef};
+use crate::pcb_track::Track;
 
 /// `DumpBoard`: the whole board (keys must be initialised by the caller's `Out`).
 pub(crate) fn dump_board_into(o: &mut Out, board: &Board, opts: &DumpOptions) {
@@ -255,13 +256,13 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
 
             emit!(o, "bounding_radius", v_int(pad.bounding_radius(ctx)));
         }
-        AnyItem::Track(t) if t.as_via().is_some() => {
+        AnyItem::Track(Track::Via(v)) => {
             for l in copper_layers(item_copper_count(it)) {
                 if let Some(true) = o.cond(&format!("bbox.{}", v_layer(l)), || it.is_on_layer(l)) {
                     emit!(
                         o,
                         format!("bbox.{}", v_layer(l)),
-                        no_api("PCB_VIA::GetBoundingBox (aLayer)")
+                        v_box(v.bounding_box_layer(ctx, l))
                     );
                 }
             }

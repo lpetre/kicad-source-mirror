@@ -126,6 +126,9 @@ board_items!(gen_board, {
         /// settings the core reads. `None` = "no project" (SynchronizeNetsAndNetClasses
         /// returns early).
         pub project: Option<BoardProject>,
+        /// Host-provided clock for `CURRENT_DATE` / `CURRENT_TIME_*` (C++ reads the wall
+        /// clock; library code has none). Empty by default.
+        pub text_var_clock: kicad_core::title_block::TitleBlockClock,
 
         // ---- bookkeeping ----
         pub(crate) time_stamp: i32,          // m_timeStamp
@@ -139,12 +142,38 @@ board_items!(gen_board, {
     }
 });
 
-/// What C++ reaches through `BOARD::m_project`.
-#[derive(Clone, Debug, Default)]
+/// What C++ reaches through `BOARD::m_project`. Filled by `Board::set_project`
+/// (`project/board_project.rs`, package SET-5) from a `project::Project`; the project's
+/// `NET_SETTINGS` move into `design_settings.net_settings`.
+#[derive(Clone, Debug)]
 pub struct BoardProject {
     pub text_vars: BTreeMap<String, String>, // PROJECT::GetTextVars()
     pub prototype_zone_fill: bool,           // PROJECT_LOCAL_SETTINGS::m_PrototypeZoneFill
     pub design_rules_path: String,           // BOARD::GetDesignRulesPath()
+    pub full_name: String,                   // PROJECT::GetProjectFullName()
+    pub project_name: String,                // PROJECT::GetProjectName() (PROJECTNAME)
+    pub visible_layers: kicad_core::Lset,    // PROJECT_LOCAL_SETTINGS::m_VisibleLayers
+    pub board_drawing_sheet_file: String,    // PROJECT_FILE::m_BoardDrawingSheetFile
+    /// PROJECT_FILE's JSON document (`m_internals`; parent of `board.design_settings`).
+    pub document: kicad_core::json_settings::JsonSettingsInternals,
+    pub file_synced: bool, // PROJECT_FILE::LoadFromFile result
+}
+
+impl Default for BoardProject {
+    /// An empty project (no `.kicad_pro`, no `.kicad_prl`): every layer visible.
+    fn default() -> Self {
+        BoardProject {
+            text_vars: BTreeMap::new(),
+            prototype_zone_fill: false,
+            design_rules_path: String::new(),
+            full_name: String::new(),
+            project_name: String::new(),
+            visible_layers: kicad_core::Lset::all_layers_mask().clone(),
+            board_drawing_sheet_file: String::new(),
+            document: Default::default(),
+            file_synced: false,
+        }
+    }
 }
 
 /// Run-time caches of BOARD that pcbnew code outside DRC uses. All cleared by
@@ -228,6 +257,7 @@ impl Default for Board {
             legacy_copper_edge_clearance_loaded: false,
             legacy_netclasses_loaded: false,
             project: None,
+            text_var_clock: Default::default(),
             time_stamp: 1,
             // Replaced at the end of the constructor by the snapshot of the settings.
             layer_env: Arc::new(LayerEnv::no_board()),

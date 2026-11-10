@@ -38,6 +38,11 @@ pub enum SessionError {
         /// The `IO_ERROR::What()` text of the loader.
         message: String,
     },
+    /// The board could not be written (`IO_ERROR` of the writer).
+    Save {
+        /// The `IO_ERROR::What()` text of the writer.
+        message: String,
+    },
     /// A malformed argument of the Rust / JavaScript API (not a C++ condition).
     InvalidArgument {
         /// What was wrong.
@@ -70,12 +75,13 @@ impl SessionError {
         matches!(self, SessionError::NotYetPorted { .. })
     }
 
-    /// The short machine-readable kind: `"NotYetPorted"`, `"Load"`, `"InvalidArgument"` or
+    /// The short machine-readable kind: `"NotYetPorted"`, `"Load"`, `"Save"`, `"InvalidArgument"` or
     /// `"StaleId"` (the JavaScript error `name` without the `Error` suffix).
     pub fn kind(&self) -> &'static str {
         match self {
             SessionError::NotYetPorted { .. } => "NotYetPorted",
             SessionError::Load { .. } => "Load",
+            SessionError::Save { .. } => "Save",
             SessionError::InvalidArgument { .. } => "InvalidArgument",
             SessionError::StaleId { .. } => "StaleId",
         }
@@ -95,6 +101,7 @@ impl fmt::Display for SessionError {
                     write!(f, "Failed to load board: {message}")
                 }
             }
+            SessionError::Save { message } => write!(f, "Failed to save board: {message}"),
             SessionError::InvalidArgument { message } => write!(f, "invalid argument: {message}"),
             SessionError::StaleId { id } => write!(f, "no live item with id {id}"),
         }

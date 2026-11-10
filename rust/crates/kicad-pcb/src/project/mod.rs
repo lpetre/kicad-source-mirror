@@ -22,3 +22,16 @@
 pub mod net_settings_json;
 
 pub mod board_design_settings_json;
+
+// Package SET-5: project file, project, binding and load sequences.
+pub mod board_loader;
+pub mod board_project;
+#[allow(clippy::module_inception)] // `project/project.rs` = `common/project.cpp`
+pub mod project;
+pub mod project_file;
+pub mod project_local_settings;
+
+pub use board_loader::{LoadPath, LoadStep, StepOutcome, initialize_loaded_board, run_model_step};
+pub use project::{Project, load_project};
+pub use project_file::ProjectFile;
+pub use project_local_settings::ProjectLocalSettings;

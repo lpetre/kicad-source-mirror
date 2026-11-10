@@ -1557,3 +1557,66 @@ API: `BoardDesignSettingsJson::new(path, codec)`; `load_from_file(Some(&mut proj
 
 - `DrcExclusionCodec` for `kicad-drc` is not implemented here (crate dependency direction); the 6 legacy-exclusion projects are verified only without their exclusions.
 - The board binding itself (`BOARD::SetProject`, legacy net classes) is SET-5.
+
+## Package PCBIO-09: board file groups and deferred resolution
+
+Files: `src/io/parser/group.rs`, `src/io/writer/group.rs`, `tests/data/pcbio09/`,
+`tests/golden/pcbio09/`, `tests/golden/pcbio09_corpus_groups.txt`,
+`tests/oracle/pcbio09_golden.sh`.
+
+### C++ to Rust map
+
+| C++ | Rust | state |
+|---|---|---|
+| `parseGROUP_members` | `parser/group.rs` `parse_group_members` | ported |
+| `parseGROUP` (name, bare `locked`, `uuid` / legacy `id`, `lib_id` with `{slash}` and both errors, `(locked B)`, `members`, `custom_property`) | `parse_group` | ported |
+| `resolveGroups` (footprint lookup map, `BOARD::ResolveItem`, pass 1 create + `Add( INSERT )`, pass 2 members with the same-parent-footprint rule, append-mode `m_resetKIIDMap`, generator layer from the first member track, `GroupsSanityCheck( true )`) | `resolve_groups` | ported |
+| generator branch of pass 1 (`CreateFromType` + "Cannot create generated object of type '%s'", `SetLayer`, `SetProperties`, `SetTemplateItem`) | `generator_from_info` (hook for PCBIO-13, which fills `generator_infos`) | ported, unexercised until `parseGENERATOR` lands |
+| `format( const PCB_GROUP* )` (member validation against the board index, empty groups skipped, `locked`, `lib_id` with manual quotes, sorted member uuids, custom properties) | `writer/group.rs` `format_group` | ported |
+
+### Tests
+
+`src/io/parser/group.rs` `tests`:
+- `oracle_resave_groups` (byte level): two hand-made boards (current format: nested groups,
+  forward references, duplicate / unknown / self / ancestor members, members moving between
+  groups, `{slash}` lib id, lib id without nickname, custom properties, UTF-8 and escaped
+  names, both lock forms; a 20231212 file with `(id ..)` and an ancestor cycle) re-saved by
+  `kicad-cli pcb upgrade --force`: the `(group ..)` blocks are identical for the input and for
+  the re-save of the reference output (`_o2`).
+- `oracle_dump_groups` (item level, feature `dump`): `pcb-dump board --no-init --sections
+  misc,item` of the same boards: all lines match except `locked_flag` (see known gaps).
+- `parse_errors`: the reference texts of the bad `lib_id`, unknown token and bad header.
+- `oracle_corpus_groups`: the 86 `(group ..)` blocks (75 board, 11 footprint level) of the 28
+  corpus boards containing groups, re-saved by the reference build: a block must be identical
+  when the parse skipped nothing, otherwise its header must be identical and its member count
+  at most the reference one (members pending on staging stubs are unresolved: they simply are
+  not on the board and the test tightens by itself as the item packages land).
+- Ports: `test_group_load_save.cpp` `GroupsLoadSave` (both files; member count bounded while a
+  graphic parser of the file is a stub), `group_saveload.cpp` `HealthyGroups`,
+  `SingleMemberGroupsSaved` (full round trip once the text writer PCBIO-05 lands; until then
+  the group-to-group memberships are checked through the staging switches), plus
+  `cycles_in_file_are_refused`. `InvalidGroups` is the M22 test; `DeepClone*` are model tests
+  (no `DeepClone` in the port).
+
+### Deviations / notes
+
+- `IsItemIndexedById( const BOARD_ITEM* )` is "the index entry of the item's UUID is this
+  handle" (Rust handles cannot dangle).
+- `LIB_ID::Parse` returns a byte offset into the item name; the error message picks the
+  character at that index of the full name as the C++ does (`name[bad_pos]`, characters).
+- The fresh ids the C++ draws (`GROUP_INFO()`, `new PCB_GROUP`, `new T` for generators) are
+  drawn from `board.kiid_generator` at the same points.
+- A generator declared inside a footprint is refused by `footprint_add` and dropped (the C++
+  `FOOTPRINT::Add` has no case for it and leaks it).
+- Group member order is insertion order (C++ `unordered_set`); only the generator layer pick
+  ("first member track") could depend on it, and the C++ comment says it is only meaningful
+  when all members share a layer.
+
+### Known gaps
+
+- pcb-dump-rs prints `locked_flag` as the raw `m_isLocked`; the C++ dump prints the
+  non-virtual `BOARD_ITEM::IsLocked()` (parent group included): change request to DUMP-RS,
+  the test skips that field.
+- Footprint-level groups are parsed only once `parseFOOTPRINT` (PCBIO-06) calls `parse_group`.
+- Generator resolution is unexercised until PCBIO-13 pushes `GeneratorInfo`s (it must also draw
+  the `GENERATOR_INFO()` id, as `parse_group` does).

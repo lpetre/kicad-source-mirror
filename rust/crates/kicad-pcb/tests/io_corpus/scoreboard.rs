@@ -137,6 +137,17 @@ pub fn render(results: &[BoardResult], oracle: &str) -> String {
         }
     }
 
+    let matches_o1 = compared
+        .iter()
+        .filter(|r| r.eval.as_ref().is_some_and(|e| e.matches_o1))
+        .count();
+    let _ = writeln!(
+        out,
+        "\n`differs` boards that are not fixed points but whose Rust re-save equals O1 modulo \
+         pending (the change O1 -> O2 comes from the oracle's post-load steps, PCBIO-15): \
+         {matches_o1}."
+    );
+
     let with_pending = compared
         .iter()
         .filter(|r| {
@@ -248,6 +259,10 @@ pub fn render(results: &[BoardResult], oracle: &str) -> String {
         };
         let mut status = r.status.label().to_string();
 
+        if r.eval.as_ref().is_some_and(|e| e.matches_o1) {
+            status.push_str(", = O1");
+        }
+
         if !r.caveats.is_empty() {
             let _ = write!(status, " ({})", r.caveats.join(", "));
         }
@@ -300,6 +315,14 @@ pub fn render_board(r: &BoardResult) -> String {
 
     if let Some((stage, f)) = &e.model_pending {
         let _ = writeln!(out, "model stub:  {f} ({})", stage.label());
+    }
+
+    if e.matches_o1 {
+        let _ = writeln!(
+            out,
+            "note:        the Rust re-save equals O1 modulo pending: O1 -> O2 is a post-load \
+             change of the oracle (PCBIO-15)"
+        );
     }
 
     for (title, map) in [

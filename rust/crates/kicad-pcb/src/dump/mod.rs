@@ -78,24 +78,113 @@ pub fn dump_defaults(hash: bool) -> String {
     o.text
 }
 
-/// Loads a `.kicad_pcb` for `pcb-dump-rs board`.
-///
-/// PARSER HOOK: the `.kicad_pcb` parser package replaces this body with the Rust equivalent of
-/// the C++ tool's default load path (`KI_TEST::LoadBoard`: parse, then `BuildListOfNets`,
-/// `BuildConnectivity`, ...). Until then it reports that the parser is pending.
-///
-/// PCBIO-01: the parser only (`KI_TEST::ReadBoardFromFileOrStream`, the C++ tool's `--no-init`
-/// path, source name "" like its stream reader), with the constructs of packages that have not
-/// landed yet skipped (`ParseOptions::allow_pending`). The post-load steps of the default path
-/// (`BuildListOfNets`, `BuildConnectivity`, ...) are PCBIO-15 / connectivity.
+/// Load path of `pcb-dump-rs board` (`main.cpp` of the C++ tool).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum DumpLoadMode {
+    /// Default: `KI_TEST::LoadBoard` (`loadBoardQa( path, true )`).
+    #[default]
+    Qa,
+    /// `--loader`: the kicad-cli path (`loadBoardCli`: `<base>.kicad_pro`, created in memory
+    /// when missing, then `BOARD_LOADER::Load`).
+    Loader,
+    /// `--no-init`: the parser only.
+    NoInit,
+}
+
+/// Loads a `.kicad_pcb` for `pcb-dump-rs board` on the default (QA) path, see
+/// [`load_board_for_dump_mode`].
 pub fn load_board_for_dump(path: &std::path::Path) -> Result<Board, String> {
+    load_board_for_dump_mode(path, DumpLoadMode::Qa).map(|(board, _)| board)
+}
+
+/// Loads a `.kicad_pcb` for `pcb-dump-rs board` the way the C++ tool does for `mode`; returns
+/// the board and `warn|load|...` texts.
+///
+/// The parser runs with the constructs of packages that have not landed yet skipped
+/// (`ParseOptions::allow_pending`); the QA path reads the stream (source name "", no board
+/// file name), the loader path names the file. Then the model steps of
+/// `project::board_loader` in C++ order (package SET-5), with the project texts read next to
+/// the board: QA binds `<base>.kicad_pro` (or, for a lone legacy `<base>.pro`, an empty
+/// project: the `.pro` migration is not ported) and `<base>.kicad_prl` only when one exists;
+/// the loader always binds one. The session steps (DRC engine, exclusions, connectivity) are
+/// not run here (PCBIO-15); they are reported as `warn` lines. A step that hits a
+/// `port_pending!` stub is reported as `warn|load|pending step <step>: <C++ name>` and the
+/// sequence continues with the next step.
+pub fn load_board_for_dump_mode(
+    path: &std::path::Path,
+    mode: DumpLoadMode,
+) -> Result<(Board, Vec<String>), String> {
+    use crate::project::board_design_settings_json::{DrcExclusionCodec, RawDrcExclusionCodec};
+    use crate::project::{LoadPath, StepOutcome, load_project, run_model_step};
+
     let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
     let text = String::from_utf8_lossy(&bytes);
     let options = crate::io::ParseOptions {
         allow_pending: true,
     };
 
-    crate::io::parse_board(&text, "", &options).map_err(|e| e.what().to_string())
+    let source_name = match mode {
+        DumpLoadMode::Loader => path.to_string_lossy().into_owned(),
+        _ => String::new(),
+    };
+
+    let mut board = crate::io::parse_board(&text, &source_name, &options)
+        .map_err(|e| e.what().to_string())?;
+
+    let load_path = match mode {
+        DumpLoadMode::NoInit => return Ok((board, Vec::new())),
+        DumpLoadMode::Qa => LoadPath::Qa,
+        DumpLoadMode::Loader => {
+            // PCB_IO::LoadBoard: newBoard->SetFileName( aFileName )
+            board.file_name = source_name.clone();
+            LoadPath::Cli
+        }
+    };
+
+    let abs = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
+    let read = |ext: &str| std::fs::read(abs.with_extension(ext)).ok();
+    let pro_text = read("kicad_pro").map(|t| String::from_utf8_lossy(&t).into_owned());
+    let prl_text = read("kicad_prl").map(|t| String::from_utf8_lossy(&t).into_owned());
+    let has_legacy_pro = abs.with_extension("pro").exists();
+    let pro_name = abs.with_extension("kicad_pro").to_string_lossy().into_owned();
+
+    let mut project = if load_path == LoadPath::Cli || pro_text.is_some() || has_legacy_pro {
+        Some(load_project(
+            pro_text.as_deref(),
+            prl_text.as_deref(),
+            &pro_name,
+        ))
+    } else {
+        None
+    };
+
+    let codec: std::rc::Rc<dyn DrcExclusionCodec> = std::rc::Rc::new(RawDrcExclusionCodec);
+    let mut warnings = Vec::new();
+    let _quiet = SilentPanics::new();
+
+    for &step in load_path.steps() {
+        let result = format::attempt(|| {
+            run_model_step(&mut board, load_path, step, &mut project, &codec)
+        });
+
+        match result {
+            Ok(Ok(StepOutcome::Done)) => {}
+            Ok(Ok(StepOutcome::Session)) => {
+                warnings.push(format!("session step not run: {step:?}"));
+            }
+            Ok(Ok(StepOutcome::Warning(w))) => warnings.push(w),
+            // The exception escapes the C++ load: the board is not loaded.
+            Ok(Err(e)) => return Err(format!("{step:?}: {}", e.message)),
+            Err(format::Failure::Pending(name)) => {
+                warnings.push(format!("pending step {step:?}: {name}"));
+            }
+            Err(format::Failure::Error(msg)) => {
+                warnings.push(format!("rust-error in step {step:?}: {msg}"));
+            }
+        }
+    }
+
+    Ok((board, warnings))
 }
 
 #[cfg(test)]

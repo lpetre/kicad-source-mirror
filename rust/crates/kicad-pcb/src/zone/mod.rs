@@ -24,15 +24,18 @@
 
 pub mod shapes;
 
+#[cfg(test)]
+mod oracle_tests;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::hash_128::Hash128;
 use kicad_geom::geometry::shape_poly_set::VertexIndex;
 use kicad_geom::geometry::transform_trs::TransformTrs;
+use kicad_geom::hash_128::Hash128;
 use kicad_geom::{
     Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg, Shape, ShapeLineChain, ShapePolySet,
     Vector2I,
@@ -45,7 +48,6 @@ use crate::drc_api::DrcConstraintT;
 use crate::ids::{NetCode, ZoneId};
 use crate::item::{BoardItemBase, ConnectedItemBase, ItemFlags, SharedShape};
 use crate::pad::Pad;
-use crate::{board_connected_item, board_item};
 use crate::teardrop_parameters::TeardropType;
 use crate::traits::{BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate};
 use crate::zone_settings::{
@@ -54,6 +56,7 @@ use crate::zone_settings::{
     ZONE_BORDER_HATCH_MINDIST_MM, ZoneBorderDisplayStyle, ZoneConnection, ZoneFillMode,
     ZoneLayerProperties, ZoneSettings,
 };
+use crate::{board_connected_item, board_item};
 
 /// `ZONE`.
 #[derive(Clone, Debug)]
@@ -323,7 +326,12 @@ impl Zone {
 
     /// Port of `ZONE::AppendCorner( aPosition, aHoleIdx, aAllowDuplication )`: false when
     /// `hole_idx` names a hole that does not exist.
-    pub fn append_corner(&mut self, position: Vector2I, hole_idx: i32, allow_duplication: bool) -> bool {
+    pub fn append_corner(
+        &mut self,
+        position: Vector2I,
+        hole_idx: i32,
+        allow_duplication: bool,
+    ) -> bool {
         // Ensure the main outline exists:
         if self.lib_outline.outline_count() == 0 {
             self.lib_outline.new_outline();
@@ -369,7 +377,7 @@ impl Zone {
 
         // Create an outline and populate it with the points of aPolygon
         for pt in polygon {
-            outline.append(*pt, false);
+            outline.append_point(*pt, false);
         }
 
         outline.set_closed(true);
@@ -596,7 +604,11 @@ impl Zone {
     /// C++ compares the pad's `std::optional` override with 0, so the zone value is only
     /// used when the pad override is explicitly 0; without an override the pad branch
     /// returns 0 (kept as in C++).
-    pub fn thermal_relief_gap_for_pad(&self, pad: &Pad, want_source: bool) -> (i32, Option<String>) {
+    pub fn thermal_relief_gap_for_pad(
+        &self,
+        pad: &Pad,
+        want_source: bool,
+    ) -> (i32, Option<String>) {
         if pad.padstack.thermal_gap(PcbLayerId::FCu) == Some(0) {
             let source = want_source.then(|| "zone".to_string());
             return (self.thermal_relief_gap, source);
@@ -724,9 +736,9 @@ impl Zone {
             vec![-1.0]
         };
 
-        self.border_hatch_lines = self
-            .lib_outline
-            .generate_hatch_lines(&slopes, spacing, hatch_line_len);
+        self.border_hatch_lines =
+            self.lib_outline
+                .generate_hatch_lines(&slopes, spacing, hatch_line_len);
     }
 
     /// Port of `ZONE::GetHatchLines()`: the border hatch lines in the board frame.
@@ -959,7 +971,11 @@ impl Zone {
     /// Port of `ZONE::GetLocalClearance()` (no source argument): always a value, 0 for a
     /// rule area, else `m_ZoneClearance`.
     pub fn local_clearance(&self) -> Option<i32> {
-        Some(if self.is_rule_area { 0 } else { self.zone_clearance })
+        Some(if self.is_rule_area {
+            0
+        } else {
+            self.zone_clearance
+        })
     }
 
     /// Port of `ZONE::GetLocalClearance( wxString* aSource )`: `None` for a rule area, else
@@ -1651,5 +1667,566 @@ mod tests {
         assert!(zone.is_filled() && zone.fill().fill_flag(PcbLayerId::FCu));
         assert!(zone.has_filled_polys_for_layer(PcbLayerId::FCu));
         assert!(zone.fill().insulated_islands[&PcbLayerId::FCu].contains(&3));
+    }
+
+    // ---- qa/tests/pcbnew/test_zone.cpp ----------------------------------------------------
+
+    use crate::board::AddMode;
+    use crate::padstack::{Padstack, PadstackMode};
+    use crate::pcb_track::{PcbVia, Track};
+    use crate::zone_utils::{auto_assign_zone_priorities, merge_zones_with_same_outline};
+    use kicad_geom::Box2I;
+
+    /// `ZONE( &m_board )`: the board's default zone settings.
+    fn board_zone(board: &mut Board) -> Zone {
+        let settings = board.design_settings().default_zone_settings().clone();
+        let mut zone = Zone::new_with_settings(&mut board.kiid_generator, &settings, false);
+        zone.base.item.parent = crate::item::ParentRef::Board;
+        zone
+    }
+
+    /// `KIGEOM::BoxToLineChain( BOX2I( aOrigin, aSize ) )` as a polygon set.
+    fn square(origin: Vector2I, size: Vector2I) -> ShapePolySet {
+        let b = Box2I::new(origin, size);
+        let mut chain = ShapeLineChain::new();
+        chain.append_point(Vector2I::new(b.left(), b.top()), false);
+        chain.append_point(Vector2I::new(b.right(), b.top()), false);
+        chain.append_point(Vector2I::new(b.right(), b.bottom()), false);
+        chain.append_point(Vector2I::new(b.left(), b.bottom()), false);
+        chain.set_closed(true);
+        ShapePolySet::from_outline(&chain)
+    }
+
+    /// `CreateSquareZone( m_board, aLayer, aOrigin, aSize )`.
+    fn create_square_zone(
+        board: &mut Board,
+        layer: PcbLayerId,
+        origin: Vector2I,
+        size: Vector2I,
+    ) -> Zone {
+        let mut zone = board_zone(board);
+        zone.set_layer(&MutEnv::detached(), layer);
+        *zone.lib_outline_mut() = square(origin, size);
+        zone
+    }
+
+    /// `CreateSimilarZone( m_board, aLayer, aOther )`.
+    fn create_similar_zone(board: &mut Board, layer: PcbLayerId, other: &Zone) -> Zone {
+        let mut zone = board_zone(board);
+        zone.set_layer(&MutEnv::detached(), layer);
+        *zone.lib_outline_mut() = other.outline().clone();
+        zone
+    }
+
+    fn mm(v: f64) -> i32 {
+        PCB_IU_SCALE.mm_to_iu(v)
+    }
+
+    /// `AddVia( aBoard, aPos, aNetCode, aTopLayer, aBotLayer )`.
+    fn add_via(
+        board: &mut Board,
+        pos: Vector2I,
+        net: NetCode,
+        top: PcbLayerId,
+        bottom: PcbLayerId,
+    ) {
+        let env = board.child_env(crate::item::ParentRef::Board);
+        let mut via = PcbVia::default();
+        via.set_padstack_mode(PadstackMode::Normal);
+        via.set_position(&env, pos);
+        via.set_layer_pair(&env, top, bottom);
+        via.set_width(Padstack::ALL_LAYERS, mm(0.6));
+        via.set_drill(mm(0.3));
+        via.track.base.net = net;
+        board
+            .add_track(Track::Via(Box::new(via)), AddMode::Insert)
+            .unwrap_or_else(|_| panic!("via refused"));
+    }
+
+    /// Board with nets "NetA" / "NetB" (or the given names).
+    fn board_with_nets(names: &[&str]) -> (Board, Vec<NetCode>) {
+        let mut board = Board::new();
+        let codes = names
+            .iter()
+            .map(|n| board.find_or_add_net(n, None))
+            .collect();
+        (board, codes)
+    }
+
+    #[test]
+    fn single_layer() {
+        let mut board = Board::new();
+        let mut zone = board_zone(&mut board);
+        zone.set_layer(&MutEnv::detached(), PcbLayerId::FCu);
+        let ctx = BoardCtx::bare(&board);
+
+        assert_eq!(zone.layer(&ctx), PcbLayerId::FCu);
+        assert_eq!(zone.layer(&ctx), zone.first_layer());
+        assert!(zone.is_on_copper_layer(&ctx));
+    }
+
+    #[test]
+    fn multiple_layers() {
+        let mut board = Board::new();
+        let mut zone = board_zone(&mut board);
+        zone.set_layer_set(
+            &MutEnv::detached(),
+            Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu]),
+        );
+        let ctx = BoardCtx::bare(&board);
+
+        // There is no "the" layer in a multi-layer zone
+        assert_eq!(zone.layer(&ctx), PcbLayerId::UndefinedLayer);
+        // ... but there is a first layer
+        assert_eq!(zone.first_layer(), PcbLayerId::FCu);
+        assert!(zone.is_on_copper_layer(&ctx));
+    }
+
+    /// https://gitlab.com/kicad/code/kicad/-/issues/18553
+    #[test]
+    fn rescued_layers() {
+        let mut board = Board::new();
+        let mut zone = board_zone(&mut board);
+        zone.set_layer(&MutEnv::detached(), PcbLayerId::Rescue);
+        let ctx = BoardCtx::bare(&board);
+
+        assert_eq!(zone.layer(&ctx), PcbLayerId::Rescue);
+        assert_eq!(zone.layer(&ctx), zone.first_layer());
+        assert!(!zone.is_on_copper_layer(&ctx));
+    }
+
+    /// https://gitlab.com/kicad/code/kicad/-/issues/23125
+    #[test]
+    fn empty_zone_get_position() {
+        let mut board = Board::new();
+        let mut zone = board_zone(&mut board);
+        zone.set_layer(&MutEnv::detached(), PcbLayerId::FCu);
+        let ctx = BoardCtx::bare(&board);
+
+        assert_eq!(zone.num_corners(), 0);
+        assert_eq!(zone.position(&ctx), Vector2I::new(0, 0));
+    }
+
+    #[test]
+    fn zone_merge_null() {
+        let mut board = Board::new();
+        let mut zones = Vec::new();
+
+        for _ in 0..2 {
+            let mut zone = board_zone(&mut board);
+            zone.set_layer(&MutEnv::detached(), PcbLayerId::FCu);
+            zones.push(zone);
+        }
+
+        // They are the same, so they do merge
+        assert_eq!(merge_zones_with_same_outline(zones).len(), 1);
+    }
+
+    #[test]
+    fn zone_merge_non_null_no_merge() {
+        let mut board = Board::new();
+        let zones = vec![
+            create_square_zone(
+                &mut board,
+                PcbLayerId::FCu,
+                Vector2I::new(0, 0),
+                Vector2I::new(100, 100),
+            ),
+            create_square_zone(
+                &mut board,
+                PcbLayerId::BCu,
+                Vector2I::new(200, 200),
+                Vector2I::new(300, 300),
+            ),
+        ];
+
+        // They are different, so they don't merge
+        assert_eq!(merge_zones_with_same_outline(zones).len(), 2);
+    }
+
+    #[test]
+    fn zone_merge_non_null_merge() {
+        let mut board = Board::new();
+        let a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(100, 100),
+        );
+        let b = create_similar_zone(&mut board, PcbLayerId::BCu, &a);
+
+        let merged = merge_zones_with_same_outline(vec![a, b]);
+
+        // They are the same, so they do merge
+        assert_eq!(merged.len(), 1);
+        assert_eq!(
+            merged[0].layer_set,
+            Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu])
+        );
+        assert_eq!(merged[0].num_corners(), 4);
+    }
+
+    #[test]
+    fn zone_merge_merge_same_geom_different_order() {
+        let mut board = Board::new();
+        let a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(100, 100),
+        );
+        let mut b = create_similar_zone(&mut board, PcbLayerId::BCu, &a);
+
+        // Reverse the outline of one of them
+        b.lib_outline_mut().outline(0).reverse();
+
+        let merged = merge_zones_with_same_outline(vec![a, b]);
+
+        // They are the same, so they do merge
+        assert_eq!(merged.len(), 1);
+        assert_eq!(
+            merged[0].layer_set,
+            Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu])
+        );
+        assert_eq!(merged[0].num_corners(), 4);
+    }
+
+    #[test]
+    fn auto_priority_non_overlapping() {
+        let (mut board, nets) = board_with_nets(&["NetA", "NetB"]);
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        a.base.net = nets[0];
+        a.priority = 5;
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(20.0), 0),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.base.net = nets[1];
+        b.priority = 10;
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        auto_assign_zone_priorities(&mut board);
+
+        assert!(board[ia].assigned_priority() <= board[ib].assigned_priority());
+    }
+
+    #[test]
+    fn auto_priority_item_count_wins() {
+        let (mut board, nets) = board_with_nets(&["NetA", "NetB"]);
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(20.0), mm(20.0)),
+        );
+        a.base.net = nets[0];
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(5.0), mm(5.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.base.net = nets[1];
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        for i in 0..5 {
+            add_via(
+                &mut board,
+                Vector2I::new(mm(7.0 + f64::from(i)), mm(10.0)),
+                nets[0],
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+            );
+        }
+
+        add_via(
+            &mut board,
+            Vector2I::new(mm(10.0), mm(7.0)),
+            nets[1],
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+        );
+
+        auto_assign_zone_priorities(&mut board);
+
+        assert!(board[ia].assigned_priority() > board[ib].assigned_priority());
+    }
+
+    #[test]
+    fn auto_priority_similar_counts_smaller_wins() {
+        let (mut board, nets) = board_with_nets(&["NetA", "NetB"]);
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(30.0), mm(30.0)),
+        );
+        a.base.net = nets[0];
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(5.0), mm(5.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.base.net = nets[1];
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        for (x, y, n) in [
+            (8.0, 8.0, 0),
+            (12.0, 8.0, 0),
+            (8.0, 12.0, 1),
+            (12.0, 12.0, 1),
+        ] {
+            add_via(
+                &mut board,
+                Vector2I::new(mm(x), mm(y)),
+                nets[n],
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+            );
+        }
+
+        auto_assign_zone_priorities(&mut board);
+
+        assert!(board[ib].assigned_priority() > board[ia].assigned_priority());
+    }
+
+    #[test]
+    fn auto_priority_multi_layer_aggregate() {
+        let (mut board, nets) = board_with_nets(&["NetA", "NetB"]);
+        board.set_copper_layer_count(2);
+        let both = Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu]);
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(20.0), mm(20.0)),
+        );
+        a.set_layer_set(&MutEnv::detached(), both.clone());
+        a.base.net = nets[0];
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(5.0), mm(5.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.set_layer_set(&MutEnv::detached(), both);
+        b.base.net = nets[1];
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        for (x, y, n) in [
+            (8.0, 8.0, 0),
+            (12.0, 8.0, 0),
+            (8.0, 12.0, 1),
+            (10.0, 10.0, 1),
+            (12.0, 12.0, 1),
+        ] {
+            add_via(
+                &mut board,
+                Vector2I::new(mm(x), mm(y)),
+                nets[n],
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+            );
+        }
+
+        auto_assign_zone_priorities(&mut board);
+
+        assert!(board[ib].assigned_priority() > board[ia].assigned_priority());
+    }
+
+    #[test]
+    fn auto_priority_same_net_equal_priority() {
+        let (mut board, nets) = board_with_nets(&["SharedNet"]);
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(30.0), mm(30.0)),
+        );
+        a.base.net = nets[0];
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(5.0), mm(5.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.base.net = nets[0];
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        add_via(
+            &mut board,
+            Vector2I::new(mm(8.0), mm(8.0)),
+            nets[0],
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+        );
+        add_via(
+            &mut board,
+            Vector2I::new(mm(12.0), mm(12.0)),
+            nets[0],
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+        );
+
+        auto_assign_zone_priorities(&mut board);
+
+        // Same-net overlapping zones are cooperative and must share equal priority
+        assert_eq!(board[ia].assigned_priority(), board[ib].assigned_priority());
+    }
+
+    #[test]
+    fn auto_priority_equal_area_no_change() {
+        let (mut board, nets) = board_with_nets(&["NetA", "NetB"]);
+
+        // Two identical-sized overlapping zones with no items in the overlap
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(20.0), mm(20.0)),
+        );
+        a.base.net = nets[0];
+        a.priority = 50;
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(20.0), mm(20.0)),
+        );
+        b.base.net = nets[1];
+        b.priority = 50;
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+
+        let changed = auto_assign_zone_priorities(&mut board);
+
+        // Equal areas, no items: no ordering evidence, priorities must not change
+        assert!(!changed);
+        assert_eq!(board[ia].assigned_priority(), 50);
+        assert_eq!(board[ib].assigned_priority(), 50);
+    }
+
+    #[test]
+    fn auto_priority_same_net_group_inherits_edge() {
+        let (mut board, nets) = board_with_nets(&["GND", "VCC"]);
+
+        // Large GND zone (A) overlaps with small VCC zone (C).
+        // Small GND zone (B) overlaps with A but NOT with C.
+        // A should beat C (more items), and B should inherit A's priority.
+        let mut a = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(0, 0),
+            Vector2I::new(mm(40.0), mm(40.0)),
+        );
+        a.base.net = nets[0];
+        let mut b = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(25.0), mm(25.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        b.base.net = nets[0];
+        let mut c = create_square_zone(
+            &mut board,
+            PcbLayerId::FCu,
+            Vector2I::new(mm(5.0), mm(5.0)),
+            Vector2I::new(mm(10.0), mm(10.0)),
+        );
+        c.base.net = nets[1];
+        let ia = board.add_zone(a, AddMode::Insert);
+        let ib = board.add_zone(b, AddMode::Insert);
+        let ic = board.add_zone(c, AddMode::Insert);
+
+        // GND items in the A/C overlap region
+        for i in 0..4 {
+            add_via(
+                &mut board,
+                Vector2I::new(mm(8.0 + f64::from(i) * 2.0), mm(10.0)),
+                nets[0],
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+            );
+        }
+
+        add_via(
+            &mut board,
+            Vector2I::new(mm(10.0), mm(8.0)),
+            nets[1],
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+        );
+
+        auto_assign_zone_priorities(&mut board);
+
+        // A beats C because GND has more items in the overlap
+        assert!(board[ia].assigned_priority() > board[ic].assigned_priority());
+
+        // B shares A's priority because they are same-net and overlap
+        assert_eq!(board[ia].assigned_priority(), board[ib].assigned_priority());
+    }
+
+    /// `ZONE::GetLocalClearance()` without a source holds a value for a rule area (0); the
+    /// overload with a source is empty then.
+    #[test]
+    fn local_clearance_overloads() {
+        let mut zone = Zone::default();
+        zone.zone_clearance = 300_000;
+        assert_eq!(zone.local_clearance(), Some(300_000));
+        assert_eq!(
+            zone.local_clearance_with_source(true),
+            Some((300_000, Some("zone".to_string())))
+        );
+        zone.is_rule_area = true;
+        assert_eq!(zone.local_clearance(), Some(0));
+        assert_eq!(zone.local_clearance_with_source(true), None);
+    }
+
+    /// `SetFillMode( COPPER_THIEVING )` clears the net and clamps the layer set; `SetLayerSet`
+    /// keeps a thieving zone on one layer and resets the fills of a changed set.
+    #[test]
+    fn copper_thieving_and_layer_set() {
+        let mut zone = Zone::default();
+        let env = MutEnv::detached();
+        zone.base.net = NetCode(3);
+        zone.set_layer_set(&env, Lset::from_layers(&[PcbLayerId::BCu, PcbLayerId::FCu]));
+        assert_eq!(zone.fill.filled_polys_list.len(), 2);
+        zone.fill.set_filled_polys_list(
+            PcbLayerId::FCu,
+            &square(Vector2I::new(0, 0), Vector2I::new(10, 10)),
+        );
+        zone.fill.set_is_filled(true);
+        zone.fill.need_refill = false;
+
+        zone.set_fill_mode(ZoneFillMode::CopperThieving);
+        assert!(zone.need_refill());
+        assert_eq!(zone.base.net, NetCode::UNCONNECTED);
+        assert_eq!(zone.layer_set, Lset::from_layers(&[PcbLayerId::FCu]));
+        assert!(!zone.is_filled());
+        assert!(zone.fill.filled_polys_list[&PcbLayerId::FCu].is_empty());
+
+        zone.set_layer_set(
+            &env,
+            Lset::from_layers(&[PcbLayerId::BCu, PcbLayerId::In1Cu]),
+        );
+        assert_eq!(zone.layer_set, Lset::from_layers(&[PcbLayerId::In1Cu]));
+        assert_eq!(zone.filter_net_code(NetCode(2)), NetCode::UNCONNECTED);
+
+        // An empty set is ignored.
+        zone.set_layer_set(&env, Lset::new());
+        assert_eq!(zone.layer_set, Lset::from_layers(&[PcbLayerId::In1Cu]));
     }
 }

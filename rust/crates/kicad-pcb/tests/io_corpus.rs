@@ -83,6 +83,11 @@ const GOLDEN_SET: &[(&str, &str)] = &[
         "qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb",
     ),
     ("via_dangling", "qa/data/pcbnew/via_dangling.kicad_pcb"),
+    (
+        "via_stack_track_width",
+        "qa/data/pcbnew/via_stack_track_width.kicad_pcb",
+    ),
+    ("backdrill", "qa/data/pcbnew/issue25021/backdrill.kicad_pcb"),
 ];
 
 fn golden_dir() -> PathBuf {
@@ -381,81 +386,93 @@ fn strict(stem: &str) {
 // (`expected.txt`, column 4); remove the #[ignore] once `golden_staging` reports it identical.
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: model stub EDA_TEXT::ResolveFont (parse)"]
 fn strict_issue4257() {
     strict("issue4257");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-06 (footprint); PCBIO-11 (embedded_fonts)"]
 fn strict_custom_pads() {
     strict("custom_pads");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-06 (footprint); PCBIO-11 (embedded_fonts)"]
 fn strict_tracks_arcs_vias() {
     strict("tracks_arcs_vias");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: model stub EDA_TEXT::ResolveFont (parse)"]
 fn strict_issue7241() {
     strict("issue7241");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-06 (footprint); PCBIO-11 (embedded_fonts)"]
 fn strict_issue10906() {
     strict("issue10906");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-06 (footprint); PCBIO-11 (embedded_fonts)"]
 fn strict_issue14412() {
     strict("issue14412");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-11 (embedded_fonts); model stub EDA_SHAPE::Compare (format)"]
 fn strict_sliver() {
     strict("sliver");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: model stub EDA_TEXT::ResolveFont (parse)"]
 fn strict_groups_load_save() {
     strict("groups_load_save");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: model stub EDA_TEXT::ResolveFont (parse)"]
 fn strict_graphics_load_save_v20240108() {
     strict("graphics_load_save_v20240108");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-11 (embedded_fonts)"]
 fn strict_issue18839() {
     strict("issue18839");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-06 (footprint); PCBIO-11 (embedded_fonts); model stub EDA_SHAPE::Compare (format)"]
 fn strict_padstacks_complex() {
     strict("padstacks_complex");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-08 (zone); PCBIO-11 (embedded_fonts)"]
 fn strict_empty_zone() {
     strict("EmptyZone");
 }
 
 #[test]
-#[ignore = "pending: see tests/golden/io_corpus/expected.txt"]
+#[ignore = "pending: PCBIO-11 (embedded_fonts)"]
 fn strict_via_dangling() {
     strict("via_dangling");
+}
+
+#[test]
+#[ignore = "pending: PCBIO-11 (embedded_fonts)"]
+fn strict_via_stack_track_width() {
+    strict("via_stack_track_width");
+}
+
+#[test]
+#[ignore = "pending: PCBIO-11 (embedded_fonts)"]
+fn strict_backdrill() {
+    strict("backdrill");
 }
 
 // ---- helper self-tests ----------------------------------------------------------------------

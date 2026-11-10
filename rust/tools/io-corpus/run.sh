@@ -70,9 +70,11 @@ run_test() {
 
 case "$mode" in
 all)
+    rm -f "$out/scoreboard.md"
     run_test
     ;;
 golden)
+    rm -f "$out/scoreboard.md"
     IO_CORPUS_UPDATE_GOLDEN=1 run_test
     ;;
 board)

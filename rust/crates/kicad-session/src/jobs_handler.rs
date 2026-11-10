@@ -44,10 +44,8 @@ use crate::jobs::{
 use crate::reporter::Reporter;
 use crate::session::{Session, file_dir, file_full_name, file_stem};
 
-/// `SEXPR_BOARD_FILE_VERSION` of `pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.h` (the current
-/// board file format version). Used by `JobUpgrade`; replace by the `kicad_pcb::io` constant
-/// when the writer lands.
-pub const SEXPR_BOARD_FILE_VERSION: i32 = 20261031;
+/// `SEXPR_BOARD_FILE_VERSION` (the current board file format version), used by `JobUpgrade`.
+pub use kicad_pcb::io::SEXPR_BOARD_FILE_VERSION;
 
 /// A produced file: the path the C++ would write it to and its contents.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

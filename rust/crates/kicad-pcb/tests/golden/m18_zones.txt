@@ -1,0 +1,1005 @@
+fp|01|translate=118000000,108000000
+fp|01|rotate=30
+fp|01|scale=1.2,0.80000000000000004
+fp|01|layer=F.Cu
+fp|01|flipped=false
+fp|01|uuid=f0000000-0000-0000-0000-000000000001
+fp|02|translate=160000000,120000000
+fp|02|rotate=-90
+fp|02|scale=1,1
+fp|02|layer=B.Cu
+fp|02|flipped=true
+fp|02|uuid=f0000000-0000-0000-0000-000000000002
+zone|01|parent=none
+zone|01|net=1
+zone|01|layers=00000000000000000000000000000001
+zone|01|priority=0
+zone|01|rule_area=false
+zone|01|teardrop=0
+zone|01|smoothing=2
+zone|01|radius=1000000
+zone|01|min_thickness=250000
+zone|01|border_style=2
+zone|01|border_pitch=500000
+zone|01|clearance=300000
+zone|01|name=""
+zone|01|uuid=e0000000-0000-0000-0000-000000000001
+zone|01|keepout=false,true,true,true,false
+zone|01|lib_outline=P(1 {C(closed w=0 n=4 [100000000,100000000 120000000,100000000 120000000,110000000 100000000,110000000])})
+zone|01|first_layer=0
+zone|01|layer=0
+zone|01|on_copper=true
+zone|01|bbox=100000000,100000000,20000000,10000000
+zone|01|board_outline=P(1 {C(closed w=0 n=4 [100000000,100000000 120000000,100000000 120000000,110000000 100000000,110000000])})
+zone|01|hatch=n=116 #7e9987f0ae9f78d5
+zone|01|position=100000000,100000000
+zone|01|local_clearance=300000
+zone|01|local_clearance_src=300000
+zone|01|friendly="Copper Zone"
+zone|01|desc="Zone [GND] on F.Cu, priority 0"
+zone|01|outline_area=200000000000000
+zone|01|num_corners=4
+zone|01|smoothed.F.Cu=true #ad28028f0486ca5c
+zone|01|apron.F.Cu=#3f6955e53a8baa20
+zone|01|smoothed_bo.F.Cu=#ad28028f0486ca5c
+zone|01|tso.F.Cu=#c08eba4a4119b564
+zone|01|tso0.F.Cu=#ad28028f0486ca5c
+zone|01|interacting.F.Cu=02 08 | 09
+zone|01|hits=1100,1100,0000,1100,1100,0000,
+zone|01|corner_hit=true 0,0,1
+zone|01|edge_hit=true 0,0,0
+zone|01|hit_rect=11010
+zone|01|hit_poly=11001
+zone|01|higher_priority=00000000000000
+zone|01|equal=10000000000000
+zone|01|move.outline=#1fb10c9427d1c5ca
+zone|01|move.hatch=n=116 #0eae03b911a678cb
+zone|01|move.bbox=101000000,98000000,20000000,10000000
+zone|01|rotate.outline=#c949dc1f81b58e7c
+zone|01|rotate.hatch=n=80 #76c8b0dc31d2488f
+zone|01|rotate.bbox=98839746,95669873,22320508,18660254
+zone|01|flip.outline=#46b7d90eb94707e0
+zone|01|flip.layers=00000000000000000000000000000004
+zone|01|flip.hatch=n=116 #62b1954b039e6aa5
+zone|01|flip.hatch_orientation=180
+zone|01|flip.bbox=100000000,100000000,20000000,10000000
+zone|01|flip.fills=B.Cu:#46b7d90eb94707e0 
+zone|01|mirror.outline=#15610c31f97e41e0
+zone|01|mirror.hatch=n=116 #e3dadb2f11c846b9
+zone|01|mirror.layers=00000000000000000000000000000001
+zone|01|fill.has_before=true
+zone|01|fill.hash_before=00000000000000000000000000000000
+zone|01|fill.hash=96B43F55BA2D286BEB01F4B147E4A423
+zone|01|fill.area=200000000000000
+zone|01|fill.tsp=#04358955c3fbf160 #aece32ff012b35c9 #9aef60303fc2a3ef #bc18c4babb4d1978
+zone|01|fill.solid=#04358955c3fbf160
+zone|01|fill.effective=5 #04358955c3fbf160
+zone|01|fill.effective_other=8
+zone|01|fill.hit_filled=true
+zone|01|fill.unfill=true false true 0
+zone|01|fill.unfill_again=false
+zone|02|parent=none
+zone|02|net=1
+zone|02|layers=00000000000000000000000000000001
+zone|02|priority=0
+zone|02|rule_area=false
+zone|02|teardrop=0
+zone|02|smoothing=1
+zone|02|radius=800000
+zone|02|min_thickness=250000
+zone|02|border_style=1
+zone|02|border_pitch=1000000
+zone|02|clearance=300000
+zone|02|name="second"
+zone|02|uuid=e0000000-0000-0000-0000-000000000002
+zone|02|keepout=false,true,true,true,false
+zone|02|lib_outline=P(1 {C(closed w=0 n=4 [115000000,105000000 130000000,105000000 130000000,115000000 115000000,115000000])})
+zone|02|first_layer=0
+zone|02|layer=0
+zone|02|on_copper=true
+zone|02|bbox=115000000,105000000,15000000,10000000
+zone|02|board_outline=P(1 {C(closed w=0 n=4 [115000000,105000000 130000000,105000000 130000000,115000000 115000000,115000000])})
+zone|02|hatch=n=12 #b135b392ecaec018
+zone|02|position=115000000,105000000
+zone|02|local_clearance=300000
+zone|02|local_clearance_src=300000
+zone|02|friendly="Copper Zone"
+zone|02|desc="Zone 'second' [GND] on F.Cu, priority 0"
+zone|02|outline_area=150000000000000
+zone|02|num_corners=4
+zone|02|smoothed.F.Cu=true #94fa97370d615bc2
+zone|02|apron.F.Cu=#1b7340436575ec81
+zone|02|smoothed_bo.F.Cu=#790b73b504d30282
+zone|02|tso.F.Cu=#06d2ed19eda9f821
+zone|02|tso0.F.Cu=#68db8ccb4b2d97fa
+zone|02|interacting.F.Cu=01 | 03
+zone|02|hits=1100,1100,0000,1100,1100,0000,
+zone|02|corner_hit=true 0,0,1
+zone|02|edge_hit=true 0,0,0
+zone|02|hit_rect=11010
+zone|02|hit_poly=11001
+zone|02|higher_priority=10000000000000
+zone|02|equal=01000000000000
+zone|02|move.outline=#0f9a3d33ec84ab44
+zone|02|move.hatch=n=12 #69c6cf521be65d32
+zone|02|move.bbox=116000000,103000000,15000000,10000000
+zone|02|rotate.outline=#4720286e094dbe45
+zone|02|rotate.hatch=n=10 #20ecd49b8d2d2ebd
+zone|02|rotate.bbox=113504809,101919873,17990382,16160254
+zone|02|flip.outline=#70f91280cbcf012c
+zone|02|flip.layers=00000000000000000000000000000004
+zone|02|flip.hatch=n=12 #21de93ca8898992c
+zone|02|flip.hatch_orientation=180
+zone|02|flip.bbox=115000000,105000000,15000000,10000000
+zone|02|flip.fills=B.Cu:#70f91280cbcf012c 
+zone|02|mirror.outline=#6797e64ff93213d4
+zone|02|mirror.hatch=n=12 #a5ce5c837347a76c
+zone|02|mirror.layers=00000000000000000000000000000001
+zone|02|fill.has_before=true
+zone|02|fill.hash_before=00000000000000000000000000000000
+zone|02|fill.hash=C694F7587474A121844D135C2D5BD6C7
+zone|02|fill.area=150000000000000
+zone|02|fill.tsp=#e926983fb3e130a0 #70341c8028095e53 #06eba61f1ba780e3 #a19ab4b2f9369628
+zone|02|fill.solid=#e926983fb3e130a0
+zone|02|fill.effective=5 #e926983fb3e130a0
+zone|02|fill.effective_other=8
+zone|02|fill.hit_filled=true
+zone|02|fill.unfill=true false true 0
+zone|02|fill.unfill_again=false
+zone|03|parent=none
+zone|03|net=2
+zone|03|layers=00000000000000000000000000000001
+zone|03|priority=5
+zone|03|rule_area=false
+zone|03|teardrop=0
+zone|03|smoothing=0
+zone|03|radius=0
+zone|03|min_thickness=250000
+zone|03|border_style=2
+zone|03|border_pitch=500000
+zone|03|clearance=300000
+zone|03|name=""
+zone|03|uuid=e0000000-0000-0000-0000-000000000003
+zone|03|keepout=false,true,true,true,false
+zone|03|lib_outline=P(1 {C(closed w=0 n=4 [125000000,100000000 135000000,100000000 135000000,108000000 125000000,108000000])})
+zone|03|first_layer=0
+zone|03|layer=0
+zone|03|on_copper=true
+zone|03|bbox=125000000,100000000,10000000,8000000
+zone|03|board_outline=P(1 {C(closed w=0 n=4 [125000000,100000000 135000000,100000000 135000000,108000000 125000000,108000000])})
+zone|03|hatch=n=68 #6249c37dfac2fc85
+zone|03|position=125000000,100000000
+zone|03|local_clearance=300000
+zone|03|local_clearance_src=300000
+zone|03|friendly="Copper Zone"
+zone|03|desc="Zone [VCC] on F.Cu, priority 5"
+zone|03|outline_area=80000000000000
+zone|03|num_corners=4
+zone|03|smoothed.F.Cu=true #ea58dc73cd3d725c
+zone|03|apron.F.Cu=#ea58dc73cd3d725c
+zone|03|smoothed_bo.F.Cu=#325e790ee6c61a60
+zone|03|tso.F.Cu=#3c36befda4ae6c1a
+zone|03|tso0.F.Cu=#325e790ee6c61a60
+zone|03|interacting.F.Cu=| 02
+zone|03|hits=1100,1100,0000,1100,1100,0000,
+zone|03|corner_hit=true 0,0,1
+zone|03|edge_hit=true 0,0,0
+zone|03|hit_rect=11010
+zone|03|hit_poly=11001
+zone|03|higher_priority=11011011011111
+zone|03|equal=00100000000000
+zone|03|move.outline=#b5772218f28879ce
+zone|03|move.hatch=n=68 #1ebd0a791b3c112f
+zone|03|move.bbox=126000000,98000000,10000000,8000000
+zone|03|rotate.outline=#8cc4d872f684c728
+zone|03|rotate.hatch=n=56 #3b3a717f2b6068cf
+zone|03|rotate.bbox=123669873,98035898,12660254,11928204
+zone|03|flip.outline=#2436c02d07dd441c
+zone|03|flip.layers=00000000000000000000000000000004
+zone|03|flip.hatch=n=68 #80365c467877507d
+zone|03|flip.hatch_orientation=180
+zone|03|flip.bbox=125000000,100000000,10000000,8000000
+zone|03|flip.fills=B.Cu:#2436c02d07dd441c 
+zone|03|mirror.outline=#62e73a9af2503124
+zone|03|mirror.hatch=n=68 #f1dce0922552e885
+zone|03|mirror.layers=00000000000000000000000000000001
+zone|03|fill.has_before=true
+zone|03|fill.hash_before=00000000000000000000000000000000
+zone|03|fill.hash=9D96CE94B7A4E96C32BCC0BA2D1A0BFE
+zone|03|fill.area=80000000000000
+zone|03|fill.tsp=#6ee3f193893099e4 #feaf247dc74a6199 #0437019f08371605 #0ad3cf50e5e65710
+zone|03|fill.solid=#6ee3f193893099e4
+zone|03|fill.effective=5 #6ee3f193893099e4
+zone|03|fill.effective_other=8
+zone|03|fill.hit_filled=true
+zone|03|fill.unfill=true false true 0
+zone|03|fill.unfill_again=false
+zone|04|parent=none
+zone|04|net=1
+zone|04|layers=00000000000000000000000000000014
+zone|04|priority=0
+zone|04|rule_area=false
+zone|04|teardrop=0
+zone|04|smoothing=2
+zone|04|radius=500000
+zone|04|min_thickness=300000
+zone|04|border_style=2
+zone|04|border_pitch=1000000
+zone|04|clearance=250000
+zone|04|name=""
+zone|04|uuid=e0000000-0000-0000-0000-000000000004
+zone|04|keepout=false,true,true,true,false
+zone|04|lib_outline=P(1 {C(closed w=0 n=6 [100000000,120000000 120000000,120000000 120000000,125000000 110000000,125000000 110000000,135000000 100000000,135000000]) hole C(closed w=0 n=4 [102000000,122000000 105000000,122000000 105000000,124000000 102000000,124000000])})
+zone|04|first_layer=4
+zone|04|layer=-1
+zone|04|on_copper=true
+zone|04|bbox=100000000,120000000,20000000,15000000
+zone|04|board_outline=P(1 {C(closed w=0 n=6 [100000000,120000000 120000000,120000000 120000000,125000000 110000000,125000000 110000000,135000000 100000000,135000000]) hole C(closed w=0 n=4 [102000000,122000000 105000000,122000000 105000000,124000000 102000000,124000000])})
+zone|04|hatch=n=77 #d1acc269aca6afb1
+zone|04|position=100000000,120000000
+zone|04|local_clearance=250000
+zone|04|local_clearance_src=250000
+zone|04|friendly="Copper Zone"
+zone|04|desc="Zone [GND] on B.Cu and In1.Cu, priority 0"
+zone|04|outline_area=194000000000000
+zone|04|num_corners=10
+zone|04|smoothed.B.Cu=true #3946ddd9309aa77e
+zone|04|apron.B.Cu=#3946ddd9309aa77e
+zone|04|smoothed_bo.B.Cu=#3946ddd9309aa77e
+zone|04|tso.B.Cu=#97a40259f919639f
+zone|04|tso0.B.Cu=#177c9a9df64f8ebd
+zone|04|interacting.B.Cu=|
+zone|04|smoothed.In1.Cu=true #3946ddd9309aa77e
+zone|04|apron.In1.Cu=#3946ddd9309aa77e
+zone|04|smoothed_bo.In1.Cu=#3946ddd9309aa77e
+zone|04|tso.In1.Cu=#97a40259f919639f
+zone|04|tso0.In1.Cu=#177c9a9df64f8ebd
+zone|04|interacting.In1.Cu=|
+zone|04|hits=1100,1100,1100,1100,1100,0000,
+zone|04|corner_hit=true 0,0,1
+zone|04|edge_hit=true 0,0,0
+zone|04|hit_rect=11110
+zone|04|hit_poly=11011
+zone|04|higher_priority=11000000000000
+zone|04|equal=00010000000000
+zone|04|move.outline=#220b4df92c98062d
+zone|04|move.hatch=n=77 #9be28248930da94d
+zone|04|move.bbox=101000000,118000000,20000000,15000000
+zone|04|rotate.outline=#a351322dbd23729e
+zone|04|rotate.hatch=n=58 #bc05b6e69bd64e3b
+zone|04|rotate.bbox=97589746,116004809,19820508,22990382
+zone|04|flip.outline=#47f7fe8570ee9a91
+zone|04|flip.layers=00000000000000000000000000000041
+zone|04|flip.hatch=n=84 #6343593a8c60a5c2
+zone|04|flip.hatch_orientation=180
+zone|04|flip.bbox=100000000,120000000,20000000,15000000
+zone|04|flip.fills=F.Cu:#1c01f81b04e3a012 In2.Cu:#47f7fe8570ee9a91 
+zone|04|mirror.outline=#44d98dd25324cb55
+zone|04|mirror.hatch=n=84 #790c85e56dcf021e
+zone|04|mirror.layers=00000000000000000000000000000014
+zone|04|fill.has_before=true
+zone|04|fill.hash_before=00000000000000000000000000000000
+zone|04|fill.hash=1BCDA23AFDA44D4CF16FC4912D05F865
+zone|04|fill.area=194000000000000
+zone|04|fill.tsp=#31de0d1d5065247d #e87a7b1c5033a4fe #f6aef3121dc9a07b #24225835a528bbb1
+zone|04|fill.solid=#31de0d1d5065247d
+zone|04|fill.effective=5 #31de0d1d5065247d
+zone|04|fill.effective_other=8
+zone|04|fill.hit_filled=false
+zone|04|fill.unfill=true false true 0
+zone|04|fill.unfill_again=false
+zone|05|parent=none
+zone|05|net=0
+zone|05|layers=00000000000000000000000000000005
+zone|05|priority=0
+zone|05|rule_area=true
+zone|05|teardrop=0
+zone|05|smoothing=0
+zone|05|radius=0
+zone|05|min_thickness=250000
+zone|05|border_style=2
+zone|05|border_pitch=500000
+zone|05|clearance=0
+zone|05|name="KO"
+zone|05|uuid=e0000000-0000-0000-0000-000000000005
+zone|05|keepout=true,true,true,true,false
+zone|05|lib_outline=P(1 {C(closed w=0 n=3 [140000000,100000000 150000000,100000000 145000000,110000000])})
+zone|05|first_layer=0
+zone|05|layer=-1
+zone|05|on_copper=true
+zone|05|bbox=140000000,100000000,10000000,10000000
+zone|05|board_outline=P(1 {C(closed w=0 n=3 [140000000,100000000 150000000,100000000 145000000,110000000])})
+zone|05|hatch=n=55 #1a83acc359588dba
+zone|05|position=140000000,100000000
+zone|05|local_clearance=0
+zone|05|local_clearance_src=none
+zone|05|friendly="Rule Area"
+zone|05|desc="Rule area 'KO' on F.Cu and B.Cu"
+zone|05|outline_area=50000000000000
+zone|05|num_corners=3
+zone|05|smoothed.F.Cu=true #7eb3815499faf1d8
+zone|05|apron.F.Cu=#1c01f81b04e3a012
+zone|05|smoothed_bo.F.Cu=#7eb3815499faf1d8
+zone|05|tso.F.Cu=#06d8e17ba2c7bb86
+zone|05|tso0.F.Cu=#bb86b216e908efdc
+zone|05|interacting.F.Cu=|
+zone|05|smoothed.B.Cu=true #7eb3815499faf1d8
+zone|05|apron.B.Cu=#1c01f81b04e3a012
+zone|05|smoothed_bo.B.Cu=#7eb3815499faf1d8
+zone|05|tso.B.Cu=#06d8e17ba2c7bb86
+zone|05|tso0.B.Cu=#bb86b216e908efdc
+zone|05|interacting.B.Cu=|
+zone|05|hits=1100,1100,0010,1100,1110,0000,
+zone|05|corner_hit=true 0,0,1
+zone|05|edge_hit=true 0,0,0
+zone|05|hit_rect=11010
+zone|05|hit_poly=11001
+zone|05|higher_priority=11010000000000
+zone|05|equal=00001000000000
+zone|05|move.outline=#2183196d70916cb0
+zone|05|move.hatch=n=55 #65da185d70acada1
+zone|05|move.bbox=141000000,98000000,10000000,10000000
+zone|05|rotate.outline=#a742aa0a7fc4fa0f
+zone|05|rotate.hatch=n=57 #55816118b6f3775c
+zone|05|rotate.bbox=138169873,98169873,9330127,11160254
+zone|05|flip.outline=#384ce7b27e1899b8
+zone|05|flip.layers=00000000000000000000000000000005
+zone|05|flip.hatch=n=55 #fd0c56d676774c3e
+zone|05|flip.hatch_orientation=180
+zone|05|flip.bbox=140000000,100000000,10000000,10000000
+zone|05|flip.fills=F.Cu:#1c01f81b04e3a012 B.Cu:#384ce7b27e1899b8 
+zone|05|mirror.outline=#1a830b7839a9a701
+zone|05|mirror.hatch=n=55 #f10df88db662ac35
+zone|05|mirror.layers=00000000000000000000000000000005
+zone|05|fill.has_before=true
+zone|05|fill.hash_before=00000000000000000000000000000000
+zone|05|fill.hash=7779AE37CABA5A93A455EC4CB857E4EE
+zone|05|fill.area=50000000000000
+zone|05|fill.tsp=#7eb3815499faf1d8 #5a716c2010ee982f #56e2e1893918613a #676c3903314972a8
+zone|05|fill.solid=#7eb3815499faf1d8
+zone|05|fill.effective=5 #7eb3815499faf1d8
+zone|05|fill.effective_other=5
+zone|05|fill.hit_filled=true
+zone|05|fill.unfill=true false true 0
+zone|05|fill.unfill_again=false
+zone|06|parent=none
+zone|06|net=2
+zone|06|layers=00000000000000000000000000000001
+zone|06|priority=0
+zone|06|rule_area=false
+zone|06|teardrop=2
+zone|06|smoothing=0
+zone|06|radius=0
+zone|06|min_thickness=25400
+zone|06|border_style=2
+zone|06|border_pitch=500000
+zone|06|clearance=0
+zone|06|name=""
+zone|06|uuid=e0000000-0000-0000-0000-000000000006
+zone|06|keepout=false,true,true,true,false
+zone|06|lib_outline=P(1 {C(closed w=0 n=4 [126000000,109000000 128000000,109500000 128000000,110500000 126000000,111000000])})
+zone|06|first_layer=0
+zone|06|layer=0
+zone|06|on_copper=true
+zone|06|bbox=126000000,109000000,2000000,2000000
+zone|06|board_outline=P(1 {C(closed w=0 n=4 [126000000,109000000 128000000,109500000 128000000,110500000 126000000,111000000])})
+zone|06|hatch=n=18 #18b0dc894d581a07
+zone|06|position=126000000,109000000
+zone|06|local_clearance=0
+zone|06|local_clearance_src=0
+zone|06|friendly="Teardrop Area"
+zone|06|desc="Teardrop [VCC] on F.Cu"
+zone|06|outline_area=3000000000000
+zone|06|num_corners=4
+zone|06|smoothed.F.Cu=true #85bfd88aed6c285f
+zone|06|apron.F.Cu=#85bfd88aed6c285f
+zone|06|smoothed_bo.F.Cu=#85bfd88aed6c285f
+zone|06|tso.F.Cu=#9dd55292c02349f4
+zone|06|tso0.F.Cu=#85bfd88aed6c285f
+zone|06|interacting.F.Cu=| 02
+zone|06|hits=1100,1100,0000,1100,1100,0000,
+zone|06|corner_hit=true 0,0,1
+zone|06|edge_hit=true 0,0,0
+zone|06|hit_rect=11010
+zone|06|hit_poly=11001
+zone|06|higher_priority=11111011111111
+zone|06|equal=00000100000000
+zone|06|move.outline=#231ce4ee32fb04bb
+zone|06|move.hatch=n=18 #a78aa01b4abc4063
+zone|06|move.bbox=127000000,107000000,2000000,2000000
+zone|06|rotate.outline=#5d903ffe84e858ae
+zone|06|rotate.hatch=n=18 #d153c1a52cb16d21
+zone|06|rotate.bbox=125633975,109066987,2482050,2299038
+zone|06|flip.outline=#d978d8a257be5263
+zone|06|flip.layers=00000000000000000000000000000004
+zone|06|flip.hatch=n=18 #6fb2ad23cf5c38ba
+zone|06|flip.hatch_orientation=180
+zone|06|flip.bbox=126000000,109000000,2000000,2000000
+zone|06|flip.fills=B.Cu:#d978d8a257be5263 
+zone|06|mirror.outline=#0027223e4f47656b
+zone|06|mirror.hatch=n=18 #8064d2d4244e78af
+zone|06|mirror.layers=00000000000000000000000000000001
+zone|06|fill.has_before=true
+zone|06|fill.hash_before=00000000000000000000000000000000
+zone|06|fill.hash=6E74C2F025F6318D0262C4C34A1C79A8
+zone|06|fill.area=3000000000000
+zone|06|fill.tsp=#530f051a7efb4c1b #77389f075579563e #4a43a0296f0add8a #583a965d86c670fc
+zone|06|fill.solid=#530f051a7efb4c1b
+zone|06|fill.effective=5 #530f051a7efb4c1b
+zone|06|fill.effective_other=8
+zone|06|fill.hit_filled=true
+zone|06|fill.unfill=true false true 0
+zone|06|fill.unfill_again=false
+zone|07|parent=none
+zone|07|net=0
+zone|07|layers=00000000000000000000000000000002
+zone|07|priority=0
+zone|07|rule_area=false
+zone|07|teardrop=0
+zone|07|smoothing=0
+zone|07|radius=0
+zone|07|min_thickness=250000
+zone|07|border_style=2
+zone|07|border_pitch=500000
+zone|07|clearance=200000
+zone|07|name=""
+zone|07|uuid=e0000000-0000-0000-0000-000000000007
+zone|07|keepout=false,true,true,true,false
+zone|07|lib_outline=P(1 {C(closed w=0 n=4 [100000000,140000000 108000000,140000000 108000000,146000000 100000000,146000000])})
+zone|07|first_layer=1
+zone|07|layer=1
+zone|07|on_copper=false
+zone|07|bbox=100000000,140000000,8000000,6000000
+zone|07|board_outline=P(1 {C(closed w=0 n=4 [100000000,140000000 108000000,140000000 108000000,146000000 100000000,146000000])})
+zone|07|hatch=n=52 #17c151321088a445
+zone|07|position=100000000,140000000
+zone|07|local_clearance=200000
+zone|07|local_clearance_src=200000
+zone|07|friendly="Non-copper Zone"
+zone|07|desc="Zone [<no net>] on F.Mask, priority 0"
+zone|07|outline_area=48000000000000
+zone|07|num_corners=4
+zone|07|smoothed.F.Mask=true #c16788e3831d6cb0
+zone|07|apron.F.Mask=#c16788e3831d6cb0
+zone|07|smoothed_bo.F.Mask=#c16788e3831d6cb0
+zone|07|tso.F.Mask=#17b2cde81c0e2dba
+zone|07|tso0.F.Mask=#c16788e3831d6cb0
+zone|07|interacting.F.Mask=|
+zone|07|hits=1100,1100,0000,1100,1100,0000,
+zone|07|corner_hit=true 0,0,1
+zone|07|edge_hit=true 0,0,0
+zone|07|hit_rect=11010
+zone|07|hit_poly=11001
+zone|07|higher_priority=11011000000000
+zone|07|equal=00000010000000
+zone|07|move.outline=#0ea441d80caec4c8
+zone|07|move.hatch=n=52 #60c19a2448795c8d
+zone|07|move.bbox=101000000,138000000,8000000,6000000
+zone|07|rotate.outline=#62823a7baa5338ed
+zone|07|rotate.hatch=n=52 #65b99fce654afce8
+zone|07|rotate.bbox=99035898,138401924,9928204,9196152
+zone|07|flip.outline=#45665be4c027b8e0
+zone|07|flip.layers=00000000000000000000000000000008
+zone|07|flip.hatch=n=52 #15d9ace3cc323519
+zone|07|flip.hatch_orientation=180
+zone|07|flip.bbox=100000000,140000000,8000000,6000000
+zone|07|flip.fills=B.Mask:#45665be4c027b8e0 
+zone|07|mirror.outline=#f2b8a4ef198e22d0
+zone|07|mirror.hatch=n=52 #1a44f5a7ea00ed31
+zone|07|mirror.layers=00000000000000000000000000000002
+zone|07|fill.has_before=true
+zone|07|fill.hash_before=00000000000000000000000000000000
+zone|07|fill.hash=7A953FA09F0470E25ED1ADEED67B7FCF
+zone|07|fill.area=48000000000000
+zone|07|fill.tsp=#7ab90183ebb2a2a0 #5a2a9805cfa0da0f #e0a8eb0f487e9471 #aca27fa93547365c
+zone|07|fill.solid=#7ab90183ebb2a2a0
+zone|07|fill.effective=5 #7ab90183ebb2a2a0
+zone|07|fill.effective_other=8
+zone|07|fill.hit_filled=true
+zone|07|fill.unfill=true false true 0
+zone|07|fill.unfill_again=false
+zone|08|parent=none
+zone|08|net=1
+zone|08|layers=00000000000000000000000000000001
+zone|08|priority=0
+zone|08|rule_area=false
+zone|08|teardrop=0
+zone|08|smoothing=2
+zone|08|radius=300000
+zone|08|min_thickness=250000
+zone|08|border_style=2
+zone|08|border_pitch=500000
+zone|08|clearance=300000
+zone|08|name=""
+zone|08|uuid=e0000000-0000-0000-0000-000000000008
+zone|08|keepout=false,true,true,true,false
+zone|08|lib_outline=P(1 {C(closed w=0 n=4 [105000000,103000000 107000000,103000000 107000000,105000000 105000000,105000000])})
+zone|08|first_layer=0
+zone|08|layer=0
+zone|08|on_copper=true
+zone|08|bbox=105000000,103000000,2000000,2000000
+zone|08|board_outline=P(1 {C(closed w=0 n=4 [105000000,103000000 107000000,103000000 107000000,105000000 105000000,105000000])})
+zone|08|hatch=n=12 #6616b34940b028f5
+zone|08|position=105000000,103000000
+zone|08|local_clearance=300000
+zone|08|local_clearance_src=300000
+zone|08|friendly="Copper Zone"
+zone|08|desc="Zone [GND] on F.Cu, priority 0"
+zone|08|outline_area=4000000000000
+zone|08|num_corners=4
+zone|08|smoothed.F.Cu=true #5f9bfb90cfcf9cac
+zone|08|apron.F.Cu=#5f9bfb90cfcf9cac
+zone|08|smoothed_bo.F.Cu=#5f9bfb90cfcf9cac
+zone|08|tso.F.Cu=#adebe6271e02eb9a
+zone|08|tso0.F.Cu=#5f9bfb90cfcf9cac
+zone|08|interacting.F.Cu=01 | 09
+zone|08|hits=1100,1100,0000,1100,1100,0000,
+zone|08|corner_hit=true 0,0,1
+zone|08|edge_hit=true 0,0,0
+zone|08|hit_rect=11010
+zone|08|hit_poly=11001
+zone|08|higher_priority=11011010000000
+zone|08|equal=00000001000000
+zone|08|move.outline=#b74cc851bd53a598
+zone|08|move.hatch=n=12 #ad8787238de8f885
+zone|08|move.bbox=106000000,101000000,2000000,2000000
+zone|08|rotate.outline=#35d3502fdda97194
+zone|08|rotate.hatch=n=12 #89684e36b7eff0f1
+zone|08|rotate.bbox=104633975,102633975,2732050,2732050
+zone|08|flip.outline=#8a3dfb5526f93738
+zone|08|flip.layers=00000000000000000000000000000004
+zone|08|flip.hatch=n=12 #85789ff74c890845
+zone|08|flip.hatch_orientation=180
+zone|08|flip.bbox=105000000,103000000,2000000,2000000
+zone|08|flip.fills=B.Cu:#8a3dfb5526f93738 
+zone|08|mirror.outline=#e93a0b39eff56f98
+zone|08|mirror.hatch=n=12 #85789ff74c890845
+zone|08|mirror.layers=00000000000000000000000000000001
+zone|08|fill.has_before=true
+zone|08|fill.hash_before=00000000000000000000000000000000
+zone|08|fill.hash=DB93A90E7673421EDFC170FEF935A8D0
+zone|08|fill.area=4000000000000
+zone|08|fill.tsp=#15a2960af3fb3068 #c266931aa1e9718f #e905412bc010fd93 #bbad1f8baf70ba00
+zone|08|fill.solid=#15a2960af3fb3068
+zone|08|fill.effective=5 #15a2960af3fb3068
+zone|08|fill.effective_other=8
+zone|08|fill.hit_filled=true
+zone|08|fill.unfill=true false true 0
+zone|08|fill.unfill_again=false
+zone|09|parent=none
+zone|09|net=2
+zone|09|layers=00000000000000000000000000000001
+zone|09|priority=10
+zone|09|rule_area=false
+zone|09|teardrop=0
+zone|09|smoothing=0
+zone|09|radius=0
+zone|09|min_thickness=250000
+zone|09|border_style=2
+zone|09|border_pitch=500000
+zone|09|clearance=300000
+zone|09|name=""
+zone|09|uuid=e0000000-0000-0000-0000-000000000009
+zone|09|keepout=false,true,true,true,false
+zone|09|lib_outline=P(1 {C(closed w=0 n=4 [104000000,102000000 108000000,102000000 108000000,106000000 104000000,106000000])})
+zone|09|first_layer=0
+zone|09|layer=0
+zone|09|on_copper=true
+zone|09|bbox=104000000,102000000,4000000,4000000
+zone|09|board_outline=P(1 {C(closed w=0 n=4 [104000000,102000000 108000000,102000000 108000000,106000000 104000000,106000000])})
+zone|09|hatch=n=28 #34bc9bd5f78993d9
+zone|09|position=104000000,102000000
+zone|09|local_clearance=300000
+zone|09|local_clearance_src=300000
+zone|09|friendly="Copper Zone"
+zone|09|desc="Zone [VCC] on F.Cu, priority 10"
+zone|09|outline_area=16000000000000
+zone|09|num_corners=4
+zone|09|smoothed.F.Cu=true #fcabb645b2371348
+zone|09|apron.F.Cu=#fcabb645b2371348
+zone|09|smoothed_bo.F.Cu=#fcabb645b2371348
+zone|09|tso.F.Cu=#4303a71d7814b410
+zone|09|tso0.F.Cu=#fcabb645b2371348
+zone|09|interacting.F.Cu=| 01 08
+zone|09|hits=1100,1100,0000,1100,1100,0000,
+zone|09|corner_hit=true 0,0,1
+zone|09|edge_hit=true 0,0,0
+zone|09|hit_rect=11010
+zone|09|hit_poly=11001
+zone|09|higher_priority=11111011011111
+zone|09|equal=00000000100000
+zone|09|move.outline=#3df191e698286b08
+zone|09|move.hatch=n=28 #ef863419eca90431
+zone|09|move.bbox=105000000,100000000,4000000,4000000
+zone|09|rotate.outline=#894a082405d5012c
+zone|09|rotate.hatch=n=24 #82c3ae6400bb5b8d
+zone|09|rotate.bbox=103267949,101267949,5464102,5464102
+zone|09|flip.outline=#db522ed2040f9d88
+zone|09|flip.layers=00000000000000000000000000000004
+zone|09|flip.hatch=n=28 #830cb78ccf141a49
+zone|09|flip.hatch_orientation=180
+zone|09|flip.bbox=104000000,102000000,4000000,4000000
+zone|09|flip.fills=B.Cu:#db522ed2040f9d88 
+zone|09|mirror.outline=#c74512d8188fe568
+zone|09|mirror.hatch=n=28 #830cb78ccf141a49
+zone|09|mirror.layers=00000000000000000000000000000001
+zone|09|fill.has_before=true
+zone|09|fill.hash_before=00000000000000000000000000000000
+zone|09|fill.hash=7EFC3D911EC638D36C1E1274B41517EA
+zone|09|fill.area=16000000000000
+zone|09|fill.tsp=#035224e2a3049f28 #0dab63c4850bc0b7 #0f489e10abb3e693 #4b1efc8e3a3163d8
+zone|09|fill.solid=#035224e2a3049f28
+zone|09|fill.effective=5 #035224e2a3049f28
+zone|09|fill.effective_other=8
+zone|09|fill.hit_filled=true
+zone|09|fill.unfill=true false true 0
+zone|09|fill.unfill_again=false
+zone|10|parent=none
+zone|10|net=1
+zone|10|layers=00000000000000000000000000000040
+zone|10|priority=0
+zone|10|rule_area=false
+zone|10|teardrop=0
+zone|10|smoothing=0
+zone|10|radius=0
+zone|10|min_thickness=250000
+zone|10|border_style=2
+zone|10|border_pitch=500000
+zone|10|clearance=300000
+zone|10|name=""
+zone|10|uuid=e0000000-0000-0000-0000-000000000010
+zone|10|keepout=false,true,true,true,false
+zone|10|lib_outline=P(1 {C(closed w=0 n=4 [140000000,120000000 150000000,120000000 150000000,130000000 140000000,130000000])})
+zone|10|first_layer=6
+zone|10|layer=6
+zone|10|on_copper=true
+zone|10|bbox=140000000,120000000,10000000,10000000
+zone|10|board_outline=P(1 {C(closed w=0 n=4 [140000000,120000000 150000000,120000000 150000000,130000000 140000000,130000000])})
+zone|10|hatch=n=76 #b851ad81c5a684f1
+zone|10|position=140000000,120000000
+zone|10|local_clearance=300000
+zone|10|local_clearance_src=300000
+zone|10|friendly="Copper Zone"
+zone|10|desc="Zone [GND] on In2.Cu, priority 0"
+zone|10|outline_area=100000000000000
+zone|10|num_corners=4
+zone|10|smoothed.In2.Cu=true #efaade8946710eb8
+zone|10|apron.In2.Cu=#efaade8946710eb8
+zone|10|smoothed_bo.In2.Cu=#1c01f81b04e3a012
+zone|10|tso.In2.Cu=#89b9f60e331af6c4
+zone|10|tso0.In2.Cu=#1c01f81b04e3a012
+zone|10|interacting.In2.Cu=|
+zone|10|hits=1100,1100,0000,1100,1100,0000,
+zone|10|corner_hit=true 0,0,1
+zone|10|edge_hit=true 0,0,0
+zone|10|hit_rect=11010
+zone|10|hit_poly=11001
+zone|10|higher_priority=11011011000000
+zone|10|equal=00000000011000
+zone|10|move.outline=#43c558d4b469954c
+zone|10|move.hatch=n=76 #e016b2b81bc026b1
+zone|10|move.bbox=141000000,118000000,10000000,10000000
+zone|10|rotate.outline=#ae57cc6a684c6f0c
+zone|10|rotate.hatch=n=68 #92928887232a0083
+zone|10|rotate.bbox=138169873,118169873,13660254,13660254
+zone|10|flip.outline=#4869f8bdc7c1a290
+zone|10|flip.layers=00000000000000000000000000000010
+zone|10|flip.hatch=n=76 #c51885d97bf42339
+zone|10|flip.hatch_orientation=180
+zone|10|flip.bbox=140000000,120000000,10000000,10000000
+zone|10|flip.fills=In1.Cu:#4869f8bdc7c1a290 
+zone|10|mirror.outline=#d3726aed6dd80030
+zone|10|mirror.hatch=n=76 #c51885d97bf42339
+zone|10|mirror.layers=00000000000000000000000000000040
+zone|10|fill.has_before=true
+zone|10|fill.hash_before=00000000000000000000000000000000
+zone|10|fill.hash=386E51B17A62E2507746BBE64033EB52
+zone|10|fill.area=100000000000000
+zone|10|fill.tsp=#41bcec4282a87328 #e2b617f39aef3783 #733de62913c11c63 #003c9e2beedf89d8
+zone|10|fill.solid=#41bcec4282a87328
+zone|10|fill.effective=5 #41bcec4282a87328
+zone|10|fill.effective_other=8
+zone|10|fill.hit_filled=true
+zone|10|fill.unfill=true false true 0
+zone|10|fill.unfill_again=false
+zone|11|parent=none
+zone|11|net=1
+zone|11|layers=00000000000000000000000000000004
+zone|11|priority=0
+zone|11|rule_area=false
+zone|11|teardrop=0
+zone|11|smoothing=0
+zone|11|radius=0
+zone|11|min_thickness=250000
+zone|11|border_style=2
+zone|11|border_pitch=500000
+zone|11|clearance=300000
+zone|11|name=""
+zone|11|uuid=e0000000-0000-0000-0000-000000000011
+zone|11|keepout=false,true,true,true,false
+zone|11|lib_outline=P(1 {C(closed w=0 n=4 [140000000,120000000 150000000,120000000 150000000,130000000 140000000,130000000])})
+zone|11|first_layer=2
+zone|11|layer=2
+zone|11|on_copper=true
+zone|11|bbox=140000000,120000000,10000000,10000000
+zone|11|board_outline=P(1 {C(closed w=0 n=4 [140000000,120000000 150000000,120000000 150000000,130000000 140000000,130000000])})
+zone|11|hatch=n=76 #b851ad81c5a684f1
+zone|11|position=140000000,120000000
+zone|11|local_clearance=300000
+zone|11|local_clearance_src=300000
+zone|11|friendly="Copper Zone"
+zone|11|desc="Zone [GND] on B.Cu, priority 0"
+zone|11|outline_area=100000000000000
+zone|11|num_corners=4
+zone|11|smoothed.B.Cu=true #efaade8946710eb8
+zone|11|apron.B.Cu=#efaade8946710eb8
+zone|11|smoothed_bo.B.Cu=#1c01f81b04e3a012
+zone|11|tso.B.Cu=#89b9f60e331af6c4
+zone|11|tso0.B.Cu=#1c01f81b04e3a012
+zone|11|interacting.B.Cu=|
+zone|11|hits=1100,1100,0000,1100,1100,0000,
+zone|11|corner_hit=true 0,0,1
+zone|11|edge_hit=true 0,0,0
+zone|11|hit_rect=11010
+zone|11|hit_poly=11001
+zone|11|higher_priority=11011011010000
+zone|11|equal=00000000011000
+zone|11|move.outline=#43c558d4b469954c
+zone|11|move.hatch=n=76 #e016b2b81bc026b1
+zone|11|move.bbox=141000000,118000000,10000000,10000000
+zone|11|rotate.outline=#ae57cc6a684c6f0c
+zone|11|rotate.hatch=n=68 #92928887232a0083
+zone|11|rotate.bbox=138169873,118169873,13660254,13660254
+zone|11|flip.outline=#4869f8bdc7c1a290
+zone|11|flip.layers=00000000000000000000000000000001
+zone|11|flip.hatch=n=76 #c51885d97bf42339
+zone|11|flip.hatch_orientation=180
+zone|11|flip.bbox=140000000,120000000,10000000,10000000
+zone|11|flip.fills=F.Cu:#4869f8bdc7c1a290 
+zone|11|mirror.outline=#d3726aed6dd80030
+zone|11|mirror.hatch=n=76 #c51885d97bf42339
+zone|11|mirror.layers=00000000000000000000000000000004
+zone|11|fill.has_before=true
+zone|11|fill.hash_before=00000000000000000000000000000000
+zone|11|fill.hash=386E51B17A62E2507746BBE64033EB52
+zone|11|fill.area=100000000000000
+zone|11|fill.tsp=#41bcec4282a87328 #e2b617f39aef3783 #733de62913c11c63 #003c9e2beedf89d8
+zone|11|fill.solid=#41bcec4282a87328
+zone|11|fill.effective=5 #41bcec4282a87328
+zone|11|fill.effective_other=8
+zone|11|fill.hit_filled=true
+zone|11|fill.unfill=true false true 0
+zone|11|fill.unfill_again=false
+zone|12|parent=01
+zone|12|net=1
+zone|12|layers=00000000000000000000000000000001
+zone|12|priority=0
+zone|12|rule_area=false
+zone|12|teardrop=0
+zone|12|smoothing=2
+zone|12|radius=500000
+zone|12|min_thickness=250000
+zone|12|border_style=2
+zone|12|border_pitch=500000
+zone|12|clearance=300000
+zone|12|name=""
+zone|12|uuid=e0000000-0000-0000-0000-000000000012
+zone|12|keepout=false,true,true,true,false
+zone|12|lib_outline=P(1 {C(closed w=0 n=4 [-3000000,-2000000 3000000,-2000000 3000000,2000000 -3000000,2000000])})
+zone|12|first_layer=0
+zone|12|layer=0
+zone|12|on_copper=true
+zone|12|bbox=114082309,104814359,7835382,6371282
+zone|12|board_outline=P(1 {C(closed w=0 n=4 [114082309,108414359 120317691,104814359 121917691,107585641 115682309,111185641])})
+zone|12|hatch=n=36 #a26fe5697421a637
+zone|12|position=-3000000,-2000000
+zone|12|local_clearance=300000
+zone|12|local_clearance_src=300000
+zone|12|friendly="Copper Zone"
+zone|12|desc="Zone [GND] on F.Cu, priority 0"
+zone|12|outline_area=24000000000000
+zone|12|num_corners=4
+zone|12|smoothed.F.Cu=true #230389f565f6c47f
+zone|12|apron.F.Cu=#9787d8d7b668754f
+zone|12|smoothed_bo.F.Cu=#230389f565f6c47f
+zone|12|tso.F.Cu=#19d4101af58cd88e
+zone|12|tso0.F.Cu=#230389f565f6c47f
+zone|12|interacting.F.Cu=01 02 |
+zone|12|hits=1100,1100,0000,1100,1100,0000,
+zone|12|corner_hit=true 0,0,1
+zone|12|edge_hit=true 0,0,0
+zone|12|hit_rect=11010
+zone|12|hit_poly=11001
+zone|12|higher_priority=11011011011000
+zone|12|equal=00000000000100
+zone|12|move.outline=#f9d05ab228e82578
+zone|12|move.hatch=n=36 #68a74393c4b7e19b
+zone|12|move.bbox=115082309,102814360,7835382,6371281
+zone|12|rotate.outline=#0424db184bb41936
+zone|12|rotate.hatch=n=28 #327752aee1517a9a
+zone|12|rotate.bbox=114167949,104801924,7664102,6396152
+zone|12|flip.outline=#0e2c137cb8c60874
+zone|12|flip.layers=00000000000000000000000000000004
+zone|12|flip.hatch=n=36 #e8514be7fc628aaf
+zone|12|flip.hatch_orientation=180
+zone|12|flip.bbox=114082309,104814359,7835382,6371282
+zone|12|flip.fills=B.Cu:#f18a07283a44ad63 
+zone|12|mirror.outline=#644830f5b779f2f4
+zone|12|mirror.hatch=n=36 #6be4a0b510e65913
+zone|12|mirror.layers=00000000000000000000000000000001
+zone|12|fill.has_before=true
+zone|12|fill.hash_before=00000000000000000000000000000000
+zone|12|fill.hash=FB374235B19BC9CAF78291C8E02EEABB
+zone|12|fill.area=23040001899724
+zone|12|fill.tsp=#877e6ce92227b6b3 #88e359bccd3a9412 #647b51cf0c0b0e57 #85bfea8a6ab208b3
+zone|12|fill.solid=#877e6ce92227b6b3
+zone|12|fill.effective=5 #877e6ce92227b6b3
+zone|12|fill.effective_other=8
+zone|12|fill.hit_filled=true
+zone|12|fill.unfill=true false true 0
+zone|12|fill.unfill_again=false
+zone|14|parent=01
+zone|14|net=0
+zone|14|layers=00000000000000000000000000000005
+zone|14|priority=0
+zone|14|rule_area=true
+zone|14|teardrop=0
+zone|14|smoothing=0
+zone|14|radius=0
+zone|14|min_thickness=250000
+zone|14|border_style=2
+zone|14|border_pitch=500000
+zone|14|clearance=0
+zone|14|name="FPKO"
+zone|14|uuid=e0000000-0000-0000-0000-000000000014
+zone|14|keepout=true,true,true,false,false
+zone|14|lib_outline=P(1 {C(closed w=0 n=3 [4000000,-1000000 6000000,-1000000 5000000,1500000])})
+zone|14|first_layer=0
+zone|14|layer=-1
+zone|14|on_copper=true
+zone|14|bbox=121756922,103707180,2078461,2332050
+zone|14|board_outline=P(1 {C(closed w=0 n=3 [121756922,104907180 123835383,103707180 123796152,106039230])})
+zone|14|hatch=n=8 #dff979985d8736a1
+zone|14|position=4000000,-1000000
+zone|14|local_clearance=0
+zone|14|local_clearance_src=none
+zone|14|friendly="Rule Area"
+zone|14|desc="Rule area 'FPKO' on F.Cu and B.Cu"
+zone|14|outline_area=2500000000000
+zone|14|num_corners=3
+zone|14|smoothed.F.Cu=true #3193455a64407895
+zone|14|apron.F.Cu=#1c01f81b04e3a012
+zone|14|smoothed_bo.F.Cu=#3193455a64407895
+zone|14|tso.F.Cu=#91ed2f83b99f47d3
+zone|14|tso0.F.Cu=#c08e6dbe83eba43d
+zone|14|interacting.F.Cu=| 02
+zone|14|smoothed.B.Cu=true #3193455a64407895
+zone|14|apron.B.Cu=#1c01f81b04e3a012
+zone|14|smoothed_bo.B.Cu=#3193455a64407895
+zone|14|tso.B.Cu=#91ed2f83b99f47d3
+zone|14|tso0.B.Cu=#c08e6dbe83eba43d
+zone|14|interacting.B.Cu=|
+zone|14|hits=1100,1110,0010,1110,1110,0000,
+zone|14|corner_hit=true 0,0,1
+zone|14|edge_hit=true 0,0,0
+zone|14|hit_rect=11110
+zone|14|hit_poly=11001
+zone|14|higher_priority=11011011011101
+zone|14|equal=00000000000010
+zone|14|move.outline=#318d20e950919c11
+zone|14|move.hatch=n=8 #b4a2231636f5ca08
+zone|14|move.bbox=122756922,101707180,2078461,2332051
+zone|14|rotate.outline=#5df038f7ef4eb413
+zone|14|rotate.hatch=n=10 #e830b9a2bd3bcfd5
+zone|14|rotate.bbox=121730594,103619111,2865064,1732051
+zone|14|flip.outline=#437e50e46e0975fe
+zone|14|flip.layers=00000000000000000000000000000005
+zone|14|flip.hatch=n=9 #e31613a94f980c8a
+zone|14|flip.hatch_orientation=180
+zone|14|flip.bbox=121266729,103990192,2078461,2332051
+zone|14|flip.fills=F.Cu:#1c01f81b04e3a012 B.Cu:#dcb9d4956d2327a1 
+zone|14|mirror.outline=#6f61e5efc72e26e1
+zone|14|mirror.hatch=n=9 #6318dbf86a02ce81
+zone|14|mirror.layers=00000000000000000000000000000005
+zone|14|fill.has_before=true
+zone|14|fill.hash_before=00000000000000000000000000000000
+zone|14|fill.hash=0506DE62FC7EA03B0ACA6A5E2CC7C386
+zone|14|fill.area=2399998887525
+zone|14|fill.tsp=#3193455a64407895 #cd42f0411effc7ab #18c2f274441d519c #9b5b0d540783effc
+zone|14|fill.solid=#3193455a64407895
+zone|14|fill.effective=5 #3193455a64407895
+zone|14|fill.effective_other=5
+zone|14|fill.hit_filled=true
+zone|14|fill.unfill=true false true 0
+zone|14|fill.unfill_again=false
+zone|13|parent=02
+zone|13|net=2
+zone|13|layers=00000000000000000000000000000004
+zone|13|priority=0
+zone|13|rule_area=false
+zone|13|teardrop=0
+zone|13|smoothing=1
+zone|13|radius=400000
+zone|13|min_thickness=200000
+zone|13|border_style=1
+zone|13|border_pitch=1000000
+zone|13|clearance=200000
+zone|13|name=""
+zone|13|uuid=e0000000-0000-0000-0000-000000000013
+zone|13|keepout=false,true,true,true,false
+zone|13|lib_outline=P(1 {C(closed w=0 n=4 [-2000000,-1000000 2500000,-1000000 2500000,1500000 -2000000,1500000])})
+zone|13|first_layer=2
+zone|13|layer=2
+zone|13|on_copper=true
+zone|13|bbox=158500000,118000000,2500000,4500000
+zone|13|board_outline=P(1 {C(closed w=0 n=4 [161000000,118000000 161000000,122500000 158500000,122500000 158500000,118000000])})
+zone|13|hatch=n=3 #28665bd8addb4ca0
+zone|13|position=-2000000,-1000000
+zone|13|local_clearance=200000
+zone|13|local_clearance_src=200000
+zone|13|friendly="Copper Zone"
+zone|13|desc="Zone [VCC] on B.Cu, priority 0"
+zone|13|outline_area=11250000000000
+zone|13|num_corners=4
+zone|13|smoothed.B.Cu=true #93a7e7f6002d525c
+zone|13|apron.B.Cu=#93a7e7f6002d525c
+zone|13|smoothed_bo.B.Cu=#1c01f81b04e3a012
+zone|13|tso.B.Cu=#75f14396f6eb8800
+zone|13|tso0.B.Cu=#1c01f81b04e3a012
+zone|13|interacting.B.Cu=|
+zone|13|hits=1100,1100,0000,1100,1100,0000,
+zone|13|corner_hit=true 0,0,1
+zone|13|edge_hit=true 0,0,0
+zone|13|hit_rect=11010
+zone|13|hit_poly=11001
+zone|13|higher_priority=11011011011100
+zone|13|equal=00000000000001
+zone|13|move.outline=#d2e5afbc5c31052c
+zone|13|move.hatch=n=3 #4b9f689bebdefc00
+zone|13|move.bbox=159500000,116000000,2500000,4500000
+zone|13|rotate.outline=#df7a87c044d9d4cb
+zone|13|rotate.hatch=n=3 #1f7057f3dc6e4f4c
+zone|13|rotate.bbox=157542468,117676443,4415064,5147114
+zone|13|flip.outline=#19598c00c1344690
+zone|13|flip.layers=00000000000000000000000000000001
+zone|13|flip.hatch=n=3 #5a2b26be89f0736c
+zone|13|flip.hatch_orientation=180
+zone|13|flip.bbox=158500000,118000000,2500000,4500000
+zone|13|flip.fills=F.Cu:#5fb45a3576a98680 
+zone|13|mirror.outline=#00dd8f2d17504f00
+zone|13|mirror.hatch=n=3 #2b58b665231ef93c
+zone|13|mirror.layers=00000000000000000000000000000004
+zone|13|fill.has_before=true
+zone|13|fill.hash_before=00000000000000000000000000000000
+zone|13|fill.hash=EAC4B9185EDA2BA473F19A1166D726C8
+zone|13|fill.area=11250000000000
+zone|13|fill.tsp=#c0ef0bb788656f84 #d61542843e6e0fff #ef3d47f96b69c367 #63fda664a91081b8
+zone|13|fill.solid=#c0ef0bb788656f84
+zone|13|fill.effective=5 #c0ef0bb788656f84
+zone|13|fill.effective_other=8
+zone|13|fill.hit_filled=true
+zone|13|fill.unfill=true false true 0
+zone|13|fill.unfill_again=false
+merge|count|n=10
+merge|01|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#04358955c3fbf160 
+merge|02|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#e926983fb3e130a0 
+merge|03|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#6ee3f193893099e4 
+merge|04|layers=00000000000000000000000000000014 filled=true refill=false fills=B.Cu:#1c01f81b04e3a012 In1.Cu:#31de0d1d5065247d 
+merge|05|layers=00000000000000000000000000000005 filled=false refill=false fills=F.Cu:#7eb3815499faf1d8 B.Cu:#1c01f81b04e3a012 
+merge|06|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#530f051a7efb4c1b 
+merge|07|layers=00000000000000000000000000000002 filled=true refill=false fills=F.Mask:#7ab90183ebb2a2a0 
+merge|08|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#15a2960af3fb3068 
+merge|09|layers=00000000000000000000000000000001 filled=true refill=false fills=F.Cu:#035224e2a3049f28 
+merge|10|layers=00000000000000000000000000000044 filled=true refill=false fills=B.Cu:#41bcec4282a87328 In2.Cu:#41bcec4282a87328 
+auto|result|changed=true
+auto|01|priority=6
+auto|02|priority=6
+auto|03|priority=3
+auto|04|priority=7
+auto|05|priority=0
+auto|06|priority=0
+auto|07|priority=0
+auto|08|priority=6
+auto|09|priority=1
+auto|10|priority=5
+auto|11|priority=4

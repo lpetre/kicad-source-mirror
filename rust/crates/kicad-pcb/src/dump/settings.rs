@@ -1070,6 +1070,14 @@ fn emit_order(o: &mut Out, ctx: &BoardCtx<'_>, field: &str, items: Vec<ItemId>, 
     }
 }
 
+/// `PCB_TRACK::cmp_tracks` on item handles (both are tracks here).
+fn track_cmp(ctx: &BoardCtx<'_>, a: ItemId, b: ItemId) -> Ordering {
+    match (a.typed::<crate::pcb_track::Track>(), b.typed::<crate::pcb_track::Track>()) {
+        (Some(ta), Some(tb)) => crate::pcb_track::pcb_track_cmp_tracks(ctx, ta, tb),
+        _ => a.cmp(&b),
+    }
+}
+
 /// `DumpOrderSection`: the sorted containers of `PCB_IO_KICAD_SEXPR::format`.
 pub(crate) fn dump_order_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     use crate::board::compare::board_cmp_drawings;
@@ -1100,7 +1108,7 @@ pub(crate) fn dump_order_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         ctx,
         "tracks",
         b.tracks().map(|(i, _)| i.into()).collect(),
-        None,
+        Some(track_cmp),
     );
     emit_order(
         o,

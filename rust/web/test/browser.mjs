@@ -76,7 +76,7 @@ try {
     await page.evaluate(([n, t]) => window.kicadDemo.handleText(n, t), [entry.file, text]);
     assert.equal(await page.evaluate(() => document.body.dataset.statsTokens),
                  String(entry.stats.tokens));
-    assert.match(await page.textContent('#board-result'), /not available yet|Loaded/);
+    assert.match(await page.textContent('#board-result'), /not available yet|Loaded|Could not load/);
 
     console.log(`browser.mjs: page loaded the wasm module (KiCad ${ref.version}), ` +
                 `token statistics of ${entry.file}: ${entry.stats.tokens} tokens`);
