@@ -16,20 +16,19 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/plot_brditems_plotter.cpp`: `BRDITEMS_PLOTTER` struct, `getColor`, pads, zones,
-//! drill marks.
+//! drill marks, drill symbols.
 //!
 //! FAB-03 defines the struct (`pcbplot.h` L61-162) with its options and the inline members;
 //! FAB-04 ports `getColor`, `PlotPadNumber`, `PlotPad` (L72-398) and `PlotZone` (L902-957).
 //! FAB-05 ports the graphic items in `plot_brditems_shapes.rs` (an `impl` block of this
-//! struct). The other per-item entry points are pending functions that name the work package
-//! porting them (FAB-11 drill marks, FAB-13 drill symbols); text (FAB-06) is in
-//! `plot_brditems_text.rs`. The pending ones panic with a "port pending" message until
-//! that package lands.
+//! struct); text (FAB-06) is in `plot_brditems_text.rs`. FAB-11 ports `PlotDrillMarks`,
+//! FAB-13 `PlotDrillSymbols` and `PlotChartSymbols` (L1515-1656) with
+//! `BOARD::DrillMapsOnLayer` (`pcbnew/board.cpp`).
 
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::plot_enums::{DrillMarks, DxfOutlineMode, FillT, PlotFormat};
-use kicad_core::string_utils::{printable_char_count, unescape_string};
 use kicad_core::printf::format_f;
+use kicad_core::string_utils::{printable_char_count, unescape_string};
 use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_font::Metrics;
@@ -51,9 +50,9 @@ use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_track::Track;
 use kicad_pcb::traits::EdaShapeItem;
 use kicad_plot::drill_markers::curated_shape;
-use kicad_plot::{PlotData, Plotter, USE_DEFAULT_LINE_WIDTH};
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
+use kicad_plot::{PlotData, Plotter, USE_DEFAULT_LINE_WIDTH};
 
 use crate::color_settings::ColorSettings;
 use crate::plot_board_layers::PadPlotState;
@@ -739,7 +738,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         // API-created board need not
         for map in maps {
             let outlines = map.board_outlines(ctx);
-            eprintln!("DBG outlines {} {} {:?}", ctx.board.file_name.rsplit("/").next().unwrap(), outlines.outline_count(), ctx.board.get_board_polygon_outlines(ctx, false, None, false, false).1);
 
             for ii in 0..outlines.outline_count() {
                 self.plotter.plot_poly_chain(

@@ -549,6 +549,22 @@ Progress log:
   Then: E2E-2 (full end-to-end rerun of all seven commands with the final binary and
   golden refresh), the cross-cutting adversarial Fable review, DOC-1 (README), PERF-2..
   (hill-climb loop), and - after a Fable review of RT-0's document - the router packages.
+  07:50 UTC: the user shared a screen recording of the friend's tool ("gloopy", a browser
+  autorouter; 30 frames reviewed, audio not transcribed). What it shows: drop .kicad_pcb +
+  .kicad_pro (+ optional net class / power current JSON); a baseline DRC; board
+  extraction (about a hundred nets, a few hundred pads and tracks, arcs as chords,
+  courtyards, GND copper); its OWN routing engine (seeds; grid route, relaxation into
+  curved traces); write-back per candidate (a few hundred tracks removed, about a
+  thousand added, some vias moved); stitching vias; teardrops; DRC until clean;
+  downloads: the routed .kicad_pcb and a DRC report JSON. (Details of the client's tool
+  are kept out of this file; see the 12:06 UTC note.) CONSEQUENCE FOR PRIORITIES: the tool routes by
+  itself - what it needs from KiCad is board access, editing, zone refill, teardrops, DRC
+  and save, i.e. a rich API over what is already ported, not KiCad's push-and-shove
+  router. Launched WASM-API-1 (read API incl. pad polygons, keepouts, courtyards, resolved
+  constraints through the DRC engine; batch edit API; teardrop control; quick DRC mode;
+  docs/WASM_API.md; a router round-trip test against the reference) (wwsbp8p4y).
+  The router analysis RT-0 keeps running (read-only), but NO router port packages are
+  launched until the user confirms the friend needs KiCad's interactive router.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

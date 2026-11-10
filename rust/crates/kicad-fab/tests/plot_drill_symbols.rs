@@ -82,7 +82,12 @@ fn cases() -> Vec<(usize, String, String, String)> {
         let f: Vec<&str> = line.split('|').map(str::trim).collect();
 
         if f[3] == "tables" {
-            out.push((out.len(), f[0].to_string(), f[1].to_string(), f[2].to_string()));
+            out.push((
+                out.len(),
+                f[0].to_string(),
+                f[1].to_string(),
+                f[2].to_string(),
+            ));
         }
     }
 
@@ -126,6 +131,12 @@ fn load_case(index: usize, name: &str, base: &str, profile: &str) -> (Board, Pat
     std::fs::write(&path, board_text(index, base, profile)).unwrap();
     let board = load_board(&path).unwrap();
     (board, path)
+}
+
+/// A `-l` argument: `LSET::NameToLayer` of the canonical name (the boards need not enable the
+/// layer, so `BOARD::GetLayerID` would not find a user layer of a two-layer board).
+fn layer_of(name: &str) -> PcbLayerId {
+    PcbLayerId(Lset::name_to_layer(name))
 }
 
 /// `golden.txt`: `(case, file) -> hash`.
@@ -176,7 +187,7 @@ fn plot_case(board: &mut Board, path: &Path) -> Vec<(String, String)> {
     let ctx = BoardCtx::bare(board)
         .with_connectivity(&connectivity)
         .with_rules(&engine);
-    let layers: Vec<PcbLayerId> = LAYERS.iter().map(|&n| board.layer_id(n)).collect();
+    let layers: Vec<PcbLayerId> = LAYERS.iter().map(|&n| layer_of(n)).collect();
     let mut files = Vec::new();
 
     // JobExportGerbers: the enabled layers of the list, UI order, one board for the run
@@ -223,7 +234,7 @@ fn plot_case(board: &mut Board, path: &Path) -> Vec<(String, String)> {
         .chain([("Eco1.User", DrillMarks::FullDrillShape, "2")]);
 
     for (name, drill, drill_opt) in svg_runs {
-        let layer = board.layer_id(name);
+        let layer = layer_of(name);
         let opts = svg_opts(drill);
         let layer_name = board.layer_name(layer);
         let out_name = format!("{}-{drill_opt}.svg", name.replace('.', "_"));
@@ -318,7 +329,10 @@ fn drill_symbols_match_kicad_cli() {
         }
     }
 
-    println!("plot_drill_symbols: {compared} files compared, {} differ", failures.len());
+    println!(
+        "plot_drill_symbols: {compared} files compared, {} differ",
+        failures.len()
+    );
     assert_eq!(compared, golden.len());
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

@@ -25,7 +25,7 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `jobs/job_export_pcb_plot.rs`, `jobs/job_export_pcb_gerbers.rs`, the Gerber part of `jobs_handler.rs` (`JobExportGerbers`, `PlotJobToPlotOpts`) | see "FAB-07" below | FAB-07 | ported (job file: FAB-09) |
 | `plot_layer_poly.rs` (`PlotPolySet`, `PlotSolderMaskLayer` min-width path, `PlotClippedSilkLayer`, `GenerateLayerPoly`) | `plot_board_layers.cpp` L49-125, L1020-1275 | FAB-10 | ported (see "FAB-10" below) |
 | `color_settings.rs`, `pcb_plotter.rs` (`plot`), `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, `plot_brditems_plotter.rs` (`PlotDrillMarks`, `GetColor`) | see "FAB-11" below | FAB-11 | ported |
-| `plot_brditems_plotter.rs` (`PlotDrillSymbols`, `PlotChartSymbols`) | `plot_brditems_plotter.cpp` | FAB-13 | stub |
+| `plot_brditems_plotter.rs` (`PlotDrillSymbols`, `PlotChartSymbols`, `BOARD::DrillMapsOnLayer`) | `plot_brditems_plotter.cpp` L1515-1656, `board.cpp` L207-218 | FAB-13 | ported (see "FAB-13" below) |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -984,4 +984,58 @@ members of `a_layer`, so the state is the one the C++ leaves.
   differ by a nanometre. Fixing it needs a model entry point that takes pad overrides.
 * DRC rules evaluated for a pad's margins (`ctx.rules`) may look the pad up in the board
   rather than in the state (only conditions on the pad size could notice).
+
+## FAB-13: drill symbols and chart symbols
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `BRDITEMS_PLOTTER::PlotDrillSymbols( aLayer )` | `BrditemsPlotter::plot_drill_symbols` |
+| `BRDITEMS_PLOTTER::PlotChartSymbols( aChart )` | `BrditemsPlotter::plot_chart_symbols` (the chart's `GeneratedTableKind::DrillChart { row_shapes, symbol_column }`) |
+| `BOARD::DrillMapsOnLayer( aLayer )` | private `drill_maps_on_layer` in `plot_brditems_plotter.rs` |
+| `PlotBoardLayers` drill-map pass, `BOARD::DrillSymbolLayers` | already in `plot_board_layers.rs` (FAB-03) / `Board::drill_symbol_layers` (M26) |
+
+Model parts used as M26 left them: `drill::drill_symbol_cache` (computed per call, C++ caches it),
+`DrillSymbolProfile::from_board`, `group_key_string`, `enumerate_drill_spans( ctx, false )`,
+`enumerate_drill_operations`, `PcbDrillMap::board_outlines` (no cache), `PcbTable::cell`,
+`kicad_plot::drill_markers::curated_shape`. `RefreshDrillSymbolLayers` /
+`ExpandBoundingBoxForDrillSymbols` are not read by the plot path (the layers are computed on
+demand). The size-text mark (`wxString::Format( "%.2f", IUTomm( diameter ) )`) uses
+`kicad_core::printf::format_f`.
+
+C++ behaviour kept: `PlotChartSymbols` does not test the layer mask, and `PlotStandardLayer`
+dispatches every board drawing, so the symbols of every drill chart on the board appear on every
+plotted layer (in the chart layer's colour); the reference output has them too. The footprint
+item dispatcher (`PlotFootprintGraphicItems`) plots chart tables without their symbols, as in C++.
+
+### Verification
+
+* `tests/plot_drill_symbols.rs` (new): the seven stage-1 boards of kicad-pcb
+  `tests/data/m26/cases.txt` (through / blind / micro / backdrilled vias, NPTH, slots, oval holes,
+  several tools; default, letters and size-text profiles; the charts of `tables.txt`) plus seven
+  drill maps (`tests/data/plot_drill_symbols/maps.txt`: six layers, two maps on one layer,
+  offsets, guide crosses, slot outlines, all / through / micro-via / backdrill span filters),
+  plotted as Gerber (`pcb export gerbers -l Dwgs.User,Cmts.User,Eco1.User,Eco2.User,User.1,B.Fab`,
+  one `PadPlotState`) and SVG (`--mode-single --exclude-drawing-sheet --drill-shape-opt 0` per
+  layer, and `--drill-shape-opt 2 -l Eco1.User`: the drill-mark pass is suppressed on a map
+  layer): 85 files (36 Gerber, 49 SVG), all byte-identical to the reference kicad-cli after
+  normalisation. Goldens: `tests/golden/plot_drill_symbols/golden.txt` (FNV-1a per file,
+  `generate.py` there). The boards are built from `qa/data` at test time (the refreshed boards
+  would be 650 KB) and plotted un-refreshed, so `RefreshGeneratedTables` runs as in kicad-cli.
+* Corpus: `plot_driver_corpus.rs` now matches all 8533 files (incl. the 26 layers of each
+  `modern_metadata` board, which carry drill maps and a chart); `plot_layer_poly.rs` 760/760
+  runs; kicad-session `gerbers_job.rs` 768/768 identical runs, 0 pending, `svg_job.rs` 491/491,
+  0 pending.
+* `tests/plot_common/mod.rs` `load_board` now runs `RefreshGeneratedTables` (every kicad-cli plot
+  starts with it in `PCB_PLOTTER::Plot`; without it the chart cells of `modern_metadata` were
+  plotted at their stale positions).
+* C++ tests: `qa/tests/pcbnew/test_drill_chart.cpp` has no plotting case (model tests of M26);
+  there is no `test_drill_map*.cpp`.
+
+### Known gaps
+
+* DXF / PDF / PS: the plot engines are out of scope; the DXF sketch/filled metadata comment of the
+  C++ has no effect on Gerber and SVG.
+* `api_kitchen_sink.kicad_pcb` (480 KB, drill maps) is above the corpus size limit and not compared.
 

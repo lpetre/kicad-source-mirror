@@ -35,7 +35,8 @@
 //! * `fab`: load, `pcb export gerbers` (all enabled layers, CLI defaults), `pcb export
 //!   drill` (CLI defaults), `pcb upgrade --force` (the board writer);
 //! * `refill`: load, `FillAllZones` (all zones), then `pcb drc` on the refilled board (the
-//!   two halves of `pcb drc --refill-zones`).
+//!   two halves of `pcb drc --refill-zones`);
+//! * `fill` (not in the default list): load and `FillAllZones` only.
 //!
 //! The load is `getBoard` split into its steps: `parse` (project file read + board parser, up
 //! to the first post-parse step), `load.<LoadStep>` (each step of `initializeLoadedBoard`,
@@ -584,9 +585,15 @@ fn run_pipeline(
             summarize(verbose, "write", &r);
             r.map_err(|e| format!("write: {e}"))?;
         }
-        "refill" => {
+        // `fill`: the zone refill alone (for boards whose DRC cannot run)
+        "refill" | "fill" => {
             let r = rec.stage("zone_refill", || session.refill_zones());
             r.map_err(|e| format!("zone_refill: {e}"))?;
+
+            if pipeline == "fill" {
+                rec.stage("fill.drop", || drop(session));
+                return Ok(());
+            }
 
             let mut job = drc_job(files);
             let mut reporter = Reporter::new();
@@ -834,6 +841,25 @@ fn main() -> ExitCode {
         other => {
             eprintln!("kicad-bench: unknown command '{other}'");
             ExitCode::from(2)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn median_odd_and_even() {
+        assert_eq!(median(&mut [3.0, 1.0, 2.0]), 2.0);
+        assert_eq!(median(&mut [4.0, 1.0, 2.0, 3.0]), 2.5);
+    }
+
+    #[test]
+    fn proc_status_is_read() {
+        // Linux only; on other systems the reader returns 0
+        if std::path::Path::new("/proc/self/status").exists() {
+            assert!(proc_status_kb("VmRSS:") > 0);
         }
     }
 }
