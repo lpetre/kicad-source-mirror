@@ -250,7 +250,6 @@ pub fn unported_check_would_run(
 /// build only warms self-validating item caches, which the cache generator's own bare
 /// builds warm on the same board state). If the board ever becomes mutable during the
 /// provider loop, this must go back to an eager build.
-pub static TMP_LAZY_BUILDS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 struct LazyConnectivity<'b> {
     board: &'b Board,
     /// False when the board has no copper zones: the query is the empty `ConnectivityData`.
@@ -274,7 +273,6 @@ impl<'b> LazyConnectivity<'b> {
             let mut query = ConnectivityData::new();
 
             if self.build {
-                TMP_LAZY_BUILDS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
                 query.build(&BoardCtx::bare(self.board));
                 // The same from-to cache as the run's connectivity (rebuilt in run_tests).
                 query.rebuild_from_to_cache(&BoardCtx::bare(self.board));
@@ -295,7 +293,7 @@ impl ConnectivityQuery for LazyConnectivity<'_> {
         layer: PcbLayerId,
         types: &[KicadT],
     ) -> bool {
-        !ConnectivityQuery::is_connected_on_layer(self.get(), ctx, item, layer, types)
+        ConnectivityQuery::is_connected_on_layer(self.get(), ctx, item, layer, types)
     }
 
     fn node_count(&self, net: Option<NetCode>) -> u32 {
@@ -793,5 +791,100 @@ mod tests {
             dump_stream(&json, 4, ObjectOrder::Sorted)
         );
         assert!(with_checks_not_run_json(json, &checks).contains("\"checks_not_run\""));
+    }
+
+    /// [`LazyConnectivity`] is not built before its first query and then answers every
+    /// [`ConnectivityQuery`] method exactly like the eager build it replaces (the statements of
+    /// the former `run_provider` arm), on a corpus board whose pads with
+    /// `remove_unused_layers` make the zone connections provider query it.
+    #[test]
+    fn lazy_connectivity_answers_like_the_eager_build() {
+        use kicad_core::layer_ids::PCB_LAYER_ID_COUNT;
+        use kicad_pcb::AnyItem;
+        use kicad_pcb::io::{ParseOptions, parse_board_report};
+
+        let path =
+            kicad_qa::kicad_source_root().join("qa/data/pcbnew/issue24865/issue24865.kicad_pcb");
+        let text = std::fs::read_to_string(&path).expect("board");
+        let options = ParseOptions {
+            allow_pending: true,
+        };
+        let (mut board, _) = parse_board_report(&text, "issue24865.kicad_pcb", &options).unwrap();
+        // The state of the run: the load's BuildConnectivity (fills triangulated, nets
+        // propagated).
+        ConnectivityData::new().build_connectivity(&mut board);
+        let board = &board;
+
+        let mut eager = ConnectivityData::new();
+        eager.build(&BoardCtx::bare(board));
+        eager.rebuild_from_to_cache(&BoardCtx::bare(board));
+
+        let lazy = LazyConnectivity::new(board, true);
+        assert!(lazy.cell.get().is_none(), "built before the first query");
+
+        let ctx = BoardCtx::bare(board);
+        let types = [
+            KicadT::PcbTraceT,
+            KicadT::PcbArcT,
+            KicadT::PcbViaT,
+            KicadT::PcbPadT,
+            KicadT::PcbZoneT,
+        ];
+        let mut connected = 0;
+
+        for (fp_id, _) in board.footprints() {
+            for (_, pad) in board.footprint_pads(fp_id) {
+                let item = ctx.view(AnyItem::Pad(pad));
+
+                for layer in 0..PCB_LAYER_ID_COUNT {
+                    let layer = PcbLayerId(layer);
+
+                    for types in [&types[..4], &types[..]] {
+                        let e = ConnectivityQuery::is_connected_on_layer(
+                            &eager, &ctx, item, layer, types,
+                        );
+                        assert_eq!(lazy.is_connected_on_layer(&ctx, item, layer, types), e);
+                        connected += e as usize;
+                    }
+                }
+
+                assert_eq!(
+                    lazy.is_on_from_to_path(&ctx, item, "*", "*"),
+                    ConnectivityQuery::is_on_from_to_path(&eager, &ctx, item, "*", "*")
+                );
+            }
+        }
+
+        assert!(connected > 0, "the board must exercise connected pads");
+        assert!(lazy.cell.get().is_some());
+
+        let mut nets: Vec<Option<NetCode>> = vec![None];
+        nets.extend(board.nets().map(|n| Some(n.net_code())));
+
+        for net in nets {
+            assert_eq!(
+                lazy.node_count(net),
+                ConnectivityQuery::node_count(&eager, net)
+            );
+            assert_eq!(
+                lazy.pad_count(net),
+                ConnectivityQuery::pad_count(&eager, net)
+            );
+
+            if let Some(net) = net {
+                assert_eq!(
+                    lazy.net_items(net, &types),
+                    ConnectivityQuery::net_items(&eager, net, &types)
+                );
+            }
+        }
+
+        // Without copper zones the query is the empty connectivity, as before.
+        let empty = LazyConnectivity::new(board, false);
+        assert_eq!(
+            empty.node_count(None),
+            ConnectivityQuery::node_count(&ConnectivityData::new(), None)
+        );
+        assert_eq!(empty.pad_count(None), 0);
     }
 }

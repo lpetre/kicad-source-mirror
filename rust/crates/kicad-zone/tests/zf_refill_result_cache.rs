@@ -42,9 +42,9 @@ use kicad_pcb::ids::ZoneId;
 use kicad_pcb::io::{ParseOptions, parse_board};
 use kicad_zone::ZoneFiller;
 
-/// GND zone (priority 0) over most of the board, connected by a via at (20, 20); VCC zone
+/// GND zone (priority 0) over most of the board, connected by a pad at (20, 20); VCC zone
 /// (priority 1) in its middle, cut in two by a GND track at y = 50 mm, of which only the upper
-/// half holds a VCC via. The lower VCC half is an island.
+/// half holds a VCC pad. The lower VCC half is an island.
 const BOARD: &str = r#"(kicad_pcb (version 20260206) (generator "pcbnew") (generator_version "10.0")
   (general (thickness 1.6) (legacy_teardrops no))
   (paper "A4")
@@ -61,10 +61,12 @@ const BOARD: &str = r#"(kicad_pcb (version 20260206) (generator "pcbnew") (gener
     (hatch edge 0.5) (priority 1) (connect_pads (clearance 0.2)) (min_thickness 0.25)
     (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5) (island_removal_mode 0))
     (polygon (pts (xy 40 40) (xy 60 40) (xy 60 60) (xy 40 60))))
-  (via (at 20 20) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net "GND")
-    (uuid "cccccccc-0000-0000-0000-000000000001"))
-  (via (at 50 45) (size 0.6) (drill 0.3) (layers "F.Cu" "B.Cu") (net "VCC")
-    (uuid "cccccccc-0000-0000-0000-000000000002"))
+  (footprint "G" (layer "F.Cu") (at 20 20) (uuid "eeeeeeee-0000-0000-0000-000000000001")
+    (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net "GND")
+      (uuid "ffffffff-0000-0000-0000-000000000001")))
+  (footprint "V" (layer "F.Cu") (at 50 45) (uuid "eeeeeeee-0000-0000-0000-000000000002")
+    (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net "VCC")
+      (uuid "ffffffff-0000-0000-0000-000000000002")))
   (segment (start 35 50) (end 65 50) (width 0.25) (layer "F.Cu") (net "GND")
     (uuid "dddddddd-0000-0000-0000-000000000001"))
 )"#;
@@ -140,7 +142,6 @@ fn refill_result_cache_hits_keep_the_fills() {
 
     // The VCC island (lower half) is removed, the upper half stays; the GND zone reclaimed the
     // freed area in the refill.
-    eprintln!("DBG vcc={} gnd={} vccbb={:?}", f.fill(vcc).outline_count(), f.fill(gnd).outline_count(), (0..f.fill(vcc).outline_count()).map(|i| f.fill(vcc).c_outline(i).c_points().len()).collect::<Vec<_>>());
     assert_eq!(f.fill(vcc).outline_count(), 1);
     assert!(f.fill(vcc).contains(mm(50.0, 42.0), -1, 0, false));
     assert!(!f.fill(vcc).contains(mm(50.0, 57.0), -1, 0, false));

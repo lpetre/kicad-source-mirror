@@ -8,7 +8,7 @@ helpers the filler uses (`BuildSmoothedPoly`, `GetInteractingZones`,
 
 | C++ | Rust | State |
 |---|---|---|
-| `zone_filler.h` `ZONE_FILLER` state, caches | `filler.rs` `ZoneFiller` | ported (`m_refillResultCache` omitted, see deviations) |
+| `zone_filler.h` `ZONE_FILLER` state, caches | `filler.rs` `ZoneFiller` | ported (`m_refillResultCache`: `refill_result_cache`, see deviations) |
 | `ZONE_FILLER::ZONE_FILLER` | `ZoneFiller::new` | ported (no commit object) |
 | `INDEXED_ITEM`, `ITEM_RTREE`, `queryIndex`, `buildItemIndexes` | `index.rs` | ported |
 | `forEachBoardAndFootprintZone` | `index::board_and_footprint_zones` (`GetZoneList( true )`) | ported |
@@ -22,7 +22,7 @@ helpers the filler uses (`BuildSmoothedPoly`, `GetInteractingZones`,
 | teardrop `connectivity->Update`, `FillIsolatedIslandsMap`, `SetIsFilled` | `ZoneFiller::fill` | ported |
 | initial island removal (L1248-1312) | `ZoneFiller::fill`, `remove_islands` | ported |
 | `sameNetOverlapSeeds`, iterative refill loop (L1314-1659) | `same_net_overlap_seeds_of`, `refill.rs` `iterative_refill_loop` | ported |
-| `refillZoneFromCache` (L4587-4820) | `refill.rs` | ported (result cache omitted) |
+| `refillZoneFromCache` (L4587-4820) | `refill.rs` | ported (with the result cache, L4725-4748, L4816) |
 | out-of-board islands (L1661-1790) | `remove_out_of_board_islands` | ported |
 | second flashing pass (L1795-1914) | `flashing_second_pass` | ported |
 | `aCheck` branch (L1916-1972, GUI dialogs) | - | skipped: GUI only (`kicad-cli` passes `aCheck = false`) |
@@ -45,8 +45,23 @@ different, first differing vertex, island flags). Report: `target/zone-corpus/re
 
 ### Deviations
 
-- `m_refillResultCache` (refill output keyed by a hash of the knockouts) is not ported: a pure
-  optimisation of a pure function (R-13), results are identical barring hash collisions.
+- `m_refillResultCache` (refill output per (zone, layer), keyed by the knockouts) is ported as
+  `ZoneFiller::refill_result_cache` (cleared at the start of `fill()` like L596, and again right
+  after the iterative refill loop so that no cached `Arc` shares a board fill afterwards). Port
+  additions, none of which changes a result:
+  - the key (`RefillKey`) is `knockouts_applied` plus `GetHash()`, outline count and vertex count
+    of each knockout set, where the C++ combines the two hashes only (the result also depends on
+    `knockoutsApplied`: it decides whether the min-width prune runs);
+  - the cached value is the board's triangulated fill, so a hit also skips the re-triangulation;
+    only fills whose triangulation is up to date are cached (their `Clone`, made by
+    `Arc::make_mut` when islands are removed, is then exact);
+  - the cache is seeded by `run_fill_dag` with every fill whose `fillCopperZone` tail applied no
+    knockout (iterative refill on, no different-net zone clearance, nothing subtracted by
+    `subtractHigherPriorityZones`, debug mode off, final `Fracture()` reached) under the key of a
+    refill without knockouts: both paths run exactly `dropSubResolutionOutlines` + `Fracture()`
+    on the same pre-knockout fill;
+  - debug builds recompute every hit and `debug_assert!` that the polygons are equal (zone corpus:
+    120 hits, 56 of them seed hits in wave 1). Test: `tests/zf_refill_result_cache.rs`.
 - `ZONE::CalculateFilledArea()` calls are not made: `m_area` is GUI-only state (search panel)
   and the model has no derived-state writer for it (change request filed).
 - Container orders: `isolatedIslandsMap`, `changedZoneLayers`, the seeds and the refill sets are

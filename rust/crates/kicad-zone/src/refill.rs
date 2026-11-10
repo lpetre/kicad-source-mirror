@@ -196,12 +196,10 @@ impl ZoneFiller {
 
                 match result {
                     RefillResult::Cached(cached) => {
-                        if std::env::var_os("R2_TRACE").is_some() { eprintln!("R2TRACE hit wave={} zone={:?}", iteration + 1, zone_id); }
-                        // The cached set already carries the triangulation the miss path
-                        // computed for exactly these polygons (or the failed-triangulation
-                        // state the miss path would reproduce), so cache_triangulation() is
-                        // skipped: it would only copy the shared set (Arc::make_mut) and
-                        // return early.
+                        // The cached set already carries the up-to-date triangulation computed
+                        // for exactly these polygons (only such sets are cached, see below),
+                        // so cache_triangulation() is skipped: it would only copy the shared
+                        // set (Arc::make_mut) and return early.
                         fill.filled_polys_list.insert(layer, cached);
                         fill.set_fill_flag(layer, false);
                         fill.set_fill_flag(layer, true);
@@ -217,9 +215,17 @@ impl ZoneFiller {
                         // entry per (zone, layer), overwritten. The entry shares the board's
                         // fill; island removal below copies it first (Arc::make_mut), so the
                         // cached set stays the refill result.
+                        //
+                        // Invariant: only a fill whose triangulation is up to date is shared.
+                        // Its Clone (the copy Arc::make_mut makes) is then exact; a failed
+                        // triangulation can leave partial triangles that Clone drops.
                         if let Some(installed) = fill.filled_polys_list.get(&layer) {
-                            self.refill_result_cache
-                                .insert((zone_id, layer), (key, Arc::clone(installed)));
+                            if installed.is_triangulation_up_to_date() {
+                                self.refill_result_cache
+                                    .insert((zone_id, layer), (key, Arc::clone(installed)));
+                            } else {
+                                self.refill_result_cache.remove(&(zone_id, layer));
+                            }
                         }
                     }
                 }

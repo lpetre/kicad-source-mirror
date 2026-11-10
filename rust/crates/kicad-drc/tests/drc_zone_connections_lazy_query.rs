@@ -37,7 +37,12 @@ fn assert_board_matches(filter: &str) {
     let score = compare_corpus_flow(TYPES, filter, &["zone connections"]);
     score.print(filter);
 
-    assert_eq!(score.compared.len(), 1, "{filter}: not compared: {:?}", score.pending);
+    assert_eq!(
+        score.compared.len(),
+        1,
+        "{filter}: not compared: {:?}",
+        score.pending
+    );
     score.assert_no_mismatch();
 }
 

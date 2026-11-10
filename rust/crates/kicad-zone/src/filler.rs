@@ -912,9 +912,15 @@ impl ZoneFiller {
 
                 // A fill whose tail applied no knockout is what a refill without knockouts
                 // computes from the same pre-knockout fill (both run exactly
-                // dropSubResolutionOutlines + Fracture on it), triangulation included.
+                // dropSubResolutionOutlines + Fracture on it), triangulation included. Only an
+                // up-to-date triangulation is shared (see the invariant in
+                // iterative_refill_loop).
                 if seeds_refill_cache {
-                    if let Some(installed) = fill.filled_polys_list.get(&layer) {
+                    if let Some(installed) = fill
+                        .filled_polys_list
+                        .get(&layer)
+                        .filter(|installed| installed.is_triangulation_up_to_date())
+                    {
                         self.refill_result_cache.insert(
                             (zone_id, layer),
                             (RefillKey::without_knockouts(), Arc::clone(installed)),

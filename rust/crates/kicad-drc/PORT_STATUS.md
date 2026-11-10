@@ -1756,7 +1756,12 @@ diff-pair nets.
   changes a footprint (change request to kicad-pcb for a `Board` hook if that ever changes).
 - The from-to cache is not rebuilt (CN-05 not ported; `fromTo()` reports its missing cache).
 - The zone connections provider needs `&mut ConnectivityData`; its item shapes see a second
-  build of the same connectivity (built only when the board has copper zones).
+  build of the same connectivity (built only when the board has copper zones, and only at its
+  first query: `run_flow::LazyConnectivity`, perf round 2 `R2-drc-lazy-zone-connection-query`.
+  Of the DRC corpus only `issue22826` and `issue24865` query it (`remove_unused_layers` pads
+  reaching `FlashLayer`); the board is immutable during the provider loop, so the lazy value
+  equals the eager one. Tests: `run_flow::tests::lazy_connectivity_answers_like_the_eager_build`,
+  `tests/drc_zone_connections_lazy_query.rs`).
 - Providers run sequentially in registry order; report order of the thread-pool providers
   is the index order (drc.md 4.12) and is compared order-insensitively.
 
