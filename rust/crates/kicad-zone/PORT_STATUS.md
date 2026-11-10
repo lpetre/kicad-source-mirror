@@ -401,7 +401,10 @@ Existing files touched: `src/lib.rs` (one `pub mod affected;` line). Uses the cr
 a commit with `SKIP_CONNECTIVITY`, a pad-less cluster taking the net of its first item) are
 compared with the nets at the start of the refill and added to the damage (area, old and new
 net) before the via / pad hit test and the selection (review finding: such an item was in no
-damage and a zone it crossed kept its old fill for one refill). The callers' precondition
+damage and a zone it crossed kept its old fill for one refill). When that re-netting makes
+the damage full, the take-over of the re-created teardrops (which has to precede the build)
+is undone before the full fill, so `Fill()` hashes their new, empty fill as in the full
+refill (unreachable today: only tracks on copper layers are re-netted). The callers' precondition
 (fills of a refill, worst clearance unchanged since, no pad / zone removal, no `fromTo()`
 rules) is checked by kicad-session (`board_api::refill::FillTracking`), which passes full
 damage otherwise.

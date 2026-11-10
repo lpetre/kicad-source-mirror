@@ -217,16 +217,25 @@ remove or re-add a tenth of the routing): commit 0.50 ms native / 0.99 ms wasm, 
 The session keeps the damage itself (natively too: `Session::refill_zones_affected( extra )`
 refills for what the session recorded plus `extra`): every `commit` / `commitBulk`, `quickDrc`,
 `checkItems` and `finalize` adds what it changed, `checkpoint` / `rollback` save and restore it
-with the board, a refill (`refillZones()` included) resets it. The record is valid only while
-the board's time stamp and the rule text are those the last of these calls left, so any other
-edit (`applyEdits`, `addTrackSegment`, `removeItems`, `updateTeardrops`, `runDrc`, design
-settings, a direct edit of `Session::board` natively, ...) and the load make the next affected
-refill a full one. It is also a full one when a commit removed a pad or a zone (rule areas and
-teardrops included: they set the worst clearance, knock holes out of every copper layer, or
-change rule clearances by area membership), when the board's worst clearance differs from that
-of the last refill, and when the custom rules use `fromTo()` (every DRC run rebuilds the from-to
-cache that rule reads). The precondition of the identity, fills that are those of a refill of
-the board before the changes, is therefore checked by the session, not left to the caller.
+with the board, a refill (`refillZones()` included) resets it. The edit calls (`applyEdits`,
+`addTrackSegment`, `addArc`, `placeVia`, `changeItem`, `removeItems`, `removeRouting`) are
+commits and are tracked like `commit`. The record is valid only while the board's time stamp
+and the rule text are those the last of these calls left, so any other change that bumps the
+time stamp (`updateTeardrops` when it adds, changes or removes a teardrop - on a board without
+a teardrop target it changes nothing and the record stays known -, the markers of `runDrc`,
+design and teardrop settings, a direct edit of `Session::board` through a `Board` mutator
+natively, ...) and the load make the next affected refill a full one. Writers of derived state
+are excluded: `Board::zone_fill_mut` (fill polygons and flags, written by the filler and the
+connectivity) does not bump the time stamp, as in C++, so fills written through it natively
+outside a refill are not noticed. The refill is also a full one when a commit removed a pad or
+a zone (rule areas and teardrops included: they set the worst clearance, knock holes out of
+every copper layer, or change rule clearances by area membership), when the board's worst
+clearance differs from that of the last refill, and when the custom rule text contains
+`fromTo` in any letter case (every DRC run rebuilds the from-to cache that function reads; the
+test is on the text because the compiled conditions of `kicad-drc` do not expose the functions
+they call). The precondition of the identity, fills that are those of a refill of the board
+before the changes, is therefore checked by the session for every tracked or time-stamped
+change, not left to the caller.
 
 Which zones are refilled (`kicad_zone::affected`): the items the refill's own connectivity
 build gives another net (a commit with `skipConnectivity`, a pad-less cluster taking the net

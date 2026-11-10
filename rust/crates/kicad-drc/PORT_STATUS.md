@@ -249,7 +249,8 @@ fast path, and the `DRC_ZONE_INDEX` queries. Golden: `tests/golden/rtree_oracle.
 
 - **`GetObjectsAt`** returns the parents without duplicates in tree search order (C++: an
   `std::unordered_set`, hash order); the oracle compares it sorted. Callers must not depend on
-  the order (`drc.md` 4.12).
+  the order (`drc.md` 4.12), except `connection_width`, which reverses it to get the libstdc++
+  iteration order of the set for one or two items (see "Connection width order" below).
 - **`QueryCollidingPairs` dedup key**: C++ orders the two parents by address; the port orders by
   `ItemId`. Only the canonical pairing matters (set membership), so results are identical.
 - **Null pad shape**: C++ `PAD::GetEffectiveShape` returns a null pointer for a layer without a
@@ -1433,11 +1434,18 @@ needs no caches.
 * Connection width order (`drc.md` 4.12): C++ iterates an `unordered_map` of (net, layer)
   entries on the thread pool, holds the items of one entry in a `std::set<BOARD_ITEM*>`
   (address order: polygon append order), and collects the items at a neck from
-  `DRC_RTREE::GetObjectsAt` (hash order) and `m_CopperZoneRTreeCache` (hash order). The port:
-  (net code, layer) key order, items in collection order (copper zones, tracks, pads), tree
-  search order then `ZoneId` order. Report order and item order within a violation (which
-  also decides which two items `EvalRules` sees) are not reproducible in C++; the set of
-  violations matched everywhere.
+  `DRC_RTREE::GetObjectsAt` (an `std::unordered_set`) and `m_CopperZoneRTreeCache` (an
+  `std::unordered_map`). The port: (net code, layer) key order, items in collection order
+  (copper zones, tracks, pads), the tree items at a neck in the order libstdc++ iterates the
+  `unordered_set` when no bucket collision reorders it (the distinct parents of the tree search
+  reversed: reverse insertion order), then zones in `ZoneId` order. With one or two
+  contributing tree items the item order within a violation (which also decides which two
+  items `EvalRules` sees) is therefore the C++ one; with three or more it depends on heap
+  addresses in C++ (an insert into a non-empty bucket is linked after that bucket's
+  predecessor node; buckets are address modulo 13, 29, 59, ...; a rehash re-links the list),
+  and the port's order is the collision-free one. The zone part and the report order are not
+  reproducible in C++; the set of violations matched everywhere
+  (`providers/connection_width.rs`, module comment).
 * `calc_effort` / progress reporting is not ported (progress only). It calls
   `GetFilledPolysList( layer )`, which throws in C++ for a zone layer without a fill entry.
 * `POLYGON_TEST::FindPairs` on an outline that yields no vertex returns false (C++:

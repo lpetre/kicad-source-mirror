@@ -53,3 +53,5 @@ Other agents: the performance loop edits existing files of kicad-drc / kicad-zon
 kicad-geom / kicad-connectivity (and its judge may revert files with git): add your
 entry points in NEW files (e.g. kicad-drc src/live.rs, kicad-zone src/affected.rs) plus
 one `mod` line, re-read before editing, and list every existing file you had to touch.
+
+Closing note: item 1 (DRC state kept between runs) is not built; `checkItems` is a filtered full run of its providers and saves no time over `quickDrc` with the same providers (`crates/kicad-session/PORT_STATUS.md`, LIVE-2).

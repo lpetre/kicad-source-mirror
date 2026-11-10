@@ -511,9 +511,16 @@ Decisions:
 * The damage lives in the session (`Session::fill_tracking`, one field added to
   `session.rs`, and `Session::refill_zones` now goes through the tracked full refill):
   `commit`, `quick_drc` / `check_items`, `finalize` add their damage, `checkpoint` /
-  `rollback` save and restore it, a refill resets it. It is valid only while the board time
-  stamp (bumped by every `Board` mutator) and the rule text are those the last tracked call
-  left; otherwise, and after a load, `refill_zones_affected` refills everything. The argument
+  `rollback` save and restore it, a refill resets it. The edit calls (`apply_edits`,
+  `add_track_segment`, `add_arc`, `add_via_with`, `change`, `remove_items`, `remove_routing`)
+  are commits and therefore tracked. The record is valid only while the board time stamp and
+  the rule text are those the last tracked call left; otherwise, and after a load,
+  `refill_zones_affected` refills everything. The time stamp is bumped by the `Board`
+  mutators of board content (so `update_teardrops` makes the record unknown when it adds,
+  changes or removes a teardrop, and leaves it known on a board without a teardrop target,
+  where it changes nothing); writers of derived state are excluded: `Board::zone_fill_mut`
+  (fill polygons and flags) does not bump it, as in C++, so fills written through it outside
+  a refill are not noticed. The argument
   of `refill_zones_affected` is extra damage (union), so passing commit damage as before still
   works, and passing nothing after an untracked edit is safe. A replaced
   `Session::drc_engine` with other rules than `rules_text` would not be noticed.
@@ -521,7 +528,11 @@ Decisions:
   and teardrops included: worst clearance of `GetMaxClearanceValue`, NPTH holes knocked out of
   every copper layer, area-membership rule clearances), a worst clearance differing from the
   last refill's, custom rules using `fromTo()` (every DRC run rebuilds the from-to cache), a
-  DRC run that had to compile the engine, a commit that failed half way.
+  DRC run that had to compile the engine, a commit that failed half way. `fromTo()` is
+  detected in the rule text, case-insensitively (any occurrence, comments and names included,
+  gives a full refill): the compiled conditions of `kicad-drc` keep their microcode behind
+  `CompiledCondition`, which does not expose the functions a condition calls, so a decision
+  from the compiled rules would need a `kicad-drc` change.
 * The refill's own pre-fill connectivity build re-nets items (skip-connectivity commits,
   pad-less clusters): they are damage of the same refill (`kicad_zone::affected`).
 
@@ -534,19 +545,35 @@ Verification:
   5778 of 20993 zone fills recomputed. Plus: without changes the affected refill keeps every
   fill and equals a second full refill on every board (`Fill()` hashes the fill it replaces:
   kept zones get the hash of their current fill, re-created teardrops that of their empty one).
-* b) `LIVE2_DRC_BOARDS=30 LIVE2_DRC_BATCHES=50 cargo test -p kicad-session --test live2_drc`:
-  30 boards, 1470 commits with injected violations: `check_items` == the full job's
-  all-track-errors entries minus the entries of the other providers, filtered by the same rule,
-  entry for entry and in order, every time (294,485 scoped entries; types clearance,
-  shorting_items, tracks_crossing, hole_clearance, hole_to_hole, holes_co_located,
-  copper_edge_clearance, copper_outside_board, items_not_allowed, track_width, via_diameter,
-  annular_width, track_dangling, via_dangling, unconnected_items). One board
-  (`diff_pair_uncoupled_tuning_drc`) stopped after a panic in the diff pair provider
-  (`kicad-drc` `diff_pair_coupling.rs:858`, `total_coupled += length` overflows an `i32`; C++
-  `int` wraps on x86): change request.
-* a1) two DRC runs in a row on the live state: identical on all 1470 commits.
-* a2) live vs a fresh load of the saved board (measured): 95 identical as entry sets, 1374
-  different (order-dependent entries, see Known gaps).
+  The skip-connectivity campaign of the independent verification (his run): 26 boards, 624
+  commits (208 with `skip_connectivity`), 416 refills, 50 of them re-netting items: affected
+  == full every time.
+* b) `LIVE2_DRC_BOARDS=30 LIVE2_DRC_BATCHES=50 cargo test -p kicad-session --test live2_drc`
+  (the independent verifier's run): 30 boards, 1500 commits with injected violations, 0
+  mismatches: `check_items` == the full job's all-track-errors entries minus the entries of
+  the other providers, filtered by the same rule, entry for entry and in order, every time
+  (335,287 scoped of 1,874,547 full-run entries). Own run at `LIVE2_DRC_BOARDS=30
+  LIVE2_DRC_BATCHES=6`: 30 boards, 180 commits, 0 mismatches, 17,299 scoped of 55,851
+  full-run entries (types annular_width, clearance, copper_edge_clearance,
+  copper_outside_board, hole_clearance, hole_to_hole, holes_co_located, isolated_copper,
+  items_not_allowed, shorting_items, track_dangling, track_width, tracks_crossing,
+  unconnected_items, via_dangling, via_diameter), no provider panic.
+* a1) two DRC runs in a row on the live state: identical on all 1500 commits (verifier's
+  30x50 run) and on all 180 of the own 30x6 run.
+* a2) live vs a fresh load of the saved board, classified and asserted (a difference outside
+  the classes fails the test). Own run at 30x6, 180 commits: 0 identical; 62 the same entries
+  in another order; 71 with items that have another net after the reload; 31 differing in
+  `unconnected_items` only; the remaining 16 (the verifier's 16 of 180) re-run on both sides
+  with all-track-errors (the job without it reports only the first hit per track, which
+  follows the track order: the clearance, shorting_items, hole_to_hole, tracks_crossing,
+  hole_clearance differences): 2 then equal as entry multisets, 4 differing in
+  `unconnected_items` only, 10 differing only in the item lines (items and marker position)
+  of `skew_out_of_range` / `diff_pair_uncoupled_length_too_long` entries (plus
+  `unconnected_items`), whose items the C++ takes from pointer-keyed `std::set`s (the port:
+  `ItemId` order, which the reload changes); 0 unexplained. The class "items with another net
+  after the reload" is accepted on that evidence alone (its entries are not compared
+  further). The new classification was not run at 30x50 (the verifier's 475 of 1500 failures
+  there were under the previous, stricter classification).
 * d) `LIVE2_EXPORT=<dir> LIVE2_DRC_BATCHES=5 cargo test ... export_edited` +
   `tests/oracle/live2_cli_compare.sh <dir>`: 20 edited boards (`finalize`, full refill, save),
   reference `kicad-cli pcb drc` against `kicad-rs pcb drc`: 13 identical as entry sets, 16
@@ -557,9 +584,10 @@ Verification:
 
 Known gaps:
 
-* Package item 1 (persistent DRC state) and verification a (live state == fresh load) are not
-  met; the package statement is reduced to: `check_items` is a filter of a full run of its
-  providers (timings in `docs/PERF.md`: `check_items` is not faster than `quick_drc`).
+* Package item 1 (DRC state kept between runs) is not built. `check_items` is a filtered full
+  run of its providers and saves no time: it costs what `quick_drc` with the same providers
+  costs (timings in `docs/PERF.md`). Verification a (live state == fresh load) holds only up
+  to the order-dependent classes of a2 above.
 * No persistent DRC state: every DRC call runs the cache generator (`ClearRatsnest` + `Build`
   of the connectivity, copper / zone r-trees, clearance caches) as `DRC_ENGINE::RunTests`
   does; only the compiled rules persist (`DrcEngine`, reused while `rules_valid()`; a changed

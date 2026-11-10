@@ -879,6 +879,13 @@ Progress log:
   module (the integration is one re-export file at the path his runner imports), his
   router tools built to wasm if Emscripten can be installed, expected result from his
   example README, then the same with the rollback sessions class.
+  14:27 UTC: at the user's request the adapter folder is now also committed to
+  a branch (claude/rust-kicad-adapter) of the user's private fork of the client's
+  repository, as a snapshot under kicad-rs/ (sources, tests, docs; no build output, no
+  assignment files). It no longer exists in this container only. Refresh it at each
+  adapter milestone together with the artifact: run /home/user/kicad-oracle/gloopy/sync/sync.py,
+  then git add -A kicad-rs, commit and push in that clone (the session has push access
+  to it). The folder stays excluded from this public repository.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
