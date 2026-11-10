@@ -385,9 +385,19 @@ pub struct Board {
     /// Load warnings (outline font fallbacks).
     warnings: Vec<String>,
     /// Saved states of `checkpoint()` by token (package LIVE-1).
-    checkpoints: std::collections::BTreeMap<u32, kicad_session::board_api::commit::Checkpoint>,
+    checkpoints: std::collections::BTreeMap<
+        u32,
+        (
+            kicad_session::board_api::commit::Checkpoint,
+            kicad_session::board_api::refill::ChangeDamage,
+        ),
+    >,
     /// The next checkpoint token.
     next_checkpoint: u32,
+    /// What changed since the zone fills were last those of a full refill (package LIVE-2):
+    /// merged from every commit and DRC, reset by a refill; full after the load and after
+    /// any edit that does not report its damage.
+    zone_damage: kicad_session::board_api::refill::ChangeDamage,
 }
 
 impl Board {
@@ -410,6 +420,7 @@ impl Board {
             warnings,
             checkpoints: std::collections::BTreeMap::new(),
             next_checkpoint: 1,
+            zone_damage: kicad_session::board_api::refill::ChangeDamage::full(),
         }
     }
 
@@ -487,6 +498,8 @@ impl Board {
     /// `runDrc(options)`: `{ exitCode, files, report, messages }`.
     #[wasm_bindgen(js_name = runDrc)]
     pub fn run_drc(&mut self, options: JsValue) -> Result<JsValue, JsValue> {
+        // the DRC job may refill zones and propagates nets
+        self.untracked_edit();
         let o: DrcOptions = from_js(options)?;
         let mut job = JobPcbDrc::new();
         job.rc.exit_code_violations = false;
@@ -683,7 +696,13 @@ impl Board {
     /// `refillZones()`.
     #[wasm_bindgen(js_name = refillZones)]
     pub fn refill_zones(&mut self) -> Result<(), JsValue> {
-        self.session.refill_zones().map_err(session_error)
+        let full = kicad_session::board_api::refill::ChangeDamage::full();
+        let report = self
+            .session
+            .refill_zones_affected(&full)
+            .map_err(session_error)?;
+        self.zone_damage = report.damage;
+        Ok(())
     }
 
     /// `nets()`: `[{ code, name, netclass }]` in net code order.
@@ -701,6 +720,7 @@ impl Board {
     pub fn add_track(&mut self, spec: JsValue) -> Result<f64, JsValue> {
         let spec: TrackSpec = serde_wasm_bindgen::from_value(spec)
             .map_err(|e| session_error(SessionError::invalid_argument(e.to_string())))?;
+        self.untracked_edit();
         let id = self.session.add_track(&spec).map_err(session_error)?;
         Ok(id as f64)
     }
@@ -710,6 +730,7 @@ impl Board {
     pub fn add_via(&mut self, spec: JsValue) -> Result<f64, JsValue> {
         let spec: ViaSpec = serde_wasm_bindgen::from_value(spec)
             .map_err(|e| session_error(SessionError::invalid_argument(e.to_string())))?;
+        self.untracked_edit();
         let id = self.session.add_via(&spec).map_err(session_error)?;
         Ok(id as f64)
     }
@@ -720,6 +741,7 @@ impl Board {
             return Err(session_error(SessionError::StaleId { id: 0 }));
         }
 
+        self.untracked_edit();
         self.session.remove(id as u64).map_err(session_error)
     }
 }

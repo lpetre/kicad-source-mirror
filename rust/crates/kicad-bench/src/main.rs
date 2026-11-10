@@ -522,12 +522,19 @@ const EDIT_TRACKS: usize = 200;
 const EDIT_ROUNDS: usize = 3;
 
 /// The inner loop of a router client (`board_api`, docs/PERF.md "Note for planners"): per
-/// round, remove [`EDIT_TRACKS`] tracks and add them again with the same geometry (one
-/// `apply_edits` batch with its connectivity rebuild), `quick_drc` with the clearance and
-/// connectivity providers, zone refill, teardrop update; `save` at the end.
+/// round, remove [`EDIT_TRACKS`] tracks and add them again with the same geometry, twice
+/// from the same full-refill state: the LIVE-2 path (`commit`, `check_items` of the new
+/// items, `refill_zones_affected` with the commit's damage) and the batch path
+/// (`apply_edits`, `quick_drc` with the clearance and connectivity providers, full zone
+/// refill), whose saved boards must be equal; then the teardrop update; `save` at the end.
 fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result<(), String> {
-    use kicad_session::board_api::check::QuickDrcOptions;
+    use kicad_session::board_api::check::{CheckItemsOptions, QuickDrcOptions};
+    use kicad_session::board_api::commit::Transaction;
     use kicad_session::board_api::edit::{EditBatch, NewItem, NewTrack};
+
+    // the fills of the loaded file are not a full refill's: start from one
+    let r = rec.stage("edit.initial_refill", || session.refill_zones());
+    r.map_err(|e| format!("initial refill: {e}"))?;
 
     let tracks: Vec<_> = session
         .tracks()
@@ -567,6 +574,31 @@ fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result
             }
         }
 
+        // LIVE-2 path first, from the full-refill state of the round's start: commit, the
+        // scoped check of the new items, the affected-only refill.
+        let cp = session.checkpoint();
+        let mut txn = Transaction::begin();
+        txn.stage_batch(&batch);
+        txn.append = true;
+        let r = rec.stage("edit.commit", || session.commit(&txn));
+        let report = r.map_err(|e| format!("commit: {e}"))?;
+
+        let check = CheckItemsOptions::default();
+        let r = rec.stage("edit.check_items", || {
+            session.check_items(&report.edit.added, &check)
+        });
+        let scoped = r.map_err(|e| format!("check_items: {e}"))?;
+
+        let mut damage = report.damage.clone();
+        damage.merge(&scoped.damage);
+        let r = rec.stage("edit.refill_affected", || {
+            session.refill_zones_affected(&damage)
+        });
+        let refill = r.map_err(|e| format!("refill_affected: {e}"))?;
+        let live_text = session.save().map_err(|e| format!("save: {e}"))?;
+
+        // The batch path of WASM-API-1 from the same state.
+        session.restore(cp);
         let r = rec.stage("edit.apply_edits", || session.apply_edits(&batch));
         r.map_err(|e| format!("apply_edits: {e}"))?;
 
@@ -580,15 +612,28 @@ fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result
         let r = rec.stage("edit.zone_refill", || session.refill_zones());
         r.map_err(|e| format!("edit zone_refill: {e}"))?;
 
+        // the affected refill gives the full refill's board (package LIVE-2, verification c)
+        if session.save().map_err(|e| format!("save: {e}"))? != live_text {
+            return Err(format!("round {round}: affected refill differs from the full refill"));
+        }
+
+        // updateTeardrops leaves new, unfilled teardrops: time it, then go back to the
+        // full-refill state for the next round.
+        let cp = session.checkpoint();
         let r = rec.stage("edit.update_teardrops", || session.update_teardrops());
         r.map_err(|e| format!("update_teardrops: {e}"))?;
+        session.restore(cp);
 
         if verbose && round == 0 {
             eprintln!(
-                "  edit: {} tracks re-added, quick_drc: {} markers, {} unconnected",
+                "  edit: {} tracks re-added, quick_drc: {} markers, {} unconnected; \
+                 check_items: {} violations; affected refill: {} of {} zones refilled",
                 batch.add.len(),
                 summary.markers,
-                summary.unconnected
+                summary.unconnected,
+                scoped.violations.len(),
+                refill.refilled.len(),
+                session.board.zones().count()
             );
         }
     }

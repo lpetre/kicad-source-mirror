@@ -18,7 +18,7 @@
 //! Package LIVE-2, verification c: affected-only refill == full refill.
 //!
 //! On the boards of `tests/oracle/live1_boards.txt` that have copper zones: one full refill,
-//! then seeded random commits (the LIVE-1 generator: removals, moves, net changes, new tracks
+//! then seeded random commits (one or, every other step, two before a refill) (the LIVE-1 generator: removals, moves, net changes, new tracks
 //! and vias at pads, route ends and inside zones); after every commit the board is refilled
 //! twice from the same checkpoint, with `refill_zones_affected( commit damage )` and with
 //! the full `refill_zones`, and the two results compared: every zone's fill vertex for
@@ -114,10 +114,33 @@ fn affected_refill_equals_full_refill() {
             }
 
             commits += 1;
+            let mut damage = report.damage.clone();
+
+            // every other step: a second commit before the refill (merged damage)
+            if k % 2 == 1 {
+                let ops = generator.batch();
+                let txn = transaction(&ops, &handles);
+
+                match s.commit(&txn) {
+                    Ok(r) => {
+                        for (u, &h) in r.edit.added_uuids.iter().zip(&r.edit.added) {
+                            handles.insert(u.clone(), h);
+                        }
+
+                        damage.merge(&r.damage);
+                        commits += 1;
+                    }
+                    Err(e) => {
+                        failures.push(format!("{rel} batch {k}b: commit failed: {e}"));
+                        break;
+                    }
+                }
+            }
+
             let cp = s.checkpoint();
 
             let r = s
-                .refill_zones_affected(&report.damage)
+                .refill_zones_affected(&damage)
                 .expect("affected refill");
             let affected = fill_state(&s);
             let affected_text = s.save().expect("save");

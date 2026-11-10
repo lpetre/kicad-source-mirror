@@ -85,6 +85,10 @@ pub struct DrcSummary {
     pub parity: u32,
     /// The providers of the C++ registry the port did not run (`checks_not_run`).
     pub checks_not_run: Vec<String>,
+    /// Nets the run's connectivity build gave to items (the cache generator's
+    /// `Build` + `PropagateNets`): damage for [`Session::refill_zones_affected`].
+    #[serde(default, skip_serializing_if = "super::refill::ChangeDamage::is_empty")]
+    pub damage: super::refill::ChangeDamage,
 }
 
 /// Options of [`Session::quick_drc`].
@@ -241,6 +245,7 @@ impl Session {
         }
 
         let tuning_profiles = crate::board_loader::tuning_profiles(&self.board);
+        let nets_before = super::refill::net_snapshot(&self.board);
         let mut found: Vec<(Arc<RcItem>, Vector2I, i32)> = Vec::new();
         let engine = self.drc_engine.take().expect("engine initialised above");
 
@@ -291,6 +296,7 @@ impl Session {
             Severity::Error.as_i32() | Severity::Warning.as_i32(),
         );
         let mut summary = summarize(&ctx, &refs, mask);
+        summary.damage = super::refill::net_damage(&self.board, &nets_before);
         summary.checks_not_run = outcome
             .checks_not_run
             .iter()
@@ -392,6 +398,7 @@ impl Session {
         };
         let mut s = DrcSummary {
             checks_not_run: full.checks_not_run,
+            damage: full.damage,
             ..DrcSummary::default()
         };
 

@@ -166,6 +166,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "EditBatch")] batch: JsValue,
     ) -> Result<JsValue, JsValue> {
         let b: EditBatch = required(batch)?;
+        self.untracked_edit();
         to_js(&self.session.apply_edits(&b).map_err(session_error)?)
     }
 
@@ -176,6 +177,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "NewTrack")] spec: JsValue,
     ) -> Result<JsValue, JsValue> {
         let s: NewTrack = required(spec)?;
+        self.untracked_edit();
         to_js(&self.session.add_track_segment(&s).map_err(session_error)?)
     }
 
@@ -186,6 +188,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "NewArc")] spec: JsValue,
     ) -> Result<JsValue, JsValue> {
         let s: NewArc = required(spec)?;
+        self.untracked_edit();
         to_js(&self.session.add_arc(&s).map_err(session_error)?)
     }
 
@@ -196,6 +199,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "NewVia")] spec: JsValue,
     ) -> Result<JsValue, JsValue> {
         let s: NewVia = required(spec)?;
+        self.untracked_edit();
         to_js(&self.session.add_via_with(&s).map_err(session_error)?)
     }
 
@@ -206,6 +210,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "ItemChange")] change: JsValue,
     ) -> Result<JsValue, JsValue> {
         let c: ItemChange = required(change)?;
+        self.untracked_edit();
         to_js(&self.session.change(&c).map_err(session_error)?)
     }
 
@@ -216,6 +221,7 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "Handle[]")] handles: JsValue,
     ) -> Result<JsValue, JsValue> {
         let ids = ids(handles)?;
+        self.untracked_edit();
         to_js(&self.session.remove_items(&ids).map_err(session_error)?)
     }
 
@@ -226,12 +232,14 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "RemoveRouting | undefined")] options: JsValue,
     ) -> Result<JsValue, JsValue> {
         let r: RemoveRouting = from_js(options)?;
+        self.untracked_edit();
         to_js(&self.session.remove_routing(&r).map_err(session_error)?)
     }
 
     /// `BOARD::BuildConnectivity()`.
     #[wasm_bindgen(js_name = rebuildConnectivity)]
     pub fn rebuild_connectivity(&mut self) {
+        self.untracked_edit();
         self.session.rebuild_connectivity();
     }
 
@@ -244,6 +252,7 @@ impl Board {
     /// Replace the board teardrop settings.
     #[wasm_bindgen(js_name = setTeardropSettings)]
     pub fn set_teardrop_settings(&mut self, settings: JsValue) -> Result<(), JsValue> {
+        self.untracked_edit();
         let s: TeardropSettings = required(settings)?;
         self.session.set_teardrop_settings(&s);
         Ok(())
@@ -257,6 +266,7 @@ impl Board {
         enabled: bool,
     ) -> Result<JsValue, JsValue> {
         let ids = ids(handles)?;
+        self.untracked_edit();
         to_js(
             &self
                 .session
@@ -268,6 +278,7 @@ impl Board {
     /// `TEARDROP_MANAGER::UpdateTeardrops` (full update).
     #[wasm_bindgen(js_name = updateTeardrops, unchecked_return_type = "TeardropOutcome")]
     pub fn update_teardrops(&mut self) -> Result<JsValue, JsValue> {
+        self.untracked_edit();
         to_js(&self.session.update_teardrops().map_err(session_error)?)
     }
 
@@ -278,7 +289,9 @@ impl Board {
         #[wasm_bindgen(unchecked_param_type = "QuickDrcOptions | undefined")] options: JsValue,
     ) -> Result<JsValue, JsValue> {
         let o: QuickDrcOptions = from_js(options)?;
-        to_js(&self.session.quick_drc(&o).map_err(session_error)?)
+        let summary = self.session.quick_drc(&o).map_err(session_error)?;
+        self.zone_damage.merge(&summary.damage);
+        to_js(&summary)
     }
 
     /// The structured violations of the last `runDrc` (its markers).

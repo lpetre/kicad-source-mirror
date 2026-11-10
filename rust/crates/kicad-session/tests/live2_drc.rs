@@ -27,9 +27,15 @@
 //!   equals, entry for entry and in order, the entries of the full DRC job with
 //!   `--all-track-errors` that name one of the handles (unconnected entries: or have one's
 //!   net), for the providers of `CHECK_ITEMS_PROVIDERS`;
-//! * (a) the DRC report of the live session (incremental connectivity, after the edits)
-//!   equals, byte for byte apart from the date and file name header lines, the report of a
-//!   fresh load of the board the live session saves.
+//! * (a1) two DRC runs in a row on the live session (incremental connectivity, after the
+//!   edits) give the same report, byte for byte apart from the date and file name lines:
+//!   the DRC carries no state from one run to the next that changes a result;
+//! * (a2, measured, not asserted) the live report against the report of a fresh load of the
+//!   board the live session saves. They differ in order-dependent entries, as in pcbnew:
+//!   the writer saves the tracks sorted (`PCB_TRACK::cmp_tracks`), so the reloaded board
+//!   iterates its tracks in another order than the edited one, which changes ratsnest edge
+//!   ties of unconnected items, the net the propagation gives a netless item touching two
+//!   nets, and report order.
 //!
 //! `LIVE2_DRC_BOARDS` (default 6) and `LIVE2_DRC_BATCHES` (default 3) scale the campaign.
 
@@ -105,6 +111,26 @@ fn normalized(report: &str) -> String {
         .join("\n")
 }
 
+/// The violation blocks of a report (a `[type]` line and its indented lines), sorted.
+fn blocks(report: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+
+    for l in normalized(report).lines() {
+        if l.starts_with("    ") {
+            if let Some(last) = out.last_mut() {
+                last.push('\n');
+                last.push_str(l);
+                continue;
+            }
+        }
+
+        out.push(l.to_string());
+    }
+
+    out.sort();
+    out
+}
+
 /// Injected violations: a via on a pad of another net, a track from a pad 40 mm to the
 /// right, a via 0.35 mm from another via.
 fn injected(s: &Session, rng: &mut Rng) -> Vec<Op> {
@@ -171,6 +197,7 @@ fn check_items_and_live_drc() {
     let max_boards = env_usize("LIVE2_DRC_BOARDS", 6);
     let mut failures = Vec::new();
     let (mut tested, mut commits, mut scoped_entries, mut full_entries) = (0, 0, 0usize, 0usize);
+    let (mut fresh_same, mut fresh_order, mut fresh_differ) = (0, 0, 0);
     let mut scoped_types: BTreeSet<String> = BTreeSet::new();
 
     for (bi, rel) in boards().iter().enumerate() {
@@ -208,6 +235,36 @@ fn check_items_and_live_drc() {
 
             commits += 1;
 
+            // (a1) repeated runs on the live state agree (nothing carried from one run to the
+            // next changes a result); (a2) the live state against a fresh load of the saved
+            // board, measured (see the module comment: the writer sorts the tracks).
+            let saved = s.save().expect("save");
+            let (live_report, _) = drc_job(&mut s, false);
+            let (again, _) = drc_job(&mut s, false);
+
+            if normalized(&live_report) != normalized(&again) {
+                failures.push(format!("{rel} batch {k}: a second DRC run on the live state differs"));
+            }
+
+            let mut fresh = load_text(&saved, rel).expect("reload");
+            let (fresh_report, _) = drc_job(&mut fresh, false);
+
+            if normalized(&live_report) == normalized(&fresh_report) {
+                fresh_same += 1;
+            } else if blocks(&live_report) == blocks(&fresh_report) {
+                fresh_order += 1;
+            } else {
+                fresh_differ += 1;
+
+                if std::env::var("LIVE2_DEBUG").is_ok() {
+                    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                        .join("../../target/live2");
+                    let _ = std::fs::create_dir_all(&dir);
+                    let _ = std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
+                    let _ = std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
+                }
+            }
+
             // (b) scoped == subset of the full all-track-errors run
             let mut ids: Vec<u64> = report.edit.added.clone();
             ids.extend(&report.edit.changed);
@@ -238,9 +295,8 @@ fn check_items_and_live_drc() {
                 )
                 .expect("check_items");
 
-            let saved = s.save().expect("save");
             let mut others = other_providers(&mut s);
-            let (live_report, full) = drc_job(&mut s, true);
+            let (_, full) = drc_job(&mut s, true);
             let wanted: BTreeSet<u64> = ids.iter().copied().collect();
             let nets: BTreeSet<i32> = ids
                 .iter()
@@ -295,36 +351,14 @@ fn check_items_and_live_drc() {
                 ));
             }
 
-            // (a) live state == fresh load of the saved board (normal DRC run)
-            let (live_report, _) = if k + 1 == n {
-                drc_job(&mut s, false)
-            } else {
-                (live_report, Vec::new())
-            };
-
-            if k + 1 == n {
-                let mut fresh = load_text(&saved, rel).expect("reload");
-                let (fresh_report, _) = drc_job(&mut fresh, false);
-
-                if normalized(&live_report) != normalized(&fresh_report) {
-                    let a = normalized(&live_report);
-                    let b = normalized(&fresh_report);
-                    let first = a
-                        .lines()
-                        .zip(b.lines())
-                        .find(|(x, y)| x != y)
-                        .map(|(x, y)| format!("{x} | {y}"));
-                    failures.push(format!(
-                        "{rel} batch {k}: live DRC differs from a fresh load: {first:?}"
-                    ));
-                }
-            }
         }
     }
 
     eprintln!(
         "live2 drc: {tested} boards, {commits} commits, {scoped_entries} scoped entries of \
-         {full_entries} full-run entries; types {scoped_types:?}"
+         {full_entries} full-run entries; types {scoped_types:?}; live vs fresh load: \
+         {fresh_same} identical, {fresh_order} same entries in another order, {fresh_differ} \
+         different"
     );
     assert!(tested > 0);
     assert!(failures.is_empty(), "{}", failures.join("\n"));

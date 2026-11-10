@@ -22,7 +22,9 @@
 use js_sys::{Float64Array, Int32Array, Object, Reflect};
 use kicad_session::SessionError;
 use kicad_session::board_api::commit::{CommitReport, Transaction as Txn};
+use kicad_session::board_api::check::CheckItemsOptions;
 use kicad_session::board_api::edit::{EditBatch, ItemChange, NewItem, RemoveRouting};
+use kicad_session::board_api::refill::ChangeDamage;
 use wasm_bindgen::prelude::*;
 
 use crate::board_api::{ids, required};
@@ -192,21 +194,26 @@ impl Board {
     /// dirty nets only); returns the change report.
     #[wasm_bindgen(unchecked_return_type = "CommitReport")]
     pub fn commit(&mut self, txn: &Transaction) -> Result<JsValue, JsValue> {
-        to_js(&self.session.commit(&txn.txn).map_err(session_error)?)
+        let report = self.tracked_commit(txn)?;
+        to_js(&report)
     }
 
     /// `commit` returning typed arrays (handles as `Float64Array`, nets as `Int32Array`,
     /// `netChanges` as `[id, from, to]` triples) and no UUID strings.
     #[wasm_bindgen(js_name = commitBulk, unchecked_return_type = "CommitReportBulk")]
     pub fn commit_bulk(&mut self, txn: &Transaction) -> Result<JsValue, JsValue> {
-        bulk_report(&self.session.commit(&txn.txn).map_err(session_error)?)
+        let report = self.tracked_commit(txn)?;
+        bulk_report(&report)
     }
 
     /// Saves board and connectivity; returns a token for `rollback`.
     pub fn checkpoint(&mut self) -> u32 {
         let token = self.next_checkpoint;
         self.next_checkpoint += 1;
-        self.checkpoints.insert(token, self.session.checkpoint());
+        self.checkpoints.insert(
+            token,
+            (self.session.checkpoint(), self.zone_damage.clone()),
+        );
         token
     }
 
@@ -217,7 +224,8 @@ impl Board {
                 "no checkpoint {token}"
             )))
         })?;
-        self.session.rollback(cp);
+        self.session.rollback(&cp.0);
+        self.zone_damage = cp.1.clone();
         Ok(())
     }
 
@@ -230,7 +238,9 @@ impl Board {
     /// Full connectivity rebuild (`BOARD::BuildConnectivity`): what a reload of the saved
     /// board computes. Call it before the final refill, DRC and save.
     pub fn finalize(&mut self) {
-        self.session.finalize();
+        // the full rebuild can give items other nets than the incremental commits did
+        let damage = self.session.finalize_tracked();
+        self.zone_damage.merge(&damage);
     }
 
     /// The routing as flat records: `{ trackIds, tracks, arcIds, arcs, viaIds, vias }`.
@@ -245,5 +255,62 @@ impl Board {
         set(&o, "viaIds", &handles_array(&r.via_ids))?;
         set(&o, "vias", &Int32Array::from(r.vias.as_slice()))?;
         Ok(o.into())
+    }
+}
+
+impl Board {
+    /// `Session::commit` with its damage merged into the zone damage (package LIVE-2).
+    fn tracked_commit(&mut self, txn: &Transaction) -> Result<CommitReport, JsValue> {
+        let report = self.session.commit(&txn.txn);
+
+        match &report {
+            Ok(r) => self.zone_damage.merge(&r.damage),
+            // an addition that failed half way: what was applied is not reported
+            Err(_) => self.untracked_edit(),
+        }
+
+        report.map_err(session_error)
+    }
+
+    /// An edit that does not report its damage: the next affected refill is a full one.
+    pub(crate) fn untracked_edit(&mut self) {
+        self.zone_damage = ChangeDamage::full();
+    }
+}
+
+#[wasm_bindgen]
+impl Board {
+    /// Zone refill of only the zones the changes since the last refill can affect (every
+    /// commit, `quickDrc` / `checkItems` and `finalize` reports its changes; any other edit
+    /// makes the next refill a full one). The result is identical to `refillZones()`.
+    #[wasm_bindgen(js_name = refillZonesAffected, unchecked_return_type = "RefillReport")]
+    pub fn refill_zones_affected(&mut self) -> Result<JsValue, JsValue> {
+        let report = self
+            .session
+            .refill_zones_affected(&self.zone_damage)
+            .map_err(session_error)?;
+        self.zone_damage = report.damage.clone();
+        to_js(&report)
+    }
+
+    /// The changes the next `refillZonesAffected` refills for.
+    #[wasm_bindgen(js_name = zoneDamage, unchecked_return_type = "ChangeDamage")]
+    pub fn zone_damage(&self) -> Result<JsValue, JsValue> {
+        to_js(&self.zone_damage)
+    }
+
+    /// The violations that involve one of the items (the subset of a full all-track-errors
+    /// run of the chosen providers whose entries name one of them).
+    #[wasm_bindgen(js_name = checkItems, unchecked_return_type = "DrcSummary")]
+    pub fn check_items(
+        &mut self,
+        handles: &Float64Array,
+        #[wasm_bindgen(unchecked_param_type = "CheckItemsOptions | undefined")] options: JsValue,
+    ) -> Result<JsValue, JsValue> {
+        let o: CheckItemsOptions = from_js(options)?;
+        let ids = handles_of(handles)?;
+        let summary = self.session.check_items(&ids, &o).map_err(session_error)?;
+        self.zone_damage.merge(&summary.damage);
+        to_js(&summary)
     }
 }

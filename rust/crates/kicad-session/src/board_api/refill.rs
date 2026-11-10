@@ -185,9 +185,49 @@ pub struct RefillReport {
     pub reused: Vec<u64>,
     /// The number of board zones whose fill was kept.
     pub kept: u32,
+    /// Nets the refill's connectivity builds gave to items (`PropagateNets`): damage for
+    /// the next affected refill.
+    #[serde(default, skip_serializing_if = "ChangeDamage::is_empty")]
+    pub damage: ChangeDamage,
+}
+
+/// The nets of the board's tracks, arcs, vias and zones (the items whose net a connectivity
+/// build can change), for [`net_damage`].
+pub(crate) fn net_snapshot(board: &kicad_pcb::Board) -> Vec<(ItemId, i32)> {
+    let mut v: Vec<(ItemId, i32)> = board
+        .tracks()
+        .map(|(id, t)| (ItemId::from(id), t.as_track().base.net.0))
+        .collect();
+    v.extend(board.zones().map(|(id, z)| (ItemId::from(id), z.base.net.0)));
+    v
+}
+
+/// The items whose net differs from `before` ([`net_snapshot`]) as damage: the item's area
+/// with its old and new nets.
+pub(crate) fn net_damage(board: &kicad_pcb::Board, before: &[(ItemId, i32)]) -> ChangeDamage {
+    let after: std::collections::HashMap<ItemId, i32> = net_snapshot(board).into_iter().collect();
+    let ctx = BoardCtx::bare(board);
+    let mut d = ChangeDamage::default();
+
+    for &(id, net) in before {
+        if after.get(&id).is_some_and(|&n| n != net) {
+            d.record_net(net);
+            d.record_item(&ctx, id);
+        }
+    }
+
+    d
 }
 
 impl Session {
+    /// [`Session::finalize`] returning the items whose net the full rebuild changed, as
+    /// damage for [`Session::refill_zones_affected`].
+    pub fn finalize_tracked(&mut self) -> ChangeDamage {
+        let before = net_snapshot(&self.board);
+        self.finalize();
+        net_damage(&self.board, &before)
+    }
+
     /// `FillAllZones` refilling only the zones `damage` (the merged
     /// [`super::commit::CommitReport::damage`] of every commit since the last refill) can
     /// affect; the fills, flags, teardrops and connectivity end up as [`Session::refill_zones`]
@@ -202,6 +242,7 @@ impl Session {
             return Err(SessionError::not_yet_ported("DRC engine"));
         };
 
+        let before = net_snapshot(&self.board);
         let outcome = fill_affected_zones(
             &mut self.board,
             &mut self.connectivity,
@@ -215,6 +256,7 @@ impl Session {
             refilled: outcome.refilled.into_iter().map(handle).collect(),
             reused: outcome.reused.into_iter().map(handle).collect(),
             kept: outcome.kept,
+            damage: net_damage(&self.board, &before),
         })
     }
 }
