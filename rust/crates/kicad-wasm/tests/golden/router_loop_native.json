@@ -1,0 +1,76 @@
+{
+  "fixedDate": "2026-01-02T03:04:05",
+  "uuidSeed": 7,
+  "boards": [
+    {
+      "file": "demos/ecc83/ecc83-pp.kicad_pcb",
+      "copperLayers": 2,
+      "pads": 33,
+      "padPolygons": 66,
+      "items": 59,
+      "removed": 59,
+      "added": 59,
+      "unconnectedBefore": 0,
+      "unconnectedStripped": 14,
+      "unconnectedAfter": 0,
+      "teardrops": null,
+      "violations": 17,
+      "drc": {
+        "length": 10246,
+        "fnv": "0e72c631766a20f3"
+      },
+      "save": {
+        "length": 157760,
+        "fnv": "f15f6ecdc0aeedfa"
+      }
+    },
+    {
+      "file": "qa/data/pcbnew/issue22010/issue22010.kicad_pcb",
+      "copperLayers": 24,
+      "pads": 96,
+      "padPolygons": 96,
+      "items": 195,
+      "removed": 195,
+      "added": 195,
+      "unconnectedBefore": 19,
+      "unconnectedStripped": 37,
+      "unconnectedAfter": 19,
+      "teardrops": null,
+      "violations": 373,
+      "drc": {
+        "length": 293871,
+        "fnv": "b4c4ff2ce34c4f6e"
+      },
+      "save": {
+        "length": 195417,
+        "fnv": "99f8a9141d82177b"
+      }
+    },
+    {
+      "file": "qa/data/pcbnew/teardrop_spike.kicad_pcb",
+      "copperLayers": 2,
+      "pads": 1,
+      "padPolygons": 1,
+      "items": 4,
+      "removed": 4,
+      "added": 4,
+      "unconnectedBefore": 0,
+      "unconnectedStripped": 0,
+      "unconnectedAfter": 0,
+      "teardrops": {
+        "teardrops": 4,
+        "candidates": 2,
+        "without": 0
+      },
+      "violations": 7,
+      "drc": {
+        "length": 4844,
+        "fnv": "3545ee754b43e46f"
+      },
+      "save": {
+        "length": 12717,
+        "fnv": "3e3ffde5cc7d1168"
+      }
+    }
+  ]
+}
