@@ -44,6 +44,11 @@ crates/kicad-cli crates/kicad-wasm` and close every stub whose subsystem exists:
    "no hash" as the reference outside a repository); hosts must seed with
    `Board::seed_generator` (replacing `board.kiid_generator` loses the reservation of the
    file's UUIDs).
+   Print `kicad_pcb::eda_text::outline_font_fallbacks(&ctx)` (`.message()`) as warnings
+   after loading a board (text in a TrueType font without usable stored glyphs is drawn
+   with the stroke font; FONT-RC-1). Set the plot creation date of the gerbers / drill /
+   svg jobs from the host clock (`gerber_job.gerber.plot.creation_date`; FAB-07 left it
+   all zeros) with an option for a fixed date for reproducible output.
 6. `rust/scripts/build-wasm.sh`: keep it working (wasm-bindgen 0.2.130 is pinned; wasm-opt
    is not installed - optional step), report module size.
 

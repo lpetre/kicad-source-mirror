@@ -383,6 +383,17 @@ Progress log:
   reference dump on 600 of 600 lines; the plot and gerbers-job corpora now have 0 known
   differences. Leftover switches named in its report (dump defaults, test skip lists) go to
   FAB-GLUE / GLUE-3.
+  05:25 UTC: done FONT-RC-1 (stored glyphs as stand-in for outline-font text: on a crafted
+  board in fonts the oracle machine has, re-save, 8 Gerber layers + job file and the DRC
+  text checks are identical to the reference; every corpus outline text (155 on 5 boards)
+  has a valid stand-in; the plot_text corpus is now 75 of 75) and DRC-22 (all expression
+  functions: 36 argument-check messages equal, EvalRules oracle 2378 categories match on
+  349 complete boards, 1 documented layer-map deviation; fromTo() needs the from-to cache).
+  ORCHESTRATOR DECISION: the TrueType branch of the DRC text thickness check unfractures a
+  copy of the stand-in glyphs (stored glyphs have holes fractured into slits; with the
+  unfracture the check equals the reference at every tested threshold); plot and save keep
+  the stored polygons. Goes into STAB-DRC.
+  Disk watchdog restarted 05:13 UTC as background task bbwthhml5 (restart about 07:10).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

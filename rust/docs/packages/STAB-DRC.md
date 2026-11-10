@@ -73,3 +73,48 @@ difference with the smallest reproducing board and your diagnosis.
   trait has no such method: add `eval_zone_connection` to the trait (kicad-pcb ctx.rs, one
   method with a default that panics or forwards - check board-model.md 7) implemented by
   `DrcEngine::eval_zone_connection`, and tell kicad-zone's owner in change_requests.
+
+## More notes (after DRC-10, DRC-22, FONT-RC-1 and the reviews)
+
+- Expression caches: the C++ keeps memo caches on BOARD that change results (the
+  layer-insensitive courtyard memo, the per-area memo that ignores the constraint, errors
+  suppressed on a memo hit, aliasing between an item and its hole proxy). The port has them
+  in `pcbexpr::functions::PcbExprBoardCaches`, active only inside
+  `PcbExprCacheScope::enter(&board)`. No production run path enters the scope yet: the DRC
+  run driver (DRC-12's job code and the harness) must hold it from InitEngine through
+  RunTests on the evaluating thread. Check that DRC-12 did it; if not, do it.
+- Harness load path: real binder (`PcbExprUcode`), triangulated zone fills
+  (`kicad_connectivity::data::cache_board_triangulation` or the full BuildConnectivity), as
+  KI_TEST::LoadBoard / the CLI do. DRC-22 saw 4 zone categories of issue11814 mismatch only
+  because the fills were not triangulated.
+- Red tests at hand-over and what is known about them:
+  drc07 `connectivity_matches_reference_corpus`: issue25580 unconnected_items names a
+  different teardrop UUID at the same position (teardrop zones are saved without a uuid and
+  get a random KIID at every load - also in the reference: compare such items by position /
+  description, not UUID); drc24 `courtyard_invalid_cases` and
+  `courtyard_clearance_matches_reference_corpus`: malformed_courtyard violations missing
+  (3-4 entries; expected ("U1", 34) not found) - footprint courtyards exist since M20:
+  find out whether the provider or `Footprint::build_courtyard_caches` / the MALFORMED flags
+  are wrong (M20 notes: the flags read as cleared after the cache was dropped; C++ readers
+  build the cache just before reading); drc25 `synthetic_boards_match_reference`: 1 extra
+  starved_thermal since pads parse from the file instead of the sidecar table; drc27
+  `drc_solder_mask_bridging_test` 3 vs 4 and its corpus replay.
+- ORCHESTRATOR DECISION (outline fonts, package FONT-RC-1): the port uses the glyphs stored
+  in the board file as stand-in for outline-font text. Stored glyphs are fractured (holes
+  turned into slits); the reference measures unfractured font outlines. For the TrueType
+  branch of checkTextThickness only, unfracture a COPY of the stand-in glyphs before the
+  deflate / area test (FONT-RC-1 measured: this matches the reference at every tested
+  threshold on the crafted board with installed fonts; plot and save keep the stored
+  polygons untouched). Implement it, extend the crafted case
+  (kicad-pcb tests/data/font_rc1/frc.kicad_pcb: thresholds 0.1 / 0.15 / 0.2 / 0.25 mm must
+  all be identical to the reference), and update tests/drc24_courtyard_text.rs:
+  `text_providers_match_reference_corpus` records issue22475 text_thickness on
+  ff749b73-2383-44e8-88dd-1d9c1b0c1a89 as an expected difference (the font is missing on the
+  oracle machine: the reference measures fontconfig's substitute, the port the stored
+  glyphs); `text_thickness_truetype_render_cache_issue22475` must test
+  `eda_text::render_cache(text, ctx, &shown, 0).is_some()` instead of the live cache.
+- Raw zone_connect values (STAB-PCB): library parity
+  (drc_test_provider_library_parity.cpp:294 / 990) and the PrintZoneConnection report texts
+  must use the `*_raw` accessors; the enum accessors return FULL for out-of-range values.
+- fromTo() returns 0 until the from-to cache (CN-05) is ported: list the corpus rules that
+  use it.
