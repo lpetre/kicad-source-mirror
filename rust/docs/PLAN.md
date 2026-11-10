@@ -1065,6 +1065,23 @@ Progress log:
   orchestrator's note from PERF.md itself; its changes went in through the checkpoint
   commits. Adapter GK-2 still running. No commits from a local session on the private
   branch yet. Demo page served on port 8123. Disk 8.4 GB free, load 4, memory fine.
+  16:43 UTC: HANDOFF. The user moves the work to a session on a laptop; this
+  cloud session wraps up. Stopped: the performance loop (after round 2's gate), the
+  adapter workflow (after the review of its wasm step; no repair run), the hourly
+  heartbeat. Round 2: three changes (refill result cache, lazy zone-connection
+  connectivity in DRC, exact integer formatting in the board writer) passed the
+  independent output review, the gate for their crates (24 of 24) and the strict
+  zone-fill corpus in release (687 of 687); they were NOT measured by a judge - the
+  implementers' own interleaved numbers are in PERF.md. The adapter's wasm step finished
+  green on 45 boards; its independent review confirmed the deliverables and found two
+  DRC defects of this port (handoff section, item 3) plus points recorded in the
+  adapter's own status file. Not done: any repair of those findings; KiCad 10.0.5
+  compatibility; DRC state between runs. One leftover of the earlier history clean-up:
+  a short quotation from a client file and three figures from his README stayed in this
+  file's history after the rewrite (reworded in the tree now); removing them from
+  history needs another forced push, which was left to the user because a second clone
+  now exists. See the handoff section at the top of this file and "Where the
+  performance work stands" in PERF.md.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
