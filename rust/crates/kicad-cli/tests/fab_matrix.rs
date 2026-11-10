@@ -499,7 +499,10 @@ fn rs_hashes(case: &Case, work: &Path) -> (String, BTreeMap<String, String>) {
         BTreeMap::from([("*".to_string(), h8(&all))])
     } else {
         // `~` stands for `file:out/<board name>` (generate.py)
-        let stem = format!("file:out/{}", name.strip_suffix(".kicad_pcb").unwrap_or(&name));
+        let stem = format!(
+            "file:out/{}",
+            name.strip_suffix(".kicad_pcb").unwrap_or(&name)
+        );
 
         res.iter()
             .map(|(k, v)| {
