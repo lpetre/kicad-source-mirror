@@ -42,6 +42,7 @@ macro_rules! port_pending {
     }};
 }
 
+pub mod affected;
 pub mod connect;
 pub mod copper_fill;
 pub mod filler;

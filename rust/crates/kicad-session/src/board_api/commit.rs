@@ -48,6 +48,7 @@ use kicad_pcb::{AddMode, Board, ItemId};
 use serde::{Deserialize, Serialize};
 
 use super::edit::{EditBatch, EditResult, ItemChange, NewItem, RemoveRouting};
+use super::refill::ChangeDamage;
 use super::{handle, item_id};
 use crate::error::SessionError;
 use crate::session::Session;
@@ -175,6 +176,10 @@ pub struct CommitReport {
     pub unconnected_visible: u32,
     /// Items whose net the propagation changed, in call order.
     pub net_changes: Vec<NetChange>,
+    /// The areas, layers and nets the commit changed, for
+    /// [`Session::refill_zones_affected`] (package LIVE-2).
+    #[serde(default)]
+    pub damage: super::refill::ChangeDamage,
 }
 
 /// A saved state of board and connectivity ([`Session::checkpoint`]).
@@ -226,10 +231,12 @@ impl Session {
     /// `m_connectivity->Remove( item )`. The connectivity is told first because the port's
     /// `Remove` reads the item (type, net, footprint pads) through the board, which the C++
     /// reads through the still-allocated item after `BOARD::Remove`; the result is the same.
-    fn commit_remove(&mut self, item: ItemId, result: &mut EditResult) {
+    fn commit_remove(&mut self, item: ItemId, result: &mut EditResult, damage: &mut ChangeDamage) {
         if !self.board.contains(item) {
             return; // already removed by an earlier entry
         }
+
+        damage.record_item(&BoardCtx::bare(&self.board), item);
 
         self.connectivity.remove(&BoardCtx::bare(&self.board), item);
 
@@ -257,7 +264,7 @@ impl Session {
             return Ok(report);
         }
 
-        let outcome = self.commit_entries(txn, &mut report.edit);
+        let outcome = self.commit_entries(txn, &mut report.edit, &mut report.damage);
 
         if txn.skip_connectivity {
             // connectivity->ClearRatsnest(); ClearLocalRatsnest() (no local ratsnest)
@@ -273,7 +280,11 @@ impl Session {
                     .item(id)
                     .and_then(|it| it.net_code())
                     .map_or(0, |n| n.0);
+                report.damage.record_net(from);
                 self.board.set_item_net(id, net, false);
+                report
+                    .damage
+                    .record_item(&BoardCtx::bare(&self.board), id);
                 report.net_changes.push(NetChange {
                     id: handle(id),
                     from,
@@ -330,13 +341,14 @@ impl Session {
         &mut self,
         txn: &Transaction,
         result: &mut EditResult,
+        damage: &mut ChangeDamage,
     ) -> Result<(), SessionError> {
         for entry in &txn.entries {
             match entry {
-                Staged::Remove { id } => self.commit_remove(item_id(*id)?, result),
+                Staged::Remove { id } => self.commit_remove(item_id(*id)?, result, damage),
                 Staged::RemoveRouting(r) => {
                     for item in self.routing_to_remove(r) {
-                        self.commit_remove(item, result);
+                        self.commit_remove(item, result, damage);
                     }
                 }
                 Staged::Change(c) => {
@@ -349,7 +361,9 @@ impl Session {
                             .mark_item_net_as_dirty(&BoardCtx::bare(&self.board), id);
                     }
 
+                    damage.record_item(&BoardCtx::bare(&self.board), id);
                     self.change_item(c)?;
+                    damage.record_item(&BoardCtx::bare(&self.board), id);
 
                     // connectivity->Update( boardItem )
                     if !txn.skip_connectivity {
@@ -372,6 +386,7 @@ impl Session {
 
                     // board->Add( boardItem, ADD_MODE::BULK_INSERT ): m_connectivity->Add
                     self.connectivity.add(&BoardCtx::bare(&self.board), id);
+                    damage.record_item(&BoardCtx::bare(&self.board), id);
                     result.added.push(id.to_bits());
                 }
             }

@@ -44,12 +44,14 @@
 //! | [`check`] | structured DRC (full job and quick provider selection) |
 //! | [`commit`] | transactions (`BOARD_COMMIT::Push` with incremental connectivity), checkpoints, finalize |
 //! | [`bulk`] | flat integer record forms of the route items for batch transfer |
+//! | [`refill`] | change damage of commits, affected-only zone refill |
 
 pub mod bulk;
 pub mod check;
 pub mod commit;
 pub mod edit;
 pub mod read;
+pub mod refill;
 pub mod rules;
 
 use kicad_core::PcbLayerId;
