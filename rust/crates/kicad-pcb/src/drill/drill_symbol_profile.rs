@@ -365,7 +365,8 @@ impl DrillSymbolProfile {
     /// `aBoard.GetDesignSettings().GetDrillSymbolProfile()`: the profile the board holds (the
     /// default profile when the board stores none).
     pub fn from_board(settings: &BoardDesignSettings) -> DrillSymbolProfile {
-        let form = model_form::DrillSymbolProfile::from_model(settings.drill_symbol_profile.as_ref());
+        let form =
+            model_form::DrillSymbolProfile::from_model(settings.drill_symbol_profile.as_ref());
         DrillSymbolProfile::from_form(&form)
     }
 

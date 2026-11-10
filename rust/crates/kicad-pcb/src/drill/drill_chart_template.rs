@@ -32,11 +32,11 @@ use crate::pcb_generated_table::{GeneratedTableColumn, GeneratedTableUnits};
 pub struct DrillChartTemplate {
     /// m_name: identifies the template file to whoever opens it.
     pub name: String,
-    pub version: i32,                        // m_version
-    pub columns: Vec<GeneratedTableColumn>,  // m_columns
-    pub units: GeneratedTableUnits,          // m_units
-    pub precision: i32,                      // m_precision
-    pub show_totals: bool,                   // m_showTotals
+    pub version: i32,                       // m_version
+    pub columns: Vec<GeneratedTableColumn>, // m_columns
+    pub units: GeneratedTableUnits,         // m_units
+    pub precision: i32,                     // m_precision
+    pub show_totals: bool,                  // m_showTotals
 }
 
 impl Default for DrillChartTemplate {

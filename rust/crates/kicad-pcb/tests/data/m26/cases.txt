@@ -15,3 +15,4 @@ m26_gen2_npth_slot | odbpp/npth_pressfit_slot.kicad_pcb | - | gen2
 m26_gen3_legacy | odbpp/npth_pressfit_slot.kicad_pcb | - | legacy
 m26_gen3_styled | via_stacks.kicad_pcb | - | styled
 api_kitchen_sink | api_kitchen_sink.kicad_pcb | - | -
+modern_metadata | ../downgrade/golden/current/modern_metadata.kicad_pcb | - | -

@@ -195,10 +195,8 @@ fn enumerate_via(
     }
 
     if op.bottom_layer == B_CU {
-        op.bottom_covered =
-            via.resolve_back_covering_mode(ctx) == CoveringMode::Covered;
-        op.bottom_plugged =
-            via.resolve_back_plugging_mode(ctx) == PluggingMode::Plugged;
+        op.bottom_covered = via.resolve_back_covering_mode(ctx) == CoveringMode::Covered;
+        op.bottom_plugged = via.resolve_back_plugging_mode(ctx) == PluggingMode::Plugged;
         op.bottom_tented = via.resolve_back_tenting_mode(ctx) == TentingMode::Tented;
     }
 

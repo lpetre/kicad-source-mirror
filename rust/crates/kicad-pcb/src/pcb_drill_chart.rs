@@ -70,7 +70,8 @@ fn column_id(data: &GeneratedTableData, col: usize) -> Option<DrillChartColumnId
         C::Description,
     ];
 
-    ALL.into_iter().find(|id| *id as i32 == data.columns[col].id)
+    ALL.into_iter()
+        .find(|id| *id as i32 == data.columns[col].id)
 }
 
 /// Port of `PCB_DRILL_CHART::buildGroups( aBoard, aProfile )`: every span on the board, as

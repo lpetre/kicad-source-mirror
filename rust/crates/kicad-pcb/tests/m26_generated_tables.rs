@@ -117,7 +117,13 @@ fn summary(name: &str, out: &str, original: &str) -> (Vec<String>, Vec<String>, 
     let mut lines = Vec::new();
 
     for (i, b) in bl.iter().enumerate() {
-        let kind = b.trim().lines().next().unwrap().trim().trim_start_matches('(');
+        let kind = b
+            .trim()
+            .lines()
+            .next()
+            .unwrap()
+            .trim()
+            .trim_start_matches('(');
         lines.push(format!("block|{name}|{i}|{kind}|fnv={}", fnv1a64(b)));
 
         for key in ["column_widths", "row_heights"] {
@@ -240,8 +246,8 @@ fn refresh(text: &str, name: &str) -> (String, i32) {
 
 #[test]
 fn generated_tables_match_the_reference_upgrade() {
-    let golden = std::fs::read_to_string(crate_dir().join("tests/golden/m26_generated_tables.txt"))
-        .unwrap();
+    let golden =
+        std::fs::read_to_string(crate_dir().join("tests/golden/m26_generated_tables.txt")).unwrap();
 
     // The golden by case: its lines and whether the reference's second upgrade was a fixed point
     let mut expected: BTreeMap<String, Vec<String>> = BTreeMap::new();
@@ -291,11 +297,19 @@ fn generated_tables_match_the_reference_upgrade() {
             let dir = Path::new(&dir);
             std::fs::create_dir_all(dir).unwrap();
             std::fs::write(dir.join(format!("{name}.o1.kicad_pcb")), &norm).unwrap();
-            std::fs::write(dir.join(format!("{name}.o2.kicad_pcb")), normalise(&o2, &input)).unwrap();
+            std::fs::write(
+                dir.join(format!("{name}.o2.kicad_pcb")),
+                normalise(&o2, &input),
+            )
+            .unwrap();
         }
 
         if fixed[name] {
-            assert_eq!(normalise(&o2, &o1), o1, "{name}: second refresh is no fixed point");
+            assert_eq!(
+                normalise(&o2, &o1),
+                o1,
+                "{name}: second refresh is no fixed point"
+            );
         } else {
             let o2_name = format!("{name}@o2");
             assert_eq!(

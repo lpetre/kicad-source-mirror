@@ -35,7 +35,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use kicad_core::EdaUnits;
 use kicad_core::printf::format_f;
 use kicad_core::text_vars::ResolutionContext;
-use kicad_core::{GrTextHAlignT, GrTextVAlignT, Kiid, Lset, PCB_IU_SCALE, PcbLayerId, TextAttributes};
+use kicad_core::{
+    GrTextHAlignT, GrTextVAlignT, Kiid, Lset, PCB_IU_SCALE, PcbLayerId, TextAttributes,
+};
 use kicad_font::FontExt;
 use kicad_geom::geometry::approximation::ERROR_INSIDE;
 use kicad_geom::geometry::geometry_utils::ARC_LOW_DEF;
@@ -898,7 +900,10 @@ impl PcbTable {
         let mut height = 0;
 
         for col in 0..self.col_count() {
-            let Some(cell) = self.cell(row, col).and_then(|c| ctx.board.tablecells.get(c)) else {
+            let Some(cell) = self
+                .cell(row, col)
+                .and_then(|c| ctx.board.tablecells.get(c))
+            else {
                 continue;
             };
 
@@ -924,7 +929,10 @@ impl PcbTable {
         let mut height = 0;
 
         for col in 0..self.col_count() {
-            let Some(cell) = self.cell(row, col).and_then(|c| ctx.board.tablecells.get(c)) else {
+            let Some(cell) = self
+                .cell(row, col)
+                .and_then(|c| ctx.board.tablecells.get(c))
+            else {
                 continue;
             };
 
@@ -1011,7 +1019,10 @@ impl PcbTable {
         }
 
         let differs = |row: i32, col: i32, text: &str| -> bool {
-            match self.cell(row, col).and_then(|c| ctx.board.tablecells.get(c)) {
+            match self
+                .cell(row, col)
+                .and_then(|c| ctx.board.tablecells.get(c))
+            {
                 None => true,
                 Some(cell) => cell.textbox.text.text() != text,
             }
@@ -1059,7 +1070,9 @@ pub fn generate(
     refresh: Option<&mut DrillSymbolProfile>,
 ) -> GeneratedTableContent {
     match &data.kind {
-        GeneratedTableKind::DrillChart { .. } => crate::pcb_drill_chart::generate(ctx, data, refresh),
+        GeneratedTableKind::DrillChart { .. } => {
+            crate::pcb_drill_chart::generate(ctx, data, refresh)
+        }
         GeneratedTableKind::StackupTable => crate::pcb_stackup_table::generate(ctx, data),
     }
 }

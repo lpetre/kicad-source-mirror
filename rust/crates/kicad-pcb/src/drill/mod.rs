@@ -29,12 +29,14 @@ pub mod drill_operation;
 pub mod drill_symbol_assigner;
 pub mod drill_symbol_profile;
 
-pub use drill_chart_model::{DrillChartGroup, DrillChartModel, DrillChartRowSpec, DrillChartTotals};
+pub use drill_chart_model::{
+    DrillChartGroup, DrillChartModel, DrillChartRowSpec, DrillChartTotals,
+};
 pub use drill_chart_template::DrillChartTemplate;
 pub use drill_enumerator::{enumerate_drill_operations, enumerate_drill_spans, is_drill_slot};
 pub use drill_operation::{
-    DrillLayerPair, DrillOpKind, DrillOperation, DrillOperationId, DrillPostMachining,
-    DrillQuery, DrillSource, DrillSpan, HoleAttribute,
+    DrillLayerPair, DrillOpKind, DrillOperation, DrillOperationId, DrillPostMachining, DrillQuery,
+    DrillSource, DrillSpan, HoleAttribute,
 };
 pub use drill_symbol_assigner::{
     DrillSymbolCache, DrillSymbolEntry, assign_drill_symbols, drill_symbol_cache,

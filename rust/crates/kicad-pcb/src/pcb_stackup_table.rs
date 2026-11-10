@@ -20,10 +20,10 @@
 //! (`BuildStackupTableRows`; `StackupTableSchema()` and `STACKUP_TABLE_COLUMN_ID` are in
 //! [`crate::pcb_generated_table`], package M11).
 
+use kicad_core::base_units::UNITY_SCALE;
 use kicad_core::eda_units::ui::string_from_value;
 use kicad_core::layer_ids::is_valid_layer;
 use kicad_core::string_utils::initial_caps;
-use kicad_core::base_units::UNITY_SCALE;
 use kicad_core::{EdaDataType, EdaUnits, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::Vector2I;
 

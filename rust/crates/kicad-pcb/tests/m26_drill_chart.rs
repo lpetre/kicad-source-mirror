@@ -109,8 +109,8 @@ fn outline(b: &Box2I) -> String {
 
 /// A 6-copper-layer board holding `items`.
 fn board(items: &str) -> Board {
-    let base = std::fs::read_to_string(kicad_qa::pcbnew_data_dir().join("via_stacks.kicad_pcb"))
-        .unwrap();
+    let base =
+        std::fs::read_to_string(kicad_qa::pcbnew_data_dir().join("via_stacks.kicad_pcb")).unwrap();
     let header = &base[..base.find("\n\t(via").unwrap() + 1];
     parse(&format!("{header}{items})\n"))
 }
@@ -537,7 +537,11 @@ fn every_symbol_resolves_without_a_chart() {
     assert_eq!(resolved.len(), model.groups().len());
 
     for group in model.groups() {
-        assert!(resolved.contains_key(&group.key), "no symbol for {}", group.key);
+        assert!(
+            resolved.contains_key(&group.key),
+            "no symbol for {}",
+            group.key
+        );
     }
 
     // Resolving must not have written anything back to the board
@@ -548,7 +552,10 @@ fn every_symbol_resolves_without_a_chart() {
 /// (`PCB_TABLECELL::PCB_TABLECELL`, `PCB_TABLE::AddCell`).
 #[test]
 fn new_cells_take_the_chart_layer_and_side() {
-    for (layer, id, mirrored) in [("B.Fab", PcbLayerId::BFab, true), ("User.1", PcbLayerId::User1, false)] {
+    for (layer, id, mirrored) in [
+        ("B.Fab", PcbLayerId::BFab, true),
+        ("User.1", PcbLayerId::User1, false),
+    ] {
         let mut board = board(&format!("{HOLES}{}", chart(layer)));
         let chart = the_chart(&board);
         rebuild(&mut board, chart);

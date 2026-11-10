@@ -394,6 +394,13 @@ Progress log:
   unfracture the check equals the reference at every tested threshold); plot and save keep
   the stored polygons. Goes into STAB-DRC.
   Disk watchdog restarted 05:13 UTC as background task bbwthhml5 (restart about 07:10).
+  05:35 UTC: launched the next wave - DRC-30 diff pair coupling -> DRC-31 matched length /
+  skew / via count / net chains (with the length calculation) -> DRC-34 leftovers, and
+  CN-05 from-to cache (wf3foz4r4); DRC-32 -> DRC-33 creepage (w2bvh6638); the owed Fable
+  reviews REV-ZF (zone filler: coverage map of every fill branch, crafted boards for the
+  uncovered ones) and REV-FAB (fabrication: option and item coverage against the
+  reference, statement-level reading of aperture / attribute / number formatting)
+  (wktru4kxr). Running besides: DRC-12, TD-01, M26, FAB-GLUE -> FAB-10 -> 11 -> 12.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

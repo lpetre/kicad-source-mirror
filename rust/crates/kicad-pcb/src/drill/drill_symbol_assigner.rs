@@ -193,16 +193,19 @@ pub fn resolve_drill_symbols_by_item(
                 continue;
             };
 
-            by_item.entry(op.source_id).or_default().push(DrillSymbolEntry {
-                symbol: symbol.clone(),
-                span,
-                position: op.position,
-                kind: op.kind,
-                diameter: op.diameter,
-                size_xy: op.size_xy,
-                orientation: op.orientation,
-                is_slot: op.is_slot,
-            });
+            by_item
+                .entry(op.source_id)
+                .or_default()
+                .push(DrillSymbolEntry {
+                    symbol: symbol.clone(),
+                    span,
+                    position: op.position,
+                    kind: op.kind,
+                    diameter: op.diameter,
+                    size_xy: op.size_xy,
+                    orientation: op.orientation,
+                    is_slot: op.is_slot,
+                });
         }
     }
 
