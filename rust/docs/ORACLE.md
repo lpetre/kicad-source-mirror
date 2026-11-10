@@ -56,6 +56,12 @@ parse-and-write reference for `.kicad_mod` files.
 
 A DRC run on `demos/pic_programmer/pic_programmer.kicad_pcb` takes about 1.4 s.
 
+## Machine limits (read this)
+
+Every C++ compile or link runs under the machine-wide lock, two jobs at most:
+`flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 <build command>`. See PORTING.md
+section 7 (memory and disk rules): concurrent C++ builds have already crashed the machine once.
+
 ## Unit-level C++ harnesses
 
 For differential tests below the CLI level (geometry, formatting, lexing) compile a small C++

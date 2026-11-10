@@ -136,6 +136,17 @@ Several agents work in this workspace at the same time, in different crates or d
   modify anything outside `<kicad>/rust/` (the C++ tree is read-only reference).
 - Scratch files go under `rust/target/` or the system temp dir, not into the source tree.
 - Do not use `cargo install` or `rustup` without being asked to.
+- **Memory is small and shared** (15 GB for everybody). The machine has already been restarted
+  once, most likely by running out of memory while several agents compiled C++ oracle drivers
+  at the same time; a restart kills every running agent. Therefore: every C++ compile or link
+  (oracle drivers, pcb-dump rebuilds, anything invoking g++ / ninja / make) MUST run under the
+  machine-wide lock and with at most two jobs:
+  `flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 <your build command, -j2 at most>`
+  (put the `flock` inside your build script so it cannot be forgotten). Reuse an existing
+  driver or dump section instead of creating a new C++ binary where you can. Never run
+  `pcb-dump` or the reference `kicad-cli` on the large demo boards (jetson, vme-wren,
+  openair-max, tiny_tapeout, cm5_minima) in parallel with anything else, and never more than
+  two reference-tool processes at once.
 - **Disk is small and shared** (about 40 GB for everything, including the reference build and
   all build outputs). The disk has filled up once already because of scratch dumps. Never write
   a scratch file larger than about 200 MB: hash oracle output per case or per section instead

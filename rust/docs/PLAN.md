@@ -140,54 +140,53 @@ Standing instructions from the user: do not stop; spare no tokens; Opus for the 
 reviews every Opus decision before others build on it; commit and push after every workflow.
 A heartbeat reminder is scheduled with send_later; re-arm it each time it fires.
 
-Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend the script):
-- `.../workflows/scripts/model-wave-wf_9da70494-9c4.js` - args `{integration?: text,
-  packages: [{id, title, modules, cpp, notes}]}`: optional Fable integration step, then the
-  kicad-pcb model packages in parallel (2 per workflow).
-- `.../workflows/scripts/port-packages-wf_122f1b23-a17.js` - args `{chains: [[{id, title,
-  crate, body, model?}, ...], ...]}`: chains in parallel, packages of a chain in order, each
-  receiving its predecessor's notes. Generic for every non-model package.
-(Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
+Reusable workflow script (invoke with `scriptPath` + `args`, no need to resend the script):
+- `/root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/workflows/scripts/run-packages-wf_bf883e1d-a68.js`
+  - args `{chains: [["ID", "ID2"], ["ID3"]], interrupted: ["ID"], extra: {"ID": "note"},
+  models: {"ID": "fable"}}`. Each agent reads its assignment from `rust/docs/packages/<ID>.md`
+  (committed). Chains run in parallel (2 per workflow), packages of a chain in order, each
+  receiving its predecessor's notes; ids listed in `interrupted` get a "take stock and finish,
+  do not start over" instruction. To launch a NEW package: write `docs/packages/<ID>.md`
+  (same shape as the existing ones: crate, owned files, C++ to port, verification), then run it.
+- (`model-wave-wf_9da70494-9c4.js` with an optional Fable integration step also still exists.)
 
-Progress log of launches (workflow task ids):
+Recovery after a container restart (it happened once, 2026-11-10 00:55 UTC, probably out of
+memory from parallel C++ oracle builds): files survive, processes do not. Commit + push; list
+finished packages from the workflow journals (`.../subagents/workflows/*/journal.jsonl`,
+`type == "result"`); relaunch every unfinished package with `interrupted`; restart the disk
+watchdog (`/home/user/kicad-oracle/bin/disk-watchdog.sh` as a background task). PORTING.md
+section 7 now has memory and disk rules (machine-wide flock for C++ builds).
+
+Progress log:
 - done (Opus; results read and accepted on Fable unless noted): model M0 (reviewed kernel +
-  types), M1, M2, M3, M4, M5, M6, M7, M10, M13, M14, M16, M17, M22, M23, M24, SET-3 (net
-  settings JSON), Fable integration #1 (design rev 2.2), DUMP-RS (defaults scoreboard: 3013
-  match / 0 mismatch / 669 pending), PCBIO-01 parser core, PCBIO-02 writer core, DRC-20 rule
-  file parser, FAB-01 drill model. kicad-geom is COMPLETE: G4b triangulation (140k oracle
-  cases), G5 collision matrix + nearest points + shape index (245k cases; found and fixed an
-  MTV sign bug in the G2 dispatch), G6b shape conversion utilities (250k cases; replaced
-  cmath::cbrt with a glibc port because Rust's cbrt differs by 1 ulp) - orchestrator re-ran
-  the crate: 555 tests pass, 0 fail.
-- running: PCBIO-17 corpus harness and DRC-11 report writers (wh3q6gcxx); W1 session / cli /
-  wasm skeleton and FAB-02 Excellon writer (wqbof03ge); SET-5 project file + SetProject +
-  load sequences (wu5ii0v6b; SET-4 BDS JSON finished); M8 -> M9
-  -> M11 (w3pcibnu5); PCBIO-04 setup and PCBIO-09 -> PCBIO-11 (wn7tddi73); M18 -> PCBIO-08
-  and M12 -> PCBIO-10 (wr976icfj); PCBIO-03 and PCBIO-05 (wa5nbjjnh); M15 pad shapes and
-  CN-01 -> CN-02 -> CN-03 -> CN-04 connectivity (wk55svoty); DRC-03 -> DRC-04 and DRC-02 ->
-  DRC-05 (wfbkc41jw).
+  types), M1-M8, M10, M13, M14, M16, M17, M22, M23, M24, SET-3, SET-4, Fable integration #1
+  (design rev 2.2), DUMP-RS, PCBIO-01 parser core, PCBIO-02 writer core, DRC-20 rule file
+  parser, DRC-11 report writers, FAB-01 drill model, FAB-02 Excellon writer. kicad-geom,
+  kicad-sexpr, kicad-core, kicad-libeval, kicad-font, kicad-plot are complete.
+- relaunched after the restart (all were mid-flight; run-packages, Opus): M9 -> M11 and M18
+  -> PCBIO-08 (w7nqnu6z5); PCBIO-03 and PCBIO-05 (wb51psfi2); M15 and M12 -> PCBIO-10
+  (wxze6tto6); CN-01 -> CN-02 -> CN-03 -> CN-04 and DRC-03 -> DRC-04 (w6koa0hnk); DRC-02 ->
+  DRC-05 and PCBIO-04 -> SET-5 (w08hk2mca); W1 and PCBIO-17 -> PCBIO-09 -> PCBIO-11
+  (wd75f0o07).
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
-  real boards end to end), PCBIO-12 / 13 / 14; SET-5 project file + SetProject glue; DRC
-  providers DRC-06 .. DRC-10 and DRC-12 (after DRC-04 / 05); FAB-03 .. FAB-09 board plotting
-  (after model shapes); PCBIO-15 loader glue in kicad-session (after CN-04); zone fill.
-- Fable integration #2 (DEFERRED until the M8 -> M9 -> M11 chain and M12 / M15 / M18 are
-  done, because it changes trait signatures in files those agents are editing): apply the
-  collected change requests in rust/target/orchestrator/change_requests.txt (regenerate it
-  from the workflow journals first; it is a scratch file) - traits.rs
-  (EdaShapeItem::corners_in_sequence(ctx), BoardItemMut::style_from_settings(&MutEnv), a
-  SetNet virtual), ctx.rs (LayerEnv LAYER_T, ConnectivityQuery::net_items), item.rs
-  (ItemFlags STARTPOINT / ENDPOINT), drc_api.rs (DrcConstraint::name()), dump (LAYER_T
-  names; wire every `no_api(..)` whose getter now exists), footprint functions other
-  packages inlined or stubbed, apply_net_chain_netclasses wiring, wx_string_matches to
-  kicad_core, BoardProject::project_name / visible_layers / clock - and review the
-  decisions and deviations of every package section in kicad-pcb/PORT_STATUS.md.
+  real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12
+  (after DRC-04 / 05); FAB-03 .. FAB-09 board plotting; PCBIO-15 loader glue in
+  kicad-session (after CN-04); zone fill.
+- Fable integration #2 (DEFERRED until M9 / M11 / M12 / M15 / M18 are done, because it
+  changes trait signatures in files those agents edit): apply the collected change requests
+  (regenerate rust/target/orchestrator/change_requests.txt from the workflow journals first)
+  - traits.rs (EdaShapeItem::corners_in_sequence(ctx), BoardItemMut::style_from_settings(
+  &MutEnv), a SetNet virtual), ctx.rs (LayerEnv LAYER_T, ConnectivityQuery::net_items),
+  item.rs (ItemFlags STARTPOINT / ENDPOINT), drc_api.rs (DrcConstraint::name()), dump (LAYER_T
+  names; wire every `no_api(..)` whose getter now exists; meander lines), footprint
+  functions other packages inlined or stubbed, apply_net_chain_netclasses wiring,
+  wx_string_matches to kicad_core, PCB_VIA::ValidateViaParameters, NET_SETTINGS operator== -
+  and review the decisions and deviations of every package section in kicad-pcb/PORT_STATUS.md.
 - dedicated Fable reviews still owed: connectivity pointer-order replacements (after CN-04),
   DRC resolver / EvalRules (after DRC-04), zone filler.
-- incidents: the disk filled once (multi-GB oracle scratch dumps); a watchdog
-  (/home/user/kicad-oracle/bin/disk-watchdog.sh, background task with a 2 h lifetime:
-  restart it when it ends) removes scratch files over 1 GB; dev profile has debug = 0;
-  PORTING.md section 7 has the disk rule.
+- note for the user: one pushed commit (58d2d62f) carries a model name in its Co-Authored-By
+  trailer; rewording it needs a force push, which was not permitted.
 
 Queue - launch each item as soon as its dependencies have landed (model package rows and
 run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis
