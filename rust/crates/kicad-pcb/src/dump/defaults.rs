@@ -25,8 +25,7 @@ use kicad_geom::Vector2I;
 
 use super::board::{SectionFn, dump_bbox, dump_item_base, is_dimension};
 use super::format::{
-    Out, attempt, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_polyset, v_str,
-    v_vec,
+    Out, attempt, emit, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_polyset, v_str, v_vec,
 };
 use super::{items, settings};
 use crate::board::Board;
@@ -188,31 +187,10 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "barcode.library_pos", v_vec(b.lib_pos()));
             emit!(o, "barcode.library_angle", v_angle(b.lib_angle()));
 
-            // The assembled polygons need the zint symbol encoder (ZINT-1) for any non-empty
-            // text; an empty text assembles without it.
-            if b.text().is_empty() {
-                emit!(o, "barcode.poly", v_polyset(&b.poly_shape(ctx)));
-                emit!(o, "barcode.symbol_poly", v_polyset(&b.symbol_poly(ctx)));
-                emit!(o, "barcode.text_poly", v_polyset(&b.text_poly(ctx)));
-                emit!(o, "barcode.last_error", v_str(&b.last_error(ctx)));
-            } else {
-                emit!(o, "barcode.poly", no_api("zint symbol encoder (ZINT-1)"));
-                emit!(
-                    o,
-                    "barcode.symbol_poly",
-                    no_api("zint symbol encoder (ZINT-1)")
-                );
-                emit!(
-                    o,
-                    "barcode.text_poly",
-                    no_api("zint symbol encoder (ZINT-1)")
-                );
-                emit!(
-                    o,
-                    "barcode.last_error",
-                    no_api("zint symbol encoder (ZINT-1)")
-                );
-            }
+            emit!(o, "barcode.poly", v_polyset(&b.poly_shape(ctx)));
+            emit!(o, "barcode.symbol_poly", v_polyset(&b.symbol_poly(ctx)));
+            emit!(o, "barcode.text_poly", v_polyset(&b.text_poly(ctx)));
+            emit!(o, "barcode.last_error", v_str(&b.last_error(ctx)));
         }
         AnyItem::Image(r) => {
             emit!(o, "image.position", v_vec(r.pos));

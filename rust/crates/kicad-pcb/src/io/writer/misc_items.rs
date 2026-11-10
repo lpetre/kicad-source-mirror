@@ -543,6 +543,7 @@ impl PcbWriter<'_> {
             show_totals,
             row_shapes,
             symbol_column,
+            ..
         }) = t.generated.as_deref().map(|g| &g.kind)
         else {
             return Ok(());

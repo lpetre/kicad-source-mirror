@@ -92,6 +92,7 @@ impl Board {
             board_drawing_sheet_file,
             document: Default::default(),
             file_synced,
+            vcs_hash: None,
         };
         bound.design_rules_path = design_rules_path(&self.file_name, Some(&bound));
 

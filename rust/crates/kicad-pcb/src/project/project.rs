@@ -244,9 +244,10 @@ fn normalize_dots(path: &str) -> String {
 impl BoardProject {
     /// Port of `PROJECT::TextVarResolver( aToken )` (project.cpp:178-220) for the bound
     /// project. `CURRENT_DATE` / `CURRENT_TIME_*` come from `clock` (library code has no wall
-    /// clock); `VCSHASH` / `VCSSHORTHASH` resolve to "no hash" (no git access in library code;
-    /// that is what `PROJECT_GIT_UTILS::GetCurrentHash` returns for a project outside a
-    /// repository, and `aShort` takes its first 8 characters: the same 7).
+    /// clock); `VCSHASH` / `VCSSHORTHASH` are `PROJECT_GIT_UTILS::GetCurrentHash` of the host-set
+    /// [`BoardProject::vcs_hash`], "no hash" without one (library code has no git access; that
+    /// is what the C++ returns for a project outside a repository); `aShort` takes the first 8
+    /// characters (`Left( 8 )`).
     pub fn text_var_resolver(&self, clock: &TitleBlockClock, token: &mut String) -> bool {
         match token.as_str() {
             "PROJECTNAME" => {
@@ -266,7 +267,13 @@ impl BoardProject {
                 true
             }
             "VCSHASH" | "VCSSHORTHASH" => {
-                *token = "no hash".to_string();
+                let hash = self.vcs_hash.as_deref().unwrap_or("no hash");
+
+                *token = if token == "VCSSHORTHASH" {
+                    hash.chars().take(8).collect()
+                } else {
+                    hash.to_string()
+                };
                 true
             }
             _ => match self.text_vars.get(token.as_str()) {

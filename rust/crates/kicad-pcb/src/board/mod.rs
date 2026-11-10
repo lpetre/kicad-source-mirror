@@ -131,7 +131,10 @@ board_items!(gen_board, {
         pub text_var_clock: kicad_core::title_block::TitleBlockClock,
 
         // ---- bookkeeping ----
-        pub(crate) time_stamp: i32,          // m_timeStamp
+        pub(crate) time_stamp: i32, // m_timeStamp
+        /// `m_drillModelGeneration`: bumped whenever something a drill chart shows may have
+        /// changed (`BumpDrillModelGeneration`); compared with a chart's built generation.
+        pub(crate) drill_model_generation: u64,
         pub(crate) layer_env: Arc<LayerEnv>, // snapshot for MutEnv (board-model.md 8.2)
         pub(crate) layer_env_stale: bool,
         pub(crate) journal: ChangeJournal, // optional, off by default (board-model.md 8.5)
@@ -159,6 +162,10 @@ pub struct BoardProject {
     /// PROJECT_FILE's JSON document (`m_internals`; parent of `board.design_settings`).
     pub document: kicad_core::json_settings::JsonSettingsInternals,
     pub file_synced: bool, // PROJECT_FILE::LoadFromFile result
+    /// What `KIGIT::PROJECT_GIT_UTILS::GetCurrentHash( GetProjectFullName(), false )` returns
+    /// (the full hex hash of the repository's HEAD), set by the host; library code has no git
+    /// access. `None` is a project outside a repository ("no hash").
+    pub vcs_hash: Option<String>,
 }
 
 impl Default for BoardProject {
@@ -174,6 +181,7 @@ impl Default for BoardProject {
             board_drawing_sheet_file: String::new(),
             document: Default::default(),
             file_synced: false,
+            vcs_hash: None,
         }
     }
 }
@@ -261,6 +269,7 @@ impl Default for Board {
             project: None,
             text_var_clock: Default::default(),
             time_stamp: 1,
+            drill_model_generation: 1,
             // Replaced at the end of the constructor by the snapshot of the settings.
             layer_env: Arc::new(LayerEnv::no_board()),
             layer_env_stale: false,
@@ -339,6 +348,35 @@ impl Board {
     pub fn increment_time_stamp(&mut self) {
         self.time_stamp = self.time_stamp.wrapping_add(1);
         self.caches = BoardCaches::default();
+    }
+
+    // ---- drill model generation ----
+
+    /// `BOARD::GetDrillModelGeneration()`.
+    pub fn drill_model_generation(&self) -> u64 {
+        self.drill_model_generation
+    }
+
+    /// Port of `BOARD::BumpDrillModelGeneration()`.
+    pub fn bump_drill_model_generation(&mut self) {
+        self.drill_model_generation += 1;
+    }
+
+    /// Port of `BOARD::noteDrillModelChange( aItem )` with the file-static `affectsDrillModel`:
+    /// a drill map (after `RefreshDrillSymbolLayers`, which the port computes on demand, see
+    /// [`Board::drill_symbol_layers`]), a pad, a via or a footprint bumps the generation.
+    /// Footprints count because the board editor promotes a pad edit to its parent, so
+    /// watching `PCB_PAD_T` alone would miss every drill change made through the normal
+    /// editing path.
+    pub(crate) fn note_drill_model_change(&mut self, kind: Option<kicad_core::KicadT>) {
+        use kicad_core::KicadT;
+
+        if matches!(
+            kind,
+            Some(KicadT::PcbDrillMapT | KicadT::PcbPadT | KicadT::PcbViaT | KicadT::PcbFootprintT)
+        ) {
+            self.bump_drill_model_generation();
+        }
     }
 
     // ---- design settings ----

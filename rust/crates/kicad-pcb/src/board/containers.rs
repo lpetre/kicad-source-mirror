@@ -112,7 +112,8 @@ impl Board {
     }
 
     /// The common tail of `BOARD::Add`: `CacheItemById`, `CacheChildrenById` for footprints
-    /// and tables, `InvokeListeners( OnBoardItemAdded )` (the journal), time stamp.
+    /// and tables, `InvokeListeners( OnBoardItemAdded )` (the journal), time stamp,
+    /// `noteDrillModelChange`.
     fn after_board_add(&mut self, id: ItemId) {
         self.bind_item(id);
 
@@ -122,6 +123,9 @@ impl Board {
 
         self.increment_time_stamp();
         self.journal_record(ChangeKind::Added, id);
+
+        let kind = self.get(id).map(|item| item.as_dyn().type_());
+        self.note_drill_model_change(kind);
     }
 
     /// `BOARD::Add( track, aMode )` for `PCB_TRACE_T`, `PCB_ARC_T` and `PCB_VIA_T`: `push_back`
@@ -427,6 +431,9 @@ impl Board {
 
                         board_level = true;
                         self.increment_time_stamp();
+
+                        let kind = self.get(id).map(|item| item.as_dyn().type_());
+                        self.note_drill_model_change(kind);
                     } else {
                         // An unattached container: the C++ unique_ptr going out of scope.
                         self.increment_time_stamp();

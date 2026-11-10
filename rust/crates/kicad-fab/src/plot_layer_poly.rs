@@ -26,19 +26,16 @@
 
 use kicad_core::stroke_params::LineStyle;
 use kicad_core::{KicadT, Lset, PcbLayerId};
-use kicad_geom::convert_basic_shapes_to_polygon::{
-    transform_circle_to_polygon, transform_oval_to_polygon,
-};
+use kicad_geom::ShapePolySet;
+use kicad_geom::convert_basic_shapes_to_polygon::transform_oval_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::geometry_utils::DisableArcRadiusCorrection;
-use kicad_geom::{ShapePolySet, ShapeSegment, Vector2I};
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::eda_shape::shapes::make_effective_shapes_for_stroking;
 use kicad_pcb::item::ParentRef;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_shape::PcbShape;
-use kicad_pcb::pcb_table::PcbTable;
 use kicad_pcb::pcb_textbox::PcbTextbox;
 use kicad_pcb::pcb_track::Track;
 use kicad_pcb::stroke_params::{StrokePatternLengths, stroke};
@@ -380,15 +377,16 @@ impl LayerPolyGen<'_, '_> {
         let ctx = self.ctx;
 
         match item.any() {
-            AnyItem::Table(table) if with_render_settings => table_transform_shape_to_poly_set(
-                table,
-                ctx,
-                buffer,
-                clearance,
-                self.max_error,
-                ErrorLoc::Outside,
-                self.render_settings,
-            ),
+            AnyItem::Table(table) if with_render_settings => table
+                .transform_shape_to_poly_set_with_render_settings(
+                    ctx,
+                    buffer,
+                    self.layer,
+                    clearance,
+                    self.max_error,
+                    ErrorLoc::Outside,
+                    self.render_settings,
+                ),
             _ => item.as_dyn().transform_shape_to_poly_set(
                 ctx,
                 buffer,
@@ -423,96 +421,6 @@ impl LayerPolyGen<'_, '_> {
             }
 
             self.transform_other_item(item, result, self.inflate, with_render_settings);
-        }
-    }
-}
-
-/// Port of `PCB_TABLE::TransformShapeToPolySet( .., aRenderSettings )` with non-null render
-/// settings (the kicad-pcb port has the `nullptr` overload only, which strokes every border
-/// solid): `TransformGraphicItemsToPolySet` with dashed borders through
-/// `STROKE_PARAMS::Stroke`, inflated (chamfered) by a positive clearance.
-fn table_transform_shape_to_poly_set(
-    table: &PcbTable,
-    ctx: &BoardCtx<'_>,
-    buffer: &mut ShapePolySet,
-    clearance: i32,
-    max_error: i32,
-    error_loc: ErrorLoc,
-    render_settings: Option<&RenderSettings>,
-) {
-    if clearance <= 0 {
-        table_transform_graphic_items_to_poly_set(
-            table,
-            ctx,
-            buffer,
-            max_error,
-            error_loc,
-            render_settings,
-        );
-    } else {
-        let mut tmp = ShapePolySet::new();
-        table_transform_graphic_items_to_poly_set(
-            table,
-            ctx,
-            &mut tmp,
-            max_error,
-            error_loc,
-            render_settings,
-        );
-        tmp.inflate(
-            clearance,
-            CornerStrategy::ChamferAllCorners,
-            max_error,
-            false,
-        );
-        buffer.append_set(&tmp);
-    }
-}
-
-/// Port of `PCB_TABLE::TransformGraphicItemsToPolySet( .., aRenderSettings )`.
-fn table_transform_graphic_items_to_poly_set(
-    table: &PcbTable,
-    ctx: &BoardCtx<'_>,
-    buffer: &mut ShapePolySet,
-    max_error: i32,
-    error_loc: ErrorLoc,
-    render_settings: Option<&RenderSettings>,
-) {
-    // Convert graphic items (segments and texts) to a set of polygonal shapes
-    // aRenderSettings is used to draw lines when line style != LINE_STYLE::SOLID, so
-    // if nullptr line style will be ignored
-    table.draw_borders(ctx, &mut |pt_a, pt_b, stroke_params| {
-        let line_width = stroke_params.width();
-        let line_style = stroke_params.line_style();
-
-        if is_solid_style(line_style) || render_settings.is_none() {
-            transform_oval_to_polygon(buffer, pt_a, pt_b, line_width, max_error, error_loc, 0);
-        } else {
-            let seg = ShapeSegment::new(pt_a, pt_b, 0);
-            let lengths = stroke_lengths(render_settings, line_width);
-
-            stroke(&seg, line_style, line_width, &lengths, &mut |a, b| {
-                if a == b {
-                    transform_circle_to_polygon(buffer, a, line_width / 2, max_error, error_loc, 0);
-                } else {
-                    // `a + 1`: VECTOR2I + scalar adds to both coordinates
-                    transform_oval_to_polygon(
-                        buffer,
-                        Vector2I::new(a.x + 1, a.y + 1),
-                        b,
-                        line_width,
-                        max_error,
-                        error_loc,
-                        0,
-                    );
-                }
-            });
-        }
-    });
-
-    for &cell in &table.cells {
-        if let Some(cell) = ctx.board.tablecell(cell) {
-            cell.transform_text_to_poly_set(ctx, buffer, 0, max_error, ErrorLoc::Inside);
         }
     }
 }

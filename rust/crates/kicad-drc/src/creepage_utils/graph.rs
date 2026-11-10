@@ -484,7 +484,7 @@ impl<'a> CreepageGraph<'a> {
         let max_angle = if angle1 > angle2 { angle1 } else { angle2 };
         // asin( float ) is the float overload (asinf) in the reference build
         let ratio: f32 = self.min_groove_width as f32 / (2 * m_radius) as f32;
-        let mut skip_angle = EdaAngle::new(asinf(ratio) as f64, RADIANS_T);
+        let mut skip_angle = EdaAngle::new(kicad_geom::cmath::asinf(ratio) as f64, RADIANS_T);
         skip_angle += skip_angle; // Cannot multiply EDA_ANGLE by scalar, but this really is angle *2
         let point_angle = max_angle - skip_angle;
 
@@ -837,9 +837,3 @@ fn node_key(node: &GraphNode) -> NodeKey {
     (node.type_, node.parent, node.pos.x, node.pos.y)
 }
 
-/// `asinf`: the `float` overload of `asin` the reference build calls in
-/// `ShortenChildDueToGV`. Natively Rust's `f32::asin` is the platform `asinf` (glibc, as the
-/// reference); on wasm32 it is Rust's bundled libm (the documented wasm-only libm deviation).
-fn asinf(x: f32) -> f32 {
-    x.asin()
-}

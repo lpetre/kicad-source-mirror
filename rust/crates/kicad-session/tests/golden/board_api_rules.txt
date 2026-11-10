@@ -1,0 +1,539 @@
+file|qa/data/pcbnew/connection_width_rules.kicad_pcb|
+evalrules|track:07a05dc9-fd0c-4bac-8cfe-73f661e50f58|c1@0=t=1;v=100000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:07a05dc9-fd0c-4bac-8cfe-73f661e50f58|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:07a05dc9-fd0c-4bac-8cfe-73f661e50f58|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:b9c8bd88-3577-41fd-b8a3-f84c3ec54539|c5@0=t=5;v=0/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:b9c8bd88-3577-41fd-b8a3-f84c3ec54539|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:5fd40a5e-8558-46fc-9321-fcda035db40b|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:5fd40a5e-8558-46fc-9321-fcda035db40b|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7014ab67-9149-4546-9f6e-d99764e15f97|c11@0=t=11;v=200000/250000/none;n="netclass 'High_current'";mr="netclass 'High_current'";im=1;zc=-1;d=0;s=1
+evalrules|track:7014ab67-9149-4546-9f6e-d99764e15f97|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7014ab67-9149-4546-9f6e-d99764e15f97|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7c6d2fd8-65cf-4c16-ba39-e8c3cd86d13d|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|track:7c6d2fd8-65cf-4c16-ba39-e8c3cd86d13d|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:a38443b8-d7a2-41c0-b6b5-5218a5114002|c13@0=t=13;v=50000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:a38443b8-d7a2-41c0-b6b5-5218a5114002|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:db40c24a-6762-409a-acaf-cbcefb8e7d40|c22@0=t=22;v=400000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:db40c24a-6762-409a-acaf-cbcefb8e7d40|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:e8d7189c-1bf1-4f6c-abd7-bbbd5fd5f896|c1@0=t=1;v=100000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:e8d7189c-1bf1-4f6c-abd7-bbbd5fd5f896|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:e8d7189c-1bf1-4f6c-abd7-bbbd5fd5f896|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:07a05dc9-fd0c-4bac-8cfe-73f661e50f58:7014ab67-9149-4546-9f6e-d99764e15f97|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:b9c8bd88-3577-41fd-b8a3-f84c3ec54539:5fd40a5e-8558-46fc-9321-fcda035db40b|c1@0=t=1;v=100000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:b9c8bd88-3577-41fd-b8a3-f84c3ec54539:7014ab67-9149-4546-9f6e-d99764e15f97|c28@-1=t=28;v=100000/250000/none;n="netclass 'High_current'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:5fd40a5e-8558-46fc-9321-fcda035db40b:7c6d2fd8-65cf-4c16-ba39-e8c3cd86d13d|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:5fd40a5e-8558-46fc-9321-fcda035db40b:db40c24a-6762-409a-acaf-cbcefb8e7d40|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7014ab67-9149-4546-9f6e-d99764e15f97:a38443b8-d7a2-41c0-b6b5-5218a5114002|c1@0=t=1;v=100000/none/none;n="netclass 'High_current'";mr="netclass 'High_current'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7014ab67-9149-4546-9f6e-d99764e15f97:db40c24a-6762-409a-acaf-cbcefb8e7d40|c28@-1=t=28;v=100000/250000/none;n="netclass 'High_current'";mr="netclass 'High_current'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7c6d2fd8-65cf-4c16-ba39-e8c3cd86d13d:e8d7189c-1bf1-4f6c-abd7-bbbd5fd5f896|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:a38443b8-d7a2-41c0-b6b5-5218a5114002:e8d7189c-1bf1-4f6c-abd7-bbbd5fd5f896|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_zt:b0befc79-e815-4fdd-bd77-757b21ce75e2:b9c8bd88-3577-41fd-b8a3-f84c3ec54539|c1@0=t=1;v=100000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_zt:b0befc79-e815-4fdd-bd77-757b21ce75e2:5fd40a5e-8558-46fc-9321-fcda035db40b|c28@-1=t=28;v=100000/250000/none;n="netclass 'High_current'";mr="netclass 'High_current'";im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/multinetclasses_drc.kicad_pcb|
+evalrules|track:2a7c931b-072e-4000-9dc5-1c4949cffe4f|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:2a7c931b-072e-4000-9dc5-1c4949cffe4f|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:2a7c931b-072e-4000-9dc5-1c4949cffe4f|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:995d2ce6-a1f6-4315-a31f-e3c626d0a199|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:995d2ce6-a1f6-4315-a31f-e3c626d0a199|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f375c5bd-a6be-4783-9916-e175b2dd101f|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:f375c5bd-a6be-4783-9916-e175b2dd101f|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:c99d68e6-bede-4e15-96c7-55746cc9e356|c11@0=t=11;v=0/200000/127000;n="rule 'rule_3'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=32
+evalrules|pad:c99d68e6-bede-4e15-96c7-55746cc9e356|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:c99d68e6-bede-4e15-96c7-55746cc9e356|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:7607eac6-dbc5-4832-8f45-933b8603723b|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:7607eac6-dbc5-4832-8f45-933b8603723b|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:a6788b5c-c345-4eaf-9dc2-392aecdd372c|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:a6788b5c-c345-4eaf-9dc2-392aecdd372c|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:67a43e38-7450-4c9e-a76f-e6e7de8dd2f9|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:67a43e38-7450-4c9e-a76f-e6e7de8dd2f9|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:39b77ab5-6107-402d-9ef7-3553e446aae7|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:39b77ab5-6107-402d-9ef7-3553e446aae7|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:39b77ab5-6107-402d-9ef7-3553e446aae7|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:c03217c8-3f4f-425e-8100-b854faa30110|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:c03217c8-3f4f-425e-8100-b854faa30110|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:165f3c83-32ed-4211-aac6-677b9dbf888f|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:165f3c83-32ed-4211-aac6-677b9dbf888f|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:2a7c931b-072e-4000-9dc5-1c4949cffe4f:995d2ce6-a1f6-4315-a31f-e3c626d0a199|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:f375c5bd-a6be-4783-9916-e175b2dd101f:7607eac6-dbc5-4832-8f45-933b8603723b|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:f375c5bd-a6be-4783-9916-e175b2dd101f:a6788b5c-c345-4eaf-9dc2-392aecdd372c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:c99d68e6-bede-4e15-96c7-55746cc9e356:a6788b5c-c345-4eaf-9dc2-392aecdd372c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:7607eac6-dbc5-4832-8f45-933b8603723b:a6788b5c-c345-4eaf-9dc2-392aecdd372c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:7607eac6-dbc5-4832-8f45-933b8603723b:39b77ab5-6107-402d-9ef7-3553e446aae7|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:a6788b5c-c345-4eaf-9dc2-392aecdd372c:67a43e38-7450-4c9e-a76f-e6e7de8dd2f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:a6788b5c-c345-4eaf-9dc2-392aecdd372c:165f3c83-32ed-4211-aac6-677b9dbf888f|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:67a43e38-7450-4c9e-a76f-e6e7de8dd2f9:c03217c8-3f4f-425e-8100-b854faa30110|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:39b77ab5-6107-402d-9ef7-3553e446aae7:c03217c8-3f4f-425e-8100-b854faa30110|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:39b77ab5-6107-402d-9ef7-3553e446aae7:165f3c83-32ed-4211-aac6-677b9dbf888f|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:2a7c931b-072e-4000-9dc5-1c4949cffe4f:f375c5bd-a6be-4783-9916-e175b2dd101f|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:2a7c931b-072e-4000-9dc5-1c4949cffe4f:7607eac6-dbc5-4832-8f45-933b8603723b|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:995d2ce6-a1f6-4315-a31f-e3c626d0a199:f375c5bd-a6be-4783-9916-e175b2dd101f|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:995d2ce6-a1f6-4315-a31f-e3c626d0a199:7607eac6-dbc5-4832-8f45-933b8603723b|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb|
+evalrules|track:36bb9922-0f43-45c2-86dc-1ea5cfca7353|c1@0=t=1;v=100000/none/none;n="rule 'clearance_under_fpga'";mr="rule 'clearance_under_fpga'";im=0;zc=-1;d=0;s=1
+evalrules|track:36bb9922-0f43-45c2-86dc-1ea5cfca7353|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:36bb9922-0f43-45c2-86dc-1ea5cfca7353|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+file|qa/data/pcbnew/via_stack_track_width.kicad_pcb|
+evalrules|track:892f8d8b-6142-445f-a82d-a14f197154ad|c1@0=t=1;v=125000/none/none;n="board minimum";mr=-;im=1;zc=-1;d=0;s=1
+evalrules|track:892f8d8b-6142-445f-a82d-a14f197154ad|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:892f8d8b-6142-445f-a82d-a14f197154ad|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:6492e3a2-bf99-4d3d-9e54-724806cce92b|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:6492e3a2-bf99-4d3d-9e54-724806cce92b|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:f2a9766d-6760-44f4-a71f-1825b08fa470|c6@0=t=6;v=200000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:f2a9766d-6760-44f4-a71f-1825b08fa470|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:892f8d8b-6142-445f-a82d-a14f197154ad:6492e3a2-bf99-4d3d-9e54-724806cce92b|c3@-1=t=3;v=200000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:6492e3a2-bf99-4d3d-9e54-724806cce92b:f2a9766d-6760-44f4-a71f-1825b08fa470|c1@0=t=1;v=125000/none/none;n="board minimum";mr=-;im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb|
+evalrules|track:04e4736a-4cbf-4d77-8457-f16672fe1f54|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:04e4736a-4cbf-4d77-8457-f16672fe1f54|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:04e4736a-4cbf-4d77-8457-f16672fe1f54|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:144ca2c2-eed6-47a3-8b99-e848c2f0f122|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:144ca2c2-eed6-47a3-8b99-e848c2f0f122|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:224f3005-5048-458c-b452-07f19e9e7395|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:224f3005-5048-458c-b452-07f19e9e7395|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:49c6076b-8a3b-4667-beef-d2cd4d643e35|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:49c6076b-8a3b-4667-beef-d2cd4d643e35|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:49c6076b-8a3b-4667-beef-d2cd4d643e35|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:55cbd5da-d486-432b-b418-fcf5ca9beb3d|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|track:55cbd5da-d486-432b-b418-fcf5ca9beb3d|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:68a1c4a0-be46-4be7-9261-a134eb07a36d|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:68a1c4a0-be46-4be7-9261-a134eb07a36d|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:6a790508-24b6-479a-801e-7cf0ba08ae55|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:6a790508-24b6-479a-801e-7cf0ba08ae55|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7151ff6f-1487-4bc8-8d5a-8231456040ab|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:7151ff6f-1487-4bc8-8d5a-8231456040ab|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7151ff6f-1487-4bc8-8d5a-8231456040ab|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:75add182-96bb-461b-83a3-b0521dfcb99f|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:75add182-96bb-461b-83a3-b0521dfcb99f|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:8a854050-c2d8-47c4-b06e-623869d32f17|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:8a854050-c2d8-47c4-b06e-623869d32f17|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:8a854050-c2d8-47c4-b06e-623869d32f17|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:919e0003-b9c4-4d9d-86d2-e230ca5a7935|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|track:919e0003-b9c4-4d9d-86d2-e230ca5a7935|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:adcbb9da-5db7-436c-a249-1288468de698|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:adcbb9da-5db7-436c-a249-1288468de698|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:c1569363-b6c7-47db-8bea-d93ab6fb5975|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:c1569363-b6c7-47db-8bea-d93ab6fb5975|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:d9f9b957-4571-46ac-8f14-8e8028e52f63|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:d9f9b957-4571-46ac-8f14-8e8028e52f63|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:e3c7bc59-ad89-436d-958b-b1b314fab20d|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:e3c7bc59-ad89-436d-958b-b1b314fab20d|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:fa8ef471-d615-40b0-a683-a4efb4865ac7|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:fa8ef471-d615-40b0-a683-a4efb4865ac7|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:fa8ef471-d615-40b0-a683-a4efb4865ac7|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:012dc542-5251-41dd-94a5-32f95c2c4b3c|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|arc:012dc542-5251-41dd-94a5-32f95c2c4b3c|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:26aefb01-8370-4ae8-baa5-5c6dc1b6152c|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:26aefb01-8370-4ae8-baa5-5c6dc1b6152c|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:2812aa00-5c40-4d55-974f-dbad816c9b43|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:2812aa00-5c40-4d55-974f-dbad816c9b43|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:321db390-8fc0-4153-b8f3-0c2d3ae14d6e|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|arc:321db390-8fc0-4153-b8f3-0c2d3ae14d6e|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:321db390-8fc0-4153-b8f3-0c2d3ae14d6e|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:43ed3dec-b72b-4586-ae08-08ffde26d369|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|arc:43ed3dec-b72b-4586-ae08-08ffde26d369|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:54357edd-7890-4461-83f9-bc434a4e0335|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:54357edd-7890-4461-83f9-bc434a4e0335|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:5aa9e16e-4da0-4413-a0ae-81156a6f68d1|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|arc:5aa9e16e-4da0-4413-a0ae-81156a6f68d1|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:5aa9e16e-4da0-4413-a0ae-81156a6f68d1|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:5bbf05ad-9a68-4bca-b538-326f1b888a69|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|arc:5bbf05ad-9a68-4bca-b538-326f1b888a69|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:c14fd769-68c6-4031-bbf7-4866058f3bb5|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:c14fd769-68c6-4031-bbf7-4866058f3bb5|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:e05884a0-5af7-4fe0-ab2c-837e73048151|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:e05884a0-5af7-4fe0-ab2c-837e73048151|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:0557653b-2b54-4bbf-9b73-9350a9d8b829|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:0557653b-2b54-4bbf-9b73-9350a9d8b829|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:0557653b-2b54-4bbf-9b73-9350a9d8b829|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:19c4fe61-803f-4e67-8094-0b85fdeb116d|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:19c4fe61-803f-4e67-8094-0b85fdeb116d|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:4e40c3a5-2b63-42eb-aff1-8a7a9613b5fd|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:4e40c3a5-2b63-42eb-aff1-8a7a9613b5fd|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:4e40c3a5-2b63-42eb-aff1-8a7a9613b5fd|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:5a4850bb-41ad-4123-88f5-df3325021a58|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|track:5a4850bb-41ad-4123-88f5-df3325021a58|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:5fb1167b-a93f-4d0e-8958-1077f53ace06|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:5fb1167b-a93f-4d0e-8958-1077f53ace06|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:639303c5-a0df-4a76-956f-1d7514cf85e0|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:639303c5-a0df-4a76-956f-1d7514cf85e0|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:65635c1b-73c7-43bb-bbe2-905ccba11f1e|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:65635c1b-73c7-43bb-bbe2-905ccba11f1e|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:65635c1b-73c7-43bb-bbe2-905ccba11f1e|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:6b8847b6-61c8-478c-9b34-d6ea14869c18|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:6b8847b6-61c8-478c-9b34-d6ea14869c18|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:87d2e7c5-a42e-4f85-a91f-d4cf07f1810c|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:87d2e7c5-a42e-4f85-a91f-d4cf07f1810c|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:a2a6adb2-8042-4d31-b4fd-915f5ccfa1a7|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:a2a6adb2-8042-4d31-b4fd-915f5ccfa1a7|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:a2a6adb2-8042-4d31-b4fd-915f5ccfa1a7|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:a364848a-1f11-46ce-93c3-7e6a55b74b05|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|track:a364848a-1f11-46ce-93c3-7e6a55b74b05|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:b5213a5c-66fc-4ecb-bc87-0016d3fbd033|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:b5213a5c-66fc-4ecb-bc87-0016d3fbd033|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:ce92e2bb-628d-4e54-865b-12dc61355934|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:ce92e2bb-628d-4e54-865b-12dc61355934|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:ea0ee2c4-3a43-4986-9c0b-c685d53183cc|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:ea0ee2c4-3a43-4986-9c0b-c685d53183cc|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:ea0ee2c4-3a43-4986-9c0b-c685d53183cc|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:f2039503-f0ae-4b26-9371-8dda677832d7|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:f2039503-f0ae-4b26-9371-8dda677832d7|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:f5a124b2-438f-441b-b8e8-5edeab1e5e34|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:f5a124b2-438f-441b-b8e8-5edeab1e5e34|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:fd4ea537-3e82-4063-89ee-7709f0fb2de1|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|track:fd4ea537-3e82-4063-89ee-7709f0fb2de1|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:fd4ea537-3e82-4063-89ee-7709f0fb2de1|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:08c0e0f4-0d4c-4ff4-8bd5-34f121cdf984|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|arc:08c0e0f4-0d4c-4ff4-8bd5-34f121cdf984|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:17f3107d-6d7c-4489-8fac-e67c8a432d61|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:17f3107d-6d7c-4489-8fac-e67c8a432d61|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:45128009-36af-419f-a7b6-c01ed11777bb|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:45128009-36af-419f-a7b6-c01ed11777bb|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:46c0bef9-bbb5-48f1-8d1e-333e5d92547a|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|arc:46c0bef9-bbb5-48f1-8d1e-333e5d92547a|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:46c0bef9-bbb5-48f1-8d1e-333e5d92547a|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:655b2317-0fc9-4aa6-b021-24fc4e72703f|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|arc:655b2317-0fc9-4aa6-b021-24fc4e72703f|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:826504b1-aee8-4989-87b8-63ef037d73f3|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:826504b1-aee8-4989-87b8-63ef037d73f3|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:b4305a10-afdf-4d76-9644-9d75184eec1c|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|arc:b4305a10-afdf-4d76-9644-9d75184eec1c|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:b4305a10-afdf-4d76-9644-9d75184eec1c|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:d2842be0-eb0b-42c4-a9b1-05e948dad9c7|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|arc:d2842be0-eb0b-42c4-a9b1-05e948dad9c7|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:e900e348-49ce-4744-a0ec-40ba6b080d97|c13@0=t=13;v=100000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:e900e348-49ce-4744-a0ec-40ba6b080d97|c19@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|arc:fc535167-7900-478f-b5dc-b78a5d8440ef|c22@0=t=22;v=500000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|arc:fc535167-7900-478f-b5dc-b78a5d8440ef|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:a79dcaa0-0379-4886-9c66-8980474b5e7c|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:a79dcaa0-0379-4886-9c66-8980474b5e7c|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:c65ef3e2-507e-40e6-98bd-31da45935a96|c5@0=t=5;v=500000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:c65ef3e2-507e-40e6-98bd-31da45935a96|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c11@0=t=11;v=200000/200000/none;n="netclass 'Default' diff pair";mr="netclass 'Default' diff pair";im=1;zc=-1;d=0;s=1
+evalrules|pad:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:04e4736a-4cbf-4d77-8457-f16672fe1f54:19c4fe61-803f-4e67-8094-0b85fdeb116d|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:144ca2c2-eed6-47a3-8b99-e848c2f0f122:0557653b-2b54-4bbf-9b73-9350a9d8b829|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:144ca2c2-eed6-47a3-8b99-e848c2f0f122:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:224f3005-5048-458c-b452-07f19e9e7395:0557653b-2b54-4bbf-9b73-9350a9d8b829|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:224f3005-5048-458c-b452-07f19e9e7395:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:49c6076b-8a3b-4667-beef-d2cd4d643e35:19c4fe61-803f-4e67-8094-0b85fdeb116d|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:55cbd5da-d486-432b-b418-fcf5ca9beb3d:0557653b-2b54-4bbf-9b73-9350a9d8b829|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:55cbd5da-d486-432b-b418-fcf5ca9beb3d:19c4fe61-803f-4e67-8094-0b85fdeb116d|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:68a1c4a0-be46-4be7-9261-a134eb07a36d:0557653b-2b54-4bbf-9b73-9350a9d8b829|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:68a1c4a0-be46-4be7-9261-a134eb07a36d:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:6a790508-24b6-479a-801e-7cf0ba08ae55:19c4fe61-803f-4e67-8094-0b85fdeb116d|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:6a790508-24b6-479a-801e-7cf0ba08ae55:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7151ff6f-1487-4bc8-8d5a-8231456040ab:19c4fe61-803f-4e67-8094-0b85fdeb116d|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:75add182-96bb-461b-83a3-b0521dfcb99f:0557653b-2b54-4bbf-9b73-9350a9d8b829|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:75add182-96bb-461b-83a3-b0521dfcb99f:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5:0557653b-2b54-4bbf-9b73-9350a9d8b829|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:8a854050-c2d8-47c4-b06e-623869d32f17:19c4fe61-803f-4e67-8094-0b85fdeb116d|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:919e0003-b9c4-4d9d-86d2-e230ca5a7935:0557653b-2b54-4bbf-9b73-9350a9d8b829|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:919e0003-b9c4-4d9d-86d2-e230ca5a7935:19c4fe61-803f-4e67-8094-0b85fdeb116d|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:adcbb9da-5db7-436c-a249-1288468de698:0557653b-2b54-4bbf-9b73-9350a9d8b829|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:adcbb9da-5db7-436c-a249-1288468de698:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:c1569363-b6c7-47db-8bea-d93ab6fb5975:19c4fe61-803f-4e67-8094-0b85fdeb116d|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:c1569363-b6c7-47db-8bea-d93ab6fb5975:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4:19c4fe61-803f-4e67-8094-0b85fdeb116d|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:d9f9b957-4571-46ac-8f14-8e8028e52f63:0557653b-2b54-4bbf-9b73-9350a9d8b829|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:d9f9b957-4571-46ac-8f14-8e8028e52f63:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:e3c7bc59-ad89-436d-958b-b1b314fab20d:0557653b-2b54-4bbf-9b73-9350a9d8b829|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:e3c7bc59-ad89-436d-958b-b1b314fab20d:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:fa8ef471-d615-40b0-a683-a4efb4865ac7:19c4fe61-803f-4e67-8094-0b85fdeb116d|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:012dc542-5251-41dd-94a5-32f95c2c4b3c:0557653b-2b54-4bbf-9b73-9350a9d8b829|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:012dc542-5251-41dd-94a5-32f95c2c4b3c:19c4fe61-803f-4e67-8094-0b85fdeb116d|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:26aefb01-8370-4ae8-baa5-5c6dc1b6152c:0557653b-2b54-4bbf-9b73-9350a9d8b829|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:26aefb01-8370-4ae8-baa5-5c6dc1b6152c:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:2812aa00-5c40-4d55-974f-dbad816c9b43:19c4fe61-803f-4e67-8094-0b85fdeb116d|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:2812aa00-5c40-4d55-974f-dbad816c9b43:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:321db390-8fc0-4153-b8f3-0c2d3ae14d6e:19c4fe61-803f-4e67-8094-0b85fdeb116d|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:43ed3dec-b72b-4586-ae08-08ffde26d369:0557653b-2b54-4bbf-9b73-9350a9d8b829|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:43ed3dec-b72b-4586-ae08-08ffde26d369:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:54357edd-7890-4461-83f9-bc434a4e0335:0557653b-2b54-4bbf-9b73-9350a9d8b829|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:54357edd-7890-4461-83f9-bc434a4e0335:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:5aa9e16e-4da0-4413-a0ae-81156a6f68d1:19c4fe61-803f-4e67-8094-0b85fdeb116d|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:5bbf05ad-9a68-4bca-b538-326f1b888a69:0557653b-2b54-4bbf-9b73-9350a9d8b829|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:5bbf05ad-9a68-4bca-b538-326f1b888a69:19c4fe61-803f-4e67-8094-0b85fdeb116d|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:c14fd769-68c6-4031-bbf7-4866058f3bb5:0557653b-2b54-4bbf-9b73-9350a9d8b829|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tt:c14fd769-68c6-4031-bbf7-4866058f3bb5:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:e05884a0-5af7-4fe0-ab2c-837e73048151:19c4fe61-803f-4e67-8094-0b85fdeb116d|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tt:e05884a0-5af7-4fe0-ab2c-837e73048151:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:a79dcaa0-0379-4886-9c66-8980474b5e7c:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:e02aba96-03a5-4a8d-b009-ec8aa986ee94:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:04e4736a-4cbf-4d77-8457-f16672fe1f54:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:04e4736a-4cbf-4d77-8457-f16672fe1f54:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:144ca2c2-eed6-47a3-8b99-e848c2f0f122:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:224f3005-5048-458c-b452-07f19e9e7395:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:224f3005-5048-458c-b452-07f19e9e7395:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:49c6076b-8a3b-4667-beef-d2cd4d643e35:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:49c6076b-8a3b-4667-beef-d2cd4d643e35:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:55cbd5da-d486-432b-b418-fcf5ca9beb3d:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:68a1c4a0-be46-4be7-9261-a134eb07a36d:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:68a1c4a0-be46-4be7-9261-a134eb07a36d:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:6a790508-24b6-479a-801e-7cf0ba08ae55:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:6a790508-24b6-479a-801e-7cf0ba08ae55:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:7151ff6f-1487-4bc8-8d5a-8231456040ab:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:7151ff6f-1487-4bc8-8d5a-8231456040ab:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:75add182-96bb-461b-83a3-b0521dfcb99f:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:7f06bf57-3c4c-4c71-9ae3-945e18eaafa5:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:8a854050-c2d8-47c4-b06e-623869d32f17:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:8a854050-c2d8-47c4-b06e-623869d32f17:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:919e0003-b9c4-4d9d-86d2-e230ca5a7935:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:adcbb9da-5db7-436c-a249-1288468de698:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:adcbb9da-5db7-436c-a249-1288468de698:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:c1569363-b6c7-47db-8bea-d93ab6fb5975:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:c1569363-b6c7-47db-8bea-d93ab6fb5975:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:d2032d0c-9bbe-43a8-891f-8f87e7d0abf4:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:d9f9b957-4571-46ac-8f14-8e8028e52f63:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:e3c7bc59-ad89-436d-958b-b1b314fab20d:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:e3c7bc59-ad89-436d-958b-b1b314fab20d:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:fa8ef471-d615-40b0-a683-a4efb4865ac7:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:fa8ef471-d615-40b0-a683-a4efb4865ac7:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:012dc542-5251-41dd-94a5-32f95c2c4b3c:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:26aefb01-8370-4ae8-baa5-5c6dc1b6152c:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:26aefb01-8370-4ae8-baa5-5c6dc1b6152c:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:2812aa00-5c40-4d55-974f-dbad816c9b43:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:2812aa00-5c40-4d55-974f-dbad816c9b43:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:321db390-8fc0-4153-b8f3-0c2d3ae14d6e:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:321db390-8fc0-4153-b8f3-0c2d3ae14d6e:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:43ed3dec-b72b-4586-ae08-08ffde26d369:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:54357edd-7890-4461-83f9-bc434a4e0335:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:54357edd-7890-4461-83f9-bc434a4e0335:c65ef3e2-507e-40e6-98bd-31da45935a96|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:5aa9e16e-4da0-4413-a0ae-81156a6f68d1:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:5aa9e16e-4da0-4413-a0ae-81156a6f68d1:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:5bbf05ad-9a68-4bca-b538-326f1b888a69:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:c14fd769-68c6-4031-bbf7-4866058f3bb5:ac1c137b-6b8f-4f48-9b9b-de421d8fb4f9|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:c14fd769-68c6-4031-bbf7-4866058f3bb5:c65ef3e2-507e-40e6-98bd-31da45935a96|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:e05884a0-5af7-4fe0-ab2c-837e73048151:c65ef3e2-507e-40e6-98bd-31da45935a96|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:e05884a0-5af7-4fe0-ab2c-837e73048151:c65ef3e2-507e-40e6-98bd-31da45935a96|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:0557653b-2b54-4bbf-9b73-9350a9d8b829:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:0557653b-2b54-4bbf-9b73-9350a9d8b829:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:19c4fe61-803f-4e67-8094-0b85fdeb116d:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:27271aca-8dfd-4292-b2a5-f6d40cd6e1bf:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:4e40c3a5-2b63-42eb-aff1-8a7a9613b5fd:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:4e40c3a5-2b63-42eb-aff1-8a7a9613b5fd:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:5a4850bb-41ad-4123-88f5-df3325021a58:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:5fb1167b-a93f-4d0e-8958-1077f53ace06:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:5fb1167b-a93f-4d0e-8958-1077f53ace06:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:639303c5-a0df-4a76-956f-1d7514cf85e0:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:639303c5-a0df-4a76-956f-1d7514cf85e0:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:65635c1b-73c7-43bb-bbe2-905ccba11f1e:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:65635c1b-73c7-43bb-bbe2-905ccba11f1e:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:6b8847b6-61c8-478c-9b34-d6ea14869c18:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:87d2e7c5-a42e-4f85-a91f-d4cf07f1810c:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:87d2e7c5-a42e-4f85-a91f-d4cf07f1810c:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:a2a6adb2-8042-4d31-b4fd-915f5ccfa1a7:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:a2a6adb2-8042-4d31-b4fd-915f5ccfa1a7:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:a364848a-1f11-46ce-93c3-7e6a55b74b05:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:b5213a5c-66fc-4ecb-bc87-0016d3fbd033:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:b5213a5c-66fc-4ecb-bc87-0016d3fbd033:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:ce92e2bb-628d-4e54-865b-12dc61355934:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:ce92e2bb-628d-4e54-865b-12dc61355934:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:ea0ee2c4-3a43-4986-9c0b-c685d53183cc:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:ea0ee2c4-3a43-4986-9c0b-c685d53183cc:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:f2039503-f0ae-4b26-9371-8dda677832d7:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:f5a124b2-438f-441b-b8e8-5edeab1e5e34:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:f5a124b2-438f-441b-b8e8-5edeab1e5e34:a79dcaa0-0379-4886-9c66-8980474b5e7c|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:fd4ea537-3e82-4063-89ee-7709f0fb2de1:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:fd4ea537-3e82-4063-89ee-7709f0fb2de1:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:08c0e0f4-0d4c-4ff4-8bd5-34f121cdf984:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:17f3107d-6d7c-4489-8fac-e67c8a432d61:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:17f3107d-6d7c-4489-8fac-e67c8a432d61:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:45128009-36af-419f-a7b6-c01ed11777bb:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:45128009-36af-419f-a7b6-c01ed11777bb:a79dcaa0-0379-4886-9c66-8980474b5e7c|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:46c0bef9-bbb5-48f1-8d1e-333e5d92547a:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:46c0bef9-bbb5-48f1-8d1e-333e5d92547a:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:655b2317-0fc9-4aa6-b021-24fc4e72703f:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:826504b1-aee8-4989-87b8-63ef037d73f3:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:826504b1-aee8-4989-87b8-63ef037d73f3:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:b4305a10-afdf-4d76-9644-9d75184eec1c:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:b4305a10-afdf-4d76-9644-9d75184eec1c:a79dcaa0-0379-4886-9c66-8980474b5e7c|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:d2842be0-eb0b-42c4-a9b1-05e948dad9c7:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:e900e348-49ce-4744-a0ec-40ba6b080d97:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:e900e348-49ce-4744-a0ec-40ba6b080d97:a79dcaa0-0379-4886-9c66-8980474b5e7c|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:fc535167-7900-478f-b5dc-b78a5d8440ef:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:fc535167-7900-478f-b5dc-b78a5d8440ef:e02aba96-03a5-4a8d-b009-ec8aa986ee94|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/issue16566.kicad_pcb|
+evalrules|track:11ed0c56-f17a-440e-9f40-7eb9be0013ba|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:11ed0c56-f17a-440e-9f40-7eb9be0013ba|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:11ed0c56-f17a-440e-9f40-7eb9be0013ba|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:666f9f32-3952-4934-8df5-9ad24f041214|c5@0=t=5;v=0/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|track:666f9f32-3952-4934-8df5-9ad24f041214|c20@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|track:96063ec2-be50-433f-9564-7ca25d99ba52|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|track:96063ec2-be50-433f-9564-7ca25d99ba52|c18@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f413018c-f4a3-4350-9444-46ee005605d8|c11@0=t=11;v=0/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:f413018c-f4a3-4350-9444-46ee005605d8|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f413018c-f4a3-4350-9444-46ee005605d8|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f864d905-4e66-4c6a-9dbb-10ad926c266a|c3@0=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:f864d905-4e66-4c6a-9dbb-10ad926c266a|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:11ed0c56-f17a-440e-9f40-7eb9be0013ba:f413018c-f4a3-4350-9444-46ee005605d8|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:11ed0c56-f17a-440e-9f40-7eb9be0013ba:f864d905-4e66-4c6a-9dbb-10ad926c266a|c28@-1=t=28;v=5000000/250000/none;n="netclass 'Default'";mr="rule 'oval_clearance'";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:666f9f32-3952-4934-8df5-9ad24f041214:f864d905-4e66-4c6a-9dbb-10ad926c266a|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:666f9f32-3952-4934-8df5-9ad24f041214:f864d905-4e66-4c6a-9dbb-10ad926c266a|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_tp:96063ec2-be50-433f-9564-7ca25d99ba52:f864d905-4e66-4c6a-9dbb-10ad926c266a|c1@0=t=1;v=5000000/none/none;n="rule 'oval_clearance'";mr="rule 'oval_clearance'";im=0;zc=-1;d=0;s=1
+evalrules|pair_tp:96063ec2-be50-433f-9564-7ca25d99ba52:f413018c-f4a3-4350-9444-46ee005605d8|c28@-1=t=28;v=200000/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/issue7567.kicad_pcb|
+evalrules|pad:50e46035-d009-4bc9-9144-01a2b287fa35|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:50e46035-d009-4bc9-9144-01a2b287fa35|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:50e46035-d009-4bc9-9144-01a2b287fa35|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:da748863-9757-41e5-820a-7f527a6b67f4|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:da748863-9757-41e5-820a-7f527a6b67f4|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:5e5f556f-b431-451a-97db-c239bfdb6b76|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:5e5f556f-b431-451a-97db-c239bfdb6b76|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:5e5f556f-b431-451a-97db-c239bfdb6b76|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4|c13@0=t=13;v=150000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:bb0fbcdb-2c6a-42d9-b77d-949cc4808960|c11@0=t=11;v=203200/203200/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:bb0fbcdb-2c6a-42d9-b77d-949cc4808960|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:bb0fbcdb-2c6a-42d9-b77d-949cc4808960|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:12b020e9-d4e0-43a5-806a-e9106735ab66|c5@0=t=5;v=200000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:12b020e9-d4e0-43a5-806a-e9106735ab66|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:7693013d-863f-442e-99fb-6039d8b588de|c22@0=t=22;v=600000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:7693013d-863f-442e-99fb-6039d8b588de|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:98154aac-31dc-461f-bfc2-29e338d032b8|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:98154aac-31dc-461f-bfc2-29e338d032b8|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:98154aac-31dc-461f-bfc2-29e338d032b8|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:fe7b12bd-1172-47eb-89b1-4e16aee85fab|c13@0=t=13;v=150000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:fe7b12bd-1172-47eb-89b1-4e16aee85fab|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f205cafc-4bc4-4231-937b-c32e5ee0917f|c11@0=t=11;v=203200/203200/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:f205cafc-4bc4-4231-937b-c32e5ee0917f|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f205cafc-4bc4-4231-937b-c32e5ee0917f|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:0d650c51-94a2-4a05-b514-dcca6c661b70|c5@0=t=5;v=200000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:0d650c51-94a2-4a05-b514-dcca6c661b70|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:62385088-5982-4c59-83ee-a3e784b8dcc6|c22@0=t=22;v=600000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:62385088-5982-4c59-83ee-a3e784b8dcc6|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:13faa25d-676b-4b52-bb43-20b12e4ee67b|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:13faa25d-676b-4b52-bb43-20b12e4ee67b|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:13faa25d-676b-4b52-bb43-20b12e4ee67b|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:12e0b964-6275-4d6d-bc8e-1115d1e67dd0|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:12e0b964-6275-4d6d-bc8e-1115d1e67dd0|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:e6f77aad-8f77-428b-b3da-8b4736e0a396|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:e6f77aad-8f77-428b-b3da-8b4736e0a396|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:e6f77aad-8f77-428b-b3da-8b4736e0a396|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c|c13@0=t=13;v=150000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:6d5620cd-9778-4c77-be23-94a57f004611|c11@0=t=11;v=203200/203200/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:6d5620cd-9778-4c77-be23-94a57f004611|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:6d5620cd-9778-4c77-be23-94a57f004611|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51|c5@0=t=5;v=200000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:5426cde5-01bb-4e04-b1c2-1eb7426cbec8|c22@0=t=22;v=600000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:5426cde5-01bb-4e04-b1c2-1eb7426cbec8|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:4c4613cf-50b8-4d30-b330-d44b7505f7a5|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:4c4613cf-50b8-4d30-b330-d44b7505f7a5|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:4c4613cf-50b8-4d30-b330-d44b7505f7a5|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:040a8c56-a2c5-489c-8167-8b7186664393|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:040a8c56-a2c5-489c-8167-8b7186664393|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:376a7697-de73-4228-b597-7420574cb8f4|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:376a7697-de73-4228-b597-7420574cb8f4|c32@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:376a7697-de73-4228-b597-7420574cb8f4|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:ad3c0573-42eb-4ab4-acec-a839887126ca|c13@0=t=13;v=150000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:ad3c0573-42eb-4ab4-acec-a839887126ca|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:874ff977-dbaa-4613-abf6-c2d848b5b3f0|c11@0=t=11;v=203200/203200/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:874ff977-dbaa-4613-abf6-c2d848b5b3f0|c8@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:874ff977-dbaa-4613-abf6-c2d848b5b3f0|c16@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:86ce1d0e-da25-49eb-ae42-604350131569|c5@0=t=5;v=200000/none/none;n="board setup constraints edge";mr="board setup constraints edge";im=1;zc=-1;d=0;s=1
+evalrules|pad:86ce1d0e-da25-49eb-ae42-604350131569|c20@0=t=20;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:342f95af-1da3-4ffa-a9ef-dbc51ce2b75b|c22@0=t=22;v=600000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:342f95af-1da3-4ffa-a9ef-dbc51ce2b75b|c9@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:6cb52416-0698-4f08-a129-189ae148bc82|c1@0=t=1;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:6cb52416-0698-4f08-a129-189ae148bc82|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:6cb52416-0698-4f08-a129-189ae148bc82|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:93ef87f2-708b-4e52-b54c-2cbd6740e799|c6@0=t=6;v=300000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:93ef87f2-708b-4e52-b54c-2cbd6740e799|c18@0=t=18;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:05de845e-b7f4-43e8-bc7c-621f0a3d63eb|c22@13=t=22;v=600000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:05de845e-b7f4-43e8-bc7c-621f0a3d63eb|c9@13=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f3ca4cf6-bb49-45aa-bbc0-df85cd44b58f|c11@13=t=11;v=203200/203200/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pad:f3ca4cf6-bb49-45aa-bbc0-df85cd44b58f|c8@13=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:f3ca4cf6-bb49-45aa-bbc0-df85cd44b58f|c16@13=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:a2d80f69-5f89-4bbd-a0e6-bd1f2450f16f|c3@0=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pad:a2d80f69-5f89-4bbd-a0e6-bd1f2450f16f|c14@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pad:377331a3-75db-48e6-8254-e27dc43ff779|c13@0=t=13;v=150000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pad:377331a3-75db-48e6-8254-e27dc43ff779|c19@0=t=19;v=none/0/none;n="board setup";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:50e46035-d009-4bc9-9144-01a2b287fa35:5e5f556f-b431-451a-97db-c239bfdb6b76|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:50e46035-d009-4bc9-9144-01a2b287fa35:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:da748863-9757-41e5-820a-7f527a6b67f4:5e5f556f-b431-451a-97db-c239bfdb6b76|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:da748863-9757-41e5-820a-7f527a6b67f4:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:5e5f556f-b431-451a-97db-c239bfdb6b76:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:5e5f556f-b431-451a-97db-c239bfdb6b76:bb0fbcdb-2c6a-42d9-b77d-949cc4808960|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:5e5f556f-b431-451a-97db-c239bfdb6b76:12b020e9-d4e0-43a5-806a-e9106735ab66|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4:12b020e9-d4e0-43a5-806a-e9106735ab66|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:3549d9b3-8d6e-45c8-9dc8-155d51b3f1f4:7693013d-863f-442e-99fb-6039d8b588de|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:bb0fbcdb-2c6a-42d9-b77d-949cc4808960:7693013d-863f-442e-99fb-6039d8b588de|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:bb0fbcdb-2c6a-42d9-b77d-949cc4808960:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:12b020e9-d4e0-43a5-806a-e9106735ab66:7693013d-863f-442e-99fb-6039d8b588de|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:12b020e9-d4e0-43a5-806a-e9106735ab66:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:7693013d-863f-442e-99fb-6039d8b588de:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:7693013d-863f-442e-99fb-6039d8b588de:98154aac-31dc-461f-bfc2-29e338d032b8|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:bc5ffcde-e33e-441d-b6ac-3e6afc4d94e7:98154aac-31dc-461f-bfc2-29e338d032b8|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5:98154aac-31dc-461f-bfc2-29e338d032b8|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:7f45ed09-d0b5-4fac-9eb4-20ee6c6f07a5:fe7b12bd-1172-47eb-89b1-4e16aee85fab|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:98154aac-31dc-461f-bfc2-29e338d032b8:fe7b12bd-1172-47eb-89b1-4e16aee85fab|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:98154aac-31dc-461f-bfc2-29e338d032b8:f205cafc-4bc4-4231-937b-c32e5ee0917f|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:98154aac-31dc-461f-bfc2-29e338d032b8:0d650c51-94a2-4a05-b514-dcca6c661b70|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:fe7b12bd-1172-47eb-89b1-4e16aee85fab:0d650c51-94a2-4a05-b514-dcca6c661b70|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:fe7b12bd-1172-47eb-89b1-4e16aee85fab:62385088-5982-4c59-83ee-a3e784b8dcc6|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:f205cafc-4bc4-4231-937b-c32e5ee0917f:62385088-5982-4c59-83ee-a3e784b8dcc6|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:f205cafc-4bc4-4231-937b-c32e5ee0917f:13faa25d-676b-4b52-bb43-20b12e4ee67b|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:0d650c51-94a2-4a05-b514-dcca6c661b70:62385088-5982-4c59-83ee-a3e784b8dcc6|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:0d650c51-94a2-4a05-b514-dcca6c661b70:12e0b964-6275-4d6d-bc8e-1115d1e67dd0|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:62385088-5982-4c59-83ee-a3e784b8dcc6:13faa25d-676b-4b52-bb43-20b12e4ee67b|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:62385088-5982-4c59-83ee-a3e784b8dcc6:e6f77aad-8f77-428b-b3da-8b4736e0a396|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:13faa25d-676b-4b52-bb43-20b12e4ee67b:12e0b964-6275-4d6d-bc8e-1115d1e67dd0|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:13faa25d-676b-4b52-bb43-20b12e4ee67b:e6f77aad-8f77-428b-b3da-8b4736e0a396|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:12e0b964-6275-4d6d-bc8e-1115d1e67dd0:e6f77aad-8f77-428b-b3da-8b4736e0a396|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:12e0b964-6275-4d6d-bc8e-1115d1e67dd0:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:e6f77aad-8f77-428b-b3da-8b4736e0a396:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:e6f77aad-8f77-428b-b3da-8b4736e0a396:6d5620cd-9778-4c77-be23-94a57f004611|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:e6f77aad-8f77-428b-b3da-8b4736e0a396:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:456b7b6c-732b-4dd9-bb8c-bbfb8fd8ea8c:5426cde5-01bb-4e04-b1c2-1eb7426cbec8|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:6d5620cd-9778-4c77-be23-94a57f004611:5426cde5-01bb-4e04-b1c2-1eb7426cbec8|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:6d5620cd-9778-4c77-be23-94a57f004611:4c4613cf-50b8-4d30-b330-d44b7505f7a5|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51:5426cde5-01bb-4e04-b1c2-1eb7426cbec8|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:31a6a5b8-e9b4-41b0-be22-3a2ae05ecc51:040a8c56-a2c5-489c-8167-8b7186664393|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:5426cde5-01bb-4e04-b1c2-1eb7426cbec8:4c4613cf-50b8-4d30-b330-d44b7505f7a5|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:5426cde5-01bb-4e04-b1c2-1eb7426cbec8:376a7697-de73-4228-b597-7420574cb8f4|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:4c4613cf-50b8-4d30-b330-d44b7505f7a5:040a8c56-a2c5-489c-8167-8b7186664393|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:4c4613cf-50b8-4d30-b330-d44b7505f7a5:376a7697-de73-4228-b597-7420574cb8f4|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:040a8c56-a2c5-489c-8167-8b7186664393:376a7697-de73-4228-b597-7420574cb8f4|c1@2=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:040a8c56-a2c5-489c-8167-8b7186664393:ad3c0573-42eb-4ab4-acec-a839887126ca|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:376a7697-de73-4228-b597-7420574cb8f4:ad3c0573-42eb-4ab4-acec-a839887126ca|c1@0=t=1;v=177800/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:376a7697-de73-4228-b597-7420574cb8f4:874ff977-dbaa-4613-abf6-c2d848b5b3f0|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:376a7697-de73-4228-b597-7420574cb8f4:86ce1d0e-da25-49eb-ae42-604350131569|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:ad3c0573-42eb-4ab4-acec-a839887126ca:86ce1d0e-da25-49eb-ae42-604350131569|c1@2=t=1;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:ad3c0573-42eb-4ab4-acec-a839887126ca:342f95af-1da3-4ffa-a9ef-dbc51ce2b75b|c4@-1=t=4;v=250000/none/none;n="board setup constraints";mr="board setup constraints";im=1;zc=-1;d=0;s=1
+evalrules|pair_pp:874ff977-dbaa-4613-abf6-c2d848b5b3f0:342f95af-1da3-4ffa-a9ef-dbc51ce2b75b|c1@0=t=1;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_pp:874ff977-dbaa-4613-abf6-c2d848b5b3f0:6cb52416-0698-4f08-a129-189ae148bc82|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_zp:50e46035-d009-4bc9-9144-01a2b287fa35:7ecf5a8d-7053-4645-8dde-8ebe3d86d387|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_zp:da748863-9757-41e5-820a-7f527a6b67f4:7ecf5a8d-7053-4645-8dde-8ebe3d86d387|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|pair_zz:7ecf5a8d-7053-4645-8dde-8ebe3d86d387:a318326d-41b9-4ad1-a1b1-e90c920d74a2|c1@2=t=1;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_zp:50e46035-d009-4bc9-9144-01a2b287fa35:a318326d-41b9-4ad1-a1b1-e90c920d74a2|c3@-1=t=3;v=0/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+evalrules|pair_zp:da748863-9757-41e5-820a-7f527a6b67f4:a318326d-41b9-4ad1-a1b1-e90c920d74a2|c4@-1=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_zp:5e5f556f-b431-451a-97db-c239bfdb6b76:a318326d-41b9-4ad1-a1b1-e90c920d74a2|c28@-1=t=28;v=177800/250000/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+file|qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb|
+evalrules|track:5fb9f1bf-6353-4482-ab6f-bb68ff4bf749|c1@0=t=1;v=200000/none/none;n="netclass 'Default'";mr="netclass 'Default'";im=1;zc=-1;d=0;s=1
+evalrules|track:5fb9f1bf-6353-4482-ab6f-bb68ff4bf749|c32@0=t=32;v=20000000/none/none;n="rule 'physical_clearance'";mr="rule 'physical_clearance'";im=0;zc=-1;d=0;s=1
+evalrules|track:5fb9f1bf-6353-4482-ab6f-bb68ff4bf749|c15@0=t=0;v=none/none/none;n="";mr=-;im=0;zc=-1;d=0;s=1
+evalrules|pair_zz:d018de2a-07e4-4ce1-a131-bb240359f63d:fb20db62-f53e-4e90-a8ad-6b2609563157|c3@-1=t=3;v=250000/none/none;n="board setup constraints hole";mr="board setup constraints hole";im=1;zc=-1;d=0;s=1
+file|demos/constraints/constraints.kicad_pcb|

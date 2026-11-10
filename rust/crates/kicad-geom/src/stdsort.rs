@@ -606,6 +606,465 @@ impl<T> StdSet<T> {
     }
 }
 
+// ---- std::map ------------------------------------------------------------------------------
+
+/// Null link of [`StdMap`].
+const MAP_NIL: usize = usize::MAX;
+
+/// A node of [`StdMap`] (`_Rb_tree_node_base` plus the entry; the header has none).
+#[derive(Clone, Debug)]
+struct MapNode<K, V> {
+    entry: Option<(K, V)>,
+    parent: usize,
+    left: usize,
+    right: usize,
+    red: bool,
+}
+
+/// Port of the lookup and insertion part of libstdc++'s `_Rb_tree` behind
+/// `std::map<K, V, Compare>` (GCC 13: `bits/stl_map.h`, `bits/stl_tree.h`,
+/// `src/c++98/tree.cc`): `operator[]` (`lower_bound`, then `_M_emplace_hint_unique`) and
+/// `_Rb_tree_insert_and_rebalance`, on an index arena, with exactly the same comparisons.
+///
+/// As for [`StdSet`], the comparator is passed to each call (`less( a, b )` is the C++
+/// `comp( a, b )`, the same for every call on one map) and need not be a strict weak ordering:
+/// which entry `operator[]` finds then depends on the shape of the tree and on the sequence
+/// of comparisons, both reproduced (DRC's `DIFF_PAIR_KEY::operator<` is such a comparator).
+/// The rebalancing is the one of [`StdSet`] (verified against libstdc++ there). Erasure is not
+/// ported (no caller needs it).
+#[derive(Clone, Debug)]
+pub struct StdMap<K, V> {
+    nodes: Vec<MapNode<K, V>>,
+}
+
+impl<K, V> Default for StdMap<K, V> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<K, V> StdMap<K, V> {
+    /// An empty map (`_M_reset()`: the header is red and links to itself as leftmost and
+    /// rightmost).
+    pub fn new() -> Self {
+        StdMap {
+            nodes: vec![MapNode {
+                entry: None,
+                parent: MAP_NIL,
+                left: RB_HEADER,
+                right: RB_HEADER,
+                red: true,
+            }],
+        }
+    }
+
+    /// `size()`
+    pub fn len(&self) -> usize {
+        self.nodes.len() - 1
+    }
+
+    /// `empty()`
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    fn key(&self, n: usize) -> &K {
+        &self.nodes[n].entry.as_ref().expect("value node").0
+    }
+
+    fn root(&self) -> usize {
+        self.nodes[RB_HEADER].parent
+    }
+
+    fn leftmost(&self) -> usize {
+        self.nodes[RB_HEADER].left
+    }
+
+    fn rightmost(&self) -> usize {
+        self.nodes[RB_HEADER].right
+    }
+
+    /// Port of `map::operator[]( k )`: `lower_bound( k )`; unless the found entry is
+    /// equivalent (`!comp( k, found )`), a new entry with a copy of `k` is inserted with that
+    /// position as hint (`_M_emplace_hint_unique`). An existing entry keeps the key it was
+    /// created with.
+    pub fn entry<F>(&mut self, k: &K, mut less: F) -> &mut V
+    where
+        F: FnMut(&K, &K) -> bool,
+        K: Clone,
+        V: Default,
+    {
+        let mut i = self.lower_bound(k, &mut less);
+
+        if i == RB_HEADER || less(k, self.key(i)) {
+            i = self.emplace_hint_unique(i, k, &mut less);
+        }
+
+        &mut self.nodes[i].entry.as_mut().expect("value node").1
+    }
+
+    /// `_M_lower_bound( _M_begin(), _M_end(), k )`.
+    fn lower_bound<F: FnMut(&K, &K) -> bool>(&self, k: &K, less: &mut F) -> usize {
+        let mut x = self.root();
+        let mut y = RB_HEADER;
+
+        while x != MAP_NIL {
+            if !less(self.key(x), k) {
+                y = x;
+                x = self.nodes[x].left;
+            } else {
+                x = self.nodes[x].right;
+            }
+        }
+
+        y
+    }
+
+    /// `_M_emplace_hint_unique( pos, k )`: the node of `k` (new, or the equivalent one the
+    /// hint search found).
+    fn emplace_hint_unique<F>(&mut self, pos: usize, k: &K, less: &mut F) -> usize
+    where
+        F: FnMut(&K, &K) -> bool,
+        K: Clone,
+        V: Default,
+    {
+        match self.get_insert_hint_unique_pos(pos, k, less) {
+            (x, Some(p)) => self.insert_node(x, p, k.clone(), less),
+            (existing, None) => existing,
+        }
+    }
+
+    /// `_M_get_insert_hint_unique_pos( position, k )`: `(x, Some( p ))` of the insert position,
+    /// or `(node, None)` for an equivalent node.
+    fn get_insert_hint_unique_pos<F: FnMut(&K, &K) -> bool>(
+        &self,
+        pos: usize,
+        k: &K,
+        less: &mut F,
+    ) -> (usize, Option<usize>) {
+        if pos == RB_HEADER {
+            // end()
+            if !self.is_empty() && less(self.key(self.rightmost()), k) {
+                return (MAP_NIL, Some(self.rightmost()));
+            }
+
+            return self.get_insert_unique_pos(k, less);
+        }
+
+        if less(k, self.key(pos)) {
+            // First, try before...
+            if pos == self.leftmost() {
+                // begin()
+                return (self.leftmost(), Some(self.leftmost()));
+            }
+
+            let before = self.decrement(pos);
+
+            if less(self.key(before), k) {
+                if self.nodes[before].right == MAP_NIL {
+                    return (MAP_NIL, Some(before));
+                }
+
+                return (pos, Some(pos));
+            }
+
+            return self.get_insert_unique_pos(k, less);
+        }
+
+        if less(self.key(pos), k) {
+            // ... then try after.
+            if pos == self.rightmost() {
+                return (MAP_NIL, Some(self.rightmost()));
+            }
+
+            let after = self.increment(pos);
+
+            if less(k, self.key(after)) {
+                if self.nodes[pos].right == MAP_NIL {
+                    return (MAP_NIL, Some(pos));
+                }
+
+                return (after, Some(after));
+            }
+
+            return self.get_insert_unique_pos(k, less);
+        }
+
+        // Equivalent keys.
+        (pos, None)
+    }
+
+    /// `_M_get_insert_unique_pos( k )`.
+    fn get_insert_unique_pos<F: FnMut(&K, &K) -> bool>(
+        &self,
+        k: &K,
+        less: &mut F,
+    ) -> (usize, Option<usize>) {
+        let mut x = self.root();
+        let mut y = RB_HEADER;
+        let mut comp = true;
+
+        while x != MAP_NIL {
+            y = x;
+            comp = less(k, self.key(x));
+            x = if comp {
+                self.nodes[x].left
+            } else {
+                self.nodes[x].right
+            };
+        }
+
+        let mut j = y;
+
+        if comp {
+            if j == self.leftmost() {
+                // j == begin()
+                return (x, Some(y));
+            }
+
+            j = self.decrement(j);
+        }
+
+        if less(self.key(j), k) {
+            return (x, Some(y));
+        }
+
+        (j, None)
+    }
+
+    /// `_M_insert_node( x, p, z )` with a new node for `k`: its index.
+    fn insert_node<F>(&mut self, x: usize, p: usize, k: K, less: &mut F) -> usize
+    where
+        F: FnMut(&K, &K) -> bool,
+        V: Default,
+    {
+        let insert_left = x != MAP_NIL || p == RB_HEADER || less(&k, self.key(p));
+        self.nodes.push(MapNode {
+            entry: Some((k, V::default())),
+            parent: MAP_NIL,
+            left: MAP_NIL,
+            right: MAP_NIL,
+            red: true,
+        });
+        let z = self.nodes.len() - 1;
+        self.insert_and_rebalance(insert_left, z, p);
+        z
+    }
+
+    /// `_Rb_tree_increment( x )`.
+    fn increment(&self, mut x: usize) -> usize {
+        if self.nodes[x].right != MAP_NIL {
+            x = self.nodes[x].right;
+
+            while self.nodes[x].left != MAP_NIL {
+                x = self.nodes[x].left;
+            }
+
+            return x;
+        }
+
+        let mut y = self.nodes[x].parent;
+
+        while x == self.nodes[y].right {
+            x = y;
+            y = self.nodes[y].parent;
+        }
+
+        if self.nodes[x].right != y {
+            x = y;
+        }
+
+        x
+    }
+
+    /// `_Rb_tree_decrement( x )`.
+    fn decrement(&self, mut x: usize) -> usize {
+        if self.nodes[x].red
+            && self.nodes[x].parent != MAP_NIL
+            && self.nodes[self.nodes[x].parent].parent == x
+        {
+            // x is the header (end()): its predecessor is the rightmost node
+            return self.nodes[x].right;
+        }
+
+        if self.nodes[x].left != MAP_NIL {
+            let mut y = self.nodes[x].left;
+
+            while self.nodes[y].right != MAP_NIL {
+                y = self.nodes[y].right;
+            }
+
+            return y;
+        }
+
+        let mut y = self.nodes[x].parent;
+
+        while x == self.nodes[y].left {
+            x = y;
+            y = self.nodes[y].parent;
+        }
+
+        y
+    }
+
+    /// `local_Rb_tree_rotate_left( x, root )`.
+    fn rotate_left(&mut self, x: usize) {
+        let y = self.nodes[x].right;
+        self.nodes[x].right = self.nodes[y].left;
+
+        if self.nodes[y].left != MAP_NIL {
+            let yl = self.nodes[y].left;
+            self.nodes[yl].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].left {
+            self.nodes[xp].left = y;
+        } else {
+            self.nodes[xp].right = y;
+        }
+
+        self.nodes[y].left = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `local_Rb_tree_rotate_right( x, root )`.
+    fn rotate_right(&mut self, x: usize) {
+        let y = self.nodes[x].left;
+        self.nodes[x].left = self.nodes[y].right;
+
+        if self.nodes[y].right != MAP_NIL {
+            let yr = self.nodes[y].right;
+            self.nodes[yr].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].right {
+            self.nodes[xp].right = y;
+        } else {
+            self.nodes[xp].left = y;
+        }
+
+        self.nodes[y].right = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `_Rb_tree_insert_and_rebalance( insert_left, x, p, header )`.
+    fn insert_and_rebalance(&mut self, insert_left: bool, mut x: usize, p: usize) {
+        // Initialize fields in new node to insert.
+        self.nodes[x].parent = p;
+        self.nodes[x].left = MAP_NIL;
+        self.nodes[x].right = MAP_NIL;
+        self.nodes[x].red = true;
+
+        // Insert.
+        // Make new node child of parent and maintain root, leftmost and rightmost nodes.
+        // N.B. First node is always inserted left.
+        if insert_left {
+            self.nodes[p].left = x; // also makes leftmost = x when p == &header
+
+            if p == RB_HEADER {
+                self.nodes[RB_HEADER].parent = x;
+                self.nodes[RB_HEADER].right = x;
+            } else if p == self.nodes[RB_HEADER].left {
+                self.nodes[RB_HEADER].left = x; // maintain leftmost pointing to min node
+            }
+        } else {
+            self.nodes[p].right = x;
+
+            if p == self.nodes[RB_HEADER].right {
+                self.nodes[RB_HEADER].right = x; // maintain rightmost pointing to max node
+            }
+        }
+
+        // Rebalance.
+        while x != self.root() && self.nodes[self.nodes[x].parent].red {
+            let xp = self.nodes[x].parent;
+            let xpp = self.nodes[xp].parent;
+
+            if xp == self.nodes[xpp].left {
+                let y = self.nodes[xpp].right;
+
+                if y != MAP_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].right {
+                        x = xp;
+                        self.rotate_left(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_right(xpp);
+                }
+            } else {
+                let y = self.nodes[xpp].left;
+
+                if y != MAP_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].left {
+                        x = xp;
+                        self.rotate_right(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_left(xpp);
+                }
+            }
+        }
+
+        let root = self.root();
+        self.nodes[root].red = false;
+    }
+
+    /// The node indices in iteration order (`begin()` .. `end()`).
+    fn in_order(&self) -> Vec<usize> {
+        let mut out = Vec::with_capacity(self.len());
+        let mut x = self.leftmost();
+
+        while x != RB_HEADER && !self.is_empty() {
+            out.push(x);
+            x = self.increment(x);
+        }
+
+        out
+    }
+
+    /// The entries in iteration order (`begin()` .. `end()`).
+    pub fn iter(&self) -> impl Iterator<Item = (&K, &V)> {
+        self.in_order().into_iter().map(|n| {
+            let (k, v) = self.nodes[n].entry.as_ref().expect("value node");
+            (k, v)
+        })
+    }
+
+    /// The entries in iteration order, consuming the map.
+    pub fn into_entries(mut self) -> Vec<(K, V)> {
+        self.in_order()
+            .into_iter()
+            .map(|n| self.nodes[n].entry.take().expect("value node"))
+            .collect()
+    }
+}
+
 /// Port of `std::__lg` (`floor( log2( n ) )` for `n > 0`).
 fn lg(n: usize) -> usize {
     (usize::BITS - 1 - n.leading_zeros()) as usize
@@ -932,6 +1391,33 @@ where
 
 #[cfg(test)]
 mod tests {
+    /// `StdMap::entry` (`operator[]`) with a strict weak ordering: every key once, in key
+    /// order, each entry found again by an equal key.
+    #[test]
+    fn std_map_entry_finds_and_orders() {
+        let mut m: StdMap<i32, Vec<i32>> = StdMap::new();
+        let keys = [5, 3, 9, 1, 3, 7, 5, 2, 8, 6, 4, 0, 9];
+
+        for (n, &k) in keys.iter().enumerate() {
+            m.entry(&k, |a, b| a < b).push(n as i32);
+        }
+
+        assert_eq!(m.len(), 10);
+        let got: Vec<(i32, Vec<i32>)> = m.into_entries();
+        let want: Vec<(i32, Vec<i32>)> = (0..10)
+            .map(|k| {
+                let hits = keys
+                    .iter()
+                    .enumerate()
+                    .filter(|&(_, &x)| x == k)
+                    .map(|(n, _)| n as i32)
+                    .collect();
+                (k, hits)
+            })
+            .collect();
+        assert_eq!(got, want);
+    }
+
     use super::*;
 
     /// splitmix64

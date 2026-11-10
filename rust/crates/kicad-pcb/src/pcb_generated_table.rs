@@ -153,6 +153,9 @@ pub enum GeneratedTableKind {
         show_totals: bool,              // m_showTotals
         row_shapes: BTreeMap<i32, i32>, // m_rowShapes
         symbol_column: i32,             // m_symbolColumn
+        /// m_builtGeneration: the board's drill model generation at the last rebuild (0 until
+        /// the first, so a loaded chart is stale).
+        built_generation: u64,
     },
     /// `PCB_STACKUP_TABLE_T` (no own members).
     StackupTable,
@@ -167,6 +170,7 @@ impl GeneratedTableKind {
             show_totals: true,
             row_shapes: BTreeMap::new(),
             symbol_column: -1,
+            built_generation: 0,
         }
     }
 }
@@ -793,6 +797,17 @@ impl CellStyle {
 }
 
 impl PcbTable {
+    /// `PCB_DRILL_CHART::GetBuiltGeneration()`: the board's drill model generation at the last
+    /// rebuild (0 before the first); `None` for a table that is not a drill chart.
+    pub fn built_generation(&self) -> Option<u64> {
+        match self.generated.as_deref().map(|g| &g.kind) {
+            Some(GeneratedTableKind::DrillChart {
+                built_generation, ..
+            }) => Some(*built_generation),
+            _ => None,
+        }
+    }
+
     /// The generated-table members; panics (programmer error) for a plain table.
     fn gen_data(&self) -> &GeneratedTableData {
         self.generated
@@ -995,17 +1010,17 @@ impl PcbTable {
     /// Port of `PCB_GENERATED_TABLE::IsStale( aBoard )` and the `PCB_DRILL_CHART` override.
     ///
     /// The default (stack-up table) compares freshly generated text with the cells. A drill
-    /// chart compares `m_builtGeneration` with the board's drill model generation; the port
-    /// tracks neither, and treats a drill chart as always stale. In the C++ a chart is stale
-    /// after every load (`m_builtGeneration` starts at 0, the board's generation at 1) and
-    /// fresh after its rebuild until a pad, via or footprint changes, so the only difference
-    /// is a second refresh in the same session without a drill change, which the C++ skips
-    /// and the port repeats (a rebuild of a fresh chart reproduces its cells).
+    /// chart (`PCB_DRILL_CHART::IsStale`) compares `m_builtGeneration` with the board's drill
+    /// model generation: stale after every load (built generation 0, the board's at least 1)
+    /// and fresh after its rebuild until the board bumps the generation.
     pub fn generated_is_stale(&self, ctx: &BoardCtx<'_>) -> bool {
         let data = self.gen_data();
 
-        if matches!(data.kind, GeneratedTableKind::DrillChart { .. }) {
-            return true;
+        if let GeneratedTableKind::DrillChart {
+            built_generation, ..
+        } = &data.kind
+        {
+            return *built_generation != ctx.board.drill_model_generation();
         }
 
         let content = generate(ctx, data, None);
@@ -1630,16 +1645,20 @@ impl Board {
         self.move_item(table.into(), anchor - position);
 
         // Last, so a table is only ever marked fresh once its layout is complete
-        // (onRebuilt: PCB_DRILL_CHART keeps the row shapes and the symbol column)
+        // (onRebuilt: PCB_DRILL_CHART keeps the row shapes, the symbol column and the drill
+        // model generation it was built from)
+        let generation = self.drill_model_generation();
         self.modify_table(table, |t, _| {
             let data = t.generated.as_deref_mut().expect("generated table");
 
             if let GeneratedTableKind::DrillChart {
                 row_shapes,
                 symbol_column,
+                built_generation,
                 ..
             } = &mut data.kind
             {
+                *built_generation = generation;
                 row_shapes.clear();
 
                 for (ii, shape) in content.row_shapes.iter().enumerate() {
@@ -1659,8 +1678,8 @@ impl Board {
     /// their old order; the drill chart's symbol column follows (`onColumnsReversed`); a hidden
     /// column keeps its place in the reversed order; trailer rows, laid out by position rather
     /// than by column, get their text back to where a rebuild puts it (the cells stay where the
-    /// flip left them). `Mirror` goes through `Flip` too. To be called by the table flip cascade
-    /// (`Board::table_flip`, package M11) for a generated table.
+    /// flip left them). `Mirror` goes through `Flip` too. Called by `Board::table_flip` for a
+    /// generated table.
     pub fn generated_after_flip(&mut self, table: TableId) {
         self.modify_table(table, |t, _| {
             let data = t.generated.as_deref_mut().expect("generated table");

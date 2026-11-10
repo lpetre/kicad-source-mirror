@@ -576,6 +576,11 @@ Progress log:
   natively and in wasm, `cargo doc` clean, semver-style list of what is public) and DOC-1
   (README). Still open question for the user / friend: which subset he wants beyond boards
   (schematics, libraries, rendering?) - nothing outside pcbnew's board side is ported.
+  08:05 UTC: the friend's own layer is "a subset of a reimplementation of kicad-cli"
+  (import, export, DRC, copper refill). Package file CLI-WASM-1 written (the kicad-rs
+  command layer as a library over an abstract host; `runCli(argv, files)` in wasm with the
+  exact behaviour of the native binary): launch after FIX-FAB-2 (editing kicad-cli) and
+  WASM-API-1 (editing kicad-wasm) have finished.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

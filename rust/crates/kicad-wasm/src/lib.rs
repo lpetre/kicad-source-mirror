@@ -24,6 +24,7 @@
 //! `StaleIdError`.
 
 pub mod api;
+pub mod board_api;
 
 use js_sys::{Error as JsError, Reflect};
 use kicad_session::jobs::{
@@ -656,8 +657,13 @@ impl Board {
 
     /// `ratsnest()`: `Int32Array` of `[x1, y1, x2, y2] * n`.
     pub fn ratsnest(&mut self) -> Result<Vec<i32>, JsValue> {
-        let lines = self.session.ratsnest().map_err(session_error)?;
-        Ok(lines.into_iter().flatten().collect())
+        // The unconnected edges of `CONNECTIVITY_DATA::RecalculateRatsnest` (board_api).
+        let info = self.session.connectivity_info();
+        Ok(info
+            .edges
+            .iter()
+            .flat_map(|e| [e.source_pos[0], e.source_pos[1], e.target_pos[0], e.target_pos[1]])
+            .collect())
     }
 
     /// `refillZones()`.

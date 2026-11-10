@@ -228,6 +228,9 @@ impl Board {
     pub fn set_copper_layer_count(&mut self, count: i32) {
         self.design_settings_mut().set_copper_layer_count(count);
         self.recalc_opposites();
+
+        // A chart prints layer spans, so the count and order change what it says
+        self.bump_drill_model_generation();
     }
 
     /// `BOARD::GetEnabledLayers`.
@@ -236,10 +239,10 @@ impl Board {
     }
 
     /// `BOARD::SetEnabledLayers`: the design settings' mask (which also recounts the copper
-    /// and user-defined layers). `BumpDrillModelGeneration()` has no counterpart (the drill
-    /// model of the drill maps is tier 2).
+    /// and user-defined layers), then `BumpDrillModelGeneration()`.
     pub fn set_enabled_layers(&mut self, layers: Lset) {
         self.design_settings_mut().set_enabled_layers(&layers);
+        self.bump_drill_model_generation();
     }
 
     /// `BOARD::IsLayerEnabled`.
@@ -271,7 +274,7 @@ impl Board {
 
     /// `BOARD::SetLayerName`: `false` for a name with a quote character or a disabled layer
     /// (an empty name clears the user name of any layer and also returns `false`, as in C++).
-    /// `BumpDrillModelGeneration()` has no counterpart (tier 2 drill model).
+    /// A successful rename bumps the drill model generation.
     pub fn set_layer_name(&mut self, layer: PcbLayerId, name: &str) -> bool {
         if name.is_empty() {
             // If the name is empty, we clear the user name.
@@ -286,6 +289,9 @@ impl Board {
             if self.is_layer_enabled(layer) {
                 self.layers.entry(layer.0).or_default().user_name = name.to_string();
                 self.layers_changed();
+
+                // A chart prints the span using layer names, so a rename changes what it says
+                self.bump_drill_model_generation();
                 return true;
             }
         }

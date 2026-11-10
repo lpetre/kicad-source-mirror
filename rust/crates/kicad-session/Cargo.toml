@@ -34,3 +34,6 @@ serde = { version = "1.0.229", features = ["derive"] }
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }
+# The reference dump's value formatters (`kicad_pcb::dump::format`) for the read API oracle
+# (tests/board_api_read.rs).
+kicad-pcb = { path = "../kicad-pcb", features = ["dump"] }

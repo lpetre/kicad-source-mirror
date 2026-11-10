@@ -1,0 +1,5 @@
+none=8c6f699bb42b7add:6754
+flip_lr=855a256cc2f3cde0:6884
+flip_tb=b23ae5821481a66a:6998
+mirror_lr=855a256cc2f3cde0:6884
+mirror_tb=b23ae5821481a66a:6998

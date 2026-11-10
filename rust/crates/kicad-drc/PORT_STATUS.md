@@ -1882,7 +1882,7 @@ Deviations:
 - `BuildCreepageBoardEdges` flattens Bezier edges with `build_bezier_to_segments_points_list`
   instead of rebuilding the board item's cached list (same points; the board stays immutable).
 - `ShortenChildDueToGV` calls `asin` on a `float` (`asinf` in the reference): the port uses
-  `f32::asin`, the platform `asinf` natively (glibc, matched by the goldens); wasm32 uses
+  `kicad_geom::cmath::asinf` (`f32::asin`), the platform `asinf` natively (glibc, matched by the goldens); wasm32 uses
   Rust's libm (the documented wasm-only libm deviation).
 
 Known gaps: `PATH_CONNECTION::isValid` is unverified (needs `SegmentIntersectsBoard`, DRC-33);
@@ -1898,7 +1898,7 @@ have no oracle coverage yet (used by DRC-33's engine).
 | `DRC_TEST_PROVIDER_DIFF_PAIR_COUPLING::Run` | `src/providers/diff_pair_coupling.rs` `DrcTestProviderDiffPairCoupling::run` (takes the run's `&DrcBoardCaches` for `m_CopperItemRTreeCache`) | ported |
 | `commonParallelProjection( SEG, SEG, ... )` / `( PCB_ARC, PCB_ARC, ... )` | `common_parallel_projection_seg` / `common_parallel_projection_arc` | ported |
 | `DIFF_PAIR_KEY` (+ `operator<`), `DIFF_PAIR_COUPLED_SEGMENTS`, `DIFF_PAIR_ITEMS` | `DiffPairKey` (+ `key_less`), `DiffPairCoupledSegments`, `DiffPairItems` | ported |
-| `std::map<DIFF_PAIR_KEY, DIFF_PAIR_ITEMS> dpRuleMatches` | `DpRuleMatches`: the libstdc++ red-black tree of `operator[]` (`lower_bound`, `_M_emplace_hint_unique`, `_Rb_tree_insert_and_rebalance`) on an index arena | ported (exact) |
+| `std::map<DIFF_PAIR_KEY, DIFF_PAIR_ITEMS> dpRuleMatches` | `DpRuleMatches`: `kicad_geom::stdsort::StdMap` (the libstdc++ red-black tree of `operator[]`: `lower_bound`, `_M_emplace_hint_unique`, `_Rb_tree_insert_and_rebalance`, on an index arena; moved there from this crate in GLUE-3) | ported (exact) |
 | `extractDiffPairCoupledItems`, `isInTuningPattern` | same names, snake_case | ported |
 | `GetFromToCache()->Rebuild( m_board )` (first statement of `Run`) | `run_flow::run_provider` calls `ConnectivityData::rebuild_from_to_cache` right before the provider (needs `&mut`) | ported |
 | `ADVANCED_CFG::m_MinParallelAngle` | `ADVANCED_CFG_MIN_PARALLEL_ANGLE` (default 0.001 deg) | default only |

@@ -19,6 +19,7 @@
 //!
 //! | module | ports |
 //! |---|---|
+//! | [`board_api`] | router access API (package WASM-API-1): read, resolved rules, edit, teardrops, structured DRC |
 //! | [`session`] | `PCBNEW_JOBS_HANDLER::getBoard`, `BOARD_LOADER::Load` on in-memory texts; item access for clients |
 //! | [`board_loader`] | `pcbnew/board_loader.cpp` (`BOARD_LOADER::Load`, `initializeLoadedBoard`, `SaveBoard`), `KI_TEST::LoadBoard` |
 //! | [`jobs`] | `common/jobs/job*.{h,cpp}`: `JOB`, `JOB_RC`, `JOB_PCB_DRC`, `JOB_EXPORT_PCB_PLOT`, `..._GERBER(S)`, `..._DRILL`, `..._SVG`, `JOB_PCB_UPGRADE`, `JOB_FP_UPGRADE` |
@@ -32,6 +33,7 @@
 //! [`OutputFile`]s that come back. Subsystems that have not landed yet are reported as
 //! [`SessionError::NotYetPorted`].
 
+pub mod board_api;
 pub mod board_loader;
 pub mod build_version;
 pub mod error;

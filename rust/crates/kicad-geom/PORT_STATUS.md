@@ -963,3 +963,12 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   `Seg::nearest_point`) for a segment and a circle more than 2^31 nm apart still overflows (not
   in the oracle).  `KiCheckedCast<int64_t, int>` clamps (D1) where the Linux reference wraps;
   `kicad-pcb`'s `PcbShape::normalize_env` therefore spells out the wrapping box arithmetic.
+
+## GLUE-3 (consolidation)
+
+- `stdsort::StdMap<K, V>`: `std::map::operator[]` (`lower_bound`, `_M_emplace_hint_unique`,
+  `_M_get_insert_hint_unique_pos`, `_M_get_insert_unique_pos`) and the `StdSet` rebalancing,
+  with the comparator passed per call; moved from kicad-drc's `DpRuleMatches`
+  (`DIFF_PAIR_KEY::operator<` is not a strict weak ordering). Same code; kicad-drc's
+  diff-pair tests and DRC corpus replay it.
+- `cmath::asinf` (`asin( float )`), moved from kicad-drc's creepage graph.

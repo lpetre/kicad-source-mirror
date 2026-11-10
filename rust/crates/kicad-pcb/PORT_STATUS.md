@@ -773,7 +773,7 @@ and most item `GetBoundingBox` are stubs.
   resolver of later calls, as the C++ cache ignores a later-attached engine.
 - `LayerDepth` with a non-copper layer (C++ throws from `LAYER_RANGE`) is a `debug_assert!`
   and returns 0.
-- `BumpDrillModelGeneration()` calls (layer renames, counts) have no counterpart (tier 2).
+- `BumpDrillModelGeneration()` of the layer setters: ported in GLUE-3 (see there).
 
 ## Package M5: design settings, zone settings, teardrop parameters (model logic)
 
@@ -3472,10 +3472,10 @@ Scoreboard (values): before 6133270 match / 257 mismatch / 18459 pending / 649 e
 |---|---|---|---|
 | `shape|lib.start`, `lib.end` of polygon cells (embedded_table_rotated_legacy_v10) | 16 / 1 | R2-09: `m_libStart` / `m_libEnd` of a cell whose library shape is POLY; never read for a POLY lib shape (`OnFootprintTransformed` / `rebakeFromLib` use `m_libPoly`) | expected (R2-09) |
 | `text|*` / `bbox` / `board|bbox` of issue14549 | 38 / 1 | outline font (host font vs stroke font, R2-06) | expected |
-| `bbox` / `board|bbox*` of barcodes (api_kitchen_sink, issue24525) | 6 / 2 | no zint symbol encoder (ZINT-1) | expected |
+| `bbox` / `board|bbox*` of barcodes (api_kitchen_sink, issue24525) | 0 / 0 (was 6 / 2) | zint symbol encoder (ZINT-1, done) | fixed (GLUE-3 rerun: both boards match in every section) |
 | `order|*` of ZoneFill-4.0.7, issue25580, issue4139 | 5 / 3 | items without a UUID in the file get generated UUIDs, a sort key (R2-10) | expected |
 | pending `board|ds.meander.*` | 15436 / 343 | meander settings not modelled | expected |
-| pending `misc|barcode.*`, `bbox` | 14 / 2 | ZINT-1 | expected |
+| pending `misc|barcode.*`, `bbox` | 0 / 0 (was 14 / 2) | ZINT-1 done; dump switched on in GLUE-3 | fixed |
 
 Fixed here (C++ / Rust / state):
 
@@ -3707,24 +3707,16 @@ table marks the board as changed). The SVG job's refresh belongs to `PCB_PLOTTER
 
 ### Deviations
 
-* `PCB_DRILL_CHART::IsStale` compares `m_builtGeneration` with `BOARD::GetDrillModelGeneration()`;
-  the port keeps neither and treats a drill chart as always stale. The C++ chart is stale after
-  every load (built generation 0, board generation >= 1), so the first refresh of a session is
-  the same; a second refresh without a drill change rebuilds the chart again (the C++ skips it)
-  and counts it in the return value. Rebuilding a fresh chart reproduces its cells (12 of 13
-  oracle boards; the 13th moves by 1 nm in the C++ as well).
+* (Resolved in GLUE-3: `PCB_DRILL_CHART::IsStale` compares the chart's built generation with
+  `Board::drill_model_generation`.)
 * `m_laidOutShowTotals` is not kept (set only between a `SetShowTotals` edit and the next rebuild).
 * `DRILL_SYMBOL_PROFILE::m_uuid` is not kept (not in the board file, not in `operator==`).
 * New cells take UUIDs from the board's `KiidGenerator` (random in the C++).
 
 ### Known gaps
 
-* Not wired (change requests): `Board::table_autosize` / `PcbTable::set_autosized_row_heights`
-  still reach the M26 `port_pending!` for a generated table (the refresh uses
-  `Board::generated_table_autosize`); `Board::table_flip` / `table_mirror` do not call
-  `Board::generated_after_flip` (ported, not oracle-verified).
-* `kicad-fab/src/drill/` duplicates `drill/drill_operation.rs` / `drill_enumerator.rs` (and
-  `DrillSpan`); consolidation: kicad-fab re-exports `kicad_pcb::drill`.
+* (Wired in GLUE-3: `Board::table_autosize` / `table_flip` / `table_mirror` of a generated
+  table; kicad-fab re-exports `kicad_pcb::drill`.)
 * Drill symbol and chart symbol plotting (`plot_brditems_plotter.cpp` L1515-1656) is FAB-13: it
   needs `crate::drill::drill_symbol_cache` (`by_item`: per hole the assignment, span, position,
   kind, diameter, size, orientation, slot flag), `PcbDrillMap::board_outlines` / `span` /
@@ -3869,3 +3861,41 @@ setter, `GetValueFieldText` / `ChangeValue*`, i32-backed `DimUnitsFormat` / `Dim
 `Pad::padstack()` accessor for `TEARDROP_MANAGER::IsUniformlyRound`; `PcbShape::normalize` with
 the pad's primitive lib scale; PROP-1 generator property getters; remove / re-add of items in
 the mutator oracle; router-style item creation with incremental connectivity (part 3).
+
+## Package GLUE-3: cross-crate leftovers (third wiring pass)
+
+| C++ | Rust | State |
+|---|---|---|
+| `BOARD::m_drillModelGeneration`, `GetDrillModelGeneration`, `BumpDrillModelGeneration`, `noteDrillModelChange` / `affectsDrillModel` | `Board::drill_model_generation`, `bump_drill_model_generation`, `note_drill_model_change` (from `after_board_add` and the board-level branch of `remove_many`) | ported |
+| bump sites `SetCopperLayerCount`, `SetEnabledLayers`, `SetLayerName` (successful rename) | `board/layers.rs` | ported |
+| `PCB_DRILL_CHART::m_builtGeneration`, `GetBuiltGeneration`, `IsStale`, `onRebuilt` | `GeneratedTableKind::DrillChart::built_generation`, `PcbTable::built_generation`, `generated_is_stale`, `generated_rebuild_cells` | ported |
+| `PCB_TABLE::Autosize` -> `PCB_GENERATED_TABLE::setAutosizedRowHeights` | `Board::table_autosize` -> `generated_table_autosize` (`PcbTable::set_autosized_row_heights` asserts on a generated table) | ported |
+| `PCB_GENERATED_TABLE::Flip` (also reached by `PCB_TABLE::Mirror`) | `Board::table_flip` = `table_flip_base` + `generated_after_flip` | ported, oracle |
+| `PCB_TABLE::TransformShapeToPolySet` / `TransformGraphicItemsToPolySet` with `aRenderSettings` | `PcbTable::transform_shape_to_poly_set_with_render_settings` / `transform_graphic_items_to_poly_set_with_render_settings` (moved from kicad-fab) | ported |
+| `PROJECT::TextVarResolver` `VCSHASH` / `VCSSHORTHASH` (`GetCurrentHash`, `Left( 8 )`) | `BoardProject::vcs_hash` (host-set), `text_var_resolver` | ported |
+| dump `misc|barcode.poly` / `symbol_poly` / `text_poly` / `last_error` | `dump/defaults.rs` (always printed, ZINT-1 is done) | ported, scoreboard |
+
+Verification:
+- `tests/glue3.rs`: `AChartFollowsTheBoardWithoutBeingAsked` with its `GetBuiltGeneration`
+  checks (test_drill_chart.cpp), the bump sites, and `flip_and_mirror_match_the_reference`:
+  the saved board after Flip LR / TB and Mirror LR / TB of every top-level item of
+  `pcbio12/generated_tables.kicad_pcb` (drill chart + stack-up table) equals the reference's
+  (`tests/oracle/glue3_flip_golden.sh` runs the FIX-EDIT-1 mutator driver; golden
+  `tests/golden/glue3/flip_tables.txt`, 5 saves). Without the `generated_after_flip` hook the
+  four flip / mirror saves differ.
+- `kicad-cli pcb upgrade` without `--force` on an up-to-date board with a drill chart
+  (`api_kitchen_sink`, `pcbio12/generated_tables`): the reference saves ("Successfully saved
+  board file using the latest format") because a loaded chart is stale (built generation 0)
+  and the CLI path runs no refresh before `JobUpgrade`'s. The M26 note expecting "Board file
+  was not updated" was wrong; the port gave the same result before and after this package.
+- Scoreboard (`tools/pcb-dump/scoreboard.sh --board`) of the two barcode boards
+  (api_kitchen_sink, issue24525): 20 371 values match, 0 mismatch, 90 pending (all
+  `ds.meander.*`); `misc` 109 / 109.
+
+Not done here: FIX-BEZ-1 (Bezier points re-approximated by outline builds; needs the M21
+oracle extension and host call sites in kicad-drc / kicad-fab); a colour-settings slot on
+`PcbPlotParams` (FAB-11 passes the theme explicitly; left as is). `OnItemChanged` /
+`OnItemsChanged` / `OnItemsCompositeUpdate` (commit listeners) have no counterpart, so an
+in-place edit of a pad or via does not bump the drill model generation; a host editing holes
+in place calls `Board::bump_drill_model_generation` before refreshing tables.
+

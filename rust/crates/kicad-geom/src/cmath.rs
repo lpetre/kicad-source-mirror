@@ -64,6 +64,14 @@ pub fn asin(x: f64) -> f64 {
     x.asin()
 }
 
+/// `asinf` / `std::asin( float )`: the `float` overload. Natively Rust's `f32::asin` is the
+/// platform `asinf` (glibc, as the reference); on wasm32 it is Rust's bundled libm (the
+/// documented wasm-only libm deviation).
+#[inline]
+pub fn asinf(x: f32) -> f32 {
+    x.asin()
+}
+
 /// `std::acos( double )`.
 #[inline]
 pub fn acos(x: f64) -> f64 {

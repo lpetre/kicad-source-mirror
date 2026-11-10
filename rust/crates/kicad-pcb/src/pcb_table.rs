@@ -33,7 +33,9 @@ use kicad_geom::{Box2I, ShapePolySet, Vector2I};
 use std::sync::Arc;
 
 use kicad_geom::cmath::f64_to_i32_x86;
-use kicad_geom::convert_basic_shapes_to_polygon::transform_oval_to_polygon;
+use kicad_geom::convert_basic_shapes_to_polygon::{
+    transform_circle_to_polygon, transform_oval_to_polygon,
+};
 use kicad_geom::geometry::approximation::ERROR_INSIDE;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::geometry_utils::ARC_LOW_DEF;
@@ -186,12 +188,14 @@ impl PcbTable {
 
     /// Port of `setAutosizedRowHeights( aNeeded )` (virtual): `PCB_TABLE` stores each needed
     /// height. The `PCB_GENERATED_TABLE` override (line metrics of data rows, the common
-    /// height of the data rows, a `Normalize()` first) belongs to the generated-table refresh
-    /// (package M26).
+    /// height of the data rows, a `Normalize()` first) moves cells, which are separate arena
+    /// items, so it is [`Board::generated_table_autosize`], reached through
+    /// [`Board::table_autosize`]; calling this on a generated table is a programmer error.
     pub fn set_autosized_row_heights(&mut self, needed: &[i32]) {
-        if self.generated.is_some() {
-            crate::port_pending!("PCB_GENERATED_TABLE::setAutosizedRowHeights (M26)", needed);
-        }
+        assert!(
+            self.generated.is_none(),
+            "PCB_GENERATED_TABLE::setAutosizedRowHeights: use Board::table_autosize"
+        );
 
         for (row, &height) in needed.iter().enumerate() {
             self.set_row_height(row as i32, height);
@@ -647,10 +651,27 @@ impl PcbTable {
         }
     }
 
-    /// Port of `PCB_TABLE::TransformShapeToPolySet`: `TransformGraphicItemsToPolySet` (no
-    /// render settings: every border as a solid oval), inflated (chamfered) by a positive
-    /// clearance.
+    /// Port of `PCB_TABLE::TransformShapeToPolySet` without render settings (the
+    /// `BOARD_ITEM` interface: every border as a solid oval); see
+    /// [`PcbTable::transform_shape_to_poly_set_with_render_settings`].
     pub fn transform_shape_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        layer: PcbLayerId,
+        clearance: i32,
+        error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        self.transform_shape_to_poly_set_with_render_settings(
+            ctx, buffer, layer, clearance, error, error_loc, None,
+        );
+    }
+
+    /// Port of `PCB_TABLE::TransformShapeToPolySet( .., aRenderSettings )`:
+    /// `TransformGraphicItemsToPolySet`, inflated (chamfered) by a positive clearance.
+    #[allow(clippy::too_many_arguments)]
+    pub fn transform_shape_to_poly_set_with_render_settings(
         &self,
         ctx: &BoardCtx<'_>,
         buffer: &mut ShapePolySet,
@@ -658,12 +679,25 @@ impl PcbTable {
         clearance: i32,
         error: i32,
         error_loc: ErrorLoc,
+        render_settings: Option<&kicad_plot::RenderSettings>,
     ) {
         if clearance <= 0 {
-            self.transform_graphic_items_to_poly_set(ctx, buffer, error, error_loc);
+            self.transform_graphic_items_to_poly_set_with_render_settings(
+                ctx,
+                buffer,
+                error,
+                error_loc,
+                render_settings,
+            );
         } else {
             let mut tmp = ShapePolySet::new();
-            self.transform_graphic_items_to_poly_set(ctx, &mut tmp, error, error_loc);
+            self.transform_graphic_items_to_poly_set_with_render_settings(
+                ctx,
+                &mut tmp,
+                error,
+                error_loc,
+                render_settings,
+            );
             tmp.inflate(clearance, CornerStrategy::ChamferAllCorners, error, false);
             buffer.append_set(&tmp);
         }
@@ -678,11 +712,72 @@ impl PcbTable {
         max_error: i32,
         error_loc: ErrorLoc,
     ) {
+        self.transform_graphic_items_to_poly_set_with_render_settings(
+            ctx, buffer, max_error, error_loc, None,
+        );
+    }
+
+    /// Port of `PCB_TABLE::TransformGraphicItemsToPolySet( .., aRenderSettings )`: the borders
+    /// (a styled border dashed through `STROKE_PARAMS::Stroke` when render settings are given)
+    /// and the cells' text.
+    pub fn transform_graphic_items_to_poly_set_with_render_settings(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        max_error: i32,
+        error_loc: ErrorLoc,
+        render_settings: Option<&kicad_plot::RenderSettings>,
+    ) {
         // Convert graphic items (segments and texts) to a set of polygonal shapes
         // aRenderSettings is used to draw lines when line style != LINE_STYLE::SOLID, so
         // if nullptr line style will be ignored
-        self.draw_borders(ctx, &mut |pt_a, pt_b, stroke| {
-            transform_oval_to_polygon(buffer, pt_a, pt_b, stroke.width(), max_error, error_loc, 0);
+        self.draw_borders(ctx, &mut |pt_a, pt_b, stroke_params| {
+            let line_width = stroke_params.width();
+            let line_style = stroke_params.line_style();
+
+            match render_settings {
+                Some(rs) if (line_style as i32) > (LineStyle::Solid as i32) => {
+                    let seg = ShapeSegment::new(pt_a, pt_b, 0);
+                    let lengths = crate::stroke_params::StrokePatternLengths {
+                        dash: rs.dash_length(line_width),
+                        dot: rs.dot_length(line_width),
+                        gap: rs.gap_length(line_width),
+                    };
+
+                    crate::stroke_params::stroke(
+                        &seg,
+                        line_style,
+                        line_width,
+                        &lengths,
+                        &mut |a, b| {
+                            if a == b {
+                                transform_circle_to_polygon(
+                                    buffer,
+                                    a,
+                                    line_width / 2,
+                                    max_error,
+                                    error_loc,
+                                    0,
+                                );
+                            } else {
+                                // `a + 1`: VECTOR2I + scalar adds to both coordinates
+                                transform_oval_to_polygon(
+                                    buffer,
+                                    Vector2I::new(a.x + 1, a.y + 1),
+                                    b,
+                                    line_width,
+                                    max_error,
+                                    error_loc,
+                                    0,
+                                );
+                            }
+                        },
+                    );
+                }
+                _ => transform_oval_to_polygon(
+                    buffer, pt_a, pt_b, line_width, max_error, error_loc, 0,
+                ),
+            }
         });
 
         for cell in self.cell_refs(ctx) {
@@ -971,11 +1066,18 @@ impl Board {
     }
 
     /// Port of `PCB_TABLE::Autosize()`: column widths and row heights from the cells' text
-    /// extents ([`PcbTable::autosize`], clone-edit-store), then `Normalize()`.
+    /// extents ([`PcbTable::autosize`], clone-edit-store), then `Normalize()`. A generated
+    /// table takes the `PCB_GENERATED_TABLE::setAutosizedRowHeights` override
+    /// ([`Board::generated_table_autosize`]).
     pub fn table_autosize(&mut self, table: TableId) {
         let Some(mut t) = self.tables.get(table).cloned() else {
             return;
         };
+
+        if t.is_generated() {
+            self.generated_table_autosize(table);
+            return;
+        }
 
         {
             let ctx = BoardCtx::bare(self);
@@ -1065,11 +1167,22 @@ impl Board {
         Some(item.flipped_layer(item.layer()))
     }
 
+    /// The virtual `Flip( aCentre, aFlipDirection )` of a table: [`Board::table_flip_base`]
+    /// (`PCB_TABLE::Flip`), then for a generated table the rest of the `PCB_GENERATED_TABLE`
+    /// override ([`Board::generated_after_flip`]).
+    pub(crate) fn table_flip(&mut self, table: TableId, centre: Vector2I, dir: FlipDirection) {
+        self.table_flip_base(table, centre, dir);
+
+        if self.tables.get(table).is_some_and(PcbTable::is_generated) {
+            self.generated_after_flip(table);
+        }
+    }
+
     /// Port of `PCB_TABLE::Flip( aCentre, aFlipDirection )`. A footprint child flips each
     /// cell in the library frame; a board table is turned upright, flipped about its origin,
     /// re-laid out and moved to the mirrored place of its box. (A board table without cells,
     /// a null dereference in C++, is left alone.)
-    pub(crate) fn table_flip(&mut self, table: TableId, centre: Vector2I, dir: FlipDirection) {
+    fn table_flip_base(&mut self, table: TableId, centre: Vector2I, dir: FlipDirection) {
         let Some(t) = self.tables.get(table) else {
             return;
         };

@@ -8,9 +8,7 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 |---|---|---|---|
 | `lib.rs` (`OutputFile`, `FabError`, `Reporter`, `VecReporter`) | `REPORTER::Report` (part) | FAB-01 | done |
 | `wx_file_name.rs` | `wxFileName` (Unix: `SplitPath`, `SetName/SetExt/SetPath`, `GetFullName/GetFullPath`) | FAB-01 | done (string part only) |
-| `drill/drill_span.rs` | `pcbnew/drill/drill_span.h` | FAB-01 | ported |
-| `drill/drill_operation.rs` | `pcbnew/drill/drill_operation.h` | FAB-01 | ported |
-| `drill/drill_enumerator.rs` | `pcbnew/drill/drill_enumerator.h/.cpp` | FAB-01, FAB-GLUE | ported; verified end to end (FAB-GLUE) |
+| `drill/mod.rs` (re-exports `kicad_pcb::drill`, `DrillSpan` = `kicad_pcb::pcb_drill_map::DrillSpan`) | `pcbnew/drill/drill_span.h`, `drill_operation.h`, `drill_enumerator.h/.cpp` | FAB-01, FAB-GLUE, GLUE-3 | ported (the FAB-01 copy was replaced by the M26 model copy in GLUE-3); verified end to end |
 | `exporters/gendrill_writer_base.rs` | `gendrill_writer_base.h` (all types), `.cpp` L47-300, L303-355, L358-461, L464-501 | FAB-01 | ported |
 | `exporters/gendrill_map.rs` | `gendrill_writer_base.cpp` L506-847, L996-1019 | FAB-12 | ported: Gerber X2 and SVG maps (see "FAB-12" below); PDF / PS / DXF: `FabError::Unsupported` |
 | `exporters/gendrill_excellon_writer.rs` | `gendrill_excellon_writer.*` | FAB-02 | ported |
@@ -750,7 +748,7 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
 | `PlotSolderMaskLayer` (L91-107) | `plot_board_layers::plot_solder_mask_layer` (min width 0 -> `PlotLayer`, as FAB-03 left it) + `plot_layer_poly::plot_solder_mask_layer_min_width` (the rest) |
 | `PlotClippedSilkLayer` (L110-125) | `plot_layer_poly::plot_clipped_silk_layer` (called from `plot_one_board_layer`) |
 | `GenerateLayerPoly` (L1020-1275) incl. its lambdas `handlePcbShape`, `handleFPTextItem`, `handleTextBoxItem` | `plot_layer_poly::generate_layer_poly`, `LayerPolyGen` |
-| `PCB_TABLE::TransformShapeToPolySet` / `TransformGraphicItemsToPolySet` with non-null `aRenderSettings` (dashed borders) | `plot_layer_poly::table_transform_shape_to_poly_set` (private; the kicad-pcb model has only the `nullptr` overload) |
+| `PCB_TABLE::TransformShapeToPolySet` / `TransformGraphicItemsToPolySet` with non-null `aRenderSettings` (dashed borders) | `PcbTable::transform_shape_to_poly_set_with_render_settings` (kicad-pcb, since GLUE-3) |
 
 Notes on the port:
 * `track->GetSolderMaskExpansion()` is called through `const PCB_TRACK*` and is not virtual,
@@ -789,9 +787,9 @@ None known.
 
 ### Known gaps
 
-* `table_transform_shape_to_poly_set` (dashed table borders of a board table on a mask / silk
-  layer with render settings) is a local port because kicad-pcb lacks the render-settings
-  overload; no corpus board exercises it (unverified against the oracle).
+* The render-settings overload of `PCB_TABLE::TransformShapeToPolySet` (dashed table borders of
+  a board table on a mask / silk layer; `PcbTable::transform_shape_to_poly_set_with_render_settings`
+  since GLUE-3): no corpus board exercises it (unverified against the oracle).
 * SVG `--subtract-soldermask` reaches the same code; it is verified only through Gerber here
   (SVG plotting is FAB-11).
 
@@ -1039,3 +1037,14 @@ item dispatcher (`PlotFootprintGraphicItems`) plots chart tables without their s
   C++ has no effect on Gerber and SVG.
 * `api_kitchen_sink.kicad_pcb` (480 KB, drill maps) is above the corpus size limit and not compared.
 
+## GLUE-3 (cross-crate leftovers)
+
+- `src/drill/`: the FAB-01 copies `drill_span.rs`, `drill_operation.rs`, `drill_enumerator.rs`
+  are gone; `drill/mod.rs` re-exports `kicad_pcb::drill` under the same paths (the tests of
+  `drill_span.rs` moved to `kicad-pcb/tests/glue3.rs`). The two copies differed only in
+  comments, a `const fn` and a test's UUID source. Corpus counts after the switch (unchanged):
+  Excellon 4584 runs / 4572 identical / 0 differ (12 reference failures), Gerber drill 1146 /
+  1143 / 0 differ, drill maps 30 runs / 103 files / 0 differ, plot driver 8533 files matched,
+  plot graphics 8445 matched, plot items 7334 matched, 0 known differences.
+- `plot_layer_poly.rs` calls `PcbTable::transform_shape_to_poly_set_with_render_settings`
+  (kicad-pcb) instead of its local copy.

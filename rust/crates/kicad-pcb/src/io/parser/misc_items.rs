@@ -907,6 +907,7 @@ impl PcbParser {
                     show_totals,
                     row_shapes,
                     symbol_column,
+                    ..
                 } = &mut g.kind
                 {
                     f(filter, show_totals, row_shapes, symbol_column);
