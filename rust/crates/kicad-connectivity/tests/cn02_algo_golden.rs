@@ -535,3 +535,98 @@ fn cn02_connectivity_matches_cpp() {
     );
     assert!(full.len() >= 2, "too few boards could be compared fully");
 }
+
+/// Port of `checkClustersAreConnectedComponents` (`qa/tests/pcbnew/test_connectivity_clusters.cpp`):
+/// every item lands in exactly one ratsnest cluster, no adjacency between two members of the
+/// same net spans two clusters, and every cluster is internally reachable.
+fn check_clusters_are_connected_components(name: &str, ctx: &BoardCtx<'_>) {
+    let mut algo = CnConnectivityAlgo::new();
+    algo.build(ctx);
+    algo.propagate_nets(ctx);
+
+    let clusters = algo.search_clusters(ctx, ClusterSearchMode::Ratsnest);
+    let list = algo.item_list();
+
+    if clusters.is_empty() {
+        // BOOST_REQUIRE( !clusters.empty() ): only boards with netted items qualify
+        eprintln!("{name}: no ratsnest cluster (no netted item parsed)");
+        return;
+    }
+
+    let mut cluster_of: BTreeMap<kicad_connectivity::CnItemId, usize> = BTreeMap::new();
+    let mut placed = 0;
+
+    for (ii, &cl) in clusters.iter().enumerate() {
+        for &item in algo.cluster(cl).items() {
+            assert!(
+                cluster_of.insert(item, ii).is_none(),
+                "{name}: item appears in more than one cluster"
+            );
+            placed += 1;
+        }
+    }
+
+    assert_eq!(placed, cluster_of.len());
+
+    for (&item, &cluster) in &cluster_of {
+        for &neighbour in list.item(item).connected_items() {
+            let Some(&other) = cluster_of.get(&neighbour) else {
+                continue;
+            };
+
+            if list.item(neighbour).net() != list.item(item).net() {
+                continue;
+            }
+
+            assert_eq!(
+                other, cluster,
+                "{name}: connected items landed in different clusters"
+            );
+        }
+    }
+
+    for &cl in &clusters {
+        let members: std::collections::BTreeSet<_> =
+            algo.cluster(cl).items().iter().copied().collect();
+        let first = algo.cluster(cl).items()[0];
+        let mut seen = std::collections::BTreeSet::from([first]);
+        let mut queue = std::collections::VecDeque::from([first]);
+
+        while let Some(current) = queue.pop_front() {
+            for &neighbour in list.item(current).connected_items() {
+                if members.contains(&neighbour) && seen.insert(neighbour) {
+                    queue.push_back(neighbour);
+                }
+            }
+        }
+
+        assert_eq!(seen.len(), members.len(), "{name}");
+    }
+}
+
+/// `ClustersAndRatsnestMatchTheBoard`, cluster part, on the C++ test's boards plus the golden
+/// boards (whatever the parser loads today; fills are read from the files, `FillZones` is
+/// ZF-*). The ratsnest part is CN-03's.
+#[test]
+fn cn02_clusters_are_connected_components() {
+    let cpp_boards = [
+        "issue22267",
+        "issue17429",
+        "issue16182",
+        "issue14559",
+        "issue8909",
+    ];
+    let mut checked = 0;
+
+    for name in cpp_boards.iter().chain(BOARDS) {
+        let Some((board, _, _)) = load(name) else {
+            continue;
+        };
+        let ctx = BoardCtx::bare(&board);
+        check_clusters_are_connected_components(name, &ctx);
+        checked += 1;
+    }
+
+    eprintln!("cn02 clusters: {checked} boards checked");
+    assert!(checked >= 3);
+}

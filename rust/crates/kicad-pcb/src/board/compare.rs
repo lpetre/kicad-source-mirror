@@ -27,6 +27,7 @@ use crate::ctx::BoardCtx;
 use crate::eda_text::EdaTextExt;
 use crate::ids::ItemId;
 use crate::item_ref::ItemRef;
+use crate::traits::EdaShapeItem;
 
 /// `BOARD::cmp_items::operator()` as an `Ordering`: `Type()`, layer, position x then y,
 /// `m_Uuid`, then pointer order, which is `ItemId` order (`board-model.md` 3.1). A stale

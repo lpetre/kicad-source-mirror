@@ -45,6 +45,7 @@ use crate::item::DetachedCopy;
 use crate::item::ParentRef;
 use crate::pcb_shape::PcbShape;
 use crate::pcb_track::UNDEFINED_DRILL_DIAMETER;
+use crate::traits::EdaShapeItem;
 use crate::zone_settings::ZoneConnection;
 
 /// The C++ `TEST( a, b )` macro of padstack.cpp: `if( a != b ) return a - b;` (the int

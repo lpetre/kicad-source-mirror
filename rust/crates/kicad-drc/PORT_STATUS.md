@@ -268,3 +268,90 @@ fast path, and the `DRC_ZONE_INDEX` queries. Golden: `tests/golden/rtree_oracle.
   goldens already contain them.
 - `reportViolation` / `reportTwo*Geometry` are checked by unit tests against a recording host;
   the engine side (`DRC_ENGINE::ReportViolation`, marker creation) is DRC-03.
+
+## DRC-03: DRC engine core (implicit rules, rule compilation, run driver, error limits)
+
+### File / class map
+
+| C++ (`pcbnew/drc/drc_engine.cpp/.h`) | Rust | State |
+|---|---|---|
+| `DRC_ENGINE` split per `board-model.md` 7: rule set + compiled lists + memo caches | `src/engine/mod.rs` `DrcEngine` (`Sync`, implements `kicad_pcb::RuleResolver`) | ported |
+| run state: `m_errorLimits`, `m_violationHandler`, `m_logReporter`, `m_progressReporter`, `m_reportAllTrackErrors`, `m_testFootprints`, user units | `src/engine/mod.rs` `DrcRunState` | ported |
+| `InitEngine( const wxFileName& )` (provider creation log, marker rule reset, the clear steps, implicit + file rules, retry with implicit rules only on `PARSE_ERROR`, rethrow) | `DrcEngine::init_engine` / `init_engine_with::<B>` | ported (rule file text passed in) |
+| `InitEngine( const std::shared_ptr<DRC_RULE>& )` | `DrcEngine::init_engine_with_rule` | ported (show-matches registry is empty in C++: nothing logged) |
+| `createImplicitRule`, `isKeepoutZone`, `loadImplicitRules` (board setup rules 1-2b, barcode, per-netclass rules incl. composites sorted with `std::sort` (`kicad_geom::stdsort`), tuning-profile rules, keepout rules of board and footprint zones) | `src/engine/implicit_rules.rs` | ported |
+| `loadRules` | `src/engine/mod.rs` `load_rules` / `load_rules_with::<B>` | ported (DRC-20) |
+| `compileRules` (per-type `DRC_ENGINE_CONSTRAINT` lists, `implicitKeepoutZone`, `m_explicitConstraints`, `m_hasExplicitClearanceRules`, `m_hasGeometryDependentRules`, `PARSE_ERROR` on a compile error) | `DrcEngine::compile_rules` | ported |
+| implicit rule conditions (`A.hasExactNetclass`, `A.inDiffPair`, `AB.isCoupledDiffPair`, `A.Via_Type ==/!= 'Micro'`, `A.Type == 'Barcode'`, `A.Layer == ...`, `A.intersectsKeepout`) | `src/engine/implicit_condition.rs` (`ImplicitCondition`, `EngineCondition`) | ported natively (analysis 4.8.5); `A.Layer` is `port_pending!` (DRC-21: `PCBEXPR_VAR_REF::GetValue`), `intersectsKeepout` is `port_pending!` (DRC-10) |
+| `RunTests` (limits per code: 0 ignored / 499 clearance + unconnected / 199, time stamp, providers in registry order, cancel) | `DrcEngine::prepare_run`, `run_providers`, `run_tests`; `PROVIDER_ORDER` | ported; cache generation / component classes / from-to cache are a caller closure (DRC-05 and others) |
+| `IsErrorLimitExceeded`, `GetErrorLimit`, `ReportViolation` (cap enforced in the call, handler, log lines) | `DrcRunState` | ported |
+| `KeepRefreshing`, `AdvanceProgress`, `SetMaxProgress`, `ReportProgress`, `ReportPhase`, `IsCancelled`; `PROGRESS_REPORTER` | `DrcRunState`; `ProgressReporter` trait (no-op defaults) | ported |
+| `HasRulesForConstraintType`, `QueryWorstConstraint`, `HasConditionalConstraint`, `HasUserDefinedConstraint`, `HasUserDefinedPhysicalConstraint`, `QueryDistinctConstraints`, `ClearClearanceCache`, `RulesValid`, `HasGeometryDependentRules` | `DrcEngine` | ported |
+| `MatchDpSuffix`, `IsNetADiffPair`, `IsNetTieExclusion` | `src/engine/diff_pair.rs` | ported |
+| `EvalRules`, `EvalZoneConnection`, `EvalClearanceBatch`, `ProcessAssertions`, `GetCachedOwnClearance`, `InvalidateClearanceCache`, `InitializeClearanceCache` | `src/engine/eval_rules.rs` | not this package (DRC-04); `RuleResolver::eval_rules` / `cached_own_clearance` are `port_pending!` |
+| `GetItemsMatchingCondition`, `GetItemsMatchingRule`, show-match domains, `GetTestProvider`, debug overlay, drawing sheet, schematic netlist setters | - | skipped: GUI (rule editor) / providers are created per run |
+
+### Verification
+
+Differential oracle against the real `DRC_ENGINE`: opt-in section `pcb-dump board --sections
+engine` (`rust/tools/pcb-dump/dump_engine.cpp`, format `rust/docs/PCB_DUMP_FORMAT.md` section
+9) prints after the QA load path's `InitEngine` the provider registry order, the engine flags,
+every rule (name, implicit source, layers, severity, netclass, item id, condition text, every
+constraint with min/opt/max, flags, name, severity), both constraint maps (with condition usage
+flags and keepout zones) and the netclass clearance table. Rust twin: `dump_engine` in
+`tests/engine_oracle.rs`; compact golden `tests/golden/engine_corpus.txt` (FNV-1a per board,
+`tests/oracle/gen_engine_goldens.py`, 367 boards: every `.kicad_pcb` < 5 MB under `qa/data/pcbnew`
+and `demos`; re-generation spot-checked identical).
+
+`engine_corpus_matches_cxx`: 0 mismatches. With the parser state of 2026-11-10 309 boards
+matched (incl. 85 user rules with conditions, compiled with the DRC-20 stand-in binding
+`tests/common::SyntaxBinder` through `init_engine_with::<B>`, and the 10 tuning-profile rules of
+issue23868, profiles read from the project file by the test); the rest are reported as pending
+with the reason (zones / keepouts / footprints skipped by the parser or `port_pending!` in the
+zone parser, missing nets of skipped items, textbox and net-chain stubs of kicad-pcb, legacy
+`.pro` projects, legacy netclasses). The provider order (`PROVIDER_ORDER`) is part of every
+board's dump, i.e. confirmed by the reference build. The default-board rule list was confirmed
+on an empty board file with the reference dump.
+
+Not verified differentially yet: the evaluation of the native implicit conditions (statement-
+by-statement review against `pcbexpr_functions.cpp`; the differential check comes with the
+`EvalRules` oracle of DRC-04), keepout rules on real boards (all keepout boards wait for the
+zone parser; unit-level only), `RunTests` with real providers.
+
+### Ported C++ tests
+
+| C++ | Rust (`tests/engine_oracle.rs`) |
+|---|---|
+| `qa/tests/pcbnew/drc/test_drc_error_limit.cpp`: `CapIsExact`, `InitEngineResetsLastErrorCode` | `cap_is_exact`, `init_engine_resets_last_error_code` |
+| `qa/tests/pcbnew/test_board_design_settings.cpp`: `BiggestClearanceIncludesPhysicalHoleClearance` (real engine as resolver) | `biggest_clearance_includes_physical_hole_clearance` |
+
+Plus `run_tests_error_limits`, `run_tests_provider_order_and_cancel`, `default_board_rule_list`,
+`init_engine_clears_marker_rules_and_single_rule_overload` and unit tests in
+`src/engine/diff_pair.rs` (`MatchDpSuffix` table) and `src/engine/implicit_condition.rs`.
+
+### Deviations
+
+- **Engine split**: the error limits live in `DrcRunState`; the limit reset at the end of both
+  `InitEngine` overloads is `DrcRunState::reset_error_limits` (callers run it with the init).
+  Test providers are created per run (`DrcTestProviderRun`), so `InitEngine` only logs their
+  names (`PROVIDER_ORDER`).
+- **Native implicit conditions**: implicit rules whose condition text is one of the shapes
+  `loadImplicitRules` produces are evaluated natively instead of being compiled; anything else
+  takes the compiled path. Same expression text (memo key) and usage flags.
+- **Binding parameter**: `init_engine_with::<B>` / `load_rules_with::<B>` choose the
+  `PcbExprBinder` for user rule conditions (default `PcbExprUcode`); not a C++ API, used by the
+  tests while DRC-21 is pending.
+- **Marker rule reset**: markers hold a copy of the rule data; it is cleared through
+  `Board::modify_marker`, which also bumps the board time stamp (the C++ bumps it right after).
+- `ReportViolation` takes the provider name instead of `aItem->GetViolatingTest()`; the
+  handler mutex is unnecessary (sequential port).
+- `m_netclassClearances` (an `unordered_map` used for lookups only) is a `BTreeMap`.
+- Rule file text and tuning profiles are parameters (no file / project access in the library).
+
+### Known gaps
+
+- `A.Layer == '...'` (tuning-profile rules) and `A.intersectsKeepout()` evaluate through
+  `port_pending!` stubs until DRC-21 / DRC-10.
+- User rule conditions compile only with a stand-in binding until DRC-21 (`init_engine` with the
+  default binding panics with `port_pending!` on a rule file with conditions).
+- `TUNING_PROFILES` is not part of the Rust project model; callers build `TuningProfiles`.
