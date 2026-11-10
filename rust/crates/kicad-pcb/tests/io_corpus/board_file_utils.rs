@@ -103,7 +103,10 @@ pub fn read_footprint_from_file(
         .extension()
         .is_some_and(|e| e.to_string_lossy().to_lowercase() == "kicad_mod")
     {
-        file_name.parent().map(Path::to_path_buf).unwrap_or_default()
+        file_name
+            .parent()
+            .map(Path::to_path_buf)
+            .unwrap_or_default()
     } else {
         file_name.to_path_buf()
     };

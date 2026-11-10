@@ -126,8 +126,7 @@ pub fn rust_resave(text: &str, source_name: &str, staging: bool) -> Resave {
         ..FormatOptions::default()
     };
 
-    let (board, report) = match guarded(|| parse_board_report(text, source_name, &parse_options))
-    {
+    let (board, report) = match guarded(|| parse_board_report(text, source_name, &parse_options)) {
         Ok(Ok(r)) => r,
         Ok(Err(e)) => return Resave::ParseError(e.what().to_string()),
         Err(m) => {
@@ -289,9 +288,8 @@ fn writer_item_keywords(item: &str) -> Option<Vec<&str>> {
 fn node_matches_writer_item(node: &SexprNode, item: &str) -> bool {
     match writer_item_keywords(item) {
         None => {
-            let is_graphic = |k: &str| {
-                (k.starts_with("gr_") || k.starts_with("fp_")) && !k.contains("text")
-            };
+            let is_graphic =
+                |k: &str| (k.starts_with("gr_") || k.starts_with("fp_")) && !k.contains("text");
             is_graphic(&node.keyword) || any_descendant(node, &is_graphic)
         }
         Some(kws) => kws

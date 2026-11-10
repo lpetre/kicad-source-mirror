@@ -858,7 +858,7 @@ impl BoardDesignSettingsJson {
     /// the members keep the state reached at that point.
     pub fn load_from_file(
         &mut self,
-        mut parent: Option<&mut JsonSettingsInternals>,
+        parent: Option<&mut JsonSettingsInternals>,
         parent_is_project_file: bool,
         bds: &mut BoardDesignSettings,
     ) -> Result<bool, JsonError> {
@@ -890,7 +890,7 @@ impl BoardDesignSettingsJson {
         // of descoped objects required to decode this data.  So, it will be in the
         // legacy.pcbnew section and needs to be pulled out here
 
-        let Some(project) = parent.as_deref_mut() else {
+        let Some(project) = parent else {
             return Ok(ret);
         };
 
