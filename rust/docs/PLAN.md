@@ -565,6 +565,17 @@ Progress log:
   docs/WASM_API.md; a router round-trip test against the reference) (wwsbp8p4y).
   The router analysis RT-0 keeps running (read-only), but NO router port packages are
   launched until the user confirms the friend needs KiCad's interactive router.
+  07:58 UTC: the friend confirmed through the user: he has his own router and sees "a path
+  to a full kicad replacement for the subset of things I want". DECISIONS: the router
+  (push-and-shove) is DROPPED from the plan - RT-0 stopped (workflow welvludhf; any partial
+  docs/analysis/router.md is unreviewed); the port's job is to be a FOUNDATION others
+  build on: a documented, stable API (Rust via kicad-session, JavaScript via kicad-wasm),
+  verified editing paths (FIX-EDIT-1), performance, and honest docs of what matches KiCad.
+  After WASM-API-1: LIB-1 (library pass: rustdoc on the public API of kicad-session and the
+  crates it re-exports, runnable examples for load / inspect / edit / fill / DRC / export
+  natively and in wasm, `cargo doc` clean, semver-style list of what is public) and DOC-1
+  (README). Still open question for the user / friend: which subset he wants beyond boards
+  (schematics, libraries, rendering?) - nothing outside pcbnew's board side is ported.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
