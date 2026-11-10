@@ -144,11 +144,9 @@ impl RnNet {
     fn kruskal_mst(&mut self, list: &mut CnList, edges: Vec<CnEdge>) {
         self.rn_edges.clear();
 
-        let mut tag = 0;
-
-        for &node in self.nodes.values() {
-            anchor_of_mut(list, node).set_tag(tag);
-            tag += 1;
+        // node->SetTag( tag++ )
+        for (tag, &node) in self.nodes.values().enumerate() {
+            anchor_of_mut(list, node).set_tag(tag as i32);
         }
 
         let mut forest = KiUnionFind::new(self.nodes.len());
