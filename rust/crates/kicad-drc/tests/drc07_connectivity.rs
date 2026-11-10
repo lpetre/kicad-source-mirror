@@ -302,8 +302,8 @@ impl Score {
         // Items saved without a UUID (teardrops) get a random KIID at every load, also in
         // the reference: compare them by description and position.
         let (mut reference, mut mine) = (reference, mine);
-        let board_text = std::fs::read_to_string(kicad_qa::kicad_source_root().join(rel))
-            .unwrap_or_default();
+        let board_text =
+            std::fs::read_to_string(kicad_qa::kicad_source_root().join(rel)).unwrap_or_default();
         mask_generated_uuids(&mut reference, &board_text);
         mask_generated_uuids(&mut mine, &board_text);
 

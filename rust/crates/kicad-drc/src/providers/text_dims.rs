@@ -26,7 +26,10 @@
 //! (`EDA_TEXT::GetRenderCache`). The port has no outline font engine: the glyphs stored in the
 //! board file stand in for the regenerated ones while they are valid for the text (kicad-pcb
 //! package FONT-RC-1); otherwise (C++ regenerates them with `OUTLINE_FONT::GetLinesAsGlyphs`)
-//! the provider stops with `port_pending!`.
+//! the provider stops with `port_pending!`. Stored glyphs are fractured (holes bridged into
+//! slits) while the C++ measures the font's outlines with holes: the thickness test measures an
+//! unfractured copy (orchestrator decision, measured by FONT-RC-1 / STAB-DRC on the crafted
+//! board `kicad-pcb/tests/data/font_rc1/frc.kicad_pcb`; see PORT_STATUS.md).
 
 use std::cell::Cell;
 use std::sync::Arc;
@@ -269,7 +272,15 @@ impl DrcTestProviderTextDims {
                     continue;
                 };
 
-                let outline_count = outline_glyph.poly.outline_count();
+                // ORCHESTRATOR DECISION (FONT-RC-1): the stand-in glyphs stored in the board
+                // file are fractured (holes bridged into slits); the C++ measures the font's
+                // unfractured outlines. Measure an unfractured COPY (the stored glyphs, which
+                // plot and save use, stay untouched).
+                let mut unfractured = outline_glyph.poly.clone_drop_triangulation();
+                unfractured.unfracture();
+                let outline_glyph = &unfractured;
+
+                let outline_count = outline_glyph.outline_count();
                 let mut hole_count = 0;
 
                 if outline_count == 0 {
@@ -279,11 +290,11 @@ impl DrcTestProviderTextDims {
                 ii.set(0);
 
                 while (ii.get() as i32) < outline_count {
-                    hole_count += outline_glyph.poly.hole_count(ii.get() as i32);
+                    hole_count += outline_glyph.hole_count(ii.get() as i32);
                     ii.set(ii.get() + 1);
                 }
 
-                let mut poly = outline_glyph.poly.clone_drop_triangulation();
+                let mut poly = outline_glyph.clone_drop_triangulation();
                 poly.deflate(half_min, CornerStrategy::ChamferAllCorners, ARC_LOW_DEF);
                 poly.simplify();
 
@@ -302,7 +313,7 @@ impl DrcTestProviderTextDims {
                     break;
                 }
 
-                let glyph_area = outline_glyph.poly.area();
+                let glyph_area = outline_glyph.area();
 
                 if glyph_area == 0.0 {
                     continue;

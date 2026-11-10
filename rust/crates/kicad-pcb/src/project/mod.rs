@@ -30,6 +30,7 @@ pub mod board_project;
 pub mod project;
 pub mod project_file;
 pub mod project_local_settings;
+pub mod tuning_profiles_json;
 
 pub use board_loader::{LoadPath, LoadStep, StepOutcome, initialize_loaded_board, run_model_step};
 pub use project::{Project, load_project};

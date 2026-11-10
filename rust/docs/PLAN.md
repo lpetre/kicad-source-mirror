@@ -433,6 +433,13 @@ Progress log:
   refresh in one session counts the chart again: check `pcb upgrade` without --force), the
   table autosize / flip hooks, the duplicated drill model in kicad-pcb and kicad-fab.
   Drill and chart symbol plotting is FAB-13 (to write, after the fabrication chain).
+  05:30 UTC (heartbeat; next 06:29): done FAB-GLUE - drill export now runs on the real via
+  model and is verified on EVERY corpus board through parser, enumeration and drill job:
+  Excellon 4572 of 4584 runs identical over 12 option sets x 381 boards (7212 files incl.
+  reports; the other 12 runs are a file the reference rejects too), Gerber drill 1143 of
+  1146 identical (same 3), 0 differing, 0 pending; a crafted board covers backdrills,
+  tertiary drills, via post-machining, blind / buried / micro vias. Plot corpora unchanged
+  (8445 matched, 88 pending on FAB-10 / FAB-13, 0 known differences). Running: FAB-10.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

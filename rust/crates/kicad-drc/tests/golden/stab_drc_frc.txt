@@ -1,0 +1,40 @@
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.1	warning	text_height	Text height out of range (rule 'silk text' min height 1.0000 mm; actual 0.5000 mm)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b6	PCB text 'Ok ring' on F.Silkscreen	130	140
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b3	PCB text 'BACK mirror' on B.Silkscreen	100	130
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b7	PCB text box 'box DejaVu\nline 2' on F.Silkscreen	150	140
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a2	Reference field of U1	147	120
+0.1	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a4	Footprint text of U1 (fp user)	150	118
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.15	warning	text_height	Text height out of range (rule 'silk text' min height 1.0000 mm; actual 0.5000 mm)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b2	PCB text 'Multi\nline DejaVu' on F.Cu	130	100
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b6	PCB text 'Ok ring' on F.Silkscreen	130	140
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b1	PCB text 'Liberation Bold' on F.Silkscreen	100	100
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b3	PCB text 'BACK mirror' on B.Silkscreen	100	130
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b4	PCB text 'User.1 var' on User.1	130	130
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b7	PCB text box 'box DejaVu\nline 2' on F.Silkscreen	150	140
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a2	Reference field of U1	147	120
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a3	Value field of U1 (VAL)	153	120
+0.15	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a4	Footprint text of U1 (fp user)	150	118
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.2	warning	text_height	Text height out of range (rule 'silk text' min height 1.0000 mm; actual 0.5000 mm)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b2	PCB text 'Multi\nline DejaVu' on F.Cu	130	100
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b6	PCB text 'Ok ring' on F.Silkscreen	130	140
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b1	PCB text 'Liberation Bold' on F.Silkscreen	100	100
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b3	PCB text 'BACK mirror' on B.Silkscreen	100	130
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b4	PCB text 'User.1 var' on User.1	130	130
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b7	PCB text box 'box DejaVu\nline 2' on F.Silkscreen	150	140
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a2	Reference field of U1	147	120
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a3	Value field of U1 (VAL)	153	120
+0.2	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a4	Footprint text of U1 (fp user)	150	118
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.25	warning	text_height	Text height out of range (rule 'silk text' min height 1.0000 mm; actual 0.5000 mm)	00000000-0000-4000-8000-0000000000b5	PCB text 'tiny' on F.Cu	110	140
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b2	PCB text 'Multi\nline DejaVu' on F.Cu	130	100
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b6	PCB text 'Ok ring' on F.Silkscreen	130	140
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b1	PCB text 'Liberation Bold' on F.Silkscreen	100	100
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b3	PCB text 'BACK mirror' on B.Silkscreen	100	130
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b4	PCB text 'User.1 var' on User.1	130	130
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000b7	PCB text box 'box DejaVu\nline 2' on F.Silkscreen	150	140
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a2	Reference field of U1	147	120
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a3	Value field of U1 (VAL)	153	120
+0.25	warning	text_thickness	Text thickness out of range (TrueType font characters with insufficient stroke weight)	00000000-0000-4000-8000-0000000000a4	Footprint text of U1 (fp user)	150	118

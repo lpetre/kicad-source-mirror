@@ -30,17 +30,20 @@ mod drc_harness;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use drc_harness::{Loaded, Reported, load_board, run_flow_providers, run_providers};
+use drc_harness::{Loaded, Reported, load_board, run_flow_providers};
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::kiid::Kiid;
+use kicad_core::text_vars::ResolutionContext;
 use kicad_drc::engine::DrcTestProviderRun;
 use kicad_drc::providers::text_dims::DrcTestProviderTextDims;
+use kicad_geom::Vector2I;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{
     DRCE_FIRST, DRCE_LAST, DRCE_MALFORMED_COURTYARD, DRCE_MIRRORED_TEXT_ON_FRONT_LAYER,
     DRCE_MISSING_COURTYARD, DRCE_OVERLAPPING_FOOTPRINTS, DRCE_UNMIRRORED_TEXT_ON_BACK_LAYER,
 };
+use kicad_pcb::eda_text;
 
 /// The error types of the courtyard provider (settings keys).
 const COURTYARD_TYPES: &[&str] = &[
@@ -63,8 +66,7 @@ const TEXT_TYPES: &[&str] = &[
 /// reference report's (set and order).
 #[test]
 fn courtyard_clearance_matches_reference_corpus() {
-    let score =
-        drc_harness::compare_corpus_flow(COURTYARD_TYPES, "", &["courtyard_clearance"]);
+    let score = drc_harness::compare_corpus_flow(COURTYARD_TYPES, "", &["courtyard_clearance"]);
     score.print("DRC-24 courtyard clearance");
     score.assert_no_mismatch();
 }
@@ -74,12 +76,23 @@ fn courtyard_clearance_matches_reference_corpus() {
 /// (`text_dimensions` before `text_mirroring`).
 #[test]
 fn text_providers_match_reference_corpus() {
-    let score = drc_harness::compare_corpus_flow(
-        TEXT_TYPES,
-        "",
-        &["text_dimensions", "text_mirroring"],
-    );
+    let mut score =
+        drc_harness::compare_corpus_flow(TEXT_TYPES, "", &["text_dimensions", "text_mirroring"]);
     score.print("DRC-24 text dimensions / mirroring");
+
+    // Expected difference (orchestrator decision): the font of this outline text is not
+    // installed on the oracle machine; the reference measures fontconfig's substitute, the
+    // port the stored glyphs (see text_thickness_truetype_render_cache_issue22475).
+    let expected = "qa/data/pcbnew/issue22475/issue22475.kicad_pcb: - text_thickness | warning | \
+                    Text thickness out of range (TrueType font characters with insufficient \
+                    stroke weight) | ff749b73-2383-44e8-88dd-1d9c1b0c1a89 ";
+    let before = score.differences.len();
+    score.differences.retain(|d| !d.starts_with(expected));
+    assert_eq!(
+        before - score.differences.len(),
+        1,
+        "expected difference not seen"
+    );
     score.assert_no_mismatch();
 }
 
@@ -384,9 +397,12 @@ impl DrcTestProviderRun for ThicknessOfOneItem {
             .expect("the text of the reference violation");
         let text = item.as_eda_text().expect("an EDA_TEXT");
 
-        // The C++ uses the cache read from the file; without it the outline font engine would
-        // be needed (pending).
-        self.has_render_cache = text.eda_text().render_cache_data().is_some();
+        // The C++ regenerates the glyphs with the outline font engine (not ported); the port
+        // measures the stand-in glyphs stored in the file (FONT-RC-1) when they are valid for
+        // the text.
+        let shown = text.shown_text(ctx, ResolutionContext::ForCanvas, 0);
+        self.has_render_cache =
+            eda_text::render_cache(text, ctx, &shown, Vector2I::default()).is_some();
 
         if self.has_render_cache {
             let mut host = kicad_drc::providers::run_host::RunHost(run);
@@ -404,10 +420,13 @@ impl DrcTestProviderRun for ThicknessOfOneItem {
     }
 }
 
-/// The TrueType branch of `checkTextThickness` on the one outline text of `issue22475` whose
-/// render cache is stored in the file (the other outline texts of that board have none and
-/// need the outline font engine, so the whole-board run is pending): the reference reports
-/// exactly this text ("TrueType font characters with insufficient stroke weight").
+/// The TrueType branch of `checkTextThickness` on the one outline text of `issue22475`
+/// (`Franklin Gothic Medium`, stand-in glyphs stored in the file). The reference reports it
+/// ("TrueType font characters with insufficient stroke weight"), but the font is not installed
+/// on the oracle machine: the reference measures fontconfig's substitute, the port the stored
+/// glyphs of the real font, and does not report it. This is the documented expected
+/// difference (orchestrator decision, PORT_STATUS STAB-DRC); the outline-font branch itself is
+/// verified on the crafted board ([`text_thickness_outline_font_thresholds_match_reference`]).
 #[test]
 fn text_thickness_truetype_render_cache_issue22475() {
     use drc_harness::{cli_report_entries, golden, summarize};
@@ -435,13 +454,10 @@ fn text_thickness_truetype_render_cache_issue22475() {
     };
     let entries = cli_report_entries(&mut loaded, false, &mut [&mut one]);
 
-    if !one.has_render_cache {
-        eprintln!(
-            "issue22475: pending (the parsed render cache of the text is not kept by the board \
-             loader)"
-        );
-        return;
-    }
+    assert!(
+        one.has_render_cache,
+        "the stand-in glyphs of the text are not valid"
+    );
 
     let mine: Vec<_> = entries
         .iter()
@@ -453,5 +469,79 @@ fn text_thickness_truetype_render_cache_issue22475() {
         .expect("reference of issue22475");
     let expected = reference.summaries["text_thickness"];
 
-    assert_eq!(summarize(&mine), expected, "{mine:?}");
+    // Expected difference: the reference reports the text, measured on a substitute font.
+    assert_eq!(expected.0, 1);
+    assert_eq!(summarize(&mine).0, 0, "{mine:?}");
+}
+
+/// The outline (TrueType) font branch of `checkTextThickness` and `checkTextHeight` on the
+/// crafted board of FONT-RC-1 (fonts installed on the oracle machine, stand-in glyphs stored in
+/// the file) with its rule file at text_thickness min 0.1 / 0.15 / 0.2 / 0.25 mm: the
+/// violations equal the reference's, in report order (`tests/golden/stab_drc_frc.txt`,
+/// `tests/oracle/gen_stab_drc_frc.py`). The stored glyphs are fractured; the provider measures
+/// an unfractured copy (orchestrator decision). Without it the port reports one more text
+/// ('Liberation Bold') at min 0.1 mm.
+#[test]
+fn text_thickness_outline_font_thresholds_match_reference() {
+    let data =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../kicad-pcb/tests/data/font_rc1");
+    let board = std::fs::read(data.join("frc.kicad_pcb")).unwrap();
+    let rules = std::fs::read_to_string(data.join("frc.kicad_dru")).unwrap();
+    assert!(rules.contains("(min 0.25mm)"));
+
+    let unescape = |s: &str| {
+        s.replace("\\n", "\n")
+            .replace("\\t", "\t")
+            .replace("\\\\", "\\")
+    };
+    let golden = include_str!("golden/stab_drc_frc.txt");
+
+    for threshold in ["0.1", "0.15", "0.2", "0.25"] {
+        let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+            .join(format!("stab_drc_frc_{threshold}"));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("frc.kicad_pcb"), &board).unwrap();
+        std::fs::write(
+            dir.join("frc.kicad_dru"),
+            rules.replace("(min 0.25mm)", &format!("(min {threshold}mm)")),
+        )
+        .unwrap();
+
+        let mut loaded = load_board(&dir.join("frc.kicad_pcb")).expect("frc board");
+        let mine: Vec<String> =
+            drc_harness::cli_report_entries_flow(&mut loaded, false, &["text_dimensions"])
+                .into_iter()
+                .filter(|e| TEXT_TYPES.contains(&e.type_.as_str()))
+                .map(|e| e.key())
+                .collect();
+
+        let reference: Vec<String> = golden
+            .lines()
+            .map(|l| l.split('\t').collect::<Vec<_>>())
+            .filter(|f| f[0] == threshold)
+            .map(|f| {
+                drc_harness::Entry {
+                    severity: f[1].to_string(),
+                    type_: f[2].to_string(),
+                    description: unescape(f[3]),
+                    items: f[4..]
+                        .chunks(4)
+                        .map(|i| {
+                            (
+                                i[0].to_string(),
+                                unescape(i[1]),
+                                i[2].parse().unwrap(),
+                                i[3].parse().unwrap(),
+                            )
+                        })
+                        .collect(),
+                    excluded: false,
+                }
+                .key()
+            })
+            .collect();
+
+        assert!(!reference.is_empty());
+        assert_eq!(mine, reference, "text_thickness min {threshold} mm");
+    }
 }

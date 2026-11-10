@@ -16,10 +16,13 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of the thermal relief and hatch parts of `pcbnew/zone_filler.cpp`:
-//! `buildThermalSpokes`, `buildHatchZoneThermalRings` and `addHatchFillTypeOnZone`.
+//! `buildThermalSpokes`, `buildHatchZoneThermalRings`, `addHatchFillTypeOnZone` and
+//! `addCopperThievingPattern`.
 
 use kicad_core::{PCB_IU_SCALE, PcbLayerId};
-use kicad_geom::convert_basic_shapes_to_polygon::transform_ring_to_polygon;
+use kicad_geom::convert_basic_shapes_to_polygon::{
+    transform_circle_to_polygon, transform_ring_to_polygon, transform_trapezoid_to_polygon,
+};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::eda_angle::{ANGLE_0, ANGLE_90, EdaAngle};
@@ -36,7 +39,7 @@ use kicad_pcb::pad::Pad;
 use kicad_pcb::padstack::PadShape;
 use kicad_pcb::pcb_track::PcbVia;
 use kicad_pcb::zone::Zone;
-use kicad_pcb::zone_settings::ZoneFillMode;
+use kicad_pcb::zone_settings::{ThievingPattern, ThievingSettings, ZoneFillMode};
 
 use crate::copper_fill::dump_polys_to_copper_layer;
 use crate::filler::ZoneFiller;
@@ -902,8 +905,10 @@ impl ZoneFiller {
         true
     }
 
-    /// Port of `ZONE_FILLER::addCopperThievingPattern( aZone, aLayer, aFillPolys )`:
-    /// package ZF-07.
+    /// Port of `ZONE_FILLER::addCopperThievingPattern( aZone, aLayer, aFillPolys )`
+    /// (package ZF-07): replace (dots, squares) or perforate (hatch) the deflated fill of a
+    /// copper-thieving zone with its thieving pattern.  Returns `false` only for the
+    /// `wxCHECK( aZone->IsCopperThieving(), false )` programmer error.
     pub(crate) fn add_copper_thieving_pattern(
         &self,
         ctx: &BoardCtx<'_>,
@@ -911,13 +916,252 @@ impl ZoneFiller {
         layer: PcbLayerId,
         fill_polys: &mut ShapePolySet,
     ) -> bool {
-        port_pending!(
-            "ZONE_FILLER::addCopperThievingPattern (ZF-07)",
-            ctx,
-            zone,
-            layer,
-            fill_polys
-        )
+        if !zone.is_copper_thieving() {
+            debug_assert!(false, "addCopperThievingPattern on a non-thieving zone");
+            return false;
+        }
+
+        let settings: &ThievingSettings = &zone.thieving_settings;
+        let orientation = settings.orientation.angle();
+
+        // Constructor defaults are positive but a malformed file or test board could still
+        // produce a zero gap, which would deadlock the grid loop below.  Bail out without
+        // touching aFillPolys so the zone simply has no fill, matching POLYGONS-with-bad-poly.
+        // element_size is meaningful for dots and squares only.  Hatch uses line_width.
+        let needs_element_size = settings.pattern != ThievingPattern::Hatch;
+        let needs_line_width = settings.pattern == ThievingPattern::Hatch;
+
+        if settings.gap <= 0
+            || (needs_element_size && settings.element_size <= 0)
+            || (needs_line_width && settings.line_width <= 0)
+        {
+            fill_polys.remove_all_contours();
+            return true;
+        }
+
+        let mut filled_region = fill_polys.clone_drop_triangulation();
+
+        if filled_region.outline_count() == 0 {
+            fill_polys.remove_all_contours();
+            return true;
+        }
+
+        // Rotate the clip region into the pattern's local frame so the grid iterates
+        // axis-aligned; the resulting stamps get rotated back into the zone's frame below.
+        if !orientation.is_zero() {
+            filled_region.rotate(-orientation, Vector2I::new(0, 0));
+        }
+
+        // BBox() over all outlines -- the post-clearance fill region may be split
+        // into several pieces (e.g. by a track cutting across the zone) and the
+        // void grid has to cover every piece.
+        let bbox = filled_region.bbox(0);
+
+        // Per-layer phase offset (hatching_offset) -- same lookup the hatch generator uses
+        // so thieving on multiple copper layers can be de-correlated through the stack-up.
+        // Board-default offsets apply first; per-zone local offsets override.
+        let default_offsets = &ctx.board.design_settings().zone_layer_properties;
+        let local_offsets = &zone.layer_properties;
+        let mut offset = Vector2I::default();
+
+        if let Some(props) = default_offsets.get(&layer) {
+            offset = props.hatching_offset.unwrap_or_default();
+        }
+
+        if let Some(local) = local_offsets.get(&layer).and_then(|p| p.hatching_offset) {
+            offset = local;
+        }
+
+        if !orientation.is_zero() {
+            rotate_point(&mut offset, -orientation);
+        }
+
+        // Gap is edge-to-edge; grid stride is element_size + gap (dots/squares) or
+        // line_width + gap (crosshatch).
+        let dot_stride = settings.element_size + settings.gap;
+
+        // The filler stamps thieving shapes while aFillPolys is deflated by
+        // half_min_width and then later re-inflates by the same amount.  Pre-compensate
+        // the dot radius so the final stamp matches element_size exactly.  If the
+        // user's element_size is smaller than min_thickness, fall back to a 1 IU
+        // radius so the reinflate produces approximately min_thickness diameter.
+        let half_min_width = zone.min_thickness() / 2;
+        let dot_radius = (settings.element_size / 2 - half_min_width).max(1);
+        let max_error = ctx.board.design_settings().max_error();
+
+        // Collect every stamp into a single SHAPE_POLY_SET, then BooleanIntersect once.
+        // Per-stamp boolean ops would explode in cost on a 10k-dot zone.
+        let mut stamps = ShapePolySet::new();
+
+        // Hatch is subtractive: keep the zone outline as a perimeter border around
+        // the mesh by carving voids out of aFillPolys.  Dots and squares are
+        // additive: replace aFillPolys with the stamp set, clipped to the zone.
+        if settings.pattern == ThievingPattern::Hatch {
+            // Void size in the deflated frame is gap + min_thickness so that the
+            // generic reinflate at the end of fillCopperZone shrinks the void by
+            // min_thickness and the final edge-to-edge spacing equals user gap.
+            let void_size = settings.gap + zone.min_thickness();
+            let line_stride = settings.line_width + settings.gap;
+
+            // Deflate aFillPolys by line_width to define an interior region that
+            // can receive voids.  The unaltered annulus between aFillPolys and
+            // interior becomes the perimeter outline of the mesh, matching how
+            // the existing HATCH_PATTERN fill mode produces a border.  This also
+            // protects narrow post-clearance fragments (e.g. a thin strip on the
+            // opposite side of a track) from being entirely consumed by voids.
+            let mut interior = fill_polys.clone_drop_triangulation();
+            interior.deflate(
+                settings.line_width,
+                CornerStrategy::ChamferAllCorners,
+                self.max_error,
+            );
+
+            if interior.outline_count() == 0 {
+                return true;
+            }
+
+            // Walk a starting position backwards into the bbox so we never miss a
+            // void on the negative side after the modulo step.  bbox already
+            // contains the rotated filledRegion bounds, which slightly overcover
+            // the interior; extra voids get clipped to interior below.
+            let mut x_void = bbox.left() - (bbox.left() % line_stride) + offset.x + line_stride / 2;
+            let mut y_void = bbox.top() - (bbox.top() % line_stride) + offset.y + line_stride / 2;
+
+            while x_void - void_size / 2 > bbox.left() {
+                x_void -= line_stride;
+            }
+
+            while y_void - void_size / 2 > bbox.top() {
+                y_void -= line_stride;
+            }
+
+            let mut voids = ShapePolySet::new();
+
+            let mut yy = y_void;
+
+            while yy <= bbox.bottom() + void_size {
+                let mut xx = x_void;
+
+                while xx <= bbox.right() + void_size {
+                    let mut rect = ShapeLineChain::new();
+                    rect.append_xy(xx - void_size / 2, yy - void_size / 2, false);
+                    rect.append_xy(xx + void_size / 2, yy - void_size / 2, false);
+                    rect.append_xy(xx + void_size / 2, yy + void_size / 2, false);
+                    rect.append_xy(xx - void_size / 2, yy + void_size / 2, false);
+                    rect.set_closed(true);
+                    voids.add_outline(&rect);
+
+                    xx += line_stride;
+                }
+
+                yy += line_stride;
+            }
+
+            if !orientation.is_zero() {
+                voids.rotate(orientation, Vector2I::new(0, 0));
+            }
+
+            // Clip voids to interior so the perimeter border survives the
+            // subtraction.  Without this clamp, voids on the edge punch through
+            // the border, and narrow post-clearance pieces of aFillPolys are
+            // consumed entirely.
+            voids.boolean_intersection(&interior);
+
+            // Carve the voids out of the zone fill region.  No island removal: the
+            // hatch mesh is a single connected piece with its zone-outline border.
+            fill_polys.boolean_subtract(&voids);
+            return true;
+        }
+
+        let mut x_start = bbox.left() - (bbox.left() % dot_stride) + offset.x;
+        let mut y_start = bbox.top() - (bbox.top() % dot_stride) + offset.y;
+
+        while x_start > bbox.left() {
+            x_start -= dot_stride;
+        }
+
+        while y_start > bbox.top() {
+            y_start -= dot_stride;
+        }
+
+        // Dots and squares: drop any stamp transected by an obstacle or touching the
+        // zone outline.  Deflating the fill region by stampHalfExtent + 1 IU yields
+        // the set of centres where a full stamp fits without touching the boundary.
+        let side_len = (settings.element_size - zone.min_thickness()).max(1);
+        let square_size = Vector2I::new(side_len, side_len);
+
+        let containment_inset = if settings.pattern == ThievingPattern::Squares {
+            side_len / 2
+        } else {
+            dot_radius
+        } + 1;
+
+        filled_region.deflate(
+            containment_inset,
+            CornerStrategy::ChamferAllCorners,
+            max_error,
+        );
+
+        if filled_region.outline_count() == 0 {
+            fill_polys.remove_all_contours();
+            return true;
+        }
+
+        filled_region.build_bbox_caches();
+
+        let mut row_index = 0;
+        let mut yy = y_start;
+
+        while yy <= bbox.bottom() + dot_radius {
+            let row_offset = if settings.stagger && (row_index & 1) != 0 {
+                dot_stride / 2
+            } else {
+                0
+            };
+
+            let mut xx = x_start + row_offset;
+
+            while xx <= bbox.right() + dot_radius {
+                let centre = Vector2I::new(xx, yy);
+
+                if filled_region.contains(centre, -1, 0, true) {
+                    if settings.pattern == ThievingPattern::Squares {
+                        transform_trapezoid_to_polygon(
+                            &mut stamps,
+                            centre,
+                            square_size,
+                            ANGLE_0,
+                            0,
+                            0,
+                            0,
+                            max_error,
+                            ErrorLoc::Outside,
+                        );
+                    } else {
+                        transform_circle_to_polygon(
+                            &mut stamps,
+                            centre,
+                            dot_radius,
+                            max_error,
+                            ErrorLoc::Outside,
+                            0,
+                        );
+                    }
+                }
+
+                xx += dot_stride;
+            }
+
+            row_index += 1;
+            yy += dot_stride;
+        }
+
+        if !orientation.is_zero() {
+            stamps.rotate(orientation, Vector2I::new(0, 0));
+        }
+
+        *fill_polys = stamps;
+        true
     }
 }
 

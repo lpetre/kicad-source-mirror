@@ -26,3 +26,11 @@ requested return the documented NotPorted error), --drill-shape-opt 0 / 1 / 2, -
 300 KB for the default option set and over five boards for each other option. Port
 qa/tests/pcbnew/test_plot_edge_cuts_drill_marks.cpp (three cases) and the two
 test_pcb_export_svg cases of qa/tests/cli/test_pcb.py.
+
+Orchestrator note: small leftover in this crate to do first - src/plot_brditems_text.rs
+`pcb_text_transform_text_to_poly_set`: replace the `AnyItem::Dimension(_)`
+`fab_port_pending!` arm with a call to the model method that now exists
+(`dim.transform_text_to_poly_set(ctx, buffer, clearance, max_error, error_loc)`), and cover
+knockout / struck-out dimension text inside a footprint with a crafted board against the
+reference. Generated tables: `kicad_pcb::board_tables::refresh_generated_tables` must run
+before plotting in the SVG job as PCB_PLOTTER::Plot does (pcb_plotter.cpp L90).
