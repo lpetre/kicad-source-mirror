@@ -581,6 +581,29 @@ Progress log:
   command layer as a library over an abstract host; `runCli(argv, files)` in wasm with the
   exact behaviour of the native binary): launch after FIX-FAB-2 (editing kicad-cli) and
   WASM-API-1 (editing kicad-wasm) have finished.
+  08:20 UTC: USER PRIORITY CHANGE - "focus on speed". No further non-performance package
+  is launched (CLI-WASM-1, LIB-1, DOC-1, E2E-2 and the cross-cutting review wait);
+  WASM-API-1 (the friend's API) and PERF-1 finish.
+  Done since: FAB-13 drill and chart symbol plotting (85 of 85 crafted files identical;
+  every fabrication corpus now has nothing pending), FIX-FAB-2 (CLI leftovers; a 476-case
+  option matrix of kicad-rs vs the reference: 462 identical, 8 where the reference loses
+  its own stderr text, 2 PDF, 4 variant / drill option cases listed in its report), GLUE-3
+  (drill chart staleness generation, generated-table autosize / flip hooks, one drill model,
+  StdMap and asinf in kicad-geom, host-settable VCS hash; FIX-BEZ-1 not started), FIX-EDIT-1
+  (mutator oracle: 26 edits x every item kind on 17 boards = 965,706 dump values and 442
+  saved files against a reference driver; generator, grid item and other mutator fixes;
+  OPEN from it: router-style item creation with incremental connectivity vs full rebuild,
+  dimension Update-on-setter, remove / re-add in the oracle, a 1 nm GetFpPadsLocalBbox
+  difference on flipped footprints with custom pads after odd rotations).
+  First (noisy) baseline, medians in ms - medium boards: zone refill 240-1400, DRC 120-450,
+  load 30-170; vme-wren (70 MB): zone refill 40,100, load 4,500 (connectivity 2,900),
+  gerbers 2,300, parse 1,500, write 1,100; jetson (85 MB): zone refill 23,600, DRC 16,600,
+  load 3,500, gerbers 3,300. Zone refill dominates, then DRC, then the connectivity build.
+  NEXT: the performance loop as a workflow (gate script + quiet baseline, then rounds of
+  plan -> optimise (Opus, disjoint files) -> Fable review of each diff -> judge (gate bit
+  for bit + quiet benchmark, keep or revert, commit) until two dry rounds). Single-thread
+  speed first (helps wasm and native); native threading and wasm build tuning as planner
+  options in later rounds.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

@@ -616,7 +616,8 @@ impl Session {
             })
             .collect();
 
-        let (outline, outline_ok) = board.get_board_polygon_outlines(&ctx, true, None, false, false);
+        let (outline, outline_ok) =
+            board.get_board_polygon_outlines(&ctx, true, None, false, false);
 
         BoardInfo {
             name: self.source_name.clone(),

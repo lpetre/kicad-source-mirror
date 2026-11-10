@@ -471,7 +471,8 @@ impl Session {
         a.track.base.item.layer = layer;
         a.track.base.net = net;
         a.track.set_has_solder_mask(spec.solder_mask);
-        a.track.set_local_solder_mask_margin(spec.solder_mask_margin);
+        a.track
+            .set_local_solder_mask_margin(spec.solder_mask_margin);
         self.add_route_item(Track::Arc(a), spec.locked)
     }
 
@@ -510,12 +511,17 @@ impl Session {
         v.set_is_free(spec.free);
         if let Some(mode) = &spec.unconnected_layers {
             use kicad_pcb::padstack::UnconnectedLayerMode as M;
-            let m = [M::KeepAll, M::StartEndOnly, M::RemoveAll, M::RemoveExceptStartAndEnd]
-                .into_iter()
-                .find(|m| super::enum_name(*m) == *mode)
-                .ok_or_else(|| {
-                    SessionError::invalid_argument(format!("invalid unconnected layer mode '{mode}'"))
-                })?;
+            let m = [
+                M::KeepAll,
+                M::StartEndOnly,
+                M::RemoveAll,
+                M::RemoveExceptStartAndEnd,
+            ]
+            .into_iter()
+            .find(|m| super::enum_name(*m) == *mode)
+            .ok_or_else(|| {
+                SessionError::invalid_argument(format!("invalid unconnected layer mode '{mode}'"))
+            })?;
             v.padstack.set_unconnected_layer_mode(m);
         }
 
@@ -556,51 +562,49 @@ impl Session {
             self.net_code(net)?;
         }
 
-        self.board.modify_track(track_id, |track, env| {
-            match track {
-                Track::Via(v) => {
-                    if let Some(p) = c.start {
-                        BoardItemMut::set_position(&mut **v, env, vec2(p));
-                    }
-
-                    if let Some(w) = c.width {
-                        v.set_width(Padstack::ALL_LAYERS, w);
-                    }
-
-                    if let Some(d) = c.drill {
-                        v.set_drill(d);
-                    }
-
-                    if layer.is_some() || bottom.is_some() {
-                        let top = layer.unwrap_or_else(|| v.top_layer());
-                        let bot = bottom.unwrap_or_else(|| v.bottom_layer());
-                        v.set_layer_pair(env, top, bot);
-                    }
-
-                    if let Some(free) = c.free {
-                        v.set_is_free(free);
-                    }
+        self.board.modify_track(track_id, |track, env| match track {
+            Track::Via(v) => {
+                if let Some(p) = c.start {
+                    BoardItemMut::set_position(&mut **v, env, vec2(p));
                 }
-                Track::Trace(_) | Track::Arc(_) => {
-                    if let Some(p) = c.start {
-                        track.as_track_mut().set_start(vec2(p));
-                    }
 
-                    if let Some(p) = c.end {
-                        track.as_track_mut().set_end(vec2(p));
-                    }
+                if let Some(w) = c.width {
+                    v.set_width(Padstack::ALL_LAYERS, w);
+                }
 
-                    if let (Some(p), Track::Arc(a)) = (c.mid, &mut *track) {
-                        a.set_mid(vec2(p));
-                    }
+                if let Some(d) = c.drill {
+                    v.set_drill(d);
+                }
 
-                    if let Some(w) = c.width {
-                        track.set_width(w);
-                    }
+                if layer.is_some() || bottom.is_some() {
+                    let top = layer.unwrap_or_else(|| v.top_layer());
+                    let bot = bottom.unwrap_or_else(|| v.bottom_layer());
+                    v.set_layer_pair(env, top, bot);
+                }
 
-                    if let Some(l) = layer {
-                        BoardItemMut::set_layer(track, env, l);
-                    }
+                if let Some(free) = c.free {
+                    v.set_is_free(free);
+                }
+            }
+            Track::Trace(_) | Track::Arc(_) => {
+                if let Some(p) = c.start {
+                    track.as_track_mut().set_start(vec2(p));
+                }
+
+                if let Some(p) = c.end {
+                    track.as_track_mut().set_end(vec2(p));
+                }
+
+                if let (Some(p), Track::Arc(a)) = (c.mid, &mut *track) {
+                    a.set_mid(vec2(p));
+                }
+
+                if let Some(w) = c.width {
+                    track.set_width(w);
+                }
+
+                if let Some(l) = layer {
+                    BoardItemMut::set_layer(track, env, l);
                 }
             }
         });
@@ -692,7 +696,10 @@ impl Session {
         result.added_uuids = result
             .added
             .iter()
-            .filter_map(|&id| ctx.item(ItemId::from_bits(id)?).map(|it| it.uuid().as_string()))
+            .filter_map(|&id| {
+                ctx.item(ItemId::from_bits(id)?)
+                    .map(|it| it.uuid().as_string())
+            })
             .collect();
         Ok(result)
     }
@@ -778,7 +785,10 @@ impl Session {
         ids: &[u64],
         enabled: bool,
     ) -> Result<Vec<u64>, SessionError> {
-        let items: Vec<ItemId> = ids.iter().map(|&id| item_id(id)).collect::<Result<_, _>>()?;
+        let items: Vec<ItemId> = ids
+            .iter()
+            .map(|&id| item_id(id))
+            .collect::<Result<_, _>>()?;
         let mut changed = Vec::new();
 
         for (item, &raw) in items.iter().zip(ids) {
@@ -854,7 +864,12 @@ impl Session {
                 .connectivity
                 .connected_tracks(item)
                 .into_iter()
-                .filter(|t| !matches!(self.board.track(t.typed().unwrap()), Some(Track::Via(_)) | None))
+                .filter(|t| {
+                    !matches!(
+                        self.board.track(t.typed().unwrap()),
+                        Some(Track::Via(_)) | None
+                    )
+                })
                 .collect();
 
             if tracks.is_empty() {
@@ -864,8 +879,16 @@ impl Session {
             outcome.candidates += 1;
 
             let has = tracks.iter().any(|t| {
-                let track_uuid = self.board.track(t.typed().unwrap()).unwrap().as_track().base.item.uuid;
-                let td = kicad_zone::teardrop::TeardropManager::teardrop_uuid(&track_uuid, &uuid, 0);
+                let track_uuid = self
+                    .board
+                    .track(t.typed().unwrap())
+                    .unwrap()
+                    .as_track()
+                    .base
+                    .item
+                    .uuid;
+                let td =
+                    kicad_zone::teardrop::TeardropManager::teardrop_uuid(&track_uuid, &uuid, 0);
                 self.board.resolve_item(&td).is_some()
             });
 

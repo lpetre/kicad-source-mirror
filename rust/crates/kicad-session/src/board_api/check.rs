@@ -226,9 +226,7 @@ impl Session {
             engine
                 .init_engine(
                     &mut self.board,
-                    self.rules_text
-                        .as_deref()
-                        .map(|t| (t, rules_path.as_str())),
+                    self.rules_text.as_deref().map(|t| (t, rules_path.as_str())),
                     layer_choices,
                     &tuning_profiles,
                     None,

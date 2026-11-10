@@ -427,30 +427,8 @@ fn corpus_args(set: &str) -> Vec<&'static str> {
 
 /// `(board path, set, file index)` whose difference is explained in `PORT_STATUS.md`
 /// (a model or plot gap of another package); remove an entry when it starts matching.
-const KNOWN_DIFFERENCES: &[(&str, &str, usize)] = &[
-    // barcode without symbol encoder (model, M25a); kicad-fab plot_driver_corpus.rs lists the
-    // same layers
-    (
-        "qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb",
-        "default",
-        6,
-    ),
-    (
-        "qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb",
-        "nox2_drill",
-        6,
-    ),
-    (
-        "qa/data/pcbnew/issue24525/issue24525.kicad_pcb",
-        "default",
-        14,
-    ),
-    (
-        "qa/data/pcbnew/issue24525/issue24525.kicad_pcb",
-        "nox2_drill",
-        14,
-    ),
-];
+// Empty since GLUE-3: the barcode boards (project_barcode, issue24525) match since ZINT-1.
+const KNOWN_DIFFERENCES: &[(&str, &str, usize)] = &[];
 
 #[test]
 fn corpus_replay() {

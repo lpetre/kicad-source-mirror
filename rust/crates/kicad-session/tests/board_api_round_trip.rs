@@ -115,8 +115,7 @@ fn round_trip(path: &Path, with_drc: bool) -> Result<bool, String> {
         return Ok(false);
     };
     // Known limit: group / generator membership of a removed track is not restored.
-    if s
-        .board
+    if s.board
         .tracks()
         .any(|(_, t)| t.as_track().base.item.group.is_some())
     {
@@ -195,9 +194,18 @@ fn round_trip(path: &Path, with_drc: bool) -> Result<bool, String> {
 /// Boards whose routing the API cannot re-create exactly (PORT_STATUS.md, WASM-API-1 known
 /// gaps): per-layer via padstacks, backdrill and post-machining are not in `NewVia`.
 const KNOWN_GAPS: &[(&str, &str)] = &[
-    ("qa/data/pcbnew/issue24758/issue24758.kicad_pcb", "via padstack per layer"),
-    ("qa/data/pcbnew/issue25021/backdrill.kicad_pcb", "via backdrill"),
-    ("qa/data/pcbnew/padstacks.kicad_pcb", "via post-machining / padstack"),
+    (
+        "qa/data/pcbnew/issue24758/issue24758.kicad_pcb",
+        "via padstack per layer",
+    ),
+    (
+        "qa/data/pcbnew/issue25021/backdrill.kicad_pcb",
+        "via backdrill",
+    ),
+    (
+        "qa/data/pcbnew/padstacks.kicad_pcb",
+        "via post-machining / padstack",
+    ),
 ];
 
 #[test]

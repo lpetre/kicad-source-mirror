@@ -836,4 +836,3 @@ impl<'a> CreepageGraph<'a> {
 fn node_key(node: &GraphNode) -> NodeKey {
     (node.type_, node.parent, node.pos.x, node.pos.y)
 }
-

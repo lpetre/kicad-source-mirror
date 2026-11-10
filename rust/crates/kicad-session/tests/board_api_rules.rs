@@ -22,8 +22,8 @@
 
 mod common;
 
-use kicad_core::{Kiid, PcbLayerId};
 use kicad_core::lset::Lset;
+use kicad_core::{Kiid, PcbLayerId};
 use kicad_session::board_api::rules::{
     ALL_CONSTRAINT_TYPES, ConstraintQuery, ConstraintResult, ItemSel, constraint_kind,
 };
@@ -165,6 +165,16 @@ fn net_queries_and_router_sizes() {
     } else {
         bds.get_current_track_width()
     };
-    assert_eq!(sizes.track_width, expected.max(bds.track_min_width), "{r:?} {sizes:?}");
-    assert!(s.constraint(&ConstraintQuery { kind: "nope".into(), ..q.clone() }).is_err());
+    assert_eq!(
+        sizes.track_width,
+        expected.max(bds.track_min_width),
+        "{r:?} {sizes:?}"
+    );
+    assert!(
+        s.constraint(&ConstraintQuery {
+            kind: "nope".into(),
+            ..q.clone()
+        })
+        .is_err()
+    );
 }

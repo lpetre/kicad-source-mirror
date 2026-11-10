@@ -97,12 +97,11 @@ fn teardrop_update_matches_the_reference() {
     };
 
     for case in cases {
-        let Some(board) = std::fs::read_dir(case.join("in"))
-            .ok()
-            .and_then(|d| d.filter_map(|e| e.ok()).map(|e| e.path()).find(|p| {
-                p.extension().is_some_and(|e| e == "kicad_pcb")
-            }))
-        else {
+        let Some(board) = std::fs::read_dir(case.join("in")).ok().and_then(|d| {
+            d.filter_map(|e| e.ok())
+                .map(|e| e.path())
+                .find(|p| p.extension().is_some_and(|e| e == "kicad_pcb"))
+        }) else {
             continue;
         };
         let reference = case.join("ref").join(board.file_name().unwrap());
@@ -216,7 +215,12 @@ fn edits_change_the_board() {
     let mut s = load("demos/ecc83/ecc83-pp.kicad_pcb");
     let tracks = s.route_items();
     let t = tracks.iter().find(|t| t.kind == "track").unwrap().clone();
-    let other_net = s.net_details().iter().find(|n| n.code > 0 && n.code != t.net).unwrap().code;
+    let other_net = s
+        .net_details()
+        .iter()
+        .find(|n| n.code > 0 && n.code != t.net)
+        .unwrap()
+        .code;
 
     let r = s
         .change(&ItemChange {

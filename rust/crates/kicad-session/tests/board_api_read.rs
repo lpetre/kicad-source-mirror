@@ -92,7 +92,12 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
     };
 
     let b: BoardInfo = s.board_info();
-    put("board", "board", "copper_layer_count", b.copper_layer_count.to_string());
+    put(
+        "board",
+        "board",
+        "copper_layer_count",
+        b.copper_layer_count.to_string(),
+    );
     put(
         "board",
         "board",
@@ -101,7 +106,12 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
     );
 
     for l in &b.copper_layers {
-        put("board", "board", &format!("layer.{}.name", l.name), v_str(&l.user_name));
+        put(
+            "board",
+            "board",
+            &format!("layer.{}.name", l.name),
+            v_str(&l.user_name),
+        );
         put(
             "board",
             "board",
@@ -111,7 +121,12 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
     }
 
     put("board", "board", "bbox", v_box(b.bbox));
-    put("board", "board", "outline_inferred.ok", v_bool(b.outline_ok));
+    put(
+        "board",
+        "board",
+        "outline_inferred.ok",
+        v_bool(b.outline_ok),
+    );
     put("board", "board", "outline_inferred", v_polys(&b.outline));
 
     let pads: Vec<PadInfo> = s.pads(true);
@@ -140,13 +155,28 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
             put("pad", k, &f("shape"), sh.shape.clone());
             put("pad", k, &f("size"), v_pt(sh.size));
             put("pad", k, &f("offset"), v_pt(sh.offset));
-            put("pad", k, &f("round_rect_corner_radius"), sh.corner_radius.to_string());
+            put(
+                "pad",
+                k,
+                &f("round_rect_corner_radius"),
+                sh.corner_radius.to_string(),
+            );
             put("pad", k, &f("chamfer_ratio"), v_f64(sh.chamfer_ratio));
-            put("pad", k, &f("chamfer_positions"), sh.chamfer_positions.to_string());
+            put(
+                "pad",
+                k,
+                &f("chamfer_positions"),
+                sh.chamfer_positions.to_string(),
+            );
         }
 
         for poly in &p.polygons {
-            put("pad", k, &format!("flash.{}", poly.layer), v_bool(poly.flashed));
+            put(
+                "pad",
+                k,
+                &format!("flash.{}", poly.layer),
+                v_bool(poly.flashed),
+            );
             put(
                 "pad",
                 k,
@@ -206,11 +236,21 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
         put("zone", k, "name", v_str(&z.name));
         put("zone", k, "priority", z.priority.to_string());
         put("zone", k, "rule_area", v_bool(z.rule_area));
-        put("zone", k, "keepout.zone_fills", v_bool(z.keepout.copper_pour));
+        put(
+            "zone",
+            k,
+            "keepout.zone_fills",
+            v_bool(z.keepout.copper_pour),
+        );
         put("zone", k, "keepout.vias", v_bool(z.keepout.vias));
         put("zone", k, "keepout.tracks", v_bool(z.keepout.tracks));
         put("zone", k, "keepout.pads", v_bool(z.keepout.pads));
-        put("zone", k, "keepout.footprints", v_bool(z.keepout.footprints));
+        put(
+            "zone",
+            k,
+            "keepout.footprints",
+            v_bool(z.keepout.footprints),
+        );
         put("zone", k, "teardrop_area", v_bool(z.teardrop));
         put("zone", k, "local_clearance", v_opt(z.clearance));
         put("zone", k, "min_thickness", z.min_thickness.to_string());
@@ -224,7 +264,12 @@ fn api_lines(s: &mut Session) -> BTreeMap<String, String> {
         }
 
         for f in &z.fills {
-            put("zone", k, &format!("filled.{}", f.layer), v_polys(&f.polygons));
+            put(
+                "zone",
+                k,
+                &format!("filled.{}", f.layer),
+                v_polys(&f.polygons),
+            );
         }
     }
 
