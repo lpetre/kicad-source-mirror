@@ -539,3 +539,17 @@ Verification:
   does before its first `Rebuild`. Providers whose context has no connectivity (the
   `connectivity` provider in `run_flow.rs`) take the "non-existent from-to cache" branch.
 - The full `kicad-cli pcb drc` report comparison with `fromTo()` rules waits for that hook.
+
+## FIX-FAB-3: anchors more than 2^31 nm apart (review-connectivity F-8)
+
+- `CnAnchor::dist`, `CnEdge::length`, the `optimizeZoneAnchor` lambda (`optimize_zone_anchor`),
+  `are_nodes_colinear` and the `verify` lambda of `NearestBicoloredPair`
+  (`aTestNode1->Pos() - aTestNode2->Pos()`) wrap their `VECTOR2I` subtractions like the
+  reference build; `getMinDist` (`min_dist`) converts its `double` with `f64_to_i32_x86`
+  (cvttsd2si, `INT_MIN` beyond the range) instead of a saturating `as`.
+- Verified: `tests/golden/cn04/rev_far_anchors.kicad_pcb` (vias at -1100 / +1100 mm and
+  -2000 / +2000 mm, two filled zones with hatched borders at opposite corners) against the
+  reference `pcb-dump --sections connectivity` (`tests/golden/rev_far_anchors.txt`), replayed by
+  `cn03_ratsnest_matches_cpp`: 0 mismatches (the reference wraps: edge weights 2147483647 and
+  417146750). Before the fix the board load panicked (hatch lines, colinearity test, segment
+  nearest points, edge lengths).

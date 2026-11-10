@@ -307,3 +307,34 @@ Tests: `tests/drc_lp_library_parity.rs` (crafted project `tests/data/drc_lp`, re
 `lib_footprint_*` entries identical. `tests/drc12_regressions.rs`: the 23 false-negative
 counts are asserted now (all pass). `tests/drc12_corpus.rs` no longer filters the
 `lib_footprint_*` codes.
+
+## Package FIX-FAB-2: command line leftovers of the fabrication exports (REV-FAB F-01, F-04)
+
+* `JobOutcome::output_dir` (new, `OutputDir`, not serialised): the directory the C++ job
+  creates before writing (`PATHS::EnsurePathExists`, built with
+  `OutputDir::ensure_path_exists( outPath, aPathToFile )`): gerbers and drill `outPath`
+  (directory), DRC the directory of the report file, SVG the directory (multi) or the file's
+  directory (single), fp upgrade the library directory alone (`FP_CACHE::Save`:
+  `wxFileName::Mkdir()` without `wxPATH_MKDIR_FULL`, failure "Unable to save library",
+  `ERR_UNKNOWN`), pcb upgrade none (the board is saved in place). The host creates exactly this
+  directory; any other directory a file needs must exist (F-04: a drill report in a missing
+  directory now fails as in C++: the drill files are written, the report is not, exit 4).
+  The report path is still recorded by `AddOutput` (only the jobset output list sees it; the
+  CLI does not use it).
+* `run_export_gerbers` with `--board-plot-params` and a stored `(outputformat 0)` (HPGL, F-01):
+  `gerbers_start_plot_fails` ports the layer loop of `JobExportGerbers` for a `StartPlotBoard`
+  that returns `nullptr` on every layer: per layer the file name is registered in the job file,
+  the `wxLogError` "HPGL plotting is no longer supported as of KiCad 10.0" and
+  "Failed to plot to '<file>'." are reported (both `RPT_SEVERITY_ERROR`; the log line is
+  formatted like kicad-cli's log target, `HH:MM:SS: Error: ...`, with the time of
+  `creation_date`, so that it keeps its place on stderr), the exit code is
+  `ERR_INVALID_OUTPUT_CONFLICT` and the `.gbrjob` is written. The case runs in the session
+  because kicad-fab's `job_export_gerbers` stops at the first layer it cannot plot.
+* Decision (F-01, other stored formats): PostScript, DXF, PDF (and PNG) stored in the board's
+  plot parameters stay `NotYetPorted` ("kicad-fab: unsupported: plot format .. is not part of
+  the port"), exit code 2 (`NOT_YET_PORTED` = `ERR_UNKNOWN`), no file: the port has no plotter
+  for them, and every other out-of-port path of the CLI exits with 2 as well. The reference
+  writes that format into the `.gbr` files and exits with 0.
+
+Verification: kicad-cli `tests/fab_matrix.rs` (golden `kicad-cli/tests/golden/fab_matrix/`),
+see kicad-cli `PORT_STATUS.md` FIX-FAB-2.

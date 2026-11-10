@@ -1,0 +1,24 @@
+<normalised>
+<normalised>
+%TF.ProjectId,one,6f6e652e-6b69-4636-9164-5f7063625858,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 Aperture macros list*
+%AMFreePoly0*
+4,1,15,0.292678,2.870710,0.300000,2.800000,0.300000,-2.360000,0.292678,-2.430710,0.182678,-2.870710,0.165000,-2.900000,-0.275000,-2.900000,-0.292678,-2.870710,-0.300000,-2.800000,-0.300000,2.360000,-0.292678,2.430710,-0.182678,2.870710,-0.165000,2.900000,0.275000,2.900000,0.292678,2.870710,0.292678,2.870710,$1*%
+G04 Aperture macros list end*
+%ADD10FreePoly0,105.000000*%
+G04 APERTURE END LIST*
+D10*
+%TO.C,*%
+X138000000Y-50000000D03*
+%TD*%
+M02*

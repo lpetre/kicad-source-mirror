@@ -279,7 +279,8 @@ maps onto (see the change request in the FAB-02 result).
 | `PCB_PLOT_PARAMS::ColorSettings()->GetColor( layer )` | `BrditemsPlotter::color_settings_color` (see deviations) |
 
 `PAD dummy( *pad )` and the in-place "modify the board pad, plot, restore" of `plotPadLayer`
-are both a `detached_copy()` of the pad viewed with `ctx.view` (`board-model.md` 13). Setters
+are both a `detached_copy()` of the pad viewed with `ctx.view` (`board-model.md` 13); the
+restore sequence is applied and its result kept in the job's `PadPlotState` (FIX-FAB-1). Setters
 take the pad's `board.mut_env(pad)` (its footprint frame). `ZONE dummy( *zone ); SetNet( &nonet
 )` is a detached copy with net code -1 (no board net carries it: empty net name).
 
@@ -808,9 +809,9 @@ items, zones, vias, exotic names, extreme coordinates).
 
 * F-03 (`plot_board_layers.rs` `plot_pad_layer`): the C++ plots the board's pad in place and
   restores it through the board-frame `PAD::SetSize`, which is lossy under a footprint scale
-  and persists into the layers plotted later; the port's detached copy does not. Visible as
+  and persists into the layers plotted later; the port's detached copy did not. Visible as
   1 to 3 nm in the `F.Mask` macro of a chamfered pad in a non-uniformly scaled footprint when
-  `F.Cu` or `F.Paste` is plotted first. `docs/packages/FIX-FAB-1.md`.
+  `F.Cu` or `F.Paste` is plotted first. Fixed by FIX-FAB-1 (`PadPlotState`, below).
 * F-01 (accepted, already listed under FAB-03 / FAB-07): `--board-plot-params` with a stored
   non-Gerber `outputformat`: the reference writes that format into the `.gbr` files (HPGL:
   `Failed to plot`, job file, exit code 4); the port stops with an error (exit code 2).
@@ -937,4 +938,50 @@ press-fit / backdrill stub / post-machined / counts / not plated) in the stroke 
 ### Known gaps
 
 * None for the Gerber X2 and SVG maps.
+
+## FIX-FAB-1: the pad that `plotPadLayer` leaves behind (footprint scale)
+
+Finding F-03 of REV-FAB (`docs/packages/FIX-FAB-1.md`).
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| the board's `PAD` as `plotPadLayer` (L446-681) leaves it for the next layer / file of the job | `plot_board_layers::PadPlotState` (overlay `PadId -> Pad`, `RefCell<BTreeMap>`), passed to `plot_board_layers` / `plot_one_board_layer` / `plot_standard_layer` and installed in `BrditemsPlotter::pad_state` |
+| restore `SetSize`, `SetDelta`, `SetShape`, `SetRoundRectRadiusRatio` (L676-680) | end of `plot_pad_layer`, which returns the restored pad (`None` for the zero-size exit L482-486, which modifies nothing); the NPTH skip (L494-500, a `break`) now reaches the restore |
+| pad loop body L387-447 reading the (modified) board pad | `plot_footprint_pad`: reads the pad from the state, falls back to the board's pad; the layers of `SeqStackupForPlotting()` chain the restored pad |
+| one loaded board per job (`pcbnew_jobs_handler.cpp` L1835-1912, `PCB_PLOTTER::Plot`) | one `PadPlotState` per call of `job_export_gerbers` and `pcb_plotter::plot` (SVG job), shared by all files in plot order; `plot_gerber_layer_file` (one file) and `plot_standard_layer_pads_vias_tracks_zones` without an installed state use a fresh one |
+
+The restore is applied to a clone of the pad the layer started from (it keeps the arena id),
+not to the detached `work` copy: the plot code modifies `work` only through the four restored
+members of `a_layer`, so the state is the one the C++ leaves.
+
+### Tests and verification (reference kicad-cli)
+
+* `tests/plot_pad_state.rs`: two crafted boards (`tests/data/plot_pad_state`: `one_pad.py ..
+  90 2 0.5 15 cham`, and six pad shapes in a footprint with `(scale 0.3 0.3)` and sizes with a
+  nm remainder), goldens from `kicad-cli pcb export gerbers -l F.Cu,F.Paste,F.Mask` and
+  `-l F.Mask` (the two reference masks differ; both match).
+* `review-fab/tools/fabcmp.py`: the three failing `one_pad.py` configurations (`90 2 0.5 15`,
+  `33 2 0.5 15`, `90 2 0.5 33` `cham`) with `-l F.Cu,F.Mask`, `-l F.Paste,F.Mask`,
+  `-l F.Mask` and the default layers: 12 / 12 identical; 6 shapes x 4 footprint configurations
+  (incl. uniform and relative angle 0) x 2 layer orders: 48 / 48 identical; `rev_scaled`
+  (`gen_pads.py`, the 12 `(scale 1 1)` replaced by uniform 0.3 .. 3 and non-uniform scales) x
+  `tools/gs3.txt`: 5 / 5 sets identical (23 files each, `bpp` 12); the same board and
+  `one_pad` with `solder_mask_min_width 0.1`: identical.
+
+### Deviations
+
+* None known.
+
+### Known gaps
+
+* The solder mask minimum width path and the clipped silk (`plot_layer_poly.rs`
+  `generate_layer_poly`) read the pads through `FOOTPRINT::TransformPadsToPolySet` of the
+  model, i.e. the board's pads, not the `PadPlotState`. The C++ reads the modified pads there
+  too. No difference found (`rev_scaled` and `one_pad` with a minimum width), but a footprint
+  scale, a minimum mask width and a pad plotted before on another layer of the same job could
+  differ by a nanometre. Fixing it needs a model entry point that takes pad overrides.
+* DRC rules evaluated for a pad's margins (`ctx.rules`) may look the pad up in the board
+  rather than in the state (only conditions on the pad size could notice).
 

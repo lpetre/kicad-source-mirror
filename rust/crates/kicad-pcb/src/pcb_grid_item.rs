@@ -330,6 +330,38 @@ impl PcbGridItem {
         self.spacing = Vector2I::new(spacing.x.max(1), spacing.y.max(1));
     }
 
+    /// `GetOrientationDegrees()`.
+    pub fn orientation_degrees(&self) -> f64 {
+        self.orientation.angle().as_degrees()
+    }
+
+    /// `SetOrientationDegrees( aDeg )`: `m_orientation = EDA_ANGLE( aDeg, DEGREES_T )`
+    /// (normalising, as `EDA_ORIENTATION::operator=`).
+    pub fn set_orientation_degrees(&mut self, degrees: f64) {
+        self.set_orientation(EdaAngle::new(degrees, DEGREES_T));
+    }
+
+    /// `GetRadiusExtent()`: `m_extent.x`.
+    pub fn radius_extent(&self) -> i32 {
+        self.extent.x
+    }
+
+    /// `SetRadiusExtent( aR )`: `m_extent.x = std::abs( aR )`.
+    pub fn set_radius_extent(&mut self, radius: i32) {
+        // std::abs of INT_MIN is INT_MIN on the reference platform
+        self.extent.x = radius.wrapping_abs();
+    }
+
+    /// `GetRadiusSpacing()`: `m_spacing.x`.
+    pub fn radius_spacing(&self) -> i32 {
+        self.spacing.x
+    }
+
+    /// `SetRadiusSpacing( aR )`: `m_spacing.x = std::max( aR, 1 )`.
+    pub fn set_radius_spacing(&mut self, radius: i32) {
+        self.spacing.x = radius.max(1);
+    }
+
     /// `SetPhiExtentDegrees( aDeg )`: `max( |aDeg|, 0.001 )`.
     pub fn set_phi_extent_degrees(&mut self, degrees: f64) {
         self.phi_extent = EdaAngle::new(std_max_f64(degrees.abs(), 0.001), DEGREES_T);

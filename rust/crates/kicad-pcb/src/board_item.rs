@@ -882,12 +882,10 @@ impl Board {
     /// `PCB_TUNING_PATTERN::SetLayer` also sets the layer of every member.
     fn generator_set_layer(&mut self, id: ItemId, layer: PcbLayerId) {
         let Some(generator) = id.typed() else { return };
-        let Some(is_tuning) = self
-            .modify_generator(generator, |g, _| {
-                g.base_mut().layer = layer;
-                g.generator_type() == GENERATOR_TYPE_TUNING_PATTERN
-            })
-        else {
+        let Some(is_tuning) = self.modify_generator(generator, |g, _| {
+            g.base_mut().layer = layer;
+            g.generator_type() == GENERATOR_TYPE_TUNING_PATTERN
+        }) else {
             return;
         };
 

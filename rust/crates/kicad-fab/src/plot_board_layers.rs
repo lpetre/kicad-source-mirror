@@ -218,7 +218,14 @@ pub fn plot_one_board_layer(
             plot_opt.skip_npth_pads = true;
         }
 
-        plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
+        plot_layer(
+            a_board,
+            a_plotter,
+            &layer_mask,
+            &plot_opt,
+            a_colors,
+            a_pad_state,
+        );
     } else {
         match a_layer {
             PcbLayerId::BMask | PcbLayerId::FMask => {
@@ -243,7 +250,14 @@ pub fn plot_one_board_layer(
                 // Use outline mode for DXF
                 plot_opt.dxf_polygon_mode = true;
 
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
+                plot_layer(
+                    a_board,
+                    a_plotter,
+                    &layer_mask,
+                    &plot_opt,
+                    a_colors,
+                    a_pad_state,
+                );
             }
 
             PcbLayerId::FSilkS | PcbLayerId::BSilkS => {
@@ -297,14 +311,28 @@ pub fn plot_one_board_layer(
                         );
                     }
                 } else {
-                    plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
+                    plot_layer(
+                        a_board,
+                        a_plotter,
+                        &layer_mask,
+                        &plot_opt,
+                        a_colors,
+                        a_pad_state,
+                    );
                 }
             }
 
             // Dwgs_User, Cmts_User, Eco1_User, Eco2_User, Edge_Cuts, Margin, F/B_CrtYd,
             // F/B_Fab and every other layer
             _ => {
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
+                plot_layer(
+                    a_board,
+                    a_plotter,
+                    &layer_mask,
+                    &plot_opt,
+                    a_colors,
+                    a_pad_state,
+                );
             }
         }
     }
@@ -558,8 +586,12 @@ pub fn plot_standard_layer_footprint(
     for (pad_id, board_pad) in board.footprint_pads(footprint_id) {
         // `pad` is the board's pad as the earlier `plotPadLayer` calls of the job left it.
         let stored = pad_state.take(pad_id);
-        let restored =
-            plot_footprint_pad(itemplotter, pad_id, stored.as_ref().unwrap_or(board_pad), flags);
+        let restored = plot_footprint_pad(
+            itemplotter,
+            pad_id,
+            stored.as_ref().unwrap_or(board_pad),
+            flags,
+        );
 
         if let Some(pad) = restored.or(stored) {
             pad_state.put(pad_id, pad);

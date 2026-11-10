@@ -340,8 +340,8 @@ fn edits_match_the_reference() {
         }
     }
 
-    let boards = std::fs::read_to_string(crate_dir().join("tests/oracle/editmut_boards.txt"))
-        .unwrap();
+    let boards =
+        std::fs::read_to_string(crate_dir().join("tests/oracle/editmut_boards.txt")).unwrap();
     let edits: Vec<String> = {
         let mut seen = Vec::new();
 
@@ -397,18 +397,14 @@ fn edits_match_the_reference() {
         }
     }
 
-    let known: Vec<String> = std::fs::read_to_string(
-        crate_dir().join("tests/golden/editmut/known_mismatches.txt"),
-    )
-    .unwrap()
-    .lines()
-    .filter(|l| !l.is_empty() && !l.starts_with('#'))
-    .map(str::to_string)
-    .collect();
-    let differing: Vec<&str> = bad
-        .iter()
-        .map(|b| b.split(':').next().unwrap())
-        .collect();
+    let known: Vec<String> =
+        std::fs::read_to_string(crate_dir().join("tests/golden/editmut/known_mismatches.txt"))
+            .unwrap()
+            .lines()
+            .filter(|l| !l.is_empty() && !l.starts_with('#'))
+            .map(str::to_string)
+            .collect();
+    let differing: Vec<&str> = bad.iter().map(|b| b.split(':').next().unwrap()).collect();
 
     for k in &known {
         if !differing.contains(&k.as_str()) {

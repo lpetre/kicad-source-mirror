@@ -246,33 +246,46 @@ pub fn get_board(path: &str) -> Result<Session, i32> {
     }
 }
 
-/// Creates the directory a job asks for ([`kicad_session::jobs_handler::OutputDir`]): `PATHS::EnsurePathExists`
-/// (`wxFileName::Mkdir( path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL )` when it does not exist) or,
-/// with `full == false`, a plain `wxFileName::Mkdir()` of the last component.
+/// Creates the directory a job asks for ([`kicad_session::jobs_handler::OutputDir`]):
+/// `PATHS::EnsurePathExists` (`wxFileName::Mkdir( path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL )`
+/// when it does not exist) or, with `full == false`, a plain `wxFileName::Mkdir()` of the last
+/// component. A failure logs wxMkdir's
+/// `wxLogSysError( _( "Directory '%s' couldn't be created" ), dir )`.
 fn ensure_output_dir(dir: &kicad_session::jobs_handler::OutputDir) -> bool {
     if dir.path.is_empty() || Path::new(&dir.path).is_dir() {
         return true;
     }
 
-    if dir.full {
-        std::fs::create_dir_all(&dir.path).is_ok()
+    let result = if dir.full {
+        std::fs::create_dir_all(&dir.path)
     } else {
-        std::fs::create_dir(&dir.path).is_ok()
+        std::fs::create_dir(&dir.path)
+    };
+
+    match result {
+        Ok(()) => true,
+        Err(err) => {
+            log_sys_error(
+                &format!("Directory '{}' couldn't be created", dir.path),
+                &err,
+            );
+            false
+        }
     }
 }
 
-/// `wxLogSysError( _( "can't open file '%s'" ), name )` of `wxFFile::Open` as kicad-cli's log
-/// target prints it: `HH:MM:SS: Error: can't open file '<name>' (error <errno>: <strerror>)`.
-fn log_cannot_open(name: &str, err: &std::io::Error) {
+/// `wxLogSysError( aText )` as kicad-cli's log target prints it:
+/// `HH:MM:SS: Error: <text> (error <errno>: <strerror>)` on stderr.
+fn log_sys_error(text: &str, err: &std::io::Error) {
     let clock = host_clock();
-    let text = err.to_string();
+    let message = err.to_string();
     // std::io::Error's Display is "<strerror> (os error <errno>)"
-    let strerror = text
+    let strerror = message
         .rfind(" (os error ")
-        .map_or(text.as_str(), |at| &text[..at]);
+        .map_or(message.as_str(), |at| &message[..at]);
 
     eprintln!(
-        "{:02}:{:02}:{:02}: Error: can't open file '{name}' (error {}: {strerror})",
+        "{:02}:{:02}:{:02}: Error: {text} (error {}: {strerror})",
         clock.hour,
         clock.minute,
         clock.second,
@@ -318,7 +331,8 @@ pub fn finish_job(result: Result<JobOutcome, SessionError>, reporter: Reporter) 
 
             for file in &outcome.files {
                 if let Err(err) = std::fs::write(&file.name, &file.contents) {
-                    log_cannot_open(&file.name, &err);
+                    // wxFFile::Open: wxLogSysError( _( "can't open file '%s'" ), name )
+                    log_sys_error(&format!("can't open file '{}'", file.name), &err);
                     return exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
                 }
             }

@@ -3793,3 +3793,19 @@ golden that depends on its sequence is unchanged), and reserves it there like th
 loaded file. `Board::resolve_item` still has no handle for it (no `ItemId`); the DRC report
 resolver (`kicad-drc` `BoardRcItemResolver`) answers it after every item, as
 `BOARD::ResolveItem` does. Test: `board::tests::board_uuid_is_reserved_and_does_not_consume_the_item_generator`.
+
+## FIX-FAB-3: `PCB_SHAPE::Normalize()` beyond the `int` range (review-fab X-2)
+
+- `PcbShape::normalize_env` (rectangle branch) spells out `BOX2I rect( start, end - start );
+  rect.Normalize(); SetStart( GetPosition() ); SetEnd( GetEnd() );` with the arithmetic of the
+  Linux reference: `end - start` wraps (`int`), and `KiCheckedCast<int64_t, int>` is a plain
+  narrowing conversion there (`int64_t` is `long`), while `kicad_geom::Box2I` clamps (its D1).
+  Identical to `Box2I::new( .. ).normalize()` for every rectangle inside the `int` range; a
+  2520 mm wide rectangle (invalid board, the reference loads it) no longer panics in the parser.
+- Verified: reference `pcb-dump board --sections shape` against `pcb-dump-rs` on three
+  rectangles (2520 x 2320 mm, 2520 mm wide reversed, small reversed): `start`, `end`,
+  `lib.start`, `lib.end`, `corners`, `rect_corners`, `shape.F.SilkS` identical; test
+  `tests/fix_fab3_normalize.rs` (start / end of the reference).
+- Known gap: for the two oversized rectangles `rect_size` (`EDA_SHAPE::GetRectangleWidth /
+  Height`, `end - start`) and `tpoly.*` (`TransformShapeToPolygon`) still panic with overflow in
+  `eda_shape` (not part of this package; the reference wraps).

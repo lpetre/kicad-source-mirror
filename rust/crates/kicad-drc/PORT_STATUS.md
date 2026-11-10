@@ -2162,38 +2162,41 @@ expected difference below. All kicad-drc tests green.
 ### Scoreboards
 
 `drc12_cli_compare.py cmp` (364 boards, `--severity-all --units mm`, text + JSON + stdout +
-exit code):
+exit code; "after" with the binary of 2026-11-10 that includes DRC-LP's library parity):
 
 | | exact | equal after filtering | equal as sets | differing |
 |---|---|---|---|---|
 | before (DRC-12 / STAB-DRC state, board without UUID: `PCB` lines masked) | 47 | 254 | 51 | 12 |
-| after | 96 | 213 | 53 | 2 |
+| after this package, library parity not yet in the binary | 96 | 213 | 53 | 2 |
+| after (final) | 298 | 11 | 53 | 2 |
 
-`e2e_cli.py --commands drc-report,drc-json` (308 boards, default options):
+`e2e_cli.py --commands drc-report,drc-json` (308 boards, default options; golden lines
+updated):
 
 | | identical | identical after masks | differing |
 |---|---|---|---|
 | drc-report before (golden) | 43 | 79 (60 of them with the `PCB` line mask) | 186 |
-| drc-report after | 91 | 42 | 175 |
+| drc-report after | 276 | 26 (report order) | 6 |
 | drc-json before (golden) | 43 | 20 | 245 |
-| drc-json after | 45 | 88 (61 with the board UUID normalised) | 175 |
+| drc-json after | 185 | 117 (board UUID 87, random UUIDs / order 30) | 6 |
 
-Every remaining difference is owned by another package (multiset of entries per board,
-`target/stab-drc2/e2e_cat.py` logic): `lib_footprint_issues` missing on 166 report / 136+ JSON
-boards (library parity, DRC-LP: was not run by the binary compared), `creepage` entries on 6
-boards (DRC-33, smallest `creepage/creepage`), `skew_out_of_range` on
-`skew_group_matched_drc` (DRC-31), `net_chain_tuning_profiles` on
-`drc_net_chain_tuning_profiles` (unported, DRC-34); in the drc12 tool `issue22475`
-(`text_thickness`, font not installed on the oracle machine) and `fw16_MCIO8i`
-(`connection_width` neck from a pointer-ordered set) as before. The differences named by the
-first pass (connection_width_rules rule name, issue5854, issue24525, issue24935,
-microwave `shorting_items`, issue24853, issue25439, two_segment_teardrop, issue24078 counts)
-no longer exist: all are equal or equal as sets (thread pool order: edge clearance,
-copper clearance, isolated copper, connection width) in both tools.
+Remaining differences, all owned by running packages or documented reference effects:
+`creepage` entries on 5 boards (DRC-33; smallest `creepage/creepage`, also
+`creepage_malformed_edge`, issue23389, issue24286, issue24875_capstraight),
+`skew_out_of_range` on `skew_group_matched_drc` (DRC-31: the item named differs, pad vs
+track); in the drc12 tool `issue22475` (`text_thickness`, font not installed on the oracle
+machine) and `fw16_MCIO8i` (`connection_width` neck from a pointer-ordered set) as before.
+The differences named by the first pass (connection_width_rules rule name, issue5854,
+issue24525, issue24935, microwave `shorting_items`, issue24853, issue25439,
+two_segment_teardrop, issue24078 counts) no longer exist with the current binary: every one
+is equal or equal as sets (thread pool order: edge clearance, copper clearance, isolated
+copper, connection width) in both tools. None needed a fix in this package; they were fixed
+by the first stabilisation pass and the provider packages that landed after the last run.
 
 Kicad-session replay `drc12_corpus`: 312 boards equal, 50 equal as sets, 2 known
 differences, 1 pending (fakeboard: reference fails); `api_kitchen_sink` dropped from
-`KNOWN_DIFFERENCES` (matches).
+`KNOWN_DIFFERENCES` (matches). drc23's corpus replay compares the board item of the
+`invalid_outline` entries (as uuid `board` on both sides): 105 matched, 0 missing, 0 extra.
 
 Options not verified by DRC-12, now run against the reference (`target/stab-drc2/opt_cmp.py`
 logic, e2e masks):

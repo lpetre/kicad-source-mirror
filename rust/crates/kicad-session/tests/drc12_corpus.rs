@@ -36,6 +36,8 @@ use kicad_session::{Reporter, Session, run_drc};
 /// The settings keys of the providers whose packages are still running, filtered like the
 /// unported ones (`UNPORTED` of `drc12_cli_compare.py` lists them too).
 const IN_PROGRESS_KEYS: &[&str] = &[
+    "net_chain_tuning_profiles",
+    "via_stitch_overlap",
     "creepage",
     "length_out_of_range",
     "net_chain_return_path",
