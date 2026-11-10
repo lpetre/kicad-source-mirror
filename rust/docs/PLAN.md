@@ -424,6 +424,15 @@ Progress log:
   regeneration before the fill the zone corpus is 656 of 656 zone layers identical and the
   refill-and-save comparison 233 identical / 1 random in the reference / 2 waiting for
   copper thieving. Launched ZF-07 copper thieving (wgcovhd2v).
+  05:30 UTC: done M26 generated tables (drill chart, stackup table) and their refresh at
+  load / before plot / in upgrade: 13 boards (7 crafted x charts and stackups, 4
+  second-generation, api_kitchen_sink, modern_metadata) - every generated block and the
+  committed drill symbol profile identical to the reference upgrade, first and second
+  pass; api_kitchen_sink (the last unloadable corpus board) now upgrades byte-identically.
+  Open from its report (in GLUE-3): the drill chart staleness generation (a second
+  refresh in one session counts the chart again: check `pcb upgrade` without --force), the
+  table autosize / flip hooks, the duplicated drill model in kicad-pcb and kicad-fab.
+  Drill and chart symbol plotting is FAB-13 (to write, after the fabrication chain).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

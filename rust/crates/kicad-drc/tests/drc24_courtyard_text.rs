@@ -30,14 +30,12 @@ mod drc_harness;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use drc_harness::{Loaded, Reported, load_board, run_providers};
+use drc_harness::{Loaded, Reported, load_board, run_flow_providers, run_providers};
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::kiid::Kiid;
 use kicad_drc::engine::DrcTestProviderRun;
-use kicad_drc::providers::courtyard_clearance::DrcTestProviderCourtyardClearance;
 use kicad_drc::providers::text_dims::DrcTestProviderTextDims;
-use kicad_drc::providers::text_mirroring::DrcTestProviderTextMirroring;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{
     DRCE_FIRST, DRCE_LAST, DRCE_MALFORMED_COURTYARD, DRCE_MIRRORED_TEXT_ON_FRONT_LAYER,
@@ -65,9 +63,8 @@ const TEXT_TYPES: &[&str] = &[
 /// reference report's (set and order).
 #[test]
 fn courtyard_clearance_matches_reference_corpus() {
-    let score = drc_harness::compare_corpus(COURTYARD_TYPES, "", &mut || {
-        vec![Box::new(DrcTestProviderCourtyardClearance::default()) as Box<dyn DrcTestProviderRun>]
-    });
+    let score =
+        drc_harness::compare_corpus_flow(COURTYARD_TYPES, "", &["courtyard_clearance"]);
     score.print("DRC-24 courtyard clearance");
     score.assert_no_mismatch();
 }
@@ -77,12 +74,11 @@ fn courtyard_clearance_matches_reference_corpus() {
 /// (`text_dimensions` before `text_mirroring`).
 #[test]
 fn text_providers_match_reference_corpus() {
-    let score = drc_harness::compare_corpus(TEXT_TYPES, "", &mut || {
-        vec![
-            Box::new(DrcTestProviderTextDims::default()) as Box<dyn DrcTestProviderRun>,
-            Box::new(DrcTestProviderTextMirroring::default()),
-        ]
-    });
+    let score = drc_harness::compare_corpus_flow(
+        TEXT_TYPES,
+        "",
+        &["text_dimensions", "text_mirroring"],
+    );
     score.print("DRC-24 text dimensions / mirroring");
     score.assert_no_mismatch();
 }
@@ -109,16 +105,14 @@ fn load_qa(rel: &str) -> Option<Loaded> {
     }
 }
 
-/// Runs `providers` on `loaded`; `None` (with a note) when the run reaches a part of the port
-/// that is still pending. Other panics propagate.
-fn run_or_pending(
-    rel: &str,
-    loaded: &mut Loaded,
-    providers: &mut [&mut dyn DrcTestProviderRun],
-) -> Option<Vec<Reported>> {
+/// Runs the registry slots `providers` through the real run path (cache generator
+/// included: it builds the courtyard caches the courtyard provider reads) on `loaded`;
+/// `None` (with a note) when the run reaches a part of the port that is still pending.
+/// Other panics propagate.
+fn run_or_pending(rel: &str, loaded: &mut Loaded, providers: &[&str]) -> Option<Vec<Reported>> {
     match drc_harness::quiet(|| {
         catch_unwind(AssertUnwindSafe(|| {
-            run_providers(loaded, EdaUnits::Mm, true, providers)
+            run_flow_providers(loaded, EdaUnits::Mm, true, providers)
         }))
     }) {
         Ok(found) => Some(found),
@@ -233,8 +227,7 @@ fn courtyard_invalid_cases() {
                 .insert(DRCE_MISSING_COURTYARD, Severity::Error);
         }
 
-        let mut provider = DrcTestProviderCourtyardClearance::default();
-        let Some(found) = run_or_pending(&rel, &mut loaded, &mut [&mut provider]) else {
+        let Some(found) = run_or_pending(&rel, &mut loaded, &["courtyard_clearance"]) else {
             continue;
         };
         let markers = courtyard_markers(found);
@@ -291,8 +284,7 @@ fn courtyard_overlap_cases() {
                 .insert(DRCE_MISSING_COURTYARD, Severity::Ignore);
         }
 
-        let mut provider = DrcTestProviderCourtyardClearance::default();
-        let Some(found) = run_or_pending(&rel, &mut loaded, &mut [&mut provider]) else {
+        let Some(found) = run_or_pending(&rel, &mut loaded, &["courtyard_clearance"]) else {
             continue;
         };
         let markers = courtyard_markers(found);
@@ -344,8 +336,7 @@ fn drc_incorrect_text_mirror() {
                 .insert(DRCE_UNMIRRORED_TEXT_ON_BACK_LAYER, Severity::Error);
         }
 
-        let mut provider = DrcTestProviderTextMirroring::default();
-        let Some(found) = run_or_pending(&rel, &mut loaded, &mut [&mut provider]) else {
+        let Some(found) = run_or_pending(&rel, &mut loaded, &["text_mirroring"]) else {
             continue;
         };
         let violations = found

@@ -38,3 +38,22 @@ gets worse; list the counts), clippy, wasm32 builds.
   barcode entries of the skip / KNOWN_DIFFERENCES lists in kicad-fab
   tests/plot_driver_corpus.rs, tests/plot_graphics_corpus.rs and kicad-session
   tests/gerbers_job.rs if FAB-GLUE has not done it.
+
+- From M26 (generated tables, done):
+  - `PCB_DRILL_CHART::IsStale` is always true in the port (no drill model generation), so
+    a second `RefreshGeneratedTables` in one session rebuilds and counts the chart where
+    the C++ returns 0. Consequence to check against the reference: `kicad-cli pcb upgrade`
+    WITHOUT --force on an up-to-date board that holds a drill chart (C++: the loader
+    refreshes once, JobUpgrade's `RefreshGeneratedTables( *brd ) > 0` then finds nothing
+    stale -> "Board file was not updated"). Port the generation compare (the board's drill
+    generation counter with its C++ bump sites, `m_builtGeneration` on the chart) and add
+    the CLI case as a regression test on api_kitchen_sink and one crafted M26 board.
+  - pcb_table.rs: `Board::table_autosize` / `PcbTable::set_autosized_row_heights` call
+    `generated_table_autosize` for a generated table (a `port_pending!` today);
+    `Board::table_flip` calls `generated_after_flip` after PCB_TABLE::Flip.
+  - The drill model now exists twice (kicad-pcb src/drill/ and kicad-fab src/drill/):
+    make kicad-fab re-export `kicad_pcb::drill` (DrillSpan is
+    `kicad_pcb::pcb_drill_map::DrillSpan`) and delete the duplicate, after proving on the
+    drill corpus (Excellon + Gerber drill goldens of kicad-fab) that nothing changes.
+  - SVG job / PCB_PLOTTER::Plot must call `board_tables::refresh_generated_tables` before
+    plotting (pcb_plotter.cpp L90) if FAB-11 has not done it.

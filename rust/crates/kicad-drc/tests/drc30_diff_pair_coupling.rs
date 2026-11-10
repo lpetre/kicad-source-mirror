@@ -277,6 +277,11 @@ fn drc30_reference_cases() {
                 same_order += 1;
             } else {
                 println!("{case}: same entries, different order");
+                if std::env::var("DRC30_DEBUG").is_ok() {
+                    for (x, y) in a.iter().zip(b.iter()) {
+                        println!("R {}\nM {}", &x[..x.len().min(260)], &y[..y.len().min(260)]);
+                    }
+                }
             }
         }
 
