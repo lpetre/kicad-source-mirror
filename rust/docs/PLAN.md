@@ -190,9 +190,19 @@ Progress log:
   PCBIO-09, PCBIO-11, CN-01, CN-02, DRC-03. Launched: PROP-1 -> DRC-21 -> DRC-22 (property
   tables, expression binding, functions) and DRC-06 -> DRC-07 -> DRC-08a -> DRC-08b -> DRC-09
   -> DRC-10 -> DRC-12 (providers and the drc job) (w878ykkp2). Package files still to write:
-  PCBIO-14 (footprint library files), PCBIO-15 (loader glue in kicad-session, after CN-04),
-  ZF-01..06 and TD-01/02 (zone fill and teardrops, after CN-04 and DRC-04), tier-2 DRC
-  providers DRC-23..29, FAB-10..12.
+  FAB-10..12 (tier 2). 02:20 UTC: done M9 (2384 values vs pcb-dump, 0 mismatches), M11
+  (9403 oracle values equal), M18, PCBIO-08, CN-02, CN-03 (ratsnest: 0 mismatches), DRC-04
+  EvalRules (1128 oracle categories match, 0 mismatch; pads pending the pad parser).
+  kicad-pcb model stubs: 793 -> 73 (barcode tier 2, footprint geometry M20 running).
+  Launched: tier-2 DRC providers DRC-24 -> DRC-26 -> DRC-23 -> DRC-29 and DRC-27 -> DRC-25
+  -> DRC-28 (wxpfc9smx).
+  READY TO LAUNCH (package files written): after CN-04 finishes (workflow w6koa0hnk):
+  chain [PCBIO-15] and chain [ZF-01, ZF-03, ZF-06] then [TD-01]; after PCBIO-07 finishes
+  (workflow w3kdexuvx): [PCBIO-14]; after GLUE-1 finishes (workflow w3ztkctur): Fable
+  integration #2 (see below; M9 / M11 / M12 / M15 / M18 are done, so it is no longer
+  blocked by them).
+  Dedicated Fable reviews are postponed until pads parse (then the EvalRules and
+  connectivity oracles cover pads and a review can look at real mismatches).
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
   real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12
