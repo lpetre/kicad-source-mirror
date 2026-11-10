@@ -61,17 +61,19 @@ class Board:
         self.rng = random.Random(seed)
         self.nets = nets
         self.items = []
+        self.shapes = []
 
     def uuid(self):
         h = "%032x" % self.rng.getrandbits(128)
         return "%s-%s-4%s-8%s-%s" % (h[0:8], h[8:12], h[13:16], h[17:20], h[20:32])
 
-    def via(self, x, y, net, mode=KEEP_ALL, top="F.Cu", bot="B.Cu", size=0.6, kind=""):
+    def via(self, x, y, net, mode=KEEP_ALL, top="F.Cu", bot="B.Cu", size=0.6, kind="", free=False):
         kind = (" " + kind) if kind else ""
+        free = "\t\t(free yes)\n" if free else ""
         self.items.append(
             "\t(via%s\n\t\t(at %s %s)\n\t\t(size %s)\n\t\t(drill 0.3)\n"
-            "\t\t(layers \"%s\" \"%s\")\n%s\t\t(net %d)\n\t\t(uuid \"%s\")\n\t)\n"
-            % (kind, mm(x), mm(y), size, top, bot, mode, net, self.uuid()))
+            "\t\t(layers \"%s\" \"%s\")\n%s%s\t\t(net %d)\n\t\t(uuid \"%s\")\n\t)\n"
+            % (kind, mm(x), mm(y), size, top, bot, mode, free, net, self.uuid()))
 
     def seg(self, x1, y1, x2, y2, layer, net, width=0.2):
         self.items.append(
@@ -96,7 +98,73 @@ class Board:
             "\t\t(filled_polygon\n\t\t\t(layer \"%s\")\n\t\t\t(pts\n\t\t\t\t%s\n\t\t\t)\n\t\t)\n\t)\n"
             % (net, net, layer, self.uuid(), xy, layer, xy))
 
+    def zone_ex(self, outline, fills, net, teardrop=False):
+        """A zone with explicit fills: `fills` is a list of (layer, pts), one per fill outline
+        (several per layer = islands); the zone is on every layer named there."""
+        def xy(pts):
+            return " ".join("(xy %s %s)" % (mm(x), mm(y)) for x, y in pts)
+
+        layers = []
+        for layer, _ in fills:
+            if layer not in layers:
+                layers.append(layer)
+        if len(layers) == 1:
+            layer_text = "\t\t(layer \"%s\")\n" % layers[0]
+        else:
+            layer_text = "\t\t(layers %s)\n" % " ".join("\"%s\"" % l for l in layers)
+        attr = ""
+        if teardrop:
+            attr = ("\t\t(name \"$teardrop_padvia$\")\n\t\t(hatch full 0.1)\n\t\t(priority 30000)\n"
+                    "\t\t(attr\n\t\t\t(teardrop\n\t\t\t\t(type padvia)\n\t\t\t)\n\t\t)\n")
+        else:
+            attr = "\t\t(hatch edge 0.5)\n"
+        out = ("\t(zone\n\t\t(net %d)\n\t\t(net_name \"%s\")\n%s\t\t(uuid \"%s\")\n%s"
+               "\t\t(connect_pads\n\t\t\t(clearance 0.2)\n\t\t)\n"
+               "\t\t(min_thickness 0.2)\n\t\t(fill yes\n\t\t\t(thermal_gap 0.5)\n"
+               "\t\t\t(thermal_bridge_width 0.5)\n\t\t)\n"
+               "\t\t(polygon\n\t\t\t(pts\n\t\t\t\t%s\n\t\t\t)\n\t\t)\n"
+               % (net, ("N%d" % net) if net else "", layer_text, self.uuid(), attr, xy(outline)))
+        for layer, pts in fills:
+            out += ("\t\t(filled_polygon\n\t\t\t(layer \"%s\")\n\t\t\t(pts\n\t\t\t\t%s\n"
+                    "\t\t\t)\n\t\t)\n" % (layer, xy(pts)))
+        self.items.append(out + "\t)\n")
+
+    def gr(self, kind, body, layer, net, width=0.2, fill=None):
+        """A board graphic (`gr_line`, `gr_arc`, `gr_circle`, `gr_rect`, `gr_poly`)."""
+        fill_text = "" if fill is None else "\t\t(fill %s)\n" % fill
+        net_text = "" if net is None else "\t\t(net %d)\n" % net
+        self.shapes.append(
+            "\t(%s\n%s\t\t(stroke\n\t\t\t(width %s)\n\t\t\t(type solid)\n\t\t)\n%s"
+            "\t\t(layer \"%s\")\n%s\t\t(uuid \"%s\")\n\t)\n"
+            % (kind, body, width, fill_text, layer, net_text, self.uuid()))
+
+    def gr_line(self, x1, y1, x2, y2, layer, net, width=0.2):
+        self.gr("gr_line", "\t\t(start %s %s)\n\t\t(end %s %s)\n" % (mm(x1), mm(y1), mm(x2), mm(y2)),
+                layer, net, width)
+
+    def gr_arc(self, x1, y1, xm, ym, x2, y2, layer, net, width=0.2):
+        self.gr("gr_arc", "\t\t(start %s %s)\n\t\t(mid %s %s)\n\t\t(end %s %s)\n"
+                % (mm(x1), mm(y1), mm(xm), mm(ym), mm(x2), mm(y2)), layer, net, width)
+
+    def gr_circle(self, cx, cy, r, layer, net, width=0.2, fill="no"):
+        self.gr("gr_circle", "\t\t(center %s %s)\n\t\t(end %s %s)\n" % (mm(cx), mm(cy), mm(cx + r), mm(cy)),
+                layer, net, width, fill)
+
+    def gr_rect(self, x1, y1, x2, y2, layer, net, width=0.2, fill="no"):
+        self.gr("gr_rect", "\t\t(start %s %s)\n\t\t(end %s %s)\n" % (mm(x1), mm(y1), mm(x2), mm(y2)),
+                layer, net, width, fill)
+
+    def gr_poly(self, pts, layer, net, width=0.2, fill="yes"):
+        xy = " ".join("(xy %s %s)" % (mm(x), mm(y)) for x, y in pts)
+        self.gr("gr_poly", "\t\t(pts\n\t\t\t%s\n\t\t)\n" % xy, layer, net, width, fill)
+
     def text(self):
+        # File order of pcbnew: graphics, then tracks, then zones.
+        tracks = [i for i in self.items if not i.startswith("\t(zone")]
+        zones = [i for i in self.items if i.startswith("\t(zone")]
+        if self.shapes:
+            self.items = self.shapes + tracks + zones
+            self.shapes = []
         out = HEADER
         out += "\t(net 0 \"\")\n"
         for n in range(1, self.nets + 1):
@@ -236,11 +304,213 @@ def random_board(seed):
     return b
 
 
+def rect(x1, y1, x2, y2):
+    return [(x1 * MM, y1 * MM), (x2 * MM, y1 * MM), (x2 * MM, y2 * MM), (x1 * MM, y2 * MM)]
+
+
+def rev_zone_contacts():
+    """REV-CN: the zone contact paths of CN_VISITOR (zone / item by anchor and by shape, zone /
+    zone), the deferred via-net rule, islands and a teardrop zone."""
+    b = Board(31, 4)
+    y = 10 * MM
+    # --- zone / item: zone N1 on F.Cu
+    z = rect(10, 5, 20, 15)
+    b.zone_ex(z, [("F.Cu", z)], 1)
+    b.seg(12 * MM, y, 25 * MM, y, "F.Cu", 1)                 # start anchor inside
+    b.seg(8 * MM, 7 * MM, 22 * MM, 7 * MM, "F.Cu", 1)        # crosses, both ends outside
+    b.seg(20 * MM + 100000, 12 * MM, 25 * MM, 12 * MM, "F.Cu", 1)   # cap just touches the edge
+    b.seg(20 * MM + 100001, 13 * MM, 25 * MM, 13 * MM, "F.Cu", 1)   # 1 nm short
+    b.seg(12 * MM, 11 * MM, 18 * MM, 11 * MM, "B.Cu", 1)     # other layer
+    b.seg(12 * MM, 9 * MM, 18 * MM, 9 * MM, "F.Cu", 2)       # other net (a track may change net)
+    b.via(15 * MM, 12 * MM, 1)                               # anchor inside
+    b.via(20 * MM + 200000, 14 * MM, 1)                      # only the ring overlaps
+    b.via(20 * MM + 300000, 6 * MM, 1)                       # ring touches the edge exactly
+    b.via(17 * MM, 6 * MM, 1, REMOVE_ALL)                    # conditionally flashed, inside
+    b.via(13 * MM, 13 * MM, 1, KEEP_ALL, "F.Cu", "In1.Cu", kind="blind")
+    b.via(11 * MM, 6 * MM, 1, KEEP_ALL, "In1.Cu", "In2.Cu", kind="buried")   # not on F.Cu
+    b.arc(9 * MM, 13 * MM, 10 * MM + 500000, 14 * MM, 9 * MM, 15 * MM, "F.Cu", 1)   # body only
+    # --- the deferred via-net rule: zones N2 on In1 and N3 on In2 over each other
+    z = rect(40, 5, 50, 15)
+    b.zone_ex(z, [("In1.Cu", z)], 2)
+    b.zone_ex(z, [("In2.Cu", z)], 3)
+    b.via(42 * MM, 8 * MM, 0)                                # no net: takes the lowest (2)
+    b.via(44 * MM, 8 * MM, 3)                                # its net matches a zone: kept
+    b.via(46 * MM, 8 * MM, 1)                                # matches none: lowest (2)
+    b.via(48 * MM, 8 * MM, 1)                                # has a track: untouched
+    b.seg(48 * MM, 8 * MM, 48 * MM, 3 * MM, "F.Cu", 1)
+    b.via(42 * MM, 12 * MM, 4, free=True)                    # free via of another net: no contact
+    b.via(44 * MM, 12 * MM, 2, free=True)                    # free via of the In1 zone's net
+    b.via(46 * MM, 12 * MM, 0, KEEP_ALL, "F.Cu", "In1.Cu", kind="blind")    # touches N2 only
+    b.via(48 * MM, 12 * MM, 0)                               # net-less with a net-less track
+    b.seg(48 * MM, 12 * MM, 52 * MM, 17 * MM, "B.Cu", 0)
+    b.via(41 * MM, 14 * MM, 4)                               # track of another net wins later
+    b.seg(41 * MM, 14 * MM, 38 * MM, 14 * MM, "F.Cu", 1)
+    # --- zone / zone on B.Cu
+    za = rect(70, 5, 80, 15)
+    b.zone_ex(za, [("B.Cu", za)], 1)
+    zb = rect(78, 8, 88, 12)
+    b.zone_ex(zb, [("B.Cu", zb)], 1)                         # corners inside A
+    zc = rect(90, 5, 95, 10)
+    zd = rect(95, 10, 100, 15)
+    b.zone_ex(zc, [("B.Cu", zc)], 1)                         # C and D share one corner
+    b.zone_ex(zd, [("B.Cu", zd)], 1)
+    ze = rect(114, 2, 116, 18)
+    zf = rect(110, 9, 120, 11)
+    b.zone_ex(ze, [("B.Cu", ze)], 1)                         # a cross: no corner inside the other
+    b.zone_ex(zf, [("B.Cu", zf)], 1)
+    zg = rect(72, 13, 76, 17)
+    b.zone_ex(zg, [("B.Cu", zg)], 2)                         # other net over A
+    zh = rect(71, 6, 75, 10)
+    b.zone_ex(zh, [("F.Cu", zh)], 1)                         # other layer over A
+    zs = rect(80, 20, 85, 25)
+    zt = rect(85, 20, 90, 25)
+    b.zone_ex(zs, [("B.Cu", zs)], 1)                         # S and T share an edge
+    b.zone_ex(zt, [("B.Cu", zt)], 1)
+    # --- islands: one zone, three fill outlines on B.Cu, a two-layer zone
+    zi = rect(130, 5, 160, 15)
+    b.zone_ex(zi, [("B.Cu", rect(130, 5, 138, 15)), ("B.Cu", rect(142, 5, 150, 15)),
+                   ("B.Cu", rect(152, 5, 156, 9))], 1)
+    b.seg(136 * MM, y, 144 * MM, y, "B.Cu", 1)               # bridges the first two islands
+    b.via(132 * MM, 7 * MM, 1)                               # second connection of the first
+    zj = rect(130, 20, 150, 30)
+    b.zone_ex(zj, [("F.Cu", rect(130, 20, 150, 30)), ("In1.Cu", rect(130, 20, 139, 30)),
+                   ("In1.Cu", rect(141, 20, 150, 30))], 3)
+    b.via(135 * MM, 25 * MM, 3)                              # F.Cu island and the first In1 island
+    b.seg(145 * MM, 25 * MM, 155 * MM, 25 * MM, "In1.Cu", 3)  # second In1 island only
+    zk = rect(165, 20, 170, 25)
+    b.zone_ex(zk, [("In2.Cu", zk)], 0)                       # net-less zone with a net-less via
+    b.via(167 * MM, 22 * MM, 0)
+    # --- a teardrop zone (outline tests instead of triangles)
+    td = [(170 * MM, 10 * MM - 100000), (173 * MM, 10 * MM - 500000), (173 * MM, 10 * MM + 500000),
+          (170 * MM, 10 * MM + 100000)]
+    b.zone_ex(td, [("F.Cu", td)], 1, teardrop=True)
+    b.seg(168 * MM, y, 171 * MM, y, "F.Cu", 1)               # end anchor inside the outline
+    b.via(173 * MM + 200000, y, 1)                           # ring overlaps the outline
+    b.seg(171 * MM, 10 * MM + 400000, 175 * MM, 12 * MM, "F.Cu", 1)   # touches the slanted edge
+    zr = rect(172, 8, 176, 12)
+    b.zone_ex(zr, [("F.Cu", zr)], 1)                         # ordinary zone over the teardrop
+    return b
+
+
+def rev_ratsnest_zones():
+    """REV-CN: RN_NET::OptimizeRNEdges (both lambdas) and ratsnest nodes next to zones."""
+    b = Board(32, 4)
+    # --- optimizeZoneAnchor: a lone via and a via in a zone island of the same net
+    z = rect(30, 5, 50, 15)
+    b.zone_ex(z, [("F.Cu", z)], 1)
+    b.via(10 * MM, 10 * MM, 1)                               # two outline corners at one distance
+    b.via(40 * MM, 10 * MM, 1)
+    b.via(60 * MM, 4 * MM, 1, KEEP_ALL, "In1.Cu", "In2.Cu", kind="buried")  # not on the zone's layer
+    b.seg(70 * MM, 12 * MM, 75 * MM, 12 * MM, "F.Cu", 1)     # a lone track
+    # --- optimizeZoneToZoneAnchors: two islands of one zone, a via in each
+    zz = rect(10, 30, 50, 40)
+    b.zone_ex(zz, [("F.Cu", rect(10, 30, 20, 40)),
+                   ("F.Cu", [(40 * MM, 31 * MM), (50 * MM, 30 * MM), (50 * MM, 40 * MM),
+                             (38 * MM, 40 * MM)])], 2)
+    b.via(12 * MM, 35 * MM, 2)
+    b.via(48 * MM, 35 * MM, 2)
+    # --- three islands, more than three candidate pairs, tracks ending in the fills
+    zy = rect(10, 50, 90, 62)
+    b.zone_ex(zy, [("B.Cu", rect(10, 50, 20, 60)), ("B.Cu", rect(30, 52, 40, 62)),
+                   ("B.Cu", rect(60, 50, 70, 60)), ("In1.Cu", rect(10, 50, 22, 60)),
+                   ("In1.Cu", rect(58, 50, 70, 60))], 3)
+    b.via(15 * MM, 55 * MM, 3)                               # B.Cu and In1 islands at the left
+    b.via(65 * MM, 55 * MM, 3)                               # B.Cu and In1 islands at the right
+    b.seg(35 * MM, 57 * MM, 35 * MM, 70 * MM, "B.Cu", 3)     # middle island and a free end
+    b.via(35 * MM, 70 * MM, 3)
+    # --- a zone island without any item, and a net with zones only
+    zq = rect(100, 5, 110, 15)
+    b.zone_ex(zq, [("F.Cu", rect(100, 5, 104, 15)), ("F.Cu", rect(106, 5, 110, 15))], 4)
+    return b
+
+
+def rev_shapes():
+    """REV-CN: copper graphics as connectivity items (connection points per shape kind) and the
+    net propagation of clusters without pads (the first member with a net in list order)."""
+    b = Board(33, 4)
+    y = 10 * MM
+    # the track's net wins over a net-less track and a net-less line (tracks come first)
+    b.gr_line(10 * MM, y, 20 * MM, y, "F.Cu", 0)
+    b.seg(20 * MM, y, 25 * MM, y, "F.Cu", 1)
+    b.seg(10 * MM, y, 10 * MM, 5 * MM, "F.Cu", 0)
+    # the line is the only item with a net
+    b.gr_line(30 * MM, y, 40 * MM, y, "F.Cu", 2)
+    b.seg(40 * MM, y, 45 * MM, y, "F.Cu", 0)
+    b.seg(30 * MM, y, 30 * MM, 5 * MM, "F.Cu", 0)
+    # two track nets in one cluster: the first in board order wins
+    b.seg(50 * MM, y, 55 * MM, y, "F.Cu", 3)
+    b.seg(55 * MM, y, 60 * MM, y, "F.Cu", 1)
+    b.via(60 * MM, y, 2)
+    b.seg(60 * MM, y, 65 * MM, y, "B.Cu", 4)
+    # a free via keeps its net and does not stop the others
+    b.seg(70 * MM, y, 75 * MM, y, "F.Cu", 0)
+    b.via(75 * MM, y, 4, free=True)
+    b.seg(75 * MM, y, 80 * MM, y, "B.Cu", 2)
+    # circle (four key points), with a track on one and a zone under another
+    b.gr_circle(100 * MM, y, 3 * MM, "F.Cu", 1)
+    b.seg(103 * MM, y, 108 * MM, y, "F.Cu", 1)
+    zc = rect(96, 8, 98, 12)
+    b.zone_ex(zc, [("F.Cu", zc)], 1)
+    b.seg(100 * MM, 12 * MM, 100 * MM, 9 * MM, "F.Cu", 1)    # inside the circle: no contact
+    # rectangle outline (corners), filled rectangle (centre) in a zone, arc, filled polygon
+    b.gr_rect(120 * MM, 5 * MM, 130 * MM, 15 * MM, "F.Cu", 1)
+    b.seg(130 * MM, 15 * MM, 135 * MM, 18 * MM, "F.Cu", 1)
+    b.gr_rect(140 * MM, 5 * MM, 150 * MM, 15 * MM, "B.Cu", 2, fill="yes")
+    zr = rect(144, 9, 146, 11)
+    b.zone_ex(zr, [("B.Cu", zr)], 2)
+    zo = rect(151, 5, 155, 15)
+    b.zone_ex(zo, [("B.Cu", zo)], 2)                         # 1 mm beside the filled rectangle
+    b.gr_arc(160 * MM, y, 162 * MM, 12 * MM, 164 * MM, y, "In1.Cu", 3)
+    b.seg(162 * MM, 12 * MM, 162 * MM, 16 * MM, "In1.Cu", 3)
+    b.gr_poly([(170 * MM, 5 * MM), (180 * MM, 5 * MM), (175 * MM, 15 * MM)], "In2.Cu", 4)
+    b.via(175 * MM, 8 * MM, 4)
+    b.gr_poly([(185 * MM, 5 * MM), (195 * MM, 5 * MM), (190 * MM, 15 * MM)], "In2.Cu", 4, fill="no")
+    zp = rect(189, 14, 191, 16)
+    b.zone_ex(zp, [("In2.Cu", zp)], 4)
+    # not copper: no item
+    b.gr_line(10 * MM, 30 * MM, 20 * MM, 30 * MM, "Edge.Cuts", None)
+    # two lines of different nets touching: the first drawing wins (no track in the cluster)
+    b.gr_line(30 * MM, 30 * MM, 40 * MM, 30 * MM, "B.Cu", 3)
+    b.gr_line(40 * MM, 30 * MM, 50 * MM, 30 * MM, "B.Cu", 1)
+    return b
+
+
+def rev_order_probe():
+    """REV-CN: results that follow the order of CN_ITEM::m_connected, which the reference build
+    keeps in heap-address order (rust/docs/design/review-connectivity.md)."""
+    b = Board(34, 3)
+    # a track whose two ends lie off-centre in two vias (DRC: track not centred on via, first hit)
+    b.via(10 * MM, 10 * MM, 1)
+    b.via(20 * MM, 10 * MM, 1)
+    b.seg(10 * MM + 50000, 10 * MM, 20 * MM - 50000, 10 * MM, "F.Cu", 1)
+    # optimizeZoneAnchor: the nearest outline vertex is the same point on two zones
+    z = rect(30, 25, 50, 35)
+    b.zone_ex(z, [("F.Cu", z)], 2)
+    b.zone_ex(z, [("B.Cu", z)], 2)
+    b.via(10 * MM, 28 * MM, 2)
+    b.via(40 * MM, 30 * MM, 2)
+    # optimizeZoneToZoneAnchors: four candidate pairs with one centre distance, different outlines
+    zp = rect(10, 50, 50, 60)
+    b.zone_ex(zp, [("F.Cu", rect(10, 50, 20, 60)), ("F.Cu", rect(40, 50, 50, 60))], 3)
+    qa = [(10 * MM, 50 * MM), (20 * MM, 50 * MM), (20 * MM, 52 * MM), (15 * MM, 55 * MM),
+          (20 * MM, 58 * MM), (20 * MM, 60 * MM), (10 * MM, 60 * MM)]
+    qb = [(40 * MM, 50 * MM), (50 * MM, 50 * MM), (50 * MM, 60 * MM), (40 * MM, 60 * MM),
+          (40 * MM, 58 * MM), (45 * MM, 55 * MM), (40 * MM, 52 * MM)]
+    b.zone_ex(zp, [("B.Cu", qa), ("B.Cu", qb)], 3)
+    b.via(12 * MM, 55 * MM, 3)
+    b.via(48 * MM, 55 * MM, 3)
+    return b
+
+
 BOARDS = {
     "cn04_flash": flash,
     "cn04_dangling": dangling,
     "cn04_random1": lambda: random_board(21),
     "cn04_random2": lambda: random_board(22),
+    "rev_zone_contacts": rev_zone_contacts,
+    "rev_ratsnest_zones": rev_ratsnest_zones,
+    "rev_shapes": rev_shapes,
+    "rev_order_probe": rev_order_probe,
 }
 
 if __name__ == "__main__":
