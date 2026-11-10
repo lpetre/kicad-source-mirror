@@ -678,3 +678,61 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
 
 * `--generate-map`: FAB-12 (`FabError::NotPorted`, as for Excellon).
 * (Done, FAB-GLUE) End-to-end on boards with vias: see "FAB-GLUE" below.
+
+## FAB-GLUE: drill enumeration on the via model, model replacements, stale expectations
+
+### Changes
+
+| Before | After |
+|---|---|
+| `drill/via_access.rs` placeholders (`port_pending!`) | `PcbVia::drill_value(ctx)`, `layer_pair()`, `resolve_*_mode(ctx)` of the model (M17); file deleted |
+| `drill_enumerator.rs` unit test: `KiidGenerator::default()` (R2-11) | the board's `kiid_generator`; the enumerator itself draws no UUID |
+| `plot_board_layers::pad_delete_primitives_list` / `pad_add_primitive_poly` | `Pad::delete_primitives_list` / `Pad::add_primitive_poly` (on the `&mut Pad` copy with the pad env) |
+| `plot_board_layers::round_chamfered_rect_to_polygon`, `SvgPlotter::set_round_rect_polygon_fn` call, `flash_pad_chamfer_round_rect(.., &fn)` | `GerberPlotter::flash_pad_chamfer_round_rect_default`; the SVG plotter's default generator |
+| private `expand_project_text_vars` in `pcbplot.rs` and `gerber_jobfile_writer.rs` | `Board::expand_project_text_vars` (kicad-pcb `board/text_vars.rs`, `ExpandTextVars( s, GetProject(), FOR_GUI )` through the model's `PROJECT::TextVarResolver`) |
+| local `pad_with_{castellated,press_fit}_attr_count`, `drill_symbol_layers` | `Board::pad_with_castellated_attr_count`, `pad_with_press_fit_attr_count`, `drill_symbol_layers` (kicad-pcb `board/queries.rs`) |
+| `e2e` feature, ignored `enumeration_matches_oracle` / `drill_export_matches_cli_goldens` | run by default |
+| corpus plot tests with `BoardCtx::bare` + connectivity | plus the board's DRC engine as `RuleResolver` (`plot_common::drc_engine`, as `BOARD_LOADER::Load` / kicad-session); kicad-drc is a dev-dependency |
+| `KNOWN_DIFFERENCES` (plot driver / graphics / items corpus), barcode skip | empty (every file matches); barcode layers compared |
+
+### Verification (all against the reference kicad-cli)
+
+* `tests/excellon_corpus.rs` (new; golden `tests/golden/excellon_corpus/corpus.txt` from
+  `generate.py` there, about 50 minutes): every `qa/data` / `demos` board under 300 KB plus the
+  crafted boards `tests/data/gerber_drill/ipc4761_vias.kicad_pcb` and
+  `tests/data/excellon_corpus/drill_features.kicad_pcb` (new: 10 copper layers, via backdrills
+  front and back, tertiary drills, via front countersink / back counterbore, blind / micro /
+  buried vias incl. reversed layer order, a rotated footprint with pad backdrill / tertiary /
+  post-machining (ignored by the CLI drill export, `m_PadMachining` false), rotated oval PTH,
+  castellated / press-fit pads, NPTH round and oval) x 12 option sets (default, which is
+  `--excellon-oval-format alternate`; `--excellon-separate-th`; `--excellon-oval-format route`;
+  `-u in`; `--excellon-zeros-format` suppressleading / suppresstrailing / keep;
+  `--drill-origin plot`; `--excellon-min-header`; `--excellon-mirror-y`; `--generate-report`;
+  `--generate-report --excellon-separate-th`), through parser, enumeration and drill job:
+  **4572 of 4584 runs identical (7212 files incl. the reports: names, order, normalised
+  contents), 0 pending, 0 differ**, 12 kicad-cli failures (`plugins/fakeboard.kicad_pcb`)
+  skipped. Full normalised texts of the crafted boards for `default` and `report_sep`.
+* `tests/gerber_drill.rs`: 831 of 1143 identical / 309 pending before; **1143 of 1146
+  identical, 0 pending, 0 differ** after (the crafted board above added; `default`,
+  `--generate-tenting`, `--gerber-precision 5 --drill-origin plot --generate-tenting`).
+* `tests/drill_golden.rs::drill_export_matches_cli_goldens`: ignored before; 10 boards x 5
+  sets identical. `tests/drill_oracle.rs::enumeration_matches_oracle`: ignored before; the
+  enumeration of the 10 corpus boards equals the C++ raw lists.
+* Corpus plot replays, before (start of FAB-GLUE) -> after: plot driver 8445 matched / 88
+  pending / 0 known -> 8445 / 88 / 0 (`KNOWN_DIFFERENCES` emptied, 7 stale entries); plot
+  graphics corpus 8443 matched + 2 barcode skipped -> 8445 matched; crafted 31 + 45 -> same;
+  plot items 7334 + 26 -> same; 0 failures throughout. The 88 pending are drill maps (FAB-13)
+  and mask minimum width (FAB-10). The DRC-engine resolver changed no result (the B.Mask files
+  had already been fixed in the model).
+
+### Deviations
+
+* None new. `${VCSHASH}` / `${VCSSHORTHASH}` in a revision now resolve as the model's
+  `PROJECT::TextVarResolver` does ("no hash", as `GetCurrentHash` outside a git repository)
+  instead of the former local copies' empty string.
+
+### Known gaps / change requests
+
+* Knockout / strike-out text of a footprint dimension still reaches the pending stub in
+  `plot_brditems_text.rs` (owned by FONT-RC-1 while it runs): its
+  `pcb_text_transform_text_to_poly_set` should call `PcbDimension::transform_text_to_poly_set`.

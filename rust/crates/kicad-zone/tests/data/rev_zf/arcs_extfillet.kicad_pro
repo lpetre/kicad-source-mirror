@@ -1,0 +1,11 @@
+{
+  "board": {
+    "design_settings": {
+      "zones_allow_external_fillets": true
+    }
+  },
+  "meta": {
+    "filename": "arcs_extfillet.kicad_pro",
+    "version": 3
+  }
+}

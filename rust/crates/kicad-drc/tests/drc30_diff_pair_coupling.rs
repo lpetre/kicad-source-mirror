@@ -191,13 +191,25 @@ fn golden() -> BTreeMap<String, Vec<Entry>> {
     out
 }
 
-/// The comparison key of an entry: the items of an uncoupled entry sorted (their order is
-/// address dependent in C++).
+/// The net part (`[<net>]`) of an item description.
+fn net_of(description: &str) -> &str {
+    let start = description.find('[').map_or(0, |i| i + 1);
+    let end = description[start..]
+        .find(']')
+        .map_or(description.len(), |i| start + i);
+    &description[start..end]
+}
+
+/// The comparison key of an entry. The two items a report shows for an uncoupled entry are
+/// the first items of the positive and of the negative net in address order in C++ (heap
+/// dependent), so they are compared by their nets only (positive net first).
 fn key(e: &Entry) -> String {
     let mut e = e.clone();
 
     if e.type_ == "diff_pair_uncoupled_length_too_long" {
-        e.items.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+        for it in e.items.iter_mut() {
+            *it = (String::new(), format!("item of net {}", net_of(&it.1)), 0.0, 0.0);
+        }
     }
 
     e.key()
