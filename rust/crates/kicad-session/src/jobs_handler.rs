@@ -341,12 +341,22 @@ pub fn drc_units(units: RcUnits) -> kicad_core::EdaUnits {
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobExportDrc`.
+///
+/// The DRC itself (violation handler, exclusions, `RunTests`, the marker providers and the
+/// report writers) is `kicad_drc::run_flow::run_drc_job`. Checks the port cannot run yet are
+/// listed in the report (`kicad_drc::run_flow::CheckNotRun`) and, one line each, as a
+/// warning on the reporter after the C++ messages; without such checks the messages and the
+/// report are those of the C++.
+///
+/// `--schematic-parity` behaves as a build without the schematic kiface: without a schematic
+/// file "Failed to fetch schematic netlist for parity tests.", with one the netlister is
+/// missing and the annotation message is reported; parity is then off, as in C++.
 pub fn run_drc(
     session: &mut Session,
     job: &mut JobPcbDrc,
     reporter: &mut Reporter,
 ) -> Result<JobOutcome, SessionError> {
-    let _ = &reporter;
+    use kicad_drc::run_flow::{DrcJobOptions, DrcReportFormat, RunTestsOptions, run_drc_job};
 
     // Running DRC requires libraries be loaded (footprint library parity only; not ported).
 
@@ -356,19 +366,154 @@ pub fn run_drc(
     }
 
     let out_path = resolve_job_output_path(&mut job.rc.job, session);
-    let _units = drc_units(job.rc.units);
-    let _ = out_path;
 
-    // drcEngine->InitEngine( brd->GetDesignRulesPath() ) when the rules are not valid, then the
-    // schematic parity netlist, the zone refill, RunTests, the marker providers and the report.
+    // PATHS::EnsurePathExists( outPath, true ): the host creates the directory when it writes
+    // the file.
+
+    let units = drc_units(job.rc.units);
+
+    if session.drc_engine.is_none() {
+        session.drc_engine = Some(kicad_drc::engine::DrcEngine::new());
+    }
+
+    let rules_valid = session
+        .drc_engine
+        .as_ref()
+        .is_some_and(|engine| engine.rules_valid());
+
+    if !rules_valid {
+        let rules_path = crate::board_loader::with_extension(&session.source_name, "kicad_dru");
+        let layer_choices = kicad_drc::rule_parser::board_layer_choices(&session.board);
+        // TUNING_PROFILES are not in the port's project model yet (SET-11).
+        let tuning_profiles = kicad_drc::engine::implicit_rules::TuningProfiles::default();
+        let engine = session.drc_engine.as_mut().expect("engine");
+
+        if let Err(error) = engine.init_engine(
+            &mut session.board,
+            session
+                .rules_text
+                .as_deref()
+                .map(|t| (t, rules_path.as_str())),
+            layer_choices,
+            &tuning_profiles,
+            None,
+        ) {
+            reporter.report(
+                format!(
+                    "DRC incomplete: could not compile custom design rules.\n{}\n",
+                    error.what()
+                ),
+                Severity::Error,
+            );
+            return Ok(JobOutcome::exit(exit_codes::ERR_INVALID_INPUT_FILE));
+        }
+    }
+
+    // drcEngine->SetDrawingSheet( getDrawingSheetProxyView( brd ) ): the drawing sheet text
+    // variable test of the misc provider is not wired (kicad-drc PORT_STATUS.md, DRC-12).
+
+    let mut check_parity = job.parity;
+
+    if check_parity {
+        let annotate_msg = "Schematic parity tests require a fully annotated schematic.";
+
+        if !job.schematic_exists {
+            reporter.report(
+                "Failed to fetch schematic netlist for parity tests.\n",
+                Severity::Error,
+            );
+        } else {
+            // GetKifaceService<KIFACE_NETLIST_SCHEMATIC_SERVICE>() is null without the
+            // schematic kiface: netlist_str stays annotateMsg.
+            reporter.report(format!("{annotate_msg}\n"), Severity::Error);
+        }
+
+        check_parity = false;
+    }
+
     if job.refill_zones {
         session.refill_zones()?;
     }
 
-    // ... then, after the report: drc_save_board (below).
-    Err(SessionError::not_yet_ported(
-        "kicad-drc: DRC_ENGINE::InitEngine / RunTests and DRC_REPORT",
-    ))
+    let tuning_profiles = kicad_drc::engine::implicit_rules::TuningProfiles::default();
+    let options = DrcJobOptions {
+        run: RunTestsOptions {
+            units,
+            report_all_track_errors: job.report_all_track_errors,
+            test_footprints: check_parity,
+            tuning_profiles: &tuning_profiles,
+        },
+        severities: job.rc.severity,
+        format: match job.rc.format {
+            RcOutputFormat::Json => DrcReportFormat::Json,
+            RcOutputFormat::Report => DrcReportFormat::Text,
+        },
+        date: job.report_date.clone(),
+        kicad_version: kicad_drc::report::KICAD_MAJOR_MINOR_PATCH_VERSION.to_string(),
+        marker_uuid_seed: job.marker_uuid_seed,
+    };
+
+    let engine = session.drc_engine.as_ref().expect("engine");
+    let result = run_drc_job(
+        engine,
+        &mut session.board,
+        &mut session.connectivity,
+        &options,
+    );
+
+    reporter.report(
+        format!("Found {} violations\n", result.violations),
+        Severity::Info,
+    );
+    reporter.report(
+        format!("Found {} unconnected items\n", result.unconnected_items),
+        Severity::Info,
+    );
+
+    if check_parity {
+        reporter.report(
+            format!("Found {} schematic parity issues\n", result.parity_issues),
+            Severity::Info,
+        );
+    }
+
+    let mut outcome = JobOutcome {
+        exit_code: exit_codes::SUCCESS,
+        files: vec![OutputFile {
+            name: out_path.clone(),
+            contents: result.report.clone().into_bytes(),
+        }],
+        report_text: Some(result.report.clone()),
+    };
+
+    job.rc.job.add_output(&out_path);
+
+    reporter.report(
+        format!("Saved DRC Report to {out_path}\n"),
+        Severity::Action,
+    );
+
+    for check in &result.checks_not_run {
+        reporter.report(
+            format!(
+                "DRC check '{}' was not run: {}\n",
+                check.provider, check.reason
+            ),
+            Severity::Warning,
+        );
+    }
+
+    if let Some(code) = drc_save_board(session, job, reporter, &mut outcome)? {
+        return Ok(JobOutcome::exit(code));
+    }
+
+    if job.rc.exit_code_violations
+        && (result.violations > 0 || result.unconnected_items > 0 || result.parity_issues > 0)
+    {
+        outcome.exit_code = exit_codes::ERR_RC_VIOLATIONS;
+    }
+
+    Ok(outcome)
 }
 
 /// The `if( drcJob->m_refillZones && drcJob->m_saveBoard )` block at the end of

@@ -57,6 +57,7 @@ pub mod eda_item;
 // ---- nets, settings, project data ---------------------------------------------------------
 pub mod board_design_settings;
 pub mod board_stackup;
+pub mod board_tables;
 pub mod component_class;
 pub mod embedded_files;
 pub mod net_settings;
@@ -68,6 +69,7 @@ pub mod zone_settings;
 
 // ---- items ---------------------------------------------------------------------------------
 pub mod convert_shape_list_to_polygon;
+pub mod drill;
 pub mod eda_shape;
 pub mod eda_text;
 pub mod footprint;
@@ -80,6 +82,7 @@ pub mod pcb_3d_body;
 pub mod pcb_barcode;
 pub mod pcb_constraint;
 pub mod pcb_dimension;
+pub mod pcb_drill_chart;
 pub mod pcb_drill_map;
 pub mod pcb_field;
 pub mod pcb_generated_table;
@@ -90,6 +93,7 @@ pub mod pcb_marker;
 pub mod pcb_point;
 pub mod pcb_reference_image;
 pub mod pcb_shape;
+pub mod pcb_stackup_table;
 pub mod pcb_table;
 pub mod pcb_tablecell;
 pub mod pcb_target;

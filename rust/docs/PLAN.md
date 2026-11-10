@@ -368,7 +368,15 @@ Progress log:
   Next: [FAB-10, FAB-11, FAB-12] when the fabrication chain ends; STAB-DRC when DRC-22 and
   DRC-12 end; WIRE-1 after DRC-12 and FAB-08; ZF-07 after TD-01; GLUE-3 when the chains are
   quiet; then the cross-cutting adversarial review, README and the performance phase.
-  Cross-crate leftovers for a GLUE-3 pass (package file written) once the FAB / DRC / ZF chains have finished:
+  04:55 UTC: the first fabrication chain is complete: FAB-09 Gerber job file (704 of 704
+  compared .gbrjob files byte-identical) and FAB-08 Gerber drill writer (831 corpus runs
+  identical, 0 differ). GAP FOUND: the drill enumerator still used FAB-01's via placeholders,
+  so every board with vias stopped in drill export (309 runs pending) - launched FAB-GLUE
+  (enumerator on the real via model + the crate's leftovers, drill export verified on every
+  corpus board with holes) -> FAB-10 mask minimum width / clipped silk -> FAB-11 SVG plots,
+  drill marks, svg job -> FAB-12 drill maps (wvkfmdjv4).
+  Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
+  into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
   generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid
   + KiidGenerator seeding; pcb-dump-session -> dump_board_ctx.

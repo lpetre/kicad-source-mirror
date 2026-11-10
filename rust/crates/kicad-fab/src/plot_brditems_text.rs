@@ -23,10 +23,12 @@
 //! `plot_brditems_plotter.rs`).
 //!
 //! Outline fonts: this port has no outline font engine. Text whose draw font is an outline
-//! font is drawn from its stored render cache when the cache is valid for the shown text
-//! (`EDA_TEXT::GetRenderCache`); otherwise (stale or missing cache, or fonts embedded in the
-//! board, where C++ lays out with the outline font) the stroke font is used, as the model's
-//! `FontLookup` documents. See `PORT_STATUS.md` (FAB-06, deviations).
+//! font is drawn from the render cache stored in the board file, the stand-in for the glyphs
+//! the C++ regenerates (`kicad_pcb::eda_text::render_cache`, package FONT-RC-1), while it is
+//! valid for the text; otherwise (edited text, missing cache, or fonts embedded in the board,
+//! where C++ lays out with the outline font) the stroke font is used, as the model's
+//! `FontLookup` documents, and the text is listed by `eda_text::outline_font_fallbacks`. See
+//! `PORT_STATUS.md` (FAB-06, deviations) and kicad-pcb `PORT_STATUS.md` (FONT-RC-1).
 
 use kicad_core::PcbLayerId;
 use kicad_core::base_units::ARC_LOW_DEF;
@@ -352,8 +354,9 @@ impl BrditemsPlotter<'_, '_> {
 
         let cache =
             if font.is_outline_unavailable() && !ctx.board.embedded_files().are_fonts_embedded() {
-                // The C++ regenerates a stale cache with the outline font; without an outline
-                // font engine a stale or missing cache falls back to the stroke font below.
+                // The C++ regenerates the cache with the outline font; without an outline font
+                // engine the glyphs stored in the file stand in while valid (FONT-RC-1), else
+                // the stroke font below is the fallback.
                 render_cache(text, ctx, &shown_text, Vector2I::default())
             } else {
                 None

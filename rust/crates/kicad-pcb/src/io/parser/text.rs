@@ -321,6 +321,10 @@ impl PcbParser {
             token = self.lexer.next_tok()?;
         }
 
+        // Not in C++ (package FONT-RC-1): keep the stored glyphs as the stand-in for the
+        // outline font engine; the cache itself is cleared by the load path as in C++.
+        text.eda_text_mut().keep_file_render_cache();
+
         Ok(())
     }
 
@@ -657,6 +661,13 @@ impl PcbParser {
             }
         }
 
+        // Not in C++ (package FONT-RC-1): the text is now in the state its stored render
+        // cache was written for.
+        {
+            let ctx = BoardCtx::bare(&self.board);
+            eda_text::seal_file_render_cache(text, &ctx);
+        }
+
         Ok(saw_effects)
     }
 
@@ -700,6 +711,13 @@ impl PcbParser {
             textbox.text_angle(&ctx)
         };
         eda_text::set_text_angle(textbox, &env, angle);
+
+        // Not in C++ (package FONT-RC-1): the text box (or table cell) is now in the state its
+        // stored render cache was written for.
+        {
+            let ctx = BoardCtx::bare(&self.board);
+            eda_text::seal_file_render_cache(textbox, &ctx);
+        }
 
         Ok(())
     }
@@ -999,6 +1017,90 @@ mod tests {
             assert!(text.text.render_cache_data().is_none());
             assert!(text.text.is_keep_upright());
             assert_eq!(text.base.layer, kicad_core::PcbLayerId::FSilkS);
+        }
+    }
+
+    /// Package FONT-RC-1: the render cache stored in the file survives the load path's
+    /// `ClearRenderCache()` as the outline-font stand-in, and `GetRenderCache` returns it while
+    /// the text is unchanged.
+    #[test]
+    fn board_text_keeps_file_glyphs_as_stand_in() {
+        let mut p = parser_on(&format!("(gr_text \"SCL\" {CACHED}"), 20241229);
+        let mut text = resolved(p.parse_pcb_text(ParentRef::Board, None).unwrap().unwrap());
+        let ctx = BoardCtx::bare(&p.board);
+
+        assert!(text.text.render_cache_data().is_none());
+        let cache = eda_text::render_cache(&text, &ctx, "SCL", Vector2I::default())
+            .expect("stand-in glyphs");
+        assert_eq!(cache.glyphs.len(), 1);
+        let glyph = cache.glyphs[0].as_outline().unwrap();
+        assert_eq!(glyph.poly.c_outline(0).c_point(0), Vector2I::new(1_000_000, 1_000_000));
+        assert_eq!(eda_text::outline_font_fallback(&text, &ctx), None);
+
+        // Another resolved text, offset or angle: the C++ key does not match.
+        assert!(eda_text::render_cache(&text, &ctx, "SCX", Vector2I::default()).is_none());
+        assert!(eda_text::render_cache(&text, &ctx, "SCL", Vector2I::new(1, 0)).is_none());
+
+        // A move translates the glyphs (EDA_TEXT::Offset on a live cache).
+        let env = MutEnv::detached();
+        text.move_by(&env, Vector2I::new(10, -20));
+        let ctx = BoardCtx::bare(&p.board);
+        let cache = eda_text::render_cache(&text, &ctx, "SCL", Vector2I::default()).unwrap();
+        let glyph = cache.glyphs[0].as_outline().unwrap();
+        assert_eq!(glyph.poly.c_outline(0).c_point(0), Vector2I::new(1_000_010, 999_980));
+
+        // A size edit (SetTextSize clears the cache in C++, which then regenerates it with
+        // the font): no stand-in any more, the text falls back to the stroke font.
+        let mut edited = text.clone();
+        edited.set_text_size(&env, Vector2I::new(800_000, 800_000), true);
+        assert!(eda_text::render_cache(&edited, &ctx, "SCL", Vector2I::default()).is_none());
+        assert_eq!(
+            eda_text::outline_font_fallback(&edited, &ctx).as_deref(),
+            Some("Ubuntu Sans")
+        );
+
+        // So do a rotation and a justification change.
+        let mut edited = text.clone();
+        edited.set_text_angle(&env, EdaAngle::from_degrees(90.0));
+        assert!(eda_text::render_cache(&edited, &ctx, "SCL", Vector2I::default()).is_none());
+        let mut edited = text.clone();
+        edited.text.set_horiz_justify(GrTextHAlignT::Left);
+        assert!(eda_text::render_cache(&edited, &ctx, "SCL", Vector2I::default()).is_none());
+    }
+
+    /// Package FONT-RC-1: an outline-font text without a stored cache falls back to the
+    /// stroke font and is reported.
+    #[test]
+    fn outline_text_without_cache_is_reported() {
+        let item = "(gr_text \"SCL\" (at 1 2 0) (layer \"F.SilkS\") \
+                    (effects (font (face \"Ubuntu Sans\") (size 1 1))))";
+        let mut p = parser_on(item, 20241229);
+        let text = resolved(p.parse_pcb_text(ParentRef::Board, None).unwrap().unwrap());
+        let ctx = BoardCtx::bare(&p.board);
+        assert!(text.text.file_render_cache().is_none());
+        assert_eq!(
+            eda_text::outline_font_fallback(&text, &ctx).as_deref(),
+            Some("Ubuntu Sans")
+        );
+    }
+
+    /// Package FONT-RC-1: footprint text keeps its stored glyphs too, for legacy and new
+    /// files.
+    #[test]
+    fn footprint_text_keeps_file_glyphs_as_stand_in() {
+        for version in [20241229, 20261031] {
+            let mut p = parser_on(&format!("(fp_text user \"SCL\" {CACHED}"), version);
+            let fp = p.board.create_footprint();
+            let parsed = p
+                .parse_pcb_text_item(ParentRef::Item(fp.into()), None)
+                .unwrap();
+            let ParsedText::Text(text) = parsed else {
+                panic!("expected a PCB_TEXT");
+            };
+            let text = resolved(text);
+            let ctx = BoardCtx::bare(&p.board);
+            let cache = eda_text::render_cache(&text, &ctx, "SCL", Vector2I::default());
+            assert_eq!(cache.map(|c| c.glyphs.len()), Some(1), "version {version}");
         }
     }
 }

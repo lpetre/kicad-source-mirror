@@ -1,0 +1,25 @@
+<normalised>
+<normalised>
+%TF.ProjectId,ipc4761_vias,69706334-3736-4315-9f76-6961732e6b69,rev?*%
+%TF.SameCoordinates,Original*%
+%TF,FileFunction,Other,Filling*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Other,Filling*%
+%ADD10C,0.300000*%
+%TD*%
+%TA.AperFunction,Other,Filling*%
+%ADD11C,0.800000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X108000000Y-95000000D03*
+D11*
+X126300000Y-97700000D03*
+M02*

@@ -1,0 +1,28 @@
+<normalised>
+<normalised>
+%TF.ProjectId,ipc4761_vias,69706334-3736-4315-9f76-6961732e6b69,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,NonPlated,1,4,NPTH,Mixed*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 aperture for slot hole*
+%TA.AperFunction,ComponentDrill*%
+%ADD10C,1.000000*%
+%TD*%
+%TA.AperFunction,ComponentDrill*%
+%ADD11C,1.200000*%
+%TD*%
+G04 APERTURE END LIST*
+%TO.C,J1*%
+D10*
+X1348699Y-910301D02*
+X1270917Y-832519D01*
+D11*
+X1050000Y-1021410D03*
+M02*

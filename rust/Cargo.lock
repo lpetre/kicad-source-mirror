@@ -222,6 +222,7 @@ dependencies = [
  "kicad-core",
  "kicad-font",
  "kicad-geom",
+ "kicad-plot",
  "kicad-qa",
  "kicad-sexpr",
  "ruzstd",

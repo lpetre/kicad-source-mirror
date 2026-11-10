@@ -33,6 +33,16 @@ pub struct JobPcbDrc {
     pub refill_zones: bool,
     /// `m_saveBoard`
     pub save_board: bool,
+    /// Host input (not a `JOB_PCB_DRC` member): whether the board's schematic
+    /// (`<board>.kicad_sch`, else `<board>.sch`) exists, `schematicPath.Exists()` in
+    /// `JobExportDrc`. False in hosts without a filesystem.
+    pub schematic_exists: bool,
+    /// Host input: `GetISO8601CurrentDateTime()`, the report's creation date (the library has
+    /// no clock). Empty by default.
+    pub report_date: String,
+    /// Host input: seed of the DRC marker UUIDs (random KIIDs in C++; they never appear in a
+    /// report).
+    pub marker_uuid_seed: u32,
 }
 
 impl JobPcbDrc {
@@ -44,6 +54,9 @@ impl JobPcbDrc {
             parity: true,
             refill_zones: false,
             save_board: false,
+            schematic_exists: false,
+            report_date: String::new(),
+            marker_uuid_seed: 0x4452_4331,
         }
     }
 

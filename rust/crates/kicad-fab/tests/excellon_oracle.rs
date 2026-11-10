@@ -907,14 +907,14 @@ fn drill_job_outputs_and_pending_parts() {
     assert!(out.outputs.is_empty());
     assert_eq!(rep.messages.last().unwrap().0, "Done.");
 
-    // Gerber drill files (FAB-08).
+    // Gerber drill files (FAB-08, verified in tests/gerber_drill.rs): the same drill job
+    // runs the Gerber writer.
     let job4 = JobExportPcbDrill {
         format: kicad_fab::jobs::job_export_pcb_drill::DrillFormat::Gerber,
         ..job
     };
     let out = job_export_drill_from(&source, ctx, &job4, "o", &env(&g), None, None);
-    assert!(!out.success && out.files.is_empty());
-    assert!(matches!(out.error, Some(kicad_fab::FabError::NotPorted(_))));
+    assert!(out.success && out.error.is_none() && !out.files.is_empty());
 }
 
 /// Replaces the Excellon header lines that carry the date or the build version by fixed

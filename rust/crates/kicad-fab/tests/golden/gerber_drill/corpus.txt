@@ -1,0 +1,2429 @@
+B default 0 demos/constraints/constraints.kicad_pcb
+B tenting 0 demos/constraints/constraints.kicad_pcb
+B p5_plot 0 demos/constraints/constraints.kicad_pcb
+B default 0 demos/ecc83/ecc83-pp.kicad_pcb
+F ecc83-pp-PTH-drl.gbr 328f610e
+B tenting 0 demos/ecc83/ecc83-pp.kicad_pcb
+F ecc83-pp-PTH-drl.gbr 328f610e
+B p5_plot 0 demos/ecc83/ecc83-pp.kicad_pcb
+F ecc83-pp-PTH-drl.gbr 27cab06a
+B default 0 demos/ecc83/ecc83-pp_v2.kicad_pcb
+F ecc83-pp_v2-PTH-drl.gbr 3ccbf579
+B tenting 0 demos/ecc83/ecc83-pp_v2.kicad_pcb
+F ecc83-pp_v2-PTH-drl.gbr 3ccbf579
+B p5_plot 0 demos/ecc83/ecc83-pp_v2.kicad_pcb
+F ecc83-pp_v2-PTH-drl.gbr 6483524a
+B default 0 demos/microwave/microwave.kicad_pcb
+B tenting 0 demos/microwave/microwave.kicad_pcb
+B p5_plot 0 demos/microwave/microwave.kicad_pcb
+B default 0 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+F RoyalBlue54L-NFC-Antenna-PTH-drl.gbr d72df921
+B tenting 0 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+F RoyalBlue54L-NFC-Antenna-PTH-drl.gbr d72df921
+F RoyalBlue54L-NFC-Antenna-tenting-back.gbr 46ecc1f3
+F RoyalBlue54L-NFC-Antenna-tenting-front.gbr 35918c37
+B p5_plot 0 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+F RoyalBlue54L-NFC-Antenna-PTH-drl.gbr e8535231
+F RoyalBlue54L-NFC-Antenna-tenting-back.gbr c5a8acc8
+F RoyalBlue54L-NFC-Antenna-tenting-front.gbr d504d725
+B default 0 qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
+B tenting 0 qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
+B p5_plot 0 qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
+B default 0 qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+F ZoneFill-4.0.7-PTH-drl.gbr 43bcfe55
+B tenting 0 qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+F ZoneFill-4.0.7-PTH-drl.gbr 43bcfe55
+F ZoneFill-4.0.7-tenting-back.gbr c5b38b82
+F ZoneFill-4.0.7-tenting-front.gbr 2601d8b1
+B p5_plot 0 qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+F ZoneFill-4.0.7-PTH-drl.gbr fb10d75d
+F ZoneFill-4.0.7-tenting-back.gbr 5436b3be
+F ZoneFill-4.0.7-tenting-front.gbr ad3b805b
+B default 0 qa/data/cli/basic_test/basic_test.kicad_pcb
+F basic_test-PTH-drl.gbr b8450a38
+B tenting 0 qa/data/cli/basic_test/basic_test.kicad_pcb
+F basic_test-PTH-drl.gbr b8450a38
+F basic_test-tenting-back.gbr fac6f489
+F basic_test-tenting-front.gbr c93b081f
+B p5_plot 0 qa/data/cli/basic_test/basic_test.kicad_pcb
+F basic_test-PTH-drl.gbr a0aebe7b
+F basic_test-tenting-back.gbr 59f0fd23
+F basic_test-tenting-front.gbr 91706624
+B default 0 qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
+B tenting 0 qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
+B p5_plot 0 qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
+B default 0 qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
+B tenting 0 qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
+B p5_plot 0 qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
+B default 0 qa/data/downgrade/golden/current/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+B tenting 0 qa/data/downgrade/golden/current/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+F geometry-tenting-back.gbr aae114ff
+F geometry-tenting-front.gbr 3c2770fc
+B p5_plot 0 qa/data/downgrade/golden/current/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 4cdfa868
+F geometry-tenting-back.gbr ddcc9b0f
+F geometry-tenting-front.gbr 9044dd67
+B default 0 qa/data/downgrade/golden/current/graphics.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/current/graphics.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/current/graphics.kicad_pcb
+B default 0 qa/data/downgrade/golden/current/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 122cc6e6
+F metadata-filling-front-back.gbr 053c0e56
+F metadata-capping-front-back.gbr 50a4376d
+B tenting 0 qa/data/downgrade/golden/current/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 122cc6e6
+F metadata-filling-front-back.gbr 053c0e56
+F metadata-capping-front-back.gbr 50a4376d
+F metadata-tenting-back.gbr b3fcb1fc
+F metadata-tenting-front.gbr 09fb1dc9
+B p5_plot 0 qa/data/downgrade/golden/current/metadata.kicad_pcb
+F metadata-PTH-drl.gbr ca7eb0ce
+F metadata-filling-front-back.gbr b8214943
+F metadata-capping-front-back.gbr 21503781
+F metadata-tenting-back.gbr 4551e5e4
+F metadata-tenting-front.gbr 54b502f0
+B default 0 qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+B tenting 0 qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+F modern_metadata-tenting-back.gbr 73e67a43
+F modern_metadata-tenting-front.gbr 863ed828
+B p5_plot 0 qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr 00a89e64
+F modern_metadata-tenting-back.gbr ef3775b5
+F modern_metadata-tenting-front.gbr f99501f7
+B default 0 qa/data/downgrade/golden/seed/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+B tenting 0 qa/data/downgrade/golden/seed/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+F geometry-tenting-back.gbr aae114ff
+F geometry-tenting-front.gbr 3c2770fc
+B p5_plot 0 qa/data/downgrade/golden/seed/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 4cdfa868
+F geometry-tenting-back.gbr ddcc9b0f
+F geometry-tenting-front.gbr 9044dd67
+B default 0 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
+B default 0 qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
+B default 0 qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
+B default 0 qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
+F metadata-v9-PTH-drl.gbr b00d0ec1
+B tenting 0 qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
+F metadata-v9-PTH-drl.gbr b00d0ec1
+F metadata-v9-tenting-back.gbr 159ae521
+F metadata-v9-tenting-front.gbr 87442911
+B p5_plot 0 qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
+F metadata-v9-PTH-drl.gbr 4e81f93e
+F metadata-v9-tenting-back.gbr 32590668
+F metadata-v9-tenting-front.gbr 8a5961b4
+B default 0 qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
+F modern_metadata-v9-PTH-drl.gbr 5c70d31f
+B tenting 0 qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
+F modern_metadata-v9-PTH-drl.gbr 5c70d31f
+F modern_metadata-v9-tenting-back.gbr 0f94dac9
+F modern_metadata-v9-tenting-front.gbr de88d76b
+B p5_plot 0 qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
+F modern_metadata-v9-PTH-drl.gbr e913b6a7
+F modern_metadata-v9-tenting-back.gbr 9b068a5b
+F modern_metadata-v9-tenting-front.gbr ca6ece75
+B default 0 qa/data/downgrade/golden/v10/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+B tenting 0 qa/data/downgrade/golden/v10/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+F geometry-tenting-back.gbr aae114ff
+F geometry-tenting-front.gbr 3c2770fc
+B p5_plot 0 qa/data/downgrade/golden/v10/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 4cdfa868
+F geometry-tenting-back.gbr ddcc9b0f
+F geometry-tenting-front.gbr 9044dd67
+B default 0 qa/data/downgrade/golden/v10/graphics.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/v10/graphics.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/v10/graphics.kicad_pcb
+B default 0 qa/data/downgrade/golden/v10/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 122cc6e6
+F metadata-filling-front-back.gbr 053c0e56
+F metadata-capping-front-back.gbr 50a4376d
+B tenting 0 qa/data/downgrade/golden/v10/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 122cc6e6
+F metadata-filling-front-back.gbr 053c0e56
+F metadata-capping-front-back.gbr 50a4376d
+F metadata-tenting-back.gbr b3fcb1fc
+F metadata-tenting-front.gbr 09fb1dc9
+B p5_plot 0 qa/data/downgrade/golden/v10/metadata.kicad_pcb
+F metadata-PTH-drl.gbr ca7eb0ce
+F metadata-filling-front-back.gbr b8214943
+F metadata-capping-front-back.gbr 21503781
+F metadata-tenting-back.gbr 4551e5e4
+F metadata-tenting-front.gbr 54b502f0
+B default 0 qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+B tenting 0 qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+F modern_metadata-tenting-back.gbr 73e67a43
+F modern_metadata-tenting-front.gbr 863ed828
+B p5_plot 0 qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr 00a89e64
+F modern_metadata-tenting-back.gbr ef3775b5
+F modern_metadata-tenting-front.gbr f99501f7
+B default 0 qa/data/downgrade/golden/v9/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+B tenting 0 qa/data/downgrade/golden/v9/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 5d519bb1
+F geometry-tenting-back.gbr aae114ff
+F geometry-tenting-front.gbr 3c2770fc
+B p5_plot 0 qa/data/downgrade/golden/v9/geometry.kicad_pcb
+F geometry-PTH-drl.gbr 4cdfa868
+F geometry-tenting-back.gbr ddcc9b0f
+F geometry-tenting-front.gbr 9044dd67
+B default 0 qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
+B default 0 qa/data/downgrade/golden/v9/graphics.kicad_pcb
+B tenting 0 qa/data/downgrade/golden/v9/graphics.kicad_pcb
+B p5_plot 0 qa/data/downgrade/golden/v9/graphics.kicad_pcb
+B default 0 qa/data/downgrade/golden/v9/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 1ddacf35
+B tenting 0 qa/data/downgrade/golden/v9/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 1ddacf35
+F metadata-tenting-back.gbr b3fcb1fc
+F metadata-tenting-front.gbr 09fb1dc9
+B p5_plot 0 qa/data/downgrade/golden/v9/metadata.kicad_pcb
+F metadata-PTH-drl.gbr 5c090c85
+F metadata-tenting-back.gbr 4551e5e4
+F metadata-tenting-front.gbr 54b502f0
+B default 0 qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+B tenting 0 qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr c2f5395e
+F modern_metadata-tenting-back.gbr 73e67a43
+F modern_metadata-tenting-front.gbr 863ed828
+B p5_plot 0 qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
+F modern_metadata-PTH-drl.gbr 00a89e64
+F modern_metadata-tenting-back.gbr ef3775b5
+F modern_metadata-tenting-front.gbr f99501f7
+B default 0 qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
+B tenting 0 qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
+B p5_plot 0 qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
+B default 0 qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
+B tenting 0 qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
+B p5_plot 0 qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
+B default 0 qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
+B tenting 0 qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
+B p5_plot 0 qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
+B default 0 qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
+B tenting 0 qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
+B p5_plot 0 qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
+B default 0 qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
+F via_generators-PTH-drl.gbr bcdedc35
+F via_generators-front-in1-drl.gbr af6dd79b
+F via_generators-filling-front-in1.gbr c60cd0fb
+F via_generators-in1-in2-drl.gbr 790b9736
+F via_generators-filling-in1-in2.gbr c60cd0fb
+B tenting 0 qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
+F via_generators-PTH-drl.gbr bcdedc35
+F via_generators-front-in1-drl.gbr af6dd79b
+F via_generators-filling-front-in1.gbr c60cd0fb
+F via_generators-in1-in2-drl.gbr 790b9736
+F via_generators-filling-in1-in2.gbr c60cd0fb
+F via_generators-tenting-back.gbr dfa67214
+F via_generators-tenting-front.gbr 307b1fb9
+B p5_plot 0 qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
+F via_generators-PTH-drl.gbr 22217166
+F via_generators-front-in1-drl.gbr 1b6a733c
+F via_generators-filling-front-in1.gbr 1847825b
+F via_generators-in1-in2-drl.gbr 681c9270
+F via_generators-filling-in1-in2.gbr 1847825b
+F via_generators-tenting-back.gbr c2db6cd6
+F via_generators-tenting-front.gbr 9479ba99
+B default 0 qa/data/eeschema/issue18119/issue18119.kicad_pcb
+F issue18119-PTH-drl.gbr 64079421
+B tenting 0 qa/data/eeschema/issue18119/issue18119.kicad_pcb
+F issue18119-PTH-drl.gbr 64079421
+B p5_plot 0 qa/data/eeschema/issue18119/issue18119.kicad_pcb
+F issue18119-PTH-drl.gbr 0149d6e5
+B default 0 qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
+B tenting 0 qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
+B default 0 qa/data/eeschema/issue20173/issue20173.kicad_pcb
+B tenting 0 qa/data/eeschema/issue20173/issue20173.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue20173/issue20173.kicad_pcb
+B default 0 qa/data/eeschema/issue22873/issue22873.kicad_pcb
+B tenting 0 qa/data/eeschema/issue22873/issue22873.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue22873/issue22873.kicad_pcb
+B default 0 qa/data/eeschema/issue23346/issue23346.kicad_pcb
+B tenting 0 qa/data/eeschema/issue23346/issue23346.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue23346/issue23346.kicad_pcb
+B default 0 qa/data/eeschema/issue23403/issue23403.kicad_pcb
+B tenting 0 qa/data/eeschema/issue23403/issue23403.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue23403/issue23403.kicad_pcb
+B default 0 qa/data/eeschema/issue23719/issue23719.kicad_pcb
+F issue23719-PTH-drl.gbr d5f310de
+F issue23719-NPTH-drl.gbr ea3b5b17
+B tenting 0 qa/data/eeschema/issue23719/issue23719.kicad_pcb
+F issue23719-PTH-drl.gbr d5f310de
+F issue23719-NPTH-drl.gbr ea3b5b17
+B p5_plot 0 qa/data/eeschema/issue23719/issue23719.kicad_pcb
+F issue23719-PTH-drl.gbr ef189951
+F issue23719-NPTH-drl.gbr ff53552f
+B default 0 qa/data/eeschema/issue23962/issue23962.kicad_pcb
+B tenting 0 qa/data/eeschema/issue23962/issue23962.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue23962/issue23962.kicad_pcb
+B default 0 qa/data/eeschema/issue24001/issue24001.kicad_pcb
+B tenting 0 qa/data/eeschema/issue24001/issue24001.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue24001/issue24001.kicad_pcb
+B default 0 qa/data/eeschema/issue24044/issue24044.kicad_pcb
+F issue24044-PTH-drl.gbr 82a79f03
+B tenting 0 qa/data/eeschema/issue24044/issue24044.kicad_pcb
+F issue24044-PTH-drl.gbr 82a79f03
+B p5_plot 0 qa/data/eeschema/issue24044/issue24044.kicad_pcb
+F issue24044-PTH-drl.gbr b29c35d7
+B default 0 qa/data/eeschema/issue24201/issue24201.kicad_pcb
+B tenting 0 qa/data/eeschema/issue24201/issue24201.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue24201/issue24201.kicad_pcb
+B default 0 qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
+B tenting 0 qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
+B default 0 qa/data/eeschema/issue24409/issue24409.kicad_pcb
+B tenting 0 qa/data/eeschema/issue24409/issue24409.kicad_pcb
+B p5_plot 0 qa/data/eeschema/issue24409/issue24409.kicad_pcb
+B default 0 qa/data/eeschema/issue9673/issue9673.kicad_pcb
+F issue9673-PTH-drl.gbr 25f70137
+B tenting 0 qa/data/eeschema/issue9673/issue9673.kicad_pcb
+F issue9673-PTH-drl.gbr 25f70137
+B p5_plot 0 qa/data/eeschema/issue9673/issue9673.kicad_pcb
+F issue9673-PTH-drl.gbr a43a6260
+B default 0 qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
+B tenting 0 qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
+B p5_plot 0 qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
+B default 0 qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
+B tenting 0 qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
+B p5_plot 0 qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
+B default 0 qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
+B tenting 0 qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
+B p5_plot 0 qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
+B default 0 qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
+B tenting 0 qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
+B p5_plot 0 qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
+B default 0 qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
+B tenting 0 qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
+B p5_plot 0 qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
+B default 0 qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
+B tenting 0 qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
+B p5_plot 0 qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
+B default 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
+B tenting 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
+B p5_plot 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
+B default 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
+B tenting 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
+B p5_plot 0 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
+B default 0 qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
+B tenting 0 qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
+B p5_plot 0 qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
+B default 0 qa/data/fuzz/pcb/sexpr/default.kicad_pcb
+B tenting 0 qa/data/fuzz/pcb/sexpr/default.kicad_pcb
+B p5_plot 0 qa/data/fuzz/pcb/sexpr/default.kicad_pcb
+B default 0 qa/data/libraries/test_project/test_project.kicad_pcb
+B tenting 0 qa/data/libraries/test_project/test_project.kicad_pcb
+B p5_plot 0 qa/data/libraries/test_project/test_project.kicad_pcb
+B default 0 qa/data/pcbnew/bad_triangulation_case.kicad_pcb
+B tenting 0 qa/data/pcbnew/bad_triangulation_case.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/bad_triangulation_case.kicad_pcb
+B default 0 qa/data/pcbnew/component_classes.kicad_pcb
+B tenting 0 qa/data/pcbnew/component_classes.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/component_classes.kicad_pcb
+B default 0 qa/data/pcbnew/component_classes_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/component_classes_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/component_classes_drc.kicad_pcb
+B default 0 qa/data/pcbnew/connection_width_rules.kicad_pcb
+B tenting 0 qa/data/pcbnew/connection_width_rules.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/connection_width_rules.kicad_pcb
+B default 0 qa/data/pcbnew/creepage/creepage.kicad_pcb
+F creepage-PTH-drl.gbr a936db08
+B tenting 0 qa/data/pcbnew/creepage/creepage.kicad_pcb
+F creepage-PTH-drl.gbr a936db08
+B p5_plot 0 qa/data/pcbnew/creepage/creepage.kicad_pcb
+F creepage-PTH-drl.gbr d1e69127
+B default 0 qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
+F creepage_malformed_edge-PTH-drl.gbr 8f9c0744
+B tenting 0 qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
+F creepage_malformed_edge-PTH-drl.gbr 8f9c0744
+B p5_plot 0 qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
+F creepage_malformed_edge-PTH-drl.gbr a692f293
+B default 0 qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
+F creepage_slots-PTH-drl.gbr 5ba73c4f
+B tenting 0 qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
+F creepage_slots-PTH-drl.gbr 5ba73c4f
+B p5_plot 0 qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
+F creepage_slots-PTH-drl.gbr 17e92829
+B default 0 qa/data/pcbnew/custom_fields.kicad_pcb
+F custom_fields-PTH-drl.gbr 743700fb
+B tenting 0 qa/data/pcbnew/custom_fields.kicad_pcb
+F custom_fields-PTH-drl.gbr 743700fb
+B p5_plot 0 qa/data/pcbnew/custom_fields.kicad_pcb
+F custom_fields-PTH-drl.gbr 7948e1dd
+B default 0 qa/data/pcbnew/custom_pads.kicad_pcb
+B tenting 0 qa/data/pcbnew/custom_pads.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/custom_pads.kicad_pcb
+B default 0 qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+B default 0 qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
+B default 0 qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
+B default 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
+B default 0 qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
+B default 0 qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
+B tenting 0 qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
+B default 0 qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+F drc_skew-PTH-drl.gbr 9aa200a0
+B tenting 0 qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+F drc_skew-PTH-drl.gbr 9aa200a0
+F drc_skew-tenting-back.gbr 7bbf23e3
+F drc_skew-tenting-front.gbr e0c75d55
+B p5_plot 0 qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+F drc_skew-PTH-drl.gbr 3d2c5192
+F drc_skew-tenting-back.gbr 95ba0753
+F drc_skew-tenting-front.gbr 58998565
+B default 0 qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
+F ALoneMicroviaMayBeUnfilled-front-in1-drl.gbr 0f21f7a1
+B tenting 0 qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
+F ALoneMicroviaMayBeUnfilled-front-in1-drl.gbr 0f21f7a1
+F ALoneMicroviaMayBeUnfilled-tenting-front.gbr b9c52e6e
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
+F ALoneMicroviaMayBeUnfilled-front-in1-drl.gbr 7ca3a75c
+F ALoneMicroviaMayBeUnfilled-tenting-front.gbr 8aff54e3
+B default 0 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
+F ASecondHopSharingALandingViaIsStillChecked-front-in1-drl.gbr b8dc4257
+F ASecondHopSharingALandingViaIsStillChecked-in1-in2-drl.gbr 6b27c2d3
+F ASecondHopSharingALandingViaIsStillChecked-filling-in1-in2.gbr 5f88f446
+B tenting 0 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
+F ASecondHopSharingALandingViaIsStillChecked-front-in1-drl.gbr b8dc4257
+F ASecondHopSharingALandingViaIsStillChecked-in1-in2-drl.gbr 6b27c2d3
+F ASecondHopSharingALandingViaIsStillChecked-filling-in1-in2.gbr 5f88f446
+F ASecondHopSharingALandingViaIsStillChecked-tenting-front.gbr 91f07e31
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
+F ASecondHopSharingALandingViaIsStillChecked-front-in1-drl.gbr 99774eaf
+F ASecondHopSharingALandingViaIsStillChecked-in1-in2-drl.gbr cf26e600
+F ASecondHopSharingALandingViaIsStillChecked-filling-in1-in2.gbr cfe1fc09
+F ASecondHopSharingALandingViaIsStillChecked-tenting-front.gbr 20428742
+B default 0 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
+F AViaCarriedTwiceIsReportedOnce-front-in1-drl.gbr a1d98483
+F AViaCarriedTwiceIsReportedOnce-filling-front-in1.gbr bd69d5ec
+F AViaCarriedTwiceIsReportedOnce-in1-in2-drl.gbr ecc85d45
+B tenting 0 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
+F AViaCarriedTwiceIsReportedOnce-front-in1-drl.gbr a1d98483
+F AViaCarriedTwiceIsReportedOnce-filling-front-in1.gbr bd69d5ec
+F AViaCarriedTwiceIsReportedOnce-in1-in2-drl.gbr ecc85d45
+F AViaCarriedTwiceIsReportedOnce-tenting-front.gbr 7b79ca14
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
+F AViaCarriedTwiceIsReportedOnce-front-in1-drl.gbr 00bba4d8
+F AViaCarriedTwiceIsReportedOnce-filling-front-in1.gbr a9041e2a
+F AViaCarriedTwiceIsReportedOnce-in1-in2-drl.gbr 1c2b0f64
+F AViaCarriedTwiceIsReportedOnce-tenting-front.gbr dc296edb
+B default 0 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
+F ClearOfTheViaBelowIsAStaggerNotAStack-front-in1-drl.gbr 4294fc4c
+F ClearOfTheViaBelowIsAStaggerNotAStack-filling-front-in1.gbr bb9f8808
+F ClearOfTheViaBelowIsAStaggerNotAStack-in1-in2-drl.gbr 48b9d90b
+B tenting 0 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
+F ClearOfTheViaBelowIsAStaggerNotAStack-front-in1-drl.gbr 4294fc4c
+F ClearOfTheViaBelowIsAStaggerNotAStack-filling-front-in1.gbr bb9f8808
+F ClearOfTheViaBelowIsAStaggerNotAStack-in1-in2-drl.gbr 48b9d90b
+F ClearOfTheViaBelowIsAStaggerNotAStack-tenting-front.gbr bb1a3df9
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
+F ClearOfTheViaBelowIsAStaggerNotAStack-front-in1-drl.gbr fb2f5a9f
+F ClearOfTheViaBelowIsAStaggerNotAStack-filling-front-in1.gbr 8518821b
+F ClearOfTheViaBelowIsAStaggerNotAStack-in1-in2-drl.gbr 1d73954e
+F ClearOfTheViaBelowIsAStaggerNotAStack-tenting-front.gbr a92f7317
+B default 0 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
+F CoaxialButSeparatedMicroviasAreNotOneStack-front-in1-drl.gbr ee137c17
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-front-in1.gbr c2b07da7
+F CoaxialButSeparatedMicroviasAreNotOneStack-in2-in3-drl.gbr 5a990ef1
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-in2-in3.gbr c2b07da7
+B tenting 0 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
+F CoaxialButSeparatedMicroviasAreNotOneStack-front-in1-drl.gbr ee137c17
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-front-in1.gbr c2b07da7
+F CoaxialButSeparatedMicroviasAreNotOneStack-in2-in3-drl.gbr 5a990ef1
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-in2-in3.gbr c2b07da7
+F CoaxialButSeparatedMicroviasAreNotOneStack-tenting-front.gbr 2ccbb0a3
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
+F CoaxialButSeparatedMicroviasAreNotOneStack-front-in1-drl.gbr 1c461766
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-front-in1.gbr cd3dfe3b
+F CoaxialButSeparatedMicroviasAreNotOneStack-in2-in3-drl.gbr c0dcf510
+F CoaxialButSeparatedMicroviasAreNotOneStack-filling-in2-in3.gbr cd3dfe3b
+F CoaxialButSeparatedMicroviasAreNotOneStack-tenting-front.gbr 193eea67
+B default 0 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
+F EveryHopOfAStackMustBeFilled-front-in1-drl.gbr 8fe5da7b
+F EveryHopOfAStackMustBeFilled-in1-in2-drl.gbr 10973155
+B tenting 0 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
+F EveryHopOfAStackMustBeFilled-front-in1-drl.gbr 8fe5da7b
+F EveryHopOfAStackMustBeFilled-in1-in2-drl.gbr 10973155
+F EveryHopOfAStackMustBeFilled-tenting-front.gbr 19517c4b
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
+F EveryHopOfAStackMustBeFilled-front-in1-drl.gbr 0920cb57
+F EveryHopOfAStackMustBeFilled-in1-in2-drl.gbr 1894455a
+F EveryHopOfAStackMustBeFilled-tenting-front.gbr f2cee659
+B default 0 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
+F FillFromBoardHonoursTheBoardDefault-front-in1-drl.gbr 1cf01c6f
+F FillFromBoardHonoursTheBoardDefault-filling-front-in1.gbr 0b38bdd2
+F FillFromBoardHonoursTheBoardDefault-in1-in2-drl.gbr 8a07e4be
+F FillFromBoardHonoursTheBoardDefault-filling-in1-in2.gbr 0b38bdd2
+B tenting 0 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
+F FillFromBoardHonoursTheBoardDefault-front-in1-drl.gbr 1cf01c6f
+F FillFromBoardHonoursTheBoardDefault-filling-front-in1.gbr 0b38bdd2
+F FillFromBoardHonoursTheBoardDefault-in1-in2-drl.gbr 8a07e4be
+F FillFromBoardHonoursTheBoardDefault-filling-in1-in2.gbr 0b38bdd2
+F FillFromBoardHonoursTheBoardDefault-tenting-front.gbr bb99a169
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
+F FillFromBoardHonoursTheBoardDefault-front-in1-drl.gbr efd7c031
+F FillFromBoardHonoursTheBoardDefault-filling-front-in1.gbr a8ffb7d8
+F FillFromBoardHonoursTheBoardDefault-in1-in2-drl.gbr 1a2daa8a
+F FillFromBoardHonoursTheBoardDefault-filling-in1-in2.gbr a8ffb7d8
+F FillFromBoardHonoursTheBoardDefault-tenting-front.gbr 7fb23afd
+B default 0 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
+F GeneratorStackIsNotReportedTwice-front-in1-drl.gbr 873fdf03
+F GeneratorStackIsNotReportedTwice-in1-in2-drl.gbr aef79e67
+B tenting 0 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
+F GeneratorStackIsNotReportedTwice-front-in1-drl.gbr 873fdf03
+F GeneratorStackIsNotReportedTwice-in1-in2-drl.gbr aef79e67
+F GeneratorStackIsNotReportedTwice-tenting-front.gbr 8a053bc7
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
+F GeneratorStackIsNotReportedTwice-front-in1-drl.gbr 56058637
+F GeneratorStackIsNotReportedTwice-in1-in2-drl.gbr 54736b62
+F GeneratorStackIsNotReportedTwice-tenting-front.gbr 018b4b5d
+B default 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
+F LooseStackedMicroviasReportDepth-front-in1-drl.gbr 73916145
+F LooseStackedMicroviasReportDepth-filling-front-in1.gbr bbb08550
+F LooseStackedMicroviasReportDepth-in1-in2-drl.gbr 70d6df79
+F LooseStackedMicroviasReportDepth-filling-in1-in2.gbr bbb08550
+F LooseStackedMicroviasReportDepth-in2-in3-drl.gbr 7ffa9cd5
+F LooseStackedMicroviasReportDepth-filling-in2-in3.gbr bbb08550
+B tenting 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
+F LooseStackedMicroviasReportDepth-front-in1-drl.gbr 73916145
+F LooseStackedMicroviasReportDepth-filling-front-in1.gbr bbb08550
+F LooseStackedMicroviasReportDepth-in1-in2-drl.gbr 70d6df79
+F LooseStackedMicroviasReportDepth-filling-in1-in2.gbr bbb08550
+F LooseStackedMicroviasReportDepth-in2-in3-drl.gbr 7ffa9cd5
+F LooseStackedMicroviasReportDepth-filling-in2-in3.gbr bbb08550
+F LooseStackedMicroviasReportDepth-tenting-front.gbr 54d2a865
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
+F LooseStackedMicroviasReportDepth-front-in1-drl.gbr 80902e4f
+F LooseStackedMicroviasReportDepth-filling-front-in1.gbr c034b800
+F LooseStackedMicroviasReportDepth-in1-in2-drl.gbr 6c3c30f4
+F LooseStackedMicroviasReportDepth-filling-in1-in2.gbr c034b800
+F LooseStackedMicroviasReportDepth-in2-in3-drl.gbr d3175c5f
+F LooseStackedMicroviasReportDepth-filling-in2-in3.gbr c034b800
+F LooseStackedMicroviasReportDepth-tenting-front.gbr 996887b6
+B default 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
+F LooseStackedMicroviasReportNotFilled-front-in1-drl.gbr ed76d115
+F LooseStackedMicroviasReportNotFilled-filling-front-in1.gbr 98b40a89
+F LooseStackedMicroviasReportNotFilled-in1-in2-drl.gbr f997d167
+B tenting 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
+F LooseStackedMicroviasReportNotFilled-front-in1-drl.gbr ed76d115
+F LooseStackedMicroviasReportNotFilled-filling-front-in1.gbr 98b40a89
+F LooseStackedMicroviasReportNotFilled-in1-in2-drl.gbr f997d167
+F LooseStackedMicroviasReportNotFilled-tenting-front.gbr 3e420db9
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
+F LooseStackedMicroviasReportNotFilled-front-in1-drl.gbr 8ec06585
+F LooseStackedMicroviasReportNotFilled-filling-front-in1.gbr 1d9b02cb
+F LooseStackedMicroviasReportNotFilled-in1-in2-drl.gbr 829c74dd
+F LooseStackedMicroviasReportNotFilled-tenting-front.gbr e5c8b0c1
+B default 0 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
+F MicroviaStackDepthRuleIsHonoured-front-in1-drl.gbr 40e01164
+F MicroviaStackDepthRuleIsHonoured-filling-front-in1.gbr 8697b68a
+F MicroviaStackDepthRuleIsHonoured-in1-in2-drl.gbr 2e194305
+F MicroviaStackDepthRuleIsHonoured-filling-in1-in2.gbr 8697b68a
+F MicroviaStackDepthRuleIsHonoured-in2-back-drl.gbr 0dd6a239
+F MicroviaStackDepthRuleIsHonoured-filling-in2-back.gbr 8697b68a
+B tenting 0 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
+F MicroviaStackDepthRuleIsHonoured-front-in1-drl.gbr 40e01164
+F MicroviaStackDepthRuleIsHonoured-filling-front-in1.gbr 8697b68a
+F MicroviaStackDepthRuleIsHonoured-in1-in2-drl.gbr 2e194305
+F MicroviaStackDepthRuleIsHonoured-filling-in1-in2.gbr 8697b68a
+F MicroviaStackDepthRuleIsHonoured-in2-back-drl.gbr 0dd6a239
+F MicroviaStackDepthRuleIsHonoured-filling-in2-back.gbr 8697b68a
+F MicroviaStackDepthRuleIsHonoured-tenting-back.gbr ee172bee
+F MicroviaStackDepthRuleIsHonoured-tenting-front.gbr 5467fd37
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
+F MicroviaStackDepthRuleIsHonoured-front-in1-drl.gbr d23b83c6
+F MicroviaStackDepthRuleIsHonoured-filling-front-in1.gbr 0be7a421
+F MicroviaStackDepthRuleIsHonoured-in1-in2-drl.gbr 9603733d
+F MicroviaStackDepthRuleIsHonoured-filling-in1-in2.gbr 0be7a421
+F MicroviaStackDepthRuleIsHonoured-in2-back-drl.gbr 22bb40e0
+F MicroviaStackDepthRuleIsHonoured-filling-in2-back.gbr 0be7a421
+F MicroviaStackDepthRuleIsHonoured-tenting-back.gbr 2ada901a
+F MicroviaStackDepthRuleIsHonoured-tenting-front.gbr d1a07576
+B default 0 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
+F OverlappingButOffsetMicroviasAreOneStructure-front-in1-drl.gbr fbf63c2a
+F OverlappingButOffsetMicroviasAreOneStructure-filling-front-in1.gbr c8380c20
+F OverlappingButOffsetMicroviasAreOneStructure-in1-in2-drl.gbr 860bb8f8
+B tenting 0 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
+F OverlappingButOffsetMicroviasAreOneStructure-front-in1-drl.gbr fbf63c2a
+F OverlappingButOffsetMicroviasAreOneStructure-filling-front-in1.gbr c8380c20
+F OverlappingButOffsetMicroviasAreOneStructure-in1-in2-drl.gbr 860bb8f8
+F OverlappingButOffsetMicroviasAreOneStructure-tenting-front.gbr 5aad629d
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
+F OverlappingButOffsetMicroviasAreOneStructure-front-in1-drl.gbr b0785c35
+F OverlappingButOffsetMicroviasAreOneStructure-filling-front-in1.gbr 9b75a247
+F OverlappingButOffsetMicroviasAreOneStructure-in1-in2-drl.gbr 894aa37f
+F OverlappingButOffsetMicroviasAreOneStructure-tenting-front.gbr 38c3c207
+B default 0 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
+F StackNotTilingItsSpanReported-front-in2-drl.gbr 96c5cdb1
+F StackNotTilingItsSpanReported-filling-front-in2.gbr 0f797cc1
+B tenting 0 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
+F StackNotTilingItsSpanReported-front-in2-drl.gbr 96c5cdb1
+F StackNotTilingItsSpanReported-filling-front-in2.gbr 0f797cc1
+F StackNotTilingItsSpanReported-tenting-front.gbr 47921f05
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
+F StackNotTilingItsSpanReported-front-in2-drl.gbr 599df57b
+F StackNotTilingItsSpanReported-filling-front-in2.gbr 189df61f
+F StackNotTilingItsSpanReported-tenting-front.gbr 4596b3a7
+B default 0 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
+F StackTooDeepReported-front-in1-drl.gbr ef121d59
+F StackTooDeepReported-filling-front-in1.gbr 8ec63239
+F StackTooDeepReported-in1-in2-drl.gbr 4674f2a9
+F StackTooDeepReported-filling-in1-in2.gbr 8ec63239
+B tenting 0 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
+F StackTooDeepReported-front-in1-drl.gbr ef121d59
+F StackTooDeepReported-filling-front-in1.gbr 8ec63239
+F StackTooDeepReported-in1-in2-drl.gbr 4674f2a9
+F StackTooDeepReported-filling-in1-in2.gbr 8ec63239
+F StackTooDeepReported-tenting-front.gbr 5f40d43c
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
+F StackTooDeepReported-front-in1-drl.gbr 8685b000
+F StackTooDeepReported-filling-front-in1.gbr 3cfd66dd
+F StackTooDeepReported-in1-in2-drl.gbr 0e73f1a3
+F StackTooDeepReported-filling-in1-in2.gbr 3cfd66dd
+F StackTooDeepReported-tenting-front.gbr 41b52330
+B default 0 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
+F TouchingHolesFormAColumn-front-in1-drl.gbr 76dd6182
+F TouchingHolesFormAColumn-filling-front-in1.gbr 81db118d
+F TouchingHolesFormAColumn-in1-in2-drl.gbr 16879773
+B tenting 0 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
+F TouchingHolesFormAColumn-front-in1-drl.gbr 76dd6182
+F TouchingHolesFormAColumn-filling-front-in1.gbr 81db118d
+F TouchingHolesFormAColumn-in1-in2-drl.gbr 16879773
+F TouchingHolesFormAColumn-tenting-front.gbr 88506c52
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
+F TouchingHolesFormAColumn-front-in1-drl.gbr 507d9324
+F TouchingHolesFormAColumn-filling-front-in1.gbr b151c893
+F TouchingHolesFormAColumn-in1-in2-drl.gbr 3bc14a4a
+F TouchingHolesFormAColumn-tenting-front.gbr 8e5cf01c
+B default 0 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
+F UnfilledInnerHopReported-front-in1-drl.gbr 0cb43795
+F UnfilledInnerHopReported-filling-front-in1.gbr 6dc38bd5
+F UnfilledInnerHopReported-in1-in2-drl.gbr 7a1ddf7e
+B tenting 0 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
+F UnfilledInnerHopReported-front-in1-drl.gbr 0cb43795
+F UnfilledInnerHopReported-filling-front-in1.gbr 6dc38bd5
+F UnfilledInnerHopReported-in1-in2-drl.gbr 7a1ddf7e
+F UnfilledInnerHopReported-tenting-front.gbr ed9bbb6c
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
+F UnfilledInnerHopReported-front-in1-drl.gbr ca50d8e2
+F UnfilledInnerHopReported-filling-front-in1.gbr de30fd18
+F UnfilledInnerHopReported-in1-in2-drl.gbr ba57b490
+F UnfilledInnerHopReported-tenting-front.gbr cf97b253
+B default 0 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
+F ZeroSpanMicroviasDoNotMultiplyViolations-in1-in1-drl.gbr 06bc589f
+B tenting 0 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
+F ZeroSpanMicroviasDoNotMultiplyViolations-in1-in1-drl.gbr 06bc589f
+B p5_plot 0 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
+F ZeroSpanMicroviasDoNotMultiplyViolations-in1-in1-drl.gbr fa571f16
+B default 0 qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+B tenting 0 qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+B default 0 qa/data/pcbnew/fill_bad.kicad_pcb
+B tenting 0 qa/data/pcbnew/fill_bad.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/fill_bad.kicad_pcb
+B default 0 qa/data/pcbnew/footprints_load_save.kicad_pcb
+F footprints_load_save-PTH-drl.gbr 6a21b412
+B tenting 0 qa/data/pcbnew/footprints_load_save.kicad_pcb
+F footprints_load_save-PTH-drl.gbr 6a21b412
+B p5_plot 0 qa/data/pcbnew/footprints_load_save.kicad_pcb
+F footprints_load_save-PTH-drl.gbr ffe36d21
+B default 0 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
+B tenting 0 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
+B default 0 qa/data/pcbnew/groups_load_save.kicad_pcb
+B tenting 0 qa/data/pcbnew/groups_load_save.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/groups_load_save.kicad_pcb
+B default 0 qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
+B tenting 0 qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
+B default 0 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
+F hatch_thermal_connectivity-PTH-drl.gbr b8cb9a70
+B tenting 0 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
+F hatch_thermal_connectivity-PTH-drl.gbr b8cb9a70
+B p5_plot 0 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
+F hatch_thermal_connectivity-PTH-drl.gbr d412b6cf
+B default 0 qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
+B default 0 qa/data/pcbnew/intersectingzones.kicad_pcb
+F intersectingzones-PTH-drl.gbr 2fbc8eb3
+B tenting 0 qa/data/pcbnew/intersectingzones.kicad_pcb
+F intersectingzones-PTH-drl.gbr 2fbc8eb3
+F intersectingzones-tenting-back.gbr e912baad
+F intersectingzones-tenting-front.gbr a5901668
+B p5_plot 0 qa/data/pcbnew/intersectingzones.kicad_pcb
+F intersectingzones-PTH-drl.gbr 90672de6
+F intersectingzones-tenting-back.gbr 3ef0ae1e
+F intersectingzones-tenting-front.gbr 30d895c9
+B default 0 qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
+F filled-tented-via-PTH-drl.gbr efe4fb52
+F filled-tented-via-filling-front-back.gbr fde59a88
+B tenting 0 qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
+F filled-tented-via-PTH-drl.gbr efe4fb52
+F filled-tented-via-filling-front-back.gbr fde59a88
+F filled-tented-via-tenting-back.gbr 5ea4b708
+F filled-tented-via-tenting-front.gbr 7d74a60c
+B p5_plot 0 qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
+F filled-tented-via-PTH-drl.gbr e94de1d8
+F filled-tented-via-filling-front-back.gbr 23fffe14
+F filled-tented-via-tenting-back.gbr 9b91323e
+F filled-tented-via-tenting-front.gbr b7259aff
+B default 0 qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
+F netted_unnumbered-PTH-drl.gbr a3760658
+B tenting 0 qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
+F netted_unnumbered-PTH-drl.gbr a3760658
+F netted_unnumbered-tenting-back.gbr 64c496c7
+F netted_unnumbered-tenting-front.gbr a94d4288
+B p5_plot 0 qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
+F netted_unnumbered-PTH-drl.gbr 8301495f
+F netted_unnumbered-tenting-back.gbr c6f7ea43
+F netted_unnumbered-tenting-front.gbr 5972f2ed
+B default 0 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
+F round_unequal_drill-PTH-drl.gbr 7deb4ea7
+F round_unequal_drill-front-in4-drl.gbr 161bde3c
+F round_unequal_drill-in1-in4-drl.gbr 55aeaab2
+F round_unequal_drill-in2-in3-drl.gbr 5bf039fb
+F round_unequal_drill-in3-back-drl.gbr ec551e3b
+F round_unequal_drill-in4-back-drl.gbr 42b66c73
+B tenting 0 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
+F round_unequal_drill-PTH-drl.gbr 7deb4ea7
+F round_unequal_drill-front-in4-drl.gbr 161bde3c
+F round_unequal_drill-in1-in4-drl.gbr 55aeaab2
+F round_unequal_drill-in2-in3-drl.gbr 5bf039fb
+F round_unequal_drill-in3-back-drl.gbr ec551e3b
+F round_unequal_drill-in4-back-drl.gbr 42b66c73
+F round_unequal_drill-tenting-back.gbr c6798d0e
+F round_unequal_drill-tenting-front.gbr 4492fd51
+B p5_plot 0 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
+F round_unequal_drill-PTH-drl.gbr 616bd7b1
+F round_unequal_drill-front-in4-drl.gbr 1f40c872
+F round_unequal_drill-in1-in4-drl.gbr b4e59501
+F round_unequal_drill-in2-in3-drl.gbr 9b3d907d
+F round_unequal_drill-in3-back-drl.gbr 5a5d6155
+F round_unequal_drill-in4-back-drl.gbr 6d6afaf7
+F round_unequal_drill-tenting-back.gbr 81d8260d
+F round_unequal_drill-tenting-front.gbr 15b9adef
+B default 0 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
+B default 0 qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
+B tenting 0 qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
+B default 0 qa/data/pcbnew/issue10697.kicad_pcb
+F issue10697-PTH-drl.gbr d2302f7c
+F issue10697-front-in2-drl.gbr 374ef6df
+B tenting 0 qa/data/pcbnew/issue10697.kicad_pcb
+F issue10697-PTH-drl.gbr d2302f7c
+F issue10697-front-in2-drl.gbr 374ef6df
+F issue10697-tenting-back.gbr 8f2bce23
+F issue10697-tenting-front.gbr d83fcb11
+B p5_plot 0 qa/data/pcbnew/issue10697.kicad_pcb
+F issue10697-PTH-drl.gbr e142f225
+F issue10697-front-in2-drl.gbr 5c1b29b3
+F issue10697-tenting-back.gbr 03da4821
+F issue10697-tenting-front.gbr d2dc41be
+B default 0 qa/data/pcbnew/issue10906.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue10906.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue10906.kicad_pcb
+B default 0 qa/data/pcbnew/issue10916.kicad_pcb
+F issue10916-PTH-drl.gbr ab5c3e21
+B tenting 0 qa/data/pcbnew/issue10916.kicad_pcb
+F issue10916-PTH-drl.gbr ab5c3e21
+F issue10916-tenting-back.gbr 1f038188
+F issue10916-tenting-front.gbr 2a87923a
+B p5_plot 0 qa/data/pcbnew/issue10916.kicad_pcb
+F issue10916-PTH-drl.gbr fac06601
+F issue10916-tenting-back.gbr d243915a
+F issue10916-tenting-front.gbr 5bf3c09c
+B default 0 qa/data/pcbnew/issue12109.kicad_pcb
+F issue12109-PTH-drl.gbr ac0b8cc2
+B tenting 0 qa/data/pcbnew/issue12109.kicad_pcb
+F issue12109-PTH-drl.gbr ac0b8cc2
+F issue12109-tenting-back.gbr 968b14b7
+F issue12109-tenting-front.gbr fef07c73
+B p5_plot 0 qa/data/pcbnew/issue12109.kicad_pcb
+F issue12109-PTH-drl.gbr 340ebd1e
+F issue12109-tenting-back.gbr 4b7af275
+F issue12109-tenting-front.gbr 8a9c78c1
+B default 0 qa/data/pcbnew/issue12831.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue12831.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue12831.kicad_pcb
+B default 0 qa/data/pcbnew/issue12964/issue12964.kicad_pcb
+F issue12964-PTH-drl.gbr 25edd088
+B tenting 0 qa/data/pcbnew/issue12964/issue12964.kicad_pcb
+F issue12964-PTH-drl.gbr 25edd088
+F issue12964-tenting-back.gbr 14532212
+F issue12964-tenting-front.gbr c1323c5c
+B p5_plot 0 qa/data/pcbnew/issue12964/issue12964.kicad_pcb
+F issue12964-PTH-drl.gbr f792037e
+F issue12964-tenting-back.gbr 9e7e45ca
+F issue12964-tenting-front.gbr cbe1016e
+B default 0 qa/data/pcbnew/issue1358.kicad_pcb
+F issue1358-PTH-drl.gbr 7b3914b4
+B tenting 0 qa/data/pcbnew/issue1358.kicad_pcb
+F issue1358-PTH-drl.gbr 7b3914b4
+F issue1358-tenting-back.gbr 2ce1760e
+F issue1358-tenting-front.gbr 2944fc85
+B p5_plot 0 qa/data/pcbnew/issue1358.kicad_pcb
+F issue1358-PTH-drl.gbr 6f712d1f
+F issue1358-tenting-back.gbr 57f59ea0
+F issue1358-tenting-front.gbr 60290392
+B default 0 qa/data/pcbnew/issue14008.kicad_pcb
+F issue14008-PTH-drl.gbr b43dc6c3
+B tenting 0 qa/data/pcbnew/issue14008.kicad_pcb
+F issue14008-PTH-drl.gbr b43dc6c3
+F issue14008-tenting-back.gbr 1317c66c
+F issue14008-tenting-front.gbr e51c366f
+B p5_plot 0 qa/data/pcbnew/issue14008.kicad_pcb
+F issue14008-PTH-drl.gbr 092469e4
+F issue14008-tenting-back.gbr 4b295f90
+F issue14008-tenting-front.gbr 49404e4f
+B default 0 qa/data/pcbnew/issue14130.kicad_pcb
+F issue14130-PTH-drl.gbr 2ec71936
+F issue14130-NPTH-drl.gbr 7e595aee
+B tenting 0 qa/data/pcbnew/issue14130.kicad_pcb
+F issue14130-PTH-drl.gbr 2ec71936
+F issue14130-NPTH-drl.gbr 7e595aee
+F issue14130-tenting-back.gbr 392289b6
+F issue14130-tenting-front.gbr ec3ea8fd
+B p5_plot 0 qa/data/pcbnew/issue14130.kicad_pcb
+F issue14130-PTH-drl.gbr 5242fcb8
+F issue14130-NPTH-drl.gbr 98c347b4
+F issue14130-tenting-back.gbr ac988421
+F issue14130-tenting-front.gbr 96ca5479
+B default 0 qa/data/pcbnew/issue14294.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue14294.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue14294.kicad_pcb
+B default 0 qa/data/pcbnew/issue14334.kicad_pcb
+F issue14334-PTH-drl.gbr e7af5e30
+B tenting 0 qa/data/pcbnew/issue14334.kicad_pcb
+F issue14334-PTH-drl.gbr e7af5e30
+B p5_plot 0 qa/data/pcbnew/issue14334.kicad_pcb
+F issue14334-PTH-drl.gbr bce9c346
+B default 0 qa/data/pcbnew/issue14412.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue14412.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue14412.kicad_pcb
+B default 0 qa/data/pcbnew/issue14449.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue14449.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue14449.kicad_pcb
+B default 0 qa/data/pcbnew/issue14549_2.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue14549_2.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue14549_2.kicad_pcb
+B default 0 qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
+B default 0 qa/data/pcbnew/issue15280.kicad_pcb
+F issue15280-PTH-drl.gbr de6e4653
+B tenting 0 qa/data/pcbnew/issue15280.kicad_pcb
+F issue15280-PTH-drl.gbr de6e4653
+B p5_plot 0 qa/data/pcbnew/issue15280.kicad_pcb
+F issue15280-PTH-drl.gbr 92ad626f
+B default 0 qa/data/pcbnew/issue16182.kicad_pcb
+F issue16182-PTH-drl.gbr e0b76374
+B tenting 0 qa/data/pcbnew/issue16182.kicad_pcb
+F issue16182-PTH-drl.gbr e0b76374
+B p5_plot 0 qa/data/pcbnew/issue16182.kicad_pcb
+F issue16182-PTH-drl.gbr 983b8dde
+B default 0 qa/data/pcbnew/issue16566.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue16566.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue16566.kicad_pcb
+B default 0 qa/data/pcbnew/issue16658/issue16658.kicad_pcb
+F issue16658-PTH-drl.gbr a684858f
+B tenting 0 qa/data/pcbnew/issue16658/issue16658.kicad_pcb
+F issue16658-PTH-drl.gbr a684858f
+F issue16658-tenting-back.gbr 5f8055df
+F issue16658-tenting-front.gbr 54fd64cf
+B p5_plot 0 qa/data/pcbnew/issue16658/issue16658.kicad_pcb
+F issue16658-PTH-drl.gbr 5fb6f207
+F issue16658-tenting-back.gbr c9209d36
+F issue16658-tenting-front.gbr 93946c88
+B default 0 qa/data/pcbnew/issue17559.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue17559.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue17559.kicad_pcb
+B default 0 qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+F issue17967-PTH-drl.gbr 1df5608b
+B tenting 0 qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+F issue17967-PTH-drl.gbr 1df5608b
+F issue17967-tenting-back.gbr 595d54ef
+F issue17967-tenting-front.gbr f8a19fc7
+B p5_plot 0 qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+F issue17967-PTH-drl.gbr d9ec6c9d
+F issue17967-tenting-back.gbr 7c3b9b93
+F issue17967-tenting-front.gbr 8cbc03df
+B default 0 qa/data/pcbnew/issue17971/issue17971.kicad_pcb
+F issue17971-PTH-drl.gbr 22095833
+F issue17971-NPTH-drl.gbr c1e04bad
+B tenting 0 qa/data/pcbnew/issue17971/issue17971.kicad_pcb
+F issue17971-PTH-drl.gbr 22095833
+F issue17971-NPTH-drl.gbr c1e04bad
+F issue17971-tenting-back.gbr cdb71b33
+F issue17971-tenting-front.gbr f2bd3f66
+B p5_plot 0 qa/data/pcbnew/issue17971/issue17971.kicad_pcb
+F issue17971-PTH-drl.gbr b01d1f70
+F issue17971-NPTH-drl.gbr 3f81a183
+F issue17971-tenting-back.gbr 1ba670b1
+F issue17971-tenting-front.gbr 9769907a
+B default 0 qa/data/pcbnew/issue18.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue18.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue18.kicad_pcb
+B default 0 qa/data/pcbnew/issue18045/test_proj.kicad_pcb
+F test_proj-PTH-drl.gbr 05f8a772
+B tenting 0 qa/data/pcbnew/issue18045/test_proj.kicad_pcb
+F test_proj-PTH-drl.gbr 05f8a772
+B p5_plot 0 qa/data/pcbnew/issue18045/test_proj.kicad_pcb
+F test_proj-PTH-drl.gbr 1ccc7059
+B default 0 qa/data/pcbnew/issue18142.kicad_pcb
+F issue18142-front-in2-drl.gbr 3e3980ef
+F issue18142-in2-in3-drl.gbr d195f352
+B tenting 0 qa/data/pcbnew/issue18142.kicad_pcb
+F issue18142-front-in2-drl.gbr 3e3980ef
+F issue18142-in2-in3-drl.gbr d195f352
+F issue18142-tenting-front.gbr 28fbac15
+B p5_plot 0 qa/data/pcbnew/issue18142.kicad_pcb
+F issue18142-front-in2-drl.gbr ab2f8997
+F issue18142-in2-in3-drl.gbr 6063545f
+F issue18142-tenting-front.gbr 93dfa26c
+B default 0 qa/data/pcbnew/issue18203.kicad_pcb
+F issue18203-PTH-drl.gbr 45c81d6d
+B tenting 0 qa/data/pcbnew/issue18203.kicad_pcb
+F issue18203-PTH-drl.gbr 45c81d6d
+B p5_plot 0 qa/data/pcbnew/issue18203.kicad_pcb
+F issue18203-PTH-drl.gbr 737f625c
+B default 0 qa/data/pcbnew/issue18839.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue18839.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue18839.kicad_pcb
+B default 0 qa/data/pcbnew/issue18878.kicad_pcb
+F issue18878-PTH-drl.gbr ec0815c2
+B tenting 0 qa/data/pcbnew/issue18878.kicad_pcb
+F issue18878-PTH-drl.gbr ec0815c2
+F issue18878-tenting-back.gbr cf2b86ee
+F issue18878-tenting-front.gbr de412953
+B p5_plot 0 qa/data/pcbnew/issue18878.kicad_pcb
+F issue18878-PTH-drl.gbr 058ca7dd
+F issue18878-tenting-back.gbr 22ab75e9
+F issue18878-tenting-front.gbr b1ca3a88
+B default 0 qa/data/pcbnew/issue19090/issue19090.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue19090/issue19090.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue19090/issue19090.kicad_pcb
+B default 0 qa/data/pcbnew/issue19325/issue19325.kicad_pcb
+F issue19325-PTH-drl.gbr cd927065
+B tenting 0 qa/data/pcbnew/issue19325/issue19325.kicad_pcb
+F issue19325-PTH-drl.gbr cd927065
+B p5_plot 0 qa/data/pcbnew/issue19325/issue19325.kicad_pcb
+F issue19325-PTH-drl.gbr 1a8ec3da
+B default 0 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
+B default 0 qa/data/pcbnew/issue19574.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue19574.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue19574.kicad_pcb
+B default 0 qa/data/pcbnew/issue19956/issue19956.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue19956/issue19956.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue19956/issue19956.kicad_pcb
+B default 0 qa/data/pcbnew/issue20249/dimension.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue20249/dimension.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue20249/dimension.kicad_pcb
+B default 0 qa/data/pcbnew/issue20480/issue20480.kicad_pcb
+F issue20480-PTH-drl.gbr a3778731
+B tenting 0 qa/data/pcbnew/issue20480/issue20480.kicad_pcb
+F issue20480-PTH-drl.gbr a3778731
+B p5_plot 0 qa/data/pcbnew/issue20480/issue20480.kicad_pcb
+F issue20480-PTH-drl.gbr 62fd309b
+B default 0 qa/data/pcbnew/issue21184/issue21184.kicad_pcb
+F issue21184-PTH-drl.gbr 47a26094
+B tenting 0 qa/data/pcbnew/issue21184/issue21184.kicad_pcb
+F issue21184-PTH-drl.gbr 47a26094
+F issue21184-tenting-back.gbr d3edd978
+F issue21184-tenting-front.gbr 6143306e
+B p5_plot 0 qa/data/pcbnew/issue21184/issue21184.kicad_pcb
+F issue21184-PTH-drl.gbr 97ee36dd
+F issue21184-tenting-back.gbr 8590784b
+F issue21184-tenting-front.gbr 72e1504c
+B default 0 qa/data/pcbnew/issue21564/issue21564.kicad_pcb
+F issue21564-PTH-drl.gbr 400829ea
+B tenting 0 qa/data/pcbnew/issue21564/issue21564.kicad_pcb
+F issue21564-PTH-drl.gbr 400829ea
+B p5_plot 0 qa/data/pcbnew/issue21564/issue21564.kicad_pcb
+F issue21564-PTH-drl.gbr f0f1928e
+B default 0 qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
+F topology_mismatch-PTH-drl.gbr 3d236e94
+B tenting 0 qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
+F topology_mismatch-PTH-drl.gbr 3d236e94
+F topology_mismatch-tenting-back.gbr 4f685a7d
+F topology_mismatch-tenting-front.gbr ccabec04
+B p5_plot 0 qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
+F topology_mismatch-PTH-drl.gbr 8a87aa12
+F topology_mismatch-tenting-back.gbr 698128b4
+F topology_mismatch-tenting-front.gbr c5c82ee0
+B default 0 qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+F issue21746-PTH-drl.gbr a7796ca6
+B tenting 0 qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+F issue21746-PTH-drl.gbr a7796ca6
+B p5_plot 0 qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+F issue21746-PTH-drl.gbr 26d7d2ce
+B default 0 qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+F issue22010-PTH-drl.gbr 9eb9eb44
+B tenting 0 qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+F issue22010-PTH-drl.gbr 9eb9eb44
+F issue22010-tenting-back.gbr ad6d57ed
+F issue22010-tenting-front.gbr 91245df9
+B p5_plot 0 qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+F issue22010-PTH-drl.gbr 6aaaecfe
+F issue22010-tenting-back.gbr 6e846709
+F issue22010-tenting-front.gbr 7e0ac00c
+B default 0 qa/data/pcbnew/issue22102.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22102.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22102.kicad_pcb
+B default 0 qa/data/pcbnew/issue22267.kicad_pcb
+F issue22267-PTH-drl.gbr a5ee0eab
+F issue22267-NPTH-drl.gbr decf6935
+B tenting 0 qa/data/pcbnew/issue22267.kicad_pcb
+F issue22267-PTH-drl.gbr a5ee0eab
+F issue22267-NPTH-drl.gbr decf6935
+F issue22267-tenting-back.gbr 355531fe
+F issue22267-tenting-front.gbr 950fa0dd
+B p5_plot 0 qa/data/pcbnew/issue22267.kicad_pcb
+F issue22267-PTH-drl.gbr aa8a6a7a
+F issue22267-NPTH-drl.gbr 66788cc0
+F issue22267-tenting-back.gbr fbb56c0c
+F issue22267-tenting-front.gbr c7e03aab
+B default 0 qa/data/pcbnew/issue22316/issue22316.kicad_pcb
+F issue22316-PTH-drl.gbr 68e2474c
+B tenting 0 qa/data/pcbnew/issue22316/issue22316.kicad_pcb
+F issue22316-PTH-drl.gbr 68e2474c
+B p5_plot 0 qa/data/pcbnew/issue22316/issue22316.kicad_pcb
+F issue22316-PTH-drl.gbr 65b79ca0
+B default 0 qa/data/pcbnew/issue22318/issue22318.kicad_pcb
+F issue22318-PTH-drl.gbr 056efb63
+B tenting 0 qa/data/pcbnew/issue22318/issue22318.kicad_pcb
+F issue22318-PTH-drl.gbr 056efb63
+B p5_plot 0 qa/data/pcbnew/issue22318/issue22318.kicad_pcb
+F issue22318-PTH-drl.gbr 59d2c6e1
+B default 0 qa/data/pcbnew/issue22536.kicad_pcb
+F issue22536-PTH-drl.gbr fbe1277e
+F issue22536-front-in1-drl.gbr b200811a
+B tenting 0 qa/data/pcbnew/issue22536.kicad_pcb
+F issue22536-PTH-drl.gbr fbe1277e
+F issue22536-front-in1-drl.gbr b200811a
+F issue22536-tenting-back.gbr 26c5bf8c
+F issue22536-tenting-front.gbr 037583df
+B p5_plot 0 qa/data/pcbnew/issue22536.kicad_pcb
+F issue22536-PTH-drl.gbr cc80cf36
+F issue22536-front-in1-drl.gbr 116af80a
+F issue22536-tenting-back.gbr 87dafe3a
+F issue22536-tenting-front.gbr bd1e6782
+B default 0 qa/data/pcbnew/issue22548/issue22548.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22548/issue22548.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22548/issue22548.kicad_pcb
+B default 0 qa/data/pcbnew/issue22597/issue22597.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22597/issue22597.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22597/issue22597.kicad_pcb
+B default 0 qa/data/pcbnew/issue22751/issue22751.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22751/issue22751.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22751/issue22751.kicad_pcb
+B default 0 qa/data/pcbnew/issue22794.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22794.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22794.kicad_pcb
+B default 0 qa/data/pcbnew/issue22798.kicad_pcb
+F issue22798-PTH-drl.gbr 278aff7c
+B tenting 0 qa/data/pcbnew/issue22798.kicad_pcb
+F issue22798-PTH-drl.gbr 278aff7c
+B p5_plot 0 qa/data/pcbnew/issue22798.kicad_pcb
+F issue22798-PTH-drl.gbr 91b7e196
+B default 0 qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+F issue22809-PTH-drl.gbr 6d5a98d1
+B tenting 0 qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+F issue22809-PTH-drl.gbr 6d5a98d1
+F issue22809-tenting-back.gbr 7f7bd093
+F issue22809-tenting-front.gbr 3bfcab20
+B p5_plot 0 qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+F issue22809-PTH-drl.gbr 3a8de6df
+F issue22809-tenting-back.gbr 5ccd4688
+F issue22809-tenting-front.gbr f40db07e
+B default 0 qa/data/pcbnew/issue22983/issue22983.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue22983/issue22983.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue22983/issue22983.kicad_pcb
+B default 0 qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+F issue23053-PTH-drl.gbr b62a5f9d
+F issue23053-NPTH-drl.gbr 64f02103
+B tenting 0 qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+F issue23053-PTH-drl.gbr b62a5f9d
+F issue23053-NPTH-drl.gbr 64f02103
+F issue23053-tenting-back.gbr a32e2510
+F issue23053-tenting-front.gbr 0d1cc9da
+B p5_plot 0 qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+F issue23053-PTH-drl.gbr 34a6062c
+F issue23053-NPTH-drl.gbr f815a0be
+F issue23053-tenting-back.gbr ec422f2c
+F issue23053-tenting-front.gbr a07e2f4c
+B default 0 qa/data/pcbnew/issue23123_minimal.kicad_pcb
+F issue23123_minimal-PTH-drl.gbr 00d9bd1e
+B tenting 0 qa/data/pcbnew/issue23123_minimal.kicad_pcb
+F issue23123_minimal-PTH-drl.gbr 00d9bd1e
+B p5_plot 0 qa/data/pcbnew/issue23123_minimal.kicad_pcb
+F issue23123_minimal-PTH-drl.gbr 28ffb719
+B default 0 qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
+B default 0 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
+F issue23339_zone_layer_rules-PTH-drl.gbr f62a82db
+B tenting 0 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
+F issue23339_zone_layer_rules-PTH-drl.gbr f62a82db
+B p5_plot 0 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
+F issue23339_zone_layer_rules-PTH-drl.gbr 3f7b6aee
+B default 0 qa/data/pcbnew/issue23389/issue23389.kicad_pcb
+F issue23389-PTH-drl.gbr ad670606
+F issue23389-NPTH-drl.gbr 79d75aca
+B tenting 0 qa/data/pcbnew/issue23389/issue23389.kicad_pcb
+F issue23389-PTH-drl.gbr ad670606
+F issue23389-NPTH-drl.gbr 79d75aca
+B p5_plot 0 qa/data/pcbnew/issue23389/issue23389.kicad_pcb
+F issue23389-PTH-drl.gbr 6e61247b
+F issue23389-NPTH-drl.gbr 8c3feb33
+B default 0 qa/data/pcbnew/issue23418/testing.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23418/testing.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23418/testing.kicad_pcb
+B default 0 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
+B default 0 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
+F 3Rs_bv-PTH-drl.gbr 84706e17
+F 3Rs_bv-front-in1-drl.gbr 175a532d
+F 3Rs_bv-front-in2-drl.gbr 4eecbe28
+F 3Rs_bv-in1-in2-drl.gbr 27368d49
+F 3Rs_bv-in2-back-drl.gbr b5e79264
+F 3Rs_bv-NPTH-drl.gbr b9a539c9
+B tenting 0 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
+F 3Rs_bv-PTH-drl.gbr 84706e17
+F 3Rs_bv-front-in1-drl.gbr 175a532d
+F 3Rs_bv-front-in2-drl.gbr 4eecbe28
+F 3Rs_bv-in1-in2-drl.gbr 27368d49
+F 3Rs_bv-in2-back-drl.gbr b5e79264
+F 3Rs_bv-NPTH-drl.gbr b9a539c9
+F 3Rs_bv-tenting-back.gbr 5987d846
+F 3Rs_bv-tenting-front.gbr 4691364d
+B p5_plot 0 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
+F 3Rs_bv-PTH-drl.gbr 3ff69af6
+F 3Rs_bv-front-in1-drl.gbr aceae5e6
+F 3Rs_bv-front-in2-drl.gbr 096ce93b
+F 3Rs_bv-in1-in2-drl.gbr 7ac72271
+F 3Rs_bv-in2-back-drl.gbr ec608555
+F 3Rs_bv-NPTH-drl.gbr 58f2bb1e
+F 3Rs_bv-tenting-back.gbr eee09330
+F 3Rs_bv-tenting-front.gbr adbe0a2f
+B default 0 qa/data/pcbnew/issue23467/issue23467.kicad_pcb
+F issue23467-NPTH-drl.gbr 36f28814
+B tenting 0 qa/data/pcbnew/issue23467/issue23467.kicad_pcb
+F issue23467-NPTH-drl.gbr 36f28814
+B p5_plot 0 qa/data/pcbnew/issue23467/issue23467.kicad_pcb
+F issue23467-NPTH-drl.gbr dd2d2f4e
+B default 0 qa/data/pcbnew/issue23469/issue23469.kicad_pcb
+F issue23469-PTH-drl.gbr 48b8831c
+F issue23469-NPTH-drl.gbr 5cd3d64d
+B tenting 0 qa/data/pcbnew/issue23469/issue23469.kicad_pcb
+F issue23469-PTH-drl.gbr 48b8831c
+F issue23469-NPTH-drl.gbr 5cd3d64d
+B p5_plot 0 qa/data/pcbnew/issue23469/issue23469.kicad_pcb
+F issue23469-PTH-drl.gbr a58d51f2
+F issue23469-NPTH-drl.gbr e4d5d849
+B default 0 qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
+B default 0 qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+F issue23550-PTH-drl.gbr ebc655e7
+B tenting 0 qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+F issue23550-PTH-drl.gbr ebc655e7
+F issue23550-tenting-back.gbr d0a55d0f
+F issue23550-tenting-front.gbr 4b4c81e5
+B p5_plot 0 qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+F issue23550-PTH-drl.gbr 0f843edf
+F issue23550-tenting-back.gbr a492a316
+F issue23550-tenting-front.gbr 8fbd18eb
+B default 0 qa/data/pcbnew/issue23578/issue23578.kicad_pcb
+F issue23578-PTH-drl.gbr 0304fc77
+B tenting 0 qa/data/pcbnew/issue23578/issue23578.kicad_pcb
+F issue23578-PTH-drl.gbr 0304fc77
+B p5_plot 0 qa/data/pcbnew/issue23578/issue23578.kicad_pcb
+F issue23578-PTH-drl.gbr d58f9575
+B default 0 qa/data/pcbnew/issue23658/issue23658.kicad_pcb
+F issue23658-PTH-drl.gbr 4de10cd9
+B tenting 0 qa/data/pcbnew/issue23658/issue23658.kicad_pcb
+F issue23658-PTH-drl.gbr 4de10cd9
+B p5_plot 0 qa/data/pcbnew/issue23658/issue23658.kicad_pcb
+F issue23658-PTH-drl.gbr 927df678
+B default 0 qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
+F issue23690_via_in_pad-PTH-drl.gbr a9f4be61
+B tenting 0 qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
+F issue23690_via_in_pad-PTH-drl.gbr a9f4be61
+F issue23690_via_in_pad-tenting-back.gbr 24c7350d
+F issue23690_via_in_pad-tenting-front.gbr ff1534f1
+B p5_plot 0 qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
+F issue23690_via_in_pad-PTH-drl.gbr 28a7b9ff
+F issue23690_via_in_pad-tenting-back.gbr 249fe54e
+F issue23690_via_in_pad-tenting-front.gbr 36ab32ba
+B default 0 qa/data/pcbnew/issue23704/issue23704.kicad_pcb
+F issue23704-PTH-drl.gbr 58621513
+F issue23704-NPTH-drl.gbr 12686494
+B tenting 0 qa/data/pcbnew/issue23704/issue23704.kicad_pcb
+F issue23704-PTH-drl.gbr 58621513
+F issue23704-NPTH-drl.gbr 12686494
+B p5_plot 0 qa/data/pcbnew/issue23704/issue23704.kicad_pcb
+F issue23704-PTH-drl.gbr 00e09830
+F issue23704-NPTH-drl.gbr a8f5e2f8
+B default 0 qa/data/pcbnew/issue23790/issue23790.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23790/issue23790.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23790/issue23790.kicad_pcb
+B default 0 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
+B default 0 qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+F issue23851-PTH-drl.gbr c7896900
+B tenting 0 qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+F issue23851-PTH-drl.gbr c7896900
+B p5_plot 0 qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+F issue23851-PTH-drl.gbr 6ca3cfce
+B default 0 qa/data/pcbnew/issue23868/issue23868.kicad_pcb
+F issue23868-PTH-drl.gbr cf2e59fa
+B tenting 0 qa/data/pcbnew/issue23868/issue23868.kicad_pcb
+F issue23868-PTH-drl.gbr cf2e59fa
+B p5_plot 0 qa/data/pcbnew/issue23868/issue23868.kicad_pcb
+F issue23868-PTH-drl.gbr 3c76cc08
+B default 0 qa/data/pcbnew/issue24078/issue24078.kicad_pcb
+F issue24078-PTH-drl.gbr 4fb92a69
+B tenting 0 qa/data/pcbnew/issue24078/issue24078.kicad_pcb
+F issue24078-PTH-drl.gbr 4fb92a69
+B p5_plot 0 qa/data/pcbnew/issue24078/issue24078.kicad_pcb
+F issue24078-PTH-drl.gbr 17a7dbd0
+B default 0 qa/data/pcbnew/issue24089/issue24089.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24089/issue24089.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24089/issue24089.kicad_pcb
+B default 0 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
+B default 0 qa/data/pcbnew/issue24192/issue24192.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24192/issue24192.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24192/issue24192.kicad_pcb
+B default 0 qa/data/pcbnew/issue24241/issue24241.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24241/issue24241.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24241/issue24241.kicad_pcb
+B default 0 qa/data/pcbnew/issue24264/issue24264.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24264/issue24264.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24264/issue24264.kicad_pcb
+B default 0 qa/data/pcbnew/issue24286/issue24286.kicad_pcb
+F issue24286-PTH-drl.gbr cfa055fd
+F issue24286-NPTH-drl.gbr b16dc466
+B tenting 0 qa/data/pcbnew/issue24286/issue24286.kicad_pcb
+F issue24286-PTH-drl.gbr cfa055fd
+F issue24286-NPTH-drl.gbr b16dc466
+B p5_plot 0 qa/data/pcbnew/issue24286/issue24286.kicad_pcb
+F issue24286-PTH-drl.gbr 3ff47df5
+F issue24286-NPTH-drl.gbr 5a705a89
+B default 0 qa/data/pcbnew/issue24312/issue24312.kicad_pcb
+F issue24312-PTH-drl.gbr 915aaf92
+B tenting 0 qa/data/pcbnew/issue24312/issue24312.kicad_pcb
+F issue24312-PTH-drl.gbr 915aaf92
+F issue24312-tenting-back.gbr 2091b588
+F issue24312-tenting-front.gbr 7825a350
+B p5_plot 0 qa/data/pcbnew/issue24312/issue24312.kicad_pcb
+F issue24312-PTH-drl.gbr 6a0d2d78
+F issue24312-tenting-back.gbr ac87a8d7
+F issue24312-tenting-front.gbr e567966a
+B default 0 qa/data/pcbnew/issue24340/issue24340.kicad_pcb
+F issue24340-PTH-drl.gbr 6c5424c9
+B tenting 0 qa/data/pcbnew/issue24340/issue24340.kicad_pcb
+F issue24340-PTH-drl.gbr 6c5424c9
+B p5_plot 0 qa/data/pcbnew/issue24340/issue24340.kicad_pcb
+F issue24340-PTH-drl.gbr c77f428b
+B default 0 qa/data/pcbnew/issue24355/issue24355.kicad_pcb
+F issue24355-PTH-drl.gbr 09fa249e
+F issue24355-NPTH-drl.gbr 15ef4b40
+B tenting 0 qa/data/pcbnew/issue24355/issue24355.kicad_pcb
+F issue24355-PTH-drl.gbr 09fa249e
+F issue24355-NPTH-drl.gbr 15ef4b40
+B p5_plot 0 qa/data/pcbnew/issue24355/issue24355.kicad_pcb
+F issue24355-PTH-drl.gbr 7d0483f0
+F issue24355-NPTH-drl.gbr f8babccd
+B default 0 qa/data/pcbnew/issue24442.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24442.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24442.kicad_pcb
+B default 0 qa/data/pcbnew/issue24474/issue24474.kicad_pcb
+F issue24474-PTH-drl.gbr 39fd68ed
+B tenting 0 qa/data/pcbnew/issue24474/issue24474.kicad_pcb
+F issue24474-PTH-drl.gbr 39fd68ed
+F issue24474-tenting-back.gbr 400038e7
+F issue24474-tenting-front.gbr d1433968
+B p5_plot 0 qa/data/pcbnew/issue24474/issue24474.kicad_pcb
+F issue24474-PTH-drl.gbr 1b70f3fa
+F issue24474-tenting-back.gbr 5574653d
+F issue24474-tenting-front.gbr 9696113b
+B default 0 qa/data/pcbnew/issue24523/issue24523.kicad_pcb
+F issue24523-PTH-drl.gbr 28de9ba8
+F issue24523-NPTH-drl.gbr 0986c0a9
+B tenting 0 qa/data/pcbnew/issue24523/issue24523.kicad_pcb
+F issue24523-PTH-drl.gbr 28de9ba8
+F issue24523-NPTH-drl.gbr 0986c0a9
+B p5_plot 0 qa/data/pcbnew/issue24523/issue24523.kicad_pcb
+F issue24523-PTH-drl.gbr 217943e8
+F issue24523-NPTH-drl.gbr 24f8eb48
+B default 0 qa/data/pcbnew/issue24525/issue24525.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24525/issue24525.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24525/issue24525.kicad_pcb
+B default 0 qa/data/pcbnew/issue24541/issue24541.kicad_pcb
+F issue24541-PTH-drl.gbr 1f78ffa7
+F issue24541-NPTH-drl.gbr b43982cf
+B tenting 0 qa/data/pcbnew/issue24541/issue24541.kicad_pcb
+F issue24541-PTH-drl.gbr 1f78ffa7
+F issue24541-NPTH-drl.gbr b43982cf
+B p5_plot 0 qa/data/pcbnew/issue24541/issue24541.kicad_pcb
+F issue24541-PTH-drl.gbr 06674634
+F issue24541-NPTH-drl.gbr 56898dd4
+B default 0 qa/data/pcbnew/issue24543/issue24543.kicad_pcb
+F issue24543-PTH-drl.gbr 4884e464
+F issue24543-NPTH-drl.gbr 5a95ac6f
+B tenting 0 qa/data/pcbnew/issue24543/issue24543.kicad_pcb
+F issue24543-PTH-drl.gbr 4884e464
+F issue24543-NPTH-drl.gbr 5a95ac6f
+B p5_plot 0 qa/data/pcbnew/issue24543/issue24543.kicad_pcb
+F issue24543-PTH-drl.gbr 2aab22be
+F issue24543-NPTH-drl.gbr eb952233
+B default 0 qa/data/pcbnew/issue24544/issue24544.kicad_pcb
+F issue24544-PTH-drl.gbr e81c442a
+B tenting 0 qa/data/pcbnew/issue24544/issue24544.kicad_pcb
+F issue24544-PTH-drl.gbr e81c442a
+B p5_plot 0 qa/data/pcbnew/issue24544/issue24544.kicad_pcb
+F issue24544-PTH-drl.gbr 2caaadb0
+B default 0 qa/data/pcbnew/issue24597/issue24597.kicad_pcb
+F issue24597-PTH-drl.gbr d30d2c3f
+B tenting 0 qa/data/pcbnew/issue24597/issue24597.kicad_pcb
+F issue24597-PTH-drl.gbr d30d2c3f
+B p5_plot 0 qa/data/pcbnew/issue24597/issue24597.kicad_pcb
+F issue24597-PTH-drl.gbr 1a7b685b
+B default 0 qa/data/pcbnew/issue24649.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24649.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24649.kicad_pcb
+B default 0 qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
+B default 0 qa/data/pcbnew/issue24735/issue24735.kicad_pcb
+F issue24735-NPTH-drl.gbr 4eb50b9b
+B tenting 0 qa/data/pcbnew/issue24735/issue24735.kicad_pcb
+F issue24735-NPTH-drl.gbr 4eb50b9b
+B p5_plot 0 qa/data/pcbnew/issue24735/issue24735.kicad_pcb
+F issue24735-NPTH-drl.gbr 9da8c01e
+B default 0 qa/data/pcbnew/issue24758/issue24758.kicad_pcb
+F issue24758-PTH-drl.gbr 5ea7ddff
+B tenting 0 qa/data/pcbnew/issue24758/issue24758.kicad_pcb
+F issue24758-PTH-drl.gbr 5ea7ddff
+F issue24758-tenting-back.gbr d05e2eb1
+F issue24758-tenting-front.gbr 49e4b950
+B p5_plot 0 qa/data/pcbnew/issue24758/issue24758.kicad_pcb
+F issue24758-PTH-drl.gbr 2e51e6ad
+F issue24758-tenting-back.gbr e4d44986
+F issue24758-tenting-front.gbr 18f92b6d
+B default 0 qa/data/pcbnew/issue24799/issue24799.kicad_pcb
+F issue24799-NPTH-drl.gbr 1881d1c5
+B tenting 0 qa/data/pcbnew/issue24799/issue24799.kicad_pcb
+F issue24799-NPTH-drl.gbr 1881d1c5
+B p5_plot 0 qa/data/pcbnew/issue24799/issue24799.kicad_pcb
+F issue24799-NPTH-drl.gbr 4e8f6b89
+B default 0 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+F issue24835-min-PTH-drl.gbr 24407e9e
+B tenting 0 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+F issue24835-min-PTH-drl.gbr 24407e9e
+F issue24835-min-tenting-back.gbr 404f8973
+F issue24835-min-tenting-front.gbr 9c85b14c
+B p5_plot 0 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+F issue24835-min-PTH-drl.gbr c712c9e6
+F issue24835-min-tenting-back.gbr 85eeba60
+F issue24835-min-tenting-front.gbr 445b9747
+B default 0 qa/data/pcbnew/issue24853/issue24853.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24853/issue24853.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24853/issue24853.kicad_pcb
+B default 0 qa/data/pcbnew/issue24865/issue24865.kicad_pcb
+F issue24865-PTH-drl.gbr 54432be9
+B tenting 0 qa/data/pcbnew/issue24865/issue24865.kicad_pcb
+F issue24865-PTH-drl.gbr 54432be9
+B p5_plot 0 qa/data/pcbnew/issue24865/issue24865.kicad_pcb
+F issue24865-PTH-drl.gbr 678e0a31
+B default 0 qa/data/pcbnew/issue24875/issue24875.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24875/issue24875.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24875/issue24875.kicad_pcb
+B default 0 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
+B default 0 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
+B default 0 qa/data/pcbnew/issue24885/issue24885.kicad_pcb
+F issue24885-PTH-drl.gbr 25f77676
+B tenting 0 qa/data/pcbnew/issue24885/issue24885.kicad_pcb
+F issue24885-PTH-drl.gbr 25f77676
+B p5_plot 0 qa/data/pcbnew/issue24885/issue24885.kicad_pcb
+F issue24885-PTH-drl.gbr a2fa2b47
+B default 0 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
+F keepout_self_exclude-PTH-drl.gbr bea02eaf
+B tenting 0 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
+F keepout_self_exclude-PTH-drl.gbr bea02eaf
+B p5_plot 0 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
+F keepout_self_exclude-PTH-drl.gbr 6da92a28
+B default 0 qa/data/pcbnew/issue24935/issue24935.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24935/issue24935.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24935/issue24935.kicad_pcb
+B default 0 qa/data/pcbnew/issue24974.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue24974.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue24974.kicad_pcb
+B default 0 qa/data/pcbnew/issue25021/backdrill.kicad_pcb
+F backdrill-PTH-drl.gbr 69731206
+F backdrill_Backdrills_Drill_1_4-drl.gbr 7f776cb8
+F backdrill-front-in3-backdrill-drl.gbr 7f776cb8
+F backdrill_Backdrills_Drill_10_4-drl.gbr 72293eb5
+F backdrill-in3-back-backdrill-drl.gbr 72293eb5
+F backdrill_Backdrills_Drill_10_7-drl.gbr 406f185a
+F backdrill-in6-back-backdrill-drl.gbr 406f185a
+B tenting 0 qa/data/pcbnew/issue25021/backdrill.kicad_pcb
+F backdrill-PTH-drl.gbr 69731206
+F backdrill_Backdrills_Drill_1_4-drl.gbr 7f776cb8
+F backdrill-front-in3-backdrill-drl.gbr 7f776cb8
+F backdrill_Backdrills_Drill_10_4-drl.gbr 72293eb5
+F backdrill-in3-back-backdrill-drl.gbr 72293eb5
+F backdrill_Backdrills_Drill_10_7-drl.gbr 406f185a
+F backdrill-in6-back-backdrill-drl.gbr 406f185a
+F backdrill-tenting-back.gbr 6d9ca4e6
+F backdrill-tenting-front.gbr 83282824
+B p5_plot 0 qa/data/pcbnew/issue25021/backdrill.kicad_pcb
+F backdrill-PTH-drl.gbr 37ce959a
+F backdrill_Backdrills_Drill_1_4-drl.gbr d8a5bcde
+F backdrill-front-in3-backdrill-drl.gbr d8a5bcde
+F backdrill_Backdrills_Drill_10_4-drl.gbr 7dd3119c
+F backdrill-in3-back-backdrill-drl.gbr 7dd3119c
+F backdrill_Backdrills_Drill_10_7-drl.gbr 6f724622
+F backdrill-in6-back-backdrill-drl.gbr 6f724622
+F backdrill-tenting-back.gbr 598856de
+F backdrill-tenting-front.gbr 056623ac
+B default 0 qa/data/pcbnew/issue25065/issue25065.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25065/issue25065.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25065/issue25065.kicad_pcb
+B default 0 qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
+B default 0 qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
+B default 0 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
+B default 0 qa/data/pcbnew/issue25107/issue25107.kicad_pcb
+F issue25107-PTH-drl.gbr 96091b4c
+B tenting 0 qa/data/pcbnew/issue25107/issue25107.kicad_pcb
+F issue25107-PTH-drl.gbr 96091b4c
+B p5_plot 0 qa/data/pcbnew/issue25107/issue25107.kicad_pcb
+F issue25107-PTH-drl.gbr 599b0b8e
+B default 0 qa/data/pcbnew/issue2512.kicad_pcb
+F issue2512-PTH-drl.gbr 89dc7ada
+B tenting 0 qa/data/pcbnew/issue2512.kicad_pcb
+F issue2512-PTH-drl.gbr 89dc7ada
+F issue2512-tenting-back.gbr 69ed4f93
+F issue2512-tenting-front.gbr 99158610
+B p5_plot 0 qa/data/pcbnew/issue2512.kicad_pcb
+F issue2512-PTH-drl.gbr 6c6126f3
+F issue2512-tenting-back.gbr 83e23479
+F issue2512-tenting-front.gbr fce22bcb
+B default 0 qa/data/pcbnew/issue25265.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25265.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25265.kicad_pcb
+B default 0 qa/data/pcbnew/issue2528.kicad_pcb
+F issue2528-PTH-drl.gbr 9fdfb7e6
+B tenting 0 qa/data/pcbnew/issue2528.kicad_pcb
+F issue2528-PTH-drl.gbr 9fdfb7e6
+F issue2528-tenting-back.gbr 598ccc0a
+F issue2528-tenting-front.gbr 6e903db0
+B p5_plot 0 qa/data/pcbnew/issue2528.kicad_pcb
+F issue2528-PTH-drl.gbr 61d8aa60
+F issue2528-tenting-back.gbr a3a4246f
+F issue2528-tenting-front.gbr d0b529ff
+B default 0 qa/data/pcbnew/issue25303.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25303.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25303.kicad_pcb
+B default 0 qa/data/pcbnew/issue25439/issue25439.kicad_pcb
+F issue25439-NPTH-drl.gbr 5e73ddba
+B tenting 0 qa/data/pcbnew/issue25439/issue25439.kicad_pcb
+F issue25439-NPTH-drl.gbr 5e73ddba
+B p5_plot 0 qa/data/pcbnew/issue25439/issue25439.kicad_pcb
+F issue25439-NPTH-drl.gbr e7b7a40c
+B default 0 qa/data/pcbnew/issue25521_zone_names.kicad_pcb
+F issue25521_zone_names-PTH-drl.gbr 34c09466
+B tenting 0 qa/data/pcbnew/issue25521_zone_names.kicad_pcb
+F issue25521_zone_names-PTH-drl.gbr 34c09466
+B p5_plot 0 qa/data/pcbnew/issue25521_zone_names.kicad_pcb
+F issue25521_zone_names-PTH-drl.gbr 1eed059e
+B default 0 qa/data/pcbnew/issue25580.kicad_pcb
+F issue25580-PTH-drl.gbr 38662c88
+B tenting 0 qa/data/pcbnew/issue25580.kicad_pcb
+F issue25580-PTH-drl.gbr 38662c88
+F issue25580-tenting-back.gbr 653ace29
+F issue25580-tenting-front.gbr 7b17794f
+B p5_plot 0 qa/data/pcbnew/issue25580.kicad_pcb
+F issue25580-PTH-drl.gbr 1be88f5b
+F issue25580-tenting-back.gbr 5aec04ea
+F issue25580-tenting-front.gbr 468e71d2
+B default 0 qa/data/pcbnew/issue25650/issue25650.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue25650/issue25650.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue25650/issue25650.kicad_pcb
+B default 0 qa/data/pcbnew/issue4139.kicad_pcb
+F issue4139-PTH-drl.gbr 31371b1f
+B tenting 0 qa/data/pcbnew/issue4139.kicad_pcb
+F issue4139-PTH-drl.gbr 31371b1f
+F issue4139-tenting-back.gbr dd71589b
+F issue4139-tenting-front.gbr be34d71c
+B p5_plot 0 qa/data/pcbnew/issue4139.kicad_pcb
+F issue4139-PTH-drl.gbr b25649db
+F issue4139-tenting-back.gbr 9d520219
+F issue4139-tenting-front.gbr 7f2c2b3c
+B default 0 qa/data/pcbnew/issue4257.kicad_pcb
+F issue4257-PTH-drl.gbr f56e6da1
+F issue4257-front-in1-drl.gbr 6d224aaf
+B tenting 0 qa/data/pcbnew/issue4257.kicad_pcb
+F issue4257-PTH-drl.gbr f56e6da1
+F issue4257-front-in1-drl.gbr 6d224aaf
+F issue4257-tenting-back.gbr 8eadf423
+F issue4257-tenting-front.gbr 192a616f
+B p5_plot 0 qa/data/pcbnew/issue4257.kicad_pcb
+F issue4257-PTH-drl.gbr 61ef1a8d
+F issue4257-front-in1-drl.gbr 7ac03e83
+F issue4257-tenting-back.gbr a7ed5966
+F issue4257-tenting-front.gbr 467832ec
+B default 0 qa/data/pcbnew/issue5313.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue5313.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue5313.kicad_pcb
+B default 0 qa/data/pcbnew/issue5320.kicad_pcb
+F issue5320-PTH-drl.gbr 7c316f0e
+F issue5320-NPTH-drl.gbr d7aaef5a
+B tenting 0 qa/data/pcbnew/issue5320.kicad_pcb
+F issue5320-PTH-drl.gbr 7c316f0e
+F issue5320-NPTH-drl.gbr d7aaef5a
+B p5_plot 0 qa/data/pcbnew/issue5320.kicad_pcb
+F issue5320-PTH-drl.gbr 3843fc98
+F issue5320-NPTH-drl.gbr 243ccacf
+B default 0 qa/data/pcbnew/issue5567.kicad_pcb
+F issue5567-PTH-drl.gbr d1a85ceb
+B tenting 0 qa/data/pcbnew/issue5567.kicad_pcb
+F issue5567-PTH-drl.gbr d1a85ceb
+B p5_plot 0 qa/data/pcbnew/issue5567.kicad_pcb
+F issue5567-PTH-drl.gbr 179dc303
+B default 0 qa/data/pcbnew/issue5750.kicad_pcb
+F issue5750-PTH-drl.gbr 3dfa9b6f
+B tenting 0 qa/data/pcbnew/issue5750.kicad_pcb
+F issue5750-PTH-drl.gbr 3dfa9b6f
+B p5_plot 0 qa/data/pcbnew/issue5750.kicad_pcb
+F issue5750-PTH-drl.gbr 75d1276a
+B default 0 qa/data/pcbnew/issue5854.kicad_pcb
+F issue5854-PTH-drl.gbr e0ad4e84
+B tenting 0 qa/data/pcbnew/issue5854.kicad_pcb
+F issue5854-PTH-drl.gbr e0ad4e84
+B p5_plot 0 qa/data/pcbnew/issue5854.kicad_pcb
+F issue5854-PTH-drl.gbr 6aa380fc
+B default 0 qa/data/pcbnew/issue5978.kicad_pcb
+F issue5978-PTH-drl.gbr a17bbab2
+B tenting 0 qa/data/pcbnew/issue5978.kicad_pcb
+F issue5978-PTH-drl.gbr a17bbab2
+B p5_plot 0 qa/data/pcbnew/issue5978.kicad_pcb
+F issue5978-PTH-drl.gbr 784b659a
+B default 0 qa/data/pcbnew/issue6443.kicad_pcb
+F issue6443-PTH-drl.gbr 47c8eb47
+B tenting 0 qa/data/pcbnew/issue6443.kicad_pcb
+F issue6443-PTH-drl.gbr 47c8eb47
+B p5_plot 0 qa/data/pcbnew/issue6443.kicad_pcb
+F issue6443-PTH-drl.gbr d9bc4880
+B default 0 qa/data/pcbnew/issue6879.kicad_pcb
+F issue6879-PTH-drl.gbr 2907f101
+F issue6879-NPTH-drl.gbr 0d856029
+B tenting 0 qa/data/pcbnew/issue6879.kicad_pcb
+F issue6879-PTH-drl.gbr 2907f101
+F issue6879-NPTH-drl.gbr 0d856029
+B p5_plot 0 qa/data/pcbnew/issue6879.kicad_pcb
+F issue6879-PTH-drl.gbr ac92463d
+F issue6879-NPTH-drl.gbr b04b6fb4
+B default 0 qa/data/pcbnew/issue6945.kicad_pcb
+F issue6945-PTH-drl.gbr a30b5c4b
+F issue6945-NPTH-drl.gbr 777c3a3b
+B tenting 0 qa/data/pcbnew/issue6945.kicad_pcb
+F issue6945-PTH-drl.gbr a30b5c4b
+F issue6945-NPTH-drl.gbr 777c3a3b
+F issue6945-tenting-back.gbr fad482c3
+F issue6945-tenting-front.gbr ea4bbba4
+B p5_plot 0 qa/data/pcbnew/issue6945.kicad_pcb
+F issue6945-PTH-drl.gbr 4db01b84
+F issue6945-NPTH-drl.gbr 7b5e58f7
+F issue6945-tenting-back.gbr 2ec5c53f
+F issue6945-tenting-front.gbr b8d17b1c
+B default 0 qa/data/pcbnew/issue7086.kicad_pcb
+F issue7086-PTH-drl.gbr bf19730d
+F issue7086-NPTH-drl.gbr 7c76f306
+B tenting 0 qa/data/pcbnew/issue7086.kicad_pcb
+F issue7086-PTH-drl.gbr bf19730d
+F issue7086-NPTH-drl.gbr 7c76f306
+B p5_plot 0 qa/data/pcbnew/issue7086.kicad_pcb
+F issue7086-PTH-drl.gbr 91ae2c17
+F issue7086-NPTH-drl.gbr 3f08eeb7
+B default 0 qa/data/pcbnew/issue7241.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue7241.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue7241.kicad_pcb
+B default 0 qa/data/pcbnew/issue7267.kicad_pcb
+F issue7267-PTH-drl.gbr 5e49ed07
+B tenting 0 qa/data/pcbnew/issue7267.kicad_pcb
+F issue7267-PTH-drl.gbr 5e49ed07
+B p5_plot 0 qa/data/pcbnew/issue7267.kicad_pcb
+F issue7267-PTH-drl.gbr 6e9d40b8
+B default 0 qa/data/pcbnew/issue7567.kicad_pcb
+F issue7567-PTH-drl.gbr f9166423
+F issue7567-NPTH-drl.gbr 1e8e54b1
+B tenting 0 qa/data/pcbnew/issue7567.kicad_pcb
+F issue7567-PTH-drl.gbr f9166423
+F issue7567-NPTH-drl.gbr 1e8e54b1
+B p5_plot 0 qa/data/pcbnew/issue7567.kicad_pcb
+F issue7567-PTH-drl.gbr 9267496b
+F issue7567-NPTH-drl.gbr 7032c313
+B default 0 qa/data/pcbnew/issue7975.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue7975.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue7975.kicad_pcb
+B default 0 qa/data/pcbnew/issue8003.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue8003.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue8003.kicad_pcb
+B default 0 qa/data/pcbnew/issue8629/issue8629.kicad_pcb
+B tenting 0 qa/data/pcbnew/issue8629/issue8629.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/issue8629/issue8629.kicad_pcb
+B default 0 qa/data/pcbnew/issue8883.kicad_pcb
+F issue8883-PTH-drl.gbr 55b156fa
+B tenting 0 qa/data/pcbnew/issue8883.kicad_pcb
+F issue8883-PTH-drl.gbr 55b156fa
+F issue8883-tenting-back.gbr 71ac31b4
+F issue8883-tenting-front.gbr adcf530c
+B p5_plot 0 qa/data/pcbnew/issue8883.kicad_pcb
+F issue8883-PTH-drl.gbr 213bc657
+F issue8883-tenting-back.gbr be973dc0
+F issue8883-tenting-front.gbr 9b4831bc
+B default 0 qa/data/pcbnew/issue9081.kicad_pcb
+F issue9081-PTH-drl.gbr 7a146935
+B tenting 0 qa/data/pcbnew/issue9081.kicad_pcb
+F issue9081-PTH-drl.gbr 7a146935
+B p5_plot 0 qa/data/pcbnew/issue9081.kicad_pcb
+F issue9081-PTH-drl.gbr 665652a4
+B default 0 qa/data/pcbnew/issue9870.kicad_pcb
+F issue9870-PTH-drl.gbr 04461056
+B tenting 0 qa/data/pcbnew/issue9870.kicad_pcb
+F issue9870-PTH-drl.gbr 04461056
+F issue9870-tenting-back.gbr 41439ed2
+F issue9870-tenting-front.gbr d84f6499
+B p5_plot 0 qa/data/pcbnew/issue9870.kicad_pcb
+F issue9870-PTH-drl.gbr 327848e2
+F issue9870-tenting-back.gbr feae4acf
+F issue9870-tenting-front.gbr a4f68af8
+B default 0 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
+F keepout_disallow-PTH-drl.gbr 32c32c31
+B tenting 0 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
+F keepout_disallow-PTH-drl.gbr 32c32c31
+F keepout_disallow-tenting-back.gbr d857d27f
+F keepout_disallow-tenting-front.gbr dabe7ec7
+B p5_plot 0 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
+F keepout_disallow-PTH-drl.gbr bd15a35f
+F keepout_disallow-tenting-back.gbr 1c69d72f
+F keepout_disallow-tenting-front.gbr 8a60c4ba
+B default 0 qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
+B tenting 0 qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
+B default 0 qa/data/pcbnew/large_circle_teardrop.kicad_pcb
+B tenting 0 qa/data/pcbnew/large_circle_teardrop.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/large_circle_teardrop.kicad_pcb
+B default 0 qa/data/pcbnew/length_calculations.kicad_pcb
+F length_calculations-PTH-drl.gbr b0fcddd0
+B tenting 0 qa/data/pcbnew/length_calculations.kicad_pcb
+F length_calculations-PTH-drl.gbr b0fcddd0
+F length_calculations-tenting-back.gbr d696757d
+F length_calculations-tenting-front.gbr 44115b63
+B p5_plot 0 qa/data/pcbnew/length_calculations.kicad_pcb
+F length_calculations-PTH-drl.gbr fb810dbf
+F length_calculations-tenting-back.gbr 5a53f6f3
+F length_calculations-tenting-front.gbr 043a8849
+B default 0 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
+B tenting 0 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
+B default 0 qa/data/pcbnew/multinetclasses_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/multinetclasses_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/multinetclasses_drc.kicad_pcb
+B default 0 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
+F chain_bridging_4pad-PTH-drl.gbr 911756e7
+B tenting 0 qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
+F chain_bridging_4pad-PTH-drl.gbr 911756e7
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
+F chain_bridging_4pad-PTH-drl.gbr 9ae9fcf3
+B default 0 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
+F net_chain_total_length-PTH-drl.gbr 66eaecb0
+B tenting 0 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
+F net_chain_total_length-PTH-drl.gbr 66eaecb0
+B p5_plot 0 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
+F net_chain_total_length-PTH-drl.gbr df317088
+B default 0 qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/stub_length.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/stub_length.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/stub_length.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
+B default 0 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
+B tenting 0 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
+B default 0 qa/data/pcbnew/net_tie_drc.kicad_pcb
+F net_tie_drc-PTH-drl.gbr a4270751
+B tenting 0 qa/data/pcbnew/net_tie_drc.kicad_pcb
+F net_tie_drc-PTH-drl.gbr a4270751
+F net_tie_drc-tenting-back.gbr a6b6b4bd
+F net_tie_drc-tenting-front.gbr 9aa0893c
+B p5_plot 0 qa/data/pcbnew/net_tie_drc.kicad_pcb
+F net_tie_drc-PTH-drl.gbr 16d54ca5
+F net_tie_drc-tenting-back.gbr 1622b8b4
+F net_tie_drc-tenting-front.gbr d89e382c
+B default 0 qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
+F net_tie_hole_clearance-PTH-drl.gbr 5e532e73
+B tenting 0 qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
+F net_tie_hole_clearance-PTH-drl.gbr 5e532e73
+B p5_plot 0 qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
+F net_tie_hole_clearance-PTH-drl.gbr 19f2e15d
+B default 0 qa/data/pcbnew/notched_zones.kicad_pcb
+F notched_zones-PTH-drl.gbr 261589af
+B tenting 0 qa/data/pcbnew/notched_zones.kicad_pcb
+F notched_zones-PTH-drl.gbr 261589af
+F notched_zones-tenting-back.gbr a4a90e0e
+F notched_zones-tenting-front.gbr e9cdc34c
+B p5_plot 0 qa/data/pcbnew/notched_zones.kicad_pcb
+F notched_zones-PTH-drl.gbr 39ca995e
+F notched_zones-tenting-back.gbr ea0a66e2
+F notched_zones-tenting-front.gbr 6c90f611
+B default 0 qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
+F npth_mask_bridge_test-PTH-drl.gbr dbc16ccf
+F npth_mask_bridge_test-NPTH-drl.gbr 63640c4c
+B tenting 0 qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
+F npth_mask_bridge_test-PTH-drl.gbr dbc16ccf
+F npth_mask_bridge_test-NPTH-drl.gbr 63640c4c
+F npth_mask_bridge_test-tenting-back.gbr 543d4a69
+F npth_mask_bridge_test-tenting-front.gbr 1d1e992a
+B p5_plot 0 qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
+F npth_mask_bridge_test-PTH-drl.gbr d0e9c79b
+F npth_mask_bridge_test-NPTH-drl.gbr 45f90a8e
+F npth_mask_bridge_test-tenting-back.gbr 6e4c3c5a
+F npth_mask_bridge_test-tenting-front.gbr e2d8f7cd
+B default 0 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
+F custom_pad_mask_split-PTH-drl.gbr dcaaffaf
+F custom_pad_mask_split-front-in4-drl.gbr f031d815
+F custom_pad_mask_split-in1-in4-drl.gbr 3bb53b73
+F custom_pad_mask_split-in2-in3-drl.gbr ce7e712c
+F custom_pad_mask_split-in3-back-drl.gbr b28826e7
+F custom_pad_mask_split-in4-back-drl.gbr 5654bbdb
+B tenting 0 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
+F custom_pad_mask_split-PTH-drl.gbr dcaaffaf
+F custom_pad_mask_split-front-in4-drl.gbr f031d815
+F custom_pad_mask_split-in1-in4-drl.gbr 3bb53b73
+F custom_pad_mask_split-in2-in3-drl.gbr ce7e712c
+F custom_pad_mask_split-in3-back-drl.gbr b28826e7
+F custom_pad_mask_split-in4-back-drl.gbr 5654bbdb
+F custom_pad_mask_split-tenting-back.gbr d9063dc3
+F custom_pad_mask_split-tenting-front.gbr 776b262d
+B p5_plot 0 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
+F custom_pad_mask_split-PTH-drl.gbr 2a479387
+F custom_pad_mask_split-front-in4-drl.gbr 65539a49
+F custom_pad_mask_split-in1-in4-drl.gbr fdd3a07a
+F custom_pad_mask_split-in2-in3-drl.gbr 59da165b
+F custom_pad_mask_split-in3-back-drl.gbr 0cc3886e
+F custom_pad_mask_split-in4-back-drl.gbr 0c885c41
+F custom_pad_mask_split-tenting-back.gbr 05eb004d
+F custom_pad_mask_split-tenting-front.gbr 1ea176a3
+B default 0 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
+B tenting 0 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
+B default 0 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
+F npth_pressfit-PTH-drl.gbr 8b2455f0
+F npth_pressfit-NPTH-drl.gbr 707c8e8e
+B tenting 0 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
+F npth_pressfit-PTH-drl.gbr 8b2455f0
+F npth_pressfit-NPTH-drl.gbr 707c8e8e
+F npth_pressfit-tenting-back.gbr e953b761
+F npth_pressfit-tenting-front.gbr 5d0e2238
+B p5_plot 0 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
+F npth_pressfit-PTH-drl.gbr 4885ac70
+F npth_pressfit-NPTH-drl.gbr f172ca50
+F npth_pressfit-tenting-back.gbr bee715cc
+F npth_pressfit-tenting-front.gbr ba5c6b10
+B default 0 qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
+F npth_pressfit_slot-PTH-drl.gbr 7d4ead27
+F npth_pressfit_slot-NPTH-drl.gbr 02d73726
+B tenting 0 qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
+F npth_pressfit_slot-PTH-drl.gbr 7d4ead27
+F npth_pressfit_slot-NPTH-drl.gbr 02d73726
+F npth_pressfit_slot-tenting-back.gbr 6b49f9d5
+F npth_pressfit_slot-tenting-front.gbr 894c15e3
+B p5_plot 0 qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
+F npth_pressfit_slot-PTH-drl.gbr 2555dc55
+F npth_pressfit_slot-NPTH-drl.gbr 358507e6
+F npth_pressfit_slot-tenting-back.gbr a07a6521
+F npth_pressfit_slot-tenting-front.gbr e7e2bd1f
+B default 0 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
+F pad_margin_shapes-PTH-drl.gbr e20c7b41
+F pad_margin_shapes-front-in4-drl.gbr a55db7b1
+F pad_margin_shapes-in1-in4-drl.gbr f5bde416
+F pad_margin_shapes-in2-in3-drl.gbr 85296088
+F pad_margin_shapes-in3-back-drl.gbr e0c43cc2
+F pad_margin_shapes-in4-back-drl.gbr e8e50ba2
+B tenting 0 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
+F pad_margin_shapes-PTH-drl.gbr e20c7b41
+F pad_margin_shapes-front-in4-drl.gbr a55db7b1
+F pad_margin_shapes-in1-in4-drl.gbr f5bde416
+F pad_margin_shapes-in2-in3-drl.gbr 85296088
+F pad_margin_shapes-in3-back-drl.gbr e0c43cc2
+F pad_margin_shapes-in4-back-drl.gbr e8e50ba2
+F pad_margin_shapes-tenting-back.gbr 9a499fb2
+F pad_margin_shapes-tenting-front.gbr c004f54c
+B p5_plot 0 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
+F pad_margin_shapes-PTH-drl.gbr f1e99ad2
+F pad_margin_shapes-front-in4-drl.gbr 4a301913
+F pad_margin_shapes-in1-in4-drl.gbr 60de16a1
+F pad_margin_shapes-in2-in3-drl.gbr 50964738
+F pad_margin_shapes-in3-back-drl.gbr 5da22e0a
+F pad_margin_shapes-in4-back-drl.gbr c9876d70
+F pad_margin_shapes-tenting-back.gbr 93804730
+F pad_margin_shapes-tenting-front.gbr 783ae2a7
+B default 0 qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+F two_board_islands-PTH-drl.gbr 2a847a2b
+F two_board_islands-NPTH-drl.gbr e7980ca0
+B tenting 0 qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+F two_board_islands-PTH-drl.gbr 2a847a2b
+F two_board_islands-NPTH-drl.gbr e7980ca0
+F two_board_islands-tenting-back.gbr f6956284
+F two_board_islands-tenting-front.gbr 9187dbbe
+B p5_plot 0 qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+F two_board_islands-PTH-drl.gbr 76ec6d89
+F two_board_islands-NPTH-drl.gbr 5ebb4a21
+F two_board_islands-tenting-back.gbr 83320357
+F two_board_islands-tenting-front.gbr 037d5709
+B default 0 qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
+B tenting 0 qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
+B default 0 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
+F via_in_pad-PTH-drl.gbr 8e1b207a
+B tenting 0 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
+F via_in_pad-PTH-drl.gbr 8e1b207a
+F via_in_pad-tenting-back.gbr 33c89737
+F via_in_pad-tenting-front.gbr c6e0f5b0
+B p5_plot 0 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
+F via_in_pad-PTH-drl.gbr 1abc983a
+F via_in_pad-tenting-back.gbr aebc24d8
+F via_in_pad-tenting-front.gbr f4b296e9
+B default 0 qa/data/pcbnew/off_center_teardrop.kicad_pcb
+B tenting 0 qa/data/pcbnew/off_center_teardrop.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/off_center_teardrop.kicad_pcb
+B default 0 qa/data/pcbnew/orientation_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/orientation_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/orientation_drc.kicad_pcb
+B default 0 qa/data/pcbnew/oval_teardrop.kicad_pcb
+B tenting 0 qa/data/pcbnew/oval_teardrop.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/oval_teardrop.kicad_pcb
+B default 0 qa/data/pcbnew/padstacks.kicad_pcb
+F padstacks-PTH-drl.gbr 0d25ec5f
+F padstacks-front-in4-drl.gbr 82cd11b9
+F padstacks-in1-in4-drl.gbr 03f0465e
+F padstacks-in2-in3-drl.gbr 8b5cab25
+F padstacks-in3-back-drl.gbr 20da6901
+F padstacks-in4-back-drl.gbr 8b03d038
+B tenting 0 qa/data/pcbnew/padstacks.kicad_pcb
+F padstacks-PTH-drl.gbr 0d25ec5f
+F padstacks-front-in4-drl.gbr 82cd11b9
+F padstacks-in1-in4-drl.gbr 03f0465e
+F padstacks-in2-in3-drl.gbr 8b5cab25
+F padstacks-in3-back-drl.gbr 20da6901
+F padstacks-in4-back-drl.gbr 8b03d038
+F padstacks-tenting-back.gbr 0164b937
+F padstacks-tenting-front.gbr a75a31ad
+B p5_plot 0 qa/data/pcbnew/padstacks.kicad_pcb
+F padstacks-PTH-drl.gbr 641c7801
+F padstacks-front-in4-drl.gbr 34894324
+F padstacks-in1-in4-drl.gbr e461ef18
+F padstacks-in2-in3-drl.gbr 988e0865
+F padstacks-in3-back-drl.gbr 641d11f6
+F padstacks-in4-back-drl.gbr dccb6dae
+F padstacks-tenting-back.gbr 42971419
+F padstacks-tenting-front.gbr 481a08f7
+B default 0 qa/data/pcbnew/padstacks_complex.kicad_pcb
+F padstacks_complex-PTH-drl.gbr ad6eda90
+B tenting 0 qa/data/pcbnew/padstacks_complex.kicad_pcb
+F padstacks_complex-PTH-drl.gbr ad6eda90
+B p5_plot 0 qa/data/pcbnew/padstacks_complex.kicad_pcb
+F padstacks_complex-PTH-drl.gbr ff083b9d
+B default 0 qa/data/pcbnew/padstacks_normal.kicad_pcb
+F padstacks_normal-PTH-drl.gbr 1a2f5c98
+F padstacks_normal-NPTH-drl.gbr d64a7702
+B tenting 0 qa/data/pcbnew/padstacks_normal.kicad_pcb
+F padstacks_normal-PTH-drl.gbr 1a2f5c98
+F padstacks_normal-NPTH-drl.gbr d64a7702
+B p5_plot 0 qa/data/pcbnew/padstacks_normal.kicad_pcb
+F padstacks_normal-PTH-drl.gbr a56fb349
+F padstacks_normal-NPTH-drl.gbr f2826d07
+B default 3 qa/data/pcbnew/plugins/fakeboard.kicad_pcb
+B tenting 3 qa/data/pcbnew/plugins/fakeboard.kicad_pcb
+B p5_plot 3 qa/data/pcbnew/plugins/fakeboard.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
+B default 0 qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
+B tenting 0 qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
+B default 0 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
+F backspace1-PTH-drl.gbr b565a690
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
+F backspace1-PTH-drl.gbr b565a690
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
+F backspace1-PTH-drl.gbr 06709169
+B default 0 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
+F dp_test-PTH-drl.gbr d20b7398
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
+F dp_test-PTH-drl.gbr d20b7398
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
+F dp_test-PTH-drl.gbr 91efc167
+B default 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
+B default 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
+B default 0 qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
+F shove_same_net_via-PTH-drl.gbr ac716b90
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
+F shove_same_net_via-PTH-drl.gbr ac716b90
+F shove_same_net_via-tenting-back.gbr 8b949eb8
+F shove_same_net_via-tenting-front.gbr c2fd9a9e
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
+F shove_same_net_via-PTH-drl.gbr f6fbf6cf
+F shove_same_net_via-tenting-back.gbr 1b84b450
+F shove_same_net_via-tenting-front.gbr 75cd8429
+B default 0 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+F simple-PTH-drl.gbr b1d30d33
+B tenting 0 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+F simple-PTH-drl.gbr b1d30d33
+F simple-tenting-back.gbr b75ef258
+F simple-tenting-front.gbr 277373a3
+B p5_plot 0 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+F simple-PTH-drl.gbr 5aa6ee53
+F simple-tenting-back.gbr a265e167
+F simple-tenting-front.gbr 597bc249
+B default 0 qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
+B tenting 0 qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
+B default 0 qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
+B tenting 0 qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
+B default 0 qa/data/pcbnew/reference_images_load_save.kicad_pcb
+B tenting 0 qa/data/pcbnew/reference_images_load_save.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/reference_images_load_save.kicad_pcb
+B default 0 qa/data/pcbnew/severities.kicad_pcb
+F severities-PTH-drl.gbr 84c8baff
+B tenting 0 qa/data/pcbnew/severities.kicad_pcb
+F severities-PTH-drl.gbr 84c8baff
+F severities-tenting-back.gbr dd503bd4
+F severities-tenting-front.gbr 5e9b4ced
+B p5_plot 0 qa/data/pcbnew/severities.kicad_pcb
+F severities-PTH-drl.gbr 8c76d832
+F severities-tenting-back.gbr 065f7723
+F severities-tenting-front.gbr 9d4ed87f
+B default 0 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
+B default 0 qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
+B tenting 0 qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
+B default 0 qa/data/pcbnew/sliver.kicad_pcb
+B tenting 0 qa/data/pcbnew/sliver.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/sliver.kicad_pcb
+B default 0 qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
+F solder_mask_bridge_test-PTH-drl.gbr 9ec88110
+B tenting 0 qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
+F solder_mask_bridge_test-PTH-drl.gbr 9ec88110
+B p5_plot 0 qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
+F solder_mask_bridge_test-PTH-drl.gbr 3bab1283
+B default 0 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
+F soldermask_bridge_all_tracks-PTH-drl.gbr 0855339b
+F soldermask_bridge_all_tracks-NPTH-drl.gbr 58542685
+B tenting 0 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
+F soldermask_bridge_all_tracks-PTH-drl.gbr 0855339b
+F soldermask_bridge_all_tracks-NPTH-drl.gbr 58542685
+B p5_plot 0 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
+F soldermask_bridge_all_tracks-PTH-drl.gbr 78d9b509
+F soldermask_bridge_all_tracks-NPTH-drl.gbr 4550a2e2
+B default 0 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
+B tenting 0 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
+B default 0 qa/data/pcbnew/stacked/stacked.kicad_pcb
+F stacked-NPTH-drl.gbr f52ded76
+B tenting 0 qa/data/pcbnew/stacked/stacked.kicad_pcb
+F stacked-NPTH-drl.gbr f52ded76
+B p5_plot 0 qa/data/pcbnew/stacked/stacked.kicad_pcb
+F stacked-NPTH-drl.gbr 6dfa320a
+B default 0 qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+F stitch_fp_rulearea-PTH-drl.gbr f32cb326
+B tenting 0 qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+F stitch_fp_rulearea-PTH-drl.gbr f32cb326
+F stitch_fp_rulearea-tenting-back.gbr ff08cab1
+F stitch_fp_rulearea-tenting-front.gbr 61809a44
+B p5_plot 0 qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+F stitch_fp_rulearea-PTH-drl.gbr c93387f0
+F stitch_fp_rulearea-tenting-back.gbr 8b206c6b
+F stitch_fp_rulearea-tenting-front.gbr beeb16ca
+B default 0 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
+F teardrop_arc_anchor-PTH-drl.gbr 3be8440f
+B tenting 0 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
+F teardrop_arc_anchor-PTH-drl.gbr 3be8440f
+B p5_plot 0 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
+F teardrop_arc_anchor-PTH-drl.gbr 656e22aa
+B default 0 qa/data/pcbnew/teardrop_close_via.kicad_pcb
+F teardrop_close_via-PTH-drl.gbr 2ac01f06
+B tenting 0 qa/data/pcbnew/teardrop_close_via.kicad_pcb
+F teardrop_close_via-PTH-drl.gbr 2ac01f06
+F teardrop_close_via-tenting-back.gbr d28ebba8
+F teardrop_close_via-tenting-front.gbr 91b0ac12
+B p5_plot 0 qa/data/pcbnew/teardrop_close_via.kicad_pcb
+F teardrop_close_via-PTH-drl.gbr 7bddc2fb
+F teardrop_close_via-tenting-back.gbr ae85344f
+F teardrop_close_via-tenting-front.gbr 1d9f8105
+B default 0 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
+F teardrop_close_via_rotated_pad-PTH-drl.gbr 86d6691f
+B tenting 0 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
+F teardrop_close_via_rotated_pad-PTH-drl.gbr 86d6691f
+F teardrop_close_via_rotated_pad-tenting-back.gbr 32fe41c1
+F teardrop_close_via_rotated_pad-tenting-front.gbr 3cb7c913
+B p5_plot 0 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
+F teardrop_close_via_rotated_pad-PTH-drl.gbr 8df992e1
+F teardrop_close_via_rotated_pad-tenting-back.gbr 3bd7a321
+F teardrop_close_via_rotated_pad-tenting-front.gbr c04c60c7
+B default 0 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
+B tenting 0 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
+B default 0 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
+B tenting 0 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
+B default 0 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
+B tenting 0 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
+B default 0 qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
+F teardrop_multi_inside_via-PTH-drl.gbr e3919fa4
+B tenting 0 qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
+F teardrop_multi_inside_via-PTH-drl.gbr e3919fa4
+F teardrop_multi_inside_via-tenting-back.gbr c2b7cc2a
+F teardrop_multi_inside_via-tenting-front.gbr 6de5dd6a
+B p5_plot 0 qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
+F teardrop_multi_inside_via-PTH-drl.gbr 6b9770e8
+F teardrop_multi_inside_via-tenting-back.gbr 8a2f568c
+F teardrop_multi_inside_via-tenting-front.gbr 6d4ac5c4
+B default 0 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
+F teardrop_offcenter_two_segment-PTH-drl.gbr d5fec519
+B tenting 0 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
+F teardrop_offcenter_two_segment-PTH-drl.gbr d5fec519
+F teardrop_offcenter_two_segment-tenting-back.gbr 537e1959
+F teardrop_offcenter_two_segment-tenting-front.gbr dbd94ab6
+B p5_plot 0 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
+F teardrop_offcenter_two_segment-PTH-drl.gbr 6be5a3e9
+F teardrop_offcenter_two_segment-tenting-back.gbr 8c72b35e
+F teardrop_offcenter_two_segment-tenting-front.gbr 295fee4b
+B default 0 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+F teardrop_qfn_thermal_pad_zone-PTH-drl.gbr ad2b8e1c
+B tenting 0 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+F teardrop_qfn_thermal_pad_zone-PTH-drl.gbr ad2b8e1c
+B p5_plot 0 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+F teardrop_qfn_thermal_pad_zone-PTH-drl.gbr b199935d
+B default 0 qa/data/pcbnew/teardrop_spike.kicad_pcb
+F teardrop_spike-PTH-drl.gbr 2b2f1cdd
+B tenting 0 qa/data/pcbnew/teardrop_spike.kicad_pcb
+F teardrop_spike-PTH-drl.gbr 2b2f1cdd
+F teardrop_spike-tenting-back.gbr db756359
+F teardrop_spike-tenting-front.gbr 3dd101ee
+B p5_plot 0 qa/data/pcbnew/teardrop_spike.kicad_pcb
+F teardrop_spike-PTH-drl.gbr 4042bc06
+F teardrop_spike-tenting-back.gbr 5277fc73
+F teardrop_spike-tenting-front.gbr 0d9305e0
+B default 0 qa/data/pcbnew/test_copper_graphics.kicad_pcb
+B tenting 0 qa/data/pcbnew/test_copper_graphics.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/test_copper_graphics.kicad_pcb
+B default 0 qa/data/pcbnew/test_starved_thermal.kicad_pcb
+B tenting 0 qa/data/pcbnew/test_starved_thermal.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/test_starved_thermal.kicad_pcb
+B default 0 qa/data/pcbnew/time_calculations.kicad_pcb
+F time_calculations-PTH-drl.gbr bf2ed854
+F time_calculations-front-in1-drl.gbr 1693c319
+F time_calculations-front-in2-drl.gbr d102fd19
+B tenting 0 qa/data/pcbnew/time_calculations.kicad_pcb
+F time_calculations-PTH-drl.gbr bf2ed854
+F time_calculations-front-in1-drl.gbr 1693c319
+F time_calculations-front-in2-drl.gbr d102fd19
+F time_calculations-tenting-back.gbr bd5e1f17
+F time_calculations-tenting-front.gbr bd4e51ff
+B p5_plot 0 qa/data/pcbnew/time_calculations.kicad_pcb
+F time_calculations-PTH-drl.gbr 6b768fe8
+F time_calculations-front-in1-drl.gbr d837f863
+F time_calculations-front-in2-drl.gbr 43cb43c2
+F time_calculations-tenting-back.gbr c6ac0758
+F time_calculations-tenting-front.gbr cbfbf0ef
+B default 0 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
+F tracks_arcs_vias-PTH-drl.gbr 275555dd
+B tenting 0 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
+F tracks_arcs_vias-PTH-drl.gbr 275555dd
+F tracks_arcs_vias-tenting-back.gbr 44d29b4b
+F tracks_arcs_vias-tenting-front.gbr 5d6a733f
+B p5_plot 0 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
+F tracks_arcs_vias-PTH-drl.gbr 7254d9c4
+F tracks_arcs_vias-tenting-back.gbr 2959e746
+F tracks_arcs_vias-tenting-front.gbr 42119bd2
+B default 0 qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
+B tenting 0 qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
+B default 0 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
+B tenting 0 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
+B default 0 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
+B tenting 0 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
+B default 0 qa/data/pcbnew/two_segment_teardrop.kicad_pcb
+F two_segment_teardrop-PTH-drl.gbr 4d012dc2
+B tenting 0 qa/data/pcbnew/two_segment_teardrop.kicad_pcb
+F two_segment_teardrop-PTH-drl.gbr 4d012dc2
+F two_segment_teardrop-tenting-back.gbr dc65adcc
+F two_segment_teardrop-tenting-front.gbr c50e6a79
+B p5_plot 0 qa/data/pcbnew/two_segment_teardrop.kicad_pcb
+F two_segment_teardrop-PTH-drl.gbr a2b250d5
+F two_segment_teardrop-tenting-back.gbr 33bcf9a1
+F two_segment_teardrop-tenting-front.gbr bfbd45d4
+B default 0 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
+F unconnected-netnames-PTH-drl.gbr 0674176d
+B tenting 0 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
+F unconnected-netnames-PTH-drl.gbr 0674176d
+B p5_plot 0 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
+F unconnected-netnames-PTH-drl.gbr 9b52d55c
+B default 0 qa/data/pcbnew/variant_test/variant_test.kicad_pcb
+B tenting 0 qa/data/pcbnew/variant_test/variant_test.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/variant_test/variant_test.kicad_pcb
+B default 0 qa/data/pcbnew/via_dangling.kicad_pcb
+F via_dangling-PTH-drl.gbr cd3d77cc
+B tenting 0 qa/data/pcbnew/via_dangling.kicad_pcb
+F via_dangling-PTH-drl.gbr cd3d77cc
+F via_dangling-tenting-back.gbr 61222c63
+F via_dangling-tenting-front.gbr 9a9a1dba
+B p5_plot 0 qa/data/pcbnew/via_dangling.kicad_pcb
+F via_dangling-PTH-drl.gbr 06a9ec70
+F via_dangling-tenting-back.gbr c1d7118b
+F via_dangling-tenting-front.gbr 6a82b39e
+B default 0 qa/data/pcbnew/via_off_center.kicad_pcb
+F via_off_center-PTH-drl.gbr 16a23bff
+B tenting 0 qa/data/pcbnew/via_off_center.kicad_pcb
+F via_off_center-PTH-drl.gbr 16a23bff
+F via_off_center-tenting-back.gbr bdeb2d0a
+F via_off_center-tenting-front.gbr 01739d60
+B p5_plot 0 qa/data/pcbnew/via_off_center.kicad_pcb
+F via_off_center-PTH-drl.gbr afb15dbc
+F via_off_center-tenting-back.gbr 5fd4295c
+F via_off_center-tenting-front.gbr ce820bd8
+B default 0 qa/data/pcbnew/via_stack_track_width.kicad_pcb
+B tenting 0 qa/data/pcbnew/via_stack_track_width.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/via_stack_track_width.kicad_pcb
+B default 0 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
+B tenting 0 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
+B default 0 qa/data/pcbnew/via_stacks.kicad_pcb
+F via_stacks-front-in1-drl.gbr 98d76cf3
+F via_stacks-filling-front-in1.gbr e35cc9a6
+F via_stacks-capping-front-in1.gbr 14ae0c6c
+F via_stacks-in1-in2-drl.gbr 3c6742c2
+F via_stacks-filling-in1-in2.gbr e35cc9a6
+F via_stacks-in2-in3-drl.gbr 52923a78
+B tenting 0 qa/data/pcbnew/via_stacks.kicad_pcb
+F via_stacks-front-in1-drl.gbr 98d76cf3
+F via_stacks-filling-front-in1.gbr e35cc9a6
+F via_stacks-capping-front-in1.gbr 14ae0c6c
+F via_stacks-in1-in2-drl.gbr 3c6742c2
+F via_stacks-filling-in1-in2.gbr e35cc9a6
+F via_stacks-in2-in3-drl.gbr 52923a78
+F via_stacks-tenting-front.gbr 7ffb08ba
+B p5_plot 0 qa/data/pcbnew/via_stacks.kicad_pcb
+F via_stacks-front-in1-drl.gbr 4a9d4606
+F via_stacks-filling-front-in1.gbr 2a36c308
+F via_stacks-capping-front-in1.gbr dc75b51c
+F via_stacks-in1-in2-drl.gbr 7eceaa89
+F via_stacks-filling-in1-in2.gbr 2a36c308
+F via_stacks-in2-in3-drl.gbr 878af140
+F via_stacks-tenting-front.gbr f481000b
+B default 0 qa/data/pcbnew/zone_filler.kicad_pcb
+F zone_filler-PTH-drl.gbr 6c51409f
+B tenting 0 qa/data/pcbnew/zone_filler.kicad_pcb
+F zone_filler-PTH-drl.gbr 6c51409f
+B p5_plot 0 qa/data/pcbnew/zone_filler.kicad_pcb
+F zone_filler-PTH-drl.gbr abd2a1bb
+B default 0 qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
+F zone_refill_cascading_islands-PTH-drl.gbr 5a67ff52
+B tenting 0 qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
+F zone_refill_cascading_islands-PTH-drl.gbr 5a67ff52
+F zone_refill_cascading_islands-tenting-back.gbr 3a66bd66
+F zone_refill_cascading_islands-tenting-front.gbr 2645d23f
+B p5_plot 0 qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
+F zone_refill_cascading_islands-PTH-drl.gbr 27c26055
+F zone_refill_cascading_islands-tenting-back.gbr b778a387
+F zone_refill_cascading_islands-tenting-front.gbr bdcde9da
+B default 0 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
+F zone_refill_convergence_limit-PTH-drl.gbr 820c68b5
+B tenting 0 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
+F zone_refill_convergence_limit-PTH-drl.gbr 820c68b5
+F zone_refill_convergence_limit-tenting-back.gbr a403b42a
+F zone_refill_convergence_limit-tenting-front.gbr 78ef1a28
+B p5_plot 0 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
+F zone_refill_convergence_limit-PTH-drl.gbr 7b61d71b
+F zone_refill_convergence_limit-tenting-back.gbr 57c37394
+F zone_refill_convergence_limit-tenting-front.gbr 2904b69b
+B default 0 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
+B tenting 0 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
+B p5_plot 0 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
+B default 0 rust/crates/kicad-fab/tests/data/gerber_drill/ipc4761_vias.kicad_pcb
+F ipc4761_vias-PTH-drl.gbr f954130a
+F ipc4761_vias-filling-front-back.gbr 253b9b49
+F ipc4761_vias-capping-front-back.gbr 53dc7595
+F ipc4761_vias-front-in1-drl.gbr 85c62891
+F ipc4761_vias-filling-front-in1.gbr 83e6ab65
+F ipc4761_vias-in1-in2-drl.gbr 2e2804e0
+F ipc4761_vias-filling-in1-in2.gbr 49d7340b
+F ipc4761_vias-capping-in1-in2.gbr 65356abb
+F ipc4761_vias-in2-back-drl.gbr af8cc160
+F ipc4761_vias-capping-in2-back.gbr 6247834e
+F ipc4761_vias-NPTH-drl.gbr 64f02aee
+F ipc4761_vias-covering-back.gbr dabe2c07
+F ipc4761_vias-covering-front.gbr e0bbc6f2
+F ipc4761_vias-plugging-back.gbr 1a56f402
+F ipc4761_vias-plugging-front.gbr 57679fd0
+B tenting 0 rust/crates/kicad-fab/tests/data/gerber_drill/ipc4761_vias.kicad_pcb
+F ipc4761_vias-PTH-drl.gbr f954130a
+F ipc4761_vias-filling-front-back.gbr 253b9b49
+F ipc4761_vias-capping-front-back.gbr 53dc7595
+F ipc4761_vias-front-in1-drl.gbr 85c62891
+F ipc4761_vias-filling-front-in1.gbr 83e6ab65
+F ipc4761_vias-in1-in2-drl.gbr 2e2804e0
+F ipc4761_vias-filling-in1-in2.gbr 49d7340b
+F ipc4761_vias-capping-in1-in2.gbr 65356abb
+F ipc4761_vias-in2-back-drl.gbr af8cc160
+F ipc4761_vias-capping-in2-back.gbr 6247834e
+F ipc4761_vias-NPTH-drl.gbr 64f02aee
+F ipc4761_vias-covering-back.gbr dabe2c07
+F ipc4761_vias-covering-front.gbr e0bbc6f2
+F ipc4761_vias-plugging-back.gbr 1a56f402
+F ipc4761_vias-plugging-front.gbr 57679fd0
+F ipc4761_vias-tenting-back.gbr 2d9aff48
+F ipc4761_vias-tenting-front.gbr 7c1ae108
+B p5_plot 0 rust/crates/kicad-fab/tests/data/gerber_drill/ipc4761_vias.kicad_pcb
+F ipc4761_vias-PTH-drl.gbr 968d6239
+F ipc4761_vias-filling-front-back.gbr 7b774079
+F ipc4761_vias-capping-front-back.gbr 7c101a6f
+F ipc4761_vias-front-in1-drl.gbr 8882d449
+F ipc4761_vias-filling-front-in1.gbr e2ba541a
+F ipc4761_vias-in1-in2-drl.gbr a0680bb7
+F ipc4761_vias-filling-in1-in2.gbr 735a25d5
+F ipc4761_vias-capping-in1-in2.gbr efe295a2
+F ipc4761_vias-in2-back-drl.gbr 67baf2f5
+F ipc4761_vias-capping-in2-back.gbr 96d69f40
+F ipc4761_vias-NPTH-drl.gbr f2a83b77
+F ipc4761_vias-covering-back.gbr 1b85e8dd
+F ipc4761_vias-covering-front.gbr 1aa450d0
+F ipc4761_vias-plugging-back.gbr cccc6203
+F ipc4761_vias-plugging-front.gbr ecedd51e
+F ipc4761_vias-tenting-back.gbr 473b1630
+F ipc4761_vias-tenting-front.gbr 02b3d804

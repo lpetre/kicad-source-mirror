@@ -28,7 +28,10 @@
 //! Fonts: `m_attributes.m_Font` is the font name (`TextAttributes::font`). Text is laid out
 //! with the stroke font; an outline font is drawn from a valid render cache only (the outline
 //! engine is not ported, `kicad-font` D1), otherwise with the stroke font as fallback
-//! (`PORT_STATUS.md`, package M10).
+//! (`PORT_STATUS.md`, package M10). Where the C++ regenerates the cache with the outline
+//! font, the render cache read from the board file stands in while it is valid for the text
+//! (`EdaText::file_render_cache`, [`render_cache`], package FONT-RC-1); the texts that fall
+//! back are listed by [`outline_font_fallbacks`].
 
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
@@ -84,6 +87,12 @@ pub struct EdaText {
     /// that survives `Clone` (unlike the other caches); validated by its stored text, angle and
     /// offset.
     pub(crate) render_cache: Option<Arc<EdaTextRenderCacheData>>,
+    /// Not in C++ (package FONT-RC-1): the `(render_cache ...)` read from the file, kept
+    /// apart from `render_cache` so that it survives the faithful `ClearRenderCache()` calls
+    /// of the load path. It is the stand-in for the glyphs the C++ regenerates with the
+    /// outline font engine (not ported), valid only while its key matches the text
+    /// ([`render_cache`]).
+    pub(crate) file_render_cache: Option<Arc<EdaTextFileRenderCache>>,
     /// m_bbox_cache: line -> (position, box), cleared by the setters.
     pub(crate) bbox_cache: CacheCell<BTreeMap<i32, (Vector2I, Box2I)>>,
 }
@@ -98,6 +107,76 @@ pub struct EdaTextRenderCacheData {
     pub offset: Vector2I,
     pub mirrored: bool,
     pub glyphs: Vec<kicad_font::Glyph>,
+}
+
+/// Not in C++ (package FONT-RC-1): the render cache stored in the board file, the stand-in
+/// for outline-font glyphs while the port has no outline font engine. `data` holds what
+/// `parseRenderCache` loaded (`SetupRenderCache` + `AddRenderCacheGlyph`); `key` the state of
+/// the text the glyphs were produced for, recorded when the item's parse is complete
+/// ([`seal_file_render_cache`]). An unsealed cache is never used.
+#[derive(Clone, Debug)]
+pub struct EdaTextFileRenderCache {
+    /// The cache as loaded: resolved text, angle, offset, mirroring and the glyphs.
+    pub data: Arc<EdaTextRenderCacheData>,
+    key: Option<FileRenderCacheKey>,
+}
+
+/// The text state the stored glyphs depend on beyond the C++ cache key (text, font, angle,
+/// offset, mirroring): everything whose setter calls `ClearRenderCache()` and that
+/// `OUTLINE_FONT::GetLinesAsGlyphs` reads (face, size, justification, line spacing, italic,
+/// bold, multi-line), plus the draw position the glyphs were laid out at.
+#[derive(Clone, Debug, PartialEq)]
+struct FileRenderCacheKey {
+    face: String,
+    halign: GrTextHAlignT,
+    valign: GrTextVAlignT,
+    line_spacing: f64,
+    italic: bool,
+    bold: bool,
+    mirrored: bool,
+    multiline: bool,
+    size: (i32, i32),
+    draw_pos: Vector2I,
+}
+
+impl FileRenderCacheKey {
+    /// The key of `text` drawn at `draw_pos`. The face is the resolved font name, or the
+    /// unresolved one before `ResolveFont` (both are the name written in the file: the port's
+    /// `FONT::GetFont` keeps the asked-for name).
+    fn of(text: &EdaText, draw_pos: Vector2I) -> Self {
+        let face = if text.attributes.font.is_some() {
+            text.font_name().to_string()
+        } else {
+            text.unresolved_font_name.clone()
+        };
+        let a = &text.attributes;
+
+        FileRenderCacheKey {
+            face,
+            halign: a.halign,
+            valign: a.valign,
+            line_spacing: a.line_spacing,
+            italic: a.italic,
+            bold: a.bold,
+            mirrored: a.mirrored,
+            multiline: a.multiline,
+            size: a.size,
+            draw_pos,
+        }
+    }
+
+    /// Whether the key matches apart from the draw position.
+    fn matches_except_pos(&self, other: &FileRenderCacheKey) -> bool {
+        self.face == other.face
+            && self.halign == other.halign
+            && self.valign == other.valign
+            && self.line_spacing == other.line_spacing
+            && self.italic == other.italic
+            && self.bold == other.bold
+            && self.mirrored == other.mirrored
+            && self.multiline == other.multiline
+            && self.size == other.size
+    }
 }
 
 impl Default for EdaText {
@@ -117,6 +196,7 @@ impl Default for EdaText {
             lib_pos: Vector2I::default(),
             visible: true,
             render_cache: None,
+            file_render_cache: None,
             bbox_cache: CacheCell::default(),
         }
     }
@@ -504,6 +584,23 @@ impl EdaText {
         self.render_cache.as_deref()
     }
 
+    /// Not in C++ (package FONT-RC-1): keep the cache `parseRenderCache` just loaded as the
+    /// file stand-in (unsealed: [`seal_file_render_cache`] records its key once the item's
+    /// parse is complete). Survives `ClearRenderCache()`.
+    pub fn keep_file_render_cache(&mut self) {
+        self.file_render_cache = self.render_cache.as_ref().map(|data| {
+            Arc::new(EdaTextFileRenderCache {
+                data: Arc::clone(data),
+                key: None,
+            })
+        });
+    }
+
+    /// The render cache read from the file (package FONT-RC-1), for tests and diagnostics.
+    pub fn file_render_cache(&self) -> Option<&EdaTextFileRenderCache> {
+        self.file_render_cache.as_deref()
+    }
+
     /// `ClearRenderCache()` (the `EDA_TEXT` body).
     pub fn clear_render_cache(&mut self) {
         self.render_cache = None;
@@ -838,19 +935,167 @@ pub fn render_cache<H: EdaTextItem + ?Sized>(
 
     let resolved_angle = host.draw_rotation(ctx);
     let mirrored = text.is_mirrored();
-    let cache = text.render_cache.as_ref()?;
 
-    if cache.glyphs.is_empty()
-        || cache.font.as_ref() != Some(&text.font_ref())
-        || cache.text != resolved_text
-        || cache.angle != resolved_angle
-        || cache.offset != offset
-        || cache.mirrored != mirrored
+    if let Some(cache) = text.render_cache.as_ref() {
+        if !(cache.glyphs.is_empty()
+            || cache.font.as_ref() != Some(&text.font_ref())
+            || cache.text != resolved_text
+            || cache.angle != resolved_angle
+            || cache.offset != offset
+            || cache.mirrored != mirrored)
+        {
+            return Some(Arc::clone(cache));
+        }
+    }
+
+    // Where the C++ regenerates the glyphs with the outline font: the glyphs stored in the
+    // file stand in for them while they are valid (package FONT-RC-1, PORT_STATUS.md).
+    file_render_cache_stand_in(host, ctx, resolved_text, offset)
+}
+
+/// Not in C++ (package FONT-RC-1): the glyphs of the render cache stored in the file, when
+/// they are still what `GetRenderCache` would produce with the real font: the cache is
+/// sealed, not empty, and its resolved text, angle (the draw rotation, compared normalised to
+/// [0, 360)), offset and mirroring match as in `GetRenderCache`, and the face, size, justification, line spacing, italic,
+/// bold and multi-line flags are those the item was loaded with. A changed draw position
+/// translates the glyphs, as `EDA_TEXT::Offset` moves a live cache. `None` otherwise: the
+/// caller then falls back to the stroke font ([`outline_font_fallback`]).
+pub fn file_render_cache_stand_in<H: EdaTextItem + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    resolved_text: &str,
+    offset: Vector2I,
+) -> Option<Arc<EdaTextRenderCacheData>> {
+    let text = host.eda_text();
+    let file = text.file_render_cache.as_ref()?;
+    let key = file.key.as_ref()?;
+    let data = &file.data;
+
+    // The angle is compared normalised: files written by older versions record e.g. -90
+    // where the draw rotation is now 270, the same glyph orientation.
+    if data.glyphs.is_empty()
+        || data.text != resolved_text
+        || data.angle.normalized() != host.draw_rotation(ctx).normalized()
+        || data.offset != offset
+        || data.mirrored != text.is_mirrored()
     {
         return None;
     }
 
-    Some(Arc::clone(cache))
+    let current = FileRenderCacheKey::of(text, host.draw_pos(ctx));
+
+    if !key.matches_except_pos(&current) {
+        return None;
+    }
+
+    let delta = current.draw_pos - key.draw_pos;
+
+    if delta.x == 0 && delta.y == 0 {
+        return Some(Arc::clone(data));
+    }
+
+    let mut moved = (**data).clone();
+
+    for glyph in moved.glyphs.iter_mut() {
+        if let Glyph::Outline(outline) = glyph {
+            outline.poly.move_(delta);
+        }
+    }
+
+    Some(Arc::new(moved))
+}
+
+/// Not in C++ (package FONT-RC-1): record the key of the file render cache of `host` (its
+/// current text state and draw position). The parser calls this once the item's parse is
+/// complete (`(at ..)`, effects and the legacy footprint transforms applied), i.e. in the
+/// state the glyphs in the file were produced for.
+pub fn seal_file_render_cache<H: EdaTextItem + ?Sized>(host: &mut H, ctx: &BoardCtx<'_>) {
+    if host.eda_text().file_render_cache.is_none() {
+        return;
+    }
+
+    let draw_pos = host.draw_pos(ctx);
+    let text = host.eda_text_mut();
+    let key = FileRenderCacheKey::of(text, draw_pos);
+
+    if let Some(file) = text.file_render_cache.as_mut() {
+        Arc::make_mut(file).key = Some(key);
+    }
+}
+
+/// Not in C++ (package FONT-RC-1): the outline font name when `host` is drawn with an outline
+/// font that the port cannot render and no valid stored glyphs stand in for it, i.e. its
+/// geometry falls back to the stroke font. `None` for stroke-font text and for outline text
+/// with a valid stand-in.
+pub fn outline_font_fallback<H: EdaTextItem + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+) -> Option<String> {
+    let lookup = host.eda_text().draw_font_lookup();
+
+    if !lookup.is_outline_unavailable() {
+        return None;
+    }
+
+    let shown_text = host.shown_text(ctx, ResolutionContext::ForCanvas, 0);
+
+    match render_cache(host, ctx, &shown_text, Vector2I::default()) {
+        Some(_) => None,
+        None => Some(lookup.name().to_string()),
+    }
+}
+
+/// One text item drawn with the stroke font in place of an unavailable outline font.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OutlineFontFallback {
+    /// The text item.
+    pub item: crate::ids::ItemId,
+    /// The outline font it asks for.
+    pub font: String,
+}
+
+impl OutlineFontFallback {
+    /// The warning the hosts print for it.
+    pub fn message(&self) -> String {
+        format!(
+            "text uses font {} which is not available; drawn with the stroke font",
+            self.font
+        )
+    }
+}
+
+/// Not in C++ (package FONT-RC-1): every text item of the board (`BOARD::RunOnChildren`
+/// order, recursing) whose outline font falls back to the stroke font
+/// ([`outline_font_fallback`]): the queryable warning list of the hosts.
+pub fn outline_font_fallbacks(ctx: &BoardCtx<'_>) -> Vec<OutlineFontFallback> {
+    let mut ids: Vec<crate::ids::ItemId> = Vec::new();
+    ctx.board
+        .run_on_children(crate::item::RecurseMode::Recurse, &mut |id| ids.push(id));
+
+    let mut seen = std::collections::BTreeSet::new();
+    let mut out = Vec::new();
+
+    for id in ids {
+        if !seen.insert(id) {
+            continue;
+        }
+
+        let Some(item) = ctx.item(id) else { continue };
+        let Some(host) = item.as_eda_text() else {
+            continue;
+        };
+
+        // Hidden text is neither plotted nor checked.
+        if !host.eda_text().is_visible() {
+            continue;
+        }
+
+        if let Some(font) = outline_font_fallback(host, ctx) {
+            out.push(OutlineFontFallback { item: id, font });
+        }
+    }
+
+    out
 }
 
 // ---- non-virtual EDA_TEXT members that call virtuals (EdaTextExt) ------------------------

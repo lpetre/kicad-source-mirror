@@ -12,8 +12,8 @@
 use crate::code::code39;
 use crate::code128::code128;
 use crate::common::{
-    ZINT_COLS_MAX, ZINT_ERROR, ZINT_ERROR_ENCODING_PROBLEM, ZINT_ERROR_INVALID_DATA,
-    ZINT_ERROR_INVALID_OPTION, ZINT_ERROR_TOO_LONG, ZINT_ROWS_MAX, ZINT_WARN_USES_ECI,
+    ZINT_COLS_MAX, ZINT_ERROR, ZINT_ERROR_INVALID_DATA,
+    ZINT_ERROR_INVALID_OPTION, ZINT_ERROR_TOO_LONG, ZINT_ROWS_MAX,
     errtxt, errtxt_adj_prefix, is_valid_utf8, set_height,
 };
 use crate::dmatrix::datamatrix;
@@ -60,9 +60,7 @@ pub(crate) struct ZintSymbol {
     pub show_hrt: i32,
     pub input_mode: i32,
     pub eci: i32,
-    pub dot_size: f32,
     pub text_gap: f32,
-    pub guard_descent: f32,
     /// `text_length` of the (not kept) human readable text.
     pub text_length: i32,
     pub rows: i32,
@@ -90,9 +88,7 @@ impl ZintSymbol {
             show_hrt: 1, // Show human readable text
             input_mode: DATA_MODE,
             eci: 0, // Default 0 uses ECI 3
-            dot_size: 0.8, // 0.4 / 0.5
             text_gap: 1.0,
-            guard_descent: 5.0,
             text_length: 0,
             rows: 0,
             width: 0,
@@ -281,7 +277,7 @@ pub(crate) fn zbarcode_encode(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
     }
 
     // Check other symbol fields: all at their `ZBarcode_Create()` defaults, which pass
-    // (scale 1, dot size 0.8, height 0, guard descent 5, text gap 1, no whitespace / border,
+    // (scale 1, dot size 0.8 (not modelled), height 0, guard descent 5, text gap 1, no whitespace / border,
     // rows 0, not GS1_MODE).
 
     if (symbol.input_mode & 0x07) == UNICODE_MODE {
@@ -307,7 +303,6 @@ pub(crate) fn zbarcode_encode(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
         // non-ASCII QR Code / Data Matrix text, so ECI 0 input never fails to convert).
         return NOT_PORTED;
     }
-    let _ = ZINT_WARN_USES_ECI;
 
     if error_number == 0 {
         error_number = warn_number; // Already tagged
@@ -320,7 +315,6 @@ pub(crate) fn zbarcode_encode(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
         let _ = set_height(symbol, 0.0, 50.0, 0.0, true);
     }
 
-    let _ = ZINT_ERROR_ENCODING_PROBLEM;
     error_number
 }
 

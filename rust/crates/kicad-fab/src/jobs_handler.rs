@@ -39,6 +39,7 @@ use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_plot::GerberPlotter;
 
 use crate::exporters::gendrill_excellon_writer::{ExcellonWriter, reborrow};
+use crate::exporters::gendrill_gerber_writer::GerberWriter;
 use crate::exporters::gendrill_report::{BoardHoleSource, HoleListSource};
 use crate::exporters::gendrill_writer_base::{DrillPrecision, ZerosFmt};
 use crate::exporters::gerber_jobfile_writer::GerberJobfileWriter;
@@ -69,7 +70,7 @@ pub struct DrillJobOutcome {
     /// reported failure); `error` then says why.
     pub success: bool,
     /// Why the export failed (the port's errors: a part that is not ported yet, such as the
-    /// drill map or the Gerber drill writer).
+    /// drill map).
     pub error: Option<FabError>,
     /// Every file written, in the order the C++ creates them (drill files, maps, report).
     pub files: Vec<OutputFile>,
@@ -99,8 +100,8 @@ pub fn default_drill_report_path(out_path: &str, board_file_name: &str) -> Strin
 ///   variable expansion of the report path); `None` keeps the path as is.
 /// * `reporter`: the job handler's `m_reporter` (`Created file '...'`, `Done.`).
 ///
-/// The Gerber format (`GERBER_WRITER`, FAB-08) and the drill maps (FAB-12) are not ported
-/// yet: they end the export with `FabError::NotPorted`.
+/// The drill maps (FAB-12) are not ported yet: they end the export with
+/// `FabError::NotPorted`. The Gerber format runs `GERBER_WRITER` (FAB-08).
 pub fn job_export_drill(
     ctx: BoardCtx<'_>,
     job: &JobExportPcbDrill,
@@ -229,10 +230,49 @@ pub fn job_export_drill_from(
             // Set gerber precision: only 5 or 6 digits for mantissa are allowed
             // (SetFormat() accept 5 or 6, and any other value set the precision to 5)
             // the integer part precision is always 4, and units always mm
-            outcome.error = Some(FabError::NotPorted(
-                "GERBER_WRITER::CreateDrillandMapFilesSet (FAB-08)",
-            ));
-            return outcome;
+            let mut gerber_writer = GerberWriter::new(ctx);
+            gerber_writer.set_build_version(&env.build_version);
+            gerber_writer.set_creation_date(env.creation_date);
+
+            gerber_writer.set_format(job.gerber_precision);
+            gerber_writer.set_options(offset);
+            gerber_writer.base.set_map_file_format(map_format);
+
+            let result = gerber_writer.create_drill_and_map_files_set_from(
+                source,
+                out_path,
+                true,
+                job.generate_map,
+                job.generate_tenting,
+                reborrow(&mut reporter),
+            );
+
+            // The files written before a failure stay on disk in C++.
+            outcome.files = std::mem::take(&mut gerber_writer.base.outputs);
+
+            if let Err(err) = result {
+                outcome.error = Some(err);
+                return outcome;
+            }
+
+            outcome
+                .outputs
+                .extend(gerber_writer.base.created_files().iter().cloned());
+
+            if job.generate_report {
+                let report_path = match resolve_output_path {
+                    Some(resolve) => resolve(&report_path_setting),
+                    None => report_path_setting,
+                };
+
+                if !gerber_writer.gen_drill_report_file_from(source, &report_path, None) {
+                    outcome.files.append(&mut gerber_writer.base.outputs);
+                    return outcome;
+                }
+
+                outcome.files.append(&mut gerber_writer.base.outputs);
+                outcome.outputs.push(report_path);
+            }
         }
     }
 

@@ -1642,7 +1642,8 @@ C++ body; the `not_yet_ported` stub is gone.
   the 28 corpus boards whose rules call functions are compared (rules use `insideArea`,
   `insideCourtyard`, `isPlated`, `existsOnLayer`, `memberOfFootprint`, `hasNetclass`,
   `hasComponentClass`, `isMicroVia`, `inDiffPair`, `isCoupledDiffPair`, `intersectsArea`, ...).
-  Result: **2336 categories match (308 boards completely), 1 mismatch** - `issue24735`
+  Result (with the DRC-10 keepout hook): **2378 categories match (349 boards completely; all
+  360 `disallow` categories), 17 pending (parser / legacy project), 1 mismatch** - `issue24735`
   `drawing`: the rule `A.Layer == 'F.Silkscreen'` matches a board layer name, which the QA
   load path's `ENUM_MAP` does not hold (the DRC-21 layer-map deviation, not a function body);
   `pcb-dump board --loader` (kicad-cli path) gives exactly the Rust values. It is listed as a
@@ -1705,3 +1706,47 @@ C++ body; the `not_yet_ported` stub is gone.
 - `fromTo()` needs CN-05.
 - The shared DRC harness `tests/drc_harness` still compiles with the syntax-only binder
   (DRC-21 known gap); with the function bodies in place it can switch to `PcbExprUcode`.
+
+## DRC-12: the DRC run flow (`RunTests` driver, the `pcb drc` job)
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `DRC_ENGINE::RunTests` with `DRC_CACHE_GENERATOR::Run()` and every registry provider in `PROVIDER_ORDER` | `src/run_flow.rs` `run_tests` | ported; providers created per run with the generator's `DrcBoardCaches`; `PcbExprCacheScope` entered for the provider loop (closes the DRC-22 gap) |
+| `board->GetConnectivity()` in the cache generator (load-time connectivity for shapes, then `ClearRatsnest` / `Build` / `FillIsolatedIslandsMap`) | `run_flow::GeneratorConnectivity` (implements `CacheGeneratorConnectivity`) | ported; the recorded net propagation of `Build` is applied right after the generator |
+| `ForceComponentClassRecalculation`, `GetFromToCache()->Rebuild` | - | not needed / not ported (see Deviations) |
+| DRC half of `PCBNEW_JOBS_HANDLER::JobExportDrc` (violation handler -> `PCB_MARKER`, `RecordDRCExclusions`, `DeleteMARKERs( true, true )`, `RunTests`, `commit.Push`, `ResolveDRCExclusions( false )`, the three `DRC_ITEMS_PROVIDER`s, `WriteTextReport` / `WriteJsonReport`) | `run_flow::run_drc_job` | ported; the rest of the job (messages, exit codes, rule error exit 3, parity, refill, save) is `kicad-session` `run_drc` |
+| unported registry slots (creepage, library_parity, schematic_parity, net chain tuning profiles, via_stitch_overlap, length, diff_pair_coupling) | `run_flow::UNPORTED_PROVIDERS`, `unported_check_would_run`, `CheckNotRun` | reported, never run (see "Checks not run") |
+
+### Checks not run
+
+An unported registry slot is skipped. It is reported as a `CheckNotRun` unless a sound guard
+shows it cannot report anything on this board: every code of the provider ignored (error
+limit 0); or the first statements of the C++ `Run()` return early (creepage: no `creepage`
+rule; library parity: no project or no footprint; schematic parity: `aTestFootprints` false;
+net chain tuning profiles: no net with a net chain; via stitch: no `via_stitch` generator);
+or no item can match a constraint (length: no length / skew / via count / net chain rule;
+diff pair coupling: no diff pair constraint or no diff-pair net). The reports then carry the
+list: text report section `** Checks not run (not ported yet) **` (one `    - <provider>:
+<reason>` line each) before `** End of Report **`; JSON key `checks_not_run`
+(`[{"provider", "reason"}]`). Without such checks the reports are byte for byte the C++ ones.
+kicad-session also prints one `DRC check '<provider>' was not run: <reason>` line each.
+In practice library parity is reported on every board with footprints (the reference emits
+`lib_footprint_issues` for them, drc.md 4.10.25) and diff pair coupling on boards with
+diff-pair nets.
+
+### Deviations
+
+- Marker UUIDs: random KIIDs in C++; here drawn from a generator seeded by the host
+  (`DrcJobOptions::marker_uuid_seed`), redrawn while the UUID names a board item or an earlier
+  marker (a collision would hijack the report's item resolution). Markers never appear in a
+  report by UUID.
+- `ForceComponentClassRecalculation` is not called: the Rust footprint component class is a
+  ticker-keyed cache recomputed from its inputs on use, and nothing between load and run
+  changes a footprint (change request to kicad-pcb for a `Board` hook if that ever changes).
+- The from-to cache is not rebuilt (CN-05 not ported; `fromTo()` reports its missing cache).
+- The zone connections provider needs `&mut ConnectivityData`; its item shapes see a second
+  build of the same connectivity (built only when the board has copper zones).
+- Providers run sequentially in registry order; report order of the thread-pool providers
+  is the index order (drc.md 4.12) and is compared order-insensitively.

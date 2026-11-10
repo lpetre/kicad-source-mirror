@@ -1407,7 +1407,13 @@ pub(crate) fn draw_pos_flipped<H: TextboxHost + ?Sized>(
     let mid_bottom = (corners[3] + corners[2]) / 2;
     let mid_left = (corners[0] + corners[3]) / 2;
     let mid_right = (corners[1] + corners[2]) / 2;
-    let center = (corners[0] + corners[1] + corners[2] + corners[3]) / 4;
+    // A new table cell carries a half-INT_MAX rectangle, and a generated table lays its cells
+    // out from there before moving them home (PCB_GENERATED_TABLE::RebuildCells): the C++ int
+    // sum wraps (x86-64), so it is reproduced with wrapping adds.
+    let wrapping_sum = corners[1..].iter().fold(corners[0], |acc, c| {
+        Vector2I::new(acc.x.wrapping_add(c.x), acc.y.wrapping_add(c.y))
+    });
+    let center = wrapping_sum / 4;
 
     if et.is_mirrored() != is_flipped {
         horizontal_alignment = match et.horiz_justify() {

@@ -408,7 +408,9 @@ pub struct Reported {
 }
 
 /// `RunTests( units, reportAllTrackErrors, testFootprints = false )` with `providers` only
-/// (the cache generator is not run: providers that need its caches are not supported yet).
+/// (the cache generator is not run: providers that need its caches build them in their test
+/// wrappers; the full run is `kicad_drc::run_flow::run_tests`). The context carries a
+/// connectivity built from the board (flashing).
 /// Returns the violations in handler order; the board is not changed. Marker UUIDs (never part
 /// of a report) come from a private generator: the board's default-seeded generator reproduces
 /// the UUIDs of boards that were themselves written by a deterministically seeded KiCad (e.g.
@@ -421,6 +423,12 @@ pub fn run_providers(
 ) -> Vec<Reported> {
     let mut found = Vec::new();
     let mut generator = KiidGenerator::seeded(0xD5C0_0006);
+
+    // The reference builds the connectivity at load (BOARD::BuildConnectivity) and the item
+    // shapes ask it whether a pad or via flashes (DRC-12): providers that do not bring their
+    // own context see this one.
+    let mut connectivity = kicad_connectivity::data::ConnectivityData::new();
+    connectivity.build_connectivity(&mut loaded.board);
 
     {
         let mut run = DrcRunState::new();
@@ -447,7 +455,9 @@ pub fn run_providers(
             false,
         );
 
-        let ctx = BoardCtx::bare(&loaded.board).with_rules(&loaded.engine);
+        let ctx = BoardCtx::bare(&loaded.board)
+            .with_rules(&loaded.engine)
+            .with_connectivity(&connectivity);
         loaded
             .engine
             .run_providers(&mut run, &ctx, units, providers);

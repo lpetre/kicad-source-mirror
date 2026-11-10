@@ -18,12 +18,13 @@
 //! Port of `pcbnew/pcb_drill_map.h` and `pcbnew/pcb_drill_map.cpp` (`PCB_DRILL_MAP`: drill
 //! symbols drawn on its layer; drawing them is tier 2) and of `DRILL_SPAN`
 //! (`pcbnew/drill/drill_span.h`), `board-model-types.md` section 10. The rendering cache
-//! (`m_outlineCache*`) is dropped. Behaviour: package M23.
+//! (`m_outlineCache*`) is dropped. Behaviour: package M23; the parts through the drill symbol
+//! cache (bounding box, point hit test, span choice): package M26.
 
 use kicad_core::layer_ids::is_copper_layer_lower_than;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PCB_IU_SCALE, PcbLayerId};
-use kicad_geom::{Box2I, EdaAngle, FlipDirection, Vector2I};
+use kicad_geom::{Box2I, EdaAngle, FlipDirection, Shape, Vector2I};
 
 use crate::board_item;
 use crate::ctx::{BoardCtx, MutEnv};
@@ -47,7 +48,10 @@ pub struct PcbDrillMap {
 }
 
 /// `DRILL_SPAN` (pcbnew/drill/drill_span.h).
-#[derive(Clone, Copy, Debug, PartialEq)]
+///
+/// `Eq` compares the stored layers (not top / bottom), so a span and its reverse stay
+/// distinct; `Ord` is the C++ `operator<` (the `std::set` of `EnumerateDrillSpans`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct DrillSpan {
     pub start_layer: PcbLayerId,  // m_StartLayer
     pub end_layer: PcbLayerId,    // m_EndLayer
@@ -154,6 +158,20 @@ impl DrillSpan {
         } else {
             std::cmp::Ordering::Equal
         }
+    }
+}
+
+impl Ord for DrillSpan {
+    /// `DRILL_SPAN::operator<`; total, and consistent with `Eq` (two spans are equivalent
+    /// exactly when all four members are equal).
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        DrillSpan::cmp(self, other)
+    }
+}
+
+impl PartialOrd for DrillSpan {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(Ord::cmp(self, other))
     }
 }
 
@@ -355,23 +373,113 @@ impl PcbDrillMap {
         self.base.layer = env.layers.flip_layer(self.base.layer);
     }
 
-    /// `PCB_DRILL_MAP::GetBoundingBox()`: the hole extent of the board's
+    /// Port of `PCB_DRILL_MAP::GetBoundingBox()`: the hole extent of the board's
     /// `DRILL_SYMBOL_CACHE` inflated by `GetSymbolExtent()`, merged with the board edges box,
-    /// moved by the offset. Not ported yet: the drill symbol cache is a drill-writer cache
-    /// (class 3, `board-model.md` 9) of the tier-2 drill symbol package.
+    /// moved by the offset (package M26; the cache is computed afresh, see
+    /// `crate::drill::drill_symbol_cache`).
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_DRILL_MAP::GetBoundingBox (DRILL_SYMBOL_CACHE)", ctx)
+        let mut bbox = Box2I::default();
+
+        if board_item::has_board(self, ctx) {
+            // Holes and the board outline together, so dragging the map snaps against the edge
+            // cuts rather than against whatever hole happens to be outermost
+            bbox = crate::drill::drill_symbol_cache(ctx).hole_extent;
+            bbox.inflate(self.symbol_extent(ctx));
+            bbox.merge(&ctx.board.board_edges_bounding_box(ctx));
+        }
+
+        bbox.move_(self.offset);
+
+        bbox
     }
 
-    /// `PCB_DRILL_MAP::HitTest( aPosition, aAccuracy )`: false without a board, else the marks
-    /// of the board's `DRILL_SYMBOL_CACHE` and the board outline. Not ported yet (see
-    /// `bounding_box`).
+    /// Port of `PCB_DRILL_MAP::GetBoardOutlines()` without its cache: the board outline
+    /// (`GetBoardPolygonOutlines( outline, false )`) moved by the offset, empty when the
+    /// outline cannot be built.
+    pub fn board_outlines(&self, ctx: &BoardCtx<'_>) -> kicad_geom::ShapePolySet {
+        if !board_item::has_board(self, ctx) {
+            return kicad_geom::ShapePolySet::new();
+        }
+
+        let (mut outlines, ok) = ctx
+            .board
+            .get_board_polygon_outlines(ctx, false, None, false, false);
+
+        if ok {
+            outlines.move_(self.offset);
+        } else {
+            outlines.remove_all_contours();
+        }
+
+        outlines
+    }
+
+    /// Port of `PCB_DRILL_MAP::HitTest( aPosition, aAccuracy )`: false without a board, else
+    /// within reach of a mark of the board's `DRILL_SYMBOL_CACHE` (of the map's span unless it
+    /// shows all spans), or on the board outline it draws.
     pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
         if !board_item::has_board(self, ctx) {
             return false;
         }
 
-        crate::port_pending!("PCB_DRILL_MAP::HitTest (DRILL_SYMBOL_CACHE)", pos, accuracy)
+        // Only the marks are clickable. The bounding box spans the whole board, so treating it
+        // as the hit area would make the map answer for every click on the design.
+        let where_ = pos - self.offset;
+        let reach = self.symbol_extent(ctx) / 2 + accuracy;
+        let cache = crate::drill::drill_symbol_cache(ctx);
+
+        for entries in cache.by_item.values() {
+            for entry in entries {
+                if !self.all_spans && entry.span != self.span {
+                    continue;
+                }
+
+                if (entry.position.x - where_.x).abs() <= reach
+                    && (entry.position.y - where_.y).abs() <= reach
+                {
+                    return true;
+                }
+            }
+        }
+
+        // The outline is drawn and plotted as the map's own artwork, so a map on a board with
+        // an outline but no holes would otherwise be visible and unselectable
+        self.board_outlines(ctx).point_on_edge(pos, accuracy)
+    }
+
+    /// Port of `PCB_DRILL_MAP::GetSpanChoice()`: the index of the map's span among the
+    /// board's `EnumerateDrillSpans`, -1 for all spans (also for a span the stackup no longer
+    /// has, which reads as every span rather than as an empty map).
+    pub fn span_choice(&self, ctx: &BoardCtx<'_>) -> i32 {
+        if self.all_spans || !board_item::has_board(self, ctx) {
+            return -1;
+        }
+
+        let spans = crate::drill::enumerate_drill_spans(ctx, false);
+
+        spans
+            .iter()
+            .position(|s| *s == self.span)
+            .map_or(-1, |i| i as i32)
+    }
+
+    /// Port of `PCB_DRILL_MAP::SetSpanChoice( aIndex )`: a span of the board by index, all
+    /// spans for -1 or an index out of range.
+    pub fn set_span_choice(&mut self, ctx: &BoardCtx<'_>, index: i32) {
+        if index < 0 || !board_item::has_board(self, ctx) {
+            self.all_spans = true;
+            return;
+        }
+
+        let spans = crate::drill::enumerate_drill_spans(ctx, false);
+
+        let Some(span) = spans.get(index as usize) else {
+            self.all_spans = true;
+            return;
+        };
+
+        self.all_spans = false;
+        self.span = *span;
     }
 
     /// `PCB_DRILL_MAP::HitTest( aRect, aContained, aAccuracy )`.

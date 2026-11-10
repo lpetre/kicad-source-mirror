@@ -21,7 +21,6 @@
 //! the reference `kicad-cli pcb drc --refill-zones --save-board` is
 //! `kicad-session/tests/zf06_refill_save.rs`.
 
-use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::PcbLayerId;
@@ -93,10 +92,11 @@ fn fill_all_zones_matches_the_filler() {
     assert_eq!(format!("{:?}", filled), format!("{:?}", fill(&bare)));
 }
 
-/// A board that needs teardrop regeneration stops in the pending TD-01 hook instead of
-/// silently losing its teardrops (connectivity-zones.md 10.2, interim guard).
+/// The teardrop hook of `FillAllZones` (TD-01): with the track-to-track target enabled the
+/// board's two tracks (one width, different nets) produce no teardrop, and a board with legacy
+/// teardrops returns at once (`if( m_board->LegacyTeardrops() ) return;`).
 #[test]
-fn teardrop_boards_stop_in_the_pending_hook() {
+fn teardrop_hook_runs_before_the_fill() {
     let (mut board, mut connectivity, engine) = load();
     board
         .design_settings_mut()
@@ -104,21 +104,9 @@ fn teardrop_boards_stop_in_the_pending_hook() {
         .parameters_mut(TargetTd::Track)
         .enabled = true;
 
-    let result = catch_unwind(AssertUnwindSafe(|| {
-        fill_all_zones(&mut board, &mut connectivity, &engine)
-    }));
-    let payload = result.expect_err("pending hook");
-    let text = payload
-        .downcast_ref::<&str>()
-        .map(|s| s.to_string())
-        .or_else(|| payload.downcast_ref::<String>().cloned())
-        .unwrap_or_default();
-    assert!(
-        text.contains("port pending: TEARDROP_MANAGER::UpdateTeardrops"),
-        "{text}"
-    );
+    assert!(fill_all_zones(&mut board, &mut connectivity, &engine).filled);
+    assert!(!board.zones().any(|(_, z)| z.is_teardrop_area()));
 
-    // `if( m_board->LegacyTeardrops() ) return;`
     let (mut board, mut connectivity, engine) = load();
     board
         .design_settings_mut()

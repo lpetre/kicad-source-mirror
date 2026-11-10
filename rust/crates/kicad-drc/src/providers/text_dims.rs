@@ -23,9 +23,10 @@
 //! - `DRCE_TEXT_THICKNESS`
 //!
 //! The outline (TrueType) font branch works on the glyphs of the text's render cache
-//! (`EDA_TEXT::GetRenderCache`). The port has no outline font engine: when the cache stored in
-//! the board file is not valid for the text (C++ regenerates it with
-//! `OUTLINE_FONT::GetLinesAsGlyphs`), the provider stops with `port_pending!`.
+//! (`EDA_TEXT::GetRenderCache`). The port has no outline font engine: the glyphs stored in the
+//! board file stand in for the regenerated ones while they are valid for the text (kicad-pcb
+//! package FONT-RC-1); otherwise (C++ regenerates them with `OUTLINE_FONT::GetLinesAsGlyphs`)
+//! the provider stops with `port_pending!`.
 
 use std::cell::Cell;
 use std::sync::Arc;

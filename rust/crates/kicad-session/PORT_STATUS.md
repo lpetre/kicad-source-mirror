@@ -25,7 +25,7 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
 | `JobExportGerbers` layer selection (L1784-1830) | `jobs_handler::gerbers_layers_to_plot` | ported, oracle-verified |
 | `preparePlotLayers` | `jobs_handler::prepare_plot_layers` | ported (zone refill done by the caller first, as in C++) |
 | `resolveJobOutputPath` | `jobs_handler::resolve_job_output_path` | partial: `loadOverrideDrawingSheet` and `BOARD::SynchronizeProperties` not called yet; project vars = the `-D` overrides |
-| `JobExportDrc` | `run_drc` | stub after the output-name logic: `NotYetPorted("kicad-drc ...")` |
+| `JobExportDrc` | `run_drc` | ported (DRC-12): DRC itself in `kicad_drc::run_flow::run_drc_job`; see the DRC-12 section |
 | `JobExportGerbers` | `run_export_gerbers` | ported (FAB-07, `kicad_fab::jobs_handler::job_export_gerbers`); the Gerber job file (FAB-09) is missing: layer files + exit `NOT_YET_PORTED`; verified in `tests/gerbers_job.rs` (see kicad-fab `PORT_STATUS.md` FAB-07) |
 | `JobExportDrill` | `run_export_drill` | stub after the report path logic: `NotYetPorted("kicad-fab ...")` |
 | `JobExportSvg` (+ `resolvePlotOutputPath`) | `run_export_svg` | stub after layer preparation: `NotYetPorted("kicad-fab ...")` |
@@ -234,3 +234,23 @@ pre-2022 boards, where even two reference runs differ from each other.
 * `tests/zf06_refill_save.rs` (ignored; needs the zone-corpus cache): 125 of 141 saved boards
   byte-identical with the reference `pcb drc --refill-zones --save-board` (details in
   kicad-zone PORT_STATUS, ZF-06).
+
+## Package DRC-12: `run_drc` (the `pcb drc` job)
+
+* `run_drc` follows `JobExportDrc`: output name, `InitEngine` again when the rules are not
+  valid (a `PARSE_ERROR` reports `DRC incomplete: could not compile custom design rules.` +
+  the error text and returns 3 without a report), `--schematic-parity` as a build without the
+  schematic kiface ("Failed to fetch schematic netlist for parity tests." without a schematic,
+  the annotation message with one; parity off), `--refill-zones`, the DRC
+  (`kicad_drc::run_flow::run_drc_job`), `Found N violations` / `Found N unconnected items`,
+  the report file, `Saved DRC Report to ...`, `--save-board`, `--exit-code-violations` (5).
+* Host inputs added to `JobPcbDrc` (not C++ members): `schematic_exists`, `report_date`
+  (`GetISO8601CurrentDateTime()`; empty by default), `marker_uuid_seed`. kicad-cli does not
+  set them yet (change request: WIRE-1).
+* Checks the port cannot run (unported providers) are listed in the report (see kicad-drc
+  PORT_STATUS DRC-12) and as one `DRC check '<provider>' was not run: <reason>` warning line
+  each on the reporter (stdout), after the C++ messages.
+* Not wired: `SetDrawingSheet` (misc provider's drawing-sheet text variables), the project's
+  `TUNING_PROFILES` (SET-11: default profiles are passed), footprint library loading.
+* Tests: `tests/drc12_regressions.rs` (port of `test_drc_regressions.cpp`),
+  `tests/drc12_corpus.rs` (reference report replay).
