@@ -980,15 +980,9 @@ version=\"1.1\"\n";
     ) {
         let error = self.plotter_arc_high_def();
         let outline: ShapePolySet = match self.round_rect_polygon_fn.clone() {
-            Some(transform) => transform(
-                a_pad_pos,
-                a_size,
-                a_orient,
-                a_corner_radius,
-                0.0,
-                0,
-                error,
-            ),
+            Some(transform) => {
+                transform(a_pad_pos, a_size, a_orient, a_corner_radius, 0.0, 0, error)
+            }
             None => round_chamfered_rect_to_polygon(
                 a_pad_pos,
                 a_size,

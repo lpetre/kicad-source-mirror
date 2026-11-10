@@ -578,7 +578,9 @@ fn gen_svg_script(g: &mut Lcg, idx: usize, out: &mut String) {
         let op = if idx < FULL_COUNT {
             SVG_OPS[(idx * 20 + k as usize) % SVG_OPS.len()]
         } else if idx >= ROUND_RECT_FROM {
-            g.pick(&["RRECT", "RRECT", "RRECT", "FRR", "FRR", "RECT", "W", "PEN", "TEXT"])
+            g.pick(&[
+                "RRECT", "RRECT", "RRECT", "FRR", "FRR", "RECT", "W", "PEN", "TEXT",
+            ])
         } else if g.below(3) == 0 {
             g.pick(&["TEXT", "PTEXT"])
         } else {

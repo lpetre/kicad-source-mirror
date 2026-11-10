@@ -987,3 +987,78 @@ None added.
   generator's caches, and nothing enforces `PROVIDER_ORDER` on the provider slice (DRC-12).
 - R-06: every pad-related branch (list in the review document, section 4) is unverified until
   PCBIO-07; the oracles compare them by themselves once pads load.
+
+## DRC-28: track angle, track segment length, via stack
+
+### File / class map
+
+| C++ (`pcbnew/drc/`) | Rust | State |
+|---|---|---|
+| `drc_test_provider_track_angle.cpp` (`DRC_TEST_PROVIDER_TRACK_ANGLE`, "track angle") | `src/providers/track_angle.rs` (`DrcTestProviderTrackAngle::new( &ConnectivityData )`) | ported |
+| `drc_test_provider_track_segment_length.cpp` (`DRC_TEST_PROVIDER_TRACK_SEGMENT_LENGTH`, "segment_length") | `src/providers/track_segment_length.rs` (`DrcTestProviderTrackSegmentLength`) | ported |
+| `drc_test_provider_via_stack.cpp` (`DRC_TEST_PROVIDER_VIA_STACK`, "microvia_stack": `Run`, `checkSpan`, `checkColumn`, `checkLooseMicrovias`, `stackThickness`, `checkAspectRatio`) | `src/providers/via_stack.rs` (`DrcTestProviderViaStack`) | ported |
+| `PCB_VIA_STACK::IsSpanValid` (`pcbnew/generators/pcb_via_stack.cpp`, static) | `providers::via_stack::is_span_valid` | ported here (not in kicad-pcb yet; change request to move it) |
+
+The track angle provider takes the board's connectivity (`BOARD::GetConnectivity()`) in its
+constructor; `CONNECTIVITY_DATA::GetConnectedTracks` is `ConnectivityData::connected_tracks`
+(needs `&self` only). `PCB_VIA::CollectMicroviaColumns` (kicad-pcb M17), the generator's
+`via_stack_data()` (start / end layer), `BOARD::GetStackupOrDefault` and `BOARD::GetPad(
+pos, layers )` (`get_pad_at`) come from kicad-pcb.
+
+### Verification
+
+* `tests/oracle/gen_drc28_boards.py` (run with `python3 -I`, reference sequential, on copies)
+  writes 30 boards under `tests/data/drc28/` (with `.kicad_dru` / `.kicad_pro`) and the
+  reference entries of the 7 DRC-28 types (`kicad-cli pcb drc --format json --severity-all
+  --units mm`) to `tests/golden/drc28/`: track angle boards (corners, bends, straight joints,
+  T junctions, a three-way node, reversed segments, a joint on a via, an arc in a chain,
+  crossing segments of another net, B.Cu, nearly straight / nearly square joints, min+max,
+  min only, a joint on an SMD pad), a segment length board (lengths around both limits incl.
+  the "equal strings -> precise formatting" branch, arcs, B.Cu, a via), the in-code boards of
+  `test_drc_via_stack.cpp` rebuilt as files (explicit stackups with sublayers, cores, thin
+  inner foils; generator stacks; PTH / NPTH pads; rule severities in the project), extra via
+  stack variants (span naming an absent layer, a gap, a non-microvia stack, a back-side stack)
+  and a `%.2f` formatting board, plus the `qa/data/pcbnew/drc_via_stack` boards with the C++
+  test's rule files.
+* `tests/drc28_track_angle_via_stack.rs::synthetic_boards_match_reference`: **25 of 30 boards
+  compared, 94 reference entries, 0 differences** (via stack types in exact report order;
+  `track_angle` / `track_segment_length` as a multiset plus the order within one track).
+  Pending: `angles_pads`, `vs_pads`, `vs_npth` (the parser skips pads: PCBIO-07),
+  `vs_via_type_condition`, `qa_MicroviaStackDepthRuleIsHonoured_cond` (rule conditions:
+  DRC-21 binding not used by the harness yet). Their goldens are committed; they are compared
+  automatically once they load.
+* Shared corpus (`track_angle_via_stack_match_reference_corpus`, 2026-11-10): **104 boards
+  compared completely, 0 differences**: `microvia_crosses_core` 24 matched,
+  `microvia_stack_not_filled` 11, `malformed_microvia_stack_span` 1; no corpus board has a
+  `track_angle`, `track_segment_length`, `microvia_stack_depth` or `hole_aspect_ratio`
+  violation (they need rules: covered by the synthetic boards). 202 partially loaded boards
+  (pads skipped) show 0 differences as well; 60 boards with rule conditions, 2 legacy `.pro`
+  projects and `plugins/fakeboard` are pending.
+
+Not verified yet: the pad paths (the pad exclusion of the track angle test via
+`BOARD::GetPad`, the PTH pad aspect ratio loop) and rule conditions - the boards are in place.
+
+### Ported C++ tests (`tests/drc28_track_angle_via_stack.rs`)
+
+| C++ | Rust |
+|---|---|
+| `test_drc_via_stack.cpp` (`DRCViaStack`, all 35 cases) | `drc_via_stack`: each case's expected counts checked on the reference golden and on the port (13 board-file cases run directly on `qa/data/pcbnew/drc_via_stack`; the rule and in-code cases on the generated boards); `PlatedPadHoleUsesItsNarrowDimension`, `UnplatedHoleIsNotChecked` (pads) and the condition cases (`MicroviaStackDepthRuleIsHonoured` third part, `AViaTypeConditionScopesTheLimit`) check the reference only and print as pending |
+| `test_drc_regressions.cpp` `DRCFalseNegativeRegressions` `issue18142` | `issue18142`: with the default severity the port reports exactly the reference's one `microvia_crosses_core` and nothing else of the DRC-28 types (the C++ count of 1 is the `hole_to_hole` violation once `microvia_crosses_core` is ignored) |
+
+### Deviations
+
+- Thread pool: the track angle and segment length tests run on `submit_loop` in C++ (one task
+  per track index); the port runs them sequentially in track order. The report order across
+  tracks is scheduling dependent in C++ (`drc.md` 4.12); the set is the same. Within one
+  track the connected tracks come from a `std::set<PCB_TRACK*>` (address order) in C++ and in
+  `ItemId` order (board track order) in the port: the order of several violations of one
+  track can differ from a C++ run (the synthetic boards happen to match).
+- A lambda task returning false (error limit reached) ends only its own index in C++; the
+  port stops the loop, which is equivalent because every later index returns false too.
+- `PCB_GROUP::GetBoardItems` (an unordered set in C++) is the member list order; `checkSpan`'s
+  outcome does not depend on it.
+- `int actual = GetLength()`: `f64_to_i32_x86` (out-of-range lengths of degenerate arcs).
+
+### Known gaps
+
+- Pad paths and rule conditions unverified (above).

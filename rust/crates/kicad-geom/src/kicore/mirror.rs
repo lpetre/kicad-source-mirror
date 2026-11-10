@@ -162,6 +162,9 @@ mod tests {
 
         let mut p = Vector2I::new(i32::MAX, 0);
         mirror_point(&mut p, Vector2I::new(-10, 0), FlipDirection::LeftRight);
-        assert_eq!(p, Vector2I::new(i32::MAX.wrapping_neg().wrapping_sub(20), 0));
+        assert_eq!(
+            p,
+            Vector2I::new(i32::MAX.wrapping_neg().wrapping_sub(20), 0)
+        );
     }
 }

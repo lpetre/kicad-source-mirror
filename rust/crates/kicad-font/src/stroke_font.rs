@@ -283,7 +283,8 @@ impl Font for StrokeFont {
 
                 // int + int * int (wrapping like the C++ on x86), then + double, truncated
                 let int_part = a_position.x.wrapping_add(a_size.x.wrapping_mul(char_count));
-                let mut new_cursor: i32 = f64_to_i32_x86(int_part as f64 + a_size.x as f64 * space_width);
+                let mut new_cursor: i32 =
+                    f64_to_i32_x86(int_part as f64 + a_size.x as f64 * space_width);
 
                 // A zero-width tab never advances, so it cannot pass the cursor
                 while a_size.x > 0 && new_cursor <= cursor.x {

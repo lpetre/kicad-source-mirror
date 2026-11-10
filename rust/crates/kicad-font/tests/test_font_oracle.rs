@@ -501,13 +501,12 @@ fn case_draw(g: &mut Gen, o: &mut Out) {
     o.i(cursor.y as i64);
     o.i(column as i64);
 
-    let (line_strs, positions, extents) =
-        font.line_positions(
-            &text,
-            Vector2I::new(pos.x.wrapping_sub(cursor.x), pos.y.wrapping_sub(cursor.y)),
-            &attrs,
-            &metrics,
-        );
+    let (line_strs, positions, extents) = font.line_positions(
+        &text,
+        Vector2I::new(pos.x.wrapping_sub(cursor.x), pos.y.wrapping_sub(cursor.y)),
+        &attrs,
+        &metrics,
+    );
 
     for i in 0..line_strs.len() {
         o.s("\nP");
