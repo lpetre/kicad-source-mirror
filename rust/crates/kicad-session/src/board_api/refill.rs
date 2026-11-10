@@ -154,8 +154,8 @@ impl ChangeDamage {
             bbox: [
                 bbox.x(),
                 bbox.y(),
-                bbox.width(),
-                bbox.height(),
+                i32::try_from(bbox.width()).unwrap_or(i32::MAX),
+                i32::try_from(bbox.height()).unwrap_or(i32::MAX),
             ],
             layers: layers.seq().iter().map(|l| l.0).collect(),
         });

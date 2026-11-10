@@ -677,6 +677,21 @@ Progress log:
   To build an exact drop-in for his wrapper still needed: the code behind his export,
   import, hint, island and GND-fill steps, the JavaScript that reads the DRC report and
   the board export, and a sample of each JSON file for one board.
+  09:40 UTC (heartbeat; next 10:36): LIVE-1 done - transactions following
+  BOARD_COMMIT::Push with incremental connectivity, snapshot checkpoints (rollback keeps
+  the checkpoint reusable), typed-array bulk commits, finalize(). Against a reference
+  driver replaying the same batches as Push does: 6300 comparisons identical on 10 boards
+  x 20 batches; incremental vs full rebuild in the port: 4958 commits on 30 boards, 0
+  failures (on 9 boards the REFERENCE's incremental state differs from its own full
+  rebuild - history dependence - and the port reproduces the reference's incremental
+  state); rollback exact on 12 boards; 290-board round trip still byte-identical.
+  Timings (medians, shared machine): commit on complex_hierarchy 0.50 ms native / 0.99 ms
+  wasm vs 4.5 / 8.0 ms with a full rebuild; interf_u 1.15 / 1.98 vs 6.65 / 10.85;
+  checkpoint about 1 ms, rollback 1.6-3.3 ms. Open: finalize() equals kicad-cli on the
+  saved board only if the track order is the saved order (needs a "reorder to save order"
+  API in kicad-pcb for new routing); bulk records carry geometry / width / layer / net
+  only. LIVE-2 (persistent DRC state, scoped checks, affected-only refill) is running.
+  The performance loop is still in its Gate phase (the first full gate run started 08:25).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

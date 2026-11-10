@@ -299,3 +299,120 @@ impl Session {
         Ok(summary)
     }
 }
+
+/// The providers [`Session::check_items`] runs when none are named: those whose entries are
+/// well defined per item (see [`CHECK_ITEMS_PROVIDERS_DOC`]).
+pub const CHECK_ITEMS_PROVIDERS: [&str; 8] = [
+    "annular_width",
+    "disallow",
+    "connectivity",
+    "clearance",
+    "edge_clearance",
+    "hole_to_hole_clearance",
+    "width",
+    "diameter",
+];
+
+/// How each provider of [`CHECK_ITEMS_PROVIDERS`] reports in C++ (`pcbnew/drc/
+/// drc_test_provider_*.cpp`), and why the scoped result keeps the same entries. The scoped
+/// check runs the providers in full with `aReportAllTrackErrors = true` and keeps the
+/// entries that name a given item, so every kept entry is byte for byte the entry of the
+/// full run (same item order, position, layer, message and rule), whichever item of a pair
+/// the C++ loop happened to visit first:
+///
+/// | provider | C++ loop | entries |
+/// |---|---|---|
+/// | `clearance` | every copper item against the r-tree; track-track pairs once (the track with the smaller UUID reports), track against pads / zones from the track, pad-pad once per pair, zone-zone once per pair and layer; without all-track-errors a track stops after its first error | once per pair and layer |
+/// | `edge_clearance` | every item against the edge / margin shapes | once per item (per edge shape with all-track-errors) |
+/// | `hole_to_hole_clearance` | via holes then pad holes against the hole r-tree, `checkedPairs` shared by both passes | once per hole pair |
+/// | `width` | every track and arc | once per item |
+/// | `diameter` | every via (and pad stack layer) | once per item |
+/// | `annular_width` | every via and plated pad | once per item |
+/// | `disallow` | every item against the disallow rules (keepout rule areas compile to implicit rules) | once per item and rule |
+/// | `connectivity` | dangling tracks and vias per item; unconnected items per ratsnest edge (two items); isolated copper per zone island | per item / per edge; unconnected entries are kept when either end is a given item or has the net of one |
+pub const CHECK_ITEMS_PROVIDERS_DOC: () = ();
+
+/// Options of [`Session::check_items`].
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct CheckItemsOptions {
+    /// The providers (by `GetName()`); empty = [`CHECK_ITEMS_PROVIDERS`].
+    pub providers: Vec<String>,
+    /// Severity names kept; empty = error and warning.
+    pub severities: Vec<String>,
+}
+
+impl Session {
+    /// The violations that involve at least one of the items `handles`: the subset of a run
+    /// of the chosen providers with `aReportAllTrackErrors = true` (`kicad-cli pcb drc
+    /// --all-track-errors`) whose entries name one of the items; `unconnected_items` entries
+    /// are also kept when one of their items has the net of a given item. The board's markers
+    /// are not touched. See [`CHECK_ITEMS_PROVIDERS_DOC`].
+    pub fn check_items(
+        &mut self,
+        handles: &[u64],
+        options: &CheckItemsOptions,
+    ) -> Result<DrcSummary, SessionError> {
+        let mut nets = std::collections::BTreeSet::new();
+
+        {
+            let ctx = self.api_ctx();
+
+            for &h in handles {
+                let id = super::item_id(h)?;
+                let item = ctx.item(id).ok_or(SessionError::StaleId { id: h })?;
+
+                if let Some(net) = item.net_code() {
+                    if net.0 > 0 {
+                        nets.insert(net.0);
+                    }
+                }
+            }
+        }
+
+        let providers = if options.providers.is_empty() {
+            CHECK_ITEMS_PROVIDERS.iter().map(|p| p.to_string()).collect()
+        } else {
+            options.providers.clone()
+        };
+        let full = self.quick_drc(&QuickDrcOptions {
+            providers,
+            all_track_errors: true,
+            severities: options.severities.clone(),
+        })?;
+
+        let wanted: std::collections::BTreeSet<u64> = handles.iter().copied().collect();
+        let ctx = self.api_ctx();
+        let net_of = |v: &ViolationItem| {
+            v.id
+                .and_then(kicad_pcb::ItemId::from_bits)
+                .and_then(|id| ctx.item(id))
+                .and_then(|it| it.net_code())
+                .map(|n| n.0)
+        };
+        let mut s = DrcSummary {
+            checks_not_run: full.checks_not_run,
+            ..DrcSummary::default()
+        };
+
+        for v in full.violations {
+            let named = v.items.iter().any(|i| i.id.is_some_and(|id| wanted.contains(&id)));
+            let by_net = v.violation_type == "unconnected_items"
+                && v.items.iter().any(|i| net_of(i).is_some_and(|n| nets.contains(&n)));
+
+            if !(named || by_net) {
+                continue;
+            }
+
+            match v.section.as_str() {
+                "marker" => s.markers += 1,
+                "unconnected" => s.unconnected += 1,
+                _ => s.parity += 1,
+            }
+
+            s.violations.push(v);
+        }
+
+        Ok(s)
+    }
+}

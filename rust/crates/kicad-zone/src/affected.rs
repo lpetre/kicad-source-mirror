@@ -30,7 +30,8 @@
 //!    setting and in its outline to a removed, filled one ("re-created") takes over the old
 //!    fill unless it has a coupled zone of equal priority (the `HigherPriority()` tie is
 //!    broken by the UUID, which changed). Any other added or removed teardrop is damage.
-//! 2. Seeds: every fillable zone that shares a copper layer with a damage rectangle and whose
+//! 2. Seeds: every fillable zone that shares a layer with a damage rectangle (any layer:
+//!    non-copper zones knock out the items on their layer) and whose
 //!    bounding box, inflated by the reach of [`seed_margin`], meets it; every zone of a net
 //!    that a changed item had before or after the change (island removal reads the net's
 //!    connectivity); every zone that is not filled (`ZoneFillDirty`'s `!IsFilled()`). Vias
@@ -405,7 +406,6 @@ fn affected_set(
     zones: &[ZoneId],
     recreated: &[(ZoneId, usize)],
 ) -> Option<(BTreeSet<ZoneId>, usize)> {
-    let cu = Lset::all_cu_mask();
     let info: Vec<(ZoneId, &Zone, Box2I)> = zones
         .iter()
         .filter_map(|&id| board.zone(id).map(|z| (id, z, z.bounding_box(ctx))))
@@ -413,7 +413,7 @@ fn affected_set(
         .collect();
 
     let coupled = |a: &Zone, b: &Zone| {
-        let shared = &(&a.layer_set & &b.layer_set) & cu;
+        let shared = &a.layer_set & &b.layer_set;
 
         shared.any()
             && (filler.zone_knockout_may_interact(ctx, a, b)
@@ -433,12 +433,12 @@ fn affected_set(
         } else {
             let mut area = *bbox;
             area.inflate(seed_margin(board, rules, filler, z));
-            let layers = &z.layer_set & cu;
+            let layers = &z.layer_set;
 
             damage
                 .rects
                 .iter()
-                .any(|r| (&layers & &r.layers).any() && area.intersects(&r.bbox))
+                .any(|r| (layers & &r.layers).any() && area.intersects(&r.bbox))
         };
 
         if seeded {
