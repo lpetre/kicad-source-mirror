@@ -5020,8 +5020,8 @@ mod split_collinear_tests {
                     / n as f64;
                 let rad = rng.range(r / 3, r) as f64;
                 Vector2I::new(
-                    c.x.wrapping_add((rad * ang.cos()) as i32),
-                    c.y.wrapping_add((rad * ang.sin()) as i32),
+                    c.x.saturating_add((rad * ang.cos()) as i32),
+                    c.y.saturating_add((rad * ang.sin()) as i32),
                 )
             })
             .collect()

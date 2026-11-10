@@ -780,6 +780,30 @@ Progress log:
   split_collinear_outlines (hotspot 5). Adapter: GK-1 done, its Fable review running.
   LIVE-2 Fable review running. Disk 8.7 GB free (target 13 GB, of which 3.8 GB live
   incremental caches), memory fine.
+  12:06 UTC: ACCOUNT LIMIT INCIDENT. At about 12:00 every running agent died on the weekly
+  usage limit (performance loop: both remaining round-1 optimisers; adapter: the GK-1
+  repair agent mid-work, then GK-2 and its review at once; LIVE-2 reviewer mid-campaign).
+  The user reset the limits at 12:02. The stalled runs were stopped and all three
+  workflows resumed from their journals (same run ids; task ids now wr0rvw0m5 performance
+  loop, wrsygxn4t adapter, wttyirvuv LIVE-2 review); the interrupted agents were restarted
+  with a "take stock of the partial work on disk" note (script edits: cfg.interrupted in
+  the loop, appended notes in the other two). Finished agents replay from cache.
+  Adapter GK-1 review (Fable) result, verdict sound with findings: the 280 corpus rows
+  reproduce with stricter masks and fresh reference runs (109 identical, 167 masked, 4
+  reference-unstable); ten opens in one process = one open per process = port on 7 boards.
+  Outside the corpus it found: (a) PORT DEFECT in kicad-drc connection_width - the C++
+  iterates a std::unordered_set of items (reverse insertion order in libstdc++), the port
+  keeps r-tree order, so a violation's two items are swapped or, with three, a different
+  pair is named (10 of 35 entries on issue9870; multichannel_mixer) - the repair agent
+  fixes it in the port; (b) hint skip list with trailing empty tokens; (c) add_vias on a
+  board without a GND net (net -1 in C++); (d) JSON booleans accepted where nlohmann
+  throws; (e) three fnmatch corners against glibc (1853 of 300000 biased cases);
+  (f) comparison masks wider than documented; (g) six comment passages of the client's
+  shim pasted into the adapter (to reword); (h) CONFIDENTIALITY, orchestrator's own doing:
+  this file, PERF.md and packages/WASM-API-1.md named the client's entry points, tool
+  files, session methods and quoted log lines of his tool. Reworded now in the tree; the
+  earlier text remains in the pushed history of this public fork (withdrawing it needs a
+  history rewrite and a force push, which is the user's decision). Artifact version 3.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
