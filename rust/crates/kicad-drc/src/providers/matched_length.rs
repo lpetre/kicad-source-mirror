@@ -914,8 +914,10 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
         let board_copper_layers = Lset::all_cu_mask_n(board.copper_layer_count());
         let mut item_sets: BTreeMap<RuleKey, (DrcRuleInfo, BTreeSet<ItemId>)> = BTreeMap::new();
 
-        // ftCache->Rebuild( m_board ) ran in the caller (run_flow).
-        let ft_cache = self.conn.from_to_cache();
+        // ftCache->Rebuild( m_board ) ran in the caller (run_flow). The cache's lock is taken
+        // only around each query below: the rule conditions evaluated in this loop can call
+        // `fromTo()`, which locks it too (holding it here deadlocked on boards with from-to
+        // rules, e.g. vme-wren).
 
         let progress_delta = 100;
         let mut count = 0usize;
@@ -1047,9 +1049,15 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
                     + ent.total_pad_to_die_delay as f64;
                 ent.matching_rule = Some(rule.clone());
 
-                if let Some(ft_path) = ft_cache.query_from_to_path(&ent.items) {
-                    ent.from = ft_path.from_name.clone();
-                    ent.to = ft_path.to_name.clone();
+                let from_to = self
+                    .conn
+                    .from_to_cache()
+                    .query_from_to_path(&ent.items)
+                    .map(|p| (p.from_name.clone(), p.to_name.clone()));
+
+                if let Some((from, to)) = from_to {
+                    ent.from = from;
+                    ent.to = to;
                 } else {
                     ent.from = "<unconstrained>".to_string();
                     ent.to = "<unconstrained>".to_string();
@@ -1063,8 +1071,6 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
                     .push(ent);
             }
         }
-
-        drop(ft_cache);
 
         if !self
             .base
