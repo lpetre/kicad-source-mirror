@@ -32,14 +32,15 @@
 //!    broken by the UUID, which changed). Any other added or removed teardrop is damage.
 //! 2. Seeds: every fillable zone that shares a layer with a damage rectangle (any layer:
 //!    non-copper zones knock out the items on their layer) and whose
-//!    bounding box, inflated by the reach of [`seed_margin`], meets it; every zone of a net
-//!    that a changed item had before or after the change (island removal reads the net's
-//!    connectivity); every zone that is not filled (`ZoneFillDirty`'s `!IsFilled()`). Vias
+//!    bounding box, inflated by the reach of [`seed_margin`], meets it; every zone that a
+//!    connectivity cluster of its net touching a changed area meets (island removal reads
+//!    the clusters, [`cluster_nets_near`]); every zone that is not filled (`ZoneFillDirty`'s `!IsFilled()`). Vias
 //!    and pads whose bounding box meets a damage rectangle are damage themselves (their
 //!    conditional flashing reads the connectivity at their position).
 //! 3. Closure: a zone is added while it is *coupled* to a zone of the set (a shared layer and
 //!    `zoneKnockoutMayInteract` in either direction: the gate of every read of another zone's
-//!    fill, of the fill DAG and of the iterative refill) or has the net of a zone of the set
+//!    fill, of the fill DAG and of the iterative refill) or classifies islands and has the
+//!    net of a zone of the set
 //!    (the islands of a net's zones read each other's fills through the connectivity).
 //! 4. `ZONE_FILLER::Fill( set )` in board order, then `BuildConnectivity` as `FillAllZones`.
 //!
@@ -54,8 +55,9 @@
 use std::collections::BTreeSet;
 
 use kicad_connectivity::data::ConnectivityData;
-use kicad_core::lset::Lset;
 use kicad_core::PcbLayerId;
+use kicad_core::kiid::Kiid;
+use kicad_core::lset::Lset;
 use kicad_geom::Box2I;
 use kicad_pcb::Board;
 use kicad_pcb::ctx::{BoardCtx, RuleResolver};
@@ -144,24 +146,39 @@ pub struct AffectedFillOutcome {
     pub reused: Vec<ZoneId>,
     /// Board zones that keep their fill (not refilled, not re-created).
     pub kept: u32,
+    /// Why zones are in the refill set: not filled, new or changed teardrop, net of a change,
+    /// near a change, re-created teardrop with an equal-priority coupled zone, added by the
+    /// closure.
+    pub reasons: [u32; 6],
 }
 
-/// The settings of a teardrop zone that its fill and its fill relations depend on: every
-/// field of `ZONE` except the UUID, the handle, the fill results and the derived display
-/// caches.
-fn teardrop_signature(z: &Zone) -> String {
-    format!(
+/// The settings of a teardrop zone that its fill depends on: every field of `ZONE` except
+/// the UUID, the handle, the priority (re-assigned by `setTeardropPriorities` in an order
+/// that breaks area ties by UUID; it only decides the relation to other teardrops, see
+/// [`affected_set`]), the fill results and the derived display caches.
+fn teardrop_signature(z: &Zone) -> Option<String> {
+    let outline = z.library_outline();
+
+    // Outlines with arcs are never matched (their vertices alone do not give the geometry).
+    for i in 0..outline.outline_count() {
+        if outline.c_outline(i).arc_count() > 0
+            || (0..outline.hole_count(i)).any(|h| outline.c_hole(i, h).arc_count() > 0)
+        {
+            return None;
+        }
+    }
+
+    Some(format!(
         "{:?}",
         (
             (
-                z.library_outline(),
+                outline_points(z.library_outline()),
                 &z.layer_set,
                 z.base.net,
                 &z.base.teardrop_params,
                 z.base.item.layer,
                 z.base.item.is_locked,
                 z.base.item.is_knockout,
-                z.priority,
                 z.teardrop_type,
                 &z.layer_properties,
                 &z.zone_name,
@@ -195,7 +212,25 @@ fn teardrop_signature(z: &Zone) -> String {
                 z.do_not_allow_zone_fills,
             ),
         )
-    )
+    ))
+}
+
+/// The vertices (and arc flags) of every outline and hole of a polygon set: the geometry
+/// without the cached triangulation and bounding boxes that `Debug` would print.
+fn outline_points(set: &kicad_geom::ShapePolySet) -> Vec<Vec<Vec<kicad_geom::Vector2I>>> {
+    (0..set.outline_count())
+        .map(|i| {
+            let mut chains = vec![set.c_outline(i)];
+            chains.extend((0..set.hole_count(i)).map(|h| set.c_hole(i, h)));
+            chains.into_iter().map(|c| c.c_points().to_vec()).collect()
+        })
+        .collect()
+}
+
+/// Whether `Fill()` classifies the zone's islands (`isolatedIslandsMap`): not for
+/// copper-thieving stamps and teardrops, whose fill then never reads the connectivity.
+fn tracks_islands(z: &Zone) -> bool {
+    !z.is_copper_thieving() && !z.is_teardrop_area()
 }
 
 /// A zone `ZONE_FILLER::Fill` fills (`Fill()` skips rule areas and zones of two corners or
@@ -224,7 +259,17 @@ fn seed_margin(board: &Board, rules: &dyn RuleResolver, filler: &ZoneFiller, zon
         C::ThermalSpokeWidthConstraint,
     ] {
         if let Some(con) = rules.query_worst_constraint(c) {
-            worst = worst.max(con.value().max());
+            let v = con.value();
+
+            for (has, x) in [
+                (v.has_min(), v.min()),
+                (v.has_opt(), v.opt()),
+                (v.has_max(), v.max()),
+            ] {
+                if has {
+                    worst = worst.max(x);
+                }
+            }
         }
     }
 
@@ -261,7 +306,8 @@ pub fn fill_affected_zones(
     let worst_before = board.get_max_clearance_value(&BoardCtx::bare(board).with_rules(rules));
 
     // The teardrops before the update (they are all removed and re-created by it).
-    let old_teardrops: Vec<(String, ZoneFill, Box2I, Lset, i32)> = {
+    #[allow(clippy::type_complexity)]
+    let old_teardrops: Vec<(Option<String>, ZoneFill, Box2I, Lset, i32, (u32, Kiid))> = {
         let ctx = BoardCtx::bare(board).with_rules(rules);
         board
             .zones()
@@ -273,10 +319,12 @@ pub fn fill_affected_zones(
                     z.bounding_box(&ctx),
                     z.layer_set.clone(),
                     z.base.net.0,
+                    (z.priority, z.base.item.uuid),
                 )
             })
             .collect()
     };
+    let old_keys: Vec<(u32, Kiid)> = old_teardrops.iter().map(|t| t.5).collect();
 
     // TEARDROP_MANAGER::UpdateTeardrops( commit, nullptr, nullptr, true )
     update_teardrops(board, connectivity, rules, true);
@@ -299,17 +347,20 @@ pub fn fill_affected_zones(
 
         for (id, z) in board.zones().filter(|(_, z)| z.is_teardrop_area()) {
             let sig = teardrop_signature(z);
-            let found = old_teardrops
-                .iter()
-                .enumerate()
-                .position(|(k, old)| !matched[k] && old.1.is_filled && old.0 == sig);
+            let found = old_teardrops.iter().enumerate().position(|(k, old)| {
+                !matched[k] && old.1.is_filled && sig.is_some() && old.0 == sig
+            });
 
             match found {
                 Some(k) => {
                     matched[k] = true;
                     recreated.push((id, k));
                 }
-                None => damage.add_area(z.bounding_box(&ctx), z.layer_set.clone(), Some(z.base.net.0)),
+                None => damage.add_area(
+                    z.bounding_box(&ctx),
+                    z.layer_set.clone(),
+                    Some(z.base.net.0),
+                ),
             }
         }
     }
@@ -324,8 +375,18 @@ pub fn fill_affected_zones(
         return fill_after_teardrops(board, connectivity, rules, None);
     }
 
+    // Re-created teardrops take over their predecessor's fill (the ones the set below
+    // contains are unfilled and refilled by `Fill()`), so that the connectivity sees them.
+    for (id, k) in &recreated {
+        *board.zone_fill_mut(*id) = old_teardrops[*k].1.clone();
+    }
+
     let mut filler = ZoneFiller::new(board);
     let zones: Vec<ZoneId> = board.zones().map(|(id, _)| id).collect();
+
+    // The connectivity `Fill()` starts from (it rebuilds it the same way first).
+    connectivity.clear_ratsnest();
+    connectivity.build_board(board);
 
     let set = {
         let ctx = BoardCtx::bare(board).with_rules(rules);
@@ -367,28 +428,37 @@ pub fn fill_affected_zones(
             }
         }
 
-        affected_set(board, &ctx, rules, &filler, &damage, &zones, &recreated)
+        let near_clusters = clusters_near(&ctx, connectivity, &damage);
+
+        affected_set(
+            board,
+            &ctx,
+            rules,
+            &filler,
+            &damage,
+            &zones,
+            &recreated,
+            &old_keys,
+            &near_clusters,
+        )
     };
 
-    let Some((set, reused_from)) = set else {
+    let Some((set, reused_from, reasons)) = set else {
         return fill_after_teardrops(board, connectivity, rules, None);
     };
 
-    // Re-created teardrops outside the set take over their predecessor's fill.
-    let mut reused = Vec::new();
-
-    for (id, k) in &recreated {
-        if !set.contains(id) {
-            *board.zone_fill_mut(*id) = old_teardrops[*k].1.clone();
-            reused.push(*id);
-        }
-    }
+    let reused: Vec<ZoneId> = recreated
+        .iter()
+        .map(|(id, _)| *id)
+        .filter(|id| !set.contains(id))
+        .collect();
 
     debug_assert_eq!(reused.len(), reused_from);
 
     let refill: Vec<ZoneId> = zones.iter().copied().filter(|z| set.contains(z)).collect();
     let mut outcome = fill_after_teardrops(board, connectivity, rules, Some(&refill));
     outcome.reused = reused;
+    outcome.reasons = reasons;
     outcome.kept = (zones.len() - outcome.refilled.len() - outcome.reused.len()) as u32;
     outcome
 }
@@ -397,6 +467,7 @@ pub fn fill_affected_zones(
 /// teardrops outside it; `None` when a re-created teardrop cannot keep its fill and the
 /// set has to be recomputed with it as damage (the caller then refills everything, which
 /// is always right).
+#[allow(clippy::too_many_arguments)]
 fn affected_set(
     board: &Board,
     ctx: &BoardCtx<'_>,
@@ -405,7 +476,9 @@ fn affected_set(
     damage: &ZoneDamage,
     zones: &[ZoneId],
     recreated: &[(ZoneId, usize)],
-) -> Option<(BTreeSet<ZoneId>, usize)> {
+    old_keys: &[(u32, Kiid)],
+    near_clusters: &[(Box2I, i32)],
+) -> Option<(BTreeSet<ZoneId>, usize, [u32; 6])> {
     let info: Vec<(ZoneId, &Zone, Box2I)> = zones
         .iter()
         .filter_map(|&id| board.zone(id).map(|z| (id, z, z.bounding_box(ctx))))
@@ -422,23 +495,29 @@ fn affected_set(
 
     let recreated_ids: BTreeSet<ZoneId> = recreated.iter().map(|(id, _)| *id).collect();
     let mut set: BTreeSet<ZoneId> = BTreeSet::new();
+    let mut reasons = [0u32; 6];
 
     for (id, z, bbox) in &info {
         let seeded = if !z.is_teardrop_area() && !z.fill().is_filled {
+            reasons[0] += 1;
             true
         } else if !recreated_ids.contains(id) && z.is_teardrop_area() {
+            reasons[1] += 1;
             true // a new or changed teardrop (no predecessor to take over from)
-        } else if damage.nets.contains(&z.base.net.0) {
+        } else if tracks_islands(z) && cluster_nets_near(near_clusters, z, bbox) {
+            reasons[2] += 1;
             true
         } else {
             let mut area = *bbox;
             area.inflate(seed_margin(board, rules, filler, z));
             let layers = &z.layer_set;
 
-            damage
+            let near = damage
                 .rects
                 .iter()
-                .any(|r| (layers & &r.layers).any() && area.intersects(&r.bbox))
+                .any(|r| (layers & &r.layers).any() && area.intersects(&r.bbox));
+            reasons[3] += near as u32;
+            near
         };
 
         if seeded {
@@ -446,22 +525,36 @@ fn affected_set(
         }
     }
 
-    // A re-created teardrop whose relation to an equal-priority coupled zone was decided by
-    // its old UUID: it cannot take over the old fill.
+    // A re-created teardrop has a new priority and UUID. `HigherPriority()` decides a
+    // teardrop against a regular zone by the type alone, but against another teardrop by
+    // priority, then UUID: a re-created teardrop coupled to another re-created one whose
+    // relation to it is not the old one cannot take over the old fill. (A coupled teardrop
+    // without predecessor is in the set already and pulls it in through the closure.)
+    let pred: std::collections::BTreeMap<ZoneId, usize> = recreated.iter().copied().collect();
+    let old_higher = |a: usize, b: usize| {
+        let (pa, ua) = old_keys[a];
+        let (pb, ub) = old_keys[b];
+        if pa != pb { pa > pb } else { ua > ub }
+    };
+
     for (id, z, _) in &info {
-        if !recreated_ids.contains(id) {
+        let Some(&k) = pred.get(id) else {
             continue;
-        }
+        };
 
         let tie = info.iter().any(|(other_id, other, _)| {
+            let Some(&m) = pred.get(other_id) else {
+                return false;
+            };
+
             other_id != id
-                && other.priority == z.priority
-                && other.is_teardrop_area() == z.is_teardrop_area()
+                && (z.higher_priority(other) != old_higher(k, m)
+                    || other.higher_priority(z) != old_higher(m, k))
                 && coupled(z, other)
         });
 
-        if tie {
-            set.insert(*id);
+        if tie && set.insert(*id) {
+            reasons[4] += 1;
         }
     }
 
@@ -482,10 +575,16 @@ fn affected_set(
                 continue;
             }
 
-            if nets.contains(&z.base.net.0)
-                || info
-                    .iter()
-                    .any(|(other_id, other, _)| set.contains(other_id) && coupled(z, other))
+            // A teardrop is always higher than a regular zone (`HigherPriority()`): it never
+            // reads a regular zone's fill, and its own fill is final as filled (no island
+            // removal, no iterative refill, never out of the board), so a refilled regular
+            // zone reads the same teardrop fill as in the full refill.
+            if (tracks_islands(z) && nets.contains(&z.base.net.0))
+                || info.iter().any(|(other_id, other, _)| {
+                    set.contains(other_id)
+                        && !(z.is_teardrop_area() && !other.is_teardrop_area())
+                        && coupled(z, other)
+                })
             {
                 set.insert(*id);
             }
@@ -496,8 +595,70 @@ fn affected_set(
         }
     }
 
+    reasons[5] = set.len() as u32 - reasons[..5].iter().sum::<u32>();
     let reused = recreated.iter().filter(|(id, _)| !set.contains(id)).count();
-    Some((set, reused))
+    Some((set, reused, reasons))
+}
+
+/// The members (bounding box, net) of every connectivity cluster (`CSM_CONNECTIVITY_CHECK`,
+/// zones included) of a net of the damage that has a member whose bounding box meets a
+/// damage rectangle: the clusters whose pad membership a change can have altered (a removed
+/// item's neighbours touch its area, an added or changed item lies in its own).
+fn clusters_near(
+    ctx: &BoardCtx<'_>,
+    connectivity: &mut ConnectivityData,
+    damage: &ZoneDamage,
+) -> Vec<(Box2I, i32)> {
+    use kicad_connectivity::algo::ClusterSearchMode;
+
+    let clusters = connectivity.algo_mut().search_clusters_ex(
+        ctx,
+        ClusterSearchMode::ConnectivityCheck,
+        false,
+        -1,
+    );
+    let algo = connectivity.algo();
+    let list = algo.item_list();
+    let mut out = Vec::new();
+
+    for cl in clusters {
+        let members: Vec<(Box2I, i32)> = algo
+            .cluster(cl)
+            .items()
+            .iter()
+            .map(|&i| list.item(i))
+            .filter(|it| it.valid())
+            .map(|it| (*it.bbox(), it.net()))
+            .collect();
+
+        // CSM_CONNECTIVITY_CHECK clusters hold one net (`withinAnyNet`: a neighbour of
+        // another net is skipped): only a change of an item of that net (before or after
+        // the change) alters one.
+        if members
+            .first()
+            .is_some_and(|(_, n)| damage.nets.contains(n))
+            && members
+                .iter()
+                .any(|(b, _)| damage.rects.iter().any(|r| r.bbox.intersects(b)))
+        {
+            out.extend(members);
+        }
+    }
+
+    out
+}
+
+/// Whether a member of [`clusters_near`] has the zone's net and meets its bounding box: only
+/// then can the islands of the zone (`FillIsolatedIslandsMap`: a fill outline in a cluster
+/// without a pad) change. A fill outline joins a cluster through an item touching it, which
+/// meets the zone's bounding box; removed islands of other zones that touch it make those
+/// zones coupled (step 3).
+fn cluster_nets_near(near: &[(Box2I, i32)], zone: &Zone, bbox: &Box2I) -> bool {
+    let net = zone.base.net.0;
+    let mut area = *bbox;
+    area.inflate(1);
+
+    near.iter().any(|(b, n)| *n == net && area.intersects(b))
 }
 
 /// `FillAllZones` from the teardrop update on: the whole refill.
@@ -516,6 +677,7 @@ fn full_refill(
         refilled,
         reused: Vec::new(),
         kept: 0,
+        reasons: [0; 6],
     }
 }
 
@@ -550,6 +712,7 @@ fn fill_after_teardrops(
         kept: (total - to_fill.len()) as u32,
         refilled: to_fill,
         reused: Vec::new(),
+        reasons: [0; 6],
     }
 }
 
@@ -562,7 +725,10 @@ mod tests {
         let mut d = ZoneDamage::default();
         assert!(d.is_empty());
         d.add_area(
-            Box2I::new(kicad_geom::Vector2I::new(0, 0), kicad_geom::Vector2I::new(10, 10)),
+            Box2I::new(
+                kicad_geom::Vector2I::new(0, 0),
+                kicad_geom::Vector2I::new(10, 10),
+            ),
             Lset::from_layers(&[PcbLayerId::FCu]),
             Some(3),
         );
@@ -570,7 +736,10 @@ mod tests {
 
         let mut e = ZoneDamage::default();
         e.add_area(
-            Box2I::new(kicad_geom::Vector2I::new(0, 0), kicad_geom::Vector2I::new(1, 1)),
+            Box2I::new(
+                kicad_geom::Vector2I::new(0, 0),
+                kicad_geom::Vector2I::new(1, 1),
+            ),
             Lset::from_layers(&[PcbLayerId::EdgeCuts]),
             None,
         );

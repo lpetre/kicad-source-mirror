@@ -145,6 +145,8 @@ export interface Violation {
 export interface DrcSummary {
     violations: Violation[]; markers: number; unconnected: number; parity: number;
     checksNotRun: string[];
+    /** LIVE-2: nets the run's connectivity build gave to items (absent when none). */
+    damage?: ChangeDamage;
 }
 export interface QuickDrcOptions { providers?: string[]; allTrackErrors?: boolean; severities?: string[] }
 export interface ReadOptions { polygons?: boolean }
@@ -155,6 +157,8 @@ export interface NetChange { id: Handle; from: number; to: number }
 export interface CommitReport extends EditResult {
     dirtyNets: number[]; netUnconnected: [number, number][]; unconnected: number;
     unconnectedVisible: number; netChanges: NetChange[];
+    /** LIVE-2: what the commit changed, for the affected-only refill. */
+    damage: ChangeDamage;
 }
 /** `commitBulk`: handles as Float64Array, `netUnconnected` as [net, count] pairs,
  *  `netChanges` as [id, from, to] triples. */
@@ -170,3 +174,19 @@ export interface RouteRecords {
     trackIds: Float64Array; tracks: Int32Array; arcIds: Float64Array; arcs: Int32Array;
     viaIds: Float64Array; vias: Int32Array;
 }
+
+// LIVE-2: item-scoped checks and the affected-only zone refill (docs/WASM_API.md "Scoped
+// checks and affected-only refill").
+/** A changed area: `[x, y, w, h]` and the PCB_LAYER_ID values of the item's layers. */
+export interface DamageArea { bbox: [number, number, number, number]; layers: number[] }
+/** What changed since the zone fills were last those of a full refill. */
+export interface ChangeDamage { full?: boolean; areas?: DamageArea[]; nets?: number[] }
+/** `refillZonesAffected()`: `refilled` / `reused` zone handles, `kept` count, `reasons`
+ *  `[not filled, new teardrop, net cluster, near a change, teardrop priority, closure]`. */
+export interface RefillReport {
+    full: boolean; refilled: Handle[]; reused: Handle[]; kept: number;
+    reasons: [number, number, number, number, number, number]; damage?: ChangeDamage;
+}
+/** `checkItems(handles, options)`: providers by name (default: annular_width, disallow,
+ *  connectivity, clearance, edge_clearance, hole_to_hole_clearance, width, diameter). */
+export interface CheckItemsOptions { providers?: string[]; severities?: string[] }

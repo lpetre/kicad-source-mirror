@@ -139,9 +139,7 @@ fn affected_refill_equals_full_refill() {
 
             let cp = s.checkpoint();
 
-            let r = s
-                .refill_zones_affected(&damage)
-                .expect("affected refill");
+            let r = s.refill_zones_affected(&damage).expect("affected refill");
             let affected = fill_state(&s);
             let affected_text = s.save().expect("save");
             refilled += r.refilled.len();

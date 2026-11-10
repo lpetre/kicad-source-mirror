@@ -89,3 +89,17 @@ wasm build: identical (8 checks). `smoke.mjs` still passes (58 checks).
 loop"). Verified by `web/test/router_loop.mjs` on the wasm build (bulk remove / re-add,
 rollback to a byte-identical save, second run identical) and `tests/router_loop.rs`
 (`finalize` in the loop, golden unchanged).
+
+## Package LIVE-2: scoped checks and affected-only refill bindings
+
+`checkItems(handles, options)`, `refillZonesAffected()`, `zoneDamage()`; `CommitReport.damage`,
+`DrcSummary.damage`, types `ChangeDamage`, `DamageArea`, `RefillReport`, `CheckItemsOptions`
+(`types/board_api.d.ts`). The `Board` object merges the damage of commits, `quickDrc`,
+`checkItems` and `finalize`, saves it with checkpoints, resets it on a refill (`refillZones()`
+now runs `refill_zones_affected( full )` to get the residual damage; same result as before) and
+makes it full after every other mutating call (`applyEdits`, `addTrackSegment`, `addArc`,
+`placeVia`, `changeItem`, `removeItems`, `removeRouting`, `rebuildConnectivity`,
+`setTeardropSettings`, `setItemTeardrops`, `updateTeardrops`, `runDrc`, `addTrack`, `addVia`,
+`remove`) and after a failed commit. Not covered by a node test yet (the wasm build is
+exercised by `crates/kicad-bench/scripts/wasm_bench.mjs --pipelines live2`, which checks that
+the affected refill saves the same board as the full one).

@@ -382,3 +382,19 @@ identical except generated UUIDs.
   as `<HH:MM:SS>: Warning: <text>`, byte-identical to the reference on `no_converge` apart
   from the time. The port's dependency-cycle warning (F-2) is printed the same way; the
   reference never gets there (it hangs).
+
+## Package LIVE-2: affected-only refill (`src/affected.rs`, new file)
+
+`fill_affected_zones( board, connectivity, rules, damage )`: `ZONE_FILLER_TOOL::FillAllZones`
+(teardrop update, time stamp, `ZONE_FILLER::Fill`, `BuildConnectivity`) with `Fill()` given
+only the zones the damage can affect; `ZoneDamage::full` runs `fill_all_zones`. The selection
+and why it is sound is the module comment; summary: zones near a changed area within a
+generous knockout reach, zones whose net's connectivity cluster near a change meets them,
+unfilled zones and new teardrops, closed under `zone_knockout_may_interact` coupling (directed
+for teardrop -> regular zone) and the nets of island-tracking zones. Re-created teardrops equal
+to a predecessor (settings and outline vertices; not priority / UUID, re-assigned on every
+update) take over its fill unless a coupled re-created teardrop changed its priority relation.
+Existing files touched: `src/lib.rs` (one `pub mod affected;` line). Uses the crate-private
+`ZoneFiller::zone_knockout_may_interact`, `worst_clearance`, `zone_knockout_slack`,
+`max_zone_corner_radius`. Deviation: one extra connectivity build (`build_board`, the same one
+`Fill()` starts with) before the selection.

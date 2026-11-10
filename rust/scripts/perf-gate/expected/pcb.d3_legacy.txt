@@ -1,0 +1,24 @@
+# D3: rust_resave( original ) vs O1, UUIDs canonicalised
+
+* differs: 9
+* identical: 361
+
+## First differences
+
+* drill_chart > table_cell: 1
+* gr_text > xy: 4
+* net_chains > : 2
+* zone > net: 1
+* zone > priority: 1
+
+## Boards that are not identical
+
+* demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb: differs line 21912: gr_text > xy
+* demos/tiny_tapeout/tinytapeout-demo.kicad_pcb: differs line 69149: gr_text > xy
+* qa/data/pcbnew/api_kitchen_sink.kicad_pcb: differs line 3899: drill_chart > table_cell
+* qa/data/pcbnew/issue14549.kicad_pcb: differs line 9689: gr_text > xy
+* qa/data/pcbnew/issue22475/issue22475.kicad_pcb: differs line 47388: gr_text > xy
+* qa/data/pcbnew/issue25065/issue25065.kicad_pcb: differs line 3701: net_chains > 
+* qa/data/pcbnew/issue25580.kicad_pcb: differs line 2826: zone > net
+* qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb: differs line 2491: net_chains > 
+* qa/data/pcbnew/teardrop_spike.kicad_pcb: differs line 332: zone > priority

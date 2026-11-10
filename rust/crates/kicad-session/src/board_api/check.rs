@@ -377,7 +377,10 @@ impl Session {
         }
 
         let providers = if options.providers.is_empty() {
-            CHECK_ITEMS_PROVIDERS.iter().map(|p| p.to_string()).collect()
+            CHECK_ITEMS_PROVIDERS
+                .iter()
+                .map(|p| p.to_string())
+                .collect()
         } else {
             options.providers.clone()
         };
@@ -390,8 +393,7 @@ impl Session {
         let wanted: std::collections::BTreeSet<u64> = handles.iter().copied().collect();
         let ctx = self.api_ctx();
         let net_of = |v: &ViolationItem| {
-            v.id
-                .and_then(kicad_pcb::ItemId::from_bits)
+            v.id.and_then(kicad_pcb::ItemId::from_bits)
                 .and_then(|id| ctx.item(id))
                 .and_then(|it| it.net_code())
                 .map(|n| n.0)
@@ -403,9 +405,14 @@ impl Session {
         };
 
         for v in full.violations {
-            let named = v.items.iter().any(|i| i.id.is_some_and(|id| wanted.contains(&id)));
+            let named = v
+                .items
+                .iter()
+                .any(|i| i.id.is_some_and(|id| wanted.contains(&id)));
             let by_net = v.violation_type == "unconnected_items"
-                && v.items.iter().any(|i| net_of(i).is_some_and(|n| nets.contains(&n)));
+                && v.items
+                    .iter()
+                    .any(|i| net_of(i).is_some_and(|n| nets.contains(&n)));
 
             if !(named || by_net) {
                 continue;

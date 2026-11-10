@@ -692,6 +692,23 @@ Progress log:
   API in kicad-pcb for new routing); bulk records carry geometry / width / layer / net
   only. LIVE-2 (persistent DRC state, scoped checks, affected-only refill) is running.
   The performance loop is still in its Gate phase (the first full gate run started 08:25).
+  10:08 UTC (status asked): gate script exists; the second full gate run (started 09:49)
+  has passed sexpr, geom, core, libeval, font, zint, plot and pcb so far, no failure.
+  Baseline collected into target/bench/quiet (4-core machine, LIVE-2 running beside it, so
+  only roughly quiet). Medians, port single-threaded in process vs reference kicad-cli
+  whole process (default pool / one thread):
+    complex_hierarchy  load 41 ms, refill 231, DRC 168, gerbers 17, write 16;
+                       reference drc 630 / 703, drc+refill 896 / 855, gerbers 447.
+    StickHub           load 49, refill 235, DRC 223; reference drc+refill 788 / 1017.
+    vme-wren           load 4.6 s, refill 41.2 s, DRC 19.6 s, gerbers 2.3 s, write 1.2 s;
+                       reference drc 13.3 / 23.9 s, drc+refill 41.6 / 79.3 s,
+                       gerbers 5.2 / 7.5 s, upgrade 4.4 / 6.5 s.
+    jetson             load 3.6 s, refill 24.0 s, DRC 16.9 s, gerbers 3.4 s, write 1.6 s;
+                       reference drc 12.8 / 16.9 s, drc+refill 25.6 / 43.8 s,
+                       gerbers 8.9 / 10.1 s, upgrade 5.8 / 6.5 s.
+  Reading: medium boards about twice as fast as the reference process; the two large boards
+  about level with the reference on one thread and 1.6-1.7x behind its thread pool on
+  refill + DRC. No optimisation round has started yet.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

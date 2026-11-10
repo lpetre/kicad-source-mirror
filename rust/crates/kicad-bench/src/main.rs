@@ -614,7 +614,9 @@ fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result
 
         // the affected refill gives the full refill's board (package LIVE-2, verification c)
         if session.save().map_err(|e| format!("save: {e}"))? != live_text {
-            return Err(format!("round {round}: affected refill differs from the full refill"));
+            return Err(format!(
+                "round {round}: affected refill differs from the full refill"
+            ));
         }
 
         // updateTeardrops leaves new, unfilled teardrops: time it, then go back to the
@@ -627,13 +629,93 @@ fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result
         if verbose && round == 0 {
             eprintln!(
                 "  edit: {} tracks re-added, quick_drc: {} markers, {} unconnected; \
-                 check_items: {} violations; affected refill: {} of {} zones refilled",
+                 check_items: {} violations; affected refill: {} of {} zones refilled {:?}",
                 batch.add.len(),
                 summary.markers,
                 summary.unconnected,
                 scoped.violations.len(),
                 refill.refilled.len(),
-                session.board.zones().count()
+                session.board.zones().count(),
+                refill.reasons
+            );
+        }
+    }
+
+    // Local edits (one net re-routed, the router's typical candidate): the net's tracks
+    // removed and re-added, then the affected refill against the full refill from the same
+    // state.
+    let mut by_net: std::collections::BTreeMap<i32, usize> = std::collections::BTreeMap::new();
+
+    for t in session
+        .tracks()
+        .iter()
+        .filter(|t| t.kind == "track" && t.net > 0)
+    {
+        *by_net.entry(t.net).or_default() += 1;
+    }
+
+    let nets: Vec<i32> = by_net
+        .iter()
+        .filter(|(_, n)| **n >= 2 && **n <= 40)
+        .map(|(net, _)| *net)
+        .take(EDIT_ROUNDS)
+        .collect();
+
+    for net in nets {
+        let mut batch = EditBatch::default();
+
+        for t in session
+            .tracks()
+            .iter()
+            .filter(|t| t.kind == "track" && t.net == net)
+        {
+            batch.remove.push(t.id);
+            batch.add.push(NewItem::Track(NewTrack {
+                start: t.start,
+                end: t.end,
+                width: Some(t.width),
+                layer: t.layer.clone(),
+                net: t.net,
+                ..NewTrack::default()
+            }));
+        }
+
+        let cp = session.checkpoint();
+        let mut txn = Transaction::begin();
+        txn.stage_batch(&batch);
+        txn.append = true;
+        let r = rec.stage("edit.local_commit", || session.commit(&txn));
+        let report = r.map_err(|e| format!("commit: {e}"))?;
+        let r = rec.stage("edit.local_check_items", || {
+            session.check_items(&report.edit.added, &CheckItemsOptions::default())
+        });
+        let scoped = r.map_err(|e| format!("check_items: {e}"))?;
+        let mut damage = report.damage.clone();
+        damage.merge(&scoped.damage);
+        let r = rec.stage("edit.local_refill_affected", || {
+            session.refill_zones_affected(&damage)
+        });
+        let refill = r.map_err(|e| format!("refill_affected: {e}"))?;
+        let live_text = session.save().map_err(|e| format!("save: {e}"))?;
+
+        session.restore(cp);
+        session.commit(&txn).map_err(|e| format!("commit: {e}"))?;
+        let r = rec.stage("edit.local_zone_refill", || session.refill_zones());
+        r.map_err(|e| format!("zone_refill: {e}"))?;
+
+        if session.save().map_err(|e| format!("save: {e}"))? != live_text {
+            return Err(format!(
+                "net {net}: affected refill differs from the full refill"
+            ));
+        }
+
+        if verbose {
+            eprintln!(
+                "  edit local: net {net}, {} tracks; affected refill: {} of {} zones {:?}",
+                batch.add.len(),
+                refill.refilled.len(),
+                session.board.zones().count(),
+                refill.reasons
             );
         }
     }

@@ -21,8 +21,8 @@
 
 use js_sys::{Float64Array, Int32Array, Object, Reflect};
 use kicad_session::SessionError;
-use kicad_session::board_api::commit::{CommitReport, Transaction as Txn};
 use kicad_session::board_api::check::CheckItemsOptions;
+use kicad_session::board_api::commit::{CommitReport, Transaction as Txn};
 use kicad_session::board_api::edit::{EditBatch, ItemChange, NewItem, RemoveRouting};
 use kicad_session::board_api::refill::ChangeDamage;
 use wasm_bindgen::prelude::*;
@@ -210,10 +210,8 @@ impl Board {
     pub fn checkpoint(&mut self) -> u32 {
         let token = self.next_checkpoint;
         self.next_checkpoint += 1;
-        self.checkpoints.insert(
-            token,
-            (self.session.checkpoint(), self.zone_damage.clone()),
-        );
+        self.checkpoints
+            .insert(token, (self.session.checkpoint(), self.zone_damage.clone()));
         token
     }
 

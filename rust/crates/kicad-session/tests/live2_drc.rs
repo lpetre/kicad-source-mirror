@@ -243,7 +243,9 @@ fn check_items_and_live_drc() {
             let (again, _) = drc_job(&mut s, false);
 
             if normalized(&live_report) != normalized(&again) {
-                failures.push(format!("{rel} batch {k}: a second DRC run on the live state differs"));
+                failures.push(format!(
+                    "{rel} batch {k}: a second DRC run on the live state differs"
+                ));
             }
 
             let mut fresh = load_text(&saved, rel).expect("reload");
@@ -257,8 +259,8 @@ fn check_items_and_live_drc() {
                 fresh_differ += 1;
 
                 if std::env::var("LIVE2_DEBUG").is_ok() {
-                    let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                        .join("../../target/live2");
+                    let dir =
+                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/live2");
                     let _ = std::fs::create_dir_all(&dir);
                     let _ = std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
                     let _ = std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
@@ -277,19 +279,13 @@ fn check_items_and_live_drc() {
                 }
             }
 
-            ids.retain(|h| {
-                kicad_pcb::ItemId::from_bits(*h).is_some_and(|id| s.board.contains(id))
-            });
+            ids.retain(|h| kicad_pcb::ItemId::from_bits(*h).is_some_and(|id| s.board.contains(id)));
 
             let scoped = s
                 .check_items(
                     &ids,
                     &CheckItemsOptions {
-                        severities: vec![
-                            "error".into(),
-                            "warning".into(),
-                            "exclusions".into(),
-                        ],
+                        severities: vec!["error".into(), "warning".into(), "exclusions".into()],
                         ..CheckItemsOptions::default()
                     },
                 )
@@ -328,9 +324,13 @@ fn check_items_and_live_drc() {
                     }
                 })
                 .filter(|v| {
-                    v.items.iter().any(|i| i.id.is_some_and(|h| wanted.contains(&h)))
+                    v.items
+                        .iter()
+                        .any(|i| i.id.is_some_and(|h| wanted.contains(&h)))
                         || (v.violation_type == "unconnected_items"
-                            && v.items.iter().any(|i| net_of(i.id).is_some_and(|n| nets.contains(&n))))
+                            && v.items
+                                .iter()
+                                .any(|i| net_of(i.id).is_some_and(|n| nets.contains(&n))))
                 })
                 .map(key)
                 .collect();
@@ -350,7 +350,6 @@ fn check_items_and_live_drc() {
                     extra.first()
                 ));
             }
-
         }
     }
 
@@ -381,4 +380,69 @@ fn other_providers(s: &mut Session) -> Vec<String> {
     .iter()
     .map(key)
     .collect()
+}
+
+/// Verification d, first half (runs only with `LIVE2_EXPORT=<dir>`): on the first
+/// `LIVE2_EXPORT_BOARDS` (default 20) boards, `LIVE2_DRC_BATCHES` random commits with the
+/// injected violations, `finalize()`, a full refill, then the board saved to `<dir>` with its
+/// project and rules. `tests/oracle/live2_cli_compare.sh <dir>` then runs the reference
+/// `kicad-cli pcb drc` and `kicad-rs pcb drc` on every saved board and compares the reports.
+#[test]
+fn export_edited_boards_for_the_cli_comparison() {
+    let Ok(dir) = std::env::var("LIVE2_EXPORT") else {
+        return;
+    };
+    let dir = std::path::PathBuf::from(dir);
+    std::fs::create_dir_all(&dir).expect("export dir");
+    let n = env_usize("LIVE2_DRC_BATCHES", 3);
+    let max_boards = env_usize("LIVE2_EXPORT_BOARDS", 20);
+    let mut exported = 0;
+
+    for (bi, rel) in boards().iter().enumerate() {
+        if exported >= max_boards {
+            break;
+        }
+
+        let path = board_path(rel);
+        let Ok(text) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let Some(mut s) = load_text(&text, rel) else {
+            continue;
+        };
+
+        let mut handles = uuid_handles(&s);
+        let mut generator = Gen::new(&s, 0x55dd_0001 + bi as u64);
+        let mut rng = Rng::new(0x66ee_0001 + bi as u64);
+
+        for _ in 0..n {
+            let mut ops = generator.batch();
+            ops.extend(injected(&s, &mut rng));
+            let Ok(report) = s.commit(&transaction(&ops, &handles)) else {
+                break;
+            };
+
+            for (u, &h) in report.edit.added_uuids.iter().zip(&report.edit.added) {
+                handles.insert(u.clone(), h);
+            }
+        }
+
+        s.finalize();
+        s.refill_zones().expect("refill");
+        let stem = path.file_stem().unwrap().to_string_lossy().into_owned();
+        let out = dir.join(format!("{bi:02}_{stem}"));
+        std::fs::create_dir_all(&out).expect("board dir");
+        std::fs::write(out.join(format!("{stem}.kicad_pcb")), s.save().expect("save"))
+            .expect("write");
+
+        for ext in ["kicad_pro", "kicad_dru"] {
+            if let Ok(t) = std::fs::read(path.with_extension(ext)) {
+                std::fs::write(out.join(format!("{stem}.{ext}")), t).expect("write");
+            }
+        }
+
+        exported += 1;
+    }
+
+    eprintln!("live2 export: {exported} boards in {}", dir.display());
 }

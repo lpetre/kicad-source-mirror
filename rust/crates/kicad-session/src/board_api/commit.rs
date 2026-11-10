@@ -282,9 +282,7 @@ impl Session {
                     .map_or(0, |n| n.0);
                 report.damage.record_net(from);
                 self.board.set_item_net(id, net, false);
-                report
-                    .damage
-                    .record_item(&BoardCtx::bare(&self.board), id);
+                report.damage.record_item(&BoardCtx::bare(&self.board), id);
                 report.net_changes.push(NetChange {
                     id: handle(id),
                     from,

@@ -185,6 +185,9 @@ pub struct RefillReport {
     pub reused: Vec<u64>,
     /// The number of board zones whose fill was kept.
     pub kept: u32,
+    /// Why zones were refilled: `[not filled, new or changed teardrop, net of a change, near
+    /// a change, re-created teardrop tied with a coupled zone, closure]`.
+    pub reasons: [u32; 6],
     /// Nets the refill's connectivity builds gave to items (`PropagateNets`): damage for
     /// the next affected refill.
     #[serde(default, skip_serializing_if = "ChangeDamage::is_empty")]
@@ -198,7 +201,11 @@ pub(crate) fn net_snapshot(board: &kicad_pcb::Board) -> Vec<(ItemId, i32)> {
         .tracks()
         .map(|(id, t)| (ItemId::from(id), t.as_track().base.net.0))
         .collect();
-    v.extend(board.zones().map(|(id, z)| (ItemId::from(id), z.base.net.0)));
+    v.extend(
+        board
+            .zones()
+            .map(|(id, z)| (ItemId::from(id), z.base.net.0)),
+    );
     v
 }
 
@@ -256,6 +263,7 @@ impl Session {
             refilled: outcome.refilled.into_iter().map(handle).collect(),
             reused: outcome.reused.into_iter().map(handle).collect(),
             kept: outcome.kept,
+            reasons: outcome.reasons,
             damage: net_damage(&self.board, &before),
         })
     }

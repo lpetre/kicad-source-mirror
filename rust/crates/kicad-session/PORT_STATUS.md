@@ -469,3 +469,59 @@ Known gaps:
   its default, new UUIDs).
 * A change staged for an item that an earlier entry of the same transaction removed fails
   mid-commit (the entries before it stay applied, connectivity brought up to date).
+
+## Package LIVE-2: item-scoped checks, affected-only zone refill, change damage
+
+New code without one C++ counterpart (the router loop's DRC answer and zone refill); every
+result is defined as, and tested equal to, the full computation of the C++ port.
+
+| What | Rust | State |
+|---|---|---|
+| Change damage of a commit (`BOARD_COMMIT::propagateDamage` inputs: removed / changed (before and after) / added / re-netted items' bounding box, layers, nets) | `board_api::refill::ChangeDamage`, `CommitReport::damage` | done |
+| Nets a DRC run's connectivity build changed (`DrcSummary::damage`), and a refill's / `finalize`'s (`RefillReport::damage`, `Session::finalize_tracked`) | `board_api::refill::net_damage` | done |
+| Affected-only refill (`FillAllZones` with `ZONE_FILLER::Fill( affected )`) | `Session::refill_zones_affected` -> `kicad_zone::affected::fill_affected_zones` | done |
+| Item-scoped check (subset of a full all-track-errors run naming the items) | `Session::check_items`, `board_api::check::CHECK_ITEMS_PROVIDERS(_DOC)` | done (filter of a provider run) |
+| Persistent DRC state (cache generator, r-trees and caches updated per change) | - | not built (see Known gaps) |
+| Bench | kicad-bench `edit` pipeline (`edit.commit`, `edit.check_items`, `edit.refill_affected`, `edit.local_*`), `wasm_bench.mjs --pipelines live2` | done |
+
+Tests: `tests/live2_refill.rs` (verification c), `tests/live2_drc.rs` (b, a1, a2 measured, d
+export), `tests/oracle/live2_cli_compare.sh` (d).
+
+Decisions:
+
+* `check_items` runs the providers in full with `aReportAllTrackErrors = true` (through
+  `quick_drc`, i.e. `run_tests_selected`) and keeps the entries that name a given item (by
+  handle), plus `unconnected_items` entries one of whose ends has the net of a given item. The
+  kept entries are therefore the full run's entries byte for byte, whichever item of a pair the
+  C++ loop visits first (table in `CHECK_ITEMS_PROVIDERS_DOC`). It costs a run of its providers;
+  the providers are not restricted to the items (that would need item filters inside the
+  provider loops, files of the performance loop).
+* `check_items` resolves no exclusions (like `quick_drc`); an excluded marker of the job shows
+  as `exclusion` there and as its own severity here.
+* The damage travels with the commit report instead of living in the `Session` (no session
+  field was added: `session.rs` is not this package's file). The wasm `Board` keeps the merged
+  damage itself, saves it with checkpoints and makes it full after any edit that does not
+  report one.
+
+Verification (numbers in the final report of the package): c) affected == full refill on the
+live1 corpus boards with zones (fills vertex for vertex, flags, islands, hashes, zone list,
+saved text), one or two commits per refill; b) check_items == the job's all-track-errors
+entries minus those of the other providers, filtered by the same rule, in order; a1) two DRC
+runs in a row on the live state are identical; a2) live vs fresh reload: measured only.
+
+Known gaps:
+
+* No persistent DRC state: every DRC call runs the cache generator (`ClearRatsnest` + `Build`
+  of the connectivity, copper / zone r-trees, clearance caches) as `DRC_ENGINE::RunTests`
+  does; only the compiled rules persist (`DrcEngine`, reused while `rules_valid()`; a changed
+  `Session::rules_text` is not noticed, set `drc_engine = None` to recompile). Keeping the
+  generator's results alive needs an entry point in `kicad_drc::run_flow` that takes prebuilt
+  caches (`run_provider` is private there; files of the performance loop): change request.
+* a2: the DRC report of the live (edited) board differs from that of the reloaded saved board
+  in order-dependent entries on most edited boards (6 of 18 commits on the default campaign
+  identical as sets only, the rest also in content: ratsnest edge ends under ties, nets the
+  propagation gives to netless items touching two nets). Cause: the writer saves the tracks
+  sorted (`PCB_TRACK::cmp_tracks`); the same as LIVE-1's `finalize()` gap.
+* The affected refill refills a zone in whole: a board-wide ground pour is refilled by any
+  edit inside it, so boards with one big pour gain nothing (pic_programmer, complex_hierarchy:
+  the pours dominate the fill time even when 3 of 168 zones are refilled).

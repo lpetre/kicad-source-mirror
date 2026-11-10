@@ -205,6 +205,49 @@ remove or re-add a tenth of the routing): commit 0.50 ms native / 0.99 ms wasm, 
 8.0 ms with a full rebuild per commit; checkpoint 0.9 / 1.2 ms; rollback 1.6 / 2.5 ms
 (`docs/PERF.md`, LIVE-1).
 
+## Scoped checks and affected-only refill (package LIVE-2)
+
+| Call | Does |
+|---|---|
+| `checkItems(handles, { providers?, severities? })` | the violations that involve one of the items: the subset of a run of the providers (default `annular_width`, `disallow`, `connectivity`, `clearance`, `edge_clearance`, `hole_to_hole_clearance`, `width`, `diameter`) with `aReportAllTrackErrors = true` whose entries name one of the handles; `unconnected_items` entries also when an end has the net of one; returns `DrcSummary` |
+| `refillZonesAffected()` | `FillAllZones` with `ZONE_FILLER::Fill` on the zones the changes since the last refill can affect; the board ends up as `refillZones()` leaves it, fills vertex for vertex, flags, teardrops and saved text; returns `RefillReport { full, refilled, reused, kept, reasons }` |
+| `zoneDamage()` | the changes the next `refillZonesAffected()` refills for (`ChangeDamage { full, areas: [{ bbox, layers }], nets }`) |
+| `commit(t).damage`, `quickDrc(..).damage` | what a commit changed (areas and nets of removed, changed, added and re-netted items), and the nets a DRC run's connectivity build gave to items |
+
+The Board object keeps the damage itself: every `commit` / `commitBulk`, `quickDrc`,
+`checkItems` and `finalize` adds what it changed, `checkpoint` / `rollback` save and restore it
+with the board, a refill resets it; any other edit (`applyEdits`, `addTrackSegment`, `removeItems`,
+`updateTeardrops`, `runDrc`, ...) and the load make the next affected refill a full one. The
+precondition of the identity is that the fills are those of a full refill of the board before
+the changes, which this bookkeeping guarantees (natively: start from `ChangeDamage::full()`, merge
+`CommitReport::damage` of every commit, pass it to `Session::refill_zones_affected`).
+
+Which zones are refilled (`kicad_zone::affected`): every zone sharing a layer with a changed
+area within the knockout reach (twice the worst clearance and thermal relief, minimum width,
+corner radii, 1 mm), every zone of a net whose connectivity cluster near a change meets the
+zone (islands), every unfilled zone and every new teardrop; closed under the
+`zoneKnockoutMayInteract` coupling of the filler (a teardrop is pulled in only by other
+teardrops: it never reads a regular zone's fill) and under the nets of island-tracking zones.
+Re-created teardrops (`FillAllZones` re-creates all of them) identical to their predecessor
+keep its fill. A single ground pour that covers the board is refilled by any edit inside it,
+so the gain is on boards with several zones and edits away from the big pours:
+
+```js
+const base = b.checkpoint();                 // after a refillZones()
+for (const c of candidates) {
+    b.rollback(base);                        // board, fills and damage back
+    const r = b.commitBulk(c.txn);
+    const v = b.checkItems(r.added);         // only the new routing's violations
+    b.refillZonesAffected();                 // only the zones the candidate touches
+    score(c, r.unconnected, v);
+}
+```
+
+The DRC itself keeps no state between runs beyond the compiled rules (`DRC_ENGINE`, reused
+while valid): each `quickDrc` / `checkItems` / `runDrc` runs the cache generator (connectivity
+build, r-trees) as `RunTests` does. A persistent cache generator is not built (see
+`crates/kicad-session/PORT_STATUS.md`, LIVE-2).
+
 ## Verification (package WASM-API-1)
 
 * Read API vs the reference `pcb-dump board --loader` (`crates/kicad-session/tests/board_api_read.rs`,

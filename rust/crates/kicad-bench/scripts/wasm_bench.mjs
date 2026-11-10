@@ -130,8 +130,51 @@ for (const board of boards) {
             stage('live.rollback', () => b.rollback(cp));
             b.free();
         },
+        // LIVE-2 (`--pipelines live2`): the local-edit rounds of the kicad-bench `edit`
+        // pipeline: one net's tracks removed and re-added (commitBulk), checkItems of the new
+        // tracks, refillZonesAffected; then the same commit from the same state with the full
+        // refillZones. The saved boards must be equal.
+        live2: () => {
+            const b = k.loadBoard(text, opts);
+            stage('live2.initial_refill', () => b.refillZones());
+            const rec = b.routeRecords();
+            const count = new Map();
+            for (let i = 0; i < rec.trackIds.length; i++) {
+                const net = rec.tracks[i * 7 + 6];
+                if (net > 0) count.set(net, (count.get(net) || 0) + 1);
+            }
+            const nets = [...count.entries()].filter(([, n]) => n >= 2 && n <= 40)
+                .map(([net]) => net).sort((x, y) => x - y).slice(0, 3);
+            for (const net of nets) {
+                const now = b.routeRecords();
+                const ids = [], recs = [];
+                for (let i = 0; i < now.trackIds.length; i++) {
+                    if (now.tracks[i * 7 + 6] !== net) continue;
+                    ids.push(now.trackIds[i]);
+                    recs.push(...now.tracks.subarray(i * 7, i * 7 + 7));
+                }
+                const make = () => {
+                    const t = new k.Transaction();
+                    t.append = true;
+                    t.remove(Float64Array.from(ids));
+                    t.addTracks(Int32Array.from(recs));
+                    return t;
+                };
+                const cp = b.checkpoint();
+                const r = stage('live2.commit', () => b.commitBulk(make()));
+                stage('live2.check_items', () => b.checkItems(r.added, {}));
+                stage('live2.refill_affected', () => b.refillZonesAffected());
+                const affected = b.save();
+                b.rollback(cp);
+                b.commitBulk(make());
+                stage('live2.zone_refill', () => b.refillZones());
+                if (b.save() !== affected) throw new Error(`net ${net}: affected refill differs`);
+                b.releaseCheckpoint(cp);
+            }
+            b.free();
+        },
     };
-    if (!only) delete pipelines.live;
+    if (!only) { delete pipelines.live; delete pipelines.live2; }
     else for (const n of Object.keys(pipelines)) if (!only.includes(n)) delete pipelines[n];
 
     for (let rep = 0; rep < warmup + reps; rep++) {
