@@ -5019,7 +5019,10 @@ mod split_collinear_tests {
                     * std::f64::consts::TAU
                     / n as f64;
                 let rad = rng.range(r / 3, r) as f64;
-                Vector2I::new(c.x + (rad * ang.cos()) as i32, c.y + (rad * ang.sin()) as i32)
+                Vector2I::new(
+                    c.x.wrapping_add((rad * ang.cos()) as i32),
+                    c.y.wrapping_add((rad * ang.sin()) as i32),
+                )
             })
             .collect()
     }
@@ -5085,7 +5088,11 @@ mod split_collinear_tests {
 
             let pts = match rng.range(0, 3) {
                 0 => star(rng, c, n.max(3), 600),
-                1 => add_spikes(rng, &star(rng, c, n.max(3), 600), rng.range(1, 4) as usize),
+                1 => {
+                    let base = star(rng, c, n.max(3), 600);
+                    let k = rng.range(1, 4) as usize;
+                    add_spikes(rng, &base, k)
+                }
                 2 => grid_poly(rng, n, 50, c),
                 _ => {
                     let base = star(rng, c, n.max(3), 600);
@@ -5101,9 +5108,9 @@ mod split_collinear_tests {
             // Holes, fractured below into bridged outlines.
             if case % 3 == 0 && n >= 3 {
                 let idx = set.outline_count() - 1;
-                let hole = star(rng, c, rng.range(3, 12) as usize, 120);
-                let mut h = chain(&hole);
-                h.reverse();
+                let hn = rng.range(3, 12) as usize;
+                let hole = star(rng, c, hn, 120);
+                let h = chain(&hole).reverse();
                 set.add_hole(&h, idx);
             }
         }
@@ -5183,7 +5190,8 @@ mod split_collinear_tests {
             let pts = if case % 2 == 0 {
                 grid_poly(&mut rng, n, 50, Vector2I::new(0, 0))
             } else {
-                add_spikes(&mut rng, &star(&mut rng, Vector2I::new(0, 0), n.max(3), 600), 3)
+                let base = star(&mut rng, Vector2I::new(0, 0), n.max(3), 600);
+                add_spikes(&mut rng, &base, 3)
             };
             let count = pts.len();
             let segs: Vec<Seg> =

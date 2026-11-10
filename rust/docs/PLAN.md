@@ -773,6 +773,13 @@ Progress log:
   instance (what the client's sessions do; the C++ settings manager reuses a loaded
   project) must be compared with the reference in one process; (3) timing with in-process
   timers. Fable review of GK-1 is running. Artifact republished (version 2).
+  11:37 UTC (heartbeat; next in about an hour): performance loop round 1 is in
+  its Optimise phase with three tasks - wasm profile opt-level 3 instead of "s" (done by
+  its agent: 15-30 % faster wasm stages for a 22 % larger file, pending review and judge),
+  the DRC job's marker UUID linear scan (hotspot 3), a fast path in
+  split_collinear_outlines (hotspot 5). Adapter: GK-1 done, its Fable review running.
+  LIVE-2 Fable review running. Disk 8.7 GB free (target 13 GB, of which 3.8 GB live
+  incremental caches), memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

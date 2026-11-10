@@ -25,7 +25,7 @@ mod live1_common;
 
 use kicad_session::board_api::check::{CHECK_ITEMS_PROVIDERS, CheckItemsOptions, QuickDrcOptions};
 use kicad_session::board_api::commit::Transaction;
-use kicad_session::board_api::edit::{NewItem, NewTrack, NewVia};
+use kicad_session::board_api::edit::{ItemChange, NewItem, NewTrack, NewVia};
 use kicad_session::board_api::polygons;
 use kicad_session::board_api::refill::{ChangeDamage, RefillReport};
 use kicad_session::{LoadInputs, Session};
@@ -1116,6 +1116,270 @@ fn review_campaign() {
 
     eprintln!(
         "live2 review campaign: {commits} commits, {refills} refills ({fulls} fell back to full), {refilled} of {total} zone fills recomputed, {not_fixed} states a full rebuild re-nets, {} failures",
+        failures.len()
+    );
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+// ------------------------------------------------------------------------------------------
+// A campaign of small, local edits (most zones are kept, so a missed dependency shows)
+// ------------------------------------------------------------------------------------------
+
+struct LocalItem {
+    id: u64,
+    via: bool,
+    start: [i32; 2],
+    end: [i32; 2],
+    net: i32,
+}
+
+struct LocalGen {
+    rng: Rng,
+    items: Vec<LocalItem>,
+    pads: Vec<([i32; 2], i32)>,
+    nets: Vec<i32>,
+    layers: Vec<String>,
+}
+
+impl LocalGen {
+    fn new(s: &Session, seed: u64) -> LocalGen {
+        LocalGen {
+            rng: Rng::new(seed),
+            items: Vec::new(),
+            pads: s.pads(false).into_iter().map(|p| (p.position, p.net)).collect(),
+            nets: s.net_details().into_iter().map(|n| n.code).collect(),
+            layers: s
+                .board_info()
+                .copper_layers
+                .into_iter()
+                .map(|l| kicad_session::board_api::layer_name(kicad_core::PcbLayerId::from(l.layer_id)))
+                .collect(),
+        }
+    }
+
+    fn sync(&mut self, s: &Session) {
+        self.items = s
+            .route_items()
+            .into_iter()
+            .map(|r| LocalItem {
+                id: r.id,
+                via: r.kind == "via",
+                start: r.start,
+                end: r.end,
+                net: r.net,
+            })
+            .collect();
+    }
+
+    fn anchor(&mut self) -> ([i32; 2], i32) {
+        if self.items.is_empty() || (self.rng.chance(40) && !self.pads.is_empty()) {
+            if self.pads.is_empty() {
+                return ([0, 0], 0);
+            }
+
+            self.pads[self.rng.below(self.pads.len())]
+        } else {
+            let i = self.rng.below(self.items.len());
+            let it = &self.items[i];
+            let p = if self.rng.chance(50) { it.start } else { it.end };
+            (p, it.net)
+        }
+    }
+
+    fn net_for(&mut self, own: i32) -> i32 {
+        match self.rng.below(10) {
+            0..=6 => own,
+            7..=8 if !self.nets.is_empty() => self.nets[self.rng.below(self.nets.len())],
+            _ => 0,
+        }
+    }
+
+    /// One to three small edits around one or two anchors.
+    fn batch(&mut self, s: &Session) -> Transaction {
+        self.sync(s);
+        let mut txn = Transaction::begin();
+        let mut used: Vec<u64> = Vec::new();
+
+        for _ in 0..1 + self.rng.below(3) {
+            match self.rng.below(20) {
+                0..=8 => {
+                    let (a, net) = self.anchor();
+                    let b = [
+                        a[0] + self.rng.offset(1_500_000),
+                        a[1] + self.rng.offset(1_500_000),
+                    ];
+                    let net = self.net_for(net);
+                    let layer = self.layers[self.rng.below(self.layers.len())].clone();
+                    txn.stage_add(NewItem::Track(NewTrack {
+                        start: a,
+                        end: b,
+                        width: Some(200_000),
+                        layer,
+                        net,
+                        ..NewTrack::default()
+                    }));
+                }
+                9..=12 => {
+                    let (a, net) = self.anchor();
+                    let net = self.net_for(net);
+                    let free = self.rng.chance(40);
+                    txn.stage_add(NewItem::Via(NewVia {
+                        at: a,
+                        diameter: Some(600_000),
+                        drill: Some(300_000),
+                        net,
+                        free,
+                        ..NewVia::default()
+                    }));
+                }
+                13..=16 => {
+                    if self.items.is_empty() {
+                        continue;
+                    }
+
+                    let i = self.rng.below(self.items.len());
+                    let id = self.items[i].id;
+
+                    if !used.contains(&id) {
+                        used.push(id);
+                        txn.stage_remove(id);
+                    }
+                }
+                17..=18 => {
+                    let vias: Vec<usize> = (0..self.items.len()).filter(|&i| self.items[i].via).collect();
+
+                    if vias.is_empty() {
+                        continue;
+                    }
+
+                    let i = vias[self.rng.below(vias.len())];
+                    let id = self.items[i].id;
+
+                    if !used.contains(&id) {
+                        used.push(id);
+                        let p = self.items[i].start;
+                        txn.stage_change(ItemChange {
+                            id,
+                            start: Some([
+                                p[0] + self.rng.offset(500_000),
+                                p[1] + self.rng.offset(500_000),
+                            ]),
+                            ..ItemChange::default()
+                        });
+                    }
+                }
+                _ => {
+                    if self.items.is_empty() || self.nets.is_empty() {
+                        continue;
+                    }
+
+                    let i = self.rng.below(self.items.len());
+                    let id = self.items[i].id;
+
+                    if !used.contains(&id) {
+                        used.push(id);
+                        let net = self.nets[self.rng.below(self.nets.len())];
+                        txn.stage_change(ItemChange {
+                            id,
+                            net: Some(net),
+                            ..ItemChange::default()
+                        });
+                    }
+                }
+            }
+        }
+
+        txn
+    }
+}
+
+/// `LIVE2R_LOCAL_LIST`: comma separated board paths. Small edits, one or two commits per
+/// refill, the damage carried as the wasm `Board` does (commit damage merged, the reference
+/// refill's net changes taken as full damage).
+#[test]
+fn review_local_campaign() {
+    let Ok(list) = std::env::var("LIVE2R_LOCAL_LIST") else {
+        return;
+    };
+    let n = env_usize("LIVE2R_BATCHES", 100);
+    let seed = env_usize("LIVE2R_SEED", 0x10ca_1e55) as u64;
+    let mut failures = Vec::new();
+    let (mut commits, mut refills, mut refilled, mut total, mut renetted) =
+        (0usize, 0usize, 0usize, 0usize, 0usize);
+
+    for (bi, rel) in list.split(',').map(str::trim).enumerate() {
+        let t0 = std::time::Instant::now();
+        let Some((mut s, how)) = load_full(rel) else {
+            failures.push(format!("{rel}: load failed"));
+            continue;
+        };
+
+        s.refill_zones().expect("full refill");
+        let zones = s.board.zones().count();
+        let mut generator = LocalGen::new(&s, seed + 7919 * bi as u64);
+        let (mut b_commits, mut b_refills, mut b_refilled, mut b_total) = (0, 0, 0usize, 0usize);
+        let mut carry_full = false;
+
+        'batches: for k in 0..n {
+            let mut damage = if carry_full {
+                ChangeDamage::full()
+            } else {
+                ChangeDamage::default()
+            };
+
+            for round in 0..1 + (k % 2) {
+                let txn = generator.batch(&s);
+
+                match s.commit(&txn) {
+                    Ok(r) => {
+                        damage.merge(&r.damage);
+                        b_commits += 1;
+                    }
+                    Err(e) => {
+                        failures.push(format!("{rel} batch {k}.{round}: commit failed: {e}"));
+                        break 'batches;
+                    }
+                }
+            }
+
+            let cp = s.checkpoint();
+            let d = s.finalize_tracked();
+            s.restore(cp);
+            let not_fixed = !d.is_empty();
+            renetted += usize::from(not_fixed);
+
+            let out = compare(&mut s, &damage);
+            carry_full = out.full_refill_renetted;
+            b_refills += 1;
+            b_refilled += out.report.refilled.len();
+            b_total += s.board.zones().count();
+
+            if !out.equal || !out.text_equal {
+                failures.push(format!(
+                    "{rel} batch {k} (a full rebuild re-nets items: {not_fixed}): {}",
+                    out.describe()
+                ));
+
+                if std::env::var("LIVE2R_STOP").is_ok() {
+                    break;
+                }
+
+                // the session is full-refilled: go on from there
+            }
+        }
+
+        eprintln!(
+            "live2 review local: {rel} [{how}] {zones} zones: {b_commits} commits, {b_refills} refills, {b_refilled} of {b_total} zone fills recomputed, {:.0} s",
+            t0.elapsed().as_secs_f64()
+        );
+        commits += b_commits;
+        refills += b_refills;
+        refilled += b_refilled;
+        total += b_total;
+    }
+
+    eprintln!(
+        "live2 review local campaign: {commits} commits, {refills} refills, {refilled} of {total} zone fills recomputed, {renetted} states a full rebuild re-nets, {} failures",
         failures.len()
     );
     assert!(failures.is_empty(), "{}", failures.join("\n"));
