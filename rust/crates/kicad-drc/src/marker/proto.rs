@@ -768,7 +768,8 @@ fn parse_marker(value: &Value, into: &mut DrcMarkerMsg) -> JsonResult<()> {
                         into.items.push(parse_kiid(element)?);
                     }
                 }
-                _ => return err("items: expected a list"),
+                // The 3.21 converter accepts a single element without the list.
+                _ => into.items.push(parse_kiid(v)?),
             },
             "layer" => into.layer = json_enum(EnumKind::BoardLayer, v)?,
             "violating_rule" => into.violating_rule = json_string(v)?,

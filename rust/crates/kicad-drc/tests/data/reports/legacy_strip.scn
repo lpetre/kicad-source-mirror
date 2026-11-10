@@ -1,0 +1,26 @@
+# PCB_MARKER::FromLegacyString and StripMarkup on their own.
+legacy	annular_width|113596405|160181800|1503dbdb-28b2-4a5a-8b2d-94a0f105210d|00000000-0000-0000-0000-000000000000
+legacy	silk_over_copper|74282330|76842330|c052616e-f433-48e4-989c-8abaf3b77f5f|00000000-0000-0000-0000-000000000000
+legacy	clearance| 12x|-3|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	clearance|99999999999|-99999999999999999999|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	clearance|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa|extra|fields
+legacy	clearance\|1|2|3|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	clearance|1\|2|3|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	unconnected_items|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa|x
+legacy	generic_warning|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|F.Silkscreen
+legacy	generic_error|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|User.12
+legacy	starved_thermal|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	starved_thermal|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa|B.Cu|more
+legacy	unresolved_variable|1|2||
+legacy	|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	tuning_profile_track_geometries|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	via_stitch_overlap|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa
+legacy	
+strip	plain text
+strip	see [docs](https://kicad.org/a) now
+strip	[a](file:///foo (1).pdf)!
+strip	[a]b [c](d
+strip	[](x)[y]()
+strip	[a[b](c)
+strip	ü[ä](ö)ß
+strip	[x](javascript:alert(1)) [y](C:\\a.exe)

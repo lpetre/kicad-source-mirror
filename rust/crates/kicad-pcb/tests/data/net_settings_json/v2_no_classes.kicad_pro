@@ -1,0 +1,3 @@
+{ "net_settings": { "meta": { "version": 2 }, "classes": { "name": "x" },
+    "netclass_patterns": [ { "pattern": "kept", "netclass": "Q" } ],
+    "netclass_assignments": { "/n": "Q" } } }

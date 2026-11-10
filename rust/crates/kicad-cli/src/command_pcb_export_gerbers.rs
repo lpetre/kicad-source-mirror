@@ -39,7 +39,8 @@ pub const ARG_COMMON_LAYERS: &str = "common-layers";
 /// `ARG_SKETCH_PADS_ON_FAB_LAYERS`
 pub const ARG_SKETCH_PADS_ON_FAB_LAYERS: &str = "sketch-pads-on-fab-layers";
 /// `ARG_SKETCH_PADS_ON_FAB_LAYERS_DESC`
-pub const ARG_SKETCH_PADS_ON_FAB_LAYERS_DESC: &str = "Draw pad outlines on front and back fab layers";
+pub const ARG_SKETCH_PADS_ON_FAB_LAYERS_DESC: &str =
+    "Draw pad outlines on front and back fab layers";
 /// `ARG_SKETCH_PAD_NUMBERS`
 pub const ARG_SKETCH_PAD_NUMBERS: &str = "sketch-pad-numbers";
 /// `ARG_SKETCH_PAD_NUMBERS_DESC`
@@ -103,19 +104,31 @@ pub fn common_layers_arg() -> Arg {
 
 /// The fab-layer flags shared by the Gerber and SVG commands.
 pub fn fab_layer_flags(cmd: Command) -> Command {
-    cmd.arg(flag2("sp", ARG_SKETCH_PADS_ON_FAB_LAYERS, ARG_SKETCH_PADS_ON_FAB_LAYERS_DESC))
-        .arg(flag2("spn", ARG_SKETCH_PAD_NUMBERS, ARG_SKETCH_PAD_NUMBERS_DESC))
-        .arg(flag2("hdnp", ARG_HIDE_DNP_FPS_ON_FAB_LAYERS, ARG_HIDE_DNP_FPS_ON_FAB_LAYERS_DESC))
-        .arg(flag2(
-            "sdnp",
-            ARG_SKETCH_DNP_FPS_ON_FAB_LAYERS,
-            ARG_SKETCH_DNP_FPS_ON_FAB_LAYERS_DESC,
-        ))
-        .arg(flag2(
-            "cdnp",
-            ARG_CROSSOUT_DNP_FPS_ON_FAB_LAYERS,
-            ARG_CROSSOUT_DNP_FPS_ON_FAB_LAYERS_DESC,
-        ))
+    cmd.arg(flag2(
+        "sp",
+        ARG_SKETCH_PADS_ON_FAB_LAYERS,
+        ARG_SKETCH_PADS_ON_FAB_LAYERS_DESC,
+    ))
+    .arg(flag2(
+        "spn",
+        ARG_SKETCH_PAD_NUMBERS,
+        ARG_SKETCH_PAD_NUMBERS_DESC,
+    ))
+    .arg(flag2(
+        "hdnp",
+        ARG_HIDE_DNP_FPS_ON_FAB_LAYERS,
+        ARG_HIDE_DNP_FPS_ON_FAB_LAYERS_DESC,
+    ))
+    .arg(flag2(
+        "sdnp",
+        ARG_SKETCH_DNP_FPS_ON_FAB_LAYERS,
+        ARG_SKETCH_DNP_FPS_ON_FAB_LAYERS_DESC,
+    ))
+    .arg(flag2(
+        "cdnp",
+        ARG_CROSSOUT_DNP_FPS_ON_FAB_LAYERS,
+        ARG_CROSSOUT_DNP_FPS_ON_FAB_LAYERS_DESC,
+    ))
 }
 
 /// `PCB_EXPORT_GERBER_COMMAND::PCB_EXPORT_GERBER_COMMAND( "gerbers", IO_TYPE::DIRECTORY )` +
@@ -132,16 +145,30 @@ pub fn command() -> Command {
         .arg(common_layers_arg())
         .arg(drawing_sheet_arg())
         .arg(define_arg())
-        .arg(flag2("erd", ARG_EXCLUDE_REFDES, "Exclude the reference designator text"))
+        .arg(flag2(
+            "erd",
+            ARG_EXCLUDE_REFDES,
+            "Exclude the reference designator text",
+        ))
         .arg(flag2("ev", ARG_EXCLUDE_VALUE, "Exclude the value text"))
-        .arg(flag2("ibt", ARG_INCLUDE_BORDER_TITLE, "Include the border and title block"));
+        .arg(flag2(
+            "ibt",
+            ARG_INCLUDE_BORDER_TITLE,
+            "Include the border and title block",
+        ));
 
     fab_layer_flags(cmd)
         .arg(flag(ARG_NO_X2, "Do not use the extended X2 format"))
         .arg(flag(ARG_NO_NETLIST, "Do not generate netlist attributes"))
-        .arg(flag(ARG_SUBTRACT_SOLDERMASK, "Subtract soldermask from silkscreen"))
+        .arg(flag(
+            ARG_SUBTRACT_SOLDERMASK,
+            "Subtract soldermask from silkscreen",
+        ))
         .arg(flag(ARG_DISABLE_APERTURE_MACROS, "Disable aperture macros"))
-        .arg(flag(ARG_USE_DRILL_FILE_ORIGIN, "Use drill/place file origin"))
+        .arg(flag(
+            ARG_USE_DRILL_FILE_ORIGIN,
+            "Use drill/place file origin",
+        ))
         .arg(
             int_opt(
                 ARG_PRECISION,
@@ -150,7 +177,10 @@ pub fn command() -> Command {
             )
             .value_name("PRECISION"),
         )
-        .arg(flag(ARG_NO_PROTEL_EXTENSION, "Use KiCad Gerber file extension"))
+        .arg(flag(
+            ARG_NO_PROTEL_EXTENSION,
+            "Use KiCad Gerber file extension",
+        ))
         .arg(flag(ARG_CHECK_ZONES, ARG_CHECK_ZONES_DESC))
         .arg(variants_arg())
         .arg(flag(

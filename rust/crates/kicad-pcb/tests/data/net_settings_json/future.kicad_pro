@@ -1,0 +1,1 @@
+{ "net_settings": { "meta": { "version": 9 }, "classes": [ { "name": "F" } ], "netclass_assignments": { "/a": "F" } } }

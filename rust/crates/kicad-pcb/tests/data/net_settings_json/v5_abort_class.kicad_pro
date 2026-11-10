@@ -1,0 +1,5 @@
+{ "net_settings": { "meta": { "version": 5 },
+    "classes": [ { "name": "A", "clearance": 0.1 }, { "name": 7 }, { "name": "Default", "clearance": 0.5 } ],
+    "net_colors": { "/a": "rgb(1, 1, 1)", "/b": 7, "/c": "rgb(2, 2, 2)" },
+    "net_chain_classes": { "a": "X", "b": 3, "c": "Y" },
+    "netclass_assignments": { "/a": [ "P" ], "/b": [ 1, "Q" ], "/c": [ "R" ] } } }

@@ -1,0 +1,2 @@
+// a comment
+{ "net_settings": { "classes": [ { "name": "NoMeta", "clearance": 0.4, "nets": [ "/n" ] } ], "netclass_patterns": [ { "pattern": "/p", "netclass": "NoMeta" } ] } }

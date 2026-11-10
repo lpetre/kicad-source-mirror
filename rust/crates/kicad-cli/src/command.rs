@@ -50,7 +50,10 @@ pub enum IoType {
 
 /// An argparse `.flag()` argument (`--name`, default false).
 pub fn flag(long: &'static str, help: &'static str) -> Arg {
-    Arg::new(long).long(long).help(help).action(ArgAction::SetTrue)
+    Arg::new(long)
+        .long(long)
+        .help(help)
+        .action(ArgAction::SetTrue)
 }
 
 /// An argparse `.flag()` argument with an extra long spelling (argparse's second name, e.g.
@@ -89,7 +92,10 @@ pub fn input_arg(io: IoType) -> Arg {
         IoType::FileOrDirectory => ("Input file or directory", "INPUT_FILE_OR_DIR"),
     };
 
-    Arg::new(ARG_INPUT).help(help).value_name(metavar).required(true)
+    Arg::new(ARG_INPUT)
+        .help(help)
+        .value_name(metavar)
+        .required(true)
 }
 
 /// `COMMAND::addCommonArgs` output half: `-o, --output`, default `""`.
@@ -100,7 +106,9 @@ pub fn output_arg(io: IoType) -> Arg {
         IoType::FileOrDirectory => ("Output file or directory", "OUTPUT_FILE_OR_DIR"),
     };
 
-    string_opt(ARG_OUTPUT, "", help).short('o').value_name(metavar)
+    string_opt(ARG_OUTPUT, "", help)
+        .short('o')
+        .value_name(metavar)
 }
 
 /// `COMMAND::addDrawingSheetArg`.

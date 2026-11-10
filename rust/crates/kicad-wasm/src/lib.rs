@@ -57,9 +57,8 @@ fn from_js<T: for<'de> Deserialize<'de> + Default>(value: JsValue) -> Result<T, 
         return Ok(T::default());
     }
 
-    serde_wasm_bindgen::from_value(value).map_err(|e| {
-        session_error(SessionError::invalid_argument(e.to_string()))
-    })
+    serde_wasm_bindgen::from_value(value)
+        .map_err(|e| session_error(SessionError::invalid_argument(e.to_string())))
 }
 
 /// A JavaScript `Error` for a session error: `name` = `<kind>Error`, plus `subsystem` for
@@ -69,7 +68,11 @@ fn session_error(err: SessionError) -> JsValue {
     js.set_name(&format!("{}Error", err.kind()));
 
     if let SessionError::NotYetPorted { subsystem } = &err {
-        let _ = Reflect::set(&js, &JsValue::from_str("subsystem"), &JsValue::from_str(subsystem));
+        let _ = Reflect::set(
+            &js,
+            &JsValue::from_str("subsystem"),
+            &JsValue::from_str(subsystem),
+        );
     }
 
     js.into()
@@ -353,8 +356,8 @@ impl Board {
         }
 
         let mut reporter = Reporter::new();
-        let outcome =
-            run_export_gerbers(&mut self.session, &mut job, &mut reporter).map_err(session_error)?;
+        let outcome = run_export_gerbers(&mut self.session, &mut job, &mut reporter)
+            .map_err(session_error)?;
         job_result(outcome, reporter)
     }
 
@@ -399,7 +402,10 @@ impl Board {
         job.plot.plot_drawing_sheet = false;
         job.plot.sketch_dnp_fps_on_fab_layers = false;
         job.plot.crossout_dnp_fps_on_fab_layers = false;
-        job.plot.arg_layers = Some(o.layers.unwrap_or_else(|| "F.Cu,B.Cu,Edge.Cuts".to_string()));
+        job.plot.arg_layers = Some(
+            o.layers
+                .unwrap_or_else(|| "F.Cu,B.Cu,Edge.Cuts".to_string()),
+        );
         job.plot.arg_common_layers = Some(String::new());
         job.fit_page_to_board = o.fit_page_to_board;
         job.plot.black_and_white = o.black_and_white;

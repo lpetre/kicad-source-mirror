@@ -435,6 +435,7 @@ impl BoardStackup {
     /// `BOARD_STACKUP::BuildDefaultStackupList( aSettings, aActiveCopperLayersCount )`:
     /// appends (the C++ does not clear `m_list` first) a default stackup built from the
     /// settings, or a full 32 copper layer stackup when `settings` is `None`.
+    #[allow(clippy::explicit_counter_loop)] // keeps the C++ statement structure
     pub fn build_default_stackup_list(
         &mut self,
         settings: Option<&BoardDesignSettings>,

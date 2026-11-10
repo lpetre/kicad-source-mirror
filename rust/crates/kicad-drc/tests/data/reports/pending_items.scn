@@ -1,0 +1,5 @@
+# Items whose descriptions are still pending in the Rust board model (footprint, via, shape).
+board	qa/data/pcbnew/issue8003.kicad_pcb
+marker	courtyards_overlap	1	2	0	b68b261f-f4c9-4eef-9ff6-988c61cc3af7,f14ef839-68d9-418e-ad16-64736560725d	-	-	undefined	0	
+marker	text_on_edge_cuts	1	2	25	08c0673b-d188-4c34-917e-8882ac6e1e61	-	-	undefined	0	
+report	mm	52

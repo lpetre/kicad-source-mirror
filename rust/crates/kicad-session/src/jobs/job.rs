@@ -25,7 +25,9 @@
 use std::collections::BTreeMap;
 
 use kicad_core::TitleBlock;
-use kicad_core::text_vars::{ResolutionContext, expand_text_vars, normalize_file_path_for_text_vars};
+use kicad_core::text_vars::{
+    ResolutionContext, expand_text_vars, normalize_file_path_for_text_vars,
+};
 use kicad_core::title_block::TitleBlockClock;
 
 /// Port of `JOB_OUTPUT`.
@@ -165,7 +167,11 @@ impl Job {
 
         // ExpandPathVariables( aPath, aProject, &textResolver )
         let normalized = normalize_file_path_for_text_vars(path);
-        let out_path = expand_text_vars(&normalized, Some(&text_resolver), ResolutionContext::Internal);
+        let out_path = expand_text_vars(
+            &normalized,
+            Some(&text_resolver),
+            ResolutionContext::Internal,
+        );
 
         if !self.temp_output_directory.is_empty() {
             if path_is_directory {
@@ -206,7 +212,9 @@ impl Job {
 fn is_absolute(path: &str) -> bool {
     path.starts_with('/')
         || path.starts_with('\\')
-        || (path.len() >= 2 && path.as_bytes()[1] == b':' && path.as_bytes()[0].is_ascii_alphabetic())
+        || (path.len() >= 2
+            && path.as_bytes()[1] == b':'
+            && path.as_bytes()[0].is_ascii_alphabetic())
 }
 
 /// `wxFileName fn; fn.AssignDir( aDir ); fn.GetFullPath()`: the directory with a trailing
@@ -258,6 +266,9 @@ mod tests {
         let mut vars = BTreeMap::new();
         vars.insert("STAGE".to_string(), "proto".to_string());
         job.set_configured_output_path("out-${REVISION}-${STAGE}-${UNKNOWN}.rpt");
-        assert_eq!(job.full_output_path(Some(&vars)), "out-B-proto-${UNKNOWN}.rpt");
+        assert_eq!(
+            job.full_output_path(Some(&vars)),
+            "out-B-proto-${UNKNOWN}.rpt"
+        );
     }
 }

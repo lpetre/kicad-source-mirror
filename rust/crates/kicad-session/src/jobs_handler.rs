@@ -558,7 +558,10 @@ mod tests {
             drill_default_report_path("out", "/x/board.kicad_pcb"),
             "out/board-drill.rpt"
         );
-        assert_eq!(drill_default_report_path("", "board.kicad_pcb"), "board-drill.rpt");
+        assert_eq!(
+            drill_default_report_path("", "board.kicad_pcb"),
+            "board-drill.rpt"
+        );
     }
 
     #[test]

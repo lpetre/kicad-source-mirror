@@ -137,8 +137,10 @@ pub fn token_stats(text: &str, source: &str) -> Result<TokenStats, String> {
         }
     }
 
-    let mut top: Vec<(String, u64)> =
-        keywords.into_iter().map(|(k, n)| (k.to_string(), n)).collect();
+    let mut top: Vec<(String, u64)> = keywords
+        .into_iter()
+        .map(|(k, n)| (k.to_string(), n))
+        .collect();
     top.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
     top.truncate(10);
     stats.top_keywords = top;
@@ -190,7 +192,12 @@ pub fn stroke_text(text: &str, size_mm: f64) -> StrokeTextResult {
                 path.push(' ');
             }
 
-            path.push_str(&format!("{} {} {}", if i == 0 { 'M' } else { 'L' }, q.x, q.y));
+            path.push_str(&format!(
+                "{} {} {}",
+                if i == 0 { 'M' } else { 'L' },
+                q.x,
+                q.y
+            ));
         }
 
         segments += polyline.len().saturating_sub(1) as u64;
@@ -243,7 +250,11 @@ fn from_poly_set(set: &ShapePolySet) -> Vec<JsPolygon> {
 /// `polygonBoolean(a, b, op)`: `SHAPE_POLY_SET::BooleanAdd / BooleanSubtract /
 /// BooleanIntersection / BooleanXor` (vendored Clipper2) of two polygon lists. `op` is
 /// `"union"`, `"difference"`, `"intersection"` or `"xor"`.
-pub fn polygon_boolean(a: &[JsPolygon], b: &[JsPolygon], op: &str) -> Result<Vec<JsPolygon>, String> {
+pub fn polygon_boolean(
+    a: &[JsPolygon],
+    b: &[JsPolygon],
+    op: &str,
+) -> Result<Vec<JsPolygon>, String> {
     let mut sa = to_poly_set(a);
     let sb = to_poly_set(b);
 
@@ -320,12 +331,37 @@ pub fn plot_demo_gerber(build_version: &str, date: &str) -> String {
     let pt = |x: i32, y: i32| Vector2I::new(x, y);
     let deg = |d: f64| EdaAngle::new(d, DEGREES_T);
 
-    plotter.thick_segment(pt(10_000_000, -10_000_000), pt(30_000_000, -10_000_000), 250_000, None);
-    plotter.thick_segment(pt(30_000_000, -10_000_000), pt(30_000_000, -20_000_000), 250_000, None);
+    plotter.thick_segment(
+        pt(10_000_000, -10_000_000),
+        pt(30_000_000, -10_000_000),
+        250_000,
+        None,
+    );
+    plotter.thick_segment(
+        pt(30_000_000, -10_000_000),
+        pt(30_000_000, -20_000_000),
+        250_000,
+        None,
+    );
     plotter.flash_pad_circle(pt(10_000_000, -10_000_000), 1_600_000, None);
-    plotter.flash_pad_rect(pt(30_000_000, -20_000_000), pt(1_500_000, 1_000_000), deg(0.0), None);
-    plotter.flash_pad_oval(pt(20_000_000, -25_000_000), pt(1_200_000, 2_000_000), deg(90.0), None);
-    plotter.circle(pt(20_000_000, -15_000_000), 3_000_000, FillT::NoFill, 150_000);
+    plotter.flash_pad_rect(
+        pt(30_000_000, -20_000_000),
+        pt(1_500_000, 1_000_000),
+        deg(0.0),
+        None,
+    );
+    plotter.flash_pad_oval(
+        pt(20_000_000, -25_000_000),
+        pt(1_200_000, 2_000_000),
+        deg(90.0),
+        None,
+    );
+    plotter.circle(
+        pt(20_000_000, -15_000_000),
+        3_000_000,
+        FillT::NoFill,
+        150_000,
+    );
     plotter.thick_arc(
         Vector2D::new(20_000_000.0, -15_000_000.0),
         deg(0.0),

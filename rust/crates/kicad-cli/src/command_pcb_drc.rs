@@ -48,11 +48,21 @@ pub fn command() -> Command {
         .arg(output_arg(IoType::File))
         .arg(define_arg())
         .arg(
-            string_opt(ARG_FORMAT, "report", "Output file format, options: json, report")
-                .value_name("FORMAT"),
+            string_opt(
+                ARG_FORMAT,
+                "report",
+                "Output file format, options: json, report",
+            )
+            .value_name("FORMAT"),
         )
-        .arg(flag(ARG_ALL_TRACK_ERRORS, "Report all errors for each track"))
-        .arg(flag(ARG_PARITY, "Test for parity between PCB and schematic"))
+        .arg(flag(
+            ARG_ALL_TRACK_ERRORS,
+            "Report all errors for each track",
+        ))
+        .arg(flag(
+            ARG_PARITY,
+            "Test for parity between PCB and schematic",
+        ))
         .arg(
             string_opt(ARG_UNITS, "mm", "Report units; valid options: in, mm, mils")
                 .value_name("UNITS"),

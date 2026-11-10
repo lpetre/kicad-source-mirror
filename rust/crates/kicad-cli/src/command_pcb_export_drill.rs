@@ -55,8 +55,12 @@ pub fn command() -> Command {
                 .value_name("FORMAT"),
         )
         .arg(
-            string_opt(ARG_DRILL_ORIGIN, "absolute", "Valid options are: absolute, plot")
-                .value_name("DRILL_ORIGIN"),
+            string_opt(
+                ARG_DRILL_ORIGIN,
+                "absolute",
+                "Valid options are: absolute, plot",
+            )
+            .value_name("DRILL_ORIGIN"),
         )
         .arg(
             string_opt(
@@ -75,9 +79,13 @@ pub fn command() -> Command {
             .value_name("OVAL_FORMAT"),
         )
         .arg(
-            string_opt(ARG_EXCELLON_UNITS, "mm", "Output units, valid options: in, mm")
-                .short('u')
-                .value_name("UNITS"),
+            string_opt(
+                ARG_EXCELLON_UNITS,
+                "mm",
+                "Output units, valid options: in, mm",
+            )
+            .short('u')
+            .value_name("UNITS"),
         )
         .arg(flag(ARG_EXCELLON_MIRRORY, "Mirror Y axis"))
         .arg(flag(ARG_EXCELLON_MINIMALHEAD, "Minimal header"))
@@ -85,17 +93,31 @@ pub fn command() -> Command {
             ARG_EXCELLON_SEPARATE_TH,
             "Generate independent files for NPTH and PTH holes",
         ))
-        .arg(flag(ARG_GENERATE_MAP, "Generate map / summary of drill hits"))
+        .arg(flag(
+            ARG_GENERATE_MAP,
+            "Generate map / summary of drill hits",
+        ))
         .arg(flag(ARG_GENERATE_REPORT, "Generate report of drill hits"))
         .arg(string_opt(ARG_REPORT_PATH, "", "Report output file path").value_name("REPORT_FILE"))
-        .arg(flag(ARG_GENERATE_TENTING, "Generate a file specifically for tenting"))
+        .arg(flag(
+            ARG_GENERATE_TENTING,
+            "Generate a file specifically for tenting",
+        ))
         .arg(
-            string_opt(ARG_MAP_FORMAT, "pdf", "Valid options: pdf, gerberx2, ps, dxf, svg")
-                .value_name("MAP_FORMAT"),
+            string_opt(
+                ARG_MAP_FORMAT,
+                "pdf",
+                "Valid options: pdf, gerberx2, ps, dxf, svg",
+            )
+            .value_name("MAP_FORMAT"),
         )
         .arg(
-            int_opt(ARG_GERBER_PRECISION, "6", "Precision of Gerber coordinates (5 or 6)")
-                .value_name("VAR"),
+            int_opt(
+                ARG_GERBER_PRECISION,
+                "6",
+                "Precision of Gerber coordinates (5 or 6)",
+            )
+            .value_name("VAR"),
         )
 }
 

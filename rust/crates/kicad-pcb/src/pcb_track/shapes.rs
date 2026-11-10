@@ -22,8 +22,10 @@
 use std::sync::Arc;
 
 use kicad_core::PcbLayerId;
+use kicad_core::layer_ids::is_solder_mask_layer;
+use kicad_geom::convert_basic_shapes_to_polygon::transform_circle_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{ShapePolySet, ShapeSegment};
+use kicad_geom::{Seg, ShapeCircle, ShapePolySet, ShapeSegment};
 
 use crate::ctx::BoardCtx;
 use crate::drc_api::DrcConstraintT;
@@ -32,7 +34,10 @@ use crate::pcb_track::PcbVia;
 use crate::traits::Flashing;
 
 impl PcbVia {
-    /// `PCB_VIA::GetEffectiveShape`.
+    /// Port of `PCB_VIA::GetEffectiveShape( aLayer, aFlash, aUsage )`: a `SHAPE_CIRCLE` of the
+    /// pad (the largest non-ghost pad for `UNDEFINED_LAYER`, plus twice the mask expansion on
+    /// mask layers) where the via is flashed, of the drill where it is not; widened to the
+    /// largest hole for physical / silk clearance on backdrilled or post-machined layers.
     pub fn effective_shape(
         &self,
         ctx: &BoardCtx<'_>,
@@ -40,23 +45,82 @@ impl PcbVia {
         flash: Flashing,
         usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_VIA::GetEffectiveShape", ctx, layer, flash, usage)
+        let mut diameter = 0;
+
+        if flash == Flashing::AlwaysFlashed
+            || (flash == Flashing::Default && self.flash_layer(ctx, layer))
+        {
+            if layer == PcbLayerId::UndefinedLayer {
+                self.padstack.for_each_unique_layer(|l| {
+                    if self.is_ghost_layer(ctx, l) {
+                        return;
+                    }
+
+                    diameter = diameter.max(self.width(l));
+                });
+            } else {
+                let cu_layer = self.padstack.effective_layer_for(layer);
+                diameter = self.width(cu_layer);
+
+                if is_solder_mask_layer(layer.0) {
+                    diameter += 2 * self.solder_mask_expansion(ctx);
+                }
+            }
+        } else {
+            diameter = self.drill_value(ctx);
+        }
+
+        // In some cases we want to add in any backdrill or post-machining
+        if (usage == DrcConstraintT::PhysicalClearanceConstraint
+            && self.is_backdrilled_or_post_machined(ctx, layer))
+            || (usage == DrcConstraintT::SilkClearanceConstraint
+                && self.is_backdrilled_or_post_machined(ctx, layer))
+        {
+            diameter = diameter.max(self.padstack.max_hole_size());
+        }
+
+        Arc::new(ShapeCircle::new(self.track.start, diameter / 2))
     }
 
-    /// `PCB_VIA::GetEffectiveHoleShape`.
+    /// Port of `PCB_VIA::GetEffectiveHoleShape( aLayer, aUsage )`: a zero-length
+    /// `SHAPE_SEGMENT` of the drill (netclass fallback for an unset drill), widened to the
+    /// largest hole for hole-to-hole and, on backdrilled / post-machined layers, for hole
+    /// clearance, annular width, physical and silk clearance.
     pub fn effective_hole_shape(
         &self,
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         usage: DrcConstraintT,
     ) -> Option<Arc<ShapeSegment>> {
-        crate::port_pending!("PCB_VIA::GetEffectiveHoleShape", ctx, layer, usage)
+        // An unset padstack drill falls back to the netclass value
+        let mut hole_size = self.drill_value(ctx);
+
+        // See if we want to include a larger backdrill or post-machining hole
+        if usage == DrcConstraintT::HoleToHoleConstraint
+            || (usage == DrcConstraintT::HoleClearanceConstraint
+                && self.is_backdrilled_or_post_machined(ctx, layer))
+            || (usage == DrcConstraintT::AnnularWidthConstraint
+                && self.is_backdrilled_or_post_machined(ctx, layer))
+            || (usage == DrcConstraintT::PhysicalClearanceConstraint
+                && self.is_backdrilled_or_post_machined(ctx, layer))
+            || (usage == DrcConstraintT::SilkClearanceConstraint
+                && self.is_backdrilled_or_post_machined(ctx, layer))
+        {
+            hole_size = hole_size.max(self.padstack.max_hole_size());
+        }
+
+        Some(Arc::new(ShapeSegment::from_seg(
+            Seg::new(self.track.start, self.track.start),
+            hole_size,
+        )))
     }
 
-    /// `PCB_TRACK::TransformShapeToPolygon (PCB_VIA)`.
+    /// Port of `PCB_TRACK::TransformShapeToPolygon (PCB_VIA)`: `TransformCircleToPolygon` of
+    /// the pad on `layer` (`GetWidth( aLayer )`) grown by the clearance.
+    #[allow(clippy::too_many_arguments)]
     pub fn transform_shape_to_polygon(
         &self,
-        ctx: &BoardCtx<'_>,
+        _ctx: &BoardCtx<'_>,
         buffer: &mut ShapePolySet,
         layer: PcbLayerId,
         clearance: i32,
@@ -64,15 +128,12 @@ impl PcbVia {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_TRACK::TransformShapeToPolygon (PCB_VIA)",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc,
-            ignore_line_width
-        )
+        debug_assert!(
+            !ignore_line_width,
+            "IgnoreLineWidth has no meaning for tracks."
+        );
+
+        let radius = (self.width(layer) / 2) + clearance;
+        transform_circle_to_polygon(buffer, self.track.start, radius, error, error_loc, 0);
     }
 }

@@ -40,6 +40,10 @@ use crate::ctx::BoardCtx;
 use crate::line_ending::LineEndingStyle;
 use crate::traits::EdaShapeItem;
 use kicad_core::LineStyle;
+// M8: the line-ending branches of the hit tests.
+use kicad_geom::ShapeCompound;
+use kicad_geom::geometry::geometry_utils::shape_hit_test;
+use kicad_geom::geometry::shape_utils::box_to_line_chain;
 
 /// `alg::longest_common_subset` (`libs/core/include/core/kicad_algo.h`): the length of the
 /// longest common contiguous run of the two sequences.
@@ -1370,13 +1374,14 @@ pub(crate) fn hit_test_point<H: EdaShapeItem + ?Sized>(
     let es = host.eda_shape();
 
     if has_line_ending(es) {
-        // SHAPE_COMPOUND( MakeEffectiveShapesWithLineEndings( GetEffectiveWidth() ) )
-        //     .Collide( aPosition, std::max( 0, aAccuracy ) ): package M8.
-        crate::port_pending!(
-            "EDA_SHAPE::MakeEffectiveShapesWithLineEndings",
+        let shape = ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
+            host,
+            ctx,
             host.effective_width(ctx),
-            pos
-        );
+        ));
+        let hit_shape: &dyn Shape = &shape;
+
+        return hit_shape.collide_point(pos, 0.max(accuracy), None, None);
     }
 
     let mut maxdist = accuracy as f64;
@@ -1593,15 +1598,14 @@ pub(crate) fn hit_test_rect<H: EdaShapeItem + ?Sized>(
     rect.inflate(accuracy);
 
     if has_line_ending(es) {
-        // KIGEOM::ShapeHitTest( BoxToLineChain( rect ),
-        //     SHAPE_COMPOUND( MakeEffectiveShapesWithLineEndings( GetEffectiveWidth() ) ),
-        //     aContained ): package M8.
-        crate::port_pending!(
-            "EDA_SHAPE::MakeEffectiveShapesWithLineEndings",
+        let selection = box_to_line_chain(&rect);
+        let shape = ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
+            host,
+            ctx,
             host.effective_width(ctx),
-            rect,
-            contained
-        );
+        ));
+
+        return shape_hit_test(&selection, &shape, contained);
     }
 
     let bbox = super::shape_bounding_box(host, ctx);

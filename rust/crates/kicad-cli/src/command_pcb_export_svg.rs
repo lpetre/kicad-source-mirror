@@ -58,7 +58,10 @@ pub fn command() -> Command {
         .arg(common_layers_arg())
         .arg(drawing_sheet_arg())
         .arg(define_arg())
-        .arg(flag(ARG_SUBTRACT_SOLDERMASK, "Subtract soldermask from silkscreen"))
+        .arg(flag(
+            ARG_SUBTRACT_SOLDERMASK,
+            "Subtract soldermask from silkscreen",
+        ))
         .arg(
             flag(
                 ARG_MIRROR,
@@ -210,7 +213,10 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbSvg, i
             "This command has deprecated behavior as of KiCad 9.0, the default behavior of this \
              command will change in a future release."
         );
-        println!("\x1b[33;1m{}\x1b[0m", "The new behavior will match --mode-multi");
+        println!(
+            "\x1b[33;1m{}\x1b[0m",
+            "The new behavior will match --mode-multi"
+        );
     }
 
     Ok(svg_job)

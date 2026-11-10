@@ -561,14 +561,10 @@ pub fn make_effective_shapes<H: EdaShapeItem + ?Sized>(
     line_chain_only: bool,
     hittesting: bool,
 ) -> Vec<SharedShape> {
-    crate::port_pending!(
-        "EDA_SHAPE::makeEffectiveShapes",
-        host,
-        ctx,
-        edge_only,
-        line_chain_only,
-        hittesting
-    )
+    shapes::make_effective_shapes_list(host, ctx, edge_only, line_chain_only, hittesting)
+        .into_iter()
+        .map(SharedShape::from)
+        .collect()
 }
 
 /// `EDA_SHAPE::UpdateHatching()` + `hatching()` / `hatchLines()`: the hatching cache,
@@ -577,7 +573,11 @@ pub fn hatching_data<H: EdaShapeItem + ?Sized>(
     host: &H,
     ctx: &BoardCtx<'_>,
 ) -> std::sync::Arc<EdaShapeHatchCacheData> {
-    crate::port_pending!("EDA_SHAPE::UpdateHatching", host, ctx)
+    // `GetHatching()` / `GetHatchLines()` call `EDA_SHAPE::UpdateHatching()` non-virtually:
+    // rebuilt only while dirty (the cache is dropped by every edit that sets it dirty).
+    host.eda_shape()
+        .hatching_cache
+        .get_or_build(|_| true, || shapes::build_hatching(host, ctx))
 }
 
 /// `EDA_SHAPE::getPosition()`.
@@ -634,8 +634,7 @@ pub fn shape_transform_to_polygon<H: EdaShapeItem + ?Sized>(
     ignore_line_width: bool,
     include_fill: bool,
 ) {
-    crate::port_pending!(
-        "EDA_SHAPE::TransformShapeToPolygon",
+    shapes::transform_shape_to_polygon(
         host,
         ctx,
         buffer,
@@ -643,7 +642,7 @@ pub fn shape_transform_to_polygon<H: EdaShapeItem + ?Sized>(
         error,
         error_loc,
         ignore_line_width,
-        include_fill
+        include_fill,
     )
 }
 

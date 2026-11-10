@@ -27,9 +27,9 @@
 //! initialisation (`initializeLoadedBoard`). Both halves call into crates that are still being
 //! written; [`parse_board_text`] is the single switch for the parser.
 
-use kicad_core::lset::Lset;
 use kicad_core::PcbLayerId;
 use kicad_core::layer_ids::is_copper_layer;
+use kicad_core::lset::Lset;
 use kicad_geom::Vector2I;
 use kicad_pcb::padstack::Padstack;
 use kicad_pcb::pcb_track::{PcbTrack, PcbVia, Track};
@@ -318,7 +318,9 @@ impl Session {
         let code = NetCode(net);
 
         if self.board.find_net(code).is_none() {
-            return Err(SessionError::invalid_argument(format!("no net with code {net}")));
+            return Err(SessionError::invalid_argument(format!(
+                "no net with code {net}"
+            )));
         }
 
         Ok(code)
@@ -381,7 +383,10 @@ impl Session {
         via.padstack.drill_mut().size = Vector2I::new(spec.drill, spec.drill);
         via.track.base.net = net;
 
-        match self.board.add_track(Track::Via(Box::new(via)), AddMode::Append) {
+        match self
+            .board
+            .add_track(Track::Via(Box::new(via)), AddMode::Append)
+        {
             Ok(id) => Ok(ItemId::from(id).to_bits()),
             Err(_) => Err(SessionError::invalid_argument("via refused by BOARD::Add")),
         }
@@ -405,7 +410,9 @@ impl Session {
 
     /// `ZONE_FILLER_TOOL::FillAllZones` (`board.refillZones()`).
     pub fn refill_zones(&mut self) -> Result<(), SessionError> {
-        Err(SessionError::not_yet_ported("kicad-zone: ZONE_FILLER::Fill"))
+        Err(SessionError::not_yet_ported(
+            "kicad-zone: ZONE_FILLER::Fill",
+        ))
     }
 }
 
@@ -503,14 +510,26 @@ mod tests {
                 net: 0,
             })
             .unwrap_err();
-        assert_eq!(err.to_string(), "invalid argument: Cannot place Track on non-copper layer");
-        assert!(s.add_track(&TrackSpec { layer: "Nope".into(), ..tspec() }).is_err());
+        assert_eq!(
+            err.to_string(),
+            "invalid argument: Cannot place Track on non-copper layer"
+        );
+        assert!(
+            s.add_track(&TrackSpec {
+                layer: "Nope".into(),
+                ..tspec()
+            })
+            .is_err()
+        );
         assert!(s.add_track(&TrackSpec { net: 99, ..tspec() }).is_err());
 
         assert!(s.remove(t).unwrap());
         assert!(!s.remove(t).unwrap());
         assert_eq!(s.tracks().len(), 1);
-        assert!(matches!(s.remove(1 << 60), Err(SessionError::StaleId { .. })));
+        assert!(matches!(
+            s.remove(1 << 60),
+            Err(SessionError::StaleId { .. })
+        ));
     }
 
     fn tspec() -> TrackSpec {

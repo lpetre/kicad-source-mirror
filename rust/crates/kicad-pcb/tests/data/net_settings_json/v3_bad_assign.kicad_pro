@@ -1,0 +1,2 @@
+{ "net_settings": { "meta": { "version": 3 }, "classes": [ { "name": "P" }, null, { "name": "Default" } ],
+    "netclass_assignments": { "/a": "P", "/b": [ "P" ] } } }

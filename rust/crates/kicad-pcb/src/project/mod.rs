@@ -18,3 +18,5 @@
 //! `.kicad_pro` / settings loaders (`docs/analysis/settings.md`), owned by the settings packages.
 //!
 //! Created empty by M0a so that the module tree is complete; the named package fills it.
+
+pub mod net_settings_json;

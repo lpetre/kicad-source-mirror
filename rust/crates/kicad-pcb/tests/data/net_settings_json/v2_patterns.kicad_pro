@@ -1,0 +1,6 @@
+{ "meta": { "version": 3 },
+  "net_settings": { "meta": { "version": 2 },
+    "classes": [ { "name": "Default", "clearance": 0.15 }, { "name": "HV", "clearance": 1.5, "nets": [ "/HV*", "+3V3", "Net-(D1-A)" ] },
+                 { "name": "LV", "nets": [] }, { "nets": [ "/lost" ] }, { "name": "X", "nets": {} }, { "name": "Default", "track_width": 0.3, "nets": [ "/dflt" ] } ],
+    "netclass_patterns": [ { "pattern": "old", "netclass": "HV" } ],
+    "netclass_assignments": {} } }

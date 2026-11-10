@@ -1,0 +1,35 @@
+# Report writers: every section, severity handling, units, item resolution.
+board	qa/data/pcbnew/issue8003.kicad_pcb
+marker	clearance	137602500	76388500	0	4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6	D:(netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)	netclass 'Default'	undefined	0	
+marker	track_width	138618500	77404500	0	b14a6fe5-b108-4eb0-874f-5289bbab5bfa	D:(board setup constraints min 0.3000 mm; actual 0.2500 mm)	-	undefined	0	
+marker	via_dangling	1000	-2000	2	d3626667-3ba8-4618-aa74-3caa02344256	-	-	undefined	0	
+marker	silk_overlap	5	5	5	64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302	M:Silkscreen [overlap](https://docs.kicad.org/x) of (a) [b]	silk rule	warning	0	
+marker	clearance	1	2	0	2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0	-	demoted	warning	0	
+marker	hole_clearance	1	2	0	2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f	-	silenced	exclusion	0	
+marker	annular_width	-7	8	0	cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc	-	-	undefined	1	known and accepted
+marker	shorting_items	10	20	-1	12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6	-	-	undefined	1	
+marker	unconnected_items	135509000	76388500	0	c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302	-	-	undefined	0	
+marker	unconnected_items	0	0	0	64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f	-	-	undefined	1	ratsnest ok
+marker	missing_footprint	0	0	0	-	M:Missing footprint R3 (µF part)	-	undefined	0	
+marker	generic_warning	0	0	0	c69de6ad-e39a-4788-a757-b7516dce18a6	M:Just a warning	-	error	0	
+marker	generic_error	0	0	0	00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0	M:An error	-	warning	0	
+marker	unresolved_variable	0	0	DS	-	D:${FOO}	-	undefined	0	
+marker	lib_footprint_issues	3	3	0	00000000-0000-0000-0000-000000000000	-	-	undefined	0	
+severity	via_dangling	error
+severity	track_width	warning
+severity	hole_to_hole	ignore
+severity	copper_sliver	ignore
+severity	lib_footprint_issues	ignore
+report	mm	48
+report	mils	52
+report	in	4
+report	mm	0
+severity	missing_courtyard	error
+severity	footprint_filters_mismatch	warning
+severity	footprint_type_mismatch	warning
+severity	tuning_profile_track_geometries	error
+severity	track_not_centered_on_via	error
+severity	hole_to_hole	warning
+severity	copper_sliver	warning
+severity	lib_footprint_issues	warning
+report	mm	32

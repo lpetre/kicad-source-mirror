@@ -1,0 +1,5 @@
+{ "meta": { "version": 3 },
+  "net_settings": { "meta": { "version": 3 },
+    "classes": [ { "name": "B" }, { "name": "Default", "priority": 7 }, { "name": "A", "priority": 99 } ],
+    "netclass_assignments": { "/z": "A", "/a": "", "/m": "B", "/é": "A" },
+    "netclass_patterns": [ { "pattern": "/A*", "netclass": "A" } ] } }

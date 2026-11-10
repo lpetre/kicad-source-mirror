@@ -1163,3 +1163,133 @@ Differential oracle `tests/oracle/m24_oracle.cpp` (+ `m24_build_oracle.sh`; comp
 * `FOOTPRINT::GetComponentClass` (footprint/mod.rs, not this package) can now be written with
   `ComponentClassManager::get_component_class`, but needs `&mut` access to the manager and the
   DRC rule matcher.
+
+## Package M14: pad model (PAD without shape generation)
+
+### C++ to Rust map
+
+| C++ (`pcbnew/pad.cpp`, `pad.h`) | Rust | State |
+|---|---|---|
+| anonymous namespace: `scaleLength`, `scaleInChildFrame`, `derivePad{Board,Lib}{Size,Drill,Offset}` | `pad/derive.rs` private fns | ported |
+| `GetPosition` / `SetPosition`, `Get/SetFPRelativePosition` (BOARD_ITEM bodies), `Get/SetOrientation`, `Get/SetFPRelativeOrientation`, `GetOrientationDegrees` | `position`, `set_position`, `fp_relative_position`, `set_fp_relative_position`, `orientation`, `set_orientation`, `fp_relative_orientation`, `set_fp_relative_orientation`, `orientation_degrees` | ported (readers through the parent footprint via `ctx`, writers through `env.parent`) |
+| `Get/SetSize`, `SetLibSize`, `SetSizeX/YProp`, `Get/SetOffset`, `SetLibOffset`, `ShapePos`, `Get/SetPrimaryDrillSize` (+ X / Y), `SetLibDrillSize`, `GetPrimitiveLibScale` | same names (`drill_size`, `set_drill_size`, `set_drill_size_x/y`, `set_size_x/y_prop`) | ported |
+| drill / slot accessors (primary shape / start / end / filled / capped, secondary and tertiary drill setters, `Get*Knockout`, `IsBackdrilledOrPostMachined`) | `drill_shape`, `set_drill_shape`, ... | ported (`HasCopperRemoved` needs `GetBoundingRadius`: M15) |
+| per-layer forwards (`SetShape`, anchor shape, delta, round-rect radius / ratio incl. front variants, chamfer ratio / positions, custom-shape-in-zone, unconnected-layer mode, `GetRemoveUnconnected`, `GetKeepTopBottom`, `ConditionallyFlashed`) | same names | ported |
+| `GetLayer`, `GetPrincipalLayer`, `GetLayerSet`, `SetLayerSet`, `IsOnLayer`, `IsOnCopperLayer`, `IsAperturePad`, `CanHaveNumber`, `IsNPTHWithNoCopper`, `IsFlipped`, `IsNoConnectPad`, `IsFreePad`, `SameLogicalPadAs`, `SharesNetTieGroup` | same names (`is_free_pad_ctx`) | ported; `is_free_pad()` (no ctx) stays a marker, see gaps |
+| `FlashLayer` (all overloads), `CanFlashLayer` | `flash_layer`, `flash_layer_permitted`, `flash_layer_set` | ported; connectivity through `ctx.connectivity` (`None` = empty CONNECTIVITY_DATA: not connected), zone-layer overrides read from the pad |
+| `IsLocked`, `HasHole`, `HasDrilledHole`, `SetAttribute`, `SetProperty`, pin / die / sim setters, `SetPadstack`, `ImportSettingsFrom` | same names | ported (`ImportSettingsFrom` takes the pad's `env` and the master's `ctx`, clone-edit-store) |
+| `GetLocalClearance` (both), `GetClearanceOverrides`, `GetOwnClearance`, `GetSolderMaskExpansion`, `GetSolderPasteMargin`, `GetZoneConnectionOverrides`, `GetLocalSpokeWidthOverride`, `GetLocalThermalGapOverride` (both), `GetThermalSpokeAngle`, local override getters / setters | same names | ported (rules branch through `ctx.rules`, fallback chain pad -> footprint -> board) |
+| `Move`, `Rotate`, `Flip`, `FlipPrimitives`, `Mirror` (both), `mirrorChamferPositions`, `SwapShapePositions`, `OnFootprintTransformed`, `OnFootprintRescaled` (+ `rebakePrimitiveToFootprint`) | `move_by`, `rotate`, `flip`, `flip_primitives`, `mirror`, `mirror_seg`, `swap_shape_positions` (returns the two positions), `on_footprint_*` | ported; primitive `Flip` / `Mirror` / `RebakeWithScale` call the PcbShape methods (M9) |
+| `Compare`, `operator==`, `Similarity`, `GetItemDescription`, `ShowPadShape`, `ShowLegacyPadShape`, `ShowPadAttr` | `compare`, `eq_item`, `similarity`, `item_description`, `show_*` | ported (English texts) |
+| `Board::set_zone_layer_override` / `clear_zone_layer_overrides` | `pad/mod.rs` | pad branch ported; via branch `port_pending!` (`PCB_VIA::Set/ClearZoneLayerOverrides`, M17 has no accessor yet) |
+| `GetBoundingBox` (both), `HitTest`, `GetEffectiveShape` & co. | `pad/shapes.rs` | M15 (needs shapes) |
+| `Serialize` / `Deserialize`, `GetMsgPanelInfo`, `ViewGetLOD` & co., property setters for the UI, `Recombine`, `SetFrontShape` | - | skipped: API / UI / editor tools |
+
+### Tests
+
+- `pad::derive::tests::oracle_pad_frames`: differential test against the reference `pcb-dump`
+  (`tests/oracle/m14_pad_golden.sh` on `tests/oracle/m14_pad_frames.kicad_pcb`, golden
+  `tests/golden/m14_pad_frames.txt`): 15 pads in three footprints (rotated 30 degrees and
+  scaled 1.5 x 0.75; flipped, rotated -90 and scaled 2 x 1; identity), NORMAL / FRONT_INNER_BACK
+  / CUSTOM padstacks, PTH / SMD / CONN / NPTH / aperture pads, pad, footprint and board
+  overrides. Each pad is rebuilt from its dumped members (library frame) and about 820 derived
+  values are compared: position, orientation, primitive lib scale, per-layer board-frame size /
+  offset, drill size, principal layer, flags, every override and fallback chain, mask expansion
+  and paste margin on both sides, `IsOnLayer` / `FlashLayer` / `CanFlashLayer` per copper layer,
+  `HasHole`, `IsOnCopperLayer`, `GetFPRelativePosition`. All match.
+- `qa/tests/pcbnew/test_pad_setters.cpp`: all 4 cases. `test_pad_swap_positions.cpp`: all 5.
+  `test_pad_flashing.cpp`: the two "do not force inner layer flashing" cases without
+  connectivity (`ctx.connectivity == None`; the real-connectivity variant needs
+  kicad-connectivity), `TechLayersPullFromAppropriateSide` needs effective shapes (M15).
+- New tests: frame setters round trip on the rotated / flipped / scaled fixture, flip / mirror
+  of lib position, offset, chamfers and layers, `SetAttribute` trimming, `Compare` /
+  `operator==` / `Similarity`, the zone-layer-override writers (no time-stamp bump, C++ copper
+  range), item descriptions.
+- Not ported yet: `test_pad_check.cpp` (CheckPad reaches M15 shapes), the pad parts of
+  `test_footprint_transform_sync.cpp` (they drive `FOOTPRINT::SetTransform` / `Flip` cascades,
+  M19) and `test_footprint_pad_fixup.cpp` (M20).
+
+### Deviations / notes
+
+- `SetLayerSet` / `SetAttribute` / `SetNetCode`: `InvalidateClearanceCache` has no counterpart
+  (time-stamp revalidation, `board-model.md` 7). `SetAttribute( NPTH )` sets net 0 directly
+  (`SetNetCode( UNCONNECTED )` always ends on net 0).
+- Custom-shape primitives are mutated with a `MutEnv` whose `parent` is `None` (C++
+  `PCB_SHAPE::transformFp()` is null for pad children); the board facts are the pad's.
+- `GetClearanceOverrides` / `GetZoneConnectionOverrides` fall back to the footprint's fields
+  with the source text "footprint <reference>" (`FOOTPRINT::GetLocalClearance( aSource )` and
+  `GetZoneConnectionOverrides` are header inlines without a Rust method); the reference is read
+  only when a source is asked for.
+- `operator==( BOARD_ITEM )`: a `BOARD` parent has no UUID in Rust; two pads whose parent is the
+  board compare their parents as equal. `Similarity` treats a missing parent as a nil UUID
+  (C++ dereferences it).
+- `SharesNetTieGroup` reproduces `std::map::operator[]` (a pad number missing from the map is
+  group 0).
+
+### Known gaps / stubs left
+
+- `Pad::is_free_pad()` (no `ctx`): `port_pending!` marker; `IsFreePad` reads the net name, so
+  the port is `is_free_pad_ctx( ctx )` (signature change requested).
+- `Board::set_zone_layer_override` / `clear_zone_layer_overrides` for vias: `port_pending!`
+  until `PcbVia` has `set_zone_layer_override` / `clear_zone_layer_overrides` (M17).
+- Run-time dependencies on other packages' stubs: `FOOTPRINT::GetReference` (descriptions,
+  override sources; M19), `MapPadNumbersToNetTieGroups` (M19), `PCB_SHAPE::Flip` / `Mirror` /
+  `RebakeWithScale` (custom primitives; M9).
+
+## Package M6: board stackup, stackup predefined parameters, plot params (model logic)
+
+Supersedes the "stubs (M6)" notes of the M0d rows for `board_stackup.rs` / `pcb_plot_params.rs`.
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `BOARD_STACKUP_ITEM` getters / setters, `AddDielectricPrms`, `RemoveDielectricPrms`, `Has*Value`, `Is*Editable`, `FormatEpsilonR`, `FormatLossTangent`, `FormatDielectricLayerName`, `IsEnabled` / `SetEnabled`, `Get/SetBrdLayerId`, `Get/SetTypeName`, `Get/SetLayerName`, `Get/SetDielectricLayerId` | `board_stackup.rs` `impl BoardStackupItem` | ported |
+| `BOARD_STACKUP` copy constructor / `operator=` / `operator==` (and the item / `DIELECTRIC_PRMS` ones) | derived `Clone` / `PartialEq` (deep copies; field-wise equality = the C++ member lists) | ported |
+| `BOARD_STACKUP::StackupAllowedBrdLayers`, `RemoveAll`, `GetStackupLayer` (+ `stackup_layer_mut`), `BuildDefaultStackupList`, `BuildBoardThicknessFromStackup`, `SynchronizeWithBoard`, `GetLayerDistance`, `GetDrillDepth` | `board_stackup.rs` `impl BoardStackup` | ported |
+| `IsPrmSpecified` | `board_stackup::is_prm_specified` | ported |
+| `stackup_predefined_prms.cpp/.h`: `copperFinishType`, `gbrjobColors`, `dielectricColors`, `FAB_LAYER_COLOR` (`GetColor`, `GetColorAsString`), `GetStandardCopperFinishes`, `GetStandardColors`, `GetColorUserDefinedListIdx`, `GetDefaultUserColor`, `GetStandardColor`, `GetStandardColorName`, `IsCustomColorIdx`, `IsColorNameNormalized`, `DEFAULT_SOLDERMASK_OPACITY` | `board_stackup.rs` (end of file) | ported |
+| `BOARD_STACKUP::FormatBoardStackup` | - | PCBIO-04 (writer) |
+| `BOARD_STACKUP::Serialize` / `Deserialize` (protobuf API) | - | skipped: IPC API out of scope |
+| `PCB_PLOT_PARAMS::IsSameAs`, `SetGerberPrecision`, `SetSvgPrecision`, `Get/SetLayerSelection`, `SetPlotOnAllLayersSequence`, `GetLegacyPlotViaOnMaskLayer`, `GetGerberPrecision`, `GetSvgPrecision` | `pcb_plot_params.rs` | ported (the other trivial `Get*` / `Set*` of the header are the `pub` fields) |
+| `PCB_PLOT_PARAMS::Format` / `Parse`, `PCB_PLOT_PARAMS_PARSER`, `remapLegacyLayerLSET` | PCBIO-04 (`kicad_core::legacy_layers::remap_legacy_layer_lset` exists) | not this package |
+
+### Tests and verification
+
+* Differential oracle `tests/oracle/m6_stackup_oracle.cpp` (built and run by
+  `tests/oracle/m6_build_oracle.sh` against the reference build, reusing the pcb-dump harness
+  objects), golden `tests/golden/m6_stackup_oracle.txt` (2604 lines). Rust replay:
+  `board_stackup::tests::m6_oracle` and `pcb_plot_params::tests::m6_oracle_plot_params`. It
+  covers `BuildDefaultStackupList` with settings for 1, 2, 4, 6, 8 and 32 copper layers (odd
+  thicknesses, a 32-layer board too thin for its copper (negative dielectric), mask / paste /
+  silk subsets, appending to a non-empty list) and without settings for 0, 2, 4 and 6 layers;
+  `BuildBoardThicknessFromStackup`; `GetLayerDistance` and `GetDrillDepth` for all copper
+  pairs (6 for 32-layer stackups) of default and customised stackups (sublayers, odd copper
+  thickness, disabled items); `SynchronizeWithBoard` to the same, fewer and more layers;
+  `Add/RemoveDielectricPrms`; per-type flags; `FormatEpsilonR` / `FormatLossTangent`;
+  `IsPrmSpecified`, `IsColorNameNormalized`, the colour / finish tables; Gerber / SVG precision
+  clamping; the full `IsSameAs` matrix (49 single-field changes x 6 plot formats, both
+  directions). All lines match bit for bit (doubles compared as IEEE bits).
+* `pcb-dump defaults` vs `pcb-dump-rs defaults` (`BOARD_STACKUP`, `BOARD_STACKUP.default_list`,
+  `PCB_PLOT_PARAMS`): 194 lines, identical except the item `type` enum spelling of the Rust
+  dump (`SILKSCREEN` vs `BS_ITEM_TYPE_SILKSCREEN`; dump code, reported).
+* `pcb-dump board --sections board` on copies of 4 corpus boards without `(stackup ...)`:
+  `stackup_or_default.*` identical (same spelling caveat). `ds.stackup.*` and `plot.*` differ
+  because the parser side (PCBIO-04) does not yet read `(stackup ...)` / `(pcbplotparams ...)`
+  nor build the loader's default stackup.
+* `copy_semantics`: model part of `qa/tests/pcbnew/test_fab_stackup.cpp`
+  (`FabStackupSnapshotsRealBoard`; the FAB snapshot itself is not model code).
+
+### Deviations / notes
+
+* `BuildDefaultStackupList` and `SynchronizeWithBoard` take the settings by shared reference;
+  the C++ calls them on `aSettings->GetStackupDescriptor()` itself (aliasing). Rust callers
+  pass a copy of the settings or work on a copy of the stackup.
+* `AddDielectricPrms( idx )` with `idx > count` is undefined in C++; ignored here.
+* `FormatDielectricLayerName` returns the untranslated `"Dielectric %d"`;
+  `GetStandardCopperFinishes( aTranslate )` takes no flag (no translations in the port).
+* `GetDefaultUserColor` / `GetStandardColor` / `GetStandardColorName` return `Option` (C++
+  indexes an empty vector for types without a list).
+* `wxString::CmpNoCase` (in `IsPrmSpecified`, `IsColorNameNormalized`) is a per-character
+  lower-case comparison; a character whose Rust lower case has several characters compares by
+  the first one (matches glibc `towlower` for U+0130).

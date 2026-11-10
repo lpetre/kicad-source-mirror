@@ -1,0 +1,2 @@
+{ "net_settings": { "meta": { "version": 3 }, "classes": [ { "name": "P" }, { "clearance": 0.5 }, { "name": "Q" } ],
+    "netclass_assignments": { "/a": "P" } } }

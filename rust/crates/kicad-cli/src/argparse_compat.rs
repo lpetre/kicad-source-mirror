@@ -118,7 +118,11 @@ fn strtod_prefix_len(s: &str) -> usize {
         i += 1;
     }
 
-    let lower: String = s[i..].chars().take(8).collect::<String>().to_ascii_lowercase();
+    let lower: String = s[i..]
+        .chars()
+        .take(8)
+        .collect::<String>()
+        .to_ascii_lowercase();
 
     if lower.starts_with("infinity") {
         return i + 8;
@@ -224,7 +228,11 @@ pub fn scan_double(s: &str) -> Result<f64, String> {
         let negative = lower.starts_with('-');
 
         if unsigned.starts_with("inf") {
-            if negative { f64::NEG_INFINITY } else { f64::INFINITY }
+            if negative {
+                f64::NEG_INFINITY
+            } else {
+                f64::INFINITY
+            }
         } else if unsigned.starts_with("nan") {
             f64::NAN
         } else {
@@ -336,7 +344,9 @@ pub fn argparse_message(
                 None => err.to_string(),
             }
         }
-        ErrorKind::MissingRequiredArgument => "input: 1 argument(s) expected. 0 provided.".to_string(),
+        ErrorKind::MissingRequiredArgument => {
+            "input: 1 argument(s) expected. 0 provided.".to_string()
+        }
         ErrorKind::ArgumentConflict => format!("Duplicate argument {option_name}"),
         ErrorKind::InvalidSubcommand => {
             format!(
@@ -435,11 +445,28 @@ mod tests {
 
     #[test]
     fn similar_names() {
-        let names = ["diff", "downgrade", "drc", "export", "import", "render", "upgrade"];
+        let names = [
+            "diff",
+            "downgrade",
+            "drc",
+            "export",
+            "import",
+            "render",
+            "upgrade",
+        ];
         assert_eq!(most_similar(&names, "foo"), "drc");
         let top = [
-            "api-server", "fp", "gerber", "import", "jobset", "mergetool", "pcb", "project",
-            "sch", "sym", "version",
+            "api-server",
+            "fp",
+            "gerber",
+            "import",
+            "jobset",
+            "mergetool",
+            "pcb",
+            "project",
+            "sch",
+            "sym",
+            "version",
         ];
         assert_eq!(most_similar(&top, "bogus"), "fp");
     }

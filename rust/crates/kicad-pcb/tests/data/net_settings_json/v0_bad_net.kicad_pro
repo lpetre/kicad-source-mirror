@@ -1,0 +1,3 @@
+{ "meta": { "version": 1 },
+  "net_settings": { "meta": { "version": 0 },
+    "classes": [ { "name": "A", "nets": [ "~x~" ] }, { "name": "B", "nets": [ "/ok", 5 ] }, { "name": "C", "nets": [ "~y~" ] } ] } }

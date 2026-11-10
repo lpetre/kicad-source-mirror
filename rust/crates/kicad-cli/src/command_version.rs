@@ -30,8 +30,12 @@ pub fn command() -> Command {
     Command::new("version")
         .about("Reports the version info in various formats")
         .arg(
-            string_opt(ARG_FORMAT, "plain", "version info format (plain, commit, about)")
-                .value_name("VAR"),
+            string_opt(
+                ARG_FORMAT,
+                "plain",
+                "version info format (plain, commit, about)",
+            )
+            .value_name("VAR"),
         )
 }
 

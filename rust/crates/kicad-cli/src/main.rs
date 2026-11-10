@@ -120,7 +120,9 @@ fn print_help(root: &Command, path: &[String]) {
 /// `get_usage_full()`, e.g. `--format VAR`).
 fn first_value_option(cmd: &Command) -> Option<String> {
     cmd.get_arguments()
-        .find(|a| a.get_long().is_some() && a.get_num_args().map(|n| n.takes_values()).unwrap_or(false))
+        .find(|a| {
+            a.get_long().is_some() && a.get_num_args().map(|n| n.takes_values()).unwrap_or(false)
+        })
         .map(|a| {
             let value = a
                 .get_value_names()
@@ -150,7 +152,9 @@ fn run(args: Vec<String>) -> i32 {
             built.build();
             let cmd = command_at(&built, &path);
             let subcommands: Vec<&str> = cmd.get_subcommands().map(|c| c.get_name()).collect();
-            let takes_input = cmd.get_arguments().any(|a| a.get_id() == command::ARG_INPUT);
+            let takes_input = cmd
+                .get_arguments()
+                .any(|a| a.get_id() == command::ARG_INPUT);
             let first_opt = first_value_option(cmd);
 
             println!(

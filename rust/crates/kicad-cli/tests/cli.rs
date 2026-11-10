@@ -59,7 +59,9 @@ fn run_in(dir: &Path, exe: &Path, args: &[&str]) -> Run {
 }
 
 fn scratch(name: &str) -> PathBuf {
-    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("kicad-cli-tests").join(name);
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("kicad-cli-tests")
+        .join(name);
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir
@@ -107,7 +109,11 @@ fn version_commands() {
     assert!(r.stdout.contains("Version: 10.99.0-unknown, release build"));
 
     if let Some(oracle) = kicad_qa::oracle_cli() {
-        for args in [&["version"][..], &["--version"], &["version", "--format", "commit"]] {
+        for args in [
+            &["version"][..],
+            &["--version"],
+            &["version", "--format", "commit"],
+        ] {
             let a = run_in(&dir, exe, args);
             let b = run_in(&dir, &oracle, args);
             assert_eq!((a.code, &a.stdout), (b.code, &b.stdout), "{args:?}");
@@ -150,32 +156,81 @@ fn all_options_are_known() {
 
     let gerbers = help(&["pcb", "export", "gerbers", "--help"]);
     for opt in [
-        "--output", "--layers", "--common-layers", "--cl", "--drawing-sheet", "--define-var",
-        "--exclude-refdes", "--erd", "--exclude-value", "--ev", "--include-border-title", "--ibt",
-        "--sketch-pads-on-fab-layers", "--sp", "--sketch-pad-numbers", "--spn",
-        "--hide-DNP-footprints-on-fab-layers", "--hdnp", "--sketch-DNP-footprints-on-fab-layers",
-        "--sdnp", "--crossout-DNP-footprints-on-fab-layers", "--cdnp", "--no-x2", "--no-netlist",
-        "--subtract-soldermask", "--disable-aperture-macros", "--use-drill-file-origin",
-        "--precision", "--no-protel-ext", "--check-zones", "--variant", "--board-plot-params",
+        "--output",
+        "--layers",
+        "--common-layers",
+        "--cl",
+        "--drawing-sheet",
+        "--define-var",
+        "--exclude-refdes",
+        "--erd",
+        "--exclude-value",
+        "--ev",
+        "--include-border-title",
+        "--ibt",
+        "--sketch-pads-on-fab-layers",
+        "--sp",
+        "--sketch-pad-numbers",
+        "--spn",
+        "--hide-DNP-footprints-on-fab-layers",
+        "--hdnp",
+        "--sketch-DNP-footprints-on-fab-layers",
+        "--sdnp",
+        "--crossout-DNP-footprints-on-fab-layers",
+        "--cdnp",
+        "--no-x2",
+        "--no-netlist",
+        "--subtract-soldermask",
+        "--disable-aperture-macros",
+        "--use-drill-file-origin",
+        "--precision",
+        "--no-protel-ext",
+        "--check-zones",
+        "--variant",
+        "--board-plot-params",
     ] {
         assert!(gerbers.contains(opt), "gerbers {opt}");
     }
 
     let drill = help(&["pcb", "export", "drill", "--help"]);
     for opt in [
-        "--format", "--drill-origin", "--excellon-zeros-format", "--excellon-oval-format",
-        "--excellon-units", "-u", "--excellon-mirror-y", "--excellon-min-header",
-        "--excellon-separate-th", "--generate-map", "--generate-report", "--report-path",
-        "--generate-tenting", "--map-format", "--gerber-precision",
+        "--format",
+        "--drill-origin",
+        "--excellon-zeros-format",
+        "--excellon-oval-format",
+        "--excellon-units",
+        "-u",
+        "--excellon-mirror-y",
+        "--excellon-min-header",
+        "--excellon-separate-th",
+        "--generate-map",
+        "--generate-report",
+        "--report-path",
+        "--generate-tenting",
+        "--map-format",
+        "--gerber-precision",
     ] {
         assert!(drill.contains(opt), "drill {opt}");
     }
 
     let svg = help(&["pcb", "export", "svg", "--help"]);
     for opt in [
-        "--subtract-soldermask", "--mirror", "-m", "--theme", "-t", "--negative", "-n",
-        "--black-and-white", "--page-size-mode", "--fit-page-to-board", "--exclude-drawing-sheet",
-        "--drill-shape-opt", "--mode-single", "--mode-multi", "--scale", "--check-zones",
+        "--subtract-soldermask",
+        "--mirror",
+        "-m",
+        "--theme",
+        "-t",
+        "--negative",
+        "-n",
+        "--black-and-white",
+        "--page-size-mode",
+        "--fit-page-to-board",
+        "--exclude-drawing-sheet",
+        "--drill-shape-opt",
+        "--mode-single",
+        "--mode-multi",
+        "--scale",
+        "--check-zones",
         "--variant",
     ] {
         assert!(svg.contains(opt), "svg {opt}");
@@ -183,9 +238,18 @@ fn all_options_are_known() {
 
     let drc = help(&["pcb", "drc", "--help"]);
     for opt in [
-        "--format", "--all-track-errors", "--schematic-parity", "--units", "--severity-all",
-        "--severity-error", "--severity-warning", "--severity-exclusions",
-        "--exit-code-violations", "--refill-zones", "--save-board", "-D",
+        "--format",
+        "--all-track-errors",
+        "--schematic-parity",
+        "--units",
+        "--severity-all",
+        "--severity-error",
+        "--severity-warning",
+        "--severity-exclusions",
+        "--exit-code-violations",
+        "--refill-zones",
+        "--save-board",
+        "-D",
     ] {
         assert!(drc.contains(opt), "drc {opt}");
     }
@@ -197,17 +261,42 @@ fn all_options_are_known() {
 /// Argument errors: (args, exit code, first stdout line, stderr). `B` is replaced by a copy
 /// of a corpus board, `MISSING` stays a file that does not exist.
 const ARG_CASES: &[(&[&str], i32, &str, &str)] = &[
-    (&["pcb", "drc"], 1, "input: 1 argument(s) expected. 0 provided.", ""),
-    (&["pcb", "drc", "-o"], 1, "input: 1 argument(s) expected. 0 provided.", ""),
-    (&["pcb", "drc", "--bogus", "B"], 1, "Unknown argument: --bogus", ""),
+    (
+        &["pcb", "drc"],
+        1,
+        "input: 1 argument(s) expected. 0 provided.",
+        "",
+    ),
+    (
+        &["pcb", "drc", "-o"],
+        1,
+        "input: 1 argument(s) expected. 0 provided.",
+        "",
+    ),
+    (
+        &["pcb", "drc", "--bogus", "B"],
+        1,
+        "Unknown argument: --bogus",
+        "",
+    ),
     (
         &["pcb", "drc", "B", "extra"],
         1,
         "Maximum number of positional arguments exceeded, failed to parse 'extra'",
         "",
     ),
-    (&["pcb", "drc", "--format", "json", "--format", "report", "B"], 1, "Duplicate argument --format", ""),
-    (&["pcb", "export", "gerbers", "--format", "x", "B"], 1, "Unknown argument: --format", ""),
+    (
+        &["pcb", "drc", "--format", "json", "--format", "report", "B"],
+        1,
+        "Duplicate argument --format",
+        "",
+    ),
+    (
+        &["pcb", "export", "gerbers", "--format", "x", "B"],
+        1,
+        "Unknown argument: --format",
+        "",
+    ),
     (
         &["pcb", "export", "gerbers", "--precision", "abc", "B"],
         1,
@@ -226,12 +315,32 @@ const ARG_CASES: &[(&[&str], i32, &str, &str)] = &[
         "Failed to parse 'abc' as number: pattern 'abc' does not match to the end",
         "",
     ),
-    (&["pcb", "foo"], 1, "Failed to parse 'foo', did you mean 'drc'", ""),
-    (&["version", "extra"], 1, "Zero positional arguments expected, did you mean --format VAR", ""),
+    (
+        &["pcb", "foo"],
+        1,
+        "Failed to parse 'foo', did you mean 'drc'",
+        "",
+    ),
+    (
+        &["version", "extra"],
+        1,
+        "Zero positional arguments expected, did you mean --format VAR",
+        "",
+    ),
     // The oracle loses these stderr texts (wide-oriented stderr after wxLog, see
     // PORT_STATUS.md); only the exit code and stdout are compared with it.
-    (&["pcb", "drc", "--units", "furlong", "B"], 1, "", "Invalid units specified\n"),
-    (&["pcb", "drc", "--format", "xml", "B"], 1, "", "Invalid report format\n"),
+    (
+        &["pcb", "drc", "--units", "furlong", "B"],
+        1,
+        "",
+        "Invalid units specified\n",
+    ),
+    (
+        &["pcb", "drc", "--format", "xml", "B"],
+        1,
+        "",
+        "Invalid report format\n",
+    ),
     (&["pcb", "drc", "-D", "a=b", "-D", "c", "B"], 1, "", ""),
     (
         &["pcb", "export", "gerbers", "--precision", "7", "B"],
@@ -245,10 +354,27 @@ const ARG_CASES: &[(&[&str], i32, &str, &str)] = &[
         "",
         "Board file does not exist or is not accessible\n",
     ),
-    (&["pcb", "export", "drill", "--format", "foo", "B"], 1, "", "Invalid drill format\n"),
-    (&["pcb", "export", "drill", "-u", "cm", "B"], 1, "", "Invalid units specified\n"),
     (
-        &["pcb", "export", "drill", "--excellon-zeros-format", "x", "B"],
+        &["pcb", "export", "drill", "--format", "foo", "B"],
+        1,
+        "",
+        "Invalid drill format\n",
+    ),
+    (
+        &["pcb", "export", "drill", "-u", "cm", "B"],
+        1,
+        "",
+        "Invalid units specified\n",
+    ),
+    (
+        &[
+            "pcb",
+            "export",
+            "drill",
+            "--excellon-zeros-format",
+            "x",
+            "B",
+        ],
         1,
         "",
         "Invalid zeros format specified\n",
@@ -259,15 +385,30 @@ const ARG_CASES: &[(&[&str], i32, &str, &str)] = &[
         "",
         "Invalid oval drill format specified\n",
     ),
-    (&["pcb", "export", "drill", "--map-format", "x", "B"], 1, "", "Invalid map format specified\n"),
-    (&["pcb", "export", "drill", "--drill-origin", "x", "B"], 1, "", "Invalid origin mode specified\n"),
+    (
+        &["pcb", "export", "drill", "--map-format", "x", "B"],
+        1,
+        "",
+        "Invalid map format specified\n",
+    ),
+    (
+        &["pcb", "export", "drill", "--drill-origin", "x", "B"],
+        1,
+        "",
+        "Invalid origin mode specified\n",
+    ),
     (
         &["pcb", "export", "drill", "--gerber-precision", "4", "B"],
         1,
         "",
         "Gerber coordinate precision should be either 5 or 6\n",
     ),
-    (&["pcb", "drc", "MISSING.kicad_pcb"], 3, "", "Failed to load board\n"),
+    (
+        &["pcb", "drc", "MISSING.kicad_pcb"],
+        3,
+        "",
+        "Failed to load board\n",
+    ),
     (
         &["pcb", "upgrade", "MISSING.kicad_pcb"],
         3,
@@ -307,7 +448,11 @@ fn argument_errors() {
         if let Some(oracle) = kicad_qa::oracle_cli() {
             let o = run_in(&dir, &oracle, &args);
             assert_eq!(o.code, *code, "oracle {args:?}");
-            assert_eq!(first_line(&o.stdout), first_line(&r.stdout), "oracle {args:?}");
+            assert_eq!(
+                first_line(&o.stdout),
+                first_line(&r.stdout),
+                "oracle {args:?}"
+            );
         }
     }
 }
@@ -351,12 +496,19 @@ fn produced_files(dir: &Path, inputs: &[&str]) -> BTreeMap<String, Vec<u8>> {
 fn compare_with_oracle(name: &str, board_rel: &str, args: &[&str]) -> Outcome {
     let mine = scratch(&format!("{name}-rs"));
     let board = copy_board(&mine, board_rel);
-    let args: Vec<&str> = args.iter().map(|a| if *a == "B" { board.as_str() } else { a }).collect();
+    let args: Vec<&str> = args
+        .iter()
+        .map(|a| if *a == "B" { board.as_str() } else { a })
+        .collect();
     let inputs = [board.as_str()];
     let r = run_in(&mine, Path::new(BIN), &args);
 
     if r.stderr.contains("kicad-rs: not yet ported: ") {
-        assert_eq!(r.code, kicad_session::exit_codes::NOT_YET_PORTED, "{args:?}");
+        assert_eq!(
+            r.code,
+            kicad_session::exit_codes::NOT_YET_PORTED,
+            "{args:?}"
+        );
         let subsystem = r.stderr.lines().last().unwrap_or("").to_string();
         return Outcome::Pending(subsystem);
     }
@@ -375,7 +527,11 @@ fn compare_with_oracle(name: &str, board_rel: &str, args: &[&str]) -> Outcome {
     // to the fab / drc packages. Until then the set of files must match.
     let a = produced_files(&mine, &inputs);
     let b = produced_files(&theirs, &inputs);
-    assert_eq!(a.keys().collect::<Vec<_>>(), b.keys().collect::<Vec<_>>(), "{args:?} files");
+    assert_eq!(
+        a.keys().collect::<Vec<_>>(),
+        b.keys().collect::<Vec<_>>(),
+        "{args:?} files"
+    );
     Outcome::Compared
 }
 
@@ -389,12 +545,45 @@ const BOARDS: &[&str] = &[
 fn board_jobs_pending_or_equal() {
     let jobs: &[(&str, &[&str])] = &[
         ("drc", &["pcb", "drc", "B"]),
-        ("drc-json", &["pcb", "drc", "--format", "json", "--units", "mils", "B"]),
+        (
+            "drc-json",
+            &["pcb", "drc", "--format", "json", "--units", "mils", "B"],
+        ),
         ("gerbers", &["pcb", "export", "gerbers", "-o", "gbr", "B"]),
-        ("gerbers-layers", &["pcb", "export", "gerbers", "-o", "gbr", "-l", "F.Cu,Edge.Cuts", "B"]),
+        (
+            "gerbers-layers",
+            &[
+                "pcb",
+                "export",
+                "gerbers",
+                "-o",
+                "gbr",
+                "-l",
+                "F.Cu,Edge.Cuts",
+                "B",
+            ],
+        ),
         ("drill", &["pcb", "export", "drill", "-o", "drl", "B"]),
-        ("drill-gerber", &["pcb", "export", "drill", "--format", "gerber", "-o", "drl", "B"]),
-        ("svg", &["pcb", "export", "svg", "--mode-multi", "-l", "F.Cu", "-o", "svg", "B"]),
+        (
+            "drill-gerber",
+            &[
+                "pcb", "export", "drill", "--format", "gerber", "-o", "drl", "B",
+            ],
+        ),
+        (
+            "svg",
+            &[
+                "pcb",
+                "export",
+                "svg",
+                "--mode-multi",
+                "-l",
+                "F.Cu",
+                "-o",
+                "svg",
+                "B",
+            ],
+        ),
         ("upgrade", &["pcb", "upgrade", "--force", "B"]),
     ];
 
@@ -421,7 +610,11 @@ fn fp_upgrade_pending_or_equal() {
         std::fs::copy(e.path(), copy.join(e.file_name())).unwrap();
     }
 
-    let r = run_in(&dir, Path::new(BIN), &["fp", "upgrade", "-o", "out.pretty", "fp.pretty"]);
+    let r = run_in(
+        &dir,
+        Path::new(BIN),
+        &["fp", "upgrade", "-o", "out.pretty", "fp.pretty"],
+    );
 
     if r.stderr.contains("not yet ported") {
         assert_eq!(r.code, kicad_session::exit_codes::NOT_YET_PORTED);
@@ -430,7 +623,11 @@ fn fp_upgrade_pending_or_equal() {
     }
 
     // The checks that need no parser behave like the C++.
-    let r = run_in(&dir, Path::new(BIN), &["fp", "upgrade", "-o", "fp.pretty", "fp.pretty"]);
+    let r = run_in(
+        &dir,
+        Path::new(BIN),
+        &["fp", "upgrade", "-o", "fp.pretty", "fp.pretty"],
+    );
     assert_eq!(
         (r.code, r.stderr.as_str()),
         (4, "Output path must not conflict with existing path\n")
@@ -439,11 +636,18 @@ fn fp_upgrade_pending_or_equal() {
     let r = run_in(&dir, Path::new(BIN), &["fp", "upgrade", "empty"]);
     assert_eq!(
         (r.code, r.stderr.as_str()),
-        (4, "Output path must be specified to convert legacy and non-KiCad libraries\n")
+        (
+            4,
+            "Output path must be specified to convert legacy and non-KiCad libraries\n"
+        )
     );
 
     if let Some(oracle) = kicad_qa::oracle_cli() {
-        let o = run_in(&dir, &oracle, &["fp", "upgrade", "-o", "fp.pretty", "fp.pretty"]);
+        let o = run_in(
+            &dir,
+            &oracle,
+            &["fp", "upgrade", "-o", "fp.pretty", "fp.pretty"],
+        );
         assert_eq!(o.code, 4);
         let o = run_in(&dir, &oracle, &["fp", "upgrade", "empty"]);
         assert_eq!(o.code, 4);

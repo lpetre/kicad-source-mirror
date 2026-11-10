@@ -76,7 +76,11 @@ fn layer_arguments_match_kicad_cli() {
     let enabled: Lset = cases[0]
         .plotted
         .iter()
-        .map(|s| *all.iter().find(|l| suffix(**l) == *s).unwrap_or_else(|| panic!("{s}")))
+        .map(|s| {
+            *all.iter()
+                .find(|l| suffix(**l) == *s)
+                .unwrap_or_else(|| panic!("{s}"))
+        })
         .collect();
 
     for case in &cases {

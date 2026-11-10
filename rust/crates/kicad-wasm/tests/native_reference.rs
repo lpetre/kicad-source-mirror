@@ -55,7 +55,11 @@ fn boolean_cases() -> Vec<(Vec<api::JsPolygon>, Vec<api::JsPolygon>, &'static st
         square(-20_000_000, -20_000_000, 40_000_000),
         square(-10_000_000, -10_000_000, 20_000_000),
     ]];
-    let tri = vec![vec![vec![[0, -30_000_000], [26_000_000, 15_000_000], [-26_000_000, 15_000_000]]]];
+    let tri = vec![vec![vec![
+        [0, -30_000_000],
+        [26_000_000, 15_000_000],
+        [-26_000_000, 15_000_000],
+    ]]];
 
     let mut cases = Vec::new();
 
@@ -118,7 +122,8 @@ fn reference() -> Value {
 
 #[test]
 fn native_reference_is_current() {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/native_reference.json");
+    let path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/native_reference.json");
     let current = serde_json::to_string(&reference()).unwrap() + "\n";
 
     if std::env::var_os("KICAD_WASM_UPDATE_GOLDEN").is_some() {

@@ -1,0 +1,43 @@
+{
+  "board": { "design_settings": { "rules": { "min_clearance": 0.1 } } },
+  "meta": { "filename": "v5_full.kicad_pro", "version": 4 },
+  "net_settings": {
+    "meta": { "version": 5 },
+    "unknown_key": { "keep": true },
+    "classes": [
+      { "name": "Default", "clearance": 0.2, "track_width": 0.2, "via_diameter": 0.6, "via_drill": 0.3,
+        "microvia_diameter": 0.3, "microvia_drill": 0.1, "diff_pair_width": 0.2, "diff_pair_gap": 0.25,
+        "diff_pair_via_gap": 0.25, "wire_width": 6, "bus_width": 12, "line_style": 0,
+        "pcb_color": "rgba(0, 0, 0, 0.000)", "schematic_color": "rgba(0, 0, 0, 0.000)", "priority": 2147483647, "tuning_profile": "" },
+      { "name": "Big", "priority": 1e20, "clearance": 1e30, "track_width": -1e30, "via_diameter": 2147.483647,
+        "via_drill": -0.0000005, "microvia_diameter": 0.0000005, "wire_width": 1e12, "bus_width": -7.9, "line_style": 3.9,
+        "diff_pair_width": true, "diff_pair_gap": "0.2", "diff_pair_via_gap": null, "tuning_profile": "TP\u0000hidden",
+        "pcb_color": "#FF0000", "schematic_color": 5 },
+      { "name": "Frac", "priority": -3.7, "clearance": 0.1234565, "track_width": 0.0000004999, "via_diameter": 3,
+        "wire_width": 6.99, "bus_width": 9223372036854775807, "line_style": -2, "pcb_color": "rgb(10, 20, 30)", "schematic_color": "garbage" },
+      { "name": "Dup", "clearance": 1 },
+      { "name": "Dup", "clearance": 2 },
+      { "name": "Nul\u0000Tail", "clearance": 3 },
+      { "name": "Unicode_éµ", "priority": 18446744073709551615 },
+      { "name": "Default\u0000x", "clearance": 0.9 }
+    ],
+    "net_colors": { "/b": "rgb(0, 255, 0)", "/a": "rgba(1, 2, 3, 0.5)", "/c\u0000d": "#123456" },
+    "net_chain_classes": { "C1": "DDR", "C2": "", "C\u0000x": "Y", "C3": "Z" },
+    "net_chain_netclasses": { "C1": "HS", "Q": "" },
+    "netclass_assignments": { "/n1": [ "A", "B", "A" ], "/n2": "Solo", "/n3": null, "/n4": { "k1": "X", "k0": "W" }, "/n5": [], "/n\u0000x": [ "T" ] },
+    "netclass_patterns": [
+      { "pattern": "/D[0..3]", "netclass": "Big" },
+      { "pattern": "{A B}", "netclass": "Frac" },
+      { "pattern": "/HV*", "netclass": "Dup" },
+      { "pattern": "/HV*", "netclass": "Dup" },
+      { "pattern": "/HV*", "netclass": "Frac" },
+      { "pattern": "/x", "netclass": 5 },
+      { "netclass": "Big" },
+      "string entry",
+      { "pattern": "a\u0000b", "netclass": "Big" },
+      { "pattern": "/BUS{X Y Z}", "netclass": "Big" },
+      { "pattern": "+3V3", "netclass": "Frac" }
+    ]
+  },
+  "text_variables": { "A": "1" }
+}
