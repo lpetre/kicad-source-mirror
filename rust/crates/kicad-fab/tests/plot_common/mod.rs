@@ -73,6 +73,11 @@ pub fn load_board(path: &Path) -> Result<Board, String> {
         .set_project(project, Rc::new(RawDrcExclusionCodec))
         .map_err(|e| format!("{e:?}"))?;
 
+    // Every kicad-cli plot goes through `PCB_PLOTTER::Plot`, which starts with
+    // `RefreshGeneratedTables( *m_board )` (drill charts, stack-up tables); the port's
+    // `pcb_plotter::plot` leaves that to the caller (FAB-13).
+    kicad_pcb::board_tables::refresh_generated_tables(&mut board);
+
     Ok(board)
 }
 
