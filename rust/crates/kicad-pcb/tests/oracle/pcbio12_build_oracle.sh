@@ -30,7 +30,8 @@ mkdir -p "$obj"
 eval "CFLAGS=( $(cat "$dump_obj/cflags.txt") )"
 kicad=$(cd "$here/../../../../.." && pwd)
 CFLAGS+=( -I"$kicad/qa/qa_utils/include" -I"$kicad/qa/pcbnew_utils/include" -I"$kicad/qa/mocks/include"
-          -Wno-shadow -Wno-unused-variable )
+          -I"$kicad/thirdparty/turtle" -I"$kicad/pcbnew/router" -I"$kicad/pcbnew/tools"
+          $(pkg-config --cflags gtk+-3.0) -Wno-shadow -Wno-unused-variable )
 
 flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 \
     c++ "${CFLAGS[@]}" -c "$here/pcbio12_resave.cpp" -o "$obj/pcbio12_resave.o"

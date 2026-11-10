@@ -263,7 +263,9 @@ impl Board {
             if follows_transform(item.kind()) {
                 self.drawing_on_footprint_transformed(item, &env);
             } else {
-                self.with_leaf(item, |leaf| leaf.rotate(&env, rotation_center, angle_change));
+                self.with_leaf(item, |leaf| {
+                    leaf.rotate(&env, rotation_center, angle_change)
+                });
             }
         }
 
@@ -677,7 +679,6 @@ mod tests {
     use crate::board::AddMode;
     use crate::ctx::BoardCtx;
     use crate::eda_shape::ShapeT;
-    use crate::traits::EdaTextItem;
     use crate::item_ref::OwnedItem;
     use crate::pad::Pad;
     use crate::padstack::{PadAttrib, PadShape};
@@ -685,6 +686,7 @@ mod tests {
     use crate::pcb_shape::PcbShape;
     use crate::pcb_text::PcbText;
     use crate::traits::BoardItem;
+    use crate::traits::EdaTextItem;
     use kicad_core::Lset;
 
     /// `new FOOTPRINT( &board ); board.Add( fp )`.
@@ -924,7 +926,12 @@ mod tests {
         board.footprint_set_orientation(fp, EdaAngle::from_degrees(30.0));
 
         let coincident = Vector2I::new(53_000_000, 51_000_000);
-        let pad = add_smd_pad(&mut board, fp, coincident, Vector2I::new(1_000_000, 1_000_000));
+        let pad = add_smd_pad(
+            &mut board,
+            fp,
+            coincident,
+            Vector2I::new(1_000_000, 1_000_000),
+        );
 
         let env = board.child_env(ParentRef::Item(fp.into()));
         let mut seg = PcbShape::new(&mut board.kiid_generator, ShapeT::Segment);
@@ -1012,8 +1019,13 @@ mod tests {
 
         let ctx = BoardCtx::bare(&board);
         assert_eq!(board[fp].layer(&ctx), PcbLayerId::BCu);
-        let reference = board[fp].field(&ctx, crate::pcb_field::FieldT::Reference).unwrap();
-        assert_eq!(ctx.item(reference.into()).unwrap().layer(), PcbLayerId::BSilkS);
+        let reference = board[fp]
+            .field(&ctx, crate::pcb_field::FieldT::Reference)
+            .unwrap();
+        assert_eq!(
+            ctx.item(reference.into()).unwrap().layer(),
+            PcbLayerId::BSilkS
+        );
         let pad_layers: Lset = board[pad].layer_set(&ctx);
         for layer in [PcbLayerId::BCu, PcbLayerId::BPaste, PcbLayerId::BMask] {
             assert!(pad_layers.contains(layer));
@@ -1070,7 +1082,9 @@ mod tests {
     /// the text width 1000001 is the parser's round trip through the board frame, deduced from
     /// its `text_size`).
     fn build_cascade_footprint(board: &mut Board, prefix: &str, flip: bool) -> FootprintId {
-        let uuid = |n: u32| kicad_core::Kiid::parse(&format!("{prefix}-0000-4000-8000-00000000000{n}")).unwrap();
+        let uuid = |n: u32| {
+            kicad_core::Kiid::parse(&format!("{prefix}-0000-4000-8000-00000000000{n}")).unwrap()
+        };
         let mm = |v: f64| (v * 1_000_000.0).round() as i32;
         let fp = board.create_footprint();
         board.rebind_item_uuid(fp.into(), uuid(0));
@@ -1081,9 +1095,17 @@ mod tests {
         // board angle 0 in the placed footprint = library angle -30
         let ctx = BoardCtx::bare(board);
         let fields = [
-            (board[fp].field(&ctx, crate::pcb_field::FieldT::Reference).unwrap(), "R1", -2.5),
             (
-                board[fp].field(&ctx, crate::pcb_field::FieldT::Value).unwrap(),
+                board[fp]
+                    .field(&ctx, crate::pcb_field::FieldT::Reference)
+                    .unwrap(),
+                "R1",
+                -2.5,
+            ),
+            (
+                board[fp]
+                    .field(&ctx, crate::pcb_field::FieldT::Value)
+                    .unwrap(),
                 "V",
                 if flip { -2.5 } else { 2.5 },
             ),
@@ -1201,8 +1223,11 @@ mod tests {
         for line in golden.lines().filter(|l| !l.starts_with('#')) {
             let (head, value) = line.split_once('=').unwrap();
             let mut parts = head.split('|');
-            let (section, key, field) =
-                (parts.next().unwrap(), parts.next().unwrap(), parts.next().unwrap());
+            let (section, key, field) = (
+                parts.next().unwrap(),
+                parts.next().unwrap(),
+                parts.next().unwrap(),
+            );
             let item = ctx.resolve(&kicad_core::Kiid::parse(key).unwrap()).unwrap();
             let ok = match (section, field) {
                 ("footprint", _) => {
@@ -1249,9 +1274,7 @@ mod tests {
                         "shape" => format!("{:?}", s.shape.shape()).to_uppercase() == value,
                         "start" if segment => pt(s.shape.start()) == value,
                         "end" if segment => pt(s.shape.end()) == value,
-                        "width" => {
-                            crate::traits::EdaShapeItem::width(s, &ctx).to_string() == value
-                        }
+                        "width" => crate::traits::EdaShapeItem::width(s, &ctx).to_string() == value,
                         "lib.shape" => format!("{:?}", s.lib.shape).to_uppercase() == value,
                         "lib.start" => pt(s.lib.start) == value,
                         "lib.end" => pt(s.lib.end) == value,

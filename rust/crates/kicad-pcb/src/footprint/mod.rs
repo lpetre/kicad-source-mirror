@@ -34,7 +34,9 @@ pub mod transform;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
-use kicad_core::case_insensitive_map::{CaseInsensitiveKey, CaseInsensitiveMap, case_insensitive_cmp};
+use kicad_core::case_insensitive_map::{
+    CaseInsensitiveKey, CaseInsensitiveMap, case_insensitive_cmp,
+};
 use kicad_core::layer_ids::{is_copper_layer, is_valid_layer};
 use kicad_core::lib_id::get_lib_filename_forbidden_chars;
 use kicad_core::string_utils::{get_default_variant_name, get_trailing_int};
@@ -52,17 +54,17 @@ use crate::component_class::{ComponentClass, ComponentClassCache};
 use crate::ctx::BoardCtx;
 use crate::drc_api::DrcConstraintT;
 use crate::embedded_files::EmbeddedFiles;
+use crate::ids::ItemKind;
 use crate::ids::{
     Body3dId, ConstraintId, FieldId, FootprintId, GroupId, ItemId, NetCode, PadId, PointId, ZoneId,
 };
-use crate::ids::ItemKind;
 use crate::item::{BoardItemBase, BoardUse, ItemFlags, RecurseMode, SharedShape};
 use crate::item_ref::ItemRef;
 use crate::padstack::{PadAttrib, PadProp};
 use crate::pcb_field::FieldT;
 use crate::traits::{BoardConnectedItem, BoardItem, Flashing, Invalidate};
-use crate::{board_connected_item, board_item};
 use crate::zone_settings::ZoneConnection;
+use crate::{board_connected_item, board_item};
 
 /// `FOOTPRINT`.
 #[derive(Clone, Debug)]
@@ -532,10 +534,11 @@ impl Footprint {
     /// `GetField( FIELD_T )` (const overload): the first field with this id, `None` when it is
     /// missing (the non-const overload creates it; see `PORT_STATUS.md`).
     pub fn field(&self, ctx: &BoardCtx<'_>, field_type: FieldT) -> Option<FieldId> {
-        self.fields
-            .iter()
-            .copied()
-            .find(|&id| ctx.board.field(id).is_some_and(|f| f.field_id() == field_type))
+        self.fields.iter().copied().find(|&id| {
+            ctx.board
+                .field(id)
+                .is_some_and(|f| f.field_id() == field_type)
+        })
     }
 
     /// The text of a mandatory field (`Reference().GetText()` etc.); empty when the field is
@@ -921,7 +924,8 @@ impl Footprint {
         }
 
         let sheet = &sheet_path[1..];
-        self.path.len() + 1 >= sheet_path.len() && self.path.len() >= sheet.len()
+        self.path.len() + 1 >= sheet_path.len()
+            && self.path.len() >= sheet.len()
             && self.path[..sheet.len()] == *sheet
     }
 
@@ -1235,12 +1239,8 @@ impl Footprint {
             .field_by_name(ctx, token)
             .and_then(|id| ctx.board.field(id))
         {
-            *token = field.shown_text_for_variant(
-                ctx,
-                variant,
-                ResolutionContext::Internal,
-                depth + 1,
-            );
+            *token =
+                field.shown_text_for_variant(ctx, variant, ResolutionContext::Internal, depth + 1);
             return true;
         } else if token.starts_with("PROPERTY.") {
             // The great property resolver (PROPERTY_MANAGER): not ported, unresolved.
@@ -1282,14 +1282,20 @@ impl Footprint {
 
     /// `FindPadByUuid( aUuid )`.
     pub fn find_pad_by_uuid(&self, ctx: &BoardCtx<'_>, uuid: &Kiid) -> Option<PadId> {
-        self.pads
-            .iter()
-            .copied()
-            .find(|&id| ctx.board.pad(id).is_some_and(|p| BoardItem::uuid(p) == uuid))
+        self.pads.iter().copied().find(|&id| {
+            ctx.board
+                .pad(id)
+                .is_some_and(|p| BoardItem::uuid(p) == uuid)
+        })
     }
 
     /// `GetPad( aPosition, aLayerMask )`: the first pad on one of `layer_mask` hit at `pos`.
-    pub fn get_pad_at(&self, ctx: &BoardCtx<'_>, pos: Vector2I, layer_mask: &Lset) -> Option<PadId> {
+    pub fn get_pad_at(
+        &self,
+        ctx: &BoardCtx<'_>,
+        pos: Vector2I,
+        layer_mask: &Lset,
+    ) -> Option<PadId> {
         for &id in &self.pads {
             let Some(pad) = ctx.board.pad(id) else {
                 continue;
@@ -1457,7 +1463,9 @@ impl Footprint {
 
     /// `IsNetTie()`: the footprint has a non-empty net-tie pad group.
     pub fn is_net_tie(&self) -> bool {
-        self.net_tie_pad_groups.iter().any(|group| !group.is_empty())
+        self.net_tie_pad_groups
+            .iter()
+            .any(|group| !group.is_empty())
     }
 
     /// `MapPadNumbersToNetTieGroups()`: pad number -> group index (-1: none). Every pad
@@ -1566,7 +1574,10 @@ impl Footprint {
         }
 
         if !manager.assignment_rules.is_empty() {
-            crate::port_pending!("COMPONENT_CLASS_ASSIGNMENT_RULE::Matches (GetComponentClass)", ctx)
+            crate::port_pending!(
+                "COMPONENT_CLASS_ASSIGNMENT_RULE::Matches (GetComponentClass)",
+                ctx
+            )
         }
 
         let mut scratch = manager.clone();
@@ -1712,7 +1723,10 @@ impl Board {
     }
 
     /// The body of `BuildNetTieCache` against the unmodified board.
-    fn compute_net_tie_cache(&self, fp: FootprintId) -> Option<BTreeMap<ItemId, BTreeSet<NetCode>>> {
+    fn compute_net_tie_cache(
+        &self,
+        fp: FootprintId,
+    ) -> Option<BTreeMap<ItemId, BTreeSet<NetCode>>> {
         let ctx = BoardCtx::bare(self);
         let footprint = self.footprints.get(fp)?;
         let mut cache: BTreeMap<ItemId, BTreeSet<NetCode>> = BTreeMap::new();
@@ -1806,8 +1820,11 @@ impl Board {
                     let Some(shape_ref) = ctx.item(other_shape) else {
                         continue;
                     };
-                    let shape =
-                        shape_ref.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+                    let shape = shape_ref.effective_shape(
+                        layer,
+                        Flashing::Default,
+                        DrcConstraintT::NullConstraint,
+                    );
 
                     if pad_shape.collide(&*shape, 0, None, None) {
                         let nettie = cache.entry(pad.into()).or_default().clone();
@@ -2034,7 +2051,13 @@ mod tests {
     }
 
     /// A pad with `number` on `layers` (APPEND).
-    fn add_pad(board: &mut Board, fp: FootprintId, number: &str, layers: Lset, net: NetCode) -> PadId {
+    fn add_pad(
+        board: &mut Board,
+        fp: FootprintId,
+        number: &str,
+        layers: Lset,
+        net: NetCode,
+    ) -> PadId {
         let env = board.child_env(crate::item::ParentRef::Item(fp.into()));
         let mut pad = crate::pad::Pad::new(&mut board.kiid_generator);
         BoardItem::base_mut(&mut pad).parent = crate::item::ParentRef::Item(fp.into());
@@ -2091,8 +2114,12 @@ mod tests {
         assert!(!fp.dnp_for_variant("PrOdUcTiOn"));
         assert!(fp.dnp_for_variant("Debug"));
         assert!(fp.dnp_for_variant("NonExistentVariant"));
-        assert!(fp.excluded_from_bom_for_variant("PRODUCTION") && !fp.excluded_from_bom_for_variant(""));
-        assert!(fp.excluded_from_sim_for_variant("Production") && !fp.excluded_from_sim_for_variant(""));
+        assert!(
+            fp.excluded_from_bom_for_variant("PRODUCTION") && !fp.excluded_from_bom_for_variant("")
+        );
+        assert!(
+            fp.excluded_from_sim_for_variant("Production") && !fp.excluded_from_sim_for_variant("")
+        );
         assert!(fp.excluded_from_pos_files_for_variant("Production"));
         assert!(!fp.excluded_from_pos_files_for_variant("Debug"));
 
@@ -2132,7 +2159,10 @@ mod tests {
         fp.rename_variant("ALPHA", "Gamma");
         assert!(!fp.has_variant("Alpha"));
         let gamma = fp.variant("gamma").unwrap();
-        assert_eq!((gamma.name.as_str(), gamma.field_value("Value").as_str()), ("Gamma", "1k"));
+        assert_eq!(
+            (gamma.name.as_str(), gamma.field_value("Value").as_str()),
+            ("Gamma", "1k")
+        );
 
         fp.delete_variant("GAMMA");
         assert!(!fp.has_variant("Gamma") && fp.has_variant("Beta"));
@@ -2170,13 +2200,19 @@ mod tests {
 
         assert_eq!(resolve("DNP", None), (true, "DNP".to_string()));
         assert_eq!(resolve("DNP", Some("")), (true, String::new()));
-        assert_eq!(resolve("EXCLUDE_FROM_SIM", None), (true, "Excluded from simulation".to_string()));
+        assert_eq!(
+            resolve("EXCLUDE_FROM_SIM", None),
+            (true, "Excluded from simulation".to_string())
+        );
         assert_eq!(resolve("EXCLUDE_FROM_SIM", Some("")), (true, String::new()));
         assert_eq!(resolve("EXCLUDE_FROM_BOARD", None), (true, String::new()));
         assert_eq!(resolve("EXCLUDE_FROM_BOM", None), (true, String::new()));
         assert_eq!(resolve("LAYER", None), (true, "F.Cu".to_string()));
         assert_eq!(resolve("NOT_A_VAR", Some("")).0, false);
-        assert_eq!(f.field_value_for_variant(&ctx, "production", "Value"), "22k");
+        assert_eq!(
+            f.field_value_for_variant(&ctx, "production", "Value"),
+            "22k"
+        );
         assert_eq!(f.field_value_for_variant(&ctx, "", "Value"), "10k");
         assert_eq!(f.field_value_for_variant(&ctx, "Debug", "Value"), "10k");
         assert_eq!(f.field_value_for_variant(&ctx, "Production", "Missing"), "");
@@ -2193,7 +2229,10 @@ mod tests {
         assert!(f.has_field(&ctx, "Datasheet") && !f.has_field(&ctx, "datasheet"));
         assert_eq!(f.next_field_ordinal(&ctx), 42);
         assert_eq!(f.reference(&ctx), "");
-        let units = UnitsProvider::new(&kicad_core::base_units::PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        let units = UnitsProvider::new(
+            &kicad_core::base_units::PCB_IU_SCALE,
+            kicad_core::EdaUnits::Mm,
+        );
         assert_eq!(
             f.item_description(&ctx, &units, true),
             "Footprint <no reference designator>"
@@ -2226,7 +2265,13 @@ mod tests {
         add_pad(&mut board, fp, "", cu.clone(), NetCode(0));
         add_pad(&mut board, fp, "A12_B1", cu.clone(), NetCode(0));
         add_pad(&mut board, fp, "MP", cu.clone(), NetCode(0));
-        add_pad(&mut board, fp, "PASTE", Lset::from_layers(&[PcbLayerId::FPaste]), NetCode(0));
+        add_pad(
+            &mut board,
+            fp,
+            "PASTE",
+            Lset::from_layers(&[PcbLayerId::FPaste]),
+            NetCode(0),
+        );
         let ctx = BoardCtx::bare(&board);
         let f = &board[fp];
 
@@ -2278,7 +2323,10 @@ mod tests {
         let ctx = BoardCtx::bare(&board);
         let f = &board[fp];
         assert!(f.is_net_tie());
-        let map: Vec<(String, i32)> = f.map_pad_numbers_to_net_tie_groups(&ctx).into_iter().collect();
+        let map: Vec<(String, i32)> = f
+            .map_pad_numbers_to_net_tie_groups(&ctx)
+            .into_iter()
+            .collect();
         let expected: Vec<(String, i32)> = [("1", 0), ("2", 0), ("3", -1), ("X", 1), ("a,b", 1)]
             .iter()
             .map(|(k, v)| (k.to_string(), *v))
@@ -2290,7 +2338,12 @@ mod tests {
 
         board.build_net_tie_cache(fp);
         let f = &board[fp];
-        let nets = |id: PadId| f.net_tie_cache(id.into()).iter().map(|n| n.0).collect::<Vec<_>>();
+        let nets = |id: PadId| {
+            f.net_tie_cache(id.into())
+                .iter()
+                .map(|n| n.0)
+                .collect::<Vec<_>>()
+        };
         assert_eq!(nets(p1), vec![1, 2]);
         assert_eq!(nets(p2), vec![1, 2]);
         assert!(nets(p3).is_empty() && nets(pc).is_empty());
@@ -2298,11 +2351,19 @@ mod tests {
         let mut jumpers = JumperGroupSet::default();
         jumpers.add_names(["".to_string()].into_iter().collect());
         assert!(jumpers.is_empty());
-        jumpers.add_names(["1".to_string(), "3".to_string(), String::new()].into_iter().collect());
+        jumpers.add_names(
+            ["1".to_string(), "3".to_string(), String::new()]
+                .into_iter()
+                .collect(),
+        );
         assert_eq!(jumpers.all().len(), 1);
         assert_eq!(jumpers.all()[0].names().len(), 2);
         board.modify_footprint(fp, |f, _| f.jumper_pad_groups = jumpers.clone());
-        assert!(board[fp].jumper_pad_group("3").is_some_and(|g| g.contains("1")));
+        assert!(
+            board[fp]
+                .jumper_pad_group("3")
+                .is_some_and(|g| g.contains("1"))
+        );
         assert!(board[fp].jumper_pad_group("2").is_none());
     }
 
@@ -2311,11 +2372,19 @@ mod tests {
     #[test]
     fn children_layers_uuids_and_helpers() {
         let (mut board, fp) = board_with_fp();
-        let pad = add_pad(&mut board, fp, "1", Lset::from_layers(&[PcbLayerId::BCu]), NetCode(0));
+        let pad = add_pad(
+            &mut board,
+            fp,
+            "1",
+            Lset::from_layers(&[PcbLayerId::BCu]),
+            NetCode(0),
+        );
         let ctx = BoardCtx::bare(&board);
         let f = &board[fp];
         let mut kinds = Vec::new();
-        f.run_on_children(&ctx, RecurseMode::Recurse, &mut |item| kinds.push(item.type_()));
+        f.run_on_children(&ctx, RecurseMode::Recurse, &mut |item| {
+            kinds.push(item.type_())
+        });
         assert_eq!(kinds.len(), 5);
         assert_eq!(kinds[4], KicadT::PcbPadT);
         assert!(f.is_on_layer(&ctx, PcbLayerId::BCu)); // the pad
@@ -2340,7 +2409,10 @@ mod tests {
         f.set_dnp(false);
         assert!(!f.is_dnp() && f.is_excluded_from_sim());
         f.set_footprint_type(FootprintType::Smd);
-        assert_eq!((f.footprint_type(), f.type_name()), (FootprintType::Smd, "SMD"));
+        assert_eq!(
+            (f.footprint_type(), f.type_name()),
+            (FootprintType::Smd, "SMD")
+        );
         f.set_footprint_type(FootprintType::Unspecified);
         assert_eq!(f.footprint_type(), FootprintType::Unspecified);
         f.set_is_placed(true);

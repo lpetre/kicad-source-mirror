@@ -2393,3 +2393,131 @@ Files: `src/io/parser/netclass_embedded.rs`, `src/io/writer/netclass_embedded.rs
 - Footprint-level embedded files: PCBIO-06 must call `parse_footprint_embedded_fonts` /
   `parse_footprint_embedded_files` with the footprint's `embedded_files`; the corpus test then
   checks issue25265 / issue25303 automatically.
+
+## Package M11: text boxes and tables (PCB_TEXTBOX, PCB_TABLE, PCB_TABLECELL)
+
+### C++ to Rust map
+
+| C++ | Rust | state |
+|---|---|---|
+| `PCB_TEXTBOX` overrides (`GetTopLeft/BotRight`, `GetCorners`, `GetCornersInSequence`, `SetTop/Left/Right/Bottom`, `SetShape`, `GetMinSize`, `GetLegacyTextMargin`, `GetDrawPos( aIsFlipped )`, `GetTextAngle/Size/Thickness` and setters, `GetShownText` (resolver + `LinebreakText`), `Move`, `Rotate`, `Mirror` (both), `Flip`, `OnFootprintTransformed/Rescaled`, `syncLibCoords`, `GetBoundingBox`, `HitTest` (point, rect), `GetItemDescription`, `GetEffectiveShape`, `GetPolygonalBoxShape`, `TransformTextToPolySet`, `TransformShapeToPolygon`, `StyleFromSettings`, `Is/SetBorderEnabled`, `Get/SetBorderWidth`) | `pcb_textbox.rs` (`PcbTextbox` methods; read-only bodies as generic functions over `TextboxHost`, shared with cells) | ported |
+| `PCB_SHAPE` bodies inherited by text boxes that reach a textbox override (`SetStart/End/Center/CornerRadius/ArcGeometry/ArcAngleAndEnd/BezierC1/C2/Ellipse*/PolyShape` with the textbox `syncLibCoords`, `Normalize`, `GetEffectiveShape`, `GetSolderMaskExpansion` with the box as `this`, `TransformShapeToPolySet`, `getHatchingKnockouts`) | `pcb_textbox.rs` | ported |
+| `PCB_TABLECELL` (`GetRow/GetColumn/GetAddr`, `GetUnwrappedShownText`, `GetShownText`, `GetRowHeight/GetColumnWidth`, `GetItemDescription`, the textbox bodies over the cell, setter forwards) | `pcb_tablecell.rs` | ported |
+| `PCB_TABLE` read side (`GetPosition`, `GetEnd`, `GetBoundingBox`, `DrawBorders` as a callback, `GetEffectiveShape`, `HitTest`, `RunOnChildren`, `TransformShapeToPolygon`, `TransformShapeToPolySet` / `TransformGraphicItemsToPolySet` without render settings, `GetItemDescription`, `Compare`, `GetBorderStyle/GetSeparatorsStyle`, `setAutosizedRowHeights`, the sizing part of `Autosize`) | `pcb_table.rs` (`PcbTable`) | ported |
+| `PCB_TABLE::Normalize`, `Autosize`, `Rotate`, `Flip` (`mirrorCellColumns`), `Mirror`, `Move`, `SetLayer` (cells are arena items) | `pcb_table.rs` `impl Board`: `table_normalize`, `table_autosize`, `table_rotate`, `table_flip`, `table_mirror`; `Board::rotate_item / flip_item / mirror_item` (board_item.rs) dispatch tables there | ported |
+| `GENERATED_TABLE_SCHEMA` (`Find`, `FindToken`, `Token`, `DefaultColumn`, `Defaults`, `Validate`), `DrillChartSchema()`, `StackupTableSchema()`, `DRILL_CHART_COLUMN_ID`, `STACKUP_TABLE_COLUMN_ID`, units / align tokens, `GENERATED_TABLE_MAX_*`, `PCB_DRILL_CHART` / `PCB_STACKUP_TABLE` constructors, `AllColumns`, `RestoreColumns`, `SetPrecision` | `pcb_generated_table.rs` | ported |
+| `PCB_GENERATED_TABLE::setAutosizedRowHeights` override | `PcbTable::set_autosized_row_heights` | stub (M26: needs `IsDataRow` / `metricRowHeight` of the refresh) |
+| `FormatGeneratedTableLength`, `DocumentationLayers`, templates I/O, refresh | - | skipped here: tier 2 (M26) |
+| `PCB_TABLECELL::SetColumnWidth / SetRowHeight`, `FontChoices`, `GetMsgPanelInfo`, `Similarity`, `operator==`, `Serialize` (API) | - | not ported (property editor / UI / API) |
+
+### Tests
+
+* Ported from `qa/tests/pcbnew/test_pcb_textbox.cpp`: `GetMinSize*` (7 cases), `ThirtyDegreeIncrementsToCardinalKeepsVisualRotated`, `NonCardinalRotationDoesNotCrash`, `CardinalRotationsRoundTrip`, `NonCardinalRotationKeepsLibShapeRectangle` (`EmptyKnockoutPlotsTheBox` is plotting: plot packages). From `test_footprint_transform_sync.cpp`: `TableRotates90Cleanly`; the footprint-flip table cases (`TableFlip*`) need `FOOTPRINT::Flip` (M19, pending) and are covered by the oracle below instead (table `Flip` on a footprint child).
+* New: `grid_getters_and_stable_normalize` (Normalize stability, `GetEnd`, bbox, borders, row / column / addr), `footprint_child_sync_inverts_rebake`.
+* Differential oracle `tests/oracle/m11_oracle.cpp` + `m11_golden.sh` (links the pcb-dump objects of the reference build) -> `tests/golden/m11_boxes_tables.txt` (9403 values): tables (3 x 2, with and without a column span, board level and in a footprint rotated 30 degrees and scaled (1.5, 0.75)) and text boxes (board / footprint) under none / Rotate 30 / Rotate 90 / Flip LR / Flip TB / Mirror LR / Mirror TB / Rotate+Flip / Move / Autosize (tables) / SetTextAngle 45 / Rotate+Normalize (text boxes); per item start / end / lib frame / angles / draw position (also flipped) / corners / bbox / shown text (line breaks, `${ROW}` `${COL}` `${ADDR}`) / min size / effective shape / text polygons / box polygons; per table position / end / bbox / widths / heights / cell order / borders / effective shape / polygons. Replay: `cargo test -p kicad-pcb --features dump --lib m11_matches_oracle`: all 9403 values equal.
+* pcb-dump vs pcb-dump-rs (sections item, bbox, text, shape, misc) on scratch copies: `ipc2581/textbox-border`, `issue25074/knockout_textbox`, `odbpp/knockout_textbox_unicode`, `issue24442`, `incorrect_text_mirroring_drc`: 0 mismatch / 0 pending; `issue24525` (board tables incl. a 30 degree rotated one; barcode block removed from the scratch copy, M25 pending): 910 match, 0 mismatch, 6 pending (`table.end` / `border_style` / `separators_style` still `no_api` in `dump/defaults.rs`: change request). `embedded_table_rotated_legacy_v10` (footprint tables) does not load in Rust yet (footprint parser / transforms, M19 / PCBIO).
+
+### Deviations / notes
+
+* `EdaShapeItem::corners_in_sequence` has no context, so for a polygon box (a text box or cell in a footprint whose rotation is not cardinal, after `Flip`) the `EDA_SHAPE` body inflates by the stored width (M7 deviation). Every M11 body that has a context (corners, draw position, line breaking, table borders and effective shape) uses `corners_in_sequence_ctx`, which reads the virtual `GetWidth()` like C++; only callers of the context-free trait method see the M7 deviation.
+* Mutators read the parent frame from `MutEnv` (`GetParentFootprint()` / `GetOrientation()` = `ParentFrame::transform`). `IsSideSpecific()` in `PCB_TEXTBOX::Flip` uses the layer-set part only (as `PcbText::flip`): the board layer-type part needs layer types that `MutEnv` does not carry.
+* `PCB_TEXTBOX::StyleFromSettings` (no environment, as `PcbText`): size / thickness stored as given (footprint scale not stripped), the parent footprint is the direct parent (a footprint table's cell is not seen as in a footprint), the side is `IsBackLayer( GetLayer() )`.
+* `PcbTextbox::normalize()` without environment follows `PcbShape::normalize`: exact for board-level boxes, a footprint child / cell keeps its library frame. Table code and the oracle use `normalize_env`.
+* `PCB_TABLE::Normalize` reads widths / heights with `operator[]`, which stores 0 for a missing column / row: the Rust port does the same on copies and stores them with `modify_table`.
+* `PCB_TABLE::Autosize` is split: `PcbTable::autosize(&mut self, ctx)` sizes (run on a clone), `Board::table_autosize` stores and normalizes. `(int)` of the width sum uses `f64_to_i32_x86`.
+* A table without cells: `GetEffectiveShape` returns an empty compound and `Flip` (board level) does nothing, where the C++ dereferences null.
+* Cell `GetRow()` / `GetColumn()` return -1 for a cell that is not stored or has no parent table (C++: null dereference).
+
+### Known gaps / stubs left
+
+* `PcbTable::set_autosized_row_heights` for a generated table (`PCB_GENERATED_TABLE` override): `port_pending!` (M26).
+* `PCB_TABLE::Compare` is `PcbTable::compare(ctx, a, b)`; `board/compare.rs::pcb_table_compare` (M22) still calls its own stub (change request).
+
+## Package M19: footprint A (fields, variants, attributes, transform cascades, net ties)
+
+### C++ to Rust map (`pcbnew/footprint.cpp` / `footprint.h` unless stated)
+
+| C++ | Rust | State |
+|---|---|---|
+| `SetPosition`, `SetOrientation`, `Flip`, `SetTransformScale`, `RescaleAroundPoint`, `MoveAnchorPosition`, `SetLayerAndFlip`, `Move`, `Rotate`, `SetLayer` | `footprint/transform.rs` `Board::footprint_*` | ported: C++ child order per cascade, hooks (`OnFootprintTransformed`, `OnFootprintRescaled`, `Flip`, `Move`, `Rotate`, `KeepUpright`) through `as_leaf_mut` without `modify` bookkeeping, cache patching as C++; works on created-but-unattached footprints |
+| `PCB_TABLE::OnFootprintTransformed` / `OnFootprintRescaled` / `Move` inside the cascades | `transform.rs` (cell loops) | ported inline (the three bodies are one cell loop each); table `Flip` goes through `Board::flip_item` |
+| `GetField( FIELD_T )` const, `GetField( name )`, `HasField`, `GetFields`, `GetNextFieldOrdinal`, `GetReference`, `GetValue`, `IsAnnotated` | `Footprint::{field, field_by_name, has_field, fields_sorted, next_field_ordinal, reference, value, is_annotated}` | ported (`GetFields` sorts with `kicad_geom::stdsort`) |
+| variants: `GetVariant`, `SetVariant`, `AddVariant`, `DeleteVariant`, `RenameVariant`, `HasVariant`, `Get{DNP,ExcludedFromBOM,ExcludedFromSim,ExcludedFromPosFiles}ForVariant`, `GetFieldValueForVariant` | `Footprint::*` | ported |
+| attributes (`Set/Is` board-only, DNP, exclusions, placed), `GetFootprintType`, `SetFootprintType`, `GetTypeName`, `GetLikelyAttribute`, `HasThroughHolePads`, `SetStackupMode`, `SetStackupLayers`, `GetLocalClearance( aSource )`, `GetZoneConnectionOverrides`, `Add3DModel`, `IsConflicting`, `GetSide`, `IsWithinSchematicSheet` | `Footprint::*` | ported |
+| `GetContextualTextVars`, both `ResolveTextVar` | `contextual_text_vars`, `resolve_text_var`, `resolve_text_var_for_variant` | ported except `${PROPERTY.<name>}` (PROPERTY_MANAGER, not ported: unresolved) |
+| `IsOnLayer`, `RunOnChildren` (`ItemRef` form), `GetItemDescription`, `DisambiguateItemDescription`, `GetFPIDAsString` | `Footprint::*` | ported |
+| `FindPadByNumber`, `FindPadByUuid`, `GetPad( pos, mask )`, `GetPads`, `GetPadCount`, `GetUniquePadNumbers`, `GetUniquePadCount`, `GetNumberedPadCount`, `GetNextPadNumber` | `Footprint::*` | ported; `UTIL::GetRefDesPrefix` as `footprint::get_ref_des_prefix` |
+| `IsNetTie`, `MapPadNumbersToNetTieGroups`, `GetNetTiePads`, `GetNetTieCache`, `BuildNetTieCache` | `Footprint::*`, `Board::build_net_tie_cache` | ported |
+| `JUMPER_GROUP` / `JUMPER_GROUP_SET` (`common/jumper_group.cpp`) | `JumperGroup::{make, contains, names}`, `JumperGroupSet::{add, add_names, clear, all, is_empty, find_containing}`, `Footprint::jumper_pad_group` | ported |
+| `GetComponentClass`, `GetComponentClassAsString`, `InvalidateComponentClassCache`, `GetStaticComponentClass` | `Footprint::component_class` (`&self`), `Board::footprint_component_class` (manager updated in place) | ported; see deviations |
+| `FixUuids` | `Board::footprint_fix_uuids` | ported |
+| `IsLibNameValid`, `StringLibNameInvalidChars` | `Footprint::is_lib_name_valid`, `footprint::string_lib_name_invalid_chars` | ported |
+| non-const `GetField( FIELD_T )` (creates a missing mandatory field), `UpdateFields`, `ApplyDefaultSettings`, `AutoPositionFields`, `IncrementReference`, `ClearAllNets`, `GetArea`, `GetCoverageArea`, `CoverageRatio`, copy / move / `swapData`, `Duplicate*`, `Matches`, `Visit`, `Serialize`, `GetMsgPanelInfo`, `View*`, `GetSearchTerms` | - | not ported (editor / UI / geometry of M20, or need `BoardCommit`); `UpdateFields`' tests (`test_footprint.cpp`) therefore not ported |
+
+### Tests
+
+`footprint::transform::tests` (16): ports of `test_footprint_transform_sync.cpp`
+`DefaultIsIdentity`, `SetPositionUpdatesTransform`, `SetOrientationUpdatesTransform`,
+`MoveUpdatesTransform`, `RotateUpdatesTransform`, `SetLayerUpdatesFlipped`,
+`PadEffectiveShapeFollowsFootprintScale`, `PadBBoxFollowsFootprintMove` +
+`PadBBoxFollowsFootprintRotation`, `RescaleAroundPointMovesAnchorByExpectedDelta` +
+`RescaleAroundPointComposesScale` (footprint placed by hand instead of loading issue18),
+`MoveAnchorMovesPointsLikeOtherChildren`, `FlipNonCardinalKeepsPadAndShapeCoincident` (+ a
+double flip), `BoardlessFootprintFlip` (pad, shape, point, fields; on a board-owned footprint);
+new: cascades on an unattached footprint, cache patching / re-stamping, and the oracle replay
+`m19_oracle_cascades`. `footprint::tests` (11): `test_variant.cpp` `FootprintVariantBasics`,
+`FootprintDNPForVariant`, `FootprintBOMExclusionForVariant`, `FootprintSimExclusionForVariant`,
+`FootprintPosFileExclusionForVariant`, `VariantCaseInsensitivity`, `EmptyVariantReturnsBase`,
+`UnknownVariantReturnsBase`, `FootprintVariantTextVarResolution`, the footprint side of
+`RenameVariantPreservesData` / `VariantDeletionClearsRegistry`; new tests for fields, pad
+queries, net-tie groups / cache, jumper groups, children / layers / UUIDs / helpers, component
+class. Not ported: `test_footprint_net_tie.cpp` (needs the DRC engine), `test_footprint.cpp`
+(`UpdateFields`, bbox / hull: M20), `test_footprint_realignment.cpp` (needs the footprint
+library loader), `test_fields_table_presence.cpp` (fields-table UI model, nothing of it is in
+the footprint model), the load/save and undo cases of `test_footprint_transform_sync.cpp`.
+
+Oracle: `tests/data/m19/m19_cascade.kicad_pcb` (crafted from `net_tie_hole_clearance`: a
+footprint rotated 30 degrees and scaled 1.5 x 0.75 on F.Cu with two fields, a segment, a circle
+(an ellipse on the board), an SMD and a PTH pad, and its back-side copy) dumped with
+`pcb-dump board --sections footprint,pad,shape,text`; 110 selected values in
+`tests/golden/m19_cascade.txt`. The test rebuilds each footprint from its library-frame values
+at the identity placement and places it with `footprint_set_position`,
+`footprint_set_orientation`, `footprint_set_transform_scale` (and `footprint_flip` for the copy):
+every value (pad positions, library positions, orientations, layer sets, scaled sizes and
+drills, shape board / library coordinates and widths, field positions, sizes, thickness, angle,
+mirroring and layers, footprint transform, side, likely attribute) is identical. The back-side
+file was mirrored by hand (the reference tool cannot flip); its field angle (180) follows
+`PCB_TEXT::Flip` (M10), so that one value checks consistency, not an independent C++ flip.
+
+### Deviations / notes
+
+- Every cascade ends with a time-stamp bump (`board-model.md` 8.5). The footprint's
+  time-stamped geometry caches that C++ keeps valid by patching them (`SetPosition`,
+  `MoveAnchorPosition`, `SetOrientation`, `Flip` move / rotate / mirror them) are re-stamped
+  with the new stamp when they were valid before, so patched values are used where C++ uses
+  them; the ones C++ zeroes stay zero. The journal records nothing for a cascade.
+- The child hooks run without `modify` (no per-child time stamp, no invalidation), as the C++
+  calls them; children's own caches are keyed by their inputs. A footprint table's `Flip` uses
+  `Board::flip_item`, which goes through `modify` and so drops the footprint's geometry caches
+  that C++ patches afterwards (results equal, only rebuilt).
+- `GetComponentClass` from `&self` recomputes against a clone of the manager when the ticker
+  moved: the effective class the C++ registers in the manager on the way is not kept there
+  (`Board::footprint_component_class` keeps it). With dynamic assignment rules it is
+  `port_pending!` (the rule matcher is kicad-drc).
+- `FixUuids` uses `rebind_item_uuid` (direct write for an unindexed UUID, as
+  `ResetUuidDirect`; re-bind if the footprint is indexed) and bumps the time stamp.
+- `GetReference` / `GetValue` of a footprint without the mandatory field return "" (C++
+  dereferences null).
+- `MapPadNumbersToNetTieGroups` matches `\` and `,` on characters (C++ casts `wxUniChar` to
+  `unsigned char`, which only differs for code points that map to those bytes in the locale).
+- `GetNetTiePads` of a pad whose number is not in the map uses group 0 (`std::map::operator[]`).
+- `GetNextPadNumber` wraps on `int` overflow (C++ UB).
+
+### Stubs left / known gaps
+
+- `${PROPERTY.<name>}` in `ResolveTextVar`: not ported (no property manager), unresolved.
+- `component_class` with assignment rules: `port_pending!` (kicad-drc rule matcher).
+- Run-time dependencies on other packages' stubs: `PCB_TABLE::Flip` (`flip_item`, M11),
+  `PCB_BARCODE::Flip` / `Move` / `Rotate` (M25) inside `Flip`, `MoveAnchorPosition`,
+  `SetOrientation` of a footprint holding a barcode; `PCB_TABLE` / barcode bounding boxes etc.
+  are not reached by the cascades.

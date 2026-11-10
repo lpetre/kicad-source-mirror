@@ -89,7 +89,7 @@ int main( int argc, char** argv )
             }
 
             PCB_IO_KICAD_SEXPR io;
-            io.SaveBoard( wxString::FromUTF8( argv[i + 1] ), board.get() );
+            io.SaveBoard( wxString::FromUTF8( argv[i + 1] ), *board );
             printf( "saved %s\n", argv[i + 1] );
         }
         catch( const IO_ERROR& e )

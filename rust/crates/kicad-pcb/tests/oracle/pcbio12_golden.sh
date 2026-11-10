@@ -20,8 +20,11 @@
 # tables, barcodes, generated tables): every board tests/data/pcbio12/*.kicad_pcb and the small
 # corpus boards listed below are copied alone into a fresh scratch directory and re-saved with
 # the reference `kicad-cli pcb upgrade --force` to tests/golden/pcbio12/<name>.kicad_pcb (O1);
-# O1 is re-saved once more to <name>_o2.kicad_pcb when that differs. Replayed by
-# tests/pcbio12_misc_items.rs, which compares the top-level blocks of these item kinds.
+# O1 is re-saved once more to <name>_o2.kicad_pcb when that differs. The hand-made boards are also
+# read and written by the pure parse + write driver (pcbio12_resave.cpp, built by
+# pcbio12_build_oracle.sh) to <name>_pw.kicad_pcb: kicad-cli's loader rebuilds the cells of
+# generated tables, the driver does not. Replayed by tests/pcbio12_misc_items.rs, which compares
+# the top-level blocks of these item kinds.
 #
 # Usage: tests/oracle/pcbio12_golden.sh   (run from rust/crates/kicad-pcb)
 set -euo pipefail
@@ -44,6 +47,17 @@ inputs=("$here"/data/pcbio12/*.kicad_pcb
         "$kicad"/qa/data/pcbnew/reference_images_load_save.kicad_pcb
         "$kicad"/qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
         "$kicad"/qa/data/pcbnew/issue7567.kicad_pcb)
+
+resave_pw=${PCBIO12_RESAVE:-/home/user/kicad-oracle/bin/pcbio12-resave}
+for f in "$here"/data/pcbio12/*.kicad_pcb; do
+    n=$(basename "$f" .kicad_pcb)
+    d=$scratch/pw
+    rm -rf "$d"; mkdir -p "$d"
+    cp "$f" "$d/board.kicad_pcb"
+    timeout 300 nice -n 10 "$resave_pw" "$d/board.kicad_pcb" "$d/out.kicad_pcb" > "$d/log" 2>&1 \
+        && cp "$d/out.kicad_pcb" "$here/golden/pcbio12/${n}_pw.kicad_pcb" \
+        || { echo "parse + write driver failed on $f:" >&2; cat "$d/log" >&2; }
+done
 
 for f in "${inputs[@]}"; do
     n=$(basename "$f" .kicad_pcb)

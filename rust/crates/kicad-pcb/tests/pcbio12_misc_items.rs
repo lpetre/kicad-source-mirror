@@ -216,6 +216,14 @@ fn oracle_resave_blocks() {
 
     for (name, input) in golden_inputs() {
         let input = String::from_utf8_lossy(&std::fs::read(&input).unwrap()).into_owned();
+
+        // kicad-cli's loader rebuilds the cells of generated tables from the board
+        // (RefreshGeneratedTables, tier 2): those boards are compared with the pure parse + write
+        // driver only (oracle_parse_write_blocks).
+        if input.contains("(drill_chart") || input.contains("(stackup_table") {
+            continue;
+        }
+
         let o1 = std::fs::read_to_string(golden.join(format!("{name}.kicad_pcb"))).unwrap();
         let o2 = std::fs::read_to_string(golden.join(format!("{name}_o2.kicad_pcb")))
             .unwrap_or_else(|_| o1.clone());
@@ -237,6 +245,38 @@ fn oracle_resave_blocks() {
 
     println!("compared {compared} blocks; pending: {pending:?}");
     assert!(compared >= 30, "too few blocks compared: {compared}");
+}
+
+/// Pure parse + write oracle (`tests/oracle/pcbio12_resave.cpp`: the reference parser and
+/// writer without kicad-cli's loader, which rebuilds the cells of generated tables): parse +
+/// format of every hand-made board reproduces the blocks of this package in the driver's output
+/// (`<name>_pw.kicad_pcb`) byte for byte and in order.
+#[test]
+fn oracle_parse_write_blocks() {
+    let golden = crate_dir().join("tests/golden/pcbio12");
+    let mut compared = 0;
+    let mut pending = Vec::new();
+
+    for (name, input) in golden_inputs() {
+        let Ok(pw) = std::fs::read_to_string(golden.join(format!("{name}_pw.kicad_pcb"))) else {
+            continue;
+        };
+        let input = std::fs::read_to_string(&input).unwrap();
+
+        match model(|| assert_same_blocks(&name, &resave(&input, &name), &pw, &input)) {
+            Ok(n) => {
+                println!("{name}: {n} blocks identical");
+                compared += n;
+            }
+            Err(stub) => {
+                println!("{name}: pending on model stub {stub}");
+                pending.push(name);
+            }
+        }
+    }
+
+    println!("compared {compared} blocks; pending: {pending:?}");
+    assert!(compared >= 15, "too few blocks compared: {compared}");
 }
 
 /// Corpus oracle (needs the io-corpus cache of `rust/tools/io-corpus/run.sh`; skips silently
@@ -423,4 +463,30 @@ fn strict_errors() {
     assert!(err(r#"(point (at 1 2) (foo 1))"#).contains("at, size, layer or uuid"));
     assert!(err(r#"(grid_item xy (affects (foo yes)))"#).contains("cursor, routing or placement"));
     assert_eq!(err(r#"(target x (at 1 2) (size 1) (layer "F.Fab"))"#), "ok");
+}
+
+/// Port of `test_reference_image_load.cpp` `ReferenceImagePpiScaleMigration` (file part): a
+/// board older than 20260623 whose image PPI (96, from 3780 pixels / m) differs from the legacy
+/// truncated PPI (94) is re-scaled by 96 / 94 at load; the current version loads verbatim.
+#[test]
+fn reference_image_ppi_scale_migration() {
+    let legacy = std::fs::read_to_string(
+        crate_dir().join("tests/data/pcbio12/images_ppi_migration.kicad_pcb"),
+    )
+    .unwrap();
+    let current = legacy.replace("(version 20260512)", "(version 20261031)");
+    let first_scale = |text: &str| {
+        let board = parse(text, "ppi");
+        drawings(&board)
+            .into_iter()
+            .find_map(|i| match i {
+                AnyItem::Image(img) => Some(img.image_scale()),
+                _ => None,
+            })
+            .unwrap()
+    };
+
+    assert!((first_scale(&current) - 2.0).abs() < 2.0 * 1e-8);
+    let migrated = first_scale(&legacy);
+    assert!((migrated - 2.0 * 96.0 / 94.0).abs() < 2.0 * 96.0 / 94.0 * 1e-5);
 }
