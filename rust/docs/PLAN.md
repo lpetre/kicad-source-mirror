@@ -2,6 +2,111 @@
 
 Orchestrator's working plan. Updated as phases complete.
 
+## Handoff: read this first (written 2026-11-10 16:33 UTC)
+
+The work moved from the cloud machine that built all of this to a session on the user's
+laptop. This section is the state at that moment; the log further down is the history.
+
+### Where things are
+
+- **The port**: this repository, branch `claude/brave-fermi-i1ptdr`, folder `rust/` (17
+  crates, about 390k lines; `rust/PORTING.md` holds the rules, section 9 the binding
+  decisions). `kicad-rs` is the command line, `kicad-wasm` the WebAssembly module with a
+  board API for an autorouter (`docs/WASM_API.md`).
+- **The client adapter** (the client's KiCad steps on the port, a wasm module his page loads
+  unchanged, a session class that rolls back instead of reopening): NOT in this repository,
+  because it derives from the client's private code. It is on the user's private fork of
+  the client's repository, branch `claude/rust-kicad-adapter`, folder `kicad-rs/`. From now
+  on that folder is the source of truth (the cloud copy under `rust/clients/`, which was
+  excluded from git here, is gone with the machine). Its `README.md`, `WEB_DEMO.md` and
+  `gloopy-compat/STATUS.md` describe it. `kicad-rs/build-wasm.sh <this checkout>` builds the
+  module; for native builds and tests link the crate folder to `rust/clients/gloopy-compat`
+  inside this checkout (its `Cargo.toml` uses `../../crates/...`).
+- **Rule that stays**: nothing from the client's repository goes into this one - no code,
+  and no names of his entry points, files, session methods or log lines in tracked files
+  (the history was rewritten once to remove such text).
+- **Commit rules** (AGENTS.md): an `Assisted-by:` trailer on every commit; no model name in
+  commits or files; no merge request or issue upstream.
+
+### What is verified, and against what
+
+Everything below was compared with a reference `kicad-cli` 10.99 built from this very tree
+and with C++ drivers linked against that build (`docs/ORACLE.md`). Details and numbers:
+the crates' `PORT_STATUS.md` files, `docs/design/review-*.md`, and the log below.
+
+- Board files: re-save byte-identical on 359 of 370 corpus boards (the other 11 identical
+  after masking order / caches the reference itself randomises); footprint files 426 / 426.
+- Connectivity, zone fill (687 zone layers vertex for vertex), teardrops, DRC (whole reports
+  on 364 boards: 298 byte-exact, the rest order-only or explained), Gerber / drill / SVG.
+- wasm equals native on the tested outputs; the port's module is built by
+  `scripts/build-wasm.sh` (wasm-opt only on request).
+- The live session API (transactions, incremental connectivity, checkpoints, scoped check,
+  affected-only refill) was reviewed twice and repaired; see "LIVE-2" entries below.
+- The client's web demo and Node pipeline run on the adapter's module with the result his
+  own example documents; the adapter's steps match his shim on 45 boards.
+- Speed: `docs/PERF.md` (instrument, baseline, hotspots, rounds 1 and 2, and what is next).
+
+### What existed only on the cloud machine
+
+A laptop session does NOT have these; "identical to KiCad" cannot be re-proven without them.
+
+- The reference build (`/home/user/kicad-oracle`: `kicad-cli`, `pcb-dump`, about fifteen
+  comparison drivers, the client's shim built natively). Rebuild recipe: `docs/ORACLE.md`
+  ("Rebuilding"), several hours on Linux x86-64. The port's goldens come from Linux x86-64
+  with glibc: on another OS or CPU the native test suite can differ in a last digit (libm),
+  and a reference KiCad built there can differ from the x86 one (fused multiply-add). The
+  wasm build is not affected.
+- The caches the gate reads (`scripts/perf-gate.sh`, header): zone corpus references, board
+  io corpus, the reference binary itself. Without them `perf-gate.sh` fails its cache
+  checks; the crates' default test suites that carry committed goldens still run.
+- Benchmark raw data (`target/bench`), callgrind profiles, workflow journals, scratch files.
+
+### Open items, most useful first
+
+1. **Speed** (the user's priority): see "Where the performance work stands" in
+   `docs/PERF.md`. Zone refill is the largest cost; DRC state kept between runs (the
+   unbuilt first item of package LIVE-2) is the largest remaining win for a router loop.
+2. **KiCad 10.0.5 compatibility**: the client uses 10.0.5; the port follows master (10.99)
+   and writes only the newest board format, which 10.0.x does not open. Wanted: a "save as
+   KiCad 10" writer mode (format 20260206; about 25 format changes to invert) and a
+   measurement of how fill / DRC differ between 10.0.5 and master (needs a second reference
+   build from the 10.0.5 tag). Not started; the user had not yet said go.
+3. **Adapter leftovers** (in the private fork): its own wasm profile still uses the
+   size-optimised setting (the port's is speed-optimised since round 1: 15-25 % faster);
+   the client's example board is not yet in the comparison corpus; the independent review
+   of the wasm step finished at the handoff and its findings are listed, unrepaired, in
+   the adapter's `STATUS.md` (a comparison mask that hides real differences, an error text
+   of the rollback session class, timing statements); an incremental mode needs item 1's
+   DRC state.
+   Two of that review's findings are defects of THIS port's DRC, found on boards outside
+   every corpus and not fixed yet:
+   (a) a shorting violation that involves an item with no net at all (a via whose net was
+   set to none) prints an empty net name where KiCad prints `<no net>`
+   (`drc_test_provider_copper_clearance.cpp` about lines 229-236 and 310-318: a null net
+   becomes net code 0; in `kicad-drc` the orphaned net must be treated the same at the
+   sites that name the nets of a short);
+   (b) when a board has more shorts than the per-type report limit (199), the port and
+   KiCad agree on the totals, the item pairs and every other type, but not on WHICH pairs
+   are reported as shorts and which as clearance entries: KiCad submits one task per track
+   to a priority thread pool and the limit is hit in task order, the port tests tracks in
+   board order. Either reproduce the one-thread task order or record it as a deviation.
+4. **Threads in wasm**: single-threaded today. On large boards native KiCad with its thread
+   pool is about 1.5-1.7x faster on refill + DRC. Decide after the single-thread work.
+5. **A "reorder tracks to save order" API** in kicad-pcb, so that a live (edited) board gives
+   byte-identical reports to a reload of its saved file (LIVE-1 / LIVE-2 gap).
+6. Parked packages (assignments in `docs/packages/`): CLI-WASM-1, LIB-1, DOC-1 (README),
+   E2E-2 (full end-to-end rerun with the final binary), FIX-BEZ-1, a cross-cutting review.
+7. Known limits: outline fonts use glyphs stored in the board file as a stand-in; PDF / PS /
+   DXF plotting, legacy `.brd`, schematic parity and non-KiCad library formats are out of
+   scope.
+
+### How the work was run
+
+Work packages (`docs/packages/<ID>.md`) executed by agents through the scripts in
+`docs/workflows/` (see its README), every result read and every non-trivial decision
+reviewed independently before anything was built on it. Keep that: each review found real
+defects. Keep this file's log going with dated entries.
+
 ## Goal
 
 Rust port of the KiCad core features needed to (1) validate routed boards (DRC), (2) produce
@@ -659,8 +764,8 @@ Progress log:
   09:20 UTC: the user shared two files of the friend's repo (the JavaScript wrapper around
   his KiCad module and a README; the repo itself is not attached - the session has no
   GitHub access to it).
-  Facts: his KiCad is "kicad-wasm, KiCad 10.0.5's board code" compiled with Emscripten
-  (5 MB gzipped, about 900 MB at run time, wasm threads, so the page needs cross-origin
+  Facts: his KiCad is KiCad 10.0.5's board code compiled to WebAssembly with Emscripten
+  (a few MB to download, several hundred MB at run time, threaded, so the page needs cross-origin
   isolation headers), driven through a set of C entry points (open, save, fill, DRC,
   export and import of the routing, teardrops, stitching, island query and a few more)
   exchanging JSON files in a memory file system (formats not seen). Its sessions re-open

@@ -338,7 +338,7 @@ The golden dumps were made with Boost 1.83 and wxWidgets 3.2.4 on x86-64 Linux;
 | `EDA_UNITS`, `EDA_DATA_TYPE` | `eda_units::EdaUnits`, `EdaDataType` (`#[repr(i32)]`, C++ values, `ALL`) | ported |
 | `EDA_UNIT_UTILS::IsImperialUnit`, `IsMetricUnit`, `Mm2mils`, `Mils2mm`, `Mils2IU`, `FetchUnitsFromString`, `GetText`, `GetLabel`, `GetScaleForInternalUnitType` | `eda_units::is_imperial_unit`, `is_metric_unit`, `mm2mils`, `mils2mm`, `mils2iu`, `fetch_units_from_string -> Option`, `get_text`, `get_label`, `get_scale_for_internal_unit_type` | ported |
 | `FormatAngle( EDA_ANGLE )` | `format_angle( degrees: f64 )` | ported |
-| `FormatInternalUnits( scale, int, type )`, `( scale, VECTOR2I )` | `format_internal_units`, `format_internal_units_distance`, `format_internal_units_point( scale, x, y )` | ported |
+| `FormatInternalUnits( scale, int, type )`, `( scale, VECTOR2I )` | `format_internal_units`, `format_internal_units_distance`, `format_internal_units_point( scale, x, y )`; statement-by-statement port in `format_internal_units_generic`, integer fast path `push_iu_1e6_exact` for a divisor of exactly 1e6 (see below) | ported |
 | `ParseInternalUnits` x2 (`#if 0` in C++) | `parse_internal_units`, `parse_internal_units_point` | ported (semantics of the disabled code) |
 | `UI::ToUserUnit`, `FromUserUnit`, `StringFromValue`, `MessageTextFromValue` (double / int / long long / EDA_ANGLE), `MessageTextFromMinOptMax` | `eda_units::ui::to_user_unit`, `from_user_unit`, `string_from_value`, `message_text_from_value`, `message_text_from_value_int`, `message_text_from_value_i64`, `message_text_from_angle( degrees, bool )`, `message_text_from_min_opt_max` | ported |
 | `UI::DoubleValueFromString` x3, `UI::ValueFromString` x2, static `removeTrailingZeros` | `double_value_from_string`, `double_value_from_string_unscaled`, `double_value_from_string_with_units -> Option`, `value_from_string`, `value_from_string_unscaled`, private `remove_trailing_zeros` | ported |
@@ -405,6 +405,18 @@ luminance, nearest legacy colour, `EDA_COLOR_T` constructor), `PAGE_INFO` (all t
 count and FNV-1a hash of all lines; `tests/test_c2_oracle.rs` replays it. **All 13 sections
 match bit for bit.** The single input class excluded from the generator is a numeric HTML
 reference to a surrogate code point (deviation C2-1).
+
+### `FormatInternalUnits` integer fast path (perf round 2)
+
+When `GetScaleForInternalUnitType` returns exactly 1e6 (PCB distances and, since every scale
+has `IU_PER_PS` = `IU_PER_PS_PER_MM` = 1e6, also time / length-delay), `format_internal_units`
+and `format_internal_units_point` write the exact decimal value of `value / 10^6` straight from
+the integer (`push_iu_1e6_exact`) instead of the double division and `{:.10f}` / `{:.10g}`.
+This is not a deviation: the double quotient is within 2^-53 relative of a value with at most
+10 significant / 6 fractional digits, so both C++ branches print it exactly (argument in the
+doc comment). `tests/format_internal_units_exact.rs` compares it with the retained generic port
+over dense ranges (default) and over all 2^32 `i32` values (`#[ignore]`, release: 0
+mismatches). Other divisors keep the generic port. Write stage: coldfire 48.0 -> 18.7 ms.
 
 ## Deviations (C2)
 

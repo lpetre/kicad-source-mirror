@@ -104,7 +104,7 @@ hundred, add about a thousand, move vias), fill all zones, full DRC (JSON), and 
 something is unconnected a GND island query. A stitched check: the same with stitching
 vias added before the fill. Finishing: the same with teardrops and a save, then possibly
 dangling vias removed, fill, DRC and save again. A baseline: open, fill, DRC. One KiCad instance
-(about 900 MB, threaded) serves all seeds in turn. For the port this means the numbers to
+(several hundred MB, threaded) serves all seeds in turn. For the port this means the numbers to
 watch are: parse + load, an edit batch, a full refill, a full DRC, teardrops and save on
 boards of a few hundred pads, in single-threaded wasm; and that checkpoint / rollback
 (instead of re-opening), scoped refill and scoped DRC, and one small instance per worker

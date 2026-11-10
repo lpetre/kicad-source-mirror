@@ -1,7 +1,7 @@
 #!/bin/sh
 # Build the WebAssembly module of the KiCad Rust port and its JavaScript bindings.
 #
-#   rust/scripts/build-wasm.sh            build + bindgen (+ wasm-opt when installed)
+#   rust/scripts/build-wasm.sh            build + bindgen (+ wasm-opt only with KICAD_WASM_OPT=1)
 #   rust/scripts/build-wasm.sh --test     ... then run the node smoke test and the browser test
 #
 # Outputs (git-ignored):
@@ -42,7 +42,13 @@ echo "== sizes"
 echo "  cargo output        $(size "$WASM") bytes  $WASM"
 echo "  after wasm-bindgen  $(size "$RUST/web/pkg/kicad_wasm_bg.wasm") bytes  web/pkg/kicad_wasm_bg.wasm"
 
-if command -v wasm-opt >/dev/null 2>&1; then
+# wasm-opt is opt-in: every comparison of the module with the reference was made on the module
+# as rustc leaves it, no wasm-opt'ed package has been hash-compared (docs/PERF.md, round 1), and
+# binaryen 108 produced a module that does not load. Whoever turns it on must rerun the tests
+# and the hash comparison on the result and record the binaryen version.
+if [ "${KICAD_WASM_OPT:-0}" = "1" ]; then
+    command -v wasm-opt >/dev/null 2>&1 || { echo "KICAD_WASM_OPT=1 but wasm-opt is not on PATH" >&2; exit 1; }
+    echo "  wasm-opt: $(wasm-opt --version 2>/dev/null | head -1)"
     for d in pkg pkg-node; do
         wasm-opt -O3 --enable-bulk-memory --enable-sign-ext --enable-mutable-globals \
             --enable-nontrapping-float-to-int --enable-reference-types --enable-multivalue \
@@ -50,7 +56,7 @@ if command -v wasm-opt >/dev/null 2>&1; then
     done
     echo "  after wasm-opt -O3  $(size "$RUST/web/pkg/kicad_wasm_bg.wasm") bytes"
 else
-    echo "  wasm-opt not installed: speed optimisation pass skipped (optional, see docs/THIRD_PARTY_EQUIVALENTS.md 4)"
+    echo "  wasm-opt pass not requested (KICAD_WASM_OPT=1 turns it on; see docs/THIRD_PARTY_EQUIVALENTS.md 4)"
 fi
 
 if [ "${1:-}" = "--test" ]; then
