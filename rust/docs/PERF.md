@@ -422,3 +422,101 @@ Router loop (complex_hierarchy / interf_u): `live.commit` 0.62 -> 0.45 / 1.09 ->
 
 Hotspot list: rank 3 is done; rank 5 is smaller; the order of the rest is unchanged (not
 re-profiled with callgrind this round).
+
+## Round 2 (accepted on review and gate at the handoff, 2026-11-10; round base 6ac18e03)
+
+Kept: all three changes. This round was NOT judged the way round 1 was: the work moved to
+another machine while the loop's judge was running, so the judge was stopped after its gate
+run. Its interleaved base / head measurement and its output-hash comparison (native and
+wasm) did not happen. The gains below are the implementers' own interleaved A/B minima on a
+busy machine, medium boards only; nobody measured the large boards or wasm for this round.
+
+| id | what | files | gain (implementer's A/B, min ms) |
+|---|---|---|---|
+| `R2-zone-refill-result-cache` | port of the C++ filler's refill result cache (`m_refillResultCache`): in the iterative refill a zone whose knock-out inputs did not change reuses its previous result, triangulation included; the cache is seeded from the initial fill when its tail was a no-op | `kicad-zone/src/{filler,refill,copper_fill,knockouts}.rs` | `zone_refill`: ecc83-pp 22.6 -> 21.6 (-5 %), StickHub 210 -> 178 (-15 %), coldfire 1156 -> 1103 (-5 %) |
+| `R2-drc-lazy-zone-connection-query` | the "zone connections" provider's second connectivity is built when the provider first asks for it, not on every run of a board with copper zones (only 2 of 365 corpus boards ever ask) | `kicad-drc/src/run_flow.rs` | `drc`: coldfire 337.7 -> 305.8 (-9 %), StickHub 178.1 -> 166.4 (-7 %); the provider itself 32.9 -> 4.4 and 15.0 -> 0.09 |
+| `R2-writer-iu-integer-format` | the board writer formats internal units (divisor exactly 1e6) straight from the integer instead of through two float formattings; every other divisor keeps the statement-by-statement port | `kicad-core/src/eda_units.rs` | `write`: coldfire 48.0 -> 18.7 (-61 %), complex_hierarchy 13.6 -> 6.4 (-53 %), ecc83-pp 2.55 -> 1.07, interf_u 11.0 -> 4.7, StickHub 17.6 -> 8.6 |
+
+Verification that did happen:
+
+* Independent review of the three diffs against the C++ ("can any output byte change?"):
+  no for all three, with the argument per change (cache key covers every input of the
+  knock-out step and is stronger than the C++ key; the lazy value is built by the same
+  statements on the same immutable board; the integer formatter equals the double
+  formatting for every value when the divisor is 1e6).
+* Gate: `perf-gate.sh changed kicad-core kicad-zone kicad-drc` at 14e82ca4, the tree with all three changes: 24 of 24 entries pass in 13 minutes (`target/perf/gate-20261110-162803.log` on the build machine), among them the board io corpus, the upgrade corpus, refill + save, the DRC oracles and the end-to-end comparison of DRC reports, Gerber and drill files with the reference.
+* Writer: every one of the 2^32 `i32` values formats identically through the new and the
+  old path (`kicad-core/tests/format_internal_units_exact.rs`, the ignored exhaustive test,
+  0 mismatches, 22 minutes in release).
+* Zone cache: the zone-fill corpus in strict mode in the dev profile, where every cache hit
+  is recomputed and compared by a debug assertion (part of the gate), and the same corpus in strict mode in the release profile, where a hit is used unchecked: 687 of 687 zone layers identical to the reference, 0 different.
+* DRC: a scan of the 365-board DRC corpus for which boards build the second connectivity
+  (2 boards), and the gate's DRC oracles and end-to-end reports.
+
+Open points of that review, none of them a blocker: a cache hit also carries its
+triangulation, and its equality with a recomputed one is argued (pure function of the
+polygons) but asserted nowhere; if a future caller passed the same zone twice to one
+`fill()`, a stale seed could survive (remove the entry in that branch); while the cache
+holds fills they are shared, which costs memory until the loop ends.
+
+## Where the performance work stands (handoff, 2026-11-10, at c1165e67)
+
+**Rule of the whole exercise**: no output byte may change. Pinned and never to be "optimised":
+tie order of the unstable sorts ported from `std::sort`, r-tree visit order, Clipper2 itself,
+the order of floating-point operations, iteration orders that reach an output, the x86
+rounding and cast rules (`PORTING.md` sections 3 and 9).
+
+**Where the port stands against KiCad 10.99** (native, after round 1; port on one thread
+against the reference process, see the tables of round 1): faster than the reference on one
+thread on every bench board; faster than its thread pool on small and medium boards
+(0.04 to 0.65 of its time); behind its thread pool on refill + DRC of coldfire (1.17) and
+of the two large boards (DRC 1.05 and 1.47, refill + DRC 1.46 and 1.65). Round 2 should
+move refill and the writer a little further; that is unmeasured on the large boards.
+In wasm the module runs 1.6 to 2.5 times slower than native (`wasm after round 1` above).
+
+**What to do next, most promising first** (ranks refer to the hotspot list above, which was
+profiled before round 1 and not re-profiled since):
+
+1. Zone refill is the largest remaining cost on every board and the reason for the gap on
+   large ones (vme-wren 39 s, jetson 23 s after round 1). Rank 1: the Clipper2 offsets of
+   the filler (33-37 % of a fill; Clipper2 is pinned, so look for repeated or avoidable
+   calls and copies around it, not inside it). Rank 2: fill triangulation (14-16 % of a
+   fill and 34-44 % of the LOAD, because fills are triangulated when a board is read).
+   Rank 8: island removal re-runs the cluster search over the whole board.
+2. DRC state kept between runs (rank 7; the unbuilt first item of package LIVE-2): every
+   `RunTests` rebuilds connectivity (12 % of a medium board's DRC) and the DRC r-trees
+   (5.5 %). For a router loop that checks many candidates on one board this is the largest
+   win left. It needs an entry point in `kicad_drc::run_flow` that accepts prebuilt caches,
+   then incremental updates from commits. `check_items` is a filtered full run today.
+3. Rule evaluation (rank 4: 16 % of the DRC pipeline on jetson), copper width and sliver
+   polygon work (rank 5, partly done in round 1), clearance r-tree queries (rank 6: 31 % on
+   jetson), allocations (rank 12: 5 to 8 % self time in `malloc` / `free` in DRC profiles).
+4. Parser (rank 10) and Gerber per-layer iteration (rank 11); the writer (rank 9) is done.
+5. Threads: the port is single-threaded natively and in wasm. Not started, not decided. It
+   is the only way to pass the reference's thread pool on large boards short of item 1.
+6. The client adapter's own wasm profile still uses the size-optimised setting; round 1's
+   change (15-25 % faster wasm stages, 22 % larger file) applies to the port's module only.
+
+**How to measure** (section 1 has the tools): the cloud machine was never quiet, so every
+A/B was interleaved (base binary, head binary, alternating rounds) and reported as minima;
+single samples on the large boards carry about +-10 %. Do the same anywhere. Absolute
+numbers in this file are from a shared 4-core Xeon at 2.1 GHz: on another machine take a new
+baseline first (`crates/kicad-bench/scripts/bench.sh --set small`, then `medium`) and
+compare only against that.
+
+**How to prove that nothing changed without the reference build**: `kicad-bench` prints an
+FNV hash per stage output (DRC report, Gerbers, drill, saved board, refill + save). Build the
+bench from the commit before a change and from the commit after it and compare the hashes
+on the bench boards and on a few edge-case boards (round 1 lists the ones it used); the base
+is known good, so equal hashes mean an unchanged output there. Add the crate's own tests,
+which carry committed goldens. What cannot be done without the reference: the gate
+(`scripts/perf-gate.sh`, it reads reference caches) and any new "identical to KiCad" claim.
+Note for a machine that is not Linux x86-64: native results may differ from the committed
+goldens in a last digit (libm), so compare base against head on that machine, not against
+the goldens; the wasm build is the same everywhere.
+
+**How the loop ran**: `docs/workflows/perf-loop.js` (plan, one agent per optimisation on
+disjoint files, an independent review of the diffs before anything is measured, a judge that
+reverts what was rejected, runs the gate, measures and records). Two bugs surfaced through
+it and were fixed on the way: a deadlock in the matched-length check on boards with a
+`fromTo()` length rule, and the benchmark's allocation mode writing through a hard link.
