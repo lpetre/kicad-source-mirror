@@ -1086,3 +1086,80 @@ Staging: a stub called with `FormatOptions::allow_pending == false` fails with t
   tracks, shapes, zones: PCBIO-03 / 07 / 08).
 - The `(setup ..)` section (PCBIO-04), net chains (PCBIO-11) and every item are staging stubs;
   the oracle comparisons skip exactly the setup section and use boards without items.
+
+## Package M24: reference images, embedded files, component classes
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `PCB_REFERENCE_IMAGE` (geometry, shape, hit tests, flip, mirror) | `pcb_reference_image.rs` | ported |
+| `REFERENCE_IMAGE` (`SetPosition`, `scaleBy`, `SetImageScale/Width/Height`, `boundingSize`, `GetBoundingBox`, `Rotate`, `Flip`, `Mirror( SEG )`, `SetOpacity`, `ReadImageFile( buffer )`, `PackToBytes`) | `pcb_reference_image.rs` | ported |
+| `BITMAP_BASE` data part (`GetSize`, `GetScalingFactor`, `updatePPI`, `GetLegacyPPI`, `SaveImageData`) | `pcb_reference_image.rs` | ported; pixels never decoded |
+| `wxImage::LoadFile` (wx 3.2 PNG / JPEG handlers: libpng IHDR/pHYs, libjpeg-turbo SOF/JFIF) | `probe_image_header` | header probe only |
+| `EMBEDDED_FILES`, `EMBEDDED_FILE` (`Validate`, `Validate_SHA256`, `GetLink`, `AddFile` x2, `RemoveFile`, `AssignSharedFrom`, deep copy, `ClearEmbeddedFonts`, `UpdateFontFiles`, `WriteEmbeddedFiles`, `CompressAndEncode`, `DecompressAndDecode`, `ComputeFileHash`) | `embedded_files.rs` | ported |
+| `EMBEDDED_FILES_PARSER::ParseEmbedded` | `embedded_files::parse_embedded` | ported (for PCBIO-11) |
+| `ZSTD_getFrameContentSize` / `ZSTD_getFrameHeader` (libzstd) | `embedded_files.rs` | hand port; decoding by `ruzstd` |
+| `picosha2::hash256_hex_string` | `embedded_files::sha256_hex` | local shim (FIPS vectors) |
+| `wxBase64Encode/Decode` (strict) | `wx_base64_encode/decode` | `base64` crate, wx-strict config |
+| `COMPONENT_CLASS` | `component_class.rs` | ported |
+| `COMPONENT_CLASS_MANAGER` (static / effective / combined / dynamic classes, netlist update, ticker) | `component_class.rs` | ported except `SyncDynamicComponentClassAssignments` (stub, tier 2: needs the DRC rule parser and `COMPONENT_CLASS_ASSIGNMENT_DATA`) |
+| `COMPONENT_CLASS_CACHE_PROXY::GetComponentClass/RecomputeComponentClass` | `ComponentClassManager::get_component_class/recompute_component_class` | ported; rule matching passed in (`COMPONENT_CLASS_ASSIGNMENT_RULE::Matches` is kicad-drc) |
+| `FinishNetlistUpdate` footprint pointer clearing | `Board::finish_component_class_netlist_update` | ported |
+
+### Tests
+
+Ported: qa/tests/common/test_embedded_file_compress.cpp (all 11 cases; `ComputeFileHash_*` on
+bytes, `ComputeFileHash_NonExistentFile` n/a without filesystem), qa/tests/pcbnew/
+test_component_classes.cpp `FinishNetlistUpdateClearsDeletedClassPointers`,
+`FinishNetlistUpdatePreservesActiveClassPointers` (`ComponentClasses` needs dynamic rules:
+tier 2), qa/tests/pcbnew/test_reference_image_load.cpp `ReferenceImageFlipLayer`,
+`ReferenceImagePpiScaleMigration` (model part), `ReferenceImageRotateTransformOrigin`,
+`ReferenceImageStoresRotation`, qa/tests/common/test_bitmap_base.cpp `Empty`,
+`PPIFromNonIntegerPixelsPerCm`, PPI/size part of `BasicProps` (pixel tests n/a).
+
+Differential oracle `tests/oracle/m24_oracle.cpp` (+ `m24_build_oracle.sh`; compiles
+`common/reference_image.cpp`, `common/bitmap_base.cpp` unchanged, links libkicommon.so and wx):
+* `tests/golden/m24_images.txt` (988 lines): 32 synthetic PNG/JPEG headers (pHYs units, bad CRC,
+  late / duplicate / short pHYs, unknown critical chunk, width 0, truncated, JFIF units 0-3, no
+  JFIF) and all 8 reference images of the 6 corpus boards: read result, PPI, legacy PPI, sizes,
+  scale / width / height / rotate / flip / mirror maths and overflow refusals. Replay
+  `pcb_reference_image::tests::m24_oracle_images`: identical.
+* `tests/golden/m24_embed.txt` (303 lines): every `(embedded_files ...)` section of the 52 corpus
+  files (qa/data, demos) parsed and decoded by the C++; replay
+  `embedded_files::tests::m24_oracle_embedded_files`: identical. Stored checksums: 216 current
+  MMH3, 87 legacy `addDataV1`, all verified.
+* `m24_oracle_cpp_decodes_port_frames`: frames compressed by the port are decoded by the C++
+  `DecompressAndDecode` (skips without the oracle binary).
+
+### Deviations / notes
+
+* Pixels are never decoded: `BITMAP_BASE::Mirror` (called by `REFERENCE_IMAGE::Flip/Mirror`)
+  mirrors the raster and drops the original bytes in C++, so KiCad re-encodes a flipped image on
+  save; the port keeps the original bytes (geometry, orientation, origin offset are exact).
+* `probe_image_header` reads PNG and JPEG only (what KiCad stores); other wx formats (BMP, GIF,
+  TIFF, ...) fail to read. Corrupt pixel data after a valid header is accepted (C++ fails).
+  A PNG truncated after a valid IHDR is accepted, as the reference build does.
+* `REFERENCE_IMAGE::Flip`'s `MIRROR` and `scaleBy`'s `m_pos + m_transformOriginOffset` wrap like
+  the reference build (signed overflow) instead of panicking.
+* `CompressAndEncode` uses the `ruzstd` encoder (level "Fastest"), not libzstd level 15: newly
+  embedded files get other bytes (same data, same checksum). ruzstd writes no content size, so
+  the frame header is rewritten with one (C++ rejects frames without it). Stored frames are
+  never re-compressed.
+* `DecompressAndDecode`: a corrupt frame is OUT_OF_MEMORY like C++, but ruzstd does not verify
+  the frame's XXH64 checksum or the declared content size (the MMH3 check that follows catches
+  corrupt data); invalid base64 returns OUT_OF_MEMORY directly (C++ reads past its buffer).
+* `UpdateFontFiles` lists font *names*, not temporary file paths (no filesystem); `AddFile(
+  wxFileName )` / `ComputeFileHash` take bytes (`add_file_from_data`, `compute_file_hash`).
+* Component classes are `Arc` values: usage contexts live in the manager's maps
+  (`Arc::make_mut`); C++ pointer identity is (`is_constituent`, name). `RebuildRequiredCaches`
+  is a no-op (the courtyard cache is lazy and keyed). A missing map entry where C++ would create
+  a null entry with `operator[]` (and crash) is skipped.
+
+### Known gaps / stubs left
+
+* `ComponentClassManager::sync_dynamic_component_class_assignments`: `port_pending!` (tier 2,
+  needs the DRC rule parser / `CompileAssignmentRule` and project component-class settings).
+* `FOOTPRINT::GetComponentClass` (footprint/mod.rs, not this package) can now be written with
+  `ComponentClassManager::get_component_class`, but needs `&mut` access to the manager and the
+  DRC rule matcher.
