@@ -815,6 +815,12 @@ Progress log:
   do: the hosting service keeps the replaced commits fetchable by hash until it collects
   garbage, and its activity view lists the forced updates; removing those needs the
   service's support, and anyone who fetched the branch earlier today has them.
+  12:37 UTC (heartbeat; next in about an hour): all three resumed workflows are
+  working - round 1 optimisers (marker UUID scan, split-collinear fast path), the adapter
+  repair agent, the LIVE-2 reviewer. Load average 11 on 4 cores, so the round-1 judge
+  will measure under load unless the others finish first. Disk: pruned 2.2 GB of the
+  port's own build artifacts older than three hours (unchanged crates will rebuild once);
+  9.9 GB free. Memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
