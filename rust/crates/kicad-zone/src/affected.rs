@@ -375,10 +375,15 @@ pub fn fill_affected_zones(
         return fill_after_teardrops(board, connectivity, rules, None);
     }
 
-    // Re-created teardrops take over their predecessor's fill (the ones the set below
-    // contains are unfilled and refilled by `Fill()`), so that the connectivity sees them.
+    // Re-created teardrops take over their predecessor's fill, so that the connectivity
+    // sees them; the ones the set below contains get their new (empty) fill back before
+    // `Fill()`, which hashes the fill it replaces.
+    let mut fresh: Vec<(ZoneId, ZoneFill)> = Vec::new();
+
     for (id, k) in &recreated {
-        *board.zone_fill_mut(*id) = old_teardrops[*k].1.clone();
+        let fill = board.zone_fill_mut(*id);
+        fresh.push((*id, fill.clone()));
+        *fill = old_teardrops[*k].1.clone();
     }
 
     let mut filler = ZoneFiller::new(board);
@@ -446,6 +451,12 @@ pub fn fill_affected_zones(
     let Some((set, reused_from, reasons)) = set else {
         return fill_after_teardrops(board, connectivity, rules, None);
     };
+
+    for (id, fill) in fresh {
+        if set.contains(&id) {
+            *board.zone_fill_mut(id) = fill;
+        }
+    }
 
     let reused: Vec<ZoneId> = recreated
         .iter()

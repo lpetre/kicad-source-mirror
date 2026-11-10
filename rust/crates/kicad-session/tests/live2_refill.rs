@@ -26,7 +26,8 @@
 //! the zone list, and the saved board byte for byte.
 //!
 //! `LIVE2_BATCHES` (default 6) sets the commits per board, `LIVE2_BOARDS` (default 12) the
-//! number of boards (from the top of the list).
+//! number of boards (from the top of the list), `LIVE2_FILTER` a substring the board paths
+//! must contain.
 
 mod live1_common;
 
@@ -182,6 +183,8 @@ fn affected_refill_equals_full_refill() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
+/// The boards, restricted to those containing `LIVE2_FILTER` when it is set.
 fn boards_list() -> Vec<String> {
-    boards()
+    let filter = std::env::var("LIVE2_FILTER").unwrap_or_default();
+    boards().into_iter().filter(|b| b.contains(&filter)).collect()
 }
