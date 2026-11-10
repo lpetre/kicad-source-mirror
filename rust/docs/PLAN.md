@@ -338,6 +338,13 @@ Progress log:
   (api_kitchen_sink: generated tables refresh, M26). `kicad-rs pcb upgrade` messages and
   exit codes equal the reference in 36 of 36 runs. A default-run regression test over 308
   boards guards it (kicad-session upgrade_corpus_small).
+  04:30 UTC: done PCBIO-14 footprint library files and `fp upgrade`: all 426 corpus
+  .kicad_mod files re-save like the reference (393 byte-identical, 33 identical after
+  masking the fresh UUIDs the reference draws for legacy items, 0 differing); messages and
+  exit codes equal in the five CLI cases. The board reader / writer packages are complete.
+  Launched: ZINT-1 (new crate kicad-zint: port of the zint subset behind PCB_BARCODE -
+  Code 39, Code 128, QR, Micro QR, Data Matrix - with a differential oracle against the
+  bundled C library).
   Cross-crate leftovers for a GLUE-3 pass (package file written) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
   generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid

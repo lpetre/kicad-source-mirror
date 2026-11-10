@@ -725,7 +725,11 @@ pub fn board_items(board: &Board) -> Vec<ItemId> {
                     visit(board, c.into(), out);
                 }
             }
-            Some(AnyItem::Table(_)) => {
+            // `aItem->Type() == PCB_TABLE_T`: the cells of a generated table (drill chart,
+            // stackup table) are not visited.
+            Some(AnyItem::Table(table))
+                if crate::traits::BoardItem::type_(table) == kicad_core::KicadT::PcbTableT =>
+            {
                 let t = id.typed().expect("table id");
 
                 for (c, _) in board.table_cells(t) {

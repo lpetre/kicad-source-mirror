@@ -238,7 +238,8 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
                 emit!(o, "generator.type", v_str(generator.generator_type()));
             }
         }
-        AnyItem::Table(t) => {
+        // `case PCB_TABLE_T` (generated tables have their own types and print nothing here).
+        AnyItem::Table(t) if crate::traits::BoardItem::type_(t) == KicadT::PcbTableT => {
             emit!(o, "table.cols", v_int(t.col_count()));
             emit!(o, "table.rows", v_int(t.row_count()));
             emit!(o, "table.end", v_vec(t.end(ctx)));
