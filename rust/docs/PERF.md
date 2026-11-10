@@ -140,20 +140,6 @@ of its eight providers (it is defined as their full all-track-errors run, filter
 more than `quick_drc` with two providers; the DRC keeps no state between runs except the
 compiled rules, so every call pays the cache generator (connectivity build and r-trees).
 
-## Orchestrator note for the judge of round 1 (remove it when the round is recorded)
-
-Two things in the tree are NOT part of round 1 and must not be blamed on its changes:
-1. `crates/kicad-drc/src/providers/connection_width.rs` changed after the round's base
-   commit (a fidelity fix from another package: the two items of a connection-width
-   violation now come in the order the C++ `std::unordered_set` yields them). DRC output
-   on boards with such violations therefore differs from a base build. Do not revert it;
-   for A/B comparisons keep this file identical on both sides.
-2. `crates/kicad-session` tests `live2_*` are being repaired by another workflow right
-   now. If the gate's `session` entry fails there, check with the round's changes
-   reverted before attributing it; a failure that stays is not this round's.
-The round's base commit hash still resolves locally although the branch history was
-rewritten since (the files of the round are identical in the replacement commit).
-
 ## Quiet baseline at 63a725d7
 
 Taken by the perf gate package (2026-11-10, 08:57 to 09:49 UTC). This is the baseline that
@@ -291,9 +277,9 @@ is (caching, fewer copies / allocations, cheaper lookups; no algorithm changes):
 |---|---|---|---|---|---|
 | 1 | refill | `ShapePolySet::inflate` -> `execute_offset` -> `ClipperOffset::union` / `execute` (Clipper2 offsets of the filler: clearance knock-outs, min-width prune, `post_knockout_min_width_prune`, `refill_zone_from_cache`) | 33 % of fill | 37 % (prune 31 %, cache refill 23 %) | Clipper2's `execute_internal` is 34 to 36 % *self* cost (inlined scanbeam loop, same algorithm as the reference's Clipper2). Wins only around it: the same polygon offset by the same amount several times per zone / layer, conversions `ShapePolySet` <-> Clipper paths (`input::add_paths`, `memcpy` 2 %), engine reuse instead of re-allocation. Results must stay vertex-identical (zone corpus). |
 | 2 | refill, load | zone fill triangulation: `ZoneFill::cache_triangulation` -> `tesselate_chain` -> `earcut_list` / `VertexSet::is_ear` | 16 % of fill; 44 % of the load (521 M of 1174 M Ir) | 14 % of fill; 34 % of the load (8.5 G of 25.2 G) | Runs at load (`BuildConnectivity` -> `cache_board_triangulation`) and again after the refill. `is_ear` is 8 to 10 % *self* in every profile: a tight loop (bounds checks, vertex layout). Check whether triangulations are rebuilt for fills that did not change. |
-| 3 | DRC | `Board::resolve_item` misses falling back to the full linear scan (`resolve_item_scan`), called from `run_drc_job` | 1.6 % | 226 calls = 10.8 G Ir, 13 % of the jetson DRC job | Every call is a miss (48 M Ir each): find which UUIDs the job resolves (markers / exclusions) and cache the scan result as the C++ does (`BOARD::ResolveItem` caches scan hits) or index those items. Pure lookup, output-neutral. |
+| 3 | DRC | **done in round 1** (`R1-drc-marker-uuid-scan`, jetson `drc` -5.2 s): `Board::resolve_item` misses falling back to the full linear scan (`resolve_item_scan`), called from `run_drc_job` | 1.6 % | 226 calls = 10.8 G Ir, 13 % of the jetson DRC job | Every call is a miss (48 M Ir each): find which UUIDs the job resolves (markers / exclusions) and cache the scan result as the C++ does (`BOARD::ResolveItem` caches scan hits) or index those items. Pure lookup, output-neutral. |
 | 4 | DRC | rule evaluation `DrcEngine::eval_rules_reporting` -> `EvalState::process_all` / `check_condition` -> `EngineCondition::evaluate_for` -> ucode `run` | 3.5 % | 16 % of the drc pipeline | Called per item x constraint type (matched length asks 6 constraint types for every track / via / pad). Look for repeated evaluation of identical (rule, item, layer) queries inside one run and for allocations in the evaluator. |
-| 5 | DRC | copper width (`connection_width`) and sliver checker: `ShapePolySet::simplify` / `fracture` / `split_collinear_outlines` (`SegmentIndex::new` + its r-tree searches), `PolygonTest::kink_candidate` | width 27 % of drc pipeline | sliver 18 %, width 16 %; `split_collinear_outlines` searches 28 % | `SegmentIndex::new` and `PackedRTreeBuilder::build` rebuilt per polygon; `simplify` of the same layer polygons by both providers. |
+| 5 | DRC | copper width (`connection_width`) and sliver checker: `ShapePolySet::simplify` / `fracture` / `split_collinear_outlines` (`SegmentIndex::new` + its r-tree searches), `PolygonTest::kink_candidate` | width 27 % of drc pipeline | sliver 18 %, width 16 %; `split_collinear_outlines` searches 28 % | `SegmentIndex::new` and `PackedRTreeBuilder::build` rebuilt per polygon; `simplify` of the same layer polygons by both providers. Round 1 (`R1-split-collinear-fastpath`) took 10 to 30 % off both providers; the shared `simplify` and the kink search remain. |
 | 6 | DRC | copper clearance `DrcRtree::query_colliding_prepared_copper` (r-tree search + `collide_shapes`), `ShapeLineChain::point_inside` (5.5 % self, jetson) | 12 % | 31 % (search) | Same visit order is pinned; candidates: per-query allocations, repeated shape construction for the same item, `Board::get` (4.5 % self on jetson). |
 | 7 | DRC fixed cost | every `RunTests` rebuilds connectivity (`ConnectivityData::build`, 12 % of coldfire drc pipeline, with triangulation) and the DRC r-trees (`DrcRtree::insert_on` 5.5 %); `disallow` 8 % on jetson | yes | yes | Matters most for the router loop (PERF.md note above): one DRC per candidate pays it again. |
 | 8 | connectivity in the filler | `search_clusters_ex`, `fill_isolated_islands_map`, `cn_visit`, `check_zone_item_connection`; `connect_nearby_polys` (jetson 6.8 %) | 11 % of fill | 8 % of fill | Island removal re-runs the cluster search over the whole board. |

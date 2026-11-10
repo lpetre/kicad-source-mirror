@@ -899,6 +899,21 @@ Progress log:
   exact when the tree search finds one or two distinct parents. LIVE-2 item 1
   (DRC state kept between runs) remains NOT built - the open speed item for a router
   loop. Task 13 is closed with that exception.
+  14:38 UTC: user requests. (1) A script in the client's repository branch that
+  builds the adapter's wasm module against a given checkout of this repository, wasm not
+  committed: done and pushed there (generated manifest with the checkout's absolute
+  path, own target folder, an ignore file that keeps every .wasm out); tested here - a
+  full build takes about two minutes, 7.9 MB raw / 2.6 MB gzipped, and the client's
+  unchanged wrapper class and sessions run on it under Node (prepare on his example
+  board 0.9 s in wasm; baseline counts equal the reference's). (2) "Run the client's web
+  demo with our port": workflow web-demo launched (run wf_be7d2a9a-b50, task wvcx3ht9u):
+  build his router tools to wasm (Emscripten to be installed), wire our module in at the
+  path his page and Node runner import (ignored build paths only, none of his files
+  changed), Node pipeline against his documented expected result, then the real page in
+  a headless browser with screenshots and video -> Fable verification. This supersedes
+  the planned GK-3 part 2. (3) The user asked whether moving the work to a laptop would
+  be faster: answered - compute yes, but the reference build and caches live only in
+  this container; the demo itself needs neither.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
