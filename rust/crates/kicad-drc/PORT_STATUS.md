@@ -1163,8 +1163,8 @@ entries as multisets. State 2026-11-10 (pads load now):
 | Golden | Boards compared | Result |
 |---|---|---|
 | `golden/drc08a/corpus.txt` (the 365 cached reports of `gen_drc_corpus.py`) | 306 (56 pending DRC-21 rule conditions, 2 legacy `.pro`, 1 reference failure) | clearance 2018 matched, hole_clearance 1407, shorting_items 239, tracks_crossing 0 (none in the corpus); 0 missing, 0 extra except the two error-limit boards below; 54 reference entries are DRC-08b's, 0 physical |
-| `golden/drc08a/all_track_errors.txt` (12 boards incl. `issue17429`, `issue5093`, `issue24355`, `issue8003`, `reverse_via`) | see test output | identical sets |
-| `golden/drc08a/synthetic*.txt`: `tests/data/drc08a/items*` (tracks, arcs, through / blind / micro vias, vias with unused layers removed, zone fills, DRC epsilon gaps; no rule file, hole clearance 0.4 mm, hole clearance 0) | 3 + 3 | default 45 + 1 + 3, all-track-errors 48 + 13 + 6 entries: identical sets |
+| `golden/drc08a/all_track_errors.txt` (12 boards incl. `issue17429`, `issue5093`, `issue24355`, `issue8003`, `reverse_via`) | 12 | clearance 3, hole_clearance 31, shorting_items 45 matched; 0 missing, 0 extra |
+| `golden/drc08a/synthetic*.txt`: `tests/data/drc08a/items*` (tracks, arcs, through / blind / micro vias, vias with unused layers removed, zone fills, DRC epsilon gaps; no rule file, hole clearance 0.4 mm, hole clearance 0) | 3 + 3 | default 45 / 1 / 3, all-track-errors 48 / 13 / 6 (clearance / hole / shorting) matched; 0 missing, 0 extra |
 
 Not compared: the report **order**. Every C++ phase runs one thread-pool task per track /
 footprint, so the reference order changes between runs (three runs of `items.kicad_pcb`: three
@@ -1200,3 +1200,82 @@ cluster, which gets one net (also on the synthetic boards, where pads are absent
   `DrcEngine::run_tests` (the cache generator wiring of DRC-05's known gap).
 - Pad-vs-barcode pairs: attributed to DRC-08a by the replay; the C++ also tests them from the
   graphic side (DRC-08b), not present in the corpus.
+
+## DRC-21: PCB expression binding (`PCBEXPR_*` on kicad-libeval)
+
+Supersedes the "stub (DRC-21)" / "needs DRC-21" notes of the DRC-20, DRC-03 and DRC-04 sections:
+user rule conditions and constraint value expressions now compile and evaluate with the
+default binding `PcbExprUcode`.
+
+### File / class map
+
+| C++ (`pcbnew/pcbexpr_evaluator.h/.cpp`, `pcbexpr_functions.cpp`) | Rust | State |
+|---|---|---|
+| `PCBEXPR_UCODE::CreateVarRef` (`null`, navigation chains `A.Parent...`, `L.Layer`, receivers `A` / `B` / `AB` / `L`, the "object code" fields, `_` -> space, `Origin X/Y` aliases, the class / type matrix with `VT_PARSE_ERROR`), `CreateFuncCall`, usage flags | `src/pcbexpr/evaluator.rs` `PcbExprUcode` (`UcodeBinder` + `PcbExprBinder`) | ported |
+| `PCBEXPR_CONTEXT` (items, layer, constraint, type overrides, `GetEffectiveType`, `GetBoard`, `Reset`) | `PcbExprContext` (the binder's `Env`) | ported |
+| `PCBEXPR_VAR_REF` (`ClassifyProperty`, `ExpressionType`, `GetObject`, `GetValue` with parent-footprint fallback, `IsAvailableFor`, footprint variant overrides, the kind matrix, "quacks like a duck" strings, layer enums), `PCBEXPR_NETCLASS_REF`, `PCBEXPR_COMPONENT_CLASS_REF`, `PCBEXPR_NETNAME_REF`, `PCBEXPR_TYPE_REF` | `PcbExprVarRef` + `PcbExprRefClass` | ported |
+| `PCBEXPR_LAYER_VALUE`, `PCBEXPR_PINTYPE_VALUE`, `PCBEXPR_NETCLASS_VALUE`, `PCBEXPR_COMPONENT_CLASS_VALUE`, `PCBEXPR_NET_VALUE` (`AsString`, `EqualTo`, `NotEqualTo`) | `PcbExprValue` (`CustomValue` payload) | ported |
+| `PCBEXPR_BUILTIN_FUNCTIONS` (`Instance`, `Get`, `IsGeometryDependent`, `GetSignatures`, `RegisterFunc`) | `PcbExprBuiltinFunctions` | ported |
+| `RegisterAllFunctions` (34 signatures, geometry flags) | `src/pcbexpr/functions.rs` `register_all_functions` | ported; every body is the stub `not_yet_ported` (DRC-22) |
+| `DRC_RULE_CONDITION::EvaluateFor` teardrop type override | `PcbExprUcode::item_env` | ported |
+| implicit `A.Layer == '...'` (tuning-profile rules) | `evaluator::item_field_equals`, called from `engine/implicit_condition.rs` | ported (was `port_pending!`) |
+
+### Verification
+
+* Condition compiler vs the real C++ (`pcb-dump rules`, real `DRC_RULES_PARSER` +
+  `PCBEXPR_UCODE`), replayed with `PcbExprUcode` in `tests/drc21_pcbexpr.rs`: all 73 corpus
+  `.kicad_dru` files (`rules_corpus.txt`), all 94 broken files of DRC-20 (`rules_errors.txt`) and
+  5 new codegen case files `tests/data/rules/drc21/` (53 rules: unknown items / properties /
+  navigation steps / receivers, type conflicts (`A.Shape`), `null`, missing units, unknown
+  functions, case-insensitive fields, usage flags; golden `drc21_conditions.txt`, 3221 lines,
+  generator `tests/oracle/gen_drc21_goldens.py`): **identical** (accept / reject, every message
+  text and offset, both parser modes).
+* EvalRules oracle of DRC-04 (`tests/evalrules_oracle.rs`, now loading with the real binding):
+  27 corpus boards with user rule conditions that call no function are compared now:
+  **1244 categories match on 102 complete boards, 0 mismatches** (before: 1128 / 98; the 4
+  tuning-profile categories of `issue24772/fw16_MCIO8i` that hit the implicit `A.Layer`
+  stub match too). 28 boards whose rules call functions are counted as "needs DRC-22".
+* Ported C++ tests `qa/tests/pcbnew/test_libeval_compiler.cpp` on parsed boards:
+  `IntrospectedProperties`, `IntrospectedExtendedNumericProperties` (zone / footprint part),
+  `RenamedProperties`, `ExpressionPropertyTypesAreSupported`, `IntrospectedPropertyAvailability`,
+  `ParentNavigation`, `PropertyParentFallback`, `BoolPropertyEvaluation`,
+  `VariantAwareEvaluation`, `ReceiverValidation`, `LayerReceiverLayerField`,
+  `PairItemDependency` (the function-calling expressions of these cases are compile-checked
+  only). `SingleItemRulePreflight`, `PairConditionsInSingleItemRules` are in DRC-20's
+  `test_rule_parser.rs`. Not ported (need DRC-22 function bodies): `InNetChainClassWildcard`,
+  `StackedMicroviaExpression`, `DynamicCourtyardArgument`, `FunctionArgumentValidation`;
+  `FieldAliasNormalization` is a GUI dialog helper (skipped). Plus `value_classes` (net /
+  composite netclass / layer / pin type / fallback matrix) and `rule_condition_evaluate_for`.
+  The kicad-libeval copies stay `#[ignore]`d there (that crate cannot depend on kicad-drc).
+
+### Deviations
+
+- Layer patterns (`PCBEXPR_LAYER_VALUE::EqualTo`) match against `board_layer_choices( board )`
+  (canonical + board names = the `ENUM_MAP` after `BOARD_LOADER::Load`, the kicad-cli path),
+  recomputed per comparison: `BOARD::m_LayerExpressionCache` is crate-private in kicad-pcb (same
+  result, slower). The QA load path of C++ has only canonical names in the map; this differs
+  only for a pattern that matches a user layer name but no canonical name. Without a board
+  (C++ null dereference) the canonical names are used.
+- Function bodies (DRC-22): each registered function is a stub that pops its arguments, pushes
+  0 and, during a real evaluation (receiver resolves to an item), reports "Function '<name>' is
+  not yet ported (DRC-22)." through the error callback. The pre-flight call reports nothing, so
+  the C++ argument validation errors at compile time ("Missing ... argument", unknown layer
+  names) are missing until DRC-22. Without a reporter (DRC hot path) such conditions are
+  silently false.
+- C++ undefined behaviour made defined: `L` as a function receiver reads `m_items[2]` (out of
+  bounds) -> no item; a null `GetComponentClass()` compares as the empty name; a null board in
+  `GetLayerID` -> `UNDEFINED_LAYER`; `A.Parent` of a board-level item is the BOARD in C++
+  (`TYPE_REF` would print `ENUM_MAP<KICAD_T>` of `PCB_T`), in Rust no item (undefined value).
+- `GetAllClasses()` is iterated in `ClassId` order (C++ `unordered_map`): the resulting type and
+  class set of a valid reference are order independent; only a reference that already failed
+  with `VT_PARSE_ERROR` keeps an order-dependent partial class set (never evaluated by the engine,
+  which rejects the rule).
+
+### Known gaps
+
+- DRC-22: function bodies. The shared DRC harness `tests/drc_harness` still loads with the
+  stand-in `SyntaxBinder` and skips boards with user rule conditions; switching it to the real
+  binding (skipping only function-calling rules, as `evalrules_oracle.rs::has_compiled_conditions`
+  now does) brings 27 more boards into every provider's comparison.
+- Footprint pads do not load yet (PCBIO-07): the pad cases of `value_classes` are skipped and run
+  automatically once pads load.

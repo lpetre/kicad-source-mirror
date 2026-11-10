@@ -874,7 +874,9 @@ impl BrditemsPlotter<'_, '_> {
         let mut dummy = PcbShape::with_shape(ShapeT::Poly);
         dummy.base.item.parent = parent;
         dummy.set_layer(&env, a_bar_code.layer());
-        dummy.shape.set_fill_mode(kicad_pcb::eda_shape::FillT::FilledShape);
+        dummy
+            .shape
+            .set_fill_mode(kicad_pcb::eda_shape::FillT::FilledShape);
         dummy.set_width(&env, 0);
 
         let mut shape = ShapePolySet::new();

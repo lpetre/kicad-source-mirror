@@ -57,7 +57,12 @@ pub fn line_ending_plot(
         };
         a_plotter.plot_poly(&polygon, FillT::NoFill, plot_width, a_data);
     } else if a_ending.stroke_width() > 0 {
-        a_plotter.plot_poly(&polygon, FillT::FilledShape, a_ending.stroke_width(), a_data);
+        a_plotter.plot_poly(
+            &polygon,
+            FillT::FilledShape,
+            a_ending.stroke_width(),
+            a_data,
+        );
     } else {
         a_plotter.plot_poly(&polygon, FillT::FilledShape, 0, a_data);
     }

@@ -26,8 +26,12 @@ Written to crafted.txt in the compact corpus format of ../plot_driver/corpus.txt
 (`B <path relative to the crate>`, then `<name hash> <header hash> <file hash>` per produced
 file), and the normalised files to crafted_files.txt (`#file <name>` + text) for reading
 differences.
+
+SVG: see `svg()`.
 """
 import os
+import shutil
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -56,5 +60,31 @@ def main():
         fh.write("".join(texts))
 
 
+SVG_CASES = [
+    ("f_silks", ["-l", "F.Silkscreen"]),
+    ("dwgs_mirror", ["-l", "User.Drawings", "-m"]),
+    ("f_mask", ["-l", "F.Mask"]),
+]
+
+
+def svg():
+    """`kicad-cli pcb export svg --mode-single --exclude-drawing-sheet --drill-shape-opt 0
+    --black-and-white -l <layer> [-m]` on graphics.kicad_pcb, stored as svg_<case>.svg."""
+    board = os.path.join(drv.CRATE, "tests/data/plot_graphics/graphics.kicad_pcb")
+    work = os.path.join(drv.SCRATCH, "svg5")
+    for case, args in SVG_CASES:
+        shutil.rmtree(work, ignore_errors=True)
+        os.makedirs(work)
+        shutil.copy(board, work)
+        env = dict(os.environ, KICAD_ORACLE_HOME=os.path.join(drv.SCRATCH, "home"))
+        subprocess.run([drv.CLI, "pcb", "export", "svg", "--mode-single", "--exclude-drawing-sheet",
+                        "--drill-shape-opt", "0", "--black-and-white", *args,
+                        "-o", os.path.join(work, "a.svg"), os.path.join(work, "graphics.kicad_pcb")],
+                       env=env, capture_output=True, text=True, timeout=600, check=True)
+        shutil.copy(os.path.join(work, "a.svg"), os.path.join(HERE, "svg_%s.svg" % case))
+    shutil.rmtree(work, ignore_errors=True)
+
+
 if __name__ == "__main__":
     main()
+    svg()

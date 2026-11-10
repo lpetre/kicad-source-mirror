@@ -91,13 +91,14 @@ fn load_cli(path: &Path) -> Result<(Board, DrcEngine, ConnectivityData, Vec<Stri
             Ok(Ok(StepOutcome::Session)) => match step {
                 LoadStep::InitDrcEngine => {
                     // exceptions swallowed, like the C++ loader
-                    let _ = engine.init_engine(
+                    let r = engine.init_engine(
                         &mut board,
                         rules.as_deref().map(|t| (t, rules_path.to_str().unwrap())),
                         default_layer_choices(),
                         &TuningProfiles::default(),
                         None,
                     );
+ eprintln!("init_engine: {:?}", r.as_ref().err());
                 }
                 LoadStep::BuildConnectivity => {
                     connectivity.build_connectivity(&mut board);
@@ -124,7 +125,7 @@ fn tmp_dbg() {
         for &a in &zones { for &b in &zones { if a==b {continue;}
             for layer in [PcbLayerId::FCu, PcbLayerId::In1Cu, PcbLayerId::BCu] {
                 let c = kicad_pcb::ctx::RuleResolver::eval_rules(&engine, &ctx, kicad_pcb::drc_api::DrcConstraintT::ClearanceConstraint, ctx.item(a.into()), ctx.item(b.into()), layer);
-                eprintln!("{:?} {:?} {:?}: null={} min={}", a, b, layer, c.is_null(), c.value().min());
+                eprintln!("{:?} {:?} {:?}: null={} min={} rule={:?} nc={:?}", a, b, layer, c.is_null(), c.value().min(), c.name, ctx.item(a.into()).unwrap().effective_netclass().map(|n| n.get_name().to_string()));
             }}}
     }
     board.increment_time_stamp();
