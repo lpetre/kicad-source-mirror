@@ -709,6 +709,17 @@ Progress log:
   Reading: medium boards about twice as fast as the reference process; the two large boards
   about level with the reference on one thread and 1.6-1.7x behind its thread pool on
   refill + DRC. No optimisation round has started yet.
+  10:14 UTC: the client's own KiCad shim (C++, sixteen C entry points over KiCad 10.0.5)
+  and its JavaScript callers were handed over. Workflow client-adapter launched (run
+  wf_556623a8-5ef): GK-1 native adapter on the port's public API, proven against the shim
+  itself built on the reference tree -> Fable review -> fixes -> GK-2 wasm module his
+  unchanged JavaScript can load, a session object that rolls back instead of reopening,
+  timings -> Fable review -> fixes. The client's files are from a private repository and
+  this fork is public: they live in /home/user/kicad-oracle/gloopy, the adapter is a
+  self-contained package in rust/clients/ (own workspace, shared target dir) which is
+  excluded from git (.git/info/exclude) until the owner agrees to publication. Only
+  generic, client-neutral API additions go into the port. Until then that work exists in
+  this container only.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

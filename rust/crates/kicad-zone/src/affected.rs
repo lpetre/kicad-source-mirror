@@ -452,9 +452,46 @@ pub fn fill_affected_zones(
         return fill_after_teardrops(board, connectivity, rules, None);
     };
 
-    for (id, fill) in fresh {
+    for (id, mut fill) in fresh {
+        let layers: Vec<PcbLayerId> = board
+            .zone(id)
+            .map(|z| z.layer_set.iter().collect())
+            .unwrap_or_default();
+
         if set.contains(&id) {
             *board.zone_fill_mut(id) = fill;
+        } else {
+            // `Fill()` hashes the fill it is about to replace: for a re-created teardrop the
+            // new, empty one.
+            for &layer in &layers {
+                fill.build_hash_value(layer);
+            }
+
+            board.zone_fill_mut(id).filled_polys_hash = fill.filled_polys_hash;
+        }
+    }
+
+    // ... and for every other zone it fills its current fill, which the kept zones keep.
+    let recreated_ids: BTreeSet<ZoneId> = recreated.iter().map(|(id, _)| *id).collect();
+
+    for &id in &zones {
+        if set.contains(&id) || recreated_ids.contains(&id) {
+            continue;
+        }
+
+        let Some(z) = board.zone(id) else {
+            continue;
+        };
+
+        if !fillable(z) {
+            continue;
+        }
+
+        let layers: Vec<PcbLayerId> = z.layer_set.iter().collect();
+        let fill = board.zone_fill_mut(id);
+
+        for layer in layers {
+            fill.build_hash_value(layer);
         }
     }
 

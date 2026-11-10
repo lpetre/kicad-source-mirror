@@ -109,3 +109,33 @@ watch are: parse + load, an edit batch, a full refill, a full DRC, teardrops and
 boards of a few hundred pads, in single-threaded wasm; and that checkpoint / rollback
 (instead of re-opening), scoped refill and scoped DRC, and one small instance per worker
 (checks in parallel) are where the port can beat that setup.
+
+## LIVE-2: scoped check and affected-only refill (pipelines `edit`, `live2`)
+
+`kicad-bench run --pipelines edit` now runs, per round and from the same full-refill state,
+the LIVE-2 path (`edit.commit`, `edit.check_items` of the new tracks, `edit.refill_affected`
+with the commit's damage) and the batch path (`edit.apply_edits`, `edit.quick_drc` with
+clearance + connectivity, full `edit.zone_refill`), and checks that both save the same board;
+then `edit.local_*`: one net's tracks re-added (2 to 40 tracks), the router's typical
+candidate. `wasm_bench.mjs --pipelines live2` runs the local rounds through the JS API
+(`commitBulk`, `checkItems`, `refillZonesAffected` against `refillZones`, saved boards
+compared). Medians in ms, one rep, shared machine (load 4 to 8), local rounds:
+
+| board | zones | refilled (3 nets) | check_items native / wasm | quick_drc native | refill affected native / wasm | full refill native / wasm |
+|---|---|---|---|---|---|---|
+| pic_programmer | 1 | 1, 1, 1 | 20.5 / - | 17.5 | 205.6 / - | 198.2 / - |
+| complex_hierarchy | 168 | 38, 3, 5 | 64.1 / 158.5 | 56.6 | 209.6 / 347.8 | 230.2 / 359.8 |
+| issue14549 | 44 | 41, 25, 32 | 31.3 / 117.4 | 25.7 | 157.6 / 247.1 | 158.7 / 188.3 |
+| issue5990 | 12 | 10, 10, 10 | 37.5 / 106.8 | 14.9 | 243.8 / 361.9 | 245.5 / 352.2 |
+
+Reading: the refill cost is the board-wide pours. Every edit inside a pour refills it (the
+zone is refilled in whole; nothing smaller is provably identical), and on these boards the
+pours are most of the fill time even when 3 of 168 zones are refilled. The affected refill also
+pays the fixed part of `Fill()` (connectivity build, item indexes, both flashing passes over
+every via and pad, the teardrop update) plus one extra connectivity build and cluster search
+for the selection, so with nothing to skip it is a few ms slower than the full refill. It wins
+when the expensive zones are not near the edit (several separate pours, edits between them):
+an empty commit refills nothing (issue14549: 6.9 ms against 106 ms). `check_items` costs a run
+of its eight providers (it is defined as their full all-track-errors run, filtered), i.e. a bit
+more than `quick_drc` with two providers; the DRC keeps no state between runs except the
+compiled rules, so every call pays the cache generator (connectivity build and r-trees).

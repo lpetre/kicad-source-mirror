@@ -151,6 +151,37 @@ fn affected_refill_equals_full_refill() {
             let full = fill_state(&s);
             let full_text = s.save().expect("save");
 
+            if affected != full && std::env::var("LIVE2_DEBUG").is_ok() {
+                let dir =
+                    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/live2");
+                let _ = std::fs::create_dir_all(&dir);
+                let _ = std::fs::write(dir.join("affected.txt"), affected.join("\n"));
+                let _ = std::fs::write(dir.join("full.txt"), full.join("\n"));
+                let refilled: Vec<String> = r.refilled.iter().map(|h| h.to_string()).collect();
+                let _ = std::fs::write(dir.join("refilled.txt"), refilled.join("\n"));
+                let mut info = String::new();
+                for z in s.zones_info(false) {
+                    let bb = z.outline.iter().flat_map(|p| p.outline.iter()).fold(
+                        [i32::MAX, i32::MAX, i32::MIN, i32::MIN],
+                        |b, p| {
+                            [
+                                b[0].min(p[0]),
+                                b[1].min(p[1]),
+                                b[2].max(p[0]),
+                                b[3].max(p[1]),
+                            ]
+                        },
+                    );
+                    info.push_str(&format!(
+                        "{} id={} refilled={} net={} layers={:?} prio={} td={} island={} bbox={bb:?}\n",
+                        z.uuid, z.id, r.refilled.contains(&z.id), z.net, z.layers, z.priority,
+                        z.teardrop, z.island_mode
+                    ));
+                }
+                info.push_str(&format!("damage {:?}\n", damage));
+                let _ = std::fs::write(dir.join("zones.txt"), info);
+            }
+
             if affected != full {
                 let bad: Vec<String> = affected
                     .iter()
@@ -186,5 +217,37 @@ fn affected_refill_equals_full_refill() {
 /// The boards, restricted to those containing `LIVE2_FILTER` when it is set.
 fn boards_list() -> Vec<String> {
     let filter = std::env::var("LIVE2_FILTER").unwrap_or_default();
-    boards().into_iter().filter(|b| b.contains(&filter)).collect()
+    boards()
+        .into_iter()
+        .filter(|b| b.contains(&filter))
+        .collect()
+}
+
+/// Without changes the affected refill keeps every fill: equal to a second full refill.
+#[test]
+fn affected_refill_without_changes_equals_full_refill() {
+    for rel in boards_list() {
+        let Some(mut s) = load(&rel) else { continue };
+
+        if !has_copper_zones(&s) {
+            continue;
+        }
+
+        s.refill_zones().expect("refill");
+        let cp = s.checkpoint();
+        let r = s
+            .refill_zones_affected(&kicad_session::board_api::refill::ChangeDamage::default())
+            .expect("affected");
+        let affected = fill_state(&s);
+        s.restore(cp);
+        s.refill_zones().expect("refill");
+        let full = fill_state(&s);
+        let bad = affected.iter().zip(&full).filter(|(a, b)| a != b).count();
+        assert_eq!(
+            bad,
+            0,
+            "{rel}: {bad} zones differ; refilled {}",
+            r.refilled.len()
+        );
+    }
 }
