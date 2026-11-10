@@ -249,7 +249,7 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
                     emit!(
                         o,
                         format!("bbox.{}", v_layer(l)),
-                        no_api("PAD::GetBoundingBox (aLayer)")
+                        v_box(pad.bounding_box_layer(ctx, l))
                     );
                 }
             }

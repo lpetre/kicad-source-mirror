@@ -276,6 +276,18 @@ impl PcbParser {
                         None => return Ok(None),
                     }
 
+                    // The EDA_TEXT setters parsePCB_TEXT calls (the last one is
+                    // SetVisible( true )) reach the dimension's ClearRenderCache() override,
+                    // which runs Update(): when parsePCB_TEXT returns, the text holds the
+                    // regenerated dimension text, not the file's. The model's text setters do
+                    // not dispatch to the dimension (PORT_STATUS.md, PCBIO-10), so the last of
+                    // those Update()s is run here. This is what makes a legacy dimension read its
+                    // units from "<value> in" (constructor units) below, as the reference does.
+                    {
+                        let ctx = BoardCtx::bare(&self.board);
+                        dim.update(&ctx);
+                    }
+
                     if is_legacy_dimension {
                         let mut units = EdaUnits::Mm;
 

@@ -197,7 +197,7 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "image.orientation", v_angle(r.orientation()));
             emit!(o, "image.opacity", v_f64(r.opacity()));
             emit!(o, "image.scale", v_f64(r.image_scale()));
-            emit!(o, "image.bbox", no_api("REFERENCE_IMAGE::GetBoundingBox"));
+            emit!(o, "image.bbox", v_box(r.reference_image_bounding_box()));
         }
         AnyItem::Group(_) | AnyItem::Generator(_) => {
             let g = it.as_group().expect("group");
