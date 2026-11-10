@@ -1444,9 +1444,10 @@ impl Pad {
         self.padstack.solder_mask_margin(PcbLayerId::FCu)
     }
 
-    /// `PAD::SetLocalSolderMaskMargin()`.
+    /// `PAD::SetLocalSolderMaskMargin()`: both outer sides (`F_Mask` and `B_Mask`).
     pub fn set_local_solder_mask_margin(&mut self, margin: Option<i32>) {
-        *self.padstack.solder_mask_margin_mut(PcbLayerId::FCu) = margin;
+        *self.padstack.solder_mask_margin_mut(PcbLayerId::FMask) = margin;
+        *self.padstack.solder_mask_margin_mut(PcbLayerId::BMask) = margin;
     }
 
     /// `PAD::GetLocalSolderPasteMargin()`.
@@ -1454,9 +1455,10 @@ impl Pad {
         self.padstack.solder_paste_margin(PcbLayerId::FCu)
     }
 
-    /// `PAD::SetLocalSolderPasteMargin()`.
+    /// `PAD::SetLocalSolderPasteMargin()`: both outer sides (`F_Paste` and `B_Paste`).
     pub fn set_local_solder_paste_margin(&mut self, margin: Option<i32>) {
-        *self.padstack.solder_paste_margin_mut(PcbLayerId::FCu) = margin;
+        *self.padstack.solder_paste_margin_mut(PcbLayerId::FPaste) = margin;
+        *self.padstack.solder_paste_margin_mut(PcbLayerId::BPaste) = margin;
     }
 
     /// `PAD::GetLocalSolderPasteMarginRatio()`.
@@ -1464,9 +1466,10 @@ impl Pad {
         self.padstack.solder_paste_margin_ratio(PcbLayerId::FCu)
     }
 
-    /// `PAD::SetLocalSolderPasteMarginRatio()`.
+    /// `PAD::SetLocalSolderPasteMarginRatio()`: both outer sides (`F_Paste` and `B_Paste`).
     pub fn set_local_solder_paste_margin_ratio(&mut self, ratio: Option<f64>) {
-        *self.padstack.solder_paste_margin_ratio_mut(PcbLayerId::FCu) = ratio;
+        *self.padstack.solder_paste_margin_ratio_mut(PcbLayerId::FPaste) = ratio;
+        *self.padstack.solder_paste_margin_ratio_mut(PcbLayerId::BPaste) = ratio;
     }
 
     /// `PAD::GetLocalZoneConnection()`: `INHERITED` when unset.

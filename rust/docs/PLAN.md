@@ -288,7 +288,7 @@ Progress log:
   and GLUE-2 have landed and the provider chains have finished.
   Launched: FIX-PAD-1 -> PCBIO-14 (footprint library files) and STAB-CN (connectivity with
   pads: rerun every oracle, thirty more boards, net propagation scoreboard) (w16z105v0).
-  Next heartbeat 04:25 UTC. Disk watchdog task bnp4nj8m6 ends about 03:40 UTC: restart it.
+  Next heartbeat 04:25 UTC. Disk watchdog restarted 03:27 UTC as background task b9699ml7v (2 h lifetime: restart about 05:25 UTC).
   Still to write (tier 3, editor-only paths): FIX-GEN-1 (generator subclass arms of move /
   rotate / flip / mirror / set_layer, via stitch default template), FIX-DIM-1
   (PCB_DIMENSION_BASE::Update after text setters, i32-backed dimension enums, grid item

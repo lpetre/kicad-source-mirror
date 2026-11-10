@@ -33,7 +33,8 @@ use std::collections::BTreeSet;
 use kicad_pcb::BoardCtx;
 use kicad_session::{LoadInputs, Session};
 
-/// References whose expected class depends on a DRC-22 function (see the module comment).
+/// References of `component_classes.kicad_pcb` whose expected class depends on a DRC-22
+/// function (see the module comment).
 const NEEDS_DRC22: &[&str] = &["C1", "C2", "R2", "R3", "U2"];
 
 fn load(board: &str, cli: bool) -> Session {
@@ -95,7 +96,7 @@ fn compare_with_reference_dump(all: bool) {
             for ((gr, gc), (er, ec)) in got.iter().zip(expected.iter()) {
                 assert_eq!(gr, er, "{board} {mode}: footprint order");
 
-                if !all && NEEDS_DRC22.contains(&gr.as_str()) {
+                if !all && board == "component_classes" && NEEDS_DRC22.contains(&gr.as_str()) {
                     continue;
                 }
 
