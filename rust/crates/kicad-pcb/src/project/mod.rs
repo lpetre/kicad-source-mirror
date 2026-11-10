@@ -20,3 +20,5 @@
 //! Created empty by M0a so that the module tree is complete; the named package fills it.
 
 pub mod net_settings_json;
+
+pub mod board_design_settings_json;

@@ -38,9 +38,12 @@ use kicad_core::json::Value;
 use kicad_pcb::Board;
 use kicad_pcb::board_design_settings::DrcExclusion;
 use kicad_pcb::pcb_marker::PcbMarker;
+use kicad_pcb::project::board_design_settings_json::DrcExclusionCodec;
 
-use crate::marker::proto::{DrcExclusionMsg, DrcMarkerMsg, parse_exclusion_json};
-use crate::marker::{from_legacy_string, from_proto as marker_from_proto, to_proto as marker_to_proto};
+use crate::marker::proto::{DrcExclusionMsg, parse_exclusion_json};
+use crate::marker::{
+    from_legacy_string, from_proto as marker_from_proto, to_proto as marker_to_proto,
+};
 
 /// `DRCET_UNCONNECTED_ITEMS`.
 const DRCET_UNCONNECTED_ITEMS: i32 = 1;
@@ -153,7 +156,7 @@ pub fn marker_from_exclusion(
     exclusion: &DrcExclusion,
     kiid_generator: &mut KiidGenerator,
 ) -> Option<PcbMarker> {
-    let marker = to_proto(exclusion).marker.unwrap_or_else(DrcMarkerMsg::default);
+    let marker = to_proto(exclusion).marker.unwrap_or_default();
     marker_from_proto(&marker, kiid_generator)
 }
 
@@ -178,6 +181,34 @@ pub fn record_drc_exclusions(board: &mut Board) {
     board.record_drc_exclusions_with(&from_marker);
 }
 
+/// The `DRC_EXCLUSION` conversions for the project-file reader of `kicad-pcb`
+/// (`board_design_settings_json::DrcExclusionCodec`): [`from_json`] and
+/// [`from_legacy_strings`]. Legacy strings consume UUIDs (the marker of `FromLegacyString`,
+/// random ids for malformed item fields) from the codec's own generator.
+#[derive(Debug, Default)]
+pub struct KiapiDrcExclusionCodec {
+    kiid_generator: RefCell<KiidGenerator>,
+}
+
+impl KiapiDrcExclusionCodec {
+    /// A codec drawing UUIDs from `kiid_generator`.
+    pub fn new(kiid_generator: KiidGenerator) -> Self {
+        KiapiDrcExclusionCodec {
+            kiid_generator: RefCell::new(kiid_generator),
+        }
+    }
+}
+
+impl DrcExclusionCodec for KiapiDrcExclusionCodec {
+    fn from_json(&self, json: &Value) -> DrcExclusion {
+        from_json(json)
+    }
+
+    fn from_legacy_strings(&self, marker_data: &str, comment: &str) -> DrcExclusion {
+        from_legacy_strings(marker_data, comment, &mut self.kiid_generator.borrow_mut())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
@@ -188,7 +219,13 @@ mod tests {
     use kicad_geom::Vector2I;
     use kicad_pcb::drc_api::*;
 
-    fn marker(board: &mut Board, code: i32, ids: Vec<Kiid>, pos: Vector2I, layer: i32) -> PcbMarker {
+    fn marker(
+        board: &mut Board,
+        code: i32,
+        ids: Vec<Kiid>,
+        pos: Vector2I,
+        layer: i32,
+    ) -> PcbMarker {
         let mut item = crate::item::create(code).unwrap();
         item.set_item_ids(ids);
         PcbMarker::new(&mut board.kiid_generator, Arc::new(item), pos, layer)
@@ -210,14 +247,44 @@ mod tests {
         // the layer-carrying codes).
         let m3 = marker(&mut board, DRCE_CLEARANCE, vec![a], Vector2I::new(1, 3), 0);
         assert_ne!(from_marker(&m1), from_marker(&m3));
-        let m4 = marker(&mut board, DRCE_CLEARANCE, vec![a], Vector2I::new(1, 2), PcbLayerId::BCu.0);
+        let m4 = marker(
+            &mut board,
+            DRCE_CLEARANCE,
+            vec![a],
+            Vector2I::new(1, 2),
+            PcbLayerId::BCu.0,
+        );
         assert_eq!(from_marker(&m1), from_marker(&m4));
-        let s1 = marker(&mut board, DRCE_COPPER_SLIVER, vec![a], Vector2I::new(1, 2), 0);
-        let s2 = marker(&mut board, DRCE_COPPER_SLIVER, vec![a], Vector2I::new(1, 2), PcbLayerId::BCu.0);
+        let s1 = marker(
+            &mut board,
+            DRCE_COPPER_SLIVER,
+            vec![a],
+            Vector2I::new(1, 2),
+            0,
+        );
+        let s2 = marker(
+            &mut board,
+            DRCE_COPPER_SLIVER,
+            vec![a],
+            Vector2I::new(1, 2),
+            PcbLayerId::BCu.0,
+        );
         assert_ne!(from_marker(&s1), from_marker(&s2));
         // ... except for unconnected items, whose sort key drops the layer.
-        let u1 = marker(&mut board, DRCE_UNCONNECTED_ITEMS, vec![a, a], Vector2I::new(1, 2), 0);
-        let u2 = marker(&mut board, DRCE_UNCONNECTED_ITEMS, vec![a, a], Vector2I::new(1, 2), PcbLayerId::BCu.0);
+        let u1 = marker(
+            &mut board,
+            DRCE_UNCONNECTED_ITEMS,
+            vec![a, a],
+            Vector2I::new(1, 2),
+            0,
+        );
+        let u2 = marker(
+            &mut board,
+            DRCE_UNCONNECTED_ITEMS,
+            vec![a, a],
+            Vector2I::new(1, 2),
+            PcbLayerId::BCu.0,
+        );
         assert_eq!(from_marker(&u1), from_marker(&u2));
         assert_ne!(from_marker(&u1).json, from_marker(&u2).json);
     }
@@ -226,7 +293,13 @@ mod tests {
     fn json_storage_round_trip() {
         let mut board = Board::default();
         let a = Kiid::from_name("a");
-        let mut m = marker(&mut board, DRCE_TRACK_WIDTH, vec![a], Vector2I::new(-1000, 2000), 0);
+        let mut m = marker(
+            &mut board,
+            DRCE_TRACK_WIDTH,
+            vec![a],
+            Vector2I::new(-1000, 2000),
+            0,
+        );
         m.set_excluded(true, "fine");
         let ex = from_marker(&m);
         let text = dump(&to_json(&ex), None, ObjectOrder::Sorted);
@@ -244,14 +317,23 @@ mod tests {
         assert_eq!(dump(&back.json, None, ObjectOrder::Sorted), text);
 
         // Rejected input: empty message, empty sort key.
-        let bad = from_json(&parse("{\"marker\":{\"bogus\":1},\"comment\":\"x\"}", ObjectOrder::Sorted).unwrap());
+        let bad = from_json(
+            &parse(
+                "{\"marker\":{\"bogus\":1},\"comment\":\"x\"}",
+                ObjectOrder::Sorted,
+            )
+            .unwrap(),
+        );
         assert!(bad.sort_key.is_empty());
         assert!(bad.comment.is_empty());
 
         // Legacy string.
         let mut generator = KiidGenerator::default();
         let legacy = from_legacy_strings(
-            &format!("track_width|-1000|2000|{}|00000000-0000-0000-0000-000000000000", a.as_string()),
+            &format!(
+                "track_width|-1000|2000|{}|00000000-0000-0000-0000-000000000000",
+                a.as_string()
+            ),
             "fine",
             &mut generator,
         );
@@ -259,7 +341,19 @@ mod tests {
         assert_eq!(dump(&legacy.json, None, ObjectOrder::Sorted), text);
         let rejected = from_legacy_strings("track_width|1", "c", &mut generator);
         assert!(rejected.sort_key.is_empty());
-        assert_eq!(dump(&rejected.json, None, ObjectOrder::Sorted), "{\"comment\":\"c\"}");
+        assert_eq!(
+            dump(&rejected.json, None, ObjectOrder::Sorted),
+            "{\"comment\":\"c\"}"
+        );
+    }
+
+    #[test]
+    fn codec_for_the_settings_reader() {
+        let codec = KiapiDrcExclusionCodec::default();
+        let a = Kiid::from_name("a").as_string();
+        let ex = codec.from_legacy_strings(&format!("clearance|1|2|{a}|{a}"), "c");
+        assert!(!ex.sort_key.is_empty());
+        assert_eq!(codec.from_json(&ex.json), ex);
     }
 
     #[test]
@@ -280,8 +374,20 @@ mod tests {
         let id = board.add_marker(existing);
 
         // An exclusion for an item that does not exist and one without items.
-        let dangling = marker(&mut board, DRCE_TRACK_WIDTH, vec![a], Vector2I::new(0, 0), 0);
-        let mut lonely = marker(&mut board, DRCE_INVALID_OUTLINE, vec![], Vector2I::new(9, 9), 0);
+        let dangling = marker(
+            &mut board,
+            DRCE_TRACK_WIDTH,
+            vec![a],
+            Vector2I::new(0, 0),
+            0,
+        );
+        let mut lonely = marker(
+            &mut board,
+            DRCE_INVALID_OUTLINE,
+            vec![],
+            Vector2I::new(9, 9),
+            0,
+        );
         lonely.set_excluded(true, "outline");
 
         let settings = &mut board.design_settings_mut().drc_exclusions;

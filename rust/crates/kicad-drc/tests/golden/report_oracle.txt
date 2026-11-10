@@ -562,27 +562,6 @@ json|lines=368
 >         }
 >     ]
 > }
-marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=canonical|severity=exclusion|treated=1|key64=d7cdd57eb80c9414|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
-marker|1|code=17|key=track_width|pos=138618500,77404500|layer=31|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=1|comment=camel|severity=exclusion|treated=1|key64=cfc3640771073fa4|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
-marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=1|comment=numeric|severity=exclusion|treated=1|key64=626dae1ccc515e2a|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
-marker|3|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=unconnected|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
-marker|4|code=55|key=copper_sliver|pos=1,0|layer=2|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=warning|treated=0|key64=41d0d03e8f37b124|json={"marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
-marker|5|code=55|key=copper_sliver|pos=1,0|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=warning|treated=0|key64=5df6ab3f2fadf0af|json={"marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
-marker|6|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=1|comment=pre-excluded|severity=exclusion|treated=1|key64=e49992c85433400e|json={"comment":"pre-excluded","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
-marker|7|code=1|key=unconnected_items|pos=5,6|layer=0|type=4|ids=a202d05d-6123-4f3b-83ac-e9b52ab59302,c69de6ad-e39a-4788-a757-b7516dce18a6,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=new unconnected|severity=exclusion|treated=1|key64=c176edba6a55327e|json={"comment":"new unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
-marker|8|code=1|key=unconnected_items|pos=5,6|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=old unconnected|severity=exclusion|treated=1|key64=61abc23fec0ac976|json={"comment":"old unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
-marker|9|code=5|key=clearance|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=bool string|severity=exclusion|treated=1|key64=3ccf482716359f52|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{}}}
-marker|10|code=5|key=clearance|pos=15,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=plus string|severity=exclusion|treated=1|key64=77b1e44483bc1d21|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"15"}}}
-marker|11|code=5|key=clearance|pos=2147483647,-2147483648|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=big|severity=exclusion|treated=1|key64=7f1b56f1330f58a7|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"2147483647","y_nm":"-2147483648"}}}
-marker|12|code=5|key=clearance|pos=0,0|layer=-1|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=items object|severity=exclusion|treated=1|key64=5bfd98e5ece8cff9|json={"comment":"items object","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"marker_type":"MT_DRC","position":{}}}
-marker|13|code=11|key=starved_thermal|pos=5,6|layer=2|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,64df41cd-249a-44e2-8ece-db9044298f6e,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=thermal|severity=exclusion|treated=1|key64=17602738f3425980|json={"comment":"thermal","marker":{"error_type":"DRCET_STARVED_THERMAL","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"6"}}}
-marker|14|code=18|key=track_angle|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=nulls|severity=exclusion|treated=1|key64=0bfba9005cafad70|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","marker_type":"MT_DRC","position":{}}}
-marker|15|code=38|key=invalid_outline|pos=7,7|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=stray outline|severity=exclusion|treated=1|key64=0b4568436e79ee0a|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
-marker|16|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet|severity=exclusion|treated=1|key64=a7656fa1abaafc7b|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
-marker|17|code=51|key=unresolved_variable|pos=9,9|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet var|severity=exclusion|treated=1|key64=4597a19cb107b947|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
-marker|18|code=54|key=generic_error|pos=-1,-1|layer=127|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=layer user|severity=exclusion|treated=1|key64=80ff71de61ee1e7b|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","marker_type":"MT_DRC","position":{"x_nm":"-1","y_nm":"-1"}}}
-marker|19|code=55|key=copper_sliver|pos=1,0|layer=2|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=layer name|severity=exclusion|treated=1|key64=41d0d03e8f37b124|json={"comment":"layer name","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
-marker|20|code=55|key=copper_sliver|pos=5,6|layer=6|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sliver|severity=exclusion|treated=1|key64=22999ebb94018890|json={"comment":"sliver","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"}],"layer":"BL_In2_Cu","marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"6"}}}
 bds|0|key64=5f7c937a6c067b57|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
 bds|1|key64=c176edba6a55327e|comment=new unconnected|json={"comment":"new unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
 bds|2|key64=61abc23fec0ac976|comment=old unconnected|json={"comment":"old unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
@@ -602,439 +581,8 @@ bds|15|key64=4597a19cb107b947|comment=sheet var|json={"comment":"sheet var","mar
 bds|16|key64=80ff71de61ee1e7b|comment=layer user|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","marker_type":"MT_DRC","position":{"x_nm":"-1","y_nm":"-1"}}}
 bds|17|key64=41d0d03e8f37b124|comment=layer name|json={"comment":"layer name","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
 bds|18|key64=22999ebb94018890|comment=sliver|json={"comment":"sliver","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"}],"layer":"BL_In2_Cu","marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"6"}}}
-counts|16|3|0|errors=0|warnings=2
-text|lines=92
-> ** Drc report for issue8003.kicad_pcb **
-> ** Created on <DATE> **
-> ** Report includes: Exclusions **
-> 
-> ** Found 16 DRC violations **
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     @(5417.42 mils, 3007.42 mils): Track [/NET_B] on F.Cu, length 56.57 mils
->     @(5565.00 mils, 3162.58 mils): Pad 1 [/NET_A] of R1 on F.Cu
->     canonical
-> [track_width]: Track width
->     Local override; error (excluded)
->     @(5457.42 mils, 3047.42 mils): Track [/NET_B] on F.Cu, length 107.58 mils
->     camel
-> [via_dangling]: Via is not connected or connected on only one layer
->     Local override; warning (excluded)
->     @(5335.00 mils, 3007.42 mils): Track [/NET_B] on F.Cu, length 82.42 mils
->     numeric
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     @(5505.86 mils, 3122.58 mils): Track [/NET_A] on F.Cu, length 170.86 mils
->     @(5565.00 mils, 3162.58 mils): Track [/NET_A] on F.Cu, length 84.58 mils
->     pre-excluded
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     bool string
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     plus string
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     big
-> [clearance]: Clearance violation
->     Local override; error (excluded)
->     @(5417.42 mils, 3007.42 mils): Track [/NET_B] on F.Cu, length 56.57 mils
->     items object
-> [starved_thermal]: Thermal relief connection to zone incomplete
->     Local override; error (excluded)
->     @(5565.00 mils, 3162.58 mils): Pad 1 [/NET_A] of R1 on F.Cu
->     @(5565.00 mils, 3047.42 mils): Pad 2 [/NET_B] of R1 on F.Cu
->     thermal
-> [track_angle]: Track angle
->     Local override; error (excluded)
->     nulls
-> [invalid_outline]: Board has malformed outline
->     Local override; error (excluded)
->     stray outline
-> [unresolved_variable]: Unresolved text variable
->     Local override; error (excluded)
->     sheet
-> [unresolved_variable]: Unresolved text variable
->     Local override; error (excluded)
->     sheet var
-> [generic_error]: Error
->     Local override; error (excluded)
->     layer user
-> [copper_sliver]: Copper sliver
->     Local override; warning (excluded)
->     @(5417.42 mils, 3007.42 mils): Track [/NET_B] on F.Cu, length 56.57 mils
->     layer name
-> [copper_sliver]: Copper sliver
->     Local override; warning (excluded)
->     @(5505.86 mils, 3122.58 mils): Track [/NET_A] on F.Cu, length 170.86 mils
->     sliver
-> 
-> ** Found 3 unconnected pads **
-> [unconnected_items]: Missing connection between items
->     Local override; error (excluded)
->     @(5565.00 mils, 3047.42 mils): Pad 2 [/NET_B] of R1 on F.Cu
->     @(5335.00 mils, 3007.42 mils): Pad 2 [/NET_B] of R2 on F.Cu
->     unconnected
-> [unconnected_items]: Missing connection between items
->     Local override; error (excluded)
->     @(5335.00 mils, 3122.58 mils): Pad 1 [/NET_A] of R2 on F.Cu
->     @(5565.00 mils, 3162.58 mils): Pad 1 [/NET_A] of R1 on F.Cu
->     new unconnected
-> [unconnected_items]: Missing connection between items
->     Local override; error (excluded)
->     @(5565.00 mils, 3162.58 mils): Pad 1 [/NET_A] of R1 on F.Cu
->     @(5335.00 mils, 3122.58 mils): Pad 1 [/NET_A] of R2 on F.Cu
->     old unconnected
-> 
-> ** Found 0 Footprint errors **
-> 
-> ** Ignored checks **
->     - Footprint has no courtyard defined
->     - Track endpoint not centered on via
->     - Tuning profile track geometries
->     - Footprint doesn't match symbol's footprint filters
->     - Footprint component type doesn't match footprint pads
-> 
-> ** End of Report **
-json|lines=336
-> {
->     "$schema": "https://schemas.kicad.org/drc.v1.json",
->     "coordinate_units": "mils",
->     "date": "<DATE>",
->     "ignored_checks": [
->         {
->             "description": "Footprint has no courtyard defined",
->             "key": "missing_courtyard"
->         },
->         {
->             "description": "Track endpoint not centered on via",
->             "key": "track_not_centered_on_via"
->         },
->         {
->             "description": "Tuning profile track geometries",
->             "key": "tuning_profile_track_geometries"
->         },
->         {
->             "description": "Footprint doesn't match symbol's footprint filters",
->             "key": "footprint_filters_mismatch"
->         },
->         {
->             "description": "Footprint component type doesn't match footprint pads",
->             "key": "footprint_type_mismatch"
->         }
->     ],
->     "included_severities": [
->         "exclusion"
->     ],
->     "kicad_version": "10.99.0",
->     "schematic_parity": [],
->     "source": "issue8003.kicad_pcb",
->     "unconnected_items": [
->         {
->             "comment": "unconnected",
->             "description": "Missing connection between items",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 2 [/NET_B] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3047.4212598425197
->                     },
->                     "uuid": "64df41cd-249a-44e2-8ece-db9044298f6e"
->                 },
->                 {
->                     "description": "Pad 2 [/NET_B] of R2 on F.Cu",
->                     "pos": {
->                         "x": 5335.0,
->                         "y": 3007.4212598425197
->                     },
->                     "uuid": "79a76fdb-bb70-453e-9d81-12637b5ac88f"
->                 }
->             ],
->             "severity": "error",
->             "type": "unconnected_items"
->         },
->         {
->             "comment": "new unconnected",
->             "description": "Missing connection between items",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 1 [/NET_A] of R2 on F.Cu",
->                     "pos": {
->                         "x": 5335.0,
->                         "y": 3122.5787401574803
->                     },
->                     "uuid": "a202d05d-6123-4f3b-83ac-e9b52ab59302"
->                 },
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3162.5787401574803
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 }
->             ],
->             "severity": "error",
->             "type": "unconnected_items"
->         },
->         {
->             "comment": "old unconnected",
->             "description": "Missing connection between items",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3162.5787401574803
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 },
->                 {
->                     "description": "Pad 1 [/NET_A] of R2 on F.Cu",
->                     "pos": {
->                         "x": 5335.0,
->                         "y": 3122.5787401574803
->                     },
->                     "uuid": "a202d05d-6123-4f3b-83ac-e9b52ab59302"
->                 }
->             ],
->             "severity": "error",
->             "type": "unconnected_items"
->         }
->     ],
->     "violations": [
->         {
->             "comment": "canonical",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 56.57 mils",
->                     "pos": {
->                         "x": 5417.421259842519,
->                         "y": 3007.4212598425197
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 },
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3162.5787401574803
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 }
->             ],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "camel",
->             "description": "Track width",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 107.58 mils",
->                     "pos": {
->                         "x": 5457.421259842519,
->                         "y": 3047.4212598425197
->                     },
->                     "uuid": "b14a6fe5-b108-4eb0-874f-5289bbab5bfa"
->                 }
->             ],
->             "severity": "error",
->             "type": "track_width"
->         },
->         {
->             "comment": "numeric",
->             "description": "Via is not connected or connected on only one layer",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 82.42 mils",
->                     "pos": {
->                         "x": 5335.0,
->                         "y": 3007.4212598425197
->                     },
->                     "uuid": "d3626667-3ba8-4618-aa74-3caa02344256"
->                 }
->             ],
->             "severity": "warning",
->             "type": "via_dangling"
->         },
->         {
->             "comment": "pre-excluded",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 170.86 mils",
->                     "pos": {
->                         "x": 5505.864015748031,
->                         "y": 3122.5787401574803
->                     },
->                     "uuid": "2eeacdee-4d9d-4c65-bec0-86c0df177b61"
->                 },
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 84.58 mils",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3162.5787401574803
->                     },
->                     "uuid": "cc9b6272-14ca-4190-9739-bbef74b465c0"
->                 }
->             ],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "bool string",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "plus string",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "big",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "items object",
->             "description": "Clearance violation",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 56.57 mils",
->                     "pos": {
->                         "x": 5417.421259842519,
->                         "y": 3007.4212598425197
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 }
->             ],
->             "severity": "error",
->             "type": "clearance"
->         },
->         {
->             "comment": "thermal",
->             "description": "Thermal relief connection to zone incomplete",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3162.5787401574803
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 },
->                 {
->                     "description": "Pad 2 [/NET_B] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5565.0,
->                         "y": 3047.4212598425197
->                     },
->                     "uuid": "64df41cd-249a-44e2-8ece-db9044298f6e"
->                 }
->             ],
->             "severity": "error",
->             "type": "starved_thermal"
->         },
->         {
->             "comment": "nulls",
->             "description": "Track angle",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "track_angle"
->         },
->         {
->             "comment": "stray outline",
->             "description": "Board has malformed outline",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "invalid_outline"
->         },
->         {
->             "comment": "sheet",
->             "description": "Unresolved text variable",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "unresolved_variable"
->         },
->         {
->             "comment": "sheet var",
->             "description": "Unresolved text variable",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "unresolved_variable"
->         },
->         {
->             "comment": "layer user",
->             "description": "Error",
->             "excluded": true,
->             "items": [],
->             "severity": "error",
->             "type": "generic_error"
->         },
->         {
->             "comment": "layer name",
->             "description": "Copper sliver",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 56.57 mils",
->                     "pos": {
->                         "x": 5417.421259842519,
->                         "y": 3007.4212598425197
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 }
->             ],
->             "severity": "warning",
->             "type": "copper_sliver"
->         },
->         {
->             "comment": "sliver",
->             "description": "Copper sliver",
->             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 170.86 mils",
->                     "pos": {
->                         "x": 5505.864015748031,
->                         "y": 3122.5787401574803
->                     },
->                     "uuid": "2eeacdee-4d9d-4c65-bec0-86c0df177b61"
->                 }
->             ],
->             "severity": "warning",
->             "type": "copper_sliver"
->         }
->     ]
-> }
-scenario|exclusions_cli.scn
-board|issue8003.kicad_pcb
+scenario|exclusions_cli_noitems.scn
+board|empty.kicad_pcb
 exclusion|3|sortkey=0805120a08c4cbce411094b1b6241a260a2434666166623332312d373561622d343238662d613232332d3764663961313037333465301a260a2463363964653661642d653339612d343738382d613735372d6237353136646365313861364802|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
 exclusion|4|sortkey=0812120a0884cd8c4210d4b2f4241a260a2462313461366665352d623130382d346562302d383734662d3532383962626162356266614802|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
 exclusion|5|sortkey=080c120e08e80710b0f0ffffffffffffff011a260a2464333632363636372d336261382d343631382d616137342d3363616130323334343235364802|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
@@ -1086,42 +634,32 @@ bds|1|key64=d7cdd57eb80c9414|comment=canonical|json={"comment":"canonical","mark
 bds|2|key64=626dae1ccc515e2a|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
 bds|3|key64=cfc3640771073fa4|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
 counts|6|1|0|errors=0|warnings=2
-text|lines=47
-> ** Drc report for issue8003.kicad_pcb **
+text|lines=37
+> ** Drc report for empty.kicad_pcb **
 > ** Created on <DATE> **
 > ** Report includes: Errors, Warnings, Exclusions **
 > 
 > ** Found 6 DRC violations **
 > [copper_sliver]: Copper sliver
 >     Local override; warning
->     @(137.6025 mm, 76.3885 mm): Track [/NET_B] on F.Cu, length 1.4368 mm
 > [copper_sliver]: Copper sliver
 >     Local override; warning
->     @(137.6025 mm, 76.3885 mm): Track [/NET_B] on F.Cu, length 1.4368 mm
 > [clearance]: Clearance violation
 >     Local override; error (excluded)
->     @(137.6025 mm, 76.3885 mm): Track [/NET_B] on F.Cu, length 1.4368 mm
->     @(141.3510 mm, 80.3295 mm): Pad 1 [/NET_A] of R1 on F.Cu
 >     canonical
 > [track_width]: Track width
 >     Local override; error (excluded)
->     @(138.6185 mm, 77.4045 mm): Track [/NET_B] on F.Cu, length 2.7325 mm
 >     camel
 > [via_dangling]: Via is not connected or connected on only one layer
 >     Local override; warning (excluded)
->     @(135.5090 mm, 76.3885 mm): Track [/NET_B] on F.Cu, length 2.0935 mm
 >     numeric
 > [clearance]: Clearance violation
 >     Local override; error (excluded)
->     @(139.8489 mm, 79.3135 mm): Track [/NET_A] on F.Cu, length 4.3399 mm
->     @(141.3510 mm, 80.3295 mm): Track [/NET_A] on F.Cu, length 2.1483 mm
 >     pre-excluded
 > 
 > ** Found 1 unconnected pads **
 > [unconnected_items]: Missing connection between items
 >     Local override; error (excluded)
->     @(141.3510 mm, 77.4045 mm): Pad 2 [/NET_B] of R1 on F.Cu
->     @(135.5090 mm, 76.3885 mm): Pad 2 [/NET_B] of R2 on F.Cu
 >     unconnected
 > 
 > ** Found 0 Footprint errors **
@@ -1134,7 +672,7 @@ text|lines=47
 >     - Footprint component type doesn't match footprint pads
 > 
 > ** End of Report **
-json|lines=178
+json|lines=91
 > {
 >     "$schema": "https://schemas.kicad.org/drc.v1.json",
 >     "coordinate_units": "mm",
@@ -1168,30 +706,13 @@ json|lines=178
 >     ],
 >     "kicad_version": "10.99.0",
 >     "schematic_parity": [],
->     "source": "issue8003.kicad_pcb",
+>     "source": "empty.kicad_pcb",
 >     "unconnected_items": [
 >         {
 >             "comment": "unconnected",
 >             "description": "Missing connection between items",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 2 [/NET_B] of R1 on F.Cu",
->                     "pos": {
->                         "x": 141.351,
->                         "y": 77.4045
->                     },
->                     "uuid": "64df41cd-249a-44e2-8ece-db9044298f6e"
->                 },
->                 {
->                     "description": "Pad 2 [/NET_B] of R2 on F.Cu",
->                     "pos": {
->                         "x": 135.509,
->                         "y": 76.3885
->                     },
->                     "uuid": "79a76fdb-bb70-453e-9d81-12637b5ac88f"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "unconnected_items"
 >         }
@@ -1199,31 +720,13 @@ json|lines=178
 >     "violations": [
 >         {
 >             "description": "Copper sliver",
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 1.4368 mm",
->                     "pos": {
->                         "x": 137.6025,
->                         "y": 76.3885
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 }
->             ],
+>             "items": [],
 >             "severity": "warning",
 >             "type": "copper_sliver"
 >         },
 >         {
 >             "description": "Copper sliver",
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 1.4368 mm",
->                     "pos": {
->                         "x": 137.6025,
->                         "y": 76.3885
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 }
->             ],
+>             "items": [],
 >             "severity": "warning",
 >             "type": "copper_sliver"
 >         },
@@ -1231,24 +734,7 @@ json|lines=178
 >             "comment": "canonical",
 >             "description": "Clearance violation",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 1.4368 mm",
->                     "pos": {
->                         "x": 137.6025,
->                         "y": 76.3885
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 },
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 141.351,
->                         "y": 80.3295
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "clearance"
 >         },
@@ -1256,16 +742,7 @@ json|lines=178
 >             "comment": "camel",
 >             "description": "Track width",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 2.7325 mm",
->                     "pos": {
->                         "x": 138.6185,
->                         "y": 77.4045
->                     },
->                     "uuid": "b14a6fe5-b108-4eb0-874f-5289bbab5bfa"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "track_width"
 >         },
@@ -1273,16 +750,7 @@ json|lines=178
 >             "comment": "numeric",
 >             "description": "Via is not connected or connected on only one layer",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 2.0935 mm",
->                     "pos": {
->                         "x": 135.509,
->                         "y": 76.3885
->                     },
->                     "uuid": "d3626667-3ba8-4618-aa74-3caa02344256"
->                 }
->             ],
+>             "items": [],
 >             "severity": "warning",
 >             "type": "via_dangling"
 >         },
@@ -1290,29 +758,66 @@ json|lines=178
 >             "comment": "pre-excluded",
 >             "description": "Clearance violation",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 4.3399 mm",
->                     "pos": {
->                         "x": 139.848946,
->                         "y": 79.3135
->                     },
->                     "uuid": "2eeacdee-4d9d-4c65-bec0-86c0df177b61"
->                 },
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 2.1483 mm",
->                     "pos": {
->                         "x": 141.351,
->                         "y": 80.3295
->                     },
->                     "uuid": "cc9b6272-14ca-4190-9739-bbef74b465c0"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "clearance"
 >         }
 >     ]
 > }
+bds|0|key64=5f7c937a6c067b57|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+bds|1|key64=e49992c85433400e|comment=pre-excluded|json={"comment":"pre-excluded","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+bds|2|key64=d7cdd57eb80c9414|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+bds|3|key64=626dae1ccc515e2a|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+bds|4|key64=cfc3640771073fa4|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+scenario|exclusions_noitems.scn
+board|empty.kicad_pcb
+exclusion|3|sortkey=0805120a08c4cbce411094b1b6241a260a2434666166623332312d373561622d343238662d613232332d3764663961313037333465301a260a2463363964653661642d653339612d343738382d613735372d6237353136646365313861364802|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+exclusion|4|sortkey=0812120a0884cd8c4210d4b2f4241a260a2462313461366665352d623130382d346562302d383734662d3532383962626162356266614802|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+exclusion|5|sortkey=080c120e08e80710b0f0ffffffffffffff011a260a2464333632363636372d336261382d343631382d616137342d3363616130323334343235364802|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+exclusion|6|sortkey=-|comment=|json={}
+exclusion|7|sortkey=-|comment=|json={}
+exclusion|8|sortkey=-|comment=|json={}
+exclusion|9|sortkey=08131200|comment=nulls|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","position":{}}}
+exclusion|10|sortkey=08ab0420d209484d|comment=unknown enum number|json={"comment":"unknown enum number","marker":{"error_type":555,"layer":1234,"marker_type":77}}
+exclusion|11|sortkey=-|comment=|json={}
+exclusion|12|sortkey=-|comment=|json={}
+exclusion|13|sortkey=08051202080f|comment=plus string|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","position":{"x_nm":"15"}}}
+exclusion|14|sortkey=-|comment=|json={}
+exclusion|15|sortkey=-|comment=no marker|json={"comment":"no marker"}
+exclusion|16|sortkey=-|comment=|json={"marker":{}}
+exclusion|17|sortkey=1200|comment=|json={"marker":{"position":{}}}
+exclusion|18|sortkey=-|comment=|json={}
+exclusion|19|sortkey=-|comment=|json={}
+exclusion|20|sortkey=08051a260a2434666166623332312d373561622d343238662d613232332d376466396131303733346530|comment=items object|json={"comment":"items object","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}]}}
+exclusion|21|sortkey=0805|comment=bool string|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE"}}
+exclusion|22|sortkey=082f120208011a260a2434666166623332312d373561622d343238662d613232332d3764663961313037333465302022|comment=layer name|json={"comment":"layer name","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_B_Cu","position":{"x_nm":"1"}}}
+exclusion|23|sortkey=082e121608ffffffffffffffffff0110ffffffffffffffffff012062|comment=layer user|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","position":{"x_nm":"-1","y_nm":"-1"}}}
+exclusion|24|sortkey=0805121508ffffffffffffffff7f1080808080808080808001|comment=big|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","position":{"x_nm":"9223372036854775807","y_nm":"-9223372036854775808"}}}
+exclusion|25|sortkey=-|comment=|json={}
+exclusion|26|sortkey=08051a001a00|comment=empty item|json={"comment":"empty item","marker":{"error_type":"DRCET_CLEARANCE","items":[{},{}]}}
+exclusion|27|sortkey=080112001a260a2436346466343163642d323439612d343465322d386563652d6462393034343239386636651a260a2437396137366664622d626237302d343533652d396438312d3132363337623561633838664804|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_B_Cu","marker_type":"MT_RATSNEST","position":{}}}
+exclusion|28|sortkey=0830120208051a260a2431323334353637382d313233342d313233342d313233342d3132333435363738396162634802|comment=dangling|json={"comment":"dangling","marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"5"}}}
+exclusion|29|sortkey=08211204080710074802|comment=stray outline|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+exclusion|30|sortkey=120208084802|comment=stitch|json={"comment":"stitch","marker":{"marker_type":"MT_DRC","position":{"x_nm":"8"}}}
+exclusion|31|sortkey=082b12004803|comment=sheet|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+exclusion|32|sortkey=081312001a0c0a0a6e6f742d612d75756964|comment=bad id|json={"comment":"bad id","marker":{"error_type":"DRCET_TRACK_ANGLE","items":[{"value":"not-a-uuid"}],"position":{}}}
+exclusion|33|sortkey=080c120e08e80710b0f0ffffffffffffff011a260a2464333632363636372d336261382d343631382d616137342d3363616130323334343235364802|comment=legacy comment|json={"comment":"legacy comment","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+exclusion|34|sortkey=-|comment=short|json={"comment":"short"}
+exclusion|35|sortkey=-|comment=unknown|json={"comment":"unknown"}
+exclusion|36|sortkey=080b1204080510061a260a2463363964653661642d653339612d343738382d613735372d6237353136646365313861361a260a2436346466343163642d323439612d343465322d386563652d64623930343432393866366520224802|comment=thermal|json={"comment":"thermal","marker":{"error_type":"DRCET_STARVED_THERMAL","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"6"}}}
+exclusion|37|sortkey=082f1204080510061a260a2432656561636465652d346439642d346336352d626563302d38366330646631373762363120054802|comment=sliver|json={"comment":"sliver","marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"}],"layer":"BL_In2_Cu","marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"6"}}}
+exclusion|38|sortkey=08011204080510061a260a2463363964653661642d653339612d343738382d613735372d6237353136646365313861361a260a2461323032643035642d363132332d346633622d383361632d6539623532616235393330324804|comment=old unconnected|json={"comment":"old unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
+exclusion|39|sortkey=08011204080510061a260a2461323032643035642d363132332d346633622d383361632d6539623532616235393330321a260a2463363964653661642d653339612d343738382d613735372d6237353136646365313861364804|comment=new unconnected|json={"comment":"new unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"5","y_nm":"6"}}}
+exclusion|40|sortkey=082b1204080910094803|comment=sheet var|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
+exclusion|41|sortkey=08131204080110011a260a2430303030303030302d303030302d303030302d303030302d3030303031323334616263641a260a2430303030303030302d303030302d303030302d303030302d3030303030306162636465664802|comment=timestamps|json={"comment":"timestamps","marker":{"error_type":"DRCET_TRACK_ANGLE","items":[{"value":"00000000-0000-0000-0000-00001234abcd"},{"value":"00000000-0000-0000-0000-000000abcdef"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"1"}}}
+created|0|code=5|key=clearance|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=bool string|key64=3ccf482716359f52|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{}}}
+created|1|code=5|key=clearance|pos=15,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=plus string|key64=77b1e44483bc1d21|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"15"}}}
+created|2|code=5|key=clearance|pos=2147483647,-2147483648|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=big|key64=7f1b56f1330f58a7|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"2147483647","y_nm":"-2147483648"}}}
+created|3|code=18|key=track_angle|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=nulls|key64=0bfba9005cafad70|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","marker_type":"MT_DRC","position":{}}}
+created|4|code=38|key=invalid_outline|pos=7,7|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=stray outline|key64=0b4568436e79ee0a|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+created|5|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet|key64=a7656fa1abaafc7b|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+created|6|code=51|key=unresolved_variable|pos=9,9|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet var|key64=4597a19cb107b947|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
+created|7|code=54|key=generic_error|pos=-1,-1|layer=127|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=layer user|key64=80ff71de61ee1e7b|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","marker_type":"MT_DRC","position":{"x_nm":"-1","y_nm":"-1"}}}
 marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=canonical|severity=exclusion|treated=1|key64=d7cdd57eb80c9414|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
 marker|1|code=17|key=track_width|pos=138618500,77404500|layer=31|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=1|comment=camel|severity=exclusion|treated=1|key64=cfc3640771073fa4|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
 marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=1|comment=numeric|severity=exclusion|treated=1|key64=626dae1ccc515e2a|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
@@ -1320,42 +825,77 @@ marker|3|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-4
 marker|4|code=55|key=copper_sliver|pos=1,0|layer=2|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=warning|treated=0|key64=41d0d03e8f37b124|json={"marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_B_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
 marker|5|code=55|key=copper_sliver|pos=1,0|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=warning|treated=0|key64=5df6ab3f2fadf0af|json={"marker":{"error_type":"DRCET_COPPER_SLIVER","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{"x_nm":"1"}}}
 marker|6|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=1|comment=pre-excluded|severity=exclusion|treated=1|key64=e49992c85433400e|json={"comment":"pre-excluded","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
-bds|0|key64=5f7c937a6c067b57|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
-bds|1|key64=e49992c85433400e|comment=pre-excluded|json={"comment":"pre-excluded","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
-bds|2|key64=d7cdd57eb80c9414|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
-bds|3|key64=626dae1ccc515e2a|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
-bds|4|key64=cfc3640771073fa4|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
-counts|4|1|0|errors=0|warnings=2
-text|lines=41
-> ** Drc report for issue8003.kicad_pcb **
+marker|7|code=5|key=clearance|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=bool string|severity=exclusion|treated=1|key64=3ccf482716359f52|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{}}}
+marker|8|code=5|key=clearance|pos=15,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=plus string|severity=exclusion|treated=1|key64=77b1e44483bc1d21|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"15"}}}
+marker|9|code=5|key=clearance|pos=2147483647,-2147483648|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=big|severity=exclusion|treated=1|key64=7f1b56f1330f58a7|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"2147483647","y_nm":"-2147483648"}}}
+marker|10|code=18|key=track_angle|pos=0,0|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=nulls|severity=exclusion|treated=1|key64=0bfba9005cafad70|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","marker_type":"MT_DRC","position":{}}}
+marker|11|code=38|key=invalid_outline|pos=7,7|layer=-1|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=stray outline|severity=exclusion|treated=1|key64=0b4568436e79ee0a|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+marker|12|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet|severity=exclusion|treated=1|key64=a7656fa1abaafc7b|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=9,9|layer=0|type=3|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=sheet var|severity=exclusion|treated=1|key64=4597a19cb107b947|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
+marker|14|code=54|key=generic_error|pos=-1,-1|layer=127|type=2|ids=00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=1|comment=layer user|severity=exclusion|treated=1|key64=80ff71de61ee1e7b|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","marker_type":"MT_DRC","position":{"x_nm":"-1","y_nm":"-1"}}}
+bds|0|key64=5f7c937a6c067b57|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_B_Cu","marker_type":"MT_RATSNEST","position":{}}}
+bds|1|key64=084db307b50280b6|comment=bool string|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE"}}
+bds|2|key64=4ec55f272090360b|comment=plus string|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","position":{"x_nm":"15"}}}
+bds|3|key64=d7cdd57eb80c9414|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+bds|4|key64=7f3d70882724e201|comment=big|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","position":{"x_nm":"9223372036854775807","y_nm":"-9223372036854775808"}}}
+bds|5|key64=626dae1ccc515e2a|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+bds|6|key64=cfc3640771073fa4|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+bds|7|key64=a8a3e1c1f2780aae|comment=nulls|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","position":{}}}
+bds|8|key64=0b4568436e79ee0a|comment=stray outline|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+bds|9|key64=a7656fa1abaafc7b|comment=sheet|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+bds|10|key64=4597a19cb107b947|comment=sheet var|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
+bds|11|key64=9b8b3995a85297b1|comment=layer user|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","position":{"x_nm":"-1","y_nm":"-1"}}}
+counts|14|1|0|errors=0|warnings=2
+text|lines=61
+> ** Drc report for empty.kicad_pcb **
 > ** Created on <DATE> **
-> ** Report includes: Exclusions **
+> ** Report includes: Errors, Warnings, Exclusions **
 > 
-> ** Found 4 DRC violations **
+> ** Found 14 DRC violations **
+> [copper_sliver]: Copper sliver
+>     Local override; warning
+> [copper_sliver]: Copper sliver
+>     Local override; warning
 > [clearance]: Clearance violation
 >     Local override; error (excluded)
->     @(5.4174 in, 3.0074 in): Track [/NET_B] on F.Cu, length 0.0566 in
->     @(5.5650 in, 3.1626 in): Pad 1 [/NET_A] of R1 on F.Cu
 >     canonical
 > [track_width]: Track width
 >     Local override; error (excluded)
->     @(5.4574 in, 3.0474 in): Track [/NET_B] on F.Cu, length 0.1076 in
 >     camel
 > [via_dangling]: Via is not connected or connected on only one layer
 >     Local override; warning (excluded)
->     @(5.3350 in, 3.0074 in): Track [/NET_B] on F.Cu, length 0.0824 in
 >     numeric
 > [clearance]: Clearance violation
 >     Local override; error (excluded)
->     @(5.5059 in, 3.1226 in): Track [/NET_A] on F.Cu, length 0.1709 in
->     @(5.5650 in, 3.1626 in): Track [/NET_A] on F.Cu, length 0.0846 in
 >     pre-excluded
+> [clearance]: Clearance violation
+>     Local override; error (excluded)
+>     bool string
+> [clearance]: Clearance violation
+>     Local override; error (excluded)
+>     plus string
+> [clearance]: Clearance violation
+>     Local override; error (excluded)
+>     big
+> [track_angle]: Track angle
+>     Local override; error (excluded)
+>     nulls
+> [invalid_outline]: Board has malformed outline
+>     Local override; error (excluded)
+>     stray outline
+> [unresolved_variable]: Unresolved text variable
+>     Local override; error (excluded)
+>     sheet
+> [unresolved_variable]: Unresolved text variable
+>     Local override; error (excluded)
+>     sheet var
+> [generic_error]: Error
+>     Local override; error (excluded)
+>     layer user
 > 
 > ** Found 1 unconnected pads **
 > [unconnected_items]: Missing connection between items
 >     Local override; error (excluded)
->     @(5.5650 in, 3.0474 in): Pad 2 [/NET_B] of R1 on F.Cu
->     @(5.3350 in, 3.0074 in): Pad 2 [/NET_B] of R2 on F.Cu
 >     unconnected
 > 
 > ** Found 0 Footprint errors **
@@ -1368,10 +908,10 @@ text|lines=41
 >     - Footprint component type doesn't match footprint pads
 > 
 > ** End of Report **
-json|lines=146
+json|lines=155
 > {
 >     "$schema": "https://schemas.kicad.org/drc.v1.json",
->     "coordinate_units": "in",
+>     "coordinate_units": "mm",
 >     "date": "<DATE>",
 >     "ignored_checks": [
 >         {
@@ -1396,61 +936,41 @@ json|lines=146
 >         }
 >     ],
 >     "included_severities": [
+>         "error",
+>         "warning",
 >         "exclusion"
 >     ],
 >     "kicad_version": "10.99.0",
 >     "schematic_parity": [],
->     "source": "issue8003.kicad_pcb",
+>     "source": "empty.kicad_pcb",
 >     "unconnected_items": [
 >         {
 >             "comment": "unconnected",
 >             "description": "Missing connection between items",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Pad 2 [/NET_B] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5.565,
->                         "y": 3.04742125984252
->                     },
->                     "uuid": "64df41cd-249a-44e2-8ece-db9044298f6e"
->                 },
->                 {
->                     "description": "Pad 2 [/NET_B] of R2 on F.Cu",
->                     "pos": {
->                         "x": 5.335,
->                         "y": 3.00742125984252
->                     },
->                     "uuid": "79a76fdb-bb70-453e-9d81-12637b5ac88f"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "unconnected_items"
 >         }
 >     ],
 >     "violations": [
 >         {
+>             "description": "Copper sliver",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "copper_sliver"
+>         },
+>         {
+>             "description": "Copper sliver",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "copper_sliver"
+>         },
+>         {
 >             "comment": "canonical",
 >             "description": "Clearance violation",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 0.0566 in",
->                     "pos": {
->                         "x": 5.417421259842519,
->                         "y": 3.00742125984252
->                     },
->                     "uuid": "4fafb321-75ab-428f-a223-7df9a10734e0"
->                 },
->                 {
->                     "description": "Pad 1 [/NET_A] of R1 on F.Cu",
->                     "pos": {
->                         "x": 5.565,
->                         "y": 3.16257874015748
->                     },
->                     "uuid": "c69de6ad-e39a-4788-a757-b7516dce18a6"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "clearance"
 >         },
@@ -1458,16 +978,7 @@ json|lines=146
 >             "comment": "camel",
 >             "description": "Track width",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 0.1076 in",
->                     "pos": {
->                         "x": 5.457421259842519,
->                         "y": 3.04742125984252
->                     },
->                     "uuid": "b14a6fe5-b108-4eb0-874f-5289bbab5bfa"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "track_width"
 >         },
@@ -1475,16 +986,7 @@ json|lines=146
 >             "comment": "numeric",
 >             "description": "Via is not connected or connected on only one layer",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_B] on F.Cu, length 0.0824 in",
->                     "pos": {
->                         "x": 5.335,
->                         "y": 3.00742125984252
->                     },
->                     "uuid": "d3626667-3ba8-4618-aa74-3caa02344256"
->                 }
->             ],
+>             "items": [],
 >             "severity": "warning",
 >             "type": "via_dangling"
 >         },
@@ -1492,29 +994,89 @@ json|lines=146
 >             "comment": "pre-excluded",
 >             "description": "Clearance violation",
 >             "excluded": true,
->             "items": [
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 0.1709 in",
->                     "pos": {
->                         "x": 5.505864015748031,
->                         "y": 3.1225787401574805
->                     },
->                     "uuid": "2eeacdee-4d9d-4c65-bec0-86c0df177b61"
->                 },
->                 {
->                     "description": "Track [/NET_A] on F.Cu, length 0.0846 in",
->                     "pos": {
->                         "x": 5.565,
->                         "y": 3.16257874015748
->                     },
->                     "uuid": "cc9b6272-14ca-4190-9739-bbef74b465c0"
->                 }
->             ],
+>             "items": [],
 >             "severity": "error",
 >             "type": "clearance"
+>         },
+>         {
+>             "comment": "bool string",
+>             "description": "Clearance violation",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "comment": "plus string",
+>             "description": "Clearance violation",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "comment": "big",
+>             "description": "Clearance violation",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "comment": "nulls",
+>             "description": "Track angle",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "track_angle"
+>         },
+>         {
+>             "comment": "stray outline",
+>             "description": "Board has malformed outline",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "invalid_outline"
+>         },
+>         {
+>             "comment": "sheet",
+>             "description": "Unresolved text variable",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "unresolved_variable"
+>         },
+>         {
+>             "comment": "sheet var",
+>             "description": "Unresolved text variable",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "unresolved_variable"
+>         },
+>         {
+>             "comment": "layer user",
+>             "description": "Error",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "generic_error"
 >         }
 >     ]
 > }
+bds|0|key64=5f7c937a6c067b57|comment=unconnected|json={"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+bds|1|key64=3ccf482716359f52|comment=bool string|json={"comment":"bool string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{}}}
+bds|2|key64=77b1e44483bc1d21|comment=plus string|json={"comment":"plus string","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"15"}}}
+bds|3|key64=e49992c85433400e|comment=pre-excluded|json={"comment":"pre-excluded","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+bds|4|key64=d7cdd57eb80c9414|comment=canonical|json={"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+bds|5|key64=7f1b56f1330f58a7|comment=big|json={"comment":"big","marker":{"error_type":"DRCET_CLEARANCE","marker_type":"MT_DRC","position":{"x_nm":"2147483647","y_nm":"-2147483648"}}}
+bds|6|key64=626dae1ccc515e2a|comment=numeric|json={"comment":"numeric","marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+bds|7|key64=cfc3640771073fa4|comment=camel|json={"comment":"camel","marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+bds|8|key64=0bfba9005cafad70|comment=nulls|json={"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","marker_type":"MT_DRC","position":{}}}
+bds|9|key64=0b4568436e79ee0a|comment=stray outline|json={"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+bds|10|key64=a7656fa1abaafc7b|comment=sheet|json={"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+bds|11|key64=4597a19cb107b947|comment=sheet var|json={"comment":"sheet var","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{"x_nm":"9","y_nm":"9"}}}
+bds|12|key64=80ff71de61ee1e7b|comment=layer user|json={"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","marker_type":"MT_DRC","position":{"x_nm":"-1","y_nm":"-1"}}}
 scenario|legacy_strip.scn
 legacy|2|code=20|key=annular_width|pos=113596405,160181800|layer=0|type=2|ids=1503dbdb-28b2-4a5a-8b2d-94a0f105210d,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=0|comment=|key64=e6b10b8597af150c|json={"marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"1503dbdb-28b2-4a5a-8b2d-94a0f105210d"}],"marker_type":"MT_DRC","position":{"x_nm":"113596405","y_nm":"160181800"}}}
 legacy|3|code=57|key=silk_over_copper|pos=74282330,76842330|layer=0|type=2|ids=c052616e-f433-48e4-989c-8abaf3b77f5f,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000,00000000-0000-0000-0000-000000000000|excluded=0|comment=|key64=1d96a924d9eac2ba|json={"marker":{"error_type":"DRCET_SILK_MASK_CLEARANCE","items":[{"value":"c052616e-f433-48e4-989c-8abaf3b77f5f"}],"marker_type":"MT_DRC","position":{"x_nm":"74282330","y_nm":"76842330"}}}
@@ -2726,6 +2288,693 @@ json|lines=98
 >                     "uuid": "64df41cd-249a-44e2-8ece-db9044298f6e"
 >                 }
 >             ],
+>             "severity": "error",
+>             "type": "generic_error"
+>         },
+>         {
+>             "description": "Unresolved text variable ${FOO}",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unresolved_variable"
+>         }
+>     ]
+> }
+scenario|report_sections_noitems.scn
+board|empty.kicad_pcb
+marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=error|treated=0|key64=d7cdd57eb80c9414|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+marker|1|code=17|key=track_width|pos=138618500,77404500|layer=0|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=0|comment=|severity=warning|treated=0|key64=cfc3640771073fa4|json={"marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=0|comment=|severity=error|treated=0|key64=626dae1ccc515e2a|json={"marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+marker|3|code=59|key=silk_overlap|pos=5,5|layer=5|type=2|ids=64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=warning|treated=0|key64=1a5d6ffbcd538229|json={"marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"5"}}}
+marker|4|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=0|comment=|severity=warning|treated=0|key64=e49992c85433400e|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|5|code=16|key=hole_clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=0|comment=|severity=exclusion|treated=1|key64=be7cabaab89add24|json={"marker":{"error_type":"DRCET_HOLE_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|6|code=20|key=annular_width|pos=-7,8|layer=0|type=2|ids=cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc|excluded=1|comment=known and accepted|severity=exclusion|treated=1|key64=474153c4c3060139|json={"comment":"known and accepted","marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"},{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"-7","y_nm":"8"}}}
+marker|7|code=2|key=shorting_items|pos=10,20|layer=-1|type=2|ids=12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=|severity=exclusion|treated=1|key64=39e8a912109fb864|json={"marker":{"error_type":"DRCET_SHORTING_ITEMS","items":[{"value":"12345678-1234-1234-1234-123456789abc"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"10","y_nm":"20"}}}
+marker|8|code=1|key=unconnected_items|pos=135509000,76388500|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=error|treated=0|key64=bc32f26193e8a4aa|json={"marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"135509000","y_nm":"76388500"}}}
+marker|9|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=ratsnest ok|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"ratsnest ok","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+marker|10|code=39|key=missing_footprint|pos=0,0|layer=0|type=5|ids=-|excluded=0|comment=|severity=warning|treated=0|key64=ce080661ac5facd6|json={"marker":{"error_type":"DRCET_MISSING_FOOTPRINT","marker_type":"MT_PARITY","position":{}}}
+marker|11|code=53|key=generic_warning|pos=0,0|layer=0|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=warning|treated=0|key64=b03d27a91f941909|json={"marker":{"error_type":"DRCET_GENERIC_WARNING","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|12|code=54|key=generic_error|pos=0,0|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=error|treated=0|key64=9f2a2c8e9cd545b0|json={"marker":{"error_type":"DRCET_GENERIC_ERROR","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=-|excluded=0|comment=|severity=error|treated=0|key64=a7656fa1abaafc7b|json={"marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|14|code=46|key=lib_footprint_issues|pos=3,3|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000|excluded=0|comment=|severity=ignore|treated=0|key64=a19bf4dcaf990d62|json={"marker":{"error_type":"DRCET_LIB_FOOTPRINT_ISSUES","marker_type":"MT_DRC","position":{"x_nm":"3","y_nm":"3"}}}
+counts|8|1|1|errors=4|warnings=4
+text|lines=41
+> ** Drc report for empty.kicad_pcb **
+> ** Created on <DATE> **
+> ** Report includes: Errors, Warnings **
+> 
+> ** Found 8 DRC violations **
+> [clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)
+>     Rule: netclass 'Default'; error
+> [via_dangling]: Via is not connected or connected on only one layer
+>     Local override; error
+> [generic_error]: An error
+>     Local override; error
+> [unresolved_variable]: Unresolved text variable ${FOO}
+>     Local override; error
+> [track_width]: Track width (board setup constraints min 0.3000 mm; actual 0.2500 mm)
+>     Local override; warning
+> [silk_overlap]: Silkscreen overlap of (a) [b]
+>     Rule: silk rule; warning
+> [clearance]: Clearance violation
+>     Rule: demoted; warning
+> [generic_warning]: Just a warning
+>     Local override; warning
+> 
+> ** Found 1 unconnected pads **
+> [unconnected_items]: Missing connection between items
+>     Local override; error
+> 
+> ** Found 1 Footprint errors **
+> [missing_footprint]: Missing footprint R3 (µF part)
+>     Local override; warning
+> 
+> ** Ignored checks **
+>     - Drilled hole too close to other hole
+>     - Footprint has no courtyard defined
+>     - Copper sliver
+>     - Track endpoint not centered on via
+>     - Tuning profile track geometries
+>     - Footprint doesn't match symbol's footprint filters
+>     - Footprint component type doesn't match footprint pads
+>     - Footprint not found in libraries
+> 
+> ** End of Report **
+json|lines=111
+> {
+>     "$schema": "https://schemas.kicad.org/drc.v1.json",
+>     "coordinate_units": "mm",
+>     "date": "<DATE>",
+>     "ignored_checks": [
+>         {
+>             "description": "Drilled hole too close to other hole",
+>             "key": "hole_to_hole"
+>         },
+>         {
+>             "description": "Footprint has no courtyard defined",
+>             "key": "missing_courtyard"
+>         },
+>         {
+>             "description": "Copper sliver",
+>             "key": "copper_sliver"
+>         },
+>         {
+>             "description": "Track endpoint not centered on via",
+>             "key": "track_not_centered_on_via"
+>         },
+>         {
+>             "description": "Tuning profile track geometries",
+>             "key": "tuning_profile_track_geometries"
+>         },
+>         {
+>             "description": "Footprint doesn't match symbol's footprint filters",
+>             "key": "footprint_filters_mismatch"
+>         },
+>         {
+>             "description": "Footprint component type doesn't match footprint pads",
+>             "key": "footprint_type_mismatch"
+>         },
+>         {
+>             "description": "Footprint not found in libraries",
+>             "key": "lib_footprint_issues"
+>         }
+>     ],
+>     "included_severities": [
+>         "error",
+>         "warning"
+>     ],
+>     "kicad_version": "10.99.0",
+>     "schematic_parity": [
+>         {
+>             "description": "Missing footprint R3 (µF part)",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "missing_footprint"
+>         }
+>     ],
+>     "source": "empty.kicad_pcb",
+>     "unconnected_items": [
+>         {
+>             "description": "Missing connection between items",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unconnected_items"
+>         }
+>     ],
+>     "violations": [
+>         {
+>             "description": "Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)",
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "description": "Via is not connected or connected on only one layer",
+>             "items": [],
+>             "severity": "error",
+>             "type": "via_dangling"
+>         },
+>         {
+>             "description": "An error",
+>             "items": [],
+>             "severity": "error",
+>             "type": "generic_error"
+>         },
+>         {
+>             "description": "Unresolved text variable ${FOO}",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unresolved_variable"
+>         },
+>         {
+>             "description": "Track width (board setup constraints min 0.3000 mm; actual 0.2500 mm)",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "track_width"
+>         },
+>         {
+>             "description": "Silkscreen overlap of (a) [b]",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "silk_overlap"
+>         },
+>         {
+>             "description": "Clearance violation",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "clearance"
+>         },
+>         {
+>             "description": "Just a warning",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "generic_warning"
+>         }
+>     ]
+> }
+marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=error|treated=0|key64=d7cdd57eb80c9414|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+marker|1|code=17|key=track_width|pos=138618500,77404500|layer=0|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=0|comment=|severity=warning|treated=0|key64=cfc3640771073fa4|json={"marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=0|comment=|severity=error|treated=0|key64=626dae1ccc515e2a|json={"marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+marker|3|code=59|key=silk_overlap|pos=5,5|layer=5|type=2|ids=64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=warning|treated=0|key64=1a5d6ffbcd538229|json={"marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"5"}}}
+marker|4|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=0|comment=|severity=warning|treated=0|key64=e49992c85433400e|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|5|code=16|key=hole_clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=0|comment=|severity=exclusion|treated=1|key64=be7cabaab89add24|json={"marker":{"error_type":"DRCET_HOLE_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|6|code=20|key=annular_width|pos=-7,8|layer=0|type=2|ids=cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc|excluded=1|comment=known and accepted|severity=exclusion|treated=1|key64=474153c4c3060139|json={"comment":"known and accepted","marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"},{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"-7","y_nm":"8"}}}
+marker|7|code=2|key=shorting_items|pos=10,20|layer=-1|type=2|ids=12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=|severity=exclusion|treated=1|key64=39e8a912109fb864|json={"marker":{"error_type":"DRCET_SHORTING_ITEMS","items":[{"value":"12345678-1234-1234-1234-123456789abc"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"10","y_nm":"20"}}}
+marker|8|code=1|key=unconnected_items|pos=135509000,76388500|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=error|treated=0|key64=bc32f26193e8a4aa|json={"marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"135509000","y_nm":"76388500"}}}
+marker|9|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=ratsnest ok|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"ratsnest ok","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+marker|10|code=39|key=missing_footprint|pos=0,0|layer=0|type=5|ids=-|excluded=0|comment=|severity=warning|treated=0|key64=ce080661ac5facd6|json={"marker":{"error_type":"DRCET_MISSING_FOOTPRINT","marker_type":"MT_PARITY","position":{}}}
+marker|11|code=53|key=generic_warning|pos=0,0|layer=0|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=warning|treated=0|key64=b03d27a91f941909|json={"marker":{"error_type":"DRCET_GENERIC_WARNING","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|12|code=54|key=generic_error|pos=0,0|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=error|treated=0|key64=9f2a2c8e9cd545b0|json={"marker":{"error_type":"DRCET_GENERIC_ERROR","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=-|excluded=0|comment=|severity=error|treated=0|key64=a7656fa1abaafc7b|json={"marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|14|code=46|key=lib_footprint_issues|pos=3,3|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000|excluded=0|comment=|severity=ignore|treated=0|key64=a19bf4dcaf990d62|json={"marker":{"error_type":"DRCET_LIB_FOOTPRINT_ISSUES","marker_type":"MT_DRC","position":{"x_nm":"3","y_nm":"3"}}}
+counts|11|2|1|errors=4|warnings=4
+text|lines=51
+> ** Drc report for empty.kicad_pcb **
+> ** Created on <DATE> **
+> ** Report includes: Errors, Warnings, Exclusions **
+> 
+> ** Found 11 DRC violations **
+> [clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)
+>     Rule: netclass 'Default'; error
+> [via_dangling]: Via is not connected or connected on only one layer
+>     Local override; error
+> [generic_error]: An error
+>     Local override; error
+> [unresolved_variable]: Unresolved text variable ${FOO}
+>     Local override; error
+> [track_width]: Track width (board setup constraints min 0.3000 mm; actual 0.2500 mm)
+>     Local override; warning
+> [silk_overlap]: Silkscreen overlap of (a) [b]
+>     Rule: silk rule; warning
+> [clearance]: Clearance violation
+>     Rule: demoted; warning
+> [generic_warning]: Just a warning
+>     Local override; warning
+> [hole_clearance]: Hole clearance violation
+>     Rule: silenced; error (excluded)
+> [annular_width]: Annular width
+>     Local override; error (excluded)
+>     known and accepted
+> [shorting_items]: Items shorting two nets
+>     Local override; error (excluded)
+> 
+> ** Found 2 unconnected pads **
+> [unconnected_items]: Missing connection between items
+>     Local override; error
+> [unconnected_items]: Missing connection between items
+>     Local override; error (excluded)
+>     ratsnest ok
+> 
+> ** Found 1 Footprint errors **
+> [missing_footprint]: Missing footprint R3 (µF part)
+>     Local override; warning
+> 
+> ** Ignored checks **
+>     - Drilled hole too close to other hole
+>     - Footprint has no courtyard defined
+>     - Copper sliver
+>     - Track endpoint not centered on via
+>     - Tuning profile track geometries
+>     - Footprint doesn't match symbol's footprint filters
+>     - Footprint component type doesn't match footprint pads
+>     - Footprint not found in libraries
+> 
+> ** End of Report **
+json|lines=144
+> {
+>     "$schema": "https://schemas.kicad.org/drc.v1.json",
+>     "coordinate_units": "mils",
+>     "date": "<DATE>",
+>     "ignored_checks": [
+>         {
+>             "description": "Drilled hole too close to other hole",
+>             "key": "hole_to_hole"
+>         },
+>         {
+>             "description": "Footprint has no courtyard defined",
+>             "key": "missing_courtyard"
+>         },
+>         {
+>             "description": "Copper sliver",
+>             "key": "copper_sliver"
+>         },
+>         {
+>             "description": "Track endpoint not centered on via",
+>             "key": "track_not_centered_on_via"
+>         },
+>         {
+>             "description": "Tuning profile track geometries",
+>             "key": "tuning_profile_track_geometries"
+>         },
+>         {
+>             "description": "Footprint doesn't match symbol's footprint filters",
+>             "key": "footprint_filters_mismatch"
+>         },
+>         {
+>             "description": "Footprint component type doesn't match footprint pads",
+>             "key": "footprint_type_mismatch"
+>         },
+>         {
+>             "description": "Footprint not found in libraries",
+>             "key": "lib_footprint_issues"
+>         }
+>     ],
+>     "included_severities": [
+>         "error",
+>         "warning",
+>         "exclusion"
+>     ],
+>     "kicad_version": "10.99.0",
+>     "schematic_parity": [
+>         {
+>             "description": "Missing footprint R3 (µF part)",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "missing_footprint"
+>         }
+>     ],
+>     "source": "empty.kicad_pcb",
+>     "unconnected_items": [
+>         {
+>             "description": "Missing connection between items",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unconnected_items"
+>         },
+>         {
+>             "comment": "ratsnest ok",
+>             "description": "Missing connection between items",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "unconnected_items"
+>         }
+>     ],
+>     "violations": [
+>         {
+>             "description": "Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)",
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "description": "Via is not connected or connected on only one layer",
+>             "items": [],
+>             "severity": "error",
+>             "type": "via_dangling"
+>         },
+>         {
+>             "description": "An error",
+>             "items": [],
+>             "severity": "error",
+>             "type": "generic_error"
+>         },
+>         {
+>             "description": "Unresolved text variable ${FOO}",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unresolved_variable"
+>         },
+>         {
+>             "description": "Track width (board setup constraints min 0.3000 mm; actual 0.2500 mm)",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "track_width"
+>         },
+>         {
+>             "description": "Silkscreen overlap of (a) [b]",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "silk_overlap"
+>         },
+>         {
+>             "description": "Clearance violation",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "clearance"
+>         },
+>         {
+>             "description": "Just a warning",
+>             "items": [],
+>             "severity": "warning",
+>             "type": "generic_warning"
+>         },
+>         {
+>             "comment": "",
+>             "description": "Hole clearance violation",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "hole_clearance"
+>         },
+>         {
+>             "comment": "known and accepted",
+>             "description": "Annular width",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "annular_width"
+>         },
+>         {
+>             "comment": "",
+>             "description": "Items shorting two nets",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "shorting_items"
+>         }
+>     ]
+> }
+marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=error|treated=0|key64=d7cdd57eb80c9414|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+marker|1|code=17|key=track_width|pos=138618500,77404500|layer=0|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=0|comment=|severity=warning|treated=0|key64=cfc3640771073fa4|json={"marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=0|comment=|severity=error|treated=0|key64=626dae1ccc515e2a|json={"marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+marker|3|code=59|key=silk_overlap|pos=5,5|layer=5|type=2|ids=64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=warning|treated=0|key64=1a5d6ffbcd538229|json={"marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"5"}}}
+marker|4|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=0|comment=|severity=warning|treated=0|key64=e49992c85433400e|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|5|code=16|key=hole_clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=0|comment=|severity=exclusion|treated=1|key64=be7cabaab89add24|json={"marker":{"error_type":"DRCET_HOLE_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|6|code=20|key=annular_width|pos=-7,8|layer=0|type=2|ids=cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc|excluded=1|comment=known and accepted|severity=exclusion|treated=1|key64=474153c4c3060139|json={"comment":"known and accepted","marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"},{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"-7","y_nm":"8"}}}
+marker|7|code=2|key=shorting_items|pos=10,20|layer=-1|type=2|ids=12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=|severity=exclusion|treated=1|key64=39e8a912109fb864|json={"marker":{"error_type":"DRCET_SHORTING_ITEMS","items":[{"value":"12345678-1234-1234-1234-123456789abc"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"10","y_nm":"20"}}}
+marker|8|code=1|key=unconnected_items|pos=135509000,76388500|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=error|treated=0|key64=bc32f26193e8a4aa|json={"marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"135509000","y_nm":"76388500"}}}
+marker|9|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=ratsnest ok|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"ratsnest ok","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+marker|10|code=39|key=missing_footprint|pos=0,0|layer=0|type=5|ids=-|excluded=0|comment=|severity=warning|treated=0|key64=ce080661ac5facd6|json={"marker":{"error_type":"DRCET_MISSING_FOOTPRINT","marker_type":"MT_PARITY","position":{}}}
+marker|11|code=53|key=generic_warning|pos=0,0|layer=0|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=warning|treated=0|key64=b03d27a91f941909|json={"marker":{"error_type":"DRCET_GENERIC_WARNING","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|12|code=54|key=generic_error|pos=0,0|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=error|treated=0|key64=9f2a2c8e9cd545b0|json={"marker":{"error_type":"DRCET_GENERIC_ERROR","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=-|excluded=0|comment=|severity=error|treated=0|key64=a7656fa1abaafc7b|json={"marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|14|code=46|key=lib_footprint_issues|pos=3,3|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000|excluded=0|comment=|severity=ignore|treated=0|key64=a19bf4dcaf990d62|json={"marker":{"error_type":"DRCET_LIB_FOOTPRINT_ISSUES","marker_type":"MT_DRC","position":{"x_nm":"3","y_nm":"3"}}}
+counts|3|1|0|errors=4|warnings=4
+text|lines=31
+> ** Drc report for empty.kicad_pcb **
+> ** Created on <DATE> **
+> ** Report includes: Exclusions **
+> 
+> ** Found 3 DRC violations **
+> [hole_clearance]: Hole clearance violation
+>     Rule: silenced; error (excluded)
+> [annular_width]: Annular width
+>     Local override; error (excluded)
+>     known and accepted
+> [shorting_items]: Items shorting two nets
+>     Local override; error (excluded)
+> 
+> ** Found 1 unconnected pads **
+> [unconnected_items]: Missing connection between items
+>     Local override; error (excluded)
+>     ratsnest ok
+> 
+> ** Found 0 Footprint errors **
+> 
+> ** Ignored checks **
+>     - Drilled hole too close to other hole
+>     - Footprint has no courtyard defined
+>     - Copper sliver
+>     - Track endpoint not centered on via
+>     - Tuning profile track geometries
+>     - Footprint doesn't match symbol's footprint filters
+>     - Footprint component type doesn't match footprint pads
+>     - Footprint not found in libraries
+> 
+> ** End of Report **
+json|lines=81
+> {
+>     "$schema": "https://schemas.kicad.org/drc.v1.json",
+>     "coordinate_units": "in",
+>     "date": "<DATE>",
+>     "ignored_checks": [
+>         {
+>             "description": "Drilled hole too close to other hole",
+>             "key": "hole_to_hole"
+>         },
+>         {
+>             "description": "Footprint has no courtyard defined",
+>             "key": "missing_courtyard"
+>         },
+>         {
+>             "description": "Copper sliver",
+>             "key": "copper_sliver"
+>         },
+>         {
+>             "description": "Track endpoint not centered on via",
+>             "key": "track_not_centered_on_via"
+>         },
+>         {
+>             "description": "Tuning profile track geometries",
+>             "key": "tuning_profile_track_geometries"
+>         },
+>         {
+>             "description": "Footprint doesn't match symbol's footprint filters",
+>             "key": "footprint_filters_mismatch"
+>         },
+>         {
+>             "description": "Footprint component type doesn't match footprint pads",
+>             "key": "footprint_type_mismatch"
+>         },
+>         {
+>             "description": "Footprint not found in libraries",
+>             "key": "lib_footprint_issues"
+>         }
+>     ],
+>     "included_severities": [
+>         "exclusion"
+>     ],
+>     "kicad_version": "10.99.0",
+>     "schematic_parity": [],
+>     "source": "empty.kicad_pcb",
+>     "unconnected_items": [
+>         {
+>             "comment": "ratsnest ok",
+>             "description": "Missing connection between items",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "unconnected_items"
+>         }
+>     ],
+>     "violations": [
+>         {
+>             "comment": "",
+>             "description": "Hole clearance violation",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "hole_clearance"
+>         },
+>         {
+>             "comment": "known and accepted",
+>             "description": "Annular width",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "annular_width"
+>         },
+>         {
+>             "comment": "",
+>             "description": "Items shorting two nets",
+>             "excluded": true,
+>             "items": [],
+>             "severity": "error",
+>             "type": "shorting_items"
+>         }
+>     ]
+> }
+marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=error|treated=0|key64=d7cdd57eb80c9414|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+marker|1|code=17|key=track_width|pos=138618500,77404500|layer=0|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=0|comment=|severity=warning|treated=0|key64=cfc3640771073fa4|json={"marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=0|comment=|severity=error|treated=0|key64=626dae1ccc515e2a|json={"marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+marker|3|code=59|key=silk_overlap|pos=5,5|layer=5|type=2|ids=64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=warning|treated=0|key64=1a5d6ffbcd538229|json={"marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"5"}}}
+marker|4|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=0|comment=|severity=warning|treated=0|key64=e49992c85433400e|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|5|code=16|key=hole_clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=0|comment=|severity=exclusion|treated=1|key64=be7cabaab89add24|json={"marker":{"error_type":"DRCET_HOLE_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|6|code=20|key=annular_width|pos=-7,8|layer=0|type=2|ids=cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc|excluded=1|comment=known and accepted|severity=exclusion|treated=1|key64=474153c4c3060139|json={"comment":"known and accepted","marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"},{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"-7","y_nm":"8"}}}
+marker|7|code=2|key=shorting_items|pos=10,20|layer=-1|type=2|ids=12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=|severity=exclusion|treated=1|key64=39e8a912109fb864|json={"marker":{"error_type":"DRCET_SHORTING_ITEMS","items":[{"value":"12345678-1234-1234-1234-123456789abc"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"10","y_nm":"20"}}}
+marker|8|code=1|key=unconnected_items|pos=135509000,76388500|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=error|treated=0|key64=bc32f26193e8a4aa|json={"marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"135509000","y_nm":"76388500"}}}
+marker|9|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=ratsnest ok|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"ratsnest ok","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+marker|10|code=39|key=missing_footprint|pos=0,0|layer=0|type=5|ids=-|excluded=0|comment=|severity=warning|treated=0|key64=ce080661ac5facd6|json={"marker":{"error_type":"DRCET_MISSING_FOOTPRINT","marker_type":"MT_PARITY","position":{}}}
+marker|11|code=53|key=generic_warning|pos=0,0|layer=0|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=warning|treated=0|key64=b03d27a91f941909|json={"marker":{"error_type":"DRCET_GENERIC_WARNING","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|12|code=54|key=generic_error|pos=0,0|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=error|treated=0|key64=9f2a2c8e9cd545b0|json={"marker":{"error_type":"DRCET_GENERIC_ERROR","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=-|excluded=0|comment=|severity=error|treated=0|key64=a7656fa1abaafc7b|json={"marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|14|code=46|key=lib_footprint_issues|pos=3,3|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000|excluded=0|comment=|severity=ignore|treated=0|key64=a19bf4dcaf990d62|json={"marker":{"error_type":"DRCET_LIB_FOOTPRINT_ISSUES","marker_type":"MT_DRC","position":{"x_nm":"3","y_nm":"3"}}}
+counts|0|0|0|errors=4|warnings=4
+text|lines=21
+> ** Drc report for empty.kicad_pcb **
+> ** Created on <DATE> **
+> ** Report includes: None **
+> 
+> ** Found 0 DRC violations **
+> 
+> ** Found 0 unconnected pads **
+> 
+> ** Found 0 Footprint errors **
+> 
+> ** Ignored checks **
+>     - Drilled hole too close to other hole
+>     - Footprint has no courtyard defined
+>     - Copper sliver
+>     - Track endpoint not centered on via
+>     - Tuning profile track geometries
+>     - Footprint doesn't match symbol's footprint filters
+>     - Footprint component type doesn't match footprint pads
+>     - Footprint not found in libraries
+> 
+> ** End of Report **
+json|lines=45
+> {
+>     "$schema": "https://schemas.kicad.org/drc.v1.json",
+>     "coordinate_units": "mm",
+>     "date": "<DATE>",
+>     "ignored_checks": [
+>         {
+>             "description": "Drilled hole too close to other hole",
+>             "key": "hole_to_hole"
+>         },
+>         {
+>             "description": "Footprint has no courtyard defined",
+>             "key": "missing_courtyard"
+>         },
+>         {
+>             "description": "Copper sliver",
+>             "key": "copper_sliver"
+>         },
+>         {
+>             "description": "Track endpoint not centered on via",
+>             "key": "track_not_centered_on_via"
+>         },
+>         {
+>             "description": "Tuning profile track geometries",
+>             "key": "tuning_profile_track_geometries"
+>         },
+>         {
+>             "description": "Footprint doesn't match symbol's footprint filters",
+>             "key": "footprint_filters_mismatch"
+>         },
+>         {
+>             "description": "Footprint component type doesn't match footprint pads",
+>             "key": "footprint_type_mismatch"
+>         },
+>         {
+>             "description": "Footprint not found in libraries",
+>             "key": "lib_footprint_issues"
+>         }
+>     ],
+>     "included_severities": [],
+>     "kicad_version": "10.99.0",
+>     "schematic_parity": [],
+>     "source": "empty.kicad_pcb",
+>     "unconnected_items": [],
+>     "violations": []
+> }
+marker|0|code=5|key=clearance|pos=137602500,76388500|layer=0|type=2|ids=4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=error|treated=0|key64=d7cdd57eb80c9414|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+marker|1|code=17|key=track_width|pos=138618500,77404500|layer=0|type=2|ids=b14a6fe5-b108-4eb0-874f-5289bbab5bfa|excluded=0|comment=|severity=warning|treated=0|key64=cfc3640771073fa4|json={"marker":{"error_type":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"marker_type":"MT_DRC","position":{"x_nm":"138618500","y_nm":"77404500"}}}
+marker|2|code=12|key=via_dangling|pos=1000,-2000|layer=2|type=2|ids=d3626667-3ba8-4618-aa74-3caa02344256|excluded=0|comment=|severity=error|treated=0|key64=626dae1ccc515e2a|json={"marker":{"error_type":"DRCET_DANGLING_VIA","items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"MT_DRC","position":{"x_nm":"1000","y_nm":"-2000"}}}
+marker|3|code=59|key=silk_overlap|pos=5,5|layer=5|type=2|ids=64df41cd-249a-44e2-8ece-db9044298f6e,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=warning|treated=0|key64=1a5d6ffbcd538229|json={"marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"marker_type":"MT_DRC","position":{"x_nm":"5","y_nm":"5"}}}
+marker|4|code=5|key=clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0|excluded=0|comment=|severity=warning|treated=0|key64=e49992c85433400e|json={"marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|5|code=16|key=hole_clearance|pos=1,2|layer=0|type=2|ids=2eeacdee-4d9d-4c65-bec0-86c0df177b61,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=0|comment=|severity=exclusion|treated=1|key64=be7cabaab89add24|json={"marker":{"error_type":"DRCET_HOLE_CLEARANCE","items":[{"value":"2eeacdee-4d9d-4c65-bec0-86c0df177b61"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"marker_type":"MT_DRC","position":{"x_nm":"1","y_nm":"2"}}}
+marker|6|code=20|key=annular_width|pos=-7,8|layer=0|type=2|ids=cc9b6272-14ca-4190-9739-bbef74b465c0,12345678-1234-1234-1234-123456789abc|excluded=1|comment=known and accepted|severity=exclusion|treated=1|key64=474153c4c3060139|json={"comment":"known and accepted","marker":{"error_type":"DRCET_ANNULAR_WIDTH","items":[{"value":"cc9b6272-14ca-4190-9739-bbef74b465c0"},{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"-7","y_nm":"8"}}}
+marker|7|code=2|key=shorting_items|pos=10,20|layer=-1|type=2|ids=12345678-1234-1234-1234-123456789abc,c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=1|comment=|severity=exclusion|treated=1|key64=39e8a912109fb864|json={"marker":{"error_type":"DRCET_SHORTING_ITEMS","items":[{"value":"12345678-1234-1234-1234-123456789abc"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"10","y_nm":"20"}}}
+marker|8|code=1|key=unconnected_items|pos=135509000,76388500|layer=0|type=4|ids=c69de6ad-e39a-4788-a757-b7516dce18a6,a202d05d-6123-4f3b-83ac-e9b52ab59302|excluded=0|comment=|severity=error|treated=0|key64=bc32f26193e8a4aa|json={"marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"},{"value":"a202d05d-6123-4f3b-83ac-e9b52ab59302"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{"x_nm":"135509000","y_nm":"76388500"}}}
+marker|9|code=1|key=unconnected_items|pos=0,0|layer=0|type=4|ids=64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f|excluded=1|comment=ratsnest ok|severity=exclusion|treated=1|key64=5f7c937a6c067b57|json={"comment":"ratsnest ok","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_F_Cu","marker_type":"MT_RATSNEST","position":{}}}
+marker|10|code=39|key=missing_footprint|pos=0,0|layer=0|type=5|ids=-|excluded=0|comment=|severity=warning|treated=0|key64=ce080661ac5facd6|json={"marker":{"error_type":"DRCET_MISSING_FOOTPRINT","marker_type":"MT_PARITY","position":{}}}
+marker|11|code=53|key=generic_warning|pos=0,0|layer=0|type=2|ids=c69de6ad-e39a-4788-a757-b7516dce18a6|excluded=0|comment=|severity=warning|treated=0|key64=b03d27a91f941909|json={"marker":{"error_type":"DRCET_GENERIC_WARNING","items":[{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|12|code=54|key=generic_error|pos=0,0|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000,64df41cd-249a-44e2-8ece-db9044298f6e,4fafb321-75ab-428f-a223-7df9a10734e0|excluded=0|comment=|severity=error|treated=0|key64=9f2a2c8e9cd545b0|json={"marker":{"error_type":"DRCET_GENERIC_ERROR","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"layer":"BL_F_Cu","marker_type":"MT_DRC","position":{}}}
+marker|13|code=51|key=unresolved_variable|pos=0,0|layer=0|type=3|ids=-|excluded=0|comment=|severity=error|treated=0|key64=a7656fa1abaafc7b|json={"marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+marker|14|code=46|key=lib_footprint_issues|pos=3,3|layer=0|type=2|ids=00000000-0000-0000-0000-000000000000|excluded=0|comment=|severity=warning|treated=0|key64=a19bf4dcaf990d62|json={"marker":{"error_type":"DRCET_LIB_FOOTPRINT_ISSUES","marker_type":"MT_DRC","position":{"x_nm":"3","y_nm":"3"}}}
+counts|4|1|0|errors=4|warnings=5
+text|lines=24
+> ** Drc report for empty.kicad_pcb **
+> ** Created on <DATE> **
+> ** Report includes: Errors **
+> 
+> ** Found 4 DRC violations **
+> [clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)
+>     Rule: netclass 'Default'; error
+> [via_dangling]: Via is not connected or connected on only one layer
+>     Local override; error
+> [generic_error]: An error
+>     Local override; error
+> [unresolved_variable]: Unresolved text variable ${FOO}
+>     Local override; error
+> 
+> ** Found 1 unconnected pads **
+> [unconnected_items]: Missing connection between items
+>     Local override; error
+> 
+> ** Found 0 Footprint errors **
+> 
+> ** Ignored checks **
+>     - None
+> 
+> ** End of Report **
+json|lines=46
+> {
+>     "$schema": "https://schemas.kicad.org/drc.v1.json",
+>     "coordinate_units": "mm",
+>     "date": "<DATE>",
+>     "ignored_checks": [],
+>     "included_severities": [
+>         "error"
+>     ],
+>     "kicad_version": "10.99.0",
+>     "schematic_parity": [],
+>     "source": "empty.kicad_pcb",
+>     "unconnected_items": [
+>         {
+>             "description": "Missing connection between items",
+>             "items": [],
+>             "severity": "error",
+>             "type": "unconnected_items"
+>         }
+>     ],
+>     "violations": [
+>         {
+>             "description": "Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.1500 mm)",
+>             "items": [],
+>             "severity": "error",
+>             "type": "clearance"
+>         },
+>         {
+>             "description": "Via is not connected or connected on only one layer",
+>             "items": [],
+>             "severity": "error",
+>             "type": "via_dangling"
+>         },
+>         {
+>             "description": "An error",
+>             "items": [],
 >             "severity": "error",
 >             "type": "generic_error"
 >         },

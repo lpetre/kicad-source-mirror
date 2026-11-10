@@ -20,8 +20,8 @@
 use kicad_core::{KicadT, Lset, PcbLayerId};
 
 use super::format::{
-    Out, attempt, board_items, copper_layers, emit, init_item_keys, no_api, v_bool, v_box,
-    v_enum, v_int, v_kiid, v_layer, v_layer_names, v_lset, v_opt_int, v_polyset, v_str, v_vec,
+    Out, attempt, board_items, copper_layers, emit, init_item_keys, no_api, v_bool, v_box, v_enum,
+    v_int, v_kiid, v_layer, v_layer_names, v_lset, v_opt_int, v_polyset, v_str, v_vec,
 };
 use super::{DumpOptions, defaults, items, settings};
 use crate::board::Board;
@@ -213,7 +213,11 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
 
     match it.any() {
         AnyItem::Footprint(fp) => {
-            emit!(o, "bbox_with_text", v_box(fp.bounding_box_with_text(ctx, true)));
+            emit!(
+                o,
+                "bbox_with_text",
+                v_box(fp.bounding_box_with_text(ctx, true))
+            );
             emit!(
                 o,
                 "bbox_without_text",
@@ -238,7 +242,9 @@ pub(crate) fn dump_bbox(o: &mut Out, it: ItemRef<'_>) {
         }
         AnyItem::Pad(pad) => {
             for l in copper_layers(item_copper_count(it)) {
-                if let Some(true) = o.cond(&format!("bbox.{}", v_layer(l)), || pad.is_on_layer(ctx, l)) {
+                if let Some(true) =
+                    o.cond(&format!("bbox.{}", v_layer(l)), || pad.is_on_layer(ctx, l))
+                {
                     emit!(
                         o,
                         format!("bbox.{}", v_layer(l)),

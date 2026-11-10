@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Rust twin of `rust/tools/pcb-dump/compare.py` (same classification), for tests that
 //! compare a Rust dump with a committed C++ golden.
 
@@ -177,7 +176,13 @@ impl Comparison {
     /// The scoreboard as text, followed by the first `show` problems of each failing kind.
     pub fn report(&self, show: usize) -> String {
         let mut r = String::new();
-        let w = self.groups.keys().map(String::len).max().unwrap_or(5).max(5);
+        let w = self
+            .groups
+            .keys()
+            .map(String::len)
+            .max()
+            .unwrap_or(5)
+            .max(5);
         let _ = write!(r, "{:<w$}", "group");
 
         for k in Kind::ALL {

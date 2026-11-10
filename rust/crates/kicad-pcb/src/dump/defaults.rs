@@ -178,7 +178,11 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "barcode.library_pos", v_vec(b.lib_pos()));
             emit!(o, "barcode.library_angle", v_angle(b.lib_angle()));
             emit!(o, "barcode.poly", no_api("PCB_BARCODE::GetPolyShape"));
-            emit!(o, "barcode.symbol_poly", no_api("PCB_BARCODE::GetSymbolPoly"));
+            emit!(
+                o,
+                "barcode.symbol_poly",
+                no_api("PCB_BARCODE::GetSymbolPoly")
+            );
             emit!(o, "barcode.text_poly", no_api("PCB_BARCODE::GetTextPoly"));
             emit!(o, "barcode.last_error", no_api("PCB_BARCODE::GetLastError"));
         }
@@ -212,7 +216,11 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "table.end", no_api("PCB_TABLE::GetEnd"));
             emit!(o, "table.border_width", v_int(t.border_stroke.width()));
             emit!(o, "table.border_style", no_api("PCB_TABLE::GetBorderStyle"));
-            emit!(o, "table.separators_width", v_int(t.separators_stroke.width()));
+            emit!(
+                o,
+                "table.separators_width",
+                v_int(t.separators_stroke.width())
+            );
             emit!(
                 o,
                 "table.separators_style",

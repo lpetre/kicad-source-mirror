@@ -109,3 +109,92 @@ cases (DRC-21), the board-level tests using rule files (DRC-22 and later).
   still `port_pending!` in kicad-pcb.
 - `Reporter` belongs in a shared crate (`common/reporter.cpp`); it lives here until one exists.
 - The native implicit conditions (analysis 4.8.5) are left to DRC-03.
+
+## DRC-11: markers, severities, exclusions, report writers
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_item.cpp/.h`: the static `DRC_ITEM`s (code, title, settings key), `allItemTypes` with headings, `GetItemsWithSeverities`, `Create( int )`, `Create( key )`, `GetViolatingRuleDesc`, `GetAuxItem2ID/3ID`, `ConvertPadCheckToDrcCode` | `src/item.rs` (`ALL_ITEM_TYPES`, `items_with_severities`, `create`, `create_from_key`, ...) | ported (codes and keys from `kicad_pcb::drc_api`; item data is `kicad_pcb::pcb_marker::RcItem`) |
+| `DRC_ITEMS_PROVIDER` (`SetSeverities`, `GetCount( aSeverity )`, `GetItem`) | `src/item.rs` (`DrcItemsProvider`, holds `MarkerId`s) | ported; `DeleteItem` skipped (GUI) |
+| `BOARD_RC_ITEM_RESOLVER` | `src/item.rs` (`BoardRcItemResolver`) | ported |
+| `DRC_ITEM::GetViolationLayers` | - | skipped: GUI layer focus |
+| `common/rc_item.cpp` / `include/rc_item.h`: `RC_ITEM_RESOLVER` (miss cache), `ShowReport`, `GetJsonViolation`, `getSeverityString`, `showCoord`, `getItemDescription` | `src/rc_item.rs` (`RcItemResolver`, `show_report`, `json_violation`) | ported; `RC_ITEM::m_parent` is passed as `RcItemParent`; `RC_TREE_MODEL` skipped (GUI) |
+| `include/rc_json_schema.h` (`RC_JSON::COORDINATE`, `AFFECTED_ITEM`, `VIOLATION` with its custom `to_json`, `IGNORED_CHECK`, `DRC_REPORT`) | `src/rc_item.rs` (`Json*`) | ported (to_json; `from_json` and the ERC structs not needed) |
+| `common/widgets/wx_data_view_hyperlink_renderer.cpp`: `StripMarkup`, `ParseRuns`, `tryParseMarkdown` | `src/rc_item.rs` (`strip_markup`, `parse_runs`) | ported; `IsSafeUrl` skipped (only decides whether a GUI run is clickable) |
+| `pcbnew/drc/drc_report.cpp/.h`: `WriteTextReport`, `WriteJsonReport` | `src/report.rs` (`DrcReport`) | ported; return the file content, date and version are parameters (`KICAD_MAJOR_MINOR_PATCH_VERSION` = "10.99.0", confirmed by the oracle) |
+| `pcbnew/pcb_marker.cpp`: `ToProto`, `FromProto`, `FromLegacyString`; `wxSplit` (wx 3.2) | `src/marker.rs` (`to_proto`, `from_proto`, `from_legacy_string`, `wx_split`) | ported (the `PCB_MARKER` type, constructor, severity: `kicad_pcb::pcb_marker`) |
+| `api/proto/board/board_rules.proto` `DrcMarker`, `DrcExclusion`; `Vector2`, `KIID`; `api_pcb_enums.cpp` / `api_enums.cpp` enum conversions (`DrcErrorType`, `BoardLayer`, `MarkerType`, `RuleSeverity`); protobuf 3.21 wire format, `MessageToJsonString`, `JsonStringToMessage` | `src/marker/proto.rs` | ported by hand (no protobuf dependency), only these messages |
+| `pcbnew/drc/drc_exclusion.cpp/.h` (`DRC_EXCLUSION`: `FromMarker`, `FromProto`, `FromLegacyStrings`, `GetSortKey`, `to_json`, `from_json`, canonicalisation) | `src/exclusion.rs` | ported; produces `kicad_pcb::board_design_settings::DrcExclusion`; `KiapiDrcExclusionCodec` implements the settings reader's `DrcExclusionCodec` |
+| `board.cpp` `ResolveDRCExclusions`, `RecordDRCExclusions` | `src/exclusion.rs` (`resolve_drc_exclusions`, `record_drc_exclusions`) on top of `Board::resolve_drc_exclusions_with` / `record_drc_exclusions_with` (kicad-pcb M22) | ported |
+
+### Verification
+
+Differential oracle `tests/oracle/drc_report_oracle.cpp` (own driver, built by
+`tests/oracle/build_report_oracle.sh` against the reference build like pcb-dump; binary
+`/home/user/kicad-oracle/bin/drc-report-oracle`). It runs the scenarios `tests/data/reports/*.scn`
+(board, design-settings severities, exclusions as JSON or legacy strings, markers with
+messages / rules / exclusion flags, `ResolveDRCExclusions( true|false )`, `RecordDRCExclusions`,
+both report writers with the three providers of `JobExportDrc`, `FromLegacyString`,
+`StripMarkup`) with the real C++ code and prints every intermediate value (marker fields,
+severities, exclusion sort keys (bytes, or FNV-1a), ProtoJSON, the design-settings set in order,
+provider counts, both reports verbatim with the date replaced). Golden:
+`tests/golden/report_oracle.txt` (`tests/oracle/gen_report_goldens.sh`, deterministic over
+runs). Rust twin: `tests/report_oracle.rs::report_oracle_replay`.
+
+| Scenario | What | Result |
+|---|---|---|
+| `legacy_strip.scn` | 17 legacy exclusion strings (escaped pipes, `strtol` overflow / garbage, short forms, every special code, empty key = heading), 8 `StripMarkup` inputs | identical |
+| `report_sections_noitems.scn` | 15 markers (all marker types, rule severities incl. exclusion, generic codes, excluded with / without comment, markup in messages, UTF-8), severity overrides, 5 reports (mm / mils / in, masks 48, 52, 4, 0, 32), ignored-check lists | identical (text and JSON) |
+| `exclusions_noitems.scn` | 39 exclusions: canonical ProtoJSON, lowerCamel names, numbers / strings for int64 and enums, nulls, unknown fields / enum names (rejected), floats, spaces, `+`, overflow, items given as an object, unknown enum numbers, missing marker, legacy strings; matching against 7 markers; `ResolveDRCExclusions( true )` (created markers, set order), record, reports | identical |
+| `exclusions_cli_noitems.scn` | the same with `ResolveDRCExclusions( false )` (the CLI flow) | identical |
+| `report_sections.scn`, `exclusions.scn`, `pending_items.scn` | the same on `qa/data/pcbnew/issue8003.kicad_pcb`, whose items resolve (item lines `@(x, y): description`, item JSON, creation of exclusion markers whose items exist) | pending: the Rust board parser still skips footprints and tracks (PCBIO-03, PCBIO-06), and the footprint / shape descriptions are `port_pending!`; the test reports them as pending and compares them automatically once the board loads completely |
+
+Unit tests (`src/*.rs`) cover the item table against `drc_api` and the `allItemTypes` order of
+`drc.md` 3.6, the report line formats derived from the C++ format strings, the JSON layout
+(sorted keys, 4-space indent, `.0` doubles), the wire format, the enum tables and the round trips.
+
+Reference `kicad-cli` reports: `tests/golden/reports/` (10 boards from `qa/data/pcbnew`, text and
+JSON, mm / mils / in, severity masks all / error / warning / exclusions; 70 KB). Command lines in
+`tests/golden/reports/cases.txt`, recorded by `tests/oracle/gen_cli_reports.sh` on copies.
+`report_oracle.rs::reference_cli_reports` (`#[ignore]`d) compares them with the Rust DRC once the
+engine (DRC-03 and later) and the CLI flow (DRC-12) exist. The reference build orders some
+violations differently from run to run (thread pool; issue8003, issue7267: same set, different
+order), so the comparison sorts the entries inside each section; boards whose violation *set*
+changes between runs (soldermask_bridge_all_tracks, issue10916) were left out. issue17429 with
+`--severity-exclusions` exercises the legacy exclusions of a real project file (3 violations and
+7 unconnected items excluded).
+
+### Ported C++ tests
+
+None yet: `test_drc_unconnected_save.cpp` and `test_drc_unconnected_items_exclusion_loss.cpp`
+(and the exclusion parts of `test_drc_regressions.cpp` / `test_custom_rule_severities.cpp`) run
+the whole DRC on boards and save projects; they need the engine and the project writer.
+
+### Deviations
+
+- **Sort key representation**: `DRC_EXCLUSION::GetSortKey()` is a byte string (protobuf wire
+  format); `DrcExclusion::sort_key` stores each byte as the `char` of the same value, which keeps
+  the C++ (`unsigned char`) order. Equality and order are those of C++; the text itself is not
+  meant to be read.
+- **No protobuf library**: the four messages, their wire format and ProtoJSON are written by
+  hand after protobuf 3.21.12 (the reference build's version: on a JSON parse error the message
+  is left empty). The oracle confirms the accept / reject decisions listed above; inputs outside
+  them (e.g. duplicate fields under both names, exotic number spellings) follow the documented
+  3.21 converter behaviour without oracle confirmation.
+- `IsSafeUrl` is not ported: `parse_runs` returns the parsed href for every link.
+- The report writers return strings; failing to open the output file is the caller's error.
+- `JsonStringToMessage` input is the `serde_json` value, not `aJson.dump()` text: identical,
+  since nlohmann's dump of a parsed document re-parses to the same numbers and strings.
+- `resources/schemas/drc.v1.json` is not valid JSON (trailing comma, line 92), so no schema
+  validation is done; the JSON writer is compared byte for byte with the C++ writer instead.
+
+### Known gaps
+
+- Item lines of the reports (`@(x, y): description`, item positions / UUIDs in JSON) are verified
+  by unit tests only until the board parser loads footprints and tracks (PCBIO-03 / 06) and the
+  item descriptions of footprints, vias, zones, shapes, tables and dimensions are ported (model
+  packages, currently `port_pending!`).
+- The CLI flow (providers per marker type, severities from the job, messages, exit codes) is
+  DRC-12; the reference reports wait for it.

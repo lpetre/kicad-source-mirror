@@ -15,8 +15,7 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Port of `qa/tests/libs/kimath/geometry/test_roundrect.cpp` (suite `Roundrect`) and
-//! `qa/tests/libs/kimath/geometry/test_shape_rect_corner.cpp`.
+//! Port of `qa/tests/libs/kimath/geometry/test_roundrect.cpp` (suite `Roundrect`).
 
 use kicad_geom::geometry::roundrect::Roundrect;
 use kicad_geom::geometry::shape::Shape;
@@ -105,12 +104,4 @@ fn plain_rectangle_corner_order() {
         assert_eq!(outline.c_point(2), pos + Vector2I::new(w, h));
         assert_eq!(outline.c_point(3), pos + Vector2I::new(0, h));
     }
-}
-
-/// `test_shape_rect_corner.cpp`: `ShapeRectCornerRadius`.
-#[test]
-fn shape_rect_corner_radius() {
-    let mut rect = ShapeRect::from_corners(Vector2I::new(0, 0), Vector2I::new(10, 10));
-    rect.set_radius(2);
-    assert_eq!(rect.get_radius(), 2);
 }

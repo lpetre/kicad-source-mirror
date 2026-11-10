@@ -1,0 +1,52 @@
+# Without board items (the ids do not resolve): Exclusions: ProtoJSON and legacy forms, identity, resolve and record.
+board	rust/crates/kicad-drc/tests/data/reports/empty.kicad_pcb
+exclusion	json	{"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
+exclusion	json	{"comment":"camel","marker":{"errorType":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"markerType":2,"position":{"xNm":138618500,"yNm":"77404500"},"severity":"RS_ERROR","excluded":true,"description":"x","violatingRule":"r"}}
+exclusion	json	{"comment":"numeric","marker":{"error_type":12,"items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"2","position":{"x_nm":1000.0,"y_nm":-2000}}}
+exclusion	json	{"comment":"unknown field","marker":{"error_type":"DRCET_CLEARANCE","bogus":1}}
+exclusion	json	{"comment":"unknown top","marker":{"error_type":"DRCET_CLEARANCE"},"extra":true}
+exclusion	json	{"comment":"bad enum","marker":{"error_type":"DRCET_NOT_A_THING"}}
+exclusion	json	{"comment":"nulls","marker":{"error_type":"DRCET_TRACK_ANGLE","layer":null,"items":null,"position":{"x_nm":null}}}
+exclusion	json	{"comment":"unknown enum number","marker":{"error_type":555,"marker_type":77,"layer":1234}}
+exclusion	json	{"comment":"float x","marker":{"error_type":5,"position":{"x_nm":1.5}}}
+exclusion	json	{"comment":"spaced string","marker":{"error_type":5,"position":{"x_nm":" 15"}}}
+exclusion	json	{"comment":"plus string","marker":{"error_type":5,"position":{"x_nm":"+15","y_nm":"-0"}}}
+exclusion	json	{"comment":"enum as int string unknown","marker":{"error_type":"500"}}
+exclusion	json	{"comment":"no marker"}
+exclusion	json	{"marker":{}}
+exclusion	json	{"marker":{"position":{}}}
+exclusion	json	{"comment":5}
+exclusion	json	"a string"
+exclusion	json	{"comment":"items object","marker":{"error_type":5,"items":{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}}}
+exclusion	json	{"comment":"bool string","marker":{"error_type":5,"excluded":"yes"}}
+exclusion	json	{"comment":"layer name","marker":{"error_type":"DRCET_COPPER_SLIVER","layer":"BL_B_Cu","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"}],"position":{"x_nm":"1"}}}
+exclusion	json	{"comment":"layer user","marker":{"error_type":"DRCET_GENERIC_ERROR","layer":"BL_User_45","position":{"x_nm":"-1","y_nm":"-1"}}}
+exclusion	json	{"comment":"big","marker":{"error_type":5,"position":{"x_nm":"9223372036854775807","y_nm":-9223372036854775808}}}
+exclusion	json	{"comment":"too big","marker":{"error_type":5,"position":{"x_nm":"9223372036854775808"}}}
+exclusion	json	{"comment":"empty item","marker":{"error_type":5,"items":[{},{"value":""}]}}
+exclusion	json	{"comment":"unconnected","marker":{"error_type":"DRCET_UNCONNECTED_ITEMS","items":[{"value":"64df41cd-249a-44e2-8ece-db9044298f6e"},{"value":"79a76fdb-bb70-453e-9d81-12637b5ac88f"}],"layer":"BL_B_Cu","marker_type":"MT_RATSNEST","position":{}}}
+exclusion	json	{"comment":"dangling","marker":{"error_type":"DRCET_SILK_CLEARANCE","items":[{"value":"12345678-1234-1234-1234-123456789abc"}],"marker_type":"MT_DRC","position":{"x_nm":"5"}}}
+exclusion	json	{"comment":"stray outline","marker":{"error_type":"DRCET_INVALID_OUTLINE","marker_type":"MT_DRC","position":{"x_nm":"7","y_nm":"7"}}}
+exclusion	json	{"comment":"stitch","marker":{"error_type":"DRCET_UNKNOWN","marker_type":"MT_DRC","position":{"x_nm":"8"}}}
+exclusion	json	{"comment":"sheet","marker":{"error_type":"DRCET_UNRESOLVED_VARIABLE","marker_type":"MT_DRAWING_SHEET","position":{}}}
+exclusion	json	{"comment":"bad id","marker":{"error_type":"DRCET_TRACK_ANGLE","items":[{"value":"not-a-uuid"}],"position":{}}}
+exclusion	legacy	via_dangling|1000|-2000|d3626667-3ba8-4618-aa74-3caa02344256|00000000-0000-0000-0000-000000000000	legacy comment
+exclusion	legacy	clearance|1|2	short
+exclusion	legacy	not_a_key|1|2|4fafb321-75ab-428f-a223-7df9a10734e0|b14a6fe5-b108-4eb0-874f-5289bbab5bfa	unknown
+exclusion	legacy	starved_thermal|5|6|c69de6ad-e39a-4788-a757-b7516dce18a6|64df41cd-249a-44e2-8ece-db9044298f6e|B.Cu	thermal
+exclusion	legacy	copper_sliver|5|6|2eeacdee-4d9d-4c65-bec0-86c0df177b61|In2.Cu	sliver
+exclusion	legacy	unconnected_items|5|6|c69de6ad-e39a-4788-a757-b7516dce18a6|a202d05d-6123-4f3b-83ac-e9b52ab59302	old unconnected
+exclusion	legacy	unconnected_items|5|6|x|y|a202d05d-6123-4f3b-83ac-e9b52ab59302|c69de6ad-e39a-4788-a757-b7516dce18a6	new unconnected
+exclusion	legacy	unresolved_variable|9|9||	sheet var
+exclusion	legacy	track_angle|1|1|1234abcd|ABCDEF	timestamps
+marker	clearance	137602500	76388500	0	4fafb321-75ab-428f-a223-7df9a10734e0,c69de6ad-e39a-4788-a757-b7516dce18a6	-	-	undefined	0	
+marker	track_width	138618500	77404500	31	b14a6fe5-b108-4eb0-874f-5289bbab5bfa	-	-	undefined	0	
+marker	via_dangling	1000	-2000	2	d3626667-3ba8-4618-aa74-3caa02344256	-	-	undefined	0	
+marker	unconnected_items	0	0	0	64df41cd-249a-44e2-8ece-db9044298f6e,79a76fdb-bb70-453e-9d81-12637b5ac88f	-	-	undefined	0	
+marker	copper_sliver	1	0	2	4fafb321-75ab-428f-a223-7df9a10734e0	-	-	undefined	0	
+marker	copper_sliver	1	0	0	4fafb321-75ab-428f-a223-7df9a10734e0	-	-	undefined	0	
+marker	clearance	1	2	0	2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9739-bbef74b465c0	-	-	undefined	1	pre-excluded
+resolve	1
+report	mm	52
+record
+bds

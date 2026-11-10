@@ -1,5 +1,5 @@
-# Exclusions as the CLI applies them after a DRC run: ResolveDRCExclusions( false ).
-board	qa/data/pcbnew/issue8003.kicad_pcb
+# Without board items (the ids do not resolve): Exclusions as the CLI applies them after a DRC run: ResolveDRCExclusions( false ).
+board	rust/crates/kicad-drc/tests/data/reports/empty.kicad_pcb
 exclusion	json	{"comment":"canonical","marker":{"error_type":"DRCET_CLEARANCE","items":[{"value":"4fafb321-75ab-428f-a223-7df9a10734e0"},{"value":"c69de6ad-e39a-4788-a757-b7516dce18a6"}],"marker_type":"MT_DRC","position":{"x_nm":"137602500","y_nm":"76388500"}}}
 exclusion	json	{"comment":"camel","marker":{"errorType":"DRCET_TRACK_WIDTH","items":[{"value":"b14a6fe5-b108-4eb0-874f-5289bbab5bfa"}],"markerType":2,"position":{"xNm":138618500,"yNm":"77404500"},"severity":"RS_ERROR","excluded":true,"description":"x","violatingRule":"r"}}
 exclusion	json	{"comment":"numeric","marker":{"error_type":12,"items":[{"value":"d3626667-3ba8-4618-aa74-3caa02344256"}],"marker_type":"2","position":{"x_nm":1000.0,"y_nm":-2000}}}
@@ -49,4 +49,4 @@ marker	clearance	1	2	0	2eeacdee-4d9d-4c65-bec0-86c0df177b61,cc9b6272-14ca-4190-9
 resolve	0
 report	mm	52
 record
-report	in	4
+bds

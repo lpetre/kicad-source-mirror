@@ -1,0 +1,1 @@
+{"board": {"design_settings": {"meta": {"version": 1}, "rules": {"solder_mask_clearance": 0.0638, "solder_mask_min_width": 0.0643, "solder_paste_clearance": -0.05, "solder_paste_margin_ratio": -0.1, "min_clearance": 0.1, "allow_microvias": true}, "drc_exclusions": ["garbage|1|2", ["not a marker", "a comment"], 7]}}, "meta": {"version": 1}}

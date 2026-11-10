@@ -1,0 +1,1 @@
+{"board": {"design_settings": {"meta": {"version": 1}, "rules": {"solder_mask_clearance": 1e10}, "drc_exclusions": ["bad|marker", [5, "c"], "never reached"]}}, "meta": {"version": 3}}

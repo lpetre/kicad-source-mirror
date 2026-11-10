@@ -200,7 +200,12 @@ impl<'a> DrcReport<'a> {
         out
     }
 
-    fn violations(&self, provider: &DrcItemsProvider, units: &UnitsProvider<'_>, board_severity: bool) -> Vec<JsonViolation> {
+    fn violations(
+        &self,
+        provider: &DrcItemsProvider,
+        units: &UnitsProvider<'_>,
+        board_severity: bool,
+    ) -> Vec<JsonViolation> {
         let board = self.ctx.board;
         let bds = board.design_settings();
         let item_resolver = BoardRcItemResolver::new(self.ctx);
@@ -252,7 +257,9 @@ impl<'a> DrcReport<'a> {
         }
 
         if self.reported_severities & Severity::Exclusion as i32 != 0 {
-            report_head.included_severities.push("exclusion".to_string());
+            report_head
+                .included_severities
+                .push("exclusion".to_string());
         }
 
         // One resolver per section is equivalent to the C++ single resolver: its miss cache

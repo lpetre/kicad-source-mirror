@@ -33,8 +33,7 @@ use crate::exporters::gendrill_excellon_writer::{ExcellonWriter, reborrow};
 use crate::exporters::gendrill_report::{BoardHoleSource, HoleListSource};
 use crate::exporters::gendrill_writer_base::{DrillPrecision, ZerosFmt};
 use crate::jobs::job_export_pcb_drill::{
-    DrillExportEnv, DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, MapFormat,
-    ZerosFormat,
+    DrillExportEnv, DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, MapFormat, ZerosFormat,
 };
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile, Reporter};

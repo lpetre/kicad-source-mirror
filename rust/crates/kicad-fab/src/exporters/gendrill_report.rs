@@ -80,7 +80,8 @@ impl HoleListSource for BoardHoleSource {
 /// The virtual `getDrillFileName( aSpan, aNPTH, aMerge_PTH_NPTH )` the report calls: the base
 /// version ([`GendrillWriterBase::drill_file_name`]) for the Excellon writer, the
 /// `GERBER_WRITER` override for the Gerber writer.
-pub type DrillFileNameFn<'f> = &'f dyn Fn(&GendrillWriterBase<'_>, &DrillSpan, bool, bool) -> String;
+pub type DrillFileNameFn<'f> =
+    &'f dyn Fn(&GendrillWriterBase<'_>, &DrillSpan, bool, bool) -> String;
 
 /// The `separator` line of `GenDrillReportFile`.
 const SEPARATOR: &str = "    =============================================================\n";
@@ -220,19 +221,16 @@ impl<'a> GendrillWriterBase<'a> {
         out.push_str("Copper Layer Stackup:\n");
         out.push_str(SEPARATOR);
 
-        let mut conventional_layer_num = 1;
+        // conventional_layer_num starts at 1
+        let layers = Lset::all_cu_mask_n(board.copper_layer_count()).ui_order().0;
 
-        for layer in Lset::all_cu_mask_n(board.copper_layer_count())
-            .ui_order()
-            .0
-        {
+        for (conventional_layer_num, layer) in (1..).zip(layers) {
             out.push_str(&format!(
                 "    L{:<2}:  {} {}\n",
                 conventional_layer_num,
                 fmt_left_aligned(&board.layer_name(layer), 25),
                 layer_name(layer) // generic layer name
             ));
-            conventional_layer_num += 1;
         }
 
         out.push_str("\n\n");

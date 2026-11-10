@@ -1,0 +1,161 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mils",
+    "date": "<DATE>",
+    "ignored_checks": [
+        {
+            "description": "Track has unconnected end",
+            "key": "track_dangling"
+        },
+        {
+            "description": "Footprint has no courtyard defined",
+            "key": "missing_courtyard"
+        },
+        {
+            "description": "Track endpoint not centered on via",
+            "key": "track_not_centered_on_via"
+        },
+        {
+            "description": "Tuning profile track geometries",
+            "key": "tuning_profile_track_geometries"
+        },
+        {
+            "description": "Footprint doesn't match symbol's footprint filters",
+            "key": "footprint_filters_mismatch"
+        },
+        {
+            "description": "PTH inside courtyard",
+            "key": "pth_inside_courtyard"
+        },
+        {
+            "description": "NPTH inside courtyard",
+            "key": "npth_inside_courtyard"
+        },
+        {
+            "description": "Footprint component type doesn't match footprint pads",
+            "key": "footprint_type_mismatch"
+        },
+        {
+            "description": "Footprint not found in libraries",
+            "key": "lib_footprint_issues"
+        }
+    ],
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "10.99.0",
+    "schematic_parity": [],
+    "source": "issue7267.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 5.08 mils)",
+            "items": [
+                {
+                    "description": "Rectangle of REF** on Edge.Cuts",
+                    "pos": {
+                        "x": 6165.0,
+                        "y": 2955.0
+                    },
+                    "uuid": "1d78c688-c2db-4868-a03f-0436a459cbaf"
+                },
+                {
+                    "description": "Track [signal] on F.Cu, length 141.42 mils",
+                    "pos": {
+                        "x": 6275.0,
+                        "y": 3150.0
+                    },
+                    "uuid": "21b5daa4-e65f-4e1c-a333-2091740a1e4a"
+                }
+            ],
+            "severity": "error",
+            "type": "copper_edge_clearance"
+        },
+        {
+            "description": "Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)",
+            "items": [
+                {
+                    "description": "Rectangle on Edge.Cuts",
+                    "pos": {
+                        "x": 3075.0,
+                        "y": 1975.0
+                    },
+                    "uuid": "d0d883cf-992c-40b1-8baf-44f8b31bd338"
+                },
+                {
+                    "description": "Track [signal] on F.Cu, length 3000.00 mils",
+                    "pos": {
+                        "x": 6375.0,
+                        "y": 3150.0
+                    },
+                    "uuid": "621611c9-2b28-46fa-ba36-db611bc29586"
+                }
+            ],
+            "severity": "error",
+            "type": "copper_edge_clearance"
+        },
+        {
+            "description": "Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)",
+            "items": [
+                {
+                    "description": "Rectangle of REF** on Edge.Cuts",
+                    "pos": {
+                        "x": 6165.0,
+                        "y": 2955.0
+                    },
+                    "uuid": "1d78c688-c2db-4868-a03f-0436a459cbaf"
+                },
+                {
+                    "description": "Track [signal] on F.Cu, length 100.00 mils",
+                    "pos": {
+                        "x": 6175.0,
+                        "y": 3250.0
+                    },
+                    "uuid": "3d3d3243-6bbc-49ec-beed-2a25912450f2"
+                }
+            ],
+            "severity": "error",
+            "type": "copper_edge_clearance"
+        },
+        {
+            "description": "Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)",
+            "items": [
+                {
+                    "description": "Rectangle of REF** on Edge.Cuts",
+                    "pos": {
+                        "x": 6165.0,
+                        "y": 2955.0
+                    },
+                    "uuid": "1d78c688-c2db-4868-a03f-0436a459cbaf"
+                },
+                {
+                    "description": "Track [signal] on F.Cu, length 100.00 mils",
+                    "pos": {
+                        "x": 6375.0,
+                        "y": 3150.0
+                    },
+                    "uuid": "d3322cbe-61d2-451b-b61a-efdb757a7742"
+                }
+            ],
+            "severity": "error",
+            "type": "copper_edge_clearance"
+        },
+        {
+            "description": "Copper outside board outline",
+            "items": [
+                {
+                    "description": "Track [signal] on F.Cu, length 141.42 mils",
+                    "pos": {
+                        "x": 6275.0,
+                        "y": 3150.0
+                    },
+                    "uuid": "21b5daa4-e65f-4e1c-a333-2091740a1e4a"
+                }
+            ],
+            "severity": "warning",
+            "type": "copper_outside_board"
+        }
+    ]
+}

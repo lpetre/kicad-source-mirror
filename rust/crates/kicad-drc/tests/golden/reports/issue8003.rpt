@@ -1,0 +1,29 @@
+** Drc report for issue8003.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 2 DRC violations **
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.0892 mm)
+    Rule: netclass 'Default'; error
+    @(141.3510 mm, 77.4045 mm): Pad 2 [/NET_B] of R1 on F.Cu
+    @(141.3510 mm, 78.1812 mm): Track [/NET_A] on F.Cu, length 1.8683 mm
+[clearance]: Clearance violation (netclass 'Default' clearance 0.2000 mm; actual 0.0892 mm)
+    Rule: netclass 'Default'; error
+    @(141.3510 mm, 77.4045 mm): Pad 2 [/NET_B] of R1 on F.Cu
+    @(141.3510 mm, 80.3295 mm): Track [/NET_A] on F.Cu, length 2.1483 mm
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+    - Footprint component type doesn't match footprint pads
+    - Footprint not found in libraries
+
+** End of Report **

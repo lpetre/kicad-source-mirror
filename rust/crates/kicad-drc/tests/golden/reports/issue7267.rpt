@@ -1,0 +1,41 @@
+** Drc report for issue7267.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 5 DRC violations **
+[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)
+    Rule: board setup constraints edge; error
+    @(3075.00 mils, 1975.00 mils): Rectangle on Edge.Cuts
+    @(6375.00 mils, 3150.00 mils): Track [signal] on F.Cu, length 3000.00 mils
+[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)
+    Rule: board setup constraints edge; error
+    @(6165.00 mils, 2955.00 mils): Rectangle of REF** on Edge.Cuts
+    @(6375.00 mils, 3150.00 mils): Track [signal] on F.Cu, length 100.00 mils
+[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 0.00 mils)
+    Rule: board setup constraints edge; error
+    @(6165.00 mils, 2955.00 mils): Rectangle of REF** on Edge.Cuts
+    @(6175.00 mils, 3250.00 mils): Track [signal] on F.Cu, length 100.00 mils
+[copper_edge_clearance]: Board edge clearance violation (board setup constraints edge clearance 7.87 mils; actual 5.08 mils)
+    Rule: board setup constraints edge; error
+    @(6165.00 mils, 2955.00 mils): Rectangle of REF** on Edge.Cuts
+    @(6275.00 mils, 3150.00 mils): Track [signal] on F.Cu, length 141.42 mils
+[copper_outside_board]: Copper outside board outline
+    Local override; warning
+    @(6275.00 mils, 3150.00 mils): Track [signal] on F.Cu, length 141.42 mils
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Track has unconnected end
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+    - Footprint component type doesn't match footprint pads
+    - Footprint not found in libraries
+
+** End of Report **

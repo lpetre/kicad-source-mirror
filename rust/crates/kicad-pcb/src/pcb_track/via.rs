@@ -39,7 +39,7 @@ use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::{DrcConstraint, DrcConstraintT};
 use crate::ids::TrackId;
 use crate::item::{BoardItemBase, ItemFlags};
-use crate::item_ref::{AnyItem, ItemRef};
+use crate::item_ref::ItemRef;
 use crate::padstack::{
     BackdrillMode, DrillProps, PadDrillPostMachiningMode, PadDrillShape, Padstack, PadstackMode,
     UnconnectedLayerMode,
@@ -48,7 +48,7 @@ use crate::pcb_track::{
     CappingMode, CoveringMode, FillingMode, PcbTrack, PcbVia, PluggingMode, TentingMode, Track,
     UNDEFINED_DRILL_DIAMETER, Viatype, ZoneLayerOverride,
 };
-use crate::traits::{BoardConnectedItem, BoardItem};
+use crate::traits::BoardConnectedItem;
 
 /// `GEOMETRY_MIN_SIZE` (`pcbnew/pcb_track.h`): `(int) ( 0.001 * pcbIUScale.IU_PER_MM )`.
 pub fn geometry_min_size() -> i32 {
@@ -91,8 +91,7 @@ pub struct ViaParameterError {
 /// Port of `DRC_CONSTRAINT::Merge( aOther )` (`pcbnew/drc/drc_rule.cpp`): the tighter min /
 /// max and the first opt, with the rules they came from.
 fn merge_constraint(this: &mut DrcConstraint, other: &DrcConstraint) {
-    if other.value.has_min() && (!this.value.has_min() || (other.value.min() > this.value.min()))
-    {
+    if other.value.has_min() && (!this.value.has_min() || (other.value.min() > this.value.min())) {
         this.value.set_min(other.value.min());
         this.min_rule = if other.min_rule.is_some() {
             other.min_rule.clone()
@@ -611,8 +610,7 @@ impl PcbVia {
 
     /// Port of `GetTertiaryDrillSize()`.
     pub fn tertiary_drill_size(&self) -> Option<i32> {
-        (self.padstack.tertiary_drill().size.x > 0)
-            .then_some(self.padstack.tertiary_drill().size.x)
+        (self.padstack.tertiary_drill().size.x > 0).then_some(self.padstack.tertiary_drill().size.x)
     }
 
     /// Port of `SetTertiaryDrillStartLayer()`: `UNDEFINED_LAYER` also clears the size.
@@ -1193,7 +1191,8 @@ impl PcbVia {
     pub fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
         let drill = self.padstack.drill();
 
-        if is_copper_layer(layer.0) && LayerRange::contains_range(drill.start.0, drill.end.0, layer.0)
+        if is_copper_layer(layer.0)
+            && LayerRange::contains_range(drill.start.0, drill.end.0, layer.0)
         {
             return true;
         }
@@ -1257,7 +1256,12 @@ impl PcbVia {
     /// Port of `PCB_VIA::SetLayerPair`. C++ then calls `BOARD::InvalidateClearanceCache`, which
     /// has no model-side counterpart (`board-model.md` 7: the engine revalidates by time
     /// stamp).
-    pub fn set_layer_pair(&mut self, env: &MutEnv, top_layer: PcbLayerId, bottom_layer: PcbLayerId) {
+    pub fn set_layer_pair(
+        &mut self,
+        env: &MutEnv,
+        top_layer: PcbLayerId,
+        bottom_layer: PcbLayerId,
+    ) {
         self.padstack.drill_mut().start = top_layer;
         self.padstack.drill_mut().end = bottom_layer;
         self.sanitize_layers(env);
@@ -1428,8 +1432,8 @@ impl PcbVia {
                 }
 
                 if copper_layer_count > 0 {
-                    let mask = copper_mask
-                        .get_or_insert_with(|| Lset::all_cu_mask_n(copper_layer_count));
+                    let mask =
+                        copper_mask.get_or_insert_with(|| Lset::all_cu_mask_n(copper_layer_count));
 
                     if !mask.contains(layer) {
                         return err("Via layer is outside the board stack.", field);
@@ -1464,9 +1468,10 @@ impl PcbVia {
                 );
             }
 
-            if let Some(e) =
-                validate_layer(secondary_start_layer, ViaParameterField::SecondaryStartLayer)
-            {
+            if let Some(e) = validate_layer(
+                secondary_start_layer,
+                ViaParameterField::SecondaryStartLayer,
+            ) {
                 return Some(e);
             }
 
@@ -1702,6 +1707,7 @@ impl PcbVia {
     /// Port of `PCB_VIA::GetOutermostConnectedLayers`: (topmost, bottommost) connected layer,
     /// `UNDEFINED_LAYER` for none. As in C++ the loop runs over the raw layer ids from
     /// `TopLayer()` to `BottomLayer()` (non-copper ids in between included).
+    #[allow(clippy::if_same_then_else)] // keeps the C++ statement structure
     pub fn outermost_connected_layers(&self, ctx: &BoardCtx<'_>) -> (PcbLayerId, PcbLayerId) {
         let mut topmost = PcbLayerId::UndefinedLayer;
         let mut bottommost = PcbLayerId::UndefinedLayer;
@@ -1970,6 +1976,7 @@ impl PcbVia {
     /// one structure when the upper one lands on the lower one (hole overlap; exact
     /// concentricity is only the extreme case of that). Pointer sets become `TrackId` sets
     /// (membership only, never iterated).
+    #[allow(clippy::explicit_counter_loop)] // keeps the C++ statement structure
     pub fn collect_microvia_columns(ctx: &BoardCtx<'_>) -> Vec<Vec<TrackId>> {
         let board = ctx.board;
         let mut ordinals: BTreeMap<i32, i32> = BTreeMap::new();
@@ -2109,5 +2116,983 @@ fn tri_state(mode: i32) -> Option<bool> {
         1 => Some(true),
         2 => Some(false),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Package M17 tests. `GOLDEN` comes from the reference `pcb-dump board --sections
+    //! item,bbox,track` on a crafted 4-layer board (`tests/golden/m17_vias.py` builds it and
+    //! filters the dump; mask expansion 0.05 mm, board tenting front only, covering front
+    //! only, plugging back only, capping on): through, blind, buried and micro vias, explicit
+    //! tenting / covering / plugging / capping / filling, backdrills (both sides, top), front
+    //! and back post-machining, the four unconnected-layer modes (one with a forced zone layer
+    //! connection), FRONT_INNER_BACK and CUSTOM padstacks (one with a ghost F.Cu), a blind via
+    //! given bottom-up, a free via off the mm grid. The board parser does not load vias yet
+    //! (PCBIO-03), so the vias are rebuilt from the dumped padstack members and every dumped
+    //! derived value is asserted. Polygons are compared by the FNV-1a hash of the dump text.
+
+    use super::*;
+    use crate::board::{AddMode, Board};
+    use crate::ctx::ConnectivityQuery;
+    use crate::ids::{ItemId, NetCode};
+    use crate::item::{ParentRef, SharedShape};
+    use crate::pcb_track::Track;
+    use crate::traits::{BoardItem, Flashing};
+    use kicad_geom::geometry::approximation::{ERROR_INSIDE, ERROR_OUTSIDE};
+    use kicad_geom::{Shape, ShapePolySet, ShapeRef};
+
+    const GOLDEN: &str = include_str!("../../tests/golden/m17_vias.txt");
+
+    type Fields = BTreeMap<String, String>;
+
+    fn golden() -> BTreeMap<String, Fields> {
+        let mut map: BTreeMap<String, Fields> = BTreeMap::new();
+
+        for line in GOLDEN.lines() {
+            let mut parts = line.splitn(3, '|');
+            let section = parts.next().unwrap();
+            let key = parts.next().unwrap();
+            let (field, value) = parts.next().unwrap().split_once('=').unwrap();
+            map.entry(key.to_string())
+                .or_default()
+                .insert(format!("{section}.{field}"), value.to_string());
+        }
+
+        map
+    }
+
+    fn vec(s: &str) -> Vector2I {
+        let (x, y) = s.split_once(',').unwrap();
+        Vector2I::new(x.parse().unwrap(), y.parse().unwrap())
+    }
+
+    fn layer(name: &str) -> PcbLayerId {
+        if name == "UNDEFINED_LAYER" {
+            return PcbLayerId::UndefinedLayer;
+        }
+
+        PcbLayerId(Lset::name_to_layer(name))
+    }
+
+    fn layer_name(l: PcbLayerId) -> String {
+        if l == PcbLayerId::UndefinedLayer {
+            "UNDEFINED_LAYER".to_string()
+        } else {
+            Lset::name(l)
+        }
+    }
+
+    fn opt_bool(s: &str) -> Option<bool> {
+        match s {
+            "true" => Some(true),
+            "false" => Some(false),
+            _ => None,
+        }
+    }
+
+    fn v_opt<T: ToString>(v: Option<T>) -> String {
+        v.map_or("none".to_string(), |v| v.to_string())
+    }
+
+    fn post_mode(s: &str) -> Option<PadDrillPostMachiningMode> {
+        match s {
+            "COUNTERBORE" => Some(PadDrillPostMachiningMode::Counterbore),
+            "COUNTERSINK" => Some(PadDrillPostMachiningMode::Countersink),
+            "NOT_POST_MACHINED" => Some(PadDrillPostMachiningMode::NotPostMachined),
+            "none" => None,
+            _ => panic!("{s}"),
+        }
+    }
+
+    fn post_mode_name(m: Option<PadDrillPostMachiningMode>) -> &'static str {
+        match m {
+            Some(PadDrillPostMachiningMode::Counterbore) => "COUNTERBORE",
+            Some(PadDrillPostMachiningMode::Countersink) => "COUNTERSINK",
+            Some(PadDrillPostMachiningMode::NotPostMachined) => "NOT_POST_MACHINED",
+            Some(PadDrillPostMachiningMode::Unknown) => "UNKNOWN",
+            None => "none",
+        }
+    }
+
+    fn drill_shape(s: &str) -> PadDrillShape {
+        match s {
+            "CIRCLE" => PadDrillShape::Circle,
+            "OBLONG" => PadDrillShape::Oblong,
+            _ => PadDrillShape::Undefined,
+        }
+    }
+
+    fn mode_name(m: i32, words: [&'static str; 3]) -> &'static str {
+        words[m as usize]
+    }
+
+    fn fnv1a(s: &str) -> String {
+        let mut h: u64 = 0xcbf29ce484222325;
+
+        for b in s.bytes() {
+            h ^= b as u64;
+            h = h.wrapping_mul(0x100000001b3);
+        }
+
+        format!("{h:016x}")
+    }
+
+    /// The dump's `VPolySet` text for polygons without arcs.
+    fn v_polyset(s: &ShapePolySet) -> String {
+        let chain = |c: &kicad_geom::ShapeLineChain| {
+            let pts: Vec<String> = c
+                .c_points()
+                .iter()
+                .map(|v| format!("{},{}", v.x, v.y))
+                .collect();
+            format!(
+                "C({} w={} n={} [{}])",
+                if c.is_closed() { "closed" } else { "open" },
+                c.width(),
+                c.point_count(),
+                pts.join(" ")
+            )
+        };
+        let mut r = format!("P({}", s.outline_count());
+
+        for i in 0..s.outline_count() {
+            r.push_str(" {");
+            r.push_str(&chain(s.c_outline(i)));
+
+            for h in 0..s.hole_count(i) {
+                r.push_str(" hole ");
+                r.push_str(&chain(s.c_hole(i, h)));
+            }
+
+            r.push('}');
+        }
+
+        r.push(')');
+        r
+    }
+
+    fn v_shape(s: &SharedShape) -> String {
+        match s.as_shape_ref() {
+            ShapeRef::Circle(c) => format!(
+                "SH_CIRCLE(c={},{} r={})",
+                c.get_center().x,
+                c.get_center().y,
+                c.get_radius()
+            ),
+            ShapeRef::Segment(g) => format!(
+                "SH_SEGMENT(a={},{} b={},{} w={})",
+                g.get_seg().a.x,
+                g.get_seg().a.y,
+                g.get_seg().b.x,
+                g.get_seg().b.y,
+                g.get_width()
+            ),
+            _ => panic!("unexpected shape"),
+        }
+    }
+
+    fn v_box(b: &Box2I) -> String {
+        format!(
+            "{},{},{},{}",
+            b.position().x,
+            b.position().y,
+            b.width(),
+            b.height()
+        )
+    }
+
+    /// The design settings of the golden board (`m17_vias.py`).
+    fn golden_board() -> Board {
+        let mut board = Board::new();
+        board.set_copper_layer_count(4);
+        let bds = board.design_settings_mut();
+        bds.solder_mask_expansion = 50000;
+        bds.tent_vias_front = true;
+        bds.tent_vias_back = false;
+        bds.cover_vias_front = true;
+        bds.cover_vias_back = false;
+        bds.plug_vias_front = false;
+        bds.plug_vias_back = true;
+        bds.cap_vias = true;
+        bds.fill_vias = false;
+
+        // The parser's default stackup for a file without one (`parseSetup`).
+        let settings = board.design_settings().detached_copy();
+        let stackup = board.design_settings_mut().stackup_descriptor_mut();
+        stackup.remove_all();
+        stackup.build_default_stackup_list(Some(&settings), 4);
+        board
+    }
+
+    /// A via with the dumped members of `f`.
+    fn via_from_fields(key: &str, f: &Fields) -> PcbVia {
+        let g = |name: &str| f[&format!("track.{name}")].as_str();
+        let mut v = PcbVia::default();
+        v.track.base.item.uuid =
+            kicad_core::Kiid::parse(&format!("00000000-0000-0000-0000-00000000{key}")).unwrap();
+        v.via_type = match g("via_type") {
+            "THROUGH" => Viatype::Through,
+            "BLIND" => Viatype::Blind,
+            "BURIED" => Viatype::Buried,
+            "MICROVIA" => Viatype::Microvia,
+            s => panic!("{s}"),
+        };
+        v.track.start = vec(g("start"));
+        v.track.end = vec(g("end"));
+        v.is_free = g("is_free") == "true";
+
+        let ps = &mut v.padstack;
+        ps.set_mode(match g("padstack.mode") {
+            "NORMAL" => PadstackMode::Normal,
+            "FRONT_INNER_BACK" => PadstackMode::FrontInnerBack,
+            "CUSTOM" => PadstackMode::Custom,
+            s => panic!("{s}"),
+        });
+
+        for (name, value) in f {
+            if let Some(rest) = name.strip_prefix("track.padstack.copper.") {
+                let l = rest.strip_suffix(".size").unwrap();
+                ps.set_size(vec(value), layer(l));
+            }
+        }
+
+        ps.set_unconnected_layer_mode(match g("padstack.unconnected_layer_mode") {
+            "KEEP_ALL" => UnconnectedLayerMode::KeepAll,
+            "REMOVE_ALL" => UnconnectedLayerMode::RemoveAll,
+            "REMOVE_EXCEPT_START_AND_END" => UnconnectedLayerMode::RemoveExceptStartAndEnd,
+            "START_END_ONLY" => UnconnectedLayerMode::StartEndOnly,
+            s => panic!("{s}"),
+        });
+
+        for (which, drill) in [
+            ("drill", ps.drill.clone()),
+            ("secondary_drill", ps.secondary_drill.clone()),
+            ("tertiary_drill", ps.tertiary_drill.clone()),
+        ] {
+            let mut d = drill;
+            d.size = vec(g(&format!("padstack.{which}.size")));
+            d.shape = drill_shape(g(&format!("padstack.{which}.shape")));
+            d.start = layer(g(&format!("padstack.{which}.start")));
+            d.end = layer(g(&format!("padstack.{which}.end")));
+            d.is_filled = opt_bool(g(&format!("padstack.{which}.is_filled")));
+            d.is_capped = opt_bool(g(&format!("padstack.{which}.is_capped")));
+
+            match which {
+                "drill" => ps.drill = d,
+                "secondary_drill" => ps.secondary_drill = d,
+                _ => ps.tertiary_drill = d,
+            }
+        }
+
+        for front in [true, false] {
+            let side = if front { "front" } else { "back" };
+            let pm = if front {
+                &mut ps.front_post_machining
+            } else {
+                &mut ps.back_post_machining
+            };
+            pm.mode = post_mode(g(&format!("padstack.{side}_post_machining.mode")));
+            pm.size = g(&format!("padstack.{side}_post_machining.size"))
+                .parse()
+                .unwrap();
+            pm.depth = g(&format!("padstack.{side}_post_machining.depth"))
+                .parse()
+                .unwrap();
+            pm.angle = g(&format!("padstack.{side}_post_machining.angle"))
+                .parse()
+                .unwrap();
+
+            let outer = if front {
+                &mut ps.front_mask_props
+            } else {
+                &mut ps.back_mask_props
+            };
+            outer.has_solder_mask = opt_bool(g(&format!("padstack.{side}_outer.has_solder_mask")));
+            outer.has_covering = opt_bool(g(&format!("padstack.{side}_outer.has_covering")));
+            outer.has_plugging = opt_bool(g(&format!("padstack.{side}_outer.has_plugging")));
+        }
+
+        // (zone_layer_connections "In1.Cu") in m17_vias.py: not a dump field.
+        if key == "b009" {
+            v.set_zone_layer_override(PcbLayerId::In1Cu, ZoneLayerOverride::ForceFlashed);
+        }
+
+        v
+    }
+
+    #[test]
+    fn golden_vias_match_reference_dump() {
+        let gold = golden();
+        assert_eq!(gold.len(), 17);
+        let mut board = golden_board();
+        let mut ids = Vec::new();
+
+        for (key, f) in &gold {
+            let v = via_from_fields(key, f);
+            let id = board
+                .add_track(Track::Via(Box::new(v)), AddMode::Append)
+                .unwrap();
+            ids.push((id, key.clone()));
+        }
+
+        board.check_invariants().unwrap();
+        let ctx = BoardCtx::bare(&board);
+        let mut checked = 0;
+
+        for (id, key) in ids {
+            let f = &gold[&key];
+            let track = board.track(id).unwrap();
+            let v = track.as_via().unwrap();
+            assert_eq!(v.track.base.item.parent, ParentRef::Board);
+
+            let mut got: Fields = BTreeMap::new();
+            let mut put = |name: &str, value: String| {
+                got.insert(name.to_string(), value);
+            };
+
+            put("item.layer", layer_name(BoardItem::layer(track, &ctx)));
+            let names: Vec<String> = BoardItem::layer_set(track, &ctx)
+                .seq()
+                .0
+                .iter()
+                .map(|l| Lset::name(*l))
+                .collect();
+            put("item.layers", format!("[{}]", names.join(",")));
+            put("item.position", {
+                let p = BoardItem::position(track, &ctx);
+                format!("{},{}", p.x, p.y)
+            });
+            put(
+                "item.on_copper",
+                BoardItem::is_on_copper_layer(track, &ctx).to_string(),
+            );
+            put(
+                "item.has_hole",
+                BoardItem::has_hole(track, &ctx).to_string(),
+            );
+            put(
+                "item.has_drilled_hole",
+                BoardItem::has_drilled_hole(track, &ctx).to_string(),
+            );
+            put("bbox.bbox", v_box(&BoardItem::bounding_box(track, &ctx)));
+            put("track.is_null", track.is_null().to_string());
+            put(
+                "track.solder_mask_expansion",
+                v.solder_mask_expansion(&ctx).to_string(),
+            );
+            put("track.top_layer", layer_name(v.top_layer()));
+            put("track.bottom_layer", layer_name(v.bottom_layer()));
+            put("track.drill", v.drill().to_string());
+            put("track.drill_value", v.drill_value(&ctx).to_string());
+            put("track.front_width", v.front_width().to_string());
+            put("track.micro", v.is_micro_via().to_string());
+            put("track.blind", v.is_blind_via().to_string());
+            put("track.buried", v.is_buried_via().to_string());
+            put("track.is_free", v.is_free().to_string());
+            put(
+                "track.remove_unconnected",
+                v.remove_unconnected().to_string(),
+            );
+            put("track.keep_start_end", v.keep_start_end().to_string());
+            let tw = ["FROM_BOARD", "TENTED", "NOT_TENTED"];
+            let cw = ["FROM_BOARD", "COVERED", "NOT_COVERED"];
+            let pw = ["FROM_BOARD", "PLUGGED", "NOT_PLUGGED"];
+            put(
+                "track.front_tenting",
+                mode_name(v.front_tenting_mode() as i32, tw).into(),
+            );
+            put(
+                "track.back_tenting",
+                mode_name(v.back_tenting_mode() as i32, tw).into(),
+            );
+            put(
+                "track.front_covering",
+                mode_name(v.front_covering_mode() as i32, cw).into(),
+            );
+            put(
+                "track.back_covering",
+                mode_name(v.back_covering_mode() as i32, cw).into(),
+            );
+            put(
+                "track.front_plugging",
+                mode_name(v.front_plugging_mode() as i32, pw).into(),
+            );
+            put(
+                "track.back_plugging",
+                mode_name(v.back_plugging_mode() as i32, pw).into(),
+            );
+            put(
+                "track.capping",
+                mode_name(
+                    v.capping_mode() as i32,
+                    ["FROM_BOARD", "CAPPED", "NOT_CAPPED"],
+                )
+                .into(),
+            );
+            put(
+                "track.filling",
+                mode_name(
+                    v.filling_mode() as i32,
+                    ["FROM_BOARD", "FILLED", "NOT_FILLED"],
+                )
+                .into(),
+            );
+            put(
+                "track.is_tented.F",
+                v.is_tented(&ctx, PcbLayerId::FMask).to_string(),
+            );
+            put(
+                "track.is_tented.B",
+                v.is_tented(&ctx, PcbLayerId::BMask).to_string(),
+            );
+            put(
+                "track.primary_drill_filled",
+                v_opt(v.primary_drill_filled()),
+            );
+            put(
+                "track.primary_drill_capped",
+                v_opt(v.primary_drill_capped()),
+            );
+            put(
+                "track.secondary_drill_size",
+                v_opt(v.secondary_drill_size()),
+            );
+            put("track.tertiary_drill_size", v_opt(v.tertiary_drill_size()));
+            put(
+                "track.backdrill_mode",
+                match v.backdrill_mode() {
+                    BackdrillMode::NoBackdrill => "NO_BACKDRILL",
+                    BackdrillMode::BackdrillBottom => "BACKDRILL_BOTTOM",
+                    BackdrillMode::BackdrillTop => "BACKDRILL_TOP",
+                    BackdrillMode::BackdrillBoth => "BACKDRILL_BOTH",
+                }
+                .into(),
+            );
+            put(
+                "track.bottom_backdrill_size",
+                v_opt(v.bottom_backdrill_size()),
+            );
+            put(
+                "track.bottom_backdrill_layer",
+                layer_name(v.bottom_backdrill_layer()),
+            );
+            put("track.top_backdrill_size", v_opt(v.top_backdrill_size()));
+            put(
+                "track.top_backdrill_layer",
+                layer_name(v.top_backdrill_layer()),
+            );
+            put(
+                "track.front_post_machining",
+                post_mode_name(v.front_post_machining()).into(),
+            );
+            put(
+                "track.back_post_machining",
+                post_mode_name(v.back_post_machining()).into(),
+            );
+            put(
+                "track.valid_layer_pair",
+                v.has_valid_layer_pair(board.copper_layer_count())
+                    .to_string(),
+            );
+            put(
+                "track.padstack.max_hole_size",
+                v.padstack().max_hole_size().to_string(),
+            );
+
+            for l in layer_range(PcbLayerId::FCu, PcbLayerId::BCu, board.copper_layer_count()) {
+                let ln = Lset::name(l);
+                let on = BoardItem::is_on_layer(track, &ctx, l);
+                put(&format!("track.on_layer.{ln}"), on.to_string());
+
+                if !on {
+                    continue;
+                }
+
+                put(
+                    &format!("bbox.bbox.{ln}"),
+                    v_box(&v.bounding_box_layer(&ctx, l)),
+                );
+                put(&format!("track.width.{ln}"), v.width(l).to_string());
+                put(
+                    &format!("track.flash.{ln}"),
+                    v.flash_layer(&ctx, l).to_string(),
+                );
+                put(
+                    &format!("track.shape.{ln}"),
+                    v_shape(&BoardItem::effective_shape(
+                        track,
+                        &ctx,
+                        l,
+                        Flashing::Default,
+                        DrcConstraintT::NullConstraint,
+                    )),
+                );
+                put(
+                    &format!("track.shape_flashed.{ln}"),
+                    v_shape(&BoardItem::effective_shape(
+                        track,
+                        &ctx,
+                        l,
+                        Flashing::AlwaysFlashed,
+                        DrcConstraintT::NullConstraint,
+                    )),
+                );
+            }
+
+            let hole = BoardItem::effective_hole_shape(
+                track,
+                &ctx,
+                PcbLayerId::UndefinedLayer,
+                DrcConstraintT::NullConstraint,
+            )
+            .unwrap();
+            put("track.hole_shape", v_shape(&(hole as SharedShape)));
+
+            for (name, clearance, error, loc) in [
+                ("c0_e5000_in", 0, 5000, ERROR_INSIDE),
+                ("c0_e1000_out", 0, 1000, ERROR_OUTSIDE),
+                ("c100000_e5000_out", 100000, 5000, ERROR_OUTSIDE),
+            ] {
+                let mut poly = ShapePolySet::new();
+                BoardItem::transform_shape_to_polygon(
+                    track,
+                    &ctx,
+                    &mut poly,
+                    PcbLayerId::FCu,
+                    clearance,
+                    error,
+                    loc,
+                    false,
+                );
+                put(
+                    &format!("track.tpoly.F.Cu.{name}"),
+                    fnv1a(&v_polyset(&poly)),
+                );
+            }
+
+            for (name, value) in &got {
+                let want = f
+                    .get(name)
+                    .unwrap_or_else(|| panic!("{key}: {name} not in the golden"));
+                assert_eq!(value, want, "{key} {name}");
+                checked += 1;
+            }
+        }
+
+        assert!(checked > 1100, "{checked}");
+    }
+
+    /// `test_board_item.cpp` `BoardlessItemsUseStandardLayerMetadata` (the PCB_VIA part).
+    #[test]
+    fn boardless_via_flip_uses_standard_layers() {
+        let env = MutEnv::detached();
+        let mut via = PcbVia::default();
+        via.set_via_type(&env, Viatype::Blind);
+        via.set_layer_pair(&env, PcbLayerId::FCu, PcbLayerId::In1Cu);
+        via.flip(&env, Vector2I::new(0, 0), FlipDirection::LeftRight);
+
+        let (top_layer, bottom_layer) = via.layer_pair();
+        assert_eq!(top_layer, PcbLayerId::In1Cu);
+        assert_eq!(bottom_layer, PcbLayerId::BCu);
+
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        assert_eq!(via.layer_mask_describe(&ctx), "In1.Cu - B.Cu");
+    }
+
+    /// `test_via_validation.cpp` (`ViaValidation` suite), all cases. Columns: diameter, drill,
+    /// start, end, secondary drill / start / end, tertiary drill / start / end (mm, layer
+    /// names, "-" for nullopt), copper layer count, expected field.
+    #[test]
+    fn via_validation() {
+        use ViaParameterField as F;
+        let gms = geometry_min_size();
+        let cases: &[(&str, i32, Option<F>)] = &[
+            // WellFormedViaPasses
+            ("0.8 0.4 F.Cu B.Cu - - - - - -", 0, None),
+            ("0.8 0.4 F.Cu B.Cu - - - - - -", 2, None),
+            // DrillNotSmallerThanDiameterFails
+            ("0.4 0.4 F.Cu B.Cu - - - - - -", 0, Some(F::Drill)),
+            ("0.4 0.6 F.Cu B.Cu - - - - - -", 0, Some(F::Drill)),
+            // TooSmallGeometryFails
+            ("tiny - F.Cu B.Cu - - - - - -", 0, Some(F::Diameter)),
+            ("0.8 tiny F.Cu B.Cu - - - - - -", 0, Some(F::Drill)),
+            // PartialSizeSpecificationFails
+            ("0.8 - F.Cu B.Cu - - - - - -", 0, Some(F::Drill)),
+            ("- 0.4 F.Cu B.Cu - - - - - -", 0, Some(F::Diameter)),
+            // CoincidentLayersFail
+            ("0.8 0.4 F.Cu F.Cu - - - - - -", 0, Some(F::StartLayer)),
+            // InvalidLayersFail
+            ("0.8 0.4 F.Cu F.SilkS - - - - - -", 0, Some(F::EndLayer)),
+            ("0.8 0.4 F.Cu In2.Cu - - - - - -", 2, Some(F::EndLayer)),
+            // BackdrillSizeIsValidated
+            (
+                "0.8 0.4 F.Cu B.Cu 0.3 - - - - -",
+                0,
+                Some(F::SecondaryDrill),
+            ),
+            ("0.8 0.4 F.Cu B.Cu - - - 0.3 - -", 0, Some(F::TertiaryDrill)),
+            ("0.8 0.4 F.Cu B.Cu 0.5 - - - - -", 0, None),
+            // BackdrillLayersAreValidated
+            (
+                "0.8 0.4 F.Cu B.Cu 0.5 F.SilkS - - - -",
+                0,
+                Some(F::SecondaryStartLayer),
+            ),
+            (
+                "0.8 0.4 F.Cu B.Cu 0.5 F.Cu F.SilkS - - -",
+                0,
+                Some(F::SecondaryEndLayer),
+            ),
+            (
+                "0.8 0.4 F.Cu B.Cu - - - 0.5 F.SilkS -",
+                0,
+                Some(F::TertiaryStartLayer),
+            ),
+            (
+                "0.8 0.4 F.Cu B.Cu - - - 0.5 F.Cu F.SilkS",
+                0,
+                Some(F::TertiaryEndLayer),
+            ),
+        ];
+
+        for (args, count, want) in cases {
+            let a: Vec<&str> = args.split(' ').collect();
+            let size = |s: &str| match s {
+                "-" => None,
+                "tiny" => Some(gms - 1),
+                v => Some(PCB_IU_SCALE.mm_to_iu(v.parse().unwrap())),
+            };
+            let lay = |s: &str| (s != "-").then(|| layer(s));
+            let got = PcbVia::validate_via_parameters(
+                size(a[0]),
+                size(a[1]),
+                lay(a[2]),
+                lay(a[3]),
+                size(a[4]),
+                lay(a[5]),
+                lay(a[6]),
+                size(a[7]),
+                lay(a[8]),
+                lay(a[9]),
+                *count,
+            );
+            assert_eq!(got.map(|e| e.field), *want, "{args} / {count}");
+        }
+    }
+
+    /// `test_pad_tenting.cpp` `ViaDefaultTentingNotSerialized` / `ViaExplicitTentingSerialized`
+    /// (the model half: the writer's `(tenting ..)` block is PCBIO-02's).
+    #[test]
+    fn via_tenting_defaults_and_explicit() {
+        let env = MutEnv::detached();
+        let mut via = PcbVia::default();
+        via.set_padstack_mode(PadstackMode::Normal);
+        via.set_position(&env, Vector2I::new(0, 0));
+        via.set_width(Padstack::ALL_LAYERS, PCB_IU_SCALE.mm_to_iu(0.8));
+        via.set_drill(PCB_IU_SCALE.mm_to_iu(0.4));
+        via.set_via_type(&env, Viatype::Through);
+        assert!(
+            via.padstack()
+                .front_outer_layers()
+                .has_solder_mask
+                .is_none()
+        );
+        assert!(via.padstack().back_outer_layers().has_solder_mask.is_none());
+        assert_eq!(via.front_tenting_mode(), TentingMode::FromBoard);
+
+        via.set_front_tenting_mode(TentingMode::NotTented);
+        via.set_back_tenting_mode(TentingMode::NotTented);
+        assert_eq!(
+            via.padstack().front_outer_layers().has_solder_mask,
+            Some(false)
+        );
+        assert_eq!(via.back_tenting_mode(), TentingMode::NotTented);
+        via.set_back_tenting_mode(TentingMode::FromBoard);
+        assert_eq!(via.padstack().back_outer_layers().has_solder_mask, None);
+
+        // No board: IsTented answers true for an unset side, resolve says "not tented".
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        assert!(via.is_tented(&ctx, PcbLayerId::BMask));
+        assert_eq!(via.resolve_back_tenting_mode(&ctx), TentingMode::NotTented);
+        assert_eq!(via.solder_mask_expansion(&ctx), 0);
+        assert!(
+            via.flash_layer(&ctx, PcbLayerId::In1Cu),
+            "no board: flashed"
+        );
+    }
+
+    /// A connectivity stand-in that answers `IsConnectedOnLayer` from a fixed list.
+    struct Connected(Vec<(Option<ItemId>, PcbLayerId)>);
+
+    impl ConnectivityQuery for Connected {
+        fn is_connected_on_layer(
+            &self,
+            _ctx: &BoardCtx<'_>,
+            item: ItemRef<'_>,
+            layer: PcbLayerId,
+            types: &[KicadT],
+        ) -> bool {
+            assert_eq!(types, NON_ZONE_TYPES);
+            self.0.contains(&(item.id(), layer))
+        }
+        fn node_count(&self, _net: Option<NetCode>) -> u32 {
+            0
+        }
+        fn pad_count(&self, _net: Option<NetCode>) -> u32 {
+            0
+        }
+    }
+
+    /// `test_issue25621_via_flashing_contact_layer.cpp`: the via side. Connectivity is a
+    /// stand-in holding the facts the C++ test `BOOST_REQUIRE`s (the pad touches the via on
+    /// F.Cu only; the track touches it on In1.Cu only); the connectivity build itself belongs
+    /// to `kicad-connectivity`.
+    #[test]
+    fn via_flashing_follows_connectivity() {
+        let mut board = golden_board();
+        let mut via = PcbVia::default();
+        via.set_width(Padstack::ALL_LAYERS, PCB_IU_SCALE.mm_to_iu(0.6));
+        via.set_drill(PCB_IU_SCALE.mm_to_iu(0.3));
+        via.padstack
+            .set_unconnected_layer_mode(UnconnectedLayerMode::RemoveExceptStartAndEnd);
+        let id = board
+            .add_track(Track::Via(Box::new(via)), AddMode::Append)
+            .unwrap();
+        let item: ItemId = id.into();
+        let v = board.track(id).unwrap().as_via().unwrap();
+
+        // ViaTouchingPadOnFrontOnlyHasNoInnerRings
+        let conn = Connected(vec![(Some(item), PcbLayerId::FCu)]);
+        let ctx = BoardCtx::bare(&board).with_connectivity(&conn);
+        assert!(v.flash_layer(&ctx, PcbLayerId::FCu));
+        assert!(v.flash_layer(&ctx, PcbLayerId::BCu));
+        assert!(!v.flash_layer(&ctx, PcbLayerId::In1Cu));
+        assert!(!v.flash_layer(&ctx, PcbLayerId::In2Cu));
+        assert_eq!(
+            v.outermost_connected_layers(&ctx),
+            (PcbLayerId::FCu, PcbLayerId::FCu)
+        );
+
+        // ViaKeepsTheRingOnTheLayerItsTrackIsOn
+        let conn = Connected(vec![(Some(item), PcbLayerId::In1Cu)]);
+        let ctx = BoardCtx::bare(&board).with_connectivity(&conn);
+        assert!(v.flash_layer(&ctx, PcbLayerId::In1Cu));
+        assert!(!v.flash_layer(&ctx, PcbLayerId::In2Cu));
+        assert!(v.flash_layer_set(
+            &ctx,
+            &Lset::from_layers(&[PcbLayerId::In2Cu, PcbLayerId::In1Cu])
+        ));
+        let (shape, flashed) = (
+            v.effective_shape(
+                &ctx,
+                PcbLayerId::In2Cu,
+                Flashing::Default,
+                DrcConstraintT::NullConstraint,
+            ),
+            v.effective_shape(
+                &ctx,
+                PcbLayerId::In1Cu,
+                Flashing::Default,
+                DrcConstraintT::NullConstraint,
+            ),
+        );
+        assert_eq!(v_shape(&shape), "SH_CIRCLE(c=0,0 r=150000)");
+        assert_eq!(v_shape(&flashed), "SH_CIRCLE(c=0,0 r=300000)");
+        assert_eq!(
+            v.min_annulus(&ctx, PcbLayerId::In2Cu, true),
+            (0, Some("removed annular ring".into()))
+        );
+        assert_eq!(v.min_annulus(&ctx, PcbLayerId::In1Cu, true), (0, None));
+
+        // A detached copy has no handle: connectivity does not know it.
+        let copy = v.detached_copy();
+        assert!(!copy.flash_layer(&ctx, PcbLayerId::In1Cu));
+
+        // The null connectivity is an empty CONNECTIVITY_DATA.
+        let ctx = BoardCtx::bare(&board);
+        assert!(!v.flash_layer(&ctx, PcbLayerId::In1Cu));
+        assert!(v.flash_layer(&ctx, PcbLayerId::FCu));
+    }
+
+    #[test]
+    fn layer_handling_and_sanitize() {
+        let env = MutEnv::detached();
+        let mut via = PcbVia::default();
+
+        // Through: SetLayerSet and SetLayerPair are forced to F_Cu - B_Cu.
+        via.set_layer_pair(&env, PcbLayerId::In1Cu, PcbLayerId::In2Cu);
+        assert_eq!(
+            (via.top_layer(), via.bottom_layer()),
+            (PcbLayerId::FCu, PcbLayerId::BCu)
+        );
+
+        via.set_via_type(&env, Viatype::Buried);
+        via.set_layer_pair(&env, PcbLayerId::In3Cu, PcbLayerId::In1Cu);
+        assert_eq!(
+            (via.top_layer(), via.bottom_layer()),
+            (PcbLayerId::In1Cu, PcbLayerId::In3Cu)
+        );
+        via.set_top_layer(&env, PcbLayerId::In3Cu);
+        assert_eq!(
+            via.top_layer(),
+            PcbLayerId::In1Cu,
+            "refused: equals the end layer"
+        );
+
+        via.set_layer_set(
+            &env,
+            Lset::from_layers(&[
+                PcbLayerId::BCu,
+                PcbLayerId::In2Cu,
+                PcbLayerId::FSilkS,
+                PcbLayerId::In4Cu,
+            ]),
+        );
+        assert_eq!(
+            (via.top_layer(), via.bottom_layer()),
+            (PcbLayerId::In2Cu, PcbLayerId::BCu)
+        );
+
+        // Backdrill end points off the stack are dropped; no must-cut layer clears the size.
+        via.set_secondary_drill_size(Vector2I::new(500000, 500000));
+        via.set_secondary_drill_start_layer(PcbLayerId::BCu);
+        via.set_secondary_drill_end_layer(PcbLayerId::FSilkS);
+        let mut env4 = MutEnv::detached();
+        std::sync::Arc::make_mut(&mut env4.layers).copper_layer_count = 4;
+        via.sanitize_layers(&env4);
+        assert_eq!(via.secondary_drill_end_layer(), PcbLayerId::UndefinedLayer);
+        assert_eq!(via.secondary_drill_size(), None);
+
+        // Zone layer overrides: only F_Cu..In30_Cu carry an ordinal.
+        via.set_zone_layer_override(PcbLayerId::FMask, ZoneLayerOverride::ForceFlashed);
+        assert_eq!(
+            via.zone_layer_override(PcbLayerId::FMask),
+            ZoneLayerOverride::None
+        );
+        via.set_zone_layer_override(PcbLayerId::In30Cu, ZoneLayerOverride::ForceFlashed);
+        assert_eq!(
+            via.zone_layer_override(PcbLayerId::In30Cu),
+            ZoneLayerOverride::ForceFlashed
+        );
+        via.clear_zone_layer_overrides();
+        assert_eq!(
+            via.zone_layer_override(PcbLayerId::In30Cu),
+            ZoneLayerOverride::None
+        );
+
+        // Copy constructor: PCB_TRACK members keep their constructor values.
+        via.track.width = 1;
+        via.track.has_solder_mask = true;
+        via.track.solder_mask_margin = Some(5);
+        via.track.base.item.id = Some(ItemId::from_bits(0).unwrap_or_else(|| {
+            let mut b = Board::new();
+            b.add_track(Track::Via(Box::default()), AddMode::Append)
+                .unwrap()
+                .into()
+        }));
+        let copy = via.detached_copy();
+        assert_eq!(copy.track.width, PcbTrack::default().width);
+        assert!(!copy.track.has_solder_mask && copy.track.solder_mask_margin.is_none());
+        assert!(copy.track.base.item.id.is_none());
+        assert!(copy.eq_item(&via) && copy.similarity(&via) == 1.0);
+
+        // Texts.
+        let board = golden_board();
+        let ctx = BoardCtx::bare(&board);
+        let units = UnitsProvider::new(&PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(
+            via.item_description(&ctx, &units, true),
+            "Buried via [** NO BOARD DEFINED **] on In2.Cu - B.Cu"
+        );
+        assert_eq!(via.friendly_name(&ctx), "Via");
+    }
+
+    #[test]
+    fn transforms_hit_tests_and_mask_shapes() {
+        let env = MutEnv::detached();
+        let mut board = golden_board();
+        let mut via = PcbVia::default();
+        via.set_width(Padstack::ALL_LAYERS, 600000);
+        via.set_drill(300000);
+        via.set_position(&env, Vector2I::new(1000000, 2000000));
+        via.set_front_tenting_mode(TentingMode::NotTented);
+        let id = board
+            .add_track(Track::Via(Box::new(via)), AddMode::Append)
+            .unwrap();
+        let ctx = BoardCtx::bare(&board);
+        let v = board.track(id).unwrap().as_via().unwrap();
+
+        assert!(v.is_on_layer(&ctx, PcbLayerId::FMask));
+        assert!(
+            v.is_on_layer(&ctx, PcbLayerId::BMask),
+            "the board does not tent the back"
+        );
+        let mask = v.effective_shape(
+            &ctx,
+            PcbLayerId::FMask,
+            Flashing::Default,
+            DrcConstraintT::NullConstraint,
+        );
+        assert_eq!(v_shape(&mask), "SH_CIRCLE(c=1000000,2000000 r=350000)");
+        assert!(v.hit_test(&ctx, Vector2I::new(1300000, 2000000), 0));
+        assert!(!v.hit_test(&ctx, Vector2I::new(1300001, 2000000), 0));
+        assert!(v.hit_test(&ctx, Vector2I::new(1300001, 2000000), 1));
+        let r = Box2I::new(
+            Vector2I::new(0, 0),
+            kicad_geom::Vector2L::new(1400000, 2400000),
+        );
+        assert!(v.hit_test_rect(&ctx, &r, true, 0));
+        let r = Box2I::new(
+            Vector2I::new(1250000, 2250000),
+            kicad_geom::Vector2L::new(10, 10),
+        );
+        assert!(!v.hit_test_rect(&ctx, &r, false, 0));
+        assert!(v.fits_enabled_layers(&ctx, Lset::from_layers(&[PcbLayerId::FCu]), 4));
+
+        let mut w = v.clone();
+        w.rotate(&env, Vector2I::new(0, 0), EdaAngle::from_degrees(90.0));
+        assert_eq!(w.position(&ctx), Vector2I::new(2000000, -1000000));
+        assert_eq!(w.track.end, w.track.start);
+        w.mirror(&env, Vector2I::new(0, 0), FlipDirection::TopBottom);
+        assert_eq!(w.position(&ctx), Vector2I::new(2000000, 1000000));
+        w.flip(&env, Vector2I::new(0, 0), FlipDirection::LeftRight);
+        assert_eq!(w.position(&ctx), Vector2I::new(-2000000, 1000000));
+        assert_eq!(
+            (w.top_layer(), w.bottom_layer()),
+            (PcbLayerId::FCu, PcbLayerId::BCu)
+        );
+    }
+
+    #[test]
+    fn drill_value_falls_back_to_the_netclass() {
+        let mut board = golden_board();
+        let mut via = PcbVia::default();
+        via.set_drill_default();
+        let id = board
+            .add_track(Track::Via(Box::new(via.clone())), AddMode::Append)
+            .unwrap();
+        via.via_type = Viatype::Microvia;
+        let uid = board
+            .add_track(Track::Via(Box::new(via)), AddMode::Append)
+            .unwrap();
+        let ctx = BoardCtx::bare(&board);
+        let nc = board.design_settings().net_settings.default_netclass();
+        assert_eq!(
+            board.track(id).unwrap().as_via().unwrap().drill_value(&ctx),
+            nc.via_drill()
+        );
+        assert_eq!(
+            board
+                .track(uid)
+                .unwrap()
+                .as_via()
+                .unwrap()
+                .drill_value(&ctx),
+            nc.uvia_drill()
+        );
+        assert!(PcbVia::collect_microvia_columns(&ctx).is_empty());
     }
 }

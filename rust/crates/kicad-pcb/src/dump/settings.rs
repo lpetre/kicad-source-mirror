@@ -69,7 +69,11 @@ fn dump_meander(o: &mut Out, p: &str) {
 pub(crate) fn dump_teardrop_params(o: &mut Out, p: &str, t: &TeardropParameters) {
     emit!(o, format!("{p}max_len"), v_int(t.td_max_len));
     emit!(o, format!("{p}max_width"), v_int(t.td_max_width));
-    emit!(o, format!("{p}best_length_ratio"), v_f64(t.best_length_ratio));
+    emit!(
+        o,
+        format!("{p}best_length_ratio"),
+        v_f64(t.best_length_ratio)
+    );
     emit!(o, format!("{p}best_width_ratio"), v_f64(t.best_width_ratio));
     emit!(
         o,
@@ -78,8 +82,16 @@ pub(crate) fn dump_teardrop_params(o: &mut Out, p: &str, t: &TeardropParameters)
     );
     emit!(o, format!("{p}curved_edges"), v_bool(t.curved_edges));
     emit!(o, format!("{p}enabled"), v_bool(t.enabled));
-    emit!(o, format!("{p}allow_use_two_tracks"), v_bool(t.allow_use_two_tracks));
-    emit!(o, format!("{p}td_on_pads_in_zones"), v_bool(t.td_on_pads_in_zones));
+    emit!(
+        o,
+        format!("{p}allow_use_two_tracks"),
+        v_bool(t.allow_use_two_tracks)
+    );
+    emit!(
+        o,
+        format!("{p}td_on_pads_in_zones"),
+        v_bool(t.td_on_pads_in_zones)
+    );
 }
 
 /// `DumpZoneSettings`.
@@ -90,7 +102,11 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
     emit!(o, format!("{p}min_thickness"), v_int(z.zone_min_thickness));
     emit!(o, format!("{p}hatch_thickness"), v_int(z.hatch_thickness));
     emit!(o, format!("{p}hatch_gap"), v_int(z.hatch_gap));
-    emit!(o, format!("{p}hatch_orientation"), v_angle(z.hatch_orientation));
+    emit!(
+        o,
+        format!("{p}hatch_orientation"),
+        v_angle(z.hatch_orientation)
+    );
     emit!(
         o,
         format!("{p}hatch_smoothing_level"),
@@ -101,7 +117,11 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
         format!("{p}hatch_smoothing_value"),
         v_f64(z.hatch_smoothing_value)
     );
-    emit!(o, format!("{p}hatch_hole_min_area"), v_f64(z.hatch_hole_min_area));
+    emit!(
+        o,
+        format!("{p}hatch_hole_min_area"),
+        v_f64(z.hatch_hole_min_area)
+    );
     emit!(
         o,
         format!("{p}hatch_border_algorithm"),
@@ -109,7 +129,11 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
     );
     let t = &z.thieving_settings;
     emit!(o, format!("{p}thieving.pattern"), v_enum(t.pattern));
-    emit!(o, format!("{p}thieving.element_size"), v_int(t.element_size));
+    emit!(
+        o,
+        format!("{p}thieving.element_size"),
+        v_int(t.element_size)
+    );
     emit!(o, format!("{p}thieving.gap"), v_int(t.gap));
     emit!(o, format!("{p}thieving.line_width"), v_int(t.line_width));
     emit!(o, format!("{p}thieving.stagger"), v_bool(t.stagger));
@@ -126,8 +150,16 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
         format!("{p}border_display_style"),
         v_enum(z.zone_border_display_style)
     );
-    emit!(o, format!("{p}border_hatch_pitch"), v_int(z.border_hatch_pitch));
-    emit!(o, format!("{p}thermal_relief_gap"), v_int(z.thermal_relief_gap));
+    emit!(
+        o,
+        format!("{p}border_hatch_pitch"),
+        v_int(z.border_hatch_pitch)
+    );
+    emit!(
+        o,
+        format!("{p}thermal_relief_gap"),
+        v_int(z.thermal_relief_gap)
+    );
     emit!(
         o,
         format!("{p}thermal_relief_spoke_width"),
@@ -135,7 +167,11 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
     );
     emit!(o, format!("{p}locked"), v_bool(z.locked));
     emit!(o, format!("{p}teardrop_type"), v_enum(z.teardrop_type));
-    emit!(o, format!("{p}corner_smoothing"), v_enum(z.corner_smoothing_type));
+    emit!(
+        o,
+        format!("{p}corner_smoothing"),
+        v_enum(z.corner_smoothing_type)
+    );
     emit!(o, format!("{p}corner_radius"), v_int(z.corner_radius));
     emit!(o, format!("{p}pad_connection"), v_enum(z.pad_connection));
     emit!(o, format!("{p}rule_area"), v_bool(z.is_rule_area));
@@ -159,19 +195,31 @@ pub(crate) fn dump_zone_settings(o: &mut Out, p: &str, z: &ZoneSettings) {
         format!("{p}keepout.zone_fills"),
         v_bool(z.keepout_do_not_allow_zone_fills)
     );
-    emit!(o, format!("{p}keepout.vias"), v_bool(z.keepout_do_not_allow_vias));
+    emit!(
+        o,
+        format!("{p}keepout.vias"),
+        v_bool(z.keepout_do_not_allow_vias)
+    );
     emit!(
         o,
         format!("{p}keepout.tracks"),
         v_bool(z.keepout_do_not_allow_tracks)
     );
-    emit!(o, format!("{p}keepout.pads"), v_bool(z.keepout_do_not_allow_pads));
+    emit!(
+        o,
+        format!("{p}keepout.pads"),
+        v_bool(z.keepout_do_not_allow_pads)
+    );
     emit!(
         o,
         format!("{p}keepout.footprints"),
         v_bool(z.keepout_do_not_allow_footprints)
     );
-    emit!(o, format!("{p}island_removal_mode"), v_enum(z.remove_islands));
+    emit!(
+        o,
+        format!("{p}island_removal_mode"),
+        v_enum(z.remove_islands)
+    );
     emit!(o, format!("{p}min_island_area"), v_int(z.min_island_area));
 
     for (layer, props) in &z.layer_properties {
@@ -215,7 +263,11 @@ pub(crate) fn dump_netclass(o: &mut Out, p: &str, nc: &Netclass) {
     emit!(o, format!("{p}via_drill"), v_opt_i32(nc.via_drill));
     emit!(o, format!("{p}uvia_diameter"), v_opt_i32(nc.uvia_dia));
     emit!(o, format!("{p}uvia_drill"), v_opt_i32(nc.uvia_drill));
-    emit!(o, format!("{p}diff_pair_width"), v_opt_i32(nc.diff_pair_width));
+    emit!(
+        o,
+        format!("{p}diff_pair_width"),
+        v_opt_i32(nc.diff_pair_width)
+    );
     emit!(o, format!("{p}diff_pair_gap"), v_opt_i32(nc.diff_pair_gap));
     emit!(
         o,
@@ -225,7 +277,11 @@ pub(crate) fn dump_netclass(o: &mut Out, p: &str, nc: &Netclass) {
     emit!(o, format!("{p}wire_width"), v_opt_i32(nc.wire_width));
     emit!(o, format!("{p}bus_width"), v_opt_i32(nc.bus_width));
     emit!(o, format!("{p}line_style"), v_opt_i32(nc.line_style));
-    emit!(o, format!("{p}pcb_color"), v_str(&nc.pcb_color.to_css_string()));
+    emit!(
+        o,
+        format!("{p}pcb_color"),
+        v_str(&nc.pcb_color.to_css_string())
+    );
     emit!(
         o,
         format!("{p}schematic_color"),
@@ -280,7 +336,11 @@ pub(crate) fn dump_stackup(o: &mut Out, p: &str, s: &BoardStackup) {
 
     for (i, item) in s.list().iter().enumerate() {
         let ip = format!("{p}item.{i}.");
-        emit!(o, format!("{ip}type"), format!("BS_ITEM_TYPE_{}", v_enum(item.type_)));
+        emit!(
+            o,
+            format!("{ip}type"),
+            format!("BS_ITEM_TYPE_{}", v_enum(item.type_))
+        );
         emit!(o, format!("{ip}layer"), v_layer(item.layer_id));
         emit!(o, format!("{ip}layer_name"), v_str(&item.layer_name));
         emit!(o, format!("{ip}type_name"), v_str(&item.type_name));
@@ -290,7 +350,11 @@ pub(crate) fn dump_stackup(o: &mut Out, p: &str, s: &BoardStackup) {
             v_int(item.dielectric_layer_id)
         );
         emit!(o, format!("{ip}enabled"), v_bool(item.enabled));
-        emit!(o, format!("{ip}sublayers"), v_int(item.sublayers_count() as i64));
+        emit!(
+            o,
+            format!("{ip}sublayers"),
+            v_int(item.sublayers_count() as i64)
+        );
 
         for sl in 0..item.sublayers_count() {
             let sp = format!("{ip}sub.{sl}.");
@@ -318,8 +382,16 @@ pub(crate) fn dump_stackup(o: &mut Out, p: &str, s: &BoardStackup) {
 pub(crate) fn dump_plot_params(o: &mut Out, p: &str, pp: &PcbPlotParams) {
     emit!(o, format!("{p}text_mode"), v_enum(pp.text_mode));
     emit!(o, format!("{p}dxf_plot_mode"), v_enum(pp.dxf_plot_mode));
-    emit!(o, format!("{p}plot_pad_numbers"), v_bool(pp.plot_pad_numbers));
-    emit!(o, format!("{p}dxf_polygon_mode"), v_bool(pp.dxf_polygon_mode));
+    emit!(
+        o,
+        format!("{p}plot_pad_numbers"),
+        v_bool(pp.plot_pad_numbers)
+    );
+    emit!(
+        o,
+        format!("{p}dxf_polygon_mode"),
+        v_bool(pp.dxf_polygon_mode)
+    );
     emit!(o, format!("{p}dxf_units"), v_enum(pp.dxf_units));
     emit!(o, format!("{p}drill_marks"), v_enum(pp.drill_marks));
     emit!(o, format!("{p}scale"), v_f64(pp.scale));
@@ -369,15 +441,27 @@ pub(crate) fn dump_plot_params(o: &mut Out, p: &str, pp: &PcbPlotParams) {
         format!("{p}legacy_plot_via_on_mask"),
         v_opt_bool(pp.plot_via_on_mask_layer)
     );
-    emit!(o, format!("{p}plot_frame_ref"), v_bool(pp.plot_drawing_sheet));
+    emit!(
+        o,
+        format!("{p}plot_frame_ref"),
+        v_bool(pp.plot_drawing_sheet)
+    );
     emit!(o, format!("{p}format"), v_enum(pp.format));
-    emit!(o, format!("{p}output_directory"), v_str(&pp.output_directory));
+    emit!(
+        o,
+        format!("{p}output_directory"),
+        v_str(&pp.output_directory)
+    );
     emit!(
         o,
         format!("{p}disable_gerber_macros"),
         v_bool(pp.gerber_disable_apert_macros)
     );
-    emit!(o, format!("{p}use_gerber_x2"), v_bool(pp.use_gerber_x2_format));
+    emit!(
+        o,
+        format!("{p}use_gerber_x2"),
+        v_bool(pp.use_gerber_x2_format)
+    );
     emit!(
         o,
         format!("{p}gerber_netlist_info"),
@@ -393,9 +477,17 @@ pub(crate) fn dump_plot_params(o: &mut Out, p: &str, pp: &PcbPlotParams) {
         format!("{p}gerber_protel_ext"),
         v_bool(pp.use_gerber_protel_extensions)
     );
-    emit!(o, format!("{p}gerber_precision"), v_int(pp.gerber_precision));
+    emit!(
+        o,
+        format!("{p}gerber_precision"),
+        v_int(pp.gerber_precision)
+    );
     emit!(o, format!("{p}svg_precision"), v_int(pp.svg_precision));
-    emit!(o, format!("{p}svg_fit_page"), v_bool(pp.svg_fit_page_to_board));
+    emit!(
+        o,
+        format!("{p}svg_fit_page"),
+        v_bool(pp.svg_fit_page_to_board)
+    );
     emit!(o, format!("{p}png_dpi"), v_int(pp.png_dpi));
     emit!(o, format!("{p}png_antialias"), v_bool(pp.png_antialias));
     emit!(o, format!("{p}black_and_white"), v_bool(pp.black_and_white));
@@ -404,7 +496,11 @@ pub(crate) fn dump_plot_params(o: &mut Out, p: &str, pp: &PcbPlotParams) {
         format!("{p}subtract_mask_from_silk"),
         v_bool(pp.subtract_mask_from_silk)
     );
-    emit!(o, format!("{p}layer_selection"), v_lset(&pp.layer_selection));
+    emit!(
+        o,
+        format!("{p}layer_selection"),
+        v_lset(&pp.layer_selection)
+    );
     emit!(
         o,
         format!("{p}plot_on_all_layers"),
@@ -480,7 +576,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
             format!("{},{}", v_layer(v.start_layer), v_layer(v.end_layer))
         );
         emit!(o, format!("{vp}staggered"), v_bool(v.staggered));
-        emit!(o, format!("{vp}size"), format!("{}/{}", v.via_size, v.via_drill));
+        emit!(
+            o,
+            format!("{vp}size"),
+            format!("{}/{}", v.via_size, v.via_drill)
+        );
         emit!(o, format!("{vp}use_netclass"), v_bool(v.use_netclass));
         emit!(o, format!("{vp}filled"), v_bool(v.filled));
         emit!(o, format!("{vp}capped"), v_bool(v.capped));
@@ -488,7 +588,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
     }
 
     let tdl = b.teardrop_params_list();
-    emit!(o, format!("{p}teardrops.target_vias"), v_bool(tdl.target_vias));
+    emit!(
+        o,
+        format!("{p}teardrops.target_vias"),
+        v_bool(tdl.target_vias)
+    );
     emit!(
         o,
         format!("{p}teardrops.target_pth_pads"),
@@ -526,7 +630,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
     dump_meander(o, &format!("{p}meander.diff_pair."));
     dump_meander(o, &format!("{p}meander.skew."));
 
-    emit!(o, format!("{p}current_via_type"), v_enum(b.current_via_type));
+    emit!(
+        o,
+        format!("{p}current_via_type"),
+        v_enum(b.current_via_type)
+    );
     emit!(
         o,
         format!("{p}use_connected_track_width"),
@@ -567,7 +675,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
         );
     }
 
-    emit!(o, format!("{p}drc_exclusions"), v_int(b.drc_exclusions.len() as i64));
+    emit!(
+        o,
+        format!("{p}drc_exclusions"),
+        v_int(b.drc_exclusions.len() as i64)
+    );
     emit!(
         o,
         format!("{p}zone_keep_external_fillets"),
@@ -589,7 +701,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
         format!("{p}solder_mask_to_copper_clearance"),
         v_int(b.solder_mask_to_copper_clearance)
     );
-    emit!(o, format!("{p}solder_paste_margin"), v_int(b.solder_paste_margin));
+    emit!(
+        o,
+        format!("{p}solder_paste_margin"),
+        v_int(b.solder_paste_margin)
+    );
     emit!(
         o,
         format!("{p}solder_paste_margin_ratio"),
@@ -617,7 +733,12 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
         emit!(
             o,
             format!("{p}default_fp_text.{}", 2 * i + 1),
-            format!("{} {} {}", v_str(&t.text), v_bool(t.visible), v_layer(t.layer))
+            format!(
+                "{} {} {}",
+                v_str(&t.text),
+                v_bool(t.visible),
+                v_layer(t.layer)
+            )
         );
     }
 
@@ -704,17 +825,29 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
 
     emit!(o, format!("{p}aux_origin"), v_vec(b.aux_origin()));
     emit!(o, format!("{p}grid_origin"), v_vec(b.grid_origin()));
-    emit!(o, format!("{p}track_width_index"), v_int(b.track_width_index));
+    emit!(
+        o,
+        format!("{p}track_width_index"),
+        v_int(b.track_width_index)
+    );
     emit!(o, format!("{p}via_size_index"), v_int(b.via_size_index));
     emit!(o, format!("{p}diff_pair_index"), v_int(b.diff_pair_index));
     emit!(o, format!("{p}via_stack_index"), v_int(b.via_stack_index));
-    emit!(o, format!("{p}custom_track_width"), v_int(b.custom_track_width));
+    emit!(
+        o,
+        format!("{p}custom_track_width"),
+        v_int(b.custom_track_width)
+    );
     emit!(
         o,
         format!("{p}custom_via_size"),
         format!("{}/{}", b.custom_via_size.diameter, b.custom_via_size.drill)
     );
-    emit!(o, format!("{p}copper_layer_count"), v_int(b.copper_layer_count()));
+    emit!(
+        o,
+        format!("{p}copper_layer_count"),
+        v_int(b.copper_layer_count())
+    );
     emit!(
         o,
         format!("{p}user_defined_layer_count"),
@@ -783,7 +916,11 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
 /// `DumpBoardSection`.
 pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     let b = ctx.board;
-    emit!(o, "file_format_version", v_int(b.file_format_version_at_load));
+    emit!(
+        o,
+        "file_format_version",
+        v_int(b.file_format_version_at_load)
+    );
     emit!(o, "generator", v_str(&b.generator));
     emit!(o, "board_use", v_enum(b.board_use));
     emit!(o, "copper_layer_count", v_int(b.copper_layer_count()));
@@ -794,7 +931,11 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
 
     if let Some(ls) = o.cond("layer.*", || b.enabled_layers()) {
         for l in ls.seq().iter().copied() {
-            emit!(o, format!("layer.{}.name", v_layer(l)), v_str(&b.layer_name(l)));
+            emit!(
+                o,
+                format!("layer.{}.name", v_layer(l)),
+                v_str(&b.layer_name(l))
+            );
             emit!(
                 o,
                 format!("layer.{}.type", v_layer(l)),
@@ -867,13 +1008,21 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     }
 
     emit!(o, "bbox", v_box(b.compute_bounding_box(ctx, false, false)));
-    emit!(o, "bbox_edges", v_box(b.compute_bounding_box(ctx, true, false)));
+    emit!(
+        o,
+        "bbox_edges",
+        v_box(b.compute_bounding_box(ctx, true, false))
+    );
     emit!(
         o,
         "bbox_edges_physical",
         v_box(b.compute_bounding_box(ctx, true, true))
     );
-    emit!(o, "bbox_physical", v_box(b.compute_bounding_box(ctx, false, true)));
+    emit!(
+        o,
+        "bbox_physical",
+        v_box(b.compute_bounding_box(ctx, false, true))
+    );
 
     for (name, infer, arcs) in [
         ("outline", false, false),
@@ -925,7 +1074,9 @@ fn emit_order(o: &mut Out, ctx: &BoardCtx<'_>, field: &str, items: Vec<ItemId>, 
 pub(crate) fn dump_order_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     use crate::board::compare::board_cmp_drawings;
     use crate::board_item::board_item_ptr_cmp;
-    use crate::footprint::compare::{footprint_cmp_drawings, footprint_cmp_pads, footprint_cmp_zones};
+    use crate::footprint::compare::{
+        footprint_cmp_drawings, footprint_cmp_pads, footprint_cmp_zones,
+    };
     use crate::pcb_point::pcb_point_cmp_points;
 
     let b = ctx.board;
@@ -944,7 +1095,13 @@ pub(crate) fn dump_order_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         b.drawings().map(|(i, _)| i).collect(),
         Some(board_cmp_drawings),
     );
-    emit_order(o, ctx, "tracks", b.tracks().map(|(i, _)| i.into()).collect(), None);
+    emit_order(
+        o,
+        ctx,
+        "tracks",
+        b.tracks().map(|(i, _)| i.into()).collect(),
+        None,
+    );
     emit_order(
         o,
         ctx,

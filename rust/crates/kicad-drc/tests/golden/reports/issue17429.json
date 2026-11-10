@@ -1,0 +1,267 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "mm",
+    "date": "<DATE>",
+    "ignored_checks": [
+        {
+            "description": "Footprint has no courtyard defined",
+            "key": "missing_courtyard"
+        },
+        {
+            "description": "Track endpoint not centered on via",
+            "key": "track_not_centered_on_via"
+        },
+        {
+            "description": "Tuning profile track geometries",
+            "key": "tuning_profile_track_geometries"
+        },
+        {
+            "description": "Footprint doesn't match symbol's footprint filters",
+            "key": "footprint_filters_mismatch"
+        },
+        {
+            "description": "PTH inside courtyard",
+            "key": "pth_inside_courtyard"
+        },
+        {
+            "description": "NPTH inside courtyard",
+            "key": "npth_inside_courtyard"
+        }
+    ],
+    "included_severities": [
+        "exclusion"
+    ],
+    "kicad_version": "10.99.0",
+    "schematic_parity": [],
+    "source": "issue17429.kicad_pcb",
+    "unconnected_items": [
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Track [MODULE0_INPUT1_BIAS_ELEC] on F.Cu - hs signal, length 1.1600 mm",
+                    "pos": {
+                        "x": 119.7,
+                        "y": 154.6
+                    },
+                    "uuid": "69b8910c-2ead-48f4-9358-4be4a4a0663e"
+                },
+                {
+                    "description": "Pad 88 [MODULE0_INPUT1_BIAS_ELEC] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 154.6
+                    },
+                    "uuid": "539d8a1e-5e53-4252-9a33-1eb2c9717a4b"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Track [MODULE0_INPUT1_IN5P] on F.Cu - hs signal, length 1.3600 mm",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 159.0
+                    },
+                    "uuid": "e5b239f2-afe1-4783-8a0b-bf234fea22df"
+                },
+                {
+                    "description": "Pad 65 [MODULE0_INPUT1_IN5P] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 118.54,
+                        "y": 159.0
+                    },
+                    "uuid": "113054e2-9827-4c9f-a8ee-9dead8ac7000"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Pad 21 [MODULE0_INPUT0_IN2P] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 118.54,
+                        "y": 167.8
+                    },
+                    "uuid": "18383a8f-1c88-4048-a569-5b451205ef1b"
+                },
+                {
+                    "description": "Track [MODULE0_INPUT0_IN2P] on F.Cu - hs signal, length 1.2600 mm",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 167.8
+                    },
+                    "uuid": "c717c398-f57e-451d-8ffd-3863c703056a"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Pad 69 [MODULE0_INPUT1_IN4P] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 118.54,
+                        "y": 158.2
+                    },
+                    "uuid": "e3fa1053-01eb-44fc-ac99-4eb5213cc1c6"
+                },
+                {
+                    "description": "Track [MODULE0_INPUT1_IN4P] on F.Cu - hs signal, length 2.3512 mm",
+                    "pos": {
+                        "x": 113.108805,
+                        "y": 158.2
+                    },
+                    "uuid": "ef60360a-a7b4-4448-90c3-e2532f9767b4"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Track [MODULE0_INPUT1_IN2P] on F.Cu - hs signal, length 2.3600 mm",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 156.6
+                    },
+                    "uuid": "40bfd180-8d01-4068-ab6f-6594ed83a43d"
+                },
+                {
+                    "description": "Pad 77 [MODULE0_INPUT1_IN2P] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 118.54,
+                        "y": 156.6
+                    },
+                    "uuid": "3849f54e-dedf-435c-94cc-89af7c496ef6"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Track [MODULE0_INPUT1_REF_ELEC] on F.Cu - hs signal, length 0.9600 mm",
+                    "pos": {
+                        "x": 119.5,
+                        "y": 155.0
+                    },
+                    "uuid": "d3546ca6-3035-4598-a37d-c76932d318fd"
+                },
+                {
+                    "description": "Pad 86 [MODULE0_INPUT1_REF_ELEC] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 155.0
+                    },
+                    "uuid": "3eab64eb-a1f0-434d-968b-cd0f04f08b5b"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        },
+        {
+            "comment": "",
+            "description": "Missing connection between items",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Track [MODULE0_INPUT1_IN7P] on F.Cu - hs signal, length 1.3600 mm",
+                    "pos": {
+                        "x": 115.46,
+                        "y": 160.6
+                    },
+                    "uuid": "ea0de4c1-7ea6-445a-b27f-e2ef037bc140"
+                },
+                {
+                    "description": "Pad 57 [MODULE0_INPUT1_IN7P] of J1 on F.Cu - hs signal",
+                    "pos": {
+                        "x": 118.54,
+                        "y": 160.6
+                    },
+                    "uuid": "458f746a-f5fa-4af9-acef-11306ffa2c15"
+                }
+            ],
+            "severity": "error",
+            "type": "unconnected_items"
+        }
+    ],
+    "violations": [
+        {
+            "comment": "",
+            "description": "Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Via [<no net>] on F.Cu - hs signal - B.Cu - signal",
+                    "pos": {
+                        "x": 113.6,
+                        "y": 162.6
+                    },
+                    "uuid": "0b294af6-acbd-4af5-bc04-2b77ebed6abc"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "comment": "",
+            "description": "Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Via [<no net>] on F.Cu - hs signal - B.Cu - signal",
+                    "pos": {
+                        "x": 113.596405,
+                        "y": 160.1818
+                    },
+                    "uuid": "1503dbdb-28b2-4a5a-8b2d-94a0f105210d"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "comment": "",
+            "description": "Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)",
+            "excluded": true,
+            "items": [
+                {
+                    "description": "Via [<no net>] on F.Cu - hs signal - B.Cu - signal",
+                    "pos": {
+                        "x": 113.6,
+                        "y": 167.3818
+                    },
+                    "uuid": "1e762f2a-8588-4178-953c-7a12b91d5a39"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        }
+    ]
+}

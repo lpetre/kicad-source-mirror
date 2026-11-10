@@ -41,9 +41,9 @@ use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::roundrect::Roundrect;
 use kicad_geom::{
-    ANGLE_0, ANGLE_45, ANGLE_90, ANGLE_180, ANGLE_360, Box2I, DEGREES_T, EdaAngle, Shape,
-    ShapeArc, ShapeCircle, ShapeLineChain, ShapePolySet, ShapeRect, ShapeSegment, ShapeSimple,
-    Vector2D, Vector2I, ki_round, rad2deg, rotate_point_around, std_max, std_min,
+    ANGLE_0, ANGLE_45, ANGLE_90, ANGLE_180, ANGLE_360, Box2I, DEGREES_T, EdaAngle, Shape, ShapeArc,
+    ShapeCircle, ShapeLineChain, ShapePolySet, ShapeRect, ShapeSegment, ShapeSimple, Vector2D,
+    Vector2I, ki_round, rad2deg, rotate_point_around, std_max, std_min,
 };
 
 use super::{EdaShape, EdaShapeHatchCacheData, FillT, ShapeT};
@@ -107,11 +107,7 @@ pub fn make_effective_shapes_list<H: EdaShapeItem + ?Sized>(
         ShapeT::Rectangle => {
             if es.corner_radius > 0 {
                 let rr = Roundrect::new(
-                    ShapeRect::from_pos_size(
-                        es.start,
-                        es.rectangle_width(),
-                        es.rectangle_height(),
-                    ),
+                    ShapeRect::from_pos_size(es.start, es.rectangle_width(), es.rectangle_height()),
                     es.corner_radius,
                     false,
                 );
@@ -233,10 +229,8 @@ pub fn make_effective_shapes_list<H: EdaShapeItem + ?Sized>(
                 let chain = e.convert_to_polyline(host.shape_max_error(ctx));
 
                 for ii in 0..chain.segment_count() {
-                    effective_shapes.push(Box::new(ShapeSegment::from_seg(
-                        chain.c_segment(ii),
-                        width,
-                    )));
+                    effective_shapes
+                        .push(Box::new(ShapeSegment::from_seg(chain.c_segment(ii), width)));
                 }
             }
         }
@@ -890,7 +884,10 @@ impl EdaShape {
                     return None;
                 }
 
-                Some((outline.c_point(0), outline.c_point(outline.point_count() - 1)))
+                Some((
+                    outline.c_point(0),
+                    outline.c_point(outline.point_count() - 1),
+                ))
             }
 
             ShapeT::Bezier => {
@@ -979,10 +976,8 @@ impl EdaShape {
             return false;
         }
 
-        let start_offset = EdaAngle::new(
-            rad2deg(std_max(0, start_depth) as f64 / radius),
-            DEGREES_T,
-        );
+        let start_offset =
+            EdaAngle::new(rad2deg(std_max(0, start_depth) as f64 / radius), DEGREES_T);
         let total_offset = EdaAngle::new(rad2deg(total_depth as f64 / radius), DEGREES_T);
 
         if *arc_angle > ANGLE_0 {
@@ -1062,7 +1057,7 @@ impl EdaShape {
             let dir = second - *first;
 
             if start_seg_len > start_depth as f64 {
-                *first = *first + dir * (start_depth as f64 / start_seg_len);
+                *first += dir * (start_depth as f64 / start_seg_len);
             } else {
                 *first = second;
             }
@@ -1072,7 +1067,7 @@ impl EdaShape {
             let dir = *last - penultimate;
 
             if end_seg_len > end_depth as f64 {
-                *last = *last - dir * (end_depth as f64 / end_seg_len);
+                *last -= dir * (end_depth as f64 / end_seg_len);
             } else {
                 *last = penultimate;
             }
@@ -1172,8 +1167,8 @@ pub fn make_shortened_body_shapes<H: EdaShapeItem + ?Sized>(
 ) -> ShapeList {
     let es = host.eda_shape();
     let mut effective_shapes: ShapeList = Vec::new();
-    let shorten_body =
-        es.start_ending.shorten_depth(line_width) > 0 || es.end_ending.shorten_depth(line_width) > 0;
+    let shorten_body = es.start_ending.shorten_depth(line_width) > 0
+        || es.end_ending.shorten_depth(line_width) > 0;
 
     if !shorten_body {
         effective_shapes = make_effective_shapes_list(host, ctx, edge_only, false, false);
@@ -1252,8 +1247,11 @@ pub fn make_shortened_body_shapes<H: EdaShapeItem + ?Sized>(
 
                     if let Some(pts) = es.shortened_body_poly_points(outline, ii, line_width) {
                         for jj in 1..pts.len() {
-                            effective_shapes
-                                .push(Box::new(ShapeSegment::new(pts[jj - 1], pts[jj], width)));
+                            effective_shapes.push(Box::new(ShapeSegment::new(
+                                pts[jj - 1],
+                                pts[jj],
+                                width,
+                            )));
                         }
 
                         if outline.is_closed() {
@@ -1275,8 +1273,11 @@ pub fn make_shortened_body_shapes<H: EdaShapeItem + ?Sized>(
                 // C++ passes the stroke width (not aLineWidth) as the ending size here.
                 if let Some(pts) = es.shortened_body_poly_points(&chain, 0, width) {
                     for jj in 1..pts.len() {
-                        effective_shapes
-                            .push(Box::new(ShapeSegment::new(pts[jj - 1], pts[jj], width)));
+                        effective_shapes.push(Box::new(ShapeSegment::new(
+                            pts[jj - 1],
+                            pts[jj],
+                            width,
+                        )));
                     }
                 }
             }
@@ -1326,7 +1327,11 @@ pub fn transform_shape_to_polygon<H: EdaShapeItem + ?Sized>(
     let es = host.eda_shape();
     let solid_fill =
         es.is_solid_fill() || (es.is_hatched_fill() && !include_fill) || host.is_proxy_item();
-    let mut width = if ignore_line_width { 0 } else { host.width(ctx) };
+    let mut width = if ignore_line_width {
+        0
+    } else {
+        host.width(ctx)
+    };
 
     width += 2 * clearance;
 
@@ -1335,7 +1340,14 @@ pub fn transform_shape_to_polygon<H: EdaShapeItem + ?Sized>(
             let r = es.radius();
 
             if solid_fill {
-                transform_circle_to_polygon(buffer, es.center(), r + width / 2, error, error_loc, 0);
+                transform_circle_to_polygon(
+                    buffer,
+                    es.center(),
+                    r + width / 2,
+                    error,
+                    error_loc,
+                    0,
+                );
             } else {
                 transform_ring_to_polygon(buffer, es.center(), r, width, error, error_loc);
             }
@@ -1562,8 +1574,8 @@ pub fn transform_with_line_endings_to_polygon<H: EdaShapeItem + ?Sized>(
     } else {
         host.effective_width(ctx)
     };
-    let shorten_body =
-        es.start_ending.shorten_depth(line_width) > 0 || es.end_ending.shorten_depth(line_width) > 0;
+    let shorten_body = es.start_ending.shorten_depth(line_width) > 0
+        || es.end_ending.shorten_depth(line_width) > 0;
 
     if !shorten_body {
         transform_shape_to_polygon(
@@ -1577,7 +1589,11 @@ pub fn transform_with_line_endings_to_polygon<H: EdaShapeItem + ?Sized>(
             false,
         );
     } else {
-        let mut width = if ignore_line_width { 0 } else { host.width(ctx) };
+        let mut width = if ignore_line_width {
+            0
+        } else {
+            host.width(ctx)
+        };
         width += 2 * clearance;
 
         match es.shape {
@@ -2009,3 +2025,768 @@ pub trait EdaShapeShapesExt: EdaShapeItem {
 }
 
 impl<T: EdaShapeItem + ?Sized> EdaShapeShapesExt for T {}
+
+#[cfg(test)]
+mod tests {
+    //! The line-ending and effective-shape cases of qa/tests/common/test_eda_shape.cpp
+    //! (`EDA_SHAPE_MOCK`: a host with no overrides), plus checks of the `makeEffectiveShapes`
+    //! variants. The full geometry is checked against the reference build by
+    //! tests/m8_shapes_oracle.rs (feature `dump`).
+
+    use super::*;
+    use crate::board::Board;
+    use crate::stroke_params::{StrokePatternLengths, stroke};
+    use kicad_core::LineStyle;
+    use kicad_geom::{ShapeRef, ShapeType};
+
+    struct Mock(EdaShape);
+
+    impl EdaShapeItem for Mock {
+        fn eda_shape(&self) -> &EdaShape {
+            &self.0
+        }
+
+        fn eda_shape_mut(&mut self) -> &mut EdaShape {
+            &mut self.0
+        }
+    }
+
+    fn mock(shape: ShapeT) -> EdaShape {
+        EdaShape::new(shape, 0, FillT::NoFill)
+    }
+
+    fn v(x: i32, y: i32) -> Vector2I {
+        Vector2I::new(x, y)
+    }
+
+    fn set_start_ending(es: &mut EdaShape, style: LineEndingStyle, length: i32, width: i32) {
+        es.start_ending.set_style(style);
+        es.start_ending.set_length(length);
+        es.start_ending.set_width(width);
+    }
+
+    fn set_end_ending(es: &mut EdaShape, style: LineEndingStyle, length: i32, width: i32) {
+        es.end_ending.set_style(style);
+        es.end_ending.set_length(length);
+        es.end_ending.set_width(width);
+    }
+
+    fn check_angle_close(actual: EdaAngle, expected: f64) {
+        assert!(
+            (actual.as_degrees() - expected).abs() < 1e-6,
+            "{actual:?} vs {expected}"
+        );
+    }
+
+    fn check_vector_close(actual: Vector2D, expected: (f64, f64), tol: f64) {
+        assert!(
+            (actual.x - expected.0).abs() < tol,
+            "{actual:?} vs {expected:?}"
+        );
+        assert!(
+            (actual.y - expected.1).abs() < tol,
+            "{actual:?} vs {expected:?}"
+        );
+    }
+
+    fn segment_of(shape: &dyn Shape) -> Option<&ShapeSegment> {
+        match shape.as_shape_ref() {
+            ShapeRef::Segment(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    fn with_ctx<R>(f: impl FnOnce(&BoardCtx<'_>) -> R) -> R {
+        let board = Board::default();
+        let ctx = BoardCtx::bare(&board);
+        f(&ctx)
+    }
+
+    /// `EllipseMakeEffectiveShapesNonEmpty`.
+    #[test]
+    fn ellipse_make_effective_shapes_non_empty() {
+        let mut e = mock(ShapeT::Ellipse);
+        e.set_ellipse_center(v(0, 0));
+        e.set_ellipse_major_radius(500);
+        e.set_ellipse_minor_radius(300);
+        e.set_ellipse_rotation(EdaAngle::from_degrees(0.0));
+
+        with_ctx(|ctx| assert!(!Mock(e).make_effective_shapes_owned(ctx, false).is_empty()));
+    }
+
+    /// `ShortenSegmentForEndingsTrimsStartAndEnd`.
+    #[test]
+    fn shorten_segment_for_endings_trims_start_and_end() {
+        let (mut start, mut end) = (v(0, 0), v(1000, 0));
+        let start_ending = LineEnding::new(LineEndingStyle::Arrow, 100, 100, 0);
+        let end_ending = LineEnding::new(LineEndingStyle::Circle, 200, 200, 0);
+
+        assert!(EdaShape::shorten_segment_for_endings(
+            &mut start,
+            &mut end,
+            &start_ending,
+            &end_ending,
+            20
+        ));
+        assert_eq!((start, end), (v(100, 0), v(900, 0)));
+    }
+
+    /// `SegmentOpenArrowLeavesBody`.
+    #[test]
+    fn segment_open_arrow_leaves_body() {
+        let (mut start, mut end) = (v(0, 0), v(1000, 0));
+        let start_ending = LineEnding::new(LineEndingStyle::ArrowOpen, 500, 500, 0);
+
+        assert!(EdaShape::shorten_segment_for_endings(
+            &mut start,
+            &mut end,
+            &start_ending,
+            &LineEnding::default(),
+            20
+        ));
+        assert_eq!((start, end), (v(0, 0), v(1000, 0)));
+    }
+
+    /// `SegmentShorteningRejectsOverrun`.
+    #[test]
+    fn segment_shortening_rejects_overrun() {
+        let (mut start, mut end) = (v(0, 0), v(1000, 0));
+        let start_ending = LineEnding::new(LineEndingStyle::Arrow, 600, 100, 0);
+        let end_ending = LineEnding::new(LineEndingStyle::Arrow, 500, 100, 0);
+
+        assert!(!EdaShape::shorten_segment_for_endings(
+            &mut start,
+            &mut end,
+            &start_ending,
+            &end_ending,
+            20
+        ));
+        assert_eq!((start, end), (v(0, 0), v(0, 0)));
+    }
+
+    /// `SegmentEndingTangentsPointOutward`.
+    #[test]
+    fn segment_ending_tangents_point_outward() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+
+        let (start_tangent, end_tangent) = shape.ending_tangents(20);
+        check_angle_close(start_tangent, 180.0);
+        check_angle_close(end_tangent, 0.0);
+    }
+
+    /// `OpenArrowBezierTangentsUseDepth`.
+    #[test]
+    fn open_arrow_bezier_tangents_use_depth() {
+        let mut shape = mock(ShapeT::Bezier);
+        shape.set_start(v(0, 0));
+        shape.set_bezier_c1(v(1000, 0));
+        shape.set_bezier_c2(v(0, 1000));
+        shape.set_end(v(1000, 1000));
+        set_start_ending(&mut shape, LineEndingStyle::ArrowOpen, 300, 300);
+        set_end_ending(&mut shape, LineEndingStyle::ArrowOpen, 300, 300);
+
+        let (start_tangent, end_tangent) = shape.ending_tangents(20);
+        let (s, e) = (start_tangent.as_degrees(), end_tangent.as_degrees());
+        assert!(s > -180.0 && s < -90.0, "{s}");
+        assert!(e > 0.0 && e < 90.0, "{e}");
+    }
+
+    /// `LineEndingEndpointsUseShapeOwnedSources`.
+    #[test]
+    fn line_ending_endpoints_use_shape_owned_sources() {
+        let mut segment = mock(ShapeT::Segment);
+        segment.set_start(v(0, 10));
+        segment.set_end(v(100, 20));
+        assert_eq!(
+            segment.line_ending_endpoints(),
+            Some((v(0, 10), v(100, 20)))
+        );
+
+        let mut arc = mock(ShapeT::Arc);
+        arc.set_start(v(10, 0));
+        arc.set_end(v(20, 30));
+        assert_eq!(arc.line_ending_endpoints(), Some((v(10, 0), v(20, 30))));
+
+        let mut bezier = mock(ShapeT::Bezier);
+        bezier.set_start(v(0, 0));
+        bezier.set_bezier_c1(v(20, 0));
+        bezier.set_bezier_c2(v(80, 100));
+        bezier.set_end(v(100, 100));
+        bezier.rebuild_bezier_to_segments_points_list(1);
+        assert_eq!(bezier.line_ending_endpoints(), Some((v(0, 0), v(100, 100))));
+
+        let mut poly_shape = mock(ShapeT::Poly);
+        let mut poly = ShapePolySet::new();
+        poly.new_outline();
+        poly.outline(0).set_closed(false);
+        poly.append_point(v(5, 5), -1, -1);
+        poly.append_point(v(50, 10), -1, -1);
+        poly.append_point(v(100, 20), -1, -1);
+        poly_shape.set_poly_shape(poly);
+        assert_eq!(
+            poly_shape.line_ending_endpoints(),
+            Some((v(5, 5), v(100, 20)))
+        );
+    }
+
+    /// `LineEndingEndpointsRejectInvalidPolys`.
+    #[test]
+    fn line_ending_endpoints_reject_invalid_polys() {
+        assert_eq!(mock(ShapeT::Poly).line_ending_endpoints(), None);
+
+        let mut one_point_poly = mock(ShapeT::Poly);
+        let mut poly = ShapePolySet::new();
+        poly.new_outline();
+        poly.append_point(v(5, 5), -1, -1);
+        one_point_poly.set_poly_shape(poly);
+        assert_eq!(one_point_poly.line_ending_endpoints(), None);
+    }
+
+    /// `EffectiveShapesIncludeClosedEnding`.
+    #[test]
+    fn effective_shapes_include_closed_ending() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        set_end_ending(&mut shape, LineEndingStyle::Circle, 400, 400);
+
+        let shapes = shape.make_line_ending_effective_shapes(20);
+        assert_eq!(shapes.len(), 1);
+
+        let bbox = shapes[0].bbox(0);
+        assert!(bbox.left() <= 800 && bbox.right() >= 1200);
+        assert!(bbox.top() <= -200 && bbox.bottom() >= 200);
+    }
+
+    /// `EffectiveShapesIncludeOpenArrowLegs`.
+    #[test]
+    fn effective_shapes_include_open_arrow_legs() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        set_end_ending(&mut shape, LineEndingStyle::ArrowOpen, 300, 200);
+        shape.end_ending.set_stroke_width(70);
+
+        let shapes = shape.make_line_ending_effective_shapes(20);
+        assert_eq!(shapes.len(), 2);
+
+        for leg in &shapes {
+            assert_eq!(segment_of(leg.as_ref()).unwrap().get_width(), 70);
+        }
+    }
+
+    /// `BBoxIncludesCenteredEnding`.
+    #[test]
+    fn bbox_includes_centered_ending() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        set_end_ending(&mut shape, LineEndingStyle::Square, 400, 400);
+
+        let bbox = shape.line_endings_bounding_box(20).unwrap();
+        assert!(bbox.left() <= 800 && bbox.right() >= 1200);
+        assert!(bbox.top() <= -200 && bbox.bottom() >= 200);
+    }
+
+    /// `BBoxUsesRotatedEndingGeometry`.
+    #[test]
+    fn bbox_uses_rotated_ending_geometry() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 1000));
+        set_end_ending(&mut shape, LineEndingStyle::Square, 400, 400);
+
+        let bbox = shape.line_endings_bounding_box(20).unwrap();
+        assert!(bbox.left() <= 718 && bbox.right() >= 1282);
+        assert!(bbox.top() <= 718 && bbox.bottom() >= 1282);
+    }
+
+    /// `PolygonConversionAppendsEndings`.
+    #[test]
+    fn polygon_conversion_appends_endings() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(20);
+        set_end_ending(&mut shape, LineEndingStyle::Square, 400, 400);
+        let host = Mock(shape);
+
+        with_ctx(|ctx| {
+            let mut body = ShapePolySet::new();
+            let mut with_ending = ShapePolySet::new();
+
+            transform_shape_to_polygon(
+                &host,
+                ctx,
+                &mut body,
+                0,
+                1,
+                ErrorLoc::Outside,
+                false,
+                false,
+            );
+            transform_shape_to_polygon(
+                &host,
+                ctx,
+                &mut with_ending,
+                0,
+                1,
+                ErrorLoc::Outside,
+                false,
+                false,
+            );
+            host.0
+                .transform_line_endings_to_polygon(&mut with_ending, 0, 1, ErrorLoc::Outside, 20);
+
+            let body_bbox = body.bbox(0);
+            let ending_bbox = with_ending.bbox(0);
+
+            assert!(ending_bbox.right() > body_bbox.right());
+            assert!(ending_bbox.top() < body_bbox.top());
+            assert!(ending_bbox.bottom() > body_bbox.bottom());
+        });
+    }
+
+    /// `EffectiveShapesShortenArrowBody`.
+    #[test]
+    fn effective_shapes_shorten_arrow_body() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(20);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 200, 200);
+
+        with_ctx(|ctx| {
+            let shapes = Mock(shape).make_effective_shapes_with_line_endings(ctx, 20);
+            let body = shapes.iter().find_map(|s| segment_of(s.as_ref())).unwrap();
+
+            assert_eq!(body.get_start(), v(0, 0));
+            assert_eq!(body.get_end(), v(800, 0));
+        });
+    }
+
+    /// `StrokingShapesShortenArrowBodyOnly`.
+    #[test]
+    fn stroking_shapes_shorten_arrow_body_only() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(20);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 200, 200);
+
+        with_ctx(|ctx| {
+            let shapes = Mock(shape).make_effective_shapes_for_stroking(ctx, 20);
+            assert_eq!(shapes.len(), 1);
+
+            let body = segment_of(shapes[0].as_ref()).unwrap();
+            assert_eq!(body.get_start(), v(0, 0));
+            assert_eq!(body.get_end(), v(800, 0));
+        });
+    }
+
+    /// `StrokingShapesRejectConsumedSegmentBody`.
+    #[test]
+    fn stroking_shapes_reject_consumed_segment_body() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(20);
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 600, 200);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 500, 200);
+
+        with_ctx(|ctx| {
+            assert!(
+                Mock(shape)
+                    .make_effective_shapes_for_stroking(ctx, 20)
+                    .is_empty()
+            );
+        });
+    }
+
+    /// `EffectiveShapesHitEndpointSquare`, plus the hit tests that go through
+    /// `MakeEffectiveShapesWithLineEndings`.
+    #[test]
+    fn effective_shapes_hit_endpoint_square() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(100);
+        set_start_ending(&mut shape, LineEndingStyle::Square, 400, 400);
+        let host = Mock(shape);
+
+        with_ctx(|ctx| {
+            let shapes = host.make_effective_shapes_with_line_endings(ctx, 100);
+            let probe = ShapeSegment::new(v(0, -150), v(0, 150), 20);
+
+            assert!(
+                shapes
+                    .iter()
+                    .any(|s| s.collide_seg(probe.get_seg(), 0, None, None))
+            );
+
+            // EDA_SHAPE::hitTest with a line ending: the square reaches y = -200 at x = 0.
+            assert!(super::super::shape_hit_test(&host, ctx, v(0, -190), 0));
+            assert!(!super::super::shape_hit_test(&host, ctx, v(500, -190), 0));
+            assert!(super::super::shape_hit_test_rect(
+                &host,
+                ctx,
+                &Box2I::new(v(-50, -250), v(100, 100)),
+                false,
+                0
+            ));
+        });
+    }
+
+    /// `PolygonConversionShortensArrowBody`.
+    #[test]
+    fn polygon_conversion_shortens_arrow_body() {
+        let mut shape = mock(ShapeT::Segment);
+        shape.set_start(v(0, 0));
+        shape.set_end(v(1000, 0));
+        shape.set_width(100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 200, 200);
+        let host = Mock(shape);
+
+        with_ctx(|ctx| {
+            let mut unshortened = ShapePolySet::new();
+            let mut shortened = ShapePolySet::new();
+
+            transform_shape_to_polygon(
+                &host,
+                ctx,
+                &mut unshortened,
+                0,
+                1,
+                ErrorLoc::Outside,
+                false,
+                false,
+            );
+            host.0.transform_line_endings_to_polygon(
+                &mut unshortened,
+                0,
+                1,
+                ErrorLoc::Outside,
+                100,
+            );
+            host.transform_with_line_endings_to_polygon(
+                ctx,
+                &mut shortened,
+                0,
+                1,
+                ErrorLoc::Outside,
+                false,
+            );
+
+            assert!(unshortened.bbox(0).right() > 1000);
+            assert!(shortened.bbox(0).right() <= 1001);
+        });
+    }
+
+    fn arc_with_endings(start_len: i32, end_len: i32) -> EdaShape {
+        let mut shape = mock(ShapeT::Arc);
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, start_len, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, end_len, 100);
+        shape
+    }
+
+    /// `ShortenArcForEndingsKeepsPositiveSweep`.
+    #[test]
+    fn shorten_arc_for_endings_keeps_positive_sweep() {
+        let shape = arc_with_endings(100, 200);
+        let mut start_angle = EdaAngle::from_degrees(10.0);
+        let mut arc_angle = EdaAngle::from_degrees(90.0);
+        let radius = 1000.0;
+        let rad_to_deg = 180.0 / std::f64::consts::PI;
+
+        assert!(shape.shorten_arc_for_endings(&mut start_angle, &mut arc_angle, radius, 20));
+        check_angle_close(start_angle, 10.0 + 100.0 / radius * rad_to_deg);
+        check_angle_close(arc_angle, 90.0 - 300.0 / radius * rad_to_deg);
+        assert!(arc_angle > ANGLE_0);
+    }
+
+    /// `ShortenArcForEndingsKeepsNegativeSweep`.
+    #[test]
+    fn shorten_arc_for_endings_keeps_negative_sweep() {
+        let shape = arc_with_endings(100, 200);
+        let mut start_angle = EdaAngle::from_degrees(170.0);
+        let mut arc_angle = EdaAngle::from_degrees(-90.0);
+        let radius = 1000.0;
+        let rad_to_deg = 180.0 / std::f64::consts::PI;
+
+        assert!(shape.shorten_arc_for_endings(&mut start_angle, &mut arc_angle, radius, 20));
+        check_angle_close(start_angle, 170.0 - 100.0 / radius * rad_to_deg);
+        check_angle_close(arc_angle, -90.0 + 300.0 / radius * rad_to_deg);
+        assert!(arc_angle < ANGLE_0);
+    }
+
+    /// `ArcShorteningRejectsOverrun`.
+    #[test]
+    fn arc_shortening_rejects_overrun() {
+        let shape = arc_with_endings(100, 100);
+        let mut start_angle = EdaAngle::from_degrees(30.0);
+        let mut arc_angle = EdaAngle::from_degrees(10.0);
+
+        assert!(!shape.shorten_arc_for_endings(&mut start_angle, &mut arc_angle, 1000.0, 20));
+        check_angle_close(start_angle, 30.0);
+        check_angle_close(arc_angle, 0.0);
+    }
+
+    fn straight_bezier() -> EdaShape {
+        let mut shape = mock(ShapeT::Bezier);
+        shape.set_start(v(0, 0));
+        shape.set_bezier_c1(v(300, 0));
+        shape.set_bezier_c2(v(700, 0));
+        shape.set_end(v(1000, 0));
+        shape
+    }
+
+    /// `BezierNoEndingsReturnsSource`.
+    #[test]
+    fn bezier_no_endings_returns_source() {
+        let curve = straight_bezier().shortened_bezier_curve(20).unwrap();
+
+        check_vector_close(curve.start, (0.0, 0.0), 1e-6);
+        check_vector_close(curve.c1, (300.0, 0.0), 1e-6);
+        check_vector_close(curve.c2, (700.0, 0.0), 1e-6);
+        check_vector_close(curve.end, (1000.0, 0.0), 1e-6);
+    }
+
+    /// `BezierCurveTrimsBothEnds`.
+    #[test]
+    fn bezier_curve_trims_both_ends() {
+        let mut shape = straight_bezier();
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 100, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 200, 100);
+
+        let curve = shape.shortened_bezier_curve(20).unwrap();
+        check_vector_close(curve.start, (100.0, 0.0), 1e-3);
+        check_vector_close(curve.end, (800.0, 0.0), 1e-3);
+    }
+
+    /// `BezierCurveRejectsOverrun`.
+    #[test]
+    fn bezier_curve_rejects_overrun() {
+        let mut shape = straight_bezier();
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 600, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 500, 100);
+
+        assert!(shape.shortened_bezier_curve(20).is_none());
+    }
+
+    /// `ShortenedBezierPolylineUsesShortenedCurve`.
+    #[test]
+    fn shortened_bezier_polyline_uses_shortened_curve() {
+        let mut shape = straight_bezier();
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 100, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 200, 100);
+
+        with_ctx(|ctx| {
+            let points = Mock(shape).shortened_bezier_polyline(ctx, 20);
+
+            assert!(points.len() >= 2);
+            check_vector_close(points[0], (100.0, 0.0), 1e-3);
+            check_vector_close(points[points.len() - 1], (800.0, 0.0), 1e-3);
+        });
+    }
+
+    /// `BezierPolylineRejectsOverrun`.
+    #[test]
+    fn bezier_polyline_rejects_overrun() {
+        let mut shape = straight_bezier();
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 600, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 500, 100);
+
+        with_ctx(|ctx| assert!(Mock(shape).shortened_bezier_polyline(ctx, 20).is_empty()));
+    }
+
+    /// `StrokingShortenedBezierDashes`: a dashed Bezier with endings must still be stroked as
+    /// ONE chain: loose segments would restart the dash pattern at every tessellation vertex
+    /// (issue #25110) and draw near-solid.
+    #[test]
+    fn stroking_shortened_bezier_dashes() {
+        let mut shape = mock(ShapeT::Bezier);
+        shape.set_start(v(0, 0));
+        shape.set_bezier_c1(v(30000, 20000));
+        shape.set_bezier_c2(v(70000, -20000));
+        shape.set_end(v(100000, 0));
+        shape.set_width(100);
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 2000, 1000);
+        set_end_ending(&mut shape, LineEndingStyle::Arrow, 3000, 1000);
+
+        with_ctx(|ctx| {
+            let shapes = Mock(shape).make_effective_shapes_for_stroking(ctx, 100);
+
+            // The shortened body must come back as a single chain.
+            assert_eq!(shapes.len(), 1);
+
+            let ShapeRef::LineChain(chain) = shapes[0].as_shape_ref() else {
+                panic!("not a line chain");
+            };
+            assert!(chain.segment_count() >= 2);
+
+            let mut chain_length = 0.0;
+
+            for ii in 0..chain.segment_count() {
+                let seg = chain.c_segment(ii);
+                chain_length += Vector2D::from(seg.b - seg.a).euclidean_norm();
+            }
+
+            // RENDER_SETTINGS defaults: dash 11 w, gap 4 w, dot 0.2 w.
+            let lengths = StrokePatternLengths {
+                dash: 1100.0,
+                dot: 20.0,
+                gap: 400.0,
+            };
+            let mut pieces: Vec<(Vector2I, Vector2I)> = Vec::new();
+            stroke(chain, LineStyle::Dash, 100, &lengths, &mut |a, b| {
+                pieces.push((a, b))
+            });
+
+            let norm = |a: Vector2I, b: Vector2I| Vector2D::from(b - a).euclidean_norm();
+            let mut runs = 0;
+            let mut drawn = 0.0;
+            let mut ii = 0;
+
+            while ii < pieces.len() {
+                let mut length = norm(pieces[ii].0, pieces[ii].1);
+                let mut end = pieces[ii].1;
+                let mut jj = ii + 1;
+
+                while jj < pieces.len() && pieces[jj].0 == end {
+                    length += norm(pieces[jj].0, pieces[jj].1);
+                    end = pieces[jj].1;
+                    jj += 1;
+                }
+
+                runs += 1;
+                drawn += length;
+                ii = jj;
+            }
+
+            assert!(runs > 5, "expected many dashes, got {runs} run(s)");
+
+            let expected = chain_length * lengths.dash / (lengths.dash + lengths.gap);
+            assert!((drawn - expected).abs() < 0.05 * chain_length);
+        });
+    }
+
+    /// `PolyShorteningTrimsEnds`.
+    #[test]
+    fn poly_shortening_trims_ends() {
+        let mut shape = mock(ShapeT::Poly);
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 100, 100);
+        set_end_ending(&mut shape, LineEndingStyle::Circle, 200, 200);
+
+        let mut first = Vector2D::new(0.0, 0.0);
+        let mut last = Vector2D::new(1000.0, 2000.0);
+
+        assert!(shape.shorten_poly_for_endings(
+            &mut first,
+            &mut last,
+            Vector2D::new(1000.0, 0.0),
+            Vector2D::new(1000.0, 1000.0),
+            20
+        ));
+        check_vector_close(first, (100.0, 0.0), 1e-6);
+        check_vector_close(last, (1000.0, 1900.0), 1e-6);
+    }
+
+    /// `ShortenPolyForEndingsLeavesOpenArrowBody`.
+    #[test]
+    fn shorten_poly_for_endings_leaves_open_arrow_body() {
+        let mut shape = mock(ShapeT::Poly);
+        set_start_ending(&mut shape, LineEndingStyle::ArrowOpen, 500, 500);
+
+        let mut first = Vector2D::new(0.0, 0.0);
+        let mut last = Vector2D::new(1000.0, 2000.0);
+
+        assert!(shape.shorten_poly_for_endings(
+            &mut first,
+            &mut last,
+            Vector2D::new(1000.0, 0.0),
+            Vector2D::new(1000.0, 1000.0),
+            20
+        ));
+        check_vector_close(first, (0.0, 0.0), 1e-6);
+        check_vector_close(last, (1000.0, 2000.0), 1e-6);
+    }
+
+    /// `BodyPolyPointsShortenFirstOpenOutline`.
+    #[test]
+    fn body_poly_points_shorten_first_open_outline() {
+        let mut shape = mock(ShapeT::Poly);
+        set_start_ending(&mut shape, LineEndingStyle::Arrow, 100, 100);
+
+        let outline = ShapeLineChain::from_points(&[v(0, 0), v(1000, 0), v(1000, 1000)], true);
+        let mut poly = ShapePolySet::new();
+        poly.add_outline(&outline);
+        shape.set_poly_shape(poly);
+
+        // Closed poly; line endings should be ignored and no shortening done
+        let pts = shape.shortened_body_poly_points(&outline, 0, 20).unwrap();
+        assert_eq!(pts.len(), 3);
+        assert_eq!((pts[0], pts[2]), (v(0, 0), v(1000, 1000)));
+
+        shape.poly.outline(0).set_closed(false);
+
+        let pts = shape.shortened_body_poly_points(&outline, 0, 20).unwrap();
+        assert_eq!(pts.len(), 3);
+        assert_eq!((pts[0], pts[2]), (v(100, 0), v(1000, 1000)));
+
+        let pts = shape.shortened_body_poly_points(&outline, 1, 20).unwrap();
+        assert_eq!(pts.len(), 3);
+        assert_eq!((pts[0], pts[2]), (v(0, 0), v(1000, 1000)));
+    }
+
+    /// The `makeEffectiveShapes` variants: fill shapes first, then the edges; `aEdgeOnly`
+    /// drops the fill, `aLineChainOnly` treats a closed outline as open, `aHittesting` uses
+    /// `IsFilledForHitTesting()`.
+    #[test]
+    fn effective_shape_variants() {
+        let mut shape = mock(ShapeT::Poly);
+        let outline = ShapeLineChain::from_points(&[v(0, 0), v(1000, 0), v(1000, 1000)], true);
+        let mut poly = ShapePolySet::new();
+        poly.add_outline(&outline);
+        shape.set_poly_shape(poly);
+        shape.set_width(10);
+        shape.set_fill_mode(FillT::FilledShape);
+        let filled = Mock(shape.clone());
+
+        with_ctx(|ctx| {
+            let kinds = |shapes: &ShapeList| -> Vec<ShapeType> {
+                shapes.iter().map(|s| s.type_()).collect()
+            };
+
+            let all = make_effective_shapes_list(&filled, ctx, false, false, false);
+            assert_eq!(
+                kinds(&all),
+                [
+                    ShapeType::Simple,
+                    ShapeType::Segment,
+                    ShapeType::Segment,
+                    ShapeType::Segment
+                ]
+            );
+
+            let edges = make_effective_shapes_list(&filled, ctx, true, false, false);
+            assert_eq!(edges.len(), 3);
+
+            let open = make_effective_shapes_list(&filled, ctx, true, true, false);
+            assert_eq!(open.len(), 2);
+
+            shape.set_fill_mode(FillT::NoFill);
+            let unfilled = Mock(shape);
+            assert_eq!(
+                make_effective_shapes_list(&unfilled, ctx, false, false, false).len(),
+                3
+            );
+            // IsFilledForHitTesting() is IsSolidFill() for the base class.
+            assert_eq!(
+                make_effective_shapes_list(&unfilled, ctx, false, false, true).len(),
+                3
+            );
+        });
+    }
+}

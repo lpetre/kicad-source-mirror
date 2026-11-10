@@ -48,6 +48,14 @@ gates, rounded rectangles, the ellipse pairs, the poly-set dispatch through
 GAP-4, GAP-P2 and GAP-P3; verified by the `coll_oracle` (245,000 cases, every ordered pair of 13
 shape kinds, bit for bit).
 
+**Work package G6b** (shape conversion utilities) ported `convert_basic_shapes_to_polygon`
+(circles, rings, ovals, trapezoids, round / chamfered rectangles, arcs, `CornerListToPolygon`),
+`ROUNDRECT`, the corner operations (`ComputeChamferPoints`, `ComputeDogbone`), the rest of
+`shape_utils`, `oval`, `INTERSECTION_VISITOR` (`intersection.h`), `nearest` and `SHAPE_ELLIPSE`
+(with `ShapeRef::Ellipse`), and wired the `TransformToPolygon` of circles, segments, arcs and
+rounded rectangles (closing GAP-5 and GAP-H1); verified by the `conv_oracle` (250,000 cases,
+bit for bit).  It also replaced `cmath::cbrt` by a port of glibc's `cbrt` (D-G1).
+
 Everything in this crate builds for `wasm32-unknown-unknown` and has no `unsafe`.  Its only
 dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependency, feature
 `usingz`; pure Rust, BSL-1.0; PORTING.md section 9).
@@ -101,9 +109,9 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | - `SHAPE_BASE`, `SHAPE` (virtual interface) | trait `Shape` (+ enum `ShapeRef` for dispatch) | ported; `GetClearance` (also free fn `get_clearance`), `Distance`, `SquaredDistance`, `PointInside`, `Format`, `Centre` defaults; `Parse` is not part of the trait (the base `SHAPE::Parse` is `assert( false )`; `SHAPE_LINE_CHAIN` / `SHAPE_POLY_SET` implement it: `ShapeLineChain::parse`, `ShapePolySet::parse`); `NearestPoints( SHAPE* )` is `Shape::nearest_points` (G5); `indexable_subshape( i )` (no C++ counterpart, G5) returns the `i`-th of `indexable_subshapes()` without allocating (compounds, triangulated poly sets) |
 | - `SHAPE_LINE_CHAIN_BASE` + its methods in `shape_line_chain.cpp` | trait `ShapeLineChainBase` (`lcb_collide_point`, `lcb_collide_seg`, `lcb_squared_distance`, `lcb_point_inside`, `point_on_edge`, `edge_containing_point`) | ported |
 | `geometry/shape_arc.h`, `src/geometry/shape_arc.cpp` | `src/geometry/shape_arc.rs` (`ShapeArc`) | ported (`NearestPoints( SHAPE_RECT )` completed in G5) |
-| `geometry/shape_circle.h` (+ `Format`, `TransformToPolygon` from `shape_segment.cpp`) | `src/geometry/shape_circle.rs` | ported, except `TransformToPolygon` (GAP-5) |
-| `geometry/shape_rect.h`, `src/geometry/shape_rect.cpp` | `src/geometry/shape_rect.rs` | ported; rounded corners (`ROUNDRECT`) GAP-5 |
-| `geometry/shape_segment.h`, `src/geometry/shape_segment.cpp` | `src/geometry/shape_segment.rs` | ported, except `TransformToPolygon` (GAP-5) |
+| `geometry/shape_circle.h` (+ `Format`, `TransformToPolygon` from `shape_segment.cpp`) | `src/geometry/shape_circle.rs` | ported (`TransformToPolygon` since G6b) |
+| `geometry/shape_rect.h`, `src/geometry/shape_rect.cpp` | `src/geometry/shape_rect.rs` | ported (rounded corners through `Roundrect` since G6b) |
+| `geometry/shape_segment.h`, `src/geometry/shape_segment.cpp` | `src/geometry/shape_segment.rs` | ported (`TransformToPolygon` since G6b) |
 | `geometry/shape_simple.h` (+ `TransformToPolygon` from `shape.cpp`) | `src/geometry/shape_simple.rs` | ported |
 | `geometry/shape_null.h` | `src/geometry/shape_null.rs` | ported |
 | `geometry/shape_compound.h`, `src/geometry/shape_compound.cpp` | `src/geometry/shape_compound.rs` | ported; `Distance( const SEG& )` (`assert( false )` in C++) skipped |
@@ -117,7 +125,8 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | - `TRIANGULATED_POLYGON` / `TRI` | `TriangulatedPolygon` (`new`, `clear`, `get_triangle`, `add_triangle`, `add_vertex`, `triangle_count`, `source_outline_index`, `set_source_outline_index`, `vertex_count`, `move_`; `Triangles()` / `Vertices()` / `SetTriangles()` / `SetVertices()` are the public fields), `Tri` (incl. `Area()`) | ported (G4b: `refine`, `set_triangles`, `set_vertices`; the triangles' vertex copies are kept in sync, D15) |
 | - file-local helpers of `shape_poly_set.cpp`: `splitAtBridges`, `FractureEdge`, `FRACTURE_EDGE_INDEX`, `fractureIntersectX`, `processHole`, `fractureSingleCacheFriendly` | `shape_poly_set_fracture.rs` | ported; `FractureEdgeSlow` / `processEdge` / `fractureSingleSlow` (only selected by `ADVANCED_CFG::m_EnableCacheFriendlyFracture = false`) skipped, D-P7 |
 | - `SHAPE_LINE_CHAIN::OffsetLine()` | `ShapeLineChain::offset_line` (in `shape_poly_set.rs`) | ported (closes GAP-S1) |
-| `geometry/corner_operations.cpp`: `SHAPE_POLY_SET::chamferFilletPolygon` | `shape_poly_set.rs` | ported; the free functions `ComputeChamferPoints`, `ComputeDogbone` (`corner_operations.h`) are not part of this package (not started) |
+| `geometry/corner_operations.cpp`: `SHAPE_POLY_SET::chamferFilletPolygon` | `shape_poly_set.rs` | ported |
+| `geometry/corner_operations.h`, the free functions of `corner_operations.cpp` (`CHAMFER_PARAMS`, `CHAMFER_RESULT`, `DOGBONE_RESULT`, `ComputeChamferPoints`, `ComputeDogbone`, file-local `GetBisectorOfCornerSegments`) | `src/geometry/corner_operations.rs` (`ChamferParams`, `ChamferResult`, `DogboneResult`, `compute_chamfer_points`, `compute_dogbone`) | ported (G6b); `std::optional` results are `Option` |
 | `geometry/corner_strategy.h` (`CORNER_STRATEGY`) | `src/geometry/corner_strategy.rs` (`CornerStrategy`) | ported |
 | `geometry/segment_index.h` (`SEGMENT_INDEX`) | `src/geometry/segment_index.rs` (`SegmentIndex`) | ported (over the ported `PACKED_RTREE`, same visit order) |
 | `geometry/fracture_edge_index_utils.h` (`KIGEOM::FRACTURE_INDEX`) | `src/geometry/fracture_edge_index_utils.rs` | ported (`size_t` = `u64`) |
@@ -133,7 +142,8 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `geometry/line.h/.cpp` | `src/geometry/line.rs` (`Line`) | ported |
 | `geometry/geometry_utils.h/.cpp` | `src/geometry/geometry_utils.rs` | ported (`GetVectorSnapped45/90`, `GetClampedCoords`, `IsVec2SafeXY` for `int`, `int64_t`, `double`; `GetClampedCoords<double, int>` / `<int64_t, int>` as `get_clamped_coords_to_i` / `_l_to_i`) |
 | `include/base_units.h`: `ARC_HIGH_DEF`, `ARC_LOW_DEF` (+ `_MM`) | `src/geometry/geometry_utils.rs` | ported (constants only) |
-| `src/geometry/shape_utils.cpp`: `BoxToSegs`, `ClipHalfLineToBox`, `ClipLineToBox` | `src/geometry/shape_utils.rs` | ported; the rest of `shape_utils` is a later package |
+| `geometry/shape_utils.h`, `src/geometry/shape_utils.cpp` (`KIGEOM`) | `src/geometry/shape_utils.rs` | ported (G6b completed it): `ParameterAlong`, `NormalisedSeg`, `GetOtherEnd`, `GetSharedEndpoint`, `BoxToSegs`, `CollectBoxCorners`, `BoxToLineChain`, `GetSegsInDirection`, `ClipHalfLineToBox`, `ClipLineToBox`, `MakeArcCw90`, `MakeArcCw180`, `GetPoint`, `GetCircleKeyPoints`, `RectifyPolygon`, `AddHoleIfValid`, both `MakeRegularPolygonPoints` (`make_regular_polygon_points`, `..._radius`), `MakeCrossSegments`; invalid directions return the C++ fallback values (`wxFAIL_MSG` in release) |
+| `geometry/direction45.h` | `src/geometry/direction45.rs` (`Directions`) | partial (G6b): only the `DIRECTION_45::Directions` enum the shape utilities take; the `DIRECTION_45` class is router-only, skipped |
 | `include/bezier_curves.h`, `src/bezier_curves.cpp` | `src/bezier_curves.rs` | ported (G6a): `BEZIER_POLY` (`BezierPoly`: all three constructors, both `GetPoly` overloads as `get_poly_i` / `get_poly_d`, and every private helper with the exact tolerances), `BEZIER<T>` (`Bezier<T>`: `PointAt`, `Split`, `SubCurve`), `TransformEllipseToBeziers<T>`; `int` / `double` instantiations via trait `NumericType`; `wxLogTrace` dropped |
 | `geometry/ellipse.h`, `src/geometry/ellipse.cpp` | `src/geometry/ellipse.rs` (`Ellipse<T>`) | ported (G6a): both constructors (`new`, `from_major_axis`), `Mirror`, `GetSubtendedAngle`, `GetPointAtAngle`, `GetArcStart/EndPoint`, `GetAngleAtPoint` |
 | `geometry/convex_hull.h`, `src/geometry/convex_hull.cpp` | `src/geometry/convex_hull.rs` | ported (G6a): `BuildConvexHull` (points: `build_convex_hull`, plus `convex_hull`; poly set: `build_convex_hull_poly_set`, `..._moved`, over the skeleton's `outline_count` / `c_outline` / `point_count` / `c_point`) |
@@ -147,9 +157,14 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `geometry/point_types.h` | `src/geometry/point_types.rs` (`PointType` flags `PT_*`, `TypedPoint2I`) | ported (G6a) |
 | `geometry/distribute.h`, `src/geometry/distribute.cpp` | `src/geometry/distribute.rs` | ported (G6a) |
 | `geometry/grid_geometry.h`, `src/geometry/grid_geometry.cpp` | `src/geometry/grid_geometry.rs` (`GridGeometry`, `GridKind`) | ported (G6a) |
-| `geometry/nearest.h`, `src/geometry/nearest.cpp` | - | not started: `NEARABLE_GEOM` contains `SHAPE_ELLIPSE` (G6b) |
-| `geometry/shape_ellipse.h/.cpp` (incl. its file-private `adaptiveSimpson`, `quadraticRoots` / `cubicRoots` / `quarticRoots`, `subdivideEllipseArc`, `dedupePoints`) | - | not started (G6b): the pure-math helpers are in an anonymous namespace, so they can only be verified through `SHAPE_ELLIPSE`; `subdivideEllipseArc` writes a `SHAPE_LINE_CHAIN` |
-| `intersection.h`, `convert_basic_shapes_to_polygon`, `roundrect`, ... | - | not started (later packages) |
+| `geometry/nearest.h`, `src/geometry/nearest.cpp` | `src/geometry/nearest.rs` (`NearableGeom`, `get_nearest_point`, `get_nearest_point_any`) | ported (G6b) |
+| `geometry/shape_ellipse.h/.cpp` (`SHAPE_ELLIPSE`, incl. the file-private `adaptiveSimpson`, `subdivideEllipseArc`, `quadraticRoots` / `cubicRoots` / `quarticRoots`, `dedupePoints`, the private `CONIC`, `conicOf`, `conicRoots`, `closestLocalPoint`, ...) | `src/geometry/shape_ellipse.rs` (`ShapeEllipse`; constructors `new`, `new_arc`, `from_major_endpoint`, `from_major_endpoint_arc`; `Intersect` overloads `intersect_ellipse` / `intersect_circle` / `intersect_arc` / `intersect_seg( seg, treat_as_line )`; `operator==` is `equals`; the root finders are `pub`) | ported (G6b); `ShapeRef::Ellipse` added in `shape.rs` |
+| `geometry/intersection.h`, `src/geometry/intersection.cpp` (`INTERSECTABLE_GEOM`, `INTERSECTION_CONTACT`, `INTERSECTION_VISITOR`, every `findIntersections` pair, the contact helpers) | `src/geometry/intersection.rs` (`IntersectableGeom`, `IntersectionContact`, `IntersectionVisitor::new` / `with_contact` / `visit`) | ported (G6b): the C++ argument order of every pair is kept (it decides the point order and the overlap reference segment); the `LINE_LIKE` / `CIRCULAR` concepts are private traits |
+| `include/convert_basic_shapes_to_polygon.h`, `src/convert_basic_shapes_to_polygon.cpp` | `src/convert_basic_shapes_to_polygon.rs` | ported (G6b): `TransformCircleToPolygon` (`transform_circle_to_polygon_chain` / `transform_circle_to_polygon`), `TransformOvalToPolygon`, `TransformTrapezoidToPolygon`, `TransformRoundChamferedRectToPolygon`, both `ConvertArcToPolyline` (`convert_arc_to_polyline` centre / radius, `convert_arc_to_polyline_3pt`), `TransformArcToPolygon`, `TransformRingToPolygon`, `ROUNDED_CORNER` (`RoundedCorner`), `CornerListToPolygon`, `CornerListRemoveDuplicates`, `RECT_CHAMFER_*`; defaulted arguments are explicit |
+| `geometry/roundrect.h`, `src/geometry/roundrect.cpp` (`ROUNDRECT`) | `src/geometry/roundrect.rs` (`Roundrect`) | ported (G6b) |
+| `geometry/oval.h`, `src/geometry/oval.cpp` | `src/geometry/oval.rs` (`convert_to_chain`, `get_oval_key_points`, `OVAL_*`) | ported (G6b) |
+| `geometry/shape_file_io.h/.cpp` | - | skipped: writes debug files (`FILE*`), no filesystem in the library (PORTING.md section 5), no user in scope |
+| `geometry/poisson_disk.h/.cpp` | - | skipped: only used by the via-stitching generator / dialog (out of scope) |
 
 Support modules without a C++ counterpart:
 
@@ -240,7 +255,13 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/test_shape_rect_corner.cpp` | `tests/test_shape_compound_collision.rs` | 1 of 1 |
 | `qa/tests/libs/kimath/geometry/test_shape_nearest_points.cpp` | `tests/test_shape_nearest_points.rs` | 35 of 35 |
 | (`shape_index.h`, `shape_index_list.h`: no C++ tests) | `tests/test_shape_index.rs` | 2 extra |
-| `qa/tests/libs/kimath/geometry/test_shape_ellipse.cpp` (collision cases) | `tests/test_shape_ellipse.rs` | the 9 `SHAPE::Collide` cases are no longer `#[ignore]`d (G5) |
+| `qa/tests/libs/kimath/geometry/test_shape_ellipse.cpp` | `tests/test_shape_ellipse.rs` | 64 of 64 in 63 Rust tests (G6b; the 2 mirror-twice cases share one; randomised cases on the reference build's data via the libstdc++ replicas, GCC's right-to-left argument order; +1 extra check: exact `Format` texts); the 9 `SHAPE::Collide` cases are no longer `#[ignore]`d (G5) |
+| `qa/tests/libs/kimath/geometry/test_chamfer.cpp` | `tests/test_chamfer.rs` | 5 of 5 |
+| `qa/tests/libs/kimath/geometry/test_dogbone.cpp` | `tests/test_dogbone.rs` | 1 of 1 |
+| `qa/tests/libs/kimath/geometry/test_fillet.cpp` | `tests/test_fillet.rs` | 2 of 2 (all 4 data cases each) |
+| `qa/tests/libs/kimath/geometry/test_oval.cpp` | `tests/test_oval.rs` | 3 of 3 |
+| `qa/tests/libs/kimath/geometry/test_roundrect.cpp` | `tests/test_roundrect.rs` | 6 of 6 |
+| `qa/tests/libs/kimath/geometry/test_intersection.cpp` | `tests/test_intersection.rs` | 8 of 8 |
 | `qa/tests/libs/kimath/geometry/test_circle.cpp` | `tests/test_circle.rs` | 7 of 7 |
 | `qa/tests/libs/kimath/geometry/test_arc_chord_params.cpp` | `tests/test_arc_chord_params.rs` | 10 of 10 |
 | `qa/tests/libs/kimath/geometry/test_half_line.cpp` | `tests/test_half_line.rs` | 3 of 3 |
@@ -287,6 +308,39 @@ In-module unit tests (`#[cfg(test)]`, 55 tests) cover additional behaviour of ev
 
 Two oracles: `geom_oracle` (package G1, compiles the kimath sources it needs with stub wx
 headers) and `shapes_oracle` (package G2, links the static libraries of the reference build).
+
+### `conv_oracle` (G6b)
+
+`tests/oracle/conv_oracle.cpp` links `libkimath.a` (+ `libcore.a`, `libclipper2.a`,
+`libkicommon.so`) of the reference build and prints 11 sections, 250,000 cases (+ the libm
+probe); replay: `tests/oracle_conv_diff.rs` with `tests/oracle/conv_sections.rs`, golden
+`tests/golden/conv_oracle.txt`.  All sections match bit for bit:
+
+| Section | Cases | Content |
+|---|---|---|
+| `cbrt` | 20000 | `std::cbrt` against the port of glibc's (D-G1): random bit patterns (incl. NaN, infinities, subnormals), scaled values; libm-independent, so it is checked on every target |
+| `libm:conv_circle` | 20000 | both `TransformCircleToPolygon` overloads (into non-empty buffers too), `TransformRingToPolygon` (hole / no hole), `SHAPE_CIRCLE::TransformToPolygon`; radii 0..5e7 and negative, max errors 1..50000, both `ERROR_LOC`s, min segment counts 0..48 / 7 |
+| `libm:conv_oval` | 20000 | `TransformOvalToPolygon`, `SHAPE_SEGMENT::TransformToPolygon`: zero / nm / board-length tracks, cardinal, 45 degree and arbitrary directions, widths 0.1..10 mm, tiny and odd |
+| `libm:conv_rect` | 30000 | `TransformRoundChamferedRectToPolygon` (radii up to and beyond half the side, chamfer ratios 0..0.5, all 16 corner sets), `TransformTrapezoidToPolygon` (horizontal / vertical deltas, shrinking into triangles), `CornerListToPolygon` on convex corner lists with per-corner radii; inflation positive, zero and negative; every rotation class |
+| `libm:conv_arc` | 20000 | both `ConvertArcToPolyline` overloads (incl. radial offsets), `TransformArcToPolygon`, `SHAPE_ARC::TransformToPolygon`; arcs from centre / angle (tiny, full, negative sweeps) and the shared degenerate `arcPoints` |
+| `libm:conv_roundrect` | 20000 | `ROUNDRECT` (constructor with / without normalisation, `OutsetFrom`, `GetInflated`, getters, `BBox`, `TransformToPolygon` into empty and non-empty buffers; negative / zero sizes, radii beyond the limit), `SHAPE_RECT::TransformToPolygon` / `Outline` with radius |
+| `libm:conv_corner_ops` | 20000 | `ComputeChamferPoints`, `ComputeDogbone` (with / without slots) on axis-aligned, collinear, short, random and non-coterminous segment pairs in both orientations |
+| `libm:conv_shape_utils` | 20000 | every `KIGEOM` function of `shape_utils` (all directions incl. `LAST` / `UNDEFINED`), `GetOvalKeyPoints` (all flag sets), `ConvertToChain` |
+| `libm:intersection` | 30000 | `INTERSECTION_VISITOR` on every ordered pair of the 7 kinds, with and without contact, both directions accumulating one contact; half the cases on a 100 nm grid (collinear, tangent, concentric contacts); `GetNearestPoint` (single and list) |
+| `libm:shape_ellipse` | 30000 | `SHAPE_ELLIPSE`: all constructors (degenerate / swapped radii, DXF style), getters, `BBox` (with clearance), `GetLength`, `Format`, per case 3 queries (`PointInside` with accuracy, both `SquaredDistance`s, `NearestPoint`, `Collide( SEG )` with every out-parameter combination, `Intersect( SEG )` as segment and line), `ConvertToPolyline`, `TransformToPolygon`, `Intersect` with circles, arcs and ellipses / elliptical arcs, `Rotate`, `Mirror`, `Move`, the setters, `operator==` |
+
+- Regenerate: `tests/oracle/build_conv_oracle.sh`.  A full dump is several GB; find a mismatch
+  with `build_conv_oracle.sh --only SECTION --count N --dump cpp.txt` and
+  `KICAD_CONV_ORACLE_ONLY=SECTION KICAD_CONV_ORACLE_COUNT=N KICAD_GEOM_ORACLE_DUMP=rust.txt`
+  (both run just that section; regenerate the full golden afterwards).
+- Inputs avoid C++ undefined behaviour (filtered identically on both sides): inflating
+  trapezoids thinner than 1:50 (`( int )( aInflate / tanAngle2 )` out of range at the acute
+  corners, then signed overflow), shrinking trapezoids with a half size of 0 (division by zero),
+  `MakeRegularPolygonPoints` across flats with fewer than 3 sides (division by `cos( 90 deg )`),
+  arcs whose rounded points are collinear (clamped centre near the `int` limits overflows in
+  `SEG::LineProject`), `ConvertToChain` of zero-length ovals, `Outline()` of a rectangle whose
+  polygonisation is empty, `GetLength()` of ellipses with a major radius above 1 mm (only slow:
+  the adaptive integration runs to its depth limit).
 
 ### `coll_oracle` (G5)
 
@@ -546,6 +600,23 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 
 ## Deviations
 
+- **D-G1 `cmath::cbrt` is a port of glibc's `__cbrt`** (`sysdeps/ieee754/dbl-64/s_cbrt.c`).
+  Rust's `f64::cbrt` does not call the system libm and differs from glibc by one ulp for about
+  half of all inputs, which changed the root count of tangent ellipse / circle intersections.
+  The port is bit-exact (verified on 220,000 bit patterns) and, being pure Rust, also on wasm.
+- **D-G2 `ROUNDRECT::TransformToPolygon` replaces the buffer** with a plain assignment; the C++
+  move assignment keeps the target's "hash failed" flag (`ShapePolySet::move_assign` is private
+  to `shape_poly_set.rs`), so only that flag of the target can differ.  Geometry is identical
+  (oracle).
+- **D-G3 `CornerListToPolygon`** of an empty corner list adds an empty outline (C++ reads
+  `aCorners[0]`); its `wxCHECK_RET` (no intersection, not reachable with valid input) returns
+  from the whole function like the C++.  The out-of-range `( int )` conversions of `double`
+  arguments to `VECTOR2I::Resize` and `GetArcToSegmentCount( ..., double aAccuracy, ... )` use
+  `f64_to_i32_x86`.
+- **D-G4 Collision matrix entry for `SH_ELLIPSE`.**  Adding `ShapeRef::Ellipse` required an arm
+  in `shape_collisions::collide_single_shapes`; G6b added a placeholder that G5 has since
+  replaced with the ported ellipse pairs.
+
 - **D1 `KiCheckedCast<int64_t, int>` clamps on every platform.** The C++ only clamps when
   `in_type` is `long long int`. On LP64 Linux `int64_t` is `long`, so in the Linux build the
   instantiation used by `BOX2I` (`GetRight()`, `GetBottom()`, `Centre()`, `Normalize()`,
@@ -797,17 +868,13 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **GAP-3** Test helpers that need polygon sets (`FilletPolySet`,
   `IsPolySetValid`, `ChainsAreCyclicallyEqual`) wait for those ports (the hash and
   `geometry_predicates.h` tests were ported in G6a).
-- **GAP-H1 (G6b)** `nearest.h/.cpp` (needs `SHAPE_ELLIPSE`), `SHAPE_ELLIPSE` and the private
-  root-finding / integration helpers of `shape_ellipse.cpp`; `matrix3x3.h` (skipped, no user in
-  scope).
+- **GAP-H1** (closed in G6b) `SHAPE_ELLIPSE` and `nearest`; `matrix3x3.h` stays skipped (no user
+  in scope).
 - **GAP-4** (closed in G5) the collision matrix and `SHAPE::NearestPoints`: see the map, D-C1
   and the `coll_oracle`.
-- **GAP-5 Polygonisation of round shapes.** `TransformToPolygon` of `ShapeCircle`,
-  `ShapeSegment`, `ShapeArc` and of `ShapeRect` with rounded corners needs
-  `convert_basic_shapes_to_polygon` / `ROUNDRECT` (later packages) and leaves the buffer
-  unchanged; consequently `ShapeRect::outline()` of a rounded rectangle is empty, and the
-  default `Shape::squared_distance` / `point_inside` of those shapes see no outline (they return
-  `ECOORD_MAX` / false).
+- **GAP-5** (closed in G6b) `TransformToPolygon` of circles, segments, arcs and rounded
+  rectangles (and so `ShapeRect::outline()` of rounded rectangles) go through
+  `convert_basic_shapes_to_polygon` / `Roundrect`.
 - **GAP-6** (closed in G4a) the `SHAPE_POLY_SET` skeleton; what is left is GAP-P1.
 - **GAP-S1** (closed in G4a) `SHAPE_LINE_CHAIN::OffsetLine` is `ShapeLineChain::offset_line`
   (verified by `libm:sps_inflate`).

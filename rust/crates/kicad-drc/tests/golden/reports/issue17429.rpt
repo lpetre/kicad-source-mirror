@@ -1,0 +1,56 @@
+** Drc report for issue17429.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Exclusions **
+
+** Found 3 DRC violations **
+[annular_width]: Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)
+    Rule: board setup constraints; error (excluded)
+    @(113.6000 mm, 162.6000 mm): Via [<no net>] on F.Cu - hs signal - B.Cu - signal
+[annular_width]: Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)
+    Rule: board setup constraints; error (excluded)
+    @(113.5964 mm, 160.1818 mm): Via [<no net>] on F.Cu - hs signal - B.Cu - signal
+[annular_width]: Annular width (board setup constraints min annular width 0.1016 mm; actual 0.0508 mm)
+    Rule: board setup constraints; error (excluded)
+    @(113.6000 mm, 167.3818 mm): Via [<no net>] on F.Cu - hs signal - B.Cu - signal
+
+** Found 7 unconnected pads **
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(119.7000 mm, 154.6000 mm): Track [MODULE0_INPUT1_BIAS_ELEC] on F.Cu - hs signal, length 1.1600 mm
+    @(115.4600 mm, 154.6000 mm): Pad 88 [MODULE0_INPUT1_BIAS_ELEC] of J1 on F.Cu - hs signal
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(115.4600 mm, 159.0000 mm): Track [MODULE0_INPUT1_IN5P] on F.Cu - hs signal, length 1.3600 mm
+    @(118.5400 mm, 159.0000 mm): Pad 65 [MODULE0_INPUT1_IN5P] of J1 on F.Cu - hs signal
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(118.5400 mm, 167.8000 mm): Pad 21 [MODULE0_INPUT0_IN2P] of J1 on F.Cu - hs signal
+    @(115.4600 mm, 167.8000 mm): Track [MODULE0_INPUT0_IN2P] on F.Cu - hs signal, length 1.2600 mm
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(118.5400 mm, 158.2000 mm): Pad 69 [MODULE0_INPUT1_IN4P] of J1 on F.Cu - hs signal
+    @(113.1088 mm, 158.2000 mm): Track [MODULE0_INPUT1_IN4P] on F.Cu - hs signal, length 2.3512 mm
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(115.4600 mm, 156.6000 mm): Track [MODULE0_INPUT1_IN2P] on F.Cu - hs signal, length 2.3600 mm
+    @(118.5400 mm, 156.6000 mm): Pad 77 [MODULE0_INPUT1_IN2P] of J1 on F.Cu - hs signal
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(119.5000 mm, 155.0000 mm): Track [MODULE0_INPUT1_REF_ELEC] on F.Cu - hs signal, length 0.9600 mm
+    @(115.4600 mm, 155.0000 mm): Pad 86 [MODULE0_INPUT1_REF_ELEC] of J1 on F.Cu - hs signal
+[unconnected_items]: Missing connection between items
+    Local override; error (excluded)
+    @(115.4600 mm, 160.6000 mm): Track [MODULE0_INPUT1_IN7P] on F.Cu - hs signal, length 1.3600 mm
+    @(118.5400 mm, 160.6000 mm): Pad 57 [MODULE0_INPUT1_IN7P] of J1 on F.Cu - hs signal
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+
+** End of Report **

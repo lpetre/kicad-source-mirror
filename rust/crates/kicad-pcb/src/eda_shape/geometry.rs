@@ -1374,11 +1374,12 @@ pub(crate) fn hit_test_point<H: EdaShapeItem + ?Sized>(
     let es = host.eda_shape();
 
     if has_line_ending(es) {
-        let shape = ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
-            host,
-            ctx,
-            host.effective_width(ctx),
-        ));
+        let shape =
+            ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
+                host,
+                ctx,
+                host.effective_width(ctx),
+            ));
         let hit_shape: &dyn Shape = &shape;
 
         return hit_shape.collide_point(pos, 0.max(accuracy), None, None);
@@ -1599,11 +1600,12 @@ pub(crate) fn hit_test_rect<H: EdaShapeItem + ?Sized>(
 
     if has_line_ending(es) {
         let selection = box_to_line_chain(&rect);
-        let shape = ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
-            host,
-            ctx,
-            host.effective_width(ctx),
-        ));
+        let shape =
+            ShapeCompound::from_shapes(super::shapes::make_effective_shapes_with_line_endings(
+                host,
+                ctx,
+                host.effective_width(ctx),
+            ));
 
         return shape_hit_test(&selection, &shape, contained);
     }

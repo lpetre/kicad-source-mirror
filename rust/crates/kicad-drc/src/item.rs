@@ -573,7 +573,10 @@ mod tests {
         let expected: Vec<&str> = expected.split_whitespace().collect();
         assert_eq!(keys, expected);
         assert_eq!(
-            items_with_severities().iter().filter(|i| i.code == 0).count(),
+            items_with_severities()
+                .iter()
+                .filter(|i| i.code == 0)
+                .count(),
             6
         );
     }
@@ -582,7 +585,10 @@ mod tests {
     fn create_by_key() {
         let item = create_from_key("too_many_vias").unwrap();
         assert_eq!(item.error_code, DRCE_VIA_COUNT_OUT_OF_RANGE);
-        assert_eq!(item.error_message(), "Too many or too few vias on a connection");
+        assert_eq!(
+            item.error_message(),
+            "Too many or too few vias on a connection"
+        );
         assert!(create_from_key("hole_near_hole").is_none());
         // The settings-only item exists by key.
         assert_eq!(

@@ -526,7 +526,9 @@ fn skeleton_regions(text: &str) -> [String; 3] {
 /// board copied alone), parse (staging) + format (staging) must give the same skeleton regions
 /// ([`skeleton_regions`]) as the reference re-save. Boards whose parse reaches a model stub are
 /// reported as pending; boards the reference build rejects are skipped (the parser package
-/// checks the errors).
+/// checks the errors). A differing region is accepted (and reported) only when the parse
+/// skipped a construct whose pending parser feeds that region (legacy teardrop zones for the
+/// `(general ..)` flag, `(variants ..)`, `(embedded_fonts ..)`).
 #[test]
 fn oracle_corpus_skeleton() {
     let golden = std::fs::read_to_string(
@@ -534,7 +536,7 @@ fn oracle_corpus_skeleton() {
     )
     .unwrap();
     let root = kicad_qa::kicad_source_root();
-    let (mut compared, mut pending) = (0, 0);
+    let (mut compared, mut pending, mut pending_parsers) = (0, 0, 0);
     let mut failures = Vec::new();
 
     for line in golden
@@ -552,9 +554,10 @@ fn oracle_corpus_skeleton() {
         let text = String::from_utf8_lossy(&bytes);
 
         let result = model(|| {
-            let board =
-                parse_board(&text, path, &staging_parse()).map_err(|e| e.what().to_string())?;
-            format_board(&board, &staging()).map_err(|e| e.what().to_string())
+            let (board, report) = parse_board_report(&text, path, &staging_parse())
+                .map_err(|e| e.what().to_string())?;
+            let out = format_board(&board, &staging()).map_err(|e| e.what().to_string())?;
+            Ok::<_, String>((out, report))
         });
 
         match result {
@@ -563,25 +566,43 @@ fn oracle_corpus_skeleton() {
                 println!("{path}: pending on model stub {stub}");
             }
             Ok(Err(e)) => failures.push(format!("{path}: {e}")),
-            Ok(Ok(out)) => {
+            Ok(Ok((out, report))) => {
                 compared += 1;
                 let regions = skeleton_regions(&out);
+                let skipped = |token: &str| report.skipped.iter().any(|s| s.token == token);
 
                 for (k, region) in regions.iter().enumerate() {
                     let hash = format!("{:016x}", fnv1a64(region.as_bytes()));
 
-                    if hash != expected[k] {
-                        failures.push(format!(
-                            "{path}: region {} differs:\n{region}",
-                            ["header", "properties/variants", "embedded_fonts"][k]
-                        ));
+                    if hash == expected[k] {
+                        continue;
+                    }
+
+                    // Constructs read by still pending parsers that feed a skeleton region:
+                    // `parseZONE` sets the legacy teardrops flag of `(general ..)` (PCBIO-08),
+                    // `(variants ..)` and `(embedded_fonts ..)` are PCBIO-11.
+                    let explained = match k {
+                        0 => skipped("zone"),
+                        1 => skipped("variants"),
+                        _ => skipped("embedded_fonts"),
+                    };
+                    let what = ["header", "properties/variants", "embedded_fonts"][k];
+
+                    if explained {
+                        pending_parsers += 1;
+                        println!("{path}: region {what} differs, explained by a pending parser");
+                    } else {
+                        failures.push(format!("{path}: region {what} differs:\n{region}"));
                     }
                 }
             }
         }
     }
 
-    println!("oracle_corpus_skeleton: {compared} compared, {pending} pending on model stubs");
+    println!(
+        "oracle_corpus_skeleton: {compared} compared, {pending} pending on model stubs, \
+         {pending_parsers} regions differing because of pending parsers"
+    );
     assert!(compared > 0);
     assert!(
         failures.is_empty(),

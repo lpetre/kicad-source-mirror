@@ -94,7 +94,7 @@
 #undef private
 
 
-/// The pinned clock: 2026-11-09 18:04:05 UTC (23:34:05 at +05:30).
+/// The pinned clock: 2025-11-09 18:04:05 UTC (23:34:05 at +05:30).
 static const time_t PINNED_TIME = 1762711445;
 
 extern "C" time_t time( time_t* aOut )

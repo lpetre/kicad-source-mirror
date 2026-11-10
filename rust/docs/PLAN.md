@@ -150,35 +150,43 @@ Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend 
 (Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
 
 Progress log of launches (workflow task ids):
-- done (Opus, Fable-reviewed, decisions accepted unless noted): M1 containers/index/
-  create-attach, M2 item base (wnw19yvig); M3 nets + netclasses, M13 padstack (w1sw02b68);
-  Fable integration of wave 0b (design revision 2.2: EdaShapeItem::width / top_left /
-  bot_right take ctx; compiled matchers in NetSettings; ComponentClass is_constituent flag;
-  PcbPlotParams::layer default corrected from the oracle; tests/test_defaults_oracle.rs),
-  M7 EdaShape core, M10 text (wawxgug4p; M10 matches pcb-dump bit for bit on five texts incl.
-  a rotated + scaled footprint).
-- running: geometry G4b -> G5 and G6b (wvunbqm6s); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02
-  -> PCBIO-17 and DRC-20 -> DRC-11 (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 ->
-  FAB-02 (wqbof03ge); M5 -> SET-4 and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk); M4 ->
-  SET-3 and M14 (wi1yj6pr0); M22 and M24 (wjpjy2o11); M8 -> M9 -> M11 (w3pcibnu5).
-- next up when their dependencies land: M18 (after M5), M12 (after M8), M15 (after M14, M9),
-  M21 (after M9), M19 (after M14, M9, M10, M18), M20; PCBIO fan-out after PCBIO-02;
-  connectivity after G5; DRC engine after DRC-20.
-- frozen-file change requests to apply in the NEXT Fable integration step (after wave 1/2):
-  traits.rs: EdaShapeItem::corners_in_sequence needs ctx; BoardItemMut::style_from_settings
-  needs &MutEnv; a SetNet virtual for the zone copper-thieving override. ctx.rs: LayerEnv
-  per-layer LAYER_T (PCB_TEXT::Flip side-specific test); ConnectivityQuery::net_items (GUI
-  only). padstack.rs: CopperLayerProps::compare can now call EdaShape::compare. footprint:
-  declare ResolveTextVar and GetFieldValueForVariant (M19) and wire pcb_text / pcb_field
-  stubs. board/nets.rs: wire apply_net_chain_netclasses to M4's chain-pattern functions.
-  Parser: after (render_cache ...) call EdaText::resolve_font. Misc: wx_string_matches to
-  kicad_core; unbind_uuid helper; own_clearance for an item without a handle; a pad created
-  under a board needs zone_layer_overrides for the board's copper count.
-- incidents: the disk filled once (multi-GB oracle scratch dumps); recovered, a watchdog
-  (/home/user/kicad-oracle/bin/disk-watchdog.sh, background task, 2 h lifetime: restart it
-  when it ends) removes scratch files over 1 GB; PORTING.md section 7 has the disk rule.
-  crates/kicad-pcb/tests/pcb_dump_defaults.rs was truncated to 0 bytes at that moment: check
-  it when DUMP-RS reports.
+- done (Opus; results read and accepted on Fable unless noted): model M0 (reviewed kernel +
+  types), M1, M2, M3, M4, M5, M6, M7, M10, M13, M14, M16, M17, M22, M23, M24, SET-3 (net
+  settings JSON), Fable integration #1 (design rev 2.2), DUMP-RS (defaults scoreboard: 3013
+  match / 0 mismatch / 669 pending), PCBIO-01 parser core, PCBIO-02 writer core, DRC-20 rule
+  file parser, FAB-01 drill model. kicad-geom is COMPLETE: G4b triangulation (140k oracle
+  cases), G5 collision matrix + nearest points + shape index (245k cases; found and fixed an
+  MTV sign bug in the G2 dispatch), G6b shape conversion utilities (250k cases; replaced
+  cmath::cbrt with a glibc port because Rust's cbrt differs by 1 ulp) - orchestrator re-ran
+  the crate: 555 tests pass, 0 fail.
+- running: PCBIO-17 corpus harness and DRC-11 report writers (wh3q6gcxx); W1 session / cli /
+  wasm skeleton and FAB-02 Excellon writer (wqbof03ge); SET-4 BDS JSON (w2szwoq36); M8 -> M9
+  -> M11 (w3pcibnu5); PCBIO-04 setup and PCBIO-09 -> PCBIO-11 (wn7tddi73); M18 -> PCBIO-08
+  and M12 -> PCBIO-10 (wr976icfj); PCBIO-03 and PCBIO-05 (wa5nbjjnh); M15 pad shapes and
+  CN-01 -> CN-02 -> CN-03 -> CN-04 connectivity (wk55svoty); DRC-03 -> DRC-04 and DRC-02 ->
+  DRC-05 (wfbkc41jw).
+- next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
+  (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
+  real boards end to end), PCBIO-12 / 13 / 14; SET-5 project file + SetProject glue; DRC
+  providers DRC-06 .. DRC-10 and DRC-12 (after DRC-04 / 05); FAB-03 .. FAB-09 board plotting
+  (after model shapes); PCBIO-15 loader glue in kicad-session (after CN-04); zone fill.
+- Fable integration #2 (DEFERRED until the M8 -> M9 -> M11 chain and M12 / M15 / M18 are
+  done, because it changes trait signatures in files those agents are editing): apply the
+  collected change requests in rust/target/orchestrator/change_requests.txt (regenerate it
+  from the workflow journals first; it is a scratch file) - traits.rs
+  (EdaShapeItem::corners_in_sequence(ctx), BoardItemMut::style_from_settings(&MutEnv), a
+  SetNet virtual), ctx.rs (LayerEnv LAYER_T, ConnectivityQuery::net_items), item.rs
+  (ItemFlags STARTPOINT / ENDPOINT), drc_api.rs (DrcConstraint::name()), dump (LAYER_T
+  names; wire every `no_api(..)` whose getter now exists), footprint functions other
+  packages inlined or stubbed, apply_net_chain_netclasses wiring, wx_string_matches to
+  kicad_core, BoardProject::project_name / visible_layers / clock - and review the
+  decisions and deviations of every package section in kicad-pcb/PORT_STATUS.md.
+- dedicated Fable reviews still owed: connectivity pointer-order replacements (after CN-04),
+  DRC resolver / EvalRules (after DRC-04), zone filler.
+- incidents: the disk filled once (multi-GB oracle scratch dumps); a watchdog
+  (/home/user/kicad-oracle/bin/disk-watchdog.sh, background task with a 2 h lifetime:
+  restart it when it ends) removes scratch files over 1 GB; dev profile has debug = 0;
+  PORTING.md section 7 has the disk rule.
 
 Queue - launch each item as soon as its dependencies have landed (model package rows and
 run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis

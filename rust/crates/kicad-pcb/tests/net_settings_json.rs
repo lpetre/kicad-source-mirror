@@ -157,7 +157,7 @@ fn run_document(rel: &str, contents: &[u8], full: bool) -> Vec<String> {
     );
 
     // flushToStore(): nested settings first, then the parent's own parameters.
-    let mut flush = |nsj: &mut NetSettingsJson, parent: &mut JsonSettings<()>| {
+    let flush = |nsj: &mut NetSettingsJson, parent: &mut JsonSettings<()>| {
         let mut modified = nsj.save_to_parent(&mut parent.internals, &ns, false);
         modified |= parent.store(&());
         modified
@@ -206,7 +206,11 @@ fn oracle_documents() {
             blocks.push((rel.to_string(), Vec::new()));
         }
 
-        blocks.last_mut().expect("golden starts with a file line").1.push(line);
+        blocks
+            .last_mut()
+            .expect("golden starts with a file line")
+            .1
+            .push(line);
     }
 
     let mut mismatches = Vec::new();
@@ -304,7 +308,12 @@ fn net_chain_classes_json_round_trip_empty() {
     let reparsed = reparse(&mut source_json, &source);
 
     assert!(reparsed["net_chain_classes"].is_object());
-    assert!(reparsed["net_chain_classes"].as_object().unwrap().is_empty());
+    assert!(
+        reparsed["net_chain_classes"]
+            .as_object()
+            .unwrap()
+            .is_empty()
+    );
 
     let mut sink = NetSettings::default();
     sink.set_net_chain_class("STALE", "Default");
@@ -532,10 +541,7 @@ fn copy_from_clears_stale_chain_derived_patterns() {
     let mut sink = NetSettings::default();
     let mut sink_json = NetSettingsJson::new("");
 
-    sink.set_netclasses(single_class(
-        "HighSpeed",
-        Netclass::new("HighSpeed", false),
-    ));
+    sink.set_netclasses(single_class("HighSpeed", Netclass::new("HighSpeed", false)));
     sink.set_chain_pattern_assignment(NetChainSource::Schematic, "DDR_DQ0", "HighSpeed");
 
     assert!(resolves_to_netclass(&mut sink, "DDR_DQ0", "HighSpeed"));
@@ -548,3 +554,175 @@ fn copy_from_clears_stale_chain_derived_patterns() {
 }
 
 // CopyFromSelfIsNoop: not expressible, `copy_from` cannot borrow the same settings twice.
+
+// ---- pcb-dump: netclasses of the board bound to its project ------------------------------
+
+/// Compares, for every corpus `.kicad_pro` with a sibling `.kicad_pcb`, the netclass table, the
+/// pattern and label assignments and the effective netclass name of every board net with
+/// `pcb-dump board --sections board` of the reference build (QA load path, the board bound to
+/// its project), extracted by `tests/oracle/net_settings_json_pcbdump.py` into
+/// `tests/golden/net_settings_json_pcbdump.txt`. Boards with legacy `(net_class ...)` sections
+/// are skipped: their classes replace the project's in `BOARD::SetProject` (package SET-5).
+/// The net names come from the golden (the Rust board parser does not create the nets of
+/// footprint pads yet).
+#[test]
+fn pcb_dump_netclasses() {
+    let golden = include_str!("golden/net_settings_json_pcbdump.txt");
+    let root = kicad_root();
+    let mut mismatches = Vec::new();
+    let mut compared = [0usize; 4]; // projects, classes, patterns+labels, nets
+    let mut skipped_legacy = Vec::new();
+    let mut skipped_chain = Vec::new();
+    let mut lines = golden.lines().peekable();
+
+    while let Some(line) = lines.next() {
+        let f: Vec<&str> = line.split('\t').collect();
+        assert_eq!(f[0], "proj", "{line}");
+        let pro_rel = f[1];
+        let mut block = Vec::new();
+
+        while let Some(l) = lines.peek() {
+            if l.starts_with("proj\t") {
+                break;
+            }
+
+            block.push(lines.next().unwrap());
+        }
+
+        if f.get(3) == Some(&"legacy") {
+            skipped_legacy.push(pro_rel);
+            continue;
+        }
+
+        // The board's nets, as pcb-dump lists them (`net<TAB>name[<TAB>class]`).
+        let net_names: Vec<&str> = block
+            .iter()
+            .filter_map(|l| l.strip_prefix("net\t"))
+            .map(|l| l.split('\t').next().unwrap())
+            .collect();
+        block.retain(|l| !l.starts_with("net\t"));
+
+        let contents = std::fs::read(root.join(pro_rel)).expect("project");
+        let mut parent = JsonSettings::<()>::new(4, Some("project.json"));
+        parent.load_from_buffer(&contents, &mut ());
+        let (mut ns, _) =
+            kicad_pcb::project::net_settings_json::load_net_settings(Some(&parent.internals));
+
+        let mut actual = Vec::new();
+        let css = |nc: &Netclass| {
+            format!(
+                "nc\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+                nc.get_name(),
+                u8::from(nc.is_default()),
+                nc.priority,
+                opt(nc.clearance),
+                opt(nc.track_width),
+                opt(nc.via_dia),
+                opt(nc.via_drill),
+                opt(nc.uvia_dia),
+                opt(nc.uvia_drill),
+                opt(nc.diff_pair_width),
+                opt(nc.diff_pair_gap),
+                opt(nc.diff_pair_via_gap),
+                opt(nc.wire_width),
+                opt(nc.bus_width),
+                opt(nc.line_style),
+                nc.pcb_color.to_css_string(),
+                nc.schematic_color.to_css_string(),
+                nc.tuning_profile,
+                nc.description
+            )
+        };
+
+        actual.push(css(&ns.default_netclass));
+        actual.extend(ns.netclasses.values().map(|nc| css(nc)));
+
+        let hashed = |tag: &str, l: Vec<String>| {
+            let all: String = l.iter().map(|l| format!("{l}\n")).collect();
+            format!("{tag}\t{}\t{}", l.len(), fnv(&all))
+        };
+
+        actual.push(hashed(
+            "pat",
+            ns.netclass_pattern_assignments
+                .iter()
+                .map(|(m, nc)| format!("{}\t{nc}", m.pattern()))
+                .collect(),
+        ));
+        actual.push(hashed(
+            "lab",
+            ns.netclass_label_assignments
+                .iter()
+                .map(|(net, cl)| {
+                    std::iter::once(net.clone())
+                        .chain(cl.iter().cloned())
+                        .collect::<Vec<_>>()
+                        .join("\t")
+                })
+                .collect(),
+        ));
+
+        let mut eff: Vec<String> = net_names
+            .iter()
+            .map(|name| format!("{name}\t{}", ns.get_effective_netclass(name).get_name()))
+            .collect();
+        eff.sort_by(|a, b| a.as_bytes().cmp(b.as_bytes()));
+        actual.push(hashed("eff", eff));
+
+        // BOARD::ApplyNetChainNetclasses (package SET-5) adds chain pattern assignments from the
+        // board's net chains when the project has `net_chain_netclasses`: the effective classes
+        // of those boards are not comparable yet.
+        if !ns.net_chain_net_classes.is_empty() {
+            skipped_chain.push(pro_rel);
+            actual.pop();
+            block.retain(|l| !l.starts_with("eff\t"));
+        }
+
+        if actual.len() != block.len() || actual.iter().zip(&block).any(|(a, e)| a != e) {
+            let diffs: Vec<String> = actual
+                .iter()
+                .zip(&block)
+                .filter(|(a, e)| a != *e)
+                .map(|(a, e)| format!("  rust {a}\n  c++  {e}"))
+                .collect();
+            mismatches.push(format!(
+                "{pro_rel} ({} vs {} lines):\n{}",
+                actual.len(),
+                block.len(),
+                diffs.join("\n")
+            ));
+        } else {
+            compared[0] += 1;
+            compared[1] += block.iter().filter(|l| l.starts_with("nc\t")).count();
+
+            for l in &block {
+                let f: Vec<&str> = l.split('\t').collect();
+
+                match f[0] {
+                    "pat" | "lab" => compared[2] += f[1].parse::<usize>().unwrap(),
+                    "eff" => compared[3] += f[1].parse::<usize>().unwrap(),
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    eprintln!(
+        "pcb-dump: {} projects identical ({} classes, {} pattern/label assignments, {} nets); \
+         {} legacy boards skipped: {:?}; effective classes not compared (net chain \
+         netclasses): {:?}",
+        compared[0],
+        compared[1],
+        compared[2],
+        compared[3],
+        skipped_legacy.len(),
+        skipped_legacy,
+        skipped_chain
+    );
+    assert!(
+        mismatches.is_empty(),
+        "{} projects differ:\n{}",
+        mismatches.len(),
+        mismatches.join("\n")
+    );
+}

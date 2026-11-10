@@ -1,0 +1,1 @@
+{"board": {"design_settings": {"meta": {"version": 3}, "rule_severities": {"shorting_items": "ignore", "clearance": "warning", "creepage": null, "via_dangling": "error", "unconnected_items": "warning"}, "track_widths": [0.0, 0.2, true, 0.3], "teardrop_options": [{"td_onvia": false, "td_onpthpad": 1, "td_onsmdpad": false}]}}, "meta": {"version": 3}}

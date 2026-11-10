@@ -1,0 +1,49 @@
+** Drc report for issue12109.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 10 DRC violations **
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.8236 in, 3.7669 in): Via [Net-(J1-Pad3)] on F.Cu - B.Cu
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 3.5980 in): PTH pad 1 [Net-(J1-Pad1)] of J1
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 3.6980 in): PTH pad 2 [Net-(J1-Pad2)] of J1
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 3.7980 in): PTH pad 3 [Net-(J1-Pad3)] of J1
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 3.8980 in): PTH pad 4 [Net-(J1-Pad4)] of J1
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 3.9980 in): PTH pad 5 [Net-(J1-Pad5)] of J1
+[annular_width]: Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)
+    Rule: board setup constraints; error
+    @(5.7177 in, 4.0980 in): PTH pad 6 [Net-(J1-Pad6)] of J1
+[via_dangling]: Via is not connected or connected on only one layer
+    Local override; warning
+    @(5.8236 in, 3.7669 in): Via [Net-(J1-Pad3)] on F.Cu - B.Cu
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(5.5346 in, 3.5980 in): Footprint J2
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'
+    Local override; warning
+    @(5.7177 in, 3.5980 in): Footprint J1
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+
+** End of Report **

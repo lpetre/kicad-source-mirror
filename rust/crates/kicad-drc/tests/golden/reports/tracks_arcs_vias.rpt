@@ -1,0 +1,37 @@
+** Drc report for tracks_arcs_vias.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 5 DRC violations **
+[solder_mask_bridge]: Front solder mask aperture bridges items with different nets
+    Rule: board setup solder mask min width; error
+    @(38.0375 mm, 32.3650 mm): Pad 7 [<no net>] of REF** on F.Cu
+    @(35.6350 mm, 32.3650 mm): Track [<no net>] on F.Cu, length 2.4025 mm
+[solder_mask_bridge]: Front solder mask aperture bridges items with different nets
+    Rule: board setup solder mask min width; error
+    @(32.9625 mm, 38.6988 mm): Track (arc) [<no net>] on F.Cu, length 3.9771 mm
+    @(32.9625 mm, 33.6350 mm): Pad 3 [<no net>] of REF** on F.Cu
+[track_dangling]: Track has unconnected end
+    Local override; warning
+    @(42.3403 mm, 24.8436 mm): Track [McNetty] on F.Cu, length 0.2235 mm
+[track_dangling]: Track has unconnected end
+    Local override; warning
+    @(28.1312 mm, 30.1284 mm): Track [McNetty] on F.Cu, length 0.1836 mm
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Package_SO'
+    Local override; warning
+    @(35.5000 mm, 33.0000 mm): Footprint REF**
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+    - Footprint component type doesn't match footprint pads
+
+** End of Report **

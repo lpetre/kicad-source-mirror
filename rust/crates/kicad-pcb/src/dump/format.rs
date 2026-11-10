@@ -532,7 +532,11 @@ pub fn v_shape(s: Option<&dyn Shape>) -> String {
         ),
         ShapeRef::LineChain(c) => format!("SH_LINE_CHAIN({})", v_chain(c)),
         ShapeRef::Circle(c) => {
-            format!("SH_CIRCLE(c={} r={})", v_vec(c.get_center()), c.get_radius())
+            format!(
+                "SH_CIRCLE(c={} r={})",
+                v_vec(c.get_center()),
+                c.get_radius()
+            )
         }
         ShapeRef::Simple(c) => format!("SH_SIMPLE({})", v_chain(c.vertices())),
         ShapeRef::PolySet(p) => format!("SH_POLY_SET({})", v_polyset(p)),
@@ -844,6 +848,9 @@ mod tests {
             emit!(o, "b", panic!("boom"));
             emit!(o, "c", v_int(1));
         });
-        assert_eq!(o.text, "pending|s|k|a=X::Y\nrust-error|s|k|b=boom\ns|k|c=1\n");
+        assert_eq!(
+            o.text,
+            "pending|s|k|a=X::Y\nrust-error|s|k|b=boom\ns|k|c=1\n"
+        );
     }
 }

@@ -1,0 +1,192 @@
+{
+    "$schema": "https://schemas.kicad.org/drc.v1.json",
+    "coordinate_units": "in",
+    "date": "<DATE>",
+    "ignored_checks": [
+        {
+            "description": "Footprint has no courtyard defined",
+            "key": "missing_courtyard"
+        },
+        {
+            "description": "Track endpoint not centered on via",
+            "key": "track_not_centered_on_via"
+        },
+        {
+            "description": "Tuning profile track geometries",
+            "key": "tuning_profile_track_geometries"
+        },
+        {
+            "description": "Footprint doesn't match symbol's footprint filters",
+            "key": "footprint_filters_mismatch"
+        },
+        {
+            "description": "PTH inside courtyard",
+            "key": "pth_inside_courtyard"
+        },
+        {
+            "description": "NPTH inside courtyard",
+            "key": "npth_inside_courtyard"
+        }
+    ],
+    "included_severities": [
+        "error",
+        "warning",
+        "exclusion"
+    ],
+    "kicad_version": "10.99.0",
+    "schematic_parity": [],
+    "source": "issue12109.kicad_pcb",
+    "unconnected_items": [],
+    "violations": [
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "Via [Net-(J1-Pad3)] on F.Cu - B.Cu",
+                    "pos": {
+                        "x": 5.823622047244094,
+                        "y": 3.7669291338582673
+                    },
+                    "uuid": "56a3c0c1-a962-4ec3-b482-addc770b1808"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 1 [Net-(J1-Pad1)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.598031496062992
+                    },
+                    "uuid": "5c469eb6-9b81-491f-bd33-d81fc5db2ebd"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 2 [Net-(J1-Pad2)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.6980314960629923
+                    },
+                    "uuid": "55c8d0fb-5866-4d93-9f5b-5e208178fbc0"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 3 [Net-(J1-Pad3)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.798031496062992
+                    },
+                    "uuid": "b5a7e57b-9375-4dcc-8aaa-843bb8ad79ef"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 4 [Net-(J1-Pad4)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.898031496062992
+                    },
+                    "uuid": "7a4cf30b-7a58-4751-9358-1241c6201e8e"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 5 [Net-(J1-Pad5)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.998031496062992
+                    },
+                    "uuid": "6cd5f354-5ccb-4b02-a452-cccc06d04362"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Annular width (board setup constraints min annular width 0.0079 in; actual 0.0020 in)",
+            "items": [
+                {
+                    "description": "PTH pad 6 [Net-(J1-Pad6)] of J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 4.098031496062992
+                    },
+                    "uuid": "dff37c24-3a7a-44d4-a983-ecd21b7ea0a9"
+                }
+            ],
+            "severity": "error",
+            "type": "annular_width"
+        },
+        {
+            "description": "Via is not connected or connected on only one layer",
+            "items": [
+                {
+                    "description": "Via [Net-(J1-Pad3)] on F.Cu - B.Cu",
+                    "pos": {
+                        "x": 5.823622047244094,
+                        "y": 3.7669291338582673
+                    },
+                    "uuid": "56a3c0c1-a962-4ec3-b482-addc770b1808"
+                }
+            ],
+            "severity": "warning",
+            "type": "via_dangling"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
+            "items": [
+                {
+                    "description": "Footprint J2",
+                    "pos": {
+                        "x": 5.534645669291339,
+                        "y": 3.598031496062992
+                    },
+                    "uuid": "0f56ae0b-68c8-4d94-8ec9-a9bcb40c62ee"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        },
+        {
+            "description": "The current configuration does not include the footprint library 'Connector_PinHeader_2.54mm'",
+            "items": [
+                {
+                    "description": "Footprint J1",
+                    "pos": {
+                        "x": 5.717716535433071,
+                        "y": 3.598031496062992
+                    },
+                    "uuid": "38c7189a-ba8d-4299-b230-48e6f64519bc"
+                }
+            ],
+            "severity": "warning",
+            "type": "lib_footprint_issues"
+        }
+    ]
+}

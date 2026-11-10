@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! DUMP-RS: the Rust `defaults` dump against the C++ golden
 //! (`tests/golden/pcb_dump_defaults.txt`, made with `/home/user/kicad-oracle/bin/pcb-dump
 //! defaults`). Fails on any mismatch / rust-error / missing / extra line; pending fields (stubs

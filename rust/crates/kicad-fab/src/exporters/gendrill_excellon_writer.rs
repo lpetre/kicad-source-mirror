@@ -419,7 +419,11 @@ impl<'a> ExcellonWriter<'a> {
                     let format_stub = |stub_length: i32| -> String {
                         let stub_mm = PCB_IU_SCALE.iu_to_mm(stub_length);
                         let stub_inches = stub_mm / 25.4;
-                        format!("{}mm ({}\")", format_f(stub_mm, 3), format_f(stub_inches, 4))
+                        format!(
+                            "{}mm ({}\")",
+                            format_f(stub_mm, 3),
+                            format_f(stub_inches, 4)
+                        )
                     };
 
                     let mut comment = String::from("; Backdrill");

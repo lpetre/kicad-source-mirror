@@ -211,10 +211,13 @@ fn strtol10_as_int(text: &str) -> i32 {
         let d = i64::from(bytes[i] - b'0');
 
         if !overflow {
-            match value
-                .checked_mul(10)
-                .and_then(|v| if negative { v.checked_sub(d) } else { v.checked_add(d) })
-            {
+            match value.checked_mul(10).and_then(|v| {
+                if negative {
+                    v.checked_sub(d)
+                } else {
+                    v.checked_add(d)
+                }
+            }) {
                 Some(v) => value = v,
                 None => overflow = true,
             }
@@ -332,8 +335,11 @@ mod tests {
         let a = "1503dbdb-28b2-4a5a-8b2d-94a0f105210d";
         let nil = "00000000-0000-0000-0000-000000000000";
 
-        let m = from_legacy_string(&format!("annular_width|113596405|160181800|{a}|{nil}"), &mut generator)
-            .unwrap();
+        let m = from_legacy_string(
+            &format!("annular_width|113596405|160181800|{a}|{nil}"),
+            &mut generator,
+        )
+        .unwrap();
         assert_eq!(m.rc_item().error_code, DRCE_ANNULAR_WIDTH);
         assert_eq!(m.pos(), Vector2I::new(113_596_405, 160_181_800));
         assert_eq!(m.rc_item().ids().len(), 4);
@@ -346,14 +352,23 @@ mod tests {
 
         // Too short / unknown key.
         assert!(from_legacy_string("clearance|1|2|x", &mut generator).is_none());
-        assert!(from_legacy_string(&format!("hole_near_hole|1|2|{a}|{a}"), &mut generator).is_none());
+        assert!(
+            from_legacy_string(&format!("hole_near_hole|1|2|{a}|{a}"), &mut generator).is_none()
+        );
 
         // Unconnected items: 5 fields, 6 fields (rejected), 7 fields.
-        let m = from_legacy_string(&format!("unconnected_items|1|2|{a}|{nil}"), &mut generator).unwrap();
-        assert_eq!(m.marker_type(), MarkerT::Ratsnest);
-        assert!(from_legacy_string(&format!("unconnected_items|1|2|{a}|{a}|x"), &mut generator).is_none());
-        let m = from_legacy_string(&format!("unconnected_items|1|2|x|y|{nil}|{a}"), &mut generator)
+        let m = from_legacy_string(&format!("unconnected_items|1|2|{a}|{nil}"), &mut generator)
             .unwrap();
+        assert_eq!(m.marker_type(), MarkerT::Ratsnest);
+        assert!(
+            from_legacy_string(&format!("unconnected_items|1|2|{a}|{a}|x"), &mut generator)
+                .is_none()
+        );
+        let m = from_legacy_string(
+            &format!("unconnected_items|1|2|x|y|{nil}|{a}"),
+            &mut generator,
+        )
+        .unwrap();
         assert_eq!(m.rc_item().aux_item_id().as_string(), a);
         let msg = to_proto(&m, None);
         assert_eq!(msg.layer, 3); // F_Cu stored for unconnected items
@@ -366,8 +381,11 @@ mod tests {
         assert_eq!(m.base.layer, PcbLayerId::FCu);
 
         // Starved thermal with a layer (display name).
-        let m = from_legacy_string(&format!("starved_thermal|1|2|{a}|{a}|In1.Cu"), &mut generator)
-            .unwrap();
+        let m = from_legacy_string(
+            &format!("starved_thermal|1|2|{a}|{a}|In1.Cu"),
+            &mut generator,
+        )
+        .unwrap();
         assert_eq!(m.base.layer, PcbLayerId::In1Cu);
 
         // Drawing-sheet unresolved variable.

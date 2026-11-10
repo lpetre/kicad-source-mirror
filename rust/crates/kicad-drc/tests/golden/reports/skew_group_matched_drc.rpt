@@ -1,0 +1,83 @@
+** Drc report for skew_group_matched_drc.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 20 DRC violations **
+[skew_out_of_range]: Skew between tracks out of range (rule 'diff_skew' max skew 0.0762 mm; actual -6.8559 mm; target net length 25.6249 mm (from /NET_3P); actual 18.7689 mm)
+    Rule: diff_skew; error
+    @(75.0700 mm, 76.5600 mm): Pad 2 [/NET_1] of R1 on F.Cu
+[skew_out_of_range]: Skew between tracks out of range (rule 'diff_skew' max skew 0.0762 mm; actual -3.1559 mm; target net length 25.6249 mm (from /NET_3P); actual 22.4689 mm)
+    Rule: diff_skew; error
+    @(75.3500 mm, 78.6600 mm): Track [/NET_2] on F.Cu, length 22.3900 mm
+[skew_out_of_range]: Skew between tracks out of range (rule 'diff_skew' max skew 0.0762 mm; actual -6.6649 mm; target net length 25.6249 mm (from /NET_3P); actual 18.9600 mm)
+    Rule: diff_skew; error
+    @(75.5200 mm, 87.8900 mm): Track [/NET_3N] on F.Cu, length 18.9600 mm
+[skew_out_of_range]: Skew between tracks out of range (rule 'diff_skew' max skew 0.0762 mm; actual -12.7310 mm; target net length 25.6249 mm (from /NET_3P); actual 12.8938 mm)
+    Rule: diff_skew; error
+    @(75.5500 mm, 92.6700 mm): Track [/NET_4+] on F.Cu, length 0.0707 mm
+[skew_out_of_range]: Skew between tracks out of range (rule 'diff_skew' max skew 0.0762 mm; actual -4.3033 mm; target net length 25.6249 mm (from /NET_3P); actual 21.3215 mm)
+    Rule: diff_skew; error
+    @(96.8500 mm, 96.5900 mm): Track [/NET_4-] on F.Cu, length 21.1900 mm
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(98.2500 mm, 78.6600 mm): Footprint R4
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(94.9900 mm, 87.8900 mm): Footprint R8
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(74.9700 mm, 84.8600 mm): Footprint R5
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(74.7700 mm, 78.5900 mm): Footprint R2
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(101.5500 mm, 84.8800 mm): Footprint R7
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(94.3400 mm, 76.6300 mm): Footprint R3
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(75.0400 mm, 96.7000 mm): Footprint R10
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(75.0100 mm, 87.8900 mm): Footprint R6
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(88.8200 mm, 92.6200 mm): Footprint R11
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(74.5600 mm, 76.5600 mm): Footprint R1
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(97.3600 mm, 96.5900 mm): Footprint R12
+[lib_footprint_issues]: The current configuration does not include the footprint library 'Resistor_SMD'
+    Local override; warning
+    @(75.0400 mm, 92.6700 mm): Footprint R9
+[silk_overlap]: Silkscreen clearance
+    Rule: board setup constraints silk; warning
+    @(74.4064 mm, 76.9400 mm): Segment of R1 on F.Silkscreen
+    @(74.7700 mm, 77.4200 mm): Reference field of R2
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(74.7700 mm, 77.4200 mm): Reference field of R2
+    @(75.0700 mm, 76.5600 mm): Pad 2 [/NET_1] of R1 on F.Cu
+[silk_over_copper]: Silkscreen clipped by solder mask
+    Local override; warning
+    @(74.7700 mm, 77.4200 mm): Reference field of R2
+    @(74.0500 mm, 76.5600 mm): Pad 1 [unconnected-(R1-Pad1)] of R1 on F.Cu
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - PTH inside courtyard
+    - NPTH inside courtyard
+    - Footprint component type doesn't match footprint pads
+
+** End of Report **

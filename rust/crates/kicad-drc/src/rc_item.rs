@@ -441,14 +441,18 @@ impl JsonDrcReport {
     /// violations, unconnected_items, schematic_parity, coordinate_units, included_severities,
     /// ignored_checks )`. Dump it with sorted keys (`nlohmann::json`).
     pub fn to_json(&self) -> Value {
-        let violations =
-            |list: &[JsonViolation]| Value::Array(list.iter().map(JsonViolation::to_json).collect());
+        let violations = |list: &[JsonViolation]| {
+            Value::Array(list.iter().map(JsonViolation::to_json).collect())
+        };
 
         let mut map = Map::new();
         map.insert("$schema".to_string(), string_value(&self.schema));
         map.insert("source".to_string(), string_value(&self.source));
         map.insert("date".to_string(), string_value(&self.date));
-        map.insert("kicad_version".to_string(), string_value(&self.kicad_version));
+        map.insert(
+            "kicad_version".to_string(),
+            string_value(&self.kicad_version),
+        );
         map.insert("violations".to_string(), violations(&self.violations));
         map.insert(
             "unconnected_items".to_string(),
@@ -550,7 +554,10 @@ mod tests {
     #[test]
     fn strip_markup_cases() {
         assert_eq!(strip_markup("plain"), "plain");
-        assert_eq!(strip_markup("see [docs](https://x.org/a) now"), "see docs now");
+        assert_eq!(
+            strip_markup("see [docs](https://x.org/a) now"),
+            "see docs now"
+        );
         assert_eq!(strip_markup("[a](file:///foo (1).pdf)!"), "a!");
         assert_eq!(strip_markup("[a]b"), "[a]b");
         assert_eq!(strip_markup("[a](unterminated"), "[a](unterminated");

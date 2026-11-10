@@ -17,7 +17,7 @@ Decision for package G2 (binding for G3-G5 and the board model). C++: `libs/kima
   (via `Shape::clone_shape`, the C++ `Clone()`). `ShapeCompound` owns `Vec<Box<dyn Shape>>`.
 - **Dispatch.** The collision matrix (`shape_collisions.cpp`) is `geometry::shape_collisions::collide_shapes(ShapeRef,
   ShapeRef, ...)`; it matches on the pair of `ShapeRef`s, so adding a shape kind is a compile error everywhere it must
-  be handled. `SH_ELLIPSE` exists in `ShapeType`; its `ShapeRef` variant is added with `SHAPE_ELLIPSE`.
+  be handled. `SH_ELLIPSE` exists in `ShapeType`; its `ShapeRef` variant is `ShapeRef::Ellipse` (`ShapeEllipse`, G6b).
 - **`SHAPE_LINE_CHAIN_BASE` overrides.** A sub-trait cannot override super-trait methods, so the shared
   implementations live in `ShapeLineChainBase` as default methods with an `lcb_` prefix (`lcb_collide_point`,
   `lcb_collide_seg`, `lcb_squared_distance`, `lcb_point_inside`) plus `point_on_edge` / `edge_containing_point`.

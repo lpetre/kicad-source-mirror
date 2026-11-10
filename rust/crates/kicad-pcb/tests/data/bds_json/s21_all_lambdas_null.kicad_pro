@@ -1,0 +1,1 @@
+{"board": {"design_settings": {"meta": {"version": 3}, "rule_severities": null, "drc_exclusions": null, "track_widths": null, "via_dimensions": {}, "tuning_pattern_settings": [1], "defaults": {"zones": {"pad_connection": 2, "corner_smoothing": 2, "corner_radius": 0.5, "remove_islands": 9, "min_island_area": 1e30, "hatch_orientation": "x"}}}}, "meta": {"version": 3}}

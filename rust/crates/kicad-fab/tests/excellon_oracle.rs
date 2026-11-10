@@ -163,9 +163,19 @@ fn parse_op(f: &[&str]) -> DrillOperation {
 /// The raw enumeration of one board: case (span index, merge, npth) -> op lines.
 type RawLists = BTreeMap<(usize, bool, bool), Vec<String>>;
 
-/// The `raw` lists of the FAB-01 golden, per board name.
-fn fab01_raw_lists() -> BTreeMap<String, RawLists> {
-    let mut boards: BTreeMap<String, RawLists> = BTreeMap::new();
+/// One board of the FAB-01 golden: copper layer count, file name, spans (NPTH pseudo span
+/// last) and raw lists.
+#[derive(Default)]
+struct Fab01Board {
+    copper: i32,
+    file: String,
+    spans: Vec<DrillSpan>,
+    raw: RawLists,
+}
+
+/// The boards of the FAB-01 golden, per board name.
+fn fab01_boards() -> BTreeMap<String, Fab01Board> {
+    let mut boards: BTreeMap<String, Fab01Board> = BTreeMap::new();
     let mut board = String::new();
     let mut case = (0, false, false);
 
@@ -174,15 +184,32 @@ fn fab01_raw_lists() -> BTreeMap<String, RawLists> {
         match f[0] {
             "board" => {
                 board = f[1].to_string();
-                boards.insert(board.clone(), RawLists::new());
+                boards.insert(
+                    board.clone(),
+                    Fab01Board {
+                        copper: f[2].parse().unwrap(),
+                        file: f[3].to_string(),
+                        ..Fab01Board::default()
+                    },
+                );
+            }
+            "span" => {
+                let i = |k: usize| -> i32 { f[k].parse().unwrap() };
+                boards.get_mut(&board).unwrap().spans.push(DrillSpan::new(
+                    PcbLayerId(i(2)),
+                    PcbLayerId(i(3)),
+                    i(4) != 0,
+                    i(5) != 0,
+                ));
             }
             "case" => {
                 case = (f[1].parse().unwrap(), f[2] == "1", f[3] == "1");
-                boards.get_mut(&board).unwrap().insert(case, Vec::new());
+                boards.get_mut(&board).unwrap().raw.insert(case, Vec::new());
             }
             "raw" => boards
                 .get_mut(&board)
                 .unwrap()
+                .raw
                 .get_mut(&case)
                 .unwrap()
                 .push(line[4..].to_string()),
@@ -191,6 +218,19 @@ fn fab01_raw_lists() -> BTreeMap<String, RawLists> {
     }
 
     boards
+}
+
+/// Parses the op lines of every case.
+fn parse_raw_lists(raw: &RawLists) -> BTreeMap<(usize, bool, bool), Vec<DrillOperation>> {
+    raw.iter()
+        .map(|(case, lines)| {
+            let ops = lines
+                .iter()
+                .map(|l| parse_op(&l.split('|').collect::<Vec<_>>()))
+                .collect();
+            (*case, ops)
+        })
+        .collect()
 }
 
 /// The hole lists recorded by the oracle, served like `EnumerateDrillSpans` /
@@ -379,7 +419,15 @@ fn parse_golden() -> Golden {
                 });
                 target = Target::None;
             }
-            "result" => g.boards.last_mut().unwrap().combos.last_mut().unwrap().result = i(0) == 1,
+            "result" => {
+                g.boards
+                    .last_mut()
+                    .unwrap()
+                    .combos
+                    .last_mut()
+                    .unwrap()
+                    .result = i(0) == 1
+            }
             "msg" => g
                 .boards
                 .last_mut()
@@ -456,7 +504,11 @@ fn coordinates_match_oracle() {
     let g = parse_golden();
     let b = fmt_board();
     let mut w = ExcellonWriter::new(BoardCtx::bare(&b));
-    assert!(g.coords.len() >= 2000, "only {} coordinates", g.coords.len());
+    assert!(
+        g.coords.len() >= 2000,
+        "only {} coordinates",
+        g.coords.len()
+    );
 
     for (metric, zeros, lhs, rhs, mantissa, idx, expected) in &g.coords {
         w.set_format(*metric, zeros_fmt(*zeros), *lhs, *rhs);
@@ -484,7 +536,10 @@ fn post_machining_and_linear_values_match_oracle() {
         w.mantissa_lenght = if *metric { 3 } else { 4 };
         let got = w.post_machining_comment(pm_mode(*mode), *size, *depth, *angle, side);
         let got = got.strip_suffix('\n').unwrap_or(&got);
-        assert_eq!(got, expected, "{metric} {mode} {size} {depth} {angle} {side}");
+        assert_eq!(
+            got, expected,
+            "{metric} {mode} {size} {depth} {angle} {side}"
+        );
     }
 
     for (metric, value, expected) in &g.lins {
@@ -518,7 +573,10 @@ fn headers_match_oracle() {
 }
 
 /// Builds the board and the recorded hole source of one oracle board.
-fn board_and_source(ob: &OracleBoard, fab01: &BTreeMap<String, RawLists>) -> (Board, RecordedSource) {
+fn board_and_source(
+    ob: &OracleBoard,
+    fab01: &BTreeMap<String, Fab01Board>,
+) -> (Board, RecordedSource) {
     let mut board = Board::default();
     board.file_name = format!("/oracle/{}", ob.file);
     board.set_copper_layer_count(ob.copper);
@@ -535,12 +593,13 @@ fn board_and_source(ob: &OracleBoard, fab01: &BTreeMap<String, RawLists>) -> (Bo
     let raw_text = if ob.own {
         &ob.raw
     } else {
-        fab01
+        &fab01
             .get(&ob.name)
             .unwrap_or_else(|| panic!("{} not in the FAB-01 golden", ob.name))
+            .raw
     };
 
-    let mut raw = BTreeMap::new();
+    assert_eq!(raw_text.len(), ob.rawhash.len(), "{}: case count", ob.name);
 
     for (case, hash) in &ob.rawhash {
         let lines = &raw_text[case];
@@ -555,18 +614,13 @@ fn board_and_source(ob: &OracleBoard, fab01: &BTreeMap<String, RawLists>) -> (Bo
             "{}: raw list of case {case:?} differs from the oracle's",
             ob.name
         );
-        let ops = lines
-            .iter()
-            .map(|l| parse_op(&l.split('|').collect::<Vec<_>>()))
-            .collect();
-        raw.insert(*case, ops);
     }
 
     (
         board,
         RecordedSource {
             spans: ob.spans.clone(),
-            raw,
+            raw: parse_raw_lists(raw_text),
         },
     )
 }
@@ -589,7 +643,7 @@ fn compare_file(what: &str, got: &[u8], expected: &OracleFile) {
 #[test]
 fn drill_files_and_reports_match_oracle() {
     let g = parse_golden();
-    let fab01 = fab01_raw_lists();
+    let fab01 = fab01_boards();
     assert_eq!(g.boards.len(), 21);
 
     let (mut files, mut reports) = (0, 0);
@@ -602,7 +656,11 @@ fn drill_files_and_reports_match_oracle() {
             // metric, zeros, mirror, minimal, combine, route, plot origin, full
             let fl = &combo.flags;
             let job = JobExportPcbDrill {
-                drill_units: if fl[0] { DrillUnits::Mm } else { DrillUnits::Inch },
+                drill_units: if fl[0] {
+                    DrillUnits::Mm
+                } else {
+                    DrillUnits::Inch
+                },
                 zero_format: [
                     ZerosFormat::Decimal,
                     ZerosFormat::SuppressLeading,
@@ -623,7 +681,8 @@ fn drill_files_and_reports_match_oracle() {
             let what = format!("{} combo {}", ob.name, combo.index);
 
             let mut rep = VecReporter::default();
-            let outcome = job_export_drill_from(&source, ctx, &job, "out", &env(&g), None, Some(&mut rep));
+            let outcome =
+                job_export_drill_from(&source, ctx, &job, "out", &env(&g), None, Some(&mut rep));
             assert_eq!(outcome.success, combo.result, "{what}: result");
 
             let msgs: Vec<(i32, String)> = rep
@@ -686,7 +745,7 @@ fn drill_files_and_reports_match_oracle() {
 #[test]
 fn cam_backdrill_expectations() {
     let g = parse_golden();
-    let fab01 = fab01_raw_lists();
+    let fab01 = fab01_boards();
 
     let run = |name: &str| -> Vec<(String, String)> {
         let ob = g.boards.iter().find(|b| b.name == name).unwrap();
@@ -701,7 +760,12 @@ fn cam_backdrill_expectations() {
         w.base
             .outputs
             .iter()
-            .map(|o| (o.name.clone(), String::from_utf8(o.contents.clone()).unwrap()))
+            .map(|o| {
+                (
+                    o.name.clone(),
+                    String::from_utf8(o.contents.clone()).unwrap(),
+                )
+            })
             .collect()
     };
     let get = |files: &[(String, String)], name: &str| -> String {
@@ -720,16 +784,19 @@ fn cam_backdrill_expectations() {
     assert!(bd.contains("; Backdrill"));
     assert!(bd.contains("post-machining"));
     assert!(get(&files, "tmp/backdrill_board-front-in3-backdrill.drl").contains("; backdrill"));
-    assert!(get(&files, "tmp/backdrill_board-PTH.drl").contains(
-        "; Post-machining front countersink dia 0.600mm depth 0.150mm angle 90deg"
-    ));
+    assert!(
+        get(&files, "tmp/backdrill_board-PTH.drl")
+            .contains("; Post-machining front countersink dia 0.600mm depth 0.150mm angle 90deg")
+    );
 
     // FrontAndBackBackdrillCamOutputs, DualBackdrillSameViaCamOutputs
     for name in ["backdrill_pair_board", "dual_backdrill_board"] {
         let files = run(name);
         get(&files, &format!("tmp/{name}_Backdrills_Drill_1_2.drl"));
         // Start=B_Cu (UI index 6) drilled toward In3_Cu (UI index 4) in a 6-layer board
-        assert!(get(&files, &format!("tmp/{name}_Backdrills_Drill_6_4.drl")).contains("; Backdrill"));
+        assert!(
+            get(&files, &format!("tmp/{name}_Backdrills_Drill_6_4.drl")).contains("; Backdrill")
+        );
     }
 
     // DrillFileLayerOrderInFilename
@@ -770,7 +837,7 @@ fn cam_backdrill_expectations() {
 #[test]
 fn drill_job_outputs_and_pending_parts() {
     let g = parse_golden();
-    let fab01 = fab01_raw_lists();
+    let fab01 = fab01_boards();
     let ob = g.boards.iter().find(|b| b.name == "basic_test").unwrap();
     let (board, source) = board_and_source(ob, &fab01);
     let ctx = BoardCtx::bare(&board);
@@ -783,19 +850,37 @@ fn drill_job_outputs_and_pending_parts() {
     };
     let resolve = |p: &str| format!("{p}.resolved");
     let mut rep = VecReporter::default();
-    let out = job_export_drill_from(&source, ctx, &job, "o", &env(&g), Some(&resolve), Some(&mut rep));
+    let out = job_export_drill_from(
+        &source,
+        ctx,
+        &job,
+        "o",
+        &env(&g),
+        Some(&resolve),
+        Some(&mut rep),
+    );
     assert!(out.success && out.error.is_none());
     let names: Vec<&str> = out.files.iter().map(|f| f.name.as_str()).collect();
     assert_eq!(
         names,
-        ["o/basic_test-PTH.drl", "o/basic_test-NPTH.drl", "o/basic_test-drill.rpt.resolved"]
+        [
+            "o/basic_test-PTH.drl",
+            "o/basic_test-NPTH.drl",
+            "o/basic_test-drill.rpt.resolved"
+        ]
     );
     assert_eq!(out.outputs, names);
     assert_eq!(
         rep.messages,
         vec![
-            ("Created file 'o/basic_test-PTH.drl'".to_string(), Severity::Action),
-            ("Created file 'o/basic_test-NPTH.drl'".to_string(), Severity::Action),
+            (
+                "Created file 'o/basic_test-PTH.drl'".to_string(),
+                Severity::Action
+            ),
+            (
+                "Created file 'o/basic_test-NPTH.drl'".to_string(),
+                Severity::Action
+            ),
             ("Done.".to_string(), Severity::Info),
         ]
     );
@@ -830,4 +915,232 @@ fn drill_job_outputs_and_pending_parts() {
     let out = job_export_drill_from(&source, ctx, &job4, "o", &env(&g), None, None);
     assert!(!out.success && out.files.is_empty());
     assert!(matches!(out.error, Some(kicad_fab::FabError::NotPorted(_))));
+}
+
+/// Replaces the Excellon header lines that carry the date or the build version by fixed
+/// tokens (`docs/analysis/plot-fab.md` 9.3).
+fn normalise_excellon(text: &str) -> String {
+    text.lines()
+        .map(|l| {
+            if l.starts_with("; DRILL file KiCad ") && l.contains(" date ") {
+                "; DRILL file KiCad <version> date <date>"
+            } else if l.starts_with("; #@! TF.CreationDate,") {
+                "; #@! TF.CreationDate,<date>"
+            } else if l.starts_with("; #@! TF.GenerationSoftware,Kicad,Pcbnew,") {
+                "; #@! TF.GenerationSoftware,Kicad,Pcbnew,<version>"
+            } else {
+                l
+            }
+        })
+        .map(|l| format!("{l}\n"))
+        .collect()
+}
+
+/// The Excellon option sets of `tests/golden/drill/generate.sh` (the CLI defaults of
+/// `kicad/cli/command_pcb_export_drill.cpp` plus the set's arguments) as job options.
+fn cli_job(set: &str) -> JobExportPcbDrill {
+    let mut job = JobExportPcbDrill {
+        drill_units: DrillUnits::Mm,
+        zero_format: ZerosFormat::Decimal,
+        excellon_oval_drill_route: false,
+        excellon_combine_pth_npth: true,
+        drill_origin: DrillOrigin::Abs,
+        ..JobExportPcbDrill::default()
+    };
+
+    match set {
+        "excellon_default" => {}
+        "excellon_inches" => job.drill_units = DrillUnits::Inch,
+        "excellon_mirror" => job.excellon_mirror_y = true,
+        "excellon_separate_th" => job.excellon_combine_pth_npth = false,
+        other => panic!("unknown set {other}"),
+    }
+
+    job
+}
+
+/// A hand-built hole list for the through span only, filtered like `EnumerateDrillOperations`
+/// filters pads (plated / non-plated / merged).
+struct HandBuiltSource {
+    holes: Vec<DrillOperation>,
+}
+
+impl HoleListSource for HandBuiltSource {
+    fn drill_spans(&self, _writer: &GendrillWriterBase<'_>) -> Vec<DrillSpan> {
+        vec![DrillSpan::new(
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+            false,
+            false,
+        )]
+    }
+
+    fn build_holes_list(
+        &self,
+        writer: &mut GendrillWriterBase<'_>,
+        _span: &DrillSpan,
+        generate_npth_list: bool,
+    ) {
+        let merge = writer.merge_pth_npth;
+        let holes = self
+            .holes
+            .iter()
+            .filter(|h| merge || h.not_plated == generate_npth_list)
+            .cloned()
+            .collect();
+        writer.build_tool_list(holes);
+    }
+}
+
+/// `qa/tests/cli/test_pcb.py::test_pcb_export_drill` (Excellon cases): the repository goldens
+/// `qa/data/cli/basic_test/basic_test_excellon_{default,inches,mirror}.drl`, reproduced from a
+/// hand-built hole list equivalent to `basic_test.kicad_pcb` (four 0.4 mm through vias), byte
+/// for byte below the 5 header lines the Python test skips, and in full after normalising the
+/// date / version lines against the reference kicad-cli output of `tests/golden/drill/`.
+#[test]
+fn basic_test_goldens_from_hand_built_holes() {
+    let mm = 1_000_000;
+    let via = |x: i32, y: i32| DrillOperation {
+        position: Vector2I::new(x * mm, y * mm),
+        size_xy: Vector2I::new(400_000, 400_000),
+        diameter: 400_000,
+        top_layer: PcbLayerId::FCu,
+        bottom_layer: PcbLayerId::BCu,
+        drill_start: PcbLayerId::FCu,
+        drill_end: PcbLayerId::BCu,
+        attribute: HoleAttribute::HoleViaThrough,
+        ..DrillOperation::default()
+    };
+    let source = HandBuiltSource {
+        holes: vec![via(215, 147), via(200, 153), via(205, 148), via(200, 148)],
+    };
+
+    let mut board = Board::default();
+    board.file_name = "/tmp/basic_test.kicad_pcb".to_string();
+    board.set_copper_layer_count(2);
+
+    let env = DrillExportEnv {
+        build_version: "10.99.0-unknown".to_string(),
+        creation_date: pinned_date(),
+    };
+    let repo = kicad_qa::qa_data_dir().join("cli/basic_test");
+    let cli =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/drill/basic_test");
+
+    for (set, repo_file) in [
+        ("excellon_default", "basic_test_excellon_default.drl"),
+        ("excellon_inches", "basic_test_excellon_inches.drl"),
+        ("excellon_mirror", "basic_test_excellon_mirror.drl"),
+    ] {
+        let mut rep = VecReporter::default();
+        let out = job_export_drill_from(
+            &source,
+            BoardCtx::bare(&board),
+            &cli_job(set),
+            "out/",
+            &env,
+            None,
+            Some(&mut rep),
+        );
+        assert!(out.success);
+        assert_eq!(out.files.len(), 1);
+        assert_eq!(out.files[0].name, "out/basic_test.drl");
+        assert_eq!(rep.messages[0].0, "Created file 'out/basic_test.drl'");
+        let got = String::from_utf8(out.files[0].contents.clone()).unwrap();
+
+        let expected = std::fs::read_to_string(repo.join(repo_file)).unwrap();
+        let skip = |t: &str| -> Vec<String> { t.lines().skip(5).map(str::to_string).collect() };
+        assert_eq!(skip(&got), skip(&expected), "{set}: repository golden");
+        assert!(got.ends_with("M30\n") && expected.ends_with("M30\n"));
+
+        let cli_text = std::fs::read_to_string(cli.join(set).join("basic_test.drl")).unwrap();
+        assert_eq!(
+            normalise_excellon(&got),
+            normalise_excellon(&cli_text),
+            "{set}: kicad-cli"
+        );
+    }
+}
+
+/// The Excellon sets of the kicad-cli goldens (`tests/golden/drill/<board>/<set>/`, made by
+/// `generate.sh`) for all ten corpus boards, produced by the port's drill job from the C++
+/// enumeration of each board (FAB-01 golden: `BOARD_LOADER::Load` like kicad-cli): same file
+/// names in the same order and identical contents after normalising the date / version lines.
+#[test]
+fn cli_goldens_from_oracle_hole_lists() {
+    let fab01 = fab01_boards();
+    let golden = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/drill");
+    let env = DrillExportEnv {
+        build_version: "10.99.0-unknown".to_string(),
+        creation_date: pinned_date(),
+    };
+    let mut compared = 0;
+
+    for (name, fb) in &fab01 {
+        let dir = golden.join(name);
+        if !dir.is_dir() {
+            continue; // the synthetic boards have no kicad-cli goldens
+        }
+
+        let mut board = Board::default();
+        board.file_name = format!("/cli/{}", fb.file);
+        board.set_copper_layer_count(fb.copper);
+        let source = RecordedSource {
+            spans: fb.spans.clone(),
+            raw: parse_raw_lists(&fb.raw),
+        };
+
+        for set in [
+            "excellon_default",
+            "excellon_inches",
+            "excellon_mirror",
+            "excellon_separate_th",
+        ] {
+            let set_dir = dir.join(set);
+            let expected_names: Vec<String> = std::fs::read_to_string(set_dir.join("files.txt"))
+                .unwrap()
+                .lines()
+                .map(|l| {
+                    l.strip_prefix("Created file '")
+                        .and_then(|r| r.strip_suffix('\''))
+                        .unwrap()
+                        .to_string()
+                })
+                .collect();
+
+            let mut rep = VecReporter::default();
+            let out = job_export_drill_from(
+                &source,
+                BoardCtx::bare(&board),
+                &cli_job(set),
+                "out/",
+                &env,
+                None,
+                Some(&mut rep),
+            );
+            assert!(out.success, "{name}/{set}");
+
+            let created: Vec<String> = rep
+                .messages
+                .iter()
+                .filter_map(|(m, _)| m.strip_prefix("Created file 'out/"))
+                .map(|m| m.trim_end_matches('\'').to_string())
+                .collect();
+            assert_eq!(created, expected_names, "{name}/{set}: created files");
+
+            for file in &out.files {
+                let short = file.name.strip_prefix("out/").unwrap();
+                let expected = std::fs::read_to_string(set_dir.join(short)).unwrap();
+                let got = String::from_utf8(file.contents.clone()).unwrap();
+                assert_eq!(
+                    normalise_excellon(&got),
+                    normalise_excellon(&expected),
+                    "{name}/{set}/{short}"
+                );
+                compared += 1;
+            }
+        }
+    }
+
+    assert!(compared >= 50, "only {compared} files compared");
 }

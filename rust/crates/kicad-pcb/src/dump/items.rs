@@ -135,7 +135,11 @@ fn dump_mask(o: &mut Out, p: &str, m: &MaskLayerProps) {
         format!("{p}.solder_paste_margin_ratio"),
         v_opt_f64(m.solder_paste_margin_ratio)
     );
-    emit!(o, format!("{p}.has_solder_mask"), v_opt_bool(m.has_solder_mask));
+    emit!(
+        o,
+        format!("{p}.has_solder_mask"),
+        v_opt_bool(m.has_solder_mask)
+    );
     emit!(
         o,
         format!("{p}.has_solder_paste"),
@@ -248,7 +252,11 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
             format!("{lp}trapezoid_delta_size"),
             v_vec(c.shape.trapezoid_delta_size)
         );
-        emit!(o, format!("{lp}zone_connection"), v_opt_enum(c.zone_connection));
+        emit!(
+            o,
+            format!("{lp}zone_connection"),
+            v_opt_enum(c.zone_connection)
+        );
         emit!(
             o,
             format!("{lp}thermal_spoke_width"),
@@ -272,7 +280,11 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
             format!("{lp}thermal_spoke_angle_effective"),
             v_angle(ps.thermal_spoke_angle(l))
         );
-        emit!(o, format!("{lp}primitives"), v_int(c.custom_shapes.len() as i64));
+        emit!(
+            o,
+            format!("{lp}primitives"),
+            v_int(c.custom_shapes.len() as i64)
+        );
 
         for (i, prim) in c.custom_shapes.iter().enumerate() {
             let pp = format!("{lp}primitive.{i}.");
@@ -280,7 +292,11 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
             emit!(o, format!("{pp}shape"), v_enum(s.shape()));
             emit!(o, format!("{pp}start"), v_vec(s.start()));
             emit!(o, format!("{pp}end"), v_vec(s.end()));
-            emit!(o, format!("{pp}width"), v_int(EdaShapeItem::width(prim, &no_ctx())));
+            emit!(
+                o,
+                format!("{pp}width"),
+                v_int(EdaShapeItem::width(prim, &no_ctx()))
+            );
             emit!(o, format!("{pp}fill"), v_enum(s.fill_mode()));
 
             match s.shape() {
@@ -358,7 +374,11 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
         emit!(o, "blind", no_api("PCB_VIA::IsBlindVia"));
         emit!(o, "buried", no_api("PCB_VIA::IsBuriedVia"));
         emit!(o, "is_free", v_bool(v.is_free));
-        emit!(o, "remove_unconnected", no_api("PCB_VIA::GetRemoveUnconnected"));
+        emit!(
+            o,
+            "remove_unconnected",
+            no_api("PCB_VIA::GetRemoveUnconnected")
+        );
         emit!(o, "keep_start_end", no_api("PCB_VIA::GetKeepStartEnd"));
 
         for (f, n) in [
@@ -394,11 +414,7 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
         }
 
         if it.has_board() {
-            emit!(
-                o,
-                "valid_layer_pair",
-                no_api("PCB_VIA::HasValidLayerPair")
-            );
+            emit!(o, "valid_layer_pair", no_api("PCB_VIA::HasValidLayerPair"));
         }
 
         dump_padstack(o, "padstack.", &v.padstack);
@@ -411,7 +427,11 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
                 continue;
             }
 
-            emit!(o, format!("width.{ln}"), no_api("PCB_VIA::GetWidth (aLayer)"));
+            emit!(
+                o,
+                format!("width.{ln}"),
+                no_api("PCB_VIA::GetWidth (aLayer)")
+            );
             emit!(o, format!("flash.{ln}"), no_api("PCB_VIA::FlashLayer"));
             dump_effective_shape(o, &format!("shape.{ln}"), it, l, Flashing::Default);
             dump_effective_shape(
@@ -424,10 +444,8 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
         }
 
         emit!(o, "hole_shape", {
-            let s = it.effective_hole_shape(
-                PcbLayerId::UndefinedLayer,
-                DrcConstraintT::NullConstraint,
-            );
+            let s =
+                it.effective_hole_shape(PcbLayerId::UndefinedLayer, DrcConstraintT::NullConstraint);
             v_shape(s.as_deref().map(|s| s as &dyn kicad_geom::Shape))
         });
 
@@ -507,7 +525,11 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         "local_solder_paste_margin_ratio",
         v_opt_f64(ps.front_outer_layers().solder_paste_margin_ratio)
     );
-    emit!(o, "local_zone_connection", no_api("PAD::GetLocalZoneConnection"));
+    emit!(
+        o,
+        "local_zone_connection",
+        no_api("PAD::GetLocalZoneConnection")
+    );
     emit!(
         o,
         "zone_connection_overrides",
@@ -530,9 +552,21 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
     );
     emit!(o, "thermal_spoke_angle", v_angle(pad.thermal_spoke_angle()));
     emit!(o, "thermal_gap", no_api("PAD::GetThermalGap"));
-    emit!(o, "local_thermal_gap", no_api("PAD::GetLocalThermalGapOverride"));
-    emit!(o, "unconnected_layer_mode", v_enum(ps.unconnected_layer_mode()));
-    emit!(o, "custom_shape_in_zone", v_enum(ps.custom_shape_in_zone_mode()));
+    emit!(
+        o,
+        "local_thermal_gap",
+        no_api("PAD::GetLocalThermalGapOverride")
+    );
+    emit!(
+        o,
+        "unconnected_layer_mode",
+        v_enum(ps.unconnected_layer_mode())
+    );
+    emit!(
+        o,
+        "custom_shape_in_zone",
+        v_enum(ps.custom_shape_in_zone_mode())
+    );
 
     for l in [PcbLayerId::FMask, PcbLayerId::BMask] {
         emit!(
@@ -626,7 +660,13 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
                 continue;
             }
 
-            dump_effective_shape(o, &format!("shape.{}", v_layer(l)), it, l, Flashing::Default);
+            dump_effective_shape(
+                o,
+                &format!("shape.{}", v_layer(l)),
+                it,
+                l,
+                Flashing::Default,
+            );
         }
     }
 
@@ -671,11 +711,23 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
     emit!(o, format!("{p}start"), v_vec(s.start()));
     emit!(o, format!("{p}end"), v_vec(s.end()));
     emit!(o, format!("{p}width"), v_int(h.width(ctx)));
-    emit!(o, format!("{p}effective_width"), v_int(h.effective_width(ctx)));
-    emit!(o, format!("{p}line_style"), no_api("EDA_SHAPE::GetLineStyle"));
+    emit!(
+        o,
+        format!("{p}effective_width"),
+        v_int(h.effective_width(ctx))
+    );
+    emit!(
+        o,
+        format!("{p}line_style"),
+        no_api("EDA_SHAPE::GetLineStyle")
+    );
     emit!(o, format!("{p}fill"), v_enum(s.fill_mode()));
     emit!(o, format!("{p}closed"), v_bool(s.is_closed()));
-    emit!(o, format!("{p}hatch_line_width"), v_int(h.hatch_line_width(ctx)));
+    emit!(
+        o,
+        format!("{p}hatch_line_width"),
+        v_int(h.hatch_line_width(ctx))
+    );
     emit!(
         o,
         format!("{p}hatch_line_spacing"),
@@ -688,8 +740,16 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
             emit!(o, format!("{p}mid"), no_api("EDA_SHAPE::GetArcMid"));
             emit!(o, format!("{p}radius"), no_api("EDA_SHAPE::GetRadius"));
             emit!(o, format!("{p}arc_angle"), no_api("EDA_SHAPE::GetArcAngle"));
-            emit!(o, format!("{p}arc_angles"), no_api("EDA_SHAPE::CalcArcAngles"));
-            emit!(o, format!("{p}clockwise"), no_api("EDA_SHAPE::IsClockwiseArc"));
+            emit!(
+                o,
+                format!("{p}arc_angles"),
+                no_api("EDA_SHAPE::CalcArcAngles")
+            );
+            emit!(
+                o,
+                format!("{p}clockwise"),
+                no_api("EDA_SHAPE::IsClockwiseArc")
+            );
             emit!(o, format!("{p}length"), v_f64(h.shape_length()));
         }
         ShapeT::Circle => {
@@ -698,7 +758,11 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
         }
         ShapeT::Rectangle => {
             emit!(o, format!("{p}corner_radius"), v_int(s.corner_radius()));
-            emit!(o, format!("{p}rect_corners"), no_api("EDA_SHAPE::GetRectCorners"));
+            emit!(
+                o,
+                format!("{p}rect_corners"),
+                no_api("EDA_SHAPE::GetRectCorners")
+            );
             emit!(o, format!("{p}rect_size"), {
                 let (w, hh) = h.rectangle_size();
                 format!("{w},{hh}")
@@ -719,7 +783,11 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
         }
         ShapeT::Poly => {
             emit!(o, format!("{p}poly"), v_polyset(s.poly_shape()));
-            emit!(o, format!("{p}point_count"), no_api("EDA_SHAPE::GetPointCount"));
+            emit!(
+                o,
+                format!("{p}point_count"),
+                no_api("EDA_SHAPE::GetPointCount")
+            );
         }
         ShapeT::Ellipse | ShapeT::EllipseArc => {
             let e = s.ellipse();
@@ -750,7 +818,11 @@ pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
         "local_solder_mask_margin",
         v_opt_int(s.local_solder_mask_margin())
     );
-    emit!(o, "solder_mask_expansion", v_int(s.solder_mask_expansion(ctx)));
+    emit!(
+        o,
+        "solder_mask_expansion",
+        v_int(s.solder_mask_expansion(ctx))
+    );
     emit!(
         o,
         "proxy",
@@ -795,8 +867,7 @@ pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
         );
     }
 
-    if st == ShapeT::Rectangle
-        || (st == ShapeT::Poly && s.shape.poly_shape().total_vertices() > 0)
+    if st == ShapeT::Rectangle || (st == ShapeT::Poly && s.shape.poly_shape().total_vertices() > 0)
     {
         // GetCorners() is virtual (PCB_TEXTBOX overrides it).
         emit!(
@@ -812,7 +883,13 @@ pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
 
     if let Some(ls) = o.cond("shape.*|tpoly.*", || it.layer_set()) {
         for l in ls.seq().iter().copied() {
-            dump_effective_shape(o, &format!("shape.{}", v_layer(l)), it, l, Flashing::Default);
+            dump_effective_shape(
+                o,
+                &format!("shape.{}", v_layer(l)),
+                it,
+                l,
+                Flashing::Default,
+            );
             dump_transformed_polys(o, it, l);
         }
     }
@@ -892,7 +969,11 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
             )
         );
         emit!(o, "textbox.border_enabled", v_bool(tb.border_enabled));
-        emit!(o, "textbox.border_width", no_api("PCB_TEXTBOX::GetBorderWidth"));
+        emit!(
+            o,
+            "textbox.border_width",
+            no_api("PCB_TEXTBOX::GetBorderWidth")
+        );
         emit!(
             o,
             "textbox.corners",
@@ -904,7 +985,11 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
     }
 
     if let AnyItem::Tablecell(c) = it.any() {
-        emit!(o, "cell.row_col", format!("{},{}", c.row(ctx), c.column(ctx)));
+        emit!(
+            o,
+            "cell.row_col",
+            format!("{},{}", c.row(ctx), c.column(ctx))
+        );
         emit!(o, "cell.span", format!("{},{}", c.row_span(), c.col_span()));
     }
 
@@ -945,7 +1030,9 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
 /// `DumpDimension`.
 pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
     let ctx = it.ctx;
-    let AnyItem::Dimension(d) = it.any() else { return };
+    let AnyItem::Dimension(d) = it.any() else {
+        return;
+    };
 
     emit!(o, "start", v_vec(d.start(ctx)));
     emit!(o, "end", v_vec(d.end(ctx)));
@@ -1015,7 +1102,11 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "name", v_str(z.zone_name()));
     emit!(o, "priority", v_int(z.assigned_priority()));
     emit!(o, "rule_area", v_bool(z.is_rule_area()));
-    emit!(o, "placement_area_enabled", v_bool(z.placement_area_enabled));
+    emit!(
+        o,
+        "placement_area_enabled",
+        v_bool(z.placement_area_enabled)
+    );
     emit!(o, "placement_area_source", v_str(&z.placement_area_source));
     emit!(
         o,
@@ -1078,8 +1169,9 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     if let Some(ls) = o.cond("filled.*|islands.*", || it.layer_set()) {
         for l in ls.seq().iter().copied() {
             let ln = v_layer(l);
-            let Some(has) = o.cond(&format!("filled.{ln}|islands.{ln}"), || z.has_filled_polys_for_layer(l))
-            else {
+            let Some(has) = o.cond(&format!("filled.{ln}|islands.{ln}"), || {
+                z.has_filled_polys_for_layer(l)
+            }) else {
                 continue;
             };
 
@@ -1102,7 +1194,13 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     if let Some(Some(l)) = o.cond("shape.*", || {
         (!z.is_rule_area() && it.as_dyn().is_on_copper_layer(ctx)).then(|| z.first_layer())
     }) {
-        dump_effective_shape(o, &format!("shape.{}", v_layer(l)), it, l, Flashing::Default);
+        dump_effective_shape(
+            o,
+            &format!("shape.{}", v_layer(l)),
+            it,
+            l,
+            Flashing::Default,
+        );
     }
 }
 
@@ -1111,7 +1209,9 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
 /// `DumpFootprint`.
 pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
     let ctx = it.ctx;
-    let AnyItem::Footprint(fp) = it.any() else { return };
+    let AnyItem::Footprint(fp) = it.any() else {
+        return;
+    };
 
     emit!(o, "fpid", v_str(&fp.fpid().format()));
     emit!(o, "reference", v_str(&fp.reference(ctx)));
@@ -1134,7 +1234,11 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
 
     emit!(o, "attributes", v_int(fp.attributes()));
     emit!(o, "footprint_type", v_enum(fp.footprint_type()));
-    emit!(o, "likely_attribute", no_api("FOOTPRINT::GetLikelyAttribute"));
+    emit!(
+        o,
+        "likely_attribute",
+        no_api("FOOTPRINT::GetLikelyAttribute")
+    );
     emit!(o, "board_only", v_bool(fp.is_board_only()));
     emit!(
         o,
@@ -1142,9 +1246,17 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
         v_bool(fp.is_excluded_from_pos_files())
     );
     emit!(o, "exclude_from_bom", v_bool(fp.is_excluded_from_bom()));
-    emit!(o, "exclude_from_sim", no_api("FOOTPRINT::IsExcludedFromSim"));
+    emit!(
+        o,
+        "exclude_from_sim",
+        no_api("FOOTPRINT::IsExcludedFromSim")
+    );
     emit!(o, "dnp", v_bool(fp.is_dnp()));
-    emit!(o, "allow_missing_courtyard", v_bool(fp.allow_missing_courtyard));
+    emit!(
+        o,
+        "allow_missing_courtyard",
+        v_bool(fp.allow_missing_courtyard)
+    );
     emit!(
         o,
         "allow_solder_mask_bridges",
@@ -1153,7 +1265,11 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "net_tie", v_bool(fp.is_net_tie()));
     emit!(o, "placed", v_bool(fp.is_placed()));
     emit!(o, "local_clearance", v_opt_int(fp.local_clearance()));
-    emit!(o, "local_solder_mask_margin", v_opt_int(fp.solder_mask_margin));
+    emit!(
+        o,
+        "local_solder_mask_margin",
+        v_opt_int(fp.solder_mask_margin)
+    );
     emit!(
         o,
         "local_solder_paste_margin",
@@ -1164,7 +1280,11 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
         "local_solder_paste_margin_ratio",
         v_opt_f64(fp.solder_paste_margin_ratio)
     );
-    emit!(o, "local_zone_connection", v_enum(fp.local_zone_connection()));
+    emit!(
+        o,
+        "local_zone_connection",
+        v_enum(fp.local_zone_connection())
+    );
     emit!(o, "stackup_mode", v_enum(fp.stackup_mode));
     emit!(o, "stackup_layers", v_lset(&fp.stackup_layers));
     emit!(o, "private_layers", v_lset(&fp.private_layers));
@@ -1185,7 +1305,11 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
         v_int(fp.file_format_version_at_load)
     );
     emit!(o, "pad_count", no_api("FOOTPRINT::GetPadCount"));
-    emit!(o, "has_through_hole_pads", no_api("FOOTPRINT::HasThroughHolePads"));
+    emit!(
+        o,
+        "has_through_hole_pads",
+        no_api("FOOTPRINT::HasThroughHolePads")
+    );
     emit!(
         o,
         "component_class",
@@ -1225,7 +1349,11 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
 
         for (i, (pid, p)) in pads.into_iter().enumerate() {
             let k = o.item_key(Some(pid.into()));
-            emit!(o, format!("pad.{}", 2 * i + 1), format!("{k} {}", v_str(p.number())));
+            emit!(
+                o,
+                format!("pad.{}", 2 * i + 1),
+                format!("{k} {}", v_str(p.number()))
+            );
         }
 
         let drawings: Vec<_> = board.footprint_drawings(fp_id).map(|(id, _)| id).collect();

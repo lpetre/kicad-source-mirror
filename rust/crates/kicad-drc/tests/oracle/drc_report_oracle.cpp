@@ -38,6 +38,7 @@
  *     resolve    0|1                                     BOARD::ResolveDRCExclusions( flag ),
  *                                                        created markers are added to the board
  *     record                                             BOARD::RecordDRCExclusions()
+ *     bds                                                the design settings' exclusions
  *     report     mm|in|mils  MASK                        both report writers, three providers
  *     legacy     DATA                                    PCB_MARKER::FromLegacyString
  *     strip      TEXT                                    HYPERLINK_DV_RENDERER::StripMarkup
@@ -407,6 +408,16 @@ static int runScenario( const std::string& aRoot, const std::string& aPath, cons
         else if( cmd == "record" )
         {
             board->RecordDRCExclusions();
+        }
+        else if( cmd == "bds" )
+        {
+            int i = 0;
+
+            for( const DRC_EXCLUSION& ex : board->GetDesignSettings().m_DrcExclusions )
+            {
+                printf( "bds|%d|key64=%s|comment=%s|json=%s\n", i++, fnv( ex.GetSortKey() ).c_str(),
+                        ex.GetComment().ToStdString().c_str(), jsonOf( ex ).c_str() );
+            }
         }
         else if( cmd == "report" )
         {

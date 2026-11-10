@@ -39,8 +39,18 @@ fn check_well_formed(text: &str) {
                 assert!(parts[2].contains('='), "{line}");
                 assert!(
                     [
-                        "item", "bbox", "track", "pad", "shape", "text", "dim", "zone",
-                        "footprint", "misc", "board", "order"
+                        "item",
+                        "bbox",
+                        "track",
+                        "pad",
+                        "shape",
+                        "text",
+                        "dim",
+                        "zone",
+                        "footprint",
+                        "misc",
+                        "board",
+                        "order"
                     ]
                     .contains(&kind),
                     "{line}"
@@ -70,10 +80,9 @@ fn sections_of(text: &str, key: &str) -> Vec<String> {
 #[test]
 fn fixture_board_dumps_every_item_and_section() {
     let mut fx = rotated_flipped_scaled();
-    let track = fx.board.insert_item(
-        Track::Trace(PcbTrack::default()),
-        ParentRef::Board,
-    );
+    let track = fx
+        .board
+        .insert_item(Track::Trace(PcbTrack::default()), ParentRef::Board);
     fx.board.track_list.push_back(track);
 
     let text = dump_board(&fx.board, &DumpOptions::default());
@@ -82,7 +91,11 @@ fn fixture_board_dumps_every_item_and_section() {
     // The walk: footprint #0, then its children (fields, pads, drawings with the table's cell,
     // zones, groups, points), then the board track.
     let n = super::format::board_items(&fx.board).len();
-    assert_eq!(n, fx.children.len() - 2 + 1 + 1, "constraint and 3D body are not walked");
+    assert_eq!(
+        n,
+        fx.children.len() - 2 + 1 + 1,
+        "constraint and 3D body are not walked"
+    );
 
     for i in 0..n {
         let key = format!("#{i}");
@@ -100,9 +113,15 @@ fn fixture_board_dumps_every_item_and_section() {
         .map(|i| format!("#{i}"))
         .expect("pad walked");
     assert!(sections_of(&text, &pad_key).contains(&"pad".to_string()));
-    assert!(text.contains("item|#0|item.type=PCB_FOOTPRINT_T\n") || text.contains("item|#0|type=PCB_FOOTPRINT_T\n"));
+    assert!(
+        text.contains("item|#0|item.type=PCB_FOOTPRINT_T\n")
+            || text.contains("item|#0|type=PCB_FOOTPRINT_T\n")
+    );
     assert!(text.lines().any(|l| l.starts_with("board|board|")));
-    assert!(text.lines().any(|l| l.contains("|order|board|") || l.starts_with("order|board|")));
+    assert!(
+        text.lines()
+            .any(|l| l.contains("|order|board|") || l.starts_with("order|board|"))
+    );
     assert!(text.contains(&format!("item|#{}|type=PCB_TRACE_T\n", n - 1)));
 }
 
@@ -117,7 +136,10 @@ fn sections_filter_and_hash() {
     let text = dump_board(&fx.board, &opts);
     check_well_formed(&text);
 
-    for line in text.lines().filter(|l| !l.starts_with("pending") && !l.starts_with("rust-error")) {
+    for line in text
+        .lines()
+        .filter(|l| !l.starts_with("pending") && !l.starts_with("rust-error"))
+    {
         assert!(line.starts_with("item|"), "{line}");
         let v = line.split_once('=').expect("value").1;
         assert!(v.len() == 17 && v.starts_with('#'), "{line}");
@@ -129,10 +151,15 @@ fn file_uuids_give_uuid_keys() {
     let fx = board_with_footprint(Default::default(), false);
     let uuid = fx.board[fx.footprint].base.uuid.as_std_string();
     let opts = DumpOptions {
-        file_uuids: Some(super::scan_file_uuids(format!("(uuid \"{uuid}\")").as_bytes())),
+        file_uuids: Some(super::scan_file_uuids(
+            format!("(uuid \"{uuid}\")").as_bytes(),
+        )),
         ..DumpOptions::default()
     };
     let text = dump_board(&fx.board, &opts);
-    assert!(text.contains(&format!("item|{uuid}|uuid={}\n", super::format::v_str(&uuid).trim_matches('"'))));
+    assert!(text.contains(&format!(
+        "item|{uuid}|uuid={}\n",
+        super::format::v_str(&uuid).trim_matches('"')
+    )));
     assert!(text.contains(&format!("item|{uuid}|uuid_in_file=true\n")));
 }

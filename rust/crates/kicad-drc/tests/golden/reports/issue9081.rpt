@@ -1,0 +1,27 @@
+** Drc report for issue9081.kicad_pcb **
+** Created on <DATE> **
+** Report includes: Errors, Warnings, Exclusions **
+
+** Found 2 DRC violations **
+[pth_inside_courtyard]: PTH inside courtyard
+    Local override; error
+    @(133.8700 mm, 105.4750 mm): PTH pad 3 [Net-(J1-Pad3)] of J1
+    @(133.4100 mm, 106.7600 mm): Footprint R1
+[pth_inside_courtyard]: PTH inside courtyard
+    Local override; error
+    @(133.8700 mm, 108.0150 mm): PTH pad 4 [unconnected-(J1-Pad4)] of J1
+    @(133.4100 mm, 106.7600 mm): Footprint R1
+
+** Found 0 unconnected pads **
+
+** Found 0 Footprint errors **
+
+** Ignored checks **
+    - Footprint has no courtyard defined
+    - Track endpoint not centered on via
+    - Tuning profile track geometries
+    - Footprint doesn't match symbol's footprint filters
+    - Footprint component type doesn't match footprint pads
+    - Footprint not found in libraries
+
+** End of Report **

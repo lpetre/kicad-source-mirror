@@ -14,13 +14,15 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `drill/via_access.rs` | placeholders for `PCB_VIA` accessors not yet declared by the model | FAB-01 | stub (panics, to be deleted when M17 lands) |
 | `exporters/gendrill_writer_base.rs` | `gendrill_writer_base.h` (all types), `.cpp` L47-300, L303-355, L358-461, L464-501 | FAB-01 | ported |
 | `exporters/gendrill_map.rs` | `gendrill_writer_base.cpp` L506-847, L996-1019 | FAB-12 | stub: `gen_drill_map_file` returns `FabError::NotPorted` |
-| `exporters/gendrill_excellon_writer.rs` | `gendrill_excellon_writer.*` | FAB-02 | not started |
+| `exporters/gendrill_excellon_writer.rs` | `gendrill_excellon_writer.*` | FAB-02 | ported |
+| `exporters/gendrill_report.rs` (`HoleListSource`, `GenDrillReportFile`, `printToolSummary`) | `gendrill_writer_base.cpp` L850-993, L1022-1070 | FAB-02 | ported |
+| `jobs/job_export_pcb_drill.rs`, `jobs_handler.rs` (`job_export_drill`) | `job_export_pcb_drill.*` (options), `pcbnew_jobs_handler.cpp` `JobExportDrill` | FAB-02 | ported (Excellon); Gerber branch waits for FAB-08 |
 | `exporters/gendrill_gerber_writer.rs` | `gendrill_gerber_writer.*` | FAB-08 | not started |
 | `exporters/gerber_jobfile_writer.rs` | `gerber_jobfile_writer.*` | FAB-09 | not started |
-| `pcbplot.rs`, `pcb_plotter.rs`, `plot_board_layers.rs`, `plot_layer_poly.rs`, `plot_brditems_*.rs`, `line_ending_plot.rs`, `jobs/*`, `jobs_handler.rs` | see each module header | FAB-02..11 | not started |
+| `pcbplot.rs`, `pcb_plotter.rs`, `plot_board_layers.rs`, `plot_layer_poly.rs`, `plot_brditems_*.rs`, `line_ending_plot.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs` | see each module header | FAB-03..11 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
-L1022-1070) is FAB-02; the `ToolSummary` enum of the header is already here.
+L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
 
 ## FAB-01: drill model, tool list, drill file names
 
@@ -108,3 +110,80 @@ downstream of the enumeration (sort, tools, names, file functions) is verified n
 
 * Drill maps (`genDrillMapFile`, `plotDrillMarks`): FAB-12.
 * Enumeration end-to-end verification waits for the parser and M14 / M17.
+
+## FAB-02: Excellon writer, drill report, drill job
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `EXCELLON_WRITER` (ctor, `SetFormat`, `SetOptions`, `SetRouteModeForOvalHoles`, `GetOffset`) | `ExcellonWriter<'a>` (`base: GendrillWriterBase`), same-named snake-case methods |
+| `CreateDrillandMapFilesSet` | `create_drill_and_map_files_set` (board), `create_drill_and_map_files_set_from(source, ...)` |
+| `createDrillFile`, `writeEXCELLONHeader`, `writeEXCELLONEndOfFile`, `writeHoleAttribute` | private fns of the same names (the file is a `String`; `excellon_header_text` exposes the header for tests) |
+| `writeCoordinates` | `write_coordinates(x, y) -> String` (the line incl. `\n`) |
+| `writeHoleComments`, `writePostMachiningComment`, `formatLinearValue` | `hole_comments`, `post_machining_comment` (return the text), `format_linear_value` |
+| `getBackdrillLayerPairFileName`, `writeBackdrillLayerPairFile` | `backdrill_layer_pair_file_name`, `write_backdrill_layer_pair_file` |
+| `GENDRILL_WRITER_BASE::GenDrillReportFile`, `printToolSummary` | `GendrillWriterBase::gen_drill_report_file(path, date, drill_file_name_fn, source, reporter)`, `print_tool_summary`; `ExcellonWriter::gen_drill_report_file[_from]` |
+| `EnumerateDrillSpans` + `buildHolesList` as called by the writers / report | trait `HoleListSource` (`BoardHoleSource` = the C++ calls; tests feed recorded C++ enumerations) |
+| fmt `{:<25}` (display width), `{:2.3f}` | `fmt_left_aligned` (ports fmt's `display_width_of`), `fmt_fixed_width` (`kicad_core::printf::format_f`) |
+| `JOB_EXPORT_PCB_DRILL` (members, enums, defaults) | `jobs::job_export_pcb_drill::JobExportPcbDrill` (options only, see below), `DrillExportEnv` (build version, date) |
+| `PCBNEW_JOBS_HANDLER::JobExportDrill` (after `getBoard` / `resolveJobOutputPath`) | `jobs_handler::job_export_drill[_from]` -> `DrillJobOutcome { success, error, files, outputs }`; `default_drill_report_path`; `precisionListFor{Inches,Metric}` |
+
+`kicad-session` already has the full job struct (`JOB` base, JSON); it depends on this crate, so
+this crate defines an options-only copy (same members and constructor defaults) that the session
+maps onto (see the change request in the FAB-02 result).
+
+### Tests and verification
+
+* `tests/excellon_oracle.rs` + `tests/oracle/excellon_oracle.cpp` (build and regenerate:
+  `tests/oracle/build_excellon_oracle.sh`, about 1 minute; golden `tests/golden/excellon_oracle.txt`,
+  320 KB). The C++ driver links the reference pcbnew objects, pins the clock (it defines
+  `time()`, `TZ=XST-5:30`) and calls the real `EXCELLON_WRITER` (private helpers reached with
+  `#define private public`). It covers 21 boards (the 4 synthetic and 10 corpus boards of
+  FAB-01, the 6 boards of `test_cam_backdrill.cpp` that use the Excellon writer or the report,
+  and a slots board with odd angles / sizes, user and CJK layer names, aux origin) x 12 option
+  sets (every zero format in mm and inch, mirror, minimal header, merged / separate, G85 /
+  routed slots, aux-origin offset), plus the report merged and separate. The replay feeds the
+  C++ enumeration (FAB-01 `raw` lists, or this golden's for its own boards; `rawhash` proves
+  they are the oracle's) through `job_export_drill_from` and compares every reporter message,
+  `GetCreatedFiles` order and file: **966 drill files (FNV-1a hash, full text for the CLI
+  default set) and 42 reports, all identical**. Plus `writeCoordinates` for 53 value pairs x
+  4 zero formats x 5 precisions x 2 units (2120 lines, incl. rounding halves, negative zero,
+  int overflow clamping), 96 post-machining comments, 18 `formatLinearValue`, 48 headers: all
+  identical.
+* `basic_test_goldens_from_hand_built_holes`: `qa/data/cli/basic_test/basic_test_excellon_{default,
+  inches,mirror}.drl` reproduced from a hand-built 4-via list, byte for byte below the 5 lines
+  `test_pcb.py` skips, and fully (normalised) against the kicad-cli goldens.
+* `cli_goldens_from_oracle_hole_lists`: the 4 Excellon option sets of `tests/golden/drill/` for
+  all 10 corpus boards (kicad-cli output), file names, order and contents, all identical.
+* `cam_backdrill_expectations`: the Excellon / report assertions of `BackdrillCamOutputs`,
+  `FrontAndBackBackdrillCamOutputs`, `DualBackdrillSameViaCamOutputs`,
+  `DrillFileLayerOrderInFilename`, `DrillReportWithTools`, `DrillReportNullReporter`,
+  `DrillReportBackdrillHoleCount` (on the oracle's enumeration of the same boards; the C++
+  tests build them through the via model, M17).
+* `drill_job_outputs_and_pending_parts`: job output order (drill files, then the report),
+  report path default / explicit / resolver hook, map and Gerber failures.
+* `tests/drill_golden.rs::drill_export_matches_cli_goldens`: `run_port` wired (parser, CLI
+  defaults, job); still ignored: needs the remaining parser packages (PCBIO-04 `setup`), the pad
+  / via model accessors (M14, M17) and the Gerber writer (FAB-08).
+* Unit tests in `gendrill_excellon_writer.rs`, `gendrill_report.rs`, `jobs_handler.rs`.
+
+### Deviations
+
+* No file system: `wxFopen` / `fmt::print` failures ("Failed to create file", "Failed to write
+  file", "Error creating / writing drill report file") cannot occur; files go to
+  `base.outputs`. `GenDrillReportFile` always returns `true`.
+* `REPORTER::ReportTail( "Done." )` is reported with `Reporter::report` (the trait has no tail).
+* `CreateDrillandMapFilesSet` returns `Result<(), FabError>` instead of `bool`.
+* The drill map part of `create_drill_and_map_files_set_from` still enumerates the board
+  (`create_map_files_set`), not the given `HoleListSource`.
+* The job function starts after `getBoard` / `resolveJobOutputPath` / `EnsurePathExists`
+  (host side) and returns `DrillJobOutcome` instead of an exit code
+  (`success == false` <=> `ERR_INVALID_OUTPUT_CONFLICT`).
+
+### Known gaps
+
+* `--format gerber` in the job: `FabError::NotPorted` until FAB-08 (`GERBER_WRITER`; its report
+  must pass its own `getDrillFileName` override to `gen_drill_report_file`).
+* `--generate-map`: `FabError::NotPorted` until FAB-12 (as in FAB-01).
+* End-to-end from a `.kicad_pcb` file: waits for the parser / M14 / M17 (see above).

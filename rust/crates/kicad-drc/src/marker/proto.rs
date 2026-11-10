@@ -100,8 +100,16 @@ const DRC_ERROR_TYPES: &[(i32, &str, i32)] = &[
     (11, "DRCET_STARVED_THERMAL", DRCE_STARVED_THERMAL),
     (12, "DRCET_DANGLING_VIA", DRCE_DANGLING_VIA),
     (13, "DRCET_DANGLING_TRACK", DRCE_DANGLING_TRACK),
-    (14, "DRCET_DRILLED_HOLES_TOO_CLOSE", DRCE_DRILLED_HOLES_TOO_CLOSE),
-    (15, "DRCET_DRILLED_HOLES_COLOCATED", DRCE_DRILLED_HOLES_COLOCATED),
+    (
+        14,
+        "DRCET_DRILLED_HOLES_TOO_CLOSE",
+        DRCE_DRILLED_HOLES_TOO_CLOSE,
+    ),
+    (
+        15,
+        "DRCET_DRILLED_HOLES_COLOCATED",
+        DRCE_DRILLED_HOLES_COLOCATED,
+    ),
     (16, "DRCET_HOLE_CLEARANCE", DRCE_HOLE_CLEARANCE),
     (17, "DRCET_CONNECTION_WIDTH", DRCE_CONNECTION_WIDTH),
     (18, "DRCET_TRACK_WIDTH", DRCE_TRACK_WIDTH),
@@ -112,8 +120,16 @@ const DRC_ERROR_TYPES: &[(i32, &str, i32)] = &[
     (23, "DRCET_VIA_DIAMETER", DRCE_VIA_DIAMETER),
     (24, "DRCET_PADSTACK", DRCE_PADSTACK),
     (25, "DRCET_PADSTACK_INVALID", DRCE_PADSTACK_INVALID),
-    (26, "DRCET_MICROVIA_DRILL_OUT_OF_RANGE", DRCE_MICROVIA_DRILL_OUT_OF_RANGE),
-    (27, "DRCET_OVERLAPPING_FOOTPRINTS", DRCE_OVERLAPPING_FOOTPRINTS),
+    (
+        26,
+        "DRCET_MICROVIA_DRILL_OUT_OF_RANGE",
+        DRCE_MICROVIA_DRILL_OUT_OF_RANGE,
+    ),
+    (
+        27,
+        "DRCET_OVERLAPPING_FOOTPRINTS",
+        DRCE_OVERLAPPING_FOOTPRINTS,
+    ),
     (28, "DRCET_MISSING_COURTYARD", DRCE_MISSING_COURTYARD),
     (29, "DRCET_MALFORMED_COURTYARD", DRCE_MALFORMED_COURTYARD),
     (30, "DRCET_PTH_IN_COURTYARD", DRCE_PTH_IN_COURTYARD),
@@ -125,10 +141,18 @@ const DRC_ERROR_TYPES: &[(i32, &str, i32)] = &[
     (36, "DRCET_NET_CONFLICT", DRCE_NET_CONFLICT),
     (37, "DRCET_EXTRA_FOOTPRINT", DRCE_EXTRA_FOOTPRINT),
     (38, "DRCET_SCHEMATIC_PARITY", DRCE_SCHEMATIC_PARITY),
-    (39, "DRCET_SCHEMATIC_FIELDS_PARITY", DRCE_SCHEMATIC_FIELDS_PARITY),
+    (
+        39,
+        "DRCET_SCHEMATIC_FIELDS_PARITY",
+        DRCE_SCHEMATIC_FIELDS_PARITY,
+    ),
     (40, "DRCET_FOOTPRINT_FILTERS", DRCE_FOOTPRINT_FILTERS),
     (41, "DRCET_LIB_FOOTPRINT_ISSUES", DRCE_LIB_FOOTPRINT_ISSUES),
-    (42, "DRCET_LIB_FOOTPRINT_MISMATCH", DRCE_LIB_FOOTPRINT_MISMATCH),
+    (
+        42,
+        "DRCET_LIB_FOOTPRINT_MISMATCH",
+        DRCE_LIB_FOOTPRINT_MISMATCH,
+    ),
     (43, "DRCET_UNRESOLVED_VARIABLE", DRCE_UNRESOLVED_VARIABLE),
     (44, "DRCET_ASSERTION_FAILURE", DRCE_ASSERTION_FAILURE),
     (45, "DRCET_GENERIC_WARNING", DRCE_GENERIC_WARNING),
@@ -142,31 +166,95 @@ const DRC_ERROR_TYPES: &[(i32, &str, i32)] = &[
     (53, "DRCET_TEXT_THICKNESS", DRCE_TEXT_THICKNESS),
     (54, "DRCET_LENGTH_OUT_OF_RANGE", DRCE_LENGTH_OUT_OF_RANGE),
     (55, "DRCET_SKEW_OUT_OF_RANGE", DRCE_SKEW_OUT_OF_RANGE),
-    (56, "DRCET_VIA_COUNT_OUT_OF_RANGE", DRCE_VIA_COUNT_OUT_OF_RANGE),
-    (57, "DRCET_DIFF_PAIR_GAP_OUT_OF_RANGE", DRCE_DP_GAP_OUT_OF_RANGE),
+    (
+        56,
+        "DRCET_VIA_COUNT_OUT_OF_RANGE",
+        DRCE_VIA_COUNT_OUT_OF_RANGE,
+    ),
+    (
+        57,
+        "DRCET_DIFF_PAIR_GAP_OUT_OF_RANGE",
+        DRCE_DP_GAP_OUT_OF_RANGE,
+    ),
     (
         58,
         "DRCET_DIFF_PAIR_UNCOUPLED_LENGTH_TOO_LONG",
         DRCE_DP_UNCOUPLED_LENGTH_TOO_LONG,
     ),
     (59, "DRCET_FOOTPRINT", DRCE_FOOTPRINT),
-    (60, "DRCET_FOOTPRINT_TYPE_MISMATCH", DRCE_FOOTPRINT_TYPE_MISMATCH),
+    (
+        60,
+        "DRCET_FOOTPRINT_TYPE_MISMATCH",
+        DRCE_FOOTPRINT_TYPE_MISMATCH,
+    ),
     (61, "DRCET_PAD_TH_WITH_NO_HOLE", DRCE_PAD_TH_WITH_NO_HOLE),
-    (62, "DRCET_MIRRORED_TEXT_ON_FRONT_LAYER", DRCE_MIRRORED_TEXT_ON_FRONT_LAYER),
-    (63, "DRCET_NONMIRRORED_TEXT_ON_BACK_LAYER", DRCE_UNMIRRORED_TEXT_ON_BACK_LAYER),
-    (64, "DRCET_MISSING_TUNING_PROFILE", DRCE_MISSING_TUNING_PROFILE),
-    (65, "DRCET_TUNING_PROFILE_IMPLICIT_RULES", DRCE_TUNING_PROFILE_IMPLICIT_RULES),
-    (66, "DRCET_TRACK_ON_POST_MACHINED_LAYER", DRCE_TRACK_ON_POST_MACHINED_LAYER),
-    (67, "DRCET_TRACK_NOT_CENTERED_ON_VIA", DRCE_TRACK_NOT_CENTERED_ON_VIA),
-    (68, "DRCET_FOOTPRINT_SCALED_WITH_PADS", DRCE_FOOTPRINT_SCALED_WITH_PADS),
-    (69, "DRCET_NET_CHAIN_STUB_TOO_LONG", DRCE_NET_CHAIN_STUB_TOO_LONG),
-    (70, "DRCET_NET_CHAIN_RETURN_PATH_BREAK", DRCE_NET_CHAIN_RETURN_PATH_BREAK),
-    (71, "DRCET_NET_CHAIN_TUNING_PROFILES", DRCE_NET_CHAIN_TUNING_PROFILES),
-    (72, "DRCET_MALFORMED_MICROVIA_STACK_SPAN", DRCE_MALFORMED_MICROVIA_STACK_SPAN),
-    (73, "DRCET_MICROVIA_STACK_NOT_FILLED", DRCE_MICROVIA_STACK_NOT_FILLED),
+    (
+        62,
+        "DRCET_MIRRORED_TEXT_ON_FRONT_LAYER",
+        DRCE_MIRRORED_TEXT_ON_FRONT_LAYER,
+    ),
+    (
+        63,
+        "DRCET_NONMIRRORED_TEXT_ON_BACK_LAYER",
+        DRCE_UNMIRRORED_TEXT_ON_BACK_LAYER,
+    ),
+    (
+        64,
+        "DRCET_MISSING_TUNING_PROFILE",
+        DRCE_MISSING_TUNING_PROFILE,
+    ),
+    (
+        65,
+        "DRCET_TUNING_PROFILE_IMPLICIT_RULES",
+        DRCE_TUNING_PROFILE_IMPLICIT_RULES,
+    ),
+    (
+        66,
+        "DRCET_TRACK_ON_POST_MACHINED_LAYER",
+        DRCE_TRACK_ON_POST_MACHINED_LAYER,
+    ),
+    (
+        67,
+        "DRCET_TRACK_NOT_CENTERED_ON_VIA",
+        DRCE_TRACK_NOT_CENTERED_ON_VIA,
+    ),
+    (
+        68,
+        "DRCET_FOOTPRINT_SCALED_WITH_PADS",
+        DRCE_FOOTPRINT_SCALED_WITH_PADS,
+    ),
+    (
+        69,
+        "DRCET_NET_CHAIN_STUB_TOO_LONG",
+        DRCE_NET_CHAIN_STUB_TOO_LONG,
+    ),
+    (
+        70,
+        "DRCET_NET_CHAIN_RETURN_PATH_BREAK",
+        DRCE_NET_CHAIN_RETURN_PATH_BREAK,
+    ),
+    (
+        71,
+        "DRCET_NET_CHAIN_TUNING_PROFILES",
+        DRCE_NET_CHAIN_TUNING_PROFILES,
+    ),
+    (
+        72,
+        "DRCET_MALFORMED_MICROVIA_STACK_SPAN",
+        DRCE_MALFORMED_MICROVIA_STACK_SPAN,
+    ),
+    (
+        73,
+        "DRCET_MICROVIA_STACK_NOT_FILLED",
+        DRCE_MICROVIA_STACK_NOT_FILLED,
+    ),
     (74, "DRCET_MICROVIA_STACK_DEPTH", DRCE_MICROVIA_STACK_DEPTH),
     (75, "DRCET_HOLE_ASPECT_RATIO", DRCE_HOLE_ASPECT_RATIO),
-    (76, "DRCET_MICROVIA_CROSSES_CORE", DRCE_MICROVIA_CROSSES_CORE),
+    (
+        76,
+        "DRCET_MICROVIA_CROSSES_CORE",
+        DRCE_MICROVIA_CROSSES_CORE,
+    ),
     (77, "DRCET_COPPER_OUTSIDE_BOARD", DRCE_COPPER_OUTSIDE_BOARD),
 ];
 
@@ -286,7 +374,10 @@ fn board_layer_table() -> impl Iterator<Item = (i32, PcbLayerId)> {
     layers.extend((1..=9).map(|n| PcbLayerId(37 + 2 * n))); // User_1 .. User_9
     layers.push(PcbLayerId::Rescue);
     layers.extend((10..=45).map(|n| PcbLayerId(37 + 2 * n))); // User_10 .. User_45
-    layers.into_iter().zip(3..).map(|(layer, value)| (value, layer))
+    layers
+        .into_iter()
+        .zip(3..)
+        .map(|(layer, value)| (value, layer))
 }
 
 /// Port of `ToProtoEnum<PCB_LAYER_ID, board::types::BoardLayer>` (`BL_UNKNOWN` for ids
@@ -321,7 +412,12 @@ fn board_layer_name(value: i32) -> Option<String> {
         2 => Some("BL_UNSELECTED".to_string()),
         _ => board_layer_table()
             .find(|(v, _)| *v == value)
-            .map(|(_, layer)| format!("BL_{}", kicad_core::lset::Lset::name(layer).replace('.', "_"))),
+            .map(|(_, layer)| {
+                format!(
+                    "BL_{}",
+                    kicad_core::lset::Lset::name(layer).replace('.', "_")
+                )
+            }),
     }
 }
 
@@ -514,7 +610,12 @@ impl DrcMarkerMsg {
     /// ProtoJSON with the proto field names, fields in number order.
     pub fn to_json(&self) -> Value {
         let mut map = Map::new();
-        put_json_enum(&mut map, "error_type", EnumKind::DrcErrorType, self.error_type);
+        put_json_enum(
+            &mut map,
+            "error_type",
+            EnumKind::DrcErrorType,
+            self.error_type,
+        );
 
         if let Some(position) = &self.position {
             map.insert("position".to_string(), position.to_json());
@@ -542,7 +643,12 @@ impl DrcMarkerMsg {
             map.insert("excluded".to_string(), Value::Bool(true));
         }
 
-        put_json_enum(&mut map, "marker_type", EnumKind::MarkerType, self.marker_type);
+        put_json_enum(
+            &mut map,
+            "marker_type",
+            EnumKind::MarkerType,
+            self.marker_type,
+        );
         Value::Object(map)
     }
 }
@@ -588,7 +694,10 @@ fn json_integer(value: &Value, min: i64, max: i64) -> JsonResult<i64> {
                 // FloatingPointToIntConvertAndCheck: the double must convert exactly.
                 let d = n.as_f64().unwrap_or(f64::NAN);
 
-                if d.is_finite() && d.trunc() == d && d >= -9.223_372_036_854_776e18 && d < 9.223_372_036_854_776e18
+                if d.is_finite()
+                    && d.trunc() == d
+                    && d >= -9.223_372_036_854_776e18
+                    && d < 9.223_372_036_854_776e18
                 {
                     Some(d as i64)
                 } else {
@@ -852,7 +961,10 @@ mod tests {
     fn wire_format() {
         let msg = DrcMarkerMsg {
             error_type: 5,
-            position: Some(ProtoVector2 { x_nm: 150, y_nm: -1 }),
+            position: Some(ProtoVector2 {
+                x_nm: 150,
+                y_nm: -1,
+            }),
             items: vec!["ab".into(), String::new()],
             layer: 3,
             marker_type: 2,
@@ -909,7 +1021,10 @@ mod tests {
             r#"{"comment":5}"#,
             r#"[1]"#,
         ] {
-            assert!(parse_exclusion_json(&serde_json_like(bad)).is_err(), "{bad}");
+            assert!(
+                parse_exclusion_json(&serde_json_like(bad)).is_err(),
+                "{bad}"
+            );
         }
 
         // Unknown enum numbers are kept and printed as numbers.

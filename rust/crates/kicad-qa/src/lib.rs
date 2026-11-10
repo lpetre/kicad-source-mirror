@@ -5,6 +5,11 @@
 
 use std::path::{Path, PathBuf};
 
+pub mod board_file_utils;
+pub mod io_corpus;
+pub mod sexpr_text;
+pub mod uuid_canon;
+
 /// Root of the KiCad source tree (the directory containing `qa/`, `demos/`, `pcbnew/`, ...).
 pub fn kicad_source_root() -> PathBuf {
     // CARGO_MANIFEST_DIR = <kicad>/rust/crates/kicad-qa
@@ -50,7 +55,9 @@ pub fn files_with_extension(dir: &Path, ext: &str) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![dir.to_path_buf()];
     while let Some(d) = stack.pop() {
-        let Ok(rd) = std::fs::read_dir(&d) else { continue };
+        let Ok(rd) = std::fs::read_dir(&d) else {
+            continue;
+        };
         for entry in rd.flatten() {
             let p = entry.path();
             if p.is_dir() {

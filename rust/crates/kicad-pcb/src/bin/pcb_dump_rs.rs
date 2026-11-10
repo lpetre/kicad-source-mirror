@@ -26,7 +26,9 @@
 use std::io::Write;
 use std::path::Path;
 
-use kicad_pcb::dump::{DumpOptions, dump_board, dump_defaults, load_board_for_dump, scan_file_uuids};
+use kicad_pcb::dump::{
+    DumpOptions, dump_board, dump_defaults, load_board_for_dump, scan_file_uuids,
+};
 
 fn usage() -> std::process::ExitCode {
     eprintln!(
@@ -90,7 +92,11 @@ fn main() -> std::process::ExitCode {
                 };
 
                 let mut o = opts.clone();
-                o.file_uuids = Some(std::fs::read(path).map(|t| scan_file_uuids(&t)).unwrap_or_default());
+                o.file_uuids = Some(
+                    std::fs::read(path)
+                        .map(|t| scan_file_uuids(&t))
+                        .unwrap_or_default(),
+                );
                 let _ = out.write_all(dump_board(&board, &o).as_bytes());
             }
 

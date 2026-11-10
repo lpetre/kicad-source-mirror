@@ -24,7 +24,10 @@
 //!   the goldens committed in `qa/data/cli/basic_test/` after normalisation (checks the
 //!   normaliser and the golden generation).
 //! * `drill_export_matches_cli_goldens` (ignored): the port's `pcb export drill` against the
-//!   goldens; needs `kicad_pcb::io::parse_board` and the drill writers (FAB-02, FAB-08).
+//!   goldens; wired to the parser and the drill job (FAB-02); waits for the remaining parser
+//!   packages (PCBIO), the pad / via model accessors (M14, M17) and the Gerber drill writer
+//!   (FAB-08). The Excellon sets are already
+//!   reproduced from the C++ enumeration in `tests/excellon_oracle.rs`.
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -199,7 +202,10 @@ fn normaliser_replaces_only_header_lines() {
 /// `pcb export drill` through the port, compared with the oracle goldens: same file names in
 /// the same order and identical contents after normalisation.
 #[test]
-#[ignore = "needs kicad_pcb::io::parse_board and the drill writers (FAB-02, FAB-08)"]
+#[ignore = "needs the remaining board parser packages (PCBIO, e.g. setup PCBIO-04), the pad \
+            (M14) and via (M17) model accessors the drill enumerator calls (port_pending \
+            today) and the Gerber drill writer (FAB-08); the Excellon writer and the job \
+            (FAB-02) are wired"]
 fn drill_export_matches_cli_goldens() {
     for board in corpus_boards() {
         let path = kicad_qa::kicad_source_root().join(&board);
@@ -226,9 +232,74 @@ fn drill_export_matches_cli_goldens() {
 }
 
 /// Runs the port's drill export for one board and option set; returns `(file name, text)` in
-/// creation order. To be wired by FAB-02 / FAB-08 (parse with `kicad_pcb::io::parse_board`,
-/// apply the CLI defaults of `docs/analysis/plot-fab.md` 1.3 plus `args`, call the drill job).
+/// creation order: parse with `kicad_pcb::io::parse_board`, apply the CLI defaults of
+/// `docs/analysis/plot-fab.md` 1.3 (`kicad/cli/command_pcb_export_drill.cpp`) plus `args`, run
+/// the drill job (`jobs_handler::job_export_drill`) into `out/` and keep the file names.
 fn run_port(path: &Path, text: &str, args: &[&str]) -> Vec<(String, String)> {
-    let _ = (path, text, args);
-    panic!("drill export not ported yet (FAB-02 Excellon, FAB-08 Gerber, PCBIO parser)");
+    use kicad_fab::jobs::job_export_pcb_drill::{
+        DrillExportEnv, DrillFormat, DrillUnits, JobExportPcbDrill,
+    };
+
+    let mut board = kicad_pcb::io::parse_board(
+        text,
+        path.to_str().unwrap(),
+        &kicad_pcb::io::ParseOptions::default(),
+    )
+    .unwrap_or_else(|e| panic!("{}: {e:?}", path.display()));
+    board.file_name = path.to_str().unwrap().to_string();
+
+    // CLI defaults: excellon, absolute origin, decimal, alternate (G85) slots, mm, merged.
+    let mut job = JobExportPcbDrill {
+        drill_units: DrillUnits::Mm,
+        excellon_oval_drill_route: false,
+        excellon_combine_pth_npth: true,
+        ..JobExportPcbDrill::default()
+    };
+    let mut it = args.iter();
+    while let Some(arg) = it.next() {
+        match *arg {
+            "--format" => {
+                job.format = match *it.next().unwrap() {
+                    "excellon" => DrillFormat::Excellon,
+                    "gerber" => DrillFormat::Gerber,
+                    other => panic!("format {other}"),
+                }
+            }
+            "-u" => {
+                job.drill_units = match *it.next().unwrap() {
+                    "in" => DrillUnits::Inch,
+                    "mm" => DrillUnits::Mm,
+                    other => panic!("units {other}"),
+                }
+            }
+            "--excellon-mirror-y" => job.excellon_mirror_y = true,
+            "--excellon-separate-th" => job.excellon_combine_pth_npth = false,
+            other => panic!("argument {other} not handled"),
+        }
+    }
+
+    let env = DrillExportEnv {
+        build_version: "10.99.0-unknown".to_string(),
+        creation_date: Default::default(),
+    };
+    let outcome = kicad_fab::jobs_handler::job_export_drill(
+        kicad_pcb::BoardCtx::bare(&board),
+        &job,
+        "out/",
+        &env,
+        None,
+        None,
+    );
+    assert!(outcome.success, "{}: {:?}", path.display(), outcome.error);
+
+    outcome
+        .files
+        .into_iter()
+        .map(|f| {
+            (
+                f.name.strip_prefix("out/").unwrap().to_string(),
+                String::from_utf8(f.contents).unwrap(),
+            )
+        })
+        .collect()
 }

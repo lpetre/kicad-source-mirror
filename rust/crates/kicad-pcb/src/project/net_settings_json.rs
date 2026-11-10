@@ -761,7 +761,8 @@ fn migrate_schema_2_to_3(internals: &mut JsonSettingsInternals) -> Result<bool, 
             continue;
         };
 
-        if let (Some(name), Some(Value::Array(nets))) = (net_class.get("name"), net_class.get("nets"))
+        if let (Some(name), Some(Value::Array(nets))) =
+            (net_class.get("name"), net_class.get("nets"))
         {
             let net_class_name = get_wx_string(name)?;
 
