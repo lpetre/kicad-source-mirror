@@ -319,3 +319,106 @@ refill+save, cli e2e all). Entries reading caches (`target/zone-corpus`,
 missing. Scoreboard replays that do not assert identity are compared with committed status
 snapshots (`scripts/perf-gate/expected/`). First run at 03b6a6fd (63a725d7 + LIVE work):
 30 / 30 PASS in 28 min (`target/perf/gate-20261110-094933.log`).
+
+## Round 1 (judged 2026-11-10, round base 85314f75)
+
+Kept: all three changes. Reverted: none.
+
+| id | what | files | gain (min ms, A/B below) |
+|---|---|---|---|
+| `R1-wasm-opt3` | `[profile.wasm-release]` opt-level `"s"` -> `3`; optional `wasm-opt -Os` -> `-O3` | `Cargo.toml`, `scripts/build-wasm.sh` | wasm, medium boards: `load_total` -21 to -26 %, `drc` -19 to -23 %, `zone_refill` -11 to -19 %, `drc_after_refill` -19 to -25 %, `gerbers` -15 to -25 %, `write` -3 to -19 %; router loop: `live.commit` -17 to -27 %, `live2.check_items` -16 to -23 %, `live2.refill_affected` -13 %. Package 8.71 -> 10.65 MB. Native unaffected. |
+| `R1-drc-marker-uuid-scan` | `UuidPresence` answers `resolve_item(..).is_some()` for the fresh marker UUIDs of `run_drc_job` without the per-marker linear board scan; net-tie group map memoised per footprint for one copper-clearance run | `kicad-pcb/src/board/index.rs`, `kicad-drc/src/run_flow.rs`, `kicad-drc/src/providers/copper_clearance.rs` | jetson `drc` 15915 -> 10729 (-33 %), `drc_after_refill` 15500 -> 10742; vme-wren `drc` -12 %; coldfire `drc2.provider.clearance` 55.6 -> 45.2 (-19 %; spread 0.1), `drc` -7 %. Neutral on the other medium boards (few markers, no net ties). |
+| `R1-split-collinear-fastpath` | `split_collinear_outlines`: a box-overlap pre-check of the necessary conditions skips building the segment r-tree when no pair can split; lazily built extent filter in front of `point_inside` | `kicad-geom/src/geometry/shape_poly_set.rs` | `drc2.provider.copper width` -13 to -19 % (medium), `sliver checker` -10 to -14 % (medium), -18 % jetson, -30 % vme-wren; `drc` -3 to -7 % on medium, vme-wren -17 %; `zone_refill` within noise. |
+
+Verification (all output byte-identical):
+
+* Gate: `perf-gate.sh changed kicad-geom kicad-pcb kicad-drc` at 12981c84 (23 entries incl.
+  pcb uuid_presence test, geom split_collinear tests, zone corpus strict, zf06, drc oracles,
+  cli e2e all in the dev profile, i.e. with overflow checks, incl. `issue25089/
+  odb_circle_edge_cases`): 23 / 23 PASS, `target/perf/gate-20261110-130025.log`. The round's
+  files are unchanged in a37201e4.
+* Native A/B: four release `kicad-bench` binaries from `git archive` of 12981c84 with the
+  round's files at base / one change / the other / all (everything else identical, incl.
+  `connection_width.rs`). Per-stage output hashes (drc, drc_after_refill, gerbers, drill,
+  write) equal between base and head on the 6 bench boards, vme-wren, jetson (e.g. jetson
+  drc `64f7cd1b1a143b7d`, drc_after_refill `24fdd0c1d63e345e`, write `b1e3d92fe3c515a9`) and
+  the net-tie / edge-case boards `net_tie_hole_clearance`, `issue14008`, `issue14412`,
+  `issue19956`, `issue24974`, `test_copper_graphics`, `issue25089/odb_circle_edge_cases`
+  (their drc reports are also identical to the reference kicad-cli in e2e_cli).
+* wasm: three nodejs packages from rustc 1.97.0 - base code at opt-level `s`, round code at
+  `s`, round code at 3 - hashed through the JS API (uuidSeed 1, fixed date): `save()`,
+  `runDrc({})` report and JSON, the save after it, a track committed after `runDrc` (its
+  UUID shows the generator advanced identically), `exportGerbers`, `exportDrill` excellon and
+  gerber, `refillZones()` + save + both DRC reports, the live (incremental and full) and live2
+  (affected and full refill, checkItems) saved boards: 128 hashes equal across all three
+  packages on the 6 bench boards; vme-wren alone, `s` vs 3: 22 hashes equal, no
+  `WebAssembly.RuntimeError`. `build-wasm.sh --test` on the O3 package: smoke.mjs 58 checks
+  (wasm == native reference), browser.mjs OK; `web/test/router_loop.mjs` 20 checks.
+  wasm-opt is not installed here: the `-O3` branch did not run and no wasm-opt'ed package was
+  compared; whoever ships one must repeat the hash comparison and record the binaryen version.
+
+Measurement: the machine never got quiet (other agents' tests and builds; waited 20 min, the
+1-minute load stayed 2.2 to 6.0 during the runs, logged per run in
+`target/bench/round1/driver.log`). To beat that, every A/B is interleaved: small / medium
+7 reps + 1 warm-up per binary, 2 alternating rounds (fab re-check: 15 reps, 3 rounds);
+jetson / vme-wren `drc` 2 reps + 1, `refill` 1 rep + 1 (single samples: treat +-10 % as
+noise there). Values are minima. Spread (difference between the two rounds' minima of the same
+binary) on medium boards: 1 to 3 % for the DRC providers and `drc`, up to 10 % for
+`zone_refill` and the writer. A fab-only re-run (complex_hierarchy, interf_u, StickHub)
+shows `load_total`, `gerbers` and `write` within 0.5 ms base vs head. Raw TSVs:
+`target/bench/round1/` (`native-sm.tsv`, `native-lg.tsv`, `native-fab.tsv`, `wasm-def.tsv`,
+`wasm-live.tsv`).
+
+#### Native stage times after round 1: quiet baseline 63a725d7 / round base -> round head, min ms
+
+| board | load_total | drc | zone_refill | drc_after_refill | gerbers | write |
+|---|---:|---:|---:|---:|---:|---:|
+| ecc83-pp | 6.0 / 6.1 -> 6.2 | 18.6 / 19.8 -> 18.0 (-9 %) | 25.0 / 26.1 -> 24.6 | 19.1 / 18.6 -> 18.1 | 3.4 / 3.3 -> 3.5 | 2.7 / 2.7 -> 2.6 |
+| issue10697 | 1.0 / 0.9 -> 1.0 | 3.6 / 3.5 -> 3.0 (-14 %) | 0.2 / 0.2 -> 0.2 | 3.6 / 3.6 -> 3.2 (-12 %) | 0.6 / 0.6 -> 0.7 | 0.2 / 0.2 -> 0.2 |
+| complex_hierarchy | 39.2 / 38.6 -> 38.5 | 157.8 / 156.4 -> 154.0 (-2 %) | 226.8 / 224.7 -> 212.5 | 159.3 / 158.5 -> 150.9 (-5 %) | 15.4 / 14.1 -> 14.2 | 14.9 / 14.1 -> 14.0 |
+| interf_u | 27.0 / 27.5 -> 26.8 | 109.0 / 106.1 -> 104.5 (-2 %) | 232.6 / 232.9 -> 237.2 | 110.4 / 107.9 -> 100.5 (-7 %) | 20.0 / 17.4 -> 17.2 | 11.3 / 10.8 -> 10.8 |
+| StickHub | 42.6 / 42.2 -> 42.2 | 204.2 / 200.1 -> 183.4 (-8 %) | 216.9 / 222.1 -> 212.9 | 209.4 / 205.5 -> 191.8 (-7 %) | 19.1 / 17.9 -> 17.4 | 17.3 / 17.6 -> 17.5 |
+| kit-dev-coldfire-xilinx_5213 | 132.4 / 133.1 -> 133.1 | 387.1 / 388.4 -> 354.2 (-9 %) | 1245.2 / 1241.1 -> 1194.5 | 392.8 / 398.7 -> 352.6 (-12 %) | 53.4 / 50.5 -> 50.5 | 51.9 / 51.8 -> 50.9 |
+| vme-wren | 4324 / 4300 -> 4331 | 18775 / 19868 -> 15185 (-24 %) | 39861 / 41221 -> 38784 | 31042 / 31831 -> 25542 (-20 %) | - | - |
+| jetson-agx-thor-baseboard | 3150 / 3384 -> 3214 | 16675 / 15915 -> 10152 (-36 %) | 23661 / 23074 -> 23028 | 16925 / 15500 -> 11050 (-29 %) | - | - |
+
+(gerbers / write of the medium boards from the 15-rep fab re-run.)
+
+#### Remaining gap to the reference: port / reference, round base -> round head
+
+Port = min of `load_total` + stages (kicad-bench); reference = the kicad-cli medians of the
+quiet baseline minus start-up, as in the ratio table above.
+
+| board | drc pool | drc 1t | drc_refill pool | drc_refill 1t |
+|---|---:|---:|---:|---:|
+| ecc83-pp | 0.10 -> 0.09 | 0.10 -> 0.10 | 0.15 -> 0.15 | 0.15 -> 0.15 |
+| issue10697 | 0.05 -> 0.04 | 0.03 -> 0.03 | 0.06 -> 0.05 | 0.04 -> 0.04 |
+| complex_hierarchy | 0.38 -> 0.38 | 0.33 -> 0.32 | 0.54 -> 0.52 | 0.56 -> 0.53 |
+| interf_u | 0.33 -> 0.32 | 0.34 -> 0.34 | 0.65 -> 0.64 | 0.64 -> 0.64 |
+| StickHub | 0.51 -> 0.48 | 0.48 -> 0.45 | 0.68 -> 0.65 | 0.51 -> 0.49 |
+| kit-dev-coldfire-xilinx_5213 | 0.69 -> 0.65 | 0.59 -> 0.55 | 1.23 -> 1.17 | 0.83 -> 0.79 |
+| vme-wren | 1.83 -> 1.47 | 1.02 -> 0.82 | 1.86 -> 1.65 | 0.98 -> 0.87 |
+| jetson-agx-thor-baseboard | 1.52 -> 1.05 | 1.15 -> 0.80 | 1.64 -> 1.46 | 0.96 -> 0.85 |
+
+The port now beats the single-threaded reference everywhere and the thread pool everywhere
+except refill + DRC on coldfire (1.17) and the large boards (DRC 1.05 / 1.47, refill + DRC
+1.46 / 1.65), where zone refill is the gap (hotspots 1, 2).
+
+#### wasm after round 1 (wasm_bench.mjs, node 22, 4 reps + 1, 2 alternating rounds): opt-level s -> 3, min ms
+
+| board | load_total | drc | zone_refill | drc_after_refill | gerbers | write |
+|---|---:|---:|---:|---:|---:|---:|
+| ecc83-pp | 9.9 -> 7.9 | 28.9 -> 29.3 | 34.4 -> 32.0 | 28.4 -> 28.1 | 8.6 -> 7.6 | 5.5 -> 5.7 |
+| issue10697 | 1.5 -> 1.2 | 6.0 -> 4.3 | 0.4 -> 0.3 | 6.3 -> 4.5 | 1.5 -> 1.1 | 0.3 -> 0.3 |
+| complex_hierarchy | 59.3 -> 46.9 | 238.5 -> 192.3 | 294.7 -> 254.3 | 234.2 -> 184.3 | 32.7 -> 26.3 | 27.7 -> 25.1 |
+| interf_u | 44.7 -> 32.9 | 167.7 -> 129.5 | 326.6 -> 264.0 | 157.8 -> 127.3 | 44.4 -> 33.4 | 21.6 -> 18.7 |
+| StickHub | 72.1 -> 55.4 | 317.5 -> 255.2 | 308.9 -> 257.4 | 324.1 -> 255.0 | 37.5 -> 31.9 | 33.3 -> 32.4 |
+| kit-dev-coldfire-xilinx_5213 | 210.2 -> 165.6 | 570.4 -> 449.6 | 1651.2 -> 1462.5 | 579.4 -> 433.7 | 105.2 -> 83.3 | 103.6 -> 84.4 |
+
+Router loop (complex_hierarchy / interf_u): `live.commit` 0.62 -> 0.45 / 1.09 -> 0.90,
+`live.commit_full` 4.99 -> 3.96 / 6.30 -> 5.63, `live2.check_items` 103.7 -> 86.7 / 45.0 ->
+34.8, `live2.refill_affected` 262.6 -> 228.1 / 315.7 -> 275.2, `live2.zone_refill` 291.1 ->
+249.3 / 308.4 -> 267.1.
+
+Hotspot list: rank 3 is done; rank 5 is smaller; the order of the rest is unchanged (not
+re-profiled with callgrind this round).
