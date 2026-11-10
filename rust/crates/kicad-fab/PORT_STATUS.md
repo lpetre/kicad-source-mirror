@@ -12,7 +12,7 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `drill/drill_operation.rs` | `pcbnew/drill/drill_operation.h` | FAB-01 | ported |
 | `drill/drill_enumerator.rs` | `pcbnew/drill/drill_enumerator.h/.cpp` | FAB-01, FAB-GLUE | ported; verified end to end (FAB-GLUE) |
 | `exporters/gendrill_writer_base.rs` | `gendrill_writer_base.h` (all types), `.cpp` L47-300, L303-355, L358-461, L464-501 | FAB-01 | ported |
-| `exporters/gendrill_map.rs` | `gendrill_writer_base.cpp` L506-847, L996-1019 | FAB-12 | stub: `gen_drill_map_file` returns `FabError::NotPorted` |
+| `exporters/gendrill_map.rs` | `gendrill_writer_base.cpp` L506-847, L996-1019 | FAB-12 | ported: Gerber X2 and SVG maps (see "FAB-12" below); PDF / PS / DXF: `FabError::Unsupported` |
 | `exporters/gendrill_excellon_writer.rs` | `gendrill_excellon_writer.*` | FAB-02 | ported |
 | `exporters/gendrill_report.rs` (`HoleListSource`, `GenDrillReportFile`, `printToolSummary`) | `gendrill_writer_base.cpp` L850-993, L1022-1070 | FAB-02 | ported |
 | `jobs/job_export_pcb_drill.rs`, `jobs_handler.rs` (`job_export_drill`) | `job_export_pcb_drill.*` (options), `pcbnew_jobs_handler.cpp` `JobExportDrill` | FAB-02 | ported (Excellon; Gerber branch: FAB-08) |
@@ -186,7 +186,7 @@ maps onto (see the change request in the FAB-02 result).
 
 ### Known gaps
 
-* `--generate-map`: `FabError::NotPorted` until FAB-12 (as in FAB-01).
+* (Done, FAB-12) `--generate-map`: Gerber X2 / SVG maps; see "FAB-12" below.
 
 ## FAB-03: board plot driver, Gerber X2 header, file names
 
@@ -678,7 +678,7 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
 
 ### Known gaps
 
-* `--generate-map`: FAB-12 (`FabError::NotPorted`, as for Excellon).
+* (Done, FAB-12) `--generate-map`: see "FAB-12" below.
 * (Done, FAB-GLUE) End-to-end on boards with vias: see "FAB-GLUE" below.
 
 ## FAB-GLUE: drill enumeration on the via model, model replacements, stale expectations
@@ -888,3 +888,53 @@ drill chart symbols (FAB-13): the boards and option sets to rerun are in the rep
 
 * `PlotDrillSymbols` / `PlotChartSymbols` (FAB-13): the board `modern_metadata` is pending.
 * PDF / DXF / PostScript / PNG branches of `PCB_PLOTTER::Plot` (formats out of scope).
+
+## FAB-12: drill maps
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `GENDRILL_WRITER_BASE::genDrillMapFile( aFullFileName, aFormat )` | `exporters::gendrill_map::gen_drill_map_file(writer, name, format, env) -> Result<Vec<u8>, FabError>` |
+| `GENDRILL_WRITER_BASE::plotDrillMarks( aPlotter )` | `gendrill_map::plot_drill_marks(writer, plotter)` |
+| `CreateMapFilesSet( aPlotDirectory, aReporter )` (FAB-01 loop) | `create_map_files_set(dir, env, reporter)`: new `env: &PlotEnv` argument (build version and date of the map plots), passed by `ExcellonWriter` / `GerberWriter::create_drill_and_map_files_set_from` |
+
+Ported in full for `PLOT_FORMAT::GERBER` (X2 header, `TF.FileFunction,Drillmap`, 4.5 mm
+format, scale 1 at the drill offset) and `SVG` (A4 landscape `m_pageInfo` default, 10 mm margin,
+60/40 split, scale clipped at 3, `bottom_limit` column wrapping of the legend): board and footprint
+`Edge.Cuts` shapes as `Dwgs.User` copies without group through `BRDITEMS_PLOTTER::PlotShape`
+(default `PCB_PLOT_PARAMS`, unloaded colour settings, colour mode off), one `Marker` per hole
+(+ `ThickOval` for slots), the legend with the exact strings (`%3.3fmm / %2.4f"`, castellated /
+press-fit / backdrill stub / post-machined / counts / not plated) in the stroke font.
+
+### Tests and verification (reference kicad-cli)
+
+* `tests/drill_map.rs`, golden `tests/golden/drill_map/corpus.txt` (made by `generate.py`
+  there on copies; about 25 minutes): every `qa/data` / `demos` board under 300 KB plus the
+  crafted boards `tests/data/drill_map/map_columns.kicad_pcb` (250 x 80 mm with 22 via tools
+  and slots / castellated / press-fit / NPTH tools: the SVG legend wraps into several columns;
+  arc, circle, dashed rect, grouped and footprint `Edge.Cuts` shapes, Edge.Cuts text and a
+  Dwgs.User line that must not be plotted), `map_tiny` (scale clipped at 3, aux origin),
+  `map_large` (scale < 1) and `tests/data/excellon_corpus/drill_features.kicad_pcb` (backdrill
+  stubs, post-machining, blind / buried spans), each with 7 sets: Excellon + gerberx2 map
+  (merged, `--excellon-separate-th`, `--drill-origin plot`), Excellon + svg map (merged,
+  separate), `--format gerber` + gerberx2 / svg map. Names, order and FNV-1a of the normalised
+  maps (`TF.GenerationSoftware`, `TF.CreationDate`, `G04 Created by`, the date of the SVG
+  `<title>`); full normalised maps of `map_tiny` for two sets.
+  * `corpus_maps_match_cli`: **2681 of 2688 runs identical (4787 maps), 0 pending, 0 differ**;
+    7 kicad-cli failures (`plugins/fakeboard.kicad_pcb`, not a board) skipped.
+  * `crafted_maps_full_text`: identical. `unsupported_map_formats`: PDF / PS / DXF.
+* `KICAD_FAB_DRILL_MAP_DUMP=<dir>` writes differing maps.
+
+### Deviations
+
+* PDF, PostScript and DXF maps (and HPGL, which C++ turns into PDF): `FabError::Unsupported`
+  naming the format, after `Failed to create file '...'` is reported (no plot engine).
+* The C++ makes `Edge.Cuts` visible around `GetBoardEdgesBoundingBox`; the port does not touch
+  the board (`ComputeBoundingBox( true, true )` sets `Edge.Cuts` itself, same result).
+* `OpenFile` / `EndPlot` cannot fail (no file system).
+
+### Known gaps
+
+* None for the Gerber X2 and SVG maps.
+

@@ -192,6 +192,9 @@ pub fn perform(m: &ArgMatches) -> i32 {
         Err(code) => return code,
     };
 
+    // Running DRC requires libraries be loaded (JobExportDrc: AsyncLoad + BlockUntilLoaded)
+    crate::host_libraries::load_footprint_libraries(&mut session);
+
     // Host inputs of JobExportDrc (the C++ reads them from the clock / filesystem)
     job.report_date = host::host_clock().iso8601();
     job.schematic_exists = host::schematic_exists(&job.rc.filename);

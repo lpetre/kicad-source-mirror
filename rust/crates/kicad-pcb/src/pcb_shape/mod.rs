@@ -716,11 +716,42 @@ impl PcbShape {
             let start = self.shape.start();
             let end = self.shape.end();
 
-            let mut rect = Box2I::new(start, end - start);
-            rect.normalize();
+            // BOX2I rect( start, end - start );
+            // rect.Normalize();
+            // SetStart( rect.GetPosition() );
+            // SetEnd( rect.GetEnd() );
+            //
+            // Spelled out with the arithmetic of the reference build (FIX-FAB-3, finding X-2 of
+            // review-fab): `end - start` is an int subtraction that wraps for a rectangle wider
+            // or taller than 2^31 nm (an invalid board, which the reference still loads, plots
+            // and saves), and on Linux `KiCheckedCast<int64_t, int>` in `Normalize()` /
+            // `GetRight()` / `GetBottom()` is a plain narrowing conversion that wraps, while
+            // `kicad_geom`'s `Box2I` clamps (its PORT_STATUS deviation D1).  For every
+            // rectangle inside the int range this is exactly `Box2I::new( .. ).normalize()`.
+            // Verified with pcb-dump against pcb-dump-rs (PORT_STATUS.md, FIX-FAB-3).
+            let mut pos = start;
+            let mut size: [i64; 2] = [
+                end.x.wrapping_sub(start.x) as i64,
+                end.y.wrapping_sub(start.y) as i64,
+            ];
 
-            self.set_start(env, rect.position());
-            self.set_end(env, rect.end());
+            if size[1] < 0 {
+                size[1] = -size[1];
+                pos.y = (pos.y as i64 - size[1]) as i32;
+            }
+
+            if size[0] < 0 {
+                size[0] = -size[0];
+                pos.x = (pos.x as i64 - size[0]) as i32;
+            }
+
+            let rect_end = Vector2I::new(
+                (pos.x as i64 + size[0]) as i32,
+                (pos.y as i64 + size[1]) as i32,
+            );
+
+            self.set_start(env, pos);
+            self.set_end(env, rect_end);
         } else if self.shape.shape == ShapeT::Poly {
             let horizontal = |seg: &Seg| seg.a.y == seg.b.y;
             let vertical = |seg: &Seg| seg.a.x == seg.b.x;

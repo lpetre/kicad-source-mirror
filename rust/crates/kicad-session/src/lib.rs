@@ -36,6 +36,7 @@ pub mod board_loader;
 pub mod build_version;
 pub mod error;
 pub mod exit_codes;
+pub mod footprint_libraries;
 pub mod host_clock;
 pub mod jobs;
 pub mod jobs_handler;
@@ -44,6 +45,7 @@ pub mod session;
 
 pub use board_loader::{LoadInputs, LoadedBoard};
 pub use error::SessionError;
+pub use footprint_libraries::LibraryHost;
 pub use host_clock::HostClock;
 pub use jobs_handler::{
     FootprintLibrary, JobOutcome, OutputFile, convert_layer_arg, run_drc, run_export_drill,

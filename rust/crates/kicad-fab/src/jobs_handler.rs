@@ -103,8 +103,8 @@ pub fn default_drill_report_path(out_path: &str, board_file_name: &str) -> Strin
 ///   variable expansion of the report path); `None` keeps the path as is.
 /// * `reporter`: the job handler's `m_reporter` (`Created file '...'`, `Done.`).
 ///
-/// The drill maps (FAB-12) are not ported yet: they end the export with
-/// `FabError::NotPorted`. The Gerber format runs `GERBER_WRITER` (FAB-08).
+/// Drill maps (FAB-12) are plotted in Gerber X2 and SVG; a PDF, PostScript or DXF map ends
+/// the export with `FabError::Unsupported`. The Gerber format runs `GERBER_WRITER` (FAB-08).
 pub fn job_export_drill(
     ctx: BoardCtx<'_>,
     job: &JobExportPcbDrill,

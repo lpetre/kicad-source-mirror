@@ -50,3 +50,11 @@ Size (wasm-release, no wasm-opt): 8,496,478 bytes from cargo, 7,715,653 after wa
 ## Known gaps
 
 * `wasm-opt` is not installed on the build machine; size optimisation is skipped.
+
+## Package DRC-LP: footprint libraries for `runDrc`
+
+`DrcOptions::libraryFiles` (`[{ path, content }]`: project-relative or absolute paths of the
+project `fp-lib-table`, nested tables and `<lib>.pretty/<name>.kicad_mod` files),
+`globalLibraryTable` (text of the global `fp-lib-table`) and `libraryEnv` (URI variables)
+feed an in-memory library source (working directory `/`); without files and global table the
+library parity test has no tables, as kicad-cli without any `fp-lib-table`.

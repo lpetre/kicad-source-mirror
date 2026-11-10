@@ -245,6 +245,26 @@ pub struct DrcOptions {
     pub all_track_errors: bool,
     /// `--refill-zones`
     pub refill_zones: bool,
+    /// Footprint library files for the library parity test (the project's `fp-lib-table`,
+    /// nested tables, `<lib>.pretty/<name>.kicad_mod`): paths relative to the project
+    /// directory (the board's directory, `/` for a board name without one) or absolute.
+    /// Without files and global table the test finds no library table.
+    pub library_files: Vec<LibraryFile>,
+    /// The text of the global `fp-lib-table` (kicad-cli: the user's configuration directory).
+    pub global_library_table: Option<String>,
+    /// Environment variables for the library URIs (`${KICAD10_FOOTPRINT_DIR}`, ...);
+    /// `KIPRJMOD` is the project directory.
+    pub library_env: std::collections::BTreeMap<String, String>,
+}
+
+/// A file of [`DrcOptions::library_files`].
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct LibraryFile {
+    /// Project-relative or absolute path.
+    pub path: String,
+    /// The file contents.
+    pub content: String,
 }
 
 /// Options of `exportGerbers` (`kicad-cli pcb export gerbers` flags).
@@ -390,6 +410,51 @@ impl Board {
         self.fixed_date.unwrap_or_else(browser_clock)
     }
 
+    /// The footprint library tables of [`DrcOptions`] (package DRC-LP): the files in an
+    /// in-memory file system with the working directory `/`; none at all: no tables.
+    fn load_footprint_libraries(&mut self, o: &DrcOptions) {
+        use kicad_session::footprint_libraries::{MemoryLibrarySource, ParseOptions};
+
+        if o.library_files.is_empty() && o.global_library_table.is_none() {
+            self.session.footprint_libraries = None;
+            return;
+        }
+
+        const CONFIG_DIR: &str = "/.config/kicad/10.99";
+        let host = kicad_session::LibraryHost {
+            env_vars: o.library_env.clone(),
+            cwd: "/".to_string(),
+            home: "/".to_string(),
+            user_settings_path: CONFIG_DIR.to_string(),
+            stock_footprints_path: None,
+        };
+        let project_dir = self
+            .session
+            .library_project_dir(&host)
+            .unwrap_or_else(|| "/".to_string());
+        let mut source = MemoryLibrarySource::default();
+
+        for file in &o.library_files {
+            let path = if file.path.starts_with('/') {
+                file.path.clone()
+            } else {
+                format!("{}/{}", project_dir.trim_end_matches('/'), file.path)
+            };
+
+            source.insert(&path, file.content.as_bytes());
+        }
+
+        if let Some(table) = &o.global_library_table {
+            source.insert(&format!("{CONFIG_DIR}/fp-lib-table"), table.as_bytes());
+        }
+
+        self.session.load_footprint_libraries(
+            std::sync::Arc::new(source),
+            &host,
+            &ParseOptions::default(),
+        );
+    }
+
     /// The DRC marker UUID seed of a run.
     fn marker_seed(&self) -> u32 {
         self.uuid_seed.unwrap_or_else(random_u32)
@@ -457,6 +522,9 @@ impl Board {
         job.refill_zones = o.refill_zones;
         job.report_date = self.clock().iso8601();
         job.marker_uuid_seed = self.marker_seed();
+
+        // Running DRC requires libraries be loaded (JobExportDrc: AsyncLoad + BlockUntilLoaded)
+        self.load_footprint_libraries(&o);
 
         let mut reporter = Reporter::new();
         let outcome = run_drc(&mut self.session, &mut job, &mut reporter).map_err(session_error)?;

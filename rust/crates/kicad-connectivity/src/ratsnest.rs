@@ -518,7 +518,10 @@ impl RnNet {
         let mut dist_max_sq: i64 = i64::MAX;
 
         let mut verify = |test_node1: &CnAnchor, test_node2: &CnAnchor, dist_max_sq: &mut i64| {
-            let diff = test_node1.pos() - test_node2.pos();
+            // VECTOR2I diff = aTestNode1->Pos() - aTestNode2->Pos();  (int, wraps in the
+            // reference build for anchors more than 2^31 nm apart, FIX-FAB-3)
+            let (p1, p2) = (test_node1.pos(), test_node2.pos());
+            let diff = Vector2I::new(p1.x.wrapping_sub(p2.x), p1.y.wrapping_sub(p2.y));
             let dist_sq = diff.squared_euclidean_norm();
 
             if dist_sq < *dist_max_sq {
@@ -592,11 +595,15 @@ fn are_nodes_colinear(list: &CnList, nodes: &[CnAnchorRef]) -> bool {
         return true;
     }
 
+    // The int subtractions wrap in the reference build for nodes more than 2^31 nm apart
+    // (FIX-FAB-3, review-connectivity F-8), so they wrap here too.
+    let wsub =
+        |a: Vector2I, b: Vector2I| Vector2I::new(a.x.wrapping_sub(b.x), a.y.wrapping_sub(b.y));
     let p0 = anchor_of(list, nodes[0]).pos();
-    let v0 = anchor_of(list, nodes[1]).pos() - p0;
+    let v0 = wsub(anchor_of(list, nodes[1]).pos(), p0);
 
     for &n in &nodes[2..] {
-        let v1 = anchor_of(list, n).pos() - p0;
+        let v1 = wsub(anchor_of(list, n).pos(), p0);
 
         if v0.cross(v1) != 0 {
             return false;
@@ -627,7 +634,11 @@ fn optimize_zone_anchor(
         .expect("CN_ANCHOR::Parent: item not on the board")
         .layer_set();
 
-    let mut closest_dist_sq: i64 = (anchor.pos() - pos).squared_euclidean_norm();
+    // The int subtractions of this lambda wrap in the reference build for points more than
+    // 2^31 nm apart (review-connectivity F-8, FIX-FAB-3), so they wrap here too.
+    let wsub =
+        |a: Vector2I, b: Vector2I| Vector2I::new(a.x.wrapping_sub(b.x), a.y.wrapping_sub(b.y));
+    let mut closest_dist_sq: i64 = wsub(anchor.pos(), pos).squared_euclidean_norm();
     let mut closest_pt = Vector2I::default();
     let mut closest_item: Option<CnItemId> = None;
 
@@ -653,7 +664,7 @@ fn optimize_zone_anchor(
             let mut item_best: Option<(i64, Vector2I)> = None;
 
             for &pt in pts {
-                let dist_sq: i64 = (pt - pos).squared_euclidean_norm();
+                let dist_sq: i64 = wsub(pt, pos).squared_euclidean_norm();
 
                 if item_best.is_none_or(|(d, _)| dist_sq < d) {
                     item_best = Some((dist_sq, pt));

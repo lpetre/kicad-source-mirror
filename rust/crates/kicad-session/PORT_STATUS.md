@@ -290,3 +290,20 @@ pre-2022 boards, where even two reference runs differ from each other.
 Verification: kicad-cli's end-to-end differential test (`kicad-cli/tests/oracle/e2e_cli.py`,
 golden `kicad-cli/tests/golden/e2e_cli.txt`, replay `kicad-cli/tests/e2e_cli.rs`), 308 corpus
 boards under 300 KB, scoreboard in kicad-cli `PORT_STATUS.md`.
+
+## Package DRC-LP: footprint libraries of a session
+
+| C++ | Rust | State |
+|---|---|---|
+| `PGM_KICAD::OnPgmStart` `LoadGlobalTables()`, `SETTINGS_MANAGER::LoadProject` (`KIPRJMOD`, `LIBRARY_MANAGER::ProjectChanged` -> `LoadProjectTables`), `JobExportDrc`'s `AsyncLoad()` + `BlockUntilLoaded()` | `src/footprint_libraries.rs` `Session::load_footprint_libraries`, `Session::library_env`, `LibraryHost` | ported; the host supplies the file access (`LibrarySource`), the environment, the working and home directories, `PATHS::GetUserSettingsPath()` and the default `KICAD10_FOOTPRINT_DIR`; `Session::footprint_libraries` is passed to the DRC (`RunTestsOptions::footprint_libraries`) |
+
+`PROJECT::TextVarResolver` tokens for library URIs: `PROJECTNAME`, the clock tokens, the VCS
+tokens (resolved as `BoardProject::text_var_resolver` resolves them), then the project's text
+variables. A session without `load_footprint_libraries` runs the library parity test with no
+tables (every footprint with a library nickname: "does not include the footprint library").
+
+Tests: `tests/drc_lp_library_parity.rs` (crafted project `tests/data/drc_lp`, reference golden
+`tests/golden/drc_lp_library_parity.json` from `tests/oracle/gen_drc_lp_cases.py`): the 37
+`lib_footprint_*` entries identical. `tests/drc12_regressions.rs`: the 23 false-negative
+counts are asserted now (all pass). `tests/drc12_corpus.rs` no longer filters the
+`lib_footprint_*` codes.

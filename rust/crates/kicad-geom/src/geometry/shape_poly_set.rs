@@ -3948,9 +3948,12 @@ impl ShapePolySet {
 
                     let candidate = Seg::new(p1, p2);
 
+                    // int additions: they wrap in the reference build for zones beyond 2^30 nm
+                    // (the wrapped midpoint then lies outside the polygon and the line is
+                    // dropped), so they wrap here too (FIX-FAB-3)
                     let mid = Vector2I::new(
-                        (candidate.a.x + candidate.b.x) / 2,
-                        (candidate.a.y + candidate.b.y) / 2,
+                        candidate.a.x.wrapping_add(candidate.b.x) / 2,
+                        candidate.a.y.wrapping_add(candidate.b.y) / 2,
                     );
 
                     // Check if segment is inside the polygon by checking its middle point

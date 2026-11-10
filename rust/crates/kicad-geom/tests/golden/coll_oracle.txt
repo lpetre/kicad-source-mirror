@@ -5,5 +5,5 @@ libm:coll_degenerate 20000 82ce3963ced30563
 libm:coll_nearest 60000 a5a2cc7e6a77226c
 libm:coll_nearest_touching 20000 8150caf6531d782a
 coll_chain_index 5000 de6bcec6cfd27e35
-libm:coll_far 20000 e0d4be1e494ba5a5
-libm:coll_far_apart 800 cf158110ee1cf52f
+libm:coll_far 20000 79d76d9bef453a9c
+libm:coll_far_apart 800 cde8816438979187

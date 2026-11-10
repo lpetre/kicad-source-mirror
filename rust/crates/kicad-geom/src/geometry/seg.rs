@@ -308,11 +308,15 @@ impl Seg {
 
         let pts_out: [Vector2I; 4] = [self.a, self.b, pts_origin[2], pts_origin[3]];
 
+        // int subtractions of points of the two segments: they wrap in the reference build
+        // for segments more than 2^31 nm apart (FIX-FAB-3), so they wrap here too
+        let wsub =
+            |p: Vector2I, q: Vector2I| Vector2I::new(p.x.wrapping_sub(q.x), p.y.wrapping_sub(q.y));
         let pts_dist: [Ecoord; 4] = [
-            (pts_origin[0] - self.a).squared_euclidean_norm(),
-            (pts_origin[1] - self.b).squared_euclidean_norm(),
-            (pts_origin[2] - a_seg.a).squared_euclidean_norm(),
-            (pts_origin[3] - a_seg.b).squared_euclidean_norm(),
+            wsub(pts_origin[0], self.a).squared_euclidean_norm(),
+            wsub(pts_origin[1], self.b).squared_euclidean_norm(),
+            wsub(pts_origin[2], a_seg.a).squared_euclidean_norm(),
+            wsub(pts_origin[3], a_seg.b).squared_euclidean_norm(),
         ];
 
         let mut min_i: usize = 0;
@@ -349,11 +353,15 @@ impl Seg {
 
         let pts_b_out: [Vector2I; 4] = [pts_origin[0], pts_origin[1], a_seg.a, a_seg.b];
 
+        // int subtractions of points of the two segments: they wrap in the reference build
+        // for segments more than 2^31 nm apart (FIX-FAB-3), so they wrap here too
+        let wsub =
+            |p: Vector2I, q: Vector2I| Vector2I::new(p.x.wrapping_sub(q.x), p.y.wrapping_sub(q.y));
         let pts_dist: [Ecoord; 4] = [
-            (pts_origin[0] - self.a).squared_euclidean_norm(),
-            (pts_origin[1] - self.b).squared_euclidean_norm(),
-            (pts_origin[2] - a_seg.a).squared_euclidean_norm(),
-            (pts_origin[3] - a_seg.b).squared_euclidean_norm(),
+            wsub(pts_origin[0], self.a).squared_euclidean_norm(),
+            wsub(pts_origin[1], self.b).squared_euclidean_norm(),
+            wsub(pts_origin[2], a_seg.a).squared_euclidean_norm(),
+            wsub(pts_origin[3], a_seg.b).squared_euclidean_norm(),
         ];
 
         let mut min_i: usize = 0;
@@ -610,11 +618,15 @@ impl Seg {
             return 0;
         }
 
+        // int subtractions of points of the two segments: they wrap in the reference build
+        // for segments more than 2^31 nm apart (FIX-FAB-3), so they wrap here too
+        let wsub =
+            |p: Vector2I, q: Vector2I| Vector2I::new(p.x.wrapping_sub(q.x), p.y.wrapping_sub(q.y));
         let pts: [Vector2I; 4] = [
-            a_seg.nearest_point(self.a) - self.a,
-            a_seg.nearest_point(self.b) - self.b,
-            self.nearest_point(a_seg.a) - a_seg.a,
-            self.nearest_point(a_seg.b) - a_seg.b,
+            wsub(a_seg.nearest_point(self.a), self.a),
+            wsub(a_seg.nearest_point(self.b), self.b),
+            wsub(self.nearest_point(a_seg.a), a_seg.a),
+            wsub(self.nearest_point(a_seg.b), a_seg.b),
         ];
 
         let mut m: Ecoord = Vector2I::ECOORD_MAX;

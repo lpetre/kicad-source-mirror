@@ -15,7 +15,7 @@ see after a refill.
 
 Result: the statement-by-statement reading found no deviation from the C++ on any input
 the reference survives. Every fill branch the corpus does not reach now has a crafted board,
-except the two rows marked FIX-ZF-1 in section 2; all 15 crafted boards are vertex-identical
+(the two rows of FIX-ZF-1 in section 2 followed); all 17 crafted boards are vertex-identical
 to the reference, and `kicad-rs pcb drc --refill-zones --save-board` equals the reference on
 them end to end. Two inputs make the reference itself crash or hang; the port panicked /
 silently left zones empty there and is fixed (F-1, F-2). One class of inputs has no
@@ -78,7 +78,7 @@ identical to the reference unless a finding is named.
 | `IsIsland` of a net-less zone (every outline) | 11 | `islands` (`nonet`) |
 | Islands of a zone on copper and technical layers (aliased layer of the zone item) | 0 | `mixed_layers` (NEVER); `mixed_isolated`: reference segfaults, F-1 |
 | Iterative refill: island-removal seeds, same-net overlap seeds (issue 23790) | yes (`zone_refill_cascading_islands`, `issue21746`, `issue23790` ...) | `priority` |
-| Iterative refill: no convergence after 8 passes (warning) | 0 | not crafted (FIX-ZF-1) |
+| Iterative refill: no convergence after 8 passes (warning) | 0 | `no_converge` (FIX-ZF-1: period-2 flip of three zones; warning text identical, also on the kicad-rs stderr) |
 | Out-of-board islands (chamfer / fillet zones) | 11 | `arcs_smooth`, `arcs_extfillet` (zone mostly outside the edge) |
 | Second flashing pass (solid fills) | 27 + 8 | - |
 | Second flashing pass against a hatched fill | 0 | `hatch_flashing` |
@@ -118,7 +118,7 @@ identical to the reference unless a finding is named.
 | Graphics on the layer, with nets, on Edge.Cuts | 37+ / 2 / 121 | `mixed_layers` |
 | Graphics on Margin | 0 | `mixed_layers` |
 | Texts, knockout text, text box, target, bar code, dimension | 7 / 2 / 1 / 1 / 1 / 2 | `hatch_noncu` (knockout text) |
-| Table, drill chart, stackup table knockouts | 1 table (on Dwgs.User) / 0 / 0 | not crafted (FIX-ZF-1) |
+| Table, drill chart, stackup table knockouts | 1 table (on Dwgs.User) / 0 / 0 | `tables` (FIX-ZF-1: plain tables on F.Cu and Margin; generated tables can only sit on documentation layers, and `PCB_TABLE::IsKnockout()` is never true, so tables with knockout cells and generated tables under Dwgs.User / F.SilkS zones are no knockouts there) |
 | Courtyard knockouts (`physical_clearance` against a footprint): gap 0, gap > 0, back side, inner layer | 1 | `dedupe_courtyard` |
 | Net-tie footprints: graphic touching an allowed pad skipped, others knocked out | 7 (skip taken: not known) | `dedupe_courtyard` |
 | Coincident pad / via / track deduplication (same and different nets, reversed ends, arcs: F-7) | not known | `dedupe_courtyard` |
@@ -233,11 +233,11 @@ C++ `find() == end()` branches, a missing fill entry cannot occur (F-6).
 | F-1 | minor | `filler.rs` `remove_islands` | `zone_filler.cpp:1286-1304`, `:1597-1607`; `connectivity_items.h:164-171` | A zone on a copper layer and a technical layer (a hand-written or scripted board). `CN_ITEM::SetLayers` maps the technical layer to copper ordinal 0, so the zone item of F.SilkS answers `GetBoardLayer() == F_Cu` and `FillIsolatedIslandsMap` lists its outline index a second time under F.Cu. With an isolated copper fill the C++ deletes the same index twice: undefined behaviour, the reference segfaults in `SHAPE_POLY_SET::DeletePolygonAndTriangulationData` (`mixed_isolated`, backtrace taken). The port panicked (`removal index (is 0) should be < len (is 0)`). | fixed: an index the fill no longer has is skipped; test `rev_zf_mixed_layer_zone_with_isolated_copper_does_not_panic`. While the index exists the double deletion (a second, unrelated outline goes) is reproduced; `mixed_layers` (NEVER mode) is identical |
 | F-2 | minor | `filler.rs` `run_fill_dag` | `zone_filler.cpp:930-964`, `:1143-1185`; `zone.cpp:545-556` | Two interacting zones of different nets with equal priority and the same UUID (the parser does not make zone UUIDs unique; legacy `(tstamp 0)` zones all get the nil UUID). Neither is `HigherPriority`, each waits for the other and `Fill()` never leaves its drain loop: the reference was killed after 40 s (`dup_uuid`). The port left both zones without a fill and said nothing. | fixed: the items of a cycle are filled in `toFill` order (no fill reads the other one's: the read gate needs `HigherPriority` too) and `ZoneFiller::warnings()` reports it; test `rev_zf_duplicate_zone_uuids_terminate` |
 | F-3 | note | kicad-pcb UUID generation on load; `Zone::higher_priority` | `zone.cpp:555`, `kiid.cpp` | Zones without a `(uuid ..)` get random UUIDs in the reference; for interacting zones of equal priority and different nets the winner of the overlap is then random: 6 reference runs of one board gave 2 different fills (3 each). The port's generated UUIDs are deterministic, its result is one of the two. | documented; such boards cannot be compared exactly (none in the corpus differs) |
-| F-4 | minor | `tests/zone_fill_corpus.rs` `load_cli` | `SETTINGS_MANAGER::LoadProject` | The corpus harness loads the project without its `.kicad_prl`, so `m_PrototypeZoneFill` is never set there (`prototype` through `ZONE_CORPUS_DIR`: 2165 instead of 197 points). The session / CLI loader passes it and is identical. No corpus board has a `.kicad_prl`. | open: change request (pass the `.kicad_prl` text to `load_project`) |
+| F-4 | minor | `tests/zone_fill_corpus.rs` `load_cli` | `SETTINGS_MANAGER::LoadProject` | The corpus harness loads the project without its `.kicad_prl`, so `m_PrototypeZoneFill` is never set there (`prototype` through `ZONE_CORPUS_DIR`: 2165 instead of 197 points). The session / CLI loader passes it and is identical. No corpus board has a `.kicad_prl`. | fixed (FIX-ZF-1): `load_cli` reads `<board>.kicad_prl`; `prototype` through `ZONE_CORPUS_DIR` is identical |
 | F-5 | note (docs) | `docs/analysis/connectivity-zones.md` 4.12 | `zone_filler.cpp:4378` | "`bbox = filled.BBox( 0 )` (outline 0 only)": the argument is the clearance, the box spans all outlines. The port is right. | change request |
 | F-6 | note | `filler.rs` `fill_outline_count`, `remove_out_of_board_islands`, `flashing_second_pass`; PORT_STATUS "throws in C++" | `zone.h:701` | `GetFilledPolysList( layer )` cannot miss: `ZONE::SetLayerSet` creates an entry for every layer and `UnFill` keeps them. The port's "treated as empty" fallbacks are unreachable. | accepted |
 | F-7 | note | `knockouts.rs` track deduplication | `zone_filler.cpp:2641` | The key of a track is (canonical ends, width); an arc and a straight track, or two different arcs, with the same ends and width share one knockout (the first in board order), the other gets none: the reference fills over the second arc (`dedupe_courtyard`: its own DRC then reports "Clearance violation (zone clearance 0.3000 mm; actual 0.0000 mm)" for both such arcs). An upstream defect. | reproduced, identical to the reference (`dedupe_courtyard`) |
-| F-8 | note | `tool.rs` `fill_all_zones`, kicad-session | `zone_filler.cpp:1656` (`wxLogWarning`) | The filler's warnings (non-convergence, F-2) are returned in `FillAllZonesOutcome::warnings`; whether the CLI prints them is the session's business. | change request |
+| F-8 | note | `tool.rs` `fill_all_zones`, kicad-session | `zone_filler.cpp:1656` (`wxLogWarning`) | The filler's warnings (non-convergence, F-2) are returned in `FillAllZonesOutcome::warnings`; whether the CLI prints them is the session's business. | fixed (FIX-ZF-1): `Session::refill_zones` keeps them in `Session::log_warnings`, kicad-rs prints them after the DRC / Gerber / SVG jobs as `<HH:MM:SS>: Warning: <text>` on stderr, like the reference (`no_converge`) |
 
 Checked and found equivalent (no finding): everything in section 4; the hatch-zone via walk
 over `Tracks()` (not the index); `ZONE_CONNECTION::NONE` vias falling through to the

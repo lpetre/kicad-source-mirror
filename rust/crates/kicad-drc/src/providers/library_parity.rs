@@ -234,10 +234,7 @@ fn arc_mid_moved(a: Vector2I, b: Vector2I) -> bool {
 /// The `POLY` case of `primitiveNeedsUpdate` / `shapeNeedsUpdate` after the vertex count
 /// test: the first contour of each polygon compared cyclically within `EPSILON`. A polygon
 /// index that `b` lacks (`CPolygon( poly )` out of range, undefined in C++) is a difference.
-fn polygons_differ(
-    a: &kicad_geom::ShapePolySet,
-    b: &kicad_geom::ShapePolySet,
-) -> bool {
+fn polygons_differ(a: &kicad_geom::ShapePolySet, b: &kicad_geom::ShapePolySet) -> bool {
     for poly in 0..a.c_polygons().len() {
         let a_polygon = a.c_polygon(poly as i32);
 
@@ -371,7 +368,8 @@ fn pad_has_overrides(a: &Pad, b: &Pad, reporter: &mut dyn FnMut(&str)) -> bool {
         report("%s has zone connection override.");
     }
 
-    if a.lib_padstack().thermal_gap(PcbLayerId::FCu).is_some() && a.thermal_gap() != b.thermal_gap() {
+    if a.lib_padstack().thermal_gap(PcbLayerId::FCu).is_some() && a.thermal_gap() != b.thermal_gap()
+    {
         diff = true;
         report("%s has thermal relief gap override.");
     }
@@ -406,7 +404,10 @@ fn pad_orientation_differs(
     b_lib: &Pad,
 ) -> bool {
     let a_deg = a.fp_relative_orientation(ctx_a).normalized().as_degrees();
-    let b_deg = b_lib.fp_relative_orientation(ctx_b).normalized().as_degrees();
+    let b_deg = b_lib
+        .fp_relative_orientation(ctx_b)
+        .normalized()
+        .as_degrees();
     let mut delta = (a_deg - b_deg).abs() % 360.0 /* std::fmod */;
 
     if delta > 180.0 {
@@ -666,7 +667,10 @@ fn pad_needs_update(
     let mut first_differing_layer = PcbLayerId::UndefinedLayer;
 
     a.lib_padstack().for_each_unique_layer(|layer| {
-        let (pa, pb) = (a.lib_padstack().primitives(layer), b_lib.lib_padstack().primitives(layer));
+        let (pa, pb) = (
+            a.lib_padstack().primitives(layer),
+            b_lib.lib_padstack().primitives(layer),
+        );
 
         if pa.len() != pb.len() {
             primitives_differ = true;
@@ -717,10 +721,20 @@ fn barcode_needs_update(
     };
 
     test!(c, curr.text(), reference.text(), String::new());
-    test_pt!(c, curr.position(ctx_a), reference.position(ctx_b), String::new());
+    test_pt!(
+        c,
+        curr.position(ctx_a),
+        reference.position(ctx_b),
+        String::new()
+    );
     test!(c, curr.width, reference.width, String::new());
     test!(c, curr.height, reference.height, String::new());
-    test!(c, curr.text_size(ctx_a), reference.text_size(ctx_b), String::new());
+    test!(
+        c,
+        curr.text_size(ctx_a),
+        reference.text_size(ctx_b),
+        String::new()
+    );
     test!(c, curr.kind as i32, reference.kind as i32, String::new());
     test!(
         c,
@@ -747,7 +761,12 @@ fn shape_needs_update(
         reporter: None,
     };
 
-    test!(c, curr.shape.shape(), reference.shape.shape(), String::new());
+    test!(
+        c,
+        curr.shape.shape(),
+        reference.shape.shape(),
+        String::new()
+    );
 
     match curr.shape.shape() {
         ShapeT::Rectangle => {
@@ -765,7 +784,10 @@ fn shape_needs_update(
             test_pt!(c, curr.lib_start(), reference.lib_start(), String::new());
             test_pt!(c, curr.lib_end(), reference.lib_end(), String::new());
 
-            if arc_mid_moved(curr.library_arc_mid(ctx_a), reference.library_arc_mid(ctx_b)) {
+            if arc_mid_moved(
+                curr.library_arc_mid(ctx_a),
+                reference.library_arc_mid(ctx_b),
+            ) {
                 return true;
             }
         }
@@ -802,7 +824,12 @@ fn shape_needs_update(
             let a_lib = curr.library_poly_shape(ctx_a);
             let b_lib = reference.library_poly_shape(ctx_b);
 
-            test!(c, a_lib.total_vertices(), b_lib.total_vertices(), String::new());
+            test!(
+                c,
+                a_lib.total_vertices(),
+                b_lib.total_vertices(),
+                String::new()
+            );
 
             if polygons_differ(&a_lib, &b_lib) {
                 c.diff = true;
@@ -815,10 +842,20 @@ fn shape_needs_update(
     }
 
     if curr.is_on_copper_layer(ctx_a) {
-        test!(c, curr.stroke(ctx_a), reference.stroke(ctx_b), String::new());
+        test!(
+            c,
+            curr.stroke(ctx_a),
+            reference.stroke(ctx_b),
+            String::new()
+        );
     }
 
-    test!(c, curr.shape.fill_mode(), reference.shape.fill_mode(), String::new());
+    test!(
+        c,
+        curr.shape.fill_mode(),
+        reference.shape.fill_mode(),
+        String::new()
+    );
 
     test!(c, curr.layer(ctx_a), reference.layer(ctx_b), String::new());
 
@@ -1092,7 +1129,11 @@ fn stackup_needs_update(
 
 /// Port of `footprintVsBoardStackup`: report board->footprint stackup differences. This is
 /// not necessarily a comparison failure, but may be useful information for the user to see.
-fn footprint_vs_board_stackup(fp: &Footprint, board: &Board, reporter: CompareReporter<'_, '_>) -> bool {
+fn footprint_vs_board_stackup(
+    fp: &Footprint,
+    board: &Board,
+    reporter: CompareReporter<'_, '_>,
+) -> bool {
     if fp.stackup_mode == FootprintStackup::ExpandInnerLayers {
         return false;
     }
@@ -1101,8 +1142,8 @@ fn footprint_vs_board_stackup(fp: &Footprint, board: &Board, reporter: CompareRe
 
     // Filter only layers that can differ between footprint and board
     let fp_layers = &fp.stackup_layers;
-    let brd_layers = &board.enabled_layers()
-        & &(Lset::all_cu_mask() | &Lset::user_defined_layers_mask(45));
+    let brd_layers =
+        &board.enabled_layers() & &(Lset::all_cu_mask() | &Lset::user_defined_layers_mask(45));
 
     let mut mismatch = false;
 
@@ -1279,14 +1320,12 @@ pub fn footprint_needs_update(
     // in the library. ... For report them as different, but we DON'T generate DRC errors on
     // them.
     if compare_flags & COMPARE_FLAGS_DRC == 0 {
-        if this.local_clearance().is_some() && this.local_clearance() != lib_fp.local_clearance()
-        {
+        if this.local_clearance().is_some() && this.local_clearance() != lib_fp.local_clearance() {
             c.diff = true;
             c.report(|| "Pad clearance overridden.".to_string());
         }
 
-        if this.solder_mask_margin.is_some()
-            && this.solder_mask_margin != lib_fp.solder_mask_margin
+        if this.solder_mask_margin.is_some() && this.solder_mask_margin != lib_fp.solder_mask_margin
         {
             c.diff = true;
             c.report(|| "Solder mask expansion overridden.".to_string());
@@ -1413,8 +1452,14 @@ pub fn footprint_needs_update(
     }
 
     // ---- pads ----
-    let mut a_pads: Vec<ItemId> = board.footprint_pads(fp_id).map(|(id, _)| id.into()).collect();
-    let mut b_lib_pads: Vec<ItemId> = temp.footprint_pads(temp_fp).map(|(id, _)| id.into()).collect();
+    let mut a_pads: Vec<ItemId> = board
+        .footprint_pads(fp_id)
+        .map(|(id, _)| id.into())
+        .collect();
+    let mut b_lib_pads: Vec<ItemId> = temp
+        .footprint_pads(temp_fp)
+        .map(|(id, _)| id.into())
+        .collect();
     a_pads.sort_by(|&x, &y| footprint_cmp_pads(ctx, x, y));
     b_lib_pads.sort_by(|&x, &y| footprint_cmp_pads(&lib_ctx, x, y));
     dedup_set(&mut a_pads, |&x, &y| footprint_cmp_pads(ctx, x, y));
@@ -1448,8 +1493,14 @@ pub fn footprint_needs_update(
     }
 
     // ---- zones ----
-    let mut a_zones: Vec<ItemId> = board.footprint_zones(fp_id).map(|(id, _)| id.into()).collect();
-    let mut b_zones: Vec<ItemId> = temp.footprint_zones(temp_fp).map(|(id, _)| id.into()).collect();
+    let mut a_zones: Vec<ItemId> = board
+        .footprint_zones(fp_id)
+        .map(|(id, _)| id.into())
+        .collect();
+    let mut b_zones: Vec<ItemId> = temp
+        .footprint_zones(temp_fp)
+        .map(|(id, _)| id.into())
+        .collect();
     a_zones.sort_by(|&x, &y| footprint_cmp_zones(ctx, x, y));
     b_zones.sort_by(|&x, &y| footprint_cmp_zones(&lib_ctx, x, y));
 
@@ -1689,11 +1740,23 @@ mod tests {
         with_inner.set(PcbLayerId::In1Cu);
 
         assert!(board_layers_match_with_inner_layer_expansion(&f, &f, false));
-        assert!(!board_layers_match_with_inner_layer_expansion(&f, &with_inner, false));
+        assert!(!board_layers_match_with_inner_layer_expansion(
+            &f,
+            &with_inner,
+            false
+        ));
         // the library has an inner layer the item lacks
-        assert!(!board_layers_match_with_inner_layer_expansion(&f, &with_inner, true));
+        assert!(!board_layers_match_with_inner_layer_expansion(
+            &f,
+            &with_inner,
+            true
+        ));
         // the item has more inner layers than the library
-        assert!(board_layers_match_with_inner_layer_expansion(&with_inner, &f, true));
+        assert!(board_layers_match_with_inner_layer_expansion(
+            &with_inner,
+            &f,
+            true
+        ));
     }
 
     #[test]

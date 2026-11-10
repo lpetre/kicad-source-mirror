@@ -126,6 +126,8 @@ struct Recorder {
     mem: bool,
     /// Whether samples are kept (false during warm-up).
     keep: bool,
+    /// Appended to every stage name (` [cold]` for the first repetition of the process).
+    suffix: &'static str,
     stages: Vec<(String, Vec<Sample>)>,
 }
 
@@ -169,9 +171,11 @@ impl Recorder {
             return;
         }
 
-        match self.stages.iter_mut().find(|(n, _)| n == name) {
+        let name = format!("{name}{}", self.suffix);
+
+        match self.stages.iter_mut().find(|(n, _)| *n == name) {
             Some((_, v)) => v.push(s),
-            None => self.stages.push((name.to_string(), vec![s])),
+            None => self.stages.push((name, vec![s])),
         }
     }
 
@@ -299,7 +303,20 @@ fn summarize(verbose: bool, what: &str, r: &Result<kicad_session::JobOutcome, Se
             let mut h = 0xcbf2_9ce4_8422_2325_u64;
             let mut bytes = 0;
 
+            // KICAD_BENCH_DUMP=<dir>: write the files of the first repetition there (by
+            // base name) for the byte comparison with kicad-rs
+            let dump = std::env::var("KICAD_BENCH_DUMP").ok();
+
             for f in &o.files {
+                if let Some(dir) = &dump {
+                    let base = std::path::Path::new(&f.name)
+                        .file_name()
+                        .map(|n| n.to_string_lossy().into_owned())
+                        .unwrap_or_default();
+                    let _ = std::fs::create_dir_all(format!("{dir}/{what}"));
+                    let _ = std::fs::write(format!("{dir}/{what}/{base}"), &f.contents);
+                }
+
                 fnv1a64(&mut h, f.name.as_bytes());
                 fnv1a64(&mut h, &f.contents);
                 bytes += f.contents.len();
@@ -320,6 +337,7 @@ fn drc_job(files: &BoardFiles) -> JobPcbDrc {
     let mut job = JobPcbDrc::new();
     job.rc.filename = files.path.clone();
     job.parity = false;
+    job.rc.exit_code_violations = false;
     job.report_date = clock().iso8601();
     job.marker_uuid_seed = UUID_SEED;
     job
@@ -335,6 +353,19 @@ struct PhaseLog<'a> {
 
 impl PhaseLog<'_> {
     fn push(&self, text: String) {
+        // Progress phases inside a provider are not interval boundaries (see drc_phases):
+        // they must not read and reset the peak of their provider's interval.
+        let boundary = text.starts_with("provider:")
+            || !self
+                .events
+                .borrow()
+                .iter()
+                .any(|e| e.3.starts_with("provider:"));
+
+        if !boundary {
+            return;
+        }
+
         let peak = if self.mem {
             let p = proc_status_kb("VmHWM:");
             reset_hwm();
@@ -451,6 +482,11 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
         end_alloc,
         String::new(),
     ))) {
+        if in_providers && text.starts_with("phase:") {
+            // provider phases stay in their provider's interval (not recorded by PhaseLog)
+            continue;
+        }
+
         // The peak read at an event belongs to the interval it closes.
         rec.push(
             &prev_name,
@@ -466,13 +502,7 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
             in_providers = true;
             prev_name = format!("drc2.provider.{name}");
         } else if let Some(msg) = text.strip_prefix("phase:") {
-            if !in_providers {
-                prev_name = format!("drc2.gen.{}", msg.trim_end_matches('.'));
-            }
-            // provider phases stay in their provider's interval
-            else {
-                continue;
-            }
+            prev_name = format!("drc2.gen.{}", msg.trim_end_matches('.'));
         }
 
         prev_t = t;
@@ -672,6 +702,7 @@ fn cmd_mem(a: &Args, files: &BoardFiles) -> ExitCode {
     let mut rec = Recorder {
         mem: true,
         keep: true,
+        suffix: "",
         stages: Vec::new(),
     };
 
@@ -725,7 +756,10 @@ fn cmd_run(a: &Args, files: &BoardFiles) -> ExitCode {
     let mut failed = Vec::new();
 
     for rep in 0..a.warmup + a.reps {
-        rec.keep = rep >= a.warmup;
+        // The first repetition of the process pays the one-time initialisations (lazy
+        // statics, fonts, ...) that every kicad-rs invocation pays: kept as `<stage> [cold]`.
+        rec.keep = rep >= a.warmup || rep == 0;
+        rec.suffix = if rep < a.warmup { " [cold]" } else { "" };
 
         for p in &a.pipelines {
             if failed.contains(p) {

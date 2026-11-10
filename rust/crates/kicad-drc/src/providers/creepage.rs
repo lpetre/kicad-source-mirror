@@ -106,7 +106,12 @@ fn placeholder_track(net_code: i32, layer: PcbLayerId) -> Track {
 
 impl DrcTestProviderCreepage {
     /// Port of `DRC_TEST_PROVIDER_CREEPAGE::Run`: false when the run was cancelled.
-    pub fn run(&mut self, engine: &DrcEngine, run: &mut DrcRunState<'_>, ctx: &BoardCtx<'_>) -> bool {
+    pub fn run(
+        &mut self,
+        engine: &DrcEngine,
+        run: &mut DrcRunState<'_>,
+        ctx: &BoardCtx<'_>,
+    ) -> bool {
         self.reported_pairs.clear();
 
         if !engine.has_rules_for_constraint_type(DrcConstraintT::CreepageConstraint) {
@@ -307,7 +312,12 @@ impl DrcTestProviderCreepage {
     }
 
     /// Port of `testCreepage()` (the board-level overload).
-    fn test_creepage_all(&mut self, engine: &DrcEngine, host: &mut RunHost<'_, '_>, ctx: &BoardCtx<'_>) -> i32 {
+    fn test_creepage_all(
+        &mut self,
+        engine: &DrcEngine,
+        host: &mut RunHost<'_, '_>,
+        ctx: &BoardCtx<'_>,
+    ) -> i32 {
         let netcodes = Self::collect_net_codes(ctx);
         let max_constraint = Self::max_constraint(engine);
 
@@ -317,11 +327,17 @@ impl DrcTestProviderCreepage {
 
         // No conditional rule means the per-pair placeholder target is exact and the graph
         // stays tight
-        let has_conditional =
-            engine.has_conditional_constraint(DrcConstraintT::CreepageConstraint);
+        let has_conditional = engine.has_conditional_constraint(DrcConstraintT::CreepageConstraint);
 
         if self.realtime_creepage {
-            return self.test_creepage_v2(engine, host, ctx, &netcodes, max_constraint, has_conditional);
+            return self.test_creepage_v2(
+                engine,
+                host,
+                ctx,
+                &netcodes,
+                max_constraint,
+                has_conditional,
+            );
         }
 
         let board = ctx.board;

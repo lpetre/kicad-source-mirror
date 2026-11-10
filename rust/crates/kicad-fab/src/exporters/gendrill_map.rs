@@ -40,9 +40,9 @@ use kicad_font::Metrics;
 use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::math::vector2::ki_round_xy;
 use kicad_geom::{Vector2I, ki_round};
-use kicad_pcb::{AnyItem, MutEnv};
 use kicad_pcb::item::DetachedCopy;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
+use kicad_pcb::{AnyItem, MutEnv};
 use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter, USE_DEFAULT_LINE_WIDTH};
 
 use super::gendrill_report::fmt_fixed_width;
@@ -145,9 +145,8 @@ pub fn gen_drill_map_file(
             // So the scale is clipped at 3.0;
             scale = scale.min(3.0);
 
-            offset.x = ki_round(
-                f64::from(bbbox.centre().x) - (f64::from(page_size_iu.x) / 2.0) / scale,
-            );
+            offset.x =
+                ki_round(f64::from(bbbox.centre().x) - (f64::from(page_size_iu.x) / 2.0) / scale);
             offset.y = ki_round(
                 f64::from(bbbox.centre().y) - (f64::from(ypagesize_for_board) / 2.0) / scale,
             );
@@ -209,12 +208,8 @@ pub fn gen_drill_map_file(
     {
         // Draw items on edge layer.
         // Not all, only items useful for drill map, i.e. board outlines.
-        let mut itemplotter = BrditemsPlotter::new(
-            plotter.as_mut(),
-            ctx,
-            &plot_opts,
-            ColorSettings::default(),
-        );
+        let mut itemplotter =
+            BrditemsPlotter::new(plotter.as_mut(), ctx, &plot_opts, ColorSettings::default());
 
         // Use attributes of a drawing layer (we are not really draw the Edge.Cuts layer)
         itemplotter.set_layer_set(&Lset::from_layers(&[PcbLayerId::DwgsUser]));
@@ -252,7 +247,6 @@ pub fn gen_drill_map_file(
 
     let mut plot_x: i32;
     let mut plot_y: i32;
-    let text_width: i32;
     let mut intervalle: i32;
     let textmarginaftersymbol = PCB_IU_SCALE.mm_to_iu(2.0);
 
@@ -273,7 +267,7 @@ pub fn gen_drill_map_file(
     let char_scale = 1.0_f64.min(1.0 / scale);
     let char_size_d = f64::from(char_size) * char_scale;
 
-    text_width = ki_round(char_size_d / 10.0); // Set text width (thickness)
+    let text_width: i32 = ki_round(char_size_d / 10.0); // Set text width (thickness)
     intervalle = ki_round(char_size_d) + text_width;
 
     // Trace information.
@@ -371,7 +365,8 @@ pub fn gen_drill_map_file(
                         ));
                     }
                     _ => {
-                        extra_info.push_str(&format!(", backdrill stub {}mm", format_f(min_stub, 3)));
+                        extra_info
+                            .push_str(&format!(", backdrill stub {}mm", format_f(min_stub, 3)));
                     }
                 }
             } else {
@@ -418,9 +413,8 @@ pub fn gen_drill_map_file(
 
         intervalle = ki_round((char_size_d + f64::from(text_width)) * 1.2);
 
-        let min_intervalle = f64::from(plot_diam)
-            + (1.0 * PCB_IU_SCALE.iu_per_mm / scale)
-            + f64::from(text_width);
+        let min_intervalle =
+            f64::from(plot_diam) + (1.0 * PCB_IU_SCALE.iu_per_mm / scale) + f64::from(text_width);
 
         if f64::from(intervalle) < min_intervalle {
             intervalle = f64_to_i32_x86(min_intervalle);

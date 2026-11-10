@@ -49,6 +49,7 @@ pub mod rules_lexer;
 pub mod item;
 pub mod marker;
 pub mod rc_item;
+pub mod violation_layers;
 
 pub mod engine;
 

@@ -152,8 +152,15 @@ impl CnAnchor {
 
     /// Port of `Dist()`: `( m_pos - aSecond.Pos() ).EuclideanNorm()` as `unsigned`.
     pub fn dist(&self, second: &CnAnchor) -> u32 {
-        // int -> unsigned conversion of a norm that is never negative.
-        (self.pos - second.pos()).euclidean_norm() as u32
+        // int -> unsigned conversion of a norm that is never negative.  `m_pos - aSecond.Pos()`
+        // is an int subtraction: it wraps in the reference build for anchors more than
+        // 2^31 nm apart (review-connectivity F-8, FIX-FAB-3), so it wraps here too.
+        let second = second.pos();
+        let d = Vector2I::new(
+            self.pos.x.wrapping_sub(second.x),
+            self.pos.y.wrapping_sub(second.y),
+        );
+        d.euclidean_norm() as u32
     }
 
     /// `GetTag()`: a common identifier for connected nodes.

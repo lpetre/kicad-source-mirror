@@ -59,5 +59,5 @@ done < "$HERE/editmut_boards.txt"
 OUT=$SCRATCH/out
 [ -n "${KEEP:-}" ] && OUT=$KEEP && mkdir -p "$KEEP"
 (cd "$SCRATCH/in" && KICAD_CONFIG_HOME="$SCRATCH/home" HOME="$SCRATCH/home" \
-    "$BIN" "$OUT" "${FILES[@]}") | python3 -I "$HERE/editmut_hash.py" "$OUT" > "$GOLDEN/editmut.txt"
+    "$BIN" "$OUT" "${FILES[@]}") | python3 -I "$HERE/editmut_hash.py" "$OUT" "$SCRATCH/in" > "$GOLDEN/editmut.txt"
 wc -l "$GOLDEN/editmut.txt"

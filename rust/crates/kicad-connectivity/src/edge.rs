@@ -296,7 +296,11 @@ impl CnEdge {
 
     /// Port of `GetLength()`: `( target - source ).EuclideanNorm()` as `unsigned`.
     pub fn length(&self, list: &CnList) -> u32 {
-        // int -> unsigned conversion of a norm that is never negative.
-        (self.target_pos(list) - self.source_pos(list)).euclidean_norm() as u32
+        // int -> unsigned conversion of a norm that is never negative.  The int subtraction
+        // wraps in the reference build for anchors more than 2^31 nm apart (review-connectivity
+        // F-8, FIX-FAB-3), so it wraps here too.
+        let t = self.target_pos(list);
+        let s = self.source_pos(list);
+        Vector2I::new(t.x.wrapping_sub(s.x), t.y.wrapping_sub(s.y)).euclidean_norm() as u32
     }
 }

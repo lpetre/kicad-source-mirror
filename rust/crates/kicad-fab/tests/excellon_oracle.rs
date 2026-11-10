@@ -893,16 +893,21 @@ fn drill_job_outputs_and_pending_parts() {
     let out = job_export_drill_from(&source, ctx, &job2, "o", &env(&g), None, None);
     assert_eq!(out.outputs.last().unwrap(), "x/r.txt");
 
-    // Drill maps (FAB-12): the drill files are kept, "Done." is reported, the job fails.
+    // A drill map format without a plot engine in the port (FAB-12: PDF, PostScript, DXF;
+    // Gerber X2 and SVG maps are verified in tests/drill_map.rs): the drill files are kept,
+    // "Done." is reported, the job fails.
     let job3 = JobExportPcbDrill {
         generate_map: true,
-        map_format: kicad_fab::jobs::job_export_pcb_drill::MapFormat::Svg,
+        map_format: kicad_fab::jobs::job_export_pcb_drill::MapFormat::Pdf,
         ..job.clone()
     };
     let mut rep = VecReporter::default();
     let out = job_export_drill_from(&source, ctx, &job3, "o", &env(&g), None, Some(&mut rep));
     assert!(!out.success);
-    assert!(matches!(out.error, Some(kicad_fab::FabError::NotPorted(_))));
+    assert!(matches!(
+        out.error,
+        Some(kicad_fab::FabError::Unsupported(_))
+    ));
     assert_eq!(out.files.len(), 2);
     assert!(out.outputs.is_empty());
     assert_eq!(rep.messages.last().unwrap().0, "Done.");

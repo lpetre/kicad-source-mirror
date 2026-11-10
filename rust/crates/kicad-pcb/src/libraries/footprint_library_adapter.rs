@@ -142,7 +142,11 @@ impl LibrarySource for NoFiles {
 impl FootprintLibraryAdapter {
     /// An adapter over `manager` reading the libraries through `source`, with nothing
     /// loaded; [`Self::load`] runs the preload.
-    pub fn new(manager: LibraryManager, source: SharedLibrarySource, parse_options: ParseOptions) -> Self {
+    pub fn new(
+        manager: LibraryManager,
+        source: SharedLibrarySource,
+        parse_options: ParseOptions,
+    ) -> Self {
         FootprintLibraryAdapter {
             manager,
             parse_options,
@@ -216,7 +220,10 @@ impl FootprintLibraryAdapter {
         match self.load_if_needed(nickname) {
             Ok(lib_scope) => {
                 let result = self.enumerate_library(source, uri);
-                let lib = self.target_mut(lib_scope).get_mut(nickname).expect("lib slot");
+                let lib = self
+                    .target_mut(lib_scope)
+                    .get_mut(nickname)
+                    .expect("lib slot");
 
                 match result {
                     Ok(footprints) => {
@@ -231,7 +238,10 @@ impl FootprintLibraryAdapter {
             }
             Err(error) => {
                 // queuedRowEntry( aWork ).status = LOAD_ERROR
-                let entry = self.target_mut(scope).entry(nickname.to_string()).or_default();
+                let entry = self
+                    .target_mut(scope)
+                    .entry(nickname.to_string())
+                    .or_default();
                 entry.status = LibStatus {
                     load_status: LoadStatus::LoadError,
                     error: Some(error),
@@ -262,7 +272,11 @@ impl FootprintLibraryAdapter {
 
     /// Port of `LIBRARY_MANAGER_ADAPTER::loadFromScope`: true when the scope's slot holds a
     /// plugin for the library (created now from the scope's row if needed).
-    fn load_from_scope(&mut self, nickname: &str, scope: LibraryTableScope) -> Result<bool, String> {
+    fn load_from_scope(
+        &mut self,
+        nickname: &str,
+        scope: LibraryTableScope,
+    ) -> Result<bool, String> {
         if self
             .target_mut(scope)
             .get(nickname)
@@ -277,7 +291,10 @@ impl FootprintLibraryAdapter {
 
         create_plugin(&row)?;
 
-        let slot = self.target_mut(scope).entry(row.nickname.clone()).or_default();
+        let slot = self
+            .target_mut(scope)
+            .entry(row.nickname.clone())
+            .or_default();
         if !slot.has_plugin {
             slot.status.load_status = LoadStatus::Loading;
             slot.row = row;
@@ -452,7 +469,8 @@ mod tests {
     use super::super::library_manager::LibraryEnv;
     use super::*;
 
-    const FP: &str = "(footprint \"R1\" (version 20241229) (generator \"pcbnew\") (layer \"F.Cu\"))\n";
+    const FP: &str =
+        "(footprint \"R1\" (version 20241229) (generator \"pcbnew\") (layer \"F.Cu\"))\n";
 
     fn source() -> MemoryLibrarySource {
         let mut src = MemoryLibrarySource::default();

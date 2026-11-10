@@ -156,6 +156,10 @@ pub struct Session {
     /// Not in C++: how the host reads a file (`wxFFile`), for the drawing sheet files
     /// ([`Session::load_project_drawing_sheet`], `--drawing-sheet`); `None` reads nothing.
     pub host_read_file: Option<fn(&str) -> Option<Vec<u8>>>,
+    /// `PROJECT_PCB::FootprintLibAdapter( project )` after the preload, filled by the host
+    /// with [`Session::load_footprint_libraries`]; `None`: no library tables (the library
+    /// parity test then finds no library).
+    pub footprint_libraries: Option<kicad_pcb::libraries::FootprintLibraryAdapter>,
 }
 
 /// A net as the item access API returns it.
@@ -299,6 +303,7 @@ impl Session {
             log_warnings: Vec::new(),
             drawing_sheet: Session::default_drawing_sheet(),
             host_read_file: None,
+            footprint_libraries: None,
         };
 
         session.initialize_loaded_board();
@@ -322,6 +327,7 @@ impl Session {
             log_warnings: Vec::new(),
             drawing_sheet: Session::default_drawing_sheet(),
             host_read_file: None,
+            footprint_libraries: None,
         }
     }
 

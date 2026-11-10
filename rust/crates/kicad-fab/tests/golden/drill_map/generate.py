@@ -24,12 +24,13 @@ Every .kicad_pcb under qa/data and demos smaller than 300 KB (with its .kicad_pr
 then the crafted boards of EXTRA_DIRS, for each option set of SETS:
 `kicad-cli pcb export drill --generate-map <set> -o <out>/ <board>`.
 
-Written to corpus.txt (compact): `B <set> <exit code> <board path relative to the KiCad tree>`,
-then one line `F <file name> <hash>` per "Created file" line of stdout naming a drill map
+Written to corpus.txt (compact): `B <board path relative to the KiCad tree>`, then per set
+`S <set> <exit code>`, then one line `F <file name> <hash>` per "Created file" line of stdout naming a drill map
 (`*-drl_map.*`), in order, where <hash>
 is the first 8 hex digits of the FNV-1a 64 of the normalised file. Boards for which kicad-cli
 created no file have no F lines. For the crafted boards (EXTRA_DIRS) the normalised files are
-also stored in full under <board stem>/<set>/.
+also stored in full
+under <board stem>/<set>/ for the pairs of KEEP.
 
 Normalisation (docs/analysis/plot-fab.md 9.3): the lines carrying the version and the date are
 replaced by `<normalised>` (same rule as kicad-session's gerbers_job golden); in SVG maps the
@@ -51,8 +52,9 @@ EXTRA_DIRS = [
     "rust/crates/kicad-fab/tests/data/excellon_corpus",
 ]
 
-# Option sets whose full normalised maps are kept for the crafted boards.
-KEEP_SETS = ("exc_gbr_sep", "exc_svg_sep", "gbr_svg")
+# (crafted board stem, option set) whose full normalised maps are kept (the maps are large:
+# every legend character is stroked; the others are compared by hash only).
+KEEP = [("map_tiny", "exc_gbr_sep"), ("map_tiny", "exc_svg_sep")]
 
 SETS = [
     ("exc_gbr", ["--map-format", "gerberx2"]),
@@ -137,17 +139,22 @@ def main():
     for d in EXTRA_DIRS:
         boards.extend((os.path.join(d, f), True) for f in sorted(os.listdir(os.path.join(KICAD, d)))
                       if f.endswith(".kicad_pcb"))
+    only = os.environ.get("ONLY")  # debugging: restrict to boards whose path contains ONLY
+    if only:
+        boards = [b for b in boards if only in b[0]]
     out = []
     for rel, crafted in boards:
         for set_name, args in SETS:
             keep = None
-            if crafted and set_name in KEEP_SETS:
-                stem = os.path.splitext(os.path.basename(rel))[0]
+            stem = os.path.splitext(os.path.basename(rel))[0]
+            if crafted and (stem, set_name) in KEEP:
                 keep = os.path.join(HERE, stem, set_name)
             code, lines = run(os.path.join(KICAD, rel), args, os.path.join(SCRATCH, "w"), keep)
-            out.append("B %s %d %s\n" % (set_name, code, rel))
+            if set_name == SETS[0][0]:
+                out.append("B %s\n" % rel)
+            out.append("S %s %d\n" % (set_name, code))
             out.extend("%s\n" % l for l in lines)
-    with open(os.path.join(HERE, "corpus.txt"), "w", encoding="utf-8", newline="") as fh:
+    with open(os.environ.get("OUT", os.path.join(HERE, "corpus.txt")), "w", encoding="utf-8", newline="") as fh:
         fh.write("".join(out))
 
 

@@ -421,6 +421,10 @@ const BOARDS: &[&str] = &[
     "rev_ratsnest_zones",
     "rev_shapes",
     "rev_order_probe",
+    // FIX-FAB-3 (review-connectivity F-8): anchors and zone outlines more than 2^31 nm apart,
+    // whose int differences wrap in the reference build (hand-written board in
+    // tests/golden/cn04/, golden: reference `pcb-dump board --sections connectivity`)
+    "rev_far_anchors",
 ];
 
 #[test]

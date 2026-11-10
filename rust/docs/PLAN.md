@@ -499,6 +499,15 @@ Progress log:
   the runs with the sheet; a 120-run CLI comparison with `--ibt` and SVG matched except
   creation-date seconds. Open: outline-font sheet text (stroke fallback), bitmaps in SVG
   sheets, `@{}` expressions (text_eval not ported).
+  07:10 UTC: the second fabrication chain is complete: FAB-11 SVG board plots, drill
+  marks and the svg job (`kicad-rs pcb export svg`: 490 of 492 corpus runs identical - exit
+  code, stdout, 6531 files; 20 option sets on five boards; built-in default and classic
+  themes) and FAB-12 drill maps as Gerber X2 and SVG (2681 of 2688 runs identical over 7
+  option sets on every corpus board, 4787 maps; the other 7 runs are a file the reference
+  rejects). PDF / PostScript / DXF outputs stay out of scope (no plot engines).
+  Launched: FIX-FAB-1 (pad state carried between plotted layers) -> FAB-13 (drill and chart
+  symbol plotting: the last pending plot stub) -> GLUE-3 (cross-crate leftovers), and
+  FIX-FAB-2 (CLI leftovers of the exports).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

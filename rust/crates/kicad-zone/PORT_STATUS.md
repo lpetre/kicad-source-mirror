@@ -355,7 +355,30 @@ identical except generated UUIDs.
 - F-3: interacting equal-priority zones of different nets without a UUID in the file have a
   random result in the reference (random UUIDs decide `HigherPriority`); the port's
   generated UUIDs give one of the possible results.
-- Not exercised by any board: knockouts of tables / drill charts / stackup tables, the
-  non-convergence warning of the iterative refill (FIX-ZF-1).
 - The ZF-01 gap "`GetFilledPolysList( layer )` ... throws in C++" cannot occur: every layer
   of the layer set has a fill entry (`ZONE::SetLayerSet`), the fallbacks are unreachable.
+
+## FIX-ZF-1: open items of the zone filler review
+
+- Two more crafted boards (`tests/rev_zf_crafted.rs`, goldens from the reference; now 17
+  boards, 69 zone layers, all vertex-identical):
+  * `tables`: plain `PCB_TABLE`s on F.Cu (with and without border / separators) and on
+    Margin knocked out of a copper zone (`addKnockout` graphic overload,
+    `PCB_TABLE::TransformShapeToPolygon`); a drill chart, a stackup table and plain tables
+    whose cells are knockout under Dwgs.User / F.SilkS zones (`fillNonCopperZone`): no
+    knockouts, because `PCB_TABLE::IsKnockout()` is never true (the parser sets the flag on
+    the cells only) and generated tables can only sit on documentation layers, so the
+    `PCB_DRILL_CHART_T` / `PCB_STACKUP_TABLE_T` cases of `addKnockout` are unreachable from
+    either fill path.
+  * `no_converge`: the iterative refill flips between two states with period 2 (an island of
+    a high-priority zone blocks the corridor of a different-net zone whose cut-off part is
+    removed, which lets a low-priority same-net zone connect the island) and stops after 8
+    passes; `outcome.warnings` equals the reference's `wxLogWarning` text, the final fills are
+    identical.
+- `tests/zone_fill_corpus.rs` `load_cli` passes `<board>.kicad_prl` to `load_project`
+  (review F-4): `prototype` through `ZONE_CORPUS_DIR=target/zone-corpus-rev` is identical.
+- The filler warnings reach the CLI (review F-8; kicad-session `Session::log_warnings`,
+  kicad-cli `host::print_log_warnings` after the DRC / Gerber / SVG jobs): printed on stderr
+  as `<HH:MM:SS>: Warning: <text>`, byte-identical to the reference on `no_converge` apart
+  from the time. The port's dependency-cycle warning (F-2) is printed the same way; the
+  reference never gets there (it hangs).

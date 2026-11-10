@@ -18,12 +18,11 @@
 //! Port of `pcbnew/drc/drc_engine.cpp`: `EvalRules`, `EvalZoneConnection`,
 //! `EvalClearanceBatch`, `ProcessAssertions` and the own-clearance cache
 //! (`GetCachedOwnClearance`, `InvalidateClearanceCache`, `ClearClearanceCache`) (package
-//! DRC-04).
+//! DRC-04), with the explanatory `REPORT( ... )` texts of the reporter path (package DRC-34,
+//! helpers in [`super::eval_rules_report`]).
 //!
-//! The `REPORTER` argument is kept and the control flow with a reporter is the C++ one (the
-//! netclass fast path and the condition memo are only used without a reporter), but the
-//! explanatory texts (`REPORT( ... )`) are package DRC-34: each such site carries a
-//! `REPORT (DRC-34)` comment.
+//! The control flow with a reporter is the C++ one (the netclass fast path and the condition
+//! memo are only used without a reporter); the texts are built only when there is one.
 
 use std::collections::BTreeMap;
 
@@ -36,11 +35,15 @@ use kicad_pcb::padstack::PadAttrib;
 use kicad_pcb::zone_settings::ZoneConnection;
 use kicad_pcb::{Board, BoardCtx, ItemRef};
 
+use super::eval_rules_report::{
+    ReportUnits, print_zone_connection, report, report_constraint_header,
+};
 use super::implicit_rules::is_keepout_zone;
 use super::{DrcEngine, DrcEngineConstraint};
 use crate::constraint_types::DrcConstraintT;
 use crate::reporter::{Reporter, reborrow};
 use crate::rule::DrcConstraintExt;
+use kicad_core::string_utils::escape_html;
 use kicad_pcb::drc_api::DrcConstraint;
 
 /// `MAXIMUM_CLEARANCE`.
@@ -133,6 +136,8 @@ struct EvalState<'x, 'e> {
     constraint: DrcConstraint,
     /// `conditionCache`: expression -> result (lookups only).
     condition_cache: BTreeMap<&'e str, bool>,
+    /// The engine's `UNITS_PROVIDER` for the report texts.
+    units: ReportUnits,
 }
 
 impl<'x, 'e> EvalState<'x, 'e> {
@@ -217,23 +222,27 @@ impl<'x, 'e> EvalState<'x, 'e> {
     }
 
     /// The `testAssertion` lambda (reporter path only: the result is only reported).
-    fn test_assertion(&self, c: &DrcEngineConstraint, reporter: Option<&mut dyn Reporter>) {
-        // REPORT (DRC-34): "Checking assertion '%s'."
+    fn test_assertion(&self, c: &DrcEngineConstraint, mut reporter: Option<&mut dyn Reporter>) {
         if let Some(test) = &c.test {
-            let _passed = test.evaluate_for(
+            report(&mut reporter, || {
+                format!("Checking assertion '{}'.", escape_html(test.expression()))
+            });
+
+            if test.evaluate_for(
                 self.a,
                 self.b,
                 c.constraint.type_ as i32,
                 self.layer,
-                reporter,
-            );
-            // REPORT (DRC-34): "Assertion passed." / "--> Assertion failed. <--"
+                reborrow(&mut reporter),
+            ) {
+                report(&mut reporter, || "Assertion passed.".to_string());
+            } else {
+                report(&mut reporter, || escape_html("--> Assertion failed. <--"));
+            }
         }
     }
 
     /// The `processConstraint` lambda.
-    // branches that differ only in their (DRC-34) report text are kept as in C++
-    #[allow(clippy::if_same_then_else)]
     fn process_constraint(
         &mut self,
         c: &'e DrcEngineConstraint,
@@ -245,8 +254,10 @@ impl<'x, 'e> EvalState<'x, 'e> {
             if c.constraint.type_ == DrcConstraintT::ClearanceConstraint
                 && (self.a_is_non_copper || self.b_is_non_copper)
             {
-                // REPORT (DRC-34): reportConstraintHeader( c ); "Netclass clearances apply
-                // only between copper items."
+                report_constraint_header(&mut reporter, &self.units, c);
+                report(&mut reporter, || {
+                    "Netclass clearances apply only between copper items.".to_string()
+                });
                 return;
             }
 
@@ -270,16 +281,27 @@ impl<'x, 'e> EvalState<'x, 'e> {
             }
         }
 
-        // REPORT (DRC-34): reportConstraintHeader( c )
+        report_constraint_header(&mut reporter, &self.units, c);
 
         let a = self.a.expect("EvalRules: a");
 
         if c.constraint.type_ == DrcConstraintT::ClearanceConstraint {
             if self.a_is_non_copper {
-                // REPORT (DRC-34): "%s contains no copper.  Constraint ignored."
+                report(&mut reporter, || {
+                    format!(
+                        "{} contains no copper.  Constraint ignored.",
+                        self.units.desc(&a)
+                    )
+                });
                 return;
             } else if self.b_is_non_copper {
-                // REPORT (DRC-34): "%s contains no copper.  Constraint ignored."
+                let b = self.b.expect("EvalRules: b");
+                report(&mut reporter, || {
+                    format!(
+                        "{} contains no copper.  Constraint ignored.",
+                        self.units.desc(&b)
+                    )
+                });
                 return;
             }
         } else if c.constraint.type_ == DrcConstraintT::DisallowConstraint {
@@ -289,7 +311,10 @@ impl<'x, 'e> EvalState<'x, 'e> {
                 let owner = a.ctx.item(zone_id).and_then(|z| z.parent_footprint());
 
                 if owner.is_some_and(|fp| fp == a) {
-                    // REPORT (DRC-34): "Keepout belongs to the footprint under test; ..."
+                    report(&mut reporter, || {
+                        "Keepout belongs to the footprint under test; constraint ignored."
+                            .to_string()
+                    });
                     return;
                 }
             }
@@ -334,8 +359,14 @@ impl<'x, 'e> EvalState<'x, 'e> {
             };
 
             if (c.constraint.disallow_flags & mask) == 0 {
-                // REPORT (DRC-34): "Keepout constraint not met." / "Disallow constraint not
-                // met."
+                report(&mut reporter, || {
+                    if implicit {
+                        "Keepout constraint not met.".to_string()
+                    } else {
+                        "Disallow constraint not met.".to_string()
+                    }
+                });
+
                 return;
             }
 
@@ -352,8 +383,19 @@ impl<'x, 'e> EvalState<'x, 'e> {
             }
 
             if !(c.layer_test.clone() & &item_layers).any() {
-                // REPORT (DRC-34): "Keepout layer(s) not matched." / "Rule layer '%s' not
-                // matched; rule ignored."
+                // (c->parentRule is never null in the port: no "Rule layer not matched"
+                // branch without a rule)
+                report(&mut reporter, || {
+                    if implicit {
+                        "Keepout layer(s) not matched.".to_string()
+                    } else {
+                        format!(
+                            "Rule layer '{}' not matched; rule ignored.",
+                            escape_html(&c.parent_rule.layer_source)
+                        )
+                    }
+                });
+
                 return;
             }
         }
@@ -361,8 +403,16 @@ impl<'x, 'e> EvalState<'x, 'e> {
         if (is_pcb_layer(self.layer) && !c.layer_test.contains(self.layer))
             || (self.board.enabled_layers() & &c.layer_test).count() == 0
         {
-            // REPORT (DRC-34): "Constraint layer not matched." / "Rule layer '%s' not
-            // matched; rule ignored."
+            report(&mut reporter, || {
+                if implicit {
+                    "Constraint layer not matched.".to_string()
+                } else {
+                    format!(
+                        "Rule layer '{}' not matched; rule ignored.",
+                        escape_html(&c.parent_rule.layer_source)
+                    )
+                }
+            });
         } else if c.constraint.type_ == DrcConstraintT::HoleToHoleConstraint
             && (!a.has_hole() || !self.b.is_some_and(|b| b.has_hole()))
         {
@@ -371,9 +421,17 @@ impl<'x, 'e> EvalState<'x, 'e> {
             // a non-hole item.
             //
             // (A missing b dereferences null in C++; only the router's batch call passes
-            // none. It is treated as an item without a hole.)
-            //
-            // REPORT (DRC-34): "%s does not have a hole; rule ignored."
+            // none. It is treated as an item without a hole, and named only when it is a.)
+            let non_hole = if a.has_hole() { self.b } else { Some(a) };
+
+            if let Some(non_hole) = non_hole {
+                report(&mut reporter, || {
+                    format!(
+                        "{} does not have a hole; rule ignored.",
+                        self.units.desc_raw(&non_hole)
+                    )
+                });
+            }
         } else if c
             .condition
             .as_ref()
@@ -381,13 +439,16 @@ impl<'x, 'e> EvalState<'x, 'e> {
         {
             if reporter.is_some() {
                 if implicit {
-                    // REPORT (DRC-34): "Unconditional constraint applied."
+                    report(&mut reporter, || {
+                        "Unconditional constraint applied.".to_string()
+                    });
                 } else if self.constraint.type_ == DrcConstraintT::AssertionConstraint {
-                    // REPORT (DRC-34): "Unconditional rule applied."
+                    report(&mut reporter, || "Unconditional rule applied.".to_string());
                     self.test_assertion(c, reborrow(&mut reporter));
                 } else {
-                    // REPORT (DRC-34): "Unconditional rule applied; overrides previous
-                    // constraints."
+                    report(&mut reporter, || {
+                        "Unconditional rule applied; overrides previous constraints.".to_string()
+                    });
                 }
             }
 
@@ -411,8 +472,16 @@ impl<'x, 'e> EvalState<'x, 'e> {
                 }
             }
 
-            // (implicit: don't report on implicit rule conditions; they're synthetic)
-            // REPORT (DRC-34): "Checking rule condition '%s'."
+            if implicit {
+                // Don't report on implicit rule conditions; they're synthetic.
+            } else {
+                report(&mut reporter, || {
+                    format!(
+                        "Checking rule condition '{}'.",
+                        escape_html(c.condition.as_ref().expect("condition").expression())
+                    )
+                });
+            }
 
             let cond_matched =
                 if implicit && c.parent_rule.implicit_source() == DrcImplicitSource::NetClass {
@@ -424,19 +493,26 @@ impl<'x, 'e> EvalState<'x, 'e> {
             if cond_matched {
                 if reporter.is_some() {
                     if implicit {
-                        // REPORT (DRC-34): "Constraint applied."
+                        report(&mut reporter, || "Constraint applied.".to_string());
                     } else if self.constraint.type_ == DrcConstraintT::AssertionConstraint {
-                        // REPORT (DRC-34): "Rule applied."
+                        report(&mut reporter, || "Rule applied.".to_string());
                         self.test_assertion(c, reborrow(&mut reporter));
                     } else {
-                        // REPORT (DRC-34): "Rule applied; overrides previous constraints."
+                        report(&mut reporter, || {
+                            "Rule applied; overrides previous constraints.".to_string()
+                        });
                     }
                 }
 
                 self.apply_constraint(c);
             } else {
-                // REPORT (DRC-34): "Membership not satisfied; constraint ignored." /
-                // "Condition not satisfied; rule ignored."
+                report(&mut reporter, || {
+                    if implicit {
+                        "Membership not satisfied; constraint ignored.".to_string()
+                    } else {
+                        "Condition not satisfied; rule ignored.".to_string()
+                    }
+                });
             }
         }
     }
@@ -483,6 +559,7 @@ impl DrcEngine {
 
         let board = ctx.board;
         let bds = board.design_settings();
+        let units = ReportUnits::new(self.user_units);
 
         let ac = a.filter(|a| a.is_connected());
         let bc = b.filter(|b| b.is_connected());
@@ -570,7 +647,14 @@ impl DrcEngine {
                     });
 
                 if found {
-                    // REPORT (DRC-34): "Net tie on %s; clearance: 0."
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Net tie on {}; clearance: 0.",
+                            units.desc(&footprints[ii].expect("footprint"))
+                        )
+                    });
+
                     constraint.name = "net tie".to_string();
                     constraint.value.set_min(0);
                     return constraint;
@@ -605,8 +689,16 @@ impl DrcEngine {
             if override_a.is_some() || override_b.is_some() {
                 let mut msg = String::new();
 
-                if override_a.is_some() {
-                    // REPORT (DRC-34): "Local override on %s; clearance: %s."
+                if let Some(value_a) = override_a {
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Local override on {}; clearance: {}.",
+                            units.desc(&a.expect("EvalRules: a")),
+                            units.int(value_a)
+                        )
+                    });
+
                     let ac = ac.expect("ac");
                     let (value, source) = ac
                         .as_connected()
@@ -617,7 +709,15 @@ impl DrcEngine {
                 }
 
                 if let Some(value_b) = override_b {
-                    // REPORT (DRC-34): "Local override on %s; clearance: %s."
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Local override on {}; clearance: {}.",
+                            units.desc(&b.expect("EvalRules: b")),
+                            units.int(value_b)
+                        )
+                    });
+
                     if value_b > override_val {
                         let bc = bc.expect("bc");
                         let (value, source) = bc
@@ -634,12 +734,20 @@ impl DrcEngine {
                         if override_val < bds.min_clearance {
                             override_val = bds.min_clearance;
                             msg = "board minimum".to_string();
-                            // REPORT (DRC-34): "Board minimum clearance: %s."
+
+                            report(&mut reporter, String::new);
+                            report(&mut reporter, || {
+                                format!("Board minimum clearance: {}.", units.int(override_val))
+                            });
                         }
                     } else if override_val < bds.hole_clearance {
                         override_val = bds.hole_clearance;
                         msg = "board minimum hole".to_string();
-                        // REPORT (DRC-34): "Board minimum hole clearance: %s."
+
+                        report(&mut reporter, String::new);
+                        report(&mut reporter, || {
+                            format!("Board minimum hole clearance: {}.", units.int(override_val))
+                        });
                     }
 
                     constraint.name = msg;
@@ -653,7 +761,16 @@ impl DrcEngine {
 
                 if p.local_zone_connection() != ZoneConnection::Inherited {
                     let (connection, msg) = p.zone_connection_overrides(pad_ref.ctx, true);
-                    // REPORT (DRC-34): "Local override on %s; zone connection: %s."
+
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Local override on {}; zone connection: {}.",
+                            units.desc(&pad_ref),
+                            print_zone_connection(connection)
+                        )
+                    });
+
                     constraint.name = msg.unwrap_or_default();
                     constraint.zone_connection = connection;
                     return constraint;
@@ -665,7 +782,16 @@ impl DrcEngine {
 
                 if p.local_thermal_gap_override(false).0 > 0 {
                     let (gap_override, msg) = p.local_thermal_gap_override(true);
-                    // REPORT (DRC-34): "Local override on %s; thermal relief gap: %s."
+
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Local override on {}; thermal relief gap: {}.",
+                            units.desc(&pad_ref),
+                            units.int(gap_override)
+                        )
+                    });
+
                     constraint.name = msg.unwrap_or_default();
                     constraint.value.set_min(gap_override);
                     return constraint;
@@ -677,13 +803,30 @@ impl DrcEngine {
 
                 if p.local_spoke_width_override(false).0 > 0 {
                     let (mut spoke_override, msg) = p.local_spoke_width_override(true);
-                    // REPORT (DRC-34): "Local override on %s; thermal spoke width: %s."
 
-                    if let Some(z) = zone.and_then(|z| z.as_zone())
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "Local override on {}; thermal spoke width: {}.",
+                            units.desc(&pad_ref),
+                            units.int(spoke_override)
+                        )
+                    });
+
+                    if let Some(zone_ref) = zone
+                        && let Some(z) = zone_ref.as_zone()
                         && z.min_thickness() > spoke_override
                     {
                         spoke_override = z.min_thickness();
-                        // REPORT (DRC-34): "%s min thickness: %s."
+
+                        report(&mut reporter, String::new);
+                        report(&mut reporter, || {
+                            format!(
+                                "{} min thickness: {}.",
+                                units.desc(&zone_ref),
+                                units.int(spoke_override)
+                            )
+                        });
                     }
 
                     constraint.name = msg.unwrap_or_default();
@@ -694,6 +837,7 @@ impl DrcEngine {
         } else if constraint_type == SolderMaskExpansionConstraint {
             let a_ref = a.expect("EvalRules: a");
             let mut override_: Option<i32> = None;
+            let mut override_item = a_ref;
 
             if let Some(p) = pad.and_then(|p| p.as_pad()) {
                 override_ = p.local_solder_mask_margin();
@@ -704,18 +848,29 @@ impl DrcEngine {
             }
 
             if override_.is_none()
-                && let Some(fp) = parent_footprint.and_then(|f| f.as_footprint())
+                && let Some(fp_ref) = parent_footprint
+                && let Some(fp) = fp_ref.as_footprint()
             {
                 override_ = fp.solder_mask_margin;
+                override_item = fp_ref;
             }
 
             if let Some(value) = override_ {
-                // REPORT (DRC-34): "Local override on %s; solder mask expansion: %s."
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "Local override on {}; solder mask expansion: {}.",
+                        units.desc(&override_item),
+                        units.int(value)
+                    )
+                });
+
                 constraint.value.set_opt(value);
                 return constraint;
             }
         } else if constraint_type == SolderPasteAbsMarginConstraint {
             let mut override_: Option<i32> = None;
+            let mut override_item = a;
 
             if let Some(p) = pad.and_then(|p| p.as_pad()) {
                 override_ = p.local_solder_paste_margin();
@@ -723,18 +878,29 @@ impl DrcEngine {
 
             if override_.is_none()
                 && pad.is_some()
-                && let Some(fp) = parent_footprint.and_then(|f| f.as_footprint())
+                && let Some(fp_ref) = parent_footprint
+                && let Some(fp) = fp_ref.as_footprint()
             {
                 override_ = fp.solder_paste_margin;
+                override_item = Some(fp_ref);
             }
 
             if let Some(value) = override_ {
-                // REPORT (DRC-34): "Local override on %s; solder paste absolute clearance: %s."
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "Local override on {}; solder paste absolute clearance: {}.",
+                        units.desc(&override_item.expect("EvalRules: a")),
+                        units.int(value)
+                    )
+                });
+
                 constraint.value.set_opt(value);
                 return constraint;
             }
         } else if constraint_type == SolderPasteRelMarginConstraint {
             let mut override_ratio: Option<f64> = None;
+            let mut override_item = a;
 
             if let Some(p) = pad.and_then(|p| p.as_pad()) {
                 override_ratio = p.local_solder_paste_margin_ratio();
@@ -742,13 +908,24 @@ impl DrcEngine {
 
             if override_ratio.is_none()
                 && pad.is_some()
-                && let Some(fp) = parent_footprint.and_then(|f| f.as_footprint())
+                && let Some(fp_ref) = parent_footprint
+                && let Some(fp) = fp_ref.as_footprint()
             {
                 override_ratio = fp.solder_paste_margin_ratio;
+                override_item = Some(fp_ref);
             }
 
             if let Some(ratio) = override_ratio {
-                // REPORT (DRC-34): "Local override on %s; solder paste relative clearance: %s."
+                // MessageTextFromValue( double ): the percentage formatted as a distance
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "Local override on {}; solder paste relative clearance: {}.",
+                        units.desc(&override_item.expect("EvalRules: a")),
+                        units.value(ratio * 100.0)
+                    )
+                });
+
                 constraint.value.set_opt(ki_round(ratio * 1000.0));
                 return constraint;
             }
@@ -766,6 +943,7 @@ impl DrcEngine {
             b_is_non_copper,
             constraint,
             condition_cache: BTreeMap::new(),
+            units,
         };
 
         // Fast-path for netclass clearance when no explicit or diff pair override rules exist
@@ -815,7 +993,13 @@ impl DrcEngine {
                 let clearance_constraint =
                     self.eval_rules_reporting(ctx, ClearanceConstraint, a, b, layer, None);
 
-                // REPORT (DRC-34): "Resolved minimum clearance: %s."
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "Resolved minimum clearance: {}.",
+                        state.units.int(clearance_constraint.value.min())
+                    )
+                });
 
                 let mut constraint = state.constraint;
 
@@ -853,7 +1037,10 @@ impl DrcEngine {
                     | SolderPasteRelMarginConstraint
             )
         {
-            // REPORT (DRC-34): "Inheriting from parent: %s."
+            report(&mut reporter, String::new);
+            report(&mut reporter, || {
+                format!("Inheriting from parent: {}.", state.units.desc(&parent_fp))
+            });
 
             if state.a == Some(pad_ref) {
                 state.a = Some(parent_fp);
@@ -895,6 +1082,7 @@ impl DrcEngine {
             }
         }
 
+        let units = state.units;
         let mut constraint = state.constraint;
 
         // Unfortunately implicit rules don't work for local clearances (such as zones) because
@@ -903,13 +1091,24 @@ impl DrcEngine {
         if constraint_type == ClearanceConstraint {
             let global = constraint.value.min();
             let mut clearance = global;
-
-            // (needBlankLine only formats the report)
+            let mut need_blank_line = true;
 
             if let Some(ac) = ac
                 && let Some(local_a) = ac.as_connected().and_then(|c| c.local_clearance())
             {
-                // REPORT (DRC-34): "Local clearance on %s: %s."
+                if need_blank_line {
+                    report(&mut reporter, String::new);
+                    need_blank_line = false;
+                }
+
+                report(&mut reporter, || {
+                    format!(
+                        "Local clearance on {}: {}.",
+                        units.desc(&a.expect("EvalRules: a")),
+                        units.int(local_a)
+                    )
+                });
+
                 if local_a > clearance {
                     let (value, msg) = local_clearance_with_source(&ac).expect("local clearance");
                     clearance = value;
@@ -922,7 +1121,19 @@ impl DrcEngine {
             if let Some(bc) = bc
                 && let Some(local_b) = bc.as_connected().and_then(|c| c.local_clearance())
             {
-                // REPORT (DRC-34): "Local clearance on %s: %s."
+                if need_blank_line {
+                    report(&mut reporter, String::new);
+                    need_blank_line = false;
+                }
+
+                report(&mut reporter, || {
+                    format!(
+                        "Local clearance on {}: {}.",
+                        units.desc(&b.expect("EvalRules: b")),
+                        units.int(local_b)
+                    )
+                });
+
                 if local_b > clearance {
                     let (value, msg) = local_clearance_with_source(&bc).expect("local clearance");
                     clearance = value;
@@ -933,7 +1144,14 @@ impl DrcEngine {
             }
 
             if !a_is_non_copper && !b_is_non_copper {
-                // REPORT (DRC-34): "Board minimum clearance: %s."
+                if need_blank_line {
+                    report(&mut reporter, String::new);
+                }
+
+                report(&mut reporter, || {
+                    format!("Board minimum clearance: {}.", units.int(bds.min_clearance))
+                });
+
                 if clearance < bds.min_clearance {
                     constraint.set_parent_rule(None);
                     constraint.name = "board minimum".to_string();
@@ -944,12 +1162,21 @@ impl DrcEngine {
             return constraint;
         } else if constraint_type == ZoneConnectionConstraint {
             if pad.is_some()
-                && let Some(fp) = parent_footprint.and_then(|f| f.as_footprint())
+                && let Some(fp_ref) = parent_footprint
+                && let Some(fp) = fp_ref.as_footprint()
             {
                 let local = fp.local_zone_connection();
 
                 if local != ZoneConnection::Inherited {
-                    // REPORT (DRC-34): "%s zone connection: %s."
+                    report(&mut reporter, String::new);
+                    report(&mut reporter, || {
+                        format!(
+                            "{} zone connection: {}.",
+                            units.desc(&fp_ref),
+                            print_zone_connection(local)
+                        )
+                    });
+
                     constraint.set_parent_rule(None);
                     constraint.name = "footprint".to_string();
                     constraint.zone_connection = local;
@@ -957,28 +1184,60 @@ impl DrcEngine {
                 }
             }
 
-            if let Some(z) = zone.and_then(|z| z.as_zone()) {
+            if let Some(zone_ref) = zone
+                && let Some(z) = zone_ref.as_zone()
+            {
                 let local = z.pad_connection();
-                // REPORT (DRC-34): "%s pad connection: %s."
+
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "{} pad connection: {}.",
+                        units.desc(&zone_ref),
+                        print_zone_connection(local)
+                    )
+                });
+
                 constraint.set_parent_rule(None);
                 constraint.name = "zone".to_string();
                 constraint.zone_connection = local;
                 return constraint;
             }
         } else if constraint_type == ThermalReliefGapConstraint {
-            if let Some(z) = zone.and_then(|z| z.as_zone()) {
+            if let Some(zone_ref) = zone
+                && let Some(z) = zone_ref.as_zone()
+            {
                 let local = z.thermal_relief_gap();
-                // REPORT (DRC-34): "%s thermal relief gap: %s."
+
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!(
+                        "{} thermal relief gap: {}.",
+                        units.desc(&zone_ref),
+                        units.int(local)
+                    )
+                });
+
                 constraint.set_parent_rule(None);
                 constraint.name = "zone".to_string();
                 constraint.value.set_min(local);
                 return constraint;
             }
         } else if constraint_type == ThermalSpokeWidthConstraint
-            && let Some(z) = zone.and_then(|z| z.as_zone())
+            && let Some(zone_ref) = zone
+            && let Some(z) = zone_ref.as_zone()
         {
             let local = z.thermal_relief_spoke_width();
-            // REPORT (DRC-34): "%s thermal spoke width: %s."
+
+            report(&mut reporter, String::new);
+            report(&mut reporter, || {
+                format!(
+                    "{} thermal spoke width: {}.",
+                    units.desc(&zone_ref),
+                    units.int(local)
+                )
+            });
+
             constraint.set_parent_rule(None);
             constraint.name = "zone".to_string();
             constraint.value.set_min(local);
@@ -1024,7 +1283,13 @@ impl DrcEngine {
             reborrow(&mut reporter),
         );
 
-        // REPORT (DRC-34): "Resolved zone connection type: %s."
+        report(&mut reporter, String::new);
+        report(&mut reporter, || {
+            format!(
+                "Resolved zone connection type: {}.",
+                print_zone_connection(constraint.zone_connection)
+            )
+        });
 
         if constraint.zone_connection == ZoneConnection::ThtThermal {
             let pad = if a.type_() == KicadT::PcbPadT {
@@ -1038,7 +1303,12 @@ impl DrcEngine {
             if pad.is_some_and(|p| p.attribute() == PadAttrib::Pth) {
                 constraint.zone_connection = ZoneConnection::Thermal;
             } else {
-                // REPORT (DRC-34): "Pad is not a through hole pad; connection will be: %s."
+                report(&mut reporter, || {
+                    format!(
+                        "Pad is not a through hole pad; connection will be: {}.",
+                        print_zone_connection(ZoneConnection::Full)
+                    )
+                });
                 constraint.zone_connection = ZoneConnection::Full;
             }
         }
@@ -1101,31 +1371,63 @@ impl DrcEngine {
 
         let layer = a.layer();
 
-        let mut test_assertion = |c: &DrcEngineConstraint, reporter: Option<&mut dyn Reporter>| {
-            // REPORT (DRC-34): "Checking rule assertion '%s'."
-            let passed = c.test.as_ref().is_some_and(|t| {
-                t.evaluate_for(Some(a), None, c.constraint.type_ as i32, layer, reporter)
-            });
+        let mut test_assertion =
+            |c: &DrcEngineConstraint, mut reporter: Option<&mut dyn Reporter>| {
+                if let Some(test) = &c.test {
+                    report(&mut reporter, || {
+                        format!(
+                            "Checking rule assertion '{}'.",
+                            escape_html(test.expression())
+                        )
+                    });
+                }
 
-            if passed {
-                // REPORT (DRC-34): "Assertion passed."
-            } else {
-                // REPORT (DRC-34): "--> Assertion failed. <--"
-                failure_handler(&c.constraint);
-            }
-        };
+                let passed = c.test.as_ref().is_some_and(|t| {
+                    t.evaluate_for(
+                        Some(a),
+                        None,
+                        c.constraint.type_ as i32,
+                        layer,
+                        reborrow(&mut reporter),
+                    )
+                });
+
+                if passed {
+                    report(&mut reporter, || "Assertion passed.".to_string());
+                } else {
+                    report(&mut reporter, || escape_html("--> Assertion failed. <--"));
+                    failure_handler(&c.constraint);
+                }
+            };
 
         if let Some(list) = self
             .constraint_map
             .get(&DrcConstraintT::AssertionConstraint)
         {
             for c in list {
-                // REPORT (DRC-34): ""; "Checking %s."
-                // (a layer mismatch only reports "Rule layer '%s' not matched; rule ignored.")
+                report(&mut reporter, String::new);
+                report(&mut reporter, || {
+                    format!("Checking {}.", c.constraint.name())
+                });
+
+                if !(a.layer_set() & &c.layer_test).any() {
+                    report(&mut reporter, || {
+                        format!(
+                            "Rule layer '{}' not matched; rule ignored.",
+                            escape_html(&c.parent_rule.layer_source)
+                        )
+                    });
+                }
 
                 match &c.condition {
                     Some(condition) if !condition.expression().is_empty() => {
-                        // REPORT (DRC-34): "Checking rule condition '%s'."
+                        report(&mut reporter, || {
+                            format!(
+                                "Checking rule condition '{}'.",
+                                escape_html(condition.expression())
+                            )
+                        });
+
                         if condition.evaluate_for(
                             Some(a),
                             None,
@@ -1133,14 +1435,16 @@ impl DrcEngine {
                             layer,
                             reborrow(&mut reporter),
                         ) {
-                            // REPORT (DRC-34): "Rule applied."
+                            report(&mut reporter, || "Rule applied.".to_string());
                             test_assertion(c, reborrow(&mut reporter));
                         } else {
-                            // REPORT (DRC-34): "Condition not satisfied; rule ignored."
+                            report(&mut reporter, || {
+                                "Condition not satisfied; rule ignored.".to_string()
+                            });
                         }
                     }
                     _ => {
-                        // REPORT (DRC-34): "Unconditional rule applied."
+                        report(&mut reporter, || "Unconditional rule applied.".to_string());
                         test_assertion(c, reborrow(&mut reporter));
                     }
                 }
@@ -1203,6 +1507,86 @@ impl DrcEngine {
         }
 
         (clearance, source)
+    }
+
+    /// Port of `DRC_ENGINE::InitializeClearanceCache`: pre-populates the own-clearance cache
+    /// for every track (vias on each enabled copper layer, other tracks on their layer) and
+    /// every footprint pad on each enabled copper layer, so that the first render of the
+    /// clearance outlines does not have to wait.
+    ///
+    /// The C++ evaluates the (item, layer) list in blocks on the thread pool and merges the
+    /// per-block maps with `insert` (an existing entry is kept); the port evaluates it
+    /// sequentially in list order with the same keep-existing merge, which gives the same
+    /// cache contents.
+    pub fn initialize_clearance_cache<'x>(&self, ctx: &'x BoardCtx<'x>) {
+        let board = ctx.board;
+
+        // Pre-populate the cache for all connected items to avoid delays during first render.
+        // We only need to cache copper layers since clearance outlines are only drawn on copper.
+        let copper_layers = board.enabled_layers() & Lset::all_cu_mask();
+
+        // Build flat list of (item, layer) pairs to process.
+        let mut items_to_process: Vec<(ItemRef<'x>, PcbLayerId)> = Vec::new();
+
+        for (id, _) in board.tracks() {
+            let Some(track) = ctx.item(id.item_id()) else {
+                continue;
+            };
+
+            if track.type_() == KicadT::PcbViaT {
+                for layer in (track.layer_set() & &copper_layers).seq().iter() {
+                    items_to_process.push((track, *layer));
+                }
+            } else {
+                items_to_process.push((track, track.layer()));
+            }
+        }
+
+        for (fp, _) in board.footprints() {
+            for (pad_id, _) in board.footprint_pads(fp) {
+                let Some(pad) = ctx.item(pad_id.item_id()) else {
+                    continue;
+                };
+
+                for layer in (pad.layer_set() & &copper_layers).seq().iter() {
+                    items_to_process.push((pad, *layer));
+                }
+            }
+        }
+
+        if items_to_process.is_empty() {
+            return;
+        }
+
+        let mut local_cache: Vec<((Kiid, PcbLayerId), i32)> = Vec::new();
+
+        for (item, layer) in items_to_process {
+            let mut constraint_type = DrcConstraintT::ClearanceConstraint;
+
+            if let Some(pad) = item.as_pad()
+                && pad.attribute() == PadAttrib::Npth
+            {
+                constraint_type = DrcConstraintT::HoleClearanceConstraint;
+            }
+
+            let constraint = self.eval_rules(ctx, constraint_type, Some(item), None, layer);
+
+            let mut clearance = 0;
+
+            if constraint.value.has_min() {
+                clearance = constraint.value.min();
+            }
+
+            local_cache.push(((item.uuid(), layer), clearance));
+        }
+
+        // Now merge with write lock held
+        let mut cache = self.lock_own_clearance_cache();
+        cache.sync_stamp(board.time_stamp());
+
+        for (key, clearance) in local_cache {
+            cache.map.entry(key).or_insert(clearance);
+        }
     }
 
     /// Port of `DRC_ENGINE::InvalidateClearanceCache`: drop the entries of `uuid` (on the

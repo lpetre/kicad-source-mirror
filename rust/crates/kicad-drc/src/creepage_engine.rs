@@ -286,6 +286,8 @@ impl CreepageEngine {
 
         // aNearMargin == 0 reproduces the legacy "distance < constraint" test exactly; the
         // overlay passes a positive margin to also surface near misses
+        // (negated as in the C++: a NaN distance returns here)
+        #[allow(clippy::neg_cmp_op_on_partial_ord)]
         if !(a_distance - a_constraint < a_near_margin as f64) {
             return None;
         }

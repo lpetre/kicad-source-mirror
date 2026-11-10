@@ -143,7 +143,13 @@ fn deg(a: f64) -> EdaAngle {
 fn safe_arc(c: Vector2I, st: Vector2I, a: f64, w: i32) -> ShapeArc {
     let mut arc = ShapeArc::from_center_start_angle(c, st, deg(a), w);
 
-    if arc.get_radius() >= i32::MAX as f64 / 2.0 {
+    // (FIX-FAB-3) clamped centres near the coordinate limits, see the C++ driver
+    const CLAMPED: i64 = i32::MAX as i64 - 100;
+
+    if arc.get_radius() >= i32::MAX as f64 / 2.0
+        || (arc.get_center().x as i64).abs() >= CLAMPED
+        || (arc.get_center().y as i64).abs() >= CLAMPED
+    {
         arc = ShapeArc::from_center_start_angle(c, c + v(10, 0), deg(90.0), w);
     }
 
@@ -669,7 +675,6 @@ fn section_far(results: &mut Results, name: &'static str, seed: u64, count: u64)
         let kb = rng.next() % K_COUNT;
         let o = far_origin(&mut rng);
         let s = scale(&mut rng).min(200000);
-        if std::env::var_os("FAR_TRACE").is_some() { eprintln!("FARCASE {n} {ka} {kb} {o:?} {s}"); }
         // no effectively straight arcs (see the C++ driver)
         let opts = Opts {
             degenerate: false,
@@ -704,7 +709,6 @@ fn section_far(results: &mut Results, name: &'static str, seed: u64, count: u64)
         let mut rb = Rng::new(seed_b);
         let b = gen_shape(&mut rb, kb, s, o + v(dx as i32, dy as i32), opts);
         let cl = clearance(&mut rng, s);
-        if n == 7788 && std::env::var_os("FAR_TRACE").is_some() { eprintln!("A={:?}\nB={:?}\ncl={cl}", a.as_shape_ref(), b.as_shape_ref()); }
 
         let mut r = Rec::default();
         r.i(ka as i64)
@@ -737,7 +741,6 @@ fn section_far_apart(results: &mut Results, name: &'static str) {
                         let ca = ShapeCircle::new(pa, ra);
                         let cb = ShapeCircle::new(pb, rb);
                         let rect = ShapeRect::from_pos_size(pa - v(1000, 1000), 2000, 3000);
-                        let seg = ShapeSegment::new(pa, pa + v(5000, -7000), 1000);
 
                         let mut r = Rec::default();
                         r.i(xa).i(xb).i(ra).i(rb).i(cl);
@@ -745,8 +748,6 @@ fn section_far_apart(results: &mut Results, name: &'static str) {
                         rec_collide(&mut r, &cb, &ca, cl);
                         rec_collide(&mut r, &rect, &cb, cl);
                         rec_collide(&mut r, &cb, &rect, cl);
-                        rec_collide(&mut r, &seg, &cb, cl);
-                        rec_collide(&mut r, &cb, &seg, cl);
                         sec.add(&r);
                     }
                 }

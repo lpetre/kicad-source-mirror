@@ -46,8 +46,8 @@ pub use graph::{
     ConnId, CreepageGraph, GraphConnection, GraphNode, GraphNodeType, NodeId, ShapeId,
 };
 pub use paths::{CreepageTrackEntry, PathConnection, TrackRtree};
-pub use solve::get_paths;
 pub use shapes::{
     BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CreepShapeBase, CreepShapeType,
     CuShapeArc, CuShapeCircle, CuShapeSegment,
 };
+pub use solve::get_paths;

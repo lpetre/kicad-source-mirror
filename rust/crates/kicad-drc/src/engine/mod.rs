@@ -30,6 +30,7 @@
 
 pub mod diff_pair;
 pub mod eval_rules;
+pub mod eval_rules_report;
 pub mod implicit_condition;
 pub mod implicit_rules;
 
@@ -253,6 +254,9 @@ pub struct DrcEngine {
     /// `m_drawingSheet` (`SetDrawingSheet`): the drawing sheet texts of the misc provider's
     /// text variable test, `None` without a drawing sheet.
     drawing_sheet: Option<crate::providers::misc::DrawingSheetTexts>,
+    /// `UNITS_PROVIDER::m_userUnits` of the engine (`EDA_UNITS::MM` initially): the units of
+    /// the `EvalRules` reporter texts (see [`DrcEngine::set_user_units`]).
+    user_units: EdaUnits,
 }
 
 /// `DRC_RULE_CONDITION::Compile( aReporter )` as the engine calls it for rule conditions
@@ -595,7 +599,21 @@ impl DrcEngine {
             has_diff_pair_clearance_overrides: false,
             condition_compiler: compile_with_binding::<PcbExprUcode>,
             drawing_sheet: None,
+            user_units: EdaUnits::Mm,
         }
+    }
+
+    /// `UNITS_PROVIDER::SetUserUnits` of the engine: the units the `EvalRules` /
+    /// `EvalZoneConnection` / `ProcessAssertions` reporter texts are written in. (C++
+    /// `RunTests( aUnits )` also sets them; in the port the run's units live in
+    /// [`DrcRunState`], so a host that explains constraints after a run sets them here.)
+    pub fn set_user_units(&mut self, units: EdaUnits) {
+        self.user_units = units;
+    }
+
+    /// `UNITS_PROVIDER::GetUserUnits` of the engine.
+    pub fn user_units(&self) -> EdaUnits {
+        self.user_units
     }
 
     /// Port of `DRC_ENGINE::SetDrawingSheet( DS_PROXY_VIEW_ITEM* aDrawingSheet )`: the drawing

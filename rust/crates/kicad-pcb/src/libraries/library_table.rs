@@ -104,13 +104,13 @@ pub struct LibraryParseError {
 /// `LIBRARY_TABLE`.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LibraryTable {
-    pub path: String,                   // m_path
-    pub scope: LibraryTableScope,       // m_scope
-    pub type_: LibraryTableType,        // m_type
-    pub version: Option<i32>,           // m_version
-    pub rows: Vec<LibraryTableRow>,     // m_rows
-    pub ok: bool,                       // m_ok
-    pub error_description: String,      // m_errorDescription
+    pub path: String,               // m_path
+    pub scope: LibraryTableScope,   // m_scope
+    pub type_: LibraryTableType,    // m_type
+    pub version: Option<i32>,       // m_version
+    pub rows: Vec<LibraryTableRow>, // m_rows
+    pub ok: bool,                   // m_ok
+    pub error_description: String,  // m_errorDescription
 }
 
 /// Outcome of a grammar rule: no match (the input is rewound), or a raised `parse_error`
@@ -479,9 +479,9 @@ pub fn parse_library_table(
         Ok(()) => Ok(parser.model),
         Err(Fail::NoMatch) => Err(LibraryParseError {
             description: match path {
-                Some(path) => format!(
-                    "An unexpected error occurred while reading library table {path} "
-                ),
+                Some(path) => {
+                    format!("An unexpected error occurred while reading library table {path} ")
+                }
                 None => "An unexpected error occurred while reading library table".to_string(),
             },
             line: 0,
@@ -530,8 +530,7 @@ impl LibraryTable {
 
         let Some(data) = source.read_file(&resolved) else {
             table.ok = false;
-            table.error_description =
-                format!("The library table path '{resolved}' does not exist");
+            table.error_description = format!("The library table path '{resolved}' does not exist");
             return table;
         };
 
@@ -714,7 +713,10 @@ mod tests {
             "(fp_lib_table (lib (name a))",
             "(fp_lib_table (library (name a)))",
         ] {
-            assert!(parse_library_table(text.as_bytes(), None).is_err(), "{text}");
+            assert!(
+                parse_library_table(text.as_bytes(), None).is_err(),
+                "{text}"
+            );
         }
 
         let e = parse_library_table(b"(fp_lib_table\n (lib (name a)(foo b)))", None).unwrap_err();

@@ -74,6 +74,31 @@ pub struct PcbGenerator {
     pub templates: Vec<(String, OwnedItem)>,
 }
 
+/// The typed members of a generator subclass ([`PcbGenerator::subclass_data`]).
+#[derive(Clone, Debug)]
+pub enum GeneratorData {
+    /// `PCB_TUNING_PATTERN`.
+    TuningPattern(TuningPatternData),
+    /// `PCB_VIA_STACK`.
+    ViaStack(ViaStackData),
+    /// `PCB_VIA_STITCH`.
+    ViaStitch(ViaStitchData),
+    /// A plain `PCB_GENERATOR`: `m_origin` only.
+    Base(Vector2I),
+}
+
+impl GeneratorData {
+    /// `PCB_GENERATOR::m_origin` of the subclass.
+    pub fn origin_mut(&mut self) -> &mut Vector2I {
+        match self {
+            GeneratorData::TuningPattern(d) => &mut d.origin,
+            GeneratorData::ViaStack(d) => &mut d.origin,
+            GeneratorData::ViaStitch(d) => &mut d.origin,
+            GeneratorData::Base(origin) => origin,
+        }
+    }
+}
+
 /// One value of the generator property map (`STRING_ANY_MAP` entry as the file stores it).
 #[derive(Clone, Debug)]
 pub enum GeneratorProp {
@@ -322,6 +347,46 @@ impl PcbGenerator {
     pub fn via_stitch_data(&self) -> Option<ViaStitchData> {
         (self.generator_type == GENERATOR_TYPE_VIA_STITCH)
             .then(|| ViaStitchData::from_properties(&PropertyMap(&self.properties)))
+    }
+
+    /// The typed members of the subclass (package FIX-EDIT-1): what the mutating virtuals of
+    /// `pcbnew/generators/*.h` change. Write them back with [`PcbGenerator::set_subclass_data`].
+    pub fn subclass_data(&self) -> GeneratorData {
+        if let Some(data) = self.tuning_pattern_data() {
+            GeneratorData::TuningPattern(data)
+        } else if let Some(data) = self.via_stack_data() {
+            GeneratorData::ViaStack(data)
+        } else if let Some(data) = self.via_stitch_data() {
+            GeneratorData::ViaStitch(data)
+        } else {
+            GeneratorData::Base(self.origin)
+        }
+    }
+
+    /// Stores the typed members: `m_origin` and the property map the C++ `GetProperties()`
+    /// returns for them (what the writer prints).
+    pub fn set_subclass_data(&mut self, data: &GeneratorData) {
+        match data {
+            GeneratorData::TuningPattern(d) => {
+                self.origin = d.origin;
+                self.properties = d.to_properties();
+            }
+            GeneratorData::ViaStack(d) => {
+                self.origin = d.origin;
+                self.properties = d.to_properties();
+            }
+            GeneratorData::ViaStitch(d) => {
+                self.origin = d.origin;
+                self.properties = d.to_properties();
+            }
+            GeneratorData::Base(origin) => {
+                // PCB_GENERATOR::GetProperties
+                self.origin = *origin;
+                let mut props = PropertySink::default();
+                props.set(KEY_ORIGIN, GeneratorProp::Vector2I(self.origin));
+                self.properties = props.0;
+            }
+        }
     }
 
     /// `PCB_GENERATOR::GetLayer()`: `m_layer`; `PCB_TUNING_PATTERN` answers with the layer of

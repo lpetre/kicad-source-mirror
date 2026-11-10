@@ -34,7 +34,7 @@ use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{Color4D, KicadT, Lset, PcbLayerId, StrokeParams};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::geometry_utils::ARC_HIGH_DEF;
-use kicad_geom::{EdaAngle, FlipDirection, Seg, ShapeNull, ShapePolySet, Vector2I};
+use kicad_geom::{EdaAngle, FlipDirection, Seg, Shape, ShapeNull, ShapePolySet, Vector2I};
 
 use crate::board::{Board, LayerT};
 use crate::ctx::{BoardCtx, MutEnv};
@@ -43,6 +43,10 @@ use crate::footprint::Footprint;
 use crate::ids::{ItemId, ItemKind};
 use crate::item::{ParentRef, RecurseMode, SharedShape};
 use crate::item_ref::{AnyItem, ItemRef};
+use crate::pcb_generator::{
+    GENERATOR_TYPE_TUNING_PATTERN, GeneratorData, MEANDER_SIDE_LEFT, MEANDER_SIDE_RIGHT,
+    TuningPatternData,
+};
 use crate::traits::{BoardItem, BoardItemMut, Flashing};
 
 /// Port of `BOARD_ITEM::GetLayerSet` (header inline): `LSET( { m_layer } )`, empty for
@@ -506,19 +510,7 @@ impl Board {
                     self.move_item(member, delta);
                 }
             }
-            // PCB_GENERATOR::Move: m_origin += aMoveVector, then PCB_GROUP::Move
-            ItemKind::Generator => {
-                let Some(generator) = id.typed() else { return };
-
-                if self
-                    .modify_generator(generator, |g, _| g.origin += delta)
-                    .is_some()
-                {
-                    for member in self.member_snapshot(id) {
-                        self.move_item(member, delta);
-                    }
-                }
-            }
+            ItemKind::Generator => self.generator_move(id, delta),
             // PCB_TABLE::Move: every cell
             ItemKind::Table => {
                 for cell in self.cell_snapshot(id) {
@@ -549,22 +541,7 @@ impl Board {
                     self.rotate_item(member, centre, angle);
                 }
             }
-            // PCB_GENERATOR::Rotate: RotatePoint( m_origin, aRotCentre, aAngle ), then
-            // PCB_GROUP::Rotate
-            ItemKind::Generator => {
-                let Some(generator) = id.typed() else { return };
-
-                if self
-                    .modify_generator(generator, |g, _| {
-                        kicad_geom::trigo::rotate_point_around(&mut g.origin, centre, angle)
-                    })
-                    .is_some()
-                {
-                    for member in self.member_snapshot(id) {
-                        self.rotate_item(member, centre, angle);
-                    }
-                }
-            }
+            ItemKind::Generator => self.generator_rotate(id, centre, angle),
             // PCB_TABLE::Rotate (package M11, pcb_table.rs)
             ItemKind::Table => {
                 if let Some(table) = id.typed() {
@@ -595,23 +572,7 @@ impl Board {
                     self.flip_item(member, centre, dir);
                 }
             }
-            // PCB_GENERATOR::Flip: baseMirror, SetLayer( GetFlippedLayer( GetLayer() ) ), then
-            // PCB_GROUP::Flip
-            ItemKind::Generator => {
-                let Some(generator) = id.typed() else { return };
-                let Some(flipped) = self.flipped_layer_of(id) else {
-                    return;
-                };
-
-                self.modify_generator(generator, |g, _| {
-                    g.origin = mirror_axis(centre, dir).reflect_point(g.origin);
-                    g.base_mut().layer = flipped;
-                });
-
-                for member in self.member_snapshot(id) {
-                    self.flip_item(member, centre, dir);
-                }
-            }
+            ItemKind::Generator => self.generator_flip(id, centre, dir),
             // PCB_TABLE::Flip (package M11, pcb_table.rs)
             ItemKind::Table => {
                 if let Some(table) = id.typed() {
@@ -645,27 +606,7 @@ impl Board {
                     self.mirror_item(member, centre, dir);
                 }
             }
-            // PCB_GENERATOR::Mirror: baseMirror, then PCB_GROUP::Mirror
-            ItemKind::Generator => {
-                let Some(generator) = id.typed() else { return };
-
-                if self
-                    .modify_generator(generator, |g, _| {
-                        g.origin = mirror_axis(centre, dir).reflect_point(g.origin)
-                    })
-                    .is_none()
-                {
-                    return;
-                }
-
-                if self.group_has_footprint(id) {
-                    return;
-                }
-
-                for member in self.member_snapshot(id) {
-                    self.mirror_item(member, centre, dir);
-                }
-            }
+            ItemKind::Generator => self.generator_mirror(id, centre, dir),
             // PCB_TABLE::Mirror (package M11, pcb_table.rs)
             ItemKind::Table => {
                 if let Some(table) = id.typed() {
@@ -693,11 +634,7 @@ impl Board {
                 }
             }
             ItemKind::Group => {}
-            ItemKind::Generator => {
-                if let Some(generator) = id.typed() {
-                    self.modify_generator(generator, |g, _| g.base_mut().layer = layer);
-                }
-            }
+            ItemKind::Generator => self.generator_set_layer(id, layer),
             ItemKind::Table => {
                 let Some(table) = id.typed() else { return };
 
@@ -726,6 +663,41 @@ impl Board {
         self.modify(id, |mut item, _| {
             item.as_dyn_mut().base_mut().is_locked = locked;
         });
+    }
+
+    /// `item->SetPosition( aPos )` on a stored item: `FOOTPRINT::SetPosition`,
+    /// `PCB_GROUP::SetPosition` / `PCB_TABLE::SetPosition` (`Move( aPos - GetPosition() )`,
+    /// the virtual `Move`), `PCB_GENERATOR::SetPosition` (`m_origin = aPos`), else the leaf's
+    /// `SetPosition`. A stale handle is ignored.
+    pub fn set_item_position(&mut self, id: ItemId, pos: Vector2I) {
+        match id.kind() {
+            ItemKind::Footprint => {
+                if let Some(fp) = id.typed() {
+                    self.footprint_set_position(fp, pos);
+                }
+            }
+            ItemKind::Group | ItemKind::Table => {
+                let current = {
+                    let ctx = BoardCtx::bare(self);
+                    let Some(item) = ctx.item(id) else { return };
+                    item.position()
+                };
+
+                self.move_item(id, pos - current);
+            }
+            ItemKind::Generator => {
+                if let Some(generator) = id.typed() {
+                    self.modify_generator(generator, |g, _| g.origin = pos);
+                }
+            }
+            _ => {
+                self.modify(id, |mut item, env| {
+                    if let Some(leaf) = item.as_leaf_mut() {
+                        leaf.set_position(env, pos);
+                    }
+                });
+            }
+        }
     }
 
     /// Snapshot of a group's / generator's members (`m_items`, insertion order).
@@ -763,6 +735,322 @@ impl Board {
                 }
             });
         found
+    }
+}
+
+/// The generator arms of the polymorphic mutators: `PCB_GENERATOR` (`pcbnew/pcb_generator.cpp`)
+/// and the overrides of its subclasses in `pcbnew/generators/*.h` / `*.cpp`
+/// (`PCB_TUNING_PATTERN`, `PCB_VIA_STACK`, `PCB_GENERATOR_POLY` / `PCB_VIA_STITCH`). The typed
+/// members live in the property map: each arm reads them with `subclass_data`, changes them and
+/// writes them back (`set_subclass_data`), as the C++ members would then be saved
+/// (package FIX-EDIT-1). The `IN_EDIT` flag of the tuning pattern is never set outside the
+/// interactive generator tool, so its guarded bodies always run.
+impl Board {
+    /// Runs `f` on the typed members of a stored generator and stores them again.
+    fn with_generator_data(&mut self, id: ItemId, f: impl FnOnce(&mut GeneratorData)) -> bool {
+        let Some(generator) = id.typed() else {
+            return false;
+        };
+
+        self.modify_generator(generator, |g, _| {
+            let mut data = g.subclass_data();
+            f(&mut data);
+            g.set_subclass_data(&data);
+        })
+        .is_some()
+    }
+
+    /// `PCB_GENERATOR::MarkDirty()` on a stored generator.
+    fn generator_mark_dirty(&mut self, id: ItemId) {
+        if let Some(generator) = id.typed() {
+            self.modify_generator(generator, |g, _| g.mark_dirty());
+        }
+    }
+
+    /// The subclass data of a stored generator, `None` for a stale handle.
+    fn generator_data(&self, id: ItemId) -> Option<GeneratorData> {
+        id.typed()
+            .and_then(|g| self.generator(g))
+            .map(|g| g.subclass_data())
+    }
+
+    /// `item->Move( aMoveVector )` on a generator.
+    fn generator_move(&mut self, id: ItemId, delta: Vector2I) {
+        match self.generator_data(id) {
+            None => {}
+            // PCB_VIA_STITCH::Move: only the outline and the origin; the child vias are not
+            // moved (the next Update() adds / removes them on the stitch grid).
+            Some(GeneratorData::ViaStitch(_)) => {
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::ViaStitch(d) = data {
+                        if let Some(outline) = &mut d.outline {
+                            outline.move_(delta);
+                        }
+
+                        d.origin += delta;
+                    }
+                });
+                self.generator_mark_dirty(id);
+            }
+            // PCB_TUNING_PATTERN::Move: m_origin and m_end, PCB_GROUP::Move, the base lines.
+            Some(GeneratorData::TuningPattern(_)) => {
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::TuningPattern(d) = data {
+                        d.origin += delta;
+                        d.end += delta;
+
+                        if let Some(base_line) = &mut d.base_line {
+                            base_line.move_(delta);
+                        }
+
+                        if let Some(coupled) = &mut d.base_line_coupled {
+                            coupled.move_(delta);
+                        }
+                    }
+                });
+
+                for member in self.member_snapshot(id) {
+                    self.move_item(member, delta);
+                }
+            }
+            // PCB_GENERATOR::Move (m_origin += aMoveVector, then PCB_GROUP::Move); the via
+            // stack also moves its hops.
+            Some(_) => {
+                self.with_generator_data(id, |data| {
+                    *data.origin_mut() += delta;
+
+                    if let GeneratorData::ViaStack(d) = data
+                        && let Some(hops) = &mut d.hops
+                    {
+                        hops.move_(delta);
+                    }
+                });
+
+                for member in self.member_snapshot(id) {
+                    self.move_item(member, delta);
+                }
+            }
+        }
+    }
+
+    /// `item->Rotate( aRotCentre, aAngle )` on a generator: `PCB_GENERATOR::Rotate`
+    /// (`RotatePoint( m_origin )`, then `PCB_GROUP::Rotate`) plus the subclass members
+    /// (`PCB_GENERATOR_POLY`: the outline first; tuning pattern: `m_end` and the base lines;
+    /// via stack: the hops).
+    fn generator_rotate(&mut self, id: ItemId, centre: Vector2I, angle: EdaAngle) {
+        let Some(kind) = self.generator_data(id) else {
+            return;
+        };
+
+        self.with_generator_data(id, |data| {
+            kicad_geom::trigo::rotate_point_around(data.origin_mut(), centre, angle);
+
+            match data {
+                GeneratorData::ViaStitch(d) => {
+                    if let Some(outline) = &mut d.outline {
+                        outline.rotate(angle, centre);
+                    }
+                }
+                GeneratorData::TuningPattern(d) => {
+                    kicad_geom::trigo::rotate_point_around(&mut d.end, centre, angle);
+
+                    if let Some(base_line) = &mut d.base_line {
+                        base_line.rotate(angle, centre);
+                    }
+
+                    if let Some(coupled) = &mut d.base_line_coupled {
+                        coupled.rotate(angle, centre);
+                    }
+                }
+                GeneratorData::ViaStack(d) => {
+                    if let Some(hops) = &mut d.hops {
+                        hops.rotate(angle, centre);
+                    }
+                }
+                GeneratorData::Base(_) => {}
+            }
+        });
+
+        for member in self.member_snapshot(id) {
+            self.rotate_item(member, centre, angle);
+        }
+
+        if matches!(kind, GeneratorData::ViaStitch(_)) {
+            self.generator_mark_dirty(id);
+        }
+    }
+
+    /// The virtual `SetLayer( aLayer )` of a generator: `PCB_GENERATOR::SetLayer` (`m_layer`);
+    /// `PCB_TUNING_PATTERN::SetLayer` also sets the layer of every member.
+    fn generator_set_layer(&mut self, id: ItemId, layer: PcbLayerId) {
+        let Some(generator) = id.typed() else { return };
+        let Some(is_tuning) = self
+            .modify_generator(generator, |g, _| {
+                g.base_mut().layer = layer;
+                g.generator_type() == GENERATOR_TYPE_TUNING_PATTERN
+            })
+        else {
+            return;
+        };
+
+        if is_tuning {
+            for member in self.member_snapshot(id) {
+                self.set_item_layer(member, layer);
+            }
+        }
+    }
+
+    /// `PCB_TUNING_PATTERN::baseMirror( aAxis )`: `PCB_GENERATOR::baseMirror` (the origin),
+    /// the base lines (the origin and the end then follow the primary one), the initial side.
+    fn tuning_base_mirror(d: &mut TuningPatternData, axis: &Seg) {
+        d.origin = axis.reflect_point(d.origin);
+
+        if let Some(base_line) = &mut d.base_line {
+            base_line.mirror_seg(axis);
+            d.origin = base_line.c_point(0);
+            d.end = base_line.c_last_point();
+        }
+
+        if let Some(coupled) = &mut d.base_line_coupled {
+            coupled.mirror_seg(axis);
+        }
+
+        if d.settings.initial_side == MEANDER_SIDE_RIGHT {
+            d.settings.initial_side = MEANDER_SIDE_LEFT;
+        } else {
+            d.settings.initial_side = MEANDER_SIDE_RIGHT;
+        }
+    }
+
+    /// `item->Flip( aCentre, aFlipDirection )` on a generator.
+    ///
+    /// `PCB_GENERATOR::Flip`: `baseMirror` (the origin; not virtual), the virtual
+    /// `SetLayer( GetFlippedLayer( GetLayer() ) )` (a tuning pattern sets the flipped layer on
+    /// its members, which `PCB_GROUP::Flip` then flips once more), `PCB_GROUP::Flip`.
+    /// `PCB_GENERATOR_POLY` mirrors its outline first; `PCB_TUNING_PATTERN` runs its own
+    /// `baseMirror` afterwards; `PCB_VIA_STACK` mirrors the hops and flips its start and end
+    /// layers.
+    fn generator_flip(&mut self, id: ItemId, centre: Vector2I, dir: FlipDirection) {
+        let Some(kind) = self.generator_data(id) else {
+            return;
+        };
+        let axis = mirror_axis(centre, dir);
+
+        if let GeneratorData::ViaStitch(_) = kind {
+            self.with_generator_data(id, |data| {
+                if let GeneratorData::ViaStitch(d) = data
+                    && let Some(outline) = &mut d.outline
+                {
+                    outline.mirror(centre, dir);
+                }
+            });
+        }
+
+        // PCB_GENERATOR::Flip
+        self.with_generator_data(id, |data| {
+            let origin = data.origin_mut();
+            *origin = axis.reflect_point(*origin);
+        });
+
+        let Some(flipped) = self.flipped_layer_of(id) else {
+            return;
+        };
+
+        self.generator_set_layer(id, flipped);
+
+        for member in self.member_snapshot(id) {
+            self.flip_item(member, centre, dir);
+        }
+
+        match kind {
+            GeneratorData::ViaStitch(_) => self.generator_mark_dirty(id),
+            GeneratorData::TuningPattern(_) => {
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::TuningPattern(d) = data {
+                        Self::tuning_base_mirror(d, &axis);
+                    }
+                });
+            }
+            GeneratorData::ViaStack(_) => {
+                let (start, end) = {
+                    let ctx = BoardCtx::bare(self);
+                    let (Some(item), Some(GeneratorData::ViaStack(d))) =
+                        (ctx.item(id), self.generator_data(id))
+                    else {
+                        return;
+                    };
+                    (
+                        item.flipped_layer(d.start_layer),
+                        item.flipped_layer(d.end_layer),
+                    )
+                };
+
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::ViaStack(d) = data {
+                        if let Some(hops) = &mut d.hops {
+                            hops.mirror(centre, dir);
+                        }
+
+                        d.start_layer = start;
+                        d.end_layer = end;
+                    }
+                });
+            }
+            GeneratorData::Base(_) => {}
+        }
+    }
+
+    /// `item->Mirror( aCentre, aFlipDirection )` on a generator.
+    ///
+    /// `PCB_GENERATOR::Mirror`: `baseMirror` (the origin), then `PCB_GROUP::Mirror` (nothing
+    /// when a footprint is among the members). `PCB_GENERATOR_POLY` mirrors its outline
+    /// first; `PCB_VIA_STACK` mirrors its hops about `MIRROR_AXIS` afterwards;
+    /// `PCB_TUNING_PATTERN` goes through `Mirror( MIRROR_AXIS( .. ) )`, i.e. the `SEG`
+    /// overloads (for the members an axis-parallel `SEG` reflects exactly like the
+    /// centre / direction overload used here), followed by its own `baseMirror`.
+    fn generator_mirror(&mut self, id: ItemId, centre: Vector2I, dir: FlipDirection) {
+        let Some(kind) = self.generator_data(id) else {
+            return;
+        };
+        let axis = mirror_axis(centre, dir);
+
+        self.with_generator_data(id, |data| {
+            if let GeneratorData::ViaStitch(d) = data
+                && let Some(outline) = &mut d.outline
+            {
+                outline.mirror(centre, dir);
+            }
+
+            let origin = data.origin_mut();
+            *origin = axis.reflect_point(*origin);
+        });
+
+        if !self.group_has_footprint(id) {
+            for member in self.member_snapshot(id) {
+                self.mirror_item(member, centre, dir);
+            }
+        }
+
+        match kind {
+            GeneratorData::ViaStitch(_) => self.generator_mark_dirty(id),
+            GeneratorData::TuningPattern(_) => {
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::TuningPattern(d) = data {
+                        Self::tuning_base_mirror(d, &axis);
+                    }
+                });
+            }
+            GeneratorData::ViaStack(_) => {
+                self.with_generator_data(id, |data| {
+                    if let GeneratorData::ViaStack(d) = data
+                        && let Some(hops) = &mut d.hops
+                    {
+                        hops.mirror_seg(&axis);
+                    }
+                });
+            }
+            GeneratorData::Base(_) => {}
+        }
     }
 }
 

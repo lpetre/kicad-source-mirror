@@ -274,9 +274,9 @@ impl<'a> GerberWriter<'a> {
             // The build version and creation date of the map plots (C++: the environment).
             let map_env = self.plot_env();
 
-            if let Err(err) = self
-                .base
-                .create_map_files_set(plot_directory, &map_env, reborrow(&mut reporter))
+            if let Err(err) =
+                self.base
+                    .create_map_files_set(plot_directory, &map_env, reborrow(&mut reporter))
             {
                 success = Err(err);
             }

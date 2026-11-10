@@ -111,3 +111,15 @@ UUID per reference run, FIX-RESAVE-1); DRC: 175 boards whose reference reports
 `qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb`), and 10 boards with other
 entry / count differences (`connection_width_rules`, `issue5854`, `issue24525`, `issue24935`,
 `microwave`, `severities`, `issue24853`, `issue25439`, `two_segment_teardrop`, `issue24078`).
+
+## Package DRC-LP: footprint library tables on the file system
+
+`src/host_libraries.rs`: `FsLibrarySource` (`LibrarySource` on `std::fs`; `realpath()` of a
+symbolic link as `WX_FILENAME::ResolvePossibleSymlinks`) and `library_host()`: the process
+environment, the working directory, `PATHS::CalculateUserSettingsPath()` (`$KICAD_CONFIG_HOME`
+or `$XDG_CONFIG_HOME` / `~/.config` + `/kicad`, then `/10.99`) for the global `fp-lib-table`,
+and the default `KICAD10_FOOTPRINT_DIR` `PATHS::GetStockFootprintsPath()` when the
+environment does not set it (`$APPDIR/share/kicad/footprints/`, else
+`/usr/share/kicad/footprints/`: the reference build's own `KICAD_LIBRARY_DATA` is its install
+prefix; only the never-reached "was not found at" message would show it). `pcb drc` loads
+the tables and preloads the libraries before the job (`JobExportDrc`).

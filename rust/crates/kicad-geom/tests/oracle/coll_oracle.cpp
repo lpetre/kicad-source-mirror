@@ -185,7 +185,14 @@ SHAPE_ARC safeArc( const VECTOR2I& c, const VECTOR2I& s, double a, int w )
 {
     SHAPE_ARC arc( c, s, EDA_ANGLE( a, DEGREES_T ), w );
 
-    if( arc.GetRadius() >= (double) std::numeric_limits<int>::max() / 2.0 )
+    // (FIX-FAB-3) near the coordinate limits a clamped centre comes with a smaller radius: the
+    // chord ends of CIRCLE::IntersectLine() then overflow int64_t (PORT_STATUS.md D11); near
+    // the origin the radius test above already catches every clamped centre
+    const int64_t kClamped = (int64_t) std::numeric_limits<int>::max() - 100;
+
+    if( arc.GetRadius() >= (double) std::numeric_limits<int>::max() / 2.0
+        || std::abs( (int64_t) arc.GetCenter().x ) >= kClamped
+        || std::abs( (int64_t) arc.GetCenter().y ) >= kClamped )
         arc = SHAPE_ARC( c, c + VECTOR2I( 10, 0 ), EDA_ANGLE( 90.0, DEGREES_T ), w );
 
     return arc;
@@ -794,7 +801,8 @@ void sectionFar( const char* aName, uint64_t aSeed, int aCount )
 // FIX-FAB-3: shapes on opposite sides of the coordinate range: the int differences of points
 // of the two shapes (delta of two circle centres, pn - c of rectangle and circle, the
 // pushout force) wrap in the reference build, and with large radii the wrapped distance
-// reports a collision.
+// reports a collision.  (Segment against circle is not included: SHAPE_CIRCLE::Collide( SEG )
+// overflows there, PORT_STATUS.md known gaps.)
 void sectionFarApart( const char* aName )
 {
     SECTION sec( aName );
@@ -817,7 +825,6 @@ void sectionFarApart( const char* aName )
                         SHAPE_CIRCLE ca( pa, ra );
                         SHAPE_CIRCLE cb( pb, rb );
                         SHAPE_RECT   rect( pa - VECTOR2I( 1000, 1000 ), 2000, 3000 );
-                        SHAPE_SEGMENT seg( pa, pa + VECTOR2I( 5000, -7000 ), 1000 );
 
                         REC r;
                         r.i( xa ).i( xb ).i( ra ).i( rb ).i( cl );
@@ -825,8 +832,6 @@ void sectionFarApart( const char* aName )
                         recCollide( r, &cb, &ca, cl );
                         recCollide( r, &rect, &cb, cl );
                         recCollide( r, &cb, &rect, cl );
-                        recCollide( r, &seg, &cb, cl );
-                        recCollide( r, &cb, &seg, cl );
                         sec.add( r );
                     }
                 }

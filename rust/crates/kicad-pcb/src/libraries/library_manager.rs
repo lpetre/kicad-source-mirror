@@ -307,7 +307,9 @@ impl LibraryEnv {
                 }
                 '\\' => {
                     // backslash can be used to suppress special meaning of % and $
-                    if allow_escapes && n < strlen - 1 && (chars[n + 1] == '%' || chars[n + 1] == '$')
+                    if allow_escapes
+                        && n < strlen - 1
+                        && (chars[n + 1] == '%' || chars[n + 1] == '$')
                     {
                         result.push(str_n);
                         n += 1;
@@ -438,7 +440,12 @@ impl LibraryManager {
     }
 
     /// Port of `LIBRARY_MANAGER::loadTables( aTablePath, aScope, { FOOTPRINT } )`.
-    fn load_tables(&mut self, source: &dyn LibrarySource, table_path: &str, scope: LibraryTableScope) {
+    fn load_tables(
+        &mut self,
+        source: &dyn LibrarySource,
+        table_path: &str,
+        scope: LibraryTableScope,
+    ) {
         match scope {
             LibraryTableScope::Global => self.global_table = None,
             _ => self.project_table = None,
@@ -520,11 +527,13 @@ impl LibraryManager {
             if seen.contains(&src) {
                 // "Library table %s has already been loaded!"
                 row.ok = false;
-                row.error_description = "A reference to this library table already exists".to_string();
+                row.error_description =
+                    "A reference to this library table already exists".to_string();
                 continue;
             }
 
-            let mut child = LibraryTable::from_file(source, &file, root_scope, LibraryTableType::Uninitialized);
+            let mut child =
+                LibraryTable::from_file(source, &file, root_scope, LibraryTableType::Uninitialized);
 
             self.process_one_table(source, &mut child, root_scope, seen);
 
@@ -646,16 +655,24 @@ mod tests {
             ..Default::default()
         };
         env.env_vars.insert("KIPRJMOD".into(), "/proj".into());
-        env.env_vars
-            .insert("KICAD10_FOOTPRINT_DIR".into(), "/usr/share/kicad/footprints/".into());
+        env.env_vars.insert(
+            "KICAD10_FOOTPRINT_DIR".into(),
+            "/usr/share/kicad/footprints/".into(),
+        );
         env
     }
 
     #[test]
     fn expansion() {
         let env = env();
-        assert_eq!(env.expand_env_var_substitutions("${KIPRJMOD}/a.pretty"), "/proj/a.pretty");
-        assert_eq!(env.expand_env_var_substitutions("$(KIPRJMOD)/a.pretty"), "/proj/a.pretty");
+        assert_eq!(
+            env.expand_env_var_substitutions("${KIPRJMOD}/a.pretty"),
+            "/proj/a.pretty"
+        );
+        assert_eq!(
+            env.expand_env_var_substitutions("$(KIPRJMOD)/a.pretty"),
+            "/proj/a.pretty"
+        );
         assert_eq!(env.expand_env_var_substitutions("$KIPRJMOD/a"), "/proj/a");
         // an older versioned name falls back to the current one
         assert_eq!(
@@ -663,7 +680,10 @@ mod tests {
             "/usr/share/kicad/footprints//x.pretty"
         );
         assert_eq!(env.expand_env_var_substitutions("${NOPE}/x"), "${NOPE}/x");
-        assert_eq!(env.expand_env_var_substitutions("\\${KIPRJMOD}"), "\\${KIPRJMOD}");
+        assert_eq!(
+            env.expand_env_var_substitutions("\\${KIPRJMOD}"),
+            "\\${KIPRJMOD}"
+        );
 
         let mut bare = LibraryEnv::default();
         bare.cwd = "/w".into();
@@ -686,7 +706,10 @@ mod tests {
     #[test]
     fn absolute() {
         let env = env();
-        assert_eq!(env.make_absolute("a/../b/./c.pretty", None), "/work/b/c.pretty");
+        assert_eq!(
+            env.make_absolute("a/../b/./c.pretty", None),
+            "/work/b/c.pretty"
+        );
         assert_eq!(env.make_absolute("~/x", None), "/home/u/x");
         assert_eq!(env.make_absolute("/a//b/", None), "/a/b/");
         assert_eq!(env.make_absolute("sub/t", Some("/p")), "/p/sub/t");
@@ -694,8 +717,17 @@ mod tests {
 
     #[test]
     fn versioned_names() {
-        assert!(is_versioned_env_var("KICAD6_FOOTPRINT_DIR", "FOOTPRINT_DIR"));
-        assert!(!is_versioned_env_var("KICAD_FOOTPRINT_DIR", "FOOTPRINT_DIR"));
-        assert!(!is_versioned_env_var("KICADx_FOOTPRINT_DIR", "FOOTPRINT_DIR"));
+        assert!(is_versioned_env_var(
+            "KICAD6_FOOTPRINT_DIR",
+            "FOOTPRINT_DIR"
+        ));
+        assert!(!is_versioned_env_var(
+            "KICAD_FOOTPRINT_DIR",
+            "FOOTPRINT_DIR"
+        ));
+        assert!(!is_versioned_env_var(
+            "KICADx_FOOTPRINT_DIR",
+            "FOOTPRINT_DIR"
+        ));
     }
 }

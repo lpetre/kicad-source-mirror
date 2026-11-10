@@ -1,0 +1,13 @@
+# FIX-EDIT-1: dump fields left out of the editmut hashes on both sides (board file name or *,
+# a TAB, a substring of the SECTION|KEY|FIELD key). Each line is a gap of the port that the
+# "none" edit (no edit at all) already shows, not a mutator mismatch:
+# PNS::MEANDER_SETTINGS has no Rust API in the dump (pcb-dump-rs prints pending| lines).
+*	|ds.meander.
+# The barcode symbol / text polygons: pcb-dump-rs prints pending| lines for them.
+*	|barcode.poly
+*	|barcode.symbol_poly
+*	|barcode.text_poly
+*	|barcode.last_error
+# PCB_PLOT_PARAMS::m_layerSelection of the parser-only load: indeterminate in the reference
+# (values like ?1442595584), not a model value.
+*	board|board|plot.layer

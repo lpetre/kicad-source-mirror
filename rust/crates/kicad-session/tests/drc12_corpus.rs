@@ -363,11 +363,7 @@ const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
     ),
     (
         "qa/data/pcbnew/issue22475/issue22475.kicad_pcb",
-        "text_thickness of a TrueType text missing (outline-font branch of the text_dims provider, DRC-24 gap)",
-    ),
-    (
-        "qa/data/pcbnew/api_kitchen_sink.kicad_pcb",
-        "one clearance violation missing: barcode 'acode' (F.Cu) against an Edge.Cuts polygon, rule 'barcode visual separation' (open, clearance provider)",
+        "text_thickness of a TrueType text missing: font 'Franklin Gothic Medium' is not installed on the oracle machine, the reference measures fontconfig's substitute, the port the stored glyphs (orchestrator decision, kicad-drc STAB-DRC)",
     ),
 ];
 

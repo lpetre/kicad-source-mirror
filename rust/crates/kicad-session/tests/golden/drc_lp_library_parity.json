@@ -1,0 +1,557 @@
+[
+ {
+  "description": "Footprint 'C_Disc_D4.7mm_W2.5mm_P5.00mm' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint C2",
+    "pos": {
+     "x": 137.16,
+     "y": 125.095
+    },
+    "uuid": "00000000-0000-0000-0000-000054a581ea"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M02",
+    "pos": {
+     "x": 52.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000019"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M04",
+    "pos": {
+     "x": 76.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000049"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M05",
+    "pos": {
+     "x": 88.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000061"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M06",
+    "pos": {
+     "x": 100.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000079"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M07",
+    "pos": {
+     "x": 112.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000091"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M08",
+    "pos": {
+     "x": 124.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000000a9"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M09",
+    "pos": {
+     "x": 136.0,
+     "y": 40.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000000c1"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M11",
+    "pos": {
+     "x": 40.0,
+     "y": 50.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000000f1"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M14",
+    "pos": {
+     "x": 76.0,
+     "y": 50.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000139"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M16",
+    "pos": {
+     "x": 100.0,
+     "y": 50.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000169"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M19",
+    "pos": {
+     "x": 136.0,
+     "y": 50.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000001b1"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'R_Axial_DIN0207_L6.3mm_D2.5mm_P7.62mm_Horizontal' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M21",
+    "pos": {
+     "x": 40.0,
+     "y": 60.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000001e1"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "The current configuration does not include the footprint library 'NotInTable'",
+  "items": [
+   {
+    "description": "Footprint M25",
+    "pos": {
+     "x": 124.0,
+     "y": 60.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000241"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'Disabled' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M26",
+    "pos": {
+     "x": 136.0,
+     "y": 60.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000259"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'Missing' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M27",
+    "pos": {
+     "x": 148.0,
+     "y": 60.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000271"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'Bad' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M28",
+    "pos": {
+     "x": 40.0,
+     "y": 70.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000289"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "Footprint 'NoSuchFootprint' not found in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint M30",
+    "pos": {
+     "x": 64.0,
+     "y": 70.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000002b9"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'NoType' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M32",
+    "pos": {
+     "x": 76.0,
+     "y": 70.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000002d1"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'GlobalDisabled' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M37",
+    "pos": {
+     "x": 136.0,
+     "y": 70.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000349"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The footprint library 'Nested Missing' is not enabled in the current configuration",
+  "items": [
+   {
+    "description": "Footprint M38",
+    "pos": {
+     "x": 148.0,
+     "y": 70.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000361"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "The current configuration does not include the footprint library 'Esc/Lib'",
+  "items": [
+   {
+    "description": "Footprint M39",
+    "pos": {
+     "x": 40.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000379"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_issues"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S04",
+    "pos": {
+     "x": 88.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000003c8"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S05",
+    "pos": {
+     "x": 100.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000003d5"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S07",
+    "pos": {
+     "x": 124.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000003ef"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S08",
+    "pos": {
+     "x": 136.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-0000000003fc"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S09",
+    "pos": {
+     "x": 148.0,
+     "y": 80.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000409"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S10",
+    "pos": {
+     "x": 40.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000416"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S12",
+    "pos": {
+     "x": 64.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000430"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S13",
+    "pos": {
+     "x": 76.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-00000000043d"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S14",
+    "pos": {
+     "x": 88.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-00000000044a"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S15",
+    "pos": {
+     "x": 100.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000457"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'Shapes' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint S16",
+    "pos": {
+     "x": 112.0,
+     "y": 90.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000464"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'ZoneFp' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint Z02",
+    "pos": {
+     "x": 0.0,
+     "y": 0.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000484"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'ZoneFp' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint Z03",
+    "pos": {
+     "x": 0.0,
+     "y": 0.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-00000000048a"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'ZoneFp' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint Z04",
+    "pos": {
+     "x": 0.0,
+     "y": 0.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000490"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ },
+ {
+  "description": "Footprint 'ZoneFp' does not match copy in library 'Footprints'",
+  "items": [
+   {
+    "description": "Footprint Z05",
+    "pos": {
+     "x": 0.0,
+     "y": 0.0
+    },
+    "uuid": "d7c00000-0000-4000-8000-000000000496"
+   }
+  ],
+  "severity": "warning",
+  "type": "lib_footprint_mismatch"
+ }
+]

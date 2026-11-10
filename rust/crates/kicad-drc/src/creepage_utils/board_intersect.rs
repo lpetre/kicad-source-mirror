@@ -373,8 +373,7 @@ pub fn segment_intersects_board(
     let mut i = 0;
 
     while i < intersection_points.len() {
-        if intersection_points[i].squared_distance(intersection_points[i + 1]) > gv_squared as i64
-        {
+        if intersection_points[i].squared_distance(intersection_points[i + 1]) > gv_squared as i64 {
             return false;
         }
 

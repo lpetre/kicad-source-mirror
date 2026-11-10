@@ -2123,3 +2123,251 @@ expected difference below. All kicad-drc tests green.
 - The `PNS_TUNE` trace output of the length calculation is not ported.
 - The chain topology has no bit-exact C++ oracle (see Verification); a C++ driver building
   `CHAIN_TOPOLOGY` on a board with terminal pads set in code would close this.
+
+## STAB-DRC-2: `kicad-rs pcb drc` against the reference, board by board (second pass)
+
+### Changes
+
+- Board UUID (`BOARD::m_Uuid`): `kicad_pcb::Board::uuid()`, drawn from a generator of its own
+  (seed `BOARD_UUID_SEED`; the board's item generator is not consumed, so every existing
+  golden keeps its UUIDs) and reserved in `Board::kiid_generator`. The misc provider's two
+  `invalid_outline` entries (`SetItems( m_board )`, the only places in `pcbnew/drc`) name it;
+  `BoardRcItemResolver` resolves it after every item, as `BOARD::ResolveItem` does
+  (`BOARD::GetPosition()` = (0, 0), `GetItemDescription()` = `PCB`). The text report line is
+  now byte for byte the reference's; the JSON item carries a UUID that is random per run in
+  the reference (normalised by the comparison tools, below).
+- `run_flow::run_tests_selected`: `connectivity->GetFromToCache()->Rebuild( m_board )` right
+  after the cache generator (`drc_engine.cpp:968-970`); the zone connections provider's second
+  connectivity rebuilds its from-to cache too. The connectivity provider already evaluates its
+  only rule (`VIA_DANGLING_CONSTRAINT`) with the run's connectivity in its context
+  (`check_tracks`), so `fromTo()` conditions see the rebuilt cache there as well. The DRC-12
+  deviation "the from-to cache is not rebuilt" is void.
+- Marker UUIDs come from the board's generator (review R2-11); `DrcJobOptions::
+  marker_uuid_seed` is no longer read (kept for the callers).
+- misc provider `findClosestOutlineGap` uses `collect_board_shapes`.
+- drc06 / drc26 / drc27 / drc28 / drc29 run their providers through the real run path
+  (`run_flow_providers`, `cli_report_entries_flow`, `compare_corpus_flow`); the test-private
+  wrappers (`PhysicalAndSilk`, `SolderMaskWithCaches`, `TrackAngleWithConnectivity`,
+  `WithCaches`) are gone. All their tests are green with equal results.
+- Comparison tools: the `PCB` masks are removed from `drc12_cli_compare.py`, the
+  kicad-session replay `drc12_corpus.rs` and `kicad-cli/tests/oracle/e2e_cli.py`; the JSON
+  item of the board is compared with its UUID normalised (`<BOARD>`). `e2e_cli.py` applies its
+  masks cumulatively (each named only when it changes a differing output) and gained the
+  documented entry-order mask of the drc12 tool (sorted entries per section, sorted
+  `connection_width` items: thread pool / pointer-set order). The filtered codes of the drc12
+  tool and the replay are the same list (unported providers plus the providers of running
+  packages: library parity DRC-LP, creepage DRC-33, length / skew / via count / net chain
+  DRC-31, diff pair codes).
+
+### Scoreboards
+
+`drc12_cli_compare.py cmp` (364 boards, `--severity-all --units mm`, text + JSON + stdout +
+exit code):
+
+| | exact | equal after filtering | equal as sets | differing |
+|---|---|---|---|---|
+| before (DRC-12 / STAB-DRC state, board without UUID: `PCB` lines masked) | 47 | 254 | 51 | 12 |
+| after | 96 | 213 | 53 | 2 |
+
+`e2e_cli.py --commands drc-report,drc-json` (308 boards, default options):
+
+| | identical | identical after masks | differing |
+|---|---|---|---|
+| drc-report before (golden) | 43 | 79 (60 of them with the `PCB` line mask) | 186 |
+| drc-report after | 91 | 42 | 175 |
+| drc-json before (golden) | 43 | 20 | 245 |
+| drc-json after | 45 | 88 (61 with the board UUID normalised) | 175 |
+
+Every remaining difference is owned by another package (multiset of entries per board,
+`target/stab-drc2/e2e_cat.py` logic): `lib_footprint_issues` missing on 166 report / 136+ JSON
+boards (library parity, DRC-LP: was not run by the binary compared), `creepage` entries on 6
+boards (DRC-33, smallest `creepage/creepage`), `skew_out_of_range` on
+`skew_group_matched_drc` (DRC-31), `net_chain_tuning_profiles` on
+`drc_net_chain_tuning_profiles` (unported, DRC-34); in the drc12 tool `issue22475`
+(`text_thickness`, font not installed on the oracle machine) and `fw16_MCIO8i`
+(`connection_width` neck from a pointer-ordered set) as before. The differences named by the
+first pass (connection_width_rules rule name, issue5854, issue24525, issue24935,
+microwave `shorting_items`, issue24853, issue25439, two_segment_teardrop, issue24078 counts)
+no longer exist: all are equal or equal as sets (thread pool order: edge clearance,
+copper clearance, isolated copper, connection width) in both tools.
+
+Kicad-session replay `drc12_corpus`: 312 boards equal, 50 equal as sets, 2 known
+differences, 1 pending (fakeboard: reference fails); `api_kitchen_sink` dropped from
+`KNOWN_DIFFERENCES` (matches).
+
+Options not verified by DRC-12, now run against the reference (`target/stab-drc2/opt_cmp.py`
+logic, e2e masks):
+- `--severity-exclusions` (text and JSON) on the 5 corpus projects that store exclusions
+  (issue17429: 10, solder_mask_bridge_test, skew_within_diff_pairs_drc, skew_group_matched_drc,
+  issue14008): 10 of 10 equal (identical or with the not-run list only).
+- `--refill-zones --save-board --severity-all --format json` on 20 boards with filled zones
+  (upgrade-identical boards of 4 to 34 KB: keepout_no_clearance, LayerEnumerate,
+  large_circle_teardrop, teardrop_spike, fill_bad, teardrop_issue_JPC2, issue23790,
+  issue2512, issue25521_zone_names, issue19956, issue17559, npth_mask_bridge_test,
+  npth_pressfit_slot, issue5750, issue6443, issue24935, issue22983, issue21184, issue5567,
+  issue24865): report, stdout, exit code and the saved board byte for byte: 15 identical,
+  5 identical after the board UUID / random UUID (teardrop zones without UUID) / order masks
+  (library parity entries filtered).
+
+### Not done (change requests / known gaps)
+
+- `RuleResolver::eval_zone_connection` (kicad-pcb `ctx.rs`) and its use in kicad-zone
+  `knockouts.rs`: files of other packages (change request); the local copy in knockouts.rs
+  is the same body.
+- `providers/solder_mask.rs` keeps the whole-board mask as two `ShapePolySet`s instead of a
+  detached `Zone` written through `Zone::fill_mut` (no observable difference; the C++
+  `m_SolderMaskBridges` zone is read by nothing else in the port).
+
+## DRC-LP: footprint library parity (`drc_test_provider_library_parity.cpp`)
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `DRC_TEST_PROVIDER_LIBRARY_PARITY::Run` (three `lib_footprint_issues` messages, `lib_footprint_mismatch`, per-run `libFootprintCache`, error limits, `GetCenter()` positions, `UNDEFINED_LAYER`) | `src/providers/library_parity.rs` `DrcTestProviderLibraryParity` | ported; registry slot wired in `run_flow.rs` (removed from `UNPORTED_PROVIDERS`); the adapter comes in `RunTestsOptions::footprint_libraries` (`None`: no tables) |
+| `FOOTPRINT::FootprintNeedsUpdate` (flip / orientation of the `temp` clone, `NormalizeForCompare`, `footprintVsBoardStackup`, attributes, solder mask bridges, overrides (non-DRC flags), stackup, net-tie groups, shapes / barcodes / pads / zones in `cmp_drawings` / `cmp_pads` / `cmp_zones` order, `CHECKPOINT`s) | `library_parity::footprint_needs_update` | ported with both modes (`CompareReporter` `None` = DRC mode, `Some` = report mode with the C++ texts) |
+| `TEST` / `TEST_PT` (`EPSILON` 10) / `TEST_D` (`EPSILON_D` 1e-5), `getBoardNormalizedLayerSet`, `boardLayersMatchWithInnerLayerExpansion`, `primitiveNeedsUpdate`, `padHasOverrides`, `padOrientationDiffers`, `padNeedsUpdate`, `barcodeNeedsUpdate`, `shapeNeedsUpdate`, `zoneNeedsUpdate`, `stackupNeedsUpdate`, `footprintVsBoardStackup` | same file, snake_case | ported; pad / footprint zone connections compared on the raw stored integers (`local_zone_connection_raw`) |
+
+`temp->SetParent( GetBoard() )`: the library footprint stays in its holder board
+(`FootprintLibraryAdapter::load_footprint`), which takes the board's copper layer count,
+enabled layers and layer types before the flip / rotation. The `dummy` copy of the board
+footprint is the same footprint in a clone of the board made once per run (on the first
+comparison), whose graphic items are normalised.
+
+### Deviations
+
+- Zone `GetPadConnection()` is compared as the stored `ZoneConnection` enum: an out-of-range
+  value in a file is already mapped by the parser, so two zones whose raw values differ but
+  are both out of range compare equal (C++: different).
+- `primitiveNeedsUpdate` / `shapeNeedsUpdate` with the same vertex count but fewer polygons on
+  the library side read `CPolygon( poly )` out of range in C++ (undefined); the port treats
+  it as a difference.
+- `std::set` ties (two drawings / pads / zones with identical sort keys and the same UUID)
+  fall back to `ItemId` order instead of heap-pointer order.
+- The holder board takes the board's layer count, enabled layers and layer types, not
+  custom `LAYER::m_opposite` pairs (they are recomputed from the copper count).
+- Tables in footprints are not normalised (`PCB_TABLE::Normalize`); the comparison does not
+  read them.
+
+### Verification
+
+- Corpus (`tests/oracle/drc12_cli_compare.py cmp`, lib codes no longer filtered, 364 boards):
+  294 exact, 15 filtered, 53 same set, 2 differing (`text_thickness`, `connection_width`, not
+  this package), 1 reference failure; no `lib_footprint_*` entry missing or extra. Before:
+  175 boards differed only by these codes. `tests/golden/drc12_cli.txt` regenerated.
+- Demos with a project `fp-lib-table` (copied with their libraries, reference vs kicad-rs,
+  every `lib_footprint_*` entry incl. item, position and order): pic_programmer (58 entries:
+  missing `${KICAD10_FOOTPRINT_DIR}` libraries, the project library matching),
+  royalblue54L_feather (67), multichannel_mixer-unrouted (114), and 0 entries on
+  kit-dev-coldfire-xilinx_5213, stickhub, complex_hierarchy, interf_u (`$(KIPRJMOD)`),
+  multichannel_mixer, video (`${KICAD6_FOOTPRINT_DIR}`), ecc83-pp, ecc83-pp_v2,
+  sonde xilinx: all identical. Not run (large-board rule): tiny_tapeout, cm5_minima,
+  vme-wren.
+- Crafted cases: `kicad-session/tests/drc_lp_library_parity.rs` with
+  `tests/data/drc_lp` (generator `tests/oracle/gen_drc_lp_cases.py`): 61 crafted
+  footprints (pad position / size / drill / shape / layers / number / type / orientation
+  (symmetric and not) / overrides / epsilon, graphic moved / width / deleted / reversed
+  segment / rect corners swapped, arc mid, polygon vertex, circle, bezier, copper stroke,
+  fill, roundrect / chamfer ratio and corners, custom primitive, attributes, net-tie groups,
+  texts, 3D model, rotation 30 / 45 / 90, a flip, rule-area priority / corner / keepout / name
+  / missing zone, a library-side difference) and library-table situations (not in table,
+  disabled, missing directory, corrupt file in the library, unknown type, nested table and
+  a missing nested library, `$(KIPRJMOD)`, relative URI, global table rows, a disabled
+  global row, a global row shadowed by the project row, escaped nickname, missing
+  footprint, a legacy table without version and with unquoted tokens): the 37 reference
+  entries identical (message, item, position, order); the same project through
+  `kicad-rs` on the file system is identical too.
+- QA `DRCFalseNegativeRegressions` (`kicad-session/tests/drc12_regressions.rs`): all 23 counts
+  are now asserted (no check left out) and pass; `DRCFalsePositiveRegressions` 21 of 21.
+
+### Known gaps
+
+- Rows of the other plugin types (`Legacy`, `Eagle`, `gEDA / Lepton EDA`, ...) fail to load
+  in the port ("not enabled" message). The reference loads e.g. an `Eagle` row whose URI is
+  a directory as an empty library ("Footprint '...' not found in library '...'"), and real
+  Eagle / legacy libraries with their footprints.
+
+## DRC-33: creepage utilities part 2, creepage engine, creepage provider
+
+Files: `src/creepage_utils/board_intersect.rs`, `src/creepage_utils/solve.rs`,
+`src/creepage_engine.rs`, `src/providers/creepage.rs`; tests `tests/drc33_creepage.rs`; oracle
+`tests/oracle/creepage33_oracle.cpp` + `build_creepage33_oracle.sh` + `gen_creepage33_golden.py`,
+goldens `tests/golden/creepage33_{board,engine}.txt`. Registry: `run_flow` runs the provider
+(`"creepage"` left `UNPORTED_PROVIDERS`). Supersedes the DRC-32 rows "`SegmentIntersectsBoard`
+stub" and "`segmentIntersectsCircle` ... `AddNetElements` - DRC-33"; `creepage_utils::pending`
+is kept as an alias module of `board_intersect` for the (ignored) DRC-32 test that names it.
+
+| C++ | Rust | State |
+|---|---|---|
+| `segmentIntersectsCircle`, `SegmentIntersectsBoard` | `board_intersect::{segment_intersects_circle, segment_intersects_board}` | ported |
+| `GetPaths` | `solve::get_paths` (= `CreepShape::paths`, the most-derived dispatch) | ported |
+| `CREEPAGE_GRAPH::Solve`, `Addshape`, `GeneratePaths`, `AddNetElements` | `CreepageGraph::{solve, add_shape, generate_paths, add_net_elements}` (`solve.rs`) | ported |
+| `CREEPAGE_RESULT`, `CREEPAGE_ENGINE` (whole-board solve, interactive Begin/Update/End, `populateBoardEdgeGraph`, `connectChildren`, `extractResult`, `addNetsInRegion`, `buildBoardEdgePrefix`, `movingItemsHaveNPTH`) | `creepage_engine::{CreepageResult, CreepageEngine}` | ported |
+| `DRC_TEST_PROVIDER_CREEPAGE` (`Run`, both `testCreepage`, `testCreepageV2`, `placeholderConstraint`, `reportCreepageViolation`, `GetMaxConstraint`, `CollectNetCodes`, `CollectBoardEdges`) | `providers::creepage::DrcTestProviderCreepage` | ported |
+| `ADVANCED_CFG::m_RealtimeCreepage`, `m_EnableCreepageSlot` | provider fields `realtime_creepage`, `enable_creepage_slot` (default `false`, as the reference) | ported |
+
+Model: the engine keeps no board borrow (the interactive mode needs the board to change
+between frames): every method takes the context of the moment and the interactive graph is
+parked as `creepage_engine::DetachedGraph` between calls. Constraint function:
+`Box<dyn Fn(i32, i32) -> f64>`; moving items: `BTreeSet<ItemId>`.
+
+Order (see the module comment of `solve.rs`): `CREEP_SHAPE*` order = `ShapeId`,
+`BOARD_ITEM*` order = `Ord` of `CreepItem` (`ItemId` order, owned edges last),
+`GRAPH_NODE*` = `NodeId`, `m_node_conns` = `ConnId` order, pointer-keyed `unordered_map`s =
+first insertion. `GeneratePaths` uses the thread pool only when `get_tasks_total() <
+get_thread_count() - 4`: inline on the 4-thread reference machine, sequential in the port. The
+provider's net pairs are sequential in C++ too.
+
+Tests ported (`tests/drc33_creepage.rs`): `test_drc_creepage.cpp` (3), `test_drc_creepage_issue{20480,
+21482,23364,23389,23576,23578,23658,24286,24523,24543,24597,24853,24875 (3 cases),24885,25439}`,
+`CreepageStadiumCapsBlockOuterSide` of issue24524 (un-ignored copy of the DRC-32 one),
+`test_creepage_engine_parity.cpp` (3 boards), `test_creepage_engine_incremental.cpp` (2),
+`qa/tests/pcbnew/test_creepage_groove_order.cpp`. Partial: `CreepageRotatedRectPadIssue24543`
+checks the path ends on both pad outlines (the hole-distance check is implied, not ported);
+`CreepagePathStartPointIssue23576` takes the end point from the path shapes instead of
+`GetErrorLegendShapes()` (same ends without the stops); `CreepageIgnoresRuleAreas` writes the
+C++-built board as a board file; `CreepageWholeBoardSolveDeterministic` runs 100 trials, not
+1000. Not ported: `test_drc_creepage_issue24544.cpp` (checks the drawn path against the
+rounded slot corner geometry; the corpus replay covers the board, distance exact).
+`CreepagePerformanceIssue21482` is `#[ignore]`: the reference build needs ~80 s for the board on
+this 4-core machine (threshold 20 s assumes the pool); the port takes ~210 s in the test profile.
+
+Verification:
+- `creepage33-oracle board` (the legacy provider pipeline with the provider's own statements
+  against the reference build, every solve printed) on the 20 creepage QA boards: 1318 solves.
+  `drc33_oracle_board_replay` (default run without issue21482, `DRC33_FULL=1` for all): every
+  distance bit-identical; 535 solves identical in items, ends and path hash; 783 differ only in
+  which of equally short paths is returned, and for each the replay proves both reference
+  items lie on a shortest path of the Rust graph (full Dijkstra from both virtual nodes). The
+  reference breaks these ties by heap address (queue tie on `GRAPH_NODE*`, `m_node_conns`
+  order, node creation order from the pointer sort): not reproducible, compared tie-aware.
+- `creepage33-oracle engine` (`SolveNetPairWholeBoard`, 50 mm, every pair on F_Cu / B_Cu, 19
+  boards): 350 results, distances all bit-identical, 337 identical, 13 tie ends / items.
+- Corpus (`drc33_creepage_corpus`, reference kicad-cli reports, run flow with the creepage
+  slot only): 19 boards, 30 `creepage` violations: 28 identical, 2 differ only by a tie (same
+  rule, creepage and actual distance; issue20480 and issue24875_capstraight: the other of two
+  same-net tracks sharing the end point; proven ties by the replay), 0 missing / extra
+  otherwise.
+- `test_creepage_groove_order.cpp` covers the groove-width path of `SegmentIntersectsBoard`.
+
+Deviations:
+- Paths with a NaN end (overlapping circles: the tangent construction takes the square root of
+  a negative number) have NaN weight, so Dijkstra never relaxes them and their `INT_MIN` end
+  nodes are dead ends. The C++ validates them with `INT_MIN` coordinates (signed overflow, UB);
+  `GeneratePaths` rejects them before validation and `segment_intersects_arc` (DRC-32 file,
+  minimal fix) reports a crossing for an `INT_MIN` end. Same shortest paths; only unusable
+  nodes / connections are missing.
+- `SHAPE_LINE_CHAIN::PointInside` (kicad-geom, minimal fix + test
+  `tests/point_inside_wrapping.rs`): the two `int` subtractions wrap as on x86-64 instead of
+  panicking.
+- Fixed in the DRC-32 files: `std::max( x, 0.0 )` was ported as `f64::max`, which drops a NaN
+  (`std::max` returns it): `shapes::std_max` now; this changed issue24885's result (a NaN arc
+  weight became 0 and opened a 2.86 mm shortcut; the reference reports 3.0192 mm, now equal).
+- `SegmentIntersectsBoard`'s `int GVSquared = w * w` wraps (x86-64) for a groove width above
+  46340 nm (only with `enable_creepage_slot`).
+- Markers: `reportCreepageViolation` (V2 path) gets item UUIDs from the board only (the
+  engine's graph is gone; a copper item is never a transient edge).
+
+Known gaps: creepage paths between a track segment and an arc track inherit the DRC-32
+reference-UB deviation (no corpus board has one in a reported path). Performance: ~2.5x the
+reference on issue21482 (pad bounding boxes and effective shapes are recomputed per call).

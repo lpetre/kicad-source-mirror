@@ -301,9 +301,9 @@ impl<'a> ExcellonWriter<'a> {
                 drawing_sheet: Default::default(),
             };
 
-            if let Err(err) = self
-                .base
-                .create_map_files_set(plot_directory, &map_env, reborrow(&mut reporter))
+            if let Err(err) =
+                self.base
+                    .create_map_files_set(plot_directory, &map_env, reborrow(&mut reporter))
             {
                 success = Err(err);
             }

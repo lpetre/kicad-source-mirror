@@ -1,10 +1,10 @@
 pcbio03/shapes.kicad_pcb
 pcbio03/tracks_vias.kicad_pcb
-pcbio05/texts_current.kicad_pcb
+fixedit1/texts_stroke.kicad_pcb
 pcbio05/textboxes_current.kicad_pcb
 pcbio06/handmade_current.kicad_pcb
 pcbio07/handmade_pads_current.kicad_pcb
-pcbio08/zones_modern.kicad_pcb
+fixedit1/zones.kicad_pcb
 pcbio09/groups.kicad_pcb
 pcbio10/dims_current.kicad_pcb
 pcbio12/misc_items.kicad_pcb

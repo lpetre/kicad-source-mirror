@@ -64,6 +64,7 @@ def main():
     reps, warmup, modes = 7, 1, ['default', 'threads1', 'taskset0']
     ops = [o[0] for o in OPS]
     boards = []
+    tool = 'ref'
     while args:
         a = args.pop(0)
         if a == '--reps':
@@ -72,6 +73,10 @@ def main():
             warmup = int(args.pop(0))
         elif a == '--modes':
             modes = args.pop(0).split(',')
+        elif a == '--tool':
+            # --tool rs: the same commands through kicad-rs (end-to-end process time of the
+            # port, fixed date and UUID seed); modes other than `default` make no sense there
+            tool = args.pop(0)
         elif a == '--ops':
             ops = args.pop(0).split(',')
         else:
@@ -86,7 +91,7 @@ def main():
             f.write('MaximumThreads=1\n' if mode == 'threads1' else '')
         homes[mode] = home
 
-    print('board\top\tmode\tn\tmin_ms\tmedian_ms\tmax_ms\tpeak_rss_mb\texit')
+    print('tool\tboard\top\tmode\tn\tmin_ms\tmedian_ms\tmax_ms\tpeak_rss_mb\texit')
     for board in boards:
         label = os.path.splitext(os.path.basename(board))[0]
         for op, argv in OPS:
@@ -94,18 +99,22 @@ def main():
                 continue
             for mode in modes:
                 env = dict(os.environ, KICAD_ORACLE_HOME=homes[mode])
+                cli = CLI
+                if tool == 'rs':
+                    cli = os.path.join(RUST, 'target', 'release', 'kicad-rs')
+                    env.update(KICAD_RS_DATE='2026-01-01T00:00:00', KICAD_RS_UUID_SEED='1')
                 prefix = ['taskset', '-c', '0'] if mode == 'taskset0' else []
                 times, rss, code = [], 0, 0
                 for i in range(warmup + reps):
                     work = os.path.join(SCRATCH, 'work')
                     b = prepare(board, work)
-                    cmd = prefix + [CLI] + [x.format(b=b, o=os.path.join(work, 'out')) for x in argv]
+                    cmd = prefix + [cli] + [x.format(b=b, o=os.path.join(work, 'out')) for x in argv]
                     ms, kb, code = run_once(cmd, env)
                     if i >= warmup:
                         times.append(ms)
                         rss = max(rss, kb)
                 shutil.rmtree(os.path.join(SCRATCH, 'work'), ignore_errors=True)
-                print(f'{label}\t{op}\t{mode}\t{len(times)}\t{min(times):.1f}\t'
+                print(f'{tool}\t{label}\t{op}\t{mode}\t{len(times)}\t{min(times):.1f}\t'
                       f'{statistics.median(times):.1f}\t{max(times):.1f}\t{rss / 1024:.1f}\t{code}',
                       flush=True)
 

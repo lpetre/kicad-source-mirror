@@ -926,3 +926,40 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   use in-range arcs.
 - Docs: `docs/design/geom-shapes.md` no longer describes `unsupported_g5` as the route of
   not-yet-ported pairs; the second GAP-5 entry (triangulation) is renamed GAP-T5.
+
+## FIX-FAB-3 (overflow on boards beyond 1.07 m; review-fab X-1)
+
+- `shape_collisions.rs`: the eager helper `set( &mut out, value )` is replaced by
+  `set_with( &mut out, || value )` at all 34 sites, so every out-parameter expression runs
+  exactly when the C++ `if( aOut ) *aOut = ...;` runs it (before, `( aA.GetCenter() +
+  aB.GetCenter() ) / 2` of two circles beyond 2^30 nm overflowed in the connectivity search,
+  which passes no location).  The `int` sums / differences of points of two different shapes
+  wrap explicitly (`wrapping_add_v` / `wrapping_sub_v`; reference build: x86 wrap):
+  circle / circle `delta` and midpoint, rectangle / circle `pn - c` and `c - nearest`,
+  `pushoutForce` (`nearest - c`, `centre - nearest`), circle / line chain MTV `np - centre`,
+  the arc `( ptA + ptB ) / 2` and `ptB - ptA`.  The `Resize( double )` arguments of the
+  circle / circle and arc MTVs use `f64_to_i32_x86` (implicit `double` -> `int`).
+- Same defect class, found by the new oracle sections and fixed minimally (outside the package's
+  own file, reported): `Seg::intersects_impl` collinear-overlap midpoint `( overlap_start +
+  overlap_end ) / 2` and the following `rescale` arguments; `Seg::nearest_points` (both
+  overloads) and `Seg::squared_distance_seg` point differences of the two segments;
+  `ShapeRect::collide_seg` tie comparison `near - aSeg.A`; `ShapePolySet::
+  squared_distance_to_polygon_seg` midpoint; `ShapePolySet::generate_hatch_lines` midpoint (a
+  zone with hatched border beyond 2^30 nm panicked in the board parser); `ShapeArc::
+  update_values` quadrant points `m_center + radius` (the CLEAN-1 known gap).
+- Oracle: two new sections of `tests/oracle/coll_oracle.cpp` (golden `coll_oracle.txt`; the
+  seven old section hashes are unchanged), bit-exact:
+
+| Section | Cases | Content |
+|---|---|---|
+| `libm:coll_far` | 20000 | touching pairs of all 13 x 13 kinds (scale <= 2e5) around the origins (+-1.2e9, +-2.0e9)^2: all five `Collide` variants (with and without actual / location / MTV) in both orders |
+| `libm:coll_far_apart` | 800 | circle / circle and rectangle / circle with centres on opposite sides of the range (+-1.2e9, +-2.0e9, 0), radii 0 .. 1e9: the wrapped `delta` / `pn - c` report collisions in the reference, the port reproduces them |
+
+- Known gaps (D11 class, C++ undefined behaviour on degenerate input, not reachable with board
+  arcs below INT_MAX / 2 radius): nearly straight arcs with a clamped centre near the
+  coordinate limits still overflow in `Seg::line_project` / `Circle::intersect_line` ->
+  `Seg::squared_distance` (`int64_t` products); the far section excludes them (`safeArc` also
+  replaces arcs whose centre is clamped).  `ShapeCircle::collide_seg` (`pn - centre`,
+  `Seg::nearest_point`) for a segment and a circle more than 2^31 nm apart still overflows (not
+  in the oracle).  `KiCheckedCast<int64_t, int>` clamps (D1) where the Linux reference wraps;
+  `kicad-pcb`'s `PcbShape::normalize_env` therefore spells out the wrapping box arithmetic.

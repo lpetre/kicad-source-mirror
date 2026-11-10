@@ -1,0 +1,12 @@
+(fp_lib_table
+  (lib (name Footprints)(type KiCad)(uri ${KIPRJMOD}/footprints.pretty)(options "")(descr ""))
+  (lib (name "Disabled")(type "KiCad")(uri "${KIPRJMOD}/footprints.pretty")(options "")(descr "")(disabled))
+  (lib (name "Missing")(type "KiCad")(uri "${KIPRJMOD}/missing.pretty")(options "")(descr ""))
+  (lib (name "Bad")(type "KiCad")(uri "${KIPRJMOD}/bad.pretty")(options "")(descr ""))
+  (lib (name "NoType")(type "Nonsense")(uri "${KIPRJMOD}/footprints.pretty")(options "")(descr ""))
+  (lib (name "EnvLib")(type "kicad")(uri "$(KIPRJMOD)/footprints.pretty")(options "")(descr ""))
+  (lib (name "RelLib")(type "KiCad")(uri "footprints.pretty")(options "")(descr ""))
+  (lib (name "Esc/Lib")(type "KiCad")(uri "${KIPRJMOD}/footprints.pretty")(options "")(descr ""))
+  (lib (name "Sub")(type "Table")(uri "sub/fp-lib-table")(options "")(descr ""))
+  (lib (name "SubMissing")(type "Table")(uri "sub/none/fp-lib-table")(options "")(descr ""))
+)

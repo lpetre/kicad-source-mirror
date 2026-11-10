@@ -41,6 +41,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use kicad_core::layer_ids::{UNDEFINED_LAYER, copper_layer_to_ordinal, to_layer_id};
 use kicad_core::{Flashing, KicadT, Kiid, PcbLayerId};
+use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::math::util::ki_round;
 use kicad_geom::{Seg, Shape, ShapeCircle, Vector2I};
@@ -1365,12 +1366,17 @@ fn min_dist(item: &ItemRef<'_>, point: Vector2I) -> i32 {
         KicadT::PcbTraceT | KicadT::PcbArcT => {
             let track = item.as_track().expect("track type").as_track();
 
-            track
-                .start()
-                .distance(point)
-                .min(track.end().distance(point)) as i32
+            // std::min of two doubles, converted to int implicitly: beyond INT_MAX the
+            // reference build (cvttsd2si) gives INT_MIN (PORTING.md section 9; review-connectivity
+            // F-8, FIX-FAB-3)
+            f64_to_i32_x86(
+                track
+                    .start()
+                    .distance(point)
+                    .min(track.end().distance(point)),
+            )
         }
-        _ => item.position().distance(point) as i32,
+        _ => f64_to_i32_x86(item.position().distance(point)),
     }
 }
 

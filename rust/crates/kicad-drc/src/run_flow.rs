@@ -45,10 +45,8 @@ use kicad_core::json::{ObjectOrder, Value, dump_stream};
 use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
-    DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
-    DRCE_MISSING_FOOTPRINT,
-    DRCE_NET_CHAIN_TUNING_PROFILES, DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY,
-    DRCE_SCHEMATIC_PARITY, DRCE_VIA_STITCH_OVERLAP,
+    DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS, DRCE_MISSING_FOOTPRINT,
+    DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY, DRCE_SCHEMATIC_PARITY,
 };
 use kicad_pcb::pcb_marker::{MarkerT, PcbMarker, RcItem};
 use kicad_pcb::{Board, BoardCtx, ConnectivityQuery};
@@ -75,6 +73,7 @@ use crate::providers::hole_to_hole::DrcTestProviderHoleToHole;
 use crate::providers::library_parity::DrcTestProviderLibraryParity;
 use crate::providers::matched_length::DrcTestProviderMatchedLength;
 use crate::providers::misc::DrcTestProviderMisc;
+use crate::providers::net_chain_tuning_profiles::DrcTestProviderNetChainTuningProfiles;
 use crate::providers::physical_clearance::DrcTestProviderPhysicalClearance;
 use crate::providers::run_host::RunHost;
 use crate::providers::silk_clearance::DrcTestProviderSilkClearance;
@@ -87,6 +86,7 @@ use crate::providers::track_segment_length::DrcTestProviderTrackSegmentLength;
 use crate::providers::track_width::DrcTestProviderTrackWidth;
 use crate::providers::via_diameter::DrcTestProviderViaDiameter;
 use crate::providers::via_stack::DrcTestProviderViaStack;
+use crate::providers::via_stitch::DrcTestProviderViaStitch;
 use crate::providers::zone_connections::DrcTestProviderZoneConnections;
 use crate::report::DrcReport;
 
@@ -103,31 +103,19 @@ pub struct UnportedProvider {
 }
 
 /// The providers of [`PROVIDER_ORDER`] that are not ported yet (registry order).
-pub const UNPORTED_PROVIDERS: [UnportedProvider; 3] = [
-    UnportedProvider {
-        name: "schematic_parity",
-        package: "out of scope",
-        codes: &[
-            DRCE_DUPLICATE_FOOTPRINT,
-            DRCE_EXTRA_FOOTPRINT,
-            DRCE_FOOTPRINT_FILTERS,
-            DRCE_MISSING_FOOTPRINT,
-            DRCE_NET_CONFLICT,
-            DRCE_SCHEMATIC_FIELDS_PARITY,
-            DRCE_SCHEMATIC_PARITY,
-        ],
-    },
-    UnportedProvider {
-        name: "net chain tuning profiles",
-        package: "DRC-34",
-        codes: &[DRCE_NET_CHAIN_TUNING_PROFILES],
-    },
-    UnportedProvider {
-        name: "via_stitch_overlap",
-        package: "DRC-34",
-        codes: &[DRCE_VIA_STITCH_OVERLAP],
-    },
-];
+pub const UNPORTED_PROVIDERS: [UnportedProvider; 1] = [UnportedProvider {
+    name: "schematic_parity",
+    package: "out of scope",
+    codes: &[
+        DRCE_DUPLICATE_FOOTPRINT,
+        DRCE_EXTRA_FOOTPRINT,
+        DRCE_FOOTPRINT_FILTERS,
+        DRCE_MISSING_FOOTPRINT,
+        DRCE_NET_CONFLICT,
+        DRCE_SCHEMATIC_FIELDS_PARITY,
+        DRCE_SCHEMATIC_PARITY,
+    ],
+}];
 
 /// The unported provider of registry slot `name`, if it is one.
 pub fn unported_provider(name: &str) -> Option<&'static UnportedProvider> {
@@ -223,7 +211,7 @@ pub fn unported_check_would_run(
     p: &UnportedProvider,
     _engine: &DrcEngine,
     run: &DrcRunState<'_>,
-    board: &Board,
+    _board: &Board,
 ) -> Option<String> {
     let not_ported = || Some(format!("not ported yet ({})", p.package));
 
@@ -244,30 +232,6 @@ pub fn unported_check_would_run(
             }
 
             Some("not ported (schematic parity is out of scope)".to_string())
-        }
-        // if( IsErrorLimitExceeded( DRCE_NET_CHAIN_TUNING_PROFILES ) ) return true; then the
-        // nets with a net chain.
-        "net chain tuning profiles" => {
-            if run.is_error_limit_exceeded(DRCE_NET_CHAIN_TUNING_PROFILES)
-                || board.nets().all(|net| net.net_chain().is_empty())
-            {
-                return None;
-            }
-
-            not_ported()
-        }
-        // if( IsErrorLimitExceeded( DRCE_VIA_STITCH_OVERLAP ) ) return true; then the
-        // PCB_VIA_STITCH generators of the board.
-        "via_stitch_overlap" => {
-            if run.is_error_limit_exceeded(DRCE_VIA_STITCH_OVERLAP)
-                || board
-                    .generators()
-                    .all(|(_, g)| g.generator_type != "via_stitch")
-            {
-                return None;
-            }
-
-            not_ported()
         }
         _ => not_ported(),
     }
@@ -367,7 +331,11 @@ fn run_provider(
         "silk_clearance" => Box::new(DrcTestProviderSilkClearance::default()),
         "sliver checker" => Box::new(DrcTestProviderSliverChecker::default()),
         "text_mirroring" => Box::new(DrcTestProviderTextMirroring::default()),
-        "library_parity" => Box::new(DrcTestProviderLibraryParity::new(options.footprint_libraries)),
+        "library_parity" => Box::new(DrcTestProviderLibraryParity::new(
+            options.footprint_libraries,
+        )),
+        "net chain tuning profiles" => Box::new(DrcTestProviderNetChainTuningProfiles::default()),
+        "via_stitch_overlap" => Box::new(DrcTestProviderViaStitch::default()),
         _ => unreachable!("provider '{name}' is neither ported nor in UNPORTED_PROVIDERS"),
     };
 

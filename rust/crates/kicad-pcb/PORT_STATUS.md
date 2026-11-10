@@ -3753,3 +3753,43 @@ table marks the board as changed). The SVG job's refresh belongs to `PCB_PLOTTER
   `net_chain_bridging_tuning_profiles`, `time_calculations`), and `fw16_MCIO8i` lost those
   entries too (one unrelated difference left). pcb-dump has no tuning-profile section.
   Unit tests: migration 0 -> 2, entry filtering, the throw-ends-the-load rule.
+
+## Package DRC-LP: footprint library tables (`src/libraries/`)
+
+| C++ | Rust | State |
+|---|---|---|
+| `LIBRARY_TABLE_GRAMMAR` (PEGTL) + `LIBRARY_TABLE_PARSER::Parse` / `ParseBuffer` and its actions | `libraries/library_table.rs` `parse_library_table` | ported as a backtracking parser of the same language (no leading white space, `(lib` rows with `name` / `type` / `uri` / `options` / `descr`, `(hidden)` / `(disabled)`, quoted or bare values, the unescaping of the `QUOTED_TEXT` action, optional `(version)`); errors "Syntax error at line %zu, column %zu" |
+| `LIBRARY_TABLE` (file / buffer constructors, `initFromIR`, `addRowFromIR`, `HasRow`, `Row`, `ParseOptions`), `LIBRARY_TABLE_ROW` | `library_table.rs` | ported (no `Format` / `Save`) |
+| `LIBRARY_MANAGER::loadTables`, `loadNestedTables`, `LoadGlobalTables`, `LoadProjectTables`, `Rows`, `GetRow`, `GetFullURI`, `ExpandURI` (footprint tables) | `libraries/library_manager.rs` `LibraryManager` | ported; PCM auto-add / auto-remove and `ApplyLibOverrides` (read-only tables with kicad.json overrides) not ported; the row cache is transparent |
+| `KIwxExpandEnvVars` / `ExpandEnvVarSubstitutions` (Unix), `ENV_VAR::IsVersionedEnvVar`, `GetVersionedEnvVarName`, the predefined variables, `wxFileName::MakeAbsolute` | `library_manager.rs` `LibraryEnv` | ported (project `TextVarResolver` first, then the environment, then the `KICAD*_` fallbacks; the `${DRC_WARNING}` pass-through with its `operator<<( int )` bracket) |
+| `LIBRARY_MANAGER_ADAPTER::AsyncLoad` + `BlockUntilLoaded` (sequential), `loadQueuedRow`, `loadIfNeeded`, `loadFromScope`, `fetchIfLoaded`, `HasLibrary`, `IsLibraryLoaded`; `FOOTPRINT_LIBRARY_ADAPTER::createPlugin`, `enumerateLibrary`, `LoadFootprint`; `PCB_IO_KICAD_SEXPR::FootprintEnumerate` / `FP_CACHE::Load` | `libraries/footprint_library_adapter.rs` `FootprintLibraryAdapter` | ported for KiCad `.pretty` libraries (every `*.kicad_mod` parsed at load, one failure fails the library) |
+| file access | `libraries/mod.rs` `LibrarySource` trait, `MemoryLibrarySource` | host-supplied (kicad-cli: file system; wasm: in memory) |
+
+### Deviations
+
+- Footprints of a loaded library are parsed again on `load_footprint` instead of keeping
+  every parsed footprint (`PreloadedFootprints`); the parse is deterministic.
+- A `.kicad_mod` file with invalid UTF-8 is read lossily.
+- Rows of other plugin types fail to load ("not ported"), see kicad-drc DRC-LP known gaps.
+- Nested-table cycles that `loadNestedTables` does not cut (two tables behind the same raw
+  URI) make the C++ `Rows()` recurse without end; the port stops at depth 64.
+- `m_childTables` is shared by the three table types in C++ (keyed by raw URI); the port
+  holds only footprint tables.
+
+Tests: unit tests in the three files (grammar incl. legacy forms and errors, options,
+expansion, `MakeAbsolute`, adapter load states incl. disabled / missing / corrupt / unknown
+type / nested). Verified against the reference through the DRC (kicad-drc PORT_STATUS DRC-LP).
+
+## STAB-DRC-2: the board's own UUID
+
+| C++ | Rust | State |
+|---|---|---|
+| `BOARD::m_Uuid` (`EDA_ITEM` base) | `Board::uuid()` (`board/mod.rs`) | ported |
+
+Deviation: the C++ value is a random KIID drawn from the global generator when the board is
+constructed (different per run). The port draws it from a generator of its own
+(`BOARD_UUID_SEED`), so the item generator `Board::kiid_generator` is not consumed (every
+golden that depends on its sequence is unchanged), and reserves it there like the UUIDs of a
+loaded file. `Board::resolve_item` still has no handle for it (no `ItemId`); the DRC report
+resolver (`kicad-drc` `BoardRcItemResolver`) answers it after every item, as
+`BOARD::ResolveItem` does. Test: `board::tests::board_uuid_is_reserved_and_does_not_consume_the_item_generator`.

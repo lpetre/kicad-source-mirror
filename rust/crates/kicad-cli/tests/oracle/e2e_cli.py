@@ -235,8 +235,9 @@ def compare(ref, rs):
     cur_ref, cur_rs = ref, rs
     for name, fn in steps:
         m_ref, m_rs = mask(cur_ref, fn), mask(cur_rs, fn)
-        if (m_ref, m_rs) == (cur_ref, cur_rs):
-            continue
+        differing = [k for k in set(cur_ref) | set(cur_rs) if cur_ref.get(k) != cur_rs.get(k)]
+        if all(m_ref.get(k) == cur_ref.get(k) and m_rs.get(k) == cur_rs.get(k) for k in differing):
+            continue  # the mask changes nothing that differs
         used.append(name)
         cur_ref, cur_rs = m_ref, m_rs
         if first_difference(cur_ref, cur_rs) is None:

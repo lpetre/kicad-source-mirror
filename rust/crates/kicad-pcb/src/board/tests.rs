@@ -657,3 +657,25 @@ fn design_settings_mut_bumps_the_time_stamp() {
     assert!(board.time_stamp() != stamp);
     assert!(board.layer_env_stale);
 }
+
+/// `BOARD::m_Uuid`: not nil, the same for every board, not drawn from the item generator
+/// (whose sequence stays the plain seeded one) and never handed out to an item.
+#[test]
+fn board_uuid_is_reserved_and_does_not_consume_the_item_generator() {
+    let board = Board::new();
+    assert_ne!(board.uuid(), Kiid::default());
+    assert_eq!(board.uuid(), Board::new().uuid());
+
+    let mut plain = kicad_core::KiidGenerator::default();
+    let mut generator = board.kiid_generator.clone();
+    assert!(generator.is_reserved(&board.uuid()));
+
+    for _ in 0..16 {
+        let id = Kiid::new(&mut generator);
+        assert_eq!(id, Kiid::new(&mut plain));
+        assert_ne!(id, board.uuid());
+    }
+
+    // ResolveItem has no handle for the board itself.
+    assert_eq!(board.resolve_item(&board.uuid()), None);
+}

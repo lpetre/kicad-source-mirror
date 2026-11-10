@@ -162,7 +162,12 @@ static std::vector<EDIT> edits()
     };
     auto layer = []( PCB_LAYER_ID aLayer )
     {
-        return [aLayer]( BOARD_ITEM* i ) { i->SetLayer( aLayer ); };
+        // A via on a non-copper layer is not a board state: LAYER_RANGE throws on it.
+        return [aLayer]( BOARD_ITEM* i )
+        {
+            if( i->Type() != PCB_VIA_T || IsCopperLayer( aLayer ) )
+                i->SetLayer( aLayer );
+        };
     };
     auto fp = []( std::function<void( FOOTPRINT* )> aFn )
     {
@@ -174,6 +179,7 @@ static std::vector<EDIT> edits()
     };
 
     return {
+        { "none", false, []( BOARD_ITEM* ) {} },
         { "move", false, []( BOARD_ITEM* i ) { i->Move( DELTA ); } },
         { "rot90", false, rot( 90.0 ) },
         { "rot180", false, rot( 180.0 ) },
@@ -298,6 +304,9 @@ int main( int argc, char** argv )
 
         for( const EDIT& edit : edits() )
         {
+            // Every load draws the UUIDs of the items without one from the same sequence: the
+            // Rust board's generator starts from the mt19937 default seed on every parse.
+            KIID::SeedGenerator( 5489 );
             std::unique_ptr<BOARD> board = KI_TEST::ReadBoardFromFileOrStream( path );
 
             if( !board )

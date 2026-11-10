@@ -133,8 +133,8 @@ fn is_net_tie_shorting(loaded: &Loaded, e: &Entry) -> bool {
         .is_some_and(|f| f.is_net_tie())
 }
 
-/// The reference entries compared with the port: board items (`SetItems( m_board )`) dropped
-/// (the port has no board UUID), drawing-sheet entries (no items) set aside.
+/// The reference entries compared with the port: drawing-sheet entries (no items) set aside.
+/// Board items (`SetItems( m_board )`) are compared as uuid [`BOARD_UUID`] on both sides.
 fn normalise_reference(loaded: &Loaded, reference: &[Entry]) -> (Vec<Entry>, Vec<Entry>) {
     let mut kept = Vec::new();
     let mut drawing_sheet = Vec::new();
@@ -151,7 +151,6 @@ fn normalise_reference(loaded: &Loaded, reference: &[Entry]) -> (Vec<Entry>, Vec
             continue;
         }
 
-        e.items.retain(|(uuid, ..)| uuid != BOARD_UUID);
         kept.push(e);
     }
 
@@ -199,6 +198,18 @@ fn misc_and_footprint_checks_match_reference_corpus() {
                     )
                     .into_iter()
                     .filter(|e| TYPES.contains(&e.type_.as_str()))
+                    .map(|mut e| {
+                        // The board itself (`SetItems( m_board )`): random per reference run.
+                        let board_uuid = loaded.board.uuid().as_string();
+
+                        for item in &mut e.items {
+                            if item.0 == board_uuid {
+                                item.0 = BOARD_UUID.to_string();
+                            }
+                        }
+
+                        e
+                    })
                     .collect();
 
                     let (theirs, drawing_sheet) = normalise_reference(&loaded, &reference);

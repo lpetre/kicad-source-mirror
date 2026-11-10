@@ -376,7 +376,8 @@ pub fn run_drc(
 ) -> Result<JobOutcome, SessionError> {
     use kicad_drc::run_flow::{DrcJobOptions, DrcReportFormat, RunTestsOptions, run_drc_job};
 
-    // Running DRC requires libraries be loaded (footprint library parity only; not ported).
+    // Running DRC requires libraries be loaded, so make sure they have been: the host
+    // preloads them into `session.footprint_libraries` (`Session::load_footprint_libraries`).
 
     if job.rc.job.configured_output_path().is_empty() {
         let name = drc_default_output_name(&session.source_name, job.rc.format);
@@ -501,6 +502,7 @@ pub fn run_drc(
             report_all_track_errors: job.report_all_track_errors,
             test_footprints: check_parity,
             tuning_profiles: &tuning_profiles,
+            footprint_libraries: session.footprint_libraries.as_ref(),
         },
         severities: job.rc.severity,
         format: match job.rc.format {

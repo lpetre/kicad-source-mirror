@@ -32,6 +32,7 @@ mod command_pcb_export_svg;
 mod command_upgrade;
 mod command_version;
 mod host;
+mod host_libraries;
 
 use clap::{Arg, ArgAction, Command};
 use kicad_session::exit_codes;

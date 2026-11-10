@@ -41,8 +41,8 @@ use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
 
 use kicad_core::layer_ids::{Flashing, PcbLayerId};
 use kicad_geom::geometry::rtree::PackedRTree;
-use kicad_geom::{Box2I, Seg, ShapeRef, ShapeSegment};
 use kicad_geom::geometry::shape::Shape;
+use kicad_geom::{Box2I, Seg, ShapeRef, ShapeSegment};
 use kicad_pcb::eda_shape::{EdaShape, FillT, ShapeT};
 use kicad_pcb::pcb_track::Track;
 
@@ -337,10 +337,26 @@ impl<'a> CreepageGraph<'a> {
                 let point2 = rect.get_position() + rect.get_size();
                 let point3 = rect.get_position() + kicad_geom::Vector2I::new(0, rect.get_size().y);
 
-                self.add_shape(&ShapeSegment::new(point0, point1, 0), a_connect_to, a_parent);
-                self.add_shape(&ShapeSegment::new(point1, point2, 0), a_connect_to, a_parent);
-                self.add_shape(&ShapeSegment::new(point2, point3, 0), a_connect_to, a_parent);
-                self.add_shape(&ShapeSegment::new(point3, point0, 0), a_connect_to, a_parent);
+                self.add_shape(
+                    &ShapeSegment::new(point0, point1, 0),
+                    a_connect_to,
+                    a_parent,
+                );
+                self.add_shape(
+                    &ShapeSegment::new(point1, point2, 0),
+                    a_connect_to,
+                    a_parent,
+                );
+                self.add_shape(
+                    &ShapeSegment::new(point2, point3, 0),
+                    a_connect_to,
+                    a_parent,
+                );
+                self.add_shape(
+                    &ShapeSegment::new(point3, point0, 0),
+                    a_connect_to,
+                    a_parent,
+                );
             }
 
             _ => {}
@@ -569,7 +585,8 @@ impl<'a> CreepageGraph<'a> {
                 }
 
                 // Get nodes for both parents
-                let (Some(groups1), Some(groups2)) = (group_of(Some(parent1)), group_of(Some(parent2)))
+                let (Some(groups1), Some(groups2)) =
+                    (group_of(Some(parent1)), group_of(Some(parent2)))
                 else {
                     return true;
                 };
@@ -766,7 +783,10 @@ impl<'a> CreepageGraph<'a> {
         let threshold_sq = threshold * threshold;
 
         // if( (double) centerDistSq > thresholdSq ) continue;
-        !((center_dist_sq as f64) > threshold_sq)
+        // (negated, not `<=`: a NaN threshold keeps the pair, as in the C++)
+        #[allow(clippy::neg_cmp_op_on_partial_ord)]
+        let in_range = !((center_dist_sq as f64) > threshold_sq);
+        in_range
     }
 
     /// Port of `CREEPAGE_GRAPH::AddNetElements()`: add every copper item of net `a_net_code`
@@ -789,8 +809,7 @@ impl<'a> CreepageGraph<'a> {
             for (pad_id, pad) in board.footprint_pads(fp_id) {
                 let item = ctx.view(kicad_pcb::AnyItem::Pad(pad));
 
-                if item.net_code().map_or(-1, |n| n.0) != a_net_code || !item.is_on_layer(a_layer)
-                {
+                if item.net_code().map_or(-1, |n| n.0) != a_net_code || !item.is_on_layer(a_layer) {
                     continue;
                 }
 
@@ -798,8 +817,11 @@ impl<'a> CreepageGraph<'a> {
                     continue;
                 }
 
-                let pad_shape =
-                    item.effective_shape(a_layer, Flashing::Default, DrcConstraintT::NullConstraint);
+                let pad_shape = item.effective_shape(
+                    a_layer,
+                    Flashing::Default,
+                    DrcConstraintT::NullConstraint,
+                );
                 self.add_shape(
                     &*pad_shape,
                     Some(virtual_node),
@@ -857,9 +879,7 @@ impl<'a> CreepageGraph<'a> {
             let item = ctx.view(drawing);
 
             if item.is_connected() {
-                if item.net_code().map_or(-1, |n| n.0) != a_net_code
-                    || !item.is_on_layer(a_layer)
-                {
+                if item.net_code().map_or(-1, |n| n.0) != a_net_code || !item.is_on_layer(a_layer) {
                     continue;
                 }
 
@@ -868,7 +888,11 @@ impl<'a> CreepageGraph<'a> {
                     Flashing::Default,
                     DrcConstraintT::NullConstraint,
                 );
-                self.add_shape(&*shape, Some(virtual_node), Some(CreepItem::Item(drawing_id)));
+                self.add_shape(
+                    &*shape,
+                    Some(virtual_node),
+                    Some(CreepItem::Item(drawing_id)),
+                );
             }
         }
 
