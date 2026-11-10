@@ -98,6 +98,9 @@ pub struct LoadedBoard {
     /// Messages the C++ sends to `BOARD_LOADER::OPTIONS::reporter` (warning severity). kicad-cli
     /// passes no reporter, so it never prints them.
     pub warnings: Vec<String>,
+    /// The parser's non-fatal warnings (`GetParseWarnings()`), which `PCB_IO_KICAD_SEXPR::
+    /// DoLoad` sends to `LOAD_INFO_REPORTER` (kicad-cli: `wxLogWarning` on stderr).
+    pub parse_warnings: Vec<String>,
 }
 
 impl std::fmt::Debug for LoadedBoard {
@@ -122,6 +125,43 @@ pub fn with_extension(path: &str, ext: &str) -> String {
     };
 
     format!("{}{stem}.{ext}", &path[..dir_len])
+}
+
+/// The project's `TUNING_PROFILES` (`PROJECT_FILE::TuningProfileParameters()`, the nested
+/// `tuning_profiles` object of the bound project document, SET-11) as the DRC engine reads
+/// them (`InitEngine` / `loadImplicitRules`); none without a project.
+pub fn tuning_profiles(board: &Board) -> TuningProfiles {
+    use kicad_drc::engine::implicit_rules::{
+        DelayProfileTrackPropagationEntry, TuningProfile, TuningProfileType,
+    };
+
+    let parent = board.project.as_ref().map(|p| &p.document);
+    let (loaded, _) = kicad_pcb::project::tuning_profiles_json::load_tuning_profiles(parent);
+
+    TuningProfiles::new(
+        loaded
+            .tuning_profiles
+            .iter()
+            .map(|p| TuningProfile {
+                profile_name: p.profile_name.clone(),
+                // static_cast<PROFILE_TYPE>( int ): DIFFERENTIAL is 1
+                type_: if p.type_ == 1 {
+                    TuningProfileType::Differential
+                } else {
+                    TuningProfileType::Single
+                },
+                track_propagation_entries: p
+                    .track_propagation_entries
+                    .iter()
+                    .map(|e| DelayProfileTrackPropagationEntry {
+                        signal_layer: e.signal_layer,
+                        width: e.width,
+                        diff_pair_gap: e.diff_pair_gap,
+                    })
+                    .collect(),
+            })
+            .collect(),
+    )
 }
 
 /// Runs one step of a load sequence: `run` performs the step. [`load_guarded`] lets test tools
@@ -175,6 +215,8 @@ pub fn load_guarded(
         None => with_extension(inputs.source_name, "kicad_pro"),
     };
 
+    let mut parse_warnings = Vec::new();
+
     let (board, project) = match path {
         LoadPath::Cli => {
             // getProjectForBoard: <board>.kicad_pro made absolute (by the host, see
@@ -182,7 +224,8 @@ pub fn load_guarded(
             let project = load_project(inputs.project_json, inputs.local_settings_json, &pro_name);
 
             // PCB_IO::LoadBoard: newBoard->SetFileName( aFileName ), then loadBoard()
-            let mut board = parse(inputs)?;
+            let (mut board, warnings) = parse(inputs)?;
+            parse_warnings = warnings;
             board.file_name = inputs.source_name.to_string();
             (board, Some(project))
         }
@@ -192,23 +235,29 @@ pub fn load_guarded(
                 .then(|| load_project(inputs.project_json, inputs.local_settings_json, &pro_name));
 
             // ReadBoardFromFileOrStream: the parser alone, no SetFileName
-            (parse(inputs)?, project)
+            let (board, warnings) = parse(inputs)?;
+            parse_warnings = warnings;
+            (board, project)
         }
     };
 
-    initialize_loaded_board_guarded(
+    let mut loaded = initialize_loaded_board_guarded(
         board,
         path,
         project,
         inputs.rules_text,
         &with_extension(inputs.source_name, "kicad_dru"),
         guard,
-    )
+    )?;
+    loaded.parse_warnings = parse_warnings;
+    Ok(loaded)
 }
 
-/// `PCB_IO_KICAD_SEXPR::DoLoad` for a new load, errors mapped as `getBoard` does.
-fn parse(inputs: &LoadInputs<'_>) -> Result<Board, SessionError> {
-    kicad_pcb::io::parse_board(inputs.text, inputs.source_name, &inputs.parse_options)
+/// `PCB_IO_KICAD_SEXPR::DoLoad` for a new load, errors mapped as `getBoard` does; with the
+/// parse warnings.
+fn parse(inputs: &LoadInputs<'_>) -> Result<(Board, Vec<String>), SessionError> {
+    kicad_pcb::io::parse_board_report(inputs.text, inputs.source_name, &inputs.parse_options)
+        .map(|(board, report)| (board, report.warnings))
         .map_err(|e| io_error(&e, true))
 }
 
@@ -264,6 +313,7 @@ pub fn initialize_loaded_board_guarded(
         drc_engine: DrcEngine::new(),
         drc_init_error: None,
         warnings: Vec::new(),
+        parse_warnings: Vec::new(),
     };
 
     for &step in path.steps() {
@@ -336,8 +386,8 @@ fn run_session_step(
                 LoadPath::Qa => default_layer_choices(),
             };
 
-            // TUNING_PROFILES are not in the port's project model yet (SET-11).
-            let tuning_profiles = TuningProfiles::default();
+            // m_project->GetProjectFile().TuningProfileParameters()
+            let tuning_profiles = tuning_profiles(board);
 
             let result = loaded.drc_engine.init_engine(
                 board,

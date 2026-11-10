@@ -1,0 +1,6 @@
+zone board FCu outlines 1
+  0 pts 134 island 0 hash e3aee3bcb0b67cf5
+zone board_back BCu outlines 1
+  0 pts 90 island 0 hash 1a6dcdeb12891e95
+zone fp_other FCu outlines 0
+zone fp_same FCu outlines 0

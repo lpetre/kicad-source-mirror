@@ -1,0 +1,12 @@
+zone hatch BCu outlines 1
+  0 pts 1596 island 0 hash f9030cec036e8a14
+zone hatch In2Cu outlines 1
+  0 pts 1596 island 0 hash f9030cec036e8a14
+zone solid FCu outlines 1
+  0 pts 738 island 0 hash 04a803c1752c7c98
+zone solid BCu outlines 1
+  0 pts 609 island 0 hash 585f714a2588f905
+zone solid In1Cu outlines 1
+  0 pts 708 island 0 hash d601f7cf18f1dfd6
+zone solid In2Cu outlines 1
+  0 pts 605 island 0 hash 0f7add70923e127b

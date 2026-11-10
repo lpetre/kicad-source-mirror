@@ -391,8 +391,7 @@ pub fn run_drc(
             rules_path = crate::board_loader::with_extension(&session.source_name, "kicad_dru");
         }
         let layer_choices = kicad_drc::rule_parser::board_layer_choices(&session.board);
-        // TUNING_PROFILES are not in the port's project model yet (SET-11).
-        let tuning_profiles = kicad_drc::engine::implicit_rules::TuningProfiles::default();
+        let tuning_profiles = crate::board_loader::tuning_profiles(&session.board);
         let engine = session.drc_engine.as_mut().expect("engine");
 
         if let Err(error) = engine.init_engine(
@@ -442,7 +441,7 @@ pub fn run_drc(
         session.refill_zones()?;
     }
 
-    let tuning_profiles = kicad_drc::engine::implicit_rules::TuningProfiles::default();
+    let tuning_profiles = crate::board_loader::tuning_profiles(&session.board);
     let options = DrcJobOptions {
         run: RunTestsOptions {
             units,

@@ -11,7 +11,10 @@
 
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, statSync, mkdtempSync, writeFileSync, readdirSync, rmSync }
+    from 'node:fs';
+import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
@@ -78,8 +81,51 @@ try {
                  String(entry.stats.tokens));
     assert.match(await page.textContent('#board-result'), /not available yet|Loaded|Could not load/);
 
+    // The autorouter use case end to end: a board with its project loaded in the page, DRC and
+    // the fabrication outputs (Gerbers + Excellon), compared with the native kicad-rs CLI run on
+    // the same files with the same fixed date and UUID seed (kicad-rs itself is compared with
+    // the reference kicad-cli by crates/kicad-cli/tests/oracle/e2e_cli.py).
+    const cli = join(rust, 'target', 'debug', 'kicad-rs');
+    let fabChecked = 0;
+    if (existsSync(cli)) {
+        const rel = 'demos/ecc83/ecc83-pp.kicad_pcb';
+        const name = 'ecc83-pp.kicad_pcb';
+        const pcb = readFileSync(join(kicad, rel), 'utf8');
+        const pro = readFileSync(join(kicad, rel.replace(/\.kicad_pcb$/, '.kicad_pro')), 'utf8');
+        const opts = { project: pro, uuidSeed: 7, date: '2026-01-02T03:04:05' };
+        await page.evaluate(([n, t, o]) => window.kicadDemo.loadWith(n, t, o), [name, pcb, opts]);
+        await page.click('#drc');
+        await page.click('#gerbers');
+        const drc = await page.evaluate(() => window.kicadDemo.lastDrc);
+        const fab = await page.evaluate(() => window.kicadDemo.lastFab);
+        assert.ok(drc && fab && fab.length > 0, 'page ran DRC and the export');
+        assert.match(await page.textContent('#gerbers-result'), /download ecc83-pp-fab\.zip/);
+
+        const work = mkdtempSync(join(tmpdir(), 'kicad-wasm-browser-'));
+        try {
+            writeFileSync(join(work, name), pcb);
+            writeFileSync(join(work, 'ecc83-pp.kicad_pro'), pro);
+            const env = { ...process.env, KICAD_RS_DATE: opts.date, KICAD_RS_UUID_SEED: '7' };
+            const run = (...args) => execFileSync(cli, args, { cwd: work, env, stdio: 'pipe' });
+            run('pcb', 'drc', '--format', 'report', '-o', 'drc.rpt', name);
+            run('pcb', 'export', 'gerbers', '-o', 'out/', name);
+            run('pcb', 'export', 'drill', '-o', 'out/', name);
+            assert.equal(drc.report, readFileSync(join(work, 'drc.rpt'), 'utf8'), 'DRC report');
+            const cliFiles = readdirSync(join(work, 'out')).sort();
+            assert.deepEqual(fab.map((f) => f.name).sort(), cliFiles, 'fabrication file names');
+            for (const f of fab) {
+                assert.equal(f.content, readFileSync(join(work, 'out', f.name), 'utf8'), f.name);
+                fabChecked++;
+            }
+        } finally {
+            rmSync(work, { recursive: true, force: true });
+        }
+    }
+
     console.log(`browser.mjs: page loaded the wasm module (KiCad ${ref.version}), ` +
-                `token statistics of ${entry.file}: ${entry.stats.tokens} tokens`);
+                `token statistics of ${entry.file}: ${entry.stats.tokens} tokens; ` +
+                (fabChecked ? `DRC report and ${fabChecked} Gerber / drill files equal kicad-rs`
+                            : 'kicad-rs not built: CLI comparison skipped'));
 } finally {
     await browser.close();
     server.close();

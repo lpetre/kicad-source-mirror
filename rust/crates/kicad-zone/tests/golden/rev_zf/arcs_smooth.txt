@@ -1,0 +1,12 @@
+zone arc_fillet FCu outlines 1
+  0 pts 389 island 0 hash 1387ae7932e2974d
+zone chamfer FCu outlines 1
+  0 pts 181 island 0 hash 298f5b8d3af334ab
+zone corner BCu outlines 1
+  0 pts 40 island 0 hash bec093dd90cbfcb3
+zone fillet_low FCu outlines 1
+  0 pts 412 island 0 hash 08e48d8258e95ae3
+zone inner_fillet FCu outlines 1
+  0 pts 124 island 0 hash 8c12e5e0e2a3780d
+zone outside BCu outlines 1
+  0 pts 182 island 0 hash 2110da22d065e506

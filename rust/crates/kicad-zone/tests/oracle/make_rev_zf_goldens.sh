@@ -35,6 +35,9 @@ mkdir -p "$OUT" "$KICAD_ORACLE_HOME"
 
 for board in "$DATA"/*.kicad_pcb; do
     stem="$(basename "$board" .kicad_pcb)"
+
+    # the reference segfaults / hangs on these (review-zone-fill.md F-1, F-2)
+    case "$stem" in mixed_isolated|dup_uuid) continue ;; esac
     dir="$OUT/$stem"
 
     # a cached reference is reused while the input is unchanged

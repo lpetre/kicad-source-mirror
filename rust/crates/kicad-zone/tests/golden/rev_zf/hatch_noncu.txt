@@ -1,0 +1,11 @@
+zone fab BFab outlines 1
+  0 pts 88 island 1 hash b994be02673e8967
+zone fab FFab outlines 3
+  0 pts 223 island 1 hash cac26dd0262bf8ec
+  1 pts 24 island 1 hash 1099afc2422108c6
+  2 pts 24 island 1 hash ad1076e74fe7e966
+zone silk_hatch FSilkS outlines 2
+  0 pts 46 island 1 hash 62f782b965dac003
+  1 pts 1754 island 1 hash f44f7e121788078d
+zone solid_zero DwgsUser outlines 1
+  0 pts 8 island 1 hash e2e6d306af88649d

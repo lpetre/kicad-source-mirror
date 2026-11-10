@@ -68,7 +68,10 @@ fn load(rel: &str) -> Option<Board> {
                 .cloned()
                 .or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string()))
                 .unwrap_or_default();
-            assert!(msg.contains("port pending"), "{rel}: parser panicked: {msg}");
+            assert!(
+                msg.contains("port pending"),
+                "{rel}: parser panicked: {msg}"
+            );
             eprintln!("{rel}: not compared, the parser reached a model stub: {msg}");
             return None;
         }
@@ -173,8 +176,11 @@ fn cn05_from_to_cache_matches_reference() {
         let board: &Board = &board;
         let names = item_names(board);
         let ctx = BoardCtx::bare(board).with_connectivity(&data);
-        let index: HashMap<ItemId, usize> =
-            names.iter().enumerate().map(|(i, (id, _))| (*id, i)).collect();
+        let index: HashMap<ItemId, usize> = names
+            .iter()
+            .enumerate()
+            .map(|(i, (id, _))| (*id, i))
+            .collect();
 
         for line in &lines {
             let mut on_path = Vec::new();
@@ -210,7 +216,10 @@ fn cn05_from_to_cache_matches_reference() {
             // Path items outside the named items (none expected) would be invisible above
             for p in &paths {
                 for item in &p.path_items {
-                    assert!(index.contains_key(item), "{name}: path item {item:?} unnamed");
+                    assert!(
+                        index.contains_key(item),
+                        "{name}: path item {item:?} unnamed"
+                    );
                 }
             }
 
@@ -252,5 +261,8 @@ fn cn05_from_to_cache_matches_reference() {
         failures.len(),
         failures.join("\n")
     );
-    assert!(compared_boards >= 30, "only {compared_boards} boards compared");
+    assert!(
+        compared_boards >= 30,
+        "only {compared_boards} boards compared"
+    );
 }

@@ -25,8 +25,8 @@
 //!   (`DRCZoneFalsePositiveRegressions`, `starved_thermal` forced to error, 0).
 //!
 //! The provider needs the run's connectivity and the cache generator's zone lists and islands
-//! map, so the run is `RunTests` with those parts of `DRC_CACHE_GENERATOR::Run()` before the
-//! provider, as `DRC_ENGINE::RunTests` orders them.
+//! map, so it runs through the real run path (`drc_harness::run_flow_providers`:
+//! `run_flow::run_tests` with the cache generator and the zone connections slot only).
 
 mod drc_harness;
 
@@ -34,95 +34,20 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board,
-    panic_text, quiet, run_providers, summarize,
+    Entry, Loaded, cached_entries, cli_report_entries_flow, golden, load_board, panic_text, quiet,
+    run_flow_providers, summarize,
 };
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::cache_generator::{build_zone_lists, init_zone_islands_map, prepare_board};
-use kicad_drc::caches::DrcBoardCaches;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::zone_connections::DrcTestProviderZoneConnections;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::DRCE_STARVED_THERMAL;
 
 /// The error type of the provider.
 const TYPE: &str = "starved_thermal";
 
-/// The zone connections provider with the parts of `DRC_CACHE_GENERATOR::Run()` it reads
-/// (`m_DRCCopperZones`, `m_ZoneIsolatedIslandsMap` filled by `FillIsolatedIslandsMap( map,
-/// true )`) built right before it. The run's item shapes see the board's connectivity
-/// (`query`, flashing); the provider's own queries go to a second build of the same
-/// connectivity (`conn`), because `GetConnectedItems` needs `&mut` in the port.
-struct ZoneConnectionsWithCaches<'c> {
-    conn: &'c mut ConnectivityData,
-    query: &'c ConnectivityData,
-}
-
-impl DrcTestProviderRun for ZoneConnectionsWithCaches<'_> {
-    fn name(&self) -> &str {
-        "zone connections"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let board = ctx.board;
-        let bare = BoardCtx::bare(board);
-        let mut caches = DrcBoardCaches::new();
-        build_zone_lists(ctx, &mut caches);
-        init_zone_islands_map(ctx, &mut caches.zone_isolated_islands);
-
-        let mut map = BTreeMap::new();
-
-        for (zone, layers) in caches.zone_isolated_islands.iter() {
-            map.insert(zone, layers.clone());
-        }
-
-        self.conn.fill_isolated_islands_map(&bare, &mut map, true);
-
-        for (zone, layers) in map {
-            *caches.zone_isolated_islands.entry(zone) = layers;
-        }
-
-        let ctx = BoardCtx::bare(board)
-            .with_rules(engine)
-            .with_connectivity(self.query);
-        let mut provider = DrcTestProviderZoneConnections::new(self.conn, &caches);
-        provider.run_tests(engine, run, &ctx, units)
-    }
-}
-
-/// The board as the CLI holds it at the start of the provider: the board-mutating part of the
-/// cache generator, the connectivity built (`BOARD_LOADER` / `CONNECTIVITY_DATA::Build`, net
-/// propagation applied). Returns the two connectivity copies (see
-/// [`ZoneConnectionsWithCaches`]).
-fn prepare(loaded: &mut Loaded) -> (ConnectivityData, ConnectivityData) {
-    prepare_board(&mut loaded.board);
-
-    let mut conn = ConnectivityData::new();
-    conn.build_board(&mut loaded.board);
-
-    let mut query = ConnectivityData::new();
-    query.build(&BoardCtx::bare(&loaded.board));
-
-    (conn, query)
-}
-
 /// The report entries (`kicad-cli pcb drc --format json`) of a run of the provider.
 fn report_zone_connections(loaded: &mut Loaded) -> Vec<Entry> {
-    let (mut conn, query) = prepare(loaded);
-    let mut provider = ZoneConnectionsWithCaches {
-        conn: &mut conn,
-        query: &query,
-    };
-
-    cli_report_entries(loaded, false, &mut [&mut provider])
+    cli_report_entries_flow(loaded, false, &["zone connections"])
         .into_iter()
         .filter(|e| e.type_ == TYPE)
         .collect()
@@ -216,7 +141,6 @@ fn zone_connections_match_reference_corpus() {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
-
 
                     let entries = report_zone_connections(&mut loaded);
                     Ok((entries, loaded.report.skipped.is_empty()))
@@ -330,19 +254,13 @@ fn starved_thermal_errors(rel: &str) -> Result<usize, String> {
         ));
     }
 
-
     loaded
         .board
         .design_settings_mut()
         .drc_severities
         .insert(DRCE_STARVED_THERMAL, Severity::Error);
 
-    let (mut conn, query) = prepare(&mut loaded);
-    let mut provider = ZoneConnectionsWithCaches {
-        conn: &mut conn,
-        query: &query,
-    };
-    let found = run_providers(&mut loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, &["zone connections"]);
 
     Ok(found
         .iter()
@@ -402,65 +320,46 @@ fn drc_regressions_zone_connections() {
     );
 }
 
-/// Adds the pads of `tests/data/zone_connections/<name>.pads` (written by
-/// `gen_drc25_boards.py`) to their footprints through the model API, as the parser would
-/// (`parsePAD`: SMD pads have no hole). Stands in for the pad parser (PCBIO-07) on these
-/// boards only; the pads are simple (rectangular SMD on F.Cu, circular PTH).
-fn add_synthetic_pads(board: &mut kicad_pcb::Board, table: &str) {
+/// Checks that the pads parsed from the board file are those of the side table
+/// `tests/data/zone_connections/<name>.pads` (written by `gen_drc25_boards.py`; it stood in
+/// for the pad parser before PCBIO-07): uuid, number, position and net per pad, in footprint
+/// order. Adding the table's pads on top of the parsed ones (as the test did before pads
+/// parsed) duplicated every pad and produced an extra `starved_thermal` (STAB-DRC).
+fn check_synthetic_pads(board: &kicad_pcb::Board, table: &str) {
     use kicad_core::Kiid;
-    use kicad_core::layer_ids::PcbLayerId;
-    use kicad_core::lset::Lset;
-    use kicad_geom::math::vector2::Vector2I;
-    use kicad_pcb::pad::Pad;
-    use kicad_pcb::padstack::{PadAttrib, PadShape};
-    use kicad_pcb::{AddMode, OwnedItem, ParentRef};
 
     let iu = |v: &str| (v.parse::<f64>().unwrap() * 1e6).round() as i32;
+    let ctx = BoardCtx::bare(board);
+    let mut parsed = Vec::new();
 
-    for line in table.lines() {
-        let f: Vec<&str> = line.split('\t').collect();
-        let fp_uuid = Kiid::parse(f[0]).unwrap();
-        let fp = {
-            let ctx = BoardCtx::bare(board);
+    // BOARD::GetPads(): footprint order, then pad order.
+    for pad in board.get_pads() {
+        let pad = &board[pad];
+        parsed.push((
+            pad.base.item.uuid,
+            pad.number().to_string(),
+            pad.position(&ctx),
             board
-                .footprints()
-                .map(|(id, _)| id)
-                .find(|&id| ctx.item(id.into()).unwrap().uuid() == fp_uuid)
-                .expect("footprint of the pad table")
-        };
-        let env = board.child_env(ParentRef::Item(fp.into()));
-        let net = board.find_net_by_name(f[8]).expect("net").net_code;
-        let size = Vector2I::new(iu(f[6]), iu(f[7]));
-
-        let mut pad = Pad::new(&mut board.kiid_generator);
-        pad.base.item.uuid = Kiid::parse(f[1]).unwrap();
-        pad.set_number(f[2]);
-
-        if f[3] == "smd" {
-            pad.set_attribute(PadAttrib::Smd);
-            pad.set_shape(PcbLayerId::FCu, PadShape::Rectangle);
-            pad.set_drill_size(&env, Vector2I::new(0, 0));
-            pad.set_layer_set(
-                &env,
-                Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::FMask, PcbLayerId::FPaste]),
-            );
-        } else {
-            pad.set_attribute(PadAttrib::Pth);
-            pad.set_shape(PcbLayerId::FCu, PadShape::Circle);
-            pad.set_drill_size(&env, Vector2I::new(size.x / 2, size.x / 2));
-            pad.set_layer_set(&env, Pad::pth_mask());
-        }
-
-        pad.set_size(&env, PcbLayerId::FCu, size);
-        pad.set_position(&env, Vector2I::new(iu(f[4]), iu(f[5])));
-        pad.base.net = net;
-
-        assert!(
-            board
-                .footprint_add(fp, OwnedItem::Pad(Box::new(pad)), AddMode::Append)
-                .is_ok()
-        );
+                .find_net(pad.base.net)
+                .map(|n| n.netname.clone())
+                .unwrap_or_default(),
+        ));
     }
+
+    let expected: Vec<_> = table
+        .lines()
+        .map(|line| {
+            let f: Vec<&str> = line.split('\t').collect();
+            (
+                Kiid::parse(f[1]).unwrap(),
+                f[2].to_string(),
+                kicad_geom::math::vector2::Vector2I::new(iu(f[4]), iu(f[5])),
+                f[8].to_string(),
+            )
+        })
+        .collect();
+
+    assert_eq!(parsed, expected);
 }
 
 /// The golden entries of a synthetic board (`tests/oracle/gen_drc25_boards.py`).
@@ -515,11 +414,11 @@ fn synthetic_boards_match_reference() {
     for &(name, pads, golden_text) in cases {
         let mut loaded = load_board(&data.join(format!("{name}.kicad_pcb"))).unwrap();
         assert!(
-            loaded.report.skipped.iter().all(|s| s.token == "pad"),
+            loaded.report.skipped.is_empty(),
             "{name}: {:?}",
             loaded.report.skipped
         );
-        add_synthetic_pads(&mut loaded.board, pads);
+        check_synthetic_pads(&loaded.board, pads);
 
         let mine = report_zone_connections(&mut loaded);
         let theirs = synthetic_golden(golden_text);

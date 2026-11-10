@@ -1,0 +1,4 @@
+zone HB BCu outlines 1
+  0 pts 4162 island 0 hash 34395ad451a6bd66
+zone HF FCu outlines 1
+  0 pts 7713 island 0 hash 3ddcdb2f0fd86924

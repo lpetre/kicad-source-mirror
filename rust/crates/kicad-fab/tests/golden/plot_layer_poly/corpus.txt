@@ -1,0 +1,2186 @@
+B sub demos/constraints/constraints.kicad_pcb
+constraints-F_Silkscreen.gto 911bff27
+constraints-B_Silkscreen.gbo 93693fe6
+B sub_cl demos/constraints/constraints.kicad_pcb
+constraints-F_Cu.gtl 2f77ae9d
+constraints-B_Cu.gbl 38f14c41
+B sub demos/ecc83/ecc83-pp.kicad_pcb
+ecc83-pp-F_Silkscreen.gto c1e0edbd
+ecc83-pp-B_Silkscreen.gbo 37c4b0d4
+B sub_cl demos/ecc83/ecc83-pp.kicad_pcb
+ecc83-pp-top_cu.gtl c51b653c
+ecc83-pp-bottom_cu.gbl 564d1b74
+B sub demos/ecc83/ecc83-pp_v2.kicad_pcb
+ecc83-pp_v2-F_Silkscreen.gto c55018e5
+ecc83-pp_v2-B_Silkscreen.gbo fa67a0b7
+B sub_cl demos/ecc83/ecc83-pp_v2.kicad_pcb
+ecc83-pp_v2-Dessus.gtl 1b317bf5
+ecc83-pp_v2-Dessous.gbl a55755f7
+B sub demos/microwave/microwave.kicad_pcb
+microwave-F_Silkscreen.gto 5ed25d98
+microwave-B_Silkscreen.gbo dcfc4ba8
+B sub_cl demos/microwave/microwave.kicad_pcb
+microwave-F_Cu.gtl 00344990
+microwave-B_Cu.gbl 70d6b2cb
+B sub demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+RoyalBlue54L-NFC-Antenna-F_Silkscreen.gto 981799ec
+RoyalBlue54L-NFC-Antenna-B_Silkscreen.gbo 93c6b7af
+B sub_cl demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
+RoyalBlue54L-NFC-Antenna-F_Cu.gtl a22841ef
+RoyalBlue54L-NFC-Antenna-B_Cu.gbl 6874af20
+B sub qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
+B sub_cl qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
+Issue24143-F_Cu.gtl 6ce27b8c
+Issue24143-B_Cu.gbl fbd2e8d7
+B sub qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+ZoneFill-4.0.7-F_SilkS.gto 7c2e06e5
+ZoneFill-4.0.7-B_SilkS.gbo 59e5251e
+B sub_cl qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+ZoneFill-4.0.7-Dessus.gtl 951f7ad7
+ZoneFill-4.0.7-Dessous.gbl 8d57b021
+B sub qa/data/cli/basic_test/basic_test.kicad_pcb
+basic_test-F_Silkscreen.gto d179d192
+basic_test-B_Silkscreen.gbo 1039be5e
+B sub_cl qa/data/cli/basic_test/basic_test.kicad_pcb
+basic_test-F_Cu.gtl b1795bff
+basic_test-B_Cu.gbl 8d82df99
+B sub qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
+B sub_cl qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
+pcb_a-F_Cu.gtl 59cc9b8f
+pcb_a-B_Cu.gbl 72313014
+B sub qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
+B sub_cl qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
+pcb_b-F_Cu.gtl c5b22a08
+pcb_b-B_Cu.gbl 29dc62a9
+B sub qa/data/downgrade/golden/current/geometry.kicad_pcb
+geometry-F_Silkscreen.gto 8ff793d8
+geometry-B_Silkscreen.gbo 05e0b4a8
+B sub_cl qa/data/downgrade/golden/current/geometry.kicad_pcb
+geometry-F_Cu.gtl 19f2b07b
+geometry-B_Cu.gbl b7838845
+B sub qa/data/downgrade/golden/current/graphics.kicad_pcb
+graphics-F_Silkscreen.gto 58d226c1
+B sub_cl qa/data/downgrade/golden/current/graphics.kicad_pcb
+graphics-F_Cu.gtl f9d063b5
+graphics-B_Cu.gbl f75dfd08
+B sub qa/data/downgrade/golden/current/metadata.kicad_pcb
+metadata-F_Silkscreen.gto 3249b6a1
+metadata-B_Silkscreen.gbo b8392639
+B sub_cl qa/data/downgrade/golden/current/metadata.kicad_pcb
+metadata-F_Cu.gtl 57b256c4
+metadata-B_Cu.gbl 1ce8e72d
+B sub qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
+modern_metadata-F_Silkscreen.gto 5492d56a
+modern_metadata-B_Silkscreen.gbo 9a563348
+B sub_cl qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
+modern_metadata-F_Cu.gtl fdaa1e6a
+modern_metadata-B_Cu.gbl b054dac7
+B sub qa/data/downgrade/golden/seed/geometry.kicad_pcb
+geometry-F_Silkscreen.gto 117cbb75
+geometry-B_Silkscreen.gbo 05e0b4a8
+B sub_cl qa/data/downgrade/golden/seed/geometry.kicad_pcb
+geometry-F_Cu.gtl 19f2b07b
+geometry-B_Cu.gbl b7838845
+B sub qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
+graphics-drop-v9-F_Silkscreen.gto 91a9e7b6
+B sub_cl qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
+graphics-drop-v9-F_Cu.gtl 95c92a51
+graphics-drop-v9-B_Cu.gbl 32b73ce9
+B sub qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
+graphics-v10-F_Silkscreen.gto bfda0823
+B sub_cl qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
+graphics-v10-F_Cu.gtl f34b4cdc
+graphics-v10-B_Cu.gbl 2f286157
+B sub qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
+graphics-v9-F_Silkscreen.gto 99d36943
+B sub_cl qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
+graphics-v9-F_Cu.gtl 0623b53d
+graphics-v9-B_Cu.gbl fd3972ac
+B sub qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
+metadata-v9-F_Silkscreen.gto 621d9c26
+metadata-v9-B_Silkscreen.gbo e0a0a4e9
+B sub_cl qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
+metadata-v9-F_Cu.gtl 19182601
+metadata-v9-B_Cu.gbl a6e5b2a0
+B sub qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
+modern_metadata-v9-F_Silkscreen.gto d73498d4
+modern_metadata-v9-B_Silkscreen.gbo 6774c1b4
+B sub_cl qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
+modern_metadata-v9-F_Cu.gtl af3d797d
+modern_metadata-v9-B_Cu.gbl 60bce1ab
+B sub qa/data/downgrade/golden/v10/geometry.kicad_pcb
+geometry-F_Silkscreen.gto 8ff793d8
+geometry-B_Silkscreen.gbo 05e0b4a8
+B sub_cl qa/data/downgrade/golden/v10/geometry.kicad_pcb
+geometry-F_Cu.gtl 19f2b07b
+geometry-B_Cu.gbl b7838845
+B sub qa/data/downgrade/golden/v10/graphics.kicad_pcb
+graphics-F_Silkscreen.gto 58d226c1
+B sub_cl qa/data/downgrade/golden/v10/graphics.kicad_pcb
+graphics-F_Cu.gtl f9d063b5
+graphics-B_Cu.gbl f75dfd08
+B sub qa/data/downgrade/golden/v10/metadata.kicad_pcb
+metadata-F_Silkscreen.gto 3249b6a1
+metadata-B_Silkscreen.gbo 024530a8
+B sub_cl qa/data/downgrade/golden/v10/metadata.kicad_pcb
+metadata-F_Cu.gtl 57b256c4
+metadata-B_Cu.gbl 1ce8e72d
+B sub qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
+modern_metadata-F_Silkscreen.gto 7118004f
+modern_metadata-B_Silkscreen.gbo 141dadfd
+B sub_cl qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
+modern_metadata-F_Cu.gtl e51fcdab
+modern_metadata-B_Cu.gbl 7ccfff53
+B sub qa/data/downgrade/golden/v9/geometry.kicad_pcb
+geometry-F_Silkscreen.gto 117cbb75
+geometry-B_Silkscreen.gbo 05e0b4a8
+B sub_cl qa/data/downgrade/golden/v9/geometry.kicad_pcb
+geometry-F_Cu.gtl 19f2b07b
+geometry-B_Cu.gbl b7838845
+B sub qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
+graphics-drop-F_Silkscreen.gto ff49f0d8
+B sub_cl qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
+graphics-drop-F_Cu.gtl 022f653e
+graphics-drop-B_Cu.gbl 2d71a841
+B sub qa/data/downgrade/golden/v9/graphics.kicad_pcb
+graphics-F_Silkscreen.gto 9f475a6a
+B sub_cl qa/data/downgrade/golden/v9/graphics.kicad_pcb
+graphics-F_Cu.gtl 27f2547e
+graphics-B_Cu.gbl 923d9e70
+B sub qa/data/downgrade/golden/v9/metadata.kicad_pcb
+metadata-F_Silkscreen.gto 3249b6a1
+metadata-B_Silkscreen.gbo 024530a8
+B sub_cl qa/data/downgrade/golden/v9/metadata.kicad_pcb
+metadata-F_Cu.gtl 57b256c4
+metadata-B_Cu.gbl 1ce8e72d
+B sub qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
+modern_metadata-F_Silkscreen.gto 7118004f
+modern_metadata-B_Silkscreen.gbo 141dadfd
+B sub_cl qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
+modern_metadata-F_Cu.gtl e51fcdab
+modern_metadata-B_Cu.gbl 7ccfff53
+B sub qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
+custom_pad_arc-F_Silkscreen.gto f2ebafdc
+B sub_cl qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
+custom_pad_arc-F_Cu.gtl da7edc63
+custom_pad_arc-B_Cu.gbl a83bbb82
+B sub qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
+group_placement-F_Silkscreen.gto ec657f17
+group_placement-B_Silkscreen.gbo 258258fe
+B sub_cl qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
+group_placement-F_Cu.gtl 78b6f2d6
+group_placement-B_Cu.gbl 2f37772c
+B sub qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
+project_barcode-F_Silkscreen.gto 2584bb3b
+project_barcode-B_Silkscreen.gbo f5fac529
+B sub_cl qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
+project_barcode-F_Cu.gtl 45643e11
+project_barcode-B_Cu.gbl 7a8d3944
+B sub qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
+tuning_model_settings-F_Silkscreen.gto 07b41c1d
+tuning_model_settings-B_Silkscreen.gbo d6cd4572
+B sub_cl qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
+tuning_model_settings-F_Cu.gtl f592eef5
+tuning_model_settings-B_Cu.gbl 1c5039fd
+B sub qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
+via_generators-F_Silkscreen.gto 864435af
+via_generators-B_Silkscreen.gbo 7fbdd9e7
+B sub_cl qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
+via_generators-F_Cu.gtl d481fb17
+via_generators-B_Cu.gbl d5712a7f
+B sub qa/data/eeschema/issue18119/issue18119.kicad_pcb
+issue18119-F_Silkscreen.gto 5a5d2913
+issue18119-B_Silkscreen.gbo 5a93fcb6
+B sub_cl qa/data/eeschema/issue18119/issue18119.kicad_pcb
+issue18119-F_Cu.gtl 596ba995
+issue18119-B_Cu.gbl bede2c56
+B sub qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
+Kicad 9 - multi channel test-F_Silkscreen.gto 651b30d5
+Kicad 9 - multi channel test-B_Silkscreen.gbo 008ae20c
+B sub_cl qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
+Kicad 9 - multi channel test-F_Cu.gtl 7d3e7ac2
+Kicad 9 - multi channel test-B_Cu.gbl 13b3df5a
+B sub qa/data/eeschema/issue20173/issue20173.kicad_pcb
+issue20173-F_Silkscreen.gto 033c57d2
+issue20173-B_Silkscreen.gbo e73edb14
+B sub_cl qa/data/eeschema/issue20173/issue20173.kicad_pcb
+issue20173-F_Cu.gtl 7490cba5
+issue20173-B_Cu.gbl 22bdb485
+B sub qa/data/eeschema/issue22873/issue22873.kicad_pcb
+issue22873-F_Silkscreen.gto ee5c868a
+issue22873-B_Silkscreen.gbo f1545b8e
+B sub_cl qa/data/eeschema/issue22873/issue22873.kicad_pcb
+issue22873-F_Cu.gtl d2c933d9
+issue22873-B_Cu.gbl 09e30022
+B sub qa/data/eeschema/issue23346/issue23346.kicad_pcb
+issue23346-F_Silkscreen.gto f3ae750d
+issue23346-B_Silkscreen.gbo a14fda3e
+B sub_cl qa/data/eeschema/issue23346/issue23346.kicad_pcb
+issue23346-F_Cu.gtl be35fa60
+issue23346-B_Cu.gbl ca81ca65
+B sub qa/data/eeschema/issue23403/issue23403.kicad_pcb
+issue23403-F_Silkscreen.gto 5c2475a4
+issue23403-B_Silkscreen.gbo 55ba23ce
+B sub_cl qa/data/eeschema/issue23403/issue23403.kicad_pcb
+issue23403-F_Cu.gtl 5dc7c272
+issue23403-B_Cu.gbl dcb547d9
+B sub qa/data/eeschema/issue23719/issue23719.kicad_pcb
+issue23719-F_Silkscreen.gto d70cf691
+issue23719-B_Silkscreen.gbo d43f0590
+B sub_cl qa/data/eeschema/issue23719/issue23719.kicad_pcb
+issue23719-F_Cu.gtl fe5f9f13
+issue23719-B_Cu.gbl cf4b1d31
+B sub qa/data/eeschema/issue23962/issue23962.kicad_pcb
+issue23962-F_Silkscreen.gto 10866e1b
+issue23962-B_Silkscreen.gbo 8b5a87d1
+B sub_cl qa/data/eeschema/issue23962/issue23962.kicad_pcb
+issue23962-F_Cu.gtl b3e04c94
+issue23962-B_Cu.gbl ef303f37
+B sub qa/data/eeschema/issue24001/issue24001.kicad_pcb
+issue24001-F_Silkscreen.gto 788cb2e3
+issue24001-B_Silkscreen.gbo 0b321471
+B sub_cl qa/data/eeschema/issue24001/issue24001.kicad_pcb
+issue24001-F_Cu.gtl e15042a5
+issue24001-B_Cu.gbl c7f5f23d
+B sub qa/data/eeschema/issue24044/issue24044.kicad_pcb
+issue24044-F_Silkscreen.gto ea71b3a6
+issue24044-B_Silkscreen.gbo 5f7f7587
+B sub_cl qa/data/eeschema/issue24044/issue24044.kicad_pcb
+issue24044-F_Cu.gtl cca08c5a
+issue24044-B_Cu.gbl 5fb1b4b0
+B sub qa/data/eeschema/issue24201/issue24201.kicad_pcb
+issue24201-F_Silkscreen.gto 99fda87f
+issue24201-B_Silkscreen.gbo 1fd710fd
+B sub_cl qa/data/eeschema/issue24201/issue24201.kicad_pcb
+issue24201-F_Cu.gtl 40a56c68
+issue24201-B_Cu.gbl 80f5d8e2
+B sub qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
+issue24201-F_Silkscreen.gto 99fda87f
+issue24201-B_Silkscreen.gbo 1fd710fd
+B sub_cl qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
+issue24201-F_Cu.gtl 40a56c68
+issue24201-B_Cu.gbl 80f5d8e2
+B sub qa/data/eeschema/issue24409/issue24409.kicad_pcb
+issue24409-F_Silkscreen.gto 2ac77255
+issue24409-B_Silkscreen.gbo dbe88443
+B sub_cl qa/data/eeschema/issue24409/issue24409.kicad_pcb
+issue24409-F_Cu.gtl 24e9d13d
+issue24409-B_Cu.gbl 38b12ba0
+B sub qa/data/eeschema/issue9673/issue9673.kicad_pcb
+issue9673-F_Silkscreen.gto 316da14e
+issue9673-B_Silkscreen.gbo fcae52ef
+B sub_cl qa/data/eeschema/issue9673/issue9673.kicad_pcb
+issue9673-F_Cu.gtl 5f46cb7a
+issue9673-B_Cu.gbl a3e2d99c
+B sub qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
+component_classes-F_Silkscreen.gto 1a20bbe6
+component_classes-B_Silkscreen.gbo 9cae503a
+B sub_cl qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
+component_classes-F_Cu.gtl 2986cee5
+component_classes-B_Cu.gbl 3d4d83f6
+B sub qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
+issue16915-F_Silkscreen.gto 074e7512
+issue16915-B_Silkscreen.gbo 743a9870
+B sub_cl qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
+issue16915-F_Cu.gtl 38bb027b
+issue16915-B_Cu.gbl be46f164
+B sub qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
+jumpers-F_Silkscreen.gto ab42b880
+jumpers-B_Silkscreen.gbo 83812fb0
+B sub_cl qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
+jumpers-F_Cu.gtl 8d17f7c1
+jumpers-B_Cu.gbl e50da6a9
+B sub qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
+legacy_power-F_Silkscreen.gto 6914f053
+legacy_power-B_Silkscreen.gbo 06f15443
+B sub_cl qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
+legacy_power-F_Cu.gtl 882ca253
+legacy_power-B_Cu.gbl c62ff23f
+B sub qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
+legacy_power4-F_Silkscreen.gto ee9c3122
+legacy_power4-B_Silkscreen.gbo 27576e2b
+B sub_cl qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
+legacy_power4-F_Cu.gtl 3c632382
+legacy_power4-B_Cu.gbl 431bb8c6
+B sub qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
+not_shared_by_multiple_projects-F_Silkscreen.gto 59c27219
+not_shared_by_multiple_projects-B_Silkscreen.gbo a03749a2
+B sub_cl qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
+not_shared_by_multiple_projects-F_Cu.gtl dabd265a
+not_shared_by_multiple_projects-B_Cu.gbl 7bce9862
+B sub qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
+project_a-F_Silkscreen.gto 00830ab2
+project_a-B_Silkscreen.gbo 14ac0869
+B sub_cl qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
+project_a-F_Cu.gtl a31154b7
+project_a-B_Cu.gbl 8d7cc0c4
+B sub qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
+project_b-F_Silkscreen.gto cfe20a6f
+project_b-B_Silkscreen.gbo b7a957d4
+B sub_cl qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
+project_b-F_Cu.gtl 04f393da
+project_b-B_Cu.gbl c453fd05
+B sub qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
+chirp-F_Silkscreen.gto c1f3e052
+chirp-B_Silkscreen.gbo 0868b7da
+B sub_cl qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
+chirp-F_Cu.gtl 0c97d349
+chirp-B_Cu.gbl ada94552
+B sub qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
+cmos_not-F_Silkscreen.gto 2c80bee4
+cmos_not-B_Silkscreen.gbo 6076120c
+B sub_cl qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
+cmos_not-F_Cu.gtl 81bfd34b
+cmos_not-B_Cu.gbl 19e66daf
+B sub qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
+directives-F_Silkscreen.gto 51a3a613
+directives-B_Silkscreen.gbo 5b7e4ba6
+B sub_cl qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
+directives-F_Cu.gtl ca14f724
+directives-B_Cu.gbl 2e3f2fc5
+B sub qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
+fliege_filter-F_Silkscreen.gto 20e9cd27
+fliege_filter-B_Silkscreen.gbo 23370de7
+B sub_cl qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
+fliege_filter-F_Cu.gtl 13f07ac2
+fliege_filter-B_Cu.gbl 1d6a1866
+B sub qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
+instance_params-F_Silkscreen.gto a3e98f99
+instance_params-B_Silkscreen.gbo c551c158
+B sub_cl qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
+instance_params-F_Cu.gtl f24766d8
+instance_params-B_Cu.gbl f9e804a4
+B sub qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
+legacy_opamp-F_Silkscreen.gto 998c8518
+legacy_opamp-B_Silkscreen.gbo b18a8929
+B sub_cl qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
+legacy_opamp-F_Cu.gtl 7320735a
+legacy_opamp-B_Cu.gbl 4744f20f
+B sub qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
+multiunit_pinmap_split-F_Silkscreen.gto 94180e3b
+multiunit_pinmap_split-B_Silkscreen.gbo 3ec5e6dd
+B sub_cl qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
+multiunit_pinmap_split-F_Cu.gtl 0fa98245
+multiunit_pinmap_split-B_Cu.gbl 24607ed8
+B sub qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
+multiunit_repeat_opamp-F_Silkscreen.gto 787e59d2
+multiunit_repeat_opamp-B_Silkscreen.gbo f4db6b12
+B sub_cl qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
+multiunit_repeat_opamp-F_Cu.gtl 2def630b
+multiunit_repeat_opamp-B_Cu.gbl 9649b5ad
+B sub qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
+npn_ce_amp-F_Silkscreen.gto ec4f0546
+npn_ce_amp-B_Silkscreen.gbo 5055a8db
+B sub_cl qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
+npn_ce_amp-F_Cu.gtl b435f236
+npn_ce_amp-B_Cu.gbl 4be0eda3
+B sub qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
+opamp-F_Silkscreen.gto af792221
+opamp-B_Silkscreen.gbo a0a9bb77
+B sub_cl qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
+opamp-F_Cu.gtl 6453d2be
+opamp-B_Cu.gbl 0da0ebaa
+B sub qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
+B sub_cl qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
+parallel_caps-F_Cu.gtl b93729c1
+parallel_caps-B_Cu.gbl 3a9a3544
+B sub qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
+potentiometers-F_Silkscreen.gto 31f1d0f0
+potentiometers-B_Silkscreen.gbo de876969
+B sub_cl qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
+potentiometers-F_Cu.gtl 56f606a3
+potentiometers-B_Cu.gbl f824c3de
+B sub qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
+rectifier-F_Silkscreen.gto 8481b34e
+rectifier-B_Silkscreen.gbo 8f723497
+B sub_cl qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
+rectifier-F_Cu.gtl 4ffbed02
+rectifier-B_Cu.gbl 58a5021a
+B sub qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
+rlc-F_Silkscreen.gto 7886bfc0
+rlc-B_Silkscreen.gbo 479fe914
+B sub_cl qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
+rlc-F_Cu.gtl 94871367
+rlc-B_Cu.gbl bb445e70
+B sub qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
+sources-F_Silkscreen.gto 74100142
+sources-B_Silkscreen.gbo 95385ae1
+B sub_cl qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
+sources-F_Cu.gtl b1748b2e
+sources-B_Cu.gbl 87fcd0a6
+B sub qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
+switches-F_Silkscreen.gto bccc30e9
+switches-B_Silkscreen.gbo 45786ac7
+B sub_cl qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
+switches-F_Cu.gtl d56794f5
+switches-B_Cu.gbl de81ad9a
+B sub qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
+tlines-F_Silkscreen.gto 1dbe4cb1
+tlines-B_Silkscreen.gbo a6d9d3c6
+B sub_cl qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
+tlines-F_Cu.gtl 5b38eadb
+tlines-B_Cu.gbl 33265efc
+B sub qa/data/fuzz/pcb/sexpr/default.kicad_pcb
+default-F_Silkscreen.gto ae5b129c
+default-B_Silkscreen.gbo b31296f8
+B sub_cl qa/data/fuzz/pcb/sexpr/default.kicad_pcb
+default-F_Cu.gtl addf8081
+default-B_Cu.gbl fc0aa02b
+B sub qa/data/libraries/test_project/test_project.kicad_pcb
+test_project-F_Silkscreen.gto 52caed55
+test_project-B_Silkscreen.gbo 163b7280
+B sub_cl qa/data/libraries/test_project/test_project.kicad_pcb
+test_project-F_Cu.gtl 159141a7
+test_project-B_Cu.gbl 4f726615
+B sub qa/data/pcbnew/bad_triangulation_case.kicad_pcb
+bad_triangulation_case-F_Silkscreen.gto 1b42a18f
+bad_triangulation_case-B_Silkscreen.gbo 3115c627
+B sub_cl qa/data/pcbnew/bad_triangulation_case.kicad_pcb
+bad_triangulation_case-F_Cu.gtl 38a90126
+bad_triangulation_case-B_Cu.gbl a289a29a
+B sub qa/data/pcbnew/component_classes.kicad_pcb
+component_classes-F_Silkscreen.gto cb7abf64
+component_classes-B_Silkscreen.gbo 1743a934
+B sub_cl qa/data/pcbnew/component_classes.kicad_pcb
+component_classes-F_Cu.gtl f4831bbc
+component_classes-B_Cu.gbl 4016b33d
+B sub qa/data/pcbnew/component_classes_drc.kicad_pcb
+component_classes_drc-F_Silkscreen.gto 6f0581cb
+component_classes_drc-B_Silkscreen.gbo ebcd91f2
+B sub_cl qa/data/pcbnew/component_classes_drc.kicad_pcb
+component_classes_drc-F_Cu.gtl 29242b1e
+component_classes_drc-B_Cu.gbl ffc65dee
+B sub qa/data/pcbnew/connection_width_rules.kicad_pcb
+connection_width_rules-F_Silkscreen.gto 3976979e
+connection_width_rules-B_Silkscreen.gbo ea97a98d
+B sub_cl qa/data/pcbnew/connection_width_rules.kicad_pcb
+connection_width_rules-F_Cu.gtl ebf00694
+connection_width_rules-B_Cu.gbl 4b2ad17f
+B sub qa/data/pcbnew/creepage/creepage.kicad_pcb
+creepage-F_Silkscreen.gto f0b012bc
+creepage-B_Silkscreen.gbo 289faa9c
+B sub_cl qa/data/pcbnew/creepage/creepage.kicad_pcb
+creepage-F_Cu.gtl b3323329
+creepage-B_Cu.gbl 3c0458e1
+B sub qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
+creepage_malformed_edge-F_Silkscreen.gto fab65226
+creepage_malformed_edge-B_Silkscreen.gbo 32e070c5
+B sub_cl qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
+creepage_malformed_edge-F_Cu.gtl 151ce5e7
+creepage_malformed_edge-B_Cu.gbl 22c28bf0
+B sub qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
+creepage_slots-F_Silkscreen.gto 4967f2ca
+creepage_slots-B_Silkscreen.gbo f43f844f
+B sub_cl qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
+creepage_slots-F_Cu.gtl 4b59854d
+creepage_slots-B_Cu.gbl 093a9dcc
+B sub qa/data/pcbnew/custom_fields.kicad_pcb
+custom_fields-F_Silkscreen.gto 1f048747
+custom_fields-B_Silkscreen.gbo db82b867
+B sub_cl qa/data/pcbnew/custom_fields.kicad_pcb
+custom_fields-F_Cu.gtl 29f64802
+custom_fields-B_Cu.gbl 61bf7ca3
+B sub qa/data/pcbnew/custom_pads.kicad_pcb
+custom_pads-F_SilkS.gto 369fb21d
+custom_pads-B_SilkS.gbo 942bfeb8
+B sub_cl qa/data/pcbnew/custom_pads.kicad_pcb
+custom_pads-F_Cu.gtl 4b445dc3
+custom_pads-B_Cu.gbl 6cd1a002
+B sub qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+diff_pair_uncoupled_tuning_drc-F_Silkscreen.gto dabb69f2
+diff_pair_uncoupled_tuning_drc-B_Silkscreen.gbo 8b5b368f
+B sub_cl qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+diff_pair_uncoupled_tuning_drc-F_Cu.gtl b02293a2
+diff_pair_uncoupled_tuning_drc-B_Cu.gbl 806bac25
+B sub qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
+drc_arc_arc_edge_clearance-F_Silkscreen.gto fd0efb14
+drc_arc_arc_edge_clearance-B_Silkscreen.gbo acda995d
+B sub_cl qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
+drc_arc_arc_edge_clearance-F_Cu.gtl 205f2816
+drc_arc_arc_edge_clearance-B_Cu.gbl fb8de152
+B sub qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
+copper_thieving-F_Silkscreen.gto 86085fc2
+copper_thieving-B_Silkscreen.gbo c2cf4841
+B sub_cl qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
+copper_thieving-F_Cu.gtl 51e999d0
+copper_thieving-B_Cu.gbl e33e2247
+B sub qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
+empty_board-F_Silkscreen.gto 66ae50c7
+empty_board-B_Silkscreen.gbo 5341db39
+B sub_cl qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
+empty_board-F_Cu.gtl f520e17d
+empty_board-B_Cu.gbl bae277df
+B sub qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
+single_footprint_disjoint_courtyard-F_Silkscreen.gto c57c697d
+single_footprint_disjoint_courtyard-B_Silkscreen.gbo 5e0bbabc
+B sub_cl qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
+single_footprint_disjoint_courtyard-F_Cu.gtl eae601bc
+single_footprint_disjoint_courtyard-B_Cu.gbl 23ff527f
+B sub qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
+single_footprint_no_courtyard-F_Silkscreen.gto 5b3da002
+single_footprint_no_courtyard-B_Silkscreen.gbo ea2a2fdf
+B sub_cl qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
+single_footprint_no_courtyard-F_Cu.gtl 046b614f
+single_footprint_no_courtyard-B_Cu.gbl 11da3f20
+B sub qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
+single_footprint_unclosed_courtyard-F_Silkscreen.gto c31747b4
+single_footprint_unclosed_courtyard-B_Silkscreen.gbo 09a21354
+B sub_cl qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
+single_footprint_unclosed_courtyard-F_Cu.gtl 6f993797
+single_footprint_unclosed_courtyard-B_Cu.gbl 5974289e
+B sub qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
+two_footprints_one_malformed-F_Silkscreen.gto be4ad223
+two_footprints_one_malformed-B_Silkscreen.gbo ee76addf
+B sub_cl qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
+two_footprints_one_malformed-F_Cu.gtl f27be2f5
+two_footprints_one_malformed-B_Cu.gbl aabb81d6
+B sub qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
+empty_board-F_Silkscreen.gto 66ae50c7
+empty_board-B_Silkscreen.gbo 5341db39
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
+empty_board-F_Cu.gtl f520e17d
+empty_board-B_Cu.gbl bae277df
+B sub qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
+single_empty_footprint-F_Silkscreen.gto b6b3f1fc
+single_empty_footprint-B_Silkscreen.gbo e7f3121b
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
+single_empty_footprint-F_Cu.gtl 89fb14b8
+single_empty_footprint-B_Cu.gbl ad410196
+B sub qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
+single_footprint_single_courtyard-F_Silkscreen.gto 55d30186
+single_footprint_single_courtyard-B_Silkscreen.gbo cc841164
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
+single_footprint_single_courtyard-F_Cu.gtl fee4965d
+single_footprint_single_courtyard-B_Cu.gbl 9dabda9b
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
+two_footprints_bbox_overlap_only-F_Silkscreen.gto 6469e8b5
+two_footprints_bbox_overlap_only-B_Silkscreen.gbo 3f426f01
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
+two_footprints_bbox_overlap_only-F_Cu.gtl 9c9a4e4c
+two_footprints_bbox_overlap_only-B_Cu.gbl 9a093875
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
+two_footprints_multiple_courtyards_overlap-F_Silkscreen.gto f7434df1
+two_footprints_multiple_courtyards_overlap-B_Silkscreen.gbo 3f1019e0
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
+two_footprints_multiple_courtyards_overlap-F_Cu.gtl f498fed3
+two_footprints_multiple_courtyards_overlap-B_Cu.gbl f5b5369d
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
+two_footprints_no_overlap-F_Silkscreen.gto 98448269
+two_footprints_no_overlap-B_Silkscreen.gbo 660f714d
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
+two_footprints_no_overlap-F_Cu.gtl 3e26baa1
+two_footprints_no_overlap-B_Cu.gbl aa0de75a
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
+two_footprints_overlap-F_Silkscreen.gto adfd60a7
+two_footprints_overlap-B_Silkscreen.gbo 53cdef3e
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
+two_footprints_overlap-F_Cu.gtl 6fd03152
+two_footprints_overlap-B_Cu.gbl 82b8680a
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
+two_footprints_overlap_different_sides-F_Silkscreen.gto 1e13d0d0
+two_footprints_overlap_different_sides-B_Silkscreen.gbo 36dd49ea
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
+two_footprints_overlap_different_sides-F_Cu.gtl f0e16598
+two_footprints_overlap_different_sides-B_Cu.gbl b451796b
+B sub qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
+two_footprints_touching-F_Silkscreen.gto 4625aa1a
+two_footprints_touching-B_Silkscreen.gbo 473ad884
+B sub_cl qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
+two_footprints_touching-F_Cu.gtl be15e2bb
+two_footprints_touching-B_Cu.gbl 5a2bbb13
+B sub qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
+drc_missing_tuning_profile-F_Silkscreen.gto 1d927d28
+drc_missing_tuning_profile-B_Silkscreen.gbo 3dd2063d
+B sub_cl qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
+drc_missing_tuning_profile-F_Cu.gtl 5f2f3773
+drc_missing_tuning_profile-B_Cu.gbl 4ab0aee4
+B sub qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
+test_drc_net_chain_tuning_profiles-F_Silkscreen.gto a52c6884
+test_drc_net_chain_tuning_profiles-B_Silkscreen.gbo 244308d8
+B sub_cl qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
+test_drc_net_chain_tuning_profiles-F_Cu.gtl 099fcabf
+test_drc_net_chain_tuning_profiles-B_Cu.gbl 8e89859d
+B sub qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+drc_skew-F_Silkscreen.gto 0353c8c9
+drc_skew-B_Silkscreen.gbo d455af37
+B sub_cl qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+drc_skew-F_Cu.gtl 9eb1b282
+drc_skew-B_Cu.gbl fe6e972a
+B sub qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
+ALoneMicroviaMayBeUnfilled-F_Silkscreen.gto 30b99470
+ALoneMicroviaMayBeUnfilled-B_Silkscreen.gbo 94c03805
+B sub_cl qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
+ALoneMicroviaMayBeUnfilled-F_Cu.gtl be08edc7
+ALoneMicroviaMayBeUnfilled-B_Cu.gbl eab19678
+B sub qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
+ASecondHopSharingALandingViaIsStillChecked-F_Silkscreen.gto 5be66a31
+ASecondHopSharingALandingViaIsStillChecked-B_Silkscreen.gbo 087c02aa
+B sub_cl qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
+ASecondHopSharingALandingViaIsStillChecked-F_Cu.gtl a8975e53
+ASecondHopSharingALandingViaIsStillChecked-B_Cu.gbl 61776c74
+B sub qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
+AViaCarriedTwiceIsReportedOnce-F_Silkscreen.gto ab777f7f
+AViaCarriedTwiceIsReportedOnce-B_Silkscreen.gbo b16fac2a
+B sub_cl qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
+AViaCarriedTwiceIsReportedOnce-F_Cu.gtl 7c737707
+AViaCarriedTwiceIsReportedOnce-B_Cu.gbl b106305a
+B sub qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
+ClearOfTheViaBelowIsAStaggerNotAStack-F_Silkscreen.gto ce7612c8
+ClearOfTheViaBelowIsAStaggerNotAStack-B_Silkscreen.gbo 082ad5f1
+B sub_cl qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
+ClearOfTheViaBelowIsAStaggerNotAStack-F_Cu.gtl a3bb2c55
+ClearOfTheViaBelowIsAStaggerNotAStack-B_Cu.gbl cacda9da
+B sub qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
+CoaxialButSeparatedMicroviasAreNotOneStack-F_Silkscreen.gto 48229edf
+CoaxialButSeparatedMicroviasAreNotOneStack-B_Silkscreen.gbo 9381478c
+B sub_cl qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
+CoaxialButSeparatedMicroviasAreNotOneStack-F_Cu.gtl f9575d41
+CoaxialButSeparatedMicroviasAreNotOneStack-B_Cu.gbl 977494d7
+B sub qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
+EveryHopOfAStackMustBeFilled-F_Silkscreen.gto 87634169
+EveryHopOfAStackMustBeFilled-B_Silkscreen.gbo 4fa9fe4d
+B sub_cl qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
+EveryHopOfAStackMustBeFilled-F_Cu.gtl 5d998334
+EveryHopOfAStackMustBeFilled-B_Cu.gbl 962b27a8
+B sub qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
+FillFromBoardHonoursTheBoardDefault-F_Silkscreen.gto 0c53d50c
+FillFromBoardHonoursTheBoardDefault-B_Silkscreen.gbo 997d01de
+B sub_cl qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
+FillFromBoardHonoursTheBoardDefault-F_Cu.gtl c3e52c53
+FillFromBoardHonoursTheBoardDefault-B_Cu.gbl c6dec6aa
+B sub qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
+GeneratorStackIsNotReportedTwice-F_Silkscreen.gto a8f4c67c
+GeneratorStackIsNotReportedTwice-B_Silkscreen.gbo 958850ed
+B sub_cl qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
+GeneratorStackIsNotReportedTwice-F_Cu.gtl 226864ba
+GeneratorStackIsNotReportedTwice-B_Cu.gbl 28f5dd54
+B sub qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
+LooseStackedMicroviasReportDepth-F_Silkscreen.gto 5856d48e
+LooseStackedMicroviasReportDepth-B_Silkscreen.gbo 797f2e2e
+B sub_cl qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
+LooseStackedMicroviasReportDepth-F_Cu.gtl a0443041
+LooseStackedMicroviasReportDepth-B_Cu.gbl 20fd2979
+B sub qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
+LooseStackedMicroviasReportNotFilled-F_Silkscreen.gto d2614c9d
+LooseStackedMicroviasReportNotFilled-B_Silkscreen.gbo 5b7cd3b3
+B sub_cl qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
+LooseStackedMicroviasReportNotFilled-F_Cu.gtl 53e99f26
+LooseStackedMicroviasReportNotFilled-B_Cu.gbl a6315f93
+B sub qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
+MicroviaStackDepthRuleIsHonoured-F_Silkscreen.gto 7604478d
+MicroviaStackDepthRuleIsHonoured-B_Silkscreen.gbo 80f4c8d6
+B sub_cl qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
+MicroviaStackDepthRuleIsHonoured-F_Cu.gtl a15a65a7
+MicroviaStackDepthRuleIsHonoured-B_Cu.gbl 4581aec6
+B sub qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
+OverlappingButOffsetMicroviasAreOneStructure-F_Silkscreen.gto 07130dfc
+OverlappingButOffsetMicroviasAreOneStructure-B_Silkscreen.gbo 99c640b7
+B sub_cl qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
+OverlappingButOffsetMicroviasAreOneStructure-F_Cu.gtl cf057847
+OverlappingButOffsetMicroviasAreOneStructure-B_Cu.gbl 0974a456
+B sub qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
+StackNotTilingItsSpanReported-F_Silkscreen.gto d46fec9e
+StackNotTilingItsSpanReported-B_Silkscreen.gbo 50ccfdde
+B sub_cl qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
+StackNotTilingItsSpanReported-F_Cu.gtl 446fddbc
+StackNotTilingItsSpanReported-B_Cu.gbl 9c63a89b
+B sub qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
+StackTooDeepReported-F_Silkscreen.gto b36cf761
+StackTooDeepReported-B_Silkscreen.gbo 2fca08a0
+B sub_cl qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
+StackTooDeepReported-F_Cu.gtl 15f72abd
+StackTooDeepReported-B_Cu.gbl 80aa7a6d
+B sub qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
+TouchingHolesFormAColumn-F_Silkscreen.gto be74e172
+TouchingHolesFormAColumn-B_Silkscreen.gbo 28902c70
+B sub_cl qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
+TouchingHolesFormAColumn-F_Cu.gtl 5e15a80e
+TouchingHolesFormAColumn-B_Cu.gbl ac59e9d4
+B sub qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
+UnfilledInnerHopReported-F_Silkscreen.gto 9e77606c
+UnfilledInnerHopReported-B_Silkscreen.gbo d16f7967
+B sub_cl qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
+UnfilledInnerHopReported-F_Cu.gtl 237f97d4
+UnfilledInnerHopReported-B_Cu.gbl 788cd86c
+B sub qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
+ZeroSpanMicroviasDoNotMultiplyViolations-F_Silkscreen.gto 91f61a51
+ZeroSpanMicroviasDoNotMultiplyViolations-B_Silkscreen.gbo cebd02d1
+B sub_cl qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
+ZeroSpanMicroviasDoNotMultiplyViolations-F_Cu.gtl 58f1e419
+ZeroSpanMicroviasDoNotMultiplyViolations-B_Cu.gbl 11131691
+B sub qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+embedded_table_rotated_legacy_v10-F_Silkscreen.gto f8f61ef8
+embedded_table_rotated_legacy_v10-B_Silkscreen.gbo ff165144
+B sub_cl qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+embedded_table_rotated_legacy_v10-F_Cu.gtl 203804f2
+embedded_table_rotated_legacy_v10-B_Cu.gbl 51425c4d
+B sub qa/data/pcbnew/fill_bad.kicad_pcb
+fill_bad-F_Silkscreen.gto 99a8160c
+fill_bad-B_Silkscreen.gbo a1cc1cf8
+B sub_cl qa/data/pcbnew/fill_bad.kicad_pcb
+fill_bad-F_Cu.gtl 45d193ed
+fill_bad-B_Cu.gbl c6cdfa8a
+B sub qa/data/pcbnew/footprints_load_save.kicad_pcb
+footprints_load_save-F_Silkscreen.gto c7ab952f
+footprints_load_save-B_Silkscreen.gbo 1ebf7da1
+B sub_cl qa/data/pcbnew/footprints_load_save.kicad_pcb
+footprints_load_save-F_Cu.gtl a4487200
+footprints_load_save-B_Cu.gbl c8b9f3c0
+B sub qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
+graphics_load_save_v20240108-F_Silkscreen.gto 9bfdb418
+graphics_load_save_v20240108-B_Silkscreen.gbo d6953039
+B sub_cl qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
+graphics_load_save_v20240108-F_Cu.gtl 07a7b06b
+graphics_load_save_v20240108-B_Cu.gbl 500e65c4
+B sub qa/data/pcbnew/groups_load_save.kicad_pcb
+groups_load_save-F_Silkscreen.gto 09878759
+groups_load_save-B_Silkscreen.gbo 441f037a
+B sub_cl qa/data/pcbnew/groups_load_save.kicad_pcb
+groups_load_save-F_Cu.gtl deb34ff1
+groups_load_save-B_Cu.gbl 9ef1e0bc
+B sub qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
+groups_load_save_v20231212-F_Silkscreen.gto fdaba3c6
+groups_load_save_v20231212-B_Silkscreen.gbo e4b05f6c
+B sub_cl qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
+groups_load_save_v20231212-F_Cu.gtl c3b1a842
+groups_load_save_v20231212-B_Cu.gbl fbd5bfb5
+B sub qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
+hatch_thermal_connectivity-F_Silkscreen.gto 2b00be7d
+hatch_thermal_connectivity-B_Silkscreen.gbo 2dad9365
+B sub_cl qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
+hatch_thermal_connectivity-F_Cu.gtl 2c009645
+hatch_thermal_connectivity-B_Cu.gbl ce1119de
+B sub qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
+incorrect_text_mirroring_drc-F_Silkscreen.gto fcfc7fb7
+incorrect_text_mirroring_drc-B_Silkscreen.gbo 33097140
+B sub_cl qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
+incorrect_text_mirroring_drc-F_Cu.gtl bdf4259c
+incorrect_text_mirroring_drc-B_Cu.gbl f20cb7b7
+B sub qa/data/pcbnew/intersectingzones.kicad_pcb
+intersectingzones-F_Silkscreen.gto b5d75dd5
+intersectingzones-B_Silkscreen.gbo 9628b2f5
+B sub_cl qa/data/pcbnew/intersectingzones.kicad_pcb
+intersectingzones-F_Cu.gtl 82d45136
+intersectingzones-B_Cu.gbl eea60b46
+B sub qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
+dielectric-sublayer-F_Silkscreen.gto 9b440015
+B sub_cl qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
+dielectric-sublayer-F_Cu.gtl 26bad4b7
+dielectric-sublayer-B_Cu.gbl 9c136d82
+B sub qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
+edgecuts-circles-only-F_Silkscreen.gto 5c1b7da9
+B sub_cl qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
+edgecuts-circles-only-F_Cu.gtl cada2064
+edgecuts-circles-only-B_Cu.gbl 9efe9f1a
+B sub qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
+filled-silk-circle-F_Silkscreen.gto 1010bcd3
+B sub_cl qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
+filled-silk-circle-F_Cu.gtl 710f328c
+filled-silk-circle-B_Cu.gbl addd4047
+B sub qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
+filled-tented-via-F_Silkscreen.gto a026cd70
+B sub_cl qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
+filled-tented-via-F_Cu.gtl 35ae74e8
+filled-tented-via-B_Cu.gbl db4fea16
+B sub qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
+B sub_cl qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
+netted_unnumbered-M1.gtl 3a0266ea
+netted_unnumbered-M2.gbl bb798c40
+B sub qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
+round_unequal_drill-F_Silkscreen.gto 0b8b3e59
+round_unequal_drill-B_Silkscreen.gbo 99ed95f9
+B sub_cl qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
+round_unequal_drill-F_Cu.gtl c2906558
+round_unequal_drill-B_Cu.gbl 9e882f00
+B sub qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
+textbox-border-F_Silkscreen.gto c8604511
+B sub_cl qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
+textbox-border-F_Cu.gtl 18157b7a
+textbox-border-B_Cu.gbl 7340cf78
+B sub qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
+B sub_cl qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
+thirty-copper-layers-F_Cu.gtl 65b6a771
+thirty-copper-layers-B_Cu.gbl 659ef848
+B sub qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
+user10-content-F_Silkscreen.gto f715234c
+user10-content-B_Silkscreen.gbo 5a6739dd
+B sub_cl qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
+user10-content-F_Cu.gtl 8ac4a69b
+user10-content-B_Cu.gbl a3293b20
+B sub qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
+whitespace-text-F_Silkscreen.gto 172268d9
+B sub_cl qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
+whitespace-text-F_Cu.gtl cc07007b
+whitespace-text-B_Cu.gbl 4af485e2
+B sub qa/data/pcbnew/issue10697.kicad_pcb
+issue10697-F_Silkscreen.gto ba278765
+issue10697-B_Silkscreen.gbo 4a2d9e22
+B sub_cl qa/data/pcbnew/issue10697.kicad_pcb
+issue10697-TOP.gtl c628cbf6
+issue10697-BOTTOM.gbl 774635b0
+B sub qa/data/pcbnew/issue10906.kicad_pcb
+issue10906-F_Silkscreen.gto 1a97abaa
+issue10906-B_Silkscreen.gbo 3c4bb557
+B sub_cl qa/data/pcbnew/issue10906.kicad_pcb
+issue10906-F_Cu.gtl cfaa54a6
+issue10906-B_Cu.gbl 25e3a92a
+B sub qa/data/pcbnew/issue10916.kicad_pcb
+issue10916-F_Silkscreen.gto dd91aec0
+issue10916-B_Silkscreen.gbo cd4339f9
+B sub_cl qa/data/pcbnew/issue10916.kicad_pcb
+issue10916-F_Cu.gtl 55025186
+issue10916-B_Cu.gbl 0b1173e0
+B sub qa/data/pcbnew/issue12109.kicad_pcb
+issue12109-F_Silkscreen.gto 93ad070c
+issue12109-B_Silkscreen.gbo 033da9b1
+B sub_cl qa/data/pcbnew/issue12109.kicad_pcb
+issue12109-F_Cu.gtl a90ff96b
+issue12109-B_Cu.gbl 21c6604d
+B sub qa/data/pcbnew/issue12831.kicad_pcb
+issue12831-F_Silkscreen.gto f0e42d6d
+issue12831-B_Silkscreen.gbo 5a7ac8ee
+B sub_cl qa/data/pcbnew/issue12831.kicad_pcb
+issue12831-F_Cu.gtl 6ea2b915
+issue12831-B_Cu.gbl 3007ab55
+B sub qa/data/pcbnew/issue12964/issue12964.kicad_pcb
+issue12964-F_Silkscreen.gto 3066c84b
+issue12964-B_Silkscreen.gbo 51cefa09
+B sub_cl qa/data/pcbnew/issue12964/issue12964.kicad_pcb
+issue12964-Top_layer.gtl 3335758c
+issue12964-Bottom_layer.gbl 8be927f1
+B sub qa/data/pcbnew/issue1358.kicad_pcb
+issue1358-F_Silkscreen.gto af6fc97b
+issue1358-B_Silkscreen.gbo 8fef87b2
+B sub_cl qa/data/pcbnew/issue1358.kicad_pcb
+issue1358-F_Cu.gtl ae214628
+issue1358-B_Cu.gbl 3ed9a9f3
+B sub qa/data/pcbnew/issue14008.kicad_pcb
+issue14008-F_Silkscreen.gto d28d9345
+issue14008-B_Silkscreen.gbo ae3a3998
+B sub_cl qa/data/pcbnew/issue14008.kicad_pcb
+issue14008-F_Cu.gtl 0f65b414
+issue14008-B_Cu.gbl 23035257
+B sub qa/data/pcbnew/issue14130.kicad_pcb
+issue14130-F_Silkscreen.gto 1f7ab7d6
+issue14130-B_Silkscreen.gbo 5f0cf070
+B sub_cl qa/data/pcbnew/issue14130.kicad_pcb
+issue14130-F_Cu.gtl e3bdc735
+issue14130-B_Cu.gbl 1cf684c0
+B sub qa/data/pcbnew/issue14294.kicad_pcb
+issue14294-F_Silkscreen.gto 2f3783a9
+issue14294-B_Silkscreen.gbo 7f411f44
+B sub_cl qa/data/pcbnew/issue14294.kicad_pcb
+issue14294-F_Cu.gtl fad1091b
+issue14294-B_Cu.gbl 9bd277a1
+B sub qa/data/pcbnew/issue14334.kicad_pcb
+issue14334-F_Silkscreen.gto 5a22db37
+issue14334-B_Silkscreen.gbo f1e4400f
+B sub_cl qa/data/pcbnew/issue14334.kicad_pcb
+issue14334-F_Cu.gtl e02cc012
+issue14334-B_Cu.gbl 7f59b55a
+B sub qa/data/pcbnew/issue14412.kicad_pcb
+issue14412-F_Silkscreen.gto 0fcbaee7
+issue14412-B_Silkscreen.gbo f2179121
+B sub_cl qa/data/pcbnew/issue14412.kicad_pcb
+issue14412-F_Cu.gtl f852f128
+issue14412-B_Cu.gbl 9194c6ac
+B sub qa/data/pcbnew/issue14449.kicad_pcb
+issue14449-F_Silkscreen.gto c4bdc630
+issue14449-B_Silkscreen.gbo 8f6a11a7
+B sub_cl qa/data/pcbnew/issue14449.kicad_pcb
+issue14449-F_Cu.gtl 5ef268c4
+issue14449-B_Cu.gbl c49e6707
+B sub qa/data/pcbnew/issue14549_2.kicad_pcb
+issue14549_2-F_Silkscreen.gto cb77819c
+issue14549_2-B_Silkscreen.gbo a7e290a5
+B sub_cl qa/data/pcbnew/issue14549_2.kicad_pcb
+issue14549_2-F_Cu.gtl 56b0d0fe
+issue14549_2-B_Cu.gbl d2495f98
+B sub qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
+KiCAD_Fiducial-F_Silkscreen.gto 615d0deb
+KiCAD_Fiducial-B_Silkscreen.gbo 5d090bfe
+B sub_cl qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
+KiCAD_Fiducial-F_Cu.gtl 7a6aab9b
+KiCAD_Fiducial-B_Cu.gbl f9ec7821
+B sub qa/data/pcbnew/issue15280.kicad_pcb
+issue15280-F_Silkscreen.gto cc46b8b1
+issue15280-B_Silkscreen.gbo b7925b89
+B sub_cl qa/data/pcbnew/issue15280.kicad_pcb
+issue15280-F_Cu.gtl 1bad03bc
+issue15280-B_Cu.gbl 2517148a
+B sub qa/data/pcbnew/issue16182.kicad_pcb
+issue16182-F_Silkscreen.gto d545483e
+issue16182-B_Silkscreen.gbo d2cee41a
+B sub_cl qa/data/pcbnew/issue16182.kicad_pcb
+issue16182-F_Cu.gtl e1cb6927
+issue16182-B_Cu.gbl 61f94519
+B sub qa/data/pcbnew/issue16566.kicad_pcb
+issue16566-F_Silkscreen.gto b496d308
+issue16566-B_Silkscreen.gbo 8559450d
+B sub_cl qa/data/pcbnew/issue16566.kicad_pcb
+issue16566-F_Cu.gtl a9224a7c
+issue16566-B_Cu.gbl 629e3edc
+B sub qa/data/pcbnew/issue16658/issue16658.kicad_pcb
+B sub_cl qa/data/pcbnew/issue16658/issue16658.kicad_pcb
+issue16658-M1.gtl ee85c2b1
+issue16658-M2.gbl 5de12eae
+B sub qa/data/pcbnew/issue17559.kicad_pcb
+issue17559-F_Silkscreen.gto 6741eb81
+issue17559-B_Silkscreen.gbo 87fb49f4
+B sub_cl qa/data/pcbnew/issue17559.kicad_pcb
+issue17559-F_Cu.gtl d3626b8c
+issue17559-B_Cu.gbl 04f8ace3
+B sub qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+issue17967-F_Silkscreen.gto 2bf98ccb
+issue17967-B_Silkscreen.gbo 88c6f199
+B sub_cl qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+issue17967-F_Cu.gtl 7877bb5e
+issue17967-B_Cu.gbl 98ee2082
+B sub qa/data/pcbnew/issue17971/issue17971.kicad_pcb
+issue17971-F_Silkscreen.gto d78eb944
+issue17971-B_Silkscreen.gbo 44465da2
+B sub_cl qa/data/pcbnew/issue17971/issue17971.kicad_pcb
+issue17971-F_Cu.gtl 5317fbee
+issue17971-B_Cu.gbl c3b89b86
+B sub qa/data/pcbnew/issue18.kicad_pcb
+issue18-F_Silkscreen.gto 94137495
+issue18-B_Silkscreen.gbo dc47fe59
+B sub_cl qa/data/pcbnew/issue18.kicad_pcb
+issue18-F_Cu.gtl 12ac1c13
+issue18-B_Cu.gbl a3883b12
+B sub qa/data/pcbnew/issue18045/test_proj.kicad_pcb
+test_proj-F_Silkscreen.gto caf475f7
+test_proj-B_Silkscreen.gbo 446c1f19
+B sub_cl qa/data/pcbnew/issue18045/test_proj.kicad_pcb
+test_proj-F_Cu.gtl 94a54023
+test_proj-B_Cu.gbl 11b3cccd
+B sub qa/data/pcbnew/issue18142.kicad_pcb
+issue18142-F_Silkscreen.gto 7e0e9624
+issue18142-B_Silkscreen.gbo e160acb6
+B sub_cl qa/data/pcbnew/issue18142.kicad_pcb
+issue18142-F_Cu.gtl e8efa950
+issue18142-B_Cu.gbl 21720af8
+B sub qa/data/pcbnew/issue18203.kicad_pcb
+issue18203-F_Silkscreen.gto ae4aa73d
+issue18203-B_Silkscreen.gbo b2b981f4
+B sub_cl qa/data/pcbnew/issue18203.kicad_pcb
+issue18203-F_Cu.gtl 662594b9
+issue18203-B_Cu.gbl d4afab00
+B sub qa/data/pcbnew/issue18839.kicad_pcb
+B sub_cl qa/data/pcbnew/issue18839.kicad_pcb
+issue18839-F_Cu.gtl 27519ef7
+issue18839-B_Cu.gbl f87399d0
+B sub qa/data/pcbnew/issue18878.kicad_pcb
+issue18878-F_Silkscreen.gto 21bbf1b8
+issue18878-B_Silkscreen.gbo d79886f6
+B sub_cl qa/data/pcbnew/issue18878.kicad_pcb
+issue18878-F_Cu.gtl b56b934c
+issue18878-B_Cu.gbl 51df9a14
+B sub qa/data/pcbnew/issue19090/issue19090.kicad_pcb
+issue19090-F_Silkscreen.gto 0f370e07
+issue19090-B_Silkscreen.gbo 89caa76f
+B sub_cl qa/data/pcbnew/issue19090/issue19090.kicad_pcb
+issue19090-F_Cu.gtl ab3ca22b
+issue19090-B_Cu.gbl 742b6316
+B sub qa/data/pcbnew/issue19325/issue19325.kicad_pcb
+issue19325-F_Silkscreen.gto a715288b
+issue19325-B_Silkscreen.gbo aa002eb3
+B sub_cl qa/data/pcbnew/issue19325/issue19325.kicad_pcb
+issue19325-F_Cu.gtl 2f30be78
+issue19325-B_Cu.gbl 5d454a2a
+B sub qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
+issue19405_roundrect_teardrop-F_Silkscreen.gto 49ec6fd4
+issue19405_roundrect_teardrop-B_Silkscreen.gbo 6b63f047
+B sub_cl qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
+issue19405_roundrect_teardrop-F_Cu.gtl 35684c77
+issue19405_roundrect_teardrop-B_Cu.gbl e50d7326
+B sub qa/data/pcbnew/issue19574.kicad_pcb
+issue19574-F_Silkscreen.gto cea0fafc
+issue19574-B_Silkscreen.gbo 92118027
+B sub_cl qa/data/pcbnew/issue19574.kicad_pcb
+issue19574-F_Cu.gtl ca18e867
+issue19574-B_Cu.gbl f2f41b9c
+B sub qa/data/pcbnew/issue19956/issue19956.kicad_pcb
+issue19956-F_Silkscreen.gto e333bbf7
+issue19956-B_Silkscreen.gbo e477f748
+B sub_cl qa/data/pcbnew/issue19956/issue19956.kicad_pcb
+issue19956-F_Cu.gtl cb75ac2f
+issue19956-B_Cu.gbl 63636cf7
+B sub qa/data/pcbnew/issue20249/dimension.kicad_pcb
+dimension-F_Silkscreen.gto 81a78e71
+dimension-B_Silkscreen.gbo 2b40af2f
+B sub_cl qa/data/pcbnew/issue20249/dimension.kicad_pcb
+dimension-F_Cu.gtl 072b3399
+dimension-B_Cu.gbl 51aa529e
+B sub qa/data/pcbnew/issue20480/issue20480.kicad_pcb
+issue20480-F_Silkscreen.gto 583da98b
+issue20480-B_Silkscreen.gbo 1e7caabc
+B sub_cl qa/data/pcbnew/issue20480/issue20480.kicad_pcb
+issue20480-F_Cu.gtl 19706607
+issue20480-B_Cu.gbl 205873c8
+B sub qa/data/pcbnew/issue21184/issue21184.kicad_pcb
+issue21184-F_Silkscreen.gto 867e6ae6
+issue21184-B_Silkscreen.gbo d4661519
+B sub_cl qa/data/pcbnew/issue21184/issue21184.kicad_pcb
+issue21184-F_Cu.gtl 568a4aee
+issue21184-B_Cu.gbl 146d1796
+B sub qa/data/pcbnew/issue21564/issue21564.kicad_pcb
+issue21564-F_Silkscreen.gto 9a7a58ec
+issue21564-B_Silkscreen.gbo 236b1204
+B sub_cl qa/data/pcbnew/issue21564/issue21564.kicad_pcb
+issue21564-F_Cu.gtl 389232be
+issue21564-B_Cu.gbl 1353ac25
+B sub qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
+topology_mismatch-F_Silkscreen.gto 6b829e9b
+topology_mismatch-B_Silkscreen.gbo 4f2989f4
+B sub_cl qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
+topology_mismatch-F_Cu.gtl 63a284b3
+topology_mismatch-B_Cu.gbl 7a0bd1d5
+B sub qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+issue21746-F_Silkscreen.gto 722b992f
+issue21746-B_Silkscreen.gbo 1546c4c9
+B sub_cl qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+issue21746-F_Cu.gtl 562d0b20
+issue21746-B_Cu.gbl dbe8f4d8
+B sub qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+issue22010-F_Silkscreen.gto 11b93698
+issue22010-B_Silkscreen.gbo d64cc5c7
+B sub_cl qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+issue22010-F_Cu.gtl a6870c7a
+issue22010-B_Cu.gbl 7821ab74
+B sub qa/data/pcbnew/issue22102.kicad_pcb
+issue22102-F_Silkscreen.gto f170b225
+issue22102-B_Silkscreen.gbo f4b893b2
+B sub_cl qa/data/pcbnew/issue22102.kicad_pcb
+issue22102-F_Cu.gtl 90325a47
+issue22102-B_Cu.gbl 726f78e9
+B sub qa/data/pcbnew/issue22267.kicad_pcb
+issue22267-F_Silkscreen.gto 63ceee0d
+issue22267-B_Silkscreen.gbo 78ac76c1
+B sub_cl qa/data/pcbnew/issue22267.kicad_pcb
+issue22267-F_Cu.gtl 51a6f1d7
+issue22267-B_Cu.gbl b236d052
+B sub qa/data/pcbnew/issue22316/issue22316.kicad_pcb
+issue22316-F_Silkscreen.gto 2539a705
+issue22316-B_Silkscreen.gbo aee397c9
+B sub_cl qa/data/pcbnew/issue22316/issue22316.kicad_pcb
+issue22316-F_Cu.gtl d5557622
+issue22316-B_Cu.gbl 290a7ff2
+B sub qa/data/pcbnew/issue22318/issue22318.kicad_pcb
+issue22318-F_Silkscreen.gto 2452d9d6
+issue22318-B_Silkscreen.gbo e62fa21f
+B sub_cl qa/data/pcbnew/issue22318/issue22318.kicad_pcb
+issue22318-F_Cu.gtl 8928acf3
+issue22318-B_Cu.gbl f49e9b22
+B sub qa/data/pcbnew/issue22536.kicad_pcb
+issue22536-F_Silkscreen.gto 1f850df2
+issue22536-B_Silkscreen.gbo 4fb3b90d
+B sub_cl qa/data/pcbnew/issue22536.kicad_pcb
+issue22536-F_Cu.gtl 47f67c18
+issue22536-B_Cu.gbl 42c34914
+B sub qa/data/pcbnew/issue22548/issue22548.kicad_pcb
+issue22548-F_Silkscreen.gto e1ac7eb4
+issue22548-B_Silkscreen.gbo bf7ea33e
+B sub_cl qa/data/pcbnew/issue22548/issue22548.kicad_pcb
+issue22548-F_Cu.gtl f121554b
+issue22548-B_Cu.gbl a2afecfb
+B sub qa/data/pcbnew/issue22597/issue22597.kicad_pcb
+issue22597-F_Silkscreen.gto 76666bb8
+issue22597-B_Silkscreen.gbo 25b40717
+B sub_cl qa/data/pcbnew/issue22597/issue22597.kicad_pcb
+issue22597-F_Cu.gtl 2d186cdb
+issue22597-B_Cu.gbl 45793779
+B sub qa/data/pcbnew/issue22751/issue22751.kicad_pcb
+issue22751-F_Silkscreen.gto bb324c86
+issue22751-B_Silkscreen.gbo f43c4db6
+B sub_cl qa/data/pcbnew/issue22751/issue22751.kicad_pcb
+issue22751-F_Cu.gtl f8d2681f
+issue22751-B_Cu.gbl 75ad00c8
+B sub qa/data/pcbnew/issue22794.kicad_pcb
+issue22794-F_Silkscreen.gto e2f36ea5
+issue22794-B_Silkscreen.gbo 0159d790
+B sub_cl qa/data/pcbnew/issue22794.kicad_pcb
+issue22794-F_Cu.gtl d91fe040
+issue22794-B_Cu.gbl 9b48be99
+B sub qa/data/pcbnew/issue22798.kicad_pcb
+issue22798-F_Silkscreen.gto 505ac6fd
+issue22798-B_Silkscreen.gbo cce4dd85
+B sub_cl qa/data/pcbnew/issue22798.kicad_pcb
+issue22798-F_Cu.gtl 2f52628b
+issue22798-B_Cu.gbl 3bb7e6f8
+B sub qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+issue22809-F_Silkscreen.gto 83ecb111
+issue22809-B_Silkscreen.gbo 0dc19ddb
+B sub_cl qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+issue22809-F_Cu.gtl e2853d3a
+issue22809-B_Cu.gbl 0fdb7121
+B sub qa/data/pcbnew/issue22983/issue22983.kicad_pcb
+issue22983-F_Silkscreen.gto 9f106a50
+issue22983-B_Silkscreen.gbo 14130828
+B sub_cl qa/data/pcbnew/issue22983/issue22983.kicad_pcb
+issue22983-F_Cu.gtl 3c94da04
+issue22983-B_Cu.gbl 0b3838aa
+B sub qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+issue23053-F_Silkscreen.gto f6caf20c
+issue23053-B_Silkscreen.gbo fc9c3fb3
+B sub_cl qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+issue23053-F_Cu.gtl ea491df8
+issue23053-B_Cu.gbl 3f8e056c
+B sub qa/data/pcbnew/issue23123_minimal.kicad_pcb
+B sub_cl qa/data/pcbnew/issue23123_minimal.kicad_pcb
+issue23123_minimal-F_Cu.gtl 0b7a5059
+issue23123_minimal-B_Cu.gbl 468022b5
+B sub qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
+B sub_cl qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
+issue23332_min_width-F_Cu.gtl d1db0158
+issue23332_min_width-B_Cu.gbl 85825e2b
+B sub qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
+issue23339_zone_layer_rules-F_Silkscreen.gto 4634e259
+issue23339_zone_layer_rules-B_Silkscreen.gbo 500f87ec
+B sub_cl qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
+issue23339_zone_layer_rules-F_Cu.gtl 4c90a7f0
+issue23339_zone_layer_rules-B_Cu.gbl 28d3d047
+B sub qa/data/pcbnew/issue23389/issue23389.kicad_pcb
+issue23389-F_Silkscreen.gto 970038fc
+issue23389-B_Silkscreen.gbo c960a33b
+B sub_cl qa/data/pcbnew/issue23389/issue23389.kicad_pcb
+issue23389-F_Cu.gtl 54b4629e
+issue23389-B_Cu.gbl 18d4652f
+B sub qa/data/pcbnew/issue23418/testing.kicad_pcb
+testing-F_Silkscreen.gto 5dc6a0aa
+testing-B_Silkscreen.gbo 60be75af
+B sub_cl qa/data/pcbnew/issue23418/testing.kicad_pcb
+testing-F_Cu.gtl fe3602b2
+testing-B_Cu.gbl 432b666d
+B sub qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
+B sub_cl qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
+testing-F_Cu.gtl 0c119a24
+testing-B_Cu.gbl 432b666d
+B sub qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
+3Rs_bv-F_Silkscreen.gto e52f8d06
+3Rs_bv-B_Silkscreen.gbo b594b075
+B sub_cl qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
+3Rs_bv-F_Cu.gtl 340ef863
+3Rs_bv-B_Cu.gbl b7996ef0
+B sub qa/data/pcbnew/issue23467/issue23467.kicad_pcb
+B sub_cl qa/data/pcbnew/issue23467/issue23467.kicad_pcb
+issue23467-F_Cu.gtl f674afc0
+issue23467-B_Cu.gbl fd2d4504
+B sub qa/data/pcbnew/issue23469/issue23469.kicad_pcb
+issue23469-F_Silkscreen.gto fa5be1a8
+issue23469-B_Silkscreen.gbo 0297195f
+B sub_cl qa/data/pcbnew/issue23469/issue23469.kicad_pcb
+issue23469-F_Cu.gtl ab539226
+issue23469-B_Cu.gbl 24a05cc5
+B sub qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
+issue23535_minimal-F_Silkscreen.gto 1cac8524
+issue23535_minimal-B_Silkscreen.gbo a7f234a6
+B sub_cl qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
+issue23535_minimal-F_Cu.gtl cc65a40e
+issue23535_minimal-B_Cu.gbl 385331f5
+B sub qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+issue23550-F_Silkscreen.gto f2f9d7f5
+issue23550-B_Silkscreen.gbo e026bb6e
+B sub_cl qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+issue23550-F_Cu.gtl a66e55c6
+issue23550-B_Cu.gbl 19908598
+B sub qa/data/pcbnew/issue23578/issue23578.kicad_pcb
+issue23578-F_Silkscreen.gto 15d3f081
+issue23578-B_Silkscreen.gbo b302ce91
+B sub_cl qa/data/pcbnew/issue23578/issue23578.kicad_pcb
+issue23578-F_Cu.gtl 4ac61c94
+issue23578-B_Cu.gbl 3e9e5903
+B sub qa/data/pcbnew/issue23658/issue23658.kicad_pcb
+issue23658-F_Silkscreen.gto c29ba8e2
+issue23658-B_Silkscreen.gbo 4f8765c9
+B sub_cl qa/data/pcbnew/issue23658/issue23658.kicad_pcb
+issue23658-F_Cu.gtl 2d1ef584
+issue23658-B_Cu.gbl 81cde4d6
+B sub qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
+issue23690_via_in_pad-F_Silkscreen.gto e6136112
+issue23690_via_in_pad-B_Silkscreen.gbo 9707efdb
+B sub_cl qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
+issue23690_via_in_pad-F_Cu.gtl 75793795
+issue23690_via_in_pad-B_Cu.gbl b752dcef
+B sub qa/data/pcbnew/issue23704/issue23704.kicad_pcb
+issue23704-F_Silkscreen.gto ebf3f396
+issue23704-B_Silkscreen.gbo d2844dfe
+B sub_cl qa/data/pcbnew/issue23704/issue23704.kicad_pcb
+issue23704-F_Cu.gtl 56064ada
+issue23704-B_Cu.gbl fcc4876a
+B sub qa/data/pcbnew/issue23790/issue23790.kicad_pcb
+issue23790-F_Silkscreen.gto 321aa75c
+issue23790-B_Silkscreen.gbo ca1967b6
+B sub_cl qa/data/pcbnew/issue23790/issue23790.kicad_pcb
+issue23790-F_Cu.gtl daa3ff17
+issue23790-B_Cu.gbl 8380c328
+B sub qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
+touching_zones-F_Silkscreen.gto c66d9792
+touching_zones-B_Silkscreen.gbo ad24586f
+B sub_cl qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
+touching_zones-F_Cu.gtl 7bbcf970
+touching_zones-B_Cu.gbl 1ef5218b
+B sub qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+issue23851-F_Silkscreen.gto 33d06451
+issue23851-B_Silkscreen.gbo 7a27cf28
+B sub_cl qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+issue23851-F_Cu.gtl 02cb0f4e
+issue23851-B_Cu.gbl 2a2182aa
+B sub qa/data/pcbnew/issue23868/issue23868.kicad_pcb
+issue23868-F_Silkscreen.gto 30935cae
+issue23868-B_Silkscreen.gbo d21c8d92
+B sub_cl qa/data/pcbnew/issue23868/issue23868.kicad_pcb
+issue23868-F_Cu.gtl 4fe02d63
+issue23868-B_Cu.gbl e7abfa88
+B sub qa/data/pcbnew/issue24078/issue24078.kicad_pcb
+issue24078-F_Silkscreen.gto 94a0cdab
+issue24078-B_Silkscreen.gbo 4921a04b
+B sub_cl qa/data/pcbnew/issue24078/issue24078.kicad_pcb
+issue24078-F_Cu.gtl c5d3c9c1
+issue24078-B_Cu.gbl b2f9eb3f
+B sub qa/data/pcbnew/issue24089/issue24089.kicad_pcb
+issue24089-F_Silkscreen.gto 78912112
+issue24089-B_Silkscreen.gbo 5b0b7a20
+B sub_cl qa/data/pcbnew/issue24089/issue24089.kicad_pcb
+issue24089-F_Cu.gtl 990d873e
+issue24089-B_Cu.gbl 0ed62782
+B sub qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
+silk_rule_area-F_Silkscreen.gto 5ae5370c
+silk_rule_area-B_Silkscreen.gbo 9032eec1
+B sub_cl qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
+silk_rule_area-F_Cu.gtl 980d8a59
+silk_rule_area-B_Cu.gbl 339a74ae
+B sub qa/data/pcbnew/issue24192/issue24192.kicad_pcb
+issue24192-F_Silkscreen.gto f16c5230
+issue24192-B_Silkscreen.gbo 175c165e
+B sub_cl qa/data/pcbnew/issue24192/issue24192.kicad_pcb
+issue24192-F_Cu.gtl bc72547c
+issue24192-B_Cu.gbl 383f5472
+B sub qa/data/pcbnew/issue24241/issue24241.kicad_pcb
+issue24241-F_Silkscreen.gto a08fc269
+issue24241-B_Silkscreen.gbo 4e31279b
+B sub_cl qa/data/pcbnew/issue24241/issue24241.kicad_pcb
+issue24241-F_Cu.gtl a58be885
+issue24241-B_Cu.gbl b1d7b88a
+B sub qa/data/pcbnew/issue24264/issue24264.kicad_pcb
+issue24264-F_Silkscreen.gto 4fe1f00a
+issue24264-B_Silkscreen.gbo 3134f83c
+B sub_cl qa/data/pcbnew/issue24264/issue24264.kicad_pcb
+issue24264-F_Cu.gtl 4c5633b4
+issue24264-B_Cu.gbl 701b4dca
+B sub qa/data/pcbnew/issue24286/issue24286.kicad_pcb
+issue24286-F_Silkscreen.gto 848674c1
+issue24286-B_Silkscreen.gbo 04a771f0
+B sub_cl qa/data/pcbnew/issue24286/issue24286.kicad_pcb
+issue24286-F_Cu.gtl 7710941a
+issue24286-B_Cu.gbl 0a8d02ff
+B sub qa/data/pcbnew/issue24312/issue24312.kicad_pcb
+issue24312-F_Silkscreen.gto 3cc9756c
+issue24312-B_Silkscreen.gbo b92481f0
+B sub_cl qa/data/pcbnew/issue24312/issue24312.kicad_pcb
+issue24312-F_Cu.gtl 8b6b1d0c
+issue24312-B_Cu.gbl 7ceb32e2
+B sub qa/data/pcbnew/issue24340/issue24340.kicad_pcb
+issue24340-F_Silkscreen.gto 863872e9
+issue24340-B_Silkscreen.gbo 9f295f76
+B sub_cl qa/data/pcbnew/issue24340/issue24340.kicad_pcb
+issue24340-F_Cu.gtl ba25fd2d
+issue24340-B_Cu.gbl e171c696
+B sub qa/data/pcbnew/issue24355/issue24355.kicad_pcb
+issue24355-F_Silkscreen.gto fb772b0a
+issue24355-B_Silkscreen.gbo 4ad269bd
+B sub_cl qa/data/pcbnew/issue24355/issue24355.kicad_pcb
+issue24355-F_Cu.gtl f49aac38
+issue24355-B_Cu.gbl f98607b4
+B sub qa/data/pcbnew/issue24442.kicad_pcb
+issue24442-F_Silkscreen.gto 4c4ed259
+issue24442-B_Silkscreen.gbo 06371a29
+B sub_cl qa/data/pcbnew/issue24442.kicad_pcb
+issue24442-F_Cu.gtl 228bea19
+issue24442-B_Cu.gbl ba517853
+B sub qa/data/pcbnew/issue24474/issue24474.kicad_pcb
+issue24474-F_Silkscreen.gto 115ffdf8
+issue24474-B_Silkscreen.gbo 544c60c4
+B sub_cl qa/data/pcbnew/issue24474/issue24474.kicad_pcb
+issue24474-F_Cu.gtl f338df60
+issue24474-B_Cu.gbl 1ce1e521
+B sub qa/data/pcbnew/issue24523/issue24523.kicad_pcb
+issue24523-F_Silkscreen.gto 77de9401
+issue24523-B_Silkscreen.gbo a1368e54
+B sub_cl qa/data/pcbnew/issue24523/issue24523.kicad_pcb
+issue24523-F_Cu.gtl 706b943a
+issue24523-B_Cu.gbl 801263fb
+B sub qa/data/pcbnew/issue24525/issue24525.kicad_pcb
+issue24525-F_Silkscreen.gto f193651c
+issue24525-B_Silkscreen.gbo 6ce3eada
+B sub_cl qa/data/pcbnew/issue24525/issue24525.kicad_pcb
+issue24525-F_Cu.gtl 5c14e902
+issue24525-B_Cu.gbl 0afaa558
+B sub qa/data/pcbnew/issue24541/issue24541.kicad_pcb
+issue24541-F_Silkscreen.gto 7ef74e51
+issue24541-B_Silkscreen.gbo b31619f7
+B sub_cl qa/data/pcbnew/issue24541/issue24541.kicad_pcb
+issue24541-F_Cu.gtl b12358cc
+issue24541-B_Cu.gbl 70c7281b
+B sub qa/data/pcbnew/issue24543/issue24543.kicad_pcb
+issue24543-F_Silkscreen.gto 1892a67c
+issue24543-B_Silkscreen.gbo 865e358f
+B sub_cl qa/data/pcbnew/issue24543/issue24543.kicad_pcb
+issue24543-F_Cu.gtl f308b4ad
+issue24543-B_Cu.gbl 977c47a4
+B sub qa/data/pcbnew/issue24544/issue24544.kicad_pcb
+issue24544-F_Silkscreen.gto 1528d9ad
+issue24544-B_Silkscreen.gbo 0158f4b6
+B sub_cl qa/data/pcbnew/issue24544/issue24544.kicad_pcb
+issue24544-F_Cu.gtl 867804b3
+issue24544-B_Cu.gbl 109465d2
+B sub qa/data/pcbnew/issue24597/issue24597.kicad_pcb
+issue24597-F_Silkscreen.gto 316f7885
+issue24597-B_Silkscreen.gbo 69aa88ee
+B sub_cl qa/data/pcbnew/issue24597/issue24597.kicad_pcb
+issue24597-F_Cu.gtl 63e8da82
+issue24597-B_Cu.gbl b475571d
+B sub qa/data/pcbnew/issue24649.kicad_pcb
+issue24649-F_Silkscreen.gto 00053526
+issue24649-B_Silkscreen.gbo 4b63ddd3
+B sub_cl qa/data/pcbnew/issue24649.kicad_pcb
+issue24649-F_Cu.gtl 2c520a54
+issue24649-B_Cu.gbl c9db964d
+B sub qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
+soldermask_shape-F_Silkscreen.gto a88ccff2
+soldermask_shape-B_Silkscreen.gbo 0320c58a
+B sub_cl qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
+soldermask_shape-F_Cu.gtl 9618f65c
+soldermask_shape-B_Cu.gbl 44edb438
+B sub qa/data/pcbnew/issue24735/issue24735.kicad_pcb
+issue24735-F_Silkscreen.gto e002e65a
+issue24735-B_Silkscreen.gbo a63058ef
+B sub_cl qa/data/pcbnew/issue24735/issue24735.kicad_pcb
+issue24735-F_Cu.gtl 0a74e810
+issue24735-B_Cu.gbl ddf51584
+B sub qa/data/pcbnew/issue24758/issue24758.kicad_pcb
+issue24758-F_Silkscreen.gto a72c9244
+issue24758-B_Silkscreen.gbo 81d2588c
+B sub_cl qa/data/pcbnew/issue24758/issue24758.kicad_pcb
+issue24758-F_Cu.gtl 0f1ed3c3
+issue24758-B_Cu.gbl 11f594fe
+B sub qa/data/pcbnew/issue24799/issue24799.kicad_pcb
+issue24799-F_Silkscreen.gto 58762f2d
+issue24799-B_Silkscreen.gbo 601de689
+B sub_cl qa/data/pcbnew/issue24799/issue24799.kicad_pcb
+issue24799-F_Cu.gtl 71f792de
+issue24799-B_Cu.gbl 7f75f089
+B sub qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+issue24835-min-F_Silkscreen.gto fce0b8a5
+issue24835-min-B_Silkscreen.gbo 94200b21
+B sub_cl qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+issue24835-min-F_SIG_Cu.gtl 5e1c8118
+issue24835-min-B_SIG_Cu.gbl 8c277639
+B sub qa/data/pcbnew/issue24853/issue24853.kicad_pcb
+issue24853-F_Silkscreen.gto 8f9c6a4a
+issue24853-B_Silkscreen.gbo a1bbfbfc
+B sub_cl qa/data/pcbnew/issue24853/issue24853.kicad_pcb
+issue24853-F_Cu.gtl cf7feffa
+issue24853-B_Cu.gbl addc6c67
+B sub qa/data/pcbnew/issue24865/issue24865.kicad_pcb
+issue24865-F_Silkscreen.gto 79885619
+issue24865-B_Silkscreen.gbo dc9fa83e
+B sub_cl qa/data/pcbnew/issue24865/issue24865.kicad_pcb
+issue24865-F_Cu.gtl 2a655751
+issue24865-B_Cu.gbl 09772d55
+B sub qa/data/pcbnew/issue24875/issue24875.kicad_pcb
+issue24875-F_Silkscreen.gto c46190f8
+issue24875-B_Silkscreen.gbo fee4386d
+B sub_cl qa/data/pcbnew/issue24875/issue24875.kicad_pcb
+issue24875-F_Cu.gtl dbed3945
+issue24875-B_Cu.gbl 2ccd0363
+B sub qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
+issue24875_capstraight-F_Silkscreen.gto faae4951
+issue24875_capstraight-B_Silkscreen.gbo 3e383f33
+B sub_cl qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
+issue24875_capstraight-F_Cu.gtl 726a3260
+issue24875_capstraight-B_Cu.gbl dc8e887f
+B sub qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
+issue24875_fullround-F_Silkscreen.gto a918ea71
+issue24875_fullround-B_Silkscreen.gbo 570e7888
+B sub_cl qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
+issue24875_fullround-F_Cu.gtl bf6ced0f
+issue24875_fullround-B_Cu.gbl 111b71dc
+B sub qa/data/pcbnew/issue24885/issue24885.kicad_pcb
+issue24885-F_Silkscreen.gto 59044e4e
+issue24885-B_Silkscreen.gbo 3367e4a4
+B sub_cl qa/data/pcbnew/issue24885/issue24885.kicad_pcb
+issue24885-F_Cu.gtl c011ac27
+issue24885-B_Cu.gbl 0829ab87
+B sub qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
+keepout_self_exclude-F_Silkscreen.gto 9129236f
+keepout_self_exclude-B_Silkscreen.gbo 0c705911
+B sub_cl qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
+keepout_self_exclude-F_Cu.gtl f9b414f6
+keepout_self_exclude-B_Cu.gbl 63642e03
+B sub qa/data/pcbnew/issue24935/issue24935.kicad_pcb
+issue24935-F_Silkscreen.gto a00a5e8c
+issue24935-B_Silkscreen.gbo 081f083a
+B sub_cl qa/data/pcbnew/issue24935/issue24935.kicad_pcb
+issue24935-F_Cu.gtl 7589f8f8
+issue24935-B_Cu.gbl cda330e4
+B sub qa/data/pcbnew/issue24974.kicad_pcb
+issue24974-F_Silkscreen.gto ef86b8b3
+issue24974-B_Silkscreen.gbo de7a17bc
+B sub_cl qa/data/pcbnew/issue24974.kicad_pcb
+issue24974-F_Cu.gtl a4fb1150
+issue24974-B_Cu.gbl e75db2fd
+B sub qa/data/pcbnew/issue25021/backdrill.kicad_pcb
+backdrill-F_Silkscreen.gto 15c6c8aa
+backdrill-B_Silkscreen.gbo e335e751
+B sub_cl qa/data/pcbnew/issue25021/backdrill.kicad_pcb
+backdrill-F_Cu.gtl be801cb8
+backdrill-B_Cu.gbl 59e28c80
+B sub qa/data/pcbnew/issue25065/issue25065.kicad_pcb
+issue25065-F_Silkscreen.gto a551bd93
+issue25065-B_Silkscreen.gbo 8083d7dd
+B sub_cl qa/data/pcbnew/issue25065/issue25065.kicad_pcb
+issue25065-F_Cu.gtl e80ea6d8
+issue25065-B_Cu.gbl ba6ffc17
+B sub qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
+knockout_textbox-F_Silkscreen.gto ff88cdf3
+knockout_textbox-B_Silkscreen.gbo f7d6b4f1
+B sub_cl qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
+knockout_textbox-F_Cu.gtl c2fac2e5
+knockout_textbox-B_Cu.gbl 05bd90fd
+B sub qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
+B sub_cl qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
+odb_circle_edge_cases-F_Cu.gtl 743fc728
+odb_circle_edge_cases-B_Cu.gbl 0c912a57
+B sub qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
+B sub_cl qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
+odb_circles-F_Cu.gtl 65a865c8
+odb_circles-B_Cu.gbl 99c4e85c
+B sub qa/data/pcbnew/issue25107/issue25107.kicad_pcb
+issue25107-F_Silkscreen.gto 60c16c58
+issue25107-B_Silkscreen.gbo ccac7b50
+B sub_cl qa/data/pcbnew/issue25107/issue25107.kicad_pcb
+issue25107-F_Cu.gtl 867b01e4
+issue25107-B_Cu.gbl 67dfeb42
+B sub qa/data/pcbnew/issue2512.kicad_pcb
+issue2512-F_Silkscreen.gto b465be0b
+issue2512-B_Silkscreen.gbo daf21c00
+B sub_cl qa/data/pcbnew/issue2512.kicad_pcb
+issue2512-F_Cu.gtl 3ed306e7
+issue2512-B_Cu.gbl 16427168
+B sub qa/data/pcbnew/issue25265.kicad_pcb
+issue25265-F_Silkscreen.gto f09f51a4
+issue25265-B_Silkscreen.gbo 0813d147
+B sub_cl qa/data/pcbnew/issue25265.kicad_pcb
+issue25265-F_Cu.gtl a4d12e30
+issue25265-B_Cu.gbl 05f12455
+B sub qa/data/pcbnew/issue2528.kicad_pcb
+issue2528-F_Silkscreen.gto a6067a68
+issue2528-B_Silkscreen.gbo 9868fadc
+B sub_cl qa/data/pcbnew/issue2528.kicad_pcb
+issue2528-F_Cu.gtl c1022a71
+issue2528-B_Cu.gbl 65877c97
+B sub qa/data/pcbnew/issue25303.kicad_pcb
+issue25303-F_Silkscreen.gto 81f24d09
+issue25303-B_Silkscreen.gbo 55e8a140
+B sub_cl qa/data/pcbnew/issue25303.kicad_pcb
+issue25303-F_Cu.gtl 63e9bcd3
+issue25303-B_Cu.gbl 035887e4
+B sub qa/data/pcbnew/issue25439/issue25439.kicad_pcb
+issue25439-F_Silkscreen.gto 5749391d
+issue25439-B_Silkscreen.gbo 51bb4a9a
+B sub_cl qa/data/pcbnew/issue25439/issue25439.kicad_pcb
+issue25439-F_Cu.gtl 6fc4db1d
+issue25439-B_Cu.gbl 2e47fd89
+B sub qa/data/pcbnew/issue25521_zone_names.kicad_pcb
+issue25521_zone_names-F_Silkscreen.gto 140614f5
+issue25521_zone_names-B_Silkscreen.gbo 7ebd6583
+B sub_cl qa/data/pcbnew/issue25521_zone_names.kicad_pcb
+issue25521_zone_names-F_Cu.gtl 5a59e66d
+issue25521_zone_names-B_Cu.gbl ef3cce59
+B sub qa/data/pcbnew/issue25580.kicad_pcb
+issue25580-F_Silkscreen.gto cf4e162c
+issue25580-B_Silkscreen.gbo 2e62364c
+B sub_cl qa/data/pcbnew/issue25580.kicad_pcb
+issue25580-F_Cu.gtl 6a94d55f
+issue25580-B_Cu.gbl c88b2413
+B sub qa/data/pcbnew/issue25650/issue25650.kicad_pcb
+issue25650-F_Silkscreen.gto fc4d40ff
+issue25650-B_Silkscreen.gbo 841be630
+B sub_cl qa/data/pcbnew/issue25650/issue25650.kicad_pcb
+issue25650-F_Cu.gtl 7905dfa5
+issue25650-B_Cu.gbl 8e11ee3f
+B sub qa/data/pcbnew/issue4139.kicad_pcb
+issue4139-F_SilkS.gto db4438e3
+issue4139-B_SilkS.gbo 9b51b7fe
+B sub_cl qa/data/pcbnew/issue4139.kicad_pcb
+issue4139-F_Cu.gtl b2e305df
+issue4139-B_Cu.gbl ccde132a
+B sub qa/data/pcbnew/issue4257.kicad_pcb
+issue4257-F_SilkS.gto 4f8c05d6
+issue4257-B_SilkS.gbo caca48a0
+B sub_cl qa/data/pcbnew/issue4257.kicad_pcb
+issue4257-F_Cu.gtl 53b8cfc7
+issue4257-B_Cu.gbl 5379ecec
+B sub qa/data/pcbnew/issue5313.kicad_pcb
+issue5313-F_Silkscreen.gto 7534b8e1
+issue5313-B_Silkscreen.gbo 2769771e
+B sub_cl qa/data/pcbnew/issue5313.kicad_pcb
+issue5313-F_Cu.gtl 9754e787
+issue5313-B_Cu.gbl a2bde295
+B sub qa/data/pcbnew/issue5320.kicad_pcb
+issue5320-F_Silkscreen.gto 418475c2
+issue5320-B_Silkscreen.gbo 686dc914
+B sub_cl qa/data/pcbnew/issue5320.kicad_pcb
+issue5320-F_Cu.gtl 231411f6
+issue5320-B_Cu.gbl 759c54e2
+B sub qa/data/pcbnew/issue5567.kicad_pcb
+issue5567-F_Silkscreen.gto c6cd6073
+issue5567-B_Silkscreen.gbo 4f654ca8
+B sub_cl qa/data/pcbnew/issue5567.kicad_pcb
+issue5567-F_Cu.gtl 5a0050fd
+issue5567-B_Cu.gbl 2f58de37
+B sub qa/data/pcbnew/issue5750.kicad_pcb
+issue5750-F_Silkscreen.gto 184562ef
+issue5750-B_Silkscreen.gbo 76ec2316
+B sub_cl qa/data/pcbnew/issue5750.kicad_pcb
+issue5750-F_Cu.gtl 214fc903
+issue5750-B_Cu.gbl 2bf5d2a2
+B sub qa/data/pcbnew/issue5854.kicad_pcb
+issue5854-F_Silkscreen.gto 7a56ed9a
+issue5854-B_Silkscreen.gbo 99b3d226
+B sub_cl qa/data/pcbnew/issue5854.kicad_pcb
+issue5854-F_Cu.gtl 1d9fbda1
+issue5854-B_Cu.gbl 2b3be0d2
+B sub qa/data/pcbnew/issue5978.kicad_pcb
+issue5978-F_Silkscreen.gto 30bc3205
+issue5978-B_Silkscreen.gbo b0428e14
+B sub_cl qa/data/pcbnew/issue5978.kicad_pcb
+issue5978-F_Cu.gtl 91aa9d8a
+issue5978-B_Cu.gbl a5e02024
+B sub qa/data/pcbnew/issue6443.kicad_pcb
+issue6443-F_Silkscreen.gto 2e346510
+issue6443-B_Silkscreen.gbo 1afb4539
+B sub_cl qa/data/pcbnew/issue6443.kicad_pcb
+issue6443-F_Cu.gtl edc022b0
+issue6443-B_Cu.gbl 4e6f69ec
+B sub qa/data/pcbnew/issue6879.kicad_pcb
+issue6879-F_Silkscreen.gto 50c30860
+issue6879-B_Silkscreen.gbo 9198d514
+B sub_cl qa/data/pcbnew/issue6879.kicad_pcb
+issue6879-F_Cu.gtl 08c735aa
+issue6879-B_Cu.gbl 527ea3de
+B sub qa/data/pcbnew/issue6945.kicad_pcb
+issue6945-F_Silkscreen.gto 2a663d66
+issue6945-B_Silkscreen.gbo 9110ce92
+B sub_cl qa/data/pcbnew/issue6945.kicad_pcb
+issue6945-F_Cu.gtl a1d8fbed
+issue6945-B_Cu.gbl 78f18692
+B sub qa/data/pcbnew/issue7086.kicad_pcb
+issue7086-F_Silkscreen.gto faaee476
+issue7086-B_Silkscreen.gbo 5c82f36a
+B sub_cl qa/data/pcbnew/issue7086.kicad_pcb
+issue7086-F_Cu.gtl 2872902f
+issue7086-B_Cu.gbl e5344a3b
+B sub qa/data/pcbnew/issue7241.kicad_pcb
+issue7241-F_Silkscreen.gto 781caeed
+issue7241-B_Silkscreen.gbo 8b34d1b6
+B sub_cl qa/data/pcbnew/issue7241.kicad_pcb
+issue7241-F_Cu.gtl 0d3c430a
+issue7241-B_Cu.gbl 2c062b6a
+B sub qa/data/pcbnew/issue7267.kicad_pcb
+issue7267-F_Silkscreen.gto bacc7e0a
+issue7267-B_Silkscreen.gbo ae929581
+B sub_cl qa/data/pcbnew/issue7267.kicad_pcb
+issue7267-F_Cu.gtl 268e7de3
+issue7267-B_Cu.gbl 234d5488
+B sub qa/data/pcbnew/issue7567.kicad_pcb
+issue7567-F_Silkscreen.gto 9e2ab237
+issue7567-B_Silkscreen.gbo f1560242
+B sub_cl qa/data/pcbnew/issue7567.kicad_pcb
+issue7567-F_Cu.gtl 64c1f228
+issue7567-B_Cu.gbl fcfce515
+B sub qa/data/pcbnew/issue7975.kicad_pcb
+issue7975-F_Silkscreen.gto f3b07608
+issue7975-B_Silkscreen.gbo b5c47dfc
+B sub_cl qa/data/pcbnew/issue7975.kicad_pcb
+issue7975-F_Cu.gtl c30dcdbe
+issue7975-B_Cu.gbl 7bd0708b
+B sub qa/data/pcbnew/issue8003.kicad_pcb
+issue8003-F_Silkscreen.gto e4412908
+issue8003-B_Silkscreen.gbo 2da04d49
+B sub_cl qa/data/pcbnew/issue8003.kicad_pcb
+issue8003-F_Cu.gtl db77085e
+issue8003-B_Cu.gbl 5af49a46
+B sub qa/data/pcbnew/issue8629/issue8629.kicad_pcb
+issue8629-F_Silkscreen.gto d5cf2cf0
+issue8629-B_Silkscreen.gbo 19c115c3
+B sub_cl qa/data/pcbnew/issue8629/issue8629.kicad_pcb
+issue8629-F_Cu.gtl 374e24ac
+issue8629-B_Cu.gbl 2fa50e3d
+B sub qa/data/pcbnew/issue8883.kicad_pcb
+issue8883-F_Silkscreen.gto af3f1ec3
+issue8883-B_Silkscreen.gbo 35595066
+B sub_cl qa/data/pcbnew/issue8883.kicad_pcb
+issue8883-F_Cu.gtl 2d8354db
+issue8883-B_Cu.gbl c2550466
+B sub qa/data/pcbnew/issue9081.kicad_pcb
+issue9081-F_Silkscreen.gto 2112ed48
+issue9081-B_Silkscreen.gbo c8211138
+B sub_cl qa/data/pcbnew/issue9081.kicad_pcb
+issue9081-F_Cu.gtl 49ee6601
+issue9081-B_Cu.gbl a67c9561
+B sub qa/data/pcbnew/issue9870.kicad_pcb
+issue9870-F_Silkscreen.gto 0cf17d0f
+issue9870-B_Silkscreen.gbo 544e617b
+B sub_cl qa/data/pcbnew/issue9870.kicad_pcb
+issue9870-top_copper.gtl f6b99ec9
+issue9870-bottom_copper.gbl ac03e220
+B sub qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
+B sub_cl qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
+keepout_disallow-F_Cu.gtl f4eb54a2
+keepout_disallow-B_Cu.gbl 87e31de1
+B sub qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
+keepout_no_clearance-F_Silkscreen.gto 5a7eff64
+keepout_no_clearance-B_Silkscreen.gbo 85fe32df
+B sub_cl qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
+keepout_no_clearance-F_Cu.gtl d2beedb9
+keepout_no_clearance-B_Cu.gbl ccaca5de
+B sub qa/data/pcbnew/large_circle_teardrop.kicad_pcb
+large_circle_teardrop-F_Silkscreen.gto 75edd1a9
+large_circle_teardrop-B_Silkscreen.gbo f5e7aa2f
+B sub_cl qa/data/pcbnew/large_circle_teardrop.kicad_pcb
+large_circle_teardrop-F_Cu.gtl 5025920e
+large_circle_teardrop-B_Cu.gbl bbae7441
+B sub qa/data/pcbnew/length_calculations.kicad_pcb
+length_calculations-F_Silkscreen.gto 02e9eb80
+length_calculations-B_Silkscreen.gbo c41358cf
+B sub_cl qa/data/pcbnew/length_calculations.kicad_pcb
+length_calculations-F_Cu.gtl b02a8e2a
+length_calculations-B_Cu.gbl 14fc5995
+B sub qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
+line_ending_zone_flood-F_Silkscreen.gto 77e878b4
+line_ending_zone_flood-B_Silkscreen.gbo ed9e7415
+B sub_cl qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
+line_ending_zone_flood-F_Cu.gtl f3f36d4a
+line_ending_zone_flood-B_Cu.gbl c61376e3
+B sub qa/data/pcbnew/multinetclasses_drc.kicad_pcb
+multinetclasses_drc-F_Silkscreen.gto 05e463e8
+multinetclasses_drc-B_Silkscreen.gbo 86cae042
+B sub_cl qa/data/pcbnew/multinetclasses_drc.kicad_pcb
+multinetclasses_drc-F_Cu.gtl f186a759
+multinetclasses_drc-B_Cu.gbl 430ae2fb
+B sub qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
+net_chain_bridging_tuning_profiles-F_Silkscreen.gto fbf3de7f
+net_chain_bridging_tuning_profiles-B_Silkscreen.gbo 790047f5
+B sub_cl qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
+net_chain_bridging_tuning_profiles-F_Cu.gtl daf875bd
+net_chain_bridging_tuning_profiles-B_Cu.gbl 69e17545
+B sub qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
+chain_bridging_3pad_1net-F_Cu.gtl c92da096
+chain_bridging_3pad_1net-B_Cu.gbl beb42901
+B sub qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
+chain_bridging_3pad_2net-F_Cu.gtl 53cf1ca7
+chain_bridging_3pad_2net-B_Cu.gbl 38251d12
+B sub qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
+chain_bridging_3pad_3net-F_Cu.gtl 53f92ee2
+chain_bridging_3pad_3net-B_Cu.gbl 2f13223f
+B sub qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
+chain_bridging_4pad-F_Cu.gtl 7da39915
+chain_bridging_4pad-B_Cu.gbl 9285e459
+B sub qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
+chain_length_branched-F_Cu.gtl 06d90032
+chain_length_branched-B_Cu.gbl c6ad3a0a
+B sub qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
+chain_length_daisy-F_Cu.gtl 90d2892e
+chain_length_daisy-B_Cu.gbl c7532513
+B sub qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
+chain_topology_cycle-F_Cu.gtl 5fb15ae9
+chain_topology_cycle-B_Cu.gbl 291ec034
+B sub qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
+chain_topology_disconnected-F_Cu.gtl c8c0be8f
+chain_topology_disconnected-B_Cu.gbl 2af64a7e
+B sub qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
+chain_topology_missing_terminal-F_Cu.gtl 293960fc
+chain_topology_missing_terminal-B_Cu.gbl 46d2f1b6
+B sub qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
+chain_topology_t_stub-F_Cu.gtl 8cd97e58
+chain_topology_t_stub-B_Cu.gbl 17a83efa
+B sub qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
+chain_topology_trunk-F_Cu.gtl af6a1793
+chain_topology_trunk-B_Cu.gbl afce1e8d
+B sub qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
+length_with_chain-F_Cu.gtl ad2efc7b
+length_with_chain-B_Cu.gbl eb9d0a74
+B sub qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
+net_chain_total_length-F_Cu.gtl 36513bff
+net_chain_total_length-B_Cu.gbl b07e1b46
+B sub qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
+net_chain_trunk_delay-F_Cu.gtl a425fee3
+net_chain_trunk_delay-B_Cu.gbl 5db3f9a5
+B sub qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
+return_path_dual_zone-F_Cu.gtl d4447003
+return_path_dual_zone-B_Cu.gbl 7253a3f5
+B sub qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
+return_path_partial-F_Cu.gtl a400f688
+return_path_partial-B_Cu.gbl 3a0eea66
+B sub qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
+return_path_unshadowed-F_Cu.gtl 7e153180
+return_path_unshadowed-B_Cu.gbl 200d9f19
+B sub qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
+return_path_zone_bbox-F_Cu.gtl 47286d8e
+return_path_zone_bbox-B_Cu.gbl 2571d9fd
+B sub qa/data/pcbnew/net_chains/stub_length.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/stub_length.kicad_pcb
+stub_length-F_Cu.gtl db60a04d
+stub_length-B_Cu.gbl 0c5700c3
+B sub qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
+stub_length_pad_to_die-F_Cu.gtl 59c4765f
+stub_length_pad_to_die-B_Cu.gbl cdf0c950
+B sub qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
+B sub_cl qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
+stub_length_two_net-F_Cu.gtl 0c94cdc6
+stub_length_two_net-B_Cu.gbl c36d5ce7
+B sub qa/data/pcbnew/net_tie_drc.kicad_pcb
+net_tie_drc-F_Silkscreen.gto ab95cdc8
+net_tie_drc-B_Silkscreen.gbo 7535063c
+B sub_cl qa/data/pcbnew/net_tie_drc.kicad_pcb
+net_tie_drc-F_Cu.gtl d97af8ff
+net_tie_drc-B_Cu.gbl 9b251fea
+B sub qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
+net_tie_hole_clearance-F_Silkscreen.gto df1d41b3
+net_tie_hole_clearance-B_Silkscreen.gbo 5ab48350
+B sub_cl qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
+net_tie_hole_clearance-F_Cu.gtl 30ee1cc9
+net_tie_hole_clearance-B_Cu.gbl 796c0859
+B sub qa/data/pcbnew/notched_zones.kicad_pcb
+notched_zones-F_Silkscreen.gto 94ee8287
+notched_zones-B_Silkscreen.gbo 6456b9bb
+B sub_cl qa/data/pcbnew/notched_zones.kicad_pcb
+notched_zones-F_Cu.gtl 0bf465b3
+notched_zones-B_Cu.gbl 876bf064
+B sub qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
+npth_mask_bridge_test-F_Silkscreen.gto 55ab6ebb
+npth_mask_bridge_test-B_Silkscreen.gbo c7d618fe
+B sub_cl qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
+npth_mask_bridge_test-F_Cu.gtl 6ebf004c
+npth_mask_bridge_test-B_Cu.gbl c69162d9
+B sub qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
+custom_pad_mask_split-F_Silkscreen.gto 558ff6ad
+custom_pad_mask_split-B_Silkscreen.gbo 6afc6aef
+B sub_cl qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
+custom_pad_mask_split-F_Cu.gtl 147a75e0
+custom_pad_mask_split-B_Cu.gbl ba8d0094
+B sub qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
+knockout_textbox_unicode-F_Silkscreen.gto e9befadc
+knockout_textbox_unicode-B_Silkscreen.gbo 01261f85
+B sub_cl qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
+knockout_textbox_unicode-F_Cu.gtl fc51fbe1
+knockout_textbox_unicode-B_Cu.gbl 0fd96caa
+B sub qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
+npth_pressfit-F_Silkscreen.gto 37251118
+npth_pressfit-B_Silkscreen.gbo 18d6b51a
+B sub_cl qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
+npth_pressfit-F_Cu.gtl 2bda5f62
+npth_pressfit-B_Cu.gbl 3ac17bf3
+B sub qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
+npth_pressfit_slot-F_Silkscreen.gto b4c25b9c
+npth_pressfit_slot-B_Silkscreen.gbo 47423f40
+B sub_cl qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
+npth_pressfit_slot-F_Cu.gtl e28983cd
+npth_pressfit_slot-B_Cu.gbl d36fb60d
+B sub qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
+pad_margin_shapes-F_Silkscreen.gto 331afa29
+pad_margin_shapes-B_Silkscreen.gbo 7056d8c5
+B sub_cl qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
+pad_margin_shapes-F_Cu.gtl 92012696
+pad_margin_shapes-B_Cu.gbl 26510964
+B sub qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+two_board_islands-F_Silkscreen.gto 00eb3295
+two_board_islands-B_Silkscreen.gbo 899c96d7
+B sub_cl qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+two_board_islands-F_Cu.gtl 6ee4609b
+two_board_islands-B_Cu.gbl de0e43b9
+B sub qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
+variant_field_textvar-F_Silkscreen.gto 46adb140
+variant_field_textvar-B_Silkscreen.gbo 17764ae5
+B sub_cl qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
+variant_field_textvar-F_Cu.gtl c560dc50
+variant_field_textvar-B_Cu.gbl 5b3f3dc2
+B sub qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
+via_in_pad-F_Silkscreen.gto 6d2e3c89
+via_in_pad-B_Silkscreen.gbo 0b3cb291
+B sub_cl qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
+via_in_pad-F_Cu.gtl c3cd7398
+via_in_pad-B_Cu.gbl 5d2479d0
+B sub qa/data/pcbnew/off_center_teardrop.kicad_pcb
+off_center_teardrop-F_Silkscreen.gto c70910a9
+off_center_teardrop-B_Silkscreen.gbo 38a1e0af
+B sub_cl qa/data/pcbnew/off_center_teardrop.kicad_pcb
+off_center_teardrop-F_Cu.gtl 65ba3159
+off_center_teardrop-B_Cu.gbl 94a7594b
+B sub qa/data/pcbnew/orientation_drc.kicad_pcb
+orientation_drc-F_Silkscreen.gto ea18e603
+orientation_drc-B_Silkscreen.gbo 43476d46
+B sub_cl qa/data/pcbnew/orientation_drc.kicad_pcb
+orientation_drc-F_Cu.gtl 5c467051
+orientation_drc-B_Cu.gbl 60a55cb8
+B sub qa/data/pcbnew/oval_teardrop.kicad_pcb
+oval_teardrop-F_Silkscreen.gto 49ee3b11
+oval_teardrop-B_Silkscreen.gbo 9553ad8a
+B sub_cl qa/data/pcbnew/oval_teardrop.kicad_pcb
+oval_teardrop-F_Cu.gtl d1919c07
+oval_teardrop-B_Cu.gbl c9e97783
+B sub qa/data/pcbnew/padstacks.kicad_pcb
+padstacks-F_Silkscreen.gto 794ce9b8
+padstacks-B_Silkscreen.gbo a42001b2
+B sub_cl qa/data/pcbnew/padstacks.kicad_pcb
+padstacks-F_Cu.gtl 165aa280
+padstacks-B_Cu.gbl 157f2ec8
+B sub qa/data/pcbnew/padstacks_complex.kicad_pcb
+padstacks_complex-Top Overlay.gto 6354b3ab
+padstacks_complex-Bottom Overlay.gbo ef10daec
+B sub_cl qa/data/pcbnew/padstacks_complex.kicad_pcb
+padstacks_complex-Top Layer.gtl 9a43402c
+padstacks_complex-Bottom Layer.gbl c40e8496
+B sub qa/data/pcbnew/padstacks_normal.kicad_pcb
+padstacks_normal-F_Silkscreen.gto 8b3356a3
+padstacks_normal-B_Silkscreen.gbo 94e0d4f2
+B sub_cl qa/data/pcbnew/padstacks_normal.kicad_pcb
+padstacks_normal-F_Cu.gtl 8be40a55
+padstacks_normal-B_Cu.gbl f8ee5cab
+B sub qa/data/pcbnew/plugins/fakeboard.kicad_pcb
+B sub_cl qa/data/pcbnew/plugins/fakeboard.kicad_pcb
+B sub qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
+LayerEnumerate-F_Silkscreen.gto 65f433a8
+LayerEnumerate-B_Silkscreen.gbo 18607acd
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
+LayerEnumerate-F_Cu.gtl 6144a5ff
+LayerEnumerate-B_Cu.gbl 4219ce4e
+B sub qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
+LayerWildcard-F_Silkscreen.gto 7ab4411a
+LayerWildcard-B_Silkscreen.gbo 6747cb8b
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
+LayerWildcard-F_Cu.gtl bbbd4a49
+LayerWildcard-B_Cu.gbl 458b8f0c
+B sub qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
+EmptyZone-F_Cu.gtl 93e29d85
+EmptyZone-B_Cu.gbl a7a95296
+B sub qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
+corrupted_stackup-F_Silkscreen.gto 7dfefd83
+corrupted_stackup-B_Silkscreen.gbo 55603114
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
+corrupted_stackup-F_Cu.gtl ed9d0ec7
+corrupted_stackup-B_Cu.gbl 0a4fded1
+B sub qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
+duplicated_stackup-F_Silkscreen.gto e9b43e88
+duplicated_stackup-B_Silkscreen.gbo 56a061e5
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
+duplicated_stackup-F_Cu.gtl 34e4f0db
+duplicated_stackup-B_Cu.gbl ba70dfc5
+B sub qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
+ScientificNotation-F_Silkscreen.gto 3ed62541
+ScientificNotation-B_Silkscreen.gbo d08bf3f2
+B sub_cl qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
+ScientificNotation-F_Cu.gtl 862d418a
+ScientificNotation-B_Cu.gbl 425c3513
+B sub qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
+backspace1-F_Silkscreen.gto 6b74ab86
+backspace1-B_Silkscreen.gbo 5c8c7a5b
+B sub_cl qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
+backspace1-F_Cu.gtl afcaa74c
+backspace1-B_Cu.gbl fd032abe
+B sub qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
+dp_test-F_Silkscreen.gto 01b22dd8
+dp_test-B_Silkscreen.gbo 9816e6aa
+B sub_cl qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
+dp_test-F_Cu.gtl 4253e9e9
+dp_test-B_Cu.gbl aa96f982
+B sub qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
+drag-walk-optimize-fix-corners-F_Silkscreen.gto d6da704f
+drag-walk-optimize-fix-corners-B_Silkscreen.gbo dfc5eede
+B sub_cl qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
+drag-walk-optimize-fix-corners-F_Cu.gtl 0f5d969c
+drag-walk-optimize-fix-corners-B_Cu.gbl f65691db
+B sub qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
+drag-walk-optimize-F_Silkscreen.gto 912ac8ef
+drag-walk-optimize-B_Silkscreen.gbo eb6c7b23
+B sub_cl qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
+drag-walk-optimize-F_Cu.gtl 0d268917
+drag-walk-optimize-B_Cu.gbl 46c2cfc8
+B sub qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
+shove_same_net_via-F_Silkscreen.gto 47c3e41d
+shove_same_net_via-B_Silkscreen.gbo 1b80fa90
+B sub_cl qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
+shove_same_net_via-F_Cu.gtl 745ff7ff
+shove_same_net_via-B_Cu.gbl 54413002
+B sub qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+simple-F_Silkscreen.gto a22784ea
+simple-B_Silkscreen.gbo 942f99f7
+B sub_cl qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+simple-F_Cu.gtl c3162bba
+simple-B_Cu.gbl b7fc7d51
+B sub qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
+group_and_image-F_Silkscreen.gto 01e53879
+group_and_image-B_Silkscreen.gbo 07896a32
+B sub_cl qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
+group_and_image-F_Cu.gtl fce3ef55
+group_and_image-B_Cu.gbl f6bb9f6d
+B sub qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
+group_and_image_formatted-F_Silkscreen.gto 2bf58537
+group_and_image_formatted-B_Silkscreen.gbo 61051e35
+B sub_cl qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
+group_and_image_formatted-F_Cu.gtl 8e198a89
+group_and_image_formatted-B_Cu.gbl 7fc3b57f
+B sub qa/data/pcbnew/reference_images_load_save.kicad_pcb
+reference_images_load_save-F_Silkscreen.gto 87ba88ef
+reference_images_load_save-B_Silkscreen.gbo 1a5fea7d
+B sub_cl qa/data/pcbnew/reference_images_load_save.kicad_pcb
+reference_images_load_save-F_Cu.gtl 71637f99
+reference_images_load_save-B_Cu.gbl 58092f31
+B sub qa/data/pcbnew/severities.kicad_pcb
+severities-F_Silkscreen.gto 5894d7a2
+severities-B_Silkscreen.gbo 9630a81f
+B sub_cl qa/data/pcbnew/severities.kicad_pcb
+severities-F_Cu.gtl 4b6cb8ce
+severities-B_Cu.gbl 52372076
+B sub qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
+skew_group_matched_drc-F_Silkscreen.gto cc6f14b3
+skew_group_matched_drc-B_Silkscreen.gbo 2a3ec78b
+B sub_cl qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
+skew_group_matched_drc-F_Cu.gtl bb421a27
+skew_group_matched_drc-B_Cu.gbl 9eadd688
+B sub qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
+skew_within_diff_pairs_drc-F_Silkscreen.gto 61b7d434
+skew_within_diff_pairs_drc-B_Silkscreen.gbo 5ff0a09c
+B sub_cl qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
+skew_within_diff_pairs_drc-F_Cu.gtl 8ffb38fc
+skew_within_diff_pairs_drc-B_Cu.gbl 7acd2a89
+B sub qa/data/pcbnew/sliver.kicad_pcb
+sliver-F_Silkscreen.gto 32ff8235
+sliver-B_Silkscreen.gbo 91780cfc
+B sub_cl qa/data/pcbnew/sliver.kicad_pcb
+sliver-F_Cu.gtl 300b7cbf
+sliver-B_Cu.gbl c4c11cdb
+B sub qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
+solder_mask_bridge_test-F_Silkscreen.gto da6c0fe6
+solder_mask_bridge_test-B_Silkscreen.gbo af250483
+B sub_cl qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
+solder_mask_bridge_test-F_Cu.gtl fa372c71
+solder_mask_bridge_test-B_Cu.gbl 4f11f068
+B sub qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
+soldermask_bridge_all_tracks-F_Silkscreen.gto 7b744a1c
+soldermask_bridge_all_tracks-B_Silkscreen.gbo f94b3112
+B sub_cl qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
+soldermask_bridge_all_tracks-F_Cu.gtl ca9af230
+soldermask_bridge_all_tracks-B_Cu.gbl e482de04
+B sub qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
+soldermask_track_to_pad-F_Silkscreen.gto 6c8c0d2e
+soldermask_track_to_pad-B_Silkscreen.gbo 2ff6d9d1
+B sub_cl qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
+soldermask_track_to_pad-F_Cu.gtl 1f97b5ab
+soldermask_track_to_pad-B_Cu.gbl 5d45ca91
+B sub qa/data/pcbnew/stacked/stacked.kicad_pcb
+stacked-F_Silkscreen.gto 7a9cde04
+stacked-B_Silkscreen.gbo c920d1e7
+B sub_cl qa/data/pcbnew/stacked/stacked.kicad_pcb
+stacked-F_Cu.gtl b87e183f
+stacked-B_Cu.gbl 40e54979
+B sub qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+stitch_fp_rulearea-F_Silkscreen.gto c03ec8e6
+stitch_fp_rulearea-B_Silkscreen.gbo 512326ae
+B sub_cl qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+stitch_fp_rulearea-F_Cu.gtl 1429c50a
+stitch_fp_rulearea-B_Cu.gbl 83771a5e
+B sub qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
+teardrop_arc_anchor-F_Silkscreen.gto cfa7587c
+teardrop_arc_anchor-B_Silkscreen.gbo 3910fd8a
+B sub_cl qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
+teardrop_arc_anchor-F_Cu.gtl a685f7cb
+teardrop_arc_anchor-B_Cu.gbl e5e06e24
+B sub qa/data/pcbnew/teardrop_close_via.kicad_pcb
+teardrop_close_via-F_Silkscreen.gto f1004b63
+teardrop_close_via-B_Silkscreen.gbo aa634c76
+B sub_cl qa/data/pcbnew/teardrop_close_via.kicad_pcb
+teardrop_close_via-F_Cu.gtl 184993c3
+teardrop_close_via-B_Cu.gbl 1df47249
+B sub qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
+teardrop_close_via_rotated_pad-F_Silkscreen.gto 4e9e81e0
+teardrop_close_via_rotated_pad-B_Silkscreen.gbo e86765cd
+B sub_cl qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
+teardrop_close_via_rotated_pad-F_Cu.gtl 1318bf15
+teardrop_close_via_rotated_pad-B_Cu.gbl 0808dcd0
+B sub qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
+teardrop_custom_pad_anchor-F_Silkscreen.gto ff518c1f
+teardrop_custom_pad_anchor-B_Silkscreen.gbo 191e4710
+B sub_cl qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
+teardrop_custom_pad_anchor-F_Cu.gtl 398ff029
+teardrop_custom_pad_anchor-B_Cu.gbl 9a994051
+B sub qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
+teardrop_elongated_pad-F_Silkscreen.gto 2f92d82e
+teardrop_elongated_pad-B_Silkscreen.gbo 3d495d18
+B sub_cl qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
+teardrop_elongated_pad-F_Cu.gtl d51c4bd9
+teardrop_elongated_pad-B_Cu.gbl f4916c28
+B sub qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
+teardrop_issue_JPC2-F_Silkscreen.gto ab22911f
+teardrop_issue_JPC2-B_Silkscreen.gbo 4a7400f8
+B sub_cl qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
+teardrop_issue_JPC2-F_Cu.gtl 3d852df6
+teardrop_issue_JPC2-B_Cu.gbl 04aefdff
+B sub qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
+teardrop_multi_inside_via-F_Silkscreen.gto f7b53052
+teardrop_multi_inside_via-B_Silkscreen.gbo c2617bc9
+B sub_cl qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
+teardrop_multi_inside_via-F_Cu.gtl 5ca5df92
+teardrop_multi_inside_via-B_Cu.gbl a43224a0
+B sub qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
+teardrop_offcenter_two_segment-F_Silkscreen.gto 3d26a73e
+teardrop_offcenter_two_segment-B_Silkscreen.gbo 76db6a68
+B sub_cl qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
+teardrop_offcenter_two_segment-F_Cu.gtl 1b73b065
+teardrop_offcenter_two_segment-B_Cu.gbl 57ae38a6
+B sub qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+teardrop_qfn_thermal_pad_zone-F_Silkscreen.gto 0b545f39
+teardrop_qfn_thermal_pad_zone-B_Silkscreen.gbo 713eb013
+B sub_cl qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+teardrop_qfn_thermal_pad_zone-F_Cu.gtl c6c0cc03
+teardrop_qfn_thermal_pad_zone-B_Cu.gbl cf970a54
+B sub qa/data/pcbnew/teardrop_spike.kicad_pcb
+teardrop_spike-F_Silkscreen.gto 96e8b78d
+teardrop_spike-B_Silkscreen.gbo 1d4b05ca
+B sub_cl qa/data/pcbnew/teardrop_spike.kicad_pcb
+teardrop_spike-F_Cu.gtl 2ad81e5b
+teardrop_spike-B_Cu.gbl 0727dbd7
+B sub qa/data/pcbnew/test_copper_graphics.kicad_pcb
+test_copper_graphics-F_Silkscreen.gto 9e701265
+test_copper_graphics-B_Silkscreen.gbo 40d25f91
+B sub_cl qa/data/pcbnew/test_copper_graphics.kicad_pcb
+test_copper_graphics-F_Cu.gtl a58b80ac
+test_copper_graphics-B_Cu.gbl 766790dc
+B sub qa/data/pcbnew/test_starved_thermal.kicad_pcb
+test_starved_thermal-F_Silkscreen.gto 86435286
+test_starved_thermal-B_Silkscreen.gbo bf5a1b75
+B sub_cl qa/data/pcbnew/test_starved_thermal.kicad_pcb
+test_starved_thermal-F_Cu.gtl a776c976
+test_starved_thermal-B_Cu.gbl 94a4a84e
+B sub qa/data/pcbnew/time_calculations.kicad_pcb
+time_calculations-F_Silkscreen.gto 1d26682e
+time_calculations-B_Silkscreen.gbo f9e754ed
+B sub_cl qa/data/pcbnew/time_calculations.kicad_pcb
+time_calculations-F_Cu.gtl 28b255af
+time_calculations-B_Cu.gbl 5c4166b0
+B sub qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
+tracks_arcs_vias-F_Silkscreen.gto 5c8580ac
+tracks_arcs_vias-B_Silkscreen.gbo 9ae0b12e
+B sub_cl qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
+tracks_arcs_vias-F_Cu.gtl 7de62971
+tracks_arcs_vias-B_Cu.gbl 46836176
+B sub qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
+tuning_generators_load_save-F_Silkscreen.gto d5eaf1ce
+tuning_generators_load_save-B_Silkscreen.gbo 42d7152c
+B sub_cl qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
+tuning_generators_load_save-F_Cu.gtl 46e45b81
+tuning_generators_load_save-B_Cu.gbl a97c8322
+B sub qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
+tuning_generators_load_save_v20231212-F_Silkscreen.gto 8e4ecee6
+tuning_generators_load_save_v20231212-B_Silkscreen.gbo 31209df8
+B sub_cl qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
+tuning_generators_load_save_v20231212-F_Cu.gtl bcf59023
+tuning_generators_load_save_v20231212-B_Cu.gbl eed5a624
+B sub qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
+tuning_path_through_pad-F_Silkscreen.gto 0717f748
+tuning_path_through_pad-B_Silkscreen.gbo fb2fa827
+B sub_cl qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
+tuning_path_through_pad-F_Cu.gtl 4c816488
+tuning_path_through_pad-B_Cu.gbl 7e7b865f
+B sub qa/data/pcbnew/two_segment_teardrop.kicad_pcb
+two_segment_teardrop-F_Silkscreen.gto 1665f882
+two_segment_teardrop-B_Silkscreen.gbo fb179a3c
+B sub_cl qa/data/pcbnew/two_segment_teardrop.kicad_pcb
+two_segment_teardrop-F_Cu.gtl 7eae50a3
+two_segment_teardrop-B_Cu.gbl 6e897f77
+B sub qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
+unconnected-netnames-F_Silkscreen.gto 2eb65ba2
+unconnected-netnames-B_Silkscreen.gbo a5708c06
+B sub_cl qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
+unconnected-netnames-F_Cu.gtl 42b30de3
+unconnected-netnames-B_Cu.gbl 5f49f7b6
+B sub qa/data/pcbnew/variant_test/variant_test.kicad_pcb
+variant_test-F_Silkscreen.gto 350ba6e9
+variant_test-B_Silkscreen.gbo 44118302
+B sub_cl qa/data/pcbnew/variant_test/variant_test.kicad_pcb
+variant_test-F_Cu.gtl 85f00455
+variant_test-B_Cu.gbl e2dd13ed
+B sub qa/data/pcbnew/via_dangling.kicad_pcb
+B sub_cl qa/data/pcbnew/via_dangling.kicad_pcb
+via_dangling-F_Cu.gtl b1069472
+via_dangling-B_Cu.gbl bafaee4c
+B sub qa/data/pcbnew/via_off_center.kicad_pcb
+via_off_center-F_Silkscreen.gto 37a5437d
+via_off_center-B_Silkscreen.gbo 88e53d94
+B sub_cl qa/data/pcbnew/via_off_center.kicad_pcb
+via_off_center-F_Cu.gtl 99a5e299
+via_off_center-B_Cu.gbl 3dfac368
+B sub qa/data/pcbnew/via_stack_track_width.kicad_pcb
+via_stack_track_width-F_Silkscreen.gto 20835808
+via_stack_track_width-B_Silkscreen.gbo 1fb190c2
+B sub_cl qa/data/pcbnew/via_stack_track_width.kicad_pcb
+via_stack_track_width-Top Layer.gtl 9b0b1bcf
+via_stack_track_width-Bottom Layer.gbl a146d98a
+B sub qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
+via_stack_uvia_rule-F_Silkscreen.gto 97b02942
+via_stack_uvia_rule-B_Silkscreen.gbo 9129cd7a
+B sub_cl qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
+via_stack_uvia_rule-Top Layer.gtl 87730f01
+via_stack_uvia_rule-Bottom Layer.gbl 982e22ee
+B sub qa/data/pcbnew/via_stacks.kicad_pcb
+via_stacks-F_Silkscreen.gto 55431d81
+via_stacks-B_Silkscreen.gbo c5e46fd9
+B sub_cl qa/data/pcbnew/via_stacks.kicad_pcb
+via_stacks-F_Cu.gtl 01076392
+via_stacks-B_Cu.gbl 8cbe49e1
+B sub qa/data/pcbnew/zone_filler.kicad_pcb
+zone_filler-F_Silkscreen.gto b5573173
+zone_filler-B_Silkscreen.gbo 6fb74eb3
+B sub_cl qa/data/pcbnew/zone_filler.kicad_pcb
+zone_filler-F_Cu.gtl 9fd61e9a
+zone_filler-B_Cu.gbl 1b228c79
+B sub qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
+zone_refill_cascading_islands-F_Silkscreen.gto 1eab1765
+zone_refill_cascading_islands-B_Silkscreen.gbo b21e04d3
+B sub_cl qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
+zone_refill_cascading_islands-F_Cu.gtl 5ec97037
+zone_refill_cascading_islands-B_Cu.gbl 29263528
+B sub qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
+zone_refill_convergence_limit-F_Silkscreen.gto a98ec0a8
+zone_refill_convergence_limit-B_Silkscreen.gbo 78b65e65
+B sub_cl qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
+zone_refill_convergence_limit-F_Cu.gtl 761e0ece
+zone_refill_convergence_limit-B_Cu.gbl c40fb663
+B sub qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
+zone_thieving_track_bisection-F_Silkscreen.gto 6a321b20
+zone_thieving_track_bisection-B_Silkscreen.gbo 941818ce
+B sub_cl qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
+zone_thieving_track_bisection-F_Cu.gtl 1785a561
+zone_thieving_track_bisection-B_Cu.gbl b5299e08

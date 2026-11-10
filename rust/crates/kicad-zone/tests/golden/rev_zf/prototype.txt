@@ -1,0 +1,2 @@
+zone proto FCu outlines 1
+  0 pts 197 island 0 hash ca7534016c56fdbe

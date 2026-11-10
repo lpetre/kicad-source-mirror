@@ -23,7 +23,7 @@
 //! `PlotOneBoardLayer` (the dispatch per layer kind) and the iteration skeleton of
 //! `PlotStandardLayer` (container order, blocks, Gerber metadata set-up). The per-item bodies
 //! of `PlotStandardLayer` (pads, DNP cross, vias, tracks, zones, L385-928) are FAB-04; the
-//! solder mask minimum width path and the clipped silk are FAB-10.
+//! solder mask minimum width path and the clipped silk (FAB-10) are in `plot_layer_poly.rs`.
 //!
 //! Out of scope (analysis 2.2): DXF / PostScript / PDF / PNG / HPGL plotters and their
 //! branches (`PlotLayer`'s DXF outline mode, `setupPlotterNewPDFPage`, `plotBackgroundColor`,
@@ -58,6 +58,7 @@ use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 use crate::pcb_plotter::build_plot_file_name;
 use crate::pcbplot::{PlotEnv, add_gerber_x2_attribute, gerber_protel_extension};
 use crate::plot_brditems_plotter::{BrditemsPlotter, fab_port_pending};
+use crate::plot_layer_poly::{plot_clipped_silk_layer, plot_solder_mask_layer_min_width};
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile};
 
@@ -230,7 +231,7 @@ fn plot_layer(
 
 /// Port of `PlotSolderMaskLayer` (L91-107): solder mask layers have a minimum thickness value
 /// and cannot be drawn like standard layers, unless the minimum thickness is 0. The polygon
-/// path for a non-zero minimum width is FAB-10 (`plot_layer_poly.rs`).
+/// path for a non-zero minimum width is in `plot_layer_poly.rs` (FAB-10).
 fn plot_solder_mask_layer(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
@@ -242,26 +243,7 @@ fn plot_solder_mask_layer(
         return;
     }
 
-    fab_port_pending!(
-        "PlotSolderMaskLayer: GenerateLayerPoly / PlotPolySet path (FAB-10)",
-        a_layer_mask
-    )
-}
-
-/// `PlotClippedSilkLayer` (L110-125, FAB-10).
-fn plot_clipped_silk_layer(
-    a_board: &BoardCtx<'_>,
-    a_plotter: &mut dyn Plotter,
-    a_layer_mask: &Lset,
-    a_plot_opt: &PcbPlotParams,
-) {
-    fab_port_pending!(
-        "PlotClippedSilkLayer (FAB-10)",
-        a_board.board,
-        a_plotter,
-        a_layer_mask,
-        a_plot_opt
-    )
+    plot_solder_mask_layer_min_width(a_board, a_plotter, a_layer_mask, a_plot_opt);
 }
 
 /// The layer flags `PlotStandardLayer` computes once (L361-371) and its per-item bodies read.

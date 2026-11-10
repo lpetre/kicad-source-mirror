@@ -440,6 +440,11 @@ Progress log:
   1146 identical (same 3), 0 differing, 0 pending; a crafted board covers backdrills,
   tertiary drills, via post-machining, blind / buried / micro vias. Plot corpora unchanged
   (8445 matched, 88 pending on FAB-10 / FAB-13, 0 known differences). Running: FAB-10.
+  05:45 UTC: done ZF-07 copper thieving: both corpus boards and 25 crafted boards (dots,
+  squares, hatch, stagger, seven orientations, offsets, tracks and vias through the fill)
+  vertex-identical; the refill-and-save comparison is now 262 identical / 1 random in the
+  reference / 0 not run. The zone filler has no stub left. Launched DS-1 (drawing sheet:
+  model, .kicad_wks parser, default sheet, draw items, plotting, DRC hook).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

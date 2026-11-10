@@ -20,7 +20,7 @@
   )
   (setup (pad_to_mask_clearance 0) )
   (gr_rect (start 100.0 100.0) (end 140.0 130.0) (stroke (width 0.05) (type default)) (fill no) (layer "Edge.Cuts") (uuid "00000000-0000-4000-8000-000000000001"))
-  (zone (net "A") (layers "F.Cu" "In1.Cu" "F.SilkS" "F.Mask") (uuid "00000000-0000-4000-8000-000000000002") (name "mixed") (hatch edge 0.5) (connect_pads  (clearance 0.3)) (min_thickness 0.25) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5) ) (polygon (pts (xy 101.0 101.0) (xy 139.0 101.0) (xy 139.0 129.0) (xy 101.0 129.0))))
+  (zone (net "A") (layers "F.Cu" "In1.Cu" "F.SilkS" "F.Mask") (uuid "00000000-0000-4000-8000-000000000002") (name "mixed") (hatch edge 0.5) (connect_pads  (clearance 0.3)) (min_thickness 0.25) (fill yes (thermal_gap 0.5) (thermal_bridge_width 0.5) (island_removal_mode 1)) (polygon (pts (xy 101.0 101.0) (xy 139.0 101.0) (xy 139.0 129.0) (xy 101.0 129.0))))
   (gr_line (start 105 101) (end 105 129) (stroke (width 0.15) (type default)) (layer "Margin") (uuid "00000000-0000-4000-8000-000000000003"))
   (gr_line (start 100 126) (end 140 124) (stroke (width 0.6) (type default)) (layer "Margin") (uuid "00000000-0000-4000-8000-000000000004"))
   (gr_circle (center 130 110) (end 133 110) (stroke (width 0.05) (type default)) (fill no) (layer "Edge.Cuts") (uuid "00000000-0000-4000-8000-000000000005"))

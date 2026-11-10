@@ -1,0 +1,6 @@
+zone solid_zone BCu outlines 1
+  0 pts 490 island 0 hash ea83bdc531f11c0b
+zone thermal_zone FCu outlines 1
+  0 pts 704 island 0 hash 6d7cd21c956851d6
+zone tht_zone FCu outlines 1
+  0 pts 541 island 0 hash 5d074a8f74d0abc9

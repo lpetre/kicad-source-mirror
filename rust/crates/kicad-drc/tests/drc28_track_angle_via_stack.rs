@@ -127,7 +127,6 @@ fn report(path: &std::path::Path) -> Result<Vec<Entry>, String> {
         return Err(format!("parser skipped {:?}", first.token));
     }
 
-
     let mut owned = providers();
     let mut refs: Vec<&mut dyn DrcTestProviderRun> = Vec::new();
 

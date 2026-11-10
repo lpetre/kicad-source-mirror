@@ -129,6 +129,14 @@ pub(crate) fn vi(v: Vector2D) -> Vector2I {
     Vector2I::from_vec(v)
 }
 
+/// `aA - aB` of two `VECTOR2I` as the reference build executes it: a point converted from a
+/// NaN path end (`INT_MIN`, PORTING.md section 9) makes the `int` subtraction overflow, which
+/// wraps on x86-64.
+#[inline]
+pub(crate) fn wrapping_sub(a_a: Vector2I, a_b: Vector2I) -> Vector2I {
+    Vector2I::new(a_a.x.wrapping_sub(a_b.x), a_a.y.wrapping_sub(a_b.y))
+}
+
 /// Port of `CU_SHAPE_SEGMENT`: a conductive segment.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CuShapeSegment {
@@ -294,12 +302,7 @@ impl CuShapeArc {
 
     /// Port of `CU_SHAPE_ARC::AngleBetweenStartAndEnd()`.
     pub fn angle_between_start_and_end(&self, a_point: Vector2I) -> EdaAngle {
-        angle_between_start_and_end(
-            self.pos(),
-            self.start_angle(),
-            self.end_angle(),
-            a_point,
-        )
+        angle_between_start_and_end(self.pos(), self.start_angle(), self.end_angle(), a_point)
     }
 }
 
@@ -311,7 +314,7 @@ fn angle_between_start_and_end(
     end_angle: EdaAngle,
     a_point: Vector2I,
 ) -> EdaAngle {
-    let mut angle = EdaAngle::from_vector(a_point - pos);
+    let mut angle = EdaAngle::from_vector(wrapping_sub(a_point, pos));
 
     while angle < start_angle {
         angle += ANGLE_360;
@@ -493,8 +496,7 @@ impl BeShapeArc {
                 cmath::cos(start_angle) * nx + cmath::sin(start_angle) * ny <= r;
         }
 
-        connect_to_end_point |= (cmath::cos(start_angle) * nx + cmath::sin(start_angle) * ny
-            <= r)
+        connect_to_end_point |= (cmath::cos(start_angle) * nx + cmath::sin(start_angle) * ny <= r)
             && (point_angle >= end_angle || point_angle <= start_angle);
 
         let second = !connect_to_end_point;
@@ -691,7 +693,8 @@ pub fn segment_intersects_arc(
         to_int(radius * cmath::cos(start_angle.as_radians())),
         to_int(radius * cmath::sin(start_angle.as_radians())),
     );
-    let arc = ShapeArc::from_center_start_angle(center, start_point + center, end_angle - start_angle, 0);
+    let arc =
+        ShapeArc::from_center_start_angle(center, start_point + center, end_angle - start_angle, 0);
 
     let geom1 = IntersectableGeom::Seg(segment);
     let geom2 = IntersectableGeom::Arc(arc);

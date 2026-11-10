@@ -1,0 +1,19 @@
+zone chain0 FCu outlines 1
+  0 pts 201 island 0 hash 903c442d376b8dda
+zone chain1 FCu outlines 1
+  0 pts 158 island 0 hash 82920fdcdccffa7e
+zone chain2 FCu outlines 1
+  0 pts 16 island 0 hash a6d660af60e73f23
+zone island_top FCu outlines 1
+  0 pts 59 island 0 hash bab9763fb2a99e63
+zone same_high FCu outlines 1
+  0 pts 4 island 0 hash d50c7bbe8a82c915
+zone same_low FCu outlines 1
+  0 pts 236 island 0 hash 29157e1548068a41
+zone tie_high FCu outlines 1
+  0 pts 24 island 0 hash f3029e4b04b2de99
+zone tie_low FCu outlines 1
+  0 pts 176 island 0 hash 0d36ef605f9bb14b
+zone tie_mid FCu outlines 1
+  0 pts 132 island 0 hash 9713d997c3deb74e
+zone two_corners FCu outlines 0

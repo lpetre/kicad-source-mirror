@@ -825,8 +825,37 @@ impl ZoneFiller {
         let mut queue: VecDeque<usize> = (0..fill_items.len())
             .filter(|&i| in_degree[i] == 0)
             .collect();
+        let mut done = vec![false; fill_items.len()];
+        let mut cycle_items = 0;
 
-        while let Some(idx) = queue.pop_front() {
+        loop {
+            let idx = match queue.pop_front() {
+                Some(idx) => idx,
+                None => {
+                    // A dependency cycle: two interacting zones of different nets neither of
+                    // which is `HigherPriority()` than the other, i.e. equal priority and equal
+                    // UUID (a hand-edited file; the parser does not make zone UUIDs unique).
+                    // The C++ scheduler never releases such items and `Fill()` spins in its
+                    // drain loop for ever (the reference kicad-cli hangs, review-zone-fill.md
+                    // F-2). No fill reads the other zone's fill in this case (the knockout
+                    // reads require `HigherPriority()` as well), so the port fills the
+                    // remaining items in `toFill` order and reports them.
+                    match done.iter().position(|d| !d) {
+                        Some(idx) => {
+                            cycle_items += 1;
+                            idx
+                        }
+                        None => break,
+                    }
+                }
+            };
+
+            if done[idx] {
+                continue;
+            }
+
+            done[idx] = true;
+
             let (zone_id, layer) = fill_items[idx];
 
             // fill_lambda
@@ -866,6 +895,13 @@ impl ZoneFiller {
             }
 
             self.fill_order.push(fill_items[idx]);
+        }
+
+        if cycle_items > 0 {
+            self.warnings.push(format!(
+                "Zone fill dependency cycle (zones of equal priority that share a UUID): \
+                 {cycle_items} zone layer(s) were filled without waiting for each other."
+            ));
         }
     }
 
@@ -1222,6 +1258,17 @@ pub(crate) fn remove_islands(
     let poly = Arc::make_mut(poly);
 
     for idx in islands {
+        // The C++ indexes the fill unchecked. `islands` can name an outline the fill does not
+        // have (any more): `CN_ITEM::SetLayers` maps a non-copper layer of a zone to copper
+        // ordinal 0, so the zone layer item of a technical layer answers `GetBoardLayer() ==
+        // F_Cu` and `FillIsolatedIslandsMap` lists its outline index a second time under F.Cu.
+        // The second deletion of the same index is undefined behaviour when no outline is left
+        // at it (the reference kicad-cli segfaults, review-zone-fill.md F-1); the port skips
+        // it. While the index exists the double deletion is reproduced as it is.
+        if idx < 0 || idx >= poly.outline_count() {
+            continue;
+        }
+
         if mode == IslandRemovalMode::Always {
             poly.delete_polygon_and_triangulation_data(idx, false);
             removed = true;

@@ -33,25 +33,16 @@ mod drc_harness;
 
 use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::sync::Arc;
 
 use drc_harness::{
-    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries, fnv1a64, hash_text, load_board,
-    panic_text, quiet, run_providers,
+    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries_flow, fnv1a64, hash_text,
+    load_board, panic_text, quiet, run_flow_providers,
 };
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::typeinfo::KicadT;
-use kicad_drc::cache_generator::{
-    build_copper_item_rtree, build_zone_caches, build_zone_lists, compute_max_clearances,
-    prepare_board,
-};
-use kicad_drc::caches::DrcBoardCaches;
 use kicad_drc::constraint_types::DrcConstraintT;
-use kicad_drc::engine::implicit_condition::EngineCondition;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::copper_clearance::DrcTestProviderCopperClearance;
+use kicad_drc::engine::DrcEngine;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{DRCE_FIRST, DRCE_HOLE_CLEARANCE, DRCE_LAST};
 use kicad_pcb::item::RecurseMode;
@@ -74,64 +65,9 @@ fn type_of_code(code: &str) -> &'static str {
     }
 }
 
-/// The full copper clearance provider with the parts of
-/// `DRC_CACHE_GENERATOR::Run()` it reads built right before it, and the run's connectivity
-/// (FlashLayer of pads and vias).
-struct CopperWithCaches<'a> {
-    connectivity: &'a ConnectivityData,
-}
-
-impl DrcTestProviderRun for CopperWithCaches<'_> {
-    fn name(&self) -> &str {
-        "clearance"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let cctx = BoardCtx {
-            board: ctx.board,
-            rules: ctx.rules,
-            connectivity: Some(self.connectivity),
-        };
-        let mut caches = DrcBoardCaches::new();
-        (caches.max_clearance, caches.max_physical_clearance) =
-            compute_max_clearances(&cctx, engine);
-        build_zone_lists(&cctx, &mut caches);
-        caches.copper_item_rtree = Some(Arc::new(build_copper_item_rtree(
-            &cctx,
-            caches.max_clearance,
-        )));
-        build_zone_caches(&cctx, &mut caches);
-
-        let mut provider = DrcTestProviderCopperClearance::new(&caches);
-        provider.run_tests(engine, run, &cctx, units)
-    }
-}
-
-/// `BuildConnectivity` at load time, then the board-writing part of the cache generator and
-/// its `connectivity->Build( board )` (as `drc07_connectivity.rs`).
-fn prepare(loaded: &mut Loaded) -> ConnectivityData {
-    let mut connectivity = ConnectivityData::new();
-    connectivity.build_connectivity(&mut loaded.board);
-    prepare_board(&mut loaded.board);
-    connectivity.clear_ratsnest();
-    connectivity.build_board(&mut loaded.board);
-    connectivity
-}
-
 /// The report entries of the provider's types after a run of the provider.
 fn report(loaded: &mut Loaded, all_track_errors: bool) -> Vec<Entry> {
-    let connectivity = prepare(loaded);
-    let mut provider = CopperWithCaches {
-        connectivity: &connectivity,
-    };
-
-    cli_report_entries(loaded, all_track_errors, &mut [&mut provider])
+    cli_report_entries_flow(loaded, all_track_errors, &["clearance"])
         .into_iter()
         .filter(|e| TYPES.contains(&e.type_.as_str()))
         .collect()
@@ -213,17 +149,6 @@ fn types_by_uuid(loaded: &Loaded) -> BTreeMap<String, KicadT> {
         });
 
     out
-}
-
-/// Whether a user rule condition of the engine calls a function (`A.isPlated()`,
-/// `A.insideArea(..)`): the function bodies are stubs until DRC-22 lands, so such boards are
-/// pending. Conditions made of properties and operators only (`A.Net != B.Net`) evaluate with
-/// the DRC-21 binding and are compared.
-fn conditions_call_functions(engine: &DrcEngine) -> bool {
-    engine.constraint_map().values().flatten().any(|c| {
-        !c.parent_rule.is_implicit()
-            && matches!(&c.condition, Some(EngineCondition::Compiled(cond)) if cond.expression().contains('('))
-    })
 }
 
 /// The names of the physical clearance constraints of the engine (as `drc26_silk_physical`).
@@ -351,10 +276,6 @@ fn compare_golden(golden: &str, all_track_errors: bool, filter: &str) -> Score {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, BTreeMap<String, KicadT>, Vec<String>), String> {
                     let mut loaded = load_board(&path)?;
-
-                    if conditions_call_functions(&loaded.engine) {
-                        return Err("rule conditions call functions (DRC-22)".to_string());
-                    }
 
                     if !loaded.report.skipped.is_empty() {
                         return Err("parser skipped items".to_string());
@@ -602,11 +523,9 @@ fn load_qa(name: &str) -> Option<Loaded> {
     let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
 
     match quiet(|| catch_unwind(AssertUnwindSafe(|| load_board(&path)))) {
-        Ok(Ok(l)) if l.report.skipped.is_empty() && !conditions_call_functions(&l.engine) => {
-            Some(l)
-        }
+        Ok(Ok(l)) if l.report.skipped.is_empty() => Some(l),
         Ok(Ok(_)) => {
-            eprintln!("{name}: pending (skipped items or rule conditions)");
+            eprintln!("{name}: pending (skipped items)");
             None
         }
         Ok(Err(e)) => {
@@ -642,11 +561,7 @@ fn hole_clearance_issue24355() {
             .insert(DRCE_HOLE_CLEARANCE, Severity::Error);
     }
 
-    let connectivity = prepare(&mut loaded);
-    let mut provider = CopperWithCaches {
-        connectivity: &connectivity,
-    };
-    let found = run_providers(&mut loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, &["clearance"]);
     let hole_clearance_count = found
         .iter()
         .filter(|r| r.item.error_code() == DRCE_HOLE_CLEARANCE)

@@ -270,3 +270,46 @@ Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-boa
 - `RemoveTeardrops` / incremental `UpdateTeardrops` (dirty lists) and
   `DeleteTrackToTrackTeardrops` are ported but only reached by editor flows; they are not
   verified against the reference (no CLI path runs them).
+
+## ZF-07: copper thieving (`addCopperThievingPattern`)
+
+Supersedes the "ZF-07 stub" mentions in the ZF-01 / ZF-03 / ZF-06 / TD-01 sections above.
+
+| C++ | Rust | State |
+|---|---|---|
+| `ZONE_FILLER::addCopperThievingPattern` (zone_filler.cpp L4158-4352: dots, squares, hatch; grid origin / stride / stagger, per-layer `hatching_offset` lookup, orientation rotate-in / rotate-out, containment deflate, hatch interior deflate and void clipping, bad-parameter bail-out) | `thermal.rs` `add_copper_thieving_pattern` | ported |
+| callers in `fillCopperZone` / `fillNonCopperZone`, no-island-tracking for thieving zones in `Fill` (initial map and iterative refill) | `copper_fill.rs`, `filler.rs`, `refill.rs` | checked against the C++, unchanged |
+
+Tests: `tests/zf07_thieving.rs` ports the seven `CopperThievingZone_*` cases of
+`qa/tests/pcbnew/test_zone_filler.cpp` (HatchSurvivesTrackBisection, NonCopperLayerStampsNotSolid,
+DotsGrid, StaggerProducesDifferentLayout, SquaresGrid, HighDensityPerformance without the time
+bound, HatchPattern). `test_drc_copper_thieving.cpp` is ported in kicad-drc
+(`tests/drc07_connectivity.rs`).
+
+Verification (reference kicad-cli `pcb drc --refill-zones --save-board`, 2026-11-10):
+- Corpus boards `zone_thieving_track_bisection` and `drc_copper_thieving/copper_thieving`: fills
+  vertex-identical (`tests/zone_fill_corpus.rs`).
+- 25 crafted boards from `tests/oracle/gen_zf07_thieving.py` (dots / squares / hatch; stagger;
+  orientations 0, 17.5, 30, 45, 60, 90, 135; negative coordinates; element size below min
+  thickness; zone-local and board-default `hatch_position` offsets; tracks and vias cutting the
+  fill; silkscreen layer; 50 x 50 mm dense grid; narrow hatch zone; gap 0 / size 0 in the file):
+  **25 / 25 zone layers identical**.
+- Saved boards (`kicad-session` `zf06_refill_save --ignored`, whole cached corpus incl. the
+  crafted boards): 262 identical, 1 different (the known `ZoneFill-4.0.7` UUID case), 0 not run;
+  the two former "not run: ZF-07" boards and all 25 crafted boards are byte identical.
+  Regenerate with
+  `python3 -I crates/kicad-zone/tests/oracle/gen_zf07_thieving.py target/zf07-boards &&
+  tools/zone-corpus/run.sh target/zf07-boards/*.kicad_pcb`.
+
+### Deviations
+
+- `wxCHECK( aZone->IsCopperThieving(), false )`: early return `false` plus `debug_assert!`.
+
+### Known gaps
+
+- The `gap <= 0` / `element_size <= 0` / `line_width <= 0` bail-out is not reachable from a
+  file: the parser ignores non-positive values and keeps the constructor defaults (the crafted
+  `gap_zero` / `size_zero_squares` boards fill like the reference), so that branch is only
+  checked by reading.
+- Thieving zones with two copper layers in the file are reduced to one layer by the model
+  (`SetLayerSet`), so the board-default offset was only exercised on F.Cu.

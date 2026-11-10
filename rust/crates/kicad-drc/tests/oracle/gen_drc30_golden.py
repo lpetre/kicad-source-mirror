@@ -54,6 +54,9 @@ BOARDS = [
     "qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb",
 ]
 VARIANTS = ["base", "gap", "unc", "both", "layer"]
+# The large board keeps the golden small with two cases: its own rules, and the variant whose
+# keys mix an empty and a set gap rule name.
+BOARD_VARIANTS = {"qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb": ["base", "layer"]}
 
 
 def run_case(rel, variant):
@@ -106,7 +109,7 @@ def run_case(rel, variant):
 lines = []
 
 for rel in BOARDS:
-    for variant in VARIANTS:
+    for variant in BOARD_VARIANTS.get(rel, VARIANTS):
         lines += run_case(rel, variant)
 
 os.makedirs(os.path.dirname(OUT), exist_ok=True)

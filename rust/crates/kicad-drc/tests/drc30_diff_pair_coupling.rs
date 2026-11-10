@@ -204,14 +204,32 @@ fn net_of(description: &str) -> &str {
 /// the first items of the positive and of the negative net in address order in C++ (heap
 /// dependent), so they are compared by their nets only (positive net first).
 fn key(e: &Entry) -> String {
+    key_entry(e).key()
+}
+
+/// The entry [`key`] compares.
+fn key_entry(e: &Entry) -> Entry {
     let mut e = e.clone();
 
     if e.type_ == "diff_pair_uncoupled_length_too_long" {
         for it in e.items.iter_mut() {
-            *it = (String::new(), format!("item of net {}", net_of(&it.1)), 0.0, 0.0);
+            *it = (
+                String::new(),
+                format!("item of net {}", net_of(&it.1)),
+                0.0,
+                0.0,
+            );
         }
     }
 
+    e
+}
+
+/// The part of an entry whose report order is defined in C++: the type, the message and the
+/// positive item.
+fn order_key(e: &Entry) -> String {
+    let mut e = key_entry(e);
+    e.items.truncate(1);
     e.key()
 }
 
@@ -276,11 +294,15 @@ fn drc30_reference_cases() {
             if a == b {
                 same_order += 1;
             } else {
-                println!("{case}: same entries, different order");
-                if std::env::var("DRC30_DEBUG").is_ok() {
-                    for (x, y) in a.iter().zip(b.iter()) {
-                        println!("R {}\nM {}", &x[..x.len().min(260)], &y[..y.len().min(260)]);
-                    }
+                // The gap entries of one positive item follow the address order of the
+                // negative items in C++: only the order of the positive items is defined.
+                let a: Vec<String> = reference.iter().map(order_key).collect();
+                let b: Vec<String> = mine.iter().map(order_key).collect();
+
+                if a == b {
+                    println!("{case}: same entries, negative items of a pair in another order");
+                } else {
+                    failures.push(format!("{case}: same entries in a different order"));
                 }
             }
         }
@@ -307,4 +329,29 @@ fn drc30_reference_cases() {
     }
 
     assert!(failures.is_empty(), "{} differences", failures.len());
+}
+
+/// Port of the diff pair boards of `qa/tests/pcbnew/drc/test_drc_regressions.cpp`
+/// `DRCFalsePositiveRegressions` (expected: no error-severity violation), restricted to this
+/// provider: each board with its own project and rule file.
+#[test]
+fn drc_false_positive_regressions_diff_pair() {
+    let tests = [
+        "issue7975",                      // Differential pair gap out of range fault by DRC
+        "issue8407",                      // PCBNEW: Arc for diff pair has clearance DRC error
+        "issue17967/issue17967",          // Arc dp coupling
+        "diff_pair_uncoupled_tuning_drc", // Tuning pattern length wrongly counted as uncoupled
+    ];
+
+    for rel in tests {
+        let path = kicad_qa::pcbnew_data_dir().join(format!("{rel}.kicad_pcb"));
+        let entries = report(&path).unwrap();
+        let errors: Vec<String> = entries
+            .iter()
+            .filter(|e| e.severity == "error")
+            .map(|e| e.key())
+            .collect();
+
+        assert!(errors.is_empty(), "{rel}: {errors:?}");
+    }
 }

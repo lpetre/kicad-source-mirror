@@ -484,3 +484,58 @@ loaders; 4 boards have no items.
   exercised by one cluster (`metadata`).
 - Heap-order sites stay as documented by REV-CN / FIX-CN-1; no STAB-CN board needed the
   tie-aware rule (all `rn` lines of the order goldens match exactly).
+
+## CN-05: from-to cache
+
+| C++ | Rust | State |
+|---|---|---|
+| `from_to_cache.h/.cpp` `FROM_TO_CACHE` (`FT_ENDPOINT`, `FT_PATH`, `Rebuild`, `buildEndpointList`, `cacheFromToPaths`, `IsOnFromToPath`, `QueryFromToPath`) | `from_to::FromToCache` (`FtEndpoint`, `FtPath`, `rebuild`, `is_on_from_to_path`, `query_from_to_path`) | ported |
+| static `uniquePathBetweenNodes`, `isVertexVisited`, `PATH_STATUS` | `from_to::unique_path_between_nodes`, `PathStatus` | ported |
+| `CONNECTIVITY_DATA::m_fromToCache`, `GetFromToCache()` | `ConnectivityData::from_to_cache()` (a `Mutex`), `rebuild_from_to_cache()` | ported |
+| `fromToFunc` -> `GetFromToCache()->IsOnFromToPath` | `ConnectivityQuery::is_on_from_to_path` (kicad-pcb `ctx.rs`; default `None` = no cache), implemented by `ConnectivityData`; called by kicad-drc `from_to_func` | ported |
+
+Verification:
+
+- `tests/cn05_from_to_golden.rs` replays `tests/golden/ft_cache/` (driver
+  `tests/oracle/ft_cache_oracle.cpp`, build `build_ft_oracle.sh` under the C++ lock, goldens
+  `gen_ft_cache.sh`, boards `tests/oracle/ft_cache_boards.txt`: 91 boards, 69 of them with a net
+  of two or more pads): `FROM_TO_CACHE::Rebuild`, then for every net with >= 2 pads all ordered
+  pad pairs (<= 4 pads) or a seeded sample of 6, the wildcard pairs `REF-*` -> pad and
+  pad -> `REF`, and once per board pad -> `*`; `IsOnFromToPath` for every pad, track and zone
+  of the board, plus the number of cached paths and their `isUnique`. Result: 69 boards,
+  4671 pairs, 0 mismatches (97 pairs compared against the list-order replay, see below).
+- kicad-drc `tests/cn05_from_to_rules.rs`: `A.fromTo( from, to )` evaluated through
+  `DRC_RULE_CONDITION::EvaluateFor` on `demos/ecc83/ecc83-pp` against the tracks the reference
+  `kicad-cli pcb drc` flags with a `track_width` rule under that condition (7 pairs incl.
+  wildcards, `*` and a lower-case pattern; golden by `tests/oracle/gen_cn05_from_to_cli.py`).
+  Identical.
+
+### Deviations (CN-05)
+
+- Pointer-order site: `uniquePathBetweenNodes` is a breadth-first search over
+  `CN_ITEM::ConnectedItems()` (heap-address order in C++, list order in the port). Where the
+  graph between the two pads has cycles (three tracks meeting in one point already form a
+  triangle), that order decides which of two equally long paths is found first, whether a
+  second path is found (`isUnique`), and so which items are on the path. On the corpus this
+  happens for 97 of 4671 pairs (pic_programmer, interf_u, ...). The oracle replays the
+  unchanged C++ search with the neighbours in CN list order (`list=` in the golden); the port
+  matches that replay on all of them and the reference's own answer on all other pairs.
+  The choice of the `to` pad (`count >= 2` drops the path) does not depend on order.
+- `cacheFromToPaths` calls `GetConnectedItems( pad, EXCLUDE_ZONES )`, whose cluster search
+  needs `&mut` here. `rebuild` runs one `SearchClusters( CSM_CONNECTIVITY_CHECK, true, -1 )`
+  and keeps the clusters; with `aSingleNet = -1` only items of the same net are joined, so
+  the cluster of a pad has the same members in the same order as the per-net search the C++
+  runs per query. Consequence: the connectivity must not change between
+  `rebuild_from_to_cache` and the queries (true during a DRC run, where C++ rebuilds the cache
+  after the cache generator), and every rebuild costs one cluster search.
+- The `pad == endpoint.parent` scan over all endpoints is an index from pad to its endpoint
+  slots (same visit order); `std::set<BOARD_CONNECTED_ITEM*>` is a `BTreeSet<ItemId>` (only
+  membership and equality are used). The `std::recursive_mutex` is a `std::sync::Mutex`.
+
+### Known gaps (CN-05)
+
+- kicad-drc `run_tests` does not call `rebuild_from_to_cache` yet (change request to the DRC
+  run-flow owner): until it does, `fromTo()` answers 0 in a full DRC run, as the C++ cache
+  does before its first `Rebuild`. Providers whose context has no connectivity (the
+  `connectivity` provider in `run_flow.rs`) take the "non-existent from-to cache" branch.
+- The full `kicad-cli pcb drc` report comparison with `fromTo()` rules waits for that hook.

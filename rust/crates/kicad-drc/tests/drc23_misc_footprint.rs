@@ -34,8 +34,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, Loaded, cli_report_entries, diff_entries, load_board,
-    panic_text, quiet, read_tuning_profiles, run_providers,
+    Entry, Loaded, cli_report_entries, diff_entries, load_board, panic_text, quiet,
+    read_tuning_profiles, run_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
@@ -226,7 +226,6 @@ fn misc_and_footprint_checks_match_reference_corpus() {
                 || -> Result<(Vec<Entry>, Vec<Entry>, Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-
                     let mut providers = FootprintAndMisc::new(&path);
                     let mine: Vec<Entry> = cli_report_entries(
                         &mut loaded,
@@ -310,7 +309,17 @@ fn misc_and_footprint_checks_match_reference_corpus() {
             }
         }
 
-        if score.differences.is_empty() && mine != theirs {
+        // testAssertions evaluates the items on the thread pool (`submit_loop`): the report
+        // order of `assertion_failure` is scheduling dependent in C++ (drc.md 4.12); it is
+        // compared as a multiset only (STAB-DRC, seen on component_classes_drc).
+        let ordered = |list: &[Entry]| -> Vec<Entry> {
+            list.iter()
+                .filter(|e| e.type_ != "assertion_failure")
+                .cloned()
+                .collect()
+        };
+
+        if score.differences.is_empty() && ordered(&mine) != ordered(&theirs) {
             score.order_differs.push(rel.clone());
         }
     }

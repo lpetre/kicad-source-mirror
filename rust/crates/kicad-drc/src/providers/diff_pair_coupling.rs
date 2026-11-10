@@ -29,8 +29,9 @@
 //!   is heap dependent, so these are compared as sets / tie-aware.
 //! - `dpRuleMatches` is a `std::map` keyed by `DIFF_PAIR_KEY` (net codes and rule names, no
 //!   pointers): the port reproduces its order with the same comparator (see [`key_less`]).
-//! - `GetFromToCache()->Rebuild( m_board )` is not ported (the from-to cache is not ported,
-//!   `fromTo()` conditions report it, DRC-22).
+//! - `m_board->GetConnectivity()->GetFromToCache()->Rebuild( m_board )`, the first statement
+//!   of `Run()`, needs the connectivity mutably; the caller does it right before
+//!   [`DrcTestProviderDiffPairCoupling::run`] (`run_flow::run_tests`).
 
 use std::collections::BTreeSet;
 use std::sync::Arc;

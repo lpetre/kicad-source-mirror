@@ -1,0 +1,7 @@
+zone edge FCu outlines 1
+  0 pts 143 island 0 hash 615c75200e88e1b3
+zone thin FCu outlines 1
+  0 pts 128 island 0 hash 81010ef0e815238d
+zone under BCu outlines 0
+zone zero BCu outlines 1
+  0 pts 114 island 0 hash 23b61b7f5c1f3cb5

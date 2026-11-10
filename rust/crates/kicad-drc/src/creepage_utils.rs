@@ -14,7 +14,32 @@
 //
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// Additional copyright lines carried over from the C++ original:
+//
+// Copyright (C) 2024 Fabien Corona f.corona<at>laposte.net
 
 //! Port of `pcbnew/drc/drc_creepage_utils.h` / `drc_creepage_utils.cpp`.
 //!
-//! Not ported yet: work package DRC-32 / DRC-33 (`rust/docs/analysis/drc.md` section 10.2).
+//! Part 1 (work package DRC-32): the shape classes ([`shapes`]), every shape-pair path
+//! construction and `PATH_CONNECTION` ([`paths`]), `BuildCreepageBoardEdges`
+//! ([`board_edges`]) and the graph model with the board-edge graph construction
+//! ([`graph`]). Part 2 (DRC-33): `SegmentIntersectsBoard`, `segmentIntersectsCircle`,
+//! `GetPaths`, `CREEPAGE_GRAPH::Solve`, `Addshape`, `GeneratePaths`, `AddNetElements`
+//! ([`pending`] holds the placeholders part 1 calls).
+
+pub mod board_edges;
+pub mod graph;
+pub mod paths;
+pub mod pending;
+pub mod shapes;
+
+pub use board_edges::build_creepage_board_edges;
+pub use graph::{
+    ConnId, CreepageGraph, GraphConnection, GraphNode, GraphNodeType, NodeId, ShapeId,
+};
+pub use paths::{CreepageTrackEntry, PathConnection, TrackRtree};
+pub use shapes::{
+    BeShapeArc, BeShapeCircle, BeShapePoint, CreepItem, CreepShape, CreepShapeBase, CreepShapeType,
+    CuShapeArc, CuShapeCircle, CuShapeSegment,
+};

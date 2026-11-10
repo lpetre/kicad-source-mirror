@@ -23,7 +23,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `plot_brditems_shapes.rs` (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`, `PlotShape`, `PlotDimension`, `PlotPcbTarget`, `PlotBarCode`, `PlotTableBorders`), `line_ending_plot.rs` (`LINE_ENDING::Plot`) | see "FAB-05" below | FAB-05 | ported |
 | `plot_brditems_text.rs` (`PlotFootprintTextItems`, `PlotText`) | see "FAB-06" below | FAB-06 | ported |
 | `jobs/job_export_pcb_plot.rs`, `jobs/job_export_pcb_gerbers.rs`, the Gerber part of `jobs_handler.rs` (`JobExportGerbers`, `PlotJobToPlotOpts`) | see "FAB-07" below | FAB-07 | ported (job file: FAB-09) |
-| `plot_layer_poly.rs`, `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-08..13 | not started |
+| `plot_layer_poly.rs` (`PlotPolySet`, `PlotSolderMaskLayer` min-width path, `PlotClippedSilkLayer`, `GenerateLayerPoly`) | `plot_board_layers.cpp` L49-125, L1020-1275 | FAB-10 | ported (see "FAB-10" below) |
+| `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-11..13 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -736,3 +737,58 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
 * Knockout / strike-out text of a footprint dimension still reaches the pending stub in
   `plot_brditems_text.rs` (owned by FONT-RC-1 while it runs): its
   `pcb_text_transform_text_to_poly_set` should call `PcbDimension::transform_text_to_poly_set`.
+
+## FAB-10: solder mask minimum width and clipped silk
+
+### C++ to Rust
+
+| C++ (`pcbnew/plot_board_layers.cpp`) | Rust |
+|---|---|
+| `PlotPolySet` (L64-86) | `plot_layer_poly::plot_poly_set` |
+| `PlotSolderMaskLayer` (L91-107) | `plot_board_layers::plot_solder_mask_layer` (min width 0 -> `PlotLayer`, as FAB-03 left it) + `plot_layer_poly::plot_solder_mask_layer_min_width` (the rest) |
+| `PlotClippedSilkLayer` (L110-125) | `plot_layer_poly::plot_clipped_silk_layer` (called from `plot_one_board_layer`) |
+| `GenerateLayerPoly` (L1020-1275) incl. its lambdas `handlePcbShape`, `handleFPTextItem`, `handleTextBoxItem` | `plot_layer_poly::generate_layer_poly`, `LayerPolyGen` |
+| `PCB_TABLE::TransformShapeToPolySet` / `TransformGraphicItemsToPolySet` with non-null `aRenderSettings` (dashed borders) | `plot_layer_poly::table_transform_shape_to_poly_set` (private; the kicad-pcb model has only the `nullptr` overload) |
+
+Notes on the port:
+* `track->GetSolderMaskExpansion()` is called through `const PCB_TRACK*` and is not virtual,
+  so a via runs the `PCB_TRACK` body (rules with the via as `A`, the track-base local margin,
+  board setting, clamp to `-m_width / 2` of the base width 0.2 mm): `via.track.solder_mask_expansion`.
+* `DISABLE_ARC_RADIUS_CORRECTION` is held to the end of `generate_layer_poly`, as the C++ local
+  lives until the function returns (Simplify / Deflate / BooleanAdd run under it).
+* `MarkFootprintPlotted` (PDF bookmarks) is not ported (out of scope, as elsewhere).
+
+### Tests and verification (reference kicad-cli)
+
+* kicad-session `tests/gerbers_job.rs` `corpus_replay` (session path: CLI loader, connectivity,
+  DRC engine as rule resolver): 770 runs, **766 identical**, 2 pending (FAB-13 chart symbols),
+  2 not loadable, 0 failures. All 62 runs of the 31 corpus boards with
+  `solder_mask_min_width > 0` (formerly pending on this package) are identical.
+* `tests/plot_layer_poly.rs` `crafted_boards` (golden `tests/golden/plot_layer_poly/crafted.txt`,
+  `generate.py crafted`): boards `tests/data/plot_layer_poly/` (hand-written, re-saved by
+  `kicad-cli pcb upgrade --force`): `mask_min_width` (pads closer than the 0.3 mm minimum width,
+  per-pad margin, PTH oval pad, untented / front-tented vias, F.Mask / B.Mask tracks and arc,
+  solid / dashed / dotted mask lines, mask text, mirrored back text, mask text box with dashed
+  border, filled poly / rect, F.Mask zone with two fill outlines, rotated back footprint),
+  `silk_over_mask` and `silk_over_mask_minw` (silk lines / dashed / dash-dot / circle / text /
+  filled poly / text box across pad, via and mask openings, front and back) x 4 sets (all layers;
+  `-l F.Cu,Edge.Cuts --cl F.Mask,B.Mask`; `--subtract-soldermask -l F.SilkS,B.SilkS`;
+  `--subtract-soldermask -l F.Cu,B.Cu --cl F.SilkS,B.SilkS`): **12/12 runs, 36/36 files
+  byte-identical** (after the version / date normalisation).
+* `tests/plot_layer_poly.rs` `corpus_replay` (golden `corpus.txt`, `generate.py corpus`, about
+  7 minutes): every board under `qa/data` and `demos` below 300 KB with the two
+  `--subtract-soldermask` sets: 760 runs, **758 identical** (1422 files), 2 pending (FAB-13 chart
+  symbols on `modern_metadata`), 0 failures. This replays `JobExportGerbers`' per-file loop
+  (`[layer] + --cl`) on the kicad-fab test loader (parse + project + connectivity + DRC engine).
+
+### Deviations
+
+None known.
+
+### Known gaps
+
+* `table_transform_shape_to_poly_set` (dashed table borders of a board table on a mask / silk
+  layer with render settings) is a local port because kicad-pcb lacks the render-settings
+  overload; no corpus board exercises it (unverified against the oracle).
+* SVG `--subtract-soldermask` reaches the same code; it is verified only through Gerber here
+  (SVG plotting is FAB-11).

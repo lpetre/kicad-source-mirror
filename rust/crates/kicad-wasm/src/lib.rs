@@ -27,12 +27,12 @@ pub mod api;
 
 use js_sys::{Error as JsError, Reflect};
 use kicad_session::jobs::{
-    DrillFormat, DrillUnits, JobExportPcbDrill, JobExportPcbGerbers, JobExportPcbSvg, JobPcbDrc,
-    RcOutputFormat, RcUnits, SvgGenMode,
+    DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, JobExportPcbGerbers, JobExportPcbSvg, JobPcbDrc,
+    RcOutputFormat, RcUnits, SvgGenMode, ZerosFormat,
 };
 use kicad_session::{
-    JobOutcome, Reporter, Session, SessionError, TrackSpec, ViaSpec, run_drc, run_export_drill,
-    run_export_gerbers, run_export_svg,
+    HostClock, JobOutcome, LoadInputs, Reporter, Session, SessionError, TrackSpec, ViaSpec,
+    run_drc, run_export_drill, run_export_gerbers, run_export_svg,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -76,6 +76,10 @@ fn session_error(err: SessionError) -> JsValue {
     }
 
     js.into()
+}
+
+fn invalid(message: &str) -> JsValue {
+    session_error(SessionError::invalid_argument(message.to_string()))
 }
 
 fn plain_error(message: &str) -> JsValue {
@@ -132,32 +136,98 @@ pub fn plot_demo_gerber(date: Option<String>) -> String {
 
 /// Options of `loadBoard`.
 #[derive(Clone, Debug, Default, Deserialize)]
-#[serde(default)]
+#[serde(default, rename_all = "camelCase")]
 pub struct LoadOptions {
     /// Text of the `.kicad_pro`.
     pub project: Option<String>,
+    /// Text of the `.kicad_prl`.
+    pub local_settings: Option<String>,
     /// Text of the `.kicad_dru`.
     pub rules: Option<String>,
     /// The board's file name (default `board.kicad_pcb`).
     pub name: Option<String>,
+    /// Fixed seed of the UUIDs the session generates (new items, DRC markers), for
+    /// reproducible runs; default: `crypto.getRandomValues`.
+    pub uuid_seed: Option<u32>,
+    /// Fixed `YYYY-MM-DDTHH:MM:SS` for every date the jobs write (DRC report, Gerber / drill
+    /// creation date, `CURRENT_DATE`); default: the browser clock (local time).
+    pub date: Option<String>,
 }
 
-/// `loadBoard(text, { project, rules, name })`.
+/// 32 random bits from `crypto.getRandomValues` (`Math.random` when there is no `crypto`).
+fn random_u32() -> u32 {
+    let array = js_sys::Uint32Array::new_with_length(1);
+    let crypto = Reflect::get(&js_sys::global(), &JsValue::from_str("crypto")).ok();
+
+    if let Some(crypto) = crypto.filter(|c| c.is_object()) {
+        if let Ok(f) = Reflect::get(&crypto, &JsValue::from_str("getRandomValues")) {
+            if let Some(f) = f.dyn_ref::<js_sys::Function>() {
+                if f.call1(&crypto, &array).is_ok() {
+                    return array.get_index(0);
+                }
+            }
+        }
+    }
+
+    (js_sys::Math::random() * 4_294_967_296.0) as u32
+}
+
+/// The browser clock as `wxDateTime::Now()` (local time and its UTC offset).
+fn browser_clock() -> HostClock {
+    let now = js_sys::Date::new_0();
+    let ms = now.get_time();
+    // getTimezoneOffset() is UTC - local in minutes
+    let offset = -(now.get_timezone_offset() as i32);
+    HostClock::from_unix_seconds((ms / 1000.0).floor() as i64, offset)
+}
+
+/// `loadBoard(text, { project, localSettings, rules, name, uuidSeed, date })`.
 #[wasm_bindgen(js_name = loadBoard)]
 pub fn load_board(text: &str, options: JsValue) -> Result<Board, JsValue> {
     let opts: LoadOptions = from_js(options)?;
     let name = opts.name.unwrap_or_else(|| "board.kicad_pcb".to_string());
-    let session = Session::load_board(text, &name, opts.project.as_deref(), opts.rules.as_deref())
-        .map_err(session_error)?;
-    Ok(Board { session })
+    let fixed_date = parse_fixed_date(opts.date.as_deref())?;
+    let inputs = LoadInputs {
+        text,
+        source_name: &name,
+        project_json: opts.project.as_deref(),
+        local_settings_json: opts.local_settings.as_deref(),
+        rules_text: opts.rules.as_deref(),
+        ..LoadInputs::default()
+    };
+    let session = Session::load_board_with(&inputs).map_err(session_error)?;
+    Ok(Board::with_host_inputs(session, fixed_date, opts.uuid_seed))
 }
 
-/// `newBoard(name?)`: an empty board (`new BOARD()`), for building a board item by item.
-#[wasm_bindgen(js_name = newBoard)]
-pub fn new_board(name: Option<String>) -> Board {
-    Board {
-        session: Session::new_empty(&name.unwrap_or_else(|| "board.kicad_pcb".to_string())),
+fn parse_fixed_date(date: Option<&str>) -> Result<Option<HostClock>, JsValue> {
+    match date {
+        None => Ok(None),
+        Some(text) => HostClock::parse_iso(text).map(Some).ok_or_else(|| {
+            session_error(SessionError::invalid_argument(format!(
+                "Invalid date '{text}' (expected YYYY-MM-DDTHH:MM:SS)"
+            )))
+        }),
     }
+}
+
+/// Options of `newBoard`.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct NewBoardOptions {
+    /// As [`LoadOptions::uuid_seed`].
+    pub uuid_seed: Option<u32>,
+    /// As [`LoadOptions::date`].
+    pub date: Option<String>,
+}
+
+/// `newBoard(name?, { uuidSeed, date }?)`: an empty board (`new BOARD()`), for building a
+/// board item by item.
+#[wasm_bindgen(js_name = newBoard)]
+pub fn new_board(name: Option<String>, options: JsValue) -> Result<Board, JsValue> {
+    let opts: NewBoardOptions = from_js(options)?;
+    let fixed_date = parse_fixed_date(opts.date.as_deref())?;
+    let session = Session::new_empty(&name.unwrap_or_else(|| "board.kicad_pcb".to_string()));
+    Ok(Board::with_host_inputs(session, fixed_date, opts.uuid_seed))
 }
 
 /// Options of `runDrc` (`kicad-cli pcb drc` flags).
@@ -203,6 +273,8 @@ pub struct GerberOptions {
     pub board_plot_params: bool,
     /// `--check-zones`
     pub check_zones: bool,
+    /// `--variant` (the first one)
+    pub variant: Option<String>,
 }
 
 /// Options of `exportDrill` (`kicad-cli pcb export drill` flags).
@@ -217,6 +289,21 @@ pub struct DrillOptions {
     pub separate_th: bool,
     /// `--generate-report`
     pub generate_report: bool,
+    /// `--drill-origin`: `"absolute"` (default) or `"plot"`.
+    pub drill_origin: Option<String>,
+    /// `--excellon-zeros-format`: `"decimal"` (default), `"suppressleading"`,
+    /// `"suppresstrailing"`, `"keep"`.
+    pub zeros_format: Option<String>,
+    /// `--excellon-oval-format`: `"alternate"` (default) or `"route"`.
+    pub oval_format: Option<String>,
+    /// `--excellon-mirror-y`
+    pub mirror_y: bool,
+    /// `--excellon-min-header`
+    pub min_header: bool,
+    /// `--gerber-precision` (5 or 6, default 6)
+    pub gerber_precision: Option<i32>,
+    /// `--generate-tenting`
+    pub generate_tenting: bool,
 }
 
 /// Options of `plotSvg` (`kicad-cli pcb export svg --mode-single --exclude-drawing-sheet`).
@@ -269,10 +356,54 @@ fn job_result(outcome: JobOutcome, reporter: Reporter) -> Result<JsValue, JsValu
 #[wasm_bindgen]
 pub struct Board {
     session: Session,
+    /// The fixed date of the load options, `None`: the browser clock at each job.
+    fixed_date: Option<HostClock>,
+    /// The fixed UUID seed of the load options, `None`: random per run.
+    uuid_seed: Option<u32>,
+    /// Load warnings (outline font fallbacks).
+    warnings: Vec<String>,
+}
+
+impl Board {
+    /// A board object with the host inputs applied (UUID seed, clock) and the outline font
+    /// fallback warnings collected.
+    fn with_host_inputs(
+        mut session: Session,
+        fixed_date: Option<HostClock>,
+        uuid_seed: Option<u32>,
+    ) -> Board {
+        let clock = fixed_date.unwrap_or_else(browser_clock);
+        session.apply_host_inputs(&clock, uuid_seed.unwrap_or_else(random_u32));
+        let warnings = session.outline_font_warnings();
+
+        Board {
+            session,
+            fixed_date,
+            uuid_seed,
+            warnings,
+        }
+    }
+
+    /// `wxDateTime::Now()` for a job.
+    fn clock(&self) -> HostClock {
+        self.fixed_date.unwrap_or_else(browser_clock)
+    }
+
+    /// The DRC marker UUID seed of a run.
+    fn marker_seed(&self) -> u32 {
+        self.uuid_seed.unwrap_or_else(random_u32)
+    }
 }
 
 #[wasm_bindgen]
 impl Board {
+    /// `warnings`: the load warnings (text drawn with the stroke font because its outline font
+    /// has no usable stored glyphs).
+    #[wasm_bindgen(getter)]
+    pub fn warnings(&self) -> Vec<String> {
+        self.warnings.clone()
+    }
+
     /// The board's file name.
     #[wasm_bindgen(getter)]
     pub fn name(&self) -> String {
@@ -323,6 +454,8 @@ impl Board {
 
         job.report_all_track_errors = o.all_track_errors;
         job.refill_zones = o.refill_zones;
+        job.report_date = self.clock().iso8601();
+        job.marker_uuid_seed = self.marker_seed();
 
         let mut reporter = Reporter::new();
         let outcome = run_drc(&mut self.session, &mut job, &mut reporter).map_err(session_error)?;
@@ -348,6 +481,11 @@ impl Board {
         job.gerber.plot.subtract_solder_mask_from_silk = o.subtract_soldermask;
         job.gerber.plot.check_zones_before_plot = o.check_zones;
         job.use_board_plot_params = o.board_plot_params;
+        job.gerber.plot.creation_date = self.clock().gbr_creation_date();
+
+        if let Some(variant) = o.variant {
+            job.gerber.plot.variant = variant;
+        }
 
         if job.gerber.precision != 5 && job.gerber.precision != 6 {
             return Err(session_error(SessionError::invalid_argument(
@@ -386,6 +524,28 @@ impl Board {
         };
         job.excellon_combine_pth_npth = !o.separate_th;
         job.generate_report = o.generate_report;
+        job.drill_origin = match o.drill_origin.as_deref() {
+            None | Some("absolute") => DrillOrigin::Abs,
+            Some("plot") => DrillOrigin::Plot,
+            Some(v) => return Err(invalid(&format!("Invalid drill origin: {v}"))),
+        };
+        job.zero_format = match o.zeros_format.as_deref() {
+            None | Some("decimal") => ZerosFormat::Decimal,
+            Some("suppressleading") => ZerosFormat::SuppressLeading,
+            Some("suppresstrailing") => ZerosFormat::SuppressTrailing,
+            Some("keep") => ZerosFormat::KeepZeros,
+            Some(v) => return Err(invalid(&format!("Invalid zeros format: {v}"))),
+        };
+        job.excellon_oval_drill_route = match o.oval_format.as_deref() {
+            None | Some("alternate") => false,
+            Some("route") => true,
+            Some(v) => return Err(invalid(&format!("Invalid oval format: {v}"))),
+        };
+        job.excellon_mirror_y = o.mirror_y;
+        job.excellon_minimal_header = o.min_header;
+        job.gerber_precision = o.gerber_precision.unwrap_or(6);
+        job.generate_tenting = o.generate_tenting;
+        job.creation_date = self.clock().gbr_creation_date();
 
         let mut reporter = Reporter::new();
         let outcome =

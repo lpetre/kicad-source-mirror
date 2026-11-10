@@ -32,8 +32,8 @@
   <p class="muted">Module status: <span id="status">loading...</span></p>
 
   <section>
-    <div id="drop">Drop a <code>.kicad_pcb</code> here, or click to choose one</div>
-    <input id="file" type="file" accept=".kicad_pcb,.kicad_mod,.kicad_sch" hidden>
+    <div id="drop">Drop a <code>.kicad_pcb</code> (with its <code>.kicad_pro</code> / <code>.kicad_dru</code>) here, or click to choose</div>
+    <input id="file" type="file" accept=".kicad_pcb,.kicad_pro,.kicad_dru,.kicad_mod,.kicad_sch" multiple hidden>
   </section>
 
   <section id="stats-section">
@@ -48,14 +48,23 @@
     <p id="board-result" class="muted">Load a board to try the board loader.</p>
   </section>
 
-  <section class="placeholder">
-    <h2>Design rule check <small class="muted">(placeholder: kicad-drc not ported yet)</small></h2>
+  <section>
+    <h2>Design rule check</h2>
     <button id="drc" disabled>Run DRC</button> <span id="drc-result"></span>
+    <pre id="drc-report" hidden></pre>
   </section>
 
-  <section class="placeholder">
-    <h2>Gerber export <small class="muted">(placeholder: kicad-fab not ported yet)</small></h2>
-    <button id="gerbers" disabled>Export Gerbers</button> <span id="gerbers-result"></span>
+  <section>
+    <h2>Fabrication outputs</h2>
+    <p class="muted">Gerber files of the board's plot layers plus the Excellon drill files, as <code>kicad-cli pcb export gerbers</code> and <code>pcb export drill</code> write them.</p>
+    <button id="gerbers" disabled>Export Gerbers + drill (zip)</button> <span id="gerbers-result"></span>
+    <ul id="fab-files"></ul>
+  </section>
+
+  <section>
+    <h2>SVG preview</h2>
+    <button id="svg" disabled>Plot F.Cu</button> <span id="svg-result"></span>
+    <div id="svg-view"></div>
   </section>
 
   <section>

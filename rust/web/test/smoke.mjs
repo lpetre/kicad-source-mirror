@@ -70,7 +70,7 @@ checks++;
 same(k.plotDemoGerber(ref.demoGerber.date), ref.demoGerber.text, 'plotDemoGerber');
 
 // Item access on an empty board (the board model is ported).
-const b = k.newBoard('demo.kicad_pcb');
+const b = k.newBoard('demo.kicad_pcb', { uuidSeed: ref.uuidSeed, date: ref.fixedDate });
 assert.equal(b.name, 'demo.kicad_pcb');
 assert.ok(b.nets().some((n) => n.code === 0));
 const t = b.addTrack({ start: [0, 0], end: [1000000, 0], width: 250000, layer: 'F.Cu', net: 0 });
@@ -108,27 +108,47 @@ for (const l of ref.loadBoard) {
     const saved = lb.save();
     same({ length: Buffer.byteLength(saved, 'utf8'), fnv: fnv1a64(saved) }, l.save,
          `loadBoard ${l.file} save`);
-    assert.throws(() => lb.runDrc({}),
-                  (e) => e.name === 'NotYetPortedError' && /kicad-drc/.test(e.subsystem));
-    checks++;
 }
 
-// Not yet ported: every board job names its subsystem. Each call gets a fresh board: a job that
-// reaches a kicad-pcb `port_pending!` stub before its own subsystem panics, which is a wasm trap
-// (RuntimeError) with panic=abort; that is accepted for the calls marked `stubOk`.
-for (const [what, call, stubOk] of [
-    ['runDrc', (x) => x.runDrc({}), false],
-    ['exportDrill', (x) => x.exportDrill({}), false],
-    ['ratsnest', (x) => x.ratsnest(), false],
-    ['refillZones', (x) => x.refillZones(), false],
-    ['exportGerbers', (x) => x.exportGerbers({ layers: 'F.Cu' }), true],
-    ['plotSvg', (x) => x.plotSvg({}), true],
-]) {
+// The board jobs (DRC report and JSON, Gerbers, Excellon and Gerber drill files) on corpus
+// boards with their project and rule files, fixed UUID seed and date, one fresh load per job:
+// exit code, messages and every produced file equal the native run (whose CLI counterpart is
+// compared with the reference kicad-cli by kicad-cli's e2e test).
+const reduce = (r) => ({
+    exitCode: r.exitCode,
+    files: r.files.map((f) => ({ name: f.name,
+                                 content: { length: Buffer.byteLength(f.content, 'utf8'),
+                                            fnv: fnv1a64(f.content) } })),
+    report: r.report == null ? null : { length: Buffer.byteLength(r.report, 'utf8'),
+                                        fnv: fnv1a64(r.report) },
+    messages: r.messages,
+});
+const readOpt = (p) => { try { return readFileSync(p, 'utf8'); } catch { return undefined; } };
+for (const j of ref.jobs) {
+    const path = join(kicad, j.file);
+    const load = () => k.loadBoard(readFileSync(path, 'utf8'), {
+        name: j.file.split('/').pop(),
+        project: readOpt(path.replace(/\.kicad_pcb$/, '.kicad_pro')),
+        rules: readOpt(path.replace(/\.kicad_pcb$/, '.kicad_dru')),
+        uuidSeed: ref.uuidSeed,
+        date: ref.fixedDate,
+    });
+    same(reduce(load().runDrc({})), j.drcReport, `runDrc ${j.file}`);
+    same(reduce(load().runDrc({ format: 'json', severities: ['error', 'warning', 'exclusions'] })),
+         j.drcJson, `runDrc json ${j.file}`);
+    same(reduce(load().exportGerbers({})), j.gerbers, `exportGerbers ${j.file}`);
+    same(reduce(load().exportDrill({})), j.drillExcellon, `exportDrill ${j.file}`);
+    same(reduce(load().exportDrill({ format: 'gerber' })), j.drillGerber,
+         `exportDrill gerber ${j.file}`);
+}
+
+// Not yet ported: the SVG plot names its subsystem (FAB-11).
+{
     const fresh = k.newBoard('job.kicad_pcb');
-    assert.throws(() => call(fresh),
+    assert.throws(() => fresh.plotSvg({}),
                   (e) => (e.name === 'NotYetPortedError' && typeof e.subsystem === 'string')
-                         || (stubOk && e instanceof WebAssembly.RuntimeError),
-                  what);
+                         || e instanceof WebAssembly.RuntimeError,
+                  'plotSvg');
     checks++;
 }
 

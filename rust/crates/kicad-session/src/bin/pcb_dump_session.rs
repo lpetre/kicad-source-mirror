@@ -39,10 +39,10 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 
 use kicad_pcb::dump::format::{Out, v_int, v_str};
-use kicad_pcb::dump::{DumpOptions, SilentPanics, dump_board, scan_file_uuids};
+use kicad_pcb::dump::{DumpOptions, SilentPanics, dump_board_ctx, scan_file_uuids};
 use kicad_pcb::io::ParseOptions;
 use kicad_pcb::project::{LoadPath, LoadStep};
-use kicad_pcb::{NetCode, RuleResolver};
+use kicad_pcb::NetCode;
 use kicad_session::board_loader::load_guarded;
 use kicad_session::{LoadInputs, Session};
 
@@ -112,6 +112,7 @@ fn load(path: &Path, loader: bool, strict: bool) -> Result<Session, String> {
     let inputs = LoadInputs {
         text: &text,
         source_name: &source_name,
+        project_path: None,
         project_json: pro.as_deref(),
         local_settings_json: prl.as_deref(),
         legacy_project_exists: abs.with_extension("pro").exists(),
@@ -155,38 +156,6 @@ fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {
         .map(|s| s.to_string())
         .or_else(|| payload.downcast_ref::<String>().cloned())
         .unwrap_or_else(|| "(non-string panic)".to_string())
-}
-
-/// `dump_board` evaluates the board without the session's DRC engine (`BoardCtx::bare`); the
-/// C++ tool's `BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue()` asks `m_DRCEngine`. Replaces
-/// that line with the value through the engine the load sequence created.
-fn with_engine_values(text: String, session: &Session, hash: bool) -> String {
-    const PREFIX: &str = "board|board|ds.biggest_clearance=";
-
-    let Some(engine) = session.drc_engine.as_ref() else {
-        return text;
-    };
-
-    let value = session
-        .board
-        .design_settings()
-        .get_biggest_clearance_value(Some(engine as &dyn RuleResolver));
-    let mut o = Out::new(hash);
-    o.line("board", "board", "ds.biggest_clearance", &v_int(value));
-
-    text.lines()
-        .map(|l| {
-            if l.starts_with(PREFIX) {
-                o.text.trim_end().to_string()
-            } else {
-                l.to_string()
-            }
-        })
-        .fold(String::with_capacity(text.len()), |mut acc, l| {
-            acc.push_str(&l);
-            acc.push('\n');
-            acc
-        })
 }
 
 fn main() -> std::process::ExitCode {
@@ -264,7 +233,16 @@ fn main() -> std::process::ExitCode {
                 .map(|t| scan_file_uuids(&t))
                 .unwrap_or_default(),
         );
-        let text = with_engine_values(dump_board(&session.board, &o), &session, opts.hash);
+        // The board with the state the C++ tool dumps through: connectivity (via flashing)
+        // and the DRC engine (BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue)
+        let mut ctx = kicad_pcb::ctx::BoardCtx::bare(&session.board)
+            .with_connectivity(&session.connectivity);
+
+        if let Some(engine) = session.drc_engine.as_ref() {
+            ctx = ctx.with_rules(engine);
+        }
+
+        let text = dump_board_ctx(&ctx, &o);
         let _ = out.write_all(text.as_bytes());
 
         if connectivity {

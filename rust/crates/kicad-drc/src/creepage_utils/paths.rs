@@ -275,8 +275,10 @@ impl CreepShape {
             (S::BeCircle(s), S::CuCircle(o)) => {
                 reverse_paths(paths_cu_circle_be_circle(o, s, w, w2))
             }
-            // Not overridden by BE_SHAPE_CIRCLE: CREEP_SHAPE::Paths answers nothing
-            (S::BeCircle(_), S::CuArc(_)) => Vec::new(),
+            // BE_SHAPE_CIRCLE declares no Paths( const CU_SHAPE_ARC& ): its own overloads hide
+            // the base ones, so the arc binds to Paths( const CU_SHAPE_CIRCLE& ), which asks the
+            // (virtual) arc: ReversePaths( CU_SHAPE_ARC::Paths( BE_SHAPE_CIRCLE ) )
+            (S::BeCircle(s), S::CuArc(o)) => reverse_paths(paths_cu_arc_be_circle(o, s, w, w2)),
 
             (S::BeArc(s), S::BePoint(o)) => reverse_paths(paths_be_point_be_arc(o, s, w, w2)),
             (S::BeArc(s), S::BeCircle(o)) => reverse_paths(paths_be_circle_be_arc(o, s, w, w2)),
@@ -318,7 +320,12 @@ fn paths_cu_arc_cu_circle(
     a_max_weight: f64,
     a_max_squared_weight: f64,
 ) -> Vec<PathConnection> {
-    reverse_paths(paths_cu_circle_cu_arc(a_s2, s, a_max_weight, a_max_squared_weight))
+    reverse_paths(paths_cu_circle_cu_arc(
+        a_s2,
+        s,
+        a_max_weight,
+        a_max_squared_weight,
+    ))
 }
 
 /// `BE_SHAPE_ARC::Paths( const BE_SHAPE_CIRCLE& )`: `ReversePaths( aS2.Paths( *this ) )`.
@@ -328,7 +335,12 @@ fn paths_be_arc_be_circle(
     a_max_weight: f64,
     a_max_squared_weight: f64,
 ) -> Vec<PathConnection> {
-    reverse_paths(paths_be_circle_be_arc(a_s2, s, a_max_weight, a_max_squared_weight))
+    reverse_paths(paths_be_circle_be_arc(
+        a_s2,
+        s,
+        a_max_weight,
+        a_max_squared_weight,
+    ))
 }
 
 /// `BE_SHAPE_CIRCLE::Paths( const BE_SHAPE_POINT& )`: `ReversePaths( aS2.Paths( *this ) )`.
@@ -338,7 +350,12 @@ fn paths_be_circle_be_point(
     a_max_weight: f64,
     a_max_squared_weight: f64,
 ) -> Vec<PathConnection> {
-    reverse_paths(paths_be_point_be_circle(a_s2, s, a_max_weight, a_max_squared_weight))
+    reverse_paths(paths_be_point_be_circle(
+        a_s2,
+        s,
+        a_max_weight,
+        a_max_squared_weight,
+    ))
 }
 
 /// Port of `BE_SHAPE_POINT::Paths( const BE_SHAPE_POINT& )`.
@@ -456,7 +473,12 @@ pub fn paths_be_point_be_arc(
         }
     } else {
         let csp1 = BeShapePoint::new(a_s2.start_point());
-        result.extend(paths_be_point_be_point(s, &csp1, a_max_weight, a_max_squared_weight));
+        result.extend(paths_be_point_be_point(
+            s,
+            &csp1,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
     }
 
     if behaves_like_circle.1 {
@@ -469,7 +491,12 @@ pub fn paths_be_point_be_arc(
         }
     } else {
         let csp1 = BeShapePoint::new(a_s2.end_point());
-        result.extend(paths_be_point_be_point(s, &csp1, a_max_weight, a_max_squared_weight));
+        result.extend(paths_be_point_be_point(
+            s,
+            &csp1,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
     }
 
     result
@@ -739,7 +766,7 @@ pub fn paths_cu_segment_be_circle(
     let circle_center = a_s2.pos();
     let length = (start - end).euclidean_norm() as f64;
 
-    let mut weight_squared: f64;
+    let weight_squared: f64;
     let mut point_on_track: Vector2I;
     let mut point_on_circle: Vector2I;
 
@@ -757,10 +784,20 @@ pub fn paths_cu_segment_be_circle(
 
     if projected_pos1 < 0.0 && projected_pos2 < 0.0 {
         let csc = CuShapeCircle::new(start, half_width);
-        result.extend(paths_cu_circle_be_circle(&csc, a_s2, a_max_weight, a_max_squared_weight));
+        result.extend(paths_cu_circle_be_circle(
+            &csc,
+            a_s2,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
     } else if projected_pos1 > length && projected_pos2 > length {
         let csc = CuShapeCircle::new(end, half_width);
-        result.extend(paths_cu_circle_be_circle(&csc, a_s2, a_max_weight, a_max_squared_weight));
+        result.extend(paths_cu_circle_be_circle(
+            &csc,
+            a_s2,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
     } else if (projected_pos1 >= 0.0)
         && (projected_pos1 <= length)
         && (projected_pos2 >= 0.0)
@@ -990,8 +1027,18 @@ pub fn paths_cu_arc_be_circle(
         let csc1 = CuShapeCircle::new(s.start_point(), s.width() / 2.0);
         let csc2 = CuShapeCircle::new(s.end_point(), s.width() / 2.0);
 
-        result.extend(paths_cu_arc_cu_circle(s, &csc1, a_max_weight, a_max_squared_weight));
-        result.extend(paths_cu_arc_cu_circle(s, &csc2, a_max_weight, a_max_squared_weight));
+        result.extend(paths_cu_arc_cu_circle(
+            s,
+            &csc1,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
+        result.extend(paths_cu_arc_cu_circle(
+            s,
+            &csc2,
+            a_max_weight,
+            a_max_squared_weight,
+        ));
     }
 
     result
@@ -1223,8 +1270,7 @@ pub fn paths_cu_circle_cu_arc(
                         .max(0.0),
                     a1: vd(circle_pos + (circle_pos - arc_pos).resize(to_int(circle_radius))),
                     a2: vd(arc_pos
-                        + (circle_pos - arc_pos)
-                            .resize(to_int(arc_radius - a_s2.width() / 2.0))),
+                        + (circle_pos - arc_pos).resize(to_int(arc_radius - a_s2.width() / 2.0))),
                     ..PathConnection::default()
                 };
 
@@ -1295,14 +1341,34 @@ pub fn paths_cu_segment_cu_arc(
         }
     };
 
-    consider(paths_cu_segment_cu_circle(s, &csc1, a_max_weight, a_max_squared_weight));
-    consider(paths_cu_segment_cu_circle(s, &csc2, a_max_weight, a_max_squared_weight));
+    consider(paths_cu_segment_cu_circle(
+        s,
+        &csc1,
+        a_max_weight,
+        a_max_squared_weight,
+    ));
+    consider(paths_cu_segment_cu_circle(
+        s,
+        &csc2,
+        a_max_weight,
+        a_max_squared_weight,
+    ));
 
     let csc3 = CuShapeCircle::new(s_start, half_width1);
     let csc4 = CuShapeCircle::new(s_end, half_width1);
 
-    consider(paths_cu_circle_cu_arc(&csc3, a_s2, a_max_weight, a_max_squared_weight));
-    consider(paths_cu_circle_cu_arc(&csc4, a_s2, a_max_weight, a_max_squared_weight));
+    consider(paths_cu_circle_cu_arc(
+        &csc3,
+        a_s2,
+        a_max_weight,
+        a_max_squared_weight,
+    ));
+    consider(paths_cu_circle_cu_arc(
+        &csc4,
+        a_s2,
+        a_max_weight,
+        a_max_squared_weight,
+    ));
 
     if let Some(best) = best_path {
         result.push(best);

@@ -350,6 +350,16 @@ fn run_provider(
             return DrcTestProviderConnectivity::new(conn, caches)
                 .run_tests(engine, run, &ctx, units);
         }
+        "diff_pair_coupling" => {
+            // Run() starts with m_board->GetConnectivity()->GetFromToCache()->Rebuild( m_board ),
+            // which needs the connectivity mutably.
+            conn.rebuild_from_to_cache(&BoardCtx::bare(board));
+            let ctx = BoardCtx::bare(board)
+                .with_rules(engine)
+                .with_connectivity(&*conn);
+            return DrcTestProviderDiffPairCoupling::new(caches)
+                .run_tests(engine, run, &ctx, units);
+        }
         "zone connections" => {
             let mut query = ConnectivityData::new();
 
@@ -392,7 +402,6 @@ fn run_provider(
         "silk_clearance" => Box::new(DrcTestProviderSilkClearance::default()),
         "sliver checker" => Box::new(DrcTestProviderSliverChecker::default()),
         "text_mirroring" => Box::new(DrcTestProviderTextMirroring::default()),
-        "diff_pair_coupling" => Box::new(DrcTestProviderDiffPairCoupling::new(caches)),
         _ => unreachable!("provider '{name}' is neither ported nor in UNPORTED_PROVIDERS"),
     };
 

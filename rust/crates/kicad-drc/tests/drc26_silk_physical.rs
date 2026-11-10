@@ -32,8 +32,8 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board,
-    panic_text, quiet, run_providers,
+    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board, panic_text, quiet,
+    run_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
@@ -329,7 +329,6 @@ fn silk_and_physical_match_reference_corpus() {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, Vec<String>, bool), String> {
                     let mut loaded = load_board(&path)?;
-
 
                     let names = physical_names(&loaded.engine);
                     let entries = report(&mut loaded)

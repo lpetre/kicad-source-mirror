@@ -140,6 +140,9 @@ pub struct Session {
     pub drc_init_error: Option<String>,
     /// Warnings the C++ loader sends to its (optional) reporter; kicad-cli prints none.
     pub load_warnings: Vec<String>,
+    /// The parser's non-fatal warnings (`LoadedBoard::parse_warnings`); kicad-cli prints them
+    /// as `wxLogWarning`s.
+    pub parse_warnings: Vec<String>,
 }
 
 /// A net as the item access API returns it.
@@ -279,6 +282,7 @@ impl Session {
             drc_engine: Some(loaded.drc_engine),
             drc_init_error: loaded.drc_init_error,
             load_warnings: loaded.warnings,
+            parse_warnings: loaded.parse_warnings,
         };
 
         session.initialize_loaded_board();
@@ -298,6 +302,7 @@ impl Session {
             drc_engine: None,
             drc_init_error: None,
             load_warnings: Vec::new(),
+            parse_warnings: Vec::new(),
         }
     }
 
@@ -510,11 +515,12 @@ impl Session {
         if self.drc_engine.is_none() {
             let mut engine = DrcEngine::new();
             let rules_path = crate::board_loader::with_extension(&self.source_name, "kicad_dru");
+            let tuning_profiles = crate::board_loader::tuning_profiles(&self.board);
             let _ = engine.init_engine(
                 &mut self.board,
                 self.rules_text.as_deref().map(|t| (t, rules_path.as_str())),
                 kicad_drc::rule_parser::default_layer_choices(),
-                &kicad_drc::engine::implicit_rules::TuningProfiles::default(),
+                &tuning_profiles,
                 None,
             );
             self.drc_engine = Some(engine);

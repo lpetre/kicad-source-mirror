@@ -1,0 +1,22 @@
+zone always FCu outlines 1
+  0 pts 16 island 0 hash 482e9cbfb32251db
+zone area FCu outlines 5
+  0 pts 16 island 1 hash 3c32af1b2f55e491
+  1 pts 18 island 1 hash 69465ce2fa1d9ec1
+  2 pts 16 island 0 hash 2bc3788fd1362f95
+  3 pts 16 island 0 hash d7865cb715a965be
+  4 pts 16 island 1 hash 5bfecfb1eea9342a
+zone back_iso BCu outlines 1
+  0 pts 16 island 0 hash 482e9cbfb32251db
+zone never BCu outlines 3
+  0 pts 16 island 1 hash 3c32af1b2f55e491
+  1 pts 16 island 1 hash 441876d8b03e9ac1
+  2 pts 16 island 0 hash 92d0e14a8fdc011a
+zone nonet FCu outlines 2
+  0 pts 57 island 1 hash 5d3b96f4d7d0cf66
+  1 pts 57 island 1 hash 6314e9f49a0b1147
+zone unconnected FCu outlines 2
+  0 pts 16 island 0 hash 44a7b8c276eacd9d
+  1 pts 16 island 0 hash fff737881338c5e9
+zone unconnected BCu outlines 1
+  0 pts 16 island 0 hash f0cf9273551a556b

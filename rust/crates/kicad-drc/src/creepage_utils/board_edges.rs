@@ -178,9 +178,11 @@ pub fn build_creepage_board_edges<'a>(
 
         // TODO: handle backdrilling and post-machining
 
-        let Some(hole) =
-            p.effective_hole_shape(ctx, PcbLayerId::UndefinedLayer, DrcConstraintT::NullConstraint)
-        else {
+        let Some(hole) = p.effective_hole_shape(
+            ctx,
+            PcbLayerId::UndefinedLayer,
+            DrcConstraintT::NullConstraint,
+        ) else {
             continue;
         };
 

@@ -25,7 +25,14 @@
 //! `demo_gerber_matches_cpp`: the Rust Gerber plotter output of `plotDemoGerber` equals the
 //! real `GERBER_PLOTTER` running the same calls (`tests/oracle/regen_demo_gerber.sh`).
 
-use kicad_session::{Session, TrackSpec, ViaSpec};
+use kicad_session::jobs::{
+    DrillFormat, DrillUnits, JobExportPcbDrill, JobExportPcbGerbers, JobPcbDrc, RcOutputFormat,
+    RcUnits,
+};
+use kicad_session::{
+    HostClock, JobOutcome, LoadInputs, Reporter, Session, TrackSpec, ViaSpec, run_drc,
+    run_export_drill, run_export_gerbers,
+};
 use kicad_wasm::api;
 use serde_json::{Value, json};
 
@@ -45,6 +52,18 @@ const STROKE_TEXTS: &[(&str, f64)] = &[
 
 const DEMO_DATE: &str = "2026-01-01 00:00:00";
 
+/// The fixed host inputs of the job checks (`loadBoard( text, { uuidSeed, date } )`).
+const FIXED_DATE: &str = "2026-01-02T03:04:05";
+const UUID_SEED: u32 = 7;
+
+/// Boards of the job checks (`runDrc`, `exportGerbers`, `exportDrill`): loaded with their
+/// `.kicad_pro` / `.kicad_dru`, one fresh load per job, as `web/test/smoke.mjs` does.
+const JOB_BOARDS: &[&str] = &[
+    "qa/data/pcbnew/issue10697.kicad_pcb",
+    "demos/ecc83/ecc83-pp.kicad_pcb",
+    "demos/constraints/constraints.kicad_pcb",
+];
+
 /// Corpus boards the parser and writer support in full today: `loadBoard` + `nets`, `tracks`,
 /// `save` (the save equals the reference `kicad-cli pcb upgrade --force` output, see
 /// `loaded_board_save_matches_cpp`).
@@ -58,6 +77,7 @@ fn hashed(text: &str) -> Value {
 /// track list, then the track removed and the board saved.
 fn item_board() -> Value {
     let mut s = Session::new_empty("demo.kicad_pcb");
+    s.apply_host_inputs(&HostClock::parse_iso(FIXED_DATE).unwrap(), UUID_SEED);
     let t = s
         .add_track(&TrackSpec {
             start: [0, 0],
@@ -125,6 +145,129 @@ fn boolean_cases() -> Vec<(Vec<api::JsPolygon>, Vec<api::JsPolygon>, &'static st
     cases
 }
 
+/// `loadBoard( text, { name, project, rules, uuidSeed, date } )` natively.
+fn job_session(rel: &str) -> Session {
+    let root = kicad_qa::kicad_source_root();
+    let path = root.join(rel);
+    let text = std::fs::read_to_string(&path).expect("corpus file");
+    let project = std::fs::read_to_string(path.with_extension("kicad_pro")).ok();
+    let rules = std::fs::read_to_string(path.with_extension("kicad_dru")).ok();
+    let name = rel.rsplit('/').next().unwrap();
+    let inputs = LoadInputs {
+        text: &text,
+        source_name: name,
+        project_json: project.as_deref(),
+        rules_text: rules.as_deref(),
+        ..LoadInputs::default()
+    };
+    let mut s = Session::load_board_with(&inputs).expect("loads");
+    s.apply_host_inputs(&HostClock::parse_iso(FIXED_DATE).unwrap(), UUID_SEED);
+    s
+}
+
+/// A job result as `smoke.mjs` reduces the JavaScript one: exit code, hashed files, hashed
+/// report, messages.
+fn job_value(outcome: JobOutcome, reporter: Reporter) -> Value {
+    let files: Vec<Value> = outcome
+        .files
+        .iter()
+        .map(|f| {
+            json!({ "name": f.name, "content": hashed(&String::from_utf8_lossy(&f.contents)) })
+        })
+        .collect();
+    json!({ "exitCode": outcome.exit_code, "files": files,
+            "report": outcome.report_text.as_deref().map(hashed),
+            "messages": serde_json::to_value(reporter.into_lines()).unwrap() })
+}
+
+/// The jobs of `smoke.mjs` on [`JOB_BOARDS`], with the option mapping of `lib.rs` for
+/// `runDrc({})`, `runDrc({ format: 'json', severities: [...] })`, `exportGerbers({})`,
+/// `exportDrill({})` and `exportDrill({ format: 'gerber' })`.
+fn job_results() -> Vec<Value> {
+    let clock = HostClock::parse_iso(FIXED_DATE).unwrap();
+    let mut out = Vec::new();
+
+    for rel in JOB_BOARDS {
+        let drc = |json_format: bool| {
+            let mut s = job_session(rel);
+            let mut job = JobPcbDrc::new();
+            job.rc.exit_code_violations = false;
+            job.parity = false;
+            job.rc.units = RcUnits::Mm;
+            job.rc.format = if json_format {
+                RcOutputFormat::Json
+            } else {
+                RcOutputFormat::Report
+            };
+
+            if json_format {
+                job.rc.severity = kicad_core::Severity::Error.as_i32()
+                    | kicad_core::Severity::Warning.as_i32()
+                    | kicad_core::Severity::Exclusion.as_i32();
+            }
+
+            job.report_date = clock.iso8601();
+            job.marker_uuid_seed = UUID_SEED;
+            let mut reporter = Reporter::new();
+            let outcome = run_drc(&mut s, &mut job, &mut reporter).expect("drc");
+            job_value(outcome, reporter)
+        };
+
+        let gerbers = {
+            let mut s = job_session(rel);
+            let mut job = JobExportPcbGerbers::new();
+            job.gerber.plot.sketch_dnp_fps_on_fab_layers = false;
+            job.gerber.plot.crossout_dnp_fps_on_fab_layers = false;
+            job.gerber.plot.arg_layers = Some(String::new());
+            job.gerber.plot.arg_common_layers = Some(String::new());
+            job.gerber.precision = 6;
+            job.gerber.use_x2_format = true;
+            job.gerber.include_netlist_attributes = true;
+            job.gerber.use_protel_file_extension = true;
+            job.gerber.disable_aperture_macros = false;
+            job.gerber.plot.use_drill_origin = false;
+            job.gerber.plot.subtract_solder_mask_from_silk = false;
+            job.gerber.plot.check_zones_before_plot = false;
+            job.use_board_plot_params = false;
+            job.gerber.plot.creation_date = clock.gbr_creation_date();
+            let mut reporter = Reporter::new();
+            let outcome = run_export_gerbers(&mut s, &mut job, &mut reporter).expect("gerbers");
+            job_value(outcome, reporter)
+        };
+
+        let drill = |format: DrillFormat| {
+            let mut s = job_session(rel);
+            let mut job = JobExportPcbDrill::new();
+            job.format = format;
+            job.drill_units = DrillUnits::Mm;
+            job.gerber_precision = 6;
+            job.excellon_combine_pth_npth = true;
+            job.generate_report = false;
+            job.drill_origin = kicad_session::jobs::DrillOrigin::Abs;
+            job.zero_format = kicad_session::jobs::ZerosFormat::Decimal;
+            job.excellon_oval_drill_route = false;
+            job.excellon_mirror_y = false;
+            job.excellon_minimal_header = false;
+            job.generate_tenting = false;
+            job.creation_date = clock.gbr_creation_date();
+            let mut reporter = Reporter::new();
+            let outcome = run_export_drill(&mut s, &mut job, &mut reporter).expect("drill");
+            job_value(outcome, reporter)
+        };
+
+        out.push(json!({
+            "file": rel,
+            "drcReport": drc(false),
+            "drcJson": drc(true),
+            "gerbers": gerbers,
+            "drillExcellon": drill(DrillFormat::Excellon),
+            "drillGerber": drill(DrillFormat::Gerber),
+        }));
+    }
+
+    out
+}
+
 fn reference() -> Value {
     let root = kicad_qa::kicad_source_root();
     let mut prettify = Vec::new();
@@ -173,6 +316,9 @@ fn reference() -> Value {
         },
         "itemBoard": item_board(),
         "loadBoard": loaded_boards(),
+        "fixedDate": FIXED_DATE,
+        "uuidSeed": UUID_SEED,
+        "jobs": job_results(),
     })
 }
 

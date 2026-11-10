@@ -208,7 +208,10 @@ impl FromToCache {
             .parent_footprint()
             .and_then(|fp| fp.as_footprint().map(|f| f.reference(ctx)))
             .unwrap_or_default();
-        let number = item.as_pad().map(|p| p.number().to_string()).unwrap_or_default();
+        let number = item
+            .as_pad()
+            .map(|p| p.number().to_string())
+            .unwrap_or_default();
 
         format!("{reference}-{number}")
     }
@@ -373,7 +376,7 @@ impl FromToCache {
 
 /// Port of the static `isVertexVisited` of `from_to_cache.cpp`.
 fn is_vertex_visited(v: CnItemId, path: &[CnItemId]) -> bool {
-    path.iter().any(|&u| u == v)
+    path.contains(&v)
 }
 
 /// Port of the static `uniquePathBetweenNodes` of `from_to_cache.cpp`: a breadth-first search

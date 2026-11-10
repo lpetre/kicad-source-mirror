@@ -1,0 +1,48 @@
+B default rust/crates/kicad-fab/tests/data/plot_layer_poly/mask_min_width.kicad_pcb
+mask_min_width-F_Cu.gtl c1b8b14f
+mask_min_width-B_Cu.gbl 8c7198f1
+mask_min_width-F_Silkscreen.gto d19334f2
+mask_min_width-B_Silkscreen.gbo 18cefe72
+mask_min_width-F_Mask.gts 6a4e77b4
+mask_min_width-B_Mask.gbs d787d920
+B mask_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/mask_min_width.kicad_pcb
+mask_min_width-F_Cu.gtl ef1e3a9e
+mask_min_width-Edge_Cuts.gm1 83fbe01a
+B sub rust/crates/kicad-fab/tests/data/plot_layer_poly/mask_min_width.kicad_pcb
+mask_min_width-F_Silkscreen.gto 7d6a2cf6
+mask_min_width-B_Silkscreen.gbo 996d432d
+B sub_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/mask_min_width.kicad_pcb
+mask_min_width-F_Cu.gtl c1b8b14f
+mask_min_width-B_Cu.gbl 8c7198f1
+B default rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask.kicad_pcb
+silk_over_mask-F_Cu.gtl e4c5b5dc
+silk_over_mask-B_Cu.gbl db92393a
+silk_over_mask-F_Silkscreen.gto 4bc2dcff
+silk_over_mask-B_Silkscreen.gbo 01049245
+silk_over_mask-F_Mask.gts 4e3d2f75
+silk_over_mask-B_Mask.gbs b976038a
+B mask_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask.kicad_pcb
+silk_over_mask-F_Cu.gtl 0ca6c289
+silk_over_mask-Edge_Cuts.gm1 a107e89d
+B sub rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask.kicad_pcb
+silk_over_mask-F_Silkscreen.gto d527d799
+silk_over_mask-B_Silkscreen.gbo 390abc7d
+B sub_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask.kicad_pcb
+silk_over_mask-F_Cu.gtl dbbb5d16
+silk_over_mask-B_Cu.gbl 82403678
+B default rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask_minw.kicad_pcb
+silk_over_mask_minw-F_Cu.gtl b9311737
+silk_over_mask_minw-B_Cu.gbl 7e8e7adc
+silk_over_mask_minw-F_Silkscreen.gto f34d7f89
+silk_over_mask_minw-B_Silkscreen.gbo c9d63751
+silk_over_mask_minw-F_Mask.gts e6ab6b77
+silk_over_mask_minw-B_Mask.gbs 55215731
+B mask_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask_minw.kicad_pcb
+silk_over_mask_minw-F_Cu.gtl 2b334eb6
+silk_over_mask_minw-Edge_Cuts.gm1 03ebe65a
+B sub rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask_minw.kicad_pcb
+silk_over_mask_minw-F_Silkscreen.gto 714f2cbb
+silk_over_mask_minw-B_Silkscreen.gbo 02af69a9
+B sub_cl rust/crates/kicad-fab/tests/data/plot_layer_poly/silk_over_mask_minw.kicad_pcb
+silk_over_mask_minw-F_Cu.gtl 3d5462f7
+silk_over_mask_minw-B_Cu.gbl 68605fe3

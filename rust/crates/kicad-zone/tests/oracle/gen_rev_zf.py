@@ -171,13 +171,14 @@ def custom_spokes():
                                       extra="(options (clearance outline) (anchor rect)) " + prim)], rot=rot)
     # concave custom pads, other net: outline and convex hull clearance
     lshape = "(primitives (gr_poly (pts (xy -2 -2) (xy 2 -2) (xy 2 -1) (xy -1 -1) (xy -1 2) (xy -2 2)) (width 0.2) (fill yes)))"
+    lvalid = "(primitives (gr_poly (pts (xy -2 -2) (xy 2 -2) (xy 2 0.3) (xy 0.3 0.3) (xy 0.3 2) (xy -2 2)) (width 0.2) (fill yes)))"
     b.footprint("U4", 108, 121, [b.pad("1", "smd", "custom", (0, 0), (1, 1), "B", SMD,
-                                       extra="(options (clearance convexhull) (anchor circle)) " + lshape)])
+                                       extra="(options (clearance convexhull) (anchor circle)) " + lvalid)])
     b.footprint("U5", 118, 121, [b.pad("1", "smd", "custom", (0, 0), (1, 1), "B", SMD, rot=45,
                                        extra="(options (clearance outline) (anchor circle)) " + lshape)], rot=45)
     # same net, convex hull thermal knockout, no spoke templates (bounding box spokes)
     b.footprint("U6", 128, 121, [b.pad("1", "smd", "custom", (0, 0), (1, 1), "A", SMD, rot=20,
-                                       extra="(thermal_bridge_angle 45) (options (clearance convexhull) (anchor rect)) " + lshape)],
+                                       extra="(thermal_bridge_angle 45) (options (clearance convexhull) (anchor rect)) " + lvalid)],
                 rot=20)
     # custom pad with a hole and a shape offset
     b.footprint("U7", 135, 121, [b.pad("1", "thru_hole", "custom", (0, 0), (1.6, 1.6), "A", THT, drill="0.8 (offset 0.4 0)",
@@ -311,7 +312,7 @@ def mixed_layers():
     """A zone on copper and non-copper layers (fillCopperZone on a technical layer), Margin
     graphics, an edge cut-out."""
     b = Board("mixed_layers", layers=4)
-    b.zone(FULL, ("F.Cu", "In1.Cu", "F.SilkS", "F.Mask"), net="A", name="mixed")
+    b.zone(FULL, ("F.Cu", "In1.Cu", "F.SilkS", "F.Mask"), net="A", name="mixed", fill="(island_removal_mode 1)")
     b.line(105, 101, 105, 129, "Margin", 0.15)
     b.line(100, 126, 140, 124, "Margin", 0.6)
     b.circle(130, 110, 3, "Edge.Cuts", 0.05)
@@ -417,7 +418,6 @@ def arcs_smooth(name, external_fillets):
     b.line(140, 130, 100, 130, "Edge.Cuts", 0.05)
     b.line(100, 130, 100, 102, "Edge.Cuts", 0.05)
     b.arc(100, 102, 100.585786, 100.585786, 102, 100, "Edge.Cuts", 0.05)
-    b.line(120, 100, 120, 112, "Edge.Cuts", 0.05) if False else None
     arc_pts = ("(xy 96 98) (xy 118 98) (xy 118 112) (arc (start 118 112) (mid 113 117) (end 108 112)) "
                "(xy 104 112) (xy 104 122) (xy 96 122)")
     b.zone(None, "F.Cu", net="A", name="arc_fillet", raw_pts=arc_pts, fill="(smoothing fillet) (radius 1.2)")
@@ -503,12 +503,34 @@ def prototype():
     return b
 
 
+def mixed_isolated():
+    """F-1: the reference segfaults (double deletion of outline 0); no golden."""
+    b = Board("mixed_isolated")
+    b.zone(FULL, ("F.Cu", "F.SilkS"), net="A", name="mixed")
+    return b
+
+
+def dup_uuid():
+    """F-2: the reference hangs (dependency cycle of the fill scheduler); no golden."""
+    b = Board("dup_uuid")
+    u = "aaaaaaaa-0000-4000-8000-000000000001"
+    b.zone(box(101, 101, 125, 120), "F.Cu", net="A", name="za", uuid=u)
+    b.zone(box(115, 110, 139, 129), "F.Cu", net="B", name="zb", uuid=u)
+    b.footprint("P1", 104, 104, [b.pad("1", "smd", "rect", (0, 0), (1.5, 1.5), "A", SMD)])
+    b.footprint("P2", 136, 126, [b.pad("1", "smd", "rect", (0, 0), (1.5, 1.5), "B", SMD)])
+    return b
+
+
+# The boards the reference cannot refill (no golden; make_rev_zf_goldens.sh skips them).
+NO_REFERENCE = ("mixed_isolated", "dup_uuid")
+
+
 def main():
     out = sys.argv[1]
     os.makedirs(out, exist_ok=True)
     for b in (custom_spokes(), hatch_vias(), hatch_noncu(), islands(), fp_zones(), mixed_layers(), rules_conn(),
               backdrill(), arcs_smooth("arcs_smooth", False), arcs_smooth("arcs_extfillet", True), priority(),
-              thin(), prototype()):
+              thin(), prototype(), mixed_isolated(), dup_uuid()):
         b.write(out)
 
 

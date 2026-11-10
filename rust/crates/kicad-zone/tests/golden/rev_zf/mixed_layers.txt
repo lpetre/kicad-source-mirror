@@ -1,0 +1,22 @@
+zone mixed FCu outlines 4
+  0 pts 16 island 1 hash a89afcf4aa31bc5c
+  1 pts 16 island 1 hash 94dad18af09d6802
+  2 pts 16 island 1 hash 504db3dbde57bf34
+  3 pts 523 island 1 hash 29fbdceb0268231c
+zone mixed FMask outlines 4
+  0 pts 16 island 0 hash a89afcf4aa31bc5c
+  1 pts 16 island 0 hash 94dad18af09d6802
+  2 pts 16 island 0 hash 504db3dbde57bf34
+  3 pts 443 island 0 hash a83df6c538084ef4
+zone mixed In1Cu outlines 5
+  0 pts 16 island 1 hash a89afcf4aa31bc5c
+  1 pts 16 island 1 hash 94dad18af09d6802
+  2 pts 16 island 1 hash 504db3dbde57bf34
+  3 pts 66 island 1 hash c26f18fded86ca50
+  4 pts 519 island 0 hash 7f66e63ca39e55f0
+zone mixed FSilkS outlines 5
+  0 pts 16 island 0 hash a89afcf4aa31bc5c
+  1 pts 16 island 0 hash 94dad18af09d6802
+  2 pts 16 island 0 hash 504db3dbde57bf34
+  3 pts 16 island 0 hash c1643f8dce9feaff
+  4 pts 315 island 0 hash 048e54b66d5fdad4

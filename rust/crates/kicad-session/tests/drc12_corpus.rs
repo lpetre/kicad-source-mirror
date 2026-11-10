@@ -350,32 +350,8 @@ fn drc_job_matches_reference_reports() {
 /// Boards whose report differs from the reference, with the cause (`PORT_STATUS.md`, DRC-12).
 const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
     (
-        "qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
-        "qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
-        "qa/data/pcbnew/issue23868/issue23868.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
-        "qa/data/pcbnew/issue25065/issue25065.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
-        "qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
-        "qa/data/pcbnew/time_calculations.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
-    ),
-    (
         "qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb",
-        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile; one connection_width entry names other items (C++ std::set of item pointers, address order)",
+        "one connection_width entry names other items (C++ std::set of item pointers, address order)",
     ),
     (
         "qa/data/pcbnew/issue14549_2.kicad_pcb",
