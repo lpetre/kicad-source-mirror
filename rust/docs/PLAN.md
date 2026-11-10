@@ -914,6 +914,17 @@ Progress log:
   the planned GK-3 part 2. (3) The user asked whether moving the work to a laptop would
   be faster: answered - compute yes, but the reference build and caches live only in
   this container; the demo itself needs neither.
+  14:39 UTC (heartbeat; next in about an hour): PERFORMANCE ROUND 1 JUDGED - all
+  three changes kept, gate 23 of 23, output hashes equal base vs head on 8 bench boards
+  and 7 edge-case boards natively and 128 hashes across three wasm builds. Measured
+  interleaved under load (minima): DRC vme-wren 19.9 -> 15.2 s (-24 %), jetson
+  15.9 -> 10.2 s (-36 %), DRC after refill -20 and -29 %; medium boards DRC -2 to -9 %,
+  coldfire -9 to -12 %; wasm with opt-level 3: load -21 to -26 %, DRC -19 to -23 %,
+  refill -11 to -19 %. Against the reference: vme-wren DRC is now 0.82 of the reference on
+  one thread and 1.47 of its thread pool (was 1.02 / 1.83). The judge's commit is
+  pending. Follow-up: the adapter's own wasm profile still uses opt-level "s".
+  Web demo: Emscripten installed from the distribution's packages; agent working.
+  Disk 11 GB free, load 1.7, memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
