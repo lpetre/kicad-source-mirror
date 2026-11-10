@@ -32,7 +32,7 @@ use kicad_core::{KicadT, LayerRange, Lset, MinOptMax, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::math::box2::box2i_safe_from_int;
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, Vector2D, Vector2I, Vector2L};
 
-use super::{constraint_name, with_this};
+use super::with_this;
 use crate::board_connected_item;
 use crate::board_item::{self, mirror_axis};
 use crate::ctx::{BoardCtx, MutEnv};
@@ -86,33 +86,6 @@ pub enum ViaParameterField {
 pub struct ViaParameterError {
     pub message: String,
     pub field: ViaParameterField,
-}
-
-/// Port of `DRC_CONSTRAINT::Merge( aOther )` (`pcbnew/drc/drc_rule.cpp`): the tighter min /
-/// max and the first opt, with the rules they came from.
-fn merge_constraint(this: &mut DrcConstraint, other: &DrcConstraint) {
-    if other.value.has_min() && (!this.value.has_min() || (other.value.min() > this.value.min())) {
-        this.value.set_min(other.value.min());
-        this.min_rule = if other.min_rule.is_some() {
-            other.min_rule.clone()
-        } else {
-            other.parent_rule.clone()
-        };
-    }
-
-    if other.value.has_max() && (!this.value.has_max() || other.value.max() < this.value.max()) {
-        this.value.set_max(other.value.max());
-        this.max_rule = if other.max_rule.is_some() {
-            other.max_rule.clone()
-        } else {
-            other.parent_rule.clone()
-        };
-    }
-
-    if other.value.has_opt() && !this.value.has_opt() {
-        this.value.set_opt(other.value.opt());
-        this.parent_rule = other.parent_rule.clone();
-    }
 }
 
 /// `hasLayerOrdinal( aLayer )`: `IsCopperLayer()` accepts any even id below
@@ -318,13 +291,13 @@ impl PcbVia {
                             None,
                             layer,
                         );
-                        merge_constraint(&mut aggregate, &c);
+                        aggregate.merge(&c);
                     }
                 });
             }
         }
 
-        let source = want_source.then(|| constraint_name(&aggregate));
+        let source = want_source.then(|| aggregate.name());
 
         (aggregate.value, source)
     }
@@ -353,7 +326,7 @@ impl PcbVia {
             }
         }
 
-        let source = want_source.then(|| constraint_name(&aggregate));
+        let source = want_source.then(|| aggregate.name());
 
         (aggregate.value, source)
     }
@@ -419,7 +392,7 @@ impl PcbVia {
         if constraint.value.has_min() {
             return (
                 constraint.value.min(),
-                want_source.then(|| constraint_name(&constraint)),
+                want_source.then(|| constraint.name()),
             );
         }
 

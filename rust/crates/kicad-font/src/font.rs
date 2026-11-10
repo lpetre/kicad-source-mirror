@@ -25,6 +25,7 @@
 
 use kicad_core::string_utils::wx_string_split;
 use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
+use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::{ANGLE_0, Box2I, EdaAngle, Vector2D, Vector2I, ki_round};
 
 use crate::callback_gal::TextGal;
@@ -368,9 +369,9 @@ fn line_positions_impl<F: Font + ?Sized>(
     let mut extents: Vec<Vector2I> = Vec::with_capacity(text_lines.len());
     let size = Vector2I::new(a_attrs.size.0, a_attrs.size.1);
 
-    // int = double: truncation
+    // int = double: truncation (x86: INT_MIN out of range)
     let interline: i32 =
-        (font.interline(size.y as f64, a_font_metrics) * a_attrs.line_spacing) as i32;
+        f64_to_i32_x86(font.interline(size.y as f64, a_font_metrics) * a_attrs.line_spacing);
     let mut height: i32 = 0;
 
     for i in 0..line_count {
@@ -393,7 +394,7 @@ fn line_positions_impl<F: Font + ?Sized>(
 
         if i == 0 {
             // 1.17 is a fudge to match 6.0 positioning
-            height = (height as f64 + size.y as f64 * 1.17) as i32;
+            height = f64_to_i32_x86(height as f64 + size.y as f64 * 1.17);
         } else {
             height = height.wrapping_add(interline);
         }
@@ -404,8 +405,8 @@ fn line_positions_impl<F: Font + ?Sized>(
 
     if font.is_stroke() {
         // Fudge factors to match 6.0 positioning
-        offset.x = (offset.x as f64 + a_attrs.stroke_width as f64 / 1.52) as i32;
-        offset.y = (offset.y as f64 - a_attrs.stroke_width as f64 * 0.052) as i32;
+        offset.x = f64_to_i32_x86(offset.x as f64 + a_attrs.stroke_width as f64 / 1.52);
+        offset.y = f64_to_i32_x86(offset.y as f64 - a_attrs.stroke_width as f64 * 0.052);
     }
 
     match a_attrs.valign {
@@ -1249,6 +1250,44 @@ impl FontLookup {
     }
 }
 
+/// A cheap shared reference to a `KIFONT::FONT` (the `KIFONT::FONT*` of
+/// `EDA_TEXT::m_attributes.m_Font` and of the render cache key): the font is identified by
+/// the arguments of `FONT::GetFont( name, bold, italic )`, which are the key of its font map
+/// (`s_fontMap`; `aForDrawingSheet` is false for board text).  Ordering and hashing follow
+/// the fields, so it can key maps.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub struct FontRef {
+    /// The requested face name (empty for the default stroke font).
+    pub name: String,
+    /// The requested bold flag.
+    pub bold: bool,
+    /// The requested italic flag.
+    pub italic: bool,
+}
+
+impl FontRef {
+    /// The reference `FONT::GetFont( name, bold, italic )` would return.
+    pub fn new(name: &str, bold: bool, italic: bool) -> Self {
+        FontRef {
+            name: name.to_string(),
+            bold,
+            italic,
+        }
+    }
+
+    /// Resolve the reference: [`get_font`] with the referenced name and style.
+    pub fn lookup(&self) -> FontLookup {
+        get_font(&self.name, self.bold, self.italic, None, false)
+    }
+
+    /// Whether `FONT::GetFont` returns the stroke font (`FONT::IsStroke()` of the result):
+    /// an empty name or one starting with `"KiCad Font"`.  All such references designate the
+    /// same C++ font object.
+    pub fn is_stroke(&self) -> bool {
+        self.name.is_empty() || self.name.starts_with(KICAD_FONT_NAME)
+    }
+}
+
 /// Port of `FONT::GetFont( aFontName, aBold, aItalic, aEmbeddedFiles, aForDrawingSheet )`.
 ///
 /// `a_embedded_files` (font files embedded in the board) are accepted for signature fidelity;
@@ -1298,6 +1337,13 @@ mod tests {
         assert!(is_stroke_font_name("KiCad Font"));
         assert!(is_stroke_font_name("Default Font"));
         assert!(!is_stroke_font_name("KiCad Font Bold"));
+
+        let r = FontRef::new("Ubuntu Sans", true, false);
+        assert!(r.lookup().is_outline_unavailable());
+        assert!(!r.is_stroke());
+        assert!(FontRef::default().is_stroke());
+        assert_eq!(FontRef::default().lookup(), FontLookup::Stroke);
+        assert!(FontRef::new("KiCad Font", false, true).is_stroke());
     }
 
     #[test]

@@ -31,7 +31,9 @@ use super::{
 
 /// `static_cast<PCB_TRACK*>`: the track part of a track, arc or via.
 fn track<'a>(it: &ItemRef<'a>) -> &'a PcbTrack {
-    it.as_track().expect("PCB_TRACK property on a track").as_track()
+    it.as_track()
+        .expect("PCB_TRACK property on a track")
+        .as_track()
 }
 
 /// `static_cast<PCB_VIA*>`.
@@ -60,13 +62,18 @@ fn via_backdrill_available(it: ItemRef<'_>) -> bool {
 }
 
 fn via_backdrill_is(it: ItemRef<'_>, modes: &[BackdrillMode]) -> bool {
-    it.as_via().is_some_and(|v| modes.contains(&v.backdrill_mode()))
+    it.as_via()
+        .is_some_and(|v| modes.contains(&v.backdrill_mode()))
 }
 
 const BOTTOM: &[BackdrillMode] = &[BackdrillMode::BackdrillBottom, BackdrillMode::BackdrillBoth];
 const TOP: &[BackdrillMode] = &[BackdrillMode::BackdrillTop, BackdrillMode::BackdrillBoth];
 
-fn via_post_machining_is(it: ItemRef<'_>, front: bool, modes: &[PadDrillPostMachiningMode]) -> bool {
+fn via_post_machining_is(
+    it: ItemRef<'_>,
+    front: bool,
+    modes: &[PadDrillPostMachiningMode],
+) -> bool {
     it.as_via().is_some_and(|v| {
         let mode = if front {
             v.front_post_machining()
@@ -141,9 +148,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_tech_layers = "Technical Layers";
 
     pm.add_property(
-        Property::new("Soldermask", ClassId::PcbTrack, ValueType::Bool, true, |it| {
-            PropertyValue::Bool(track(&it).has_solder_mask())
-        }),
+        Property::new(
+            "Soldermask",
+            ClassId::PcbTrack,
+            ValueType::Bool,
+            true,
+            |it| PropertyValue::Bool(track(&it).has_solder_mask()),
+        ),
         group_tech_layers,
     )
     .set_available_func(is_external_layer_track)
@@ -195,14 +206,18 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_validator()
     .set_is_copyable();
     pm.add_property(
-        vint("Hole", |it| PropertyValue::Int(via(&it).drill_value(it.ctx)))
-            .with_display(PropertyDisplay::PtSize),
+        vint("Hole", |it| {
+            PropertyValue::Int(via(&it).drill_value(it.ctx))
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_via,
     )
     .set_validator()
     .set_is_copyable();
     pm.add_property(
-        venum("Layer Top", EnumId::PcbLayerId, |it| layer_value(it.layer())),
+        venum("Layer Top", EnumId::PcbLayerId, |it| {
+            layer_value(it.layer())
+        }),
         group_via,
     )
     .set_validator();
@@ -327,12 +342,16 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(|it| via_backdrill_is(it, TOP));
 
     pm.add_property(
-        venum("Front Post-machining", EnumId::PadDrillPostMachiningMode, |it| {
-            PropertyValue::Enum(
-                EnumId::PadDrillPostMachiningMode,
-                via(&it).front_post_machining_mode() as i32,
-            )
-        }),
+        venum(
+            "Front Post-machining",
+            EnumId::PadDrillPostMachiningMode,
+            |it| {
+                PropertyValue::Enum(
+                    EnumId::PadDrillPostMachiningMode,
+                    via(&it).front_post_machining_mode() as i32,
+                )
+            },
+        ),
         group_post_machining,
     );
 
@@ -364,12 +383,16 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(|it| via_post_machining_is(it, true, CS));
 
     pm.add_property(
-        venum("Back Post-machining", EnumId::PadDrillPostMachiningMode, |it| {
-            PropertyValue::Enum(
-                EnumId::PadDrillPostMachiningMode,
-                via(&it).back_post_machining_mode() as i32,
-            )
-        }),
+        venum(
+            "Back Post-machining",
+            EnumId::PadDrillPostMachiningMode,
+            |it| {
+                PropertyValue::Enum(
+                    EnumId::PadDrillPostMachiningMode,
+                    via(&it).back_post_machining_mode() as i32,
+                )
+            },
+        ),
         group_post_machining,
     );
 

@@ -18,7 +18,12 @@
 
 """Regenerate tests/golden/evalrules_corpus.txt of kicad-drc with the C++ reference dump tool.
 
-    python3 -I rust/crates/kicad-drc/tests/oracle/gen_evalrules_goldens.py [PCB_DUMP] [BOARD...]
+    python3 -I rust/crates/kicad-drc/tests/oracle/gen_evalrules_goldens.py [--out GOLDEN] [PCB_DUMP] [BOARD...]
+
+The review boards (tests/data/review, see gen_review_boards.py) have their own golden:
+
+    python3 -I .../gen_evalrules_goldens.py --out .../tests/golden/evalrules_review.txt \\
+        /home/user/kicad-oracle/bin/pcb-dump rust/crates/kicad-drc/tests/data/review/rev_*.kicad_pcb
 
 PCB_DUMP defaults to /home/user/kicad-oracle/bin/pcb-dump (rust/tools/pcb-dump/build.sh). For
 every .kicad_pcb under <kicad>/qa/data/pcbnew and <kicad>/demos smaller than 5 MB (or only the
@@ -119,8 +124,16 @@ def dump_board(tool, rel, env):
 
 
 def main():
-    tool = sys.argv[1] if len(sys.argv) > 1 else "/home/user/kicad-oracle/bin/pcb-dump"
-    boards = sys.argv[2:] or sorted(corpus())
+    args = sys.argv[1:]
+    golden = GOLDEN
+
+    if "--out" in args:
+        i = args.index("--out")
+        golden = args[i + 1]
+        del args[i:i + 2]
+
+    tool = args[0] if args else "/home/user/kicad-oracle/bin/pcb-dump"
+    boards = args[1:] or sorted(corpus())
     env = dict(os.environ, KICAD_ORACLE_HOME=tempfile.mkdtemp(prefix="evalrules-home-"))
     out = []
 
@@ -128,9 +141,9 @@ def main():
         lines = dump_board(tool, rel, env)
         out.extend(lines if lines is not None else [f"{rel}|load_error"])
 
-    with open(GOLDEN, "w") as f:
+    with open(golden, "w") as f:
         f.write("\n".join(out) + "\n")
-    print(f"{len(boards)} boards -> {GOLDEN}")
+    print(f"{len(boards)} boards -> {golden}")
 
 
 if __name__ == "__main__":

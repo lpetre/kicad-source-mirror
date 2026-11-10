@@ -66,10 +66,12 @@ struct FNV
 // Comparator kinds:
 //  0: a < b (strict weak ordering, many ties on small key ranges)
 //  1: a < b - eps  (equivalence not transitive, like EDA_SHAPE::Compare with EPSILON)
-//  2: random relation table (neither transitive nor asymmetric)
+//  2: random tournament table (asymmetric, not transitive)
 //  3: cyclic: ( b - a ) mod 3 == 1 (rock-paper-scissors)
-//  4: a <= b (irreflexive violated)
+//  4: a < b && b - a <= eps + 1 (only close pairs are ordered)
 //  5: |a| < |b| - eps with signed values
+// Every comparator is irreflexive and asymmetric: without that, libstdc++ itself reads past
+// the tree (undefined behaviour), which no port can reproduce.
 struct CMP
 {
     int kind;
@@ -85,7 +87,7 @@ struct CMP
         case 1: return a < b - eps;
         case 2: return ( *table )[a * tableSize + b] != 0;
         case 3: return ( ( b - a ) % 3 + 3 ) % 3 == 1;
-        case 4: return a <= b;
+        case 4: return a < b && b - a <= eps + 1;
         default:
         {
             int64_t aa = a < 0 ? -a : a;
@@ -113,10 +115,20 @@ int main()
 
         if( kind == 2 )
         {
-            table.resize( range * range );
+            table.assign( range * range, 0 );
 
-            for( auto& t : table )
-                t = (uint8_t) rng.below( 2 );
+            for( int64_t a = 0; a < range; a++ )
+            {
+                for( int64_t b = a + 1; b < range; b++ )
+                {
+                    int64_t r = rng.below( 3 );
+
+                    if( r == 1 )
+                        table[a * range + b] = 1;
+                    else if( r == 2 )
+                        table[b * range + a] = 1;
+                }
+            }
         }
 
         std::vector<int64_t> items;

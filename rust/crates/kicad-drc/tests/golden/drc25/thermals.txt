@@ -1,0 +1,1 @@
+error	starved_thermal	Thermal relief connection to zone incomplete (layer F.Cu; zone min spoke count 2; actual 1)	00000000-0000-0000-0000-000000000029	Zone [GND] on F.Cu, priority 0	10.0	10.0	00000000-0000-0000-0000-00000000000f	Pad 5 [GND] of TP5 on F.Cu	30.0	15.0

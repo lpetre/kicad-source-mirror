@@ -1,0 +1,3 @@
+(version 1)
+(rule silk
+	(constraint silk_clearance (min 0.15mm)))

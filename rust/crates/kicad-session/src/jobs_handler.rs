@@ -472,9 +472,12 @@ pub fn run_export_svg(
     ))
 }
 
-/// Port of `PCBNEW_JOBS_HANDLER::JobUpgrade` for a loaded session: decides whether to save
-/// and returns the re-saved board as the one output file (named like the input: the C++
-/// overwrites the board in place).
+/// Port of `PCBNEW_JOBS_HANDLER::JobUpgrade` for a loaded session (`getBoard`:
+/// [`Session::load_board`], the full `BOARD_LOADER::Load` sequence): decides whether to save
+/// and returns the re-saved board (`PCB_IO_KICAD_SEXPR::SaveBoard`, no `BOARD_LOADER::SaveBoard`
+/// pre-steps) as the one output file (named like the input: the C++ overwrites the board in
+/// place). A board holding a generated table is `NotYetPorted` (`RefreshGeneratedTables`,
+/// M26).
 pub fn run_pcb_upgrade(
     session: &mut Session,
     job: &mut JobPcbUpgrade,
@@ -487,8 +490,10 @@ pub fn run_pcb_upgrade(
     }
 
     // A chart is derived data, so the upgrade brings every one up to date and saves if
-    // that changed anything (RefreshGeneratedTables: generated tables are not refreshed yet,
-    // board-model.md 17).
+    // that changed anything
+    if crate::board_loader::refresh_generated_tables(&session.board)? > 0 {
+        should_save = true;
+    }
 
     if should_save {
         let text = match session.save() {

@@ -1385,8 +1385,13 @@ impl BoardItemMut for PcbDimension {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbDimension::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbDimension::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbDimension::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -1651,9 +1656,9 @@ impl PcbDimension {
 
     /// `PCB_DIMENSION_BASE::Mirror`.
     fn base_mirror(&mut self, env: &MutEnv, axis_pos: Vector2I, dir: FlipDirection) {
-        // IsSideSpecific(): the layer set part (MutEnv carries no layer types, as
-        // PCB_TEXT::Flip; PORT_STATUS.md M10).
-        let side_specific = Lset::side_specific_mask().contains(self.text.base.layer);
+        // IsSideSpecific(): BOARD_ITEM::GetLayerSet() is LSET( { m_layer } )
+        let layer = self.text.base.layer;
+        let side_specific = env.is_side_specific(&Lset::from_layers(&[layer]), layer);
 
         if let Some(parent) = env.parent.as_ref() {
             let lib_axis = parent.transform.inverse_apply(axis_pos);
@@ -1837,8 +1842,13 @@ impl PcbDimension {
     /// `PCB_DIMENSION_BASE::StyleFromSettings`: the `PCB_TEXT` style, then the dimension
     /// defaults of the design settings, then `Update()`. Without a context, `AUTOMATIC` units
     /// resolve to millimetres (`GetBoard()->GetUserUnits()` is not reachable; `PORT_STATUS.md`).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        self.text.style_from_settings(settings, check_side);
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        self.text.style_from_settings(env, settings, check_side);
 
         self.line_thickness = settings.get_line_thickness(self.text.base.layer);
         self.set_units_mode(settings.dimension_units_mode, None);
@@ -1849,9 +1859,7 @@ impl PcbDimension {
         self.keep_text_aligned = settings.dimension_keep_text_aligned;
 
         // refresh text & geometry
-        if self.text.base.parent.item().is_none() {
-            self.update_after_edit(&MutEnv::detached());
-        }
+        self.update_after_edit(env);
     }
 
     /// `PCB_TEXT::GetDrawRotation`, inherited by `PCB_DIMENSION_BASE` (the base body reaches no virtual that `PCB_DIMENSION_BASE` overrides).

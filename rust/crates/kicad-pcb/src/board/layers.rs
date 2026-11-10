@@ -130,6 +130,9 @@ impl Board {
             flipped: (0..PCB_LAYER_ID_COUNT)
                 .map(|l| self.flip_layer(PcbLayerId(l)))
                 .collect(),
+            layer_types: (0..PCB_LAYER_ID_COUNT)
+                .map(|l| self.layer_type(PcbLayerId(l)))
+                .collect(),
         }
     }
 

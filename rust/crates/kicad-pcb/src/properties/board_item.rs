@@ -18,7 +18,7 @@
 //! Port of `BOARD_ITEM_DESC` (`pcbnew/board_item.cpp`) and `BOARD_CONNECTED_ITEM_DESC`
 //! (`pcbnew/board_connected_item.cpp`).
 
-use crate::board_connected_item::{net_class_name, netname};
+use crate::board_connected_item::netname;
 use crate::item::BoardUse;
 use crate::item_ref::ItemRef;
 use crate::traits::BoardConnectedItem;
@@ -51,26 +51,38 @@ pub(crate) fn register_board_item(pm: &mut PropertyManager) {
     pm.inherits_after(ClassId::BoardItem, ClassId::EdaItem);
 
     pm.add_property(
-        Property::new("Parent", ClassId::BoardItem, ValueType::String, false, |it| {
-            PropertyValue::String(parent_as_string(it))
-        }),
+        Property::new(
+            "Parent",
+            ClassId::BoardItem,
+            ValueType::String,
+            false,
+            |it| PropertyValue::String(parent_as_string(it)),
+        ),
         "",
     )
     .set_is_hidden_from_library_editors()
     .set_is_hidden_from_properties_manager();
 
     pm.add_property(
-        Property::new("Position X", ClassId::BoardItem, ValueType::Int, true, |it| {
-            PropertyValue::Int(it.position().x)
-        })
+        Property::new(
+            "Position X",
+            ClassId::BoardItem,
+            ValueType::Int,
+            true,
+            |it| PropertyValue::Int(it.position().x),
+        )
         .with_display(PropertyDisplay::PtCoord)
         .with_coord(CoordType::AbsXCoord),
         "",
     );
     pm.add_property(
-        Property::new("Position Y", ClassId::BoardItem, ValueType::Int, true, |it| {
-            PropertyValue::Int(it.position().y)
-        })
+        Property::new(
+            "Position Y",
+            ClassId::BoardItem,
+            ValueType::Int,
+            true,
+            |it| PropertyValue::Int(it.position().y),
+        )
         .with_display(PropertyDisplay::PtCoord)
         .with_coord(CoordType::AbsYCoord),
         "",
@@ -108,7 +120,10 @@ fn supports_teardrops(it: ItemRef<'_>) -> bool {
             return false;
         }
 
-        return matches!(it.type_(), kicad_core::KicadT::PcbPadT | kicad_core::KicadT::PcbViaT);
+        return matches!(
+            it.type_(),
+            kicad_core::KicadT::PcbPadT | kicad_core::KicadT::PcbViaT
+        );
     }
 
     false
@@ -159,14 +174,21 @@ pub(crate) fn register_board_connected_item(pm: &mut PropertyManager) {
     .set_choices(layer_choices);
 
     pm.add_property(
-        Property::new_enum("Net", ClassId::BoardConnectedItem, ValueType::Int, true, |it| {
-            PropertyValue::Int(bci(it).net_code().0)
-        })
+        Property::new_enum(
+            "Net",
+            ClassId::BoardConnectedItem,
+            ValueType::Int,
+            true,
+            |it| PropertyValue::Int(bci(it).net_code().0),
+        )
         .with_display(PropertyDisplay::PtNet),
         "",
     )
     .set_is_hidden_from_rules_editor()
     .set_is_hidden_from_library_editors();
+
+    // GetNetClassName: GetEffectiveNetClass()->GetName() (the composite name of a multi-class
+    // net, e.g. "L,Default").
 
     // This property should just be an alias for the one below, it only exists so that we
     // maintain compatibility with both `NetClass` and `Net_Class` in custom rules.
@@ -179,7 +201,7 @@ pub(crate) fn register_board_connected_item(pm: &mut PropertyManager) {
             ClassId::BoardConnectedItem,
             ValueType::String,
             false,
-            |it| PropertyValue::String(net_class_name(bci(it), it.ctx)),
+            |it| PropertyValue::String(bci(it).effective_netclass(it.ctx).get_name()),
         ),
         "",
     )
@@ -194,7 +216,7 @@ pub(crate) fn register_board_connected_item(pm: &mut PropertyManager) {
             ClassId::BoardConnectedItem,
             ValueType::String,
             false,
-            |it| PropertyValue::String(net_class_name(bci(it), it.ctx)),
+            |it| PropertyValue::String(bci(it).effective_netclass(it.ctx).get_name()),
         ),
         "",
     )

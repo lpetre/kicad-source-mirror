@@ -11,5 +11,6 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+kicad-core = { path = "../kicad-core" }
 
 [dev-dependencies]

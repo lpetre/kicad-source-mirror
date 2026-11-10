@@ -272,8 +272,14 @@ struct RbNode<T> {
 /// leftmost and its `right` the rightmost node, as in libstdc++.
 ///
 /// The comparator is passed to each insertion (`less( a, b )` is the C++ `comp( a, b )`); it
-/// must be the same for every call on one set, as it is for a C++ set.  Erasure is not
-/// ported (no caller needs it).
+/// must be the same for every call on one set, as it is for a C++ set.  It need not be a
+/// strict weak ordering (the result then depends on the tree shape, which is reproduced), but
+/// it must be irreflexive and asymmetric: otherwise libstdc++ links a node over an existing
+/// subtree and later reads the header as a value (undefined behaviour); the port stays memory
+/// safe but may panic then.  Erasure is not ported (no caller needs it).
+///
+/// Verified against g++ 13 / libstdc++ by `tests/oracle_stdset.rs` (6,000 random sequences
+/// with transitive, epsilon, tournament, cyclic and neighbour-only comparators).
 pub struct StdSet<T> {
     nodes: Vec<RbNode<T>>,
 }

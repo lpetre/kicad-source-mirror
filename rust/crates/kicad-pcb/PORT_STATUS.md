@@ -2772,3 +2772,76 @@ Files: `src/io/parser/generator.rs`, `src/io/writer/generator.rs`, `tests/pcbio1
   writes it; the model keeps no default template (M23 gap). No corpus board has one.
 - Footprint-level constraints are parsed once `parseFOOTPRINT` (PCBIO-06) calls
   `parse_constraint`; `resolve_constraints` already handles footprint parents.
+
+## Package PROP-1: board item property tables
+
+`src/properties/` (+ `src/dump/props.rs`, the `props-table` command of `pcb-dump-rs` and the
+opt-in `props` dump section): the `PROPERTY_MANAGER` model the custom-rule language reads
+(`A.Net_Class`, `A.Pad_Type == 'SMD'`). API for DRC-21: `property_manager()` (built once),
+`class_of( ItemRef )` (= `TYPE_HASH( *item )`), `get_property( class, name )` (case-insensitive;
+the rule language replaces `_` by a space first), `properties( class )`, `all_classes()`,
+`is_of_type`, `derived_classes`, `is_available_for` / `is_writeable_for`, `Property::get( item )`
+-> `PropertyValue` (enum values carry their `EnumId`; `enum_as_string()` is the `wxAny`
+conversion `GetValue` uses), `Property::has_choices()`, `EnumId::map()` (`ENUM_MAP`).
+`PCBEXPR_VAR_REF::ClassifyProperty` is ported privately in `dump/props.rs` (DRC-21 owns it).
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `include/properties/property_mgr.h`, `common/properties/property_mgr.cpp` (`RegisterType`, `AddProperty`, `ReplaceProperty`, `AddTypeCast`, `InheritsAfter`, `Mask`, `OverrideAvailability`, `OverrideWriteability`, `IsAvailableFor`, `IsWriteableFor`, `IsOfType`, `Rebuild`, `CLASS_DESC::rebuild` / `collectPropsRecur`, `GetProperty`, `GetProperties`, `GetDisplayOrder`, `GetGroupDisplayOrder`, `GetAllClasses`, `TypeCast` existence) | `properties/mod.rs` | ported (listeners, commit handler, dynamic properties: skipped, UI) |
+| `include/properties/property.h` (`PROPERTY_BASE`, `PROPERTY`, `PROPERTY_ENUM`, `ENUM_MAP`, `DECLARE_ENUM_TO_WXANY` conversion, `TYPE_HASH` / `TYPE_NAME`) | `properties/mod.rs`, `properties/enums.rs` | ported; setters, validators, choices functions, indeterminate functions recorded as flags only (tier 3 / UI) |
+| `EDA_ITEM_DESC`, `EDA_SHAPE_DESC` (+ `GetFillModeProp`), `EDA_TEXT_DESC` (+ `GetFontProp`, `GetTextThicknessProperty`) | `eda_item.rs`, `eda_shape.rs`, `eda_text.rs` | ported |
+| `BOARD_ITEM_DESC` (+ `GetParentAsString`), `BOARD_CONNECTED_ITEM_DESC` | `board_item.rs` | ported; `Parent` of a board-level item is pending (`BOARD::m_Uuid`, generated at construction, not in the Rust model) |
+| `PAD_DESC`, `TRACK_VIA_DESC`, `ZONE_DESC`, `FOOTPRINT_DESC`, `PCB_SHAPE_DESC`, `PCB_TEXT_DESC`, `PCB_TEXTBOX_DESC`, `PCB_FIELD_DESC` | `pad.rs`, `pcb_track.rs`, `zone.rs`, `footprint.rs`, `pcb_shape.rs`, `pcb_text.rs` | ported (`isPadEditMode`: footprint-holder boards only, pending `PAD::IsEntered`) |
+| `DIMENSION_DESC` and the five concrete dimension descriptors (+ `DimensionHasValueMode`) | `pcb_dimension.rs` | ported; `Value Mode` / `Value` pending (`DimensionValueMode`, `GetValueFieldText`: constraint builder not in the Rust model) |
+| `PCB_TABLE_DESC`, `PCB_TABLECELL_DESC` (+ `IsGeneratedTableCell`), `PCB_GENERATED_TABLE_DESC`, `PCB_DRILL_CHART_DESC`, `PCB_STACKUP_TABLE_DESC` | `pcb_table.rs` | ported; generated-table `Row Height`, `Font Name`, `Font Size` pending (`GetRowHeightProp`, `GetFontNameProp`, `GetFontSizeProp` not in the Rust model) |
+| `PCB_GROUP_DESC`, `PCB_BARCODE_DESC`, `PCB_REFERENCE_IMAGE_DESC`, `PCB_3D_BODY_DESC`, `PCB_DRILL_MAP_DESC`, `PCB_GRIDITEM_DESC`, `PCB_MARKER_DESC`, `PCB_POINT_DESC`, `PCB_TARGET_DESC`, `PCB_CONSTRAINT_DESC` | `misc.rs` | ported; barcode `Orientation` calls the pending `PCB_BARCODE::GetAngle`; drill-map `Hole Span` pending for a single span (`EnumerateDrillSpans`) |
+| `PCB_TUNING_PATTERN_DESC`, `PCB_VIA_STACK_DESC`, `PCB_VIA_STITCH_DESC` | `generators.rs` | table ported; the getters are pending (the generator subclasses' typed members live in the `PcbGenerator` property map, no Rust getters) |
+| `PCB_GENERATOR_DESC` | - | compiled out in C++ (`#ifdef GENERATOR_ORDER`); `PCB_GENERATOR` exists only as a base, as in the reference build |
+
+### Ported C++ tests
+
+`qa/tests/common/test_property.cpp`: `NotexistingProperties`, `TypeCasting`, `EnumGlob`
+(choices, enum to string conversion), `Availability` (through the board tables), `Alias`,
+`Rename`, `AlternativeEnum`, `DuplicateProperty` on a private manager whose classes stand in for
+the test's `A`..`E` (`properties/tests.rs`); `SetGet`, `VirtualMethods`, `IncorrectType`
+skipped (setters / `wxAny` typing, not ported). `qa/tests/pcbnew/test_pcb_dynamic_properties.cpp`
+skipped (dynamic properties, see gaps).
+
+### Verification
+
+* `pcb-dump props-table` vs `pcb-dump-rs props-table`: 1286 / 1286 lines identical (43 classes,
+  all properties with order, owner, base, type, display, coordinate type, group, choices, flags,
+  `ClassifyProperty` kind and `GetProperty` result; 44 enum maps). Committed hashed:
+  `tests/golden/props_table.txt`, test `tests/props_oracle.rs`.
+* `--sections props` on copies of 140 corpus boards (`qa/data/pcbnew`): 0 mismatches caused by
+  this package; every remaining mismatch is on an item whose other sections (`item`, `track`,
+  `shape`, `text`, `zone`, `pad`, `footprint`, `dim`) mismatch too or that is keyed by an
+  ordinal shifted by items the Rust loader does not build yet (checked per key). 10 boards are
+  committed hashed (`tests/golden/props_values.txt`, generator `tests/oracle/props_golden.sh`).
+
+### Deviations
+
+- `GetProperties( type )` is exposed in display order with each property once; the C++ vector
+  is sorted by heap address and holds a property twice when a class reaches a base along two
+  paths (`all_properties_count` gives the C++ size).
+- `GetProperty` takes the first match in collection order (C++: address order); identical for
+  every lookup of the reference table, including the duplicate `Text` of the dimension classes.
+- `GetAllClasses()` is in `ClassId` order (C++: `unordered_map` order).
+- `TYPE_NAME` is reproduced as the Itanium mangled name (`3PAD`), as in the reference build.
+- Choice labels are the untranslated `_HKI` strings; the few `_()` group names
+  (`Border Properties`, `Margins`, `Table Properties`, `Table`, `Table Generator`,
+  `Drill Chart Properties`, `Drill Map Properties`) are the English source text, as the
+  reference environment shows them.
+
+### Known gaps
+
+- Setters, validators, choice functions (font lists, pin types), indeterminate functions,
+  listeners, `TranslateChoices`: not ported (tier 3 / UI); recorded as flags.
+- Dynamic properties (`EDA_ITEM::GetDynamicProperties`: custom properties, `FOOTPRINT`
+  mandatory-field properties): not ported; the rule language does not reach them
+  (`PCBEXPR_UCODE::CreateVarRef` uses `GetProperty( TYPE_HASH, name )`).
+- Pending getters (see the map above) print `pending|props|...` in the dump.
+- The variant overrides of `PCBEXPR_VAR_REF::GetValue` for footprint attributes and the
+  "number in a string" conversion belong to DRC-21 (`pcbexpr_evaluator.cpp`).

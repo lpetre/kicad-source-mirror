@@ -24,7 +24,8 @@
 //! attributes, format, units) and, once every item the layer holds is ported, the whole file.
 //! Parts that reach code still pending (board parser, model stubs, FAB-04/05/06 item plotting)
 //! are counted, not failed, so the test tightens as the port grows; any output the port does
-//! produce must match. `KICAD_FAB_CORPUS_REPORT=1` prints the per-board result.
+//! produce must match. `KICAD_FAB_CORPUS_REPORT=1` prints the per-board result,
+//! `KICAD_FAB_CORPUS_DUMP=<dir>` writes the port's output of every differing file there.
 
 mod plot_common;
 
@@ -108,7 +109,7 @@ fn corpus_replay() {
         }
 
         let path = root.join(&case.path);
-        let board = match catch_unwind(|| load_board(&path)) {
+        let mut board = match catch_unwind(|| load_board(&path)) {
             Ok(Ok(board)) => board,
             Ok(Err(e)) => {
                 score.boards_not_loadable += 1;
@@ -130,7 +131,14 @@ fn corpus_replay() {
             }
         };
 
-        let ctx = BoardCtx::bare(&board);
+        let Some(connectivity) = build_connectivity(&mut board) else {
+            score.boards_not_loadable += 1;
+            if report {
+                println!("{}: connectivity not buildable (pending)", case.path);
+            }
+            continue;
+        };
+        let ctx = BoardCtx::bare(&board).with_connectivity(&connectivity);
         let opts = cli_gerber_opts(false, 6, false, false);
 
         // file name hash -> (layer, file name) for every enabled layer
@@ -212,7 +220,15 @@ fn corpus_replay() {
                     score.files_matched += 1;
                     line.push('F');
                 }
-                Ok(_) => {
+                Ok(text) => {
+                    if let Some(dir) = std::env::var_os("KICAD_FAB_CORPUS_DUMP") {
+                        let name = format!(
+                            "{}-{}.gbr",
+                            case.path.replace('/', "_"),
+                            board.layer_name(layer)
+                        );
+                        std::fs::write(std::path::Path::new(&dir).join(name), &text).unwrap();
+                    }
                     score.failures.push(format!(
                         "{} {}: file differs",
                         case.path,

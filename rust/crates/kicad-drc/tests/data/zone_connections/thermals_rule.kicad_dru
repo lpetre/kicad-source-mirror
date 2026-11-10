@@ -1,0 +1,3 @@
+(version 1)
+(rule "three_spokes"
+	(constraint min_resolved_spokes 3))

@@ -27,6 +27,7 @@ use crate::ctx::BoardCtx;
 use crate::ids::{ItemId, NetCode};
 use crate::netclass::Netclass;
 use crate::netinfo::NetinfoItem;
+use crate::item_ref::AnyItem;
 use crate::traits::BoardConnectedItem;
 
 /// `m_netinfo` of an item: the board's net of its net code (`None` for a negative code, which
@@ -82,9 +83,8 @@ pub fn net_class_name<B: BoardConnectedItem + ?Sized>(item: &B, ctx: &BoardCtx<'
 /// Port of `BOARD_CONNECTED_ITEM::GetOwnClearance( aLayer, aSource )`: the DRC engine's
 /// cached own clearance (`ctx.rules`), 0 (source untouched) without a board or rules.
 ///
-/// The item is handed to the engine through its handle (`ctx.item( base.id )`); a value
-/// outside the board (`base.id == None`) cannot be wrapped generically, so its class must
-/// override `own_clearance` and pass `ctx.view( AnyItem::X( self ) )` itself (PAD does).
+/// The item is handed to the engine through `board_item::with_this`: the stored item for a
+/// live handle, a view of the value itself otherwise (a detached copy).
 pub fn own_clearance<B: BoardConnectedItem + ?Sized>(
     item: &B,
     ctx: &BoardCtx<'_>,
@@ -93,19 +93,21 @@ pub fn own_clearance<B: BoardConnectedItem + ?Sized>(
 ) -> (i32, Option<String>) {
     if has_board(item, ctx) {
         if let Some(rules) = ctx.rules {
-            let Some(this) = item.base().id().and_then(|id| ctx.item(id)) else {
-                crate::port_pending!(
-                    "BOARD_CONNECTED_ITEM::GetOwnClearance (detached item: no ItemRef of self)",
-                    layer,
-                    want_source
-                )
-            };
-
-            return rules.cached_own_clearance(ctx, this, layer, want_source);
+            return crate::board_item::with_this(item, ctx, |this| {
+                rules.cached_own_clearance(ctx, this, layer, want_source)
+            });
         }
     }
 
     (0, None)
+}
+
+/// Port of `BOARD_CONNECTED_ITEM::SetNet( aNetInfo )`: `m_netinfo = aNetInfo`
+/// (`NetCode::ORPHANED` is the null pointer).
+pub fn set_net<B: BoardConnectedItem + ?Sized>(item: &mut B, net: NetCode) {
+    if let Some(connected) = item.connected_mut() {
+        connected.net = net;
+    }
 }
 
 /// Port of `BOARD_CONNECTED_ITEM::GetNetname`: the net's name, empty without a net.
@@ -167,6 +169,11 @@ impl crate::board::Board {
 
             let mut code = net;
 
+            // ZONE::SetNetCode: copper-thieving zones are always net-less
+            if let AnyItem::Zone(zone) = item.any() {
+                code = zone.filter_net_code(code);
+            }
+
             if !connected.is_on_copper_layer(&ctx) {
                 code = NetCode::UNCONNECTED;
             }
@@ -191,5 +198,20 @@ impl crate::board::Board {
         });
 
         new_net != NetCode::ORPHANED
+    }
+
+    /// The virtual `BOARD_CONNECTED_ITEM::SetNet( aNetInfo )` on a stored item: the net is
+    /// written without the copper check and the board lookup of `SetNetCode`
+    /// (`NetCode::ORPHANED` is the null pointer); the `ZONE` override applies. `false` for a
+    /// stale or non-connected handle.
+    pub fn set_item_netinfo(&mut self, id: ItemId, net: NetCode) -> bool {
+        self.modify(id, |mut item, _| match item.as_connected_mut() {
+            Some(connected) => {
+                connected.set_net(net);
+                true
+            }
+            None => false,
+        })
+        .unwrap_or(false)
     }
 }

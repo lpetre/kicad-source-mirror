@@ -1,0 +1,10 @@
+issue25074/knockout_textbox.kicad_pcb
+issue24853/issue24853.kicad_pcb
+prettifier/group_and_image.kicad_pcb
+reference_images_load_save.kicad_pcb
+issue24690/soldermask_shape.kicad_pcb
+keepout_disallow/keepout_disallow.kicad_pcb
+issue2512.kicad_pcb
+teardrop_multi_inside_via.kicad_pcb
+issue20249/dimension.kicad_pcb
+issue14449.kicad_pcb

@@ -22,12 +22,12 @@
 
 use std::sync::Arc;
 
-use kicad_core::layer_ids::{PCB_LAYER_ID_COUNT, flip_layer};
+use kicad_core::layer_ids::{self, PCB_LAYER_ID_COUNT, flip_layer};
 use kicad_core::{KicadT, Kiid, Lset, PcbLayerId};
 use kicad_geom::geometry::geometry_utils::ARC_HIGH_DEF;
 use kicad_geom::geometry::transform_trs::TransformTrs;
 
-use crate::board::Board;
+use crate::board::{Board, LayerT};
 use crate::drc_api::{DrcConstraint, DrcConstraintT};
 use crate::ids::{FootprintId, ItemId, NetCode};
 use crate::item::BoardUse;
@@ -177,6 +177,11 @@ pub struct LayerEnv {
     /// `BOARD::FlipLayer` for every layer id (user-layer opposites included), indexed by layer
     /// id.
     pub flipped: Vec<PcbLayerId>,
+    /// `BOARD::GetLayerType( aLayer )` for every layer id, indexed by layer id (rev 2.3:
+    /// `BOARD_ITEM::IsSideSpecific` and `BOARD::IsBackLayer` in mutators). All `LT_UNDEFINED`
+    /// without a board, which makes the C++ `if( BOARD* board = GetBoard() )` branches and
+    /// their null-board fallbacks fall out of the same expressions.
+    pub layer_types: Vec<LayerT>,
 }
 
 impl LayerEnv {
@@ -191,7 +196,28 @@ impl LayerEnv {
             flipped: (0..PCB_LAYER_ID_COUNT)
                 .map(|l| flip_layer(PcbLayerId(l), 0))
                 .collect(),
+            layer_types: vec![LayerT::Undefined; PCB_LAYER_ID_COUNT as usize],
         }
+    }
+
+    /// `BOARD::GetLayerType( aLayer )` as of the snapshot; `LT_UNDEFINED` without a board and
+    /// for a layer outside the table.
+    pub fn layer_type(&self, layer: PcbLayerId) -> LayerT {
+        usize::try_from(layer.0)
+            .ok()
+            .and_then(|i| self.layer_types.get(i))
+            .copied()
+            .unwrap_or(LayerT::Undefined)
+    }
+
+    /// `BOARD::IsFrontLayer( aLayer )`; `::IsFrontLayer( aLayer )` without a board.
+    pub fn is_front_layer(&self, layer: PcbLayerId) -> bool {
+        layer_ids::is_front_layer(layer) || self.layer_type(layer) == LayerT::Front
+    }
+
+    /// `BOARD::IsBackLayer( aLayer )`; `::IsBackLayer( aLayer )` without a board.
+    pub fn is_back_layer(&self, layer: PcbLayerId) -> bool {
+        layer_ids::is_back_layer(layer) || self.layer_type(layer) == LayerT::Back
     }
 
     /// The flipped layer of `layer` (`BOARD::FlipLayer`); layers outside the table are
@@ -234,5 +260,22 @@ impl MutEnv {
             max_error: ARC_HIGH_DEF,
             board_use: BoardUse::Normal,
         }
+    }
+
+    /// Port of `BOARD_ITEM::IsSideSpecific()` for a mutator: `layer_set` is the item's
+    /// `GetLayerSet()`, `principal_layer` its `m_layer`. True on a side-specific layer, or
+    /// (with a board) when the principal layer is of type `LT_FRONT` / `LT_BACK`.
+    pub fn is_side_specific(&self, layer_set: &Lset, principal_layer: PcbLayerId) -> bool {
+        let mut layers = layer_set.clone();
+        layers &= Lset::side_specific_mask();
+
+        if layers.any() {
+            return true;
+        }
+
+        // Without a board every type of the snapshot is LT_UNDEFINED.
+        let principal_layer_type = self.layers.layer_type(principal_layer);
+
+        principal_layer_type == LayerT::Front || principal_layer_type == LayerT::Back
     }
 }

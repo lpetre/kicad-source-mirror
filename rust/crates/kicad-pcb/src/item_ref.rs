@@ -82,6 +82,19 @@ impl<'a> AnyItem<'a> {
 }
 
 impl AnyItemMut<'_> {
+    /// `dynamic_cast<BOARD_CONNECTED_ITEM*>` of a mutable item (the `SetNet` virtual).
+    pub fn as_connected_mut(&mut self) -> Option<&mut dyn BoardConnectedItem> {
+        match self {
+            AnyItemMut::Pad(x) => Some(&mut **x),
+            AnyItemMut::Track(x) => Some(&mut **x),
+            AnyItemMut::Zone(x) => Some(&mut **x),
+            AnyItemMut::Shape(x) => Some(&mut **x),
+            AnyItemMut::Textbox(x) => Some(&mut **x),
+            AnyItemMut::Tablecell(x) => Some(&mut **x),
+            _ => None,
+        }
+    }
+
     /// The mutating virtuals of a leaf item (`BoardItemMut`: `SetPosition`, `Move`, `Rotate`,
     /// `Flip`, `Mirror`, `SetLayer`, ...); `None` for the containers (footprint, table, group,
     /// generator), which cascade through `Board` methods (`board-model.md` 8.3). This is what

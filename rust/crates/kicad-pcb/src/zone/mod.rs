@@ -633,6 +633,19 @@ impl Zone {
         net
     }
 
+    /// Port of `ZONE::SetNet( aNetInfo )`: a copper-thieving zone drops the net (C++ stores
+    /// a null `m_netinfo`, i.e. `NetCode::ORPHANED`), every other zone stores it as given.
+    /// `SetNet` bypasses the `SetNetCode` clamp; importers and `BOARD::MapNets` use it.
+    pub fn set_net(&mut self, net: NetCode) {
+        let net = if self.is_copper_thieving() {
+            NetCode::ORPHANED
+        } else {
+            net
+        };
+
+        crate::board_connected_item::set_net(self, net)
+    }
+
     // ---- setters with side effects ------------------------------------------------------
 
     /// Port of `ZONE::SetFillMode()`. Switching to copper thieving clears the net
@@ -1388,8 +1401,9 @@ impl ZoneFill {
 
     /// Port of `ZONE::unFillLocked()`: every fill entry is replaced by a new empty set, the
     /// island sets of those layers are emptied, `is_filled` and the fill flags are reset.
-    /// True if any fill was not empty.
-    pub(crate) fn unfill_locked(&mut self) -> bool {
+    /// True if any fill was not empty. Public for the zone filler, which reaches a stored
+    /// zone's fill through `Board::zone_fill_mut` (`ZONE::UnFill()` on it).
+    pub fn unfill_locked(&mut self) -> bool {
         let mut change = false;
 
         for (layer, poly) in self.filled_polys_list.iter_mut() {
@@ -1549,6 +1563,9 @@ impl BoardItem for Zone {
 impl BoardConnectedItem for Zone {
     fn is_connected(&self, ctx: &BoardCtx<'_>) -> bool {
         Zone::is_connected(self, ctx)
+    }
+    fn set_net(&mut self, net: NetCode) {
+        Zone::set_net(self, net)
     }
     fn local_clearance(&self) -> Option<i32> {
         Zone::local_clearance(self)

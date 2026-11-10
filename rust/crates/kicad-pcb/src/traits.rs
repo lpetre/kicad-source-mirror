@@ -56,7 +56,7 @@ use crate::eda_shape::EdaShape;
 use crate::eda_text::EdaText;
 use crate::ids::{ItemId, NetCode};
 use crate::item::{BoardItemBase, ConnectedItemBase, RecurseMode, SharedShape};
-use crate::item_ref::ItemRef;
+use crate::item_ref::{AnyItem, ItemRef};
 use crate::netclass::Netclass;
 use crate::{board_connected_item, board_item, eda_shape, eda_text};
 
@@ -68,8 +68,19 @@ pub trait Invalidate {
     fn invalidate_caches(&mut self);
 }
 
+/// The Rust `this` as a `BOARD_ITEM*` for a value that may live outside the arena (rev 2.3).
+/// A generic base-class body (`B: BoardItem`) cannot name the `AnyItem` variant of its host;
+/// this supertrait can. Implemented by `board_items!` for every arena type and by hand for
+/// `NetinfoItem` and the three structs of the track family, whose `AnyItem` form is the
+/// tagged `Track` (they hand over a copy of themselves, `base.id` included).
+/// `board_item::with_this` is the entry point.
+pub trait AsAnyItem {
+    /// Calls `f` exactly once with the item as an `AnyItem`.
+    fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>));
+}
+
 /// The `EDA_ITEM` + `BOARD_ITEM` virtuals (read-only part).
-pub trait BoardItem: Invalidate {
+pub trait BoardItem: Invalidate + AsAnyItem {
     // ---- identity / structure (no context) ----
 
     /// The `EDA_ITEM` / `BOARD_ITEM` data members.
@@ -317,6 +328,15 @@ pub trait BoardConnectedItem: BoardItem {
         self.connected().map_or(NetCode::ORPHANED, |c| c.net)
     }
 
+    /// `SetNet( aNetInfo )` (virtual; rev 2.3): `m_netinfo = aNetInfo`, with
+    /// `NetCode::ORPHANED` standing for the null pointer (`GetNetCode()` then answers -1).
+    /// Unlike `SetNetCode` (`Board::set_item_net`) there is no copper check and no board
+    /// lookup. ZONE overrides it: a copper-thieving zone drops the net. Stored items are
+    /// reached through `Board::set_item_netinfo`.
+    fn set_net(&mut self, net: NetCode) {
+        board_connected_item::set_net(self, net)
+    }
+
     /// `IsConnected()` (ZONE: not a rule area; PCB_SHAPE: copper and not in a footprint).
     fn is_connected(&self, _ctx: &BoardCtx<'_>) -> bool {
         true
@@ -400,8 +420,16 @@ pub trait BoardItemMut: BoardItem {
     ) {
     }
 
-    /// `StyleFromSettings( settings, aCheckSide )`.
-    fn style_from_settings(&mut self, _settings: &BoardDesignSettings, _check_side: bool) {}
+    /// `StyleFromSettings( settings, aCheckSide )`. Takes the mutator snapshot (rev 2.3): the
+    /// `PCB_TEXT` / `PCB_TEXTBOX` overrides call the frame-converting `SetTextSize` /
+    /// `SetTextThickness`, test `GetParentFootprint()` and ask `BOARD::IsBackLayer`.
+    fn style_from_settings(
+        &mut self,
+        _env: &MutEnv,
+        _settings: &BoardDesignSettings,
+        _check_side: bool,
+    ) {
+    }
 }
 
 /// Virtual interface of `EDA_TEXT`. Hosts: `PcbText` (`PcbField`, `PcbDimension` and the

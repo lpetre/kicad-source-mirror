@@ -1,0 +1,13 @@
+{
+  "board": {
+    "design_settings": {
+      "rules": {
+        "min_silk_clearance": 0
+      }
+    }
+  },
+  "meta": {
+    "filename": "silk_rule_web.kicad_pro",
+    "version": 3
+  }
+}

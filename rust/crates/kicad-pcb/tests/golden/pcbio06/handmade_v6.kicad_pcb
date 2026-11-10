@@ -1,0 +1,337 @@
+(kicad_pcb
+	(version 20261031)
+	(generator "pcbnew")
+	(generator_version "10.99")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(2 "B.Cu" signal)
+		(9 "F.Adhes" user "F.Adhesive")
+		(11 "B.Adhes" user "B.Adhesive")
+		(13 "F.Paste" user)
+		(15 "B.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(17 "Dwgs.User" user "User.Drawings")
+		(19 "Cmts.User" user "User.Comments")
+		(21 "Eco1.User" user "User.Eco1")
+		(23 "Eco2.User" user "User.Eco2")
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+		(33 "B.Fab" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+		(allow_soldermask_bridges_in_footprints no)
+		(tenting
+			(front yes)
+			(back yes)
+		)
+		(covering
+			(front no)
+			(back no)
+		)
+		(plugging
+			(front no)
+			(back no)
+		)
+		(capping no)
+		(filling no)
+		(pcbplotparams
+			(layerselection 0x00000000_00000000_55555555_5755f5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
+			(disableapertmacros no)
+			(usegerberextensions no)
+			(usegerberattributes yes)
+			(usegerberadvancedattributes yes)
+			(creategerberjobfile yes)
+			(dashed_line_dash_ratio 12)
+			(dashed_line_gap_ratio 3)
+			(svgprecision 6)
+			(pngdpi 300)
+			(pngantialias yes)
+			(plotframeref no)
+			(mode 1)
+			(useauxorigin no)
+			(pdf_front_fp_property_popups yes)
+			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
+			(dxfpolygonmode yes)
+			(dxfimperialunits yes)
+			(dxfusepcbnewfont yes)
+			(psnegative no)
+			(psa4output no)
+			(plot_black_and_white yes)
+			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
+			(subtractmaskfromsilk no)
+			(outputformat 1)
+			(mirror no)
+			(drillshape 1)
+			(scaleselection 1)
+			(outputdirectory "")
+		)
+	)
+	(footprint "Resistor_SMD:R_0603"
+		(locked yes)
+		(layer "F.Cu")
+		(uuid "0a1b2c3d-0000-4000-8000-000000000001")
+		(transform
+			(translate 100 50)
+			(rotate 30)
+			(scale 1 1)
+		)
+		(descr "Resistor SMD 0603")
+		(tags "net tie resistor")
+		(property "Reference" "R1"
+			(at 0 -1.430001 30)
+			(layer "F.SilkS")
+			(uuid "0a1b2c3d-0000-4000-8000-000000000002")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "10k"
+			(at 0 1.43 30)
+			(layer "F.Fab")
+			(uuid "0a1b2c3d-0000-4000-8000-000000000003")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 30)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1caf9d54-ff81-466d-b04a-847d7e35f027")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "A resistor"
+			(at 0 0 30)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b9c3216c-6f77-4d30-9394-f27d01ca5550")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MyProp" "value1"
+			(at 38.397459 -43.301271 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4ec271e3-8fb3-4ac3-8ac9-356e59644956")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Field5" "hidden user"
+			(at 0.5 0 30)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "72cafedf-88af-4b1a-80da-3813e3f924cc")
+			(effects
+				(font
+					(size 0.5 0.5)
+					(thickness 0.08)
+				)
+			)
+		)
+		(path "/0a1b2c3d-0000-4000-8000-0000000000aa")
+		(sheetname "Child")
+		(sheetfile "child.kicad_sch")
+		(solder_paste_margin 0.01)
+		(solder_paste_margin_ratio -0.05)
+		(clearance 0.2)
+		(zone_connect 1)
+		(attr smd)
+		(private_layers "Eco2.User")
+		(duplicate_pad_numbers_are_jumpers no)
+		(zone
+			(layer "F.Cu")
+			(uuid "0a1b2c3d-0000-4000-8000-000000000005")
+			(hatch edge 0.508)
+			(connect_pads
+				(clearance 0)
+			)
+			(min_thickness 0.254)
+			(keepout
+				(tracks not_allowed)
+				(vias not_allowed)
+				(pads allowed)
+				(copperpour not_allowed)
+				(footprints allowed)
+			)
+			(placement
+				(enabled no)
+				(sheetname "")
+			)
+			(fill
+				(thermal_gap 0.508)
+				(thermal_bridge_width 0.508)
+				(island_removal_mode 0)
+			)
+			(polygon
+				(pts
+					(xy -0.366025 -1.366025) (xy 1.366025 -0.366025) (xy 0.366025 1.366025) (xy -1.366025 0.366025)
+				)
+			)
+		)
+		(embedded_fonts no)
+		(model "${KISYS3DMOD}/Resistor_SMD.3dshapes/R_0603.wrl"
+			(hide yes)
+			(opacity 0.8000)
+			(offset
+				(xyz 0.2539999962 0 0.5079999924)
+			)
+			(scale
+				(xyz 1 1 1)
+			)
+			(rotate
+				(xyz 0 0 0)
+			)
+		)
+	)
+	(footprint "Old:NoAttr"
+		(layer "F.Cu")
+		(uuid "0a1b2c3d-0000-4000-8000-000000000021")
+		(transform
+			(translate 90 40)
+			(rotate -90)
+			(scale 1 1)
+		)
+		(property "Reference" "X1"
+			(at 1 2 0)
+			(layer "F.SilkS")
+			(uuid "518cd2bd-1600-4c7e-b07b-f82a4fe1c54e")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "x"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(uuid "acd0a4f3-a63f-46cc-98b8-0d3e1eded131")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 270)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "d041d4ef-9c85-4b5c-af81-6b72675b3fd4")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 270)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "478aa4db-3631-4b80-bdde-07409fb3aa0a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(duplicate_pad_numbers_are_jumpers no)
+		(embedded_fonts no)
+	)
+	(footprint "Old:Back"
+		(layer "B.Cu")
+		(uuid "0a1b2c3d-0000-4000-8000-000000000011")
+		(transform
+			(translate 110 60)
+			(rotate 180)
+			(scale 1 1)
+		)
+		(property "Reference" "C1"
+			(at 0 -1.5 0)
+			(layer "B.SilkS")
+			(uuid "0a1b2c3d-0000-4000-8000-000000000012")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Value" "1u"
+			(at 0 1.5 180)
+			(layer "B.Fab")
+			(uuid "0a1b2c3d-0000-4000-8000-000000000013")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+				(justify mirror)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 180)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "f33d38fc-8017-435c-add8-94af6fcf7b4c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 180)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6e801576-faec-4672-9fa4-395ee45cdb55")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(sheetfile "root.kicad_sch")
+		(duplicate_pad_numbers_are_jumpers no)
+		(embedded_fonts no)
+	)
+	(embedded_fonts no)
+)

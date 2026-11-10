@@ -12,14 +12,24 @@ demos/microwave/microwave.kicad_pcb	#	clearance	2	1e4e3996d5cb03d4
 demos/microwave/microwave.kicad_pcb	#	shorting_items	6	b9bfb09252ee34e4
 demos/microwave/microwave.kicad_pcb	#	text_height	8	c0f22f8534eae3d1
 demos/microwave/microwave.kicad_pcb	#	text_thickness	8	740cda4738e600d1
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	2560250b-0cd6-4c55-9d75-16d4d2279cb5	Via [vbias] on F.Cu - B.Cu	125.0	83.000002
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	1	warning	via_dangling	Via is not connected or connected on only one layer	5a6f554b-5085-4162-8bc1-1db8a642d693	Via [vbias] on F.Cu - B.Cu	127.8	86.8
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	5e90249c-6e79-4a54-acf5-713a9592cb23	Via [vbias] on F.Cu - B.Cu	105.8	86.8
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	602627ae-c315-4a5a-b96d-c4bce862a32c	Via [vbias] on F.Cu - B.Cu	147.0	83.000002
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	c407c673-a348-4c5d-9dad-997a3f690259	Via [vbias] on F.Cu - B.Cu	149.8	86.8
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	dca81809-7cbc-445e-9b6e-970722c780ed	Via [vbias] on F.Cu - B.Cu	103.0	83.000002
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	6	warning	track_dangling	Track has unconnected end	1d7611c0-1551-4c81-b151-21a7417fd22e	Track [+12V] on F.Cu, length 6.0953 mm	121.15	89.35
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	7	warning	track_dangling	Track has unconnected end	20010854-5c06-4c8b-9f95-7a7a45335fa5	Track [+12V] on F.Cu, length 6.0953 mm	143.15	89.35
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	8	warning	track_dangling	Track has unconnected end	c092038d-396b-47b3-bba2-d8f2ea5a95b3	Track [+12V] on F.Cu, length 6.0953 mm	99.15	89.35
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	9	warning	track_dangling	Track has unconnected end	d84e9e2e-a9f6-495b-b465-3d3ddca2739e	Track [+12V] on F.Cu, length 19.0000 mm	18.675	91.225
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	6cac4972-af81-4a79-8122-08d16c139dcf	Via [+12V] on F.Cu - B.Cu	120.6	86.2
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	ae0c3db1-754a-4ff3-9964-70ce5061f5cf	Via [+12V] on F.Cu - B.Cu	142.6	86.2
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	copper_outside_board	45	d0ede188b591f113
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	holes_co_located	1	62da5c6584dc46e7
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	lib_footprint_issues	114	fb44fb73b9d10901
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	nonmirrored_text_on_back_layer	1	7ea96d82464a275d
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	silk_edge_clearance	1	b3491540badfdefc
 demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	silk_over_copper	3	d38c47511ac1c554
-demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	track_dangling	4	ed0d312352879843
-demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	via_dangling	8	ff650f544864d401
 demos/multichannel/multichannel_mixer.kicad_pcb	#	clearance	12	a115128fd1826424
 demos/multichannel/multichannel_mixer.kicad_pcb	#	connection_width	4	715d8d2b6d3277e9
 demos/multichannel/multichannel_mixer.kicad_pcb	#	lib_footprint_issues	114	97d2e0b8a0e6a0e2
@@ -35,21 +45,25 @@ demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	#	courtyards_overlap	1
 demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	#	drill_out_of_range	183	d16baf2295d834e7
 demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	#	holes_co_located	1	e20336e74cb455e5
 demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	#	lib_footprint_issues	71	d6b3b189f0024bda
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	2	warning	track_dangling	Track has unconnected end	16688252-cb48-4345-bbc2-f03b66a31f91	Track (arc) [/ANT] on F.Cu, length 0.0088 mm	152.8925	100.7434
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	3	warning	track_dangling	Track has unconnected end	2ae8074f-b195-4d0f-a729-264e92fed580	Track (arc) [/ANT] on F.Cu, length 0.0057 mm	152.9499	102.6
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	4	warning	track_dangling	Track has unconnected end	3e3dac54-3838-44c1-8491-21c627a627c0	Track (arc) [/ANT] on F.Cu, length 0.0057 mm	152.9499	101.6
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	5	warning	track_dangling	Track has unconnected end	d633e1a2-9da6-4715-974d-703c213efdb4	Track (arc) [/ANT] on F.Cu, length 0.0057 mm	152.9499	103.6
 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	#	copper_edge_clearance	2	5098427b2a8b4e5c
 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	#	lib_footprint_issues	2	eaa78a976646b5f0
-demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	#	track_dangling	4	9ea7155d2fc31bf5
 demos/sonde xilinx/sonde xilinx.kicad_pcb	#	lib_footprint_issues	25	12759fb0c9a7700c
 demos/stickhub/StickHub.kicad_pcb	#	lib_footprint_issues	94	cbf293ed2e986405
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb	2	warning	track_dangling	Track has unconnected end	f0d13343-ad3f-4a47-aba7-e70711c71e3f	Track [<no net>] on F.Cu, length 2.0000 mm	170.0	50.0
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb	3	warning	track_dangling	Track has unconnected end	a5054360-9a44-42b3-8994-84b572b6d18c	Track (arc) [<no net>] on F.Cu, length 3.1416 mm	171.0	52.0
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	6f75f268-7b12-4df8-b032-ef2b7e95c515	Zone [<no net>] on B.Cu, priority 0	232.833	116.922
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	clearance	1	ab010dc3a9e76a12
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	copper_edge_clearance	1	9781b99a942fc20e
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	copper_outside_board	4	898e76b4758efc8d
-qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	isolated_copper	1	573912f2c8099f6a
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	lib_footprint_issues	5	549db59c6a7c7d70
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	mirrored_text_on_front_layer	1	6d737020fefeb163
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	silk_edge_clearance	1	fece3e15e07921fc
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	silk_over_copper	4	0bb43ea40d8332e4
 qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	silk_overlap	2	fc7432d4a19da660
-qa/data/pcbnew/api_kitchen_sink.kicad_pcb	#	track_dangling	2	ae1a94e5a4fc9cd6
 qa/data/pcbnew/bad_triangulation_case.kicad_pcb	#	invalid_outline	1	6d3e76bf11a812a3
 qa/data/pcbnew/bad_triangulation_case.kicad_pcb	#	isolated_copper	58	feba51ea7671d7c7
 qa/data/pcbnew/complex_hierarchy.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0000 mm)	cec219c4-4e2e-45c8-bb6d-9f56daaf7b77	PTH pad [<no net>] of MIRE	187.071	51.816
@@ -75,9 +89,12 @@ qa/data/pcbnew/complex_hierarchy.kicad_pcb	#	solder_mask_bridge	112	a0df5cde5d8f
 qa/data/pcbnew/component_classes.kicad_pcb	#	invalid_outline	1	fabd092ed68c92d3
 qa/data/pcbnew/component_classes.kicad_pcb	#	items_not_allowed	2	1a6a958bc7376045
 qa/data/pcbnew/component_classes.kicad_pcb	#	lib_footprint_issues	14	14c60b0dc3ac3ef6
+qa/data/pcbnew/component_classes_drc.kicad_pcb	2	warning	track_dangling	Track has unconnected end	0bcf9545-bb79-4669-af07-4e5ce9766240	Track [<no net>] on F.Cu, length 3.0000 mm	99.5	72.5
+qa/data/pcbnew/component_classes_drc.kicad_pcb	3	warning	track_dangling	Track has unconnected end	88cd11e0-647a-4de0-981f-a0e4f60be542	Track [<no net>] on F.Cu, length 3.0000 mm	96.5	72.5
+qa/data/pcbnew/component_classes_drc.kicad_pcb	4	warning	track_dangling	Track has unconnected end	b4a3e735-48c3-4d46-ac8d-eca8ad4c71d4	Track [<no net>] on F.Cu, length 2.5000 mm	94.0	64.0
+qa/data/pcbnew/component_classes_drc.kicad_pcb	5	warning	track_dangling	Track has unconnected end	cc25001e-41e3-4bbc-bd53-be13cbe7aedb	Track [<no net>] on F.Cu, length 3.0000 mm	99.5	64.0
 qa/data/pcbnew/component_classes_drc.kicad_pcb	#	assertion_failure	2	bd398f9a175b92ba
 qa/data/pcbnew/component_classes_drc.kicad_pcb	#	lib_footprint_issues	4	4aa4eefb3a1ca3a8
-qa/data/pcbnew/component_classes_drc.kicad_pcb	#	track_dangling	4	8147dae4bfcda666
 qa/data/pcbnew/connect/connect.kicad_pcb	none
 qa/data/pcbnew/connection_width_rules.kicad_pcb	#	connection_width	3	8300b55c3790204e
 qa/data/pcbnew/creepage/creepage.kicad_pcb	#	creepage	1	c84f9da955aaa481
@@ -129,17 +146,17 @@ qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb	#	microvia_cro
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	00b9a6da-1390-4a0e-8f7e-f644d9e5bec2	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	ac02912d-2bfd-4d9c-ad41-44a62b28c572	Micro via [<no net>] on F.Cu - In1.Cu	110.05	110.0
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	caad9fbe-a019-488c-8f8e-659cff66d19e	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	caad9fbe-a019-488c-8f8e-659cff66d19e	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	#	invalid_outline	1	cc14c19eb03a45c0
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	#	microvia_crosses_core	2	79862711876d3ac1
 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	#	microvia_stack_not_filled	2	8d66152658665b79
-qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	#	via_dangling	1	7ff9d2b5fc84f335
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	807241b1-bf88-4c7a-b35e-86379cda6cd2	Micro via [<no net>] on F.Cu - In1.Cu	110.05	110.0
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	c4d45bfd-ebad-4d15-897f-7c823e19dc88	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	02cde5b8-8be4-4e5f-b37c-bc5256e65bb6	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	02cde5b8-8be4-4e5f-b37c-bc5256e65bb6	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	#	invalid_outline	1	85e298b0ebdaf2c3
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	#	microvia_crosses_core	2	9cc6ad5d3ce8e250
 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	#	microvia_stack_not_filled	1	135725ae1bdd4bcd
-qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	#	via_dangling	1	1afefaa07e738e75
 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	2b32d2a2-88c0-450e-997b-989ef46c7c5c	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	ec039841-b08a-42c9-a3c4-ea7c25f7d2d7	Micro via [<no net>] on In1.Cu - In2.Cu	110.5	110.0
 qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	#	invalid_outline	1	4d3fda0c9911ff5e
@@ -150,71 +167,83 @@ qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pc
 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb	#	microvia_crosses_core	2	197a0ebe0d0a322a
 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	f66cd076-27b4-43c0-91b4-be83cdb9ff11	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	a2052d74-6725-40b1-8b55-d6906590a9dd	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	f66cd076-27b4-43c0-91b4-be83cdb9ff11	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	a2052d74-6725-40b1-8b55-d6906590a9dd	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	#	invalid_outline	1	d2a960ea16d95021
 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	#	microvia_crosses_core	1	93e67acad62ab28e
 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	#	microvia_stack_not_filled	2	cbf348f8190e45c8
-qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	#	via_dangling	2	b216cfd38d981258
 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	43476abb-b012-42ff-9503-2b3cce6af390	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	74c0d98f-ef1d-4986-9351-fa091982e398	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	43476abb-b012-42ff-9503-2b3cce6af390	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	74c0d98f-ef1d-4986-9351-fa091982e398	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	#	invalid_outline	1	0a9a2fadc3baa399
 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	#	microvia_crosses_core	1	16d592c78620e51f
-qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	#	via_dangling	2	6eca82b7935d320d
 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	99618f3b-2e2a-4cce-8fbe-6301d88cb242	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	1c7178e2-b329-4837-bb13-8d49deb4a3bd	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	99618f3b-2e2a-4cce-8fbe-6301d88cb242	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	1c7178e2-b329-4837-bb13-8d49deb4a3bd	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	#	invalid_outline	1	8b90c19667c18cb0
 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	#	microvia_crosses_core	1	9d8f602620de0696
 qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	#	microvia_stack_not_filled	2	06a1082a6de84b65
-qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	#	via_dangling	2	e2fc5ccea80e4785
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	a8a4ed00-c080-4d03-8aae-c0299cd0e975	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	0c79dd19-ba80-44ee-8a8f-d8cafaf47bf5	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	5b53c11a-8aa9-46b5-9439-1705df50f41c	Micro via [<no net>] on In2.Cu - In3.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	a8a4ed00-c080-4d03-8aae-c0299cd0e975	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	5b53c11a-8aa9-46b5-9439-1705df50f41c	Micro via [<no net>] on In2.Cu - In3.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	#	invalid_outline	1	44b1cdd6c848549a
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	#	microvia_crosses_core	2	964839c030394e01
-qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	#	via_dangling	2	48d017d472cc3f06
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	1303885d-feaf-4825-b02f-4fd97913135b	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	b34b3e14-c152-4bd5-98ce-2fde9f2025a6	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	1303885d-feaf-4825-b02f-4fd97913135b	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	b34b3e14-c152-4bd5-98ce-2fde9f2025a6	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	#	invalid_outline	1	247f7f05973ee892
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	#	microvia_crosses_core	1	06e63fb16796f7ba
 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	#	microvia_stack_not_filled	1	a3cd406889bf4bcc
-qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	#	via_dangling	2	364cee53f0da9eb0
 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	8ea25916-ef85-43d7-8bee-67ee03614dd7	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	f3dac023-3c8b-4c63-9362-85401a8de87b	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	728a43dc-89a2-4b02-801f-7a7279fa58f3	Micro via [<no net>] on In2.Cu - B.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	8ea25916-ef85-43d7-8bee-67ee03614dd7	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	728a43dc-89a2-4b02-801f-7a7279fa58f3	Micro via [<no net>] on In2.Cu - B.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	#	invalid_outline	1	208e3145ef898f84
 qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	#	microvia_crosses_core	2	df78dcc46f0b9f8b
-qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	#	via_dangling	2	e99a3d9ef579ef5e
 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	41b0ab63-0756-4354-9b0f-83d185fbc74f	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	909d8ae5-fdfb-49b3-bb3e-720a2da7d404	Micro via [<no net>] on In1.Cu - In2.Cu	110.05	110.0
+qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	41b0ab63-0756-4354-9b0f-83d185fbc74f	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	909d8ae5-fdfb-49b3-bb3e-720a2da7d404	Micro via [<no net>] on In1.Cu - In2.Cu	110.05	110.0
 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	#	invalid_outline	1	15a9c37e9048bf88
 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	#	microvia_crosses_core	1	68849dc78fa849ac
 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	#	microvia_stack_not_filled	1	0513d4ef866dc865
-qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	#	via_dangling	2	bbe62a97a10fb4d3
 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	4de686d4-ba23-45f3-908f-496fb9a6f97c	Micro via [<no net>] on F.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	#	invalid_outline	1	7cc5b40bbfe4f5a8
 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	#	malformed_microvia_stack_span	1	ab50392c4c2d4b54
 qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	#	microvia_crosses_core	1	3d341f4201108191
 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	62ef05be-9a37-4560-9735-04d15532591b	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	205b5682-aa7f-43ad-8c97-4641a102e65d	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	62ef05be-9a37-4560-9735-04d15532591b	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	205b5682-aa7f-43ad-8c97-4641a102e65d	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	#	invalid_outline	1	84989dca9bf0ad90
 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	#	microvia_crosses_core	1	d1aaaddcd143d040
-qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	#	via_dangling	2	1b9881059b9e527c
 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	b3626528-1064-4962-a71d-063036ead5e1	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	3ed5f9eb-6310-4b80-8bb6-4001e6d036be	Micro via [<no net>] on In1.Cu - In2.Cu	110.15	110.0
+qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	b3626528-1064-4962-a71d-063036ead5e1	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	3ed5f9eb-6310-4b80-8bb6-4001e6d036be	Micro via [<no net>] on In1.Cu - In2.Cu	110.15	110.0
 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	#	invalid_outline	1	6a7b540f4d8c6b29
 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	#	microvia_crosses_core	1	ec8bb3ed8b7cef31
 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	#	microvia_stack_not_filled	1	59f20b7048663a36
-qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	#	via_dangling	2	db086ed297488f6d
 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	b91656ef-02c0-4e8e-ad18-a809af704f46	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	9006ae5b-65d2-4101-8ab7-65c977828d61	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	b91656ef-02c0-4e8e-ad18-a809af704f46	Micro via [<no net>] on F.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	9006ae5b-65d2-4101-8ab7-65c977828d61	Micro via [<no net>] on In1.Cu - In2.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	#	invalid_outline	1	006583578078f562
 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	#	microvia_crosses_core	1	eb62d477979dbe02
 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	#	microvia_stack_not_filled	1	be75862bf2dbf174
-qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	#	via_dangling	2	e74fed6c5c2b5eb4
 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	4dbf34b6-b691-4a52-8084-5d907c23c1e2	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	eb7c8feb-2069-4ac9-9956-19ee4c2bc438	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	fd90947a-2570-45e5-8f21-ed04b5e22045	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	4dbf34b6-b691-4a52-8084-5d907c23c1e2	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	eb7c8feb-2069-4ac9-9956-19ee4c2bc438	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	fd90947a-2570-45e5-8f21-ed04b5e22045	Micro via [<no net>] on In1.Cu - In1.Cu	110.0	110.0
 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	#	invalid_outline	1	8b0296c9f2e0f243
-qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	#	via_dangling	3	b7387f4722509473
 qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb	#	lib_footprint_issues	5	3bf9a4d9aa2f4248
 qa/data/pcbnew/fill_bad.kicad_pcb	#	clearance	1	707712dd575cc98d
 qa/data/pcbnew/footprints_load_save.kicad_pcb	#	invalid_outline	1	00eeac5b8a1c40a3
@@ -222,9 +251,10 @@ qa/data/pcbnew/footprints_load_save.kicad_pcb	#	lib_footprint_issues	2	a01a7f47a
 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb	#	invalid_outline	1	c914b5fd567f6969
 qa/data/pcbnew/groups_load_save.kicad_pcb	#	invalid_outline	1	5d475395a79f1157
 qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb	#	invalid_outline	1	930190c6e3fff60a
-qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	#	isolated_copper	2	e9724c3d83ce7611
+qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	0	warning	track_dangling	Track has unconnected end	82951e2f-390c-447b-ae46-026d3f7bd380	Track [A] on F.Cu, length 1.3000 mm	116.1	64.3
+qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	31d94ad4-3cd0-4e85-b769-d93fc6482911	Zone 'A' [A] on F.Cu and B.Cu, priority 0	104.394	59.182
+qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	2	warning	isolated_copper	Isolated copper fill	31d94ad4-3cd0-4e85-b769-d93fc6482911	Zone 'A' [A] on F.Cu and B.Cu, priority 0	104.394	59.182
 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	#	lib_footprint_issues	1	5dd4898c016afb52
-qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	#	track_dangling	1	e949979cb34f6fa7
 qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb	#	mirrored_text_on_front_layer	4	59953374dd7a56a8
 qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb	#	nonmirrored_text_on_back_layer	4	35518b27722f49f2
 qa/data/pcbnew/intersectingzones.kicad_pcb	#	clearance	1	eb5da6cb15838c05
@@ -249,11 +279,22 @@ qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb	#	silk_edge_clearance	2	b7353
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	#	lib_footprint_issues	7	905a2821683f3ce7
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	#	microvia_crosses_core	3	59a0a837fe869ea7
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	#	padstack	2	76d2be532bc7dc36
 qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	#	silk_over_copper	7	052741e595ae0a21
-qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	#	via_dangling	12	1fae00692c4f0cec
 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb	none
 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb	none
 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb	#	invalid_outline	1	112ad5636216bf4f
@@ -265,9 +306,9 @@ qa/data/pcbnew/issue10697.kicad_pcb	#	invalid_outline	1	5dd7adc366ff610f
 qa/data/pcbnew/issue10697.kicad_pcb	#	via_dangling	33	a62fc4e3a966880a
 qa/data/pcbnew/issue10697.kicad_pcb	#	via_diameter	33	866c91f5254d6acf
 qa/data/pcbnew/issue10906.kicad_pcb	#	lib_footprint_issues	1	11affa6e06db1c0f
+qa/data/pcbnew/issue10916.kicad_pcb	1	warning	via_dangling	Via is not connected or connected on only one layer	74d2d2c1-d0d5-412f-ab06-bb67df0a3900	Via [a] on F.Cu - B.Cu	140.05	56.95
 qa/data/pcbnew/issue10916.kicad_pcb	#	invalid_outline	1	b1580118d1ff94f9
 qa/data/pcbnew/issue10916.kicad_pcb	#	lib_footprint_issues	2	118a2de72fcde695
-qa/data/pcbnew/issue10916.kicad_pcb	#	via_dangling	1	88192b9845980c58
 qa/data/pcbnew/issue11814.kicad_pcb	#	clearance	2	6338ec7ec5055f41
 qa/data/pcbnew/issue12109.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.2000 mm; actual 0.0500 mm)	56a3c0c1-a962-4ec3-b482-addc770b1808	Via [Net-(J1-Pad3)] on F.Cu - B.Cu	147.92	95.68
 qa/data/pcbnew/issue12109.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.2000 mm; actual 0.0500 mm)	5c469eb6-9b81-491f-bd33-d81fc5db2ebd	PTH pad 1 [Net-(J1-Pad1)] of J1	145.23	91.39
@@ -276,17 +317,26 @@ qa/data/pcbnew/issue12109.kicad_pcb	3	error	annular_width	Annular width (board s
 qa/data/pcbnew/issue12109.kicad_pcb	4	error	annular_width	Annular width (board setup constraints min annular width 0.2000 mm; actual 0.0500 mm)	7a4cf30b-7a58-4751-9358-1241c6201e8e	PTH pad 4 [Net-(J1-Pad4)] of J1	145.23	99.01
 qa/data/pcbnew/issue12109.kicad_pcb	5	error	annular_width	Annular width (board setup constraints min annular width 0.2000 mm; actual 0.0500 mm)	6cd5f354-5ccb-4b02-a452-cccc06d04362	PTH pad 5 [Net-(J1-Pad5)] of J1	145.23	101.55
 qa/data/pcbnew/issue12109.kicad_pcb	6	error	annular_width	Annular width (board setup constraints min annular width 0.2000 mm; actual 0.0500 mm)	dff37c24-3a7a-44d4-a983-ecd21b7ea0a9	PTH pad 6 [Net-(J1-Pad6)] of J1	145.23	104.09
+qa/data/pcbnew/issue12109.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	56a3c0c1-a962-4ec3-b482-addc770b1808	Via [Net-(J1-Pad3)] on F.Cu - B.Cu	147.92	95.68
 qa/data/pcbnew/issue12109.kicad_pcb	#	lib_footprint_issues	2	504aff4157b6242c
-qa/data/pcbnew/issue12109.kicad_pcb	#	via_dangling	1	462295c1a473dfcc
-qa/data/pcbnew/issue12609.kicad_pcb	#	isolated_copper	1	905cc9d8514fca89
+qa/data/pcbnew/issue12609.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	a3413c1d-8a1b-44e0-8059-27085646a1a3	Zone [+12V] on In2.Cu, priority 0	167.5	113.5
 qa/data/pcbnew/issue12609.kicad_pcb	#	lib_footprint_issues	27	c5ddd5f189a16f8d
 qa/data/pcbnew/issue12609.kicad_pcb	#	silk_edge_clearance	4	967381f6dfcd4f72
 qa/data/pcbnew/issue12831.kicad_pcb	none
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	31	warning	isolated_copper	Isolated copper fill	0b0bec76-9092-4685-b190-3eb92712710f	Zone [+3.3V] on Top_layer, priority 2	108.331649	100.75
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	32	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	33	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	34	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	35	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	36	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	37	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	38	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	39	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	40	warning	isolated_copper	Isolated copper fill	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
 qa/data/pcbnew/issue12964/issue12964.kicad_pcb	#	clearance	1	f8f245db948bf1bd
-qa/data/pcbnew/issue12964/issue12964.kicad_pcb	#	isolated_copper	10	d116b188904f6644
 qa/data/pcbnew/issue12964/issue12964.kicad_pcb	#	via_dangling	30	dd6a1a99d2c6d96e
 qa/data/pcbnew/issue1358.kicad_pcb	none
-qa/data/pcbnew/issue14008.kicad_pcb	#	via_dangling	1	17ce40b4e50944dc
+qa/data/pcbnew/issue14008.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	63bbfb0d-b742-4265-a65c-2888c8e24076	Via [GNDD] on F.Cu - B.Cu	139.0142	55.499
 qa/data/pcbnew/issue14130.kicad_pcb	#	lib_footprint_issues	2	be9cdac6e0319e1b
 qa/data/pcbnew/issue14294.kicad_pcb	#	lib_footprint_issues	1	91a167ef0d8e9a7b
 qa/data/pcbnew/issue14334.kicad_pcb	#	lib_footprint_issues	1	0948f1dd2624f1cd
@@ -304,25 +354,47 @@ qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb	#	copper_outside_board	1	ec62
 qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb	#	lib_footprint_issues	2	2d065268e2da2ea1
 qa/data/pcbnew/issue15280.kicad_pcb	#	lib_footprint_issues	5	eff97ecf5ec91bad
 qa/data/pcbnew/issue15280.kicad_pcb	#	silk_edge_clearance	1	03301463b4e9349f
+qa/data/pcbnew/issue16182.kicad_pcb	2	warning	track_dangling	Track has unconnected end	34bb7c52-1f2b-4d6c-8431-158e1354a171	Track [GND] on F.Cu, length 0.5303 mm	177.8	96.7
+qa/data/pcbnew/issue16182.kicad_pcb	3	warning	track_dangling	Track has unconnected end	3d2b337a-a034-47cc-ab43-b61a14c81a69	Track [GND] on F.Cu, length 1.9375 mm	180.9375	98.5
+qa/data/pcbnew/issue16182.kicad_pcb	4	warning	track_dangling	Track has unconnected end	52edb161-0f14-4c88-8017-c1649cf56c21	Track [+3V3] on F.Cu, length 4.1012 mm	164.3	86.1
+qa/data/pcbnew/issue16182.kicad_pcb	5	warning	track_dangling	Track has unconnected end	70250cb2-99cd-408b-9af0-859bb077f559	Track [+3V3] on F.Cu, length 4.0500 mm	176.2	109.5
+qa/data/pcbnew/issue16182.kicad_pcb	6	warning	track_dangling	Track has unconnected end	9779cc85-70bd-4a55-ac02-92be5e479f59	Track [+3V3] on F.Cu, length 2.8284 mm	188.0	111.0
+qa/data/pcbnew/issue16182.kicad_pcb	7	warning	track_dangling	Track has unconnected end	a53ac72f-f020-4801-865e-5cdcdd8c1cba	Track [+3V3] on F.Cu, length 14.2000 mm	158.1	105.6
+qa/data/pcbnew/issue16182.kicad_pcb	8	warning	track_dangling	Track has unconnected end	53ec9bd3-6fdb-4660-b5ba-1b6b89e89abd	Track [/MCU/~{RST}] on F.Cu, length 0.6000 mm	170.6	108.6
+qa/data/pcbnew/issue16182.kicad_pcb	9	warning	track_dangling	Track has unconnected end	c8e88aee-c08a-4f6a-af8b-26464257b8f9	Track [/MCU/~{RST}] on F.Cu, length 11.4101 mm	158.78995	108.2
+qa/data/pcbnew/issue16182.kicad_pcb	10	warning	track_dangling	Track has unconnected end	5e4c874c-0ca0-479b-a6d4-d323e0355c46	Track [/MCU/~{RST}] on B.Cu, length 1.5556 mm	170.6	110.1
+qa/data/pcbnew/issue16182.kicad_pcb	11	warning	track_dangling	Track has unconnected end	cec66086-67a4-4b39-b200-8d3ec7724e23	Track [/MCU/~{RST}] on B.Cu, length 0.9000 mm	170.6	109.2
+qa/data/pcbnew/issue16182.kicad_pcb	12	warning	track_dangling	Track has unconnected end	07437e30-de40-419c-a9c7-5e9e943558b2	Track [/Power/PWR_LED_K] on F.Cu, length 0.9250 mm	182.75	106.5
+qa/data/pcbnew/issue16182.kicad_pcb	13	warning	track_dangling	Track has unconnected end	cfeb9cb9-f3e1-4ebb-9be0-2824a9f4bac2	Track [/Power/PWR_LED_K] on B.Cu, length 0.0530 mm	182.7125	106.5375
+qa/data/pcbnew/issue16182.kicad_pcb	14	warning	track_dangling	Track has unconnected end	a586eacb-d0e5-4b95-825e-bd179ca46f24	Track [Net-(R202-Pad1)] on F.Cu, length 0.9750 mm	178.3	107.825
+qa/data/pcbnew/issue16182.kicad_pcb	15	warning	track_dangling	Track has unconnected end	e28e980c-b1bd-42f5-a233-0df1963d47e5	Track [Net-(R202-Pad1)] on B.Cu, length 0.1061 mm	178.225	108.875
+qa/data/pcbnew/issue16182.kicad_pcb	16	warning	track_dangling	Track has unconnected end	a7a1f3f2-5cb7-40bc-a51b-71356dce4ebd	Track [/MCU/LED_K] on B.Cu, length 0.9625 mm	182.7125	110.5
+qa/data/pcbnew/issue16182.kicad_pcb	17	warning	track_dangling	Track has unconnected end	55fb0025-65f7-4032-805e-8a1b7ced7852	Track [/MCU/SWCLK/BOOT0] on F.Cu, length 12.9101 mm	158.08995	106.6
+qa/data/pcbnew/issue16182.kicad_pcb	18	warning	track_dangling	Track has unconnected end	35bc2913-3d9a-419c-ba40-847a57de7eb8	Track [/MCU/SWCLK/BOOT0] on B.Cu, length 0.1414 mm	171.0	106.6
+qa/data/pcbnew/issue16182.kicad_pcb	19	warning	track_dangling	Track has unconnected end	6754b849-93da-40b4-b4e0-aad30ec27a4a	Track [MODBUS_TX] on F.Cu, length 9.1924 mm	157.5	90.4
+qa/data/pcbnew/issue16182.kicad_pcb	20	warning	track_dangling	Track has unconnected end	7bdb1093-9c10-4472-9e22-d257212a38a8	Track [/Modbus/CONN_RS485_A] on F.Cu, length 0.0526 mm	181.5005	99.487174
+qa/data/pcbnew/issue16182.kicad_pcb	21	warning	track_dangling	Track has unconnected end	a2a580ce-44e1-473f-a706-ff5c164f86a7	Track [/Modbus/CONN_RS485_A] on B.Cu, length 0.9892 mm	181.5005	99.487174
 qa/data/pcbnew/issue16182.kicad_pcb	#	copper_edge_clearance	1	a0eb70f94992eba8
 qa/data/pcbnew/issue16182.kicad_pcb	#	copper_sliver	4	d42d3b7d55d4fea5
 qa/data/pcbnew/issue16182.kicad_pcb	#	lib_footprint_issues	25	ebb409f6192f76c2
 qa/data/pcbnew/issue16182.kicad_pcb	#	starved_thermal	1	ee0cd74c239c626f
-qa/data/pcbnew/issue16182.kicad_pcb	#	track_dangling	20	3fb43587ebf6ac88
+qa/data/pcbnew/issue16566.kicad_pcb	4	warning	track_dangling	Track has unconnected end	666f9f32-3952-4934-8df5-9ad24f041214	Track [<no net>] on F.Cu, length 0.5050 mm	153.9225	86.8187
+qa/data/pcbnew/issue16566.kicad_pcb	5	warning	track_dangling	Track has unconnected end	96063ec2-be50-433f-9564-7ca25d99ba52	Track [<no net>] on F.Cu, length 1.1833 mm	153.0858	91.821
 qa/data/pcbnew/issue16566.kicad_pcb	#	clearance	4	8afea59c392592f7
 qa/data/pcbnew/issue16566.kicad_pcb	#	lib_footprint_issues	1	a913ed518885d073
-qa/data/pcbnew/issue16566.kicad_pcb	#	track_dangling	2	f9dc44cff39ef663
 qa/data/pcbnew/issue16658/issue16658.kicad_pcb	#	lib_footprint_issues	2	4f4de260346ed2d8
 qa/data/pcbnew/issue16658/issue16658.kicad_pcb	#	microvia_crosses_core	2	5e877d69cd747a9a
 qa/data/pcbnew/issue16658/issue16658.kicad_pcb	#	silk_edge_clearance	2	b7353369aa40a60c
+qa/data/pcbnew/issue17429.kicad_pcb	106	warning	via_dangling	Via is not connected or connected on only one layer	7cbae654-d963-42d9-bf6d-8d8a1549718a	Via [<no net>] on F.Cu - hs signal - B.Cu - signal	113.537864	157.8182
+qa/data/pcbnew/issue17429.kicad_pcb	174	warning	via_dangling	Via is not connected or connected on only one layer	4188aecc-c140-4ecd-a6f1-2cd6d41d76b4	Via [MODULE0_INPUT0_IN1P] on F.Cu - hs signal - B.Cu - signal	113.0	168.6
+qa/data/pcbnew/issue17429.kicad_pcb	199	warning	isolated_copper	Isolated copper fill	f0f3a7bd-319d-479e-98f0-84cb59b4f62a	Zone 'VCC_3V3' [<no net>] on In2.Cu - VCC_3V3, priority 40	30.494256	224.390818
+qa/data/pcbnew/issue17429.kicad_pcb	200	warning	isolated_copper	Isolated copper fill	e98d252e-224e-4d3c-988a-79c3e9ffcf70	Zone [<no net>] on In5.Cu - VCC_5V, priority 0	45.776927	208.024996
 qa/data/pcbnew/issue17429.kicad_pcb	#	annular_width	32	74521ea898abe2ce
 qa/data/pcbnew/issue17429.kicad_pcb	#	clearance	1	97dc8aa9d326372c
-qa/data/pcbnew/issue17429.kicad_pcb	#	isolated_copper	2	232a6f910d5e6ef2
 qa/data/pcbnew/issue17429.kicad_pcb	#	lib_footprint_issues	1	d6a7205722454e93
 qa/data/pcbnew/issue17429.kicad_pcb	#	shorting_items	31	f91fc5b5c2d55c4d
 qa/data/pcbnew/issue17429.kicad_pcb	#	solder_mask_bridge	45	cde3339aea573320
 qa/data/pcbnew/issue17429.kicad_pcb	#	track_dangling	91	9a3eeaa86419eb4e
-qa/data/pcbnew/issue17429.kicad_pcb	#	via_dangling	2	795fd6298fc0fb8c
 qa/data/pcbnew/issue17559.kicad_pcb	#	copper_outside_board	2	f37c700eb2dfb69f
 qa/data/pcbnew/issue17559.kicad_pcb	#	lib_footprint_issues	1	18d7464399231334
 qa/data/pcbnew/issue17967/issue17967.kicad_pcb	none
@@ -334,20 +406,21 @@ qa/data/pcbnew/issue18.kicad_pcb	3	error	track_width	Track width (board setup co
 qa/data/pcbnew/issue18.kicad_pcb	4	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1270 mm)	1725a297-d3d6-44a9-b273-3793db649997	Track [/hdmi_conn/HDMI_D1_P] on F.Cu, length 0.2242 mm	23.8	18.3
 qa/data/pcbnew/issue18.kicad_pcb	5	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1270 mm)	2d8444e6-65d2-4304-a55b-32edaa9d78fd	Track [/hdmi_conn/HDMI_D1_P] on F.Cu, length 0.8800 mm	23.8	17.42
 qa/data/pcbnew/issue18.kicad_pcb	6	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1270 mm)	f8a3a6b9-b310-4f44-b853-cfee1bb98bed	Track [/hdmi_conn/HDMI_D1_P] on F.Cu, length 1.5830 mm	23.958501	18.458501
+qa/data/pcbnew/issue18.kicad_pcb	19	warning	track_dangling	Track has unconnected end	64d73793-52cb-4d93-bf48-160eec6e3b3e	Track [/hdmi_conn/HDMI_D1_N] on F.Cu, length 1.5624 mm	23.141499	18.433671
+qa/data/pcbnew/issue18.kicad_pcb	20	warning	track_dangling	Track has unconnected end	f8a3a6b9-b310-4f44-b853-cfee1bb98bed	Track [/hdmi_conn/HDMI_D1_P] on F.Cu, length 1.5830 mm	23.958501	18.458501
 qa/data/pcbnew/issue18.kicad_pcb	#	invalid_outline	1	85c2c3050bc251d2
 qa/data/pcbnew/issue18.kicad_pcb	#	lib_footprint_issues	1	f4bf6f30a8432648
 qa/data/pcbnew/issue18.kicad_pcb	#	silk_over_copper	4	c40f2b9879d843bc
 qa/data/pcbnew/issue18.kicad_pcb	#	solder_mask_bridge	10	e7fefbd99c9f1a4e
 qa/data/pcbnew/issue18.kicad_pcb	#	starved_thermal	2	04258bd1da8436c3
 qa/data/pcbnew/issue18.kicad_pcb	#	text_height	1	3e2e765fa00ccfd0
-qa/data/pcbnew/issue18.kicad_pcb	#	track_dangling	2	c8f89a285261669c
 qa/data/pcbnew/issue18045/test_proj.kicad_pcb	#	lib_footprint_issues	2	9eca96086f2fe873
 qa/data/pcbnew/issue18045/test_proj.kicad_pcb	#	skew_out_of_range	3	fb78cf22dc8e1098
 qa/data/pcbnew/issue18142.kicad_pcb	#	hole_to_hole	1	c34fac8ec7081384
 qa/data/pcbnew/issue18142.kicad_pcb	#	microvia_crosses_core	1	9726199d8a0f68db
 qa/data/pcbnew/issue18203.kicad_pcb	#	lib_footprint_issues	1	880dbad6b505135d
+qa/data/pcbnew/issue18839.kicad_pcb	1	warning	track_dangling	Track has unconnected end	00000000-0000-0000-0000-000000000002	Track (arc) [Net1] on F.Cu, length 8.4525 mm	100.0	100.0
 qa/data/pcbnew/issue18839.kicad_pcb	#	invalid_outline	1	594a365ccdbf120c
-qa/data/pcbnew/issue18839.kicad_pcb	#	track_dangling	1	d308fc2d3df52222
 qa/data/pcbnew/issue18878.kicad_pcb	#	lib_footprint_issues	9	98d70d09460078e7
 qa/data/pcbnew/issue18878.kicad_pcb	#	solder_mask_bridge	9	e0238fafa0eb974c
 qa/data/pcbnew/issue19090/issue19090.kicad_pcb	#	lib_footprint_issues	2	dd12cd96839ffa32
@@ -355,19 +428,22 @@ qa/data/pcbnew/issue19325/issue19325.kicad_pcb	0	error	annular_width	Annular wid
 qa/data/pcbnew/issue19325/issue19325.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0200 mm)	906962f6-d763-4538-b561-5883603cce0e	PTH pad MH [<no net>] of REF**	55.805	144.85
 qa/data/pcbnew/issue19325/issue19325.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0484 mm)	0e564731-c5c1-4cd7-8927-07c00eab1591	PTH pad MH [<no net>] of REF**	58.635186	145.229851
 qa/data/pcbnew/issue19325/issue19325.kicad_pcb	3	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0121 mm)	3e4f0059-2d3a-432a-a90d-790c645de9b1	PTH pad MH [<no net>] of REF**	59.375	146.4
+qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb	0	warning	track_dangling	Track has unconnected end	00000005-0000-0000-0000-000000000005	Track [Net1] on F.Cu, length 4.5000 mm	100.0	99.5
 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb	#	lib_footprint_issues	1	c4aba833a3df692c
-qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb	#	track_dangling	1	84c251ae3d52b956
-qa/data/pcbnew/issue19574.kicad_pcb	#	track_dangling	3	cac42a13d28fd342
+qa/data/pcbnew/issue19574.kicad_pcb	0	warning	track_dangling	Track has unconnected end	b5cb5fcb-d68c-4b62-8896-488a7b02b01c	Track [a] on F.Cu, length 1.7500 mm	129.75	89.0
+qa/data/pcbnew/issue19574.kicad_pcb	1	warning	track_dangling	Track has unconnected end	f2c320e0-1554-4312-ac4e-30075908acba	Track [a] on F.Cu, length 4.5000 mm	129.75	88.5
+qa/data/pcbnew/issue19574.kicad_pcb	2	warning	track_dangling	Track has unconnected end	f7140b20-6822-4a9f-ab21-98f073f5f2df	Track [a] on F.Cu, length 2.7500 mm	131.5	88.75
 qa/data/pcbnew/issue19956/issue19956.kicad_pcb	#	lib_footprint_issues	2	647fe9bdc5a34cf2
 qa/data/pcbnew/issue20249/dimension.kicad_pcb	none
 qa/data/pcbnew/issue20480/issue20480.kicad_pcb	#	creepage	1	cf1f46dd57054ae0
 qa/data/pcbnew/issue20480/issue20480.kicad_pcb	#	lib_footprint_issues	4	8657b8be5699cf4c
+qa/data/pcbnew/issue21184/issue21184.kicad_pcb	1	warning	via_dangling	Via is not connected or connected on only one layer	18ac47e2-2dac-45fc-966a-e85e1468c06d	Via [Net-(U2-V+)] on F.Cu - B.Cu	75.8	77.4
+qa/data/pcbnew/issue21184/issue21184.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	71d986b9-ddf5-4049-88f1-cec7836e9364	Via [Net-(U2-V+)] on F.Cu - B.Cu	73.8	79.2
 qa/data/pcbnew/issue21184/issue21184.kicad_pcb	#	invalid_outline	1	7937b2e278772b3c
 qa/data/pcbnew/issue21184/issue21184.kicad_pcb	#	lib_footprint_issues	2	bb829195a0ae7d61
-qa/data/pcbnew/issue21184/issue21184.kicad_pcb	#	via_dangling	2	d624a76eae2641a8
+qa/data/pcbnew/issue21564/issue21564.kicad_pcb	1	warning	track_dangling	Track has unconnected end	07b08bee-3da7-45f6-89d6-6727bb78528c	Track [/TEST] on F.Cu, length 2.0000 mm	96.0	50.0
 qa/data/pcbnew/issue21564/issue21564.kicad_pcb	#	invalid_outline	1	56fda05e1b6401df
 qa/data/pcbnew/issue21564/issue21564.kicad_pcb	#	lib_footprint_issues	2	46dff68171e12c4b
-qa/data/pcbnew/issue21564/issue21564.kicad_pcb	#	track_dangling	1	23f217c9c9f96009
 qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	#	lib_footprint_issues	5	4d71f7abe025a6f7
 qa/data/pcbnew/issue21746/issue21746.kicad_pcb	#	courtyards_overlap	3	ded3f125d088d55b
 qa/data/pcbnew/issue21746/issue21746.kicad_pcb	#	lib_footprint_issues	18	bf44c9908bfe9a58
@@ -379,14 +455,15 @@ qa/data/pcbnew/issue22010/issue22010.kicad_pcb	#	lib_footprint_issues	1	a28e1825
 qa/data/pcbnew/issue22010/issue22010.kicad_pcb	#	shorting_items	1	624422dc3d7b07f4
 qa/data/pcbnew/issue22010/issue22010.kicad_pcb	#	solder_mask_bridge	1	d37d1202736eea99
 qa/data/pcbnew/issue22010/issue22010.kicad_pcb	#	via_dangling	80	07cdf26f4e62fc01
+qa/data/pcbnew/issue22102.kicad_pcb	2	warning	track_dangling	Track has unconnected end	66547428-c169-4d94-aee8-ce3105951dc9	Track (arc) [<no net>] on F.Cu, length 1.6776 mm	65.00093	53.39923
 qa/data/pcbnew/issue22102.kicad_pcb	#	clearance	2	0d7a13dbce7a58cd
 qa/data/pcbnew/issue22102.kicad_pcb	#	lib_footprint_issues	1	6fbe0bc3bc3c8482
-qa/data/pcbnew/issue22102.kicad_pcb	#	track_dangling	1	2eb1920df3574e41
+qa/data/pcbnew/issue22267.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	03ffab42-151f-4b5f-8c00-fcca20431f59	Via [SIG0B] on F.Cu - B.Cu	73.71	56.65
+qa/data/pcbnew/issue22267.kicad_pcb	6	warning	isolated_copper	Isolated copper fill	fa4c7624-0bcb-4636-a04c-ba944dec0312	Zone [<no net>] on In1.Cu, priority 0	54.5	45.0
+qa/data/pcbnew/issue22267.kicad_pcb	7	warning	isolated_copper	Isolated copper fill	45c8b017-6c69-488f-9241-df3fcf1b3c70	Zone [<no net>] on In2.Cu, priority 0	54.5	45.0
 qa/data/pcbnew/issue22267.kicad_pcb	#	clearance	4	32af4a2c19f4fde1
 qa/data/pcbnew/issue22267.kicad_pcb	#	hole_to_hole	1	cdc82e5bda77c728
-qa/data/pcbnew/issue22267.kicad_pcb	#	isolated_copper	2	7b3c7cd4f96d021b
 qa/data/pcbnew/issue22267.kicad_pcb	#	lib_footprint_issues	36	c4f808c2252b1dc4
-qa/data/pcbnew/issue22267.kicad_pcb	#	via_dangling	1	b6078d5b87a25b53
 qa/data/pcbnew/issue22316/issue22316.kicad_pcb	#	copper_outside_board	30	4e6db2456a771327
 qa/data/pcbnew/issue22316/issue22316.kicad_pcb	#	lib_footprint_issues	24	f4017e47f0b4d28d
 qa/data/pcbnew/issue22316/issue22316.kicad_pcb	#	silk_overlap	3	045f20cdb71b758f
@@ -410,8 +487,9 @@ qa/data/pcbnew/issue22751/issue22751.kicad_pcb	#	invalid_outline	1	235641aa68705
 qa/data/pcbnew/issue22794.kicad_pcb	#	invalid_outline	1	00aca1fc6daeea0c
 qa/data/pcbnew/issue22798.kicad_pcb	#	invalid_outline	1	55fc9c6f3838319b
 qa/data/pcbnew/issue22798.kicad_pcb	#	lib_footprint_issues	1	2d3a8cb84a8817bf
+qa/data/pcbnew/issue22809/issue22809.kicad_pcb	40	warning	track_dangling	Track has unconnected end	340298cd-9ebb-49fa-80df-cc5f2aef1892	Track [n2] on In1.Cu, length 15.7480 mm	19.05	-16.51
+qa/data/pcbnew/issue22809/issue22809.kicad_pcb	41	warning	track_dangling	Track has unconnected end	e0eefb1f-0fdf-49d8-96a6-64eab43ea7fb	Track [n2] on In1.Cu, length 6.8250 mm	14.224	-21.336
 qa/data/pcbnew/issue22809/issue22809.kicad_pcb	#	lib_footprint_issues	2	aa7248d6777134e1
-qa/data/pcbnew/issue22809/issue22809.kicad_pcb	#	track_dangling	2	5910f3b7568e904c
 qa/data/pcbnew/issue22809/issue22809.kicad_pcb	#	via_dangling	40	d879a5be2c2efe7b
 qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	clearance	496	1b0ed8efca89b064
 qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	copper_edge_clearance	22	873fad86eba74854
@@ -425,31 +503,47 @@ qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	silk_overlap	1	5ea8c790381735b3
 qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	solder_mask_bridge	199	e92ae4ec6029a30b
 qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	track_width	199	e2d9019cc85517fa
 qa/data/pcbnew/issue22826/issue22826.kicad_pcb	#	via_diameter	138	d31011f7ff40ead3
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	2c8b80e8-b6d9-4556-8520-0e5dbcb4d5b0	Zone 'MultilayerZoneFrontAndOne' [<no net>] on F.Cu and B.Cu, priority 0	119.38	71.12
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	2	warning	isolated_copper	Isolated copper fill	2c8b80e8-b6d9-4556-8520-0e5dbcb4d5b0	Zone 'MultilayerZoneFrontAndOne' [<no net>] on F.Cu and B.Cu, priority 0	119.38	71.12
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	3	warning	isolated_copper	Isolated copper fill	3836606a-4774-4332-9012-768e23284dcb	Zone 'BottomZoneDontCopyMe' [<no net>] on B.Cu, priority 0	176.53	69.85
 qa/data/pcbnew/issue22983/issue22983.kicad_pcb	#	invalid_outline	1	6cd68791b8c28116
-qa/data/pcbnew/issue22983/issue22983.kicad_pcb	#	isolated_copper	3	5041a1d0538a695a
 qa/data/pcbnew/issue22983/issue22983.kicad_pcb	#	lib_footprint_issues	4	0e74a8c22b0fc85a
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	2	warning	track_dangling	Track has unconnected end	8c74ba61-b594-4888-aefe-abea70c33a99	Track [+3V3] on F.Cu, length 6.6153 mm	31.914325	-21.329643
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	3	warning	track_dangling	Track has unconnected end	0dafc331-cd78-4fe7-ac1a-a24502eaa76f	Track [+Vbat] on F.Cu, length 4.8625 mm	29.75	-16.15
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	4	warning	track_dangling	Track has unconnected end	976abe19-6ef4-4829-a14f-55426cf79b54	Track [+Vbat] on B.Cu, length 1.0761 mm	23.8	-22.486444
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	5	warning	track_dangling	Track has unconnected end	a7badd61-b1d4-4036-9f7a-dffdc6fad9c5	Track [Net-(D4-K)] on B.Cu, length 4.6750 mm	30.85	-13.2
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	6	warning	track_dangling	Track has unconnected end	ead49e97-8151-4a30-aef6-0b595f5e107e	Track [ADC1_IN5] on F.Cu, length 12.6970 mm	33.476497	-15.526497
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	7	warning	track_dangling	Track has unconnected end	90a2a8d3-50d3-4390-96aa-bdb3972eb30e	Track [ADC1_IN5] on B.Cu, length 1.2728 mm	33.749	-17.58681
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	8	warning	track_dangling	Track has unconnected end	e08d81e2-e3c6-4bcc-9b7c-a16b95d990d2	Track [TIM8_CH1] on F.Cu, length 8.4853 mm	37.8	-12.4
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	9	warning	track_dangling	Track has unconnected end	c4c6cb0d-d700-4559-8078-f46eb1fc0113	Track [+5V] on B.Cu, length 2.3500 mm	33.35	-6.15
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	10	warning	track_dangling	Track has unconnected end	229223fd-75da-4638-8275-9bc2e8a6f4c3	Track [ADC2_IN3] on B.Cu, length 65.4500 mm	7.25	-0.6
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	11	warning	track_dangling	Track has unconnected end	5b3b32d5-8e5c-4146-b519-a324f90eca9c	Track [TIM8_CH1N] on F.Cu, length 7.6125 mm	32.582843	-6.617157
 qa/data/pcbnew/issue23053/issue23053.kicad_pcb	#	clearance	2	38592eb04a5ec32c
 qa/data/pcbnew/issue23053/issue23053.kicad_pcb	#	lib_footprint_issues	21	21e0104b9b046d42
-qa/data/pcbnew/issue23053/issue23053.kicad_pcb	#	track_dangling	10	ed8f912ad2c40e99
 qa/data/pcbnew/issue23123_minimal.kicad_pcb	#	holes_co_located	1	632d7ec3d46cc8b7
 qa/data/pcbnew/issue23123_minimal.kicad_pcb	#	shorting_items	2	188b34ac36a11e19
 qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb	none
 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb	none
 qa/data/pcbnew/issue23389/issue23389.kicad_pcb	#	creepage	4	f800af3fa896a926
 qa/data/pcbnew/issue23389/issue23389.kicad_pcb	#	lib_footprint_issues	13	efa6142d3b3d56e9
+qa/data/pcbnew/issue23418/testing.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	3cad1630-7895-4782-9aa9-bac95a675d65	Zone [gnd] on F.Cu, priority 2	166.0	62.0
+qa/data/pcbnew/issue23418/testing.kicad_pcb	2	warning	isolated_copper	Isolated copper fill	5f7ef07c-d4b1-4a82-9670-8596bc872d09	Zone [gnd] on F.Cu, priority 0	167.0	61.0
+qa/data/pcbnew/issue23418/testing.kicad_pcb	3	warning	isolated_copper	Isolated copper fill	5f7ef07c-d4b1-4a82-9670-8596bc872d09	Zone [gnd] on F.Cu, priority 0	167.0	61.0
+qa/data/pcbnew/issue23418/testing.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	9eb6ae47-15bc-4f3f-a1e7-a9f9b3e06a59	Zone [gnd] on F.Cu, priority 1	172.0	63.0
+qa/data/pcbnew/issue23418/testing.kicad_pcb	5	warning	isolated_copper	Isolated copper fill	9eb6ae47-15bc-4f3f-a1e7-a9f9b3e06a59	Zone [gnd] on F.Cu, priority 1	172.0	63.0
 qa/data/pcbnew/issue23418/testing.kicad_pcb	#	invalid_outline	1	415381581cdb34a4
-qa/data/pcbnew/issue23418/testing.kicad_pcb	#	isolated_copper	5	744ea4ba525c656d
 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb	none
 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb	#	lib_footprint_issues	4	e1f8b2626e28b496
 qa/data/pcbnew/issue23467/issue23467.kicad_pcb	none
 qa/data/pcbnew/issue23469/issue23469.kicad_pcb	#	lib_footprint_issues	2	dd9eaeaffc322059
+qa/data/pcbnew/issue23515/issue23515.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	6e7444f0-29c2-40d7-ac47-9f6c5e7b6895	Zone [<no net>] on F.Cu, priority 0	50.0	60.0
 qa/data/pcbnew/issue23515/issue23515.kicad_pcb	#	invalid_outline	1	78316dd555194836
-qa/data/pcbnew/issue23515/issue23515.kicad_pcb	#	isolated_copper	1	4ad2916de99ec3d0
 qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb	none
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb	26	warning	track_dangling	Track has unconnected end	a5ce981b-98b9-4386-9035-22156c13941b	Track [<no net>] on In9.Cu, length 1.2540 mm	345.634999	184.254817
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb	27	warning	track_dangling	Track has unconnected end	1f063b88-6c67-465d-8479-918faf311cb3	Track (arc) [<no net>] on In9.Cu, length 0.2323 mm	345.487099	185.150616
 qa/data/pcbnew/issue23550/issue23550.kicad_pcb	#	clearance	25	5bcdca209f28eb8e
 qa/data/pcbnew/issue23550/issue23550.kicad_pcb	#	invalid_outline	1	979738fe47d9ae90
 qa/data/pcbnew/issue23550/issue23550.kicad_pcb	#	lib_footprint_issues	4	63a26cf5e850358c
-qa/data/pcbnew/issue23550/issue23550.kicad_pcb	#	track_dangling	2	d73367e0a67997b2
 qa/data/pcbnew/issue23578/issue23578.kicad_pcb	#	creepage	3	3abc66953dd15bda
 qa/data/pcbnew/issue23578/issue23578.kicad_pcb	#	lib_footprint_issues	13	efa6142d3b3d56e9
 qa/data/pcbnew/issue23658/issue23658.kicad_pcb	#	creepage	3	b5f7dcb967f745c8
@@ -458,8 +552,12 @@ qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	#	clearance	2	05036a3c4fd672da
 qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	#	invalid_outline	1	bb86fe1527648522
 qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	#	lib_footprint_issues	2	f5a0847ff33697e7
 qa/data/pcbnew/issue23704/issue23704.kicad_pcb	#	lib_footprint_issues	11	735b8111728ae429
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	c76d1c42-cdf9-4947-aea3-1708afd8625f	Zone [gnd] on F.Cu, priority 1	115.0	100.0
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	2	warning	isolated_copper	Isolated copper fill	dc894551-05a4-4068-b907-e1a9b8e282ba	Zone [gnd] on F.Cu, priority 0	100.0	125.0
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	3	warning	isolated_copper	Isolated copper fill	715c90da-da6d-4661-a71d-607cf068d0c7	Zone [vcc] on F.Cu, priority 2	110.0	120.0
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	a71f96ba-31eb-4ae1-9ab9-4d50efeb1065	Zone [gnd] on F.Cu, priority 0	100.0	100.0
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	5	warning	isolated_copper	Isolated copper fill	fd32eaff-1020-460b-846b-19a5182a3acc	Zone [gnd] on F.Cu, priority 1	115.0	125.0
 qa/data/pcbnew/issue23790/issue23790.kicad_pcb	#	invalid_outline	1	29a63209c84c2496
-qa/data/pcbnew/issue23790/issue23790.kicad_pcb	#	isolated_copper	5	0e6da173684ed264
 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb	#	invalid_outline	1	238600850d010707
 qa/data/pcbnew/issue23851/issue23851.kicad_pcb	#	lib_footprint_issues	13	8726bdf35aa82d28
 qa/data/pcbnew/issue23851/issue23851.kicad_pcb	#	text_thickness	1	295f726393a556a2
@@ -467,8 +565,8 @@ qa/data/pcbnew/issue23868/issue23868.kicad_pcb	#	lib_footprint_issues	2	da83f3c6
 qa/data/pcbnew/issue24078/issue24078.kicad_pcb	#	creepage	2	8f7a80e48536ecdc
 qa/data/pcbnew/issue24078/issue24078.kicad_pcb	#	invalid_outline	1	8ccf01ba5b65219f
 qa/data/pcbnew/issue24089/issue24089.kicad_pcb	#	silk_edge_clearance	1	4e7c5895eadb20e8
+qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	1	warning	track_dangling	Track has unconnected end	179bff7f-eb1d-4123-a2ae-664b9b1cb5e2	Track [<no net>] on F.Cu, length 20.0000 mm	130.0	100.0
 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	#	invalid_outline	1	da398cded6ac146b
-qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	#	track_dangling	1	7b7aa21a879e03a4
 qa/data/pcbnew/issue24192/issue24192.kicad_pcb	#	invalid_outline	1	4153f77d8eb5b342
 qa/data/pcbnew/issue24192/issue24192.kicad_pcb	#	lib_footprint_issues	8	d5b8177234942d3c
 qa/data/pcbnew/issue24192/issue24192.kicad_pcb	#	silk_over_copper	8	2128be34ad25302c
@@ -482,9 +580,14 @@ qa/data/pcbnew/issue24211/issue24211.kicad_pcb	#	starved_thermal	4	c8bb3ebad6118
 qa/data/pcbnew/issue24241/issue24241.kicad_pcb	#	invalid_outline	1	ea944940284ab57b
 qa/data/pcbnew/issue24264/issue24264.kicad_pcb	#	courtyards_overlap	1	b7ccce4f79c3fa9e
 qa/data/pcbnew/issue24264/issue24264.kicad_pcb	#	lib_footprint_issues	2	f67fbf83a6501ee7
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	2	warning	track_dangling	Track has unconnected end	099af063-209f-40da-80e6-628634a90014	Track [<no net>] on B.Cu, length 0.7478 mm	136.098763	78.531237
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	3	warning	track_dangling	Track has unconnected end	39259908-8e2b-486e-b15a-4f8317b0b70a	Track [<no net>] on B.Cu, length 6.0143 mm	142.113033	78.531237
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	4	warning	track_dangling	Track has unconnected end	a176a8f0-e8c8-46be-95a1-b61b6b3770eb	Track [<no net>] on B.Cu, length 5.4918 mm	142.113033	75.031237
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	5	warning	track_dangling	Track has unconnected end	ea118d40-5cf4-438e-ad8d-073f1ad5e4dd	Track [<no net>] on B.Cu, length 1.4867 mm	136.621237	75.031237
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	6	warning	track_dangling	Track has unconnected end	22b36c59-081e-4b76-b4de-bc5c9bcefe08	Track [unconnected-(C4-Pad1)] on B.Cu, length 8.3900 mm	133.99	59.7
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	7	warning	track_dangling	Track has unconnected end	457c732b-3559-4e97-88cd-6ec2fe4b0e51	Track [unconnected-(C4-Pad2)] on B.Cu, length 7.4300 mm	133.43	68.5
 qa/data/pcbnew/issue24286/issue24286.kicad_pcb	#	creepage	2	7000bdd8e1671aed
 qa/data/pcbnew/issue24286/issue24286.kicad_pcb	#	lib_footprint_issues	1	c1e9228053f7caf0
-qa/data/pcbnew/issue24286/issue24286.kicad_pcb	#	track_dangling	6	335535be1a6c8683
 qa/data/pcbnew/issue24312/issue24312.kicad_pcb	#	connection_width	1	c56a9fcec0ec3cd7
 qa/data/pcbnew/issue24312/issue24312.kicad_pcb	#	courtyards_overlap	1	97376f507bf49dfc
 qa/data/pcbnew/issue24312/issue24312.kicad_pcb	#	lib_footprint_issues	5	aa99511d64b4ecea
@@ -496,30 +599,50 @@ qa/data/pcbnew/issue24355/issue24355.kicad_pcb	#	lib_footprint_issues	1	417298ce
 qa/data/pcbnew/issue24442.kicad_pcb	#	generic_error	3	de82c0f98deab8f4
 qa/data/pcbnew/issue24442.kicad_pcb	#	generic_warning	2	ef67ee3107328d18
 qa/data/pcbnew/issue24474/issue24474.kicad_pcb	#	lib_footprint_issues	8	168fe8716bac8d97
+qa/data/pcbnew/issue24523/issue24523.kicad_pcb	1	warning	track_dangling	Track has unconnected end	14b36109-4c3e-47fd-b277-f25cb3d07f6a	Track [Net-(C4-Pad1)] on B.Cu, length 2.1900 mm	133.99	59.7
+qa/data/pcbnew/issue24523/issue24523.kicad_pcb	2	warning	track_dangling	Track has unconnected end	e1d370cf-e2f3-4e6d-a72a-a8016b4e1dbf	Track [Net-(C4-Pad2)] on B.Cu, length 1.7300 mm	133.43	68.5
 qa/data/pcbnew/issue24523/issue24523.kicad_pcb	#	creepage	1	f99d490c0249431a
 qa/data/pcbnew/issue24523/issue24523.kicad_pcb	#	lib_footprint_issues	2	8d00673f2e8b6c83
-qa/data/pcbnew/issue24523/issue24523.kicad_pcb	#	track_dangling	2	57a94d6e1c4de26a
 qa/data/pcbnew/issue24525/issue24525.kicad_pcb	#	text_on_edge_cuts	5	28b7571bc5415c61
 qa/data/pcbnew/issue24541/issue24541.kicad_pcb	#	hole_to_hole	1	893135c1fb5a385c
 qa/data/pcbnew/issue24541/issue24541.kicad_pcb	#	lib_footprint_issues	2	849afcd0bf90483a
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	1	warning	track_dangling	Track has unconnected end	099af063-209f-40da-80e6-628634a90014	Track [<no net>] on B.Cu, length 0.7478 mm	136.098763	78.531237
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	2	warning	track_dangling	Track has unconnected end	39259908-8e2b-486e-b15a-4f8317b0b70a	Track [<no net>] on B.Cu, length 6.0143 mm	142.113033	78.531237
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	3	warning	track_dangling	Track has unconnected end	a176a8f0-e8c8-46be-95a1-b61b6b3770eb	Track [<no net>] on B.Cu, length 5.4918 mm	142.113033	75.031237
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	4	warning	track_dangling	Track has unconnected end	ea118d40-5cf4-438e-ad8d-073f1ad5e4dd	Track [<no net>] on B.Cu, length 1.4867 mm	136.621237	75.031237
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	5	warning	track_dangling	Track has unconnected end	22b36c59-081e-4b76-b4de-bc5c9bcefe08	Track [unconnected-(C4-Pad1)] on B.Cu, length 8.3900 mm	133.99	59.7
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	6	warning	track_dangling	Track has unconnected end	457c732b-3559-4e97-88cd-6ec2fe4b0e51	Track [unconnected-(C4-Pad2)] on B.Cu, length 7.4300 mm	133.43	68.5
 qa/data/pcbnew/issue24543/issue24543.kicad_pcb	#	creepage	1	47c6294af6727a23
 qa/data/pcbnew/issue24543/issue24543.kicad_pcb	#	lib_footprint_issues	1	c1e9228053f7caf0
-qa/data/pcbnew/issue24543/issue24543.kicad_pcb	#	track_dangling	6	335535be1a6c8683
+qa/data/pcbnew/issue24544/issue24544.kicad_pcb	1	warning	track_dangling	Track has unconnected end	a61fa81e-cebb-49f3-9dab-5b10a2562671	Track [unconnected-(C4-Pad1)] on B.Cu, length 11.5500 mm	135.57	61.28
+qa/data/pcbnew/issue24544/issue24544.kicad_pcb	2	warning	track_dangling	Track has unconnected end	6ec6f9ea-5eeb-4a20-9e2f-532a6eb7f894	Track [unconnected-(C4-Pad2)] on B.Cu, length 11.7100 mm	135.57	66.36
 qa/data/pcbnew/issue24544/issue24544.kicad_pcb	#	creepage	1	8ba6812f14e7e228
 qa/data/pcbnew/issue24544/issue24544.kicad_pcb	#	lib_footprint_issues	1	c1e9228053f7caf0
-qa/data/pcbnew/issue24544/issue24544.kicad_pcb	#	track_dangling	2	ce24b517c78d80ba
+qa/data/pcbnew/issue24597/issue24597.kicad_pcb	1	warning	track_dangling	Track has unconnected end	a61fa81e-cebb-49f3-9dab-5b10a2562671	Track [unconnected-(C4-Pad1)] on B.Cu, length 11.5500 mm	135.57	61.28
+qa/data/pcbnew/issue24597/issue24597.kicad_pcb	2	warning	track_dangling	Track has unconnected end	6ec6f9ea-5eeb-4a20-9e2f-532a6eb7f894	Track [unconnected-(C4-Pad2)] on B.Cu, length 11.7100 mm	135.57	66.36
 qa/data/pcbnew/issue24597/issue24597.kicad_pcb	#	creepage	1	c178a182df66ca4e
 qa/data/pcbnew/issue24597/issue24597.kicad_pcb	#	lib_footprint_issues	1	c1e9228053f7caf0
-qa/data/pcbnew/issue24597/issue24597.kicad_pcb	#	track_dangling	2	ce24b517c78d80ba
-qa/data/pcbnew/issue24643/issue24643.kicad_pcb	#	isolated_copper	2	d97848517adf40a6
+qa/data/pcbnew/issue24643/issue24643.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	dc998682-4834-47e1-8bee-d093444334ea	Zone [Board_1-GND] on B.Cu, priority 18	170.863604	160.800003
+qa/data/pcbnew/issue24643/issue24643.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	e3b45923-cae5-49e7-ab95-fa3be90ee642	Zone [Board_0-GND] on B.Cu, priority 18	39.136396	39.200003
 qa/data/pcbnew/issue24649.kicad_pcb	#	lib_footprint_issues	2	b18d917118ef803c
 qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb	#	silk_over_copper	1	d649af88e9ae47e5
 qa/data/pcbnew/issue24735/issue24735.kicad_pcb	#	lib_footprint_issues	6	22779e6172e12800
 qa/data/pcbnew/issue24758/issue24758.kicad_pcb	1	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.0000 mm on B.Cu)	125056dd-d88d-4a20-ad8e-d2feb29d964e	Via [B] on F.Cu - B.Cu	123.0	132.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	2	warning	track_dangling	Track has unconnected end	761b4c43-36c0-4376-b7ba-e9769d3e856e	Track [A] on F.Cu, length 3.5000 mm	120.5	108.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	3	warning	track_dangling	Track has unconnected end	141e3647-fcb7-4a0f-88ba-30fda55e9cad	Track [B] on F.Cu, length 4.6135 mm	123.0	112.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	4	warning	track_dangling	Track has unconnected end	685336e3-abed-4a06-8f77-0077c1cac52b	Track [B] on F.Cu, length 4.0000 mm	148.75	60.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	5	warning	track_dangling	Track has unconnected end	6a677256-d1d6-4f12-ab84-8e12d0ed7fa3	Track [B] on F.Cu, length 4.0000 mm	148.75	68.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	6	warning	track_dangling	Track has unconnected end	f4031fcd-5c05-41af-a665-df6d97b3092e	Track [B] on F.Cu, length 1.5000 mm	129.0	104.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	11093bb6-9a59-4114-bf67-37943494496b	Via [B] on F.Cu - B.Cu	123.0	95.475496
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	125056dd-d88d-4a20-ad8e-d2feb29d964e	Via [B] on F.Cu - B.Cu	123.0	132.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	36a0457e-ab0d-4581-a460-002e43ff85ce	Via [B] on F.Cu - B.Cu	123.0	77.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	41968634-e935-4031-aaba-4294d5b074c0	Via [B] on F.Cu - B.Cu	123.0	68.475496
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	5b507576-5951-4177-8a6a-868ae5b9eb4d	Via [B] on F.Cu - B.Cu	123.0	86.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	74fe01c2-ce60-42d5-9f74-27962788e2dd	Via [B] on F.Cu - B.Cu	123.0	105.475496
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	849e1625-e330-4fde-aa43-a52a3d9f8816	Via [B] on F.Cu - B.Cu	123.0	115.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	d1eaf63e-860c-4be1-81fb-87dda0eb7c33	Via [B] on F.Cu - B.Cu	123.0	60.0
 qa/data/pcbnew/issue24758/issue24758.kicad_pcb	#	invalid_outline	1	8fde4d83015803f8
 qa/data/pcbnew/issue24758/issue24758.kicad_pcb	#	lib_footprint_issues	6	90c20091f5a0ef52
-qa/data/pcbnew/issue24758/issue24758.kicad_pcb	#	track_dangling	5	ce3c652503c4beee
-qa/data/pcbnew/issue24758/issue24758.kicad_pcb	#	via_dangling	8	5869074f244d0c88
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	clearance	4	849ad2c11e270312
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	connection_width	1	4ba0a22f550e6be9
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	copper_edge_clearance	6	1e576c17e7138653
@@ -530,9 +653,10 @@ qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	silk_edge_clearance	1	0b322d1d
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	solder_mask_bridge	15	f79666b93d64cfe3
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	text_height	1	2425841d2d826670
 qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	#	text_thickness	1	4c10ddabcce2a089
-qa/data/pcbnew/issue24799/issue24799.kicad_pcb	#	isolated_copper	1	65b427c63db72682
+qa/data/pcbnew/issue24799/issue24799.kicad_pcb	0	warning	track_dangling	Track has unconnected end	22006acf-e3aa-4cda-a620-0d1d2f43f7cf	Track [A] on F.Cu, length 1.1455 mm	122.61	79.05
+qa/data/pcbnew/issue24799/issue24799.kicad_pcb	1	warning	track_dangling	Track has unconnected end	a5f868d2-e7cd-49e8-98fc-b728763f3541	Track [A] on F.Cu, length 5.9200 mm	122.61	73.13
+qa/data/pcbnew/issue24799/issue24799.kicad_pcb	2	warning	isolated_copper	Isolated copper fill	448e24d9-fe65-451f-953d-9e1cf55e288c	Zone [GND] on F.Cu, priority 0	101.69	51.81
 qa/data/pcbnew/issue24799/issue24799.kicad_pcb	#	lib_footprint_issues	2	2d730b06fb30885e
-qa/data/pcbnew/issue24799/issue24799.kicad_pcb	#	track_dangling	2	ff2f12543a059106
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	27	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	0ddb8966-665e-47e8-8b4e-8bce55826a1c	Via [GND] on F_SIG.Cu - B_SIG.Cu	103.389	103.171802
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	28	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	26fd2bcb-0343-4f81-a07a-8205dee09cf7	Via [/DQ4] on F_SIG.Cu - B_SIG.Cu	104.257339	103.258672
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	29	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	980d0ca6-a702-48f0-bc66-1b78ded8ff37	Via [/DQ3] on F_SIG.Cu - B_SIG.Cu	104.96	103.28
@@ -547,33 +671,52 @@ qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	73	error	via_diameter	Via dia
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	74	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm)	8402e16c-1afb-4133-ab4d-225de465b659	Via [/I2C1_SCL] on F_SIG.Cu - B_SIG.Cu	103.3695	104.08867
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	75	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm)	ff0df289-1fc4-41c7-bd7e-d41658207ae3	Via [/MIO7] on F_SIG.Cu - B_SIG.Cu	103.34	102.49
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	76	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm)	8a98643e-7828-4fdd-b5a0-97f8b251de0e	Via [/BYPASS-ON-FAIL] on F_SIG.Cu - B_SIG.Cu	104.971594	102.54127
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	77	warning	via_dangling	Via is not connected or connected on only one layer	0ddb8966-665e-47e8-8b4e-8bce55826a1c	Via [GND] on F_SIG.Cu - B_SIG.Cu	103.389	103.171802
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	78	warning	track_dangling	Track has unconnected end	db9dda9c-3d1f-4cbc-bce7-d8e6aacb8d73	Track [+1V35] on F_SIG.Cu, length 0.5657 mm	105.77	102.45867
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	79	warning	track_dangling	Track has unconnected end	a20f5880-e383-48e0-9894-989e2b4de905	Track [/DQ4] on F_SIG.Cu, length 0.6927 mm	104.16	103.161333
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	80	warning	track_dangling	Track has unconnected end	eb19de59-ad78-4f09-9eaf-71f8eb061333	Track [/DQ4] on In2_SIG.Cu, length 1.0646 mm	104.85	104.417058
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	81	warning	track_dangling	Track has unconnected end	f7e7e845-7724-40d7-ba20-d25b2eb87f07	Track [/DQ1] on F_SIG.Cu, length 1.5131 mm	104.9515	105.56332
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	82	warning	track_dangling	Track has unconnected end	90e92732-ea0c-4446-87fb-28ac60c24880	Track [/DQ3] on In2_SIG.Cu, length 0.6930 mm	105.25	104.34867
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	83	warning	track_dangling	Track has unconnected end	008c7d2c-f245-48f4-b305-31170b3769a8	Track [PS-POR-B] on F_SIG.Cu, length 0.5223 mm	103.3293	104.82797
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	84	warning	track_dangling	Track has unconnected end	286f7c8e-2faa-4811-b12a-67465340e335	Track [/SPI-DQ2/M2] on In2_SIG.Cu, length 1.0167 mm	103.762	104.684732
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	85	warning	track_dangling	Track has unconnected end	76164a61-b606-443d-bc82-069ae53b51bf	Track [/SPI-DQ2/M2] on In2_SIG.Cu, length 1.5124 mm	103.840439	103.589561
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	86	warning	track_dangling	Track has unconnected end	63d9b15e-ae6b-468d-8593-c2732cb40d3c	Track [/SYSTEM_LED] on B_SIG.Cu, length 0.8459 mm	103.569774	104.665834
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	87	warning	track_dangling	Track has unconnected end	2f4052e6-c2fa-4000-aff2-42df8b0cbd3d	Track [/I2C1_SCL] on In2_SIG.Cu, length 1.8108 mm	103.490374	104.209544
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	88	warning	track_dangling	Track has unconnected end	3205f7c4-1320-44ee-bd61-c2775e884323	Track [/MIO7] on B_SIG.Cu, length 6.2700 mm	105.14	104.46
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	89	warning	track_dangling	Track has unconnected end	01b451a5-8e75-42ac-9f5b-3a2d4b11336b	Track [/BYPASS-ON-FAIL] on B_SIG.Cu, length 0.4781 mm	104.971592	102.556603
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	clearance	17	68524ac4777d9477
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	hole_clearance	10	44931da1696fc07c
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	lib_footprint_issues	1	917e9590050cbda1
-qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	track_dangling	12	e63a069790de8bb7
 qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	track_width	36	839bdafeb1e8575a
-qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	via_dangling	1	8a2e8689f650c115
+qa/data/pcbnew/issue24853/issue24853.kicad_pcb	2	warning	track_dangling	Track has unconnected end	0ff8b226-3a37-4b7e-a876-2d6cb1d5acf9	Track [a] on F.Cu, length 88.0000 mm	93.0	76.0
+qa/data/pcbnew/issue24853/issue24853.kicad_pcb	3	warning	track_dangling	Track has unconnected end	09f4a07e-d55e-41dc-8613-53763df266e5	Track [b] on F.Cu, length 88.0000 mm	94.0	86.0
 qa/data/pcbnew/issue24853/issue24853.kicad_pcb	#	clearance	1	a83ab143b6957752
 qa/data/pcbnew/issue24853/issue24853.kicad_pcb	#	creepage	1	51edafe9b91308f7
-qa/data/pcbnew/issue24853/issue24853.kicad_pcb	#	track_dangling	2	eed46615649689a7
 qa/data/pcbnew/issue24865/issue24865.kicad_pcb	#	lib_footprint_issues	3	853da159b5afed23
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	2	warning	track_dangling	Track has unconnected end	bf2b39d3-9079-499e-90ee-0c56a0056bf5	Track [unconnected-(C4-Pad1)] on B.Cu, length 0.0990 mm	135.5	61.35
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	3	warning	track_dangling	Track has unconnected end	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	4	warning	track_dangling	Track has unconnected end	83023967-9035-4036-ba91-37c40585d4c2	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6476 mm	134.405	65.195
 qa/data/pcbnew/issue24875/issue24875.kicad_pcb	#	creepage	1	23cbf33d25c49124
 qa/data/pcbnew/issue24875/issue24875.kicad_pcb	#	invalid_outline	1	a557e8e18c7329b9
 qa/data/pcbnew/issue24875/issue24875.kicad_pcb	#	lib_footprint_issues	1	b491fe061a609278
-qa/data/pcbnew/issue24875/issue24875.kicad_pcb	#	track_dangling	3	0456686789540af1
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	4	warning	track_dangling	Track has unconnected end	bf2b39d3-9079-499e-90ee-0c56a0056bf5	Track [unconnected-(C4-Pad1)] on B.Cu, length 0.0990 mm	135.5	61.35
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	5	warning	track_dangling	Track has unconnected end	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	6	warning	track_dangling	Track has unconnected end	83023967-9035-4036-ba91-37c40585d4c2	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6476 mm	134.405	65.195
 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	#	copper_edge_clearance	2	7ca7c1ceca823651
 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	#	creepage	1	dffd67edf9455ab8
 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	#	invalid_outline	1	e800cab77c1028a9
 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	#	lib_footprint_issues	1	b491fe061a609278
-qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	#	track_dangling	3	0456686789540af1
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	2	warning	track_dangling	Track has unconnected end	bf2b39d3-9079-499e-90ee-0c56a0056bf5	Track [unconnected-(C4-Pad1)] on B.Cu, length 0.0990 mm	135.5	61.35
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	3	warning	track_dangling	Track has unconnected end	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	4	warning	track_dangling	Track has unconnected end	83023967-9035-4036-ba91-37c40585d4c2	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6476 mm	134.405	65.195
 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	#	creepage	1	23cbf33d25c49124
 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	#	invalid_outline	1	a557e8e18c7329b9
 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	#	lib_footprint_issues	1	b491fe061a609278
-qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	#	track_dangling	3	0456686789540af1
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	4	warning	track_dangling	Track has unconnected end	e0d08e4e-6c8a-4ad5-9810-05fb52372ed2	Track [unconnected-(C4-Pad1)] on B.Cu, length 1.7800 mm	130.82	59.72
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	5	warning	track_dangling	Track has unconnected end	a5ad388b-550c-48a3-937b-5a2bc10e7216	Track [unconnected-(C4-Pad2)] on B.Cu, length 2.2500 mm	128.54	67.76
 qa/data/pcbnew/issue24885/issue24885.kicad_pcb	#	creepage	1	39537b9ca663ba18
 qa/data/pcbnew/issue24885/issue24885.kicad_pcb	#	invalid_outline	3	4cf2ac7a424c33a1
 qa/data/pcbnew/issue24885/issue24885.kicad_pcb	#	lib_footprint_issues	1	b491fe061a609278
-qa/data/pcbnew/issue24885/issue24885.kicad_pcb	#	track_dangling	2	31d2bbcc70f69983
 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	0	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	7a0ba74e-a4e6-4459-9ce9-a87413a1c016	PTH pad 19 [<no net>] of U1	99.86	99.65
 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	1	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	2aa0c3b9-2be2-4120-afb2-57ba752cd18f	PTH pad 19 [<no net>] of U1	99.86	100.75
 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	2	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	ef8ab1c1-2da1-47f6-ac96-63681a8089b8	PTH pad 19 [<no net>] of U1	100.41	99.1
@@ -590,11 +733,12 @@ qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	#	invalid_outline	1	845
 qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	#	lib_footprint_issues	1	5d2fd9a9f8ea9dc2
 qa/data/pcbnew/issue24935/issue24935.kicad_pcb	#	clearance	2	2bbf2fbd90fc406e
 qa/data/pcbnew/issue24935/issue24935.kicad_pcb	#	isolated_copper	82	94b02991d1174a0a
+qa/data/pcbnew/issue24951/issue24951.kicad_pcb	466	warning	isolated_copper	Isolated copper fill	00000000-0000-0000-0000-000061c8485c	Zone [GND] on In1.Cu and In2.Cu, priority 0	102.5	116.11
+qa/data/pcbnew/issue24951/issue24951.kicad_pcb	467	warning	isolated_copper	Isolated copper fill	00000000-0000-0000-0000-000061c8485c	Zone [GND] on In1.Cu and In2.Cu, priority 0	102.5	116.11
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	clearance	50	469b5aa75085404c
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	copper_edge_clearance	16	8856db64c7e52e00
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	courtyards_overlap	1	3666a4f2d5226850
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	holes_co_located	2	f56b9add822ff04b
-qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	isolated_copper	2	65d2d0c747911e35
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	lib_footprint_issues	86	3e1b271f3f386318
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	shorting_items	1	3a954bc7d79536ab
 qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	silk_edge_clearance	3	284064ad3c206ed8
@@ -628,25 +772,50 @@ qa/data/pcbnew/issue25101.kicad_pcb	#	lib_footprint_issues	89	4a64f6b626ca9631
 qa/data/pcbnew/issue25101.kicad_pcb	#	pth_inside_courtyard	80	a519699550ba3746
 qa/data/pcbnew/issue25101.kicad_pcb	#	silk_over_copper	20	a055975e0a89931a
 qa/data/pcbnew/issue25107/issue25107.kicad_pcb	#	lib_footprint_issues	3	a1189c7d2ce55293
+qa/data/pcbnew/issue2512.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	00000000-0000-0000-0000-00005d9bbec6	Zone [VDD3V3] on In2.Cu, priority 0	136.7048	126.6
 qa/data/pcbnew/issue2512.kicad_pcb	#	clearance	4	d5e3d5591b9cf4ef
-qa/data/pcbnew/issue2512.kicad_pcb	#	isolated_copper	1	9b7a069d5676d58b
-qa/data/pcbnew/issue25265.kicad_pcb	#	isolated_copper	1	c6dbe45280165c8f
+qa/data/pcbnew/issue25265.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	38763e20-95bd-4561-a831-4f8e2bed0551	Zone 'stitch_zone_0' [GND] on F.Cu and B.Cu, priority 0	91.1	89.2
 qa/data/pcbnew/issue25265.kicad_pcb	#	lib_footprint_issues	2	78980d1fd2219fcf
 qa/data/pcbnew/issue2528.kicad_pcb	0	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	adfcf048-9f2c-4268-b7b0-b7c5abacf002	Via [Net-(R2-Pad2)] on F.Cu - B.Cu	157.2	99.5
-qa/data/pcbnew/issue25303.kicad_pcb	#	isolated_copper	2	980bb6992988fb7d
+qa/data/pcbnew/issue25303.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	38763e20-95bd-4561-a831-4f8e2bed0551	Zone 'stitch_zone_0' [GND] on In1.Cu and In2.Cu, priority 0	91.1	89.2
+qa/data/pcbnew/issue25303.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	38763e20-95bd-4561-a831-4f8e2bed0551	Zone 'stitch_zone_0' [GND] on In1.Cu and In2.Cu, priority 0	91.1	89.2
 qa/data/pcbnew/issue25303.kicad_pcb	#	lib_footprint_issues	2	78980d1fd2219fcf
+qa/data/pcbnew/issue25439/issue25439.kicad_pcb	1	warning	track_dangling	Track has unconnected end	ad8816dd-2ff6-4f86-9627-f3faf16a2f50	Track [N1_A] on F.Cu, length 1.8000 mm	26.7	18.9
+qa/data/pcbnew/issue25439/issue25439.kicad_pcb	2	warning	track_dangling	Track has unconnected end	d3bf092c-6646-43f6-96bd-50e7d6c94217	Track [N1_B] on F.Cu, length 2.0000 mm	30.7	18.9
 qa/data/pcbnew/issue25439/issue25439.kicad_pcb	#	creepage	1	a5a9df017e8018f7
-qa/data/pcbnew/issue25439/issue25439.kicad_pcb	#	track_dangling	2	c8ea4d81bdc9fe79
 qa/data/pcbnew/issue25521_zone_names.kicad_pcb	#	lib_footprint_issues	2	5ce5e995606f90b8
+qa/data/pcbnew/issue25580.kicad_pcb	16	warning	via_dangling	Via is not connected or connected on only one layer	21020ac5-a6e2-4030-ace8-1c8ffba6e4f3	Via [/RS-485_Transceiver/ISO_TXD] on F.Cu - B.Cu	130.2	68.0
 qa/data/pcbnew/issue25580.kicad_pcb	#	copper_outside_board	70	5d3e43f10638f186
 qa/data/pcbnew/issue25580.kicad_pcb	#	lib_footprint_issues	4	842e723600b0badf
 qa/data/pcbnew/issue25580.kicad_pcb	#	track_dangling	24	ea99b25272b2856e
-qa/data/pcbnew/issue25580.kicad_pcb	#	via_dangling	1	8b2fcb941a40d0a1
 qa/data/pcbnew/issue25650/issue25650.kicad_pcb	#	invalid_outline	1	f3ca01bc12ae2ba3
+qa/data/pcbnew/issue2568.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	0536d6bb-c209-457f-aea9-1147e661b94c	Via [GND] on F.Cu - B.Cu	159.5	97.5
+qa/data/pcbnew/issue2568.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	0c6c4a3a-a901-4856-9894-63e92c9a160b	Via [GND] on F.Cu - B.Cu	121.25	128.75
+qa/data/pcbnew/issue2568.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	43f51f13-34f5-4357-9d11-8d4cc93d1316	Via [GND] on F.Cu - B.Cu	158.75	116.25
+qa/data/pcbnew/issue2568.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	44bf64f0-ccea-41bc-919c-e02788773a31	Via [GND] on F.Cu - B.Cu	144.5	116.25
+qa/data/pcbnew/issue2568.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4603f728-4b93-4671-aea3-a76ba412eb66	Via [GND] on F.Cu - B.Cu	140.5	97.0
+qa/data/pcbnew/issue2568.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	466e73a0-016a-45e4-bfa3-b8a22c6010c9	Via [GND] on F.Cu - B.Cu	159.5	102.75
+qa/data/pcbnew/issue2568.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	59d5e247-db71-4300-ac94-e3e909342006	Via [GND] on F.Cu - B.Cu	139.25	113.75
+qa/data/pcbnew/issue2568.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	62fc3091-bf09-4ee4-94d8-3c5a5f24b74a	Via [GND] on F.Cu - B.Cu	136.0	96.25
+qa/data/pcbnew/issue2568.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	782878c2-4cca-4d11-8cf1-96cab4251d93	Via [GND] on F.Cu - B.Cu	149.25	123.5
+qa/data/pcbnew/issue2568.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	848b4c99-8c17-4e7a-8632-f1b72acb60d2	Via [GND] on F.Cu - B.Cu	178.75	71.25
+qa/data/pcbnew/issue2568.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	9862772e-59eb-4325-a4f4-5f1a4a826057	Via [GND] on F.Cu - B.Cu	178.75	128.75
+qa/data/pcbnew/issue2568.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	a0ff3f9c-8234-4d54-aa12-265372557c1e	Via [GND] on F.Cu - B.Cu	164.0	103.5
+qa/data/pcbnew/issue2568.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	c8d1dd8d-f059-4375-8c2b-d36be06e44c4	Via [GND] on F.Cu - B.Cu	136.75	104.0
+qa/data/pcbnew/issue2568.kicad_pcb	15	warning	via_dangling	Via is not connected or connected on only one layer	d333627e-d269-495f-b61b-0e24a9f24c3d	Via [GND] on F.Cu - B.Cu	158.75	113.75
+qa/data/pcbnew/issue2568.kicad_pcb	16	warning	via_dangling	Via is not connected or connected on only one layer	e870d088-8205-487d-b5f7-34555e4af51a	Via [GND] on F.Cu - B.Cu	121.25	71.25
+qa/data/pcbnew/issue2568.kicad_pcb	17	warning	via_dangling	Via is not connected or connected on only one layer	f78d5aa4-6d47-4fab-8fe6-1acb36677696	Via [GND] on F.Cu - B.Cu	144.5	113.75
+qa/data/pcbnew/issue2568.kicad_pcb	18	warning	via_dangling	Via is not connected or connected on only one layer	f836c957-1b4d-47dd-9a1f-62c2f9040aba	Via [GND] on F.Cu - B.Cu	136.75	113.75
 qa/data/pcbnew/issue2568.kicad_pcb	#	copper_edge_clearance	1	077724fbbaa1c2e1
 qa/data/pcbnew/issue2568.kicad_pcb	#	lib_footprint_issues	3	2f651d08758f3a40
 qa/data/pcbnew/issue2568.kicad_pcb	#	malformed_courtyard	1	7255caa96cb7f1bb
-qa/data/pcbnew/issue2568.kicad_pcb	#	via_dangling	17	524b2c32e22bb395
+qa/data/pcbnew/issue2904.kicad_pcb	27	warning	track_dangling	Track has unconnected end	3272cb27-388a-4061-a0a0-e350418f0cd3	Track [/LED1] on F.Cu, length 0.2529 mm	190.702929	82.702001
+qa/data/pcbnew/issue2904.kicad_pcb	28	warning	track_dangling	Track has unconnected end	f8e3811a-6369-414b-b1f7-dbf52e6ea448	Track [/LED1] on F.Cu, length 0.3536 mm	188.393519	81.751999
+qa/data/pcbnew/issue2904.kicad_pcb	29	warning	track_dangling	Track has unconnected end	176702d0-5784-48d2-8c64-9fe850734f37	Track [/LED2] on F.Cu, length 0.3536 mm	188.890579	80.551988
+qa/data/pcbnew/issue2904.kicad_pcb	30	warning	track_dangling	Track has unconnected end	ee9e703d-3b87-4c60-8b3d-f6ec8745d4bd	Track [/LED2] on F.Cu, length 0.2466 mm	190.981466	80.726393
+qa/data/pcbnew/issue2904.kicad_pcb	31	warning	via_dangling	Via is not connected or connected on only one layer	6ca9110d-f254-4ed8-9a10-3829e3828e69	Via [/LED3] on F.Cu - B.Cu	170.3	83.802
+qa/data/pcbnew/issue2904.kicad_pcb	32	warning	via_dangling	Via is not connected or connected on only one layer	07fd8438-74b5-49a3-87ca-acae54776c60	Via [/LED4] on F.Cu - B.Cu	163.3	83.802
+qa/data/pcbnew/issue2904.kicad_pcb	33	warning	via_dangling	Via is not connected or connected on only one layer	96f71672-3054-463d-a824-930342b4749d	Via [/LED5] on F.Cu - B.Cu	196.3	74.802
 qa/data/pcbnew/issue2904.kicad_pcb	#	copper_edge_clearance	2	1830281067c0a94f
 qa/data/pcbnew/issue2904.kicad_pcb	#	courtyards_overlap	22	ca0cb09b2e72e9ed
 qa/data/pcbnew/issue2904.kicad_pcb	#	lib_footprint_issues	41	2efd88faf830865f
@@ -655,23 +824,39 @@ qa/data/pcbnew/issue2904.kicad_pcb	#	silk_over_copper	199	25f125c2b92aee3c
 qa/data/pcbnew/issue2904.kicad_pcb	#	silk_overlap	57	094e0d0034f34159
 qa/data/pcbnew/issue2904.kicad_pcb	#	solder_mask_bridge	2	04978ed892091f71
 qa/data/pcbnew/issue2904.kicad_pcb	#	starved_thermal	1	073eae9eca5f0e05
-qa/data/pcbnew/issue2904.kicad_pcb	#	track_dangling	4	96864c7584216c71
-qa/data/pcbnew/issue2904.kicad_pcb	#	via_dangling	3	cfe48e079776c08f
+qa/data/pcbnew/issue3812.kicad_pcb	170	warning	track_dangling	Track has unconnected end	ba1b6fed-d3e6-468f-978f-787acaae57d5	Track [/xilinx/TCK] on Bottom_layer, length 0.4808 mm	222.317919	73.66
+qa/data/pcbnew/issue3812.kicad_pcb	171	warning	track_dangling	Track has unconnected end	9ff415d8-c91a-4680-a8ac-56b3d4914eab	Track [+3.3V] on Top_layer, length 4.3180 mm	156.337	104.394
 qa/data/pcbnew/issue3812.kicad_pcb	#	lib_footprint_issues	160	f8fb78a8a94ddc16
 qa/data/pcbnew/issue3812.kicad_pcb	#	silk_edge_clearance	10	5d66c6bd4472b5e1
 qa/data/pcbnew/issue3812.kicad_pcb	#	starved_thermal	10	a75606027f8afbc6
 qa/data/pcbnew/issue3812.kicad_pcb	#	text_height	161	4db53000de51c973
-qa/data/pcbnew/issue3812.kicad_pcb	#	track_dangling	2	7032d097fb278f45
+qa/data/pcbnew/issue4139.kicad_pcb	0	warning	track_dangling	Track has unconnected end	a8f164c7-3d2a-426f-800b-6816271944cc	Track [Net-(J1-Pad1)] on F.Cu, length 0.0082 mm	126.4768	67.1932
 qa/data/pcbnew/issue4139.kicad_pcb	#	lib_footprint_issues	2	f44a2c046da17c30
-qa/data/pcbnew/issue4139.kicad_pcb	#	track_dangling	1	0aedba83baa10bfe
+qa/data/pcbnew/issue4257.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	19ccc761-ed00-4cfc-bfdb-96decfd7b640	Via [<no net>] on F.Cu - B.Cu	156.84754	86.995
+qa/data/pcbnew/issue4257.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	9f3db980-ce93-4ae6-813a-9832a6affc36	Via [<no net>] on F.Cu - B.Cu	156.845	86.995
+qa/data/pcbnew/issue4257.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	645cc3b2-3724-4b57-962a-a7d28e4f84a5	Blind via [<no net>] on F.Cu - In1.Cu	147.955	86.995
 qa/data/pcbnew/issue4257.kicad_pcb	#	hole_to_hole	1	0334047e9195863c
 qa/data/pcbnew/issue4257.kicad_pcb	#	invalid_outline	1	53101c2280429c0f
 qa/data/pcbnew/issue4257.kicad_pcb	#	lib_footprint_issues	1	9fe1e7af83e78f6b
 qa/data/pcbnew/issue4257.kicad_pcb	#	silk_over_copper	5	68b7e5fbd4c19493
 qa/data/pcbnew/issue4257.kicad_pcb	#	unresolved_variable	1	2a3d1f8fd21c9f7d
-qa/data/pcbnew/issue4257.kicad_pcb	#	via_dangling	3	51fb750c7d48e671
 qa/data/pcbnew/issue4774.kicad_pcb	#	silk_edge_clearance	5	86f06a9fc645da65
 qa/data/pcbnew/issue4774.kicad_pcb	#	text_height	2	34afe9d663c57f7e
+qa/data/pcbnew/issue5093.kicad_pcb	126	warning	track_dangling	Track has unconnected end	363a6edf-5030-4639-baed-ca4ae493fd38	Track [/left/GND] on F.Cu, length 0.0900 mm	123.59	67.1
+qa/data/pcbnew/issue5093.kicad_pcb	127	warning	track_dangling	Track has unconnected end	1ef7650a-1542-4142-9f67-92b29e694619	Track [/left/GND] on B.Cu, length 0.9868 mm	100.38	62.06
+qa/data/pcbnew/issue5093.kicad_pcb	128	warning	track_dangling	Track has unconnected end	24aa2108-59f5-4442-b8e2-dca58d498c33	Track [/left/GND] on B.Cu, length 8.0150 mm	150.685	90.375
+qa/data/pcbnew/issue5093.kicad_pcb	129	warning	track_dangling	Track has unconnected end	644e3c5f-6fa1-461b-ad49-34f55ca71b1d	Track [/left/GND] on B.Cu, length 34.5275 mm	169.1	55.9
+qa/data/pcbnew/issue5093.kicad_pcb	130	warning	track_dangling	Track has unconnected end	6b43b446-0a9f-4b97-a234-605508e804cf	Track [/left/GND] on B.Cu, length 1.0377 mm	176.86	88.35
+qa/data/pcbnew/issue5093.kicad_pcb	131	warning	track_dangling	Track has unconnected end	72b5c9c3-c04c-4159-94b7-f6e3853f221d	Track [/left/GND] on B.Cu, length 46.9648 mm	145.82	67.45
+qa/data/pcbnew/issue5093.kicad_pcb	132	warning	track_dangling	Track has unconnected end	85d4ee80-8cc0-4c6f-ba90-7e9a9a33c5ae	Track [/left/GND] on B.Cu, length 2.2984 mm	197.33	65.85
+qa/data/pcbnew/issue5093.kicad_pcb	133	warning	track_dangling	Track has unconnected end	9b7d33c7-b66c-49bf-aa54-cdd384b69c4b	Track [/left/GND] on B.Cu, length 12.0000 mm	122.9	97.2
+qa/data/pcbnew/issue5093.kicad_pcb	134	warning	track_dangling	Track has unconnected end	aab4d93e-f641-4741-8900-459dd395335c	Track [/left/GND] on B.Cu, length 36.5875 mm	165.13	70.69
+qa/data/pcbnew/issue5093.kicad_pcb	135	warning	track_dangling	Track has unconnected end	b424dc7e-02d3-4d85-86fd-0949be2d4623	Track [/left/GND] on B.Cu, length 0.0350 mm	175.97	50.37
+qa/data/pcbnew/issue5093.kicad_pcb	136	warning	track_dangling	Track has unconnected end	cb63ee67-8a8f-4c2c-9060-a9afad5d68ff	Track [/left/GND] on B.Cu, length 10.5000 mm	109.9	97.2
+qa/data/pcbnew/issue5093.kicad_pcb	137	warning	track_dangling	Track has unconnected end	e2bc94fd-0845-40e1-aab3-c5a5a72127a3	Track [/left/GND] on B.Cu, length 0.0778 mm	100.38	90.43
+qa/data/pcbnew/issue5093.kicad_pcb	138	warning	track_dangling	Track has unconnected end	f6fc80ce-1cf1-427c-8dd4-ac98360b3a4b	Track [/left/GND] on B.Cu, length 2.8612 mm	199.58	62.4
+qa/data/pcbnew/issue5093.kicad_pcb	139	warning	track_dangling	Track has unconnected end	0c638a27-2c74-45e7-9090-233880baa874	Track [/left/+3V3] on F.Cu, length 0.0320 mm	181.7	68.9
+qa/data/pcbnew/issue5093.kicad_pcb	140	warning	track_dangling	Track has unconnected end	5597c1db-227a-4ae5-872b-b51d25628a0b	Track [/left/+3V3] on F.Cu, length 0.0354 mm	105.075	59.575
 qa/data/pcbnew/issue5093.kicad_pcb	#	copper_edge_clearance	70	145d02d5bc8e519a
 qa/data/pcbnew/issue5093.kicad_pcb	#	courtyards_overlap	16	852158268314e11c
 qa/data/pcbnew/issue5093.kicad_pcb	#	hole_clearance	28	2d9295e4d9a2bb94
@@ -683,35 +868,40 @@ qa/data/pcbnew/issue5093.kicad_pcb	#	silk_over_copper	6	52d5e822c1a1abc6
 qa/data/pcbnew/issue5093.kicad_pcb	#	silk_overlap	30	648afab82869dcd6
 qa/data/pcbnew/issue5093.kicad_pcb	#	solder_mask_bridge	2	e1f22d47e83c075b
 qa/data/pcbnew/issue5093.kicad_pcb	#	starved_thermal	3	6925943f97c17d2a
-qa/data/pcbnew/issue5093.kicad_pcb	#	track_dangling	15	d3f5cc20e130ab0c
 qa/data/pcbnew/issue5093.kicad_pcb	#	unresolved_variable	1	617fac1861ee0e5e
+qa/data/pcbnew/issue5102.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	c04b9b6e-a5d3-4c6d-b171-9fac618de4dd	Via [/4.096V] on F.Cu - B.Cu	-8.23625	15.428671
+qa/data/pcbnew/issue5102.kicad_pcb	3	warning	track_dangling	Track has unconnected end	426686ae-ef63-498c-9159-d446a8b16d8a	Track [/VBAT] on F.Cu, length 0.3592 mm	-6.477	-9.017
 qa/data/pcbnew/issue5102.kicad_pcb	#	lib_footprint_issues	92	41ffc0d696fc3b37
 qa/data/pcbnew/issue5102.kicad_pcb	#	silk_edge_clearance	2	7a7fa31ad7a8398d
 qa/data/pcbnew/issue5102.kicad_pcb	#	silk_over_copper	18	ffea263be14a7fad
 qa/data/pcbnew/issue5102.kicad_pcb	#	silk_overlap	11	d7b82e6a97e7cd15
 qa/data/pcbnew/issue5102.kicad_pcb	#	starved_thermal	2	50520d52bfe6676a
-qa/data/pcbnew/issue5102.kicad_pcb	#	track_dangling	1	bb2c1acc6c9189b2
-qa/data/pcbnew/issue5102.kicad_pcb	#	via_dangling	1	a5dede0501244252
 qa/data/pcbnew/issue5313.kicad_pcb	#	lib_footprint_issues	3	67b785d63e00c2c2
 qa/data/pcbnew/issue5313.kicad_pcb	#	silk_over_copper	2	29c5f2b3e16b5df1
 qa/data/pcbnew/issue5320.kicad_pcb	#	lib_footprint_issues	6	27b192ea4b25a855
 qa/data/pcbnew/issue5320.kicad_pcb	#	silk_edge_clearance	2	fe0a56e14da24e39
 qa/data/pcbnew/issue5320.kicad_pcb	#	silk_over_copper	2	42b66b7b01effb0a
 qa/data/pcbnew/issue5320.kicad_pcb	#	text_height	8	f02b089483bbfbe6
-qa/data/pcbnew/issue5567.kicad_pcb	#	isolated_copper	1	109e3f58168bab87
+qa/data/pcbnew/issue5567.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	d805b776-a3e4-4510-9eb2-b1d522f09c42	Zone [<no net>] on F.Cu, priority 0	200.152	125.476
 qa/data/pcbnew/issue5567.kicad_pcb	#	lib_footprint_issues	3	92cdc8728a3481e3
 qa/data/pcbnew/issue5567.kicad_pcb	#	solder_mask_bridge	1	9e96037a5b1dca9c
 qa/data/pcbnew/issue5750.kicad_pcb	#	clearance	2	6ed37d4adbffef8d
 qa/data/pcbnew/issue5750.kicad_pcb	#	hole_clearance	1	9187ca2b16b74211
 qa/data/pcbnew/issue5750.kicad_pcb	#	lib_footprint_issues	2	501d470b96bec980
 qa/data/pcbnew/issue5750.kicad_pcb	#	solder_mask_bridge	1	91779d28d566b91b
-qa/data/pcbnew/issue5830.kicad_pcb	#	isolated_copper	2	08bcda2d4600051d
+qa/data/pcbnew/issue5830.kicad_pcb	1	warning	via_dangling	Via is not connected or connected on only one layer	77ea6d13-339f-4fa3-9716-425c8febb380	Via [VCC] on F.Cu - B.Cu	99.3	14.2
+qa/data/pcbnew/issue5830.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	a62690ed-32c9-419d-9e3a-18608c8dbe19	Via [VCC] on F.Cu - B.Cu	94.1	21.6
+qa/data/pcbnew/issue5830.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	a74230dd-fb8e-45fe-bc9b-39fbc359a273	Via [VCC] on F.Cu - B.Cu	89.6	32.0
+qa/data/pcbnew/issue5830.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	bd35d2b1-2ede-4c23-829a-f2bfa1160b0a	Via [VCC] on F.Cu - B.Cu	99.3	15.4
+qa/data/pcbnew/issue5830.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	ce56084f-5e0d-4e82-a29d-d02f9958a2d4	Via [VCC] on F.Cu - B.Cu	101.1	26.2
+qa/data/pcbnew/issue5830.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	f6564416-80c1-4be6-a474-d12739d7c643	Via [VCC] on F.Cu - B.Cu	93.3	22.6
+qa/data/pcbnew/issue5830.kicad_pcb	7	warning	isolated_copper	Isolated copper fill	00000000-0000-0000-0000-00005c07d707	Zone [GND] on In1.Cu, priority 0	102.8	99.1
+qa/data/pcbnew/issue5830.kicad_pcb	8	warning	isolated_copper	Isolated copper fill	00000000-0000-0000-0000-00005c07d70a	Zone [VCC] on In2.Cu, priority 0	102.8	43.2
 qa/data/pcbnew/issue5830.kicad_pcb	#	lib_footprint_issues	22	6cba745075e3f241
 qa/data/pcbnew/issue5830.kicad_pcb	#	silk_over_copper	2	278fd2ee1c44cb1d
 qa/data/pcbnew/issue5830.kicad_pcb	#	silk_overlap	1	388938b605ce9483
 qa/data/pcbnew/issue5830.kicad_pcb	#	starved_thermal	1	6c366f6e96626748
 qa/data/pcbnew/issue5830.kicad_pcb	#	text_height	3	cb82718c66e89130
-qa/data/pcbnew/issue5830.kicad_pcb	#	via_dangling	6	d090ac91145b7cea
 qa/data/pcbnew/issue5854.kicad_pcb	#	silk_edge_clearance	2	22d112b77e67f371
 qa/data/pcbnew/issue5854.kicad_pcb	#	silk_overlap	1	f9fdfab2dfcecf90
 qa/data/pcbnew/issue5978.kicad_pcb	#	invalid_outline	1	9f760f1fe843629f
@@ -725,11 +915,16 @@ qa/data/pcbnew/issue6039.kicad_pcb	#	solder_mask_bridge	3	c8c892be5752c112
 qa/data/pcbnew/issue6039.kicad_pcb	#	starved_thermal	5	ebee39cfd74bcff0
 qa/data/pcbnew/issue6039.kicad_pcb	#	text_height	1	b63b7cbc6ba7f077
 qa/data/pcbnew/issue6260.kicad_pcb	#	lib_footprint_issues	37	72c2e86bc9784c4a
+qa/data/pcbnew/issue6284.kicad_pcb	9	warning	track_dangling	Track has unconnected end	4c432205-2f6c-4612-8e39-f9c3e3d4b1d5	Track [/Circuit/HDOT0] on B.Cu, length 0.1760 mm	184.39999	98.00001
+qa/data/pcbnew/issue6284.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	60324f7f-922a-4410-93f6-2fcbab5e3c39	Via [/Circuit/POS0] on F.Cu - B.Cu	134.5	85.5
+qa/data/pcbnew/issue6284.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	ded192dd-eabe-45bb-ae52-9788046a53d8	Via [/Circuit/LINE0] on F.Cu - B.Cu	181.8	86.5
+qa/data/pcbnew/issue6284.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	bb812b0e-2a17-4a4e-8ee9-3ed83a2b3b75	Via [/Circuit/LASTDOT] on F.Cu - B.Cu	164.0	66.1
+qa/data/pcbnew/issue6284.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	e5682c6a-e94a-4fc2-b8a3-b6c3000e8697	Via [/Circuit/NEXTFLDREQ] on F.Cu - B.Cu	173.6	95.0
+qa/data/pcbnew/issue6284.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	13fd8724-89f7-4e9e-812e-e376f6317d2a	Via [Net-(U106-Pad2)] on F.Cu - B.Cu	182.8	61.3
+qa/data/pcbnew/issue6284.kicad_pcb	15	warning	via_dangling	Via is not connected or connected on only one layer	f7f417f9-9ef4-428c-8408-a21297284292	Via [/Circuit/~{LASTLINE}] on F.Cu - B.Cu	173.2	64.7
 qa/data/pcbnew/issue6284.kicad_pcb	#	lib_footprint_issues	134	3bf79e7c2948a639
 qa/data/pcbnew/issue6284.kicad_pcb	#	silk_overlap	4	fc090f3af628698f
 qa/data/pcbnew/issue6284.kicad_pcb	#	starved_thermal	9	0deac3c5ebf3fc4a
-qa/data/pcbnew/issue6284.kicad_pcb	#	track_dangling	1	d1fb752d42cfd51c
-qa/data/pcbnew/issue6284.kicad_pcb	#	via_dangling	6	925e358c8a153ae8
 qa/data/pcbnew/issue6443.kicad_pcb	#	lib_footprint_issues	2	d67fcf93acd97ed8
 qa/data/pcbnew/issue6879.kicad_pcb	2	error	drill_out_of_range	Hole size out of range (rule 'Max Drill Hole Size Mechanical' max hole 2.0000 mm; actual 3.2000 mm)	cfbc907d-8a25-46e9-a224-6b8152fa214f	PTH pad 1 [<no net>] of H3	186.25	88.75
 qa/data/pcbnew/issue6879.kicad_pcb	3	error	drill_out_of_range	Hole size out of range (rule 'Max Drill Hole Size Mechanical' max hole 2.0000 mm; actual 3.2000 mm)	b5c3eb60-d01c-403e-abf7-cd1ddd2c14be	PTH pad 1 [<no net>] of H4	166.25	88.75
@@ -758,6 +953,25 @@ qa/data/pcbnew/issue832.kicad_pcb	0	error	annular_width	Annular width (board set
 qa/data/pcbnew/issue832.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0850 mm)	5db6d971-ca14-4560-b0be-91cbbe1ee051	PTH pad 2 [GNDD] of D1	155.8671	55.9054
 qa/data/pcbnew/issue832.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0850 mm)	c06e22f0-4390-4546-87c2-9a5205a852cb	PTH pad 3 [Net-(D1-Pad3)] of D1	157.1371	55.9054
 qa/data/pcbnew/issue832.kicad_pcb	3	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0850 mm)	2b7dd547-172d-4eb8-9c6c-62ae25975056	PTH pad 4 [Net-(D1-Pad4)] of D1	158.4071	55.9054
+qa/data/pcbnew/issue832.kicad_pcb	735	warning	track_dangling	Track has unconnected end	2d037fb5-5cd3-4538-ab0f-88853d9f81f2	Track [/IL2-] on F.Cu, length 2.1500 mm	138.739101	68.368401
+qa/data/pcbnew/issue832.kicad_pcb	736	warning	track_dangling	Track has unconnected end	c4ae1cc6-9897-4cfe-bc17-d994e112bd8d	Track [/addr_okay-] on F.Cu, length 0.2148 mm	138.692082	126.53475
+qa/data/pcbnew/issue832.kicad_pcb	737	warning	track_dangling	Track has unconnected end	145165d2-66a3-4c9b-b367-840e41b329c5	Track [/plane2+] on F.Cu, length 0.0747 mm	133.350387	81.521687
+qa/data/pcbnew/issue832.kicad_pcb	738	warning	track_dangling	Track has unconnected end	4c0aa1b9-6d63-4376-ae64-c6b5c53cf705	Track [/plane7+] on F.Cu, length 0.6657 mm	139.029099	113.453401
+qa/data/pcbnew/issue832.kicad_pcb	739	warning	track_dangling	Track has unconnected end	a421811a-de71-46ba-878a-067d673eb56d	Track [/clear+] on F.Cu, length 0.2150 mm	138.4931	118.2624
+qa/data/pcbnew/issue832.kicad_pcb	740	warning	track_dangling	Track has unconnected end	60d2cff8-b366-431f-aa71-9087c9a4bfae	Track [/sense2+] on F.Cu, length 0.0093 mm	154.448092	112.0394
+qa/data/pcbnew/issue832.kicad_pcb	741	warning	track_dangling	Track has unconnected end	8e438c23-5bdb-4e7e-bfc1-b217c069a8c5	Track [/sense2+] on F.Cu, length 0.0080 mm	152.9241	112.0394
+qa/data/pcbnew/issue832.kicad_pcb	742	warning	track_dangling	Track has unconnected end	36b71e32-26d1-474b-9cae-2a4e2c48896a	Track [/sense2-] on F.Cu, length 0.1715 mm	164.981082	109.553799
+qa/data/pcbnew/issue832.kicad_pcb	743	warning	track_dangling	Track has unconnected end	42fde688-30d3-4584-9007-7387c85d6a4d	Track [/sense13-] on F.Cu, length 0.0817 mm	151.303099	73.32175
+qa/data/pcbnew/issue832.kicad_pcb	744	warning	track_dangling	Track has unconnected end	fe418970-295e-4f3f-945b-407d66c49321	Track [/sense13-] on F.Cu, length 0.0137 mm	168.70382	78.8924
+qa/data/pcbnew/issue832.kicad_pcb	745	warning	track_dangling	Track has unconnected end	18dcdda4-fe8c-45b9-a892-bd75c282a706	Track [/sense16-] on F.Cu, length 0.1586 mm	160.250487	68.9864
+qa/data/pcbnew/issue832.kicad_pcb	746	warning	track_dangling	Track has unconnected end	248460c8-402f-4e6b-9012-db80ca900c49	Track [/sense3] on B.Cu, length 0.0145 mm	160.77918	75.330472
+qa/data/pcbnew/issue832.kicad_pcb	747	warning	track_dangling	Track has unconnected end	5a653ca9-9044-4ac2-b524-ee12b383b405	Track [/sense14] on B.Cu, length 0.0934 mm	159.955311	103.115849
+qa/data/pcbnew/issue832.kicad_pcb	748	warning	track_dangling	Track has unconnected end	49259fac-93ab-4085-a646-52f7d32e389b	Track [/sense10] on F.Cu, length 0.2831 mm	155.9941	88.9254
+qa/data/pcbnew/issue832.kicad_pcb	749	warning	track_dangling	Track has unconnected end	98b8a3dc-174f-4dac-967e-b3f3b25f4cac	Track [/plane0] on B.Cu, length 0.0834 mm	134.980101	79.214401
+qa/data/pcbnew/issue832.kicad_pcb	750	warning	track_dangling	Track has unconnected end	9f45b4b1-257d-426b-ad5e-b5b540c32711	Track [/plane6] on B.Cu, length 0.0501 mm	143.9291	109.549452
+qa/data/pcbnew/issue832.kicad_pcb	751	warning	track_dangling	Track has unconnected end	00000000-0000-0000-0000-00005bfd1feb	Track [/plane5] on B.Cu, length 0.0000 mm	138.167099	83.544399
+qa/data/pcbnew/issue832.kicad_pcb	752	warning	track_dangling	Track has unconnected end	d6ea0983-a613-46be-a0ef-31dbcc9f3d57	Track [/g] on B.Cu, length 0.2380 mm	137.803082	85.704399
+qa/data/pcbnew/issue832.kicad_pcb	753	warning	track_dangling	Track has unconnected end	9368c9ed-b8d1-4a6c-988a-9fc4fa5e66b0	Track [/plane8] on B.Cu, length 0.2620 mm	130.2131	100.814401
 qa/data/pcbnew/issue832.kicad_pcb	#	clearance	499	5116efecbc8ed51b
 qa/data/pcbnew/issue832.kicad_pcb	#	copper_edge_clearance	21	8a64fd53fb877829
 qa/data/pcbnew/issue832.kicad_pcb	#	courtyards_overlap	4	b322878acf0d7d46
@@ -768,84 +982,133 @@ qa/data/pcbnew/issue832.kicad_pcb	#	silk_over_copper	98	d3ceadd70f281354
 qa/data/pcbnew/issue832.kicad_pcb	#	silk_overlap	13	da0e2b6892eef246
 qa/data/pcbnew/issue832.kicad_pcb	#	solder_mask_bridge	6	0f71bb29b847ff44
 qa/data/pcbnew/issue832.kicad_pcb	#	starved_thermal	2	babf97ef0d944ea8
-qa/data/pcbnew/issue832.kicad_pcb	#	track_dangling	19	b7f4021b4807d3a6
 qa/data/pcbnew/issue832.kicad_pcb	#	track_width	199	c780e403085cf14d
+qa/data/pcbnew/issue8407.kicad_pcb	0	warning	track_dangling	Track has unconnected end	47b8d31e-12b7-4c54-8753-7d134df1944f	Track [CLK_P] on B.Cu, length 12.6180 mm	30.48	-92.977
+qa/data/pcbnew/issue8407.kicad_pcb	1	warning	track_dangling	Track has unconnected end	5de03374-3f2f-4e90-8bc1-e924136e095d	Track [CLK_P] on B.Cu, length 21.8520 mm	11.971001	-76.676801
+qa/data/pcbnew/issue8407.kicad_pcb	2	warning	track_dangling	Track has unconnected end	9629862d-9ad9-4488-bcf9-4fc72975ea93	Track [TRIG_P] on B.Cu, length 5.4308 mm	30.9542	-87.913
+qa/data/pcbnew/issue8407.kicad_pcb	3	warning	track_dangling	Track has unconnected end	993c9331-3456-466a-a2e7-ab1112b2a0e4	Track [TRIG_N] on B.Cu, length 5.6172 mm	30.7678	-88.363
+qa/data/pcbnew/issue8407.kicad_pcb	4	warning	track_dangling	Track has unconnected end	52c6b271-df8b-4bf6-84cb-cfeeff8a919d	Track [TIMES_P] on B.Cu, length 10.4933 mm	31.9702	-83.595
+qa/data/pcbnew/issue8407.kicad_pcb	5	warning	track_dangling	Track has unconnected end	7058f4f6-d9b6-4899-b57d-6d196a3155c9	Track [TIMES_N] on B.Cu, length 10.6797 mm	31.7838	-84.045
 qa/data/pcbnew/issue8407.kicad_pcb	#	silk_edge_clearance	13	018f9e798ea3f61d
-qa/data/pcbnew/issue8407.kicad_pcb	#	track_dangling	6	b854cc01a273d5e2
 qa/data/pcbnew/issue8629/issue8629.kicad_pcb	#	lib_footprint_issues	2	425267f168137b99
+qa/data/pcbnew/issue8883.kicad_pcb	0	warning	track_dangling	Track has unconnected end	4397afb6-b5ea-41b0-b807-1eb5b8bd07e5	Track [+3V3] on F.Cu, length 0.0283 mm	112.375	-93.4
+qa/data/pcbnew/issue8883.kicad_pcb	1	warning	track_dangling	Track has unconnected end	acb536a5-b484-4ae7-9fb6-143a115cc3d8	Track [ADC2_IN15] on F.Cu, length 0.1563 mm	122.821555	-85.490218
+qa/data/pcbnew/issue8883.kicad_pcb	2	warning	track_dangling	Track has unconnected end	0274d653-1f7e-424e-800e-1a11a5d101ef	Track [~{RESET}] on F.Cu, length 0.0424 mm	104.73	-82.38
+qa/data/pcbnew/issue8883.kicad_pcb	3	warning	track_dangling	Track has unconnected end	bc6118ec-4137-4856-8e1f-93f839210fbb	Track [USART2_RX] on F.Cu, length 0.0707 mm	109.3	-72.65
+qa/data/pcbnew/issue8883.kicad_pcb	4	warning	track_dangling	Track has unconnected end	fad86278-e752-4050-a99e-ae442c50b3d5	Track [SPI1_~{SS}] on B.Cu, length 0.0014 mm	95.301	-76.001
+qa/data/pcbnew/issue8883.kicad_pcb	5	warning	track_dangling	Track has unconnected end	1e90f58d-6f36-48c2-a7b5-66ef4d8af4cf	Track [TIM1_CH1N] on B.Cu, length 0.0334 mm	96.923624	-77.676376
+qa/data/pcbnew/issue8883.kicad_pcb	6	warning	track_dangling	Track has unconnected end	ed9f6e87-4b74-4372-878a-803ae31e61b7	Track [PB0_OUT_SM_STEP] on B.Cu, length 0.1034 mm	97.073124	-77.126876
+qa/data/pcbnew/issue8883.kicad_pcb	7	warning	track_dangling	Track has unconnected end	95a687bf-2ded-45be-ac1d-d34df0df64b4	Track [TIM1_CH1] on F.Cu, length 0.0707 mm	121.1	-84.85
+qa/data/pcbnew/issue8883.kicad_pcb	8	warning	track_dangling	Track has unconnected end	48f019c8-b7f0-47c5-8dc9-063e7878736f	Track [USART1_RX] on B.Cu, length 0.1386 mm	124.922385	-86.749012
 qa/data/pcbnew/issue8883.kicad_pcb	#	lib_footprint_issues	5	44c1864605ecb9c4
-qa/data/pcbnew/issue8883.kicad_pcb	#	track_dangling	9	ff4611256cc7c451
+qa/data/pcbnew/issue8909.kicad_pcb	118	warning	via_dangling	Via is not connected or connected on only one layer	a0843da6-3ea2-40f0-9f84-5da4462f743e	Via [/LowVoltage/LV_EN] on F.Cu - B.Cu	123.8885	17.8115
 qa/data/pcbnew/issue8909.kicad_pcb	#	clearance	109	df17be74426659e9
 qa/data/pcbnew/issue8909.kicad_pcb	#	lib_footprint_issues	199	5718cd38723d79d7
 qa/data/pcbnew/issue8909.kicad_pcb	#	silk_edge_clearance	51	a6d9489b0d5967f0
 qa/data/pcbnew/issue8909.kicad_pcb	#	silk_over_copper	92	53b4729954f4a7bb
 qa/data/pcbnew/issue8909.kicad_pcb	#	silk_overlap	96	b1b8de32705ddc76
 qa/data/pcbnew/issue8909.kicad_pcb	#	starved_thermal	9	2295dd6ce16cd9f5
-qa/data/pcbnew/issue8909.kicad_pcb	#	via_dangling	1	3a6824e3ab2983fc
 qa/data/pcbnew/issue9081.kicad_pcb	#	pth_inside_courtyard	2	31f627cad976429c
 qa/data/pcbnew/issue9870.kicad_pcb	13	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.5080 mm; actual 0.2000 mm)	b06ca4b8-22df-4ec6-bf66-cf080ffc53d7	Via [Net-(D1-Pad2)] on top_copper - bottom_copper	128.753787	79.665232
 qa/data/pcbnew/issue9870.kicad_pcb	14	error	via_diameter	Via diameter (board setup constraints min diameter 0.8890 mm; actual 0.5000 mm)	b06ca4b8-22df-4ec6-bf66-cf080ffc53d7	Via [Net-(D1-Pad2)] on top_copper - bottom_copper	128.753787	79.665232
+qa/data/pcbnew/issue9870.kicad_pcb	15	warning	via_dangling	Via is not connected or connected on only one layer	84387f2a-9959-4d79-a875-53244f1f4e68	Via [Net-(D1-Pad2)] on top_copper - bottom_copper	126.4	78.5
+qa/data/pcbnew/issue9870.kicad_pcb	16	warning	via_dangling	Via is not connected or connected on only one layer	b06ca4b8-22df-4ec6-bf66-cf080ffc53d7	Via [Net-(D1-Pad2)] on top_copper - bottom_copper	128.753787	79.665232
+qa/data/pcbnew/issue9870.kicad_pcb	17	warning	track_dangling	Track has unconnected end	221799a2-d92f-49a1-94fe-44d3679f5dec	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	127.531503	74.6208
+qa/data/pcbnew/issue9870.kicad_pcb	18	warning	track_dangling	Track has unconnected end	2bf8d6b1-a5d9-4860-b639-a10275827821	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	125.5268	73.8632
+qa/data/pcbnew/issue9870.kicad_pcb	19	warning	track_dangling	Track has unconnected end	c0d146af-73e9-4b0c-9981-517c8336104e	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	126.617499	71.234484
+qa/data/pcbnew/issue9870.kicad_pcb	20	warning	track_dangling	Track has unconnected end	c3d0bba0-dc16-4de5-8b82-ebcebda9e1dd	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	130.804351	76.175706
+qa/data/pcbnew/issue9870.kicad_pcb	21	warning	track_dangling	Track has unconnected end	f955ff3b-6368-47ac-b9bb-dcbce17cd2cd	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	125.299606	76.121706
+qa/data/pcbnew/issue9870.kicad_pcb	22	warning	isolated_copper	Isolated copper fill	14c4dfe2-825b-4c9b-962f-b07daede2793	Zone [Net-(D1-Pad2)] on bottom_copper, priority 0	131.5	77.3
+qa/data/pcbnew/issue9870.kicad_pcb	23	warning	isolated_copper	Isolated copper fill	3378247d-c173-4772-893a-c2e81018cea2	Zone [Net-(D1-Pad2)] on bottom_copper, priority 0	137.09101	76.812004
 qa/data/pcbnew/issue9870.kicad_pcb	#	connection_width	13	9d77c8120abd1a90
-qa/data/pcbnew/issue9870.kicad_pcb	#	isolated_copper	2	d3d205047d4f62a8
 qa/data/pcbnew/issue9870.kicad_pcb	#	lib_footprint_issues	1	9d2c352e8dd1b8ab
-qa/data/pcbnew/issue9870.kicad_pcb	#	track_dangling	5	c90c1abd82531cde
-qa/data/pcbnew/issue9870.kicad_pcb	#	via_dangling	2	455491b14bd1fd91
+qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb	3	warning	track_dangling	Track has unconnected end	d4a4f87d-990f-4a53-9b82-9a6fc90a1179	Track [<no net>] on F.Cu, length 25.0000 mm	5.0	10.0
 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb	#	items_not_allowed	3	0342dd8284d77acb
-qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb	#	track_dangling	1	405774edc885ae03
-qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	#	isolated_copper	1	10538a2692c7d14e
-qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	#	track_dangling	1	886a5e5a1c4b4b8f
+qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	0	warning	track_dangling	Track has unconnected end	5fb9f1bf-6353-4482-ab6f-bb68ff4bf749	Track [/A] on F.Cu, length 37.3380 mm	144.018	56.134
+qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	fb20db62-f53e-4e90-a8ad-6b2609563157	Zone [/GND] on F.Cu, priority 0	196.596	55.086375
+qa/data/pcbnew/large_circle_teardrop.kicad_pcb	0	warning	track_dangling	Track has unconnected end	037e4989-e5f2-4037-90ca-45d17aa43801	Track [Net1] on F.Cu, length 7.8500 mm	102.4	100.0
 qa/data/pcbnew/large_circle_teardrop.kicad_pcb	#	lib_footprint_issues	1	7a32f95d899e8186
-qa/data/pcbnew/large_circle_teardrop.kicad_pcb	#	track_dangling	1	1a03ed5a1b03da18
+qa/data/pcbnew/length_calculations.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	2933b31e-1101-4f9c-8ac5-c157771bc6f0	Via [Net-(R11-Pad2)] on F.Cu - B.Cu	129.159	75.438
 qa/data/pcbnew/length_calculations.kicad_pcb	#	lib_footprint_issues	16	26f3c037a5f90909
-qa/data/pcbnew/length_calculations.kicad_pcb	#	via_dangling	1	8e913ea6935d82cb
 qa/data/pcbnew/line_ending_drc/line_ending_drc_fail.kicad_pcb	#	shorting_items	123	fe9002e9bfb2e3c8
 qa/data/pcbnew/line_ending_drc/line_ending_drc_pass.kicad_pcb	none
 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb	none
+qa/data/pcbnew/multichannel_nested.kicad_pcb	28	warning	track_dangling	Track has unconnected end	382701e6-8018-4b8b-8997-bfdbe96e143a	Track [/SecondChannel/B] on F.Cu, length 2.1807 mm	52.89	21.1
+qa/data/pcbnew/multichannel_nested.kicad_pcb	29	warning	track_dangling	Track has unconnected end	cbd6aa0b-3bac-40dd-adbf-e6834a69f2c0	Track [/SecondChannel/B] on F.Cu, length 1.4368 mm	27.755	5.717
+qa/data/pcbnew/multichannel_nested.kicad_pcb	30	warning	track_dangling	Track has unconnected end	fe4927a5-5df7-481e-aea6-164b1ddbcf59	Track [/SecondChannel/B] on F.Cu, length 0.2708 mm	44.073505	0.783505
+qa/data/pcbnew/multichannel_nested.kicad_pcb	31	warning	track_dangling	Track has unconnected end	0cbcb895-153b-403e-89eb-372a198e5b9c	Track [/FirstChannel/C] on F.Cu, length 1.4368 mm	209.881705	117.602
+qa/data/pcbnew/multichannel_nested.kicad_pcb	32	warning	track_dangling	Track has unconnected end	8ee3e30f-b243-40ec-9b83-c91b971eb0f1	Track [/FirstChannel/C] on F.Cu, length 0.2487 mm	231.76	112.759999
+qa/data/pcbnew/multichannel_nested.kicad_pcb	33	warning	track_dangling	Track has unconnected end	4a82d320-1bcc-4588-9a30-6a475ae68872	Track [/SecondChannel/A] on F.Cu, length 1.4368 mm	5.867	50.20411
+qa/data/pcbnew/multichannel_nested.kicad_pcb	34	warning	track_dangling	Track has unconnected end	4ef8b753-4265-4a1d-a35b-351dd5e72fb2	Track [/SecondChannel/A] on F.Cu, length 2.1807 mm	14.835	3.175
+qa/data/pcbnew/multichannel_nested.kicad_pcb	35	warning	track_dangling	Track has unconnected end	95129883-fa1e-4271-a2c9-f4715a486731	Track [/SecondChannel/A] on F.Cu, length 0.2708 mm	0.933505	33.885605
+qa/data/pcbnew/multichannel_nested.kicad_pcb	36	warning	track_dangling	Track has unconnected end	c75656fa-716a-40bd-ad45-350d63a74747	Track [/SecondChannel/ChannelInput] on F.Cu, length 2.1807 mm	3.325	63.12411
+qa/data/pcbnew/multichannel_nested.kicad_pcb	58	warning	track_dangling	Track has unconnected end	521813d6-fc50-429c-9e96-6522dbf5e26f	Track [/SecondChannel/C] on F.Cu, length 2.1807 mm	41.5875	69.54
+qa/data/pcbnew/multichannel_nested.kicad_pcb	59	warning	track_dangling	Track has unconnected end	6de10e35-2043-42fb-ba64-235aa7ee6000	Track [/SecondChannel/C] on F.Cu, length 1.4368 mm	65.81	23.642
+qa/data/pcbnew/multichannel_nested.kicad_pcb	60	warning	track_dangling	Track has unconnected end	922c735d-a62e-490a-b8d1-a69ba8bdfa1c	Track [/SecondChannel/C] on F.Cu, length 0.2708 mm	82.128505	18.708505
+qa/data/pcbnew/multichannel_nested.kicad_pcb	61	warning	track_dangling	Track has unconnected end	3f6ab959-9034-4690-b3b7-8d888a6400b4	Track [/SecondChannel/ChannelOutput] on F.Cu, length 0.2708 mm	39.196005	40.301495
+qa/data/pcbnew/multichannel_nested.kicad_pcb	62	warning	track_dangling	Track has unconnected end	9e0ca76e-9cfa-408d-be6b-cc457b2bf54d	Track [/SecondChannel/ChannelOutput] on F.Cu, length 1.4368 mm	44.1295	56.62
+qa/data/pcbnew/multichannel_nested.kicad_pcb	63	warning	track_dangling	Track has unconnected end	487df522-835d-464d-b025-4d586632b8da	Track [/FirstChannel/B] on F.Cu, length 1.4368 mm	174.8	117.932
+qa/data/pcbnew/multichannel_nested.kicad_pcb	64	warning	track_dangling	Track has unconnected end	2699537f-b6b9-4ace-bdf8-b85fec148fea	Track [/FirstChannel/ChannelOutput] on F.Cu, length 0.2708 mm	262.930466	110.368505
+qa/data/pcbnew/multichannel_nested.kicad_pcb	65	warning	track_dangling	Track has unconnected end	4439eb4d-b792-4d62-a455-4f29a5155e09	Track [/FirstChannel/ChannelOutput] on F.Cu, length 1.4368 mm	246.611961	115.302
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	holes_co_located	9	d3990648146c16fe
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	invalid_outline	1	e339852ff00475a9
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	lib_footprint_issues	64	fa5a6c75069f3727
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	silk_over_copper	5	81626d307c8722a0
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	silk_overlap	1	ed741ddb6b8a995f
-qa/data/pcbnew/multichannel_nested.kicad_pcb	#	track_dangling	17	6feca2a1ee583178
 qa/data/pcbnew/multichannel_nested.kicad_pcb	#	via_dangling	48	1d022f3bc068115a
 qa/data/pcbnew/multinetclasses_drc.kicad_pcb	0	error	track_width	Track width (rule 'rule_3' max width 0.1270 mm; actual 1.0160 mm)	2a7c931b-072e-4000-9dc5-1c4949cffe4f	Track [Net-(R1-Pad2)] on F.Cu, length 10.1650 mm	103.105	71.88
 qa/data/pcbnew/multinetclasses_drc.kicad_pcb	1	error	track_width	Track width (rule 'rule_3' max width 0.1270 mm; actual 0.5080 mm)	995d2ce6-a1f6-4315-a31f-e3c626d0a199	Track [Net-(R3-Pad1)] on F.Cu, length 10.3350 mm	92.89	76.91
 qa/data/pcbnew/multinetclasses_drc.kicad_pcb	#	lib_footprint_issues	4	878cd6b7773a9e98
 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb	#	invalid_outline	1	1afcf0e9f35c6737
 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb	#	lib_footprint_issues	8	ef022f261ad435ae
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	0	warning	track_dangling	Track has unconnected end	ddbca380-7e7e-46b2-951d-b9f2b92f9ac0	Track [/NET_A] on F.Cu, length 10.0000 mm	88.0	66.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	1	warning	track_dangling	Track has unconnected end	bc9b70ee-4a37-4518-bb54-f821677e5a7a	Track [/NET_B] on F.Cu, length 10.0000 mm	108.0	66.0
 qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	#	lib_footprint_issues	1	3209738d86f348aa
-qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	#	track_dangling	2	7dce79585de5f18b
+qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	0	warning	track_dangling	Track has unconnected end	0731e8a3-3e90-4b00-b4a0-a2bd8a1f512f	Track [/NET_A] on F.Cu, length 11.2000 mm	103.0	83.5
+qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	1	warning	track_dangling	Track has unconnected end	72ad56af-3588-43e0-9dbc-69fe6e77c3d4	Track [/NET_B] on F.Cu, length 11.2000 mm	116.8	83.5
 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	#	lib_footprint_issues	1	bfb11226c5a72ed1
-qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	#	track_dangling	2	cc3b40df4ab32c30
+qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	0	warning	track_dangling	Track has unconnected end	1e370692-34de-4596-920e-eb4858fe3cf5	Track [/NET_A] on F.Cu, length 11.2000 mm	83.5	87.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	1	warning	track_dangling	Track has unconnected end	aa2afe8f-204e-4e69-965d-af7bff3fcf72	Track [/NET_C] on F.Cu, length 10.0000 mm	113.5	87.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	2	warning	track_dangling	Track has unconnected end	e2a5d253-abf6-4a5d-910c-35e6102acf38	Track [/NET_C] on F.Cu, length 11.2000 mm	97.3	87.0
 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	#	lib_footprint_issues	1	a807b9539ba17c93
-qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	#	track_dangling	3	149c9e05db48e0b3
+qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	0	warning	track_dangling	Track has unconnected end	bc2774ca-fd04-49b1-a766-72017dd693b7	Track [/NET_A] on F.Cu, length 10.0000 mm	78.0	78.5
+qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	1	warning	track_dangling	Track has unconnected end	1a504fea-bf41-439d-9c2d-92ff2966fea0	Track [/NET_B] on F.Cu, length 10.0000 mm	94.0	78.5
 qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	#	lib_footprint_issues	1	51480e74daba7a0b
-qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	#	track_dangling	2	f4c829ac609e7d2f
+qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	0	warning	track_dangling	Track has unconnected end	4550bc3e-e668-4d9d-b161-739998334d18	Track [/NET_A] on F.Cu, length 20.0000 mm	66.0	70.0
+qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	1	warning	track_dangling	Track has unconnected end	47180c61-dc43-4edf-adf1-22ea395d2a6a	Track [/NET_A] on F.Cu, length 18.0000 mm	78.5	70.0
+qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	2	warning	track_dangling	Track has unconnected end	c2d1e888-e13e-49a8-a377-72d5e5bf9641	Track [/NET_A] on F.Cu, length 15.0000 mm	53.5	70.0
 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	#	lib_footprint_issues	2	b24db169f811650b
-qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	#	track_dangling	3	111cf94b4764648c
 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb	#	lib_footprint_issues	3	8a7cc81367f52075
 qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb	#	lib_footprint_issues	2	e19f5ed095c3d536
 qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb	#	lib_footprint_issues	2	4f69d38936e78eca
+qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb	0	warning	track_dangling	Track has unconnected end	17a3abbb-d04a-4b81-8192-08e6d120db4a	Track [/NET_A] on F.Cu, length 30.0000 mm	29.5	34.5
 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb	#	lib_footprint_issues	1	50b8c9a90af2c646
-qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb	#	track_dangling	1	f97d3579d50f25d8
+qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb	0	warning	track_dangling	Track has unconnected end	12c503fa-36d3-4595-98c3-c0f51476f6e2	Track [/NET_A] on F.Cu, length 5.0000 mm	57.0	49.0
 qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb	#	lib_footprint_issues	2	c0c4f6a06c0b53f0
-qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb	#	track_dangling	1	2d244ad1ed7f76fb
 qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb	#	lib_footprint_issues	4	c03518a935e9f22c
-qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb	#	track_dangling	2	ba669b125f720188
+qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb	0	warning	track_dangling	Track has unconnected end	40c03e5f-f510-4f8c-b81e-2a9c07236192	Track [/CHAIN_NET] on F.Cu, length 25.0000 mm	68.0	70.5
+qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb	1	warning	track_dangling	Track has unconnected end	8dd86990-df33-4e57-9e28-fd4ca15111ba	Track [/PLAIN_NET] on F.Cu, length 25.0000 mm	68.0	75.5
 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb	#	lib_footprint_issues	5	f70ea60bf39aab37
 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb	#	silk_over_copper	8	bdc70d227e25a5f1
 qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb	none
-qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb	#	track_dangling	1	a3af7646309d3bfe
-qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb	#	track_dangling	2	df265472809dc0b6
-qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb	#	track_dangling	1	f260c7197737d414
+qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb	0	warning	track_dangling	Track has unconnected end	21477875-9593-445c-b33d-bff4ddc99c17	Track [/CHAIN_RN] on F.Cu, length 30.0000 mm	20.0	24.0
+qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb	0	warning	track_dangling	Track has unconnected end	d605dba5-df81-4eab-9948-3ab3f0236986	Track [/CHAIN_PARTIAL] on F.Cu, length 15.0000 mm	44.0	35.0
+qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb	1	warning	track_dangling	Track has unconnected end	e374ca6d-089e-4698-9461-6957ca598a0a	Track [/CHAIN_PARTIAL] on F.Cu, length 15.0000 mm	29.0	35.0
+qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb	0	warning	track_dangling	Track has unconnected end	75a6e8cb-171f-474e-82e9-3f1d46c6ee41	Track [/CHAIN_FULL] on F.Cu, length 30.0000 mm	44.0	54.5
+qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	2	warning	track_dangling	Track has unconnected end	dcc5d744-79fa-45a8-abbc-d27661644fde	Track [/CHAIN_COVERED] on F.Cu, length 30.0000 mm	24.5	29.5
+qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	3	warning	track_dangling	Track has unconnected end	123ca306-c5ac-4d58-85d8-d520a59f848d	Track [/CHAIN_UNCOVERED] on F.Cu, length 30.0000 mm	24.5	49.5
 qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	#	copper_edge_clearance	2	20d16958fdb81a33
-qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	#	track_dangling	2	3808b2c021440481
+qa/data/pcbnew/net_chains/stub_length.kicad_pcb	0	warning	track_dangling	Track has unconnected end	4596a973-ead9-4ed7-8b15-ef335eeeefc9	Track [/TRUNK_A] on F.Cu, length 2.0000 mm	52.5	70.5
+qa/data/pcbnew/net_chains/stub_length.kicad_pcb	1	warning	track_dangling	Track has unconnected end	077ff3bc-9e8d-46da-9e46-d47c748ab35a	Track [/TRUNK_C] on F.Cu, length 2.0000 mm	90.5	70.5
+qa/data/pcbnew/net_chains/stub_length.kicad_pcb	2	warning	track_dangling	Track has unconnected end	1f6b3686-9b80-4f43-8979-d7e89ce62f06	Track [/MID_B] on F.Cu, length 30.0000 mm	57.5	70.5
 qa/data/pcbnew/net_chains/stub_length.kicad_pcb	#	lib_footprint_issues	2	8096105ec64dcad9
-qa/data/pcbnew/net_chains/stub_length.kicad_pcb	#	track_dangling	3	41657f70a7bdfb68
+qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	0	warning	track_dangling	Track has unconnected end	af1566d8-a32c-4323-a9d8-23a7a2feb5d2	Track [/TRUNK_A] on F.Cu, length 2.0000 mm	72.5	66.5
+qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	1	warning	track_dangling	Track has unconnected end	aece45d1-2c35-4a3b-a629-c605922f02dd	Track [/MID_B] on F.Cu, length 2.0000 mm	75.5	66.5
+qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	2	warning	track_dangling	Track has unconnected end	ebaaaaaa-e23d-4734-ae5c-e0670d140f1e	Track [/TRUNK_C] on F.Cu, length 2.0000 mm	80.5	66.5
 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	#	lib_footprint_issues	3	75e4db73063e683a
-qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	#	track_dangling	3	a069c1825e25967a
+qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	0	warning	track_dangling	Track has unconnected end	af47ab45-9e64-4ccd-b3d9-4c24d1163c68	Track [/A] on F.Cu, length 26.0000 mm	45.5	64.5
+qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	1	warning	track_dangling	Track has unconnected end	b1169cdc-356c-421f-ac6f-3fcfcfee008b	Track [/B] on F.Cu, length 29.4315 mm	76.068514	64.5
 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	#	lib_footprint_issues	2	9c97b7188754b48e
-qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	#	track_dangling	2	869f5ae491839432
 qa/data/pcbnew/net_tie_drc.kicad_pcb	#	lib_footprint_issues	2	7494d8ba5d2ca1eb
 qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb	#	invalid_outline	1	67ac6f1d4ac0751b
 qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb	#	lib_footprint_issues	1	562297584281752a
@@ -855,10 +1118,21 @@ qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb	#	silk_over_copper	2	25abbf5600b7
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	#	lib_footprint_issues	7	905a2821683f3ce7
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	#	microvia_crosses_core	3	59a0a837fe869ea7
 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	#	silk_over_copper	3	6faeb104d68e6d61
-qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	#	via_dangling	12	1fae00692c4f0cec
 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb	none
 qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	clearance	24	4c885c049e91f9a4
 qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	copper_edge_clearance	2	bd33fb2bc2368ebf
@@ -867,13 +1141,13 @@ qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	hole_clearance	192	8c4718
 qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	lib_footprint_issues	81	2ef3711a607eafd2
 qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	text_height	1	0c8be1432df4997c
 qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	#	via_diameter	166	8512cc6a2033a636
+qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	20	warning	track_dangling	Track has unconnected end	ae601a3f-751b-4446-8f57-bf0915e6d696	Track [Net-(Q2-C)] on F.Cu, length 1.1000 mm	152.4	111.4
+qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	21	warning	isolated_copper	Isolated copper fill	a3413c1d-8a1b-44e0-8059-27085646a1a3	Zone [+12V] on In2.Cu, priority 0	167.5	113.5
 qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	clearance	10	80ec40b1fa18dec0
 qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	copper_edge_clearance	9	a2b3d3b50f67d164
 qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	courtyards_overlap	1	fcd528f1389ccaf4
-qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	isolated_copper	1	905cc9d8514fca89
 qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	lib_footprint_issues	27	c5ddd5f189a16f8d
 qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	silk_edge_clearance	4	967381f6dfcd4f72
-qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	#	track_dangling	1	fd223962d0b7f8cd
 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	#	lib_footprint_issues	3	708231643141114b
 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	#	padstack	1	acded6c35665ddd0
 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	#	silk_over_copper	2	25abbf5600b767b9
@@ -890,11 +1164,22 @@ qa/data/pcbnew/odbpp/pad_backdrill.kicad_pcb	#	via_diameter	166	06313e2231a2ab60
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	#	lib_footprint_issues	7	905a2821683f3ce7
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	#	microvia_crosses_core	3	59a0a837fe869ea7
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	#	padstack	2	8f9f9292f5bba3d9
 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	#	silk_over_copper	8	9e4a95ecab3478f6
-qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	#	via_dangling	12	1fae00692c4f0cec
 qa/data/pcbnew/odbpp/pad_roles.kicad_pcb	#	clearance	24	311730efc6ec9dfd
 qa/data/pcbnew/odbpp/pad_roles.kicad_pcb	#	copper_edge_clearance	2	19d7101415f7fdb8
 qa/data/pcbnew/odbpp/pad_roles.kicad_pcb	#	drill_out_of_range	199	21bec76305356ccf
@@ -928,20 +1213,31 @@ qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb	#	silk_overlap	3	986805141b
 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	#	clearance	2	dea20d401c60ce5e
 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	#	invalid_outline	1	bb1b79c5b4572d0f
 qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	#	lib_footprint_issues	2	f5a0847ff33697e7
+qa/data/pcbnew/off_center_teardrop.kicad_pcb	0	warning	track_dangling	Track has unconnected end	30000007-0000-0000-0000-000000000007	Track [Net1] on F.Cu, length 14.2500 mm	100.75	99.0
 qa/data/pcbnew/off_center_teardrop.kicad_pcb	#	lib_footprint_issues	1	d3c3bcc6d94949e3
-qa/data/pcbnew/off_center_teardrop.kicad_pcb	#	track_dangling	1	904d529b6481895d
 qa/data/pcbnew/orientation_drc.kicad_pcb	#	assertion_failure	1	3d023a8b8dcf4e11
 qa/data/pcbnew/orientation_drc.kicad_pcb	#	invalid_outline	1	3a9d9cd8e52e203d
 qa/data/pcbnew/orientation_drc.kicad_pcb	#	lib_footprint_issues	2	41e1fd36b625ada6
+qa/data/pcbnew/oval_teardrop.kicad_pcb	0	warning	track_dangling	Track has unconnected end	10000005-0000-0000-0000-000000000005	Track [Net1] on F.Cu, length 3.6000 mm	101.4	100.0
 qa/data/pcbnew/oval_teardrop.kicad_pcb	#	lib_footprint_issues	1	c6036f2b071c6069
-qa/data/pcbnew/oval_teardrop.kicad_pcb	#	track_dangling	1	14cbfbb02d4d60c4
 qa/data/pcbnew/padstacks.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
 qa/data/pcbnew/padstacks.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
 qa/data/pcbnew/padstacks.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm)	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/padstacks.kicad_pcb	3	warning	via_dangling	Via is not connected or connected on only one layer	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1
+qa/data/pcbnew/padstacks.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	9	warning	via_dangling	Via is not connected or connected on only one layer	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/padstacks.kicad_pcb	10	warning	via_dangling	Via is not connected or connected on only one layer	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/padstacks.kicad_pcb	11	warning	via_dangling	Via is not connected or connected on only one layer	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	12	warning	via_dangling	Via is not connected or connected on only one layer	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/padstacks.kicad_pcb	13	warning	via_dangling	Via is not connected or connected on only one layer	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	14	warning	via_dangling	Via is not connected or connected on only one layer	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
 qa/data/pcbnew/padstacks.kicad_pcb	#	lib_footprint_issues	7	905a2821683f3ce7
 qa/data/pcbnew/padstacks.kicad_pcb	#	microvia_crosses_core	3	59a0a837fe869ea7
 qa/data/pcbnew/padstacks.kicad_pcb	#	silk_over_copper	4	4080fb4173c7849b
-qa/data/pcbnew/padstacks.kicad_pcb	#	via_dangling	12	1fae00692c4f0cec
 qa/data/pcbnew/padstacks_complex.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0000 mm on Top Layer)	05e66fff-73b7-4418-9e88-371b772d1746	PTH pad 3 [<no net>] of 	141.9606	108.3691
 qa/data/pcbnew/padstacks_complex.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0000 mm on Top Layer)	6761b056-4502-46e7-9140-90350fc3a716	PTH pad 2 [<no net>] of 	152.6286	101.8921
 qa/data/pcbnew/padstacks_complex.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0635 mm on Bottom Layer)	6761b056-4502-46e7-9140-90350fc3a716	PTH pad 2 [<no net>] of 	152.6286	101.8921
@@ -952,8 +1248,10 @@ qa/data/pcbnew/padstacks_normal.kicad_pcb	#	invalid_outline	1	dfebb49a362a9aa8
 qa/data/pcbnew/padstacks_normal.kicad_pcb	#	lib_footprint_issues	2	273f73e6cf769007
 qa/data/pcbnew/padstacks_normal.kicad_pcb	#	silk_over_copper	2	f2d3b62677896fca
 qa/data/pcbnew/plugins/fakeboard.kicad_pcb	load_error
-qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb	#	isolated_copper	2	580c395a424c56cd
-qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb	#	isolated_copper	2	580c395a424c56cd
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	8233685b-9759-4751-b126-3341098ccfbc	Zone [<no net>] on F.Cu and B.Cu, priority 0	134.0	70.5
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	8233685b-9759-4751-b126-3341098ccfbc	Zone [<no net>] on F.Cu and B.Cu, priority 0	134.0	70.5
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb	0	warning	isolated_copper	Isolated copper fill	8233685b-9759-4751-b126-3341098ccfbc	Zone [<no net>] on F.Cu and B.Cu, priority 0	134.0	70.5
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb	1	warning	isolated_copper	Isolated copper fill	8233685b-9759-4751-b126-3341098ccfbc	Zone [<no net>] on F.Cu and B.Cu, priority 0	134.0	70.5
 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb	#	invalid_outline	1	b9c3411ef78c6d90
 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb	#	invalid_outline	1	2606097060b47b2a
 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb	#	invalid_outline	1	c42227df56403abb
@@ -965,9 +1263,10 @@ qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	13	error	track_width	
 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	14	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	96856e31-07ca-4513-a68b-cba2c43bfde5	Track [/D+] on F.Cu, length 1.1500 mm	116.65	95.2
 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	15	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	bdbaeb35-0143-4c8f-86e6-649922c55de4	Track [/D+] on F.Cu, length 0.4243 mm	116.35	94.9
 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	16	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	e12cdbec-f3d9-4cd9-8131-ad2388ea9f0b	Track [/D+] on F.Cu, length 0.1414 mm	117.8	95.2
+qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	17	warning	track_dangling	Track has unconnected end	39e964cd-fd8e-4dc6-aad2-65428e129bf4	Track [/D-] on F.Cu, length 3.1932 mm	122.143198	94.625
+qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	18	warning	track_dangling	Track has unconnected end	171e0c6a-2cbf-499f-9bd5-dcc9676df500	Track [/D+] on F.Cu, length 3.0068 mm	121.956802	95.075
 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	#	clearance	10	46f19967d5521716
 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	#	lib_footprint_issues	2	c35b7aae9bd63967
-qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	#	track_dangling	2	5685bb993782e31c
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	10	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	0593d24e-7ac2-4326-af6e-ff7a595866a9	Track [/D-] on F.Cu, length 0.1000 mm	117.95	94.75
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	11	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	2de9f7f5-2c05-445c-9ab6-07a854a98921	Track [/D-] on F.Cu, length 0.2121 mm	117.8	94.9
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	12	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	618dd1e7-0f67-46e3-9782-85886e4fce15	Track [/D-] on F.Cu, length 0.8000 mm	117.0	94.9
@@ -975,18 +1274,21 @@ qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	13	error	track_width	Tra
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	14	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	96856e31-07ca-4513-a68b-cba2c43bfde5	Track [/D+] on F.Cu, length 1.1500 mm	116.65	95.2
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	15	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	bdbaeb35-0143-4c8f-86e6-649922c55de4	Track [/D+] on F.Cu, length 0.4243 mm	116.35	94.9
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	16	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.0750 mm)	e12cdbec-f3d9-4cd9-8131-ad2388ea9f0b	Track [/D+] on F.Cu, length 0.1414 mm	117.8	95.2
+qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	17	warning	track_dangling	Track has unconnected end	39e964cd-fd8e-4dc6-aad2-65428e129bf4	Track [/D-] on F.Cu, length 3.1932 mm	122.143198	94.625
+qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	18	warning	track_dangling	Track has unconnected end	171e0c6a-2cbf-499f-9bd5-dcc9676df500	Track [/D+] on F.Cu, length 3.0068 mm	121.956802	95.075
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	#	clearance	10	270b8bb4336887fe
 qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	#	lib_footprint_issues	2	c35b7aae9bd63967
-qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	#	track_dangling	2	5685bb993782e31c
 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb	#	lib_footprint_issues	4	b24ade995738f944
 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb	#	lib_footprint_issues	3	eefac4cf52674210
+qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	8	warning	track_dangling	Track has unconnected end	503b8ed3-5448-463e-84d5-e269bf99dfd3	Track [/VPP/MCLR] on bottom_layer, length 4.4450 mm	207.645	50.8
+qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	9	warning	track_dangling	Track has unconnected end	1bca740e-d69e-4f26-840b-262ef5e7d92a	Track [/CLOCK-RB6] on bottom_layer, length 3.8100 mm	211.455	53.34
+qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	10	warning	track_dangling	Track has unconnected end	0f78730e-b452-4ce0-85f2-3034d1b80b73	Track [/DATA-RB7] on bottom_layer, length 4.4450 mm	215.265	50.8
 qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	#	hole_clearance	4	782738c7c875d0d2
 qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	#	lib_footprint_issues	62	8904835b61772ac0
 qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	#	silk_edge_clearance	4	3460d1b4f4877443
 qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	#	starved_thermal	4	c8bb3ebad6118c4a
-qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	#	track_dangling	3	555cf0cbdb1e1308
+qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	13e209ef-b0bd-4aaa-972b-94fd08693b69	Via [A] on F.Cu - B.Cu	119.5	73.0
 qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	#	lib_footprint_issues	2	fd58cb24417d1c13
-qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	#	via_dangling	1	d7f95b2417cf8a31
 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb	#	copper_edge_clearance	1	079b7a0b2f1eeda6
 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb	#	lib_footprint_issues	21	af8a6f1371d32aff
 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb	#	silk_over_copper	5	cec9b49d163d66a4
@@ -1000,6 +1302,10 @@ qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	#	silk_over_c
 qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	#	silk_overlap	61	f9acd47d1c01bb72
 qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	#	text_height	36	ef1ff404eeff5347
 qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	#	track_width	199	b01e26e9453984e5
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	353	warning	via_dangling	Via is not connected or connected on only one layer	63d1d023-7acf-4e53-9562-591e2a8b9985	Via [GND] on F.Cu - B.Cu	79.753529	134.154999
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	402	warning	via_dangling	Via is not connected or connected on only one layer	ee6c41b0-37ad-48fb-ae8b-7f9ecbd690f8	Via [/P0.POS3] on F.Cu - B.Cu	200.065687	62.15
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	418	warning	via_dangling	Via is not connected or connected on only one layer	20553d74-7e47-4c18-b260-cf0914623677	Via [/PULSER0/CNF0] on F.Cu - B.Cu	191.375	72.18
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	436	warning	via_dangling	Via is not connected or connected on only one layer	09faa34e-11e9-42aa-8042-4da633d461aa	Via [+A1V8] on F.Cu - B.Cu	104.275	118.475
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	clearance	123	1374c599b19f64a4
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	copper_edge_clearance	3	09f3d11175da56c8
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	copper_outside_board	15	11ff2956e5d68e1b
@@ -1013,15 +1319,14 @@ qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	silk_overlap	144	58
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	solder_mask_bridge	26	701f568b93b7b605
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	starved_thermal	28	864b53371c8a0841
 qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	track_dangling	107	634c41e65f750a81
-qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	via_dangling	4	5e48598c2b4c9f93
 qa/data/pcbnew/prettifier/group_and_image.kicad_pcb	none
 qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb	none
 qa/data/pcbnew/reference_images_load_save.kicad_pcb	#	invalid_outline	1	dc46a0054078697d
+qa/data/pcbnew/reverse_via.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	5102eaa9-d649-41a2-a365-d32be881c5cb	Via [GND] on F.Cu - B.Cu	8.605691	-10.934309
+qa/data/pcbnew/reverse_via.kicad_pcb	1	warning	track_dangling	Track has unconnected end	11086087-1a97-4ea0-b83a-d7f0d0467d7e	Track [/EM_VBUS] on In2.Cu, length 11.3024 mm	1.908001	-3.608001
 qa/data/pcbnew/reverse_via.kicad_pcb	#	hole_clearance	1	ae5ec65269698c7d
-qa/data/pcbnew/reverse_via.kicad_pcb	#	track_dangling	1	650a7c88000ca6bc
-qa/data/pcbnew/reverse_via.kicad_pcb	#	via_dangling	1	2bbb5760a23ae012
+qa/data/pcbnew/severities.kicad_pcb	8	warning	isolated_copper	Isolated copper fill	de1fc50a-44a7-4297-8b87-e0bfaa683c57	Zone [GND] on F.Cu, priority 0	117.0	98.0
 qa/data/pcbnew/severities.kicad_pcb	#	copper_edge_clearance	8	f6cb9bd0e72ea3e4
-qa/data/pcbnew/severities.kicad_pcb	#	isolated_copper	1	cb81025f703b8060
 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb	#	lib_footprint_issues	12	4631fcb676226b95
 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb	#	silk_over_copper	2	12238e785570f0a5
 qa/data/pcbnew/skew_group_matched_drc.kicad_pcb	#	silk_overlap	1	9cb48cd19937a4e3
@@ -1033,18 +1338,20 @@ qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb	#	skew_out_of_range	2	8fecef
 qa/data/pcbnew/sliver.kicad_pcb	#	copper_sliver	1	d1c7b6e616278375
 qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb	#	silk_over_copper	9	a0d8b5d115ddb58f
 qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb	#	solder_mask_bridge	4	4a89c46a9410177b
+qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	11	warning	track_dangling	Track has unconnected end	b9c9b074-47d6-49f1-9bd3-2ac72b7ac9cf	Track [a] on F.Cu, length 13.0000 mm	198.0	67.0
+qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	12	warning	track_dangling	Track has unconnected end	37a4bd9a-91cf-42a9-aaa9-ef44d65e6333	Track [b] on F.Cu, length 13.0000 mm	199.0	67.0
 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	#	invalid_outline	1	9127653b88922308
 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	#	lib_footprint_issues	1	ca6b973a2db0d162
 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	#	silk_over_copper	3	367d1bfe19d10110
 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	#	solder_mask_bridge	10	b115862d0a71b3c8
-qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	#	track_dangling	2	308c148e9d8e87f2
+qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	3	warning	track_dangling	Track has unconnected end	55555555-5555-5555-5555-555555555555	Track [netB] on B.Cu, length 10.0000 mm	100.6	95.0
 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	#	invalid_outline	1	389235c3104fcd09
 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	#	shorting_items	1	681f846aa52af14b
 qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	#	solder_mask_bridge	1	1129fb71f2d404a3
-qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	#	track_dangling	1	8ba242f6ed474e86
 qa/data/pcbnew/stacked/stacked.kicad_pcb	#	invalid_outline	1	2e858f13c3bb462f
 qa/data/pcbnew/stacked/stacked.kicad_pcb	#	lib_footprint_issues	2	c36b785a6b630fa2
-qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	#	isolated_copper	2	70f9404658783d85
+qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	8	warning	isolated_copper	Isolated copper fill	38763e20-95bd-4561-a831-4f8e2bed0551	Zone 'stitch_zone_0' [GND] on In1.Cu and In2.Cu, priority 0	105.0	91.1
+qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	9	warning	isolated_copper	Isolated copper fill	38763e20-95bd-4561-a831-4f8e2bed0551	Zone 'stitch_zone_0' [GND] on In1.Cu and In2.Cu, priority 0	105.0	91.1
 qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	#	items_not_allowed	8	c414cb164a5e0c70
 qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	#	lib_footprint_issues	1	b8c0bc0ec3122be2
 qa/data/pcbnew/stonehenge.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0500 mm on F.Cu)	95ec29ed-b551-4f2a-978e-f9efac19b050	Via [unconnected-(C160a1-Pad1)] on F.Cu - B.Cu	146.18	100.32
@@ -1055,40 +1362,49 @@ qa/data/pcbnew/stonehenge.kicad_pcb	4	error	via_diameter	Via diameter (board set
 qa/data/pcbnew/stonehenge.kicad_pcb	5	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm on F.Cu)	e36c8dc5-6e11-48b0-bcaa-a5b41746e63f	Via [unconnected-(C160c1-Pad1)] on F.Cu - B.Cu	148.925	103.825
 qa/data/pcbnew/stonehenge.kicad_pcb	6	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm on F.Cu)	68232f73-5717-4eaa-9e3d-108cc9f8c1cf	Via [/PA6] on F.Cu - B.Cu	147.4	101.2
 qa/data/pcbnew/stonehenge.kicad_pcb	7	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4000 mm on F.Cu)	3c885e8f-2751-4a47-aff2-a11e100f3907	Via [/PA7] on F.Cu - B.Cu	147.4	102.0
-qa/data/pcbnew/stonehenge.kicad_pcb	#	isolated_copper	1	455954a7207f0559
+qa/data/pcbnew/stonehenge.kicad_pcb	47	warning	isolated_copper	Isolated copper fill	0f9c68f4-a08a-45ad-b6ed-5f76ef85a5e1	Zone [<no net>] on B.Cu, priority 0	145.0	72.5
 qa/data/pcbnew/stonehenge.kicad_pcb	#	lib_footprint_issues	87	cdd6e44c2c8e592d
 qa/data/pcbnew/stonehenge.kicad_pcb	#	via_dangling	39	90d48503119032a8
+qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb	0	warning	track_dangling	Track has unconnected end	20000008-0000-0000-0000-000000000008	Track (arc) [/Push] on F.Cu, length 3.0634 mm	-4.732618	9.483449
 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb	#	lib_footprint_issues	1	75e5ec2bc35d28f7
-qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb	#	track_dangling	1	02d74b869db9baae
+qa/data/pcbnew/teardrop_close_via.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	30000000-0000-0000-0000-000000000001	Via [Net1] on F.Cu - B.Cu	102.6	100.0
 qa/data/pcbnew/teardrop_close_via.kicad_pcb	#	lib_footprint_issues	1	7a32f95d899e8186
-qa/data/pcbnew/teardrop_close_via.kicad_pcb	#	via_dangling	1	0adfaec873bfb328
+qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	40000005-0000-0000-0000-000000000001	Via [Net1] on F.Cu - B.Cu	102.12132	102.12132
 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb	#	lib_footprint_issues	1	09c715a2ea694180
-qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb	#	via_dangling	1	76a86d3ff893c534
+qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb	0	warning	track_dangling	Track has unconnected end	ce15ad8d-a628-4715-8339-ab683211530a	Track [<no net>] on F.Cu, length 0.2404 mm	129.34	116.66
 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb	#	lib_footprint_issues	1	1e80504bdfd6b6d8
-qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb	#	track_dangling	1	0919ae19518b5d8d
 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	3	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	1afc016c-3985-498b-8a0e-c5847536a4f5	Track [/CAN2L] on B.Cu, length 1.7607 mm	135.205	97.915
 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	4	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	2f42af69-e875-4c76-9122-fd6954be57bc	Track [/CAN2L] on B.Cu, length 1.6590 mm	136.45	99.16
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	5	warning	track_dangling	Track has unconnected end	1afc016c-3985-498b-8a0e-c5847536a4f5	Track [/CAN2L] on B.Cu, length 1.7607 mm	135.205	97.915
 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	#	invalid_outline	1	4a37f92f35291caa
 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	#	lib_footprint_issues	1	426251df64129f4b
-qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	#	track_dangling	1	53ed6aeed75ca8aa
 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	#	unresolved_variable	2	c1943a539f61f4c5
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	2	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	0363adc7-8077-4556-b969-ea996bb37961	Track (arc) [/OUT_CAM0_SCL] on F.Cu, length 1.6424 mm	68.812373	55.998794
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	3	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	4ea7fd26-3643-46ba-99cd-843380d8010e	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.201294	56.041294
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	4	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	990688a7-abf7-4f96-b542-8de407f89782	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.291294	54.581294
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	5	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	74be004a-a995-40b2-a8cf-df6c7762b253	Track (arc) [/SYNC_ZRGB] on F.Cu, length 1.6424 mm	68.671294	54.531294
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	6	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	b09cc660-826f-4e9f-9ea2-2f312e884cc8	Track (arc) [/SYNC_ZRGB] on F.Cu, length 1.6424 mm	66.988706	58.748706
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	7	warning	track_dangling	Track has unconnected end	0363adc7-8077-4556-b969-ea996bb37961	Track (arc) [/OUT_CAM0_SCL] on F.Cu, length 1.6424 mm	68.812373	55.998794
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	8	warning	track_dangling	Track has unconnected end	4ea7fd26-3643-46ba-99cd-843380d8010e	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.201294	56.041294
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	9	warning	track_dangling	Track has unconnected end	990688a7-abf7-4f96-b542-8de407f89782	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.291294	54.581294
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	10	warning	track_dangling	Track has unconnected end	74be004a-a995-40b2-a8cf-df6c7762b253	Track (arc) [/SYNC_ZRGB] on F.Cu, length 1.6424 mm	68.671294	54.531294
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	11	warning	track_dangling	Track has unconnected end	b09cc660-826f-4e9f-9ea2-2f312e884cc8	Track (arc) [/SYNC_ZRGB] on F.Cu, length 1.6424 mm	66.988706	58.748706
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	#	clearance	2	1b8734d434cc6bc9
 qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	#	lib_footprint_issues	1	f9da1f399577a244
-qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	#	track_dangling	5	9cbc13bbfbc04359
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	1	warning	track_dangling	Track has unconnected end	92dbf38e-ff8d-42ff-ba43-5aad47e7ac80	Track [<no net>] on F.Cu, length 1.2021 mm	159.05	89.0
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	2	warning	track_dangling	Track has unconnected end	9d787be0-1327-4be8-bdf0-0b9c6daa09b6	Track [<no net>] on F.Cu, length 1.0607 mm	159.6	89.7
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	3	warning	track_dangling	Track has unconnected end	a000d97b-2752-437c-b190-89c1030112de	Track [<no net>] on F.Cu, length 1.1314 mm	159.6	88.3
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	4	warning	track_dangling	Track has unconnected end	b91d0375-8bf5-46da-a922-a0a4207b82fc	Track [<no net>] on F.Cu, length 1.2500 mm	160.1	89.5
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	5	warning	track_dangling	Track has unconnected end	c142426a-daa6-48e7-ac32-5cb827bd5c69	Track [<no net>] on F.Cu, length 1.7678 mm	160.2	89.0
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	6	warning	track_dangling	Track has unconnected end	dd3a6901-f216-40c4-80d3-546e02c366b1	Track [<no net>] on F.Cu, length 1.2021 mm	159.05	89.0
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	42ca7ed2-2695-49f3-9597-568216411567	Via [<no net>] on F.Cu - B.Cu	159.6	89.0
 qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	#	invalid_outline	1	7226b094892fa904
-qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	#	track_dangling	6	80a140b92abec8fd
-qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	#	via_dangling	1	6f085bccc023b70e
 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	0	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	11111111-1111-1111-1111-111111111111	Via [/SIG] on F.Cu - B.Cu	100.0	100.0
 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	2	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	22222222-2222-2222-2222-222222222222	Track [/SIG] on F.Cu, length 0.0700 mm	99.99	100.245
 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	3	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	33333333-3333-3333-3333-333333333333	Track [/SIG] on F.Cu, length 0.1504 mm	100.06	100.245
+qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	11111111-1111-1111-1111-111111111111	Via [/SIG] on F.Cu - B.Cu	100.0	100.0
+qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	5	warning	track_dangling	Track has unconnected end	33333333-3333-3333-3333-333333333333	Track [/SIG] on F.Cu, length 0.1504 mm	100.06	100.245
 qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	#	invalid_outline	1	d76bf91d08b71a7d
-qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	#	track_dangling	1	3194190a3d065e5c
-qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	#	via_dangling	1	3115e9996077c5e8
 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	8	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	b3c83326-5197-4566-9f2b-3198cd43224a	PTH pad 33 [GND] of U2	146.58	105.46
 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	9	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	e70f5d4f-bca5-4c40-ae8e-5f04aba4be2a	PTH pad 33 [GND] of U2	147.58	105.46
 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	10	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	601ac208-a50b-4f3d-bbd2-6966a0baf20b	PTH pad 33 [GND] of U2	148.58	105.46
@@ -1111,57 +1427,83 @@ qa/data/pcbnew/teardrop_spike.kicad_pcb	5	error	via_diameter	Via diameter (board
 qa/data/pcbnew/teardrop_spike.kicad_pcb	#	copper_sliver	1	d1c7b6e616278375
 qa/data/pcbnew/teardrop_spike.kicad_pcb	#	invalid_outline	1	6ab95a8c8b4861f4
 qa/data/pcbnew/teardrop_spike.kicad_pcb	#	lib_footprint_issues	1	091358c7e25d9234
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	4	warning	isolated_copper	Isolated copper fill	a78787ef-dd0d-4073-9547-f9e19d46d566	Zone [Test2] on B.Cu, priority 2	143.637	84.582
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	5	warning	isolated_copper	Isolated copper fill	e7fb42af-8060-4e89-b56c-5293c80f1b68	Zone [Test3] on B.Cu, priority 1	159.385	89.154
 qa/data/pcbnew/test_copper_graphics.kicad_pcb	#	clearance	2	d31e891d315e9a7f
-qa/data/pcbnew/test_copper_graphics.kicad_pcb	#	isolated_copper	2	5dff61511d981241
 qa/data/pcbnew/test_copper_graphics.kicad_pcb	#	lib_footprint_issues	2	8b76decef300d140
 qa/data/pcbnew/test_copper_graphics.kicad_pcb	#	nonmirrored_text_on_back_layer	1	ce25198429331f05
 qa/data/pcbnew/test_copper_graphics.kicad_pcb	#	shorting_items	2	022998a93bb654e3
 qa/data/pcbnew/test_starved_thermal.kicad_pcb	#	starved_thermal	2	8266906a4437ece2
 qa/data/pcbnew/time_calculations.kicad_pcb	#	lib_footprint_issues	16	cef7e50829b94b6c
 qa/data/pcbnew/time_calculations.kicad_pcb	#	microvia_crosses_core	1	efcdbf5cd8a3757a
+qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	2	warning	track_dangling	Track has unconnected end	3548c1d0-b54d-42f8-a856-3a63a6d65fcb	Track [McNetty] on F.Cu, length 0.2235 mm	42.340283	24.843644
+qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	3	warning	track_dangling	Track has unconnected end	c23a80a7-5bfc-4b61-99b8-5197ce24db86	Track [McNetty] on F.Cu, length 0.1836 mm	28.131219	30.128382
 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	#	lib_footprint_issues	1	bf60649393e20518
 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	#	solder_mask_bridge	2	bbae51088e486485
-qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	#	track_dangling	2	41f68d4db9270525
+qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	1	warning	track_dangling	Track has unconnected end	65de65ea-c59a-49b1-9861-84c37ec18480	Track [<no net>] on F.Cu, length 14.1727 mm	123.13735	50.14
+qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	2	warning	track_dangling	Track has unconnected end	be40dcb4-4ea4-4d02-b4a7-023ff28a179f	Track [<no net>] on F.Cu, length 13.3315 mm	102.24	50.14
 qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	#	invalid_outline	1	dda771c056b0431d
-qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	#	track_dangling	2	4ba582df0930cdad
+qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	1	warning	track_dangling	Track has unconnected end	65de65ea-c59a-49b1-9861-84c37ec18480	Track [<no net>] on F.Cu, length 14.1727 mm	123.13735	50.14
+qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	2	warning	track_dangling	Track has unconnected end	be40dcb4-4ea4-4d02-b4a7-023ff28a179f	Track [<no net>] on F.Cu, length 13.3315 mm	102.24	50.14
 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	#	invalid_outline	1	b637d969e0642ff0
-qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	#	track_dangling	2	4ba582df0930cdad
 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb	#	lib_footprint_issues	3	8f3a7b51b4fd0928
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	0	error	drill_out_of_range	Hole size out of range (board setup constraints min hole 0.3000 mm; actual 0.2000 mm)	85016fb8-dae6-4030-af49-2b0ddc298acf	Via [/TX] on F.Cu - B.Cu	131.3	85.6
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	4	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	298df97f-d70b-4d58-a974-3a9f45e95242	Track [/TX] on B.Cu, length 0.3610 mm	131.661	85.6
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	5	error	track_width	Track width (board setup constraints min width 0.2000 mm; actual 0.1000 mm)	4cb4b920-9472-4377-932e-2c0e6a1f0efc	Track [/TX] on B.Cu, length 0.1966 mm	131.8	85.739
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	6	error	via_diameter	Via diameter (board setup constraints min diameter 0.5000 mm; actual 0.4500 mm)	85016fb8-dae6-4030-af49-2b0ddc298acf	Via [/TX] on F.Cu - B.Cu	131.3	85.6
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	85016fb8-dae6-4030-af49-2b0ddc298acf	Via [/TX] on F.Cu - B.Cu	131.3	85.6
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	8	warning	track_dangling	Track has unconnected end	4cb4b920-9472-4377-932e-2c0e6a1f0efc	Track [/TX] on B.Cu, length 0.1966 mm	131.8	85.739
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	#	invalid_outline	1	59bb42e58782b1b5
-qa/data/pcbnew/two_segment_teardrop.kicad_pcb	#	track_dangling	1	4ef85a6caaf28ee7
 qa/data/pcbnew/two_segment_teardrop.kicad_pcb	#	unresolved_variable	2	c1943a539f61f4c5
-qa/data/pcbnew/two_segment_teardrop.kicad_pcb	#	via_dangling	1	507315f291e0f28f
 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb	#	lib_footprint_issues	1	d3b7b084cf84c442
 qa/data/pcbnew/variant_test/variant_test.kicad_pcb	#	invalid_outline	1	9f305e4724ac0722
 qa/data/pcbnew/variant_test/variant_test.kicad_pcb	#	lib_footprint_issues	5	f83c9586c7cbeb49
 qa/data/pcbnew/variant_test/variant_test.kicad_pcb	#	silk_over_copper	5	7a5dcef60212b0eb
 qa/data/pcbnew/variant_test/variant_test.kicad_pcb	#	silk_overlap	3	986805141b1981d1
-qa/data/pcbnew/via_dangling.kicad_pcb	#	via_dangling	1	7dd3eb4376a2c6f0
+qa/data/pcbnew/via_dangling.kicad_pcb	0	warning	via_dangling	Via is not connected or connected on only one layer	0d899acd-71ef-4c82-9710-1acddf041557	Via [<no net>] on F.Cu - B.Cu	30.0	10.0
+qa/data/pcbnew/via_off_center.kicad_pcb	0	warning	track_not_centered_on_via	Track endpoint not centered on via	2e079e32-f7d5-4a86-b4cf-583c8a018453	Track [/NON_CENTERED_C] on F.Cu, length 4.0000 mm	44.0	47.2	f62fec11-2ac0-42b3-8ca5-eaa32e968308	Via [/NON_CENTERED_C] on F.Cu - B.Cu	48.034755	46.998639
+qa/data/pcbnew/via_off_center.kicad_pcb	1	warning	track_not_centered_on_via	Track endpoint not centered on via	425ae364-8776-4899-b990-7cf8b77e2672	Track [/NON_CENTERED_C] on F.Cu, length 4.0000 mm	50.0	47.2	3bce0cf5-c4cf-40ee-ae56-3f6dc5585e57	Via [/NON_CENTERED_C] on F.Cu - B.Cu	50.034755	46.998639
+qa/data/pcbnew/via_off_center.kicad_pcb	2	warning	track_not_centered_on_via	Track endpoint not centered on via	35765100-ffa0-490e-8d1a-59ef2eaedc93	Track [/NON_CENTERED_A] on F.Cu, length 4.0000 mm	50.0	38.0	c852c74f-7d53-4404-9a48-c2e78a7032d5	Via [/NON_CENTERED_A] on F.Cu - B.Cu	50.005311	38.199279
+qa/data/pcbnew/via_off_center.kicad_pcb	3	warning	track_not_centered_on_via	Track endpoint not centered on via	5d71c324-181c-4554-a6d0-d8c2183ff3b3	Track [/NON_CENTERED_A] on B.Cu, length 2.0000 mm	50.0	38.0	c852c74f-7d53-4404-9a48-c2e78a7032d5	Via [/NON_CENTERED_A] on F.Cu - B.Cu	50.005311	38.199279
+qa/data/pcbnew/via_off_center.kicad_pcb	4	warning	track_not_centered_on_via	Track endpoint not centered on via	f88fe59d-d2c7-460d-b7e0-4dab9e685354	Track [/NON_CENTERED_B] on F.Cu, length 4.0000 mm	44.0	42.6	69e5644a-761c-4dea-ba4d-65357f172250	Via [/NON_CENTERED_B] on F.Cu - B.Cu	48.010505	42.40904
+qa/data/pcbnew/via_off_center.kicad_pcb	5	warning	track_not_centered_on_via	Track endpoint not centered on via	c467d51f-9a8f-42f7-8625-21fd9dd52b3e	Track [/NON_CENTERED_B] on B.Cu, length 2.0000 mm	50.0	42.6	69e5644a-761c-4dea-ba4d-65357f172250	Via [/NON_CENTERED_B] on F.Cu - B.Cu	48.010505	42.40904
 qa/data/pcbnew/via_off_center.kicad_pcb	#	lib_footprint_issues	6	91695098554f97e6
-qa/data/pcbnew/via_off_center.kicad_pcb	#	track_not_centered_on_via	6	ea4cb600c620a9fa
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	0	error	track_dangling	Track has unconnected end	892f8d8b-6142-445f-a82d-a14f197154ad	Track [/DDR4-PS.RSTN] on Top Layer, length 0.5568 mm	153.12782	211.474395
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	1	error	track_dangling	Track has unconnected end	6492e3a2-bf99-4d3d-9e54-724806cce92b	Track [/DDR4-PS.CK_P] on Top Layer, length 0.5568 mm	154.72782	209.874385
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	2	error	track_dangling	Track has unconnected end	f2a9766d-6760-44f4-a71f-1825b08fa470	Track [/DDR4-PS.CK_N] on Top Layer, length 0.5568 mm	154.72782	209.074395
 qa/data/pcbnew/via_stack_track_width.kicad_pcb	#	invalid_outline	1	40bf6ac412b51425
-qa/data/pcbnew/via_stack_track_width.kicad_pcb	#	track_dangling	3	566eaa40bee67ebd
+qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	0	error	track_dangling	Track has unconnected end	36bb9922-0f43-45c2-86dc-1ea5cfca7353	Track [P1V8] on Top Layer, length 0.5568 mm	154.72782	214.674385
 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	#	invalid_outline	1	261753f4b853b2e1
-qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	#	track_dangling	1	be755aca490a0148
 qa/data/pcbnew/via_stacks.kicad_pcb	0	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	e64e83bb-b9fd-40a4-82a1-4e2680099f9c	Micro via [<no net>] on F.Cu - In1.Cu	20.0	20.0
 qa/data/pcbnew/via_stacks.kicad_pcb	1	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	3489aebc-fcb5-43a2-8a7d-fa4869f8f90b	Micro via [<no net>] on In1.Cu - In2.Cu	20.0	20.0
 qa/data/pcbnew/via_stacks.kicad_pcb	2	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	5f37f62b-46be-4bf1-b36d-1180d87d62cc	Micro via [<no net>] on In1.Cu - In2.Cu	40.0	20.0
 qa/data/pcbnew/via_stacks.kicad_pcb	3	error	annular_width	Annular width (board setup constraints min annular width 0.1000 mm; actual 0.0750 mm)	cef5bd56-1e2a-48d1-8676-f66068d03504	Micro via [<no net>] on In2.Cu - In3.Cu	40.45	20.0
+qa/data/pcbnew/via_stacks.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	e64e83bb-b9fd-40a4-82a1-4e2680099f9c	Micro via [<no net>] on F.Cu - In1.Cu	20.0	20.0
+qa/data/pcbnew/via_stacks.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	3489aebc-fcb5-43a2-8a7d-fa4869f8f90b	Micro via [<no net>] on In1.Cu - In2.Cu	20.0	20.0
+qa/data/pcbnew/via_stacks.kicad_pcb	7	warning	via_dangling	Via is not connected or connected on only one layer	5f37f62b-46be-4bf1-b36d-1180d87d62cc	Micro via [<no net>] on In1.Cu - In2.Cu	40.0	20.0
+qa/data/pcbnew/via_stacks.kicad_pcb	8	warning	via_dangling	Via is not connected or connected on only one layer	cef5bd56-1e2a-48d1-8676-f66068d03504	Micro via [<no net>] on In2.Cu - In3.Cu	40.45	20.0
 qa/data/pcbnew/via_stacks.kicad_pcb	#	invalid_outline	1	221c29f18f622446
 qa/data/pcbnew/via_stacks.kicad_pcb	#	microvia_crosses_core	2	0ef0994a4526072e
-qa/data/pcbnew/via_stacks.kicad_pcb	#	via_dangling	4	5e052eb1f8b15b11
+qa/data/pcbnew/zone_filler.kicad_pcb	112	warning	track_dangling	Track has unconnected end	033af7de-85e8-467f-a25c-6dbb863e7bc9	Track [signal] on F.Cu, length 7.3755 mm	160.264532	66.04
+qa/data/pcbnew/zone_filler.kicad_pcb	113	warning	track_dangling	Track has unconnected end	adb07059-ceed-4321-b3e0-f14cf7e09e20	Track [signal] on F.Cu, length 0.6350 mm	141.605	67.31
 qa/data/pcbnew/zone_filler.kicad_pcb	#	clearance	92	7ca058d1174c6d84
 qa/data/pcbnew/zone_filler.kicad_pcb	#	lib_footprint_issues	1	fa01d08ea9e2033d
 qa/data/pcbnew/zone_filler.kicad_pcb	#	solder_mask_bridge	20	82a39725d065088d
-qa/data/pcbnew/zone_filler.kicad_pcb	#	track_dangling	2	ca6cfefa57a54018
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	0	warning	track_dangling	Track has unconnected end	d1b104ae-a663-4f49-af30-cc0e0533d79a	Track [Net-(U2-Coupled)] on B.Cu, length 0.5000 mm	109.5	72.5
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	1	warning	track_dangling	Track has unconnected end	71b8a9dd-ce53-422a-ba3d-ae6846d02237	Track [/net2] on F.Cu, length 24.5000 mm	115.0	64.5
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	2	warning	track_dangling	Track has unconnected end	dc4fb009-a833-42c4-83fa-b7ca7e4469c4	Track [/net2] on F.Cu, length 24.5000 mm	107.5	64.5
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	3	warning	track_dangling	Track has unconnected end	c4eb4e66-5b2f-40e8-9836-388dd7481482	Track [/net1] on F.Cu, length 21.5000 mm	116.0	67.5
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	4	warning	track_dangling	Track has unconnected end	d2204fb9-bf76-4379-be74-44bc6709f8a8	Track [/net1] on F.Cu, length 26.0000 mm	108.5	63.0
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	5	warning	track_dangling	Track has unconnected end	fa18ab7c-7a7f-44b6-82b5-740ada5a66b6	Track [/net1] on F.Cu, length 1.5000 mm	116.0	69.0
 qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	#	lib_footprint_issues	1	75aa2f2f9480365a
-qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	#	track_dangling	6	16f9dca6f10cb3d4
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	0	warning	track_dangling	Track has unconnected end	3c99bfe7-b61b-4a16-a8f4-364bc15adb83	Track [Net-(U2-Coupled)] on F.Cu, length 1.0000 mm	102.0	78.5
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	1	warning	track_dangling	Track has unconnected end	8fcb3cb7-e4c3-49da-918e-ec4ec254a699	Track [Net-(U2-Coupled)] on F.Cu, length 0.5000 mm	108.0	65.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	2	warning	via_dangling	Via is not connected or connected on only one layer	df4b78e7-b96b-4599-919b-55479bace3b7	Via [Net-(U2-Coupled)] on F.Cu - B.Cu	103.5	80.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	3	warning	track_dangling	Track has unconnected end	7279d26f-c32e-40c4-9086-1fb4386a0869	Track [/net2] on F.Cu, length 1.0000 mm	102.0	76.5
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	4	warning	via_dangling	Via is not connected or connected on only one layer	95eb2c50-0d82-4956-87a1-87ddf3c6ab51	Via [/net2] on F.Cu - B.Cu	103.5	77.9
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	5	warning	via_dangling	Via is not connected or connected on only one layer	46fbf3d4-4987-4aa5-8666-e132d5d116bb	Via [/net1] on F.Cu - B.Cu	102.0	80.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	6	warning	via_dangling	Via is not connected or connected on only one layer	4f07bf61-3a5a-405d-9c82-16771db402a6	Via [/net1] on F.Cu - B.Cu	103.5	75.9
 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	#	lib_footprint_issues	1	969dcb12a2620f9e
-qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	#	track_dangling	3	0bbbc772ce97eb5c
-qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	#	via_dangling	4	147c9b50e69444e5
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	1	warning	track_dangling	Track has unconnected end	749c3712-f177-4f6a-8240-f7c69002c0ef	Track [<no net>] on F.Cu, length 10.8450 mm	111.312	143.779
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	2	warning	track_dangling	Track has unconnected end	a7d81fd5-5e14-4d28-aa81-0092a263b4b1	Track [<no net>] on F.Cu, length 40.2970 mm	136.645	78.149
 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	#	invalid_outline	1	a6217f5d47dfdc37
-qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	#	track_dangling	2	94f0321ef9f38066

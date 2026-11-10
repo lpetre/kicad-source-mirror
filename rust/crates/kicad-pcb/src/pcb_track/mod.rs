@@ -66,11 +66,13 @@ use crate::board_design_settings::BoardDesignSettings;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::{DrcConstraint, DrcConstraintT};
 use crate::ids::{ItemId, NetCode, TrackId};
-use crate::item::{BoardItemBase, ConnectedItemBase, RecurseMode, SharedShape};
+use crate::item::{BoardItemBase, ConnectedItemBase, ItemFlags, RecurseMode, SharedShape};
 use crate::item_ref::{AnyItem, ItemRef};
 use crate::netclass::Netclass;
 use crate::padstack::Padstack;
-use crate::traits::{BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate};
+use crate::traits::{
+    AsAnyItem, BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate,
+};
 use crate::{board_connected_item, board_item};
 
 /// Element type of `Board::tracks` (C++ `TRACKS` holds `PCB_TRACK*`, `PCB_ARC*` and
@@ -290,6 +292,43 @@ macro_rules! on_track_mut {
 }
 
 impl Track {
+    /// Port of the virtual `operator==( const BOARD_ITEM& )` of the track family
+    /// (`PCB_TRACK`, `PCB_ARC`, `PCB_VIA`): false across types, else the typed comparison.
+    pub fn eq_item(&self, other: &Track) -> bool {
+        match (self, other) {
+            (Track::Trace(a), Track::Trace(b)) => a.eq_item(b),
+            (Track::Arc(a), Track::Arc(b)) => a.eq_item(b),
+            (Track::Via(a), Track::Via(b)) => a.eq_item(b),
+            _ => false,
+        }
+    }
+
+    /// Port of the virtual `Similarity( const BOARD_ITEM& )` of the track family: 0.0 across
+    /// types, else the typed similarity.
+    pub fn similarity(&self, other: &Track) -> f64 {
+        match (self, other) {
+            (Track::Trace(a), Track::Trace(b)) => a.similarity(b),
+            (Track::Arc(a), Track::Arc(b)) => a.similarity(b),
+            (Track::Via(a), Track::Via(b)) => a.similarity(b),
+            _ => 0.0,
+        }
+    }
+
+    /// The C++ copy constructor of the concrete class (`board-model.md` 3): the member-wise
+    /// copy for a segment or an arc, `PCB_VIA( const PCB_VIA& )` for a via (which keeps the
+    /// `PCB_TRACK` constructor values of `m_width` and the solder mask members, see
+    /// `PcbVia::detached_copy`). Shadows the blanket `DetachedCopy::detached_copy`.
+    pub fn detached_copy(&self) -> Track {
+        match self {
+            Track::Via(v) => Track::Via(Box::new(v.detached_copy())),
+            other => {
+                let mut copy = other.clone();
+                copy.as_track_mut().base.item.id = None;
+                copy
+            }
+        }
+    }
+
     /// The `PCB_TRACK` base of any variant.
     pub fn as_track(&self) -> &PcbTrack {
         match self {
@@ -432,9 +471,9 @@ pub fn pcb_track_cmp_tracks(ctx: &BoardCtx<'_>, a: TrackId, b: TrackId) -> Order
 
 /// `EDA_ITEM_FLAGS STARTPOINT` (`include/eda_item_flags.h`), returned by
 /// `PcbTrack::is_point_on_ends`.
-pub const STARTPOINT: u32 = 1 << 9;
+pub const STARTPOINT: u32 = ItemFlags::STARTPOINT;
 /// `EDA_ITEM_FLAGS ENDPOINT`.
-pub const ENDPOINT: u32 = 1 << 10;
+pub const ENDPOINT: u32 = ItemFlags::ENDPOINT;
 
 /// Hands `this` of a track-family item to `f` as the `BOARD_ITEM*` the rule resolver gets:
 /// the stored item when the value carries a live handle, otherwise a view of the copy that
@@ -452,16 +491,6 @@ fn with_this<R>(
 
     let copy = detached();
     f(ctx.view(AnyItem::Track(&copy)))
-}
-
-/// `DRC_CONSTRAINT::GetName()` (`GetRuleName( m_parentRule )`): the implicit rule's name,
-/// "rule '<name>'" for a user rule, the constraint's own name without a rule.
-fn constraint_name(constraint: &DrcConstraint) -> String {
-    match &constraint.parent_rule {
-        Some(rule) if rule.implicit => rule.name.clone(),
-        Some(rule) => format!("rule '{}'", rule.name),
-        None => constraint.name.clone(),
-    }
 }
 
 /// Port of `PCB_TRACK::GetWidthConstraint( aSource )` for the segment or arc `track`
@@ -490,7 +519,7 @@ fn width_constraint_of(
         }
     }
 
-    let source = want_source.then(|| constraint_name(&aggregate));
+    let source = want_source.then(|| aggregate.name());
 
     (aggregate.value, source)
 }
@@ -594,6 +623,29 @@ impl From<PcbVia> for Track {
 
 impl Invalidate for PcbTrack {
     fn invalidate_caches(&mut self) {}
+}
+
+// `this` as a `BOARD_ITEM*` (`AsAnyItem`): the `AnyItem` form of the family is the tagged
+// `Track`, so each struct hands over a copy of itself (with its `base.id`).
+impl AsAnyItem for PcbTrack {
+    fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)) {
+        let copy = Track::Trace(self.clone());
+        f(AnyItem::Track(&copy))
+    }
+}
+
+impl AsAnyItem for PcbArc {
+    fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)) {
+        let copy = Track::Arc(self.clone());
+        f(AnyItem::Track(&copy))
+    }
+}
+
+impl AsAnyItem for PcbVia {
+    fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)) {
+        let copy = Track::Via(Box::new(self.clone()));
+        f(AnyItem::Track(&copy))
+    }
 }
 
 impl BoardItem for PcbTrack {
@@ -1150,6 +1202,9 @@ impl BoardConnectedItem for Track {
     fn net_code(&self) -> NetCode {
         on_track!(self, t => BoardConnectedItem::net_code(t))
     }
+    fn set_net(&mut self, net: NetCode) {
+        on_track_mut!(self, t => BoardConnectedItem::set_net(t, net))
+    }
     fn is_connected(&self, ctx: &BoardCtx<'_>) -> bool {
         on_track!(self, t => BoardConnectedItem::is_connected(t, ctx))
     }
@@ -1215,8 +1270,13 @@ impl BoardItemMut for Track {
     ) {
         on_track_mut!(self, t => BoardItemMut::on_footprint_rescaled(t, env, ratio_x, ratio_y, linear_factor, anchor, parent_rotate))
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        on_track_mut!(self, t => BoardItemMut::style_from_settings(t, settings, check_side))
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        on_track_mut!(self, t => BoardItemMut::style_from_settings(t, env, settings, check_side))
     }
 }
 

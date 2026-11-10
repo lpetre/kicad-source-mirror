@@ -1243,17 +1243,17 @@ impl Pad {
         self.pin_type.contains("no_connect")
     }
 
-    /// `PAD::IsFreePad()` needs the net (`GetShortNetname()`), which a `&self`-only method
-    /// cannot reach: use [`Pad::is_free_pad_ctx`]. Kept as a marker until the signature is
-    /// changed to take `ctx` (requested from the orchestrator).
-    pub fn is_free_pad(&self) -> bool {
-        crate::port_pending!("PAD::IsFreePad (needs ctx: use Pad::is_free_pad_ctx)")
-    }
-
-    /// `PAD::IsFreePad()`: an "unconnected-(" net and a "free" pin type.
-    pub fn is_free_pad_ctx(&self, ctx: &BoardCtx<'_>) -> bool {
+    /// `PAD::IsFreePad()`: an "unconnected-(" net and a "free" pin type. Takes the context
+    /// because `GetShortNetname()` reads the net (rev 2.3).
+    pub fn is_free_pad(&self, ctx: &BoardCtx<'_>) -> bool {
         crate::board_connected_item::short_netname(self, ctx).starts_with("unconnected-(")
             && self.pin_type == "free"
+    }
+
+    /// Forwarding wrapper of [`Pad::is_free_pad`] under its pre-2.3 name; kept while running
+    /// packages still call it (removal: `docs/design/integration-2.md`).
+    pub fn is_free_pad_ctx(&self, ctx: &BoardCtx<'_>) -> bool {
+        self.is_free_pad(ctx)
     }
 
     // ---- state / attributes -------------------------------------------------------------
@@ -2542,7 +2542,7 @@ mod tests {
             "aperture" => v_bool(pad.is_aperture_pad()),
             "npth_no_copper" => v_bool(pad.is_npth_with_no_copper(ctx)),
             "no_connect" => v_bool(pad.is_no_connect_pad()),
-            "free" => v_bool(pad.is_free_pad_ctx(ctx)),
+            "free" => v_bool(pad.is_free_pad(ctx)),
             "can_have_number" => v_bool(pad.can_have_number()),
             "principal_layer" => v_layer(pad.principal_layer(ctx)),
             "drill_size" => v_vec(pad.drill_size(ctx)),

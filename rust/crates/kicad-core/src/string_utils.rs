@@ -274,94 +274,140 @@ pub fn escape_string(source: &str, context: EscapeContext) -> String {
 /// Port of `UnescapeString`: decode the `{token}` escapes of [`escape_string`]; unknown
 /// tokens and `${..}`, `~{..}`, `^{..}`, `_{..}` groups are kept (with their content
 /// unescaped recursively).
+///
+/// The C++ function calls itself for the text inside unknown or prefixed (`${...}`) braces.
+/// The port runs the same algorithm with an explicit stack of activation records, so deeply
+/// nested braces in (untrusted) text cannot overflow the call stack.
 pub fn unescape_string(source: &str) -> String {
-    let chars: Vec<char> = source.chars().collect();
-
-    unescape_chars(&chars)
-}
-
-fn unescape_chars(source: &[char]) -> String {
-    let source_len = source.len();
-
-    // smallest escape string is three characters, shortcut everything else
-    if source_len <= 2 {
-        return source.iter().collect();
+    /// The local state of one C++ call.
+    struct Frame {
+        src: Vec<char>,
+        i: usize,
+        ch: char,
+        newbuf: String,
+        /// Whether `}` follows the result of the nested call this frame is waiting for.
+        close: bool,
     }
 
-    let mut newbuf = String::with_capacity(source_len);
-    let mut ch = '\0';
-    let mut i = 0;
+    let mut stack: Vec<Frame> = Vec::new();
+    // The argument of a call about to be made, and the value a finished call returned.
+    let mut call: Option<Vec<char>> = Some(source.chars().collect());
+    let mut ret: Option<String> = None;
 
-    while i < source_len {
-        let prev = ch;
-        ch = source[i];
-
-        if ch == '{' {
-            let mut token: Vec<char> = Vec::new();
-            let mut depth = 1;
-            let mut terminated = false;
-
-            i += 1;
-
-            while i < source_len {
-                ch = source[i];
-
-                if ch == '{' {
-                    depth += 1;
-                } else if ch == '}' {
-                    depth -= 1;
-                }
-
-                if depth <= 0 {
-                    terminated = true;
-                    break;
-                } else {
-                    token.push(ch);
-                }
-
-                i += 1;
-            }
-
-            let token_str: String = token.iter().collect();
-
-            if !terminated {
-                newbuf.push('{');
-                newbuf.push_str(&unescape_chars(&token));
-            } else if prev == '$' || prev == '~' || prev == '^' || prev == '_' {
-                newbuf.push('{');
-                newbuf.push_str(&unescape_chars(&token));
-                newbuf.push('}');
+    loop {
+        if let Some(src) = call.take() {
+            // smallest escape string is three characters, shortcut everything else
+            if src.len() <= 2 {
+                ret = Some(src.into_iter().collect());
             } else {
-                match token_str.as_str() {
-                    "dblquote" => newbuf.push('"'),
-                    "quote" => newbuf.push('\''),
-                    "lt" => newbuf.push('<'),
-                    "gt" => newbuf.push('>'),
-                    "backslash" => newbuf.push('\\'),
-                    "slash" => newbuf.push('/'),
-                    "bar" => newbuf.push('|'),
-                    "comma" => newbuf.push(','),
-                    "colon" => newbuf.push(':'),
-                    "space" => newbuf.push(' '),
-                    "dollar" => newbuf.push('$'),
-                    "tab" => newbuf.push('\t'),
-                    "return" => newbuf.push('\n'),
-                    "brace" => newbuf.push('{'),
-                    _ => {
-                        newbuf.push('{');
-                        newbuf.push_str(&unescape_chars(&token));
-                        newbuf.push('}');
-                    }
-                }
+                let newbuf = String::with_capacity(src.len());
+                stack.push(Frame {
+                    src,
+                    i: 0,
+                    ch: '\0',
+                    newbuf,
+                    close: false,
+                });
             }
-        } else {
-            newbuf.push(ch);
         }
 
-        i += 1;
-    }
+        let Some(frame) = stack.last_mut() else {
+            return ret.unwrap_or_default();
+        };
 
-    newbuf
+        if let Some(nested) = ret.take() {
+            frame.newbuf.push_str(&nested);
+
+            if frame.close {
+                frame.newbuf.push('}');
+            }
+
+            frame.i += 1;
+        }
+
+        let source_len = frame.src.len();
+
+        while frame.i < source_len {
+            let prev = frame.ch;
+            frame.ch = frame.src[frame.i];
+
+            if frame.ch == '{' {
+                let mut token: Vec<char> = Vec::new();
+                let mut depth = 1;
+                let mut terminated = false;
+
+                frame.i += 1;
+
+                while frame.i < source_len {
+                    frame.ch = frame.src[frame.i];
+
+                    if frame.ch == '{' {
+                        depth += 1;
+                    } else if frame.ch == '}' {
+                        depth -= 1;
+                    }
+
+                    if depth <= 0 {
+                        terminated = true;
+                        break;
+                    } else {
+                        token.push(frame.ch);
+                    }
+
+                    frame.i += 1;
+                }
+
+                // Unterminated braces and braces after one of the markup prefixes are kept.
+                let keep_braces =
+                    !terminated || prev == '$' || prev == '~' || prev == '^' || prev == '_';
+
+                let replacement = if keep_braces {
+                    None
+                } else {
+                    match token.iter().collect::<String>().as_str() {
+                        "dblquote" => Some('"'),
+                        "quote" => Some('\''),
+                        "lt" => Some('<'),
+                        "gt" => Some('>'),
+                        "backslash" => Some('\\'),
+                        "slash" => Some('/'),
+                        "bar" => Some('|'),
+                        "comma" => Some(','),
+                        "colon" => Some(':'),
+                        "space" => Some(' '),
+                        "dollar" => Some('$'),
+                        "tab" => Some('\t'),
+                        "return" => Some('\n'),
+                        "brace" => Some('{'),
+                        _ => None,
+                    }
+                };
+
+                match replacement {
+                    Some(c) => frame.newbuf.push(c),
+                    None => {
+                        // newbuf << "{" << UnescapeString( token ) [<< "}"]
+                        frame.newbuf.push('{');
+                        frame.close = terminated;
+                        call = Some(token);
+                        break;
+                    }
+                }
+            } else {
+                frame.newbuf.push(frame.ch);
+            }
+
+            frame.i += 1;
+        }
+
+        if call.is_some() {
+            continue;
+        }
+
+        if let Some(done) = stack.pop() {
+            ret = Some(done.newbuf);
+        }
+    }
 }
 
 /// Port of `wxStringSplit`: split at every `splitter`; empty pieces are kept except a
@@ -944,6 +990,97 @@ pub fn wild_compare_string(pattern: &str, string_to_tst: &str, case_sensitive: b
     }
 
     wild[w] == '\0'
+}
+
+/// Port of `wxString::Matches( mask )` (wxWidgets 3.2, `src/common/string.cpp`, the
+/// non-regex branch built on the reference platform): `*` and `?` wildcards, case sensitive,
+/// on the code points of the C strings (`wx_str()`, so up to the first NUL).  wx's quirks are
+/// kept: any `*` / `?` run after a `*` is skipped (so `"*?"` matches the empty string and
+/// `"a*?"` matches `"a"`), the literal run after a `*` is found with `wxStrstr` (first
+/// occurrence), a literal mismatch fails at once, and only the last `*` is backtracked to,
+/// one character at a time.
+///
+/// Verified against `libwx_baseu` by `tests/test_wx_matches_oracle.rs`.
+pub fn wx_string_matches(text: &str, mask: &str) -> bool {
+    let mask = c_chars(mask);
+    let txt = c_chars(text);
+    let mut m = 0usize;
+    let mut t = 0usize;
+
+    // the last location where '*' matched
+    let mut last_star_in_text: Option<usize> = None;
+    let mut last_star_in_mask = 0usize;
+
+    loop {
+        // match:
+        while mask[m] != '\0' {
+            match mask[m] {
+                '?' => {
+                    if txt[t] == '\0' {
+                        return false;
+                    }
+
+                    // t and m will be incremented in the loop statement
+                }
+                '*' => {
+                    // remember where we started to be able to backtrack later
+                    last_star_in_text = Some(t);
+                    last_star_in_mask = m;
+
+                    // ignore special chars immediately following this one
+                    // (should this be an error?)
+                    while mask[m] == '*' || mask[m] == '?' {
+                        m += 1;
+                    }
+
+                    // if there is nothing more, match
+                    if mask[m] == '\0' {
+                        return true;
+                    }
+
+                    // are there any other metacharacters in the mask?  (wxStrpbrk, else
+                    // wxStrlen: the run up to the next metacharacter or the end)
+                    let len_mask = mask[m..]
+                        .iter()
+                        .position(|&c| c == '*' || c == '?' || c == '\0')
+                        .expect("NUL-terminated mask");
+                    let to_match = &mask[m..m + len_mask];
+
+                    // wxStrstr( pszTxt, strToMatch )
+                    let hay = &txt[t..txt.len() - 1];
+                    let Some(found) = hay.windows(len_mask).position(|w| w == to_match) else {
+                        return false;
+                    };
+
+                    // -1 to compensate "++" in the loop
+                    t = t + found + len_mask - 1;
+                    m += len_mask - 1;
+                }
+                c => {
+                    if c != txt[t] {
+                        return false;
+                    }
+                }
+            }
+
+            m += 1;
+            t += 1;
+        }
+
+        // match only if nothing left
+        if txt[t] == '\0' {
+            return true;
+        }
+
+        // if we failed to match, backtrack if we can
+        match last_star_in_text.take() {
+            Some(star) => {
+                t = star + 1;
+                m = last_star_in_mask;
+            }
+            None => return false,
+        }
+    }
 }
 
 /// Port of `NUMERIC_EVALUATOR::IsOldSchoolDecimalSeparator( wxUniChar, double* )`

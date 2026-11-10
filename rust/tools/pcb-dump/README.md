@@ -90,6 +90,7 @@ field and dumping continues.
 | `dump_items.cpp` | `track`, `pad`, `shape`, `text`, `dim`, `zone`, `footprint` |
 | `dump_settings.cpp` | design settings, netclass, stackup, plot params, teardrops, zone settings, `board`, `order` |
 | `dump_defaults.cpp` | `misc` section, `defaults` command |
+| `dump_props.cpp` | `props-table` command, opt-in `props` section (property tables and values, PROP-1) |
 | `boost_test_impl.cpp` | header-only Boost.Test implementation for the reused QA sources |
 
 ## Rust side (`pcb-dump-rs`) and comparing

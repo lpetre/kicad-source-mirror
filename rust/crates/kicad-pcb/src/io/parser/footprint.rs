@@ -335,8 +335,10 @@ impl PcbParser {
                     // Paths can be numerical so a number is also a symbol here
                     self.lexer.need_symbol_or_number()?;
                     let text = self.lexer.from_utf8();
-                    let path =
-                        kicad_core::KiidPath::from_string_or_random(&text, &mut self.board.kiid_generator);
+                    let path = kicad_core::KiidPath::from_string_or_random(
+                        &text,
+                        &mut self.board.kiid_generator,
+                    );
                     self.fp_mut(fp).path = path;
                     self.lexer.need_right()?;
                 }
@@ -417,8 +419,7 @@ impl PcbParser {
                                 names.insert(self.lexer.from_utf8());
                             }
                             T::T_RIGHT => {
-                                if let Some(group) = JumperGroup::make(std::mem::take(&mut names))
-                                {
+                                if let Some(group) = JumperGroup::make(std::mem::take(&mut names)) {
                                     self.fp_mut(fp).jumper_pad_groups.add(group);
                                 }
 
@@ -437,7 +438,8 @@ impl PcbParser {
                     self.lexer.need_right()?;
 
                     // In pre-9.0 files "0" meant inherit.
-                    if self.required_version <= 20240201 && self.fp_mut(fp).solder_mask_margin == Some(0)
+                    if self.required_version <= 20240201
+                        && self.fp_mut(fp).solder_mask_margin == Some(0)
                     {
                         self.fp_mut(fp).solder_mask_margin = None;
                     }
@@ -845,8 +847,12 @@ impl PcbParser {
             // Use the text effect parsing function because it will handle ki_fp_filters as a
             // property with no text effects, but will also handle parsing the text effects.
             // We just drop the effects if they're present.
-            let mut field =
-                PcbField::new(&mut self.board.kiid_generator, Some(fp_layer), FieldT::User, "");
+            let mut field = PcbField::new(
+                &mut self.board.kiid_generator,
+                Some(fp_layer),
+                FieldT::User,
+                "",
+            );
             let ordinal = {
                 let ctx = BoardCtx::bare(&self.board);
                 self.board
@@ -919,7 +925,11 @@ impl PcbParser {
         // board's. A file that did carry effects has said all it means to say.
         if new_field && !saw_effects && self.board_present {
             // m_board is null when reading a lib
-            field.style_from_settings(self.board.design_settings(), true);
+            field.style_from_settings(
+                &self.board.child_env(parent),
+                self.board.design_settings(),
+                true,
+            );
         }
 
         match target {

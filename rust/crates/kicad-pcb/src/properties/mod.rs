@@ -377,9 +377,9 @@ pub struct Property {
     pub base: ClassId,
     /// TypeHash().
     pub value_type: ValueType,
-    pub display: PropertyDisplay,   // m_display
-    pub coord_type: CoordType,      // m_coordType
-    pub group: String,              // m_group (set by AddProperty)
+    pub display: PropertyDisplay, // m_display
+    pub coord_type: CoordType,    // m_coordType
+    pub group: String,            // m_group (set by AddProperty)
     /// Constructed as `PROPERTY_ENUM` (even with `T = int`).
     pub is_enum_property: bool,
     /// PROPERTY_ENUM::m_choices as (value, label).
@@ -916,9 +916,11 @@ impl PropertyManager {
     }
 
     /// `GetProperty( aType, aProperty )`: case-insensitive name lookup (the rule language
-    /// replaces `_` by a space before calling it). The C++ returns the first match in address
-    /// order; within a class no two distinct properties share a name case-insensitively
-    /// (checked by the oracle table, `lookup=1`), so any order gives the same result.
+    /// replaces `_` by a space before calling it). The C++ returns the first match of
+    /// `m_allProperties` in address order. Within a class names are unique except `Text` of the
+    /// dimension classes (`EDA_TEXT` and `PCB_DIMENSION_BASE`), where the reference build
+    /// returns the `PCB_DIMENSION_BASE` one (oracle table, `lookup=`); the collection order
+    /// used here (own properties first, then the bases) gives the same answer.
     pub fn get_property(&self, class: ClassId, name: &str) -> Option<PropId> {
         let c = self.classes.get(&class)?;
         c.all_properties

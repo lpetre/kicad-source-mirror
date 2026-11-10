@@ -534,8 +534,8 @@ impl Board {
                 pad.zone_layer_overrides.insert(layer, value);
             }
         } else if let Some(track_id) = id.typed::<crate::pcb_track::Track>() {
-            if let Some(crate::pcb_track::Track::Via(_)) = self.tracks.get(track_id) {
-                crate::port_pending!("PCB_VIA::SetZoneLayerOverride (M17)", id, layer, value)
+            if let Some(crate::pcb_track::Track::Via(via)) = self.tracks.get_mut(track_id) {
+                via.set_zone_layer_override(layer, value);
             }
         }
     }
@@ -569,8 +569,8 @@ impl Board {
                 }
             }
         } else if let Some(track_id) = id.typed::<crate::pcb_track::Track>() {
-            if let Some(crate::pcb_track::Track::Via(_)) = self.tracks.get(track_id) {
-                crate::port_pending!("PCB_VIA::ClearZoneLayerOverrides (M17)", id)
+            if let Some(crate::pcb_track::Track::Via(via)) = self.tracks.get_mut(track_id) {
+                via.clear_zone_layer_overrides();
             }
         }
     }

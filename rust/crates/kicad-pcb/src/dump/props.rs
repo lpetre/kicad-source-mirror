@@ -116,7 +116,11 @@ pub fn dump_props_table(hash: bool) -> String {
             ancestors.sort();
             emit!(o, "ancestors", format!("[{}]", ancestors.join(",")));
 
-            let groups: Vec<String> = pm.group_display_order(id).iter().map(|g| v_str(g)).collect();
+            let groups: Vec<String> = pm
+                .group_display_order(id)
+                .iter()
+                .map(|g| v_str(g))
+                .collect();
             emit!(o, "groups", format!("[{}]", groups.join(",")));
             emit!(o, "count", pm.all_properties_count(id).to_string());
 
@@ -174,7 +178,9 @@ fn prop_value(p: &Property, it: ItemRef<'_>) -> String {
             Some(i) => format!("n:{}", v_f64(f64::from(i))),
             None => "null".to_string(),
         },
-        (PropertyKind::Unsigned, PropertyValue::Unsigned(u)) => format!("n:{}", v_f64(f64::from(u))),
+        (PropertyKind::Unsigned, PropertyValue::Unsigned(u)) => {
+            format!("n:{}", v_f64(f64::from(u)))
+        }
         (PropertyKind::LongLong, PropertyValue::LongLong(l)) => format!("n:{}", v_f64(l as f64)),
         (PropertyKind::Double, PropertyValue::Double(d)) => format!("n:{}", v_f64(d)),
         (PropertyKind::OptionalDouble, PropertyValue::OptDouble(d)) => match d {
@@ -197,9 +203,14 @@ fn prop_value(p: &Property, it: ItemRef<'_>) -> String {
             }
         }
         (PropertyKind::Angle, PropertyValue::Angle(a)) => format!("n:{}", v_f64(a.as_degrees())),
-        (PropertyKind::Color, PropertyValue::Color(c)) => format!("s:{}", v_str(&c.to_css_string())),
+        (PropertyKind::Color, PropertyValue::Color(c)) => {
+            format!("s:{}", v_str(&c.to_css_string()))
+        }
         (PropertyKind::Unsupported, _) => "undef".to_string(),
-        (k, v) => panic!("property {:?}: value {v:?} does not match kind {k:?}", p.name),
+        (k, v) => panic!(
+            "property {:?}: value {v:?} does not match kind {k:?}",
+            p.name
+        ),
     }
 }
 
@@ -214,7 +225,7 @@ pub(crate) fn dump_props(o: &mut Out, it: ItemRef<'_>) {
 
     for pid in pm.properties(class) {
         let p = pm.property(pid);
-        emit!(o, p.name.to_string(), {
+        o.emit(p.name, || {
             if !pm.is_available_for(class, pid, it) {
                 "n/a".to_string()
             } else {

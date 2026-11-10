@@ -164,6 +164,56 @@ impl Default for DrcConstraint {
 }
 
 impl DrcConstraint {
+    /// Port of `DRC_CONSTRAINT::GetName`: `GetRuleName( m_parentRule )`.
+    pub fn name(&self) -> String {
+        self.rule_name(self.parent_rule.as_ref())
+    }
+
+    /// Port of `DRC_CONSTRAINT::GetRuleName`: a user-facing name for `rule`, or this
+    /// constraint's own name when `rule` is `None` (for constraints from board setup or local
+    /// overrides rather than rules).
+    pub fn rule_name(&self, rule: Option<&DrcRuleInfo>) -> String {
+        if let Some(rule) = rule {
+            if rule.implicit {
+                return rule.name.clone();
+            } else {
+                // wxString::Format( _( "rule '%s'" ), aRule->m_Name )
+                return format!("rule '{}'", rule.name);
+            }
+        }
+
+        self.name.clone()
+    }
+
+    /// Port of `DRC_CONSTRAINT::Merge`: the tighter minimum and maximum win (each remembers
+    /// the rule it came from), an optimum is taken only when this constraint has none.
+    pub fn merge(&mut self, other: &DrcConstraint) {
+        if other.value.has_min() && (!self.value.has_min() || (other.value.min() > self.value.min()))
+        {
+            self.value.set_min(other.value.min());
+            self.min_rule = if other.min_rule.is_some() {
+                other.min_rule.clone()
+            } else {
+                other.parent_rule.clone()
+            };
+        }
+
+        if other.value.has_max() && (!self.value.has_max() || other.value.max() < self.value.max())
+        {
+            self.value.set_max(other.value.max());
+            self.max_rule = if other.max_rule.is_some() {
+                other.max_rule.clone()
+            } else {
+                other.parent_rule.clone()
+            };
+        }
+
+        if other.value.has_opt() && !self.value.has_opt() {
+            self.value.set_opt(other.value.opt());
+            self.parent_rule = other.parent_rule.clone();
+        }
+    }
+
     /// `DRC_CONSTRAINT( aType, aName )`.
     pub fn new(type_: DrcConstraintT, name: &str) -> Self {
         DrcConstraint {

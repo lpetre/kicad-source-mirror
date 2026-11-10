@@ -1,0 +1,614 @@
+demos/complex_hierarchy/complex_hierarchy.kicad_pcb	none
+demos/constraints/constraints.kicad_pcb	none
+demos/ecc83/ecc83-pp.kicad_pcb	none
+demos/ecc83/ecc83-pp_v2.kicad_pcb	none
+demos/interf_u/interf_u.kicad_pcb	none
+demos/kit-dev-coldfire-xilinx_5213/kit-dev-coldfire-xilinx_5213.kicad_pcb	none
+demos/microwave/microwave.kicad_pcb	none
+demos/multichannel/multichannel_mixer-unrouted.kicad_pcb	#	unconnected_items	148	b7f6e1d6bc549bbb
+demos/multichannel/multichannel_mixer.kicad_pcb	none
+demos/pic_programmer/pic_programmer.kicad_pcb	none
+demos/royalblue54L_feather/RoyalBlue54L-Feather.kicad_pcb	none
+demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb	none
+demos/sonde xilinx/sonde xilinx.kicad_pcb	none
+demos/stickhub/StickHub.kicad_pcb	none
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb	none
+qa/data/pcbnew/bad_triangulation_case.kicad_pcb	none
+qa/data/pcbnew/complex_hierarchy.kicad_pcb	none
+qa/data/pcbnew/component_classes.kicad_pcb	none
+qa/data/pcbnew/component_classes_drc.kicad_pcb	none
+qa/data/pcbnew/connect/connect.kicad_pcb	none
+qa/data/pcbnew/connection_width_rules.kicad_pcb	none
+qa/data/pcbnew/creepage/creepage.kicad_pcb	none
+qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb	none
+qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb	none
+qa/data/pcbnew/custom_fields.kicad_pcb	none
+qa/data/pcbnew/custom_pads.kicad_pcb	none
+qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb	none
+qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb	none
+qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb	none
+qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb	none
+qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb	none
+qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb	none
+qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb	none
+qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb	none
+qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb	none
+qa/data/pcbnew/fill_bad.kicad_pcb	none
+qa/data/pcbnew/footprints_load_save.kicad_pcb	none
+qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb	none
+qa/data/pcbnew/groups_load_save.kicad_pcb	none
+qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb	none
+qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb	0	error	unconnected_items	Missing connection between items	258e6759-37ae-4f2e-8ce0-885d27cfd61c	PTH pad 1 [A] of REF**	112.776	63.246	31d94ad4-3cd0-4e85-b769-d93fc6482911	Zone 'A' [A] on F.Cu and B.Cu, priority 0	104.394	59.182
+qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb	none
+qa/data/pcbnew/intersectingzones.kicad_pcb	none
+qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb	none
+qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb	none
+qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb	none
+qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb	none
+qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb	none
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	0	error	unconnected_items	Missing connection between items	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	1	error	unconnected_items	Missing connection between items	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	2	error	unconnected_items	Missing connection between items	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	3	error	unconnected_items	Missing connection between items	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	4	error	unconnected_items	Missing connection between items	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	5	error	unconnected_items	Missing connection between items	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	6	error	unconnected_items	Missing connection between items	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	7	error	unconnected_items	Missing connection between items	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	8	error	unconnected_items	Missing connection between items	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb	9	error	unconnected_items	Missing connection between items	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb	none
+qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb	none
+qa/data/pcbnew/ipc2581/user10-content.kicad_pcb	none
+qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb	none
+qa/data/pcbnew/issue10697.kicad_pcb	0	error	unconnected_items	Missing connection between items	4831966c-bb32-4bc8-a400-0382a02ffa1c	Blind via [GND] on TOP - L3_SIG	48.16221	-110.377986	2bf3f24b-fd30-41a7-a274-9b519491916b	Blind via [GND] on TOP - L3_SIG	50.157888	-110.377986
+qa/data/pcbnew/issue10697.kicad_pcb	1	error	unconnected_items	Missing connection between items	34871042-9d5c-4e29-abdd-a168368c3c22	Via [GND] on TOP - BOTTOM	50.157888	-121.426986	53c85970-3e21-4fae-a84f-721cfc0513b5	Blind via [GND] on TOP - L3_SIG	48.16221	-121.426986
+qa/data/pcbnew/issue10697.kicad_pcb	2	error	unconnected_items	Missing connection between items	34871042-9d5c-4e29-abdd-a168368c3c22	Via [GND] on TOP - BOTTOM	50.157888	-121.426986	4e66a44f-7fa6-4e16-bf9b-62ec864301a5	Via [GND] on TOP - BOTTOM	50.165	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	3	error	unconnected_items	Missing connection between items	2bf3f24b-fd30-41a7-a274-9b519491916b	Blind via [GND] on TOP - L3_SIG	50.157888	-110.377986	4e66a44f-7fa6-4e16-bf9b-62ec864301a5	Via [GND] on TOP - BOTTOM	50.165	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	4	error	unconnected_items	Missing connection between items	4e66a44f-7fa6-4e16-bf9b-62ec864301a5	Via [GND] on TOP - BOTTOM	50.165	-116.84	4412226e-d975-40a2-921f-502ff4129a95	Via [GND] on TOP - BOTTOM	46.355	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	5	error	unconnected_items	Missing connection between items	0d35483a-0b12-46cc-b9f2-896fd6831779	Via [GND] on TOP - BOTTOM	56.261	-116.84	4e66a44f-7fa6-4e16-bf9b-62ec864301a5	Via [GND] on TOP - BOTTOM	50.165	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	6	error	unconnected_items	Missing connection between items	9702d639-3b1f-4825-8985-b32b9008503d	Via [GND] on TOP - BOTTOM	62.484	-116.84	0d35483a-0b12-46cc-b9f2-896fd6831779	Via [GND] on TOP - BOTTOM	56.261	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	7	error	unconnected_items	Missing connection between items	ec9e24d8-d1c5-40e2-9812-dc315d05f470	Via [GND] on TOP - BOTTOM	66.294	-116.84	9702d639-3b1f-4825-8985-b32b9008503d	Via [GND] on TOP - BOTTOM	62.484	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	8	error	unconnected_items	Missing connection between items	a06e8e78-f567-42e6-b645-013b1073ca31	Via [GND] on TOP - BOTTOM	70.231	-116.84	ec9e24d8-d1c5-40e2-9812-dc315d05f470	Via [GND] on TOP - BOTTOM	66.294	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	9	error	unconnected_items	Missing connection between items	55992e35-fe7b-468a-9b7a-1e4dc931b904	Via [GND] on TOP - BOTTOM	76.327	-116.84	a06e8e78-f567-42e6-b645-013b1073ca31	Via [GND] on TOP - BOTTOM	70.231	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	10	error	unconnected_items	Missing connection between items	f9865a9f-edb8-49c7-828f-4896e1f3047a	Via [GND] on TOP - BOTTOM	82.55	-116.84	55992e35-fe7b-468a-9b7a-1e4dc931b904	Via [GND] on TOP - BOTTOM	76.327	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	11	error	unconnected_items	Missing connection between items	c3c93de0-69b1-4a04-8e0b-d78caf487c63	Via [GND] on TOP - BOTTOM	86.487	-116.84	f9865a9f-edb8-49c7-828f-4896e1f3047a	Via [GND] on TOP - BOTTOM	82.55	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	12	error	unconnected_items	Missing connection between items	5740c959-93d8-47fd-8f68-62f0109e753d	Via [GND] on TOP - BOTTOM	90.17	-116.84	c3c93de0-69b1-4a04-8e0b-d78caf487c63	Via [GND] on TOP - BOTTOM	86.487	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	13	error	unconnected_items	Missing connection between items	b6bcc3cf-50de-4a33-bc41-678825c1ecf2	Via [GND] on TOP - BOTTOM	96.393	-116.84	5740c959-93d8-47fd-8f68-62f0109e753d	Via [GND] on TOP - BOTTOM	90.17	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	14	error	unconnected_items	Missing connection between items	7e08f2a4-63d6-468b-bd8b-ec607077e023	Via [GND] on TOP - BOTTOM	102.362	-116.84	b6bcc3cf-50de-4a33-bc41-678825c1ecf2	Via [GND] on TOP - BOTTOM	96.393	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	15	error	unconnected_items	Missing connection between items	b60c50d1-225e-415c-8712-7acb5e3dc8ea	Via [GND] on TOP - BOTTOM	106.299	-116.84	7e08f2a4-63d6-468b-bd8b-ec607077e023	Via [GND] on TOP - BOTTOM	102.362	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	16	error	unconnected_items	Missing connection between items	9a9f2d82-f64d-4264-8bec-c182528fc4de	Via [GND] on TOP - BOTTOM	110.236	-116.84	b60c50d1-225e-415c-8712-7acb5e3dc8ea	Via [GND] on TOP - BOTTOM	106.299	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	17	error	unconnected_items	Missing connection between items	786b6072-5772-4bc1-8eeb-6c4e19f2a91b	Via [GND] on TOP - BOTTOM	116.205	-116.84	9a9f2d82-f64d-4264-8bec-c182528fc4de	Via [GND] on TOP - BOTTOM	110.236	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	18	error	unconnected_items	Missing connection between items	4d609e7c-74c9-4ae9-a26d-946ff00c167d	Via [GND] on TOP - BOTTOM	122.428	-116.84	786b6072-5772-4bc1-8eeb-6c4e19f2a91b	Via [GND] on TOP - BOTTOM	116.205	-116.84
+qa/data/pcbnew/issue10697.kicad_pcb	19	error	unconnected_items	Missing connection between items	2f3deced-880d-4075-a81b-95c62da5b94d	Via [GND] on TOP - BOTTOM	126.238	-116.84	4d609e7c-74c9-4ae9-a26d-946ff00c167d	Via [GND] on TOP - BOTTOM	122.428	-116.84
+qa/data/pcbnew/issue10906.kicad_pcb	none
+qa/data/pcbnew/issue10916.kicad_pcb	none
+qa/data/pcbnew/issue11814.kicad_pcb	none
+qa/data/pcbnew/issue12109.kicad_pcb	none
+qa/data/pcbnew/issue12609.kicad_pcb	none
+qa/data/pcbnew/issue12831.kicad_pcb	0	error	unconnected_items	Missing connection between items	cd35784a-ef8c-4f50-81c8-03f1d32edccf	Pad 1 [/-5V] of C35 on F.Cu	149.6695	150.734	84bdec75-c18e-4f2e-a079-630b2e603801	Pad 2 [/-5V] of L6 on F.Cu	147.1135	150.749
+qa/data/pcbnew/issue12831.kicad_pcb	1	error	unconnected_items	Missing connection between items	26cbffa3-663b-47c3-b73e-b92c9eab0423	Pad 1 [/-5V] of C37 on F.Cu	154.178	150.74416	cd35784a-ef8c-4f50-81c8-03f1d32edccf	Pad 1 [/-5V] of C35 on F.Cu	149.6695	150.734
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	0	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	1	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	2	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	3	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	4	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	5	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue12964/issue12964.kicad_pcb	6	error	unconnected_items	Missing connection between items	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9	f4bf9aa6-e5df-4b19-8ade-cc016bc7b8f6	Zone [GND] on Top_layer, priority 0	100.55	107.9
+qa/data/pcbnew/issue1358.kicad_pcb	0	error	unconnected_items	Missing connection between items	de1fc50a-44a7-4297-8b87-e0bfaa683c57	Zone [GND] on F.Cu, priority 0	117.0	98.0	de1fc50a-44a7-4297-8b87-e0bfaa683c57	Zone [GND] on F.Cu, priority 0	117.0	98.0
+qa/data/pcbnew/issue1358.kicad_pcb	1	error	unconnected_items	Missing connection between items	c65becca-4155-465d-8bda-b6350354aa2b	Pad 1 [+3V3] of IC1 on F.Cu	146.725009	122.800006	5c3aff29-c14b-409e-8113-f8c59d98d3b8	Pad 14 [+3V3] of IC1 on F.Cu	148.600009	122.425006
+qa/data/pcbnew/issue14008.kicad_pcb	none
+qa/data/pcbnew/issue14130.kicad_pcb	none
+qa/data/pcbnew/issue14294.kicad_pcb	none
+qa/data/pcbnew/issue14334.kicad_pcb	none
+qa/data/pcbnew/issue14412.kicad_pcb	none
+qa/data/pcbnew/issue14449.kicad_pcb	none
+qa/data/pcbnew/issue14549.kicad_pcb	none
+qa/data/pcbnew/issue14549_2.kicad_pcb	none
+qa/data/pcbnew/issue14559.kicad_pcb	none
+qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb	none
+qa/data/pcbnew/issue15280.kicad_pcb	0	error	unconnected_items	Missing connection between items	f3cafbd8-836a-4856-99fa-4a3cb504c0fa	PTH pad 1 [/Motor1/VMOT] of C101	117.25	93.5	7798ea96-00d5-47ec-858a-8a57c55760d5	PTH pad 1 [/Motor1/VMOT] of C708	108.5	93.5
+qa/data/pcbnew/issue15280.kicad_pcb	1	error	unconnected_items	Missing connection between items	f3cafbd8-836a-4856-99fa-4a3cb504c0fa	PTH pad 1 [/Motor1/VMOT] of C101	117.25	93.5	f9f1a9e0-7e23-41bb-9e3d-52ab67e5ccc9	PTH pad 1 [/Motor1/VMOT] of C311	178.0	95.25
+qa/data/pcbnew/issue15280.kicad_pcb	2	error	unconnected_items	Missing connection between items	f9f1a9e0-7e23-41bb-9e3d-52ab67e5ccc9	PTH pad 1 [/Motor1/VMOT] of C311	178.0	95.25	2111455b-3a18-4521-946f-271fd102c66d	PTH pad 1 [/Motor1/VMOT] of C102	238.75	93.5
+qa/data/pcbnew/issue15280.kicad_pcb	3	error	unconnected_items	Missing connection between items	6c5f2b72-188e-4bda-bf7e-d3c9f5aa832e	PTH pad 1 [/Motor1/VMOT] of C511	247.75	93.5	2111455b-3a18-4521-946f-271fd102c66d	PTH pad 1 [/Motor1/VMOT] of C102	238.75	93.5
+qa/data/pcbnew/issue16182.kicad_pcb	0	error	unconnected_items	Missing connection between items	13ea49f5-c6de-4856-8323-7dc269bc6d40	Pad 1 [GND] of U103 on F.Cu	166.75	110.6	b5939446-ab92-4d8a-ad49-ebeba9a512c8	Pad 2 [GND] of SW202 on B.Cu	172.525	113.375
+qa/data/pcbnew/issue16182.kicad_pcb	1	error	unconnected_items	Missing connection between items	b5939446-ab92-4d8a-ad49-ebeba9a512c8	Pad 2 [GND] of SW202 on B.Cu	172.525	113.375	96d72b51-0804-4140-bd1a-55010b75b65e	Pad 2 [GND] of SW202 on B.Cu	176.675	113.375
+qa/data/pcbnew/issue16182.kicad_pcb	2	error	unconnected_items	Missing connection between items	93ed6141-d0e6-4281-806c-6cdd736933b2	Zone 'outer_pour' [GND] on F.Cu, priority 1	189.0	130.0	93ed6141-d0e6-4281-806c-6cdd736933b2	Zone 'outer_pour' [GND] on F.Cu, priority 1	189.0	130.0
+qa/data/pcbnew/issue16182.kicad_pcb	3	error	unconnected_items	Missing connection between items	96d72b51-0804-4140-bd1a-55010b75b65e	Pad 2 [GND] of SW202 on B.Cu	176.675	113.375	0d2df83d-27dd-48e9-bcde-5ce2833cd25f	Track [GND] on F.Cu, length 1.1750 mm	184.325	105.5
+qa/data/pcbnew/issue16182.kicad_pcb	4	error	unconnected_items	Missing connection between items	93ed6141-d0e6-4281-806c-6cdd736933b2	Zone 'outer_pour' [GND] on F.Cu, priority 1	189.0	130.0	93ed6141-d0e6-4281-806c-6cdd736933b2	Zone 'outer_pour' [GND] on F.Cu, priority 1	189.0	130.0
+qa/data/pcbnew/issue16182.kicad_pcb	5	error	unconnected_items	Missing connection between items	3d2b337a-a034-47cc-ab43-b61a14c81a69	Track [GND] on F.Cu, length 1.9375 mm	180.9375	98.5	34bb7c52-1f2b-4d6c-8431-158e1354a171	Track [GND] on F.Cu, length 0.5303 mm	177.8	96.7
+qa/data/pcbnew/issue16182.kicad_pcb	6	error	unconnected_items	Missing connection between items	1395deb4-902d-42ad-af31-b08906a9c5b2	Pad 2 [+3V3] of U103 on F.Cu	166.75	112.9	64165286-5205-49d5-a726-484ed01bebd6	Pad 2 [+3V3] of U103 on F.Cu	173.05	112.9
+qa/data/pcbnew/issue16182.kicad_pcb	7	error	unconnected_items	Missing connection between items	64165286-5205-49d5-a726-484ed01bebd6	Pad 2 [+3V3] of U103 on F.Cu	173.05	112.9	67ba7972-0051-45bb-962f-7bcd1d537aca	Track [+3V3] on F.Cu, length 5.3740 mm	180.0	109.0
+qa/data/pcbnew/issue16182.kicad_pcb	8	error	unconnected_items	Missing connection between items	959faf6e-91e1-45f7-afa5-43b50d353dd0	Track [+3V3] on F.Cu, length 4.2500 mm	184.25	109.0	1b32b853-7f33-4e0d-8b3e-1346e82c62ce	Track [+3V3] on B.Cu, length 0.0530 mm	184.2875	109.0375
+qa/data/pcbnew/issue16182.kicad_pcb	9	error	unconnected_items	Missing connection between items	53ec9bd3-6fdb-4660-b5ba-1b6b89e89abd	Track [/MCU/~{RST}] on F.Cu, length 0.6000 mm	170.6	108.6	cec66086-67a4-4b39-b200-8d3ec7724e23	Track [/MCU/~{RST}] on B.Cu, length 0.9000 mm	170.6	109.2
+qa/data/pcbnew/issue16182.kicad_pcb	10	error	unconnected_items	Missing connection between items	5e4c874c-0ca0-479b-a6d4-d323e0355c46	Track [/MCU/~{RST}] on B.Cu, length 1.5556 mm	170.6	110.1	4de828b4-4a80-4258-a6d1-ed01b17785c5	Pad 1 [/MCU/~{RST}] of SW202 on B.Cu	172.525	111.225
+qa/data/pcbnew/issue16182.kicad_pcb	11	error	unconnected_items	Missing connection between items	4de828b4-4a80-4258-a6d1-ed01b17785c5	Pad 1 [/MCU/~{RST}] of SW202 on B.Cu	172.525	111.225	8fb1d370-ee96-4181-8df5-05be9ea67f37	Pad 1 [/MCU/~{RST}] of SW202 on B.Cu	176.675	111.225
+qa/data/pcbnew/issue16182.kicad_pcb	12	error	unconnected_items	Missing connection between items	07437e30-de40-419c-a9c7-5e9e943558b2	Track [/Power/PWR_LED_K] on F.Cu, length 0.9250 mm	182.75	106.5	cfeb9cb9-f3e1-4ebb-9be0-2824a9f4bac2	Track [/Power/PWR_LED_K] on B.Cu, length 0.0530 mm	182.7125	106.5375
+qa/data/pcbnew/issue16182.kicad_pcb	13	error	unconnected_items	Missing connection between items	a586eacb-d0e5-4b95-825e-bd179ca46f24	Track [Net-(R202-Pad1)] on F.Cu, length 0.9750 mm	178.3	107.825	e28e980c-b1bd-42f5-a233-0df1963d47e5	Track [Net-(R202-Pad1)] on B.Cu, length 0.1061 mm	178.225	108.875
+qa/data/pcbnew/issue16182.kicad_pcb	14	error	unconnected_items	Missing connection between items	55fb0025-65f7-4032-805e-8a1b7ced7852	Track [/MCU/SWCLK/BOOT0] on F.Cu, length 12.9101 mm	158.08995	106.6	35bc2913-3d9a-419c-ba40-847a57de7eb8	Track [/MCU/SWCLK/BOOT0] on B.Cu, length 0.1414 mm	171.0	106.6
+qa/data/pcbnew/issue16182.kicad_pcb	15	error	unconnected_items	Missing connection between items	7bdb1093-9c10-4472-9e22-d257212a38a8	Track [/Modbus/CONN_RS485_A] on F.Cu, length 0.0526 mm	181.5005	99.487174	a2a580ce-44e1-473f-a706-ff5c164f86a7	Track [/Modbus/CONN_RS485_A] on B.Cu, length 0.9892 mm	181.5005	99.487174
+qa/data/pcbnew/issue16566.kicad_pcb	none
+qa/data/pcbnew/issue16658/issue16658.kicad_pcb	none
+qa/data/pcbnew/issue17429.kicad_pcb	#	unconnected_items	35	de67554315489d30
+qa/data/pcbnew/issue17559.kicad_pcb	none
+qa/data/pcbnew/issue17967/issue17967.kicad_pcb	none
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	0	error	unconnected_items	Missing connection between items	efd4f6ea-364d-41b5-938f-52c59788cf99	Pad A4 [Net-(P1-VBUS-PadA4)] of P1 on F.Cu	162.58	62.155	2b4c3e7d-ae07-4efc-aa1a-6c5da08f2153	Pad A9 [Net-(P1-VBUS-PadA4)] of P1 on F.Cu	167.48	62.155
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	1	error	unconnected_items	Missing connection between items	7facd5ed-e775-4453-b78d-f41e1f2227f7	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	160.71	63.07	9217b937-e166-4bf4-a55e-6e5e73e9eb8d	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	160.71	67.25
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	2	error	unconnected_items	Missing connection between items	650c3b1d-c326-41ed-8e5c-825d825fd9ad	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	169.35	63.07	7facd5ed-e775-4453-b78d-f41e1f2227f7	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	160.71	63.07
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	3	error	unconnected_items	Missing connection between items	7eefb2da-505a-48e7-9438-6afd389c6109	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	169.35	67.25	650c3b1d-c326-41ed-8e5c-825d825fd9ad	PTH pad S1 [unconnected-(P1-SHIELD-PadS1)] of P1	169.35	63.07
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	4	error	unconnected_items	Missing connection between items	ad0fe592-9b6a-42f8-a270-5d58ed0e872c	Pad A1 [Net-(P1-GND-PadA1)] of P1 on F.Cu	161.78	62.155	cdf5acac-798c-40ac-b848-524dd63028ad	Pad A12 [Net-(P1-GND-PadA1)] of P1 on F.Cu	168.28	62.155
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	5	error	unconnected_items	Missing connection between items	e10077a0-4990-41d4-b012-906208bd9b6b	Pad A4 [Net-(P2-VBUS-PadA4)] of P2 on F.Cu	162.58	79.525	bd723e83-8e0c-4e75-aaf9-bbe56c221b61	Pad A9 [Net-(P2-VBUS-PadA4)] of P2 on F.Cu	167.48	79.525
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	6	error	unconnected_items	Missing connection between items	198951f6-ba36-47d5-8c0f-cbcf10080931	Pad A1 [Net-(P2-GND-PadA1)] of P2 on F.Cu	161.78	79.525	aa36507c-1835-4c26-8797-c8e4d9552b7c	Pad A12 [Net-(P2-GND-PadA1)] of P2 on F.Cu	168.28	79.525
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	7	error	unconnected_items	Missing connection between items	e426d8a9-436d-40e6-95cf-2ae269fd55b9	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	160.71	80.44	b639fd19-10ff-4479-a6cd-4f3d1bcaed42	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	160.71	84.62
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	8	error	unconnected_items	Missing connection between items	ec7d1e72-7542-4c0c-b71a-da51d6c8688d	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	169.35	80.44	e426d8a9-436d-40e6-95cf-2ae269fd55b9	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	160.71	80.44
+qa/data/pcbnew/issue17971/issue17971.kicad_pcb	9	error	unconnected_items	Missing connection between items	6bea37f8-0a1d-4fd8-8db0-6dc8ada7b355	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	169.35	84.62	ec7d1e72-7542-4c0c-b71a-da51d6c8688d	PTH pad S1 [unconnected-(P2-SHIELD-PadS1)] of P2	169.35	80.44
+qa/data/pcbnew/issue18.kicad_pcb	none
+qa/data/pcbnew/issue18045/test_proj.kicad_pcb	none
+qa/data/pcbnew/issue18142.kicad_pcb	none
+qa/data/pcbnew/issue18203.kicad_pcb	none
+qa/data/pcbnew/issue18839.kicad_pcb	none
+qa/data/pcbnew/issue18878.kicad_pcb	none
+qa/data/pcbnew/issue19090/issue19090.kicad_pcb	none
+qa/data/pcbnew/issue19325/issue19325.kicad_pcb	none
+qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb	none
+qa/data/pcbnew/issue19574.kicad_pcb	0	error	unconnected_items	Missing connection between items	b5cb5fcb-d68c-4b62-8896-488a7b02b01c	Track [a] on F.Cu, length 1.7500 mm	129.75	89.0	0ff9e6a3-108e-4607-b6ff-56672c126bd8	Track [a] on F.Cu, length 1.7500 mm	129.75	89.75
+qa/data/pcbnew/issue19574.kicad_pcb	1	error	unconnected_items	Missing connection between items	b5cb5fcb-d68c-4b62-8896-488a7b02b01c	Track [a] on F.Cu, length 1.7500 mm	129.75	89.0	f7140b20-6822-4a9f-ab21-98f073f5f2df	Track [a] on F.Cu, length 2.7500 mm	131.5	88.75
+qa/data/pcbnew/issue19574.kicad_pcb	2	error	unconnected_items	Missing connection between items	f7140b20-6822-4a9f-ab21-98f073f5f2df	Track [a] on F.Cu, length 2.7500 mm	131.5	88.75	f2c320e0-1554-4312-ac4e-30075908acba	Track [a] on F.Cu, length 4.5000 mm	129.75	88.5
+qa/data/pcbnew/issue19956/issue19956.kicad_pcb	none
+qa/data/pcbnew/issue20249/dimension.kicad_pcb	none
+qa/data/pcbnew/issue20480/issue20480.kicad_pcb	none
+qa/data/pcbnew/issue21184/issue21184.kicad_pcb	0	error	unconnected_items	Missing connection between items	2cd6cf36-1710-4733-86a5-b26a92532375	Track [Net-(U2-V+)] on F.Cu, length 1.7250 mm	73.8	79.2	c6bbf6f3-25e4-4480-8fb6-160fc059dd5f	Track [Net-(U2-V+)] on F.Cu, length 3.1625 mm	76.03749	79.25
+qa/data/pcbnew/issue21564/issue21564.kicad_pcb	none
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	0	error	unconnected_items	Missing connection between items	acf36019-cca8-4319-b748-3c62da180c65	PTH pad 2 [GND] of J1	133.965	76.3	cd00d865-0bda-4c0b-8cb4-d88c29065455	Pad 3 [GND] of U2 on F.Cu	136.125	90.925
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	1	error	unconnected_items	Missing connection between items	cd00d865-0bda-4c0b-8cb4-d88c29065455	Pad 3 [GND] of U2 on F.Cu	136.125	90.925	ab20d6ba-9c7e-411a-9c9e-d5af5bab2b38	Pad 12 [GND] of U2 on F.Cu	136.125	96.64
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	2	error	unconnected_items	Missing connection between items	0ab3fbc0-4a73-4f9f-84b2-af51088b17c4	Pad 21 [GND] of U2 on F.Cu	141.4	91.56	cd00d865-0bda-4c0b-8cb4-d88c29065455	Pad 3 [GND] of U2 on F.Cu	136.125	90.925
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	3	error	unconnected_items	Missing connection between items	49e435a5-9ce1-47ec-a97b-9b8e2cf0cc0e	Track [+3V3] on F.Cu, length 1.3550 mm	121.1375	89.3075	238f93fd-ee30-4340-b5d0-284f0a1dbe0c	Track [+3V3] on F.Cu, length 0.0177 mm	121.15	91.2
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	4	error	unconnected_items	Missing connection between items	61bd69e9-a37a-49dc-919b-3675dbd45919	Pad 2 [+3V3] of R2 on F.Cu	139.625	102.5	1668b4b9-52d8-4241-8889-2f75063b9701	Pad 24 [+3V3] of U2 on F.Cu	141.4	89.655
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	5	error	unconnected_items	Missing connection between items	1668b4b9-52d8-4241-8889-2f75063b9701	Pad 24 [+3V3] of U2 on F.Cu	141.4	89.655	e4253922-12ae-4327-be2f-f07d56b5a32d	PTH pad 1 [+3V3] of J1	131.425	76.3
+qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb	6	error	unconnected_items	Missing connection between items	dd758204-c194-4087-ac3e-843275fecac9	Pad 2 [Net-(U2-~{RST})] of U2 on F.Cu	136.125	90.29	36f7f2c1-f2cc-4550-888e-a75f16deeb71	Pad 1 [Net-(U2-~{RST})] of R2 on F.Cu	137.975	102.5
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	0	error	unconnected_items	Missing connection between items	2b76b458-931a-4d8c-b325-6f642b215418	Pad 2 [GND] of D7 on F.Cu	64.45	99.085	1950ed8e-8fa3-4e38-aa3f-4b4373435a96	Pad 2 [GND] of D10 on F.Cu	75.55	100.915
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	1	error	unconnected_items	Missing connection between items	1950ed8e-8fa3-4e38-aa3f-4b4373435a96	Pad 2 [GND] of D10 on F.Cu	75.55	100.915	fc694538-ef6f-4055-b756-4700127d95d0	Pad 2 [GND] of D6 on F.Cu	103.964089	119.741906
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	2	error	unconnected_items	Missing connection between items	fc694538-ef6f-4055-b756-4700127d95d0	Pad 2 [GND] of D6 on F.Cu	103.964089	119.741906	28d9cead-7743-4461-b1f4-5bb5fc596bb3	Pad 2 [GND] of D11 on F.Cu	111.035911	115.258094
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	3	error	unconnected_items	Missing connection between items	c0079749-0af6-46ac-a9ff-9945ee6780e0	Pad 2 [GND] of D8 on F.Cu	105.258094	78.964089	4437dbd0-f3a5-4264-8890-4054657e7a9a	Pad 2 [GND] of D9 on F.Cu	109.741906	86.035911
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	4	error	unconnected_items	Missing connection between items	c0079749-0af6-46ac-a9ff-9945ee6780e0	Pad 2 [GND] of D8 on F.Cu	105.258094	78.964089	0bf9f5f9-83f5-4445-8b5b-09e2c054fbf2	Track [GND] on F.Cu, length 1.6278 mm	120.769	50.919
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	5	error	unconnected_items	Missing connection between items	4437dbd0-f3a5-4264-8890-4054657e7a9a	Pad 2 [GND] of D9 on F.Cu	109.741906	86.035911	3f0c28d9-1700-4e40-a660-acdbef4286c2	Pad 2 [GND] of D15 on F.Cu	138.964089	84.741906
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	6	error	unconnected_items	Missing connection between items	28d9cead-7743-4461-b1f4-5bb5fc596bb3	Pad 2 [GND] of D11 on F.Cu	111.035911	115.258094	4437dbd0-f3a5-4264-8890-4054657e7a9a	Pad 2 [GND] of D9 on F.Cu	109.741906	86.035911
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	7	error	unconnected_items	Missing connection between items	28d9cead-7743-4461-b1f4-5bb5fc596bb3	Pad 2 [GND] of D11 on F.Cu	111.035911	115.258094	6b3ef8f9-a56a-4cef-bcee-2b8b23158944	Pad 2 [GND] of D13 on F.Cu	140.258094	113.964089
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	8	error	unconnected_items	Missing connection between items	c4cf2acc-f342-4b5a-9a61-0b7f50bc7eb4	Pad 2 [GND] of D16 on F.Cu	124.085	50.55	0bf9f5f9-83f5-4445-8b5b-09e2c054fbf2	Track [GND] on F.Cu, length 1.6278 mm	120.769	50.919
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	9	error	unconnected_items	Missing connection between items	146ffc13-f8f7-489e-aecd-d508917cf35e	Pad 2 [GND] of D5 on F.Cu	124.085	160.55	7caae61c-a4b8-4dc2-bde3-401cc4e67ebe	Pad 2 [GND] of D12 on F.Cu	125.68	149.45
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	10	error	unconnected_items	Missing connection between items	7caae61c-a4b8-4dc2-bde3-401cc4e67ebe	Pad 2 [GND] of D12 on F.Cu	125.68	149.45	c24e371d-91bf-464f-958e-6d8db7cfa766	Pad 2 [GND] of D4 on F.Cu	144.741906	121.035911
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	11	error	unconnected_items	Missing connection between items	cb85fa8d-97c4-4137-ac34-231646bbb6c7	Pad 2 [GND] of D1 on F.Cu	125.915	39.45	b3ddee22-8cd7-4600-abe4-e6972032016c	Track [GND] on F.Cu, length 1.6278 mm	121.92	39.37
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	12	error	unconnected_items	Missing connection between items	3f0c28d9-1700-4e40-a660-acdbef4286c2	Pad 2 [GND] of D15 on F.Cu	138.964089	84.741906	e9be2c8a-e280-4c26-b742-a031448f05db	Pad 2 [GND] of D2 on F.Cu	146.035911	80.258094
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	13	error	unconnected_items	Missing connection between items	c24e371d-91bf-464f-958e-6d8db7cfa766	Pad 2 [GND] of D4 on F.Cu	144.741906	121.035911	6b3ef8f9-a56a-4cef-bcee-2b8b23158944	Pad 2 [GND] of D13 on F.Cu	140.258094	113.964089
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	14	error	unconnected_items	Missing connection between items	dbcb2bad-9977-49d8-a2ec-c30a90d2f15d	Pad 2 [GND] of D14 on F.Cu	174.45	99.085	e9be2c8a-e280-4c26-b742-a031448f05db	Pad 2 [GND] of D2 on F.Cu	146.035911	80.258094
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb	15	error	unconnected_items	Missing connection between items	506e1fc7-09e8-4335-8006-b2b39e517029	Pad 2 [GND] of D3 on F.Cu	185.55	100.915	dbcb2bad-9977-49d8-a2ec-c30a90d2f15d	Pad 2 [GND] of D14 on F.Cu	174.45	99.085
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	0	error	unconnected_items	Missing connection between items	448999b7-904e-4e66-a1bf-23c703cb9ed8	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	33.4	bd693ee1-3891-4464-8886-fe7127dbf491	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	37.4
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	1	error	unconnected_items	Missing connection between items	11e844a2-1318-4b82-97ad-dee5821b944a	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	42.2	d8a8b881-656a-4540-a7d8-b71120a63b65	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	39.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	2	error	unconnected_items	Missing connection between items	bd693ee1-3891-4464-8886-fe7127dbf491	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	37.4	d8a8b881-656a-4540-a7d8-b71120a63b65	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	39.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	3	error	unconnected_items	Missing connection between items	ccc62e2f-b4f4-40f8-8558-cbb04be17b20	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	52.4	31.8	448999b7-904e-4e66-a1bf-23c703cb9ed8	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	50.8	33.4
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	4	error	unconnected_items	Missing connection between items	ccc62e2f-b4f4-40f8-8558-cbb04be17b20	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	52.4	31.8	bf26b75e-35b2-4025-8ac2-f48d61ab4c04	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	55.6	35.8
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	5	error	unconnected_items	Missing connection between items	bf26b75e-35b2-4025-8ac2-f48d61ab4c04	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	55.6	35.8	cfe90516-fa0a-4da1-9afd-446958d82778	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	37.4
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	6	error	unconnected_items	Missing connection between items	9a079f99-f393-454f-a0ab-86339cf62fa4	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	31.8	bf26b75e-35b2-4025-8ac2-f48d61ab4c04	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	55.6	35.8
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	7	error	unconnected_items	Missing connection between items	1e040adb-5854-49c6-ace1-a08d06775847	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	39.0	cfe90516-fa0a-4da1-9afd-446958d82778	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	37.4
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	8	error	unconnected_items	Missing connection between items	967c4794-1390-4014-b99e-4a137247f4cb	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	43.0	1e040adb-5854-49c6-ace1-a08d06775847	Track [Net-(U2-V_{DD}-PadB3)] on F.Cu, length 0.5657 mm	57.2	39.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	9	error	unconnected_items	Missing connection between items	b251114d-3389-4895-bb26-df55ed10b4fc	Track [Net-(U2-V_{PP}-PadB1)] on F.Cu, length 0.5657 mm	57.2	42.2	df1b300b-d78c-49eb-a87f-cfb08527b63f	Track [Net-(U2-V_{PP}-PadB1)] on F.Cu, length 0.6403 mm	50.8	31.8
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	10	error	unconnected_items	Missing connection between items	f31db8fa-9e78-414e-bb90-b0768a37fbc7	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	50.4	36.2	e211faa5-a9ff-4af4-9fcf-1485e8ecefe4	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	51.6	37.4
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	11	error	unconnected_items	Missing connection between items	40ec60f0-4943-4045-af3e-2fb786e3da66	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	50.8	32.6	ad303ce1-d9d5-464a-81df-c5850f3734d8	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	51.6	35.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	12	error	unconnected_items	Missing connection between items	f31db8fa-9e78-414e-bb90-b0768a37fbc7	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	50.4	36.2	ad303ce1-d9d5-464a-81df-c5850f3734d8	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	51.6	35.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	13	error	unconnected_items	Missing connection between items	40ec60f0-4943-4045-af3e-2fb786e3da66	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	50.8	32.6	fe717bd8-88e9-4118-a6c5-7c7871aeb36c	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	50.8	31.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	14	error	unconnected_items	Missing connection between items	a9100904-de75-409d-b098-3da324a0b5e1	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	56.4	35.0	2d19bd49-5226-4377-a3aa-a2896b11ccb7	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	57.2	35.8
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	15	error	unconnected_items	Missing connection between items	a9100904-de75-409d-b098-3da324a0b5e1	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	56.4	35.0	ad303ce1-d9d5-464a-81df-c5850f3734d8	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	51.6	35.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	16	error	unconnected_items	Missing connection between items	a03fc97b-94cc-4d9e-b7b8-5d71cb90db9d	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	56.4	37.4	2d19bd49-5226-4377-a3aa-a2896b11ccb7	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	57.2	35.8
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	17	error	unconnected_items	Missing connection between items	3fc527f4-b991-4407-b62f-d1efd4e00b22	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	57.2	33.4	a9100904-de75-409d-b098-3da324a0b5e1	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	56.4	35.0
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb	18	error	unconnected_items	Missing connection between items	3fc527f4-b991-4407-b62f-d1efd4e00b22	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	57.2	33.4	28139fa7-1d74-49f3-9087-ef794ad07143	Track [Net-(U2-V_{DDQ}-PadA1)] on F.Cu, length 0.5657 mm	57.2	31.0
+qa/data/pcbnew/issue22102.kicad_pcb	0	error	unconnected_items	Missing connection between items	8ea68993-38e6-4a1c-8889-2c43e9ced02a	Arc [/GNDb] on F.Cu	69.088	52.832	16afaa25-45b4-4970-9ef5-f1ceeaa69fe8	Pad 1 [/GNDb] of LED61 on F.Cu	66.802	52.07
+qa/data/pcbnew/issue22102.kicad_pcb	1	error	unconnected_items	Missing connection between items	e1c5b380-a137-4085-b36a-abfc5fa4a996	Arc [/S52] on F.Cu	69.088	52.832	145c2440-eaee-4322-a017-3dfa461d2616	Pad 2 [/S52] of LED61 on F.Cu	64.802	52.07
+qa/data/pcbnew/issue22267.kicad_pcb	#	unconnected_items	81	33eb1b6275907bdd
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	0	error	unconnected_items	Missing connection between items	64172596-6d97-47fa-ac3d-ea9851746c08	Pad 2 [GND] of R305 on F.Cu	83.8525	79.76	535ec8ef-a141-497a-8147-65eab6c27926	Pad 2 [GND] of R505 on F.Cu	83.8525	98.31
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	1	error	unconnected_items	Missing connection between items	535ec8ef-a141-497a-8147-65eab6c27926	Pad 2 [GND] of R505 on F.Cu	83.8525	98.31	bd214f6f-6846-4593-be6e-f3ac87b502ec	Zone [GND] on F.Cu, priority 0	99.0	59.0
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	2	error	unconnected_items	Missing connection between items	ec56dbd6-2de5-495e-a649-5f1dc5ff0d6b	Pad 2 [GND] of R405 on F.Cu	91.4625	79.76	64172596-6d97-47fa-ac3d-ea9851746c08	Pad 2 [GND] of R305 on F.Cu	83.8525	79.76
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	3	error	unconnected_items	Missing connection between items	061ca956-d3b5-4b0d-95fa-7f01d505cbe0	Pad 1 [+24V] of R301 on F.Cu	80.9275	66.52	ee7c0d98-6923-42e9-b467-afd5ab5dbbcd	Pad 1 [+24V] of R501 on F.Cu	80.9275	85.07
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	4	error	unconnected_items	Missing connection between items	ee7c0d98-6923-42e9-b467-afd5ab5dbbcd	Pad 1 [+24V] of R501 on F.Cu	80.9275	85.07	af9b2722-5cd9-42f9-bab8-64b995c982cd	Pad 1 [+24V] of R201 on F.Cu	104.5375	104.0
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	5	error	unconnected_items	Missing connection between items	65edbfb7-4135-4bc1-858f-9bb8b82ee76d	Pad 1 [+24V] of R401 on F.Cu	88.5375	66.52	061ca956-d3b5-4b0d-95fa-7f01d505cbe0	Pad 1 [+24V] of R301 on F.Cu	80.9275	66.52
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	6	error	unconnected_items	Missing connection between items	6210bdcc-0622-431a-9068-0993ba8d2085	Pad 2 [Net-(R301-Pad2)] of R301 on F.Cu	83.8525	66.52	0f73d580-a730-442c-9839-ec8c3dcc4de0	Pad 2 [Net-(R301-Pad2)] of R302 on F.Cu	83.8525	69.83
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	7	error	unconnected_items	Missing connection between items	44e1e726-d789-4de2-bd94-72cc9aea4bb0	Pad 1 [Net-(R302-Pad1)] of R302 on F.Cu	80.9275	69.83	89f4bfa4-038b-4cf6-9381-47c01869d566	Pad 1 [Net-(R302-Pad1)] of R303 on F.Cu	80.9275	73.14
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	8	error	unconnected_items	Missing connection between items	ecdfd316-95b8-4ae9-8189-4ee5a3224725	Pad 2 [Net-(R303-Pad2)] of R303 on F.Cu	83.8525	73.14	b9d309c3-398d-4f1a-9dc2-d7ddb2201690	Pad 2 [Net-(R303-Pad2)] of R304 on F.Cu	83.8525	76.45
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	9	error	unconnected_items	Missing connection between items	c5d6e15b-588d-443d-b3d9-e62726ee912d	Pad 1 [Net-(R304-Pad1)] of R304 on F.Cu	80.9275	76.45	d32ed499-4ed9-4a67-b157-021d20e69e27	Pad 1 [Net-(R304-Pad1)] of R305 on F.Cu	80.9275	79.76
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	10	error	unconnected_items	Missing connection between items	4907c97d-8dac-4225-8aa6-30eea6ebf2cc	Pad 2 [Net-(R401-Pad2)] of R401 on F.Cu	91.4625	66.52	133c40e2-51c8-431e-8e24-e41ed80ebad1	Pad 2 [Net-(R401-Pad2)] of R402 on F.Cu	91.4625	69.83
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	11	error	unconnected_items	Missing connection between items	e474fb9f-3156-487a-bbdd-c4f921aab98c	Pad 1 [Net-(R402-Pad1)] of R402 on F.Cu	88.5375	69.83	8da7d0f1-5720-4300-b172-c6289967e19f	Pad 1 [Net-(R402-Pad1)] of R403 on F.Cu	88.5375	73.14
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	12	error	unconnected_items	Missing connection between items	bbd2ac3c-c1b2-48fb-90b0-0f653561e8ff	Pad 2 [Net-(R403-Pad2)] of R403 on F.Cu	91.4625	73.14	92694a73-c5a5-4393-b96c-812f61ca1400	Pad 2 [Net-(R403-Pad2)] of R404 on F.Cu	91.4625	76.45
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	13	error	unconnected_items	Missing connection between items	c008dbaa-0f7d-4eb1-9610-0a245c44409e	Pad 1 [Net-(R404-Pad1)] of R404 on F.Cu	88.5375	76.45	5d120524-d5a6-4751-9adc-3a07c6141bb2	Pad 1 [Net-(R404-Pad1)] of R405 on F.Cu	88.5375	79.76
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	14	error	unconnected_items	Missing connection between items	c8588857-37d4-4974-b293-14c839c7d68e	Pad 2 [Net-(R501-Pad2)] of R501 on F.Cu	83.8525	85.07	ccee319e-0d84-4290-9b82-342345d18e44	Pad 2 [Net-(R501-Pad2)] of R502 on F.Cu	83.8525	88.38
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	15	error	unconnected_items	Missing connection between items	f9c54a9a-3851-4141-afd3-519f2baf22c2	Pad 1 [Net-(R502-Pad1)] of R502 on F.Cu	80.9275	88.38	afc39629-2dd6-4a01-bf4e-4f9f6dab671c	Pad 1 [Net-(R502-Pad1)] of R503 on F.Cu	80.9275	91.69
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	16	error	unconnected_items	Missing connection between items	b34316d9-2b0f-4794-a526-70d892b06d46	Pad 2 [Net-(R503-Pad2)] of R503 on F.Cu	83.8525	91.69	1316213c-f1d3-44c9-ae8e-723256d4f40e	Pad 2 [Net-(R503-Pad2)] of R504 on F.Cu	83.8525	95.0
+qa/data/pcbnew/issue22316/issue22316.kicad_pcb	17	error	unconnected_items	Missing connection between items	e818733c-bbd3-4b0e-8141-1fb30a42843b	Pad 1 [Net-(R504-Pad1)] of R504 on F.Cu	80.9275	95.0	30695173-9308-467e-9852-838b21dded3a	Pad 1 [Net-(R504-Pad1)] of R505 on F.Cu	80.9275	98.31
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	0	error	unconnected_items	Missing connection between items	bdfd4d62-ff4f-4f2c-9877-4868f6bdc0c5	Pad 2 [GND] of R305 on F.Cu	63.17	117.0	0d9a5591-c548-43f6-9061-b3f10f6b9d00	Pad 2 [GND] of R405 on F.Cu	70.78	117.0
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	1	error	unconnected_items	Missing connection between items	0d9a5591-c548-43f6-9061-b3f10f6b9d00	Pad 2 [GND] of R405 on F.Cu	70.78	117.0	cfc98557-fb3f-4c04-853e-756657056566	Pad 2 [GND] of R505 on F.Cu	78.39	117.0
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	2	error	unconnected_items	Missing connection between items	cfc98557-fb3f-4c04-853e-756657056566	Pad 2 [GND] of R505 on F.Cu	78.39	117.0	bd214f6f-6846-4593-be6e-f3ac87b502ec	Zone [GND] on F.Cu, priority 0	99.0	59.0
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	3	error	unconnected_items	Missing connection between items	edaf502d-3e9e-4372-b4a8-5f796f6659ff	Pad 1 [+24V] of R401 on F.Cu	67.855	103.76	749dee1d-490c-40bc-8dad-49f5d6f1ee94	Pad 1 [+24V] of R301 on F.Cu	60.245	103.76
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	4	error	unconnected_items	Missing connection between items	6b12feec-7e53-43db-b667-3e8d98b8e5e2	Pad 1 [+24V] of R501 on F.Cu	75.465	103.76	edaf502d-3e9e-4372-b4a8-5f796f6659ff	Pad 1 [+24V] of R401 on F.Cu	67.855	103.76
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	5	error	unconnected_items	Missing connection between items	27074dd4-a831-4a18-b855-43c2aece6d35	Pad 1 [+24V] of R201 on F.Cu	104.5375	104.0	6b12feec-7e53-43db-b667-3e8d98b8e5e2	Pad 1 [+24V] of R501 on F.Cu	75.465	103.76
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	6	error	unconnected_items	Missing connection between items	8c8ce4f6-622e-4e65-8105-f5f42c73b32f	Pad 2 [Net-(R301-Pad2)] of R301 on F.Cu	63.17	103.76	ebcd90e1-2051-4ad2-944f-e7a1ed7bffc3	Pad 2 [Net-(R301-Pad2)] of R302 on F.Cu	63.17	107.07
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	7	error	unconnected_items	Missing connection between items	7c53ca11-47dc-4218-accc-b8e8ba0a3604	Pad 1 [Net-(R302-Pad1)] of R302 on F.Cu	60.245	107.07	7c07cd42-bea3-4d8c-9c29-2f61773941cf	Pad 1 [Net-(R302-Pad1)] of R303 on F.Cu	60.245	110.38
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	8	error	unconnected_items	Missing connection between items	81c313ca-02bd-4c76-9ff3-8af11b7cd395	Pad 2 [Net-(R303-Pad2)] of R303 on F.Cu	63.17	110.38	90473dab-3b48-4edf-8079-fba0870f3e02	Pad 2 [Net-(R303-Pad2)] of R304 on F.Cu	63.17	113.69
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	9	error	unconnected_items	Missing connection between items	223b982c-116c-446f-9df8-4d5168c83202	Pad 1 [Net-(R304-Pad1)] of R304 on F.Cu	60.245	113.69	115208f6-aebb-4504-a94d-0ee6ab15f677	Pad 1 [Net-(R304-Pad1)] of R305 on F.Cu	60.245	117.0
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	10	error	unconnected_items	Missing connection between items	75c865bc-782f-4f97-abca-93f64a095d39	Pad 2 [Net-(R401-Pad2)] of R401 on F.Cu	70.78	103.76	2df252be-daf5-4179-9541-ac7ea5f28aa5	Pad 2 [Net-(R401-Pad2)] of R402 on F.Cu	70.78	107.07
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	11	error	unconnected_items	Missing connection between items	f38f2df5-21d8-40af-9af2-e79417e8513d	Pad 1 [Net-(R402-Pad1)] of R402 on F.Cu	67.855	107.07	5dec2ba1-ffee-4dd8-8fcb-e37b1239c76c	Pad 1 [Net-(R402-Pad1)] of R403 on F.Cu	67.855	110.38
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	12	error	unconnected_items	Missing connection between items	1bf90615-138d-41ca-a743-37e6410f5e33	Pad 2 [Net-(R403-Pad2)] of R403 on F.Cu	70.78	110.38	9b37fab6-2e6f-45f2-9104-a12f2c2ea0ae	Pad 2 [Net-(R403-Pad2)] of R404 on F.Cu	70.78	113.69
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	13	error	unconnected_items	Missing connection between items	893f133a-e97e-4343-b8c6-bbb676bae5e7	Pad 1 [Net-(R404-Pad1)] of R404 on F.Cu	67.855	113.69	8f29ef69-93f7-4124-a657-bc041e88294d	Pad 1 [Net-(R404-Pad1)] of R405 on F.Cu	67.855	117.0
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	14	error	unconnected_items	Missing connection between items	ab0afb33-d938-4837-adec-0a1d474f59fa	Pad 2 [Net-(R501-Pad2)] of R501 on F.Cu	78.39	103.76	d1d50ac7-7702-4edc-b2f0-3ab26256f36c	Pad 2 [Net-(R501-Pad2)] of R502 on F.Cu	78.39	107.07
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	15	error	unconnected_items	Missing connection between items	ad9f57ba-5c38-47ca-beee-7cad835a566d	Pad 1 [Net-(R502-Pad1)] of R502 on F.Cu	75.465	107.07	ce133404-b559-42ad-879c-3420f95bef21	Pad 1 [Net-(R502-Pad1)] of R503 on F.Cu	75.465	110.38
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	16	error	unconnected_items	Missing connection between items	5cb829a6-d93f-413b-b871-ff1130349299	Pad 2 [Net-(R503-Pad2)] of R503 on F.Cu	78.39	110.38	7fd25c00-e862-494e-b233-41c5cb4b1e3d	Pad 2 [Net-(R503-Pad2)] of R504 on F.Cu	78.39	113.69
+qa/data/pcbnew/issue22318/issue22318.kicad_pcb	17	error	unconnected_items	Missing connection between items	d79263b1-84f8-4997-8097-398d0c7815b2	Pad 1 [Net-(R504-Pad1)] of R504 on F.Cu	75.465	113.69	a8b789e7-4b74-4e27-92a8-126b00321dda	Pad 1 [Net-(R504-Pad1)] of R505 on F.Cu	75.465	117.0
+qa/data/pcbnew/issue22475/issue22475.kicad_pcb	none
+qa/data/pcbnew/issue22536.kicad_pcb	none
+qa/data/pcbnew/issue22548/issue22548.kicad_pcb	none
+qa/data/pcbnew/issue22597/issue22597.kicad_pcb	none
+qa/data/pcbnew/issue22751/issue22751.kicad_pcb	0	error	unconnected_items	Missing connection between items	00000000-0000-0000-0000-000000000002	Pad 1 [Net1] of  on F.Cu	100.0	100.0	00000000-0000-0000-0000-000000000004	Pad 1 [Net1] of  on F.Cu	110.0	100.0
+qa/data/pcbnew/issue22751/issue22751.kicad_pcb	1	error	unconnected_items	Missing connection between items	00000000-0000-0000-0000-000000000004	Pad 1 [Net1] of  on F.Cu	110.0	100.0	00000000-0000-0000-0000-000000000006	Pad 1 [Net1] of  on F.Cu	120.0	100.0
+qa/data/pcbnew/issue22794.kicad_pcb	none
+qa/data/pcbnew/issue22798.kicad_pcb	none
+qa/data/pcbnew/issue22809/issue22809.kicad_pcb	#	unconnected_items	42	0648a81c9b718592
+qa/data/pcbnew/issue22826/issue22826.kicad_pcb	0	error	unconnected_items	Missing connection between items	a0d35895-c2e2-4e71-8a49-4c465f01bed5	Track [VBUS_DBG] on F.Cu, length 0.9899 mm	112.7	84.4	0671adb6-4003-4839-9ec2-db98e2298f92	Track [VBUS_DBG] on F.Cu, length 1.7550 mm	107.245	86.55
+qa/data/pcbnew/issue22826/issue22826.kicad_pcb	1	error	unconnected_items	Missing connection between items	a099560c-7a69-4871-bcaf-13ac2da27939	PTH pad 3 [VBUS_DUT] of JP1	112.0	76.460001	63fad4b3-cb73-4709-8c78-e5287ab524d8	Track [VBUS_DUT] on F.Cu, length 1.7550 mm	107.245	71.45
+qa/data/pcbnew/issue22826/issue22826.kicad_pcb	2	error	unconnected_items	Missing connection between items	58b55571-8a02-4f10-853e-cb66e1e86809	Track [+3V3_PCIe] on F.Cu, length 0.7071 mm	152.6	112.4	71852b11-9ff8-4326-89fd-2eabaafaaed8	PTH pad 1 [+3V3_PCIe] of JP10	141.0	97.54
+qa/data/pcbnew/issue22983/issue22983.kicad_pcb	none
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	0	error	unconnected_items	Missing connection between items	90a2a8d3-50d3-4390-96aa-bdb3972eb30e	Track [ADC1_IN5] on B.Cu, length 1.2728 mm	33.749	-17.58681	38e4294d-a7e3-4d75-9ac9-982195013707	Track [ADC1_IN5] on B.Cu, length 1.1000 mm	34.1	-23.1
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb	1	error	unconnected_items	Missing connection between items	e9a387a0-c4dc-4901-9f35-9552236c2b1d	Pad 1 [+Vbat] of R17 on B.Cu	22.2	-25.1625	976abe19-6ef4-4829-a14f-55426cf79b54	Track [+Vbat] on B.Cu, length 1.0761 mm	23.8	-22.486444
+qa/data/pcbnew/issue23123_minimal.kicad_pcb	none
+qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb	none
+qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb	none
+qa/data/pcbnew/issue23389/issue23389.kicad_pcb	none
+qa/data/pcbnew/issue23418/testing.kicad_pcb	none
+qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb	none
+qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb	none
+qa/data/pcbnew/issue23467/issue23467.kicad_pcb	none
+qa/data/pcbnew/issue23469/issue23469.kicad_pcb	0	error	unconnected_items	Missing connection between items	93f494cb-13f0-4995-9b3e-a4b8e38b81b8	Pad A4 [Net-(J1-VBUS-PadA4)] of J1 on F.Cu	147.945	119.07	63f45f0f-f438-443c-84db-1cd14db4cb12	Pad A9 [Net-(J1-VBUS-PadA4)] of J1 on F.Cu	152.745	119.07
+qa/data/pcbnew/issue23469/issue23469.kicad_pcb	1	error	unconnected_items	Missing connection between items	4a488d80-883a-411f-a850-48eb08cca060	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	146.025	119.645	53e97366-122c-4cc1-b1c8-8e4106b1b739	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	146.025	123.825
+qa/data/pcbnew/issue23469/issue23469.kicad_pcb	2	error	unconnected_items	Missing connection between items	93f8b4ea-6cea-49cc-8222-0a3172fb1769	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	154.665	119.645	4a488d80-883a-411f-a850-48eb08cca060	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	146.025	119.645
+qa/data/pcbnew/issue23469/issue23469.kicad_pcb	3	error	unconnected_items	Missing connection between items	39cec6f8-8a56-4748-9db0-afb6505808ae	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	154.665	123.825	93f8b4ea-6cea-49cc-8222-0a3172fb1769	PTH pad SH [unconnected-(J1-SHIELD-PadSH)] of J1	154.665	119.645
+qa/data/pcbnew/issue23515/issue23515.kicad_pcb	none
+qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb	none
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb	none
+qa/data/pcbnew/issue23578/issue23578.kicad_pcb	none
+qa/data/pcbnew/issue23658/issue23658.kicad_pcb	none
+qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb	none
+qa/data/pcbnew/issue23704/issue23704.kicad_pcb	none
+qa/data/pcbnew/issue23790/issue23790.kicad_pcb	none
+qa/data/pcbnew/issue23790/touching_zones.kicad_pcb	none
+qa/data/pcbnew/issue23851/issue23851.kicad_pcb	none
+qa/data/pcbnew/issue23868/issue23868.kicad_pcb	none
+qa/data/pcbnew/issue24078/issue24078.kicad_pcb	none
+qa/data/pcbnew/issue24089/issue24089.kicad_pcb	none
+qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb	none
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	0	error	unconnected_items	Missing connection between items	40c87175-fa4f-4c9b-8533-5476ad455004	Pad 2 [Net-(R7-Pad2)] of R7 on F.Cu	124.4125	93.178815	4189626e-12c9-4d97-964d-61e0d26eab81	Pad 1 [Net-(R7-Pad2)] of R8 on F.Cu	124.5	97.628815
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	1	error	unconnected_items	Missing connection between items	4e0bef36-489f-44da-81da-1383e4c0703e	Pad 1 [Net-(R5-Pad2)] of R6 on F.Cu	122.5875	90.228815	78c676ce-80cd-4052-ac47-c3f63b789f8e	Pad 2 [Net-(R5-Pad2)] of R5 on F.Cu	124.4125	87.278815
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	2	error	unconnected_items	Missing connection between items	4b247e6f-033c-4c0b-9835-496a05d1e0a1	Pad 1 [/Untitled Sheet/x] of R1 on F.Cu	137.8925	86.65	d743ec1d-123e-46d6-a084-ce96ef558254	Pad 2 [/Untitled Sheet/x] of R2 on F.Cu	139.7175	89.6
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	3	error	unconnected_items	Missing connection between items	d79759af-6fae-4d0d-9188-dc50eeb28e8d	Pad 1 [Net-(R1-Pad2)] of R2 on F.Cu	137.8925	89.6	aa1ccc02-9532-4cd7-b836-1141eff3474a	Pad 2 [Net-(R1-Pad2)] of R1 on F.Cu	139.7175	86.65
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	4	error	unconnected_items	Missing connection between items	9ac3ab8a-7e59-46bc-8965-f6fb84c56326	Pad 2 [Net-(R3-Pad2)] of R3 on F.Cu	139.7175	92.55	a1d478a3-826e-4788-b9e3-9cb5f87720d3	Pad 1 [Net-(R3-Pad2)] of R4 on F.Cu	139.805	97.0
+qa/data/pcbnew/issue24192/issue24192.kicad_pcb	5	error	unconnected_items	Missing connection between items	edb039ce-2c8a-4fbb-a033-71d16fa45afe	Pad 1 [/Untitled Sheet/a] of R3 on F.Cu	137.8925	92.55	d54ea045-d51c-45c4-a3f0-b1ad5036fe2b	Pad 2 [/Untitled Sheet/a] of R4 on F.Cu	141.63	97.0
+qa/data/pcbnew/issue24211/issue24211.kicad_pcb	none
+qa/data/pcbnew/issue24241/issue24241.kicad_pcb	none
+qa/data/pcbnew/issue24264/issue24264.kicad_pcb	none
+qa/data/pcbnew/issue24286/issue24286.kicad_pcb	none
+qa/data/pcbnew/issue24312/issue24312.kicad_pcb	none
+qa/data/pcbnew/issue24340/issue24340.kicad_pcb	none
+qa/data/pcbnew/issue24355/issue24355.kicad_pcb	none
+qa/data/pcbnew/issue24442.kicad_pcb	none
+qa/data/pcbnew/issue24474/issue24474.kicad_pcb	none
+qa/data/pcbnew/issue24523/issue24523.kicad_pcb	none
+qa/data/pcbnew/issue24525/issue24525.kicad_pcb	none
+qa/data/pcbnew/issue24541/issue24541.kicad_pcb	0	error	unconnected_items	Missing connection between items	2e81dc4a-dbd6-4765-a6d1-811f6cd2a03e	PTH pad 1 [Net-(C4-Pad1)] of C4	121.52	62.137349	68495b60-c1e2-4760-b299-d0751f6c5dcf	PTH pad 1 [Net-(C4-Pad1)] of C5	130.1	61.8
+qa/data/pcbnew/issue24541/issue24541.kicad_pcb	1	error	unconnected_items	Missing connection between items	ce91d3a0-d75d-4f82-b5b8-32a928bb4b12	PTH pad 2 [Net-(C4-Pad2)] of C4	121.52	65.637349	c92d41ee-5ea5-4a43-a8b0-91f19a1b66ce	PTH pad 2 [Net-(C4-Pad2)] of C5	130.1	65.3
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	0	error	unconnected_items	Missing connection between items	22b36c59-081e-4b76-b4de-bc5c9bcefe08	Track [unconnected-(C4-Pad1)] on B.Cu, length 8.3900 mm	133.99	59.7	11334c56-f11e-4606-b424-52a82f4d3146	Track [unconnected-(C4-Pad1)] on B.Cu, length 0.0528 mm	121.557349	62.1
+qa/data/pcbnew/issue24543/issue24543.kicad_pcb	1	error	unconnected_items	Missing connection between items	ce91d3a0-d75d-4f82-b5b8-32a928bb4b12	PTH pad 2 [unconnected-(C4-Pad2)] of C4	121.52	65.637349	457c732b-3559-4e97-88cd-6ec2fe4b0e51	Track [unconnected-(C4-Pad2)] on B.Cu, length 7.4300 mm	133.43	68.5
+qa/data/pcbnew/issue24544/issue24544.kicad_pcb	none
+qa/data/pcbnew/issue24597/issue24597.kicad_pcb	none
+qa/data/pcbnew/issue24643/issue24643.kicad_pcb	none
+qa/data/pcbnew/issue24649.kicad_pcb	none
+qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb	none
+qa/data/pcbnew/issue24735/issue24735.kicad_pcb	none
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	0	error	unconnected_items	Missing connection between items	d1eaf63e-860c-4be1-81fb-87dda0eb7c33	Via [B] on F.Cu - B.Cu	123.0	60.0	41968634-e935-4031-aaba-4294d5b074c0	Via [B] on F.Cu - B.Cu	123.0	68.475496
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	1	error	unconnected_items	Missing connection between items	41968634-e935-4031-aaba-4294d5b074c0	Via [B] on F.Cu - B.Cu	123.0	68.475496	36a0457e-ab0d-4581-a460-002e43ff85ce	Via [B] on F.Cu - B.Cu	123.0	77.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	2	error	unconnected_items	Missing connection between items	36a0457e-ab0d-4581-a460-002e43ff85ce	Via [B] on F.Cu - B.Cu	123.0	77.5	5b507576-5951-4177-8a6a-868ae5b9eb4d	Via [B] on F.Cu - B.Cu	123.0	86.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	3	error	unconnected_items	Missing connection between items	5b507576-5951-4177-8a6a-868ae5b9eb4d	Via [B] on F.Cu - B.Cu	123.0	86.5	11093bb6-9a59-4114-bf67-37943494496b	Via [B] on F.Cu - B.Cu	123.0	95.475496
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	4	error	unconnected_items	Missing connection between items	11093bb6-9a59-4114-bf67-37943494496b	Via [B] on F.Cu - B.Cu	123.0	95.475496	735003bd-09b2-4d80-b630-928f1016a869	Track [B] on F.Cu, length 4.6135 mm	126.262252	108.737748
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	5	error	unconnected_items	Missing connection between items	141e3647-fcb7-4a0f-88ba-30fda55e9cad	Track [B] on F.Cu, length 4.6135 mm	123.0	112.0	849e1625-e330-4fde-aa43-a52a3d9f8816	Via [B] on F.Cu - B.Cu	123.0	115.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	6	error	unconnected_items	Missing connection between items	849e1625-e330-4fde-aa43-a52a3d9f8816	Via [B] on F.Cu - B.Cu	123.0	115.0	125056dd-d88d-4a20-ad8e-d2feb29d964e	Via [B] on F.Cu - B.Cu	123.0	132.5
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	7	error	unconnected_items	Missing connection between items	f4031fcd-5c05-41af-a665-df6d97b3092e	Track [B] on F.Cu, length 1.5000 mm	129.0	104.5	141e3647-fcb7-4a0f-88ba-30fda55e9cad	Track [B] on F.Cu, length 4.6135 mm	123.0	112.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	8	error	unconnected_items	Missing connection between items	7abfcbf5-a1c1-4214-9885-97bfb68c05f1	PTH pad 1 [B] of REF**	134.0	58.25	d1eaf63e-860c-4be1-81fb-87dda0eb7c33	Via [B] on F.Cu - B.Cu	123.0	60.0
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	9	error	unconnected_items	Missing connection between items	685336e3-abed-4a06-8f77-0077c1cac52b	Track [B] on F.Cu, length 4.0000 mm	148.75	60.0	7abfcbf5-a1c1-4214-9885-97bfb68c05f1	PTH pad 1 [B] of REF**	134.0	58.25
+qa/data/pcbnew/issue24758/issue24758.kicad_pcb	10	error	unconnected_items	Missing connection between items	6a677256-d1d6-4f12-ab84-8e12d0ed7fa3	Track [B] on F.Cu, length 4.0000 mm	148.75	68.5	685336e3-abed-4a06-8f77-0077c1cac52b	Track [B] on F.Cu, length 4.0000 mm	148.75	60.0
+qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	0	error	unconnected_items	Missing connection between items	4f42d528-51cc-406b-a25c-037a458e927a	Pad PK8 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.12	108.765	e1dfab9f-b7d3-4645-be52-ae87bd8d6c87	Pad PL8 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.12	109.365
+qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	1	error	unconnected_items	Missing connection between items	0aa47134-e37a-4634-97c7-5240130b1b9e	Pad PK7 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.98	108.765	4f42d528-51cc-406b-a25c-037a458e927a	Pad PK8 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.12	108.765
+qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb	2	error	unconnected_items	Missing connection between items	595d1ab8-1bbd-47fb-bfa7-bcc1465390ed	Pad PL7 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.98	109.365	0aa47134-e37a-4634-97c7-5240130b1b9e	Pad PK7 [/PCIe-clk-mux/PWR.5V] of IN1 on F.Cu	70.98	108.765
+qa/data/pcbnew/issue24799/issue24799.kicad_pcb	none
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb	#	unconnected_items	140	d5e039e4da3f599b
+qa/data/pcbnew/issue24853/issue24853.kicad_pcb	none
+qa/data/pcbnew/issue24865/issue24865.kicad_pcb	0	error	unconnected_items	Missing connection between items	6f102ab1-a974-4bc8-85f3-c44a5d043054	PTH pad 1 [+3V3] of R1	108.5	121.5	abc3d4c2-c563-412f-b9f0-50f312c18dd4	PTH pad 1 [+3V3] of R2	117.5	121.5
+qa/data/pcbnew/issue24865/issue24865.kicad_pcb	1	error	unconnected_items	Missing connection between items	abc3d4c2-c563-412f-b9f0-50f312c18dd4	PTH pad 1 [+3V3] of R2	117.5	121.5	0838488d-d3c4-4df1-8e31-47d862f6f58d	PTH pad 1 [+3V3] of R3	126.5	121.5
+qa/data/pcbnew/issue24875/issue24875.kicad_pcb	0	error	unconnected_items	Missing connection between items	ce91d3a0-d75d-4f82-b5b8-32a928bb4b12	Pad 2 [unconnected-(C4-Pad2)] of C4 on F.Cu	121.431434	65.47016	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb	0	error	unconnected_items	Missing connection between items	ce91d3a0-d75d-4f82-b5b8-32a928bb4b12	Pad 2 [unconnected-(C4-Pad2)] of C4 on F.Cu	121.431434	65.47016	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb	0	error	unconnected_items	Missing connection between items	ce91d3a0-d75d-4f82-b5b8-32a928bb4b12	Pad 2 [unconnected-(C4-Pad2)] of C4 on F.Cu	121.431434	65.47016	4fd1c86c-696b-4c34-be1e-f2d322b8bd4e	Track [unconnected-(C4-Pad2)] on B.Cu, length 1.6829 mm	122.3	66.41
+qa/data/pcbnew/issue24885/issue24885.kicad_pcb	none
+qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb	none
+qa/data/pcbnew/issue24935/issue24935.kicad_pcb	none
+qa/data/pcbnew/issue24951/issue24951.kicad_pcb	#	unconnected_items	110	4952288cc8244a1b
+qa/data/pcbnew/issue24974.kicad_pcb	none
+qa/data/pcbnew/issue25021/backdrill.kicad_pcb	none
+qa/data/pcbnew/issue25065/issue25065.kicad_pcb	none
+qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb	none
+qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb	none
+qa/data/pcbnew/issue25089/odb_circles.kicad_pcb	none
+qa/data/pcbnew/issue25101.kicad_pcb	none
+qa/data/pcbnew/issue25107/issue25107.kicad_pcb	none
+qa/data/pcbnew/issue2512.kicad_pcb	none
+qa/data/pcbnew/issue25265.kicad_pcb	0	error	unconnected_items	Missing connection between items	5de2c693-cccd-4534-973b-20e1020bb9aa	Pad 1 [Net-(U1Power-V+)] of C1 on F.Cu	99.2	95.775	7c5578fb-20aa-4aad-85bc-3c2fc7666874	Pad 8 [Net-(U1Power-V+)] of U1 on F.Cu	109.5	95.77
+qa/data/pcbnew/issue2528.kicad_pcb	none
+qa/data/pcbnew/issue25303.kicad_pcb	0	error	unconnected_items	Missing connection between items	5de2c693-cccd-4534-973b-20e1020bb9aa	Pad 1 [Net-(U1Power-V+)] of C1 on F.Cu	99.2	95.775	7c5578fb-20aa-4aad-85bc-3c2fc7666874	Pad 8 [Net-(U1Power-V+)] of U1 on F.Cu	109.5	95.77
+qa/data/pcbnew/issue25303.kicad_pcb	1	error	unconnected_items	Missing connection between items	e20893b9-c21f-4ef3-ac2f-5a0a4f3d694f	Zone [GND] on F.Cu, priority 1	92.7	105.7	cbd07dfc-c319-47d8-a8a1-ae880ea6d943	Pad 4 [GND] of U1 on F.Cu	113.31	100.6
+qa/data/pcbnew/issue25439/issue25439.kicad_pcb	none
+qa/data/pcbnew/issue25521_zone_names.kicad_pcb	0	error	unconnected_items	Missing connection between items	a6c7be33-148a-4ded-b593-a941ac42ebed	PTH pad 1 [/VCC] of C1	122.0	100.0	32c8c367-5617-4bae-b204-889ddbefafe1	PTH pad 1 [/VCC] of C2	132.0	100.0
+qa/data/pcbnew/issue25580.kicad_pcb	#	unconnected_items	24	6681b0e07ce3f56e
+qa/data/pcbnew/issue25650/issue25650.kicad_pcb	none
+qa/data/pcbnew/issue2568.kicad_pcb	0	error	unconnected_items	Missing connection between items	9989cf15-53e2-4326-bf1b-f407338c9318	Pad 1 [Net-(BT1-Pad1)] of BT1 on F.Cu	161.905	100.0	19e3a608-0c27-4f46-844d-e54d47eb0e72	Track [Net-(BT1-Pad1)] on F.Cu, length 0.1344 mm	138.0	100.095
+qa/data/pcbnew/issue2904.kicad_pcb	#	unconnected_items	50	e2bef6189ea6cb40
+qa/data/pcbnew/issue3812.kicad_pcb	none
+qa/data/pcbnew/issue4139.kicad_pcb	none
+qa/data/pcbnew/issue4257.kicad_pcb	none
+qa/data/pcbnew/issue4774.kicad_pcb	none
+qa/data/pcbnew/issue5093.kicad_pcb	none
+qa/data/pcbnew/issue5102.kicad_pcb	none
+qa/data/pcbnew/issue5313.kicad_pcb	0	error	unconnected_items	Missing connection between items	241fb8f4-0106-4da2-95e1-08924968743f	Track [Net-(R1-Pad2)] on F.Cu, length 3.1127 mm	114.192	78.613	9e4243f1-8573-419b-93f6-69fab259a67e	Pad 2 [Net-(R1-Pad2)] of R1 on F.Cu	111.991	82.804
+qa/data/pcbnew/issue5320.kicad_pcb	0	error	unconnected_items	Missing connection between items	ceb80e4b-80b1-4138-aee6-8bed2935bd3f	Pad 1 [/+Vout_WFG] of TP11 on F.Cu	21.59	48.514	d144727e-d495-4268-b773-768dd2c6f4fc	Pad 1 [/+Vout_WFG] of TP2 on F.Cu	19.304	65.786
+qa/data/pcbnew/issue5320.kicad_pcb	1	error	unconnected_items	Missing connection between items	8da3d923-9529-4d33-82b6-04b7c6fc9d79	PTH pad 1 [/+Vout_WFG] of R20	34.535369	11.1506	ceb80e4b-80b1-4138-aee6-8bed2935bd3f	Pad 1 [/+Vout_WFG] of TP11 on F.Cu	21.59	48.514
+qa/data/pcbnew/issue5320.kicad_pcb	2	error	unconnected_items	Missing connection between items	e4b4e846-e010-45f7-92e5-0a3d6896a2d0	PTH pad 4 [/+Vout_WFG] of U13	51.6839	13.232	8da3d923-9529-4d33-82b6-04b7c6fc9d79	PTH pad 1 [/+Vout_WFG] of R20	34.535369	11.1506
+qa/data/pcbnew/issue5567.kicad_pcb	none
+qa/data/pcbnew/issue5750.kicad_pcb	none
+qa/data/pcbnew/issue5830.kicad_pcb	0	error	unconnected_items	Missing connection between items	9fac306c-312e-41c7-a693-1df3019b4590	Pad 6 [GND] of P1 on B.Cu	95.76	25.93	222265ea-1607-45ab-a5ba-6f987346d777	Track [GND] on In2.Cu, length 0.0077 mm	95.6	26.094552
+qa/data/pcbnew/issue5830.kicad_pcb	1	error	unconnected_items	Missing connection between items	58679211-f41c-46b1-bbbe-fa97cc822e72	Track [VCC] on F.Cu, length 0.8500 mm	90.45	32.0	9616df2f-e951-4369-a572-3c0fa5ad572a	Track [VCC] on F.Cu, length 0.3502 mm	94.4	24.19
+qa/data/pcbnew/issue5830.kicad_pcb	2	error	unconnected_items	Missing connection between items	623b33ef-9574-4c5b-9e23-ef194c48315d	Pad 1 [VCC] of IC1 on F.Cu	94.625	24.19	697c152f-ccfb-4050-937c-4a3ead5503be	Pad 2 [VCC] of P1 on B.Cu	100.84	25.93
+qa/data/pcbnew/issue5830.kicad_pcb	3	error	unconnected_items	Missing connection between items	bd35d2b1-2ede-4c23-829a-f2bfa1160b0a	Via [VCC] on F.Cu - B.Cu	99.3	15.4	f82b6cef-5512-4318-ab42-e313cb056601	Track [VCC] on F.Cu, length 0.0740 mm	94.15234	21.65234
+qa/data/pcbnew/issue5854.kicad_pcb	none
+qa/data/pcbnew/issue5978.kicad_pcb	none
+qa/data/pcbnew/issue5990.kicad_pcb	none
+qa/data/pcbnew/issue6039.kicad_pcb	0	error	unconnected_items	Missing connection between items	8f82e4b8-d05d-4bad-b35c-0b7eaa257811	Pad 2 [/~{MCU_RST}] of SW2 on F.Cu	90.55	130.075	031e659e-e4c8-4094-87c5-4a18b343f8bb	Track [/~{MCU_RST}] on F.Cu, length 1.6350 mm	92.5	122.44
+qa/data/pcbnew/issue6039.kicad_pcb	1	error	unconnected_items	Missing connection between items	c52153b9-4324-409d-98c9-236641f461c8	Track [Net-(SW1-Pad2)] on F.Cu, length 25.9250 mm	109.825	120.975	2b3b2208-aed0-4b30-a05a-d87ef596d345	Pad 2 [Net-(SW1-Pad2)] of SW1 on F.Cu	135.75	113.025
+qa/data/pcbnew/issue6260.kicad_pcb	none
+qa/data/pcbnew/issue6284.kicad_pcb	none
+qa/data/pcbnew/issue6443.kicad_pcb	none
+qa/data/pcbnew/issue6879.kicad_pcb	none
+qa/data/pcbnew/issue6945.kicad_pcb	none
+qa/data/pcbnew/issue7004.kicad_pcb	0	error	unconnected_items	Missing connection between items	093fed24-7031-4c19-99b7-67f7d2512367	Pad 2 [+3V3] of R6 on F.Cu	135.368	83.693	babbb1d2-f82d-4334-a280-742f2004c3b7	Track [+3V3] on F.Cu, length 0.0898 mm	135.368	85.7885
+qa/data/pcbnew/issue7004.kicad_pcb	1	error	unconnected_items	Missing connection between items	093fed24-7031-4c19-99b7-67f7d2512367	Pad 2 [+3V3] of R6 on F.Cu	135.368	83.693	b14f1655-7219-4eec-921a-8eba46e5bbd8	Track [+3V3] on F.Cu, length 0.6500 mm	123.627	83.2595
+qa/data/pcbnew/issue7004.kicad_pcb	2	error	unconnected_items	Missing connection between items	f9355431-cf56-438a-a605-f17a597d7ed3	Track [+3V3] on F.Cu, length 1.5302 mm	137.48	74.977	093fed24-7031-4c19-99b7-67f7d2512367	Pad 2 [+3V3] of R6 on F.Cu	135.368	83.693
+qa/data/pcbnew/issue7004.kicad_pcb	3	error	unconnected_items	Missing connection between items	02ebc7e5-e373-4c26-971b-13ea2a0ea3e1	Track [+3V3] on F.Cu, length 0.4750 mm	139.6238	71.106	84a5ef7a-5155-4db4-9284-b4dbd5091886	Track [+3V3] on F.Cu, length 2.3122 mm	140.0988	74.977
+qa/data/pcbnew/issue7004.kicad_pcb	4	error	unconnected_items	Missing connection between items	297a0b90-8874-4af0-97c2-88cf903568ca	Track [+3V3] on F.Cu, length 4.6950 mm	162.26399	60.61699	686b958b-3ad0-4cc3-b68d-d54e7b0ada76	Track [+3V3] on F.Cu, length 0.1598 mm	156.732	56.642
+qa/data/pcbnew/issue7004.kicad_pcb	5	error	unconnected_items	Missing connection between items	b0984e6c-9099-4f11-ad90-44352fd28b3f	Track [+3V3] on F.Cu, length 2.9080 mm	162.280999	57.143001	297a0b90-8874-4af0-97c2-88cf903568ca	Track [+3V3] on F.Cu, length 4.6950 mm	162.26399	60.61699
+qa/data/pcbnew/issue7004.kicad_pcb	6	error	unconnected_items	Missing connection between items	b73483c1-7c78-4fc4-a4c0-72548eebe67f	Zone [GND] on F.Cu, priority 0	188.3	43.4	b73483c1-7c78-4fc4-a4c0-72548eebe67f	Zone [GND] on F.Cu, priority 0	188.3	43.4
+qa/data/pcbnew/issue7004.kicad_pcb	7	error	unconnected_items	Missing connection between items	0181ed70-9b7f-4ab6-bc51-4fb584459c5e	Track [GND] on F.Cu, length 0.6500 mm	130.627	83.9095	24d91557-2c94-49fc-babc-ee5581c12608	Track [GND] on F.Cu, length 0.0185 mm	130.627	87.1595
+qa/data/pcbnew/issue7004.kicad_pcb	8	error	unconnected_items	Missing connection between items	b73483c1-7c78-4fc4-a4c0-72548eebe67f	Zone [GND] on F.Cu, priority 0	188.3	43.4	3bf1d4d0-f287-4bb5-bcb6-27882dac388a	PTH pad 3 [GND] of RV1	161.2265	118.491
+qa/data/pcbnew/issue7004.kicad_pcb	9	error	unconnected_items	Missing connection between items	b73483c1-7c78-4fc4-a4c0-72548eebe67f	Zone [GND] on F.Cu, priority 0	188.3	43.4	b73483c1-7c78-4fc4-a4c0-72548eebe67f	Zone [GND] on F.Cu, priority 0	188.3	43.4
+qa/data/pcbnew/issue7086.kicad_pcb	0	error	unconnected_items	Missing connection between items	1d47edde-9be6-49af-97a0-4d7b794b0395	PTH pad 1 [Net-(J3-Pad4)] of J1	133.62	68.79	5d070306-84b5-46f9-8d6e-6adbe0b42531	Pad 4 [Net-(J3-Pad4)] of J3 on F.Cu	126.585	76.37
+qa/data/pcbnew/issue7086.kicad_pcb	1	error	unconnected_items	Missing connection between items	c6ac7803-cbcc-49f9-8644-cb11d0f6177a	PTH pad 4 [Net-(J3-Pad4)] of J1	141.24	68.79	1d47edde-9be6-49af-97a0-4d7b794b0395	PTH pad 1 [Net-(J3-Pad4)] of J1	133.62	68.79
+qa/data/pcbnew/issue7086.kicad_pcb	2	error	unconnected_items	Missing connection between items	ad922073-0aff-4353-9660-7074e7eba0b7	Pad 4 [Net-(J3-Pad4)] of J2 on F.Cu	145.505	76.9	c6ac7803-cbcc-49f9-8644-cb11d0f6177a	PTH pad 4 [Net-(J3-Pad4)] of J1	141.24	68.79
+qa/data/pcbnew/issue7086.kicad_pcb	3	error	unconnected_items	Missing connection between items	1e53baa4-d0aa-418f-b29b-235285c77c1f	Pad 1 [Net-(J3-Pad1)] of J3 on F.Cu	129.895	68.75	74e8de01-da27-4cbd-9a20-ecc609ee3c46	PTH pad 2 [Net-(J3-Pad1)] of J1	136.16	68.79
+qa/data/pcbnew/issue7241.kicad_pcb	none
+qa/data/pcbnew/issue7267.kicad_pcb	none
+qa/data/pcbnew/issue7325.kicad_pcb	none
+qa/data/pcbnew/issue7567.kicad_pcb	0	error	unconnected_items	Missing connection between items	da748863-9757-41e5-820a-7f527a6b67f4	PTH pad 2 [GND] of P1	109.855	139.7	50e46035-d009-4bc9-9144-01a2b287fa35	PTH pad 1 [GND] of P1	109.855	142.24
+qa/data/pcbnew/issue7975.kicad_pcb	none
+qa/data/pcbnew/issue8003.kicad_pcb	none
+qa/data/pcbnew/issue832.kicad_pcb	none
+qa/data/pcbnew/issue8407.kicad_pcb	0	error	unconnected_items	Missing connection between items	47b8d31e-12b7-4c54-8753-7d134df1944f	Track [CLK_P] on B.Cu, length 12.6180 mm	30.48	-92.977	5de03374-3f2f-4e90-8bc1-e924136e095d	Track [CLK_P] on B.Cu, length 21.8520 mm	11.971001	-76.676801
+qa/data/pcbnew/issue8407.kicad_pcb	1	error	unconnected_items	Missing connection between items	f7b47244-9542-4639-a103-799b8dfaf321	PTH pad 3 [TRIG_P] of J11	58.896	-92.202	9629862d-9ad9-4488-bcf9-4fc72975ea93	Track [TRIG_P] on B.Cu, length 5.4308 mm	30.9542	-87.913
+qa/data/pcbnew/issue8407.kicad_pcb	2	error	unconnected_items	Missing connection between items	c5ffe5c8-790e-4cbf-827e-59e98c310b0f	PTH pad 4 [TRIG_N] of J11	58.896	-94.202	993c9331-3456-466a-a2e7-ab1112b2a0e4	Track [TRIG_N] on B.Cu, length 5.6172 mm	30.7678	-88.363
+qa/data/pcbnew/issue8407.kicad_pcb	3	error	unconnected_items	Missing connection between items	832e4442-f944-4b87-9333-874c45929c10	PTH pad 5 [TIMES_P] of J11	60.896	-92.202	52c6b271-df8b-4bf6-84cb-cfeeff8a919d	Track [TIMES_P] on B.Cu, length 10.4933 mm	31.9702	-83.595
+qa/data/pcbnew/issue8407.kicad_pcb	4	error	unconnected_items	Missing connection between items	bd3cf8c3-5b82-4a22-9393-0313dbd1de9a	PTH pad 6 [TIMES_N] of J11	60.896	-94.202	7058f4f6-d9b6-4899-b57d-6d196a3155c9	Track [TIMES_N] on B.Cu, length 10.6797 mm	31.7838	-84.045
+qa/data/pcbnew/issue8407.kicad_pcb	5	error	unconnected_items	Missing connection between items	122d8a15-f4ba-46e1-93bd-7ab781cb0c8b	PTH pad 1 [USER1_P] of J4	12.346	-36.524	1e624997-6264-40b9-bac0-a1f20aab4daa	PTH pad 7 [USER1_P] of J11	62.896	-92.202
+qa/data/pcbnew/issue8407.kicad_pcb	6	error	unconnected_items	Missing connection between items	4cac0152-c4a8-4395-b818-45db7ef0c450	PTH pad 2 [USER1_N] of J4	11.146	-36.524	521628a7-b7d5-4c8d-9d63-4582415cbd12	PTH pad 8 [USER1_N] of J11	62.896	-94.202
+qa/data/pcbnew/issue8629/issue8629.kicad_pcb	none
+qa/data/pcbnew/issue8883.kicad_pcb	0	error	unconnected_items	Missing connection between items	4ab41e96-3896-429b-845c-c8b841245667	Pad 2 [GND] of C27 on F.Cu	100.195	-88.88	767a6593-1530-48ff-8f15-972e43ca7829	Pad 2 [GND] of C28 on F.Cu	100.195	-86.38
+qa/data/pcbnew/issue8883.kicad_pcb	1	error	unconnected_items	Missing connection between items	767a6593-1530-48ff-8f15-972e43ca7829	Pad 2 [GND] of C28 on F.Cu	100.195	-86.38	297c662b-9710-4f76-b1a4-745eb9b402bc	Pad 2 [GND] of C24 on F.Cu	102.995	-82.38
+qa/data/pcbnew/issue8883.kicad_pcb	2	error	unconnected_items	Missing connection between items	4b9748b3-8ebd-4c02-8852-11697ffb14a2	Pad 47 [GND] of IC2 on F.Cu	113.35	-89.2625	297c662b-9710-4f76-b1a4-745eb9b402bc	Pad 2 [GND] of C24 on F.Cu	102.995	-82.38
+qa/data/pcbnew/issue8883.kicad_pcb	3	error	unconnected_items	Missing connection between items	e32949db-2489-4c96-9722-3f6a012d5e66	Pad 23 [GND] of IC2 on F.Cu	117.85	-80.9375	a6b20249-42fa-4fb7-a76f-9ebccf646c57	Pad 35 [GND] of IC2 on F.Cu	119.7625	-87.35
+qa/data/pcbnew/issue8883.kicad_pcb	4	error	unconnected_items	Missing connection between items	a6b20249-42fa-4fb7-a76f-9ebccf646c57	Pad 35 [GND] of IC2 on F.Cu	119.7625	-87.35	4b9748b3-8ebd-4c02-8852-11697ffb14a2	Pad 47 [GND] of IC2 on F.Cu	113.35	-89.2625
+qa/data/pcbnew/issue8883.kicad_pcb	5	error	unconnected_items	Missing connection between items	b594f538-ed79-42cf-9c7f-01fe42485b77	Pad 24 [+3V3] of IC2 on F.Cu	118.35	-80.9375	2427fbc4-dab5-41f3-8c14-a57477041f14	Pad 36 [+3V3] of IC2 on F.Cu	119.7625	-87.85
+qa/data/pcbnew/issue8883.kicad_pcb	6	error	unconnected_items	Missing connection between items	2427fbc4-dab5-41f3-8c14-a57477041f14	Pad 36 [+3V3] of IC2 on F.Cu	119.7625	-87.85	17b7dbb2-a831-4dea-b4e7-844bc97220de	Track [+3V3] on F.Cu, length 1.9976 mm	111.4375	-87.85
+qa/data/pcbnew/issue8909.kicad_pcb	none
+qa/data/pcbnew/issue9081.kicad_pcb	none
+qa/data/pcbnew/issue9870.kicad_pcb	0	error	unconnected_items	Missing connection between items	f955ff3b-6368-47ac-b9bb-dcbce17cd2cd	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	125.299606	76.121706	6362c510-89e2-442a-9bef-a423f67b5f2a	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	122.705989	75.036817
+qa/data/pcbnew/issue9870.kicad_pcb	1	error	unconnected_items	Missing connection between items	84387f2a-9959-4d79-a875-53244f1f4e68	Via [Net-(D1-Pad2)] on top_copper - bottom_copper	126.4	78.5	14c4dfe2-825b-4c9b-962f-b07daede2793	Zone [Net-(D1-Pad2)] on bottom_copper, priority 0	131.5	77.3
+qa/data/pcbnew/issue9870.kicad_pcb	2	error	unconnected_items	Missing connection between items	221799a2-d92f-49a1-94fe-44d3679f5dec	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	127.531503	74.6208	f955ff3b-6368-47ac-b9bb-dcbce17cd2cd	Track [Net-(D1-Pad2)] on bottom_copper, length 1.0856 mm	125.299606	76.121706
+qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb	none
+qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb	none
+qa/data/pcbnew/large_circle_teardrop.kicad_pcb	none
+qa/data/pcbnew/length_calculations.kicad_pcb	none
+qa/data/pcbnew/line_ending_drc/line_ending_drc_fail.kicad_pcb	none
+qa/data/pcbnew/line_ending_drc/line_ending_drc_pass.kicad_pcb	none
+qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb	none
+qa/data/pcbnew/multichannel_nested.kicad_pcb	#	unconnected_items	41	b1062ce6b516294b
+qa/data/pcbnew/multinetclasses_drc.kicad_pcb	none
+qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	0	error	unconnected_items	Missing connection between items	ddbca380-7e7e-46b2-951d-b9f2b92f9ac0	Track [/NET_A] on F.Cu, length 10.0000 mm	88.0	66.0	a192c84f-5e55-4f59-bc44-b2fae50c2027	Pad 1 [/NET_A] of U2 on F.Cu	91.7	71.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	1	error	unconnected_items	Missing connection between items	a192c84f-5e55-4f59-bc44-b2fae50c2027	Pad 1 [/NET_A] of U2 on F.Cu	91.7	71.0	910d4d3e-5418-49c4-a276-c5691853787c	Pad 2 [/NET_A] of U2 on F.Cu	93.0	71.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb	2	error	unconnected_items	Missing connection between items	910d4d3e-5418-49c4-a276-c5691853787c	Pad 2 [/NET_A] of U2 on F.Cu	93.0	71.0	b428698e-1615-40e0-9e7f-c98b3e2c1a1a	Pad 3 [/NET_A] of U2 on F.Cu	94.3	71.0
+qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb	0	error	unconnected_items	Missing connection between items	0731e8a3-3e90-4b00-b4a0-a2bd8a1f512f	Track [/NET_A] on F.Cu, length 11.2000 mm	103.0	83.5	2392fcf8-c7d2-4fc6-b2ba-8ba7b16ab891	Pad 2 [/NET_A] of FB1 on F.Cu	115.5	83.5
+qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb	0	error	unconnected_items	Missing connection between items	e2a5d253-abf6-4a5d-910c-35e6102acf38	Track [/NET_C] on F.Cu, length 11.2000 mm	97.3	87.0	aa2afe8f-204e-4e69-965d-af7bff3fcf72	Track [/NET_C] on F.Cu, length 10.0000 mm	113.5	87.0
+qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	0	error	unconnected_items	Missing connection between items	bc2774ca-fd04-49b1-a766-72017dd693b7	Track [/NET_A] on F.Cu, length 10.0000 mm	78.0	78.5	df2db49b-c7bf-4204-b92d-97bc58328158	PTH pad 2 [/NET_A] of U1	90.0	78.5
+qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb	1	error	unconnected_items	Missing connection between items	2a33842e-ac6a-4d9d-aeeb-8888cae3bbf3	PTH pad 3 [/NET_B] of U1	92.0	78.5	1a504fea-bf41-439d-9c2d-92ff2966fea0	Track [/NET_B] on F.Cu, length 10.0000 mm	94.0	78.5
+qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb	0	error	unconnected_items	Missing connection between items	0f92ae9d-c281-4d09-af9f-79a9c0c654be	Pad 1 [/NET_A] of FP_START on F.Cu	36.5	57.0	73941c6f-47c7-421f-85a4-0d97fdaf9770	Pad 1 [/NET_A] of FP_END on F.Cu	136.5	57.0
+qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb	none
+qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb	none
+qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb	none
+qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb	none
+qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb	none
+qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb	none
+qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb	none
+qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb	none
+qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb	none
+qa/data/pcbnew/net_chains/stub_length.kicad_pcb	none
+qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb	none
+qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb	none
+qa/data/pcbnew/net_tie_drc.kicad_pcb	none
+qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb	none
+qa/data/pcbnew/notched_zones.kicad_pcb	none
+qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb	none
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	0	error	unconnected_items	Missing connection between items	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	1	error	unconnected_items	Missing connection between items	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	2	error	unconnected_items	Missing connection between items	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	3	error	unconnected_items	Missing connection between items	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	4	error	unconnected_items	Missing connection between items	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	5	error	unconnected_items	Missing connection between items	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	6	error	unconnected_items	Missing connection between items	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	7	error	unconnected_items	Missing connection between items	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	8	error	unconnected_items	Missing connection between items	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb	9	error	unconnected_items	Missing connection between items	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb	none
+qa/data/pcbnew/odbpp/layer_name_collisions.kicad_pcb	0	error	unconnected_items	Missing connection between items	34428461-7652-43ea-869c-ef8abe86da6c	PTH pad 5 [+VLINK] of J201	77.11	99.61	7fd355c2-90ad-4068-8cff-b83d37ead4ad	Zone [+VLINK] on Signal, priority 1	74.0	91.0
+qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb	0	error	unconnected_items	Missing connection between items	65e9b25f-4bfc-413e-bcad-cc32e9f956db	Pad 2 [Net-(Q2-C)] of TW2 on F.Cu	156.3	111.4	04a851f6-67ec-4578-a038-25e3e5111ab5	Track [Net-(Q2-C)] on F.Cu, length 16.2000 mm	155.9	91.7
+qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb	none
+qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb	none
+qa/data/pcbnew/odbpp/pad_backdrill.kicad_pcb	0	error	unconnected_items	Missing connection between items	34428461-7652-43ea-869c-ef8abe86da6c	PTH pad 5 [+VLINK] of J201	77.11	99.61	7fd355c2-90ad-4068-8cff-b83d37ead4ad	Zone [+VLINK] on Front, priority 1	74.0	91.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	0	error	unconnected_items	Missing connection between items	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	1	error	unconnected_items	Missing connection between items	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	2	error	unconnected_items	Missing connection between items	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	3	error	unconnected_items	Missing connection between items	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	4	error	unconnected_items	Missing connection between items	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	5	error	unconnected_items	Missing connection between items	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	6	error	unconnected_items	Missing connection between items	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	7	error	unconnected_items	Missing connection between items	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	8	error	unconnected_items	Missing connection between items	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb	9	error	unconnected_items	Missing connection between items	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/odbpp/pad_roles.kicad_pcb	none
+qa/data/pcbnew/odbpp/reverse_backdrill.kicad_pcb	0	error	unconnected_items	Missing connection between items	34428461-7652-43ea-869c-ef8abe86da6c	PTH pad 5 [+VLINK] of J201	77.11	99.61	7fd355c2-90ad-4068-8cff-b83d37ead4ad	Zone [+VLINK] on Front, priority 1	74.0	91.0
+qa/data/pcbnew/odbpp/slot_machining.kicad_pcb	0	error	unconnected_items	Missing connection between items	34428461-7652-43ea-869c-ef8abe86da6c	PTH pad 5 [+VLINK] of J201	77.11	99.61	7fd355c2-90ad-4068-8cff-b83d37ead4ad	Zone [+VLINK] on Front, priority 1	74.0	91.0
+qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb	none
+qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb	0	error	unconnected_items	Missing connection between items	c9c9ce62-7e6a-4d48-abe2-a39ff1dd1747	Pad 1 [unconnected-(R2-Pad1)] of R2 on F.Cu	7.235949	-5.412247	6d717a7a-9e85-4217-979e-ec55ea9bfa3a	Pad 1 [unconnected-(R2-Pad1)] of R2 on F.Cu	12.959916	1.779948
+qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb	1	error	unconnected_items	Missing connection between items	cbe40c96-8d44-4264-9e48-dcdad994537d	Pad 2 [unconnected-(R2-Pad2)] of R2 on F.Cu	15.585949	-5.412247	9303f78f-807f-4867-9767-a0c37fb3383d	Pad 2 [unconnected-(R2-Pad2)] of R2 on F.Cu	15.909916	1.779948
+qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb	none
+qa/data/pcbnew/off_center_teardrop.kicad_pcb	none
+qa/data/pcbnew/orientation_drc.kicad_pcb	none
+qa/data/pcbnew/oval_teardrop.kicad_pcb	none
+qa/data/pcbnew/padstacks.kicad_pcb	0	error	unconnected_items	Missing connection between items	2ff08d6b-d2fa-498c-aa0a-437903b48438	Via [A] on F.Cu - B.Cu	120.0	80.0	b86ba856-d576-4a99-a8e8-6d1c7f1f8e54	Via [A] on F.Cu - B.Cu	124.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	1	error	unconnected_items	Missing connection between items	993f27ea-49bf-4980-b2ed-b2764a799bb9	Via [B] on F.Cu - B.Cu	122.0	79.1	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	2	error	unconnected_items	Missing connection between items	4da21d74-ca51-4030-841d-9fa4271dd639	Via [B] on F.Cu - B.Cu	122.0	80.0	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0
+qa/data/pcbnew/padstacks.kicad_pcb	3	error	unconnected_items	Missing connection between items	d8a5911f-c1d6-4713-912d-d31101496061	Via [B] on F.Cu - B.Cu	122.0	81.0	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0
+qa/data/pcbnew/padstacks.kicad_pcb	4	error	unconnected_items	Missing connection between items	c37863ac-f1db-49d4-876a-be127599ff62	Via [B] on F.Cu - B.Cu	122.0	82.0	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	5	error	unconnected_items	Missing connection between items	13ce42b0-06c2-44cb-9836-26127897dd66	Via [B] on F.Cu - B.Cu	122.0	83.0	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	6	error	unconnected_items	Missing connection between items	aff7cd99-a442-4592-b93d-20bb191ac90d	Via [B] on F.Cu - B.Cu	123.0	83.0	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0
+qa/data/pcbnew/padstacks.kicad_pcb	7	error	unconnected_items	Missing connection between items	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0	dab5afb6-716e-4443-b91e-13650cfba71f	Micro via [B] on F.Cu - B.Cu	126.0	80.0
+qa/data/pcbnew/padstacks.kicad_pcb	8	error	unconnected_items	Missing connection between items	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0	dd040225-30f9-4c79-ad3e-e43383b2fb35	Micro via [B] on F.Cu - In4.Cu	126.0	81.0
+qa/data/pcbnew/padstacks.kicad_pcb	9	error	unconnected_items	Missing connection between items	878e8a3b-77d9-402e-9019-c139f6ee7548	Micro via [B] on In3.Cu - B.Cu	126.0	83.0	c5a1f081-1841-48f2-858c-598a487445a0	Micro via [B] on In4.Cu - B.Cu	126.0	82.0
+qa/data/pcbnew/padstacks_complex.kicad_pcb	none
+qa/data/pcbnew/padstacks_normal.kicad_pcb	none
+qa/data/pcbnew/plugins/fakeboard.kicad_pcb	load_error
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb	none
+qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb	none
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb	none
+qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb	none
+qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb	none
+qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	0	error	unconnected_items	Missing connection between items	171e0c6a-2cbf-499f-9bd5-dcc9676df500	Track [/D+] on F.Cu, length 3.0068 mm	121.956802	95.075	0299fa19-3efe-4290-98bb-12accf909ac4	Track [/D+] on F.Cu, length 0.1500 mm	117.9	95.3
+qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb	1	error	unconnected_items	Missing connection between items	0593d24e-7ac2-4326-af6e-ff7a595866a9	Track [/D-] on F.Cu, length 0.1000 mm	117.95	94.75	39e964cd-fd8e-4dc6-aad2-65428e129bf4	Track [/D-] on F.Cu, length 3.1932 mm	122.143198	94.625
+qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	0	error	unconnected_items	Missing connection between items	0593d24e-7ac2-4326-af6e-ff7a595866a9	Track [/D-] on F.Cu, length 0.1000 mm	117.95	94.75	39e964cd-fd8e-4dc6-aad2-65428e129bf4	Track [/D-] on F.Cu, length 3.1932 mm	122.143198	94.625
+qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb	1	error	unconnected_items	Missing connection between items	171e0c6a-2cbf-499f-9bd5-dcc9676df500	Track [/D+] on F.Cu, length 3.0068 mm	121.956802	95.075	0299fa19-3efe-4290-98bb-12accf909ac4	Track [/D+] on F.Cu, length 0.1500 mm	117.9	95.3
+qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/pic_programmer.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	0	error	unconnected_items	Missing connection between items	13e209ef-b0bd-4aaa-972b-94fd08693b69	Via [A] on F.Cu - B.Cu	119.5	73.0	25b605d3-97b9-4f46-a65f-4ecb7d2c692d	Pad 2 [A] of REF** on F.Cu	114.7	73.1375
+qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb	1	error	unconnected_items	Missing connection between items	26f09248-a006-429f-846b-093c091ceda3	Pad 2 [A] of REF** on F.Cu	124.0	73.0875	13e209ef-b0bd-4aaa-972b-94fd08693b69	Via [A] on F.Cu - B.Cu	119.5	73.0
+qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/stickhub-extra-via.kicad_pcb	none
+qa/data/pcbnew/pns_regressions/boards/ultrasound.kicad_pcb	#	unconnected_items	348	35d6e40152aa795c
+qa/data/pcbnew/prettifier/group_and_image.kicad_pcb	none
+qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb	none
+qa/data/pcbnew/reference_images_load_save.kicad_pcb	none
+qa/data/pcbnew/reverse_via.kicad_pcb	none
+qa/data/pcbnew/severities.kicad_pcb	none
+qa/data/pcbnew/skew_group_matched_drc.kicad_pcb	none
+qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb	none
+qa/data/pcbnew/sliver.kicad_pcb	none
+qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb	none
+qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb	none
+qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb	none
+qa/data/pcbnew/stacked/stacked.kicad_pcb	0	error	unconnected_items	Missing connection between items	0d1d056c-2f36-4152-9a5c-117b6f43d4e3	Pad 1 [GND] of R1 on F.Cu	96.61	83.435	7835c4d6-293f-470f-9732-986fc9802a90	Pad 2 [GND] of R1 on F.Cu	97.88	83.435
+qa/data/pcbnew/stacked/stacked.kicad_pcb	1	error	unconnected_items	Missing connection between items	7835c4d6-293f-470f-9732-986fc9802a90	Pad 2 [GND] of R1 on F.Cu	97.88	83.435	ea592653-d244-4bb8-b4ed-ee92882d3777	Pad 3 [GND] of R1 on F.Cu	99.15	83.435
+qa/data/pcbnew/stacked/stacked.kicad_pcb	2	error	unconnected_items	Missing connection between items	ea592653-d244-4bb8-b4ed-ee92882d3777	Pad 3 [GND] of R1 on F.Cu	99.15	83.435	5e78183f-956b-4f05-a129-15f4e5fe3a0c	Pad 4 [GND] of R1 on F.Cu	100.42	83.435
+qa/data/pcbnew/stacked/stacked.kicad_pcb	3	error	unconnected_items	Missing connection between items	5e78183f-956b-4f05-a129-15f4e5fe3a0c	Pad 4 [GND] of R1 on F.Cu	100.42	83.435	6e86d938-6846-476f-83b5-1d8afafe7361	Pad 5 [GND] of R1 on F.Cu	101.69	83.435
+qa/data/pcbnew/stacked/stacked.kicad_pcb	4	error	unconnected_items	Missing connection between items	46e85dda-2b66-4d09-a062-916d33de6a9e	Pad 10 [Net-(R1-Pad6)] of R1 on F.Cu	96.61	82.165	595baab1-9b66-41dd-838b-67f9f7f008e9	Pad 1 [Net-(R1-Pad6)] of X1 on F.Cu	95.0	90.0
+qa/data/pcbnew/stacked/stacked.kicad_pcb	5	error	unconnected_items	Missing connection between items	1dab4fb0-b39d-4753-ab2a-a5f4f1e8aac1	Pad 9 [Net-(R1-Pad6)] of R1 on F.Cu	97.88	82.165	46e85dda-2b66-4d09-a062-916d33de6a9e	Pad 10 [Net-(R1-Pad6)] of R1 on F.Cu	96.61	82.165
+qa/data/pcbnew/stacked/stacked.kicad_pcb	6	error	unconnected_items	Missing connection between items	d0255722-889d-41bc-920a-0463b6ac11fc	Pad 7 [Net-(R1-Pad6)] of R1 on F.Cu	100.42	82.165	1dab4fb0-b39d-4753-ab2a-a5f4f1e8aac1	Pad 9 [Net-(R1-Pad6)] of R1 on F.Cu	97.88	82.165
+qa/data/pcbnew/stacked/stacked.kicad_pcb	7	error	unconnected_items	Missing connection between items	6b67537c-a5db-4c19-a020-c8fcd9f7acf8	Pad 6 [Net-(R1-Pad6)] of R1 on F.Cu	101.69	82.165	d0255722-889d-41bc-920a-0463b6ac11fc	Pad 7 [Net-(R1-Pad6)] of R1 on F.Cu	100.42	82.165
+qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb	0	error	unconnected_items	Missing connection between items	cbd07dfc-c319-47d8-a8a1-ae880ea6d943	Pad 4 [GND] of U1 on F.Cu	113.31	100.6	95240b01-6402-464c-b3ce-b69e20c5dfc4	Via [GND] on F.Cu - B.Cu	114.0	102.0
+qa/data/pcbnew/stonehenge.kicad_pcb	none
+qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb	none
+qa/data/pcbnew/teardrop_close_via.kicad_pcb	none
+qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb	none
+qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb	none
+qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb	none
+qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb	0	error	unconnected_items	Missing connection between items	990688a7-abf7-4f96-b542-8de407f89782	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.291294	54.581294	4ea7fd26-3643-46ba-99cd-843380d8010e	Track (arc) [GND] on F.Cu, length 1.6424 mm	65.201294	56.041294
+qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb	none
+qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb	none
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	0	error	unconnected_items	Missing connection between items	b241cdcb-c35a-4dd9-893f-5d4a1faa4a30	Track [GND] on F.Cu, length 1.0850 mm	150.73	108.66	d718acb8-9c0c-43f4-af76-b055c28dd484	Track [GND] on F.Cu, length 1.7000 mm	148.33	106.91
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	1	error	unconnected_items	Missing connection between items	d9ac2279-659c-4652-bf3b-c03d52184263	Track [VSYS] on F.Cu, length 0.7071 mm	142.48	102.4	532fad66-ad9c-44e8-a8c3-6dc3ca6b8522	Track [VSYS] on F.Cu, length 1.1100 mm	147.83	102.01
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	2	error	unconnected_items	Missing connection between items	5e9b9994-a8a9-4d6c-8e8c-cdea0f8b75c8	Track [VSYS] on F.Cu, length 1.7300 mm	147.33	106.91	532fad66-ad9c-44e8-a8c3-6dc3ca6b8522	Track [VSYS] on F.Cu, length 1.1100 mm	147.83	102.01
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb	3	error	unconnected_items	Missing connection between items	699bdc2a-12a7-428e-ba7f-6b5b215137ba	Track [/Debugger/TRG_~{RESET}_NRF52] on F.Cu, length 0.4000 mm	143.11	108.03	4e55ef8b-b3b8-4095-9872-8a1236645d98	Track [/Debugger/TRG_~{RESET}_NRF52] on F.Cu, length 0.9662 mm	153.073185	107.878921
+qa/data/pcbnew/teardrop_spike.kicad_pcb	none
+qa/data/pcbnew/test_copper_graphics.kicad_pcb	none
+qa/data/pcbnew/test_starved_thermal.kicad_pcb	none
+qa/data/pcbnew/time_calculations.kicad_pcb	none
+qa/data/pcbnew/tracks_arcs_vias.kicad_pcb	none
+qa/data/pcbnew/tuning_generators_load_save.kicad_pcb	none
+qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb	none
+qa/data/pcbnew/tuning_path_through_pad.kicad_pcb	none
+qa/data/pcbnew/two_segment_teardrop.kicad_pcb	none
+qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb	none
+qa/data/pcbnew/variant_test/variant_test.kicad_pcb	0	error	unconnected_items	Missing connection between items	c9c9ce62-7e6a-4d48-abe2-a39ff1dd1747	Pad 1 [unconnected-(R2-Pad1)] of R2 on F.Cu	7.235949	-5.412247	6d717a7a-9e85-4217-979e-ec55ea9bfa3a	Pad 1 [unconnected-(R2-Pad1)] of R2 on F.Cu	12.959916	1.779948
+qa/data/pcbnew/variant_test/variant_test.kicad_pcb	1	error	unconnected_items	Missing connection between items	cbe40c96-8d44-4264-9e48-dcdad994537d	Pad 2 [unconnected-(R2-Pad2)] of R2 on F.Cu	15.585949	-5.412247	9303f78f-807f-4867-9767-a0c37fb3383d	Pad 2 [unconnected-(R2-Pad2)] of R2 on F.Cu	15.909916	1.779948
+qa/data/pcbnew/via_dangling.kicad_pcb	none
+qa/data/pcbnew/via_off_center.kicad_pcb	none
+qa/data/pcbnew/via_stack_track_width.kicad_pcb	none
+qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb	none
+qa/data/pcbnew/via_stacks.kicad_pcb	none
+qa/data/pcbnew/zone_filler.kicad_pcb	none
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	0	error	unconnected_items	Missing connection between items	8285e017-de72-4eb5-894b-ad8e33f434da	Pad 5 [Net-(U2-Coupled)] of U2 on F.Cu	105.95	60.0	495ee411-762a-4701-9780-6cd2c5079387	Zone 'background' [Net-(U2-Coupled)] on F.Cu, priority 0	119.5	56.0
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	1	error	unconnected_items	Missing connection between items	57883afe-25fd-464f-b976-992d8d81614f	Pad 2 [/net2] of U2 on F.Cu	104.5	60.0	73af1da9-5564-49c3-baa4-c102d0369667	Pad 3 [/net2] of U2 on F.Cu	104.5	60.5
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb	2	error	unconnected_items	Missing connection between items	293a49a3-f72e-4ec0-8326-2cec05aa5647	Track [/net2] on F.Cu, length 2.4500 mm	105.95	60.5	73af1da9-5564-49c3-baa4-c102d0369667	Pad 3 [/net2] of U2 on F.Cu	104.5	60.5
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	0	error	unconnected_items	Missing connection between items	e4d6a4a6-b534-4206-a796-bbfc46936f72	Track [Net-(U2-Coupled)] on F.Cu, length 0.1894 mm	109.45	65.5	8fcb3cb7-e4c3-49da-918e-ec4ec254a699	Track [Net-(U2-Coupled)] on F.Cu, length 0.5000 mm	108.0	65.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	1	error	unconnected_items	Missing connection between items	3583819b-974b-4a79-a43b-bffd265cf8f1	Pad 2 [/net2] of U2 on F.Cu	108.0	65.5	a1485bb5-c224-4ca5-a293-153d78f0c097	Pad 3 [/net2] of U2 on F.Cu	108.0	66.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	2	error	unconnected_items	Missing connection between items	5a20eeb7-1b33-4097-864a-0be1db608ab1	Track [/net2] on F.Cu, length 5.5500 mm	109.45	71.55	a1485bb5-c224-4ca5-a293-153d78f0c097	Pad 3 [/net2] of U2 on F.Cu	108.0	66.0
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb	3	error	unconnected_items	Missing connection between items	46fbf3d4-4987-4aa5-8666-e132d5d116bb	Via [/net1] on F.Cu - B.Cu	102.0	80.0	12120c1b-e216-4bd2-9f0e-77878034eed4	Zone 'hi' [/net1] on F.Cu, priority 24	104.0	75.5
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb	none

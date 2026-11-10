@@ -10,6 +10,16 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+# Reference-dump driver (bin pcb-dump-session, package PCBIO-15): pcb-dump-rs on boards loaded
+# through the session's load sequences.
+dump = ["kicad-pcb/dump"]
+
+[[bin]]
+name = "pcb-dump-session"
+path = "src/bin/pcb_dump_session.rs"
+required-features = ["dump"]
+
 [dependencies]
 kicad-core = { path = "../kicad-core" }
 kicad-geom = { path = "../kicad-geom" }

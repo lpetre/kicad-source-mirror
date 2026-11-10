@@ -49,8 +49,7 @@ use crate::eda_text::{
     resolve_text_vars_shared_depth,
 };
 use crate::footprint::Footprint;
-use crate::ids::ItemKind;
-use crate::item::{BoardItemBase, ParentRef, SharedShape};
+use crate::item::{BoardItemBase, SharedShape};
 use crate::traits::{BoardItem, BoardItemMut, EdaTextItem, Flashing, Invalidate};
 
 /// `PCB_TEXT` (`pcbnew/pcb_text.h`).
@@ -655,8 +654,13 @@ impl BoardItemMut for PcbText {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbText::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbText::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbText::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -805,9 +809,8 @@ impl PcbText {
         let layer = env.layers.flip_layer(self.base.layer);
         self.set_layer(env, layer);
 
-        // IsSideSpecific(): the layer set part (the board layer-type part needs layer types
-        // that MutEnv does not carry; PORT_STATUS.md).
-        if Lset::side_specific_mask().contains(self.base.layer) {
+        // IsSideSpecific(): BOARD_ITEM::GetLayerSet() is LSET( { m_layer } )
+        if env.is_side_specific(&Lset::from_layers(&[self.base.layer]), self.base.layer) {
             let mirrored = !self.text.is_mirrored();
             self.text.set_mirrored(mirrored);
         }
@@ -882,26 +885,27 @@ impl PcbText {
         self.set_text_pos(env, pos)
     }
 
-    /// `PCB_TEXT::StyleFromSettings`. The trait signature carries no `MutEnv`: the size and
-    /// thickness setters run without the parent frame, and `BOARD::IsBackLayer` is the layer
-    /// id test (`PORT_STATUS.md`).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        let env = MutEnv::detached();
+    /// `PCB_TEXT::StyleFromSettings`.
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
         let layer = self.base.layer;
 
-        self.set_text_size(&env, settings.get_text_size(layer), true);
-        self.set_text_thickness(&env, settings.get_text_thickness(layer));
+        self.set_text_size(env, settings.get_text_size(layer), true);
+        self.set_text_thickness(env, settings.get_text_thickness(layer));
         self.text.set_italic(settings.get_text_italic(layer));
 
-        let in_footprint =
-            matches!(self.base.parent, ParentRef::Item(id) if id.kind() == ItemKind::Footprint);
-
-        if in_footprint {
+        // GetParentFootprint()
+        if env.parent.is_some() {
             self.text.set_keep_upright(settings.get_text_upright(layer));
         }
 
         if check_side {
-            self.text.set_mirrored(is_back_layer(layer));
+            // board->IsBackLayer( GetLayer() ); IsBackLayer( GetLayer() ) without a board
+            self.text.set_mirrored(env.layers.is_back_layer(layer));
         }
     }
 

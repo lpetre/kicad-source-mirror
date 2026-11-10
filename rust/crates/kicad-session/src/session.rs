@@ -24,23 +24,26 @@
 //! board's file name, which the C++ uses for default output names.
 //!
 //! Loading is `BOARD_LOADER::Load` (`pcbnew/board_loader.cpp`): parse, then the post-load
-//! initialisation (`initializeLoadedBoard`). Both halves call into crates that are still being
-//! written; [`parse_board_text`] is the single switch for the parser.
+//! initialisation (`initializeLoadedBoard`), both in [`crate::board_loader`] (package
+//! PCBIO-15); [`Session::load_board_qa`] is the QA harness sequence (`KI_TEST::LoadBoard`).
 
+use kicad_connectivity::data::ConnectivityData;
 use kicad_core::PcbLayerId;
 use kicad_core::layer_ids::is_copper_layer;
 use kicad_core::lset::Lset;
+use kicad_drc::engine::DrcEngine;
 use kicad_geom::Vector2I;
 use kicad_pcb::padstack::Padstack;
 use kicad_pcb::pcb_track::{PcbTrack, PcbVia, Track};
 use kicad_pcb::{AddMode, Board, ItemId, NetCode};
 use serde::{Deserialize, Serialize};
 
+use crate::board_loader::{LoadInputs, LoadedBoard};
 use crate::error::SessionError;
 
 /// Map an `IO_ERROR` of the board reader / writer: a staging stub of the PCBIO packages
 /// ("port pending: ...") is `NotYetPorted`, anything else the C++ error text.
-fn io_error(err: &kicad_sexpr::IoError, load: bool) -> SessionError {
+pub(crate) fn io_error(err: &kicad_sexpr::IoError, load: bool) -> SessionError {
     let what = err.what().to_string();
 
     if what.contains("port pending") {
@@ -107,15 +110,10 @@ pub fn can_read_board(file_name: &str, text: &str) -> bool {
     matches!(lexer.next_tok(), Ok(T::T_kicad_pcb))
 }
 
-/// One step of `BOARD_LOADER::initializeLoadedBoard` the session has not run because the
-/// subsystem is not ported yet. Consumers that need the step report `NotYetPorted` for it.
-pub const PENDING_LOAD_STEPS: &[&str] = &[
-    "kicad-pcb: BOARD::SetProject (bind .kicad_pro settings)",
-    "kicad-drc: DRC_ENGINE::InitEngine (.kicad_dru rules)",
-    "kicad-drc: BOARD::ResolveDRCExclusions",
-    "kicad-connectivity: BOARD::BuildConnectivity",
-    "kicad-pcb: BOARD::BuildListOfNets / SynchronizeNetsAndNetClasses",
-];
+/// The steps of `BOARD_LOADER::initializeLoadedBoard` the session does not run because their
+/// subsystem is not ported yet. Empty: every step runs ([`crate::board_loader`]). Kept so
+/// that consumers can keep checking it.
+pub const PENDING_LOAD_STEPS: &[&str] = &[];
 
 /// The board, its project and rules: what a CLI run or a browser tab works on.
 pub struct Session {
@@ -131,6 +129,17 @@ pub struct Session {
     pub rules_text: Option<String>,
     /// The `initializeLoadedBoard` steps not run yet (see [`PENDING_LOAD_STEPS`]).
     pub pending_load_steps: Vec<&'static str>,
+    /// `BOARD::GetConnectivity()`: built by the load (`BuildConnectivity`); empty for
+    /// [`Session::new_empty`].
+    pub connectivity: ConnectivityData,
+    /// `BOARD_DESIGN_SETTINGS::m_DRCEngine` after the load's `InitEngine`; `None` for
+    /// [`Session::new_empty`] (a bare `new BOARD()` has no engine).
+    pub drc_engine: Option<DrcEngine>,
+    /// The swallowed `InitEngine` error of the kicad-cli load (see
+    /// [`LoadedBoard::drc_init_error`]).
+    pub drc_init_error: Option<String>,
+    /// Warnings the C++ loader sends to its (optional) reporter; kicad-cli prints none.
+    pub load_warnings: Vec<String>,
 }
 
 /// A net as the item access API returns it.
@@ -209,6 +218,8 @@ impl std::fmt::Debug for Session {
             .field("has_project", &self.project_json.is_some())
             .field("has_rules", &self.rules_text.is_some())
             .field("pending_load_steps", &self.pending_load_steps)
+            .field("drc_init_error", &self.drc_init_error)
+            .field("load_warnings", &self.load_warnings)
             .finish_non_exhaustive()
     }
 }
@@ -219,29 +230,59 @@ fn xy(v: Vector2I) -> [i32; 2] {
 
 impl Session {
     /// Port of `PCBNEW_JOBS_HANDLER::getBoard` + `BOARD_LOADER::Load` on in-memory texts:
-    /// parse `text` (the `.kicad_pcb`), bind the project and the rules, run the post-load
-    /// initialisation.
+    /// parse `text` (the `.kicad_pcb`), bind the project (`project_json`, the `.kicad_pro`;
+    /// defaults without one) and the rules (`rules_text`, the `.kicad_dru`), run the post-load
+    /// initialisation (`initializeLoadedBoard`, [`crate::board_loader::load`]).
     ///
     /// `source_name` is the board's file name (`BOARD::SetFileName`), used for default output
-    /// names and in parser error messages.
+    /// names, the project name and in parser error messages; kicad-cli makes it absolute.
     pub fn load_board(
         text: &str,
         source_name: &str,
         project_json: Option<&str>,
         rules_text: Option<&str>,
     ) -> Result<Session, SessionError> {
-        let board = parse_board_text(text, source_name)?;
+        Session::load_board_with(&LoadInputs {
+            text,
+            source_name,
+            project_json,
+            rules_text,
+            ..LoadInputs::default()
+        })
+    }
 
+    /// [`Session::load_board`] with every input of the kicad-cli load (also the `.kicad_prl`
+    /// text and the parser's staging switch).
+    pub fn load_board_with(inputs: &LoadInputs<'_>) -> Result<Session, SessionError> {
+        let loaded = crate::board_loader::load(inputs)?;
+        Ok(Session::from_loaded(loaded, inputs))
+    }
+
+    /// Port of `KI_TEST::LoadBoard` (`qa/pcbnew_utils/board_test_utils.cpp`), the load
+    /// sequence of the C++ QA tests and of the reference dump tool's default mode: a project
+    /// only when a project file exists, `BuildListOfNets` before `BuildConnectivity`, no DRC
+    /// exclusions, the board's file name not set. See [`crate::board_loader::load_qa`].
+    pub fn load_board_qa(inputs: &LoadInputs<'_>) -> Result<Session, SessionError> {
+        let loaded = crate::board_loader::load_qa(inputs)?;
+        Ok(Session::from_loaded(loaded, inputs))
+    }
+
+    /// The session of a board loaded by [`crate::board_loader`] from `inputs`.
+    pub fn from_loaded(loaded: LoadedBoard, inputs: &LoadInputs<'_>) -> Session {
         let mut session = Session {
-            board,
-            source_name: source_name.to_string(),
-            project_json: project_json.map(str::to_string),
-            rules_text: rules_text.map(str::to_string),
+            board: loaded.board,
+            source_name: inputs.source_name.to_string(),
+            project_json: inputs.project_json.map(str::to_string),
+            rules_text: inputs.rules_text.map(str::to_string),
             pending_load_steps: Vec::new(),
+            connectivity: loaded.connectivity,
+            drc_engine: Some(loaded.drc_engine),
+            drc_init_error: loaded.drc_init_error,
+            load_warnings: loaded.warnings,
         };
 
         session.initialize_loaded_board();
-        Ok(session)
+        session
     }
 
     /// A session on a new, empty board (`new BOARD()`), for clients that build a board item by
@@ -253,13 +294,15 @@ impl Session {
             project_json: None,
             rules_text: None,
             pending_load_steps: Vec::new(),
+            connectivity: ConnectivityData::new(),
+            drc_engine: None,
+            drc_init_error: None,
+            load_warnings: Vec::new(),
         }
     }
 
-    /// `BOARD_LOADER::initializeLoadedBoard` (`pcbnew/board_loader.cpp` L100-170): project
-    /// binding, DRC engine with the `.kicad_dru` rules, exclusions, connectivity, net lists.
-    /// None of the steps' subsystems has landed yet; they are recorded in
-    /// `pending_load_steps` and run here once they exist.
+    /// Records the `initializeLoadedBoard` steps that did not run (none: the sequence itself
+    /// is [`crate::board_loader::initialize_loaded_board`]).
     fn initialize_loaded_board(&mut self) {
         self.pending_load_steps = PENDING_LOAD_STEPS.to_vec();
     }

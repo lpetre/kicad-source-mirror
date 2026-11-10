@@ -467,8 +467,13 @@ impl BoardItemMut for PcbField {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbField::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbField::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbField::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -647,8 +652,13 @@ impl PcbField {
     }
 
     /// `PCB_TEXT::StyleFromSettings`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        self.text.style_from_settings(settings, check_side)
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        self.text.style_from_settings(env, settings, check_side)
     }
 
     /// `PCB_TEXT::GetDrawRotation`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).

@@ -23,8 +23,8 @@
 //! pending (`no_rust_api`) apart from the `BOARD_ITEM` layer.
 
 use super::{
-    ClassId, CoordType, EnumId, Property, PropertyDisplay, PropertyManager, ValueType,
-    layer_value, no_rust_api,
+    ClassId, CoordType, EnumId, Property, PropertyDisplay, PropertyManager, ValueType, layer_value,
+    no_rust_api,
 };
 
 fn tp(name: &'static str, t: ValueType, getter: super::Getter) -> Property {
@@ -50,16 +50,22 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     pm.replace_property(
         ClassId::BoardItem,
         "Layer",
-        Property::new_enum("Layer", c, ValueType::Enum(EnumId::PcbLayerId), true, |it| {
-            layer_value(it.layer())
-        }),
+        Property::new_enum(
+            "Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            true,
+            |it| layer_value(it.layer()),
+        ),
         "",
     )
     .set_choices(layer_choices);
 
     pm.add_property(
-        tp("Width", ValueType::Int, |_| no_rust_api("PCB_TUNING_PATTERN::GetWidth"))
-            .with_display(PropertyDisplay::PtSize),
+        tp("Width", ValueType::Int, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::GetWidth")
+        })
+        .with_display(PropertyDisplay::PtSize),
         "",
     );
 
@@ -74,7 +80,9 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     let group_tech_layers = "Technical Layers";
 
     pm.add_property(
-        tp("Soldermask", ValueType::Bool, |_| no_rust_api("PCB_TUNING_PATTERN::HasSolderMask")),
+        tp("Soldermask", ValueType::Bool, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::HasSolderMask")
+        }),
         group_tech_layers,
     );
 
@@ -89,16 +97,20 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     let group_tab = "Pattern Properties";
 
     pm.add_property(
-        tp("End X", ValueType::Int, |_| no_rust_api("PCB_TUNING_PATTERN::GetEndX"))
-            .with_display(PropertyDisplay::PtSize)
-            .with_coord(CoordType::AbsXCoord),
+        tp("End X", ValueType::Int, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::GetEndX")
+        })
+        .with_display(PropertyDisplay::PtSize)
+        .with_coord(CoordType::AbsXCoord),
         group_tab,
     );
 
     pm.add_property(
-        tp("End Y", ValueType::Int, |_| no_rust_api("PCB_TUNING_PATTERN::GetEndY"))
-            .with_display(PropertyDisplay::PtSize)
-            .with_coord(CoordType::AbsYCoord),
+        tp("End Y", ValueType::Int, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::GetEndY")
+        })
+        .with_display(PropertyDisplay::PtSize)
+        .with_coord(CoordType::AbsYCoord),
         group_tab,
     );
 
@@ -143,9 +155,11 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        tp("Min Spacing", ValueType::Int, |_| no_rust_api("PCB_TUNING_PATTERN::GetSpacing"))
-            .with_display(PropertyDisplay::PtSize)
-            .with_coord(CoordType::AbsXCoord),
+        tp("Min Spacing", ValueType::Int, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::GetSpacing")
+        })
+        .with_display(PropertyDisplay::PtSize)
+        .with_coord(CoordType::AbsXCoord),
         group_tab,
     );
 
@@ -176,9 +190,11 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     .set_available_func(tuning_mode_pending);
 
     pm.add_property(
-        tp("Target Skew", ValueType::Int, |_| no_rust_api("PCB_TUNING_PATTERN::GetTargetSkew"))
-            .with_display(PropertyDisplay::PtSize)
-            .with_coord(CoordType::AbsXCoord),
+        tp("Target Skew", ValueType::Int, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::GetTargetSkew")
+        })
+        .with_display(PropertyDisplay::PtSize)
+        .with_coord(CoordType::AbsXCoord),
         group_tab,
     )
     .set_available_func(tuning_mode_pending);
@@ -200,12 +216,16 @@ pub(crate) fn register_tuning_pattern(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        tp("Single-sided", ValueType::Bool, |_| no_rust_api("PCB_TUNING_PATTERN::IsSingleSided")),
+        tp("Single-sided", ValueType::Bool, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::IsSingleSided")
+        }),
         group_tab,
     );
 
     pm.add_property(
-        tp("Rounded", ValueType::Bool, |_| no_rust_api("PCB_TUNING_PATTERN::IsRounded")),
+        tp("Rounded", ValueType::Bool, |_| {
+            no_rust_api("PCB_TUNING_PATTERN::IsRounded")
+        }),
         group_tab,
     );
 }
@@ -232,25 +252,37 @@ pub(crate) fn register_via_stack(pm: &mut PropertyManager) {
 
     let layer_choices = EnumId::PcbLayerId.map().choices_owned();
     pm.add_property(
-        Property::new_enum("Start Layer", c, ValueType::Enum(EnumId::PcbLayerId), false, |_| {
-            no_rust_api("PCB_VIA_STACK::GetStartLayer")
-        }),
+        Property::new_enum(
+            "Start Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            false,
+            |_| no_rust_api("PCB_VIA_STACK::GetStartLayer"),
+        ),
         group_stack,
     )
     .set_choices(layer_choices.clone());
 
     pm.add_property(
-        Property::new_enum("End Layer", c, ValueType::Enum(EnumId::PcbLayerId), false, |_| {
-            no_rust_api("PCB_VIA_STACK::GetEndLayer")
-        }),
+        Property::new_enum(
+            "End Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            false,
+            |_| no_rust_api("PCB_VIA_STACK::GetEndLayer"),
+        ),
         group_stack,
     )
     .set_choices(layer_choices);
 
     pm.add_property(
-        Property::new_enum("Style", c, ValueType::Enum(EnumId::ViaStackStyle), false, |_| {
-            no_rust_api("PCB_VIA_STACK::GetStyle")
-        }),
+        Property::new_enum(
+            "Style",
+            c,
+            ValueType::Enum(EnumId::ViaStackStyle),
+            false,
+            |_| no_rust_api("PCB_VIA_STACK::GetStyle"),
+        ),
         group_stack,
     );
 
@@ -270,31 +302,41 @@ pub(crate) fn register_via_stack(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        vs("Via Diameter", ValueType::Int, |_| no_rust_api("PCB_VIA_STACK::GetViaSize"))
-            .with_display(PropertyDisplay::PtSize),
+        vs("Via Diameter", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STACK::GetViaSize")
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_stack,
     );
 
     pm.add_property(
-        vs("Via Hole", ValueType::Int, |_| no_rust_api("PCB_VIA_STACK::GetViaDrill"))
-            .with_display(PropertyDisplay::PtSize),
+        vs("Via Hole", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STACK::GetViaDrill")
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_stack,
     );
 
     pm.add_property(
-        vs("Pitch", ValueType::Int, |_| no_rust_api("PCB_VIA_STACK::GetPitch"))
-            .with_display(PropertyDisplay::PtSize),
+        vs("Pitch", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STACK::GetPitch")
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_stack,
     )
     .set_available_func(|_| no_rust_api("PCB_VIA_STACK::GetStyle"));
 
     pm.add_property(
-        vs("Copper-filled", ValueType::Bool, |_| no_rust_api("PCB_VIA_STACK::IsFilled")),
+        vs("Copper-filled", ValueType::Bool, |_| {
+            no_rust_api("PCB_VIA_STACK::IsFilled")
+        }),
         group_stack,
     );
 
     pm.add_property(
-        vs("Capped", ValueType::Bool, |_| no_rust_api("PCB_VIA_STACK::IsCapped")),
+        vs("Capped", ValueType::Bool, |_| {
+            no_rust_api("PCB_VIA_STACK::IsCapped")
+        }),
         group_stack,
     );
 }
@@ -313,20 +355,26 @@ pub(crate) fn register_via_stitch(pm: &mut PropertyManager) {
     pm.inherits_after(c, ClassId::BoardItem);
 
     pm.add_property(
-        st("Size", ValueType::Int, |_| no_rust_api("PCB_VIA_STITCH::GetViaSize"))
-            .with_display(PropertyDisplay::PtSize),
+        st("Size", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STITCH::GetViaSize")
+        })
+        .with_display(PropertyDisplay::PtSize),
         "",
     );
 
     pm.add_property(
-        st("Drill", ValueType::Int, |_| no_rust_api("PCB_VIA_STITCH::GetViaDrill"))
-            .with_display(PropertyDisplay::PtSize),
+        st("Drill", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STITCH::GetViaDrill")
+        })
+        .with_display(PropertyDisplay::PtSize),
         "",
     );
 
     pm.add_property(
-        st("Pitch", ValueType::Int, |_| no_rust_api("PCB_VIA_STITCH::GetPitch"))
-            .with_display(PropertyDisplay::PtSize),
+        st("Pitch", ValueType::Int, |_| {
+            no_rust_api("PCB_VIA_STITCH::GetPitch")
+        })
+        .with_display(PropertyDisplay::PtSize),
         "",
     );
 
@@ -343,14 +391,20 @@ pub(crate) fn register_via_stitch(pm: &mut PropertyManager) {
     .set_available_func(|_| no_rust_api("PCB_VIA_STITCH::GetMode"));
 
     pm.add_property(
-        Property::new_enum("Mode", c, ValueType::Enum(EnumId::PcbViaStitchMode), true, |_| {
-            no_rust_api("PCB_VIA_STITCH::GetMode")
-        }),
+        Property::new_enum(
+            "Mode",
+            c,
+            ValueType::Enum(EnumId::PcbViaStitchMode),
+            true,
+            |_| no_rust_api("PCB_VIA_STITCH::GetMode"),
+        ),
         "",
     );
 
     pm.add_property(
-        st("Seed", ValueType::Unsigned, |_| no_rust_api("PCB_VIA_STITCH::GetSeed")),
+        st("Seed", ValueType::Unsigned, |_| {
+            no_rust_api("PCB_VIA_STITCH::GetSeed")
+        }),
         "",
     )
     .set_available_func(|_| no_rust_api("PCB_VIA_STITCH::GetMode"));

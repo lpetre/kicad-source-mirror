@@ -52,13 +52,17 @@ pub(crate) fn register_pcb_group(pm: &mut PropertyManager) {
 
     // PROPERTY<EDA_GROUP, wxString>: registered for EDA_GROUP.
     pm.add_property(
-        Property::new("Name", ClassId::EdaGroup, ValueType::String, true, |it| {
-            match it.any() {
+        Property::new(
+            "Name",
+            ClassId::EdaGroup,
+            ValueType::String,
+            true,
+            |it| match it.any() {
                 AnyItem::Group(g) => PropertyValue::String(g.name().to_string()),
                 AnyItem::Generator(g) => PropertyValue::String(g.group.name().to_string()),
                 _ => unreachable!("EDA_GROUP property on a group"),
-            }
-        }),
+            },
+        ),
         group_tab,
     );
 }
@@ -113,11 +117,17 @@ pub(crate) fn register_pcb_barcode(pm: &mut PropertyManager) {
         group_barcode,
     );
 
-    pm.add_property(bint("Width", |it| PropertyValue::Int(barcode(&it).width)), group_barcode)
-        .set_is_copyable();
+    pm.add_property(
+        bint("Width", |it| PropertyValue::Int(barcode(&it).width)),
+        group_barcode,
+    )
+    .set_is_copyable();
 
-    pm.add_property(bint("Height", |it| PropertyValue::Int(barcode(&it).height)), group_barcode)
-        .set_is_copyable();
+    pm.add_property(
+        bint("Height", |it| PropertyValue::Int(barcode(&it).height)),
+        group_barcode,
+    )
+    .set_is_copyable();
 
     // GetOrientation: GetAngle().AsDegrees().
     pm.add_property(
@@ -128,9 +138,13 @@ pub(crate) fn register_pcb_barcode(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        Property::new_enum("Barcode Type", c, ValueType::Enum(EnumId::BarcodeT), true, |it| {
-            PropertyValue::Enum(EnumId::BarcodeT, barcode(&it).kind as i32)
-        }),
+        Property::new_enum(
+            "Barcode Type",
+            c,
+            ValueType::Enum(EnumId::BarcodeT),
+            true,
+            |it| PropertyValue::Enum(EnumId::BarcodeT, barcode(&it).kind as i32),
+        ),
         group_barcode,
     );
 
@@ -158,11 +172,17 @@ pub(crate) fn register_pcb_barcode(pm: &mut PropertyManager) {
     )
     .set_is_copyable();
 
-    pm.add_property(bint("Margin X", |it| PropertyValue::Int(barcode(&it).margin.x)), group_barcode)
-        .set_available_func(has_knockout);
+    pm.add_property(
+        bint("Margin X", |it| PropertyValue::Int(barcode(&it).margin.x)),
+        group_barcode,
+    )
+    .set_available_func(has_knockout);
 
-    pm.add_property(bint("Margin Y", |it| PropertyValue::Int(barcode(&it).margin.y)), group_barcode)
-        .set_available_func(has_knockout);
+    pm.add_property(
+        bint("Margin Y", |it| PropertyValue::Int(barcode(&it).margin.y)),
+        group_barcode,
+    )
+    .set_available_func(has_knockout);
 }
 
 /// `static_cast<PCB_REFERENCE_IMAGE*>`.
@@ -378,36 +398,72 @@ pub(crate) fn register_pcb_grid_item(pm: &mut PropertyManager) {
     pm.override_availability(c, ClassId::BoardItem, "Layer", |_| false);
 
     pm.add_property(
-        Property::new_enum("Grid Type", c, ValueType::Enum(EnumId::PcbGridType), true, |it| {
-            PropertyValue::Enum(EnumId::PcbGridType, grid(&it).grid_item_type() as i32)
+        Property::new_enum(
+            "Grid Type",
+            c,
+            ValueType::Enum(EnumId::PcbGridType),
+            true,
+            |it| PropertyValue::Enum(EnumId::PcbGridType, grid(&it).grid_item_type() as i32),
+        ),
+        "",
+    );
+
+    pm.add_property(
+        gdeg("Orientation", |it| {
+            PropertyValue::Double(grid(&it).orientation().as_degrees())
         }),
         "",
     );
 
     pm.add_property(
-        gdeg("Orientation", |it| PropertyValue::Double(grid(&it).orientation().as_degrees())),
+        gint("Extent X", |it| {
+            PropertyValue::Int(grid(&it).extent().x * 2)
+        }),
         "",
-    );
-
-    pm.add_property(gint("Extent X", |it| PropertyValue::Int(grid(&it).extent().x * 2)), "")
-        .set_available_func(is_cartesian);
-    pm.add_property(gint("Extent Y", |it| PropertyValue::Int(grid(&it).extent().y * 2)), "")
-        .set_available_func(is_cartesian);
-    pm.add_property(gint("Spacing X", |it| PropertyValue::Int(grid(&it).spacing().x)), "")
-        .set_available_func(is_cartesian);
-    pm.add_property(gint("Spacing Y", |it| PropertyValue::Int(grid(&it).spacing().y)), "")
-        .set_available_func(is_cartesian);
-    pm.add_property(gint("Radius Extent", |it| PropertyValue::Int(grid(&it).extent().x)), "")
-        .set_available_func(is_polar);
-    pm.add_property(gint("Radius Spacing", |it| PropertyValue::Int(grid(&it).spacing().x)), "")
-        .set_available_func(is_polar);
+    )
+    .set_available_func(is_cartesian);
     pm.add_property(
-        gdeg("Phi Extent", |it| PropertyValue::Double(grid(&it).phi_extent().as_degrees())),
+        gint("Extent Y", |it| {
+            PropertyValue::Int(grid(&it).extent().y * 2)
+        }),
+        "",
+    )
+    .set_available_func(is_cartesian);
+    pm.add_property(
+        gint("Spacing X", |it| PropertyValue::Int(grid(&it).spacing().x)),
+        "",
+    )
+    .set_available_func(is_cartesian);
+    pm.add_property(
+        gint("Spacing Y", |it| PropertyValue::Int(grid(&it).spacing().y)),
+        "",
+    )
+    .set_available_func(is_cartesian);
+    pm.add_property(
+        gint("Radius Extent", |it| {
+            PropertyValue::Int(grid(&it).extent().x)
+        }),
         "",
     )
     .set_available_func(is_polar);
     pm.add_property(
-        gdeg("Phi Spacing", |it| PropertyValue::Double(grid(&it).phi_spacing().as_degrees())),
+        gint("Radius Spacing", |it| {
+            PropertyValue::Int(grid(&it).spacing().x)
+        }),
+        "",
+    )
+    .set_available_func(is_polar);
+    pm.add_property(
+        gdeg("Phi Extent", |it| {
+            PropertyValue::Double(grid(&it).phi_extent().as_degrees())
+        }),
+        "",
+    )
+    .set_available_func(is_polar);
+    pm.add_property(
+        gdeg("Phi Spacing", |it| {
+            PropertyValue::Double(grid(&it).phi_spacing().as_degrees())
+        }),
         "",
     )
     .set_available_func(is_polar);

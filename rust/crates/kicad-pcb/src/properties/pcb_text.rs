@@ -31,9 +31,10 @@ fn knockout(it: ItemRef<'_>) -> PropertyValue {
     PropertyValue::Bool(it.as_dyn().is_knockout())
 }
 
-/// `isFootprintText`.
+/// `isFootprintText`: `dynamic_cast<PCB_TEXT*>` (only reached for `PCB_TEXT` items, the
+/// override is registered for that class) with a parent footprint.
 fn is_footprint_text(it: ItemRef<'_>) -> bool {
-    it.type_() == kicad_core::KicadT::PcbTextT && it.parent_footprint().is_some()
+    it.as_eda_text().is_some() && it.parent_footprint().is_some()
 }
 
 /// `PCB_TEXT_DESC::PCB_TEXT_DESC()`.
@@ -129,15 +130,26 @@ pub(crate) fn register_pcb_textbox(pm: &mut PropertyManager) {
 
     // lineStyleGetter: the EDA_SHAPE::GetLineStyle PCB_TEXTBOX inherits.
     pm.add_property(
-        Property::new_enum("Border Style", c, ValueType::Enum(EnumId::LineStyle), true, |it| {
-            PropertyValue::Enum(EnumId::LineStyle, textbox(&it).shape.shape.line_style() as i32)
-        }),
+        Property::new_enum(
+            "Border Style",
+            c,
+            ValueType::Enum(EnumId::LineStyle),
+            true,
+            |it| {
+                PropertyValue::Enum(
+                    EnumId::LineStyle,
+                    textbox(&it).shape.shape.line_style() as i32,
+                )
+            },
+        ),
         border_props,
     )
     .set_is_copyable();
 
     pm.add_property(
-        tb_int("Border Width", |it| PropertyValue::Int(textbox(&it).border_width())),
+        tb_int("Border Width", |it| {
+            PropertyValue::Int(textbox(&it).border_width())
+        }),
         border_props,
     )
     .set_is_copyable();
@@ -146,22 +158,30 @@ pub(crate) fn register_pcb_textbox(pm: &mut PropertyManager) {
     let margin_props = "Margins";
 
     pm.add_property(
-        tb_int("Margin Left", |it| PropertyValue::Int(textbox(&it).margin_left)),
+        tb_int("Margin Left", |it| {
+            PropertyValue::Int(textbox(&it).margin_left)
+        }),
         margin_props,
     )
     .set_is_copyable();
     pm.add_property(
-        tb_int("Margin Top", |it| PropertyValue::Int(textbox(&it).margin_top)),
+        tb_int("Margin Top", |it| {
+            PropertyValue::Int(textbox(&it).margin_top)
+        }),
         margin_props,
     )
     .set_is_copyable();
     pm.add_property(
-        tb_int("Margin Right", |it| PropertyValue::Int(textbox(&it).margin_right)),
+        tb_int("Margin Right", |it| {
+            PropertyValue::Int(textbox(&it).margin_right)
+        }),
         margin_props,
     )
     .set_is_copyable();
     pm.add_property(
-        tb_int("Margin Bottom", |it| PropertyValue::Int(textbox(&it).margin_bottom)),
+        tb_int("Margin Bottom", |it| {
+            PropertyValue::Int(textbox(&it).margin_bottom)
+        }),
         margin_props,
     )
     .set_is_copyable();

@@ -71,7 +71,9 @@ pub(crate) fn register_pcb_table(pm: &mut PropertyManager) {
     let table_props = "Table Properties";
 
     pm.add_property(
-        tbool("External Border", |it| PropertyValue::Bool(table(&it).stroke_external)),
+        tbool("External Border", |it| {
+            PropertyValue::Bool(table(&it).stroke_external)
+        }),
         table_props,
     )
     .set_is_copyable();
@@ -94,9 +96,13 @@ pub(crate) fn register_pcb_table(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        Property::new_enum("Border Style", c, ValueType::Enum(EnumId::LineStyle), true, |it| {
-            PropertyValue::Enum(EnumId::LineStyle, table(&it).border_style() as i32)
-        }),
+        Property::new_enum(
+            "Border Style",
+            c,
+            ValueType::Enum(EnumId::LineStyle),
+            true,
+            |it| PropertyValue::Enum(EnumId::LineStyle, table(&it).border_style() as i32),
+        ),
         table_props,
     )
     .set_is_copyable();
@@ -110,13 +116,17 @@ pub(crate) fn register_pcb_table(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        tbool("Row Separators", |it| PropertyValue::Bool(table(&it).stroke_rows)),
+        tbool("Row Separators", |it| {
+            PropertyValue::Bool(table(&it).stroke_rows)
+        }),
         table_props,
     )
     .set_is_copyable();
 
     pm.add_property(
-        tbool("Cell Separators", |it| PropertyValue::Bool(table(&it).stroke_columns)),
+        tbool("Cell Separators", |it| {
+            PropertyValue::Bool(table(&it).stroke_columns)
+        }),
         table_props,
     )
     .set_is_copyable();
@@ -227,7 +237,9 @@ pub(crate) fn register_pcb_tablecell(pm: &mut PropertyManager) {
 
     // A generated table reports the board, so cell contents are not the user's to edit but
     // their formatting is. Scoped here, not on EDA_TEXT's descriptor, which eeschema shares
-    pm.override_writeability(c, ClassId::EdaText, "Text", |it| !is_generated_table_cell(it));
+    pm.override_writeability(c, ClassId::EdaText, "Text", |it| {
+        !is_generated_table_cell(it)
+    });
 
     // A generated cell takes its font and size through the Font group, the same as its table
     for name in ["Font", "Width", "Height"] {
@@ -388,7 +400,9 @@ pub(crate) fn register_pcb_generated_table(pm: &mut PropertyManager) {
 fn chart<'a>(it: &ItemRef<'a>) -> (&'a bool, &'a crate::pcb_generated_table::DrillChartFilter) {
     match &generated(it).kind {
         GeneratedTableKind::DrillChart {
-            show_totals, filter, ..
+            show_totals,
+            filter,
+            ..
         } => (show_totals, filter),
         _ => unreachable!("PCB_DRILL_CHART property on a drill chart"),
     }
@@ -420,11 +434,15 @@ pub(crate) fn register_pcb_drill_chart(pm: &mut PropertyManager) {
     let include_props = "Include Holes";
 
     pm.add_property(
-        cbool("Plated Holes", |it| PropertyValue::Bool(chart(&it).1.plated)),
+        cbool("Plated Holes", |it| {
+            PropertyValue::Bool(chart(&it).1.plated)
+        }),
         include_props,
     );
     pm.add_property(
-        cbool("Non-plated Holes", |it| PropertyValue::Bool(chart(&it).1.non_plated)),
+        cbool("Non-plated Holes", |it| {
+            PropertyValue::Bool(chart(&it).1.non_plated)
+        }),
         include_props,
     );
     pm.add_property(
@@ -436,11 +454,15 @@ pub(crate) fn register_pcb_drill_chart(pm: &mut PropertyManager) {
         include_props,
     );
     pm.add_property(
-        cbool("Backdrills", |it| PropertyValue::Bool(chart(&it).1.backdrills)),
+        cbool("Backdrills", |it| {
+            PropertyValue::Bool(chart(&it).1.backdrills)
+        }),
         include_props,
     );
     pm.add_property(
-        cbool("Castellated", |it| PropertyValue::Bool(chart(&it).1.castellated)),
+        cbool("Castellated", |it| {
+            PropertyValue::Bool(chart(&it).1.castellated)
+        }),
         include_props,
     );
 }

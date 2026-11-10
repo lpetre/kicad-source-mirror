@@ -20,6 +20,7 @@
 
 use std::sync::OnceLock;
 
+use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::{Box2D, Box2I, EdaAngle, Vector2D, Vector2I, ki_round};
 
 use crate::font::{
@@ -268,9 +269,9 @@ impl Font for StrokeFont {
         {
             glyph_size *= self.super_sub_size_multiplier();
             // int += double: the sum is truncated
-            cursor.y = (cursor.y as f64
-                + glyph_size.y * self.super_sub_baseline_offset(a_text_style))
-                as i32;
+            cursor.y = f64_to_i32_x86(
+                cursor.y as f64 + glyph_size.y * self.super_sub_baseline_offset(a_text_style),
+            );
         }
 
         for ch in a_text.chars() {
@@ -282,7 +283,7 @@ impl Font for StrokeFont {
 
                 // int + int * int (wrapping like the C++ on x86), then + double, truncated
                 let int_part = a_position.x.wrapping_add(a_size.x.wrapping_mul(char_count));
-                let mut new_cursor: i32 = (int_part as f64 + a_size.x as f64 * space_width) as i32;
+                let mut new_cursor: i32 = f64_to_i32_x86(int_part as f64 + a_size.x as f64 * space_width);
 
                 // A zero-width tab never advances, so it cannot pass the cursor
                 while a_size.x > 0 && new_cursor <= cursor.x {
@@ -328,7 +329,7 @@ impl Font for StrokeFont {
             // SetEnd( coord_type, coord_type ): the double argument is truncated
             bbox.set_end_xy(
                 cursor.x.wrapping_sub(ki_round(glyph_size.x * INTER_CHAR)),
-                (cursor.y as f64 - glyph_size.y) as i32,
+                f64_to_i32_x86(cursor.y as f64 - glyph_size.y),
             );
             bbox.normalize();
         }

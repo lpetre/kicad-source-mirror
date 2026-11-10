@@ -1,0 +1,3 @@
+warning	silk_overlap	Silkscreen clearance (board setup constraints silk clearance 0.2000 mm; actual 0.0000 mm)	00000000-0000-0000-0000-000000000002	Segment on F.Silkscreen	105.0	98.0	00000000-0000-0000-0000-000000000004	PCB text 'SILK' on F.Silkscreen	104.0	101.2
+warning	silk_over_copper	Silkscreen clipped by solder mask	00000000-0000-0000-0000-000000000008	Segment on F.Silkscreen	112.0	98.0	00000000-0000-0000-0000-00000000000c	Via [B] on F.Cu - B.Cu	112.4	106.0
+warning	silk_overlap	Silkscreen clearance (board setup constraints silk clearance 0.2000 mm; actual 0.0000 mm)	00000000-0000-0000-0000-000000000005	Segment on B.Silkscreen	100.0	104.0	00000000-0000-0000-0000-000000000007	PCB text 'BK' on B.Silkscreen	108.0	104.5

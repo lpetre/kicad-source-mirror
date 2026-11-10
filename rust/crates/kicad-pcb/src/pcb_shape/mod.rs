@@ -312,8 +312,13 @@ impl BoardItemMut for PcbShape {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbShape::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbShape::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbShape::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -827,7 +832,12 @@ impl PcbShape {
     }
 
     /// Port of `PCB_SHAPE::StyleFromSettings()`: the line thickness of the layer class.
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, _check_side: bool) {
+    pub fn style_from_settings(
+        &mut self,
+        _env: &MutEnv,
+        settings: &BoardDesignSettings,
+        _check_side: bool,
+    ) {
         let width = settings.get_line_thickness(self.base.item.layer);
         self.shape.stroke.set_width(width);
     }

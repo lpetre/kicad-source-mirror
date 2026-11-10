@@ -133,7 +133,8 @@ fn load_path(name: &str, path: &std::path::Path) -> Option<Board> {
 
     for s in &report.skipped {
         match s.token.as_str() {
-            "footprint" | "module" | "zone" => {
+            // (`pad`: the footprint parser landed before the pad parser, PCBIO-07)
+            "footprint" | "module" | "pad" | "zone" => {
                 eprintln!("{name}: not compared, the parser skipped `{}`", s.token);
                 return None;
             }

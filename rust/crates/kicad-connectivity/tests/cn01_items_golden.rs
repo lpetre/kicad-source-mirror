@@ -243,7 +243,8 @@ fn check_board(name: &str) -> Option<usize> {
 
     for s in &report.skipped {
         match s.token.as_str() {
-            "footprint" | "module" => drop_pads = true,
+            // (`pad`: the footprint parser landed before the pad parser, PCBIO-07)
+            "footprint" | "module" | "pad" => drop_pads = true,
             "zone" => drop_zones = true,
             "embedded_fonts" | "net_class" | "zone_defaults" | "generated" => {}
             t => panic!("{name}: parser skipped `{t}`: extend the filter"),

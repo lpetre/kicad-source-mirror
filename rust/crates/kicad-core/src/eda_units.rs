@@ -28,10 +28,11 @@ use crate::printf::{format_e, format_f, format_g};
 use crate::wxstr;
 
 /// Port of `enum class EDA_DATA_TYPE`: the kind of quantity a value measures.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i32)]
 pub enum EdaDataType {
-    /// `DISTANCE`
+    /// `DISTANCE` (the default of the `EDA_DATA_TYPE` parameters in the C++ API)
+    #[default]
     Distance = 0,
     /// `AREA`
     Area = 1,
@@ -48,14 +49,15 @@ pub enum EdaDataType {
 }
 
 /// Port of `enum class EDA_UNITS`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i32)]
 pub enum EdaUnits {
     /// `INCH` (do not use `IN`: it conflicts with a Windows header)
     Inch = 0,
     /// `MM`
     Mm = 1,
-    /// `UNSCALED`
+    /// `UNSCALED` (also the [`Default`], as in `kicad-libeval`'s unit resolvers)
+    #[default]
     Unscaled = 2,
     /// `DEGREES`
     Degrees = 3,
@@ -80,6 +82,18 @@ pub enum EdaUnits {
 }
 
 impl EdaUnits {
+    /// The numeric value of the C++ enumerator.
+    pub fn as_i32(self) -> i32 {
+        self as i32
+    }
+
+    /// The enumerator with the given C++ numeric value.
+    pub fn from_i32(value: i32) -> Option<EdaUnits> {
+        usize::try_from(value)
+            .ok()
+            .and_then(|i| EdaUnits::ALL.get(i).copied())
+    }
+
     /// All units, in enum order.
     pub const ALL: [EdaUnits; 13] = [
         EdaUnits::Inch,

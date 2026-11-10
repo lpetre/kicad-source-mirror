@@ -34,7 +34,11 @@ crates/kicad-cli crates/kicad-wasm` and close every stub whose subsystem exists:
    rust/web/test/smoke.mjs (node; currently 49 checks) plus a Playwright page test (chromium
    is preinstalled: require('playwright'), no install step) that loads the demo page, runs
    DRC and an export on a small board and compares with the native CLI output.
-5. `rust/scripts/build-wasm.sh`: keep it working (wasm-bindgen 0.2.130 is pinned; wasm-opt
+5. UUID generation: the model draws fresh UUIDs from a seeded `KiidGenerator` (deterministic
+   for tests). The hosts must seed it per run: OS randomness natively, crypto.getRandomValues
+   in wasm, with a `--deterministic-uuids <seed>` style switch / API option for reproducible
+   runs (DRC-06 found that the default seed reproduces UUIDs stored in QA boards).
+6. `rust/scripts/build-wasm.sh`: keep it working (wasm-bindgen 0.2.130 is pinned; wasm-opt
    is not installed - optional step), report module size.
 
 You own crates/kicad-session, crates/kicad-cli, crates/kicad-wasm, rust/web, rust/scripts.

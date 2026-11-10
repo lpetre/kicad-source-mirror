@@ -507,7 +507,7 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "aperture", v_bool(pad.is_aperture_pad()));
     emit!(o, "npth_no_copper", v_bool(pad.is_npth_with_no_copper(ctx)));
     emit!(o, "no_connect", v_bool(pad.is_no_connect_pad()));
-    emit!(o, "free", v_bool(pad.is_free_pad_ctx(ctx)));
+    emit!(o, "free", v_bool(pad.is_free_pad(ctx)));
     emit!(o, "can_have_number", v_bool(pad.can_have_number()));
     emit!(o, "principal_layer", v_layer(pad.principal_layer(ctx)));
     emit!(o, "drill_size", v_vec(pad.drill_size(ctx)));

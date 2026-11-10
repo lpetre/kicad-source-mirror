@@ -65,16 +65,14 @@ fn is_thieving_fill(it: ItemRef<'_>) -> bool {
 
 /// `isThievingHatch`.
 fn is_thieving_hatch(it: ItemRef<'_>) -> bool {
-    it.as_zone().is_some_and(|z| {
-        z.is_copper_thieving() && z.thieving_pattern() == ThievingPattern::Hatch
-    })
+    it.as_zone()
+        .is_some_and(|z| z.is_copper_thieving() && z.thieving_pattern() == ThievingPattern::Hatch)
 }
 
 /// `isThievingNonHatch`.
 fn is_thieving_non_hatch(it: ItemRef<'_>) -> bool {
-    it.as_zone().is_some_and(|z| {
-        z.is_copper_thieving() && z.thieving_pattern() != ThievingPattern::Hatch
-    })
+    it.as_zone()
+        .is_some_and(|z| z.is_copper_thieving() && z.thieving_pattern() != ThievingPattern::Hatch)
 }
 
 /// `isAreaBasedIslandRemoval`.
@@ -125,14 +123,23 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     pm.replace_property(
         ClassId::BoardConnectedItem,
         "Layer",
-        Property::new_enum("Layer", c, ValueType::Enum(EnumId::PcbLayerId), true, |it| {
-            layer_value(it.layer())
-        }),
+        Property::new_enum(
+            "Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            true,
+            |it| layer_value(it.layer()),
+        ),
         "",
     )
     .set_available_func(is_thieving_fill);
 
-    pm.override_availability(c, ClassId::BoardConnectedItem, "Net", is_non_thieving_copper_zone);
+    pm.override_availability(
+        c,
+        ClassId::BoardConnectedItem,
+        "Net",
+        is_non_thieving_copper_zone,
+    );
     pm.override_availability(
         c,
         ClassId::BoardConnectedItem,
@@ -158,21 +165,27 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_keepout = "Keepout";
 
     pm.add_property(
-        boolean("Keep Out Tracks", |it| PropertyValue::Bool(zone(&it).do_not_allow_tracks)),
+        boolean("Keep Out Tracks", |it| {
+            PropertyValue::Bool(zone(&it).do_not_allow_tracks)
+        }),
         group_keepout,
     )
     .set_available_func(is_rule_area)
     .set_is_copyable();
 
     pm.add_property(
-        boolean("Keep Out Vias", |it| PropertyValue::Bool(zone(&it).do_not_allow_vias)),
+        boolean("Keep Out Vias", |it| {
+            PropertyValue::Bool(zone(&it).do_not_allow_vias)
+        }),
         group_keepout,
     )
     .set_available_func(is_rule_area)
     .set_is_copyable();
 
     pm.add_property(
-        boolean("Keep Out Pads", |it| PropertyValue::Bool(zone(&it).do_not_allow_pads)),
+        boolean("Keep Out Pads", |it| {
+            PropertyValue::Bool(zone(&it).do_not_allow_pads)
+        }),
         group_keepout,
     )
     .set_available_func(is_rule_area)
@@ -199,7 +212,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_placement = "Placement";
 
     pm.add_property(
-        boolean("Enable", |it| PropertyValue::Bool(zone(&it).placement_area_enabled)),
+        boolean("Enable", |it| {
+            PropertyValue::Bool(zone(&it).placement_area_enabled)
+        }),
         group_placement,
     )
     .set_available_func(is_rule_area);
@@ -232,9 +247,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_fill = "Fill Style";
 
     pm.add_property(
-        Property::new_enum("Fill Mode", c, ValueType::Enum(EnumId::ZoneFillMode), true, |it| {
-            PropertyValue::Enum(EnumId::ZoneFillMode, zone(&it).fill_mode() as i32)
-        }),
+        Property::new_enum(
+            "Fill Mode",
+            c,
+            ValueType::Enum(EnumId::ZoneFillMode),
+            true,
+            |it| PropertyValue::Enum(EnumId::ZoneFillMode, zone(&it).fill_mode() as i32),
+        ),
         group_fill,
     )
     .set_available_func(is_copper_zone)
@@ -252,8 +271,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        int("Hatch Width", |it| PropertyValue::Int(zone(&it).hatch_thickness))
-            .with_display(PropertyDisplay::PtSize),
+        int("Hatch Width", |it| {
+            PropertyValue::Int(zone(&it).hatch_thickness)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_fill,
     )
     .set_available_func(is_non_thieving_copper_zone)
@@ -272,9 +293,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        Property::new("Hatch Minimum Hole Ratio", c, ValueType::Double, true, |it| {
-            PropertyValue::Double(zone(&it).hatch_hole_min_area)
-        }),
+        Property::new(
+            "Hatch Minimum Hole Ratio",
+            c,
+            ValueType::Double,
+            true,
+            |it| PropertyValue::Double(zone(&it).hatch_hole_min_area),
+        ),
         group_fill,
     )
     .set_available_func(is_non_thieving_copper_zone)
@@ -284,7 +309,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     // TODO: Smoothing effort needs to change to enum (in dialog too)
     pm.add_property(
-        int("Smoothing Effort", |it| PropertyValue::Int(zone(&it).hatch_smoothing_level)),
+        int("Smoothing Effort", |it| {
+            PropertyValue::Int(zone(&it).hatch_smoothing_level)
+        }),
         group_fill,
     )
     .set_available_func(is_non_thieving_copper_zone)
@@ -329,8 +356,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     // Gap is meaningful for all three patterns: edge-to-edge spacing between
     // adjacent stamps for dots/squares, line-to-line edge spacing for hatch.
     pm.add_property(
-        int("Thieving Gap", |it| PropertyValue::Int(zone(&it).thieving_settings.gap))
-            .with_display(PropertyDisplay::PtSize),
+        int("Thieving Gap", |it| {
+            PropertyValue::Int(zone(&it).thieving_settings.gap)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_fill,
     )
     .set_available_func(is_thieving_fill)
@@ -375,7 +404,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
             ValueType::Enum(EnumId::IslandRemovalMode),
             true,
             |it| {
-                PropertyValue::Enum(EnumId::IslandRemovalMode, zone(&it).island_removal_mode as i32)
+                PropertyValue::Enum(
+                    EnumId::IslandRemovalMode,
+                    zone(&it).island_removal_mode as i32,
+                )
             },
         ),
         group_fill,
@@ -407,8 +439,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_validator();
 
     pm.add_property(
-        int("Minimum Width", |it| PropertyValue::Int(zone(&it).min_thickness()))
-            .with_display(PropertyDisplay::PtSize),
+        int("Minimum Width", |it| {
+            PropertyValue::Int(zone(&it).min_thickness())
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_electrical,
     )
     .set_available_func(is_copper_zone)
@@ -431,8 +465,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(is_non_thieving_copper_zone);
 
     pm.add_property(
-        int("Thermal Relief Gap", |it| PropertyValue::Int(zone(&it).thermal_relief_gap()))
-            .with_display(PropertyDisplay::PtSize),
+        int("Thermal Relief Gap", |it| {
+            PropertyValue::Int(zone(&it).thermal_relief_gap())
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_electrical,
     )
     .set_available_func(is_non_thieving_copper_zone)

@@ -1431,7 +1431,7 @@ impl CnCluster {
 /// `static_cast<PAD*>( item->Parent() )->IsFreePad()`.
 fn is_free_pad(ctx: &BoardCtx<'_>, pad: ItemId) -> bool {
     ctx.item(pad)
-        .and_then(|p| p.as_pad().map(|pad| pad.is_free_pad_ctx(ctx)))
+        .and_then(|p| p.as_pad().map(|pad| pad.is_free_pad(ctx)))
         .unwrap_or(false)
 }
 

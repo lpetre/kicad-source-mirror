@@ -23,10 +23,10 @@ use kicad_core::PcbLayerId;
 
 use crate::item_ref::ItemRef;
 use crate::pad::Pad;
+use crate::pad_utils::pad_has_meaningful_rounding_radius;
 use crate::padstack::{
     BackdrillMode, PadAttrib, PadDrillPostMachiningMode, PadDrillShape, PadShape, PadstackMode,
 };
-use crate::pad_utils::pad_has_meaningful_rounding_radius;
 
 use super::{
     ClassId, EnumId, Property, PropertyDisplay, PropertyManager, PropertyValue, ValueType,
@@ -43,7 +43,8 @@ fn pad<'a>(it: &ItemRef<'a>) -> &'a Pad {
 
 /// `isCopperPad`.
 fn is_copper_pad(it: ItemRef<'_>) -> bool {
-    it.as_pad().is_some_and(|p| p.attribute() != PadAttrib::Npth)
+    it.as_pad()
+        .is_some_and(|p| p.attribute() != PadAttrib::Npth)
 }
 
 /// `padCanHaveHole`.
@@ -150,7 +151,9 @@ fn post_machining_mode(p: &Pad, front: bool) -> PropertyValue {
     } else {
         p.padstack.back_post_machining()
     };
-    let mode = pm.mode.unwrap_or(PadDrillPostMachiningMode::NotPostMachined);
+    let mode = pm
+        .mode
+        .unwrap_or(PadDrillPostMachiningMode::NotPostMachined);
     PropertyValue::Enum(EnumId::PadDrillPostMachiningMode, mode as i32)
 }
 
@@ -186,7 +189,12 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         "",
     );
 
-    pm.override_availability(ClassId::Pad, ClassId::BoardConnectedItem, "Net", is_copper_pad);
+    pm.override_availability(
+        ClassId::Pad,
+        ClassId::BoardConnectedItem,
+        "Net",
+        is_copper_pad,
+    );
     pm.override_availability(
         ClassId::Pad,
         ClassId::BoardConnectedItem,
@@ -253,22 +261,30 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        int("Size X", |it| PropertyValue::Int(pad(&it).size(it.ctx, ALL_LAYERS).x))
-            .with_display(PropertyDisplay::PtSize),
+        int("Size X", |it| {
+            PropertyValue::Int(pad(&it).size(it.ctx, ALL_LAYERS).x)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_pad,
     )
     .set_available_func(has_normal_padstack);
     pm.add_property(
-        int("Size Y", |it| PropertyValue::Int(pad(&it).size(it.ctx, ALL_LAYERS).y))
-            .with_display(PropertyDisplay::PtSize),
+        int("Size Y", |it| {
+            PropertyValue::Int(pad(&it).size(it.ctx, ALL_LAYERS).y)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_pad,
     )
     .set_available_func(size_y_available);
 
     pm.add_property(
-        Property::new("Corner Radius Ratio", ClassId::Pad, ValueType::Double, true, |it| {
-            PropertyValue::Double(pad(&it).padstack.round_rect_radius_ratio(PcbLayerId::FCu))
-        }),
+        Property::new(
+            "Corner Radius Ratio",
+            ClassId::Pad,
+            ValueType::Double,
+            true,
+            |it| PropertyValue::Double(pad(&it).padstack.round_rect_radius_ratio(PcbLayerId::FCu)),
+        ),
         group_pad,
     )
     .set_available_func(has_round_radius);
@@ -291,16 +307,20 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_writeable_func(pad_can_have_hole);
 
     pm.add_property(
-        int("Hole Size X", |it| PropertyValue::Int(pad(&it).drill_size(it.ctx).x))
-            .with_display(PropertyDisplay::PtSize),
+        int("Hole Size X", |it| {
+            PropertyValue::Int(pad(&it).drill_size(it.ctx).x)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_pad,
     )
     .set_writeable_func(pad_can_have_hole)
     .set_validator();
 
     pm.add_property(
-        int("Hole Size Y", |it| PropertyValue::Int(pad(&it).drill_size(it.ctx).y))
-            .with_display(PropertyDisplay::PtSize),
+        int("Hole Size Y", |it| {
+            PropertyValue::Int(pad(&it).drill_size(it.ctx).y)
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_pad,
     )
     .set_writeable_func(pad_can_have_hole)
@@ -308,9 +328,11 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(hole_size_y_available);
 
     pm.add_property(
-        enum_prop("Top Post-machining", EnumId::PadDrillPostMachiningMode, |it| {
-            post_machining_mode(pad(&it), true)
-        }),
+        enum_prop(
+            "Top Post-machining",
+            EnumId::PadDrillPostMachiningMode,
+            |it| post_machining_mode(pad(&it), true),
+        ),
         group_post_machining,
     )
     .set_writeable_func(pad_can_have_hole)
@@ -347,9 +369,11 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(|it| post_machining_is(it, true, CS));
 
     pm.add_property(
-        enum_prop("Bottom Post-machining", EnumId::PadDrillPostMachiningMode, |it| {
-            post_machining_mode(pad(&it), false)
-        }),
+        enum_prop(
+            "Bottom Post-machining",
+            EnumId::PadDrillPostMachiningMode,
+            |it| post_machining_mode(pad(&it), false),
+        ),
         group_post_machining,
     )
     .set_writeable_func(pad_can_have_hole)
@@ -387,12 +411,16 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     pm.add_property(
         enum_prop("Backdrill Mode", EnumId::BackdrillMode, |it| {
-            PropertyValue::Enum(EnumId::BackdrillMode, pad(&it).padstack.backdrill_mode() as i32)
+            PropertyValue::Enum(
+                EnumId::BackdrillMode,
+                pad(&it).padstack.backdrill_mode() as i32,
+            )
         }),
         group_backdrill,
     );
 
-    const BOTTOM: &[BackdrillMode] = &[BackdrillMode::BackdrillBottom, BackdrillMode::BackdrillBoth];
+    const BOTTOM: &[BackdrillMode] =
+        &[BackdrillMode::BackdrillBottom, BackdrillMode::BackdrillBoth];
     const TOP: &[BackdrillMode] = &[BackdrillMode::BackdrillTop, BackdrillMode::BackdrillBoth];
 
     pm.add_property(
@@ -445,15 +473,19 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     );
 
     pm.add_property(
-        int("Pad To Die Length", |it| PropertyValue::Int(pad(&it).pad_to_die_length()))
-            .with_display(PropertyDisplay::PtSize),
+        int("Pad To Die Length", |it| {
+            PropertyValue::Int(pad(&it).pad_to_die_length())
+        })
+        .with_display(PropertyDisplay::PtSize),
         group_pad,
     )
     .set_available_func(is_copper_pad);
 
     pm.add_property(
-        int("Pad To Die Delay", |it| PropertyValue::Int(pad(&it).pad_to_die_delay()))
-            .with_display(PropertyDisplay::PtTime),
+        int("Pad To Die Delay", |it| {
+            PropertyValue::Int(pad(&it).pad_to_die_delay())
+        })
+        .with_display(PropertyDisplay::PtTime),
         group_pad,
     )
     .set_available_func(is_copper_pad);
@@ -499,7 +531,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     pm.add_property(
         enum_prop("Zone Connection Style", EnumId::ZoneConnection, |it| {
-            PropertyValue::Enum(EnumId::ZoneConnection, pad(&it).local_zone_connection() as i32)
+            PropertyValue::Enum(
+                EnumId::ZoneConnection,
+                pad(&it).local_zone_connection() as i32,
+            )
         }),
         group_overrides,
     )

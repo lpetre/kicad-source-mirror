@@ -1,0 +1,3 @@
+error	clearance	Clearance violation (rule 'phys' clearance 0.3000 mm; actual 0.0000 mm)	00000000-0000-0000-0000-000000000001	Track [A] on F.Cu, length 8.0000 mm	100.0	100.0	00000000-0000-0000-0000-000000000003	Track [A] on F.Cu, length 2.8284 mm	108.0	100.0
+error	clearance	Clearance violation (rule 'phys' clearance 0.3000 mm; actual 0.0000 mm)	00000000-0000-0000-0000-000000000012	PCB text 'T' on F.Cu	118.0	110.0	00000000-0000-0000-0000-000000000013	Track [B] on F.Cu, length 4.0000 mm	116.0	109.5
+error	clearance	Clearance violation (rule 'phys' clearance 0.3000 mm; actual 0.0000 mm)	00000000-0000-0000-0000-000000000014	Rectangle on Edge.Cuts	95.0	95.0	00000000-0000-0000-0000-000000000015	Segment on Edge.Cuts	95.0	110.0

@@ -31,7 +31,8 @@ use super::{
 
 /// `static_cast<PCB_DIMENSION_BASE*>`.
 fn dim<'a>(it: &ItemRef<'a>) -> &'a PcbDimension {
-    it.as_dimension().expect("dimension property on a dimension")
+    it.as_dimension()
+        .expect("dimension property on a dimension")
 }
 
 /// `isLeader`: `dynamic_cast<PCB_DIM_LEADER*>`.
@@ -55,7 +56,10 @@ fn is_not_center(it: ItemRef<'_>) -> bool {
 /// from it).
 fn is_multi_arrow_direction(it: ItemRef<'_>) -> bool {
     it.as_dimension().is_some_and(|d| {
-        matches!(d.kind, DimensionKind::Aligned(_) | DimensionKind::Orthogonal { .. })
+        matches!(
+            d.kind,
+            DimensionKind::Aligned(_) | DimensionKind::Orthogonal { .. }
+        )
     })
 }
 
@@ -75,7 +79,13 @@ fn uses_override_text(it: ItemRef<'_>) -> bool {
 }
 
 fn denum(name: &'static str, e: EnumId, get: super::Getter) -> Property {
-    Property::new_enum(name, ClassId::PcbDimensionBase, ValueType::Enum(e), true, get)
+    Property::new_enum(
+        name,
+        ClassId::PcbDimensionBase,
+        ValueType::Enum(e),
+        true,
+        get,
+    )
 }
 
 fn dint(name: &'static str, get: super::Getter) -> Property {
@@ -84,7 +94,13 @@ fn dint(name: &'static str, get: super::Getter) -> Property {
 }
 
 fn dstring(name: &'static str, get: super::Getter) -> Property {
-    Property::new(name, ClassId::PcbDimensionBase, ValueType::String, true, get)
+    Property::new(
+        name,
+        ClassId::PcbDimensionBase,
+        ValueType::String,
+        true,
+        get,
+    )
 }
 
 /// `DIMENSION_DESC::DIMENSION_DESC()`.
@@ -103,12 +119,16 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_dimension = "Dimension Properties";
 
     pm.add_property(
-        dstring("Prefix", |it| PropertyValue::String(dim(&it).prefix.clone())),
+        dstring("Prefix", |it| {
+            PropertyValue::String(dim(&it).prefix.clone())
+        }),
         group_dimension,
     )
     .set_available_func(is_not_leader);
     pm.add_property(
-        dstring("Suffix", |it| PropertyValue::String(dim(&it).suffix.clone())),
+        dstring("Suffix", |it| {
+            PropertyValue::String(dim(&it).suffix.clone())
+        }),
         group_dimension,
     )
     .set_available_func(is_not_leader);
@@ -133,7 +153,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     // Driven mirrors measured geometry so grey it out since edit would not stick.
     pm.add_property(
-        dstring("Value", |_| no_rust_api("PCB_DIMENSION_BASE::GetValueFieldText")),
+        dstring("Value", |_| {
+            no_rust_api("PCB_DIMENSION_BASE::GetValueFieldText")
+        }),
         group_dimension,
     )
     .set_available_func(dimension_has_value_mode)
@@ -141,7 +163,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_validator();
 
     pm.add_property(
-        dstring("Text", |it| PropertyValue::String(dim(&it).override_text().to_string())),
+        dstring("Text", |it| {
+            PropertyValue::String(dim(&it).override_text().to_string())
+        }),
         group_dimension,
     )
     .set_available_func(is_leader);
@@ -189,20 +213,26 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        dint("Line Thickness", |it| PropertyValue::Int(dim(&it).line_thickness)),
+        dint("Line Thickness", |it| {
+            PropertyValue::Int(dim(&it).line_thickness)
+        }),
         group_dimension,
     )
     .set_is_copyable();
 
     pm.add_property(
-        dint("Arrow Length", |it| PropertyValue::Int(dim(&it).arrow_length)),
+        dint("Arrow Length", |it| {
+            PropertyValue::Int(dim(&it).arrow_length)
+        }),
         group_dimension,
     )
     .set_available_func(is_not_center)
     .set_is_copyable();
 
     pm.add_property(
-        dint("Extension Line Offset", |it| PropertyValue::Int(dim(&it).extension_offset)),
+        dint("Extension Line Offset", |it| {
+            PropertyValue::Int(dim(&it).extension_offset)
+        }),
         group_dimension,
     )
     .set_available_func(is_not_center)
@@ -220,9 +250,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        Property::new("Keep Aligned with Dimension", c, ValueType::Bool, true, |it| {
-            PropertyValue::Bool(dim(&it).keep_text_aligned)
-        }),
+        Property::new(
+            "Keep Aligned with Dimension",
+            c,
+            ValueType::Bool,
+            true,
+            |it| PropertyValue::Bool(dim(&it).keep_text_aligned),
+        ),
         group_text,
     );
 
@@ -325,9 +359,11 @@ fn register_radial(pm: &mut PropertyManager) {
     pm.inherits_after(c, ClassId::PcbDimensionBase);
 
     pm.add_property(
-        Property::new("Leader Length", c, ValueType::Int, true, |it| match &dim(&it).kind {
-            DimensionKind::Radial { leader_length } => PropertyValue::Int(*leader_length),
-            _ => unreachable!("PCB_DIM_RADIAL property on a radial dimension"),
+        Property::new("Leader Length", c, ValueType::Int, true, |it| {
+            match &dim(&it).kind {
+                DimensionKind::Radial { leader_length } => PropertyValue::Int(*leader_length),
+                _ => unreachable!("PCB_DIM_RADIAL property on a radial dimension"),
+            }
         })
         .with_display(PropertyDisplay::PtSize),
         "Dimension Properties",

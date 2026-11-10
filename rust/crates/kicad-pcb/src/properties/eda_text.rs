@@ -23,7 +23,9 @@ use crate::eda_text::{EdaText, EdaTextExt};
 use crate::item_ref::ItemRef;
 use crate::traits::EdaTextItem;
 
-use super::{ClassId, EnumId, Property, PropertyDisplay, PropertyManager, PropertyValue, ValueType};
+use super::{
+    ClassId, EnumId, Property, PropertyDisplay, PropertyManager, PropertyValue, ValueType,
+};
 
 /// `KICAD_FONT_NAME`.
 pub(crate) const KICAD_FONT_NAME: &str = "KiCad Font";

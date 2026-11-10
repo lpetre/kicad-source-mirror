@@ -29,7 +29,7 @@ INC="-I$BUILD -I$BUILD/common -I$KICAD/include -I$KICAD/libs/core/include -I$KIC
      -I$KICAD/thirdparty/glm -I$KICAD/thirdparty/expected/include -I$KICAD/thirdparty/clipper2/Clipper2Lib/include"
 
 # shellcheck disable=SC2086
-${CXX:-c++} -std=c++20 -O1 -w -DNDEBUG -DFMT_HEADER_ONLY $(wx-config --cxxflags core,base) $INC \
+flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 ${CXX:-c++} -std=c++20 -O1 -w -DNDEBUG -DFMT_HEADER_ONLY $(wx-config --cxxflags core,base) $INC \
     -o "$OUT/font_oracle" "$HERE/font_oracle.cpp" "$OUT/gr_text_helpers.cpp" \
     -L"$BUILD/common/gal" -L"$BUILD/common" -lkigal -lkicommon \
     "$BUILD/libs/kimath/libkimath.a" "$BUILD/libs/core/libcore.a" \

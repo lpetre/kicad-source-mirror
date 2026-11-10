@@ -31,7 +31,8 @@ use super::{
 
 /// `static_cast<FOOTPRINT*>`.
 fn fp<'a>(it: &ItemRef<'a>) -> &'a Footprint {
-    it.as_footprint().expect("FOOTPRINT property on a footprint")
+    it.as_footprint()
+        .expect("FOOTPRINT property on a footprint")
 }
 
 /// `isNotFootprintHolder` (the `FOOTPRINT_DESC` version: true without a board).
@@ -66,8 +67,14 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     // footprints might be placed only on F.Cu & B.Cu
     let fp_layers = vec![
-        (i32::from(PcbLayerId::FCu), kicad_core::Lset::name(PcbLayerId::FCu)),
-        (i32::from(PcbLayerId::BCu), kicad_core::Lset::name(PcbLayerId::BCu)),
+        (
+            i32::from(PcbLayerId::FCu),
+            kicad_core::Lset::name(PcbLayerId::FCu),
+        ),
+        (
+            i32::from(PcbLayerId::BCu),
+            kicad_core::Lset::name(PcbLayerId::BCu),
+        ),
     ];
 
     pm.register_type(c);
@@ -79,9 +86,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     pm.replace_property(
         ClassId::BoardItem,
         "Layer",
-        Property::new_enum("Layer", c, ValueType::Enum(EnumId::PcbLayerId), true, |it| {
-            layer_value(it.layer())
-        }),
+        Property::new_enum(
+            "Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            true,
+            |it| layer_value(it.layer()),
+        ),
         "",
     )
     .set_available_func(is_not_footprint_holder)
@@ -115,7 +126,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     let group_fields = "Fields";
 
     pm.add_property(
-        string("Reference", true, |it| PropertyValue::String(fp(&it).reference(it.ctx))),
+        string("Reference", true, |it| {
+            PropertyValue::String(fp(&it).reference(it.ctx))
+        }),
         group_fields,
     );
 
@@ -134,7 +147,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         property_fields,
     );
     pm.add_property(
-        string("Keywords", false, |it| PropertyValue::String(fp(&it).keywords.clone())),
+        string("Keywords", false, |it| {
+            PropertyValue::String(fp(&it).keywords.clone())
+        }),
         property_fields,
     );
 
@@ -174,7 +189,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         group_attributes,
     );
     pm.add_property(
-        boolean("Not in Schematic", |it| PropertyValue::Bool(fp(&it).is_board_only())),
+        boolean("Not in Schematic", |it| {
+            PropertyValue::Bool(fp(&it).is_board_only())
+        }),
         group_attributes,
     );
     pm.add_property(
@@ -196,7 +213,9 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         group_attributes,
     );
     pm.add_property(
-        boolean("Do not Populate", |it| PropertyValue::Bool(fp(&it).is_dnp())),
+        boolean("Do not Populate", |it| {
+            PropertyValue::Bool(fp(&it).is_dnp())
+        }),
         group_attributes,
     );
 
@@ -217,9 +236,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     )
     .set_is_copyable();
     pm.add_property(
-        Property::new("Solderpaste Margin Override", c, ValueType::OptInt, true, |it| {
-            PropertyValue::OptInt(fp(&it).solder_paste_margin)
-        })
+        Property::new(
+            "Solderpaste Margin Override",
+            c,
+            ValueType::OptInt,
+            true,
+            |it| PropertyValue::OptInt(fp(&it).solder_paste_margin),
+        )
         .with_display(PropertyDisplay::PtSize),
         group_overrides,
     )
@@ -242,7 +265,12 @@ pub(crate) fn register(pm: &mut PropertyManager) {
             c,
             ValueType::Enum(EnumId::ZoneConnection),
             true,
-            |it| PropertyValue::Enum(EnumId::ZoneConnection, fp(&it).local_zone_connection() as i32),
+            |it| {
+                PropertyValue::Enum(
+                    EnumId::ZoneConnection,
+                    fp(&it).local_zone_connection() as i32,
+                )
+            },
         ),
         group_overrides,
     )

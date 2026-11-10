@@ -22,8 +22,8 @@
 //! Gerber X2 header), `initializePlotter`, `FillNegativeKnockout`, `PlotBoardLayers`,
 //! `PlotOneBoardLayer` (the dispatch per layer kind) and the iteration skeleton of
 //! `PlotStandardLayer` (container order, blocks, Gerber metadata set-up). The per-item bodies
-//! of `PlotStandardLayer` (pads, DNP cross, vias, tracks, zones) are FAB-04 and are pending
-//! functions here; the solder mask minimum width path and the clipped silk are FAB-10.
+//! of `PlotStandardLayer` (pads, DNP cross, vias, tracks, zones, L385-928) are FAB-04; the
+//! solder mask minimum width path and the clipped silk are FAB-10.
 //!
 //! Out of scope (analysis 2.2): DXF / PostScript / PDF / PNG / HPGL plotters and their
 //! branches (`PlotLayer`'s DXF outline mode, `setupPlotterNewPDFPage`, `plotBackgroundColor`,
@@ -31,22 +31,36 @@
 
 use std::sync::Arc;
 
-use kicad_core::color4d::Color4D;
-use kicad_core::layer_ids::is_copper_layer;
+use kicad_core::color4d::{Color4D, EdaColorT};
+use kicad_core::layer_ids::{Flashing, LAYER_DNP_MARKER, LAYER_VIAS, is_copper_layer};
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
+use kicad_core::stroke_params::{LineStyle, StrokeParams};
+use kicad_geom::cmath::f64_to_i32_x86;
 use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
+use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{Box2I, EdaAngle, ShapePolySet, Vector2I, ki_round};
+use kicad_geom::trigo::rotate_point_around;
+use kicad_geom::{
+    ANGLE_0, Box2I, EdaAngle, Shape, ShapePolySet, Vector2D, Vector2I, ki_round,
+};
 use kicad_pcb::AnyItem;
-use kicad_pcb::ctx::BoardCtx;
-use kicad_pcb::ids::{FootprintId, TrackId, ZoneId};
+use kicad_pcb::board_design_settings::LAYER_CLASS_FAB;
+use kicad_pcb::ctx::{BoardCtx, MutEnv};
+use kicad_pcb::drc_api::DrcConstraintT;
+use kicad_pcb::eda_shape::ShapeT;
+use kicad_pcb::ids::{FootprintId, NetCode, PadId, TrackId, ZoneId};
+use kicad_pcb::item::{DetachedCopy, ParentRef};
+use kicad_pcb::pad::Pad;
+use kicad_pcb::padstack::{PadAttrib, PadShape};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
+use kicad_pcb::pcb_shape::PcbShape;
 use kicad_pcb::pcb_track::Track;
 use kicad_plot::gbr_metadata::GbrApertureAttrib;
 use kicad_plot::gbr_metadata::GbrMetadata;
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
+use kicad_plot::plotter::PlotData;
 use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 
 use crate::pcb_plotter::build_plot_file_name;
@@ -299,14 +313,43 @@ pub struct StandardLayerFlags {
     pub variant_name: String,
 }
 
+impl StandardLayerFlags {
+    /// The preamble of `PlotStandardLayer` (L361-371) for `a_layer_mask`.
+    pub fn new(a_board: &BoardCtx<'_>, a_layer_mask: &Lset, a_plot_opt: &PcbPlotParams) -> Self {
+        let board = a_board.board;
+        let max_error = board.design_settings().max_error;
+
+        let on_copper_layer = (Lset::all_cu_mask() & a_layer_mask).any();
+        let on_solder_mask_layer =
+            (Lset::from_layers(&[PcbLayerId::FMask, PcbLayerId::BMask]) & a_layer_mask).any();
+        let on_solder_paste_layer =
+            (Lset::from_layers(&[PcbLayerId::FPaste, PcbLayerId::BPaste]) & a_layer_mask).any();
+        let on_front_fab = (Lset::from_layers(&[PcbLayerId::FFab]) & a_layer_mask).any();
+        let on_back_fab = (Lset::from_layers(&[PcbLayerId::BFab]) & a_layer_mask).any();
+        let sketch_pads = (on_front_fab || on_back_fab) && a_plot_opt.sketch_pads_on_fab_layers;
+        let variant_name = board.get_current_variant().to_string();
+
+        StandardLayerFlags {
+            max_error,
+            on_copper_layer,
+            on_solder_mask_layer,
+            on_solder_paste_layer,
+            on_front_fab,
+            on_back_fab,
+            sketch_pads,
+            variant_name,
+        }
+    }
+}
+
 /// Port of `PlotStandardLayer`: plot any layer EXCEPT a solder-mask with an enforced minimum
 /// width.
 ///
 /// The iteration order of this function defines the object order in the file and, through the
-/// aperture list, all D-codes; it is ported literally. The per-item bodies are FAB-04
-/// (`plot_standard_layer_footprint`, `plot_standard_layer_via`, `plot_standard_layer_track`,
-/// `plot_standard_layer_zone`), FAB-05 (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`)
-/// and FAB-06 (`PlotFootprintTextItems`).
+/// aperture list, all D-codes; it is ported literally. The board graphics and footprint
+/// texts / graphics are FAB-05 (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`) and
+/// FAB-06 (`PlotFootprintTextItems`); the rest (L385-930) is
+/// [`plot_standard_layer_pads_vias_tracks_zones`].
 pub fn plot_standard_layer(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
@@ -315,30 +358,10 @@ pub fn plot_standard_layer(
 ) {
     let board = a_board.board;
     let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt);
-    let max_error = board.design_settings().max_error;
 
     itemplotter.set_layer_set(a_layer_mask);
 
-    let on_copper_layer = (Lset::all_cu_mask() & a_layer_mask).any();
-    let on_solder_mask_layer =
-        (Lset::from_layers(&[PcbLayerId::FMask, PcbLayerId::BMask]) & a_layer_mask).any();
-    let on_solder_paste_layer =
-        (Lset::from_layers(&[PcbLayerId::FPaste, PcbLayerId::BPaste]) & a_layer_mask).any();
-    let on_front_fab = (Lset::from_layers(&[PcbLayerId::FFab]) & a_layer_mask).any();
-    let on_back_fab = (Lset::from_layers(&[PcbLayerId::BFab]) & a_layer_mask).any();
-    let sketch_pads = (on_front_fab || on_back_fab) && a_plot_opt.sketch_pads_on_fab_layers;
-    let variant_name = board.get_current_variant().to_string();
-
-    let flags = StandardLayerFlags {
-        max_error,
-        on_copper_layer,
-        on_solder_mask_layer,
-        on_solder_paste_layer,
-        on_front_fab,
-        on_back_fab,
-        sketch_pads,
-        variant_name,
-    };
+    let flags = StandardLayerFlags::new(a_board, a_layer_mask, a_plot_opt);
 
     // Plot edge layer and graphic items
     for (id, _) in board.drawings() {
@@ -357,11 +380,25 @@ pub fn plot_standard_layer(
         itemplotter.plot_footprint_graphic_items(footprint);
     }
 
+    plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);
+}
+
+/// `PlotStandardLayer` L383-930: footprint pads (one block per footprint), vias, tracks and
+/// zone fills, each container in its own `StartBlock` / `EndBlock`. Public so that the
+/// verification can run it on layers without FAB-05 / FAB-06 content while those packages
+/// are pending.
+pub fn plot_standard_layer_pads_vias_tracks_zones(
+    itemplotter: &mut BrditemsPlotter<'_, '_>,
+    flags: &StandardLayerFlags,
+) {
+    let board = itemplotter.ctx.board;
+    let on_copper_layer = flags.on_copper_layer;
+
     // Plot footprint pads
     for (footprint, _) in board.footprints() {
         itemplotter.plotter.start_block(None);
 
-        plot_standard_layer_footprint(&mut itemplotter, footprint, &flags);
+        plot_standard_layer_footprint(itemplotter, footprint, flags);
 
         itemplotter.plotter.end_block(None);
     }
@@ -382,7 +419,7 @@ pub fn plot_standard_layer(
             continue;
         }
 
-        plot_standard_layer_via(&mut itemplotter, &mut gbr_metadata, track, &flags);
+        plot_standard_layer_via(itemplotter, &mut gbr_metadata, track, flags);
     }
 
     itemplotter.plotter.end_block(None);
@@ -403,7 +440,7 @@ pub fn plot_standard_layer(
             continue;
         }
 
-        plot_standard_layer_track(&mut itemplotter, &mut gbr_metadata, track, &flags);
+        plot_standard_layer_track(itemplotter, &mut gbr_metadata, track, flags);
     }
 
     itemplotter.plotter.end_block(None);
@@ -412,7 +449,7 @@ pub fn plot_standard_layer(
     itemplotter.plotter.start_block(None);
 
     for (zone, _) in board.zones() {
-        plot_standard_layer_zone(&mut itemplotter, zone, &flags);
+        plot_standard_layer_zone(itemplotter, zone, flags);
     }
 
     itemplotter.plotter.end_block(None);
@@ -420,65 +457,761 @@ pub fn plot_standard_layer(
 
 /// `PlotStandardLayer` L385-740: the pads of one footprint (sketch pads, pad numbers, the
 /// margin / shape adjustments of `plotPadLayer` per layer of `SeqStackupForPlotting()`) and
-/// the DNP cross, between the `StartBlock` / `EndBlock` of the caller (FAB-04).
+/// the DNP cross, between the `StartBlock` / `EndBlock` of the caller.
 pub fn plot_standard_layer_footprint(
     itemplotter: &mut BrditemsPlotter<'_, '_>,
-    footprint: FootprintId,
+    footprint_id: FootprintId,
     flags: &StandardLayerFlags,
 ) {
-    fab_port_pending!(
-        "PlotStandardLayer: footprint pads and DNP cross (FAB-04)",
-        itemplotter.layer_mask,
-        footprint,
-        flags
-    )
+    let ctx = itemplotter.ctx;
+    let board = ctx.board;
+    let a_layer_mask = itemplotter.layer_mask.clone();
+    let Some(footprint) = board.footprint(footprint_id) else {
+        return;
+    };
+    let dnp = footprint.dnp_for_variant(&flags.variant_name);
+    let sketch_pads = flags.sketch_pads;
+    let on_front_fab = flags.on_front_fab;
+    let on_back_fab = flags.on_back_fab;
+
+    for (pad_id, pad) in board.footprint_pads(footprint_id) {
+        let mut do_sketch_pads = false;
+        let pad_layers = pad.layer_set(ctx);
+
+        if !(&pad_layers & &a_layer_mask).any() {
+            if sketch_pads
+                && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
+                    || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
+            {
+                do_sketch_pads = true;
+            } else {
+                continue;
+            }
+        }
+
+        if flags.on_copper_layer && !pad.is_on_copper_layer(ctx) {
+            continue;
+        }
+
+        // pads not connected to copper are optionally not drawn
+        if flags.on_copper_layer && !pad.flash_layer_set(ctx, &a_layer_mask) {
+            continue;
+        }
+
+        // TODO(JE) padstacks - different behavior for single layer or multilayer
+
+        let mut color = Color4D::BLACK;
+
+        // If we're plotting a single layer, the color for that layer can be used directly.
+        if a_layer_mask.count() == 1 {
+            color = itemplotter.color_settings_color(a_layer_mask.seq()[0].0);
+        } else {
+            let pad_on_mask = &pad_layers & &a_layer_mask;
+
+            if pad_on_mask.contains(PcbLayerId::BCu) {
+                color = itemplotter.color_settings_color(PcbLayerId::BCu.0);
+            }
+
+            if pad_on_mask.contains(PcbLayerId::FCu) {
+                color = color.legacy_mix(&itemplotter.color_settings_color(PcbLayerId::FCu.0));
+            }
+
+            if sketch_pads && a_layer_mask.contains(PcbLayerId::FFab) {
+                color = itemplotter.color_settings_color(PcbLayerId::FFab.0);
+            } else if sketch_pads && a_layer_mask.contains(PcbLayerId::BFab) {
+                color = itemplotter.color_settings_color(PcbLayerId::BFab.0);
+            }
+        }
+
+        if sketch_pads
+            && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
+                || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
+            && itemplotter.opts.plot_pad_numbers
+        {
+            itemplotter.plot_pad_number(ctx.view(AnyItem::Pad(pad)), &color);
+        }
+
+        for layer in a_layer_mask.seq_stackup_for_plotting().iter() {
+            plot_pad_layer(
+                itemplotter,
+                pad_id,
+                pad,
+                *layer,
+                &color,
+                do_sketch_pads,
+                flags,
+            );
+        }
+    }
+
+    if dnp
+        && !itemplotter.opts.hide_dnp_fps_on_fab_layers
+        && itemplotter.opts.crossout_dnp_fps_on_fab_layers
+        && ((on_front_fab && footprint.layer(ctx) == PcbLayerId::FCu)
+            || (on_back_fab && footprint.layer(ctx) == PcbLayerId::BCu))
+    {
+        // aPlotter->MarkFootprintPlotted( footprint ): PDF only (out of scope).
+
+        let courtyard = footprint.courtyard(ctx, footprint.layer(ctx));
+        let center = footprint.position(ctx);
+        let orient = footprint.orientation();
+
+        // Compute a tight oriented bounding box by un-rotating the shape into the
+        // footprint's local frame, taking the axis-aligned BBox there, then rotating
+        // the four corners back into world coordinates.
+        let local_rect: Box2I = if courtyard.is_empty() {
+            let mut shape = footprint
+                .effective_shape(
+                    ctx,
+                    PcbLayerId::UndefinedLayer,
+                    Flashing::Default,
+                    DrcConstraintT::NullConstraint,
+                )
+                .clone_shape();
+            shape.rotate(-orient, center);
+            shape.bbox(0)
+        } else {
+            let mut temp = courtyard.clone();
+            Shape::rotate(&mut temp, -orient, center);
+            Shape::bbox(&temp, 0)
+        };
+
+        let mut corner1 = Vector2I::new(local_rect.left(), local_rect.top());
+        let mut corner2 = Vector2I::new(local_rect.right(), local_rect.top());
+        let mut corner3 = Vector2I::new(local_rect.right(), local_rect.bottom());
+        let mut corner4 = Vector2I::new(local_rect.left(), local_rect.bottom());
+
+        rotate_point_around(&mut corner1, center, orient);
+        rotate_point_around(&mut corner2, center, orient);
+        rotate_point_around(&mut corner3, center, orient);
+        rotate_point_around(&mut corner4, center, orient);
+
+        let width = board.design_settings().line_thickness[LAYER_CLASS_FAB];
+
+        // Use DNP cross color from color scheme
+        let dnp_marker_color = itemplotter.color_settings_color(LAYER_DNP_MARKER);
+
+        if dnp_marker_color != Color4D::UNSPECIFIED {
+            itemplotter.plotter.set_color(&dnp_marker_color);
+        } else {
+            let color = itemplotter.color_settings_color(if on_front_fab {
+                PcbLayerId::FFab.0
+            } else {
+                PcbLayerId::BFab.0
+            });
+            itemplotter.plotter.set_color(&color);
+        }
+
+        itemplotter
+            .plotter
+            .thick_segment(corner1, corner3, width, None);
+        itemplotter
+            .plotter
+            .thick_segment(corner2, corner4, width, None);
+    }
 }
 
-/// `PlotStandardLayer` L768-831: the body of the via loop for one via (FAB-04).
+/// The `plotPadLayer` lambda of `PlotStandardLayer` (L446-681): plot `pad` on `a_layer` with
+/// its size, shape and corner radius adjusted by the mask / paste margin.
+///
+/// C++ modifies the board's pad in place and restores the modified members afterwards (or
+/// plots a modified copy, `PAD dummy( *pad )`); the port always works on a detached copy
+/// (`board-model.md` 13), which is the same pad as far as `PlotPad` can tell.
+fn plot_pad_layer(
+    itemplotter: &mut BrditemsPlotter<'_, '_>,
+    pad_id: PadId,
+    pad: &Pad,
+    a_layer: PcbLayerId,
+    color: &Color4D,
+    do_sketch_pads: bool,
+    flags: &StandardLayerFlags,
+) {
+    let ctx: BoardCtx<'_> = *itemplotter.ctx;
+    let ctx = &ctx;
+    let max_error = flags.max_error;
+    let mut margin = Vector2I::new(0, 0);
+    let mut width_adj = 0;
+
+    if flags.on_copper_layer {
+        width_adj = itemplotter.fine_width_adj();
+    }
+
+    if flags.on_solder_mask_layer {
+        let expansion = pad.solder_mask_expansion(ctx, a_layer);
+        margin.x = expansion;
+        margin.y = expansion;
+    }
+
+    if flags.on_solder_paste_layer {
+        margin = pad.solder_paste_margin(ctx, a_layer);
+    }
+
+    // not all shapes can have a different margin for x and y axis
+    // in fact only oval and rect shapes can have different values.
+    // Round shape have always the same x,y margin
+    // so define a unique value for other shapes that do not support different values
+    let mask_clearance = margin.x;
+    // When clearance is same for x and y pad axis, calculations are more easy
+    let same_xy_clearance = margin.x == margin.y;
+
+    // Now offset the pad size by margin + width_adj
+    let pad_plots_size: Vector2I =
+        pad.size(ctx, a_layer) + margin * 2 + Vector2I::new(width_adj, width_adj);
+
+    // Store these parameters that can be modified to plot inflated/deflated pads shape
+    let pad_shape = pad.shape(a_layer);
+    let pad_size = pad.size(ctx, a_layer);
+    let pad_delta = pad.delta(a_layer); // has meaning only for trapezoidal pads
+
+    // Don't draw a 0 sized pad.
+    // Note: a custom pad can have its pad anchor with size = 0
+    if pad_shape != PadShape::Custom && (pad_plots_size.x <= 0 || pad_plots_size.y <= 0) {
+        return;
+    }
+
+    // The mutators' view of the pad's parent footprint (`GetParentFootprint()`, board).
+    let env = ctx.board.mut_env(pad_id.into());
+    // `pad` as C++ modifies it: a detached copy (the "restore" at the end is dropping it).
+    let mut work = pad.detached_copy();
+
+    match pad_shape {
+        PadShape::Circle | PadShape::Oval => {
+            work.set_size(&env, a_layer, pad_plots_size);
+
+            if itemplotter.opts.skip_npth_pads
+                && itemplotter.opts.drill_marks == DrillMarks::NoDrillShape
+                && work.size(ctx, a_layer) == work.drill_size(ctx)
+                && work.attribute() == PadAttrib::Npth
+            {
+                return;
+            }
+
+            itemplotter.plot_pad(
+                ctx.view(AnyItem::Pad(&work)),
+                a_layer,
+                color,
+                do_sketch_pads,
+            );
+        }
+
+        PadShape::Rectangle => {
+            work.set_size(&env, a_layer, pad_plots_size);
+
+            if mask_clearance > 0 {
+                work.set_shape(a_layer, PadShape::Roundrect);
+                work.set_round_rect_corner_radius(a_layer, f64::from(mask_clearance));
+            }
+
+            itemplotter.plot_pad(
+                ctx.view(AnyItem::Pad(&work)),
+                a_layer,
+                color,
+                do_sketch_pads,
+            );
+        }
+
+        PadShape::Trapezoid => {
+            // inflate/deflate a trapezoid is a bit complex.
+            // so if the margin is not null, build a similar polygonal pad shape,
+            // and inflate/deflate the polygonal shape
+            // because inflating/deflating using different values for y and y
+            // we are using only margin.x as inflate/deflate value
+            if mask_clearance == 0 {
+                itemplotter.plot_pad(
+                    ctx.view(AnyItem::Pad(&work)),
+                    a_layer,
+                    color,
+                    do_sketch_pads,
+                );
+            } else {
+                let mut dummy = pad.detached_copy();
+                dummy.set_anchor_pad_shape(a_layer, PadShape::Circle);
+                dummy.set_shape(a_layer, PadShape::Custom);
+                let mut outline = ShapePolySet::new();
+                outline.new_outline();
+                let dx = pad_size.x / 2;
+                let dy = pad_size.y / 2;
+                let ddx = pad_delta.x / 2;
+                let ddy = pad_delta.y / 2;
+
+                outline.append(-dx - ddy, dy + ddx, -1, -1, false);
+                outline.append(dx + ddy, dy - ddx, -1, -1, false);
+                outline.append(dx - ddy, -dy + ddx, -1, -1, false);
+                outline.append(-dx + ddy, -dy - ddx, -1, -1, false);
+
+                // Shape polygon can have holes so use InflateWithLinkedHoles(), not Inflate()
+                // which can create bad shapes if margin.x is < 0
+                outline.inflate_with_linked_holes(
+                    mask_clearance,
+                    CornerStrategy::RoundAllCorners,
+                    max_error,
+                );
+                pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
+                pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &outline, 0, true);
+
+                // Be sure the anchor pad is not bigger than the deflated shape because this
+                // anchor will be added to the pad shape when plotting the pad. So now the
+                // polygonal shape is built, we can clamp the anchor size
+                dummy.set_size(&env, a_layer, Vector2I::new(0, 0));
+
+                itemplotter.plot_pad(
+                    ctx.view(AnyItem::Pad(&dummy)),
+                    a_layer,
+                    color,
+                    do_sketch_pads,
+                );
+            }
+        }
+
+        PadShape::Roundrect => {
+            // The Minkowski sum of a rounded rectangle with a disk of radius R is
+            // another rounded rectangle whose sides grow by 2R and whose corner
+            // radius grows by R. Preserving the original radius_ratio instead
+            // produces visibly inconsistent expansion at the corners (issue 24327).
+            if same_xy_clearance {
+                let original_radius = work.round_rect_corner_radius(a_layer);
+                let new_radius = 0.max(original_radius + mask_clearance + width_adj / 2);
+                work.set_size(&env, a_layer, pad_plots_size);
+                work.set_round_rect_corner_radius(a_layer, f64::from(new_radius));
+            } else {
+                // Asymmetric X/Y clearance (e.g. solder paste ratio on a
+                // non-square pad) is not a Minkowski sum with a disk. Fall back
+                // to the historical behavior of scaling both axes by the per-axis
+                // margin while keeping the radius_ratio. This is approximate at
+                // the corners but preserves the bounding box, which is the
+                // dimension users rely on for paste apertures.
+                let radius_ratio = work.round_rect_radius_ratio(a_layer);
+                work.set_size(&env, a_layer, pad_plots_size);
+                work.set_round_rect_radius_ratio(a_layer, radius_ratio);
+            }
+
+            itemplotter.plot_pad(
+                ctx.view(AnyItem::Pad(&work)),
+                a_layer,
+                color,
+                do_sketch_pads,
+            );
+        }
+
+        PadShape::ChamferedRect => {
+            // for smaller/same rect size than initial shape (i.e. mask_clearance <= 0)
+            // use the rect with size set to padPlotsSize. It gives a good shape
+            if mask_clearance <= 0 {
+                // the size can be slightly inflated by width_adj (PS/PDF only)
+                work.set_size(&env, a_layer, pad_plots_size);
+                itemplotter.plot_pad(
+                    ctx.view(AnyItem::Pad(&work)),
+                    a_layer,
+                    color,
+                    do_sketch_pads,
+                );
+            } else {
+                // Due to the polygonal shape of a CHAMFERED_RECT pad, the best way is to
+                // convert the pad shape to a full polygon and inflate it
+                // and use a dummy  CUSTOM pad to plot the final shape.
+                // However one can inflate polygon only if X,Y has same inflate value
+                // if not the case, just use a rectangle having the padPlotsSize new size
+                let mut dummy = pad.detached_copy();
+                // Build the dummy pad outline with coordinates relative to the pad position
+                // pad offset and orientation 0. The actual pos, offset and rotation will be
+                // taken in account later by the plot function
+                dummy.set_position(&env, Vector2I::new(0, 0));
+                dummy.set_offset(&env, a_layer, Vector2I::new(0, 0));
+
+                if !same_xy_clearance {
+                    dummy.set_size(&env, a_layer, pad_plots_size);
+                }
+
+                dummy.set_orientation(&env, ANGLE_0);
+                let mut outline = ShapePolySet::new();
+                dummy.transform_shape_to_polygon(
+                    ctx,
+                    &mut outline,
+                    a_layer,
+                    0,
+                    max_error,
+                    ErrorLoc::Inside,
+                    false,
+                );
+
+                if same_xy_clearance {
+                    outline.inflate_with_linked_holes(
+                        mask_clearance,
+                        CornerStrategy::RoundAllCorners,
+                        max_error,
+                    );
+                }
+
+                // Initialize the dummy pad shape:
+                dummy.set_anchor_pad_shape(a_layer, PadShape::Circle);
+                dummy.set_shape(a_layer, PadShape::Custom);
+                pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
+                pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &outline, 0, true);
+
+                // Be sure the anchor pad is not bigger than the deflated shape because this
+                // anchor will be added to the pad shape when plotting the pad.
+                // So we set the anchor size to 0
+                dummy.set_size(&env, a_layer, Vector2I::new(0, 0));
+                // Restore pad position and offset
+                dummy.set_position(&env, pad.position(ctx));
+                dummy.set_offset(&env, a_layer, pad.offset(ctx, a_layer));
+                dummy.set_orientation(&env, pad.orientation(ctx));
+
+                itemplotter.plot_pad(
+                    ctx.view(AnyItem::Pad(&dummy)),
+                    a_layer,
+                    color,
+                    do_sketch_pads,
+                );
+            }
+        }
+
+        PadShape::Custom => {
+            // inflate/deflate a custom shape is a bit complex.
+            // so build a similar pad shape, and inflate/deflate the polygonal shape
+            let mut dummy = pad.detached_copy();
+            // dummy.SetParentGroup( nullptr ): no effect on plotting.
+
+            let mut shape = ShapePolySet::new();
+            pad.merge_primitives_as_polygon(ctx, a_layer, &mut shape, ErrorLoc::Inside);
+
+            // Shape polygon can have holes so use InflateWithLinkedHoles(), not Inflate()
+            // which can create bad shapes if margin.x is < 0
+            shape.inflate_with_linked_holes(
+                mask_clearance,
+                CornerStrategy::RoundAllCorners,
+                max_error,
+            );
+            pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
+            pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &shape, 0, true);
+
+            // Be sure the anchor pad is not bigger than the deflated shape because this
+            // anchor will be added to the pad shape when plotting the pad. So now the
+            // polygonal shape is built, we can clamp the anchor size
+            if mask_clearance < 0 {
+                // we expect margin.x = margin.y for custom pads
+                dummy.set_size(
+                    &env,
+                    a_layer,
+                    Vector2I::new(0.max(pad_plots_size.x), 0.max(pad_plots_size.y)),
+                );
+            }
+
+            itemplotter.plot_pad(
+                ctx.view(AnyItem::Pad(&dummy)),
+                a_layer,
+                color,
+                do_sketch_pads,
+            );
+        }
+    }
+
+    // Restore the pad parameters modified by the plot code: `work` is a copy.
+}
+
+/// Port of `PAD::DeletePrimitivesList( aLayer )` (`UNDEFINED_LAYER`: every unique layer of the
+/// padstack).
+///
+/// Local port: the model does not expose the pad's primitive list mutably (change request);
+/// it goes through the public `PAD::SetPadstack` (`PADSTACK::operator=`) of a modified copy.
+fn pad_delete_primitives_list(pad: &mut Pad, a_layer: PcbLayerId) {
+    let mut padstack = pad.lib_padstack().clone();
+
+    if a_layer == PcbLayerId::UndefinedLayer {
+        for l in padstack.unique_layers() {
+            padstack.clear_primitives(l);
+        }
+    } else {
+        padstack.clear_primitives(a_layer);
+    }
+
+    pad.set_padstack(&padstack);
+    pad.set_dirty();
+}
+
+/// Port of `PAD::AddPrimitivePoly( aLayer, const SHAPE_POLY_SET& aPoly, aThickness, aFilled )`
+/// with `PAD::AddPrimitive( aLayer, aPrimitive )` and `rebakePrimitiveToFootprint` inlined.
+///
+/// Local port (see [`pad_delete_primitives_list`]). `pad_env` is the environment of the
+/// board pad the copy was made from (its parent footprint frame, the board's `maxError`).
+/// The new primitives belong to the copy, which has no handle (`ParentRef::None`); C++ sets
+/// their parent to the copy's address. Pad primitives are never transformed by the
+/// footprint frame, so the parent only matters as "a pad" in C++ (`GetMaxError()` of the
+/// board, reproduced by `pad_env`).
+fn pad_add_primitive_poly(
+    ctx: &BoardCtx<'_>,
+    pad_env: &MutEnv,
+    pad: &mut Pad,
+    a_layer: PcbLayerId,
+    a_poly: &ShapePolySet,
+    a_thickness: i32,
+    a_filled: bool,
+) {
+    // If aPoly has holes, convert it to a polygon with no holes.
+    let mut poly_no_hole = ShapePolySet::new();
+    poly_no_hole.append_set(a_poly);
+
+    if poly_no_hole.has_holes() {
+        poly_no_hole.fracture(true);
+    }
+
+    // `new PCB_SHAPE()` has no parent: its setters see no footprint frame.
+    let shape_env = MutEnv::detached();
+    // `rebakePrimitiveToFootprint` (`GetParentFootprint()`, `GetPrimitiveLibScale`) and the
+    // primitive's `getMaxError()` (the pad's board).
+    let lib_scale = pad
+        .parent_footprint(ctx)
+        .map(|_| pad.primitive_lib_scale(ctx));
+    let prim_env = MutEnv {
+        parent: None,
+        ..pad_env.clone()
+    };
+    let mut padstack = pad.lib_padstack().clone();
+
+    // There should never be multiple shapes, but if there are, we split them into
+    // primitives so that we can edit them both.
+    for ii in 0..poly_no_hole.outline_count() {
+        let poly_outline = ShapePolySet::from_outline(poly_no_hole.c_outline(ii));
+        let mut item = PcbShape::default();
+        item.set_shape(&shape_env, ShapeT::Poly);
+        item.shape.set_filled(a_filled);
+        item.set_poly_shape(&shape_env, poly_outline);
+        item.set_stroke(
+            &shape_env,
+            StrokeParams::new(a_thickness, LineStyle::Solid, Color4D::UNSPECIFIED),
+        );
+
+        // PAD::AddPrimitive( aLayer, item ):
+        item.base.item.parent = ParentRef::None; // aPrimitive->SetParent( this )
+
+        // Seed lib state from the primitive's current values, then rebake so the
+        // runtime cache reflects the parent FP transform reachable via the pad.
+        let (start, end) = (item.shape.start(), item.shape.end());
+        item.override_lib_coords(start, end, Vector2I::new(0, 0));
+        let poly = item.shape.poly_shape().clone();
+        item.override_lib_poly(poly);
+
+        // Covers load, where the footprint scale is set before the primitives are parsed.
+        if let Some((local_sx, local_sy)) = lib_scale {
+            item.rebake_with_scale(&prim_env, local_sx, local_sy);
+        }
+
+        padstack.add_primitive(item, a_layer);
+    }
+
+    pad.set_padstack(&padstack);
+    pad.set_dirty();
+}
+
+/// The `getMetadata` lambda of `PlotStandardLayer`: the Gerber metadata for a Gerber
+/// plotter, nothing for the other engines (DXF, which gets the plot options, is out of
+/// scope).
+fn plot_metadata<'m>(plotter: &dyn Plotter, gbr_metadata: &'m GbrMetadata) -> PlotData<'m> {
+    if plotter.plotter_type() == PlotFormat::Gerber {
+        Some(gbr_metadata)
+    } else {
+        None
+    }
+}
+
+/// `PlotStandardLayer` L768-831: the body of the via loop for one via.
 pub fn plot_standard_layer_via(
     itemplotter: &mut BrditemsPlotter<'_, '_>,
     gbr_metadata: &mut GbrMetadata,
-    via: TrackId,
+    via_id: TrackId,
     flags: &StandardLayerFlags,
 ) {
-    fab_port_pending!(
-        "PlotStandardLayer: via (FAB-04)",
-        itemplotter.layer_mask,
-        gbr_metadata,
-        via,
-        flags
-    )
+    let ctx = itemplotter.ctx;
+    let a_layer_mask = itemplotter.layer_mask.clone();
+    let Some(item) = ctx.item(via_id.into()) else {
+        return;
+    };
+    let Some(via) = item.as_via() else {
+        return;
+    };
+
+    // vias are not plotted if not on selected layer
+    let via_mask_layer = via.layer_set(ctx);
+
+    if !(&via_mask_layer & &a_layer_mask).any() {
+        return;
+    }
+
+    let mut via_margin = 0;
+    let mut width_adj: f64 = 0.0;
+
+    // TODO(JE) padstacks - separate top/bottom margin
+    if flags.on_solder_mask_layer {
+        via_margin = via.solder_mask_expansion(ctx);
+    }
+
+    if (&a_layer_mask & Lset::all_cu_mask()).any() {
+        width_adj = f64::from(itemplotter.fine_width_adj());
+    }
+
+    // Vias not connected to copper are optionally not drawn
+    if flags.on_copper_layer && !via.flash_layer_set(ctx, &a_layer_mask) {
+        return;
+    }
+
+    let mut diameter = 0;
+
+    for layer in a_layer_mask.iter() {
+        diameter = diameter.max(via.width(layer));
+    }
+
+    // diameter += 2 * via_margin + width_adj: int += double
+    diameter = f64_to_i32_x86(f64::from(diameter) + (f64::from(2 * via_margin) + width_adj));
+
+    // Don't draw a null size item :
+    if diameter <= 0 {
+        return;
+    }
+
+    // Some vias can be not connected (no net).
+    // Set the m_NotInNet for these vias to force a empty net name in gerber file
+    gbr_metadata.netlist_metadata.not_in_net = item.netname().is_empty();
+
+    gbr_metadata.set_net_name(item.netname());
+
+    // If we're plotting a single layer, the color for that layer can be used directly.
+    let mut color = if a_layer_mask.count() == 1 {
+        itemplotter.color_settings_color(a_layer_mask.seq()[0].0)
+    } else {
+        itemplotter.color_settings_color(LAYER_VIAS + via.via_type() as i32)
+    };
+
+    // Change UNSPECIFIED or WHITE to LIGHTGRAY because the white items are not seen on a
+    // white paper or screen
+    if color == Color4D::UNSPECIFIED || color == Color4D::WHITE {
+        color = Color4D::from_eda_color(EdaColorT::LIGHTGRAY);
+    }
+
+    itemplotter.plotter.set_color(&color);
+    let start = via.track.start();
+    let metadata = plot_metadata(&*itemplotter.plotter, gbr_metadata);
+    itemplotter
+        .plotter
+        .flash_pad_circle(start, diameter, metadata);
 }
 
-/// `PlotStandardLayer` L848-889: the body of the track loop for one segment or arc (FAB-04).
+/// `PlotStandardLayer` L848-889: the body of the track loop for one segment or arc.
 pub fn plot_standard_layer_track(
     itemplotter: &mut BrditemsPlotter<'_, '_>,
     gbr_metadata: &mut GbrMetadata,
-    track: TrackId,
+    track_id: TrackId,
     flags: &StandardLayerFlags,
 ) {
-    fab_port_pending!(
-        "PlotStandardLayer: track (FAB-04)",
-        itemplotter.layer_mask,
-        gbr_metadata,
-        track,
-        flags
-    )
+    let ctx = itemplotter.ctx;
+    let a_layer_mask = itemplotter.layer_mask.clone();
+    let Some(item) = ctx.item(track_id.into()) else {
+        return;
+    };
+    let Some(track) = item.as_track() else {
+        return;
+    };
+
+    if !(&a_layer_mask & &item.layer_set()).any() {
+        return;
+    }
+
+    // Some track segments can be not connected (no net).
+    // Set the m_NotInNet for these segments to force a empty net name in gerber file
+    gbr_metadata.netlist_metadata.not_in_net = item.netname().is_empty();
+
+    gbr_metadata.set_net_name(item.netname());
+
+    let mut margin = 0;
+
+    if flags.on_solder_mask_layer {
+        margin = match track {
+            Track::Trace(segment) => segment.solder_mask_expansion(ctx),
+            Track::Arc(arc) => arc.solder_mask_expansion(ctx),
+            Track::Via(via) => via.solder_mask_expansion(ctx),
+        };
+    }
+
+    let width = track.width() + 2 * margin + itemplotter.fine_width_adj();
+
+    let color = itemplotter.get_color(item.layer().0);
+    itemplotter.plotter.set_color(&color);
+
+    let segment = track.as_track();
+    let metadata = plot_metadata(&*itemplotter.plotter, gbr_metadata);
+
+    if let Track::Arc(arc) = track {
+        // Too small arcs cannot be really handled: arc center (and arc radius)
+        // cannot be safely computed
+        if !arc.is_degenerated(10 /* in IU */) {
+            itemplotter.plotter.thick_arc(
+                Vector2D::from(arc.center(ctx)),
+                arc.arc_angle_start(),
+                arc.angle(),
+                arc.radius(),
+                width,
+                metadata,
+            );
+        } else {
+            // Approximate this very small arc by a segment.
+            itemplotter
+                .plotter
+                .thick_segment(segment.start(), segment.end(), width, metadata);
+        }
+    } else {
+        itemplotter
+            .plotter
+            .thick_segment(segment.start(), segment.end(), width, metadata);
+    }
 }
 
 /// `PlotStandardLayer` L898-928: the body of the zone loop for one zone (rule areas skipped,
-/// fills per layer of the mask, islands with a dummy no-net copy) (FAB-04).
+/// fills per layer of the mask, islands with a dummy no-net copy).
 pub fn plot_standard_layer_zone(
     itemplotter: &mut BrditemsPlotter<'_, '_>,
-    zone: ZoneId,
+    zone_id: ZoneId,
     flags: &StandardLayerFlags,
 ) {
-    fab_port_pending!(
-        "PlotStandardLayer: zone (FAB-04)",
-        itemplotter.layer_mask,
-        zone,
-        flags
-    )
+    let _ = flags;
+    let ctx: BoardCtx<'_> = *itemplotter.ctx;
+    let ctx = &ctx;
+    let a_layer_mask = itemplotter.layer_mask.clone();
+    let Some(item) = ctx.item(zone_id.into()) else {
+        return;
+    };
+    let Some(zone) = item.as_zone() else {
+        return;
+    };
+
+    if zone.is_rule_area() {
+        return;
+    }
+
+    for layer in zone.layer_set(ctx).seq().iter().copied() {
+        if !a_layer_mask.contains(layer) {
+            continue;
+        }
+
+        let mut main_area = zone.filled_polys_list(layer).clone_drop_triangulation();
+        let mut islands = ShapePolySet::new();
+
+        for i in (0..main_area.outline_count()).rev() {
+            if zone.is_island(layer, i) {
+                let outline = main_area.c_polygon(i)[0].clone();
+                islands.add_outline(&outline);
+                main_area.delete_polygon(i);
+            }
+        }
+
+        itemplotter.plot_zone(item, layer, &main_area);
+
+        if !islands.is_empty() {
+            // ZONE dummy( *zone ); dummy.SetNet( &nonet ): `NETINFO_ITEM nonet( aBoard )` has
+            // the net code -1 and an empty name, which no board net carries.
+            let mut dummy = zone.detached_copy();
+            dummy.base.net = NetCode::ORPHANED;
+            itemplotter.plot_zone(ctx.view(AnyItem::Zone(&dummy)), layer, &islands);
+        }
+    }
 }
 
 /// `TransformRoundChamferedRectToPolygon( buffer, pos, size, rotation, radius, chamferRatio,

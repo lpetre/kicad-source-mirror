@@ -1,0 +1,4 @@
+(version 1)
+(rule r_clear_in1 (layer "In1.Cu") (constraint clearance (min 0.17mm)))
+(rule r_clear_big (layer "B.Cu") (severity warning) (constraint clearance (min 700mm)))
+(rule r_clear_opt (constraint clearance (opt 0.3mm)))

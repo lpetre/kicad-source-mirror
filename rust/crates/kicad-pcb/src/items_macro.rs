@@ -188,7 +188,19 @@ macro_rules! gen_any_item {
                     AnyItem::$kind(item)
                 }
             }
+
+            impl crate::traits::AsAnyItem for $ty {
+                fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)) {
+                    f(AnyItem::$kind(self))
+                }
+            }
         )*
+
+        impl crate::traits::AsAnyItem for crate::netinfo::NetinfoItem {
+            fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)) {
+                f(AnyItem::Net(self))
+            }
+        }
     };
 }
 

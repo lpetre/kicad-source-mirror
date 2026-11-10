@@ -20,6 +20,7 @@
 //! | module | ports |
 //! |---|---|
 //! | [`session`] | `PCBNEW_JOBS_HANDLER::getBoard`, `BOARD_LOADER::Load` on in-memory texts; item access for clients |
+//! | [`board_loader`] | `pcbnew/board_loader.cpp` (`BOARD_LOADER::Load`, `initializeLoadedBoard`, `SaveBoard`), `KI_TEST::LoadBoard` |
 //! | [`jobs`] | `common/jobs/job*.{h,cpp}`: `JOB`, `JOB_RC`, `JOB_PCB_DRC`, `JOB_EXPORT_PCB_PLOT`, `..._GERBER(S)`, `..._DRILL`, `..._SVG`, `JOB_PCB_UPGRADE`, `JOB_FP_UPGRADE` |
 //! | [`jobs_handler`] | `pcbnew/pcbnew_jobs_handler.cpp`: one `run_*` per job, `convertLayerArg` |
 //! | [`exit_codes`] | `include/cli/exit_codes.h` |
@@ -31,6 +32,7 @@
 //! [`OutputFile`]s that come back. Subsystems that have not landed yet are reported as
 //! [`SessionError::NotYetPorted`].
 
+pub mod board_loader;
 pub mod build_version;
 pub mod error;
 pub mod exit_codes;
@@ -39,6 +41,7 @@ pub mod jobs_handler;
 pub mod reporter;
 pub mod session;
 
+pub use board_loader::{LoadInputs, LoadedBoard};
 pub use error::SessionError;
 pub use jobs_handler::{
     FootprintLibrary, JobOutcome, OutputFile, convert_layer_arg, run_drc, run_export_drill,

@@ -49,6 +49,10 @@ impl ItemFlags {
     pub const IS_NEW: u32 = 1 << 4;
     pub const IS_BROKEN: u32 = 1 << 5;
     pub const IS_DELETED: u32 = 1 << 7;
+    /// When a line is selected, these flags indicate which ends (used to support dragging);
+    /// also the result bits of `PCB_TRACK::IsPointOnEnds`.
+    pub const STARTPOINT: u32 = 1 << 9;
+    pub const ENDPOINT: u32 = 1 << 10;
     pub const STRUCT_DELETED: u32 = 1 << 13;
     pub const CANDIDATE: u32 = 1 << 14;
     pub const SKIP_STRUCT: u32 = 1 << 15;

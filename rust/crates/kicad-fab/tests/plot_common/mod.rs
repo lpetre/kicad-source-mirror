@@ -24,6 +24,7 @@
 use std::path::Path;
 use std::rc::Rc;
 
+use kicad_connectivity::data::ConnectivityData;
 use kicad_core::PcbLayerId;
 use kicad_core::plot_enums::{DrillMarks, PlotFormat};
 use kicad_fab::pcb_plotter::build_plot_file_name;
@@ -72,6 +73,21 @@ pub fn load_board(path: &Path) -> Result<Board, String> {
         .map_err(|e| format!("{e:?}"))?;
 
     Ok(board)
+}
+
+/// `BOARD::BuildConnectivity()` as `BOARD_LOADER::Load` runs it after loading (pad and via
+/// flashing on copper layers asks it). `None` when the connectivity build reaches code that
+/// is still pending.
+pub fn build_connectivity(board: &mut Board) -> Option<ConnectivityData> {
+    let mut connectivity = ConnectivityData::new();
+    let ok = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        connectivity.build_connectivity(board)
+    }));
+
+    match ok {
+        Ok(true) => Some(connectivity),
+        _ => None,
+    }
 }
 
 /// `PCB_PLOTTER::PlotJobToPlotOpts` for a `JOB_EXPORT_PCB_GERBERS` filled by

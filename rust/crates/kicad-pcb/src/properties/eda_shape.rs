@@ -23,10 +23,10 @@ use crate::eda_shape::{EdaShape, FillT, ShapeT};
 use crate::item_ref::ItemRef;
 use crate::traits::EdaShapeItem;
 
+use super::CoordType;
 use super::{
     ClassId, EnumId, Property, PropertyDisplay, PropertyManager, PropertyValue, ValueType,
 };
-use super::CoordType;
 
 /// `dynamic_cast<EDA_SHAPE*>( aItem )`.
 pub(crate) fn shape_of<'a>(it: &ItemRef<'a>) -> Option<&'a dyn EdaShapeItem> {
@@ -193,30 +193,38 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(is_rectangle);
 
     pm.add_property(
-        int("Height", |it| PropertyValue::Int(es(&it).rectangle_height()))
-            .with_display(PropertyDisplay::PtSize),
+        int("Height", |it| {
+            PropertyValue::Int(es(&it).rectangle_height())
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_rectangle);
 
     pm.add_property(
-        int("Corner Radius", |it| PropertyValue::Int(es(&it).corner_radius()))
-            .with_display(PropertyDisplay::PtSize),
+        int("Corner Radius", |it| {
+            PropertyValue::Int(es(&it).corner_radius())
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_rectangle)
     .set_validator();
 
     pm.add_property(
-        int("Major Radius", |it| PropertyValue::Int(es(&it).ellipse.major_radius))
-            .with_display(PropertyDisplay::PtSize),
+        int("Major Radius", |it| {
+            PropertyValue::Int(es(&it).ellipse.major_radius)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_ellipse_or_ellipse_arc);
 
     pm.add_property(
-        int("Minor Radius", |it| PropertyValue::Int(es(&it).ellipse.minor_radius))
-            .with_display(PropertyDisplay::PtSize),
+        int("Minor Radius", |it| {
+            PropertyValue::Int(es(&it).ellipse.minor_radius)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_ellipse_or_ellipse_arc);
@@ -259,9 +267,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        Property::new_enum("Line Style", c, ValueType::Enum(EnumId::LineStyle), true, |it| {
-            PropertyValue::Enum(EnumId::LineStyle, es(&it).line_style() as i32)
-        }),
+        Property::new_enum(
+            "Line Style",
+            c,
+            ValueType::Enum(EnumId::LineStyle),
+            true,
+            |it| PropertyValue::Enum(EnumId::LineStyle, es(&it).line_style() as i32),
+        ),
         shape_props,
     )
     .set_is_copyable();
@@ -315,15 +327,19 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(is_open_shape);
 
     pm.add_property(
-        int("Start Length", |it| PropertyValue::Int(es(&it).start_ending.length))
-            .with_display(PropertyDisplay::PtSize),
+        int("Start Length", |it| {
+            PropertyValue::Int(es(&it).start_ending.length)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_open_shape);
 
     pm.add_property(
-        int("Start Width", |it| PropertyValue::Int(es(&it).start_ending.width))
-            .with_display(PropertyDisplay::PtSize),
+        int("Start Width", |it| {
+            PropertyValue::Int(es(&it).start_ending.width)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_open_shape);
@@ -350,15 +366,19 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_available_func(is_open_shape);
 
     pm.add_property(
-        int("End Length", |it| PropertyValue::Int(es(&it).end_ending.length))
-            .with_display(PropertyDisplay::PtSize),
+        int("End Length", |it| {
+            PropertyValue::Int(es(&it).end_ending.length)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_open_shape);
 
     pm.add_property(
-        int("End Width", |it| PropertyValue::Int(es(&it).end_ending.width))
-            .with_display(PropertyDisplay::PtSize),
+        int("End Width", |it| {
+            PropertyValue::Int(es(&it).end_ending.width)
+        })
+        .with_display(PropertyDisplay::PtSize),
         shape_props,
     )
     .set_available_func(is_open_shape);

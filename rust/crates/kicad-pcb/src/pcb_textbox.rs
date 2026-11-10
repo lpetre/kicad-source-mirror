@@ -32,7 +32,7 @@
 use std::cell::{Cell, RefCell};
 use std::sync::Arc;
 
-use kicad_core::layer_ids::{is_back_layer, is_copper_layer, is_solder_mask_layer};
+use kicad_core::layer_ids::{is_copper_layer, is_solder_mask_layer};
 use kicad_core::text_vars::{ResolutionContext, finalize_text_var_expansion};
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{
@@ -488,11 +488,10 @@ impl PcbTextbox {
         eda_text::set_text_angle(self, env, angle);
     }
 
-    /// The `PCB_TEXTBOX` part of `IsSideSpecific()` a mutator can answer: the layer set
-    /// (`PCB_SHAPE::GetLayerSet()`) against `LSET::SideSpecificMask()`. The board layer-type
-    /// part needs layer types that `MutEnv` does not carry (as `PcbText::flip`,
-    /// `PORT_STATUS.md`).
-    fn is_side_specific_env(&self) -> bool {
+    /// `BOARD_ITEM::IsSideSpecific()` for a mutator: the layer set
+    /// (`PCB_SHAPE::GetLayerSet()`) against `LSET::SideSpecificMask()`, then the type of the
+    /// principal layer on the board (`MutEnv::is_side_specific`).
+    fn is_side_specific_env(&self, env: &MutEnv) -> bool {
         let layer = self.shape.base.item.layer;
         let mut layers = Lset::from_layers(&[layer]);
 
@@ -506,8 +505,7 @@ impl PcbTextbox {
             }
         }
 
-        layers &= Lset::side_specific_mask();
-        layers.any()
+        env.is_side_specific(&layers, layer)
     }
 }
 
@@ -684,8 +682,13 @@ impl BoardItemMut for PcbTextbox {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbTextbox::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbTextbox::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbTextbox::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -910,7 +913,7 @@ impl PcbTextbox {
         let angle = self.text_angle_env(env);
         eda_text::set_text_angle(self, env, angle);
 
-        if self.is_side_specific_env() {
+        if self.is_side_specific_env(env) {
             let mirrored = !self.text.is_mirrored();
             self.text.set_mirrored(mirrored);
         }
@@ -1053,35 +1056,29 @@ impl PcbTextbox {
         self.shape.shape.set_position(pos);
     }
 
-    /// Port of `PCB_TEXTBOX::StyleFromSettings`. Without a board environment (as
-    /// `PcbText::style_from_settings`): the size and thickness are stored as given (the
-    /// footprint scale is not stripped), the parent footprint is the direct parent (a cell
-    /// of a footprint table is not seen as in a footprint) and the side is
-    /// `IsBackLayer( GetLayer() )` (`PORT_STATUS.md`).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        self.shape.style_from_settings(settings, check_side);
+    /// Port of `PCB_TEXTBOX::StyleFromSettings`.
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        self.shape.style_from_settings(env, settings, check_side);
 
-        let env = MutEnv::detached();
         let layer = self.shape.base.item.layer;
 
-        self.set_text_size(&env, settings.get_text_size(layer), true);
-        self.set_text_thickness(&env, settings.get_text_thickness(layer));
+        self.set_text_size(env, settings.get_text_size(layer), true);
+        self.set_text_thickness(env, settings.get_text_thickness(layer));
         self.text.set_italic(settings.get_text_italic(layer));
 
-        let in_footprint = self
-            .shape
-            .base
-            .item
-            .parent
-            .item()
-            .is_some_and(|id| id.kind() == crate::ids::ItemKind::Footprint);
-
-        if in_footprint {
+        // GetParentFootprint()
+        if env.parent.is_some() {
             self.text.set_keep_upright(settings.get_text_upright(layer));
         }
 
         if check_side {
-            self.text.set_mirrored(is_back_layer(layer));
+            // board->IsBackLayer( GetLayer() ); IsBackLayer( GetLayer() ) without a board
+            self.text.set_mirrored(env.layers.is_back_layer(layer));
         }
     }
 

@@ -55,7 +55,8 @@ fn is_circle(it: ItemRef<'_>) -> bool {
 
 /// `isNotCircleOrEllipse`.
 fn is_not_circle_or_ellipse(it: ItemRef<'_>) -> bool {
-    shape_t(it).is_none_or(|t| t != ShapeT::Circle && t != ShapeT::Ellipse && t != ShapeT::EllipseArc)
+    shape_t(it)
+        .is_none_or(|t| t != ShapeT::Circle && t != ShapeT::Ellipse && t != ShapeT::EllipseArc)
 }
 
 /// `isCopper`.
@@ -100,9 +101,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     pm.replace_property(
         ClassId::BoardConnectedItem,
         "Layer",
-        Property::new_enum("Layer", c, ValueType::Enum(EnumId::PcbLayerId), true, |it| {
-            layer_value(it.layer())
-        }),
+        Property::new_enum(
+            "Layer",
+            c,
+            ValueType::Enum(EnumId::PcbLayerId),
+            true,
+            |it| layer_value(it.layer()),
+        ),
         "",
     )
     .set_is_copyable();
@@ -157,9 +162,13 @@ pub(crate) fn register(pm: &mut PropertyManager) {
     .set_is_copyable();
 
     pm.add_property(
-        Property::new("Soldermask Margin Override", c, ValueType::OptInt, true, |it| {
-            PropertyValue::OptInt(pcb_shape(&it).expect("shape").local_solder_mask_margin())
-        })
+        Property::new(
+            "Soldermask Margin Override",
+            c,
+            ValueType::OptInt,
+            true,
+            |it| PropertyValue::OptInt(pcb_shape(&it).expect("shape").local_solder_mask_margin()),
+        )
         .with_display(PropertyDisplay::PtSize),
         group_tech_layers,
     )

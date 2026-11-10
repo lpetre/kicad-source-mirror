@@ -275,6 +275,30 @@ pub fn is_on_copper_layer<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -
     }
 }
 
+/// `this` as the `BOARD_ITEM*` a base-class body hands to another subsystem (rule resolver,
+/// connectivity): the stored item when the value carries a live handle, otherwise a view of
+/// the value itself (`id() == None`, like the address of an unregistered C++ object).
+pub fn with_this<B: BoardItem + ?Sized, R>(
+    item: &B,
+    ctx: &BoardCtx<'_>,
+    f: impl FnOnce(ItemRef<'_>) -> R,
+) -> R {
+    if let Some(this) = item.base().id().and_then(|id| ctx.item(id)) {
+        return f(this);
+    }
+
+    let mut f = Some(f);
+    let mut result = None;
+
+    item.with_any_item(&mut |any| {
+        if let Some(f) = f.take() {
+            result = Some(f(ctx.view(any)));
+        }
+    });
+
+    result.expect("AsAnyItem::with_any_item calls its closure")
+}
+
 /// Port of `BOARD_ITEM::IsSideSpecific`: on a side-specific layer, or (with a board) the
 /// principal layer `m_layer` is of type `LT_FRONT` / `LT_BACK`.
 pub fn is_side_specific<B: BoardItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -> bool {

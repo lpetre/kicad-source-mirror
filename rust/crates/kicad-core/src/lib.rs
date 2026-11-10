@@ -81,7 +81,7 @@ pub mod text_vars;
 pub mod title_block;
 pub mod typeinfo;
 pub mod units_provider;
-mod wxstr;
+pub mod wxstr;
 
 /// printf / `{fmt}` exact double formatting (`%f`, `%e`, `%g`), shared with `kicad-sexpr`.
 pub use kicad_sexpr::formatter::cformat as printf;

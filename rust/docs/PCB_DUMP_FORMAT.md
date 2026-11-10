@@ -240,3 +240,28 @@ Severities are `RPT_SEVERITY_*` names. Rust twin: `dump_engine` in
 `rust/crates/kicad-drc/tests/engine_oracle.rs`; compact corpus golden
 `rust/crates/kicad-drc/tests/golden/engine_corpus.txt` (generator
 `tests/oracle/gen_engine_goldens.py` there).
+
+## 10. props-table and props
+
+Source `rust/tools/pcb-dump/dump_props.cpp` (package PROP-1); Rust twin
+`crates/kicad-pcb/src/dump/props.rs`; goldens and the replay test in
+`crates/kicad-pcb/tests/props_oracle.rs`.
+
+`pcb-dump props-table [--hash]` prints the `PROPERTY_MANAGER` tables after `Rebuild()`:
+
+| Key | Fields |
+|---|---|
+| `propclass\|<CLASS>` (every class of `GetAllClasses()`, by C++ class name; `?` for an unknown hash) | `registered` (the `REGISTER_TYPE` name, `typeid(x).name()`, `""` for a class only created as a base or owner), `ancestors` (`[A,B]`: every known class it `IsOfType`, sorted), `groups` (`GetGroupDisplayOrder`), `count` (`GetProperties().size()`, duplicates of diamond inheritance included), `distinct` (`GetDisplayOrder().size()`), then `<i>` for the i-th property in display order: `name=..;order=<display order>;owner=..;base=..;type=<C++ value type>;display=PT_*;coord=*_COORD;group=..;has_choices=0/1;choices=[v:"label",..] (Choices());hidden_pm/hidden_re/hidden_lib/hidden_des/copyable=0/1;kind=<PCBEXPR_PROPERTY_KIND>;lookup=0/1` (`lookup` = `GetProperty( class, name )` returns this property) |
+| `enummap\|<ENUM>` | `undefined` (`GetUndefined()` as int), `choices` (`[v:"label",..]`) for every `ENUM_MAP` a property uses |
+
+`pcb-dump board --sections props FILE` (**opt-in**, printed only when listed): for every item
+`props|<key>|class=<C++ class>` and one line per property of `GetProperties( TYPE_HASH( *item ) )`
+in display order, field = the property name. Value: `n/a` when `IsAvailableFor` is false, else
+the value as `PCBEXPR_VAR_REF::GetValue` computes it by `ClassifyProperty` kind: `n:<V(double)>`
+for the numeric kinds (int, optional int, unsigned, long long, double, optional double, bool as
+0/1, `EDA_ANGLE` as degrees), `null` for an empty optional, `s:<V(string)>` for strings (raw: the
+"quacks like a number" conversion of `GetValue` is left out), enum labels (`wxAny` conversion
+through the `ENUM_MAP`) and colours (`ToCSSString`), `layer:<VLayer>` for the enum properties
+named `Layer` / `Layer Top` / `Layer Bottom`, `undef` for a failed conversion. ` (ro)` is
+appended when `IsWriteableFor` is false. The variant overrides of footprint attributes in
+`GetValue` (board with a current variant) are not applied.

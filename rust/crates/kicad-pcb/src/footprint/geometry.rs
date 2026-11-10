@@ -40,7 +40,7 @@ use crate::drc_api::DrcConstraintT;
 use crate::footprint::{Footprint, FootprintCourtyardCacheData, FootprintStackup};
 use crate::ids::{FootprintId, ItemId, ShapeId};
 use crate::item::SharedShape;
-use crate::pad::PadAttrib;
+use crate::padstack::PadAttrib;
 use crate::pcb_field::FieldT;
 use crate::pcb_shape::PcbShape;
 use crate::traits::{BoardItem, EdaTextItem, Flashing};
@@ -173,7 +173,8 @@ impl Footprint {
             bbox.merge(&board[id].bounding_box(ctx));
         }
 
-        let no_draw_items = self.drawings.is_empty() && self.pads.is_empty() && self.zones.is_empty();
+        let no_draw_items =
+            self.drawings.is_empty() && self.pads.is_empty() && self.zones.is_empty();
 
         // Groups do not contribute to the rect, only their members
         if include_text || no_draw_items {
@@ -187,7 +188,9 @@ impl Footprint {
                 }
 
                 if text.type_() == KicadT::PcbFieldT
-                    && !text.as_eda_text().is_some_and(|t| t.eda_text().is_visible())
+                    && !text
+                        .as_eda_text()
+                        .is_some_and(|t| t.eda_text().is_visible())
                 {
                     continue;
                 }
@@ -509,8 +512,7 @@ impl Footprint {
             }
 
             if item.is_on_layer(layer) {
-                if item.type_() != KicadT::PcbFieldT && item.type_() != KicadT::PcbReferenceImageT
-                {
+                if item.type_() != KicadT::PcbFieldT && item.type_() != KicadT::PcbReferenceImageT {
                     item.transform_shape_to_polygon(
                         &mut raw_polys,
                         PcbLayerId::UndefinedLayer,
@@ -595,7 +597,9 @@ impl Footprint {
                 return Arc::new(shape);
             }
 
-            shape.add_shape(Box::new(ShapeSimple::from_line_chain(courtyard.c_outline(0))));
+            shape.add_shape(Box::new(ShapeSimple::from_line_chain(
+                courtyard.c_outline(0),
+            )));
         } else {
             for &id in &self.pads {
                 let pad_shape = ctx.board[id].effective_shape(ctx, layer, flash, usage);
@@ -622,7 +626,8 @@ impl Footprint {
 
     /// `FOOTPRINT::HitTestAccurate( aPosition, aAccuracy )`: on or inside the bounding hull.
     pub fn hit_test_accurate(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        self.bounding_hull(ctx).collide_point(pos, accuracy, None, None)
+        self.bounding_hull(ctx)
+            .collide_point(pos, accuracy, None, None)
     }
 
     /// `FOOTPRINT::HitTestOnLayer( aPosition, aLayer, aAccuracy )`.
@@ -813,18 +818,24 @@ impl Footprint {
         let mut back_width_histogram: BTreeMap<i32, i32> = BTreeMap::new();
 
         for &id in &self.drawings {
-            let Some(shape_id) = id.typed::<PcbShape>() else { continue };
+            let Some(shape_id) = id.typed::<PcbShape>() else {
+                continue;
+            };
             let shape = &ctx.board[shape_id];
             let layer = shape.base.item.layer;
 
             if layer == PcbLayerId::BCrtYd {
                 list_back.push(shape_id);
-                *back_width_histogram.entry(shape.stroke(ctx).width()).or_insert(0) += 1;
+                *back_width_histogram
+                    .entry(shape.stroke(ctx).width())
+                    .or_insert(0) += 1;
             }
 
             if layer == PcbLayerId::FCrtYd {
                 list_front.push(shape_id);
-                *front_width_histogram.entry(shape.stroke(ctx).width()).or_insert(0) += 1;
+                *front_width_histogram
+                    .entry(shape.stroke(ctx).width())
+                    .or_insert(0) += 1;
             }
         }
 
@@ -973,13 +984,1005 @@ impl Board {
         let pads: Vec<_> = footprint.pads.iter().copied().collect();
 
         for pad in pads {
-            if self.pads.get(pad).is_some_and(|p| p.attribute() == PadAttrib::Pth) {
+            if self
+                .pads
+                .get(pad)
+                .is_some_and(|p| p.attribute() == PadAttrib::Pth)
+            {
                 self.modify_pad(pad, |p, env| {
-                    let mut pad_layers = p.layer_set(&BoardCtx::bare_none()).clone();
+                    // PAD::GetLayerSet(): the padstack layer set.
+                    let mut pad_layers = p.padstack.layer_set.clone();
                     pad_layers |= &board_copper;
                     p.set_layer_set(env, pad_layers);
                 });
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Ports of `qa/tests/pcbnew/test_footprint.cpp` (`FootprintCourtyardAndHull`,
+    //! `FootprintBoundingBoxWithoutMandatoryFields` without the field removal),
+    //! `test_footprint_pad_fixup.cpp`, `drc/test_footprint_courtyard_chaining.cpp`, and the
+    //! oracle replay of `tests/golden/m20_footprints.txt`.
+
+    use super::*;
+    use crate::board::AddMode;
+    #[cfg(feature = "dump")]
+    use crate::dump::format::{v_box, v_f64, v_polyset};
+    use crate::eda_shape::ShapeT;
+    use crate::item::BoardUse;
+    use crate::item::ParentRef;
+    use crate::item_ref::OwnedItem;
+    use crate::pad::Pad;
+    use crate::padstack::PadShape;
+    use crate::pcb_text::PcbText;
+    use kicad_geom::EdaAngle;
+
+    fn mm(v: f64) -> i32 {
+        PCB_IU_SCALE.mm_to_iu(v)
+    }
+
+    fn pt(x: f64, y: f64) -> Vector2I {
+        Vector2I::new(mm(x), mm(y))
+    }
+
+    /// A graphic child of `fp` in the library frame (the footprint is still at the identity
+    /// placement while it is filled).
+    fn add_shape(
+        board: &mut Board,
+        fp: FootprintId,
+        uuid: Option<&str>,
+        shape: ShapeT,
+        layer: PcbLayerId,
+        width: i32,
+        geometry: impl FnOnce(&mut PcbShape, &crate::ctx::MutEnv),
+    ) -> ItemId {
+        let env = board.child_env(ParentRef::Item(fp.into()));
+        let mut s = PcbShape::new(&mut board.kiid_generator, shape);
+        BoardItem::base_mut(&mut s).parent = ParentRef::Item(fp.into());
+
+        if let Some(uuid) = uuid {
+            BoardItem::base_mut(&mut s).uuid = kicad_core::Kiid::parse(uuid).unwrap();
+        }
+
+        geometry(&mut s, &env);
+        s.set_width(&env, width);
+        s.set_layer(&env, layer);
+        board
+            .footprint_add(fp, OwnedItem::Shape(Box::new(s)), AddMode::Insert)
+            .unwrap_or_else(|_| panic!("shape refused"))
+    }
+
+    fn segment(
+        board: &mut Board,
+        fp: FootprintId,
+        u: &str,
+        layer: PcbLayerId,
+        w: f64,
+        a: Vector2I,
+        b: Vector2I,
+    ) {
+        add_shape(
+            board,
+            fp,
+            Some(u),
+            ShapeT::Segment,
+            layer,
+            mm(w),
+            |s, env| {
+                s.set_start(env, a);
+                s.set_end(env, b);
+            },
+        );
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn add_pad(
+        board: &mut Board,
+        fp: FootprintId,
+        u: &str,
+        number: &str,
+        attrib: PadAttrib,
+        layers: Lset,
+        shape: PadShape,
+        size: Vector2I,
+        pos: Vector2I,
+        angle: f64,
+        drill: i32,
+    ) {
+        let env = board.child_env(ParentRef::Item(fp.into()));
+        let mut pad = Pad::new(&mut board.kiid_generator);
+        BoardItem::base_mut(&mut pad).parent = ParentRef::Item(fp.into());
+        BoardItem::base_mut(&mut pad).uuid = kicad_core::Kiid::parse(u).unwrap();
+        pad.set_number(number);
+        pad.set_attribute(attrib);
+        pad.set_layer_set(&env, layers);
+        pad.set_shape(PcbLayerId::FCu, shape);
+        pad.set_size(&env, PcbLayerId::FCu, size);
+
+        if shape == PadShape::Roundrect {
+            pad.set_round_rect_radius_ratio(PcbLayerId::FCu, 0.25);
+        }
+
+        if drill > 0 {
+            pad.set_drill_shape(crate::padstack::PadDrillShape::Circle);
+            pad.set_drill_size(&env, Vector2I::new(drill, drill));
+        }
+
+        pad.set_position(&env, pos);
+        pad.set_fp_relative_orientation(&env, EdaAngle::from_degrees(angle));
+        board
+            .footprint_add(fp, OwnedItem::Pad(Box::new(pad)), AddMode::Append)
+            .unwrap_or_else(|_| panic!("pad refused"));
+    }
+
+    /// Set up the reference / value fields: text, library position, lib angle, visibility.
+    fn set_fields(
+        board: &mut Board,
+        fp: FootprintId,
+        prefix: &str,
+        fields: [(&str, f64, f64, bool); 2],
+        text_width: i32,
+    ) {
+        let env = board.child_env(ParentRef::Item(fp.into()));
+        let ctx = BoardCtx::bare(board);
+        let ids = [
+            board[fp].field(&ctx, FieldT::Reference).unwrap(),
+            board[fp].field(&ctx, FieldT::Value).unwrap(),
+        ];
+
+        for (n, (id, (text, y, angle, visible))) in ids.into_iter().zip(fields).enumerate() {
+            let uuid = format!("{prefix}-0000-4000-8000-00000000000{}", n + 1);
+            board.rebind_item_uuid(id.into(), kicad_core::Kiid::parse(&uuid).unwrap());
+            board.modify_field(id, |f, _| {
+                f.text.text.set_text(text);
+                f.text.text.set_visible(visible);
+                EdaTextItem::set_text_pos(f, &env, Vector2I::new(0, mm(y)));
+                EdaTextItem::set_text_size(f, &env, Vector2I::new(text_width, 1_000_000), false);
+                EdaTextItem::set_text_thickness(f, &env, 150_000);
+                EdaTextItem::set_text_angle(f, &env, EdaAngle::from_degrees(angle));
+            });
+        }
+    }
+
+    fn new_footprint(board: &mut Board, prefix: &str) -> FootprintId {
+        let fp = board.create_footprint();
+        let uuid = format!("{prefix}-0000-4000-8000-000000000000");
+        board.rebind_item_uuid(fp.into(), kicad_core::Kiid::parse(&uuid).unwrap());
+        fp
+    }
+
+    /// Footprints A and B of `m20_footprints.kicad_pcb`: A on the front, rotated 30 degrees
+    /// and scaled 1.5 x 0.75, with a closed F.CrtYd outline (four segments, one arc), a
+    /// Cmts.User line and a user text; B its flipped copy without the arc (an open, hence
+    /// malformed, courtyard) and without the text.
+    fn build_cascade(board: &mut Board, prefix: &str, flip: bool) -> FootprintId {
+        let u = |n: u32| format!("{prefix}-0000-4000-8000-0000000000{n:02}");
+        let fp = new_footprint(board, prefix);
+        let v_angle = if flip { -2.5 } else { 2.5 };
+        set_fields(
+            board,
+            fp,
+            prefix,
+            [("R1", -2.5, 330.0, true), ("V", v_angle, 330.0, true)],
+            1_000_001,
+        );
+
+        if !flip {
+            let env = board.child_env(ParentRef::Item(fp.into()));
+            let mut text = PcbText::new(&mut board.kiid_generator);
+            BoardItem::base_mut(&mut text).parent = ParentRef::Item(fp.into());
+            BoardItem::base_mut(&mut text).uuid = kicad_core::Kiid::parse(&u(9)).unwrap();
+            text.text.set_text("T");
+            EdaTextItem::set_text_pos(&mut text, &env, pt(0.5, 0.5));
+            EdaTextItem::set_text_size(&mut text, &env, Vector2I::new(1_000_001, 1_000_000), false);
+            EdaTextItem::set_text_thickness(&mut text, &env, 150_000);
+            EdaTextItem::set_text_angle(&mut text, &env, EdaAngle::from_degrees(330.0));
+            crate::traits::BoardItemMut::set_layer(&mut text, &env, PcbLayerId::FSilkS);
+            board
+                .footprint_add(fp, OwnedItem::Text(Box::new(text)), AddMode::Insert)
+                .unwrap_or_else(|_| panic!("text refused"));
+        }
+
+        segment(
+            board,
+            fp,
+            &u(3),
+            PcbLayerId::FSilkS,
+            0.12,
+            pt(0.0, -1.0),
+            pt(2.0, 1.5),
+        );
+        add_shape(
+            board,
+            fp,
+            Some(&u(4)),
+            ShapeT::Circle,
+            PcbLayerId::FFab,
+            mm(0.1),
+            |s, env| {
+                s.set_start(env, pt(-1.0, -1.0));
+                s.set_end(env, pt(-0.5, -1.0));
+            },
+        );
+        segment(
+            board,
+            fp,
+            &u(8),
+            PcbLayerId::CmtsUser,
+            0.1,
+            pt(-1.0, 2.0),
+            pt(4.0, 2.0),
+        );
+        let crtyd = PcbLayerId::FCrtYd;
+        segment(
+            board,
+            fp,
+            &u(10),
+            crtyd,
+            0.05,
+            pt(-3.0, -1.5),
+            pt(2.5, -1.5),
+        );
+        segment(board, fp, &u(11), crtyd, 0.05, pt(2.5, -1.5), pt(2.5, 1.2));
+
+        if !flip {
+            add_shape(
+                board,
+                fp,
+                Some(&u(12)),
+                ShapeT::Arc,
+                crtyd,
+                mm(0.05),
+                |s, env| {
+                    s.set_arc_geometry(env, pt(2.5, 1.2), pt(2.207107, 1.907107), pt(1.5, 2.2));
+                },
+            );
+        }
+
+        segment(board, fp, &u(13), crtyd, 0.05, pt(1.5, 2.2), pt(-3.0, 2.2));
+        segment(
+            board,
+            fp,
+            &u(14),
+            crtyd,
+            0.06,
+            pt(-3.0, 2.2),
+            pt(-3.0, -1.5),
+        );
+
+        let front = Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::FMask, PcbLayerId::FPaste]);
+        add_pad(
+            board,
+            fp,
+            &u(5),
+            "1",
+            PadAttrib::Smd,
+            front,
+            PadShape::Rectangle,
+            pt(1.0, 0.6),
+            Vector2I::new(1_000_000, -500_001),
+            345.0,
+            0,
+        );
+        add_pad(
+            board,
+            fp,
+            &u(6),
+            "2",
+            PadAttrib::Pth,
+            Pad::pth_mask(),
+            PadShape::Oval,
+            pt(1.2, 0.8),
+            Vector2I::new(-2_000_000, 1_500_001),
+            330.0,
+            mm(0.6),
+        );
+
+        let pos = if flip {
+            pt(120.0, 100.0)
+        } else {
+            pt(100.0, 100.0)
+        };
+        board.footprint_set_position(fp, pos);
+        board.footprint_set_orientation(fp, EdaAngle::from_degrees(30.0));
+        board.footprint_set_transform_scale(fp, 1.5, 0.75);
+
+        if flip {
+            board.footprint_flip(fp, pos, FlipDirection::TopBottom);
+        }
+
+        board.attach_footprint(fp, AddMode::Append);
+        fp
+    }
+
+    /// The `m20_footprints.kicad_pcb` board built by hand (the footprint parser is pending).
+    fn build_m20_board() -> Board {
+        let mut board = Board::new();
+        build_cascade(&mut board, "aaaaaaaa", false);
+        build_cascade(&mut board, "bbbbbbbb", true);
+
+        // C: fields only (the "no draw items" paths), value hidden.
+        let fp = new_footprint(&mut board, "cccccccc");
+        set_fields(
+            &mut board,
+            fp,
+            "cccccccc",
+            [("C1", -1.5, 0.0, true), ("VC", 1.5, 0.0, false)],
+            1_000_000,
+        );
+        board.footprint_set_position(fp, pt(140.0, 100.0));
+        board.attach_footprint(fp, AddMode::Append);
+
+        // D: rotated 90 degrees, a private-layer line, a circular courtyard, a roundrect pad.
+        let fp = new_footprint(&mut board, "dddddddd");
+        set_fields(
+            &mut board,
+            fp,
+            "dddddddd",
+            [("D1", -3.0, 0.0, true), ("VD", 3.0, 0.0, true)],
+            1_000_000,
+        );
+        board.modify_footprint(fp, |f, _| {
+            f.private_layers = Lset::from_layers(&[PcbLayerId::User1])
+        });
+        segment(
+            &mut board,
+            fp,
+            "dddddddd-0000-4000-8000-000000000003",
+            PcbLayerId::User1,
+            0.1,
+            pt(-5.0, -5.0),
+            pt(5.0, 5.0),
+        );
+        add_shape(
+            &mut board,
+            fp,
+            Some("dddddddd-0000-4000-8000-000000000004"),
+            ShapeT::Circle,
+            PcbLayerId::FCrtYd,
+            mm(0.05),
+            |s, env| {
+                s.set_start(env, pt(0.0, 0.0));
+                s.set_end(env, pt(2.0, 0.0));
+            },
+        );
+        let front = Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::FMask, PcbLayerId::FPaste]);
+        add_pad(
+            &mut board,
+            fp,
+            "dddddddd-0000-4000-8000-000000000005",
+            "1",
+            PadAttrib::Smd,
+            front,
+            PadShape::Roundrect,
+            pt(1.5, 0.8),
+            pt(0.5, 0.25),
+            // legacy `(at 0.5 0.25)`: board-frame angle 0 in a footprint rotated 90 degrees
+            270.0,
+            0,
+        );
+        board.footprint_set_position(fp, pt(160.0, 100.0));
+        board.footprint_set_orientation(fp, EdaAngle::from_degrees(90.0));
+        board.attach_footprint(fp, AddMode::Append);
+
+        board.check_invariants().unwrap();
+        board
+    }
+
+    /// Differential check against the reference build: every footprint-level geometry value
+    /// of `tests/golden/m20_footprints.txt` (`pcb-dump board --sections bbox,footprint`).
+    #[cfg(feature = "dump")]
+    #[test]
+    fn m20_oracle_footprint_geometry() {
+        let golden = include_str!("../../tests/golden/m20_footprints.txt");
+        let board = build_m20_board();
+        let ctx = BoardCtx::bare(&board);
+        let mut checked = 0;
+        let mut mismatches = Vec::new();
+
+        for line in golden
+            .lines()
+            .filter(|l| !l.starts_with('#') && !l.starts_with("order|"))
+        {
+            let (head, expected) = line.split_once('=').unwrap();
+            let mut parts = head.split('|');
+            let (_, key, field) = (
+                parts.next().unwrap(),
+                parts.next().unwrap(),
+                parts.next().unwrap(),
+            );
+            let item = ctx.resolve(&kicad_core::Kiid::parse(key).unwrap()).unwrap();
+            let fp = item.as_footprint().unwrap();
+            let layers = |l: PcbLayerId| Lset::from_layers(&[l]);
+
+            let actual = match field {
+                "bbox" => v_box(item.bounding_box()),
+                "bbox_with_text" => v_box(fp.bounding_box_with_text(&ctx, true)),
+                "bbox_without_text" => v_box(fp.bounding_box_with_text(&ctx, false)),
+                "fp_pads_local_bbox" => v_box(fp.fp_pads_local_bbox(&ctx)),
+                "bounding_hull" => v_polyset(&fp.bounding_hull(&ctx)),
+                "layer_bbox.F_Cu" => v_box(fp.layer_bounding_box(&ctx, &layers(PcbLayerId::FCu))),
+                "layer_bbox.B_Cu" => v_box(fp.layer_bounding_box(&ctx, &layers(PcbLayerId::BCu))),
+                "courtyard.F" => v_polyset(&fp.courtyard(&ctx, PcbLayerId::FCrtYd)),
+                "courtyard.B" => v_polyset(&fp.courtyard(&ctx, PcbLayerId::BCrtYd)),
+                "hull.F_Cu" => v_polyset(&fp.bounding_hull_on_layer(&ctx, PcbLayerId::FCu)),
+                "hull.B_Cu" => v_polyset(&fp.bounding_hull_on_layer(&ctx, PcbLayerId::BCu)),
+                "area" => v_f64(fp.area(&ctx, 0)),
+                _ => continue,
+            };
+
+            if actual != expected {
+                mismatches.push(format!("{head}\n   C++ {expected}\n  Rust {actual}"));
+            }
+
+            checked += 1;
+        }
+
+        assert!(
+            mismatches.is_empty(),
+            "{} of {checked} differ:\n{}",
+            mismatches.len(),
+            mismatches.join("\n")
+        );
+        assert_eq!(checked, 48);
+    }
+
+    /// `test_footprint_pad_fixup.cpp` `PthPadExpandsToAllCopperLayers`.
+    #[test]
+    fn pth_pad_expands_to_all_copper_layers() {
+        let mut board = Board::new();
+        board.board_use = BoardUse::FpHolder;
+        board.set_copper_layer_count(4);
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        board.modify_footprint(fp, |f, _| {
+            f.set_stackup_mode(FootprintStackup::ExpandInnerLayers)
+        });
+        add_pad(
+            &mut board,
+            fp,
+            "eeeeeeee-0000-4000-8000-000000000001",
+            "1",
+            PadAttrib::Pth,
+            Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu]),
+            PadShape::Rectangle,
+            pt(1.0, 1.0),
+            pt(0.0, 0.0),
+            0.0,
+            0,
+        );
+
+        board.footprint_fix_up_pads_for_board(fp);
+
+        let pad = board.footprint_pads(fp).next().unwrap().1;
+        let layers = pad.layer_set(&BoardCtx::bare(&board));
+        assert_eq!(layers.count(), 4);
+
+        for l in [
+            PcbLayerId::FCu,
+            PcbLayerId::In1Cu,
+            PcbLayerId::In2Cu,
+            PcbLayerId::BCu,
+        ] {
+            assert!(layers.contains(l));
+        }
+    }
+
+    /// `KI_TEST::ChainsAreCyclicallyEqual` (`SHAPE_LINE_CHAIN::CompareGeometry( .., true, tol )`).
+    fn cyclically_equal(
+        a: &kicad_geom::ShapeLineChain,
+        b: &kicad_geom::ShapeLineChain,
+        tol: i32,
+    ) -> bool {
+        a.compare_geometry(b, true, tol)
+    }
+
+    /// `test_footprint.cpp` `FootprintCourtyardAndHull`: the courtyard and the hull follow
+    /// `Move`, `Rotate` and `Flip`.
+    #[test]
+    fn footprint_courtyard_and_hull() {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+
+        let line_w = mm(0.05);
+        let courtyard_h = mm(1.0);
+        let courtyard_w = mm(2.0);
+        let courtyard_points = [
+            Vector2I::new(0, 0),
+            Vector2I::new(courtyard_w, 0),
+            Vector2I::new(courtyard_w, courtyard_h),
+            Vector2I::new(0, courtyard_h),
+        ];
+
+        add_shape(
+            &mut board,
+            fp,
+            None,
+            ShapeT::Poly,
+            PcbLayerId::FCrtYd,
+            line_w,
+            |s, env| {
+                let mut poly = ShapePolySet::default();
+                poly.add_outline(&kicad_geom::ShapeLineChain::from_points(
+                    &courtyard_points,
+                    true,
+                ));
+                s.set_poly_shape(env, poly);
+            },
+        );
+
+        // The courtyards get a tiny epsilon to handle polygonisaton errors
+        let courtyard_epsilon = mm(0.005);
+        let assert_courtyard =
+            |board: &Board, layer: PcbLayerId, expected: &kicad_geom::ShapeLineChain| {
+                let ctx = BoardCtx::bare(board);
+                let courtyard = board[fp].courtyard(&ctx, layer);
+                assert_eq!(courtyard.outline_count(), 1);
+                assert!(cyclically_equal(
+                    courtyard.c_outline(0),
+                    expected,
+                    courtyard_epsilon
+                ));
+            };
+        let assert_no_courtyard = |board: &Board, layer: PcbLayerId| {
+            let ctx = BoardCtx::bare(board);
+            assert_eq!(board[fp].courtyard(&ctx, layer).outline_count(), 0);
+        };
+        let assert_hull = |board: &Board, expected: &kicad_geom::ShapeLineChain| {
+            let ctx = BoardCtx::bare(board);
+            let hull = board[fp].bounding_hull(&ctx);
+            assert_eq!(hull.outline_count(), 1);
+            assert!(cyclically_equal(hull.c_outline(0), expected, 0));
+        };
+
+        // We'll modify this in lock-step with the footprint
+        let mut expected_courtyard =
+            kicad_geom::ShapeLineChain::from_points(&courtyard_points, true);
+        // The hull is hard to calculate - we'll take the initial one as a given
+        let mut expected_hull = board[fp]
+            .bounding_hull(&BoardCtx::bare(&board))
+            .c_outline(0)
+            .clone();
+
+        // Initial courtyard
+        assert_courtyard(&board, PcbLayerId::FCrtYd, &expected_courtyard);
+        assert_no_courtyard(&board, PcbLayerId::BCrtYd);
+
+        let move_vector = Vector2I::new(courtyard_w, 0);
+        board.footprint_move(fp, move_vector);
+        expected_courtyard.move_(move_vector);
+        expected_hull.move_(move_vector);
+
+        // Moved courtyard
+        assert_courtyard(&board, PcbLayerId::FCrtYd, &expected_courtyard);
+        assert_no_courtyard(&board, PcbLayerId::BCrtYd);
+        assert_hull(&board, &expected_hull);
+
+        board.footprint_rotate(fp, Vector2I::new(0, 0), EdaAngle::from_degrees(90.0));
+        expected_courtyard.rotate(EdaAngle::from_degrees(90.0), Vector2I::new(0, 0));
+        expected_hull.rotate(EdaAngle::from_degrees(90.0), Vector2I::new(0, 0));
+
+        // Rotated courtyard
+        assert_courtyard(&board, PcbLayerId::FCrtYd, &expected_courtyard);
+        assert_no_courtyard(&board, PcbLayerId::BCrtYd);
+        assert_hull(&board, &expected_hull);
+
+        board.footprint_flip(fp, Vector2I::new(0, 0), FlipDirection::LeftRight);
+        expected_courtyard.mirror(Vector2I::new(0, 0), FlipDirection::LeftRight);
+        expected_hull.mirror(Vector2I::new(0, 0), FlipDirection::LeftRight);
+
+        // Flipped courtyard
+        assert_courtyard(&board, PcbLayerId::BCrtYd, &expected_courtyard);
+        assert_no_courtyard(&board, PcbLayerId::FCrtYd);
+        assert_hull(&board, &expected_hull);
+    }
+
+    /// `test_footprint.cpp` `FootprintBoundingBoxWithoutMandatoryFields`, first half: hidden
+    /// reference / value fields stay out of the box (removing the fields needs the non-const
+    /// `Remove` path of a later package; the text-variable half is M19's).
+    #[test]
+    fn footprint_bounding_box_with_hidden_mandatory_fields() {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        let shape_size = mm(3.0);
+
+        add_shape(
+            &mut board,
+            fp,
+            None,
+            ShapeT::Rectangle,
+            PcbLayerId::FCu,
+            mm(0.1),
+            |s, env| {
+                s.set_start(env, Vector2I::new(0, 0));
+                s.set_end(env, Vector2I::new(shape_size, shape_size));
+            },
+        );
+
+        let ctx = BoardCtx::bare(&board);
+        let ids = [FieldT::Reference, FieldT::Value].map(|t| board[fp].field(&ctx, t).unwrap());
+
+        for id in ids {
+            board.modify_field(id, |f, _| f.text.text.set_visible(false));
+        }
+
+        let ctx = BoardCtx::bare(&board);
+        let with_fields = board[fp].bounding_box(&ctx);
+        let shape_box = ctx.item(board[fp].drawings[0]).unwrap().bounding_box();
+        let mut expected = Box2I::from_pos(Vector2I::new(0, 0));
+        expected.inflate(mm(0.25));
+        expected.merge(&shape_box);
+        assert_eq!(with_fields, expected);
+        // the cache answers the second call
+        assert_eq!(board[fp].bounding_box(&ctx), with_fields);
+    }
+
+    /// L5 (Don-Inductor:L_Wuerth_WE-HCI_Flat_1040) from the ticket 2491 board
+    /// (`drc/test_footprint_courtyard_chaining.cpp`). Four segments are shorter than the 0.02mm
+    /// chaining epsilon.
+    const L5_SEGMENTS: [[f64; 4]; 12] = [
+        [-6.025, -1.500000, -6.025, 1.500000],
+        [-5.502647, -2.214616, -5.500000, -2.225000],
+        [-5.502647, 2.214616, -5.500000, 2.225000],
+        [-5.500000, -5.250000, -5.500000, -2.225000],
+        [-5.500000, 5.250000, -5.500000, 2.225000],
+        [-5.250000, -5.500000, 5.250000, -5.500000],
+        [-5.250000, 5.500000, 5.250000, 5.500000],
+        [5.500000, -5.250000, 5.500000, -2.221321],
+        [5.500000, -2.221321, 5.502647, -2.214616],
+        [5.500000, 5.250000, 5.500000, 2.225000],
+        [5.502647, 2.214616, 5.500000, 2.225000],
+        [6.025, 1.500000, 6.025, -1.500000],
+    ];
+
+    const L5_ARCS: [[f64; 6]; 8] = [
+        [
+            -6.025000, -1.500000, -5.880489, -1.942586, -5.502647, -2.214616,
+        ],
+        [
+            -5.502647, 2.214616, -5.880490, 1.942586, -6.025000, 1.500000,
+        ],
+        [
+            -5.500000, -5.250000, -5.426777, -5.426777, -5.250000, -5.500000,
+        ],
+        [
+            -5.250000, 5.500000, -5.426777, 5.426777, -5.500000, 5.250000,
+        ],
+        [
+            5.250000, -5.500000, 5.426777, -5.426777, 5.500000, -5.250000,
+        ],
+        [5.500000, 5.250000, 5.426777, 5.426777, 5.250000, 5.500000],
+        [
+            5.502647, -2.214616, 5.880489, -1.942586, 6.025000, -1.500000,
+        ],
+        [6.025000, 1.500000, 5.880490, 1.942586, 5.502647, 2.214616],
+    ];
+
+    /// `checkCourtyardCloses`: the shapes added (`ADD_MODE::INSERT`) in `order`.
+    fn check_courtyard_closes(order: &[usize]) {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        let width = mm(0.05);
+        let layer = PcbLayerId::BCrtYd;
+
+        for &idx in order {
+            if idx < L5_SEGMENTS.len() {
+                let s = L5_SEGMENTS[idx];
+                add_shape(
+                    &mut board,
+                    fp,
+                    None,
+                    ShapeT::Segment,
+                    layer,
+                    width,
+                    |sh, env| {
+                        sh.set_start(env, pt(s[0], s[1]));
+                        sh.set_end(env, pt(s[2], s[3]));
+                    },
+                );
+            } else {
+                let a = L5_ARCS[idx - L5_SEGMENTS.len()];
+                add_shape(
+                    &mut board,
+                    fp,
+                    None,
+                    ShapeT::Arc,
+                    layer,
+                    width,
+                    |sh, env| {
+                        sh.set_arc_geometry(env, pt(a[0], a[1]), pt(a[2], a[3]), pt(a[4], a[5]));
+                    },
+                );
+            }
+        }
+
+        let ctx = BoardCtx::bare(&board);
+        board[fp].build_courtyard_caches(&ctx, None);
+        assert_eq!(
+            board[fp].courtyard_flags(&ctx),
+            CourtyardFlags::default(),
+            "order {order:?}"
+        );
+        assert_eq!(
+            board[fp]
+                .courtyard(&ctx, PcbLayerId::BCrtYd)
+                .outline_count(),
+            1,
+            "order {order:?}"
+        );
+    }
+
+    /// `ClosesFromEverySeedShape`: the courtyard closes whatever order its shapes arrive in.
+    /// Each rotation seeds from a different shape.
+    #[test]
+    fn closes_from_every_seed_shape() {
+        let count = L5_SEGMENTS.len() + L5_ARCS.len();
+        let mut order: Vec<usize> = (0..count).collect();
+
+        for _ in 0..count {
+            check_courtyard_closes(&order);
+            order.rotate_left(1);
+        }
+    }
+
+    /// `ClosesInArbitraryShapeOrder`: 64 shuffles of the whole list. The C++ draws them with
+    /// `std::shuffle` over `std::mt19937( 42 )`; this uses a Fisher-Yates shuffle over the same
+    /// engine (different permutations, same property under test).
+    #[test]
+    fn closes_in_arbitrary_shape_order() {
+        let count = L5_SEGMENTS.len() + L5_ARCS.len();
+        let mut order: Vec<usize> = (0..count).collect();
+        let mut rng = kicad_core::mt19937::Mt19937::from_seed(42);
+
+        for _ in 0..64 {
+            for i in (1..order.len()).rev() {
+                let j = (rng.next_u32() as usize) % (i + 1);
+                order.swap(i, j);
+            }
+
+            check_courtyard_closes(&order);
+        }
+    }
+
+    /// An open courtyard sets the malformed flag of its side only, and the flags follow the
+    /// last build.
+    #[test]
+    fn malformed_courtyard_flags() {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        add_shape(
+            &mut board,
+            fp,
+            None,
+            ShapeT::Segment,
+            PcbLayerId::FCrtYd,
+            mm(0.05),
+            |s, env| {
+                s.set_start(env, pt(0.0, 0.0));
+                s.set_end(env, pt(1.0, 0.0));
+            },
+        );
+
+        let ctx = BoardCtx::bare(&board);
+        assert_eq!(board[fp].courtyard_flags(&ctx), CourtyardFlags::default());
+        let mut errors = 0;
+        let mut handler = |_: &str, _: Option<ItemId>, _: Option<ItemId>, _: Vector2I| errors += 1;
+        board[fp].build_courtyard_caches(&ctx, Some(&mut handler));
+        let flags = board[fp].courtyard_flags(&ctx);
+        assert!(flags.malformed_front && !flags.malformed_back);
+        assert!(errors > 0);
+        assert_eq!(
+            board[fp]
+                .courtyard(&ctx, PcbLayerId::FCrtYd)
+                .outline_count(),
+            0
+        );
+        // GetEffectiveShape on a courtyard layer of a malformed courtyard: an empty compound
+        let shape = board[fp].effective_shape(
+            &ctx,
+            PcbLayerId::FCrtYd,
+            Flashing::Default,
+            DrcConstraintT::NullConstraint,
+        );
+        assert!(shape.bbox(0) == ShapeCompound::new().bbox(0));
+    }
+
+    /// Save order of the footprint children (`FOOTPRINT::cmp_pads` / `cmp_drawings` /
+    /// `cmp_zones` in the writer's `std::set`s) against the `order` lines of
+    /// `tests/golden/m20_footprints.txt`.
+    #[test]
+    fn m20_oracle_save_order() {
+        let golden = include_str!("../../tests/golden/m20_footprints.txt");
+        let board = build_m20_board();
+        let ctx = BoardCtx::bare(&board);
+        let mut checked = 0;
+
+        for line in golden.lines().filter(|l| l.starts_with("order|board|fp.")) {
+            let (head, expected) = line.split_once('=').unwrap();
+            let rest = head.strip_prefix("order|board|fp.").unwrap();
+            let (fp_key, list) = rest.split_once('.').unwrap();
+            let fp_ref = ctx
+                .resolve(&kicad_core::Kiid::parse(fp_key).unwrap())
+                .unwrap();
+            let fp = fp_ref.as_footprint().unwrap();
+
+            let (mut ids, cmp): (
+                Vec<ItemId>,
+                fn(&BoardCtx<'_>, ItemId, ItemId) -> std::cmp::Ordering,
+            ) = match list {
+                "pads" => (
+                    fp.pads.iter().map(|&p| p.into()).collect(),
+                    crate::footprint::compare::footprint_cmp_pads,
+                ),
+                "drawings" => (
+                    fp.drawings.iter().copied().collect(),
+                    crate::footprint::compare::footprint_cmp_drawings,
+                ),
+                "zones" => (
+                    fp.zones.iter().map(|&z| z.into()).collect(),
+                    crate::footprint::compare::footprint_cmp_zones,
+                ),
+                _ => continue,
+            };
+
+            ids.sort_by(|&a, &b| cmp(&ctx, a, b));
+            let actual: Vec<String> = ids
+                .iter()
+                .map(|&id| ctx.item(id).unwrap().uuid().to_string())
+                .collect();
+            assert_eq!(format!("[{}]", actual.join(" ")), expected, "{head}");
+            checked += 1;
+        }
+
+        assert_eq!(checked, 6);
+    }
+
+    /// `drc/test_footprint_courtyard_index.cpp` `MatchesBruteForceScan`.
+    #[test]
+    fn courtyard_index_matches_brute_force_scan() {
+        use std::collections::BTreeSet;
+
+        let mut board = Board::new();
+
+        // addFootprint: a single rectangular front courtyard centred on the origin
+        // (KI_TEST::DrawRect, four segments), then SetPosition.
+        let add_footprint = |board: &mut Board, pos: Vector2I, size: Vector2I| {
+            let fp = board.create_footprint();
+            let (x_r, x_l) = (size.x / 2, -size.x / 2);
+            let (y_t, y_b) = (size.y / 2, -size.y / 2);
+            let segs = [
+                ((x_l, y_t), (x_r, y_t)),
+                ((x_l, y_b), (x_r, y_b)),
+                ((x_l, y_b), (x_l, y_t)),
+                ((x_r, y_b), (x_r, y_t)),
+            ];
+
+            for ((ax, ay), (bx, by)) in segs {
+                add_shape(
+                    board,
+                    fp,
+                    None,
+                    ShapeT::Segment,
+                    PcbLayerId::FCrtYd,
+                    mm(0.1),
+                    |s, env| {
+                        s.set_start(env, Vector2I::new(ax, ay));
+                        s.set_end(env, Vector2I::new(bx, by));
+                    },
+                );
+            }
+
+            board.footprint_set_position(fp, pos);
+            board.attach_footprint(fp, AddMode::Insert);
+        };
+
+        add_footprint(&mut board, pt(0.0, 0.0), pt(2.0, 2.0));
+        add_footprint(&mut board, pt(50.0, 0.0), pt(2.0, 2.0));
+        add_footprint(&mut board, pt(100.0, 100.0), pt(2.0, 2.0));
+
+        // A footprint whose courtyard is far larger than its body: indexing the body bounds
+        // instead of the courtyard bounds would wrongly exclude it from far-reaching queries.
+        add_footprint(&mut board, pt(0.0, 50.0), pt(60.0, 60.0));
+
+        // A footprint with no courtyard graphics must never be returned.
+        let no_courtyard = board.create_footprint();
+        board.footprint_set_position(no_courtyard, pt(50.0, 50.0));
+        board.attach_footprint(no_courtyard, AddMode::Insert);
+
+        let ctx = BoardCtx::bare(&board);
+        let index = board.footprint_courtyard_index(&ctx);
+
+        let brute_force = |query: &Box2I| -> BTreeSet<FootprintId> {
+            let mut result = BTreeSet::new();
+
+            for (id, footprint) in board.footprints() {
+                let mut bbox = Box2I::default();
+                let mut has_courtyard = false;
+
+                for side in [PcbLayerId::FCu, PcbLayerId::BCu] {
+                    let courtyard = footprint.courtyard(&ctx, side);
+
+                    if courtyard.outline_count() == 0 {
+                        continue;
+                    }
+
+                    if has_courtyard {
+                        bbox.merge(&courtyard.bbox(0));
+                    } else {
+                        bbox = courtyard.bbox(0);
+                    }
+
+                    has_courtyard = true;
+                }
+
+                if has_courtyard && bbox.intersects(query) {
+                    result.insert(id);
+                }
+            }
+
+            result
+        };
+
+        let queries = [
+            Box2I::new(pt(-5.0, -5.0), pt(10.0, 10.0)), // around U1 only
+            Box2I::new(pt(200.0, 200.0), pt(10.0, 10.0)), // empty region
+            Box2I::new(pt(20.0, 40.0), pt(5.0, 5.0)),   // only U4's large courtyard
+            Box2I::new(pt(-50.0, -50.0), pt(250.0, 250.0)), // everything
+        ];
+
+        for query in &queries {
+            let mut found = BTreeSet::new();
+            index.query_overlapping(query, &mut |fp| {
+                found.insert(fp);
+                true
+            });
+            assert_eq!(found, brute_force(query), "{query:?}");
+        }
+
+        // the index is cached until the next time stamp bump
+        assert!(Arc::ptr_eq(&index, &board.footprint_courtyard_index(&ctx)));
+    }
+
+    /// `FOOTPRINT::cmp_pads`: pad numbers in `StrNumCmp` order, then position.
+    #[test]
+    fn cmp_pads_number_and_position() {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        let front = Lset::from_layers(&[PcbLayerId::FCu]);
+
+        for (n, (number, x)) in [("10", 0.0), ("2", 1.0), ("2", 0.5)]
+            .into_iter()
+            .enumerate()
+        {
+            let u = format!("eeeeeeee-0000-4000-8000-00000000000{n}");
+            add_pad(
+                &mut board,
+                fp,
+                &u,
+                number,
+                PadAttrib::Smd,
+                front.clone(),
+                PadShape::Rectangle,
+                pt(1.0, 1.0),
+                pt(x, 0.0),
+                0.0,
+                0,
+            );
+        }
+
+        let ctx = BoardCtx::bare(&board);
+        let pads: Vec<ItemId> = board[fp].pads.iter().map(|&p| p.into()).collect();
+        let cmp = crate::footprint::compare::footprint_cmp_pads;
+        assert_eq!(cmp(&ctx, pads[1], pads[0]), std::cmp::Ordering::Less); // "2" < "10"
+        assert_eq!(cmp(&ctx, pads[2], pads[1]), std::cmp::Ordering::Less); // x 0.5 < 1
+        assert_eq!(cmp(&ctx, pads[0], pads[0]), std::cmp::Ordering::Equal);
     }
 }

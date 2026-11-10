@@ -17,7 +17,8 @@
 
 //! Differential test of [`kicad_geom::stdsort::StdSet`] / [`std_set_order`] against libstdc++
 //! `std::set`: replays the cases of `oracle/stdset_oracle.cpp` (6,000 random sequences, with
-//! comparators that are and deliberately are not strict weak orderings) and compares the
+//! comparators that are and deliberately are not strict weak orderings, all irreflexive and
+//! asymmetric) and compares the
 //! iteration order with `golden/stdset_oracle.txt` (regenerate with
 //! `oracle/build_stdset_oracle.sh`).
 
@@ -67,7 +68,7 @@ fn less(kind: i64, eps: i64, table: &[u8], size: i64, a: i64, b: i64) -> bool {
         1 => a < b - eps,
         2 => table[(a * size + b) as usize] != 0,
         3 => (b - a).rem_euclid(3) == 1,
-        4 => a <= b,
+        4 => a < b && b - a <= eps + 1,
         _ => a.abs() < b.abs() - eps,
     }
 }
@@ -94,7 +95,17 @@ fn std_set_matches_libstdcxx() {
         let mut table = Vec::new();
 
         if kind == 2 {
-            table = (0..range * range).map(|_| rng.below(2) as u8).collect();
+            table = vec![0u8; (range * range) as usize];
+
+            for a in 0..range {
+                for b in a + 1..range {
+                    match rng.below(3) {
+                        1 => table[(a * range + b) as usize] = 1,
+                        2 => table[(b * range + a) as usize] = 1,
+                        _ => {}
+                    }
+                }
+            }
         }
 
         let items: Vec<i64> = (0..n)

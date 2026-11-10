@@ -425,7 +425,7 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
     tb.normalize();
     tb.on_footprint_transformed(env);
     tb.on_footprint_rescaled(env, 1.0, 1.0, 1.0, p, ANGLE_0);
-    tb.style_from_settings(ctx.board.design_settings(), false);
+    tb.style_from_settings(env, ctx.board.design_settings(), false);
     tb.set_text_pos(env, p);
     tb.set_text_size(env, p, true);
     tb.set_text_thickness(env, 0);

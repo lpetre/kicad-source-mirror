@@ -502,14 +502,10 @@ impl Board {
             .collect()
     }
 
-    /// `BOARD_CONNECTED_ITEM::SetNet` on a stored item: the net code is written without the
-    /// copper check of `SetNetCode`.
+    /// `BOARD_CONNECTED_ITEM::SetNet` on a stored item (virtual: the `ZONE` override
+    /// applies): the net code is written without the copper check of `SetNetCode`.
     fn set_item_net_direct(&mut self, id: ItemId, code: NetCode) {
-        self.modify(id, |mut item, _env| {
-            if let Some(c) = item.as_leaf_mut().and_then(|leaf| leaf.connected_mut()) {
-                c.net = code;
-            }
-        });
+        self.set_item_netinfo(id, code);
     }
 
     /// `m_itemIndex.Unbind( net->m_Uuid )` when the index entry names this net.

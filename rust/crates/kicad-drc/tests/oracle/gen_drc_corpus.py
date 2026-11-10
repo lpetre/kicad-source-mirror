@@ -67,6 +67,9 @@ PORTED_TYPES = {
     # DRC-06
     "annular_width", "drill_out_of_range", "microvia_drill_out_of_range", "track_width",
     "via_diameter",
+    # DRC-07
+    "isolated_copper", "track_dangling", "track_not_centered_on_via",
+    "track_on_post_machined_layer", "via_dangling",
 }
 # More entries of one type on one board are stored as a summary line only.
 MAX_FULL = 20

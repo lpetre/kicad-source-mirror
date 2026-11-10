@@ -25,7 +25,10 @@
 //   font_oracle full [KIND IDX] -> the full output text of every case (or of one case)
 //   font_oracle strings         -> the raw glyph table strings, one per line
 
+#include <algorithm>
 #include <cinttypes>
+#include <climits>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -119,8 +122,29 @@ static wxString toWx( const std::vector<uint32_t>& aCps )
     return s;
 }
 
+// Kinds 'O' and 'E' (package CLEAN-1) rerun the glyph and draw cases with out-of-range sizes,
+// coordinates, stroke widths and line spacings, so that the double -> int conversions of
+// font.cpp / stroke_font.cpp see values outside the int range (x86: INT_MIN).
+static bool g_extreme = false;
+
+static int genExtremeInt()
+{
+    static const int TABLE[] = { INT_MAX,     INT_MIN,     INT_MAX - 1000, INT_MIN + 1000,
+                                 2000000000,  -2000000000, 1900000000,     -1900000000,
+                                 1500000000,  -1500000000, 1000000000 };
+    int64_t r = rnd( 16 );
+
+    if( r < 11 )
+        return TABLE[r];
+
+    return (int) ( rnd( 4294967296LL ) - 2147483648LL );
+}
+
 static int genSize()
 {
+    if( g_extreme && rnd( 2 ) == 0 )
+        return genExtremeInt();
+
     int64_t r = rnd( 10 );
 
     if( r == 0 ) return 0;
@@ -131,6 +155,9 @@ static int genSize()
 
 static int genCoord()
 {
+    if( g_extreme && rnd( 2 ) == 0 )
+        return genExtremeInt();
+
     return (int) ( rnd( 200000001 ) - 100000000 );
 }
 
@@ -313,8 +340,13 @@ static void caseMarkup()
 
 static void caseGlyphs()
 {
-    wxString text = toWx( genText( 12 ) );
+    std::vector<uint32_t> cps = genText( 12 );
+    wxString text = toWx( cps );
     int      sx = genSize();
+
+    // a tab advances in steps of 4 * size.x until it passes the cursor: keep that loop short
+    if( g_extreme && std::find( cps.begin(), cps.end(), '\t' ) != cps.end() )
+        sx = 4000000;
     int      sy = rnd( 4 ) == 0 ? genSize() : sx;
     // (every random draw is its own statement: the evaluation order of function arguments
     // is unspecified)
@@ -374,6 +406,9 @@ static void caseDraw()
     wxString        text = toWx( cps );
     TEXT_ATTRIBUTES attrs;
     int             sx = rnd( 8 ) == 0 ? genSize() : (int) ( 500000 + rnd( 4500001 ) );
+
+    if( g_extreme && std::find( cps.begin(), cps.end(), '\t' ) != cps.end() )
+        sx = 4000000;
     int             sy = rnd( 4 ) == 0 ? (int) ( 500000 + rnd( 4500001 ) ) : sx;
     static const double SPACING[] = { 1.0, 1.0, 1.5, 0.8 };
     int64_t         sw = rnd( 4 );
@@ -388,6 +423,15 @@ static void caseDraw()
     attrs.m_Underlined = rnd( 4 ) == 0;
     attrs.m_StrokeWidth = sw == 0 ? 0 : sw == 1 ? 1 : (int) ( 50000 + rnd( 550001 ) );
     attrs.m_LineSpacing = rnd( 3 ) ? SPACING[rnd( 4 )] : rnd( 300 ) / 100.0;
+
+    if( g_extreme && rnd( 2 ) == 0 )
+        attrs.m_StrokeWidth = genExtremeInt();
+
+    if( g_extreme && rnd( 2 ) == 0 )
+    {
+        static const double LS[] = { 1e9, 3e9, -3e9, 1e300, -1e300, INFINITY, NAN, 20000.0 };
+        attrs.m_LineSpacing = LS[rnd( 8 )];
+    }
 
     int      px = genCoord();
     int      py = genCoord();
@@ -505,11 +549,27 @@ struct KIND
     void ( *fn )();
 };
 
+static void caseGlyphsExtreme()
+{
+    g_extreme = true;
+    caseGlyphs();
+    g_extreme = false;
+}
+
+static void caseDrawExtreme()
+{
+    g_extreme = true;
+    caseDraw();
+    g_extreme = false;
+}
+
 static const KIND KINDS[] = {
     { 'M', 3000, caseMarkup },
     { 'T', 2000, caseGlyphs },
     { 'D', 3000, caseDraw },
     { 'H', 500, caseHelpers },
+    { 'O', 600, caseGlyphsExtreme },
+    { 'E', 600, caseDrawExtreme },
 };
 
 static void dumpTable( bool aFull )

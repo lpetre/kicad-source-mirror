@@ -82,3 +82,21 @@ go down).
 Report: `summary` with the counts per severity; `decisions` = the fixes you made (one line
 each, with the evidence); `known_gaps` = open findings with their id; `change_requests` =
 findings in running packages' files; `notes_for_next` = the FIX packages you wrote.
+
+## Reports from other packages to check during the review (added by the orchestrator)
+
+- DRC-24: "the render cache of a gr_text is gone right after parse_board_report" on
+  qa/data/pcbnew/issue22475, text ff749b73-2383-44e8-88dd-1d9c1b0c1a89
+  (`text.eda_text().render_cache_data()` is None after the parse). Find the setter or
+  finishing step that clears it; decide with the C++ (EDA_TEXT::ClearRenderCache call sites,
+  what the reference re-save writes for such a text when the font file is not installed)
+  what the correct behaviour is, fix and add a regression case.
+- DRC-06: the board's KiidGenerator starts from a default seed that reproduces UUIDs stored
+  in some QA boards (issue10697), so freshly generated UUIDs can collide with item UUIDs.
+  Check how fresh UUIDs are drawn during parse / load (the C++ draws random UUIDs at defined
+  points; the port must draw at the same points so a seeded test run is reproducible, but a
+  generated UUID must never equal one that is in the file): propose the rule (e.g. the
+  generator skips UUIDs present in the board's UUID index) and apply it if it is local.
+- DRC-24 asks for `Board::is_layer_visible` (BOARD::IsLayerVisible); DRC-27 asks for a public
+  writer for the fill of a detached zone (`Zone::fill_mut` or `set_filled_polys_list`).
+  INT-2a may already have added them; add them if not.

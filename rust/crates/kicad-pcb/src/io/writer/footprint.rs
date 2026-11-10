@@ -35,12 +35,12 @@ use super::{
     sorted_set,
 };
 use crate::board_item::{board_item_ptr_cmp, is_locked};
+use crate::footprint::FootprintStackup;
 use crate::footprint::compare::{footprint_cmp_drawings, footprint_cmp_pads, footprint_cmp_zones};
 use crate::footprint::footprint_attr::{
     FP_BOARD_ONLY, FP_DNP, FP_EXCLUDE_FROM_BOM, FP_EXCLUDE_FROM_POS_FILES, FP_EXCLUDE_FROM_SIM,
     FP_SMD, FP_THROUGH_HOLE,
 };
-use crate::footprint::FootprintStackup;
 use crate::ids::{FootprintId, ItemId};
 use crate::io::SEXPR_BOARD_FILE_VERSION;
 use crate::pcb_3d_body::ExtrusionMaterial;
@@ -330,20 +330,22 @@ impl PcbWriter<'_> {
         }
 
         let sorted_pads: Vec<ItemId> = sorted_set(
-            src.footprint_pads(footprint).map(|(id, _)| ItemId::from(id)),
+            src.footprint_pads(footprint)
+                .map(|(id, _)| ItemId::from(id)),
             |a, b| footprint_cmp_pads(&ctx, *a, *b),
         );
-        let sorted_drawings: Vec<ItemId> =
-            sorted_set(src.footprint_drawings(footprint).map(|(id, _)| id), |a, b| {
-                footprint_cmp_drawings(&ctx, *a, *b)
-            });
+        let sorted_drawings: Vec<ItemId> = sorted_set(
+            src.footprint_drawings(footprint).map(|(id, _)| id),
+            |a, b| footprint_cmp_drawings(&ctx, *a, *b),
+        );
         let sorted_points: Vec<ItemId> = sorted_set(
             src.footprint_points(footprint)
                 .map(|(id, _)| ItemId::from(id)),
             |a, b| pcb_point_cmp_points(&ctx, *a, *b),
         );
         let sorted_zones: Vec<ItemId> = sorted_set(
-            src.footprint_zones(footprint).map(|(id, _)| ItemId::from(id)),
+            src.footprint_zones(footprint)
+                .map(|(id, _)| ItemId::from(id)),
             |a, b| footprint_cmp_zones(&ctx, *a, *b),
         );
         let sorted_groups: Vec<ItemId> = sorted_set(
@@ -402,11 +404,19 @@ impl PcbWriter<'_> {
             }
 
             if variant.excluded_from_bom != base_excluded_from_bom {
-                format_bool(&mut *self.out, "exclude_from_bom", variant.excluded_from_bom)?;
+                format_bool(
+                    &mut *self.out,
+                    "exclude_from_bom",
+                    variant.excluded_from_bom,
+                )?;
             }
 
             if variant.excluded_from_sim != base_excluded_from_sim {
-                format_bool(&mut *self.out, "exclude_from_sim", variant.excluded_from_sim)?;
+                format_bool(
+                    &mut *self.out,
+                    "exclude_from_sim",
+                    variant.excluded_from_sim,
+                )?;
             }
 
             if variant.excluded_from_pos_files != base_excluded_from_pos_files {

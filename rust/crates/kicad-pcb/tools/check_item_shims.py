@@ -140,6 +140,7 @@ TRAITS = {
     },
     "BoardConnectedItem": {
         "IsConnected": "is_connected",
+        "SetNet": "set_net",
         "GetEffectiveNetClass": "effective_netclass",
         "GetOwnClearance": "own_clearance",
         "GetLocalClearance": {"wxString": None, "": "local_clearance"},

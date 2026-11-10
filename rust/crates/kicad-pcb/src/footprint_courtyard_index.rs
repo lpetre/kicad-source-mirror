@@ -17,11 +17,16 @@
 
 //! Port of `pcbnew/footprint_courtyard_index.h` and `footprint_courtyard_index.cpp`
 //! (`FOOTPRINT_COURTYARD_INDEX`): a packed R-tree over the footprints' courtyard bounding
-//! boxes, cached per board time stamp in `BoardCaches` (package M20).
+//! boxes, cached per board time stamp in `BoardCaches` (package M20), and
+//! `BOARD::GetFootprintCourtyardIndex()`.
 
-use kicad_geom::Box2I;
+use std::sync::Arc;
+
+use kicad_core::PcbLayerId;
 use kicad_geom::geometry::rtree::packed_rtree::PackedRTree;
+use kicad_geom::{Box2I, Shape};
 
+use crate::board::Board;
 use crate::ctx::BoardCtx;
 use crate::ids::FootprintId;
 
@@ -29,7 +34,6 @@ use crate::ids::FootprintId;
 #[derive(Clone, Debug, Default)]
 pub struct FootprintCourtyardIndex {
     /// m_tree (`KIRTREE::PACKED_RTREE<FOOTPRINT*, int, 2>`): footprint handles.
-    #[allow(dead_code)] // built and queried by package M20
     pub(crate) tree: PackedRTree<FootprintId, 2>,
 }
 
@@ -37,12 +41,69 @@ impl FootprintCourtyardIndex {
     /// `FOOTPRINT_COURTYARD_INDEX( aBoard )`: build the index from the board's footprint
     /// courtyards (which DRC has already cached).
     pub fn new(ctx: &BoardCtx<'_>) -> Self {
-        crate::port_pending!("FOOTPRINT_COURTYARD_INDEX::FOOTPRINT_COURTYARD_INDEX", ctx)
+        let board = ctx.board;
+        let mut builder = PackedRTree::<FootprintId, 2>::builder();
+
+        builder.reserve(board.footprint_list.len());
+
+        for (id, footprint) in board.footprints() {
+            let mut bbox = Box2I::default();
+            let mut has_courtyard = false;
+
+            // Index by the union of the front and back courtyard bounds so a single query
+            // serves intersectsCourtyard/Front/Back; the downstream per-side test discards any
+            // extra hits.
+            for side in [PcbLayerId::FCu, PcbLayerId::BCu] {
+                let courtyard = footprint.courtyard(ctx, side);
+
+                if courtyard.outline_count() == 0 {
+                    continue;
+                }
+
+                if has_courtyard {
+                    bbox.merge(&courtyard.bbox(0));
+                } else {
+                    bbox = courtyard.bbox(0);
+                }
+
+                has_courtyard = true;
+            }
+
+            if !has_courtyard {
+                continue;
+            }
+
+            let min = [bbox.left(), bbox.top()];
+            let max = [bbox.right(), bbox.bottom()];
+
+            builder.add(&min, &max, id);
+        }
+
+        FootprintCourtyardIndex {
+            tree: builder.build(),
+        }
     }
 
     /// `QueryOverlapping( aBox, aVisitor )`: visit every footprint whose courtyard bounding
     /// box overlaps `bbox`; the visitor returns true to keep searching, false to stop.
     pub fn query_overlapping(&self, bbox: &Box2I, visitor: &mut dyn FnMut(FootprintId) -> bool) {
-        crate::port_pending!("FOOTPRINT_COURTYARD_INDEX::QueryOverlapping", bbox, visitor)
+        let min = [bbox.left(), bbox.top()];
+        let max = [bbox.right(), bbox.bottom()];
+
+        self.tree.search(&min, &max, |&id| visitor(id));
+    }
+}
+
+impl Board {
+    /// `BOARD::GetFootprintCourtyardIndex()`: built lazily and kept until the next time stamp
+    /// bump (`increment_time_stamp` clears `BoardCaches`, where C++ resets
+    /// `m_footprintCourtyardIndex` in `IncrementTimeStamp`).
+    pub fn footprint_courtyard_index(&self, ctx: &BoardCtx<'_>) -> Arc<FootprintCourtyardIndex> {
+        let cached = self
+            .caches
+            .footprint_courtyard_index
+            .get_or_build(|_| true, || Arc::new(FootprintCourtyardIndex::new(ctx)));
+
+        Arc::clone(&*cached)
     }
 }

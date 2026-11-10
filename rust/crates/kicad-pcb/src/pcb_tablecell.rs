@@ -515,8 +515,13 @@ impl BoardItemMut for PcbTablecell {
     fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
         PcbTablecell::set_position(self, env, pos)
     }
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        PcbTablecell::style_from_settings(self, settings, check_side)
+    fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        PcbTablecell::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -787,8 +792,13 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::StyleFromSettings`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {
-        self.textbox.style_from_settings(settings, check_side)
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        check_side: bool,
+    ) {
+        self.textbox.style_from_settings(env, settings, check_side)
     }
 
     /// Port of `PCB_TEXTBOX::GetDrawPos (PCB_TABLECELL)`: `GetDrawPos( false )` over the cell.

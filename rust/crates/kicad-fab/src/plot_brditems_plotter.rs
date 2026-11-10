@@ -19,19 +19,32 @@
 //! drill marks.
 //!
 //! FAB-03 defines the struct (`pcbplot.h` L61-162) with its options and the inline members;
-//! every per-item entry point is a pending function that names the work package porting it
-//! (FAB-04 pads / zones / colours, FAB-05 graphics, FAB-06 text, FAB-11 drill marks, FAB-13
-//! drill symbols). They panic with a "port pending" message until that package lands.
+//! FAB-04 ports `getColor`, `PlotPadNumber`, `PlotPad` (L72-398) and `PlotZone` (L902-957).
+//! The other per-item entry points are pending functions that name the work package porting
+//! them (FAB-05 graphics, FAB-06 text, FAB-11 drill marks, FAB-13 drill symbols). They panic
+//! with a "port pending" message until that package lands.
 
-use kicad_core::color4d::Color4D;
-use kicad_core::plot_enums::PlotFormat;
-use kicad_core::{Lset, PcbLayerId};
-use kicad_geom::ShapePolySet;
+use kicad_core::color4d::{Color4D, EdaColorT};
+use kicad_core::plot_enums::{FillT, PlotFormat};
+use kicad_core::string_utils::{printable_char_count, unescape_string};
+use kicad_core::text_attributes::TextAttributes;
+use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
+use kicad_font::Metrics;
+use kicad_pcb::eda_shape::ShapeT;
+use kicad_geom::geometry::approximation::ErrorLoc;
+use kicad_geom::trigo::rotate_point;
+use kicad_geom::{ANGLE_90, ShapePolySet, Vector2I, ki_round};
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::ids::FootprintId;
 use kicad_pcb::item_ref::ItemRef;
+use kicad_pcb::padstack::{PadAttrib, PadProp, PadShape, Padstack};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
+use kicad_pcb::traits::EdaShapeItem;
 use kicad_plot::Plotter;
+use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
+use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
+
+use crate::plot_board_layers::round_chamfered_rect_to_polygon;
 
 /// Panic with a "port pending" message naming the C++ function and the work package that
 /// ports it (the plotting counterpart of `kicad_pcb::port_pending!`).
@@ -130,19 +143,65 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         fab_port_pending!("BRDITEMS_PLOTTER::PlotPcbTarget (FAB-05)", a_mire)
     }
 
-    /// `BRDITEMS_PLOTTER::PlotZone` (FAB-04). `a_zone` may be a detached copy (`ZONE dummy`).
+    /// Port of `BRDITEMS_PLOTTER::PlotZone`: plot the outlines of `a_polys_list` (the fill of
+    /// `a_zone` on `a_layer`, or a part of it) as filled polygons; Gerber regions carry the
+    /// zone's net attributes. `a_zone` may be a detached copy (`ZONE dummy`).
     pub fn plot_zone(
         &mut self,
         a_zone: ItemRef<'_>,
         a_layer: PcbLayerId,
         a_polys_list: &ShapePolySet,
     ) {
-        fab_port_pending!(
-            "BRDITEMS_PLOTTER::PlotZone (FAB-04)",
-            a_zone,
-            a_layer,
-            a_polys_list
-        )
+        if a_polys_list.is_empty() {
+            return;
+        }
+
+        let mut gbr_metadata = GbrMetadata::new();
+        let zone = a_zone.as_zone().expect("PlotZone: a zone");
+
+        if zone.is_on_copper_layer(a_zone.ctx) {
+            gbr_metadata.set_net_name(a_zone.netname());
+            gbr_metadata.set_copper(true);
+
+            // Zones with no net name can exist.
+            // they are not used to connect items, so the aperture attribute cannot
+            // be set as conductor
+            if a_zone.netname().is_empty() {
+                gbr_metadata.set_aperture_attrib(GbrApertureAttrib::Nonconductor);
+            } else {
+                gbr_metadata.set_aperture_attrib(GbrApertureAttrib::Conductor);
+                gbr_metadata.set_net_attrib_type(gbr_netinfo::NET);
+            }
+        }
+
+        let color = self.get_color(a_layer.0);
+        self.plotter.set_color(&color);
+
+        self.plotter.start_block(None); // Clean current object attributes
+
+        /*
+         * In non filled mode the outline is plotted, but not the filling items
+         */
+
+        for idx in 0..a_polys_list.outline_count() {
+            let outline = a_polys_list.c_outline(idx);
+
+            // Plot the current filled area (as region for Gerber plotter to manage attributes)
+            if self.plotter.plotter_type() == PlotFormat::Gerber {
+                self.plotter
+                    .as_gerber_mut()
+                    .expect("a Gerber plotter")
+                    .plot_gerber_region_chain(outline, Some(&gbr_metadata));
+            } else if self.plotter.plotter_type() == PlotFormat::Dxf {
+                fab_port_pending!("BRDITEMS_PLOTTER::PlotZone: DXF (out of scope)")
+            } else {
+                // getMetadata(): nullptr for every engine but Gerber and DXF
+                self.plotter
+                    .plot_poly_chain(outline, FillT::FilledShape, 0, None);
+            }
+        }
+
+        self.plotter.end_block(None); // Clear object attributes
     }
 
     /// `BRDITEMS_PLOTTER::PlotText` (FAB-06). `a_text` is the item owning the `EDA_TEXT`.
@@ -179,7 +238,9 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         fab_port_pending!("BRDITEMS_PLOTTER::PlotBarCode (FAB-05)", a_bar_code)
     }
 
-    /// `BRDITEMS_PLOTTER::PlotPad` (FAB-04). `a_pad` may be a detached copy (`PAD dummy`).
+    /// Port of `BRDITEMS_PLOTTER::PlotPad`: plot a pad (flashed, or outlined in sketch mode)
+    /// on `a_layer` with its Gerber attributes. `a_pad` may be a detached copy (`PAD dummy`,
+    /// or the pad with the sizes `plotPadLayer` set).
     pub fn plot_pad(
         &mut self,
         a_pad: ItemRef<'_>,
@@ -187,18 +248,375 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         a_color: &Color4D,
         a_sketch_mode: bool,
     ) {
-        fab_port_pending!(
-            "BRDITEMS_PLOTTER::PlotPad (FAB-04)",
-            a_pad,
-            a_layer,
-            a_color,
-            a_sketch_mode
-        )
+        let ctx = a_pad.ctx;
+        let pad = a_pad.as_pad().expect("PlotPad: a pad");
+        let shape_pos = pad.shape_pos(ctx, a_layer);
+        let mut metadata = GbrMetadata::new();
+
+        // m_plotter->MarkFootprintPlotted( aPad->GetParentFootprint() ): PDF only (out of
+        // scope).
+
+        let plot_on_copper_layer = (Lset::all_cu_mask() & &self.layer_mask).any();
+        let plot_on_external_copper_layer = (Lset::external_cu_mask() & &self.layer_mask).any();
+
+        // Pad not on the solder mask layer cannot be soldered.
+        // therefore it can have a specific aperture attribute.
+        // Not yet in use.
+        // bool isPadOnBoardTechLayers = ( aPad->GetLayerSet() & LSET::AllBoardTechMask() ).any();
+
+        let reference = pad
+            .parent_footprint(ctx)
+            .expect("PlotPad: a footprint pad")
+            .reference(ctx);
+        metadata.set_cmp_reference(&reference);
+
+        if plot_on_copper_layer {
+            metadata.set_net_attrib_type(gbr_netinfo::ALL);
+            metadata.set_copper(true);
+
+            // Gives a default attribute, for instance for pads used as tracks in net ties:
+            // Connector pads and SMD pads are on external layers
+            // if on internal layers, they are certainly used as net tie
+            // and are similar to tracks: just conductor items
+            metadata.set_aperture_attrib(GbrApertureAttrib::Conductor);
+
+            let use_utf8 = false;
+            let use_quoting = false;
+            metadata.set_pad_name(pad.number(), use_utf8, use_quoting);
+
+            if !pad.number().is_empty() {
+                metadata.set_pad_pin_function(pad.pin_function(), use_utf8, use_quoting);
+            }
+
+            metadata.set_net_name(a_pad.netname());
+
+            // Some pads are mechanical pads ( through hole or smd )
+            // when this is the case, they have no pad name and/or are not plated.
+            // In this case gerber files have slightly different attributes.
+            if pad.attribute() == PadAttrib::Npth || pad.number().is_empty() {
+                metadata.netlist_metadata.not_in_net = true;
+            }
+
+            if !plot_on_external_copper_layer {
+                // the .P object attribute (GBR_NETLIST_METADATA::GBR_NETINFO_PAD)
+                // is used on outer layers, unless the component is embedded
+                // or a "etched" component (fp only drawn, not a physical component)
+                // Currently, Pcbnew does not handle embedded component, so we disable the .P
+                // attribute on internal layers
+                // Note the Gerber doc is not really clear about through holes pads about the .P
+                metadata.set_net_attrib_type(gbr_netinfo::NET | gbr_netinfo::CMP);
+            }
+
+            // Some attributes are reserved to the external copper layers:
+            // GBR_APERTURE_ATTRIB_CONNECTORPAD and GBR_APERTURE_ATTRIB_SMDPAD_CUDEF
+            // for instance.
+            // Pad with type PAD_ATTRIB::CONN or PAD_ATTRIB::SMD that is not on outer layer
+            // has its aperture attribute set to GBR_APERTURE_ATTRIB_CONDUCTOR
+            match pad.attribute() {
+                // Mechanical pad through hole
+                PadAttrib::Npth => metadata.set_aperture_attrib(GbrApertureAttrib::Washerpad),
+
+                // Pad through hole, a hole is also expected
+                PadAttrib::Pth => metadata.set_aperture_attrib(GbrApertureAttrib::Componentpad),
+
+                // Connector pads, no solder paste but with solder mask.
+                PadAttrib::Conn => {
+                    if plot_on_external_copper_layer {
+                        metadata.set_aperture_attrib(GbrApertureAttrib::Connectorpad);
+                    }
+                }
+
+                // Non-component only pads on any layer
+                // For now, keep the existing "Conductor" logic above, but this can be changed
+                // later if needed.
+                PadAttrib::NonComponent => {}
+
+                // SMD pads (on external copper layer only) with solder paste and mask
+                PadAttrib::Smd => {
+                    if plot_on_external_copper_layer {
+                        metadata.set_aperture_attrib(GbrApertureAttrib::SmdpadCudef);
+                    }
+                }
+            }
+
+            // Fabrication properties can have specific GBR_APERTURE_METADATA options
+            // that replace previous aperture attribute:
+            match pad.property() {
+                // Only applicable to outer layers
+                PadProp::Bga => {
+                    if plot_on_external_copper_layer {
+                        metadata.set_aperture_attrib(GbrApertureAttrib::BgapadCudef);
+                    }
+                }
+
+                PadProp::FiducialGlbl => {
+                    metadata.set_aperture_attrib(GbrApertureAttrib::FiducialGlbl);
+                }
+
+                PadProp::FiducialLocal => {
+                    metadata.set_aperture_attrib(GbrApertureAttrib::FiducialLocal);
+                }
+
+                // Only applicable to outer layers
+                PadProp::Testpoint => {
+                    if plot_on_external_copper_layer {
+                        metadata.set_aperture_attrib(GbrApertureAttrib::Testpoint);
+                    }
+                }
+
+                PadProp::Heatsink => metadata.set_aperture_attrib(GbrApertureAttrib::Heatsinkpad),
+
+                PadProp::Castellated => {
+                    metadata.set_aperture_attrib(GbrApertureAttrib::Castellatedpad);
+                }
+
+                // used only in drill files
+                PadProp::Pressfit | PadProp::None | PadProp::Mechanical => {}
+            }
+
+            // Ensure NPTH pads have *always* the GBR_APERTURE_ATTRIB_WASHERPAD attribute
+            if pad.attribute() == PadAttrib::Npth {
+                metadata.set_aperture_attrib(GbrApertureAttrib::Washerpad);
+            }
+        } else {
+            metadata.set_net_attrib_type(gbr_netinfo::CMP);
+        }
+
+        // Set plot color (change WHITE to LIGHTGRAY because
+        // the white items are not seen on a white paper or screen
+        let color = if *a_color != Color4D::WHITE {
+            a_color.clone()
+        } else {
+            Color4D::from_eda_color(EdaColorT::LIGHTGRAY)
+        };
+        self.plotter.set_color(&color);
+
+        let orientation = pad.orientation(ctx);
+
+        if a_sketch_mode {
+            let sketch_width = self.opts.sketch_pad_line_width;
+
+            match pad.shape(a_layer) {
+                PadShape::Circle => {
+                    self.plotter.thick_circle(
+                        shape_pos,
+                        pad.size(ctx, a_layer).x,
+                        sketch_width,
+                        None,
+                    );
+                }
+
+                PadShape::Oval => {
+                    self.plotter.thick_oval(
+                        shape_pos,
+                        pad.size(ctx, a_layer),
+                        orientation,
+                        sketch_width,
+                        None,
+                    );
+                }
+
+                PadShape::Rectangle
+                | PadShape::Roundrect
+                | PadShape::Trapezoid
+                | PadShape::ChamferedRect
+                | PadShape::Custom => {
+                    let mut outline = ShapePolySet::new();
+                    pad.transform_shape_to_polygon(
+                        ctx,
+                        &mut outline,
+                        a_layer,
+                        0,
+                        self.plotter.plotter_arc_high_def(),
+                        ErrorLoc::Inside,
+                        false,
+                    );
+
+                    self.plotter.thick_poly(&outline, sketch_width, None);
+                }
+            }
+
+            return;
+        }
+
+        match pad.shape(a_layer) {
+            PadShape::Circle => {
+                self.plotter
+                    .flash_pad_circle(shape_pos, pad.size(ctx, a_layer).x, Some(&metadata));
+            }
+
+            PadShape::Oval => {
+                self.plotter.flash_pad_oval(
+                    shape_pos,
+                    pad.size(ctx, a_layer),
+                    orientation,
+                    Some(&metadata),
+                );
+            }
+
+            PadShape::Rectangle => {
+                self.plotter.flash_pad_rect(
+                    shape_pos,
+                    pad.size(ctx, a_layer),
+                    orientation,
+                    Some(&metadata),
+                );
+            }
+
+            PadShape::Roundrect => {
+                self.plotter.flash_pad_round_rect(
+                    shape_pos,
+                    pad.size(ctx, a_layer),
+                    pad.round_rect_corner_radius(a_layer),
+                    orientation,
+                    Some(&metadata),
+                );
+            }
+
+            PadShape::Trapezoid => {
+                // Build the pad polygon in coordinates relative to the pad
+                // (i.e. for a pad at pos 0,0, rot 0.0). Needed to use aperture macros,
+                // to be able to create a pattern common to all trapezoid pads having the same
+                // shape
+
+                // Order is lower left, lower right, upper right, upper left.
+                let half_size = pad.size(ctx, a_layer) / 2;
+                let trap_delta = pad.delta(a_layer) / 2;
+
+                let coord = [
+                    Vector2I::new(
+                        -half_size.x - trap_delta.y,
+                        half_size.y + trap_delta.x,
+                    ),
+                    Vector2I::new(half_size.x + trap_delta.y, half_size.y - trap_delta.x),
+                    Vector2I::new(
+                        half_size.x - trap_delta.y,
+                        -half_size.y + trap_delta.x,
+                    ),
+                    Vector2I::new(
+                        -half_size.x + trap_delta.y,
+                        -half_size.y - trap_delta.x,
+                    ),
+                ];
+
+                self.plotter
+                    .flash_pad_trapez(shape_pos, &coord, orientation, Some(&metadata));
+            }
+
+            shape @ (PadShape::ChamferedRect | PadShape::Custom) => {
+                if shape == PadShape::ChamferedRect
+                    && self.plotter.plotter_type() == PlotFormat::Gerber
+                {
+                    let gerber_plotter =
+                        self.plotter.as_gerber_mut().expect("a Gerber plotter");
+
+                    gerber_plotter.flash_pad_chamfer_round_rect(
+                        shape_pos,
+                        pad.size(ctx, a_layer),
+                        pad.round_rect_corner_radius(a_layer),
+                        pad.chamfer_rect_ratio(a_layer),
+                        pad.chamfer_positions(a_layer),
+                        orientation,
+                        Some(&metadata),
+                        &round_chamfered_rect_to_polygon,
+                    );
+                    return;
+                }
+
+                // KI_FALLTHROUGH to CUSTOM
+                let polygons = pad.effective_polygon(ctx, a_layer, ErrorLoc::Inside);
+
+                if polygons.outline_count() > 0 {
+                    self.plotter.flash_pad_custom(
+                        shape_pos,
+                        pad.size(ctx, a_layer),
+                        orientation,
+                        &polygons,
+                        Some(&metadata),
+                    );
+                }
+            }
+        }
     }
 
-    /// `BRDITEMS_PLOTTER::PlotPadNumber` (FAB-04).
+    /// Port of `BRDITEMS_PLOTTER::PlotPadNumber`: the pad number as stroke text sized to the
+    /// pad (sketched pads on fabrication layers).
     pub fn plot_pad_number(&mut self, a_pad: ItemRef<'_>, a_color: &Color4D) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotPadNumber (FAB-04)", a_pad, a_color)
+        let ctx = a_pad.ctx;
+        let pad = a_pad.as_pad().expect("PlotPadNumber: a pad");
+        let pad_number = unescape_string(pad.number());
+
+        if pad_number.is_empty() {
+            return;
+        }
+
+        let pad_bbox = pad.bounding_box(ctx);
+        let mut position = pad_bbox.centre();
+        let size = pad_bbox.size();
+        // VECTOR2I padsize = padBBox.GetSize(): the int64 size clamped to int
+        let mut padsize = Vector2I::new(clamp_i64_to_i32(size.x), clamp_i64_to_i32(size.y));
+
+        // TODO(JE) padstacks
+        if pad.shape(Padstack::TEMP_ALL_LAYERS) == PadShape::Custom {
+            // See if we have a number box
+            for primitive in pad.lib_padstack().primitives(Padstack::TEMP_ALL_LAYERS) {
+                if primitive.is_proxy_item() && primitive.shape.shape() == ShapeT::Rectangle {
+                    position = primitive.center(ctx);
+                    rotate_point(&mut position, pad.orientation(ctx));
+                    position += pad.shape_pos(ctx, Padstack::TEMP_ALL_LAYERS);
+
+                    padsize.x = (primitive.bot_right(ctx).x - primitive.top_left(ctx).x).abs();
+                    padsize.y = (primitive.bot_right(ctx).y - primitive.top_left(ctx).y).abs();
+
+                    break;
+                }
+            }
+        }
+
+        if pad.shape(Padstack::TEMP_ALL_LAYERS) != PadShape::Custom {
+            // Don't allow a 45 degree rotation to bloat a pad's bounding box unnecessarily
+            let pad_size = pad.size(ctx, Padstack::TEMP_ALL_LAYERS);
+            let limit = ki_round(f64::from(pad_size.x.min(pad_size.y)) * 1.1);
+
+            if padsize.x > limit && padsize.y > limit {
+                padsize.x = limit;
+                padsize.y = limit;
+            }
+        }
+
+        let mut text_attrs = TextAttributes {
+            mirrored: self.plotter.plot_mirrored(),
+            ..TextAttributes::default()
+        };
+
+        if f64::from(padsize.x) < (f64::from(padsize.y) * 0.95) {
+            text_attrs.angle = ANGLE_90.as_degrees();
+            std::mem::swap(&mut padsize.x, &mut padsize.y);
+        }
+
+        // approximate the size of the pad number text:
+        // We use a size for at least 3 chars, to give a good look even for short numbers
+        // KiROUND( int / int ): the integer quotient
+        let mut tsize = padsize.x / printable_char_count(&pad_number).max(3);
+        tsize = tsize.min(padsize.y);
+
+        // enforce a max size
+        tsize = tsize.min(PCB_IU_SCALE.mm_to_iu(5.0));
+
+        text_attrs.size = (tsize, tsize);
+
+        // use a somewhat spindly font to go with the outlined pads
+        text_attrs.stroke_width = ki_round(f64::from(tsize) / 12.0);
+
+        self.plotter.plot_text(
+            position,
+            a_color,
+            &pad_number,
+            &text_attrs,
+            None,
+            Metrics::default_metrics(),
+            None,
+        );
     }
 
     /// `BRDITEMS_PLOTTER::PlotBoardGraphicItem` (FAB-05).
@@ -221,8 +639,35 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         fab_port_pending!("BRDITEMS_PLOTTER::PlotChartSymbols (FAB-13)", a_chart)
     }
 
-    /// `BRDITEMS_PLOTTER::getColor` (FAB-04).
+    /// Port of `BRDITEMS_PLOTTER::getColor`.
     pub fn get_color(&self, a_layer: i32) -> Color4D {
-        fab_port_pending!("BRDITEMS_PLOTTER::getColor (FAB-04)", a_layer)
+        let mut color = self.color_settings_color(a_layer);
+
+        // A hack to avoid plotting a white item in white color on white paper
+        if color == Color4D::WHITE {
+            color = Color4D::from_eda_color(EdaColorT::LIGHTGRAY);
+        }
+
+        color
     }
+
+    /// `ColorSettings()->GetColor( aLayer )` of the plot options (`PCB_PLOT_PARAMS::
+    /// ColorSettings`).
+    ///
+    /// The colour themes are not ported (FAB-11): the port has no `COLOR_SETTINGS`. Gerber
+    /// ignores colours and a black and white plot only distinguishes "white or not"
+    /// (`PSLIKE_PLOTTER::SetColor`), so the theme colour is replaced by BLACK there (see
+    /// `PORT_STATUS.md`, FAB-04 deviations); a colour plot needs the theme and is pending.
+    pub fn color_settings_color(&self, a_layer: i32) -> Color4D {
+        if self.plotter.plotter_type() != PlotFormat::Gerber && self.plotter.color_mode() {
+            fab_port_pending!("COLOR_SETTINGS::GetColor (colour themes, FAB-11)", a_layer)
+        }
+
+        Color4D::BLACK
+    }
+}
+
+/// `VECTOR2I( BOX2I::GetSize() )`: the int64 size clamped to `int`.
+fn clamp_i64_to_i32(v: i64) -> i32 {
+    v.clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32
 }

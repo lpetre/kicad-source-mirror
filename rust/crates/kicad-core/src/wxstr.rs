@@ -15,9 +15,11 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Private helpers reproducing the parts of `wxString`, the C library and `KiROUND` that the
+//! Helpers reproducing the parts of `wxString`, the C library and `KiROUND` that the
 //! modules ported from `common/eda_units.cpp`, `common/string_utils.cpp` and
-//! `common/gal/color4d.cpp` rely on.
+//! `common/gal/color4d.cpp` rely on.  The `wxString` / C library ones are public so that the
+//! other foundation crates (`kicad-libeval`) share them instead of keeping copies; the
+//! `KiROUND` instantiations stay private (the public port is `kicad_geom::math::util`).
 //!
 //! A `wxString` on the reference platform (Linux, see `PORTING.md` section 9) is a sequence
 //! of 32 bit `wchar_t`, i.e. of Unicode code points, so every index and length of the C++ code
@@ -26,21 +28,21 @@
 //! Unicode simple case mappings.
 
 /// `localeconv()->decimal_point[0]`: always the "C" locale's.
-pub(crate) const LOCALE_DECIMAL_POINT: char = '.';
+pub const LOCALE_DECIMAL_POINT: char = '.';
 
 /// `wxSafeIsspace` as used by `wxString::Trim` / `Strip`: the ASCII white space characters.
-pub(crate) fn is_space(c: char) -> bool {
+pub fn is_space(c: char) -> bool {
     matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r')
 }
 
 /// `wxIsdigit` (`iswdigit`): true for `0` .. `9` only, in every locale.
-pub(crate) fn is_digit(c: char) -> bool {
+pub fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
 
 /// `towlower` (`wxTolower`, `wxString::Lower`, `CmpNoCase`): the Unicode *simple* lower-case
 /// mapping (one character in, one character out).
-pub(crate) fn to_lower(c: char) -> char {
+pub fn to_lower(c: char) -> char {
     if c.is_ascii() {
         return c.to_ascii_lowercase();
     }
@@ -57,7 +59,7 @@ pub(crate) fn to_lower(c: char) -> char {
 }
 
 /// `towupper` (`wxToupper`, `wxString::MakeUpper`): the Unicode *simple* upper-case mapping.
-pub(crate) fn to_upper(c: char) -> char {
+pub fn to_upper(c: char) -> char {
     if c.is_ascii() {
         return c.to_ascii_uppercase();
     }
@@ -84,17 +86,17 @@ pub(crate) fn to_upper(c: char) -> char {
 }
 
 /// `wxString::Lower()`.
-pub(crate) fn lower(s: &str) -> String {
+pub fn lower(s: &str) -> String {
     s.chars().map(to_lower).collect()
 }
 
 /// `wxString::Upper()` / `MakeUpper()`.
-pub(crate) fn upper(s: &str) -> String {
+pub fn upper(s: &str) -> String {
     s.chars().map(to_upper).collect()
 }
 
 /// `wxString::Capitalize()`: first character upper-cased, the others lower-cased.
-pub(crate) fn capitalize(s: &str) -> String {
+pub fn capitalize(s: &str) -> String {
     let mut chars = s.chars();
     let mut out = String::with_capacity(s.len());
 
@@ -106,44 +108,100 @@ pub(crate) fn capitalize(s: &str) -> String {
     out
 }
 
-/// `wxString::CmpNoCase` (`wcscasecmp`): the difference of the first pair of lower-cased
-/// characters that differ, 0 if the strings are equal ignoring case.
-pub(crate) fn cmp_no_case(a: &str, b: &str) -> i32 {
-    let mut ia = a.chars();
-    let mut ib = b.chars();
+/// Port of `wxString::CmpNoCase` (wxWidgets 3.2, `src/common/string.cpp`, the
+/// `!wxUSE_UNICODE_UTF8` branch of the reference platform): `wxStricmp` (`wcscasecmp`: the
+/// first difference of the lower-cased characters) on the NUL-delimited chunks of both
+/// strings, embedded NULs compared explicitly (a NUL sorts before anything else, a string
+/// that ends first is smaller); the result is normalised to -1, 0 or 1.
+pub fn cmp_no_case(a: &str, b: &str) -> i32 {
+    let a: Vec<u32> = a.chars().map(|c| to_lower(c) as u32).collect();
+    let b: Vec<u32> = b.chars().map(|c| to_lower(c) as u32).collect();
+
+    // `c_str()`: the terminating NUL is at `len()`
+    let at = |v: &[u32], i: usize| v.get(i).copied().unwrap_or(0);
+
+    let mut this_cur = 0usize;
+    let mut that_cur = 0usize;
+    let mut rc: i32;
 
     loop {
-        let c1 = ia.next().map_or(0, |c| to_lower(c) as i32);
-        let c2 = ib.next().map_or(0, |c| to_lower(c) as i32);
+        // Compare until the next NUL, if the strings differ this is the final result.
+        // (wxStricmp( thisCur, thatCur ))
+        let mut k = 0;
 
-        if c1 == 0 || c1 != c2 {
-            return c1 - c2;
+        rc = loop {
+            let c1 = at(&a, this_cur + k);
+            let c2 = at(&b, that_cur + k);
+
+            if c1 == 0 || c1 != c2 {
+                break c1 as i32 - c2 as i32;
+            }
+
+            k += 1;
+        };
+
+        if rc != 0 {
+            break;
+        }
+
+        let len_chunk = a[this_cur..].iter().take_while(|&&c| c != 0).count();
+        this_cur += len_chunk;
+        that_cur += len_chunk;
+
+        // Skip all the NULs as wxStricmp() doesn't handle them.
+        while at(&a, this_cur) == 0 {
+            // Check if we exhausted either of the strings.
+            if this_cur == a.len() {
+                // This one is exhausted, is the other one too?
+                return if that_cur == b.len() { 0 } else { -1 };
+            }
+
+            if that_cur == b.len() {
+                // Because of the check above we know that this one is not
+                // exhausted yet so it's "greater".
+                return 1;
+            }
+
+            if at(&b, that_cur) != 0 {
+                // Anything non-NUL is greater than NUL.
+                rc = -1;
+                break;
+            }
+
+            this_cur += 1;
+            that_cur += 1;
+        }
+
+        if rc != 0 {
+            break;
         }
     }
+
+    rc.signum()
 }
 
 /// `wxString::IsSameAs( other, false )`.
-pub(crate) fn is_same_as_no_case(a: &str, b: &str) -> bool {
+pub fn is_same_as_no_case(a: &str, b: &str) -> bool {
     cmp_no_case(a, b) == 0
 }
 
 /// `wxString::Trim( true )` / `Strip( wxString::trailing )`: remove trailing white space.
-pub(crate) fn trim_right(s: &str) -> &str {
+pub fn trim_right(s: &str) -> &str {
     s.trim_end_matches(is_space)
 }
 
 /// `wxString::Trim( false )` / `Strip( wxString::leading )`: remove leading white space.
-pub(crate) fn trim_left(s: &str) -> &str {
+pub fn trim_left(s: &str) -> &str {
     s.trim_start_matches(is_space)
 }
 
 /// `wxString::Strip( wxString::both )` / `Trim( true ).Trim( false )`.
-pub(crate) fn strip_both(s: &str) -> &str {
+pub fn strip_both(s: &str) -> &str {
     trim_left(trim_right(s))
 }
 
 /// `wxString::Left( count )` in characters.
-pub(crate) fn left(s: &str, count: usize) -> &str {
+pub fn left(s: &str, count: usize) -> &str {
     match s.char_indices().nth(count) {
         Some((idx, _)) => &s[..idx],
         None => s,
@@ -151,7 +209,7 @@ pub(crate) fn left(s: &str, count: usize) -> &str {
 }
 
 /// `wxString::Mid( start )` in characters.
-pub(crate) fn mid(s: &str, start: usize) -> &str {
+pub fn mid(s: &str, start: usize) -> &str {
     match s.char_indices().nth(start) {
         Some((idx, _)) => &s[idx..],
         None => "",
@@ -160,7 +218,7 @@ pub(crate) fn mid(s: &str, start: usize) -> &str {
 
 /// Result of [`strtod`].
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub(crate) struct Strtod {
+pub struct Strtod {
     /// The converted value (0.0 if nothing could be converted).
     pub value: f64,
     /// Number of bytes of the input that were consumed (0 if nothing could be converted).
@@ -176,7 +234,7 @@ pub(crate) struct Strtod {
 /// optional exponent are accepted, as are `inf`, `infinity`, `nan` (case-insensitive) and
 /// hexadecimal floats (`0x1.8p3`; their mantissa is accumulated in a double, which is exact
 /// up to 13 hex digits).  The decimal conversion is correctly rounded, like glibc's.
-pub(crate) fn strtod(s: &str) -> Strtod {
+pub fn strtod(s: &str) -> Strtod {
     let bytes = s.as_bytes();
     let mut i = 0;
 
@@ -366,7 +424,7 @@ fn strtod_special(bytes: &[u8], i: usize, negative: bool) -> Option<Strtod> {
 /// Returns `(parsed, complete)`: `parsed` is the value C++ stores through the output pointer
 /// (`None` when it leaves the output untouched: nothing parsed, or `ERANGE`), `complete` is
 /// the function's boolean result (true only if the whole string was consumed).
-pub(crate) fn to_double(s: &str) -> (Option<f64>, bool) {
+pub fn to_double(s: &str) -> (Option<f64>, bool) {
     let r = strtod(s);
 
     if r.consumed == 0 || r.erange {

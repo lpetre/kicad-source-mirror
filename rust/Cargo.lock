@@ -181,6 +181,7 @@ dependencies = [
 name = "kicad-fab"
 version = "0.1.0"
 dependencies = [
+ "kicad-connectivity",
  "kicad-core",
  "kicad-font",
  "kicad-geom",
@@ -209,6 +210,9 @@ dependencies = [
 [[package]]
 name = "kicad-libeval"
 version = "0.1.0"
+dependencies = [
+ "kicad-core",
+]
 
 [[package]]
 name = "kicad-pcb"

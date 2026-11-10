@@ -34,7 +34,24 @@ use kicad_geom::{Box2I, EdaAngle, Vector2I, ki_round};
 
 struct Gen {
     state: u64,
+    /// `g_extreme` of the driver: kinds 'O' and 'E' (out-of-range values)
+    extreme: bool,
 }
+
+/// `genExtremeInt` table of the driver.
+const EXTREME: [i32; 11] = [
+    i32::MAX,
+    i32::MIN,
+    i32::MAX - 1000,
+    i32::MIN + 1000,
+    2000000000,
+    -2000000000,
+    1900000000,
+    -1900000000,
+    1500000000,
+    -1500000000,
+    1000000000,
+];
 
 impl Gen {
     fn next64(&mut self) -> u64 {
@@ -125,7 +142,21 @@ impl Gen {
         s
     }
 
+    fn gen_extreme_int(&mut self) -> i32 {
+        let r = self.rnd(16);
+
+        if r < 11 {
+            return EXTREME[r as usize];
+        }
+
+        (self.rnd(4294967296) - 2147483648) as i32
+    }
+
     fn gen_size(&mut self) -> i32 {
+        if self.extreme && self.rnd(2) == 0 {
+            return self.gen_extreme_int();
+        }
+
         let r = self.rnd(10);
 
         if r == 0 {
@@ -141,6 +172,10 @@ impl Gen {
     }
 
     fn gen_coord(&mut self) -> i32 {
+        if self.extreme && self.rnd(2) == 0 {
+            return self.gen_extreme_int();
+        }
+
         (self.rnd(200000001) - 100000000) as i32
     }
 
@@ -296,7 +331,12 @@ fn case_markup(g: &mut Gen, o: &mut Out) {
 fn case_glyphs(g: &mut Gen, o: &mut Out) {
     let font = default_font();
     let text = g.gen_text(12);
-    let sx = g.gen_size();
+    let mut sx = g.gen_size();
+
+    // a tab advances in steps of 4 * size.x until it passes the cursor: keep that loop short
+    if g.extreme && text.contains('\t') {
+        sx = 4000000;
+    }
     let sy = if g.rnd(4) == 0 { g.gen_size() } else { sx };
     let px = g.gen_coord();
     let py = g.gen_coord();
@@ -361,11 +401,15 @@ fn case_draw(g: &mut Gen, o: &mut Out) {
     }
 
     let mut attrs = TextAttributes::default();
-    let sx = if g.rnd(8) == 0 {
+    let mut sx = if g.rnd(8) == 0 {
         g.gen_size()
     } else {
         (500000 + g.rnd(4500001)) as i32
     };
+
+    if g.extreme && text.contains('\t') {
+        sx = 4000000;
+    }
     let sy = if g.rnd(4) == 0 {
         (500000 + g.rnd(4500001)) as i32
     } else {
@@ -403,6 +447,24 @@ fn case_draw(g: &mut Gen, o: &mut Out) {
     } else {
         g.rnd(300) as f64 / 100.0
     };
+
+    if g.extreme && g.rnd(2) == 0 {
+        attrs.stroke_width = g.gen_extreme_int();
+    }
+
+    if g.extreme && g.rnd(2) == 0 {
+        const LS: [f64; 8] = [
+            1e9,
+            3e9,
+            -3e9,
+            1e300,
+            -1e300,
+            f64::INFINITY,
+            f64::NAN,
+            20000.0,
+        ];
+        attrs.line_spacing = LS[g.rnd(8) as usize];
+    }
 
     let px = g.gen_coord();
     let py = g.gen_coord();
@@ -593,11 +655,13 @@ fn font_oracle_golden() {
     }
 
     type CaseFn = fn(&mut Gen, &mut Out);
-    let kinds: [(char, CaseFn); 4] = [
+    let kinds: [(char, CaseFn); 6] = [
         ('M', case_markup),
         ('T', case_glyphs),
         ('D', case_draw),
         ('H', case_helpers),
+        ('O', case_glyphs),
+        ('E', case_draw),
     ];
 
     for exp in expected {
@@ -608,6 +672,7 @@ fn font_oracle_golden() {
         let f = kinds.iter().find(|k| k.0 == tag).unwrap().1;
         let mut g = Gen {
             state: idx.wrapping_mul(1000003).wrapping_add(tag as u64),
+            extreme: tag == 'O' || tag == 'E',
         };
         let mut o = Out::default();
 
