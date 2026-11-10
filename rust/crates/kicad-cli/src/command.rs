@@ -244,9 +244,9 @@ impl CommonArgs {
                     && !args.output.is_empty()
                     && !args.output.contains("${VARIANT}")
                 {
-                    eprint!(
+                    eprintln!(
                         "When specifying multiple variants, the output path must contain \
-                         ${{VARIANT}} to generate separate output files for each variant.\n"
+                         ${{VARIANT}} to generate separate output files for each variant."
                     );
                     return Err(exit_codes::ERR_ARGS);
                 }

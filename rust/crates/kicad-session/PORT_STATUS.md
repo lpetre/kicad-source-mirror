@@ -29,9 +29,9 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
 | `JobExportGerbers` | `run_export_gerbers` | stub after layer selection: `NotYetPorted("kicad-fab ...")` |
 | `JobExportDrill` | `run_export_drill` | stub after the report path logic: `NotYetPorted("kicad-fab ...")` |
 | `JobExportSvg` (+ `resolvePlotOutputPath`) | `run_export_svg` | stub after layer preparation: `NotYetPorted("kicad-fab ...")` |
-| `JobUpgrade` | `run_pcb_upgrade` | ported up to the writer call (`format_board_text` pending) |
+| `JobUpgrade` | `run_pcb_upgrade` | ported (`RefreshGeneratedTables` skipped, see Deviations); oracle-verified |
 | `JobExportFpUpgrade` | `run_fp_upgrade` + the filesystem checks in `kicad-cli` | stub: footprint library parser/writer pending |
-| `getBoard` / `BOARD_LOADER::Load` | `Session::load_board` | parser switch `parse_board_text` returns `NotYetPorted`; `initializeLoadedBoard` steps listed in `PENDING_LOAD_STEPS` |
+| `getBoard` / `BOARD_LOADER::Load` | `Session::load_board` | partial: parser (`kicad_pcb::io::parse_board`; constructs whose parser package is pending give `NotYetPorted`); `initializeLoadedBoard` steps listed in `PENDING_LOAD_STEPS` |
 | `PCB_IO_KICAD_SEXPR::CanReadBoard` + `IsValidBoardHeader` | `session::can_read_board` | ported (move to `kicad_pcb::io` when the parser lands) |
 | `REPORTER` / `CLI_REPORTER` | `reporter.rs` (recorded lines; the host prints) | ported |
 | item access (`nets`, `tracks`, `add_track`, `add_via`, `remove`) | `Session` methods on the kicad-pcb model | new API over ported model code |
@@ -42,6 +42,12 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
   (`tests/oracle/gen_gerbers_layer_args.sh`, golden `tests/golden/gerbers_layer_args.txt`):
   22 `--layers` arguments (groups, GUI and file names, whitespace, empty tokens, bad names,
   disabled layers) - messages and plotted layers in `UIOrder` identical.
+* `tests/upgrade_oracle.rs`: `Session::load_board` + `run_pcb_upgrade` on
+  `qa/data/pcbnew/issue10697.kicad_pcb` against the reference `kicad-cli pcb upgrade --force`
+  (`tests/oracle/gen_upgrade_golden.sh`, goldens `tests/golden/upgrade/`): re-saved board
+  byte-identical, message and exit code equal, with and without `--force`; the second run on
+  the upgraded board (`Board file was not updated`) is checked once the parser reads
+  `embedded_fonts` (PCBIO-11).
 * unit tests: job path resolution, default output names, tokenizer, item access on an empty
   board, pending parser.
 
@@ -58,7 +64,6 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
   updated.
 * `run_*` record the reporter messages and return the files; the host writes the files after the
   run (C++ creates the output directory before running the job and writes during it).
-* `SEXPR_BOARD_FILE_VERSION` is duplicated here until `kicad_pcb::io` exports it.
 * Item access (`add_track` / `add_via`) appends (`ADD_MODE::APPEND`); the via width/drill are set
   through the padstack exactly as `PCB_VIA::SetWidth( w, ALL_LAYERS )` / `SetDrill` do (those
   two methods are not in kicad-pcb yet).

@@ -21,10 +21,10 @@
 //! M0c; bodies: package M9. Trivial lib-frame accessors are real.
 
 use kicad_core::{PCB_IU_SCALE, StrokeParams};
-use kicad_geom::geometry::geometry_utils::ARC_HIGH_DEF;
 use kicad_geom::cmath::{self, f64_to_i32_x86};
 use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
+use kicad_geom::geometry::geometry_utils::ARC_HIGH_DEF;
 use kicad_geom::geometry::shape_ellipse::ShapeEllipse;
 use kicad_geom::geometry::transform_trs::TransformTrs;
 use kicad_geom::{
@@ -666,9 +666,8 @@ impl PcbShape {
             if es.shape == ShapeT::Rectangle {
                 // We assume xform is uniform scale.  If not, we should have been turned into a
                 // polygon.
-                lib.corner_radius = f64_to_i32_x86(
-                    xform.inverse_apply_linear_scale(es.corner_radius() as f64),
-                );
+                lib.corner_radius =
+                    f64_to_i32_x86(xform.inverse_apply_linear_scale(es.corner_radius() as f64));
             }
 
             if es.shape == ShapeT::Arc {
@@ -738,9 +737,8 @@ impl PcbShape {
         let has_board = board_item::has_board(self, ctx);
         let drc_engine = ctx.rules.filter(|engine| {
             has_board
-                && engine.has_rules_for_constraint_type(
-                    DrcConstraintT::SolderMaskExpansionConstraint,
-                )
+                && engine
+                    .has_rules_for_constraint_type(DrcConstraintT::SolderMaskExpansionConstraint)
         });
 
         if let Some(drc_engine) = drc_engine {
@@ -881,7 +879,8 @@ impl PcbShape {
         angle: EdaAngle,
         check_negative_angle: bool,
     ) {
-        self.shape.set_arc_angle_and_end(angle, check_negative_angle);
+        self.shape
+            .set_arc_angle_and_end(angle, check_negative_angle);
         self.sync_lib_coords(env);
     }
 
@@ -991,7 +990,11 @@ fn env_scale_linear(env: &MutEnv) -> f64 {
 /// Move every vertex of the polygon through the transform. SetVertex turns the arc a vertex
 /// belongs to into segments, so a uniform transform maps each arc as an arc and only a skewing
 /// one is left to flatten them.
-pub(crate) fn transform_poly_vertices(poly: &mut ShapePolySet, xform: &TransformTrs, inverse: bool) {
+pub(crate) fn transform_poly_vertices(
+    poly: &mut ShapePolySet,
+    xform: &TransformTrs,
+    inverse: bool,
+) {
     let map = |pt: Vector2I| {
         if inverse {
             xform.inverse_apply(pt)

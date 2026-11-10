@@ -24,8 +24,15 @@
 #   ORACLE_BUILD  reference build (default /home/user/kicad-oracle/build)
 #   OBJ_DIR       object dir      (default /home/user/kicad-oracle/build-drc-rtree)
 #   OUT           binary          (default /home/user/kicad-oracle/bin/drc-rtree-oracle)
-#   JOBS          parallel compiles (default 2); compiles run under nice -n 15
+#   JOBS          parallel compiles (default 2, at most 2); compiles run under nice -n 15
+#
+# The whole build runs under the machine-wide C++ build lock (PORTING.md section 7).
 set -euo pipefail
+
+if [ -z "${CXX_BUILD_LOCK_HELD:-}" ]; then
+    exec env CXX_BUILD_LOCK_HELD=1 flock /home/user/kicad-oracle/cxx-build.lock \
+        nice -n 10 bash "$0" "$@"
+fi
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
 KICAD_SRC="$(cd "$HERE/../../../../.." && pwd)"
@@ -34,6 +41,7 @@ ORACLE_BUILD="${ORACLE_BUILD:-/home/user/kicad-oracle/build}"
 OBJ_DIR="${OBJ_DIR:-/home/user/kicad-oracle/build-drc-rtree}"
 OUT="${OUT:-/home/user/kicad-oracle/bin/drc-rtree-oracle}"
 JOBS="${JOBS:-2}"
+[ "$JOBS" -gt 2 ] && JOBS=2
 mkdir -p "$OBJ_DIR" "$(dirname "$OUT")"
 
 CFLAGS_FILE="$OBJ_DIR/cflags.txt"

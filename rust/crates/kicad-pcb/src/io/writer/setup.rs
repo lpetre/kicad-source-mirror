@@ -39,6 +39,9 @@ use crate::board_stackup::{
 };
 use crate::pcb_plot_params::{GBR_DEFAULT_PRECISION, PcbPlotParams};
 
+// The drill symbol profile data is shared with the reader; the reader's module is private to
+// `io::parser`, so the file is compiled a second time here.
+#[allow(clippy::duplicate_mod)]
 #[path = "../parser/setup_drill_profile.rs"]
 mod drill_profile;
 
@@ -260,8 +263,10 @@ impl PcbWriter<'_> {
                 }
 
                 if item.is_thickness_editable() {
-                    self.out
-                        .print(format_args!("(thickness {}", format_iu(item.thickness(idx))))?;
+                    self.out.print(format_args!(
+                        "(thickness {}",
+                        format_iu(item.thickness(idx))
+                    ))?;
 
                     if item.type_() == BoardStackupItemType::Dielectric
                         && item.is_thickness_locked(idx)
@@ -364,8 +369,16 @@ impl PcbWriter<'_> {
             common_layers.fmt_hex()
         ))?;
 
-        format_bool(out, "disableapertmacros", params.gerber_disable_apert_macros)?;
-        format_bool(out, "usegerberextensions", params.use_gerber_protel_extensions)?;
+        format_bool(
+            out,
+            "disableapertmacros",
+            params.gerber_disable_apert_macros,
+        )?;
+        format_bool(
+            out,
+            "usegerberextensions",
+            params.use_gerber_protel_extensions,
+        )?;
         format_bool(out, "usegerberattributes", params.use_gerber_x2_format)?;
         format_bool(
             out,
@@ -377,7 +390,10 @@ impl PcbWriter<'_> {
         // save this option only if it is not the default value,
         // to avoid incompatibility with older Pcbnew version
         if params.gerber_precision != GBR_DEFAULT_PRECISION {
-            out.print(format_args!("(gerberprecision {})", params.gerber_precision))?;
+            out.print(format_args!(
+                "(gerberprecision {})",
+                params.gerber_precision
+            ))?;
         }
 
         out.print(format_args!(
@@ -439,7 +455,11 @@ impl PcbWriter<'_> {
         format_bool(out, "plotpadnumbers", params.plot_pad_numbers)?;
         format_bool(out, "hidednponfab", params.hide_dnp_fps_on_fab_layers)?;
         format_bool(out, "sketchdnponfab", params.sketch_dnp_fps_on_fab_layers)?;
-        format_bool(out, "crossoutdnponfab", params.crossout_dnp_fps_on_fab_layers)?;
+        format_bool(
+            out,
+            "crossoutdnponfab",
+            params.crossout_dnp_fps_on_fab_layers,
+        )?;
         format_bool(out, "subtractmaskfromsilk", params.subtract_mask_from_silk)?;
         out.print(format_args!("(outputformat {})", params.format as i32))?;
         format_bool(out, "mirror", params.mirror)?;

@@ -167,7 +167,12 @@ Progress log:
   -> PCBIO-08 (w7nqnu6z5); PCBIO-03 and PCBIO-05 (wb51psfi2); M15 and M12 -> PCBIO-10
   (wxze6tto6); CN-01 -> CN-02 -> CN-03 -> CN-04 and DRC-03 -> DRC-04 (w6koa0hnk); DRC-02 ->
   DRC-05 and PCBIO-04 -> SET-5 (w08hk2mca); W1 and PCBIO-17 -> PCBIO-09 -> PCBIO-11
-  (wd75f0o07).
+  (wd75f0o07). Done since: PCBIO-03 tracks/vias/shapes and PCBIO-05 text (wb51psfi2): first
+  byte-exact results - track/via/shape blocks identical to the reference re-save on 170
+  corpus boards (256 board-kind pairs), shape formatter identical on 276 boards, text blocks
+  identical wherever reachable; 0 real differences. Launched: GLUE-1 (wire finished ports
+  into stale stubs, dump no_api calls, stale staging-stub tests) and PCBIO-12 other items
+  (w3ztkctur).
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
   real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12

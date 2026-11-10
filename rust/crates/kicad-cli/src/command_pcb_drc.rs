@@ -153,7 +153,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobPcbDrc, i32> {
     } else if units == "mils" {
         drc_job.rc.units = RcUnits::Mils;
     } else if !units.is_empty() {
-        eprint!("Invalid units specified\n");
+        eprintln!("Invalid units specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -164,7 +164,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobPcbDrc, i32> {
     } else if format == "json" {
         drc_job.rc.format = RcOutputFormat::Json;
     } else {
-        eprint!("Invalid report format\n");
+        eprintln!("Invalid report format");
         return Err(exit_codes::ERR_ARGS);
     }
 

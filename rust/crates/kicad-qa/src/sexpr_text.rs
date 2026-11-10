@@ -397,7 +397,10 @@ mod tests {
         assert_eq!(d.expected.as_deref(), Some("\t\t\t(net 1)"));
         assert_eq!(d.short_label(), "footprint > net");
         assert_eq!(d.path_label(), "footprint > pad > net");
-        assert!(d.excerpt.contains("- \t\t\t(net 1)\n- \t\t)\n+ \t\t\t(net 2)\n"));
+        assert!(
+            d.excerpt
+                .contains("- \t\t\t(net 1)\n- \t\t)\n+ \t\t\t(net 2)\n")
+        );
         assert!(first_difference(BOARD, BOARD, 2).is_none());
 
         let shorter = &BOARD[..BOARD.len() - 2];

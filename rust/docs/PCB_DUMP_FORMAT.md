@@ -218,3 +218,25 @@ A `ref` names a `CN_ITEM` independently of list order: the parent's item key (se
 `/<layer>/<outline index>` for a `CN_ZONE_LAYER`; `invalid` / `null` for an invalid or missing
 item. Verified deterministic (two runs, identical output) on the goldens in
 `rust/crates/kicad-connectivity/tests/golden/` (generator `tests/oracle/gen_goldens.sh` there).
+
+## 9. engine
+
+`pcb-dump board --sections engine FILE` (source `rust/tools/pcb-dump/dump_engine.cpp`).
+**Opt-in** like `connectivity`. It reads the `DRC_ENGINE` of the board's design settings after
+the QA load path's `InitEngine( <base>.kicad_dru )` (or `InitEngine( wxFileName() )` without a
+rule file); a failed `InitEngine` is reported as `error|load|drc|...` before the sections. All
+lines use the section `engine`:
+
+| Key | Fields |
+|---|---|
+| `providers` | `count`, then `<i>` = `GetName()` of the i-th entry of `GetTestProviders()` (the registry order, i.e. the run order of `RunTests`) |
+| `engine` | `rules_valid`, `has_explicit_clearance_rules`, `has_geometry_dependent_rules`, `has_dp_clearance_overrides`, `rules` (size of `m_rules`) |
+| `rule.<i>` | for every rule of `m_rules` in order: `name`, `implicit`, `source` (`DRC_IMPLICIT_SOURCE` enum name), `unary`, `layers` (`m_LayerCondition`), `severity`, `netclass` (`m_ImplicitNetclass`), `item_id` (`m_ImplicitItemId`), `condition` (expression text, or `none` without a condition), `constraints` (count); per constraint `c<j>.type` (`DRC_CONSTRAINT_T` enum name), `c<j>.value` (`min/opt/max`, `none` for an unset value), `c<j>.disallow` (flags), `c<j>.name` (`GetName()`), `c<j>.severity` |
+| `map` | `m_constraintMap` in key order: `map.<TYPE>.count`, then per entry `map.<TYPE>.<k>.rule` (index into `m_rules`, `stale` for a rule no longer in it), `.layers`, `.condition` (expression or `none`), `.condition.pair` (`RequiresPairItems`), `.condition.item_b` (`ReferencesItemB`), `.condition.geometry` (`HasGeometryDependentFunctions`), `.type`, `.value`, `.disallow`, `.name`, `.severity`, `.keepout_zone` (UUID of `implicitKeepoutZone` or `none`) |
+| `explicit` | `m_explicitConstraints`: `explicit.<TYPE>.count` and `explicit.<TYPE>.<k>.rule` only |
+| `netclass_clearances` | `<netclass name>` = rule index, in name order (the C++ container is an `unordered_map`) |
+
+Severities are `RPT_SEVERITY_*` names. Rust twin: `dump_engine` in
+`rust/crates/kicad-drc/tests/engine_oracle.rs`; compact corpus golden
+`rust/crates/kicad-drc/tests/golden/engine_corpus.txt` (generator
+`tests/oracle/gen_engine_goldens.py` there).

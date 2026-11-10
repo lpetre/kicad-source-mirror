@@ -114,6 +114,13 @@ fn min_max(b: &Box2I) -> ([i32; 2], [i32; 2]) {
     ([b.x(), b.y()], [b.right(), b.bottom()])
 }
 
+/// Whether `shape` stands for the null `std::shared_ptr<SHAPE>` the C++ `PAD::GetEffectiveShape`
+/// returns for a layer without a cached shape (kicad-pcb returns a bare `SHAPE_NULL` there; the
+/// pad never returns a bare `SHAPE_NULL` otherwise).
+fn is_null_pad_shape(item: &ItemRef<'_>, shape: &SharedShape) -> bool {
+    item.type_() == KicadT::PcbPadT && shape.type_() == ShapeType::Null
+}
+
 impl DrcRtree {
     /// `DRC_RTREE()`.
     pub fn new() -> Self {
@@ -188,6 +195,14 @@ impl DrcRtree {
 
         let shape: SharedShape =
             item.effective_shape(ref_layer, Flashing::Default, constraint_type);
+
+        // wxCHECK2_MSG( shape, return, "Item does not have a valid shape for this layer" ):
+        // `PAD::GetEffectiveShape()` returns null when a layer has no cached shape, which
+        // kicad-pcb represents as a bare null shape. Returning here also skips the hole entry,
+        // like the C++.
+        if is_null_pad_shape(&item, &shape) {
+            return;
+        }
 
         let entries: Vec<Option<u32>> = if shape.has_indexable_subshapes() {
             (0..shape.indexable_subshape_count() as u32)
@@ -404,6 +419,12 @@ impl DrcRtree {
         clearance: i32,
         use_padding_credit: bool,
     ) -> i32 {
+        // PAD::GetEffectiveShape() returns null when a layer has no cached shape
+        // (wxCHECK( aRefShape, 0 ); see `is_null_pad_shape`)
+        if is_null_pad_shape(&ref_item, ref_shape) {
+            return 0;
+        }
+
         let mut colliding_compounds: HashSet<ItemId> = HashSet::new();
         let mut filter_results: HashMap<ItemId, bool> = HashMap::new();
         let mut b = ref_item.bounding_box();
@@ -666,15 +687,12 @@ impl DrcRtree {
         // means we have a hit)
         let mut colliding_compounds: HashSet<(ItemId, ItemId)> = HashSet::new();
 
-        let mut progress = 0;
         let count = pairs_to_visit.len() as i32;
 
-        for (layer_pair, ref_item, test_item) in &pairs_to_visit {
-            if !progress_reporter(progress, count) {
+        for (progress, (layer_pair, ref_item, test_item)) in pairs_to_visit.iter().enumerate() {
+            if !progress_reporter(progress as i32, count) {
                 break;
             }
-
-            progress += 1;
 
             let mut a = ref_item.parent;
             let mut b = test_item.parent;

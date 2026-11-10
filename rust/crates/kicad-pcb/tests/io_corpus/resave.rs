@@ -485,7 +485,7 @@ pub fn evaluate(o1: &str, o2: &str, source_name: &str) -> Evaluation {
                 ev.stripped_kinds = pending_kinds(o1, o2, &text, &parse_skipped, &write_skipped);
                 let strip = |t: &str| {
                     kicad_qa::sexpr_text::strip_top_level(t, |n| {
-                        ev.stripped_kinds.iter().any(|k| *k == n.keyword)
+                        ev.stripped_kinds.contains(&n.keyword)
                     })
                 };
                 ev.masked_diff = first_difference(&strip(o2), &strip(&text), CONTEXT);

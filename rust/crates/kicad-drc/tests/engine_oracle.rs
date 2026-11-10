@@ -17,7 +17,7 @@
 
 //! Differential test of the DRC engine core (package DRC-03) against the C++ engine: the
 //! Rust twin of `pcb-dump board --sections engine` (`rust/tools/pcb-dump/dump_engine.cpp`,
-//! `rust/docs/PCB_DUMP_FORMAT.md` section 8) replayed against the compact golden
+//! `rust/docs/PCB_DUMP_FORMAT.md` section 9) replayed against the compact golden
 //! `tests/golden/engine_corpus.txt` (`tests/oracle/gen_engine_goldens.py`).
 //!
 //! The load path mirrors the dump tool's QA path (`KI_TEST::LoadBoard`): parse, bind the
@@ -35,7 +35,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 use std::sync::Arc;
 
-use common::{constraint_name, severity_name, v_lset, v_str};
+use common::{SyntaxBinder, constraint_name, severity_name, v_lset, v_str};
 use kicad_core::json::{self, ObjectOrder};
 use kicad_core::json_settings::JsonSettingsInternals;
 use kicad_drc::engine::implicit_condition::EngineCondition;
@@ -68,7 +68,13 @@ fn source_name(source: DrcImplicitSource) -> &'static str {
 }
 
 fn value_text(v: &kicad_core::minoptmax::MinOptMax<i32>) -> String {
-    let f = |has: bool, val: i32| if has { val.to_string() } else { "none".to_string() };
+    let f = |has: bool, val: i32| {
+        if has {
+            val.to_string()
+        } else {
+            "none".to_string()
+        }
+    };
     format!(
         "{}/{}/{}",
         f(v.has_min(), v.min()),
@@ -102,7 +108,11 @@ fn dump_lists(out: &mut Out, key: &str, map: &ConstraintMap, engine: &DrcEngine,
 
         for (ii, c) in list.iter().enumerate() {
             let q = format!("{p}.{ii}");
-            out.emit(key, &format!("{q}.rule"), &rule_index(engine, &c.parent_rule));
+            out.emit(
+                key,
+                &format!("{q}.rule"),
+                &rule_index(engine, &c.parent_rule),
+            );
 
             if !full {
                 continue;
@@ -132,7 +142,11 @@ fn dump_lists(out: &mut Out, key: &str, map: &ConstraintMap, engine: &DrcEngine,
                 None => out.emit(key, &format!("{q}.condition"), "none"),
             }
 
-            out.emit(key, &format!("{q}.type"), constraint_name(c.constraint.type_));
+            out.emit(
+                key,
+                &format!("{q}.type"),
+                constraint_name(c.constraint.type_),
+            );
             out.emit(key, &format!("{q}.value"), &value_text(&c.constraint.value));
             out.emit(
                 key,
@@ -145,9 +159,9 @@ fn dump_lists(out: &mut Out, key: &str, map: &ConstraintMap, engine: &DrcEngine,
                 &format!("{q}.severity"),
                 severity_name(c.constraint.severity()),
             );
-            let zone = c
-                .implicit_keepout_zone
-                .map_or("none".to_string(), |_| c.parent_rule.implicit_item_id.as_string());
+            let zone = c.implicit_keepout_zone.map_or("none".to_string(), |_| {
+                c.parent_rule.implicit_item_id.as_string()
+            });
             out.emit(key, &format!("{q}.keepout_zone"), &zone);
         }
     }
@@ -205,14 +219,24 @@ pub fn dump_engine(engine: &DrcEngine) -> Vec<String> {
             let p = format!("c{jj}");
             out.emit(&key, &format!("{p}.type"), constraint_name(c.type_));
             out.emit(&key, &format!("{p}.value"), &value_text(&c.value));
-            out.emit(&key, &format!("{p}.disallow"), &c.disallow_flags.to_string());
+            out.emit(
+                &key,
+                &format!("{p}.disallow"),
+                &c.disallow_flags.to_string(),
+            );
             out.emit(&key, &format!("{p}.name"), &v_str(&c.name()));
             out.emit(&key, &format!("{p}.severity"), severity_name(c.severity()));
         }
     }
 
     dump_lists(&mut out, "map", engine.constraint_map(), engine, true);
-    dump_lists(&mut out, "explicit", engine.explicit_constraints(), engine, false);
+    dump_lists(
+        &mut out,
+        "explicit",
+        engine.explicit_constraints(),
+        engine,
+        false,
+    );
 
     for (name, rule) in engine.netclass_clearances() {
         out.emit("netclass_clearances", name, &rule_index(engine, rule));
@@ -225,6 +249,7 @@ pub fn dump_engine(engine: &DrcEngine) -> Vec<String> {
 /// `InitEngine` with the sibling rule file. Returns the board, the parse report, the engine
 /// and whether `InitEngine` failed.
 fn load_board_qa(path: &Path) -> Result<(Board, ParseReport, DrcEngine, bool), String> {
+    let mut tuning_profiles = TuningProfiles::default();
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
     let text = String::from_utf8_lossy(&bytes);
     let name = path.file_name().unwrap().to_string_lossy().to_string();
@@ -255,6 +280,7 @@ fn load_board_qa(path: &Path) -> Result<(Board, ParseReport, DrcEngine, bool), S
         let (net_settings, _) = load_net_settings(Some(&parent));
         board.design_settings_mut().net_settings = net_settings;
         board.project = Some(BoardProject::default());
+        tuning_profiles = read_tuning_profiles(&parent.doc);
     } else if path.with_extension("pro").exists() {
         return Err("legacy .pro project (not readable by the port)".to_string());
     }
@@ -266,15 +292,95 @@ fn load_board_qa(path: &Path) -> Result<(Board, ParseReport, DrcEngine, bool), S
     let dru_path = dru.to_string_lossy().to_string();
 
     let mut engine = DrcEngine::new();
-    let result = engine.init_engine(
+    // User rule conditions are compiled with the stand-in binding of the DRC-20 tests (exact
+    // variable / function names and usage flags; the real binding is package DRC-21).
+    let result = engine.init_engine_with::<SyntaxBinder>(
         &mut board,
         dru_text.as_deref().map(|t| (t, dru_path.as_str())),
         default_layer_choices(),
-        &TuningProfiles::default(),
+        &tuning_profiles,
         None,
     );
 
     Ok((board, report, engine, result.is_err()))
+}
+
+/// The part of `TUNING_PROFILES::TUNING_PROFILES` (`common/project/tuning_profiles.cpp`, the
+/// `tuning_profiles` object of the project file) that `loadImplicitRules` reads: per profile
+/// of `tuning_profiles_impedance_geometric` its name, type and the signal layer, width and
+/// diff pair gap of each layer entry. The Rust project model does not hold tuning profiles
+/// yet, so the test reads them itself.
+fn read_tuning_profiles(doc: &json::Value) -> TuningProfiles {
+    use kicad_core::{Lset, PcbLayerId};
+    use kicad_drc::engine::implicit_rules::{
+        DelayProfileTrackPropagationEntry, TuningProfile, TuningProfileType,
+    };
+
+    let mut profiles = Vec::new();
+    let list = doc
+        .pointer("/tuning_profiles/tuning_profiles_impedance_geometric")
+        .and_then(|v| v.as_array());
+
+    for entry in list.into_iter().flatten() {
+        let int = |v: &json::Value, key: &str| v[key].as_i64().unwrap_or(0) as i32;
+        let entries = entry["layer_entries"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|layer| DelayProfileTrackPropagationEntry {
+                signal_layer: PcbLayerId::from(Lset::name_to_layer(
+                    layer["signal_layer"].as_str().unwrap_or(""),
+                )),
+                width: int(layer, "width"),
+                diff_pair_gap: int(layer, "diff_pair_gap"),
+            })
+            .collect();
+
+        profiles.push(TuningProfile {
+            profile_name: entry["profile_name"].as_str().unwrap_or("").to_string(),
+            type_: if int(entry, "type") == 1 {
+                TuningProfileType::Differential
+            } else {
+                TuningProfileType::Single
+            },
+            track_propagation_entries: entries,
+        });
+    }
+
+    TuningProfiles::new(profiles)
+}
+
+/// The number of distinct net names in the board file (`(net "name")` and `(net N "name")`)
+/// that the parsed board does not know.
+fn missing_net_count(path: &Path, board: &Board) -> usize {
+    let text = String::from_utf8_lossy(&std::fs::read(path).unwrap()).to_string();
+    let mut names = std::collections::BTreeSet::new();
+    let mut rest = text.as_str();
+
+    while let Some(pos) = rest.find("(net ") {
+        rest = &rest[pos + 5..];
+        let after_code = rest.trim_start_matches(|c: char| c.is_ascii_digit() || c == ' ');
+
+        if let Some(quoted) = after_code.strip_prefix('"') {
+            let mut name = String::new();
+            let mut chars = quoted.chars();
+
+            while let Some(c) = chars.next() {
+                match c {
+                    '"' => break,
+                    '\\' => name.extend(chars.next()),
+                    _ => name.push(c),
+                }
+            }
+
+            names.insert(name);
+        }
+    }
+
+    names
+        .iter()
+        .filter(|n| board.find_net_by_name(n).is_none())
+        .count()
 }
 
 fn fnv1a64(data: &[u8]) -> u64 {
@@ -343,6 +449,7 @@ fn engine_corpus_matches_cxx() {
                 continue;
             }
         };
+        let missing_nets = missing_net_count(&path, &board);
         drop(board);
 
         let lines = dump_engine(&engine);
@@ -358,7 +465,7 @@ fn engine_corpus_matches_cxx() {
         }
 
         if hash == get("hash") && i32::from(drc_error) == num("drc_error") {
-            matched.push(rel.to_string());
+            matched.push((num("keepout"), num("tuning"), num("user"), num("user_cond")));
             continue;
         }
 
@@ -370,12 +477,14 @@ fn engine_corpus_matches_cxx() {
             reasons.push("keepout zones skipped by the parser (PCBIO-06 / 08)");
         }
 
-        if skipped("net_class") {
-            reasons.push("legacy netclasses skipped by the parser (PCBIO-11)");
+        if missing_nets > 0 && (skipped("footprint") || skipped("zone")) {
+            // nets named only by skipped items (`(net "name")` of the name-only net format)
+            // do not exist, so their effective / composite netclasses are missing
+            reasons.push("nets of skipped footprints / zones missing (PCBIO-03 / 06)");
         }
 
-        if num("tuning") > 0 {
-            reasons.push("tuning profiles not in the project model");
+        if skipped("net_class") {
+            reasons.push("legacy netclasses skipped by the parser (PCBIO-11)");
         }
 
         if reasons.is_empty() {
@@ -390,8 +499,13 @@ fn engine_corpus_matches_cxx() {
     }
 
     eprintln!(
-        "engine corpus: {} match, {} pending, {} mismatch",
+        "engine corpus: {} match ({} keepout, {} tuning profile, {} user rules ({} with a \
+         condition) among them), {} pending, {} mismatch",
         matched.len(),
+        matched.iter().map(|m| m.0).sum::<i32>(),
+        matched.iter().map(|m| m.1).sum::<i32>(),
+        matched.iter().map(|m| m.2).sum::<i32>(),
+        matched.iter().map(|m| m.3).sum::<i32>(),
         pending.len(),
         mismatched.len()
     );
@@ -400,7 +514,11 @@ fn engine_corpus_matches_cxx() {
         eprintln!("pending: {p}");
     }
 
-    assert!(mismatched.is_empty(), "mismatches:\n{}", mismatched.join("\n"));
+    assert!(
+        mismatched.is_empty(),
+        "mismatches:\n{}",
+        mismatched.join("\n")
+    );
     assert!(!matched.is_empty());
 }
 
@@ -453,8 +571,50 @@ fn init_engine_resets_last_error_code() {
     }
 
     assert!(run.is_error_limit_exceeded(DRCE_LAST));
+
+    // engine.InitEngine( std::make_shared<DRC_RULE>( wxT( "Reset limits" ) ) ): the rule set
+    // half, then the limit reset of its last step, which lives in the run state in the port
+    let mut board = Board::new();
+    let mut engine = DrcEngine::new();
+    engine
+        .init_engine_with_rule(
+            &mut board,
+            Arc::new(DrcRule::with_name("Reset limits")),
+            None,
+        )
+        .unwrap();
     run.reset_error_limits();
+
     assert!(!run.is_error_limit_exceeded(DRCE_LAST));
+}
+
+/// `qa/tests/pcbnew/test_board_design_settings.cpp`: `BiggestClearanceIncludesPhysicalHoleClearance`
+/// (with the real engine as the board's rule resolver).
+#[test]
+fn biggest_clearance_includes_physical_hole_clearance() {
+    use kicad_drc::DrcConstraint;
+
+    let mut board = Board::new();
+
+    // Larger than any default clearance, so it can only come from the rule below.
+    let rule_clearance = 4_000_000;
+
+    let mut rule = DrcRule::with_name("NPTH Hole to Track Clearance");
+    let mut constraint = DrcConstraint::new(DrcConstraintT::PhysicalHoleClearanceConstraint, "");
+    constraint.value.set_min(rule_clearance);
+    rule.add_constraint(&mut constraint, None);
+
+    let mut engine = DrcEngine::new();
+    engine
+        .init_engine_with_rule(&mut board, Arc::new(rule), None)
+        .unwrap();
+
+    assert!(
+        board
+            .design_settings()
+            .get_biggest_clearance_value(Some(&engine))
+            >= rule_clearance
+    );
 }
 
 /// The run limits of `RunTests`: 0 for ignored codes, 499 for clearance and unconnected items,
@@ -477,7 +637,10 @@ fn run_tests_error_limits() {
     engine.prepare_run(&mut run, &mut board, EdaUnits::Inch, true, false);
 
     assert_eq!(run.error_limit(DRCE_CLEARANCE), EXTENDED_ERROR_LIMIT);
-    assert_eq!(run.error_limit(DRCE_UNCONNECTED_ITEMS), EXTENDED_ERROR_LIMIT);
+    assert_eq!(
+        run.error_limit(DRCE_UNCONNECTED_ITEMS),
+        EXTENDED_ERROR_LIMIT
+    );
     assert_eq!(run.error_limit(DRCE_SILK_CLEARANCE), 0);
     assert!(run.is_error_limit_exceeded(DRCE_SILK_CLEARANCE));
     assert_eq!(
@@ -573,7 +736,10 @@ fn run_tests_provider_order_and_cancel() {
 }
 
 /// The implicit rules of a default board (no project): the fixed rules 1-10 and the default
-/// netclass rules, in the order of analysis section 4.2, with native conditions.
+/// netclass rules, in the order of analysis section 4.2, with native conditions. The name list
+/// was confirmed with `pcb-dump board --sections engine` on an empty board file (the default
+/// netclass has diff pair width and gap, so the "diff pair" width rule exists; its gap 0.25 mm
+/// is not below the clearance 0.2 mm, so no gap override rule).
 #[test]
 fn default_board_rule_list() {
     let mut board = Board::new();
@@ -604,6 +770,7 @@ fn default_board_rule_list() {
             "barcode visual separation default",
             "netclass 'Default'",
             "netclass 'Default'",
+            "netclass 'Default' diff pair",
             "netclass 'Default'",
             "netclass 'Default'",
             "netclass 'Default'",
@@ -617,7 +784,10 @@ fn default_board_rule_list() {
 
     // the courtyard rule has a constraint without any value (C++ sets the wrong variable)
     let courtyard = &engine.rules()[7].constraints[0];
-    assert_eq!(courtyard.type_, DrcConstraintT::CourtyardClearanceConstraint);
+    assert_eq!(
+        courtyard.type_,
+        DrcConstraintT::CourtyardClearanceConstraint
+    );
     assert!(!courtyard.value.has_min());
 
     // every implicit condition is native
@@ -636,6 +806,70 @@ fn default_board_rule_list() {
         engine
             .query_worst_constraint(DrcConstraintT::ClearanceConstraint, false)
             .map(|c| c.value.min()),
-        Some(board.design_settings().net_settings.default_netclass().clearance())
+        Some(
+            board
+                .design_settings()
+                .net_settings
+                .default_netclass()
+                .clearance()
+        )
     );
+}
+
+/// Both `InitEngine` overloads null the violating rule of every board marker first ("so
+/// GetSeverity() falls back to the board design settings"); the single-rule overload leaves
+/// exactly that rule in the engine.
+#[test]
+fn init_engine_clears_marker_rules_and_single_rule_overload() {
+    use kicad_core::{KiidGenerator, Severity};
+    use kicad_geom::math::vector2::Vector2I;
+    use kicad_pcb::drc_api::{DRCE_CLEARANCE, DrcRuleInfo};
+    use kicad_pcb::pcb_marker::{PcbMarker, RcItem};
+
+    let mut board = Board::new();
+    let mut item = RcItem::default();
+    item.set_error_code(DRCE_CLEARANCE);
+    item.violating_rule = Some(DrcRuleInfo {
+        name: "r".to_string(),
+        severity: Severity::Warning,
+        implicit: false,
+    });
+    let mut g = KiidGenerator::default();
+    board.add_marker(PcbMarker::new(
+        &mut g,
+        Arc::new(item),
+        Vector2I::new(0, 0),
+        0,
+    ));
+
+    let mut engine = DrcEngine::new();
+    engine
+        .init_engine(
+            &mut board,
+            None,
+            default_layer_choices(),
+            &TuningProfiles::default(),
+            None,
+        )
+        .unwrap();
+
+    assert!(
+        board
+            .markers()
+            .all(|(_, m)| m.rc_item().violating_rule().is_none())
+    );
+
+    // InitEngine( rule ): only that rule; the netclass clearance table is cleared
+    let mut rule = DrcRule::default();
+    rule.name = "single".to_string();
+    let rule = Arc::new(rule);
+    engine
+        .init_engine_with_rule(&mut board, Arc::clone(&rule), None)
+        .unwrap();
+
+    assert_eq!(engine.rules().len(), 1);
+    assert_eq!(engine.rules()[0].name, "single");
+    assert!(engine.rules_valid());
+    assert!(engine.netclass_clearances().is_empty());
+    assert!(engine.constraint_map().is_empty());
 }

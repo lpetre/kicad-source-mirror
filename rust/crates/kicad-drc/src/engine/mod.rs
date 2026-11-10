@@ -45,6 +45,7 @@ use kicad_pcb::{Board, BoardCtx, ConnectivityQuery, ItemId, ItemRef, RuleResolve
 use kicad_sexpr::{IoError, ParseError};
 
 use crate::constraint_types::DrcConstraintT;
+use crate::pcbexpr::evaluator::{PcbExprBinder, PcbExprUcode};
 use crate::reporter::{Reporter, WxStringReporter, reborrow};
 use crate::rule::{DrcConstraint, DrcRule, is_component_class_selector};
 use crate::rule_condition::DrcRuleCondition;
@@ -107,6 +108,20 @@ pub fn load_rules(
     layer_choices: LayerChoices,
     log_reporter: Option<&mut dyn Reporter>,
 ) -> Result<Vec<DrcRule>, IoError> {
+    load_rules_with::<PcbExprUcode>(board, file_text, path, layer_choices, log_reporter)
+}
+
+/// [`load_rules`] with the PCB expression binding `B` (see [`DrcEngine::init_engine_with`]).
+pub fn load_rules_with<B: PcbExprBinder>(
+    board: &Board,
+    file_text: Option<&str>,
+    path: &str,
+    layer_choices: LayerChoices,
+    log_reporter: Option<&mut dyn Reporter>,
+) -> Result<Vec<DrcRule>, IoError>
+where
+    B::VarRef: Send + Sync,
+{
     let mut rules = Vec::new();
 
     if let Some(file_text) = file_text {
@@ -118,7 +133,7 @@ pub fn load_rules(
             &resolve,
         );
 
-        let mut parser: DrcRulesParser<'_> = DrcRulesParser::new(&rules_text, path);
+        let mut parser: DrcRulesParser<'_, B> = DrcRulesParser::new(&rules_text, path);
         parser.set_layer_choices(layer_choices);
         parser.parse(&mut rules, log_reporter)?;
     }
@@ -220,6 +235,24 @@ pub struct DrcEngine {
     has_geometry_dependent_rules: bool,
     /// `m_hasDiffPairClearanceOverrides`.
     has_diff_pair_clearance_overrides: bool,
+    /// How `compileRules` compiles a non-implicit condition (`condition->Compile(
+    /// &error_semaphore )`); see [`DrcEngine::set_condition_compiler`].
+    condition_compiler: ConditionCompiler,
+}
+
+/// `DRC_RULE_CONDITION::Compile( aReporter )` as the engine calls it for rule conditions
+/// that are not native implicit conditions.
+pub type ConditionCompiler = fn(&mut DrcRuleCondition, &mut dyn Reporter) -> bool;
+
+/// The [`ConditionCompiler`] of the binding `B`: `condition.compile_with::<B>( reporter )`.
+fn compile_with_binding<B: PcbExprBinder>(
+    condition: &mut DrcRuleCondition,
+    reporter: &mut dyn Reporter,
+) -> bool
+where
+    B::VarRef: Send + Sync,
+{
+    condition.compile_with::<B>(Some(reporter), 0, 0)
 }
 
 impl Default for DrcEngine {
@@ -506,6 +539,25 @@ fn is_parse_error(error: &IoError) -> bool {
     matches!(error, IoError::Parse(_) | IoError::FutureFormat(_))
 }
 
+/// The marker loop at the start of both `InitEngine` overloads:
+/// `drcItem->SetViolatingRule( nullptr )` for every board marker, so that `GetSeverity()`
+/// falls back to the board design settings. The Rust marker holds a copy of the rule data, not
+/// a pointer, but clearing it keeps the C++ severity behaviour. Markers without a rule are not
+/// touched (the C++ assignment is a no-op for them).
+fn clear_marker_violating_rules(board: &mut Board) {
+    let ids: Vec<_> = board
+        .markers()
+        .filter(|(_, marker)| marker.rc_item().violating_rule().is_some())
+        .map(|(id, _)| id)
+        .collect();
+
+    for id in ids {
+        board.modify_marker(id, |marker, _env| {
+            Arc::make_mut(&mut marker.rc_item).violating_rule = None;
+        });
+    }
+}
+
 impl DrcEngine {
     /// Port of `DRC_ENGINE::DRC_ENGINE`: no rules, rules not valid.
     pub fn new() -> Self {
@@ -519,6 +571,7 @@ impl DrcEngine {
             has_explicit_clearance_rules: false,
             has_geometry_dependent_rules: false,
             has_diff_pair_clearance_overrides: false,
+            condition_compiler: compile_with_binding::<PcbExprUcode>,
         }
     }
 
@@ -538,8 +591,35 @@ impl DrcEngine {
         rules_file: Option<(&str, &str)>,
         layer_choices: LayerChoices,
         tuning_profiles: &TuningProfiles,
-        mut log_reporter: Option<&mut dyn Reporter>,
+        log_reporter: Option<&mut dyn Reporter>,
     ) -> Result<(), IoError> {
+        self.init_engine_with::<PcbExprUcode>(
+            board,
+            rules_file,
+            layer_choices,
+            tuning_profiles,
+            log_reporter,
+        )
+    }
+
+    /// [`init_engine`](Self::init_engine) with the PCB expression binding `B` for the user
+    /// rule conditions (rule file parser and `compileRules`). Not a C++ API: it lets tests
+    /// compile user rule conditions with a stand-in binding (e.g. a syntax-only one) while
+    /// the expression binding (package DRC-21) is pending. Later `compileRules` passes
+    /// ([`init_engine_with_rule`](Self::init_engine_with_rule)) keep using `B`.
+    pub fn init_engine_with<B: PcbExprBinder>(
+        &mut self,
+        board: &mut Board,
+        rules_file: Option<(&str, &str)>,
+        layer_choices: LayerChoices,
+        tuning_profiles: &TuningProfiles,
+        mut log_reporter: Option<&mut dyn Reporter>,
+    ) -> Result<(), IoError>
+    where
+        B::VarRef: Send + Sync,
+    {
+        self.condition_compiler = compile_with_binding::<B>;
+
         // m_testProviders = DRC_TEST_PROVIDER_REGISTRY::Instance().GetTestProviders(): the
         // providers are created per run (see DrcTestProviderRun); only the log remains.
         for name in PROVIDER_ORDER {
@@ -553,12 +633,7 @@ impl DrcEngine {
 
         // Existing markers may hold raw pointers to DRC_RULEs we're about to destroy.
         // Null them out so GetSeverity() falls back to the board design settings.
-        if board
-            .markers()
-            .any(|(_, marker)| marker.rc_item().violating_rule().is_some())
-        {
-            crate::port_pending!("DRC_ITEM::SetViolatingRule( nullptr ) on board markers");
-        }
+        clear_marker_violating_rules(board);
 
         self.rules.clear();
         self.rules_valid = false;
@@ -578,7 +653,12 @@ impl DrcEngine {
         // attempt to load full set of rules (implicit + user rules)
         let result = (|| -> Result<(), IoError> {
             self.load_implicit_rules(board, tuning_profiles);
-            self.load_rules_file(board, rules_file, layer_choices, reborrow(&mut log_reporter))?;
+            self.load_rules_file::<B>(
+                board,
+                rules_file,
+                layer_choices,
+                reborrow(&mut log_reporter),
+            )?;
             self.compile_rules(reborrow(&mut log_reporter))
         })();
 
@@ -606,6 +686,42 @@ impl DrcEngine {
         Ok(())
     }
 
+    /// Port of `DRC_ENGINE::InitEngine( const std::shared_ptr<DRC_RULE>& rule )`: the engine
+    /// with this single rule (used by the rule editor's "show matches").
+    ///
+    /// The C++ fills `m_testProviders` from `DRC_SHOWMATCHES_PROVIDER_REGISTRY`, in which no
+    /// provider registers (no `DRC_REGISTER_SHOWMATCHES_PROVIDER` instance exists), so nothing
+    /// is logged. Note that, unlike the file overload, the C++ does not clear
+    /// `m_ownClearanceCache`, `m_explicitConstraints` and the `m_has*` flags here; neither does
+    /// the port.
+    pub fn init_engine_with_rule(
+        &mut self,
+        board: &mut Board,
+        rule: Arc<DrcRule>,
+        log_reporter: Option<&mut dyn Reporter>,
+    ) -> Result<(), IoError> {
+        // Existing markers may hold raw pointers to DRC_RULEs we're about to destroy.
+        // Null them out so GetSeverity() falls back to the board design settings.
+        clear_marker_violating_rules(board);
+
+        self.rules.clear();
+        self.rules_valid = false;
+        self.constraint_map.clear();
+
+        // The netclass clearance cache points at the rules just destroyed
+        self.netclass_clearances.clear();
+
+        board.increment_time_stamp(); // Clear board-level caches
+
+        self.rules.push(rule);
+        self.compile_rules(log_reporter)?;
+
+        // (error limits: see DrcRunState::reset_error_limits)
+
+        self.rules_valid = true;
+        Ok(())
+    }
+
     /// `loadImplicitRules()`: appends the implicit rules and fills `m_netclassClearances`.
     fn load_implicit_rules(&mut self, board: &mut Board, tuning_profiles: &TuningProfiles) {
         let mut rules = Vec::new();
@@ -625,19 +741,22 @@ impl DrcEngine {
     }
 
     /// `loadRules( aPath )`: appends the rule file's rules if it parses.
-    fn load_rules_file(
+    fn load_rules_file<B: PcbExprBinder>(
         &mut self,
         board: &Board,
         rules_file: Option<(&str, &str)>,
         layer_choices: LayerChoices,
         log_reporter: Option<&mut dyn Reporter>,
-    ) -> Result<(), IoError> {
+    ) -> Result<(), IoError>
+    where
+        B::VarRef: Send + Sync,
+    {
         let (text, path) = match rules_file {
             Some((text, path)) => (Some(text), path),
             None => (None, ""),
         };
 
-        let rules = load_rules(board, text, path, layer_choices, log_reporter)?;
+        let rules = load_rules_with::<B>(board, text, path, layer_choices, log_reporter)?;
         self.rules.extend(rules.into_iter().map(Arc::new));
         Ok(())
     }
@@ -762,8 +881,9 @@ impl DrcEngine {
         expression: &str,
         error_semaphore: &mut WxStringReporter,
     ) -> Arc<DrcRuleCondition> {
+        let compiler = self.condition_compiler;
         let compile = |c: &mut DrcRuleCondition, reporter: &mut WxStringReporter| {
-            c.compile(Some(reporter), 0, 0);
+            compiler(c, reporter);
         };
 
         let rule_arc = &mut self.rules[index];
@@ -1024,7 +1144,14 @@ impl RuleResolver for DrcEngine {
         b: Option<ItemRef<'_>>,
         layer: PcbLayerId,
     ) -> DrcConstraint {
-        crate::port_pending!("DRC_ENGINE::EvalRules (DRC-04)", ctx, constraint, a, b, layer)
+        crate::port_pending!(
+            "DRC_ENGINE::EvalRules (DRC-04)",
+            ctx,
+            constraint,
+            a,
+            b,
+            layer
+        )
     }
 
     fn has_rules_for_constraint_type(&self, constraint: DrcConstraintT) -> bool {

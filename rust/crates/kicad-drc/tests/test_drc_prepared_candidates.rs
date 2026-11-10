@@ -23,11 +23,12 @@
 //! and zone loading exist yet. The test bodies are therefore run on the synthetic track / arc /
 //! via boards of `tests/data/rtree` with a fixed maximum clearance, and the zone tests on
 //! synthetic boxes; the assertions are the C++ ones. `DRCGraphicBoundsDoNotContainTheirEffectiveShape`
-//! needs copper graphics shapes (pending in kicad-pcb) and is not ported yet.
+//! runs on the C++ board (`issue22102`) and reports itself as pending until the board model
+//! loads it.
 
 use std::path::Path;
 
-use kicad_core::layer_ids::{Flashing, PcbLayerId};
+use kicad_core::layer_ids::{Flashing, PcbLayerId, is_copper_layer};
 use kicad_core::lset::Lset;
 use kicad_drc::constraint_types::DrcConstraintT;
 use kicad_drc::rtree::DrcRtree;
@@ -637,4 +638,68 @@ fn drc_zone_pair_enumeration_matches_nested_loop() {
 
     assert!(total_pairs > 0);
     assert!(empty_layers > 0);
+}
+
+/// `DRCGraphicBoundsDoNotContainTheirEffectiveShape`: padding credit is only sound where the
+/// item's bounding box contains the shape the query will collide against. Copper graphics do
+/// not satisfy that, which is why testGraphicClearances() opts out. Red if the two bounding
+/// boxes are ever reconciled, at which point the credit could be turned back on there.
+///
+/// `issue22102` has footprints; while the board model cannot load it (or shape its graphics)
+/// the test reports itself as pending and passes.
+#[test]
+fn drc_graphic_bounds_do_not_contain_their_effective_shape() {
+    let name = "issue22102.kicad_pcb";
+    let text = std::fs::read_to_string(kicad_qa::pcbnew_data_dir().join(name)).unwrap();
+
+    let result = std::panic::catch_unwind(|| {
+        let board = match parse_board(&text, name, &ParseOptions::default()) {
+            Ok(board) => board,
+            Err(e) => return Err(format!("{e}")),
+        };
+        let ctx = BoardCtx::bare(&board);
+        let mut copper_graphics = 0usize;
+        let mut uncontained = 0usize;
+
+        for (_, drawing) in board.drawings() {
+            let item = ctx.view(drawing);
+            let layer = item.layer();
+
+            if !is_copper_layer(layer) {
+                continue;
+            }
+
+            let shape =
+                item.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+
+            copper_graphics += 1;
+
+            if !item.bounding_box().contains_box(&shape.bbox(0)) {
+                uncontained += 1;
+            }
+        }
+
+        Ok((copper_graphics, uncontained))
+    });
+
+    let pending = |msg: &str| {
+        assert!(msg.contains("port pending"), "{name}: {msg}");
+        eprintln!("{name}: pending ({msg})");
+    };
+
+    match result {
+        Ok(Ok((copper_graphics, uncontained))) => {
+            assert!(copper_graphics > 0);
+            assert!(uncontained > 0);
+        }
+        Ok(Err(msg)) => pending(&msg),
+        Err(e) => {
+            let msg = e
+                .downcast_ref::<String>()
+                .cloned()
+                .or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string()))
+                .unwrap_or_default();
+            pending(&msg);
+        }
+    }
 }

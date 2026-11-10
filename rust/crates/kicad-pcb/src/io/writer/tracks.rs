@@ -31,7 +31,7 @@ use super::{CTL_OMIT_PAD_NETS, PcbWriter, format_iu, format_iu_pt};
 use crate::board_connected_item::netname;
 use crate::ids::TrackId;
 use crate::padstack::{
-    Padstack, PadDrillPostMachiningMode, PadstackMode, PostMachiningProps, UnconnectedLayerMode,
+    PadDrillPostMachiningMode, Padstack, PadstackMode, PostMachiningProps, UnconnectedLayerMode,
 };
 use crate::pcb_track::{PcbVia, Track, UNDEFINED_DRILL_DIAMETER, Viatype, ZoneLayerOverride};
 use crate::teardrop_parameters::TeardropParameters;
@@ -138,8 +138,7 @@ impl PcbWriter<'_> {
 
             let name1 = self.out.quotew(&Lset::name(layer1));
             let name2 = self.out.quotew(&Lset::name(layer2));
-            self.out
-                .print(format_args!("(layers {name1} {name2})"))?;
+            self.out.print(format_args!("(layers {name1} {name2})"))?;
 
             match padstack.unconnected_layer_mode() {
                 UnconnectedLayerMode::RemoveAll => {
@@ -186,7 +185,11 @@ impl PcbWriter<'_> {
                     "front",
                     padstack.front_outer_layers().has_solder_mask,
                 )?;
-                format_opt_bool(self.out, "back", padstack.back_outer_layers().has_solder_mask)?;
+                format_opt_bool(
+                    self.out,
+                    "back",
+                    padstack.back_outer_layers().has_solder_mask,
+                )?;
                 self.out.print_nest(0, format_args!(")"))?;
             }
 
@@ -198,7 +201,11 @@ impl PcbWriter<'_> {
                 || padstack.back_outer_layers().has_covering.is_some()
             {
                 self.out.print_nest(0, format_args!(" (covering "))?;
-                format_opt_bool(self.out, "front", padstack.front_outer_layers().has_covering)?;
+                format_opt_bool(
+                    self.out,
+                    "front",
+                    padstack.front_outer_layers().has_covering,
+                )?;
                 format_opt_bool(self.out, "back", padstack.back_outer_layers().has_covering)?;
                 self.out.print_nest(0, format_args!(")"))?;
             }
@@ -207,7 +214,11 @@ impl PcbWriter<'_> {
                 || padstack.back_outer_layers().has_plugging.is_some()
             {
                 self.out.print_nest(0, format_args!(" (plugging "))?;
-                format_opt_bool(self.out, "front", padstack.front_outer_layers().has_plugging)?;
+                format_opt_bool(
+                    self.out,
+                    "front",
+                    padstack.front_outer_layers().has_plugging,
+                )?;
                 format_opt_bool(self.out, "back", padstack.back_outer_layers().has_plugging)?;
                 self.out.print_nest(0, format_args!(")"))?;
             }
@@ -252,10 +263,8 @@ impl PcbWriter<'_> {
 
                         let name = self.out.quotew(&Lset::name(layer));
                         self.out.print(format_args!("(layer {name}"))?;
-                        self.out.print(format_args!(
-                            "(size {})",
-                            format_iu(padstack.size(layer).x)
-                        ))?;
+                        self.out
+                            .print(format_args!("(size {})", format_iu(padstack.size(layer).x)))?;
                         self.out.print(format_args!(")"))?;
                     }
                 }
@@ -387,7 +396,11 @@ impl PcbWriter<'_> {
         ))?;
 
         format_bool(self.out, "enabled", td_params.enabled)?;
-        format_bool(self.out, "allow_two_segments", td_params.allow_use_two_tracks)?;
+        format_bool(
+            self.out,
+            "allow_two_segments",
+            td_params.allow_use_two_tracks,
+        )?;
         format_bool(
             self.out,
             "prefer_zone_connections",

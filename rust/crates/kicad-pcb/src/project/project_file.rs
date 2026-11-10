@@ -192,7 +192,10 @@ mod tests {
         assert!(pf.file_synced);
         assert_eq!(
             pf.text_vars.iter().collect::<Vec<_>>(),
-            vec![(&"A".to_string(), &"1".to_string()), (&"B".to_string(), &"2".to_string())]
+            vec![
+                (&"A".to_string(), &"1".to_string()),
+                (&"B".to_string(), &"2".to_string())
+            ]
         );
         assert_eq!(pf.board_drawing_sheet_file, "sheet.kicad_wks");
     }

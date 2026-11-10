@@ -32,8 +32,8 @@
 //! - dimension text (PCBIO-10): [`PcbParser::parse_pcb_text`] with the dimension's `PcbText`
 //!   as base text (the only `aBaseText` the C++ passes is a `PCB_DIMENSION_BASE`).
 
-use kicad_core::stroke_params::StrokeParamsParser;
 use kicad_core::string_utils::convert_to_new_overbar_notation;
+use kicad_core::stroke_params::StrokeParamsParser;
 use kicad_core::{Color4D, GrTextHAlignT, GrTextVAlignT, LineStyle, PCB_IU_SCALE, StrokeParams};
 use kicad_geom::{ANGLE_0, EdaAngle, ShapeLineChain, ShapePolySet, Vector2I};
 use kicad_sexpr::IoError;
@@ -45,8 +45,9 @@ use crate::ctx::{BoardCtx, MutEnv};
 use crate::eda_shape::ShapeT;
 use crate::eda_text;
 use crate::footprint::Footprint;
-use crate::ids::ItemKind;
+use crate::ids::{ItemId, ItemKind};
 use crate::item::ParentRef;
+use crate::item_ref::AnyItemMut;
 use crate::pcb_field::{FieldT, PcbField, get_user_field_name};
 use crate::pcb_text::PcbText;
 use crate::pcb_textbox::PcbTextbox;
@@ -90,6 +91,27 @@ impl PcbParser {
             ParentRef::None => MutEnv::detached(),
             _ => self.board.child_env(parent),
         }
+    }
+
+    /// The `finishItem` step `if( EDA_TEXT* textItem = dynamic_cast<EDA_TEXT*>( aChild ) )
+    /// textItem->ResolveFont( embeddedFonts );` for one child: texts, fields, dimensions, text
+    /// boxes and table cells (`PCB_BARCODE` is no `EDA_TEXT`). Returns `ResolveFont`'s result,
+    /// `false` for a child without text.
+    pub(crate) fn resolve_child_font(&mut self, child: ItemId, embedded_fonts: &[String]) -> bool {
+        let Some(item) = self.board.get_mut_raw(child) else {
+            return false;
+        };
+
+        let text = match item {
+            AnyItemMut::Text(x) => &mut x.text,
+            AnyItemMut::Field(x) => &mut x.text.text,
+            AnyItemMut::Dimension(x) => &mut x.text.text,
+            AnyItemMut::Textbox(x) => &mut x.text,
+            AnyItemMut::Tablecell(x) => &mut x.textbox.text,
+            _ => return false,
+        };
+
+        text.resolve_font(Some(embedded_fonts))
     }
 
     /// Port of `parseEDA_TEXT( EDA_TEXT* aText )`: the content of `(effects ...)`; call with
@@ -252,13 +274,14 @@ impl PcbParser {
     ) -> Result<(), IoError> {
         self.lexer.need_symbol_or_number()?;
         let cache_text = self.lexer.from_utf8();
-        let cache_angle =
-            EdaAngle::from_degrees(self.parse_double_expected("render cache angle")?);
+        let cache_angle = EdaAngle::from_degrees(self.parse_double_expected("render cache angle")?);
 
-        let font = match text.eda_text().attributes.font {
-            Some(_) => Some(text.eda_text().font_ref()),
-            None => None,
-        };
+        let font = text
+            .eda_text()
+            .attributes
+            .font
+            .as_ref()
+            .map(|_| text.eda_text().font_ref());
 
         text.eda_text_mut()
             .setup_render_cache(&cache_text, font, cache_angle, Vector2I::new(0, 0));
@@ -544,9 +567,9 @@ impl PcbParser {
                     if parent_fp.is_some() {
                         text.text.set_visible(!hide);
                     } else {
-                        return Err(self
-                            .lexer
-                            .expecting_str("layer, effects, locked, render_cache, uuid or tstamp"));
+                        return Err(self.lexer.expecting_str(
+                            "layer, effects, locked, render_cache, uuid or tstamp",
+                        ));
                     }
                 }
                 T::T_locked => {
@@ -631,8 +654,7 @@ impl PcbParser {
                 }
             }
 
-            if !base_is_dimension && self.required_version >= crate::io::FIRST_FP_AFFINE_TRANSFORM
-            {
+            if !base_is_dimension && self.required_version >= crate::io::FIRST_FP_AFFINE_TRANSFORM {
                 let (size, auto_thickness, thickness) = {
                     let ctx = BoardCtx::bare(&self.board);
                     (
@@ -940,6 +962,39 @@ mod tests {
         assert_eq!(text.text.attributes.stroke_width, 160_000);
     }
 
+    /// Port of the parse half of `FootprintUserFieldKeepsAutoThickness`
+    /// (`qa/tests/pcbnew/test_footprint_load_save.cpp`): a footprint user field whose effects
+    /// carry no thickness keeps auto thickness even when the board default silk thickness is
+    /// not zero. The save / reload round trip needs the footprint parser and writer (PCBIO-06).
+    #[test]
+    fn footprint_user_field_keeps_auto_thickness() {
+        let item = "(property (at 0 0 0) (layer \"F.SilkS\") \
+                    (uuid \"00000000-0000-0000-0000-000000000001\") \
+                    (effects (font (size 1 1))))";
+        let mut p = parser_on(item, 20261031);
+
+        // Auto thickness only differs from the board default when that default is not zero
+        p.board.design_settings_mut().text_thickness
+            [crate::board_design_settings::LAYER_CLASS_SILK] = PCB_IU_SCALE.mm_to_iu(0.15);
+
+        let fp = p.board.create_footprint();
+        let mut field = PcbField::new(
+            &mut p.board.kiid_generator,
+            Some(kicad_core::PcbLayerId::FCu),
+            FieldT::User,
+            "Label",
+        );
+        field.text.base.parent = ParentRef::Item(fp.into());
+        field.text.text.set_text("BezelSW0");
+
+        p.parse_pcb_text_effects(&mut field.text, false).unwrap();
+
+        let ctx = BoardCtx::bare(&p.board);
+        assert!(eda_text::auto_thickness(&field, &ctx));
+        assert_eq!(field.text.text.attributes.stroke_width, 0);
+        assert_eq!(field.text.base.layer, kicad_core::PcbLayerId::FSilkS);
+    }
+
     /// Footprint text loses its render cache as well: new files end with `SetLibTextSize`
     /// (`EDA_TEXT::SetTextSize` clears it), legacy files with `SetTextAngle` / `Rotate`.
     #[test]
@@ -947,7 +1002,9 @@ mod tests {
         for version in [20241229, 20261031] {
             let mut p = parser_on(&format!("(fp_text user \"SCL\" {CACHED}"), version);
             let fp = p.board.create_footprint();
-            let parsed = p.parse_pcb_text_item(ParentRef::Item(fp.into()), None).unwrap();
+            let parsed = p
+                .parse_pcb_text_item(ParentRef::Item(fp.into()), None)
+                .unwrap();
             let ParsedText::Text(text) = parsed else {
                 panic!("expected a PCB_TEXT");
             };

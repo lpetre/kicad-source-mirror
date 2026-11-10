@@ -30,9 +30,12 @@ jobs run in `kicad-session`; this crate does the file I/O and the terminal outpu
   (`input: 1 argument(s) expected...`, `Unknown argument`, `Duplicate argument`, number parse
   errors, `did you mean`, `Zero positional arguments expected...`), plus the C++ stderr texts.
 * board jobs (drc, drc json/mils, gerbers, gerbers -l, drill excellon/gerber, svg multi,
-  upgrade) on three corpus boards: today all stop at the board parser with
-  `kicad-rs: not yet ported: <subsystem>` and exit 2; once a job runs through, the same test
-  compares exit code, stdout and the produced file set with the oracle.
+  upgrade with and without `--force`) on four corpus boards: a job that cannot run yet stops
+  with `kicad-rs: not yet ported: <subsystem>` and exit 2; a job that runs through is compared
+  with the oracle (exit code, stdout, produced file set, and the input board file byte for
+  byte). Today `pcb upgrade` on `qa/data/pcbnew/issue10697.kicad_pcb` runs through and is
+  byte-identical; the other boards stop at the parser (footprints), the other jobs at
+  kicad-drc / kicad-fab.
 * `fp upgrade`: the parser-free checks (output conflict, non-KiCad library without output) equal
   the oracle.
 

@@ -232,12 +232,12 @@ pub fn populate_job(m: &ArgMatches, args: &CommonArgs, job: &mut JobExportPcbGer
     job.plot.arg_common_layers = Some(get_string(m, ARG_COMMON_LAYERS));
 
     if !Path::new(&job.plot.filename).is_file() {
-        eprint!("Board file does not exist or is not accessible\n");
+        eprintln!("Board file does not exist or is not accessible");
         return exit_codes::ERR_INVALID_INPUT_FILE;
     }
 
     if job.precision != 5 && job.precision != 6 {
-        eprint!("Gerber coordinate precision should be either 5 or 6\n");
+        eprintln!("Gerber coordinate precision should be either 5 or 6");
         return exit_codes::ERR_ARGS;
     }
 

@@ -1,0 +1,1177 @@
+(kicad_pcb
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(title_block
+		(date "2025-02-12")
+	)
+	(layers
+		(0 "F.Cu" signal)
+		(4 "In1.Cu" signal)
+		(6 "In2.Cu" signal)
+		(8 "In3.Cu" signal)
+		(10 "In4.Cu" signal)
+		(12 "In5.Cu" signal)
+		(14 "In6.Cu" signal)
+		(2 "B.Cu" signal)
+		(9 "F.Adhes" user "F.Adhesive")
+		(11 "B.Adhes" user "B.Adhesive")
+		(13 "F.Paste" user)
+		(15 "B.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(17 "Dwgs.User" user "User.Drawings")
+		(19 "Cmts.User" user "User.Comments")
+		(21 "Eco1.User" user "User.Eco1")
+		(23 "Eco2.User" user "User.Eco2")
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+		(33 "B.Fab" user)
+		(39 "User.1" user)
+		(41 "User.2" user)
+		(43 "User.3" user)
+		(45 "User.4" user)
+		(47 "User.5" user)
+		(49 "User.6" user)
+		(51 "User.7" user)
+		(53 "User.8" user)
+		(55 "User.9" user)
+	)
+	(setup
+		(stackup
+			(layer "F.SilkS"
+				(type "Top Silk Screen")
+				(color "White")
+			)
+			(layer "F.Paste"
+				(type "Top Solder Paste")
+			)
+			(layer "F.Mask"
+				(type "Top Solder Mask")
+				(color "Blue")
+				(thickness 0.01)
+			)
+			(layer "F.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 1"
+				(type "prepreg")
+				(thickness 0.1)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In1.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 2"
+				(type "core")
+				(thickness 0.3)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In2.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 3"
+				(type "prepreg")
+				(thickness 0.1)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In3.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 4"
+				(type "core")
+				(thickness 0.3)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In4.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 5"
+				(type "prepreg")
+				(thickness 0.1)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In5.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 6"
+				(type "core")
+				(thickness 0.3)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "In6.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 7"
+				(type "prepreg")
+				(thickness 0.1)
+				(material "FR4")
+				(epsilon_r 4.5)
+				(loss_tangent 0.02)
+			)
+			(layer "B.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "B.Mask"
+				(type "Bottom Solder Mask")
+				(color "Blue")
+				(thickness 0.01)
+			)
+			(layer "B.Paste"
+				(type "Bottom Solder Paste")
+			)
+			(layer "B.SilkS"
+				(type "Bottom Silk Screen")
+				(color "White")
+			)
+			(copper_finish "ENIG")
+			(dielectric_constraints no)
+			(castellated_pads yes)
+		)
+		(pad_to_mask_clearance 0)
+		(allow_soldermask_bridges_in_footprints no)
+		(tenting front back)
+		(aux_axis_origin 119.1 116.41)
+		(grid_origin 119.1 104.98)
+		(pcbplotparams
+			(layerselection 0x00000000_00000000_5555555d_d7fff5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
+			(disableapertmacros no)
+			(usegerberextensions no)
+			(usegerberattributes yes)
+			(usegerberadvancedattributes yes)
+			(creategerberjobfile yes)
+			(dashed_line_dash_ratio 12.000000)
+			(dashed_line_gap_ratio 3.000000)
+			(svgprecision 4)
+			(plotframeref no)
+			(mode 1)
+			(useauxorigin no)
+			(hpglpennumber 1)
+			(hpglpenspeed 20)
+			(hpglpendiameter 15.000000)
+			(pdf_front_fp_property_popups yes)
+			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
+			(dxfpolygonmode yes)
+			(dxfimperialunits yes)
+			(dxfusepcbnewfont yes)
+			(psnegative no)
+			(psa4output no)
+			(plot_black_and_white yes)
+			(plotinvisibletext no)
+			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
+			(subtractmaskfromsilk no)
+			(outputformat 1)
+			(mirror no)
+			(drillshape 0)
+			(scaleselection 1)
+			(outputdirectory "")
+		)
+	)
+	(gr_text "Debugger"
+	(at 141.56 108.13 90)
+	(layer "F.SilkS")
+	(uuid "03d634b0-b030-43f8-874a-b48e11ac9cfc")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SCL"
+	(at 168.66 96.63 0)
+	(layer "F.SilkS")
+	(uuid "098c9e31-c76b-43cb-bd92-64c51eee7bbe")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SCK"
+	(at 158.46 113.33 0)
+	(layer "F.SilkS")
+	(uuid "0a74d606-e7e7-4280-a700-59a91d417cdf")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A1"
+	(at 145.76 113.33 0)
+	(layer "F.SilkS")
+	(uuid "0c73a3ad-6196-4e15-86fb-6e61724eb543")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "GND"
+	(at 140.68 113.33 0)
+	(layer "F.SilkS")
+	(uuid "12da71aa-3e9c-4cd6-99ea-12f1c66360bf")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "TX"
+	(at 168.62 113.33 0)
+	(layer "F.SilkS")
+	(uuid "24521df6-57ce-4da5-84d8-2aac169eec72")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "5"
+	(at 166.12 96.63 0)
+	(layer "F.SilkS")
+	(uuid "273a9789-fbdc-4a46-a4f9-6a43beb14995")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SDI"
+	(at 163.54 113.33 0)
+	(layer "F.SilkS")
+	(uuid "2e42f66d-4dc7-46af-97c3-7f90fd083bd5")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "13"
+	(at 150.88 96.63 0)
+	(layer "F.SilkS")
+	(uuid "2f6f3c8e-bfa5-487f-ab16-9ea7d7025049")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "RoyalBlue54L"
+	(at 167.36 98.33 0)
+	(layer "F.SilkS")
+	(uuid "3990d0b9-7ae1-4aea-a433-b307b43d2fc4")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A3"
+	(at 150.84 113.33 0)
+	(layer "F.SilkS")
+	(uuid "3d843ce1-6bdd-4e18-ae24-2dc5f25ccc8e")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "6"
+	(at 163.58 96.63 0)
+	(layer "F.SilkS")
+	(uuid "4b7f47e4-f13e-43aa-99df-29656c81a301")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "USB"
+	(at 148.34 96.63 0)
+	(layer "F.SilkS")
+	(uuid "64c5a2bc-ffff-430e-a1cc-23479141e613")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "2M"
+	(at 159.46 103.73 0)
+	(layer "F.SilkS")
+	(uuid "6923d19c-a980-4516-a1fe-5b716ed5c22b")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "VDD"
+	(at 135.6 113.33 0)
+	(layer "F.SilkS")
+	(uuid "7920b2d5-cbb9-44d1-b1e9-a677539d174e")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "nPM1300"
+	(at 146.685 100.905 0)
+	(layer "F.SilkS")
+	(uuid "897747ec-4e4f-462c-9430-19c731fbe50c")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SDO"
+	(at 161 113.33 0)
+	(layer "F.SilkS")
+	(uuid "9356a41f-95a4-4d4d-80e2-291174f96eae")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "NC"
+	(at 138.14 113.33 0)
+	(layer "F.SilkS")
+	(uuid "982fb231-455e-4721-b90b-c7af8fa83e67")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "I^{2}C"
+	(at 125.235 99.18 0)
+	(layer "F.SilkS")
+	(uuid "998fed4d-4e18-4fb3-b8c3-b67f048f32e6")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A5"
+	(at 155.92 113.33 0)
+	(layer "F.SilkS")
+	(uuid "9aad246f-2b0d-4708-8070-7bdbef5629dc")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "+"
+	(at 139.71 102.855 0)
+	(layer "F.SilkS")
+	(uuid "a4c58724-0922-4cf0-b6cc-8f5725078791")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 2 2)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "Lord's"
+	(at 132.26 96.73 90)
+	(layer "F.SilkS")
+	(uuid "a61409e7-2f25-4957-b213-5d05e276352e")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "BTN"
+	(at 152.06 99.43 0)
+	(layer "F.SilkS")
+	(uuid "ac15cc34-440a-4c5b-a9ab-d2a84aa9bcec")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "~{RST}"
+	(at 133.06 113.33 0)
+	(layer "F.SilkS")
+	(uuid "b3f5e542-ce39-4ff0-8f53-b5245cc3a251")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A0"
+	(at 143.22 113.33 0)
+	(layer "F.SilkS")
+	(uuid "b549cd17-5dba-4e54-972d-4728b6af212f")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SHP"
+	(at 171.16 113.33 0)
+	(layer "F.SilkS")
+	(uuid "c280caa2-12bf-473a-a49e-4280e1caffc9")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A4"
+	(at 153.38 113.33 0)
+	(layer "F.SilkS")
+	(uuid "c76f13fc-a49c-4691-b0ce-5183befa49c4")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "A2"
+	(at 148.3 113.33 0)
+	(layer "F.SilkS")
+	(uuid "c9fab62e-188c-4e86-a998-c6d946551a31")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "9"
+	(at 161.04 96.63 0)
+	(layer "F.SilkS")
+	(uuid "da286e78-a6c2-4345-9fac-4fe5199625db")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "NFC"
+	(at 127.81 110.83 0)
+	(layer "F.SilkS")
+	(uuid "dc7ab62f-2dfc-4c78-9c35-6d3bf0402fce")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "11"
+	(at 155.96 96.63 0)
+	(layer "F.SilkS")
+	(uuid "e070584f-6c7a-48e8-bd5a-1a216c038dda")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "12"
+	(at 153.42 96.63 0)
+	(layer "F.SilkS")
+	(uuid "e2ef4a68-55ae-4f50-b898-305df88aa6c0")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "BAT"
+	(at 143.26 96.63 0)
+	(layer "F.SilkS")
+	(uuid "e8ce9ff7-cf8e-4574-b385-49ff199b04d9")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "EN"
+	(at 145.8 96.63 0)
+	(layer "F.SilkS")
+	(uuid "ea12eedf-aa46-4716-a9db-6cc7a442874c")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "~{RST}"
+	(at 152.06 110.73 0)
+	(layer "F.SilkS")
+	(uuid "ebba9345-632b-4e2a-9599-f1dc3bcd499f")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "10"
+	(at 158.5 96.63 0)
+	(layer "F.SilkS")
+	(uuid "ed2ce709-9086-489a-9dc7-b64c62cc50bf")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "RX"
+	(at 166.08 113.33 0)
+	(layer "F.SilkS")
+	(uuid "eee10df0-2a7b-4b11-8381-0415c550cb8b")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "SDA"
+	(at 171.2 96.63 0)
+	(layer "F.SilkS")
+	(uuid "f6575335-7cc7-46ec-bfe6-dc4704504d4e")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+	)
+)
+	(gr_text "CLK"
+	(at 168.16 107.48 270)
+	(layer "B.SilkS")
+	(uuid "039e4235-7844-4dde-948d-a0513b2e07e1")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "DIO"
+	(at 168.16 102.479293 270)
+	(layer "B.SilkS")
+	(uuid "058c32ba-71cb-45ca-a10a-467f28ef4d0b")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "GND"
+	(at 163.16 107.48 270)
+	(layer "B.SilkS")
+	(uuid "062fa922-d593-4d1a-b16a-18f8564dc348")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "A0"
+	(at 143.22 113.33 0)
+	(layer "B.SilkS")
+	(uuid "0b00056b-882c-463c-b34e-84c1d340512b")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SDA"
+	(at 171.2 96.63 0)
+	(layer "B.SilkS")
+	(uuid "0d1e7b1f-08f1-4257-b355-f3cef31070f9")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "A1"
+	(at 145.76 113.33 0)
+	(layer "B.SilkS")
+	(uuid "0ff6e463-abe9-49e3-834e-0be4d7d2dc18")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "11"
+	(at 155.96 96.63 0)
+	(layer "B.SilkS")
+	(uuid "1a07c983-75c3-4271-8067-7a992c083fe1")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "VDD"
+	(at 154.46 106.33 270)
+	(layer "B.SilkS")
+	(uuid "1f26b77f-0cd7-4c17-b842-157884ceee14")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "GND"
+	(at 140.68 113.33 0)
+	(layer "B.SilkS")
+	(uuid "2845c487-e7d0-4d6a-80dd-0dc74b0d1429")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "~{RST}"
+	(at 163.16 102.479293 270)
+	(layer "B.SilkS")
+	(uuid "2f64dc4b-f9f2-4df3-9ac3-63f209204170")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SCK"
+	(at 158.46 113.33 0)
+	(layer "B.SilkS")
+	(uuid "39648e1e-b049-45ec-b978-6a28ba99445d")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "A4"
+	(at 153.38 113.33 0)
+	(layer "B.SilkS")
+	(uuid "3f6e1a6b-7836-4860-9af1-1fbdec5479c5")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "10"
+	(at 158.5 96.63 0)
+	(layer "B.SilkS")
+	(uuid "4284e954-0b05-4a76-8cad-f1655dfaf5ed")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SDO"
+	(at 161 113.33 0)
+	(layer "B.SilkS")
+	(uuid "59b6971a-26b5-40a2-9892-3feedc85e6bc")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "VDD"
+	(at 135.6 113.33 0)
+	(layer "B.SilkS")
+	(uuid "5b9abbb9-fa99-46c8-a192-eb89d4b83224")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "13"
+	(at 150.88 96.63 0)
+	(layer "B.SilkS")
+	(uuid "66b7a4a7-036b-4b2f-8c47-ce0c604cea19")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "RX"
+	(at 166.08 113.33 0)
+	(layer "B.SilkS")
+	(uuid "674ff3cf-d375-456e-9c50-e15cc0a82431")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "~{RST}"
+	(at 133.06 113.33 0)
+	(layer "B.SilkS")
+	(uuid "6a997ccb-f94f-41e2-ba89-ee3034138164")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "6"
+	(at 163.58 96.63 0)
+	(layer "B.SilkS")
+	(uuid "8d00d5a6-fbf2-4a0f-8a6f-661854f3667e")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "5"
+	(at 166.12 96.63 0)
+	(layer "B.SilkS")
+	(uuid "9bfbf62b-6d5e-472f-8abe-438178298748")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SCL"
+	(at 168.66 96.63 0)
+	(layer "B.SilkS")
+	(uuid "9f9d7650-a18d-46d5-a2fd-fef7fba2ed0f")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SDI"
+	(at 163.54 113.33 0)
+	(layer "B.SilkS")
+	(uuid "a42a4ff9-c94f-458d-b715-a67bf0f4f3fe")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "EN"
+	(at 145.8 96.63 0)
+	(layer "B.SilkS")
+	(uuid "aa44e7be-c9e3-4064-8480-31edae6db368")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "BAT"
+	(at 143.26 96.63 0)
+	(layer "B.SilkS")
+	(uuid "ad078c90-22af-436f-bb36-5bfda06c8a12")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "Guide at:\nlordsboards.com/royalblue54l"
+	(at 140.1 96.02 0)
+	(layer "B.SilkS")
+	(uuid "bad114b3-cc4c-4156-8e9f-0be06259da53")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify left mirror)
+	)
+)
+	(gr_text "A2"
+	(at 148.3 113.33 0)
+	(layer "B.SilkS")
+	(uuid "bb728fca-e064-4d4b-82e4-26687271620f")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "9"
+	(at 161.04 96.63 0)
+	(layer "B.SilkS")
+	(uuid "bc9ab8ae-4855-45b9-b812-43d616aaaf4b")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "USB"
+	(at 148.34 96.63 0)
+	(layer "B.SilkS")
+	(uuid "d1a89f2f-50f7-420a-a2b1-b89d4c450e81")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "SHP"
+	(at 171.16 113.33 0)
+	(layer "B.SilkS")
+	(uuid "d2960a4e-991b-4538-b8ef-6ef390e397d4")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "A3"
+	(at 150.84 113.33 0)
+	(layer "B.SilkS")
+	(uuid "d5af412e-1325-4fb3-b17e-8e108eb81d7c")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "VDD"
+	(at 138.14 113.33 0)
+	(layer "B.SilkS")
+	(uuid "d726c8f0-3b31-45e0-bb9f-0eeffe8191a7")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "TX"
+	(at 168.62 113.33 0)
+	(layer "B.SilkS")
+	(uuid "e38f9c07-4523-41a4-9f1b-1ae53b49fbff")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "A5"
+	(at 155.92 113.33 0)
+	(layer "B.SilkS")
+	(uuid "ed6483ea-fdc6-4ad2-a15f-4aed8643c19c")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+	(gr_text "12"
+	(at 153.42 96.63 0)
+	(layer "B.SilkS")
+	(uuid "eeca9dfd-b536-4700-b305-4c41726579c2")
+	(effects
+		(font
+			(face "Ubuntu Sans")
+			(size 0.8 0.7)
+			(thickness 0.16)
+			(bold yes)
+		)
+		(justify mirror)
+	)
+)
+)

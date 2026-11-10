@@ -35,7 +35,7 @@ import init, * as kicad from './pkg/kicad_wasm.js'; await init();
 | `strokeText(text, sizeMm)` | `{ path, strokeWidth, segments }`: KiCad stroke font, left/bottom aligned at the origin, SVG path data in nm | works |
 | `polygonBoolean(a, b, op)` | polygons: `[[ring0, ring1, ...], ...]`, ring = `[[x, y], ...]`, ring 0 the outline, others holes; `op` = `union`, `difference`, `intersection`, `xor` (`SHAPE_POLY_SET` + vendored Clipper2) | works |
 | `plotDemoGerber(date?)` | a small Gerber X2 file from the Rust `GERBER_PLOTTER` (byte-identical to the C++ plotter, `tests/golden/demo_gerber_cpp.gbr`) | works |
-| `loadBoard(text, { project, rules, name })` | a `Board`; `project` / `rules` are the `.kicad_pro` / `.kicad_dru` texts, `name` the file name (default output names derive from it) | pending (parser) |
+| `loadBoard(text, { project, rules, name })` | a `Board`; `project` / `rules` are the `.kicad_pro` / `.kicad_dru` texts, `name` the file name (default output names derive from it) | works for boards whose constructs the parser has landed for (e.g. `qa/data/pcbnew/issue10697.kicad_pcb`); otherwise `NotYetPortedError` (`kicad-pcb parser: port pending: <construct>`). The post-load steps (project binding, connectivity, DRC engine) are pending |
 | `newBoard(name?)` | an empty `Board` (`new BOARD()`) for clients that build a board item by item | works |
 
 ## `Board`
@@ -55,7 +55,7 @@ Item handles are `ItemId::to_bits()` numbers (< 2^53, exact as JS numbers), vali
 | `exportGerbers({ layers, commonLayers, precision, noX2, noNetlist, noProtelExt, disableApertureMacros, useDrillFileOrigin, subtractSoldermask, boardPlotParams, checkZones })` | `{ exitCode, files: [{ name, content }], messages }` as `kicad-cli pcb export gerbers` | pending (kicad-fab) |
 | `exportDrill({ format, units, separateTh, generateReport })` | `{ exitCode, files, report, messages }` as `kicad-cli pcb export drill` | pending (kicad-fab) |
 | `plotSvg({ layers, fitPageToBoard, blackAndWhite })` | SVG text (`pcb export svg --mode-single --exclude-drawing-sheet`) | pending (kicad-fab) |
-| `save()` | `.kicad_pcb` text | pending (writer) |
+| `save()` | `.kicad_pcb` text (`PCB_IO_KICAD_SEXPR::SaveBoard`; byte-identical to `kicad-cli pcb upgrade --force` on the loadable corpus boards) | works (items whose writer package has not landed: `NotYetPortedError`) |
 | `ratsnest()` | `Int32Array` `[x1, y1, x2, y2] * n` | pending (kicad-connectivity) |
 | `refillZones()` | - | pending (kicad-zone) |
 
@@ -76,8 +76,10 @@ All failures are JavaScript `Error`s with a `name`:
 
 * `crates/kicad-wasm/tests/native_reference.rs`: computes every working call natively and
   pins the results in `tests/golden/native_reference.json`; checks `plotDemoGerber` against the
-  C++ golden.
+  C++ golden and `save()` of the loadable corpus boards against the reference `kicad-cli pcb
+  upgrade --force` output (kicad-session's golden).
 * `web/test/smoke.mjs` (node): the same calls on the wasm module must give the same results;
-  the pending calls must throw `NotYetPortedError`.
+  `newBoard` + items + `save()` and `loadBoard` + `nets()` / `tracks()` / `save()` equal the
+  native results; the pending calls must throw `NotYetPortedError`.
 * `web/test/browser.mjs` (Playwright + Chromium): serves `web/`, loads `index.html`, checks the
   page loads the module and computes the same token statistics as the native build.

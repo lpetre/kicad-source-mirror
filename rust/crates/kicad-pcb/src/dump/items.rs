@@ -300,7 +300,7 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
             emit!(o, format!("{pp}fill"), v_enum(s.fill_mode()));
 
             match s.shape() {
-                ShapeT::Arc => emit!(o, format!("{pp}mid"), no_api("EDA_SHAPE::GetArcMid")),
+                ShapeT::Arc => emit!(o, format!("{pp}mid"), v_vec(s.arc_mid())),
                 ShapeT::Bezier => emit!(
                     o,
                     format!("{pp}bezier"),
@@ -693,6 +693,17 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
 
 // ---- shape --------------------------------------------------------------------------------
 
+/// `VEnum( LINE_STYLE )`: the magic_enum names (`DASHDOT`, not the derived `DASH_DOT`).
+fn v_line_style(style: kicad_core::stroke_params::LineStyle) -> String {
+    use kicad_core::stroke_params::LineStyle;
+
+    match style {
+        LineStyle::DashDot => "DASHDOT".into(),
+        LineStyle::DashDotDot => "DASHDOTDOT".into(),
+        other => v_enum(other),
+    }
+}
+
 /// `DumpEdaShape`.
 pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
     let ctx = it.ctx;
@@ -708,11 +719,7 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
         format!("{p}effective_width"),
         v_int(h.effective_width(ctx))
     );
-    emit!(
-        o,
-        format!("{p}line_style"),
-        no_api("EDA_SHAPE::GetLineStyle")
-    );
+    emit!(o, format!("{p}line_style"), v_line_style(s.line_style()));
     emit!(o, format!("{p}fill"), v_enum(s.fill_mode()));
     emit!(o, format!("{p}closed"), v_bool(s.is_closed()));
     emit!(
@@ -728,33 +735,24 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
 
     match st {
         ShapeT::Arc => {
-            emit!(o, format!("{p}center"), no_api("EDA_SHAPE::getCenter"));
-            emit!(o, format!("{p}mid"), no_api("EDA_SHAPE::GetArcMid"));
-            emit!(o, format!("{p}radius"), no_api("EDA_SHAPE::GetRadius"));
-            emit!(o, format!("{p}arc_angle"), no_api("EDA_SHAPE::GetArcAngle"));
-            emit!(
-                o,
-                format!("{p}arc_angles"),
-                no_api("EDA_SHAPE::CalcArcAngles")
-            );
-            emit!(
-                o,
-                format!("{p}clockwise"),
-                no_api("EDA_SHAPE::IsClockwiseArc")
-            );
+            emit!(o, format!("{p}center"), v_vec(s.center()));
+            emit!(o, format!("{p}mid"), v_vec(s.arc_mid()));
+            emit!(o, format!("{p}radius"), v_int(s.radius()));
+            emit!(o, format!("{p}arc_angle"), v_angle(s.arc_angle()));
+            emit!(o, format!("{p}arc_angles"), {
+                let (a0, a1) = s.calc_arc_angles();
+                format!("{},{}", v_angle(a0), v_angle(a1))
+            });
+            emit!(o, format!("{p}clockwise"), v_bool(s.is_clockwise_arc()));
             emit!(o, format!("{p}length"), v_f64(h.shape_length()));
         }
         ShapeT::Circle => {
-            emit!(o, format!("{p}center"), no_api("EDA_SHAPE::getCenter"));
-            emit!(o, format!("{p}radius"), no_api("EDA_SHAPE::GetRadius"));
+            emit!(o, format!("{p}center"), v_vec(s.center()));
+            emit!(o, format!("{p}radius"), v_int(s.radius()));
         }
         ShapeT::Rectangle => {
             emit!(o, format!("{p}corner_radius"), v_int(s.corner_radius()));
-            emit!(
-                o,
-                format!("{p}rect_corners"),
-                no_api("EDA_SHAPE::GetRectCorners")
-            );
+            emit!(o, format!("{p}rect_corners"), v_points(&s.rect_corners()));
             emit!(o, format!("{p}rect_size"), {
                 let (w, hh) = h.rectangle_size();
                 format!("{w},{hh}")
@@ -762,11 +760,7 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
         }
         ShapeT::Segment => {
             emit!(o, format!("{p}length"), v_f64(h.shape_length()));
-            emit!(
-                o,
-                format!("{p}segment_angle"),
-                no_api("EDA_SHAPE::GetSegmentAngle")
-            );
+            emit!(o, format!("{p}segment_angle"), v_angle(s.segment_angle()));
         }
         ShapeT::Bezier => {
             emit!(o, format!("{p}bezier_c1"), v_vec(s.bezier_c1()));
@@ -775,11 +769,7 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
         }
         ShapeT::Poly => {
             emit!(o, format!("{p}poly"), v_polyset(s.poly_shape()));
-            emit!(
-                o,
-                format!("{p}point_count"),
-                no_api("EDA_SHAPE::GetPointCount")
-            );
+            emit!(o, format!("{p}point_count"), v_int(s.point_count()));
         }
         ShapeT::Ellipse | ShapeT::EllipseArc => {
             let e = s.ellipse();

@@ -19,7 +19,7 @@
 //! `BuildEffectivePolygon`, `GetEffectiveShape`, `GetEffectiveHoleShape`,
 //! `GetEffectivePolygon`, `GetBoundingRadius`, `GetBoundingBox` (both overloads),
 //! `HasCopperRemoved`, `TransformShapeToPolygon`, `TransformHoleToPolygon`, `getMaskShape`,
-//! `MergePrimitivesAsPolygon` and the `HitTest` overloads (package M15). Results are cached in
+//! `MergePrimitivesAsPolygon` and the four `HitTest` overloads (package M15). Results are cached in
 //! `Pad::caches` (`board-model.md` 9), validated against `PadCacheKey` (parent transform, flip,
 //! maximum error) and dropped by `set_dirty()` where C++ calls `SetDirty()`.
 
@@ -34,6 +34,7 @@ use kicad_geom::convert_basic_shapes_to_polygon::{
 };
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
+use kicad_geom::geometry::geometry_utils::shape_hit_test;
 use kicad_geom::{
     Box2I, Seg, Shape, ShapeCircle, ShapeCompound, ShapeLineChain, ShapeNull, ShapePolySet,
     ShapeRect, ShapeSegment, ShapeSimple, Vector2I, ki_round, rotate_point,
@@ -979,6 +980,30 @@ impl Pad {
 
         hit
     }
+
+    /// `PAD::HitTest( aPoly, aContained )`: the effective shapes of every unique padstack layer
+    /// (default flashing, no usage) and the hole, tested with `KIGEOM::ShapeHitTest`.
+    pub fn hit_test_poly(
+        &self,
+        ctx: &BoardCtx<'_>,
+        poly: &ShapeLineChain,
+        contained: bool,
+    ) -> bool {
+        let mut effective_shape = ShapeCompound::new();
+        let null = DrcConstraintT::NullConstraint;
+
+        // Add padstack shapes
+        self.padstack.for_each_unique_layer(|layer| {
+            let shape = self.effective_shape(ctx, layer, Flashing::Default, null);
+            effective_shape.add_shape_shared(&shape);
+        });
+
+        // Add hole shape
+        let hole: SharedShape = self.hole_segment(ctx, PcbLayerId::UndefinedLayer, null);
+        effective_shape.add_shape_shared(&hole);
+
+        shape_hit_test(poly, &effective_shape, contained)
+    }
 }
 
 #[cfg(test)]
@@ -1840,6 +1865,41 @@ mod tests {
             pad.bounding_box(&ctx),
             Box2I::by_center(centre, Vector2I::new(500_000, 1_000_000))
         );
+
+        // HitTest( aPoly, aContained ) and HitTest( aPosition, aAccuracy, aLayer ) on the moved
+        // pad (centre `centre`, 0.5 x 1 mm in board frame).
+        let closed = |x0: i32, y0: i32, x1: i32, y1: i32| {
+            ShapeLineChain::from_points(
+                &[
+                    Vector2I::new(x0, y0),
+                    Vector2I::new(x1, y0),
+                    Vector2I::new(x1, y1),
+                    Vector2I::new(x0, y1),
+                ],
+                true,
+            )
+        };
+        let (cx, cy) = (centre.x, centre.y);
+        let around = closed(cx - 400_000, cy - 600_000, cx + 400_000, cy + 600_000);
+        let half = closed(cx, cy - 600_000, cx + 400_000, cy + 600_000);
+        let away = closed(cx + 300_000, cy - 600_000, cx + 400_000, cy + 600_000);
+        assert!(pad.hit_test_poly(&ctx, &around, true));
+        assert!(pad.hit_test_poly(&ctx, &around, false));
+        assert!(!pad.hit_test_poly(&ctx, &half, true));
+        assert!(pad.hit_test_poly(&ctx, &half, false));
+        assert!(!pad.hit_test_poly(&ctx, &away, false));
+        let line = ShapeLineChain::from_points(
+            &[
+                Vector2I::new(cx - 400_000, cy),
+                Vector2I::new(cx + 400_000, cy),
+            ],
+            false,
+        );
+        assert!(pad.hit_test_poly(&ctx, &line, false));
+        // SetAttribute( SMD ) on the default PTH layer set keeps B.Cu (C++ trims to B_Cu).
+        assert!(pad.hit_test_layer(&ctx, centre, 0, PcbLayerId::BCu));
+        assert!(!pad.hit_test_layer(&ctx, centre, 0, PcbLayerId::FCu));
+        assert!(!pad.hit_test_layer(&ctx, centre + Vector2I::new(0, 600_000), 0, PcbLayerId::BCu));
 
         pad.set_shape(Padstack::ALL_LAYERS, PadShape::Circle);
         // ERROR_OUTSIDE polygon of a 1 mm circle: the vertices lie outside the radius.

@@ -45,7 +45,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use kicad_core::eda_units::{EdaDataType, EdaUnits};
-use kicad_core::layer_ids::{Flashing, PcbLayerId};
+use kicad_core::layer_ids::{Flashing, PcbLayerId, is_copper_layer};
 use kicad_core::lset::Lset;
 use kicad_core::typeinfo::KicadT;
 use kicad_drc::constraint_types::DrcConstraintT;
@@ -54,12 +54,15 @@ use kicad_drc::test_provider::{
     DRC_TEST_PROVIDERS, DrcTestProviderBase, all_basic_items, all_basic_items_but_zones,
     for_each_geometry_item,
 };
-use kicad_drc::zone_index::collect_overlapping_pairs;
+use kicad_drc::zone_index::{DrcZoneIndex, collect_overlapping_pairs};
 use kicad_geom::geometry::shape::Shape;
+use kicad_geom::geometry::shape_poly_set::ShapePolySet;
 use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::vector2::{Vector2I, Vector2L};
+use kicad_pcb::ids::ZoneId;
 use kicad_pcb::io::{ParseOptions, parse_board};
-use kicad_pcb::{BoardCtx, ItemId, ItemRef};
+use kicad_pcb::zone::Zone;
+use kicad_pcb::{AnyItem, Board, BoardCtx, ItemId, ItemRef};
 
 const WORST: i32 = 200000;
 
@@ -268,17 +271,20 @@ impl Keys {
         }
     }
 
-    fn entry(&self, e: &ItemWithShape) -> String {
-        let sub = if e.shape_storage.is_some() {
+    /// `sub()` of the driver.
+    fn sub(e: &ItemWithShape) -> String {
+        if e.shape_storage.is_some() {
             "h".to_string()
         } else {
             match e.sub {
                 None => "-".to_string(),
                 Some(i) => i.to_string(),
             }
-        };
+        }
+    }
 
-        format!("{}:{}", self.key(e.parent), sub)
+    fn entry(&self, e: &ItemWithShape) -> String {
+        format!("{}:{}", self.key(e.parent), Self::sub(e))
     }
 }
 
@@ -314,8 +320,7 @@ const COPPER_TYPES: [KicadT; 12] = [
     KicadT::PcbBarcodeT,
 ];
 
-/// The walk and r-tree sections of the driver's `runBoard` (the zone sections are not
-/// replayed: zone shapes and triangulation caches are not ported yet).
+/// The sections of the driver's `runBoard`: the walks, the copper r-tree and the zone trees.
 fn replay_board(ctx: &BoardCtx<'_>) -> Vec<String> {
     let mut out = Vec::new();
     let mut keys = Keys(HashMap::new());
@@ -577,15 +582,173 @@ fn replay_board(ctx: &BoardCtx<'_>) -> Vec<String> {
     );
     out.push(format!("pairstop|{visits}|{progress_calls}"));
 
+    replay_zones(ctx, &keys, &copper_items, &board_copper, &mut out);
+
     out
 }
 
-/// Prefixes of the golden lines the replay produces.
-fn replayed(line: &str) -> bool {
-    !matches!(
-        line.split('|').next(),
-        Some("ztree" | "zq" | "zqb" | "zqp" | "zidx")
-    )
+/// The zones of the driver in its order: the board's, then each footprint's.
+fn all_zones(ctx: &BoardCtx<'_>) -> Vec<ZoneId> {
+    let board = ctx.board;
+    let mut zones: Vec<ZoneId> = board.zones().map(|(id, _)| id).collect();
+
+    for (fp_id, _) in board.footprints() {
+        zones.extend(board.footprint_zones(fp_id).map(|(id, _)| id));
+    }
+
+    zones
+}
+
+/// The zone `id` of the board.
+fn zone_of<'a>(ctx: &BoardCtx<'a>, id: ZoneId) -> &'a Zone {
+    match ctx.board.get(id.into()) {
+        Some(AnyItem::Zone(zone)) => zone,
+        _ => panic!("not a zone"),
+    }
+}
+
+/// The copper zones the driver indexes (`!GetIsRuleArea() && IsOnCopperLayer()`).
+fn copper_zones(ctx: &BoardCtx<'_>) -> Vec<ZoneId> {
+    all_zones(ctx)
+        .into_iter()
+        .filter(|&id| {
+            let zone = zone_of(ctx, id);
+            !zone.is_rule_area() && zone.is_on_copper_layer(ctx)
+        })
+        .collect()
+}
+
+/// The zone sections of the driver (`ztree`, `zq`, `zqb`, `zqp`, `zidx`): one `DRC_RTREE` per
+/// copper zone (triangulated fills, as the cache generator builds them) queried with the copper
+/// items, then the `DRC_ZONE_INDEX` of the zones by layer. The fills were triangulated by
+/// [`prepare_board`] (`zone->CacheTriangulation()`).
+fn replay_zones(
+    ctx: &BoardCtx<'_>,
+    keys: &Keys,
+    copper_items: &[ItemRef<'_>],
+    board_copper: &Lset,
+    out: &mut Vec<String>,
+) {
+    let mut zones_by_layer: BTreeMap<PcbLayerId, Vec<ZoneId>> = BTreeMap::new();
+
+    for zone_id in copper_zones(ctx) {
+        let zone = ctx.item(zone_id.into()).expect("zone");
+        let zone_layers = zone.layer_set();
+
+        zone_of(ctx, zone_id).cache_bounding_box(ctx);
+
+        let mut ztree = DrcRtree::new();
+
+        for layer in layers_of(&zone_layers) {
+            if is_copper_layer(layer) {
+                ztree.insert(zone, layer, DrcConstraintT::ClearanceConstraint, 0, false);
+            }
+        }
+
+        ztree.build();
+
+        for layer in layers_of(&(&zone_layers & board_copper)) {
+            zones_by_layer.entry(layer).or_default().push(zone_id);
+        }
+
+        let zk = keys.key(zone.id().unwrap());
+
+        for layer in layers_of(&zone_layers) {
+            if !is_copper_layer(layer) {
+                continue;
+            }
+
+            let list: Vec<String> = ztree.on_layer(layer).into_iter().map(Keys::sub).collect();
+            out.push(format!("ztree|{zk}|{}|{}", layer.0, join(&list)));
+
+            for item in copper_items {
+                if !copper_layers_of(item, board_copper).contains(layer) {
+                    continue;
+                }
+
+                let k = keys.key(item.id().unwrap());
+                let shape =
+                    item.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+                let b = shape.bbox(0);
+
+                for clr in [0, 200000] {
+                    let hit = ztree.query_colliding_box_actual(&b, shape.as_ref(), layer, clr);
+                    let (h, actual, x, y) = match hit {
+                        Some((actual, pos)) => (1, actual, pos.x, pos.y),
+                        None => (0, -1, 0, 0),
+                    };
+                    out.push(format!(
+                        "zq|{zk}|{k}|{}|{clr}|{h}|{actual}|{x} {y}",
+                        layer.0
+                    ));
+                }
+
+                let hit = ztree.query_colliding_box(&b, shape.as_ref(), layer);
+                out.push(format!(
+                    "zqb|{zk}|{k}|{}|{}",
+                    layer.0,
+                    if hit { 1 } else { 0 }
+                ));
+
+                let mut poly = ShapePolySet::new();
+                poly.new_outline();
+                poly.append(b.x(), b.y(), -1, -1, false);
+                poly.append(b.right(), b.y(), -1, -1, false);
+                poly.append(b.right(), b.bottom(), -1, -1, false);
+                poly.append(b.x(), b.bottom(), -1, -1, false);
+
+                let hit = ztree.query_colliding_box(&b, &poly, layer);
+                out.push(format!(
+                    "zqp|{zk}|{k}|{}|{}",
+                    layer.0,
+                    if hit { 1 } else { 0 }
+                ));
+            }
+        }
+    }
+
+    let mut zone_index = DrcZoneIndex::new();
+    zone_index.build(&zones_by_layer, |id| {
+        ctx.item(id.into()).expect("zone").bounding_box()
+    });
+
+    for layer in zones_by_layer.keys() {
+        out.push(format!(
+            "zidx|has|{}|{}",
+            layer.0,
+            if zone_index.has_layer(*layer) { 1 } else { 0 }
+        ));
+
+        for item in copper_items {
+            let found: Vec<String> = zone_index
+                .query(*layer, &item.bounding_box())
+                .into_iter()
+                .map(|z| keys.key(z.into()))
+                .collect();
+            out.push(format!(
+                "zidx|{}|{}|{}",
+                keys.key(item.id().unwrap()),
+                layer.0,
+                join(&found)
+            ));
+        }
+    }
+}
+
+/// Parses a board and triangulates the fills of the copper zones like the driver
+/// (`zone->CacheTriangulation()` before the zone trees are built).
+fn prepare_board(text: &str, name: &str) -> Result<Board, String> {
+    let mut board =
+        parse_board(text, name, &ParseOptions::default()).map_err(|e| format!("{e}"))?;
+    let zones = copper_zones(&BoardCtx::bare(&board));
+
+    for id in zones {
+        board
+            .zone_fill_mut(id)
+            .cache_triangulation(PcbLayerId::UndefinedLayer);
+    }
+
+    Ok(board)
 }
 
 fn panic_text(e: &(dyn std::any::Any + Send)) -> String {
@@ -604,8 +767,7 @@ fn rtree_oracle_replay() {
         let text = std::fs::read_to_string(board_path(&name)).expect("board file");
 
         let result = std::panic::catch_unwind(|| {
-            let board =
-                parse_board(&text, &name, &ParseOptions::default()).map_err(|e| format!("{e}"))?;
+            let board = prepare_board(&text, &name)?;
             let ctx = BoardCtx::bare(&board);
             Ok::<_, String>(replay_board(&ctx))
         });
@@ -629,7 +791,7 @@ fn rtree_oracle_replay() {
             }
         };
 
-        let expected: Vec<&String> = golden_lines.iter().filter(|l| replayed(l)).collect();
+        let expected: Vec<&String> = golden_lines.iter().collect();
 
         for (i, (g, o)) in expected.iter().zip(ours.iter()).enumerate() {
             assert_eq!(o, *g, "{name}: line {i}");

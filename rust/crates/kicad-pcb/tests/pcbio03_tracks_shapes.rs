@@ -133,7 +133,8 @@ fn blocks(text: &str, tracks: bool) -> Vec<String> {
         };
         let mut j = i;
 
-        if !l.trim_end_matches('\n').ends_with(')') || l.matches('(').count() != l.matches(')').count()
+        if !l.trim_end_matches('\n').ends_with(')')
+            || l.matches('(').count() != l.matches(')').count()
         {
             while j < lines.len() && lines[j] != "\t)\n" {
                 j += 1;
@@ -198,6 +199,78 @@ fn oracle_resave_handmade() {
     }
 }
 
+/// Whether a `(uuid ..)` / `(tstamp ..)` value of a board file is neither a canonical
+/// 8-4-4-4-12 UUID nor a legacy timestamp (at most 8 hex digits): `KIID( string )` replaces such
+/// a value by a random UUID, so the reference output is not reproducible.
+fn has_non_canonical_uuid(text: &str) -> bool {
+    let canonical = |v: &str| {
+        let hex = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_hexdigit());
+        let parts: Vec<&str> = v.split('-').collect();
+
+        (v.len() <= 8 && hex(v))
+            || (parts.len() == 5
+                && parts.iter().map(|p| p.len()).eq([8, 4, 4, 4, 12])
+                && parts.iter().all(|p| hex(p)))
+    };
+
+    ["(uuid ", "(tstamp "].iter().any(|key| {
+        text.match_indices(key).any(|(i, _)| {
+            let value: String = text[i + key.len()..]
+                .trim_start()
+                .trim_start_matches('"')
+                .chars()
+                .take_while(|c| !matches!(c, '"' | ')' | ' ' | '\t' | '\n' | '\r'))
+                .collect();
+            !canonical(&value)
+        })
+    })
+}
+
+/// `(uuid "..")` values replaced by `*`.
+fn mask_uuids(block: &str) -> String {
+    let mut out = String::new();
+    let mut rest = block;
+
+    while let Some(i) = rest.find("(uuid ") {
+        out.push_str(&rest[..i]);
+        out.push_str("(uuid *)");
+        rest = &rest[i..];
+        rest = &rest[rest.find(')').map_or(rest.len(), |j| j + 1)..];
+    }
+
+    out.push_str(rest);
+    out
+}
+
+/// For a corpus board with non-canonical UUIDs: `None` when it has none; `Some(None)` when the
+/// reference text is not in the io-corpus cache; else `Some(same)`, `got` against the
+/// reference blocks with the UUIDs masked (as sets: the save order of drawings and tracks
+/// depends on the UUIDs).
+fn random_uuid_check(path: &str, got: &[String], tracks: bool) -> Option<Option<bool>> {
+    let bytes = std::fs::read(kicad_qa::kicad_source_root().join(path)).ok()?;
+
+    if !has_non_canonical_uuid(&String::from_utf8_lossy(&bytes)) {
+        return None;
+    }
+
+    let o1 = kicad_qa::io_corpus::io_corpus_dir()
+        .join("boards")
+        .join(path.replace('/', "__"))
+        .join("o1.kicad_pcb");
+
+    let Ok(o1) = std::fs::read_to_string(o1) else {
+        return Some(None);
+    };
+
+    let mask = |v: &[String]| {
+        let mut m: Vec<String> = v.iter().map(|b| mask_uuids(b)).collect();
+        m.sort();
+        m
+    };
+
+    Some(Some(mask(got) == mask(&blocks(&o1, tracks))))
+}
+
 /// Corpus oracle: every corpus board the reference build re-saves
 /// (`tests/golden/pcbio03_corpus.txt`); parse + format of the original board must give the
 /// same track and graphic blocks. Reports, per board and kind: identical (same blocks, same
@@ -212,6 +285,7 @@ fn oracle_corpus_blocks() {
     let mut identical_boards = std::collections::BTreeSet::new();
     let mut failures = Vec::new();
     let mut explained = 0;
+    let (mut random_uuid, mut random_uuid_unverifiable) = (0, 0);
     // (path, Ok((output, tokens skipped by staging parsers)) or Err(model stub))
     type Resaved = Result<(String, Vec<String>), String>;
     let mut cache: Option<(String, Resaved)> = None;
@@ -275,6 +349,14 @@ fn oracle_corpus_blocks() {
             // `parsePostMachining` is package PCBIO-07 (a staging stub skips it).
             explained += 1;
             println!("{path}|{kind}: differs, explained by the pending post-machining parser");
+        } else if let Some(masked) = random_uuid_check(path, &got, kind == "tracks") {
+            // KIID( string ) gives a value that is not a UUID a random one, so the reference
+            // re-save is not reproducible byte for byte; compared with the UUIDs masked.
+            match masked {
+                Some(true) => random_uuid += 1,
+                Some(false) => failures.push(format!("{path}|{kind}: differs (UUIDs masked)")),
+                None => random_uuid_unverifiable += 1,
+            }
         } else {
             // The first block that is not in the reference set (needs the io-corpus cache for
             // the reference text; the hashes alone say only that something differs).
@@ -295,9 +377,10 @@ fn oracle_corpus_blocks() {
     }
 
     println!(
-        "pcbio03 corpus: {identical} identical, {same_set} same set, {pending} pending, \
-         {explained} explained by a pending parser, {} differ, {empty} without blocks; \
-         {} boards with identical blocks",
+        "pcbio03 corpus: {identical} identical, {same_set} same set, {random_uuid} identical \
+         with random UUIDs masked, {random_uuid_unverifiable} with random UUIDs not checked (no \
+         io-corpus cache), {pending} pending, {explained} explained by a pending parser, {} \
+         differ, {empty} without blocks; {} boards with identical blocks",
         failures.len(),
         identical_boards.len()
     );
@@ -306,7 +389,11 @@ fn oracle_corpus_blocks() {
         println!("DIFFERS {f}");
     }
 
-    assert!(failures.is_empty(), "{} (board, kind) pairs differ", failures.len());
+    assert!(
+        failures.is_empty(),
+        "{} (board, kind) pairs differ",
+        failures.len()
+    );
 }
 
 /// `test_kicad_sexpr.cpp` `CoincidentDrawingsSurviveSave`: the writer sorts drawings into a
@@ -406,8 +493,14 @@ fn collinear_track_arc_loads_as_track() {
         .expect("collinear arc not loaded");
 
     assert!(matches!(track, Track::Trace(_)));
-    assert_eq!(track.as_track().start(), Vector2I::new(30_000_000, 14_000_000));
-    assert_eq!(track.as_track().end(), Vector2I::new(35_000_000, 14_000_000));
+    assert_eq!(
+        track.as_track().start(),
+        Vector2I::new(30_000_000, 14_000_000)
+    );
+    assert_eq!(
+        track.as_track().end(),
+        Vector2I::new(35_000_000, 14_000_000)
+    );
     assert_eq!(track.as_track().width(), 200_000);
     assert_eq!(track.as_track().base.item.layer, PcbLayerId::In2Cu);
 
@@ -419,9 +512,8 @@ fn collinear_track_arc_loads_as_track() {
 #[test]
 #[ignore = "48 MB board"]
 fn collinear_track_arc_loads_as_track_vcu118() {
-    let path = kicad_qa::pcbnew_data_dir().join(
-        "plugins/allegro/boards/VCU118_REV2-0/8851_HW-U1-VCU118_REV2-0_071417.kicad_pcb",
-    );
+    let path = kicad_qa::pcbnew_data_dir()
+        .join("plugins/allegro/boards/VCU118_REV2-0/8851_HW-U1-VCU118_REV2-0_071417.kicad_pcb");
     let text = std::fs::read_to_string(&path).unwrap();
     let board = parse(&text, "vcu118");
     let id = Kiid::parse("945ee847-b394-409c-b580-2568b3573ad8").unwrap();
@@ -432,8 +524,14 @@ fn collinear_track_arc_loads_as_track_vcu118() {
 
     assert!(matches!(track, Track::Trace(_)));
     let mm = |v: f64| kicad_geom::ki_round(v * 1e6);
-    assert_eq!(track.as_track().start(), Vector2I::new(mm(81.471125), mm(-136.690775)));
-    assert_eq!(track.as_track().end(), Vector2I::new(mm(81.476825), mm(-136.685025)));
+    assert_eq!(
+        track.as_track().start(),
+        Vector2I::new(mm(81.471125), mm(-136.690775))
+    );
+    assert_eq!(
+        track.as_track().end(),
+        Vector2I::new(mm(81.476825), mm(-136.685025))
+    );
     assert_eq!(track.as_track().width(), mm(0.15));
     assert_eq!(track.as_track().base.item.layer, PcbLayerId::In2Cu);
     let net = board.find_net(track.as_track().base.net).unwrap();
@@ -512,8 +610,7 @@ fn line_ending_load_save() {
             })
             .collect();
         let line = |n: u8| {
-            let id = Kiid::parse(&format!("00000000-0000-0000-0000-00000000000{n}"))
-                .unwrap();
+            let id = Kiid::parse(&format!("00000000-0000-0000-0000-00000000000{n}")).unwrap();
             *shapes.iter().find(|s| s.base.item.uuid == id).unwrap()
         };
 
@@ -529,10 +626,28 @@ fn line_ending_load_save() {
         };
 
         let l1 = line(1);
-        check(l1.shape.start_ending(), LineEndingStyle::Square, 300_000, 200_000, 50_000);
-        check(l1.shape.end_ending(), LineEndingStyle::ArrowOpen, 500_000, 400_000, 100_000);
+        check(
+            l1.shape.start_ending(),
+            LineEndingStyle::Square,
+            300_000,
+            200_000,
+            50_000,
+        );
+        check(
+            l1.shape.end_ending(),
+            LineEndingStyle::ArrowOpen,
+            500_000,
+            400_000,
+            100_000,
+        );
         let l2 = line(2);
-        check(l2.shape.start_ending(), LineEndingStyle::Square, 300_000, 300_000, 0);
+        check(
+            l2.shape.start_ending(),
+            LineEndingStyle::Square,
+            300_000,
+            300_000,
+            0,
+        );
     });
 
     if let Err(stub) = r {
@@ -551,19 +666,162 @@ fn line_ending_load_save() {
 #[test]
 fn ellipse_roundtrip() {
     // (shape, center, major, minor, rotation, start, end, width, fill, locked, layer)
-    let cases: [(&str, &str, &str, &str, &str, Option<(&str, &str)>, &str, &str, bool, &str); 12] = [
-        ("gr_ellipse", "100 80", "5", "3", "30", None, "0.15", "no", false, "F.SilkS"),
-        ("gr_ellipse_arc", "50 50", "8", "4", "15", Some(("30", "210")), "0.1", "", false, "F.SilkS"),
-        ("gr_ellipse", "10 10", "6", "2", "0", None, "0.3", "yes", false, "F.SilkS"),
-        ("gr_ellipse", "20 20", "4", "2", "0", None, "0.1", "no", true, "F.SilkS"),
-        ("gr_ellipse", "30 30", "7", "3", "-45", None, "0.1", "no", false, "F.SilkS"),
-        ("gr_ellipse_arc", "40 40", "5", "3", "0", Some(("90", "90")), "0.1", "", false, "F.SilkS"),
-        ("gr_ellipse", "50 50", "0.001", "0.001", "0", None, "0.1", "no", false, "F.SilkS"),
-        ("gr_ellipse", "60 60", "500", "300", "10", None, "0.1", "no", false, "F.SilkS"),
-        ("gr_ellipse_arc", "70 70", "5", "3", "0", Some(("300", "60")), "0.1", "", false, "F.SilkS"),
-        ("gr_ellipse_arc", "80 80", "5", "3", "0", Some(("-45", "45")), "0.1", "", false, "F.SilkS"),
-        ("gr_ellipse", "90 90", "5", "3", "0", None, "0.1", "no", false, "Edge.Cuts"),
-        ("gr_ellipse", "95 95", "5", "3", "0", None, "0.2", "no", false, "B.Cu"),
+    let cases: [(
+        &str,
+        &str,
+        &str,
+        &str,
+        &str,
+        Option<(&str, &str)>,
+        &str,
+        &str,
+        bool,
+        &str,
+    ); 12] = [
+        (
+            "gr_ellipse",
+            "100 80",
+            "5",
+            "3",
+            "30",
+            None,
+            "0.15",
+            "no",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse_arc",
+            "50 50",
+            "8",
+            "4",
+            "15",
+            Some(("30", "210")),
+            "0.1",
+            "",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "10 10",
+            "6",
+            "2",
+            "0",
+            None,
+            "0.3",
+            "yes",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "20 20",
+            "4",
+            "2",
+            "0",
+            None,
+            "0.1",
+            "no",
+            true,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "30 30",
+            "7",
+            "3",
+            "-45",
+            None,
+            "0.1",
+            "no",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse_arc",
+            "40 40",
+            "5",
+            "3",
+            "0",
+            Some(("90", "90")),
+            "0.1",
+            "",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "50 50",
+            "0.001",
+            "0.001",
+            "0",
+            None,
+            "0.1",
+            "no",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "60 60",
+            "500",
+            "300",
+            "10",
+            None,
+            "0.1",
+            "no",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse_arc",
+            "70 70",
+            "5",
+            "3",
+            "0",
+            Some(("300", "60")),
+            "0.1",
+            "",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse_arc",
+            "80 80",
+            "5",
+            "3",
+            "0",
+            Some(("-45", "45")),
+            "0.1",
+            "",
+            false,
+            "F.SilkS",
+        ),
+        (
+            "gr_ellipse",
+            "90 90",
+            "5",
+            "3",
+            "0",
+            None,
+            "0.1",
+            "no",
+            false,
+            "Edge.Cuts",
+        ),
+        (
+            "gr_ellipse",
+            "95 95",
+            "5",
+            "3",
+            "0",
+            None,
+            "0.2",
+            "no",
+            false,
+            "B.Cu",
+        ),
     ];
 
     let mut text = String::from(
@@ -599,8 +857,7 @@ fn ellipse_roundtrip() {
         let ctx = kicad_pcb::ctx::BoardCtx::bare(&reloaded);
 
         for (k, (kw, _, _, _, _, angles, _, fill, locked, layer)) in cases.iter().enumerate() {
-            let id = Kiid::parse(&format!("00000000-0000-0000-0000-0000000001{k:02}"))
-                .unwrap();
+            let id = Kiid::parse(&format!("00000000-0000-0000-0000-0000000001{k:02}")).unwrap();
             let find = |b: &Board| {
                 b.drawings()
                     .find_map(|(_, item)| match item {
@@ -619,8 +876,16 @@ fn ellipse_roundtrip() {
             };
             assert_eq!(b.shape.shape(), kind, "{k}");
             assert_eq!(b.lib_ellipse_center(), a.lib_ellipse_center(), "{k}");
-            assert_eq!(b.lib_ellipse_major_radius(), a.lib_ellipse_major_radius(), "{k}");
-            assert_eq!(b.lib_ellipse_minor_radius(), a.lib_ellipse_minor_radius(), "{k}");
+            assert_eq!(
+                b.lib_ellipse_major_radius(),
+                a.lib_ellipse_major_radius(),
+                "{k}"
+            );
+            assert_eq!(
+                b.lib_ellipse_minor_radius(),
+                a.lib_ellipse_minor_radius(),
+                "{k}"
+            );
             assert_eq!(
                 b.lib_ellipse_rotation().as_degrees(),
                 a.lib_ellipse_rotation().as_degrees(),

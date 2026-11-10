@@ -130,12 +130,12 @@ pub fn finish_job(result: Result<JobOutcome, SessionError>, reporter: Reporter) 
         Ok(outcome) => {
             for file in &outcome.files {
                 if ensure_parent_dir(&file.name).is_err() {
-                    eprint!("Failed to create output directory\n");
+                    eprintln!("Failed to create output directory");
                     return exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
                 }
 
                 if std::fs::write(&file.name, &file.contents).is_err() {
-                    eprint!("Failed to write '{}'.\n", file.name);
+                    eprintln!("Failed to write '{}'.", file.name);
                     return exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
                 }
             }

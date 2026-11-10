@@ -24,7 +24,7 @@ PCB_DUMP defaults to /home/user/kicad-oracle/bin/pcb-dump (rust/tools/pcb-dump/b
 every .kicad_pcb under <kicad>/qa/data/pcbnew and <kicad>/demos smaller than 5 MB, the board
 and its sibling .kicad_pro / .pro / .kicad_dru are copied to a temporary directory and
 `pcb-dump board --sections engine` (QA load path, format: rust/docs/PCB_DUMP_FORMAT.md
-section 8) runs on the copy. One golden line per board:
+section 9) runs on the copy. One golden line per board:
 
     <path relative to <kicad>>|lines=<n>|hash=<FNV-1a 64 of the engine lines>|drc_error=<0/1>|
     keepout=<n>|tuning=<n>|user=<n>|user_cond=<n>

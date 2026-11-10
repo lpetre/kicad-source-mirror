@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Tests of package PCBIO-04 (setup section reader and writer): the ported C++ tests of
 //! `qa/tests/pcbnew/pcb_io/kicad_sexpr/test_kicad_sexpr.cpp`, the differential oracles
 //! against the reference `kicad-cli pcb upgrade --force` (hand-made boards of
@@ -206,8 +205,7 @@ fn check_resave_dir(data: &str, golden_dir: &str, min_count: usize) {
     for input in &inputs {
         let name = input.file_name().unwrap().to_str().unwrap().to_string();
         let text = std::fs::read_to_string(input).unwrap();
-        let golden =
-            std::fs::read_to_string(manifest_path(golden_dir).join(&name)).unwrap();
+        let golden = std::fs::read_to_string(manifest_path(golden_dir).join(&name)).unwrap();
         let expected = setup_section(&golden);
         assert!(!expected.is_empty(), "{name}");
 
@@ -292,8 +290,8 @@ const CORPUS_EXCEPTIONS: &[(&str, &str)] = &[];
 /// reported separately.
 #[test]
 fn oracle_corpus_setup() {
-    let golden = std::fs::read_to_string(manifest_path("tests/golden/pcbio04_setup_corpus.txt"))
-        .unwrap();
+    let golden =
+        std::fs::read_to_string(manifest_path("tests/golden/pcbio04_setup_corpus.txt")).unwrap();
     let root = kicad_qa::kicad_source_root();
 
     let mut compared = 0;
@@ -371,10 +369,7 @@ fn board_with_setup(setup: &str) -> String {
 #[test]
 fn setup_errors() {
     let cases: &[(&str, &str)] = &[
-        (
-            "(bogus 1)",
-            "Unexpected bogus in '', line 3, offset 11.",
-        ),
+        ("(bogus 1)", "Unexpected bogus in '', line 3, offset 11."),
         (
             "(stackup (layer \"Edge.Cuts\" (type \"x\")))",
             "Expecting layer_name. Got ''quoted string'' in '', line 3, offset 27.",
@@ -420,14 +415,22 @@ fn setup_errors() {
 #[test]
 fn legacy_design_settings_flag() {
     let cases: &[(&str, bool, bool)] = &[
-        ("(pad_to_mask_clearance 0.1) (aux_axis_origin 1 2) (grid_origin 3 4)", false, false),
+        (
+            "(pad_to_mask_clearance 0.1) (aux_axis_origin 1 2) (grid_origin 3 4)",
+            false,
+            false,
+        ),
         ("(trace_clearance 0.2)", true, false),
         ("(user_trace_width 0.2)", true, false),
         ("(max_error 0.005)", true, false),
         ("(pad_drill 0.5)", true, false),
         ("(defaults (copper_line_width 0.2))", true, false),
         ("(defaults (edge_clearance 0.2))", true, true),
-        ("(visible_elements 7FFFFFFF) (filled_areas_thickness no)", false, false),
+        (
+            "(visible_elements 7FFFFFFF) (filled_areas_thickness no)",
+            false,
+            false,
+        ),
     ];
 
     for (setup, legacy, edge) in cases {

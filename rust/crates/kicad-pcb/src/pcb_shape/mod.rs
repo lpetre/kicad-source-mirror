@@ -31,13 +31,13 @@ use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId, St
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::transform_trs::TransformTrs;
 use kicad_geom::{
-    ANGLE_0, ANGLE_180, Box2I, EdaAngle, FlipDirection, Seg, ShapeCompound, ShapePolySet,
-    Vector2I, ki_round,
+    ANGLE_0, ANGLE_180, Box2I, EdaAngle, FlipDirection, Seg, ShapeCompound, ShapePolySet, Vector2I,
+    ki_round,
 };
 
 use crate::eda_shape::shapes::make_effective_shapes_with_line_endings;
-use crate::item::BoardUse;
 use crate::ids::NetCode;
+use crate::item::BoardUse;
 use crate::{board_connected_item, board_item};
 
 use crate::board_design_settings::BoardDesignSettings;
@@ -460,7 +460,12 @@ impl PcbShape {
                     layer_name
                 )
             } else {
-                format!("{} {} on {}", self.friendly_name(ctx), netname_msg, layer_name)
+                format!(
+                    "{} {} on {}",
+                    self.friendly_name(ctx),
+                    netname_msg,
+                    layer_name
+                )
             }
         } else if let Some(fp) = parent_fp {
             format!(
@@ -728,17 +733,11 @@ impl PcbShape {
 
                 if horizontal(&s0) && vertical(&s1) && horizontal(&s2) && vertical(&s3) {
                     self.set_shape(env, ShapeT::Rectangle);
-                    self.set_start(
-                        env,
-                        Vector2I::new(s0.a.x.min(s0.b.x), s1.a.y.min(s1.b.y)),
-                    );
+                    self.set_start(env, Vector2I::new(s0.a.x.min(s0.b.x), s1.a.y.min(s1.b.y)));
                     self.set_end(env, Vector2I::new(s0.a.x.max(s0.b.x), s1.a.y.max(s1.b.y)));
                 } else if vertical(&s0) && horizontal(&s1) && vertical(&s2) && horizontal(&s3) {
                     self.set_shape(env, ShapeT::Rectangle);
-                    self.set_start(
-                        env,
-                        Vector2I::new(s1.a.x.min(s1.b.x), s0.a.y.min(s0.b.y)),
-                    );
+                    self.set_start(env, Vector2I::new(s1.a.x.min(s1.b.x), s0.a.y.min(s0.b.y)));
                     self.set_end(env, Vector2I::new(s1.a.x.max(s1.b.x), s0.a.y.max(s0.b.y)));
                 }
             }

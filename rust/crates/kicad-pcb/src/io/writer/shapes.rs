@@ -21,10 +21,10 @@
 //! (`common/line_ending.cpp`), the line-ending formatter the shape writer calls. The stroke
 //! formatter is `STROKE_PARAMS::Format` (`kicad_core::stroke_params`).
 
+use kicad_core::PCB_IU_SCALE;
 use kicad_core::eda_units::format_angle;
 use kicad_core::layer_ids::is_external_copper_layer;
 use kicad_core::stroke_params::StrokeParams;
-use kicad_core::PCB_IU_SCALE;
 use kicad_sexpr::{IoError, OutputFormatter};
 use kicad_sexpr::{format_bool, format_custom_properties, format_uuid};
 
@@ -358,10 +358,57 @@ mod tests {
         out
     }
 
-    fn parse(text: &str, name: &str) -> Board {
-        parse_board_report(text, name, &ParseOptions {
-            allow_pending: true,
+    /// Whether a `(uuid ..)` / `(tstamp ..)` value of a board file is neither a canonical
+    /// 8-4-4-4-12 UUID nor a legacy timestamp (at most 8 hex digits): `KIID( string )` replaces
+    /// such a value by a random UUID, so the reference output is not reproducible.
+    fn has_non_canonical_uuid(text: &str) -> bool {
+        let canonical = |v: &str| {
+            let hex = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_hexdigit());
+            let parts: Vec<&str> = v.split('-').collect();
+
+            (v.len() <= 8 && hex(v))
+                || (parts.len() == 5
+                    && parts.iter().map(|p| p.len()).eq([8, 4, 4, 4, 12])
+                    && parts.iter().all(|p| hex(p)))
+        };
+
+        ["(uuid ", "(tstamp "].iter().any(|key| {
+            text.match_indices(key).any(|(i, _)| {
+                let rest = text[i + key.len()..].trim_start();
+                let value: String = rest
+                    .trim_start_matches('"')
+                    .chars()
+                    .take_while(|c| !matches!(c, '"' | ')' | ' ' | '\t' | '\n' | '\r'))
+                    .collect();
+                !canonical(&value)
+            })
         })
+    }
+
+    /// `(uuid "..")` values replaced by `*`.
+    fn mask_uuids(block: &str) -> String {
+        let mut out = String::new();
+        let mut rest = block;
+
+        while let Some(i) = rest.find("(uuid ") {
+            out.push_str(&rest[..i]);
+            out.push_str("(uuid *)");
+            rest = &rest[i..];
+            rest = &rest[rest.find(')').map_or(rest.len(), |j| j + 1)..];
+        }
+
+        out.push_str(rest);
+        out
+    }
+
+    fn parse(text: &str, name: &str) -> Board {
+        parse_board_report(
+            text,
+            name,
+            &ParseOptions {
+                allow_pending: true,
+            },
+        )
         .unwrap_or_else(|e| panic!("{name}: {}", e.what()))
         .0
     }
@@ -406,6 +453,7 @@ mod tests {
             std::fs::read_to_string(crate_dir.join("tests/golden/pcbio03_corpus.txt")).unwrap();
         let root = kicad_qa::kicad_source_root();
         let (mut identical, mut pending, mut blocks_checked) = (0, 0, 0);
+        let (mut random_uuid_masked, mut random_uuid_unverifiable) = (0, 0);
         let mut failures = Vec::new();
 
         for line in golden.lines().filter(|l| l.contains("|graphics|")) {
@@ -416,13 +464,17 @@ mod tests {
                 continue;
             }
 
-            let text = String::from_utf8_lossy(&std::fs::read(root.join(path)).unwrap())
-                .into_owned();
+            let text =
+                String::from_utf8_lossy(&std::fs::read(root.join(path)).unwrap()).into_owned();
 
             match model(|| {
-                parse_board_report(&text, path, &ParseOptions {
-                    allow_pending: true,
-                })
+                parse_board_report(
+                    &text,
+                    path,
+                    &ParseOptions {
+                        allow_pending: true,
+                    },
+                )
                 .map(|(board, _)| sorted(graphic_blocks(&format_shapes_alone(&board))))
             }) {
                 Err(stub) => {
@@ -439,6 +491,35 @@ mod tests {
                     if got.len() == count && hash == f[4] {
                         identical += 1;
                         blocks_checked += count;
+                    } else if has_non_canonical_uuid(&text) {
+                        // KIID( string ) assigns a random UUID to a string that is not a UUID
+                        // (e.g. `0-0-0-0-000000000001`), so the reference re-save cannot be
+                        // reproduced byte for byte: compare with the UUIDs masked when the
+                        // reference text is in the io-corpus cache.
+                        let o1 = kicad_qa::io_corpus::io_corpus_dir()
+                            .join("boards")
+                            .join(path.replace('/', "__"))
+                            .join("o1.kicad_pcb");
+
+                        match std::fs::read_to_string(o1) {
+                            Ok(o1) => {
+                                let want = sorted(
+                                    graphic_blocks(&o1).iter().map(|b| mask_uuids(b)).collect(),
+                                );
+                                let got = sorted(got.iter().map(|b| mask_uuids(b)).collect());
+
+                                if got == want {
+                                    random_uuid_masked += 1;
+                                    blocks_checked += count;
+                                } else {
+                                    failures.push(format!(
+                                        "{path}: {} blocks, expected {count} (UUIDs masked)",
+                                        got.len()
+                                    ));
+                                }
+                            }
+                            Err(_) => random_uuid_unverifiable += 1,
+                        }
                     } else {
                         failures.push(format!("{path}: {} blocks, expected {count}", got.len()));
                     }
@@ -447,8 +528,9 @@ mod tests {
         }
 
         println!(
-            "pcbio03 shapes corpus: {identical} boards identical ({blocks_checked} blocks), \
-             {pending} pending, {} differ",
+            "pcbio03 shapes corpus: {identical} boards identical, {random_uuid_masked} identical \
+             with random UUIDs masked ({blocks_checked} blocks), {random_uuid_unverifiable} with \
+             random UUIDs not checked (no io-corpus cache), {pending} pending, {} differ",
             failures.len()
         );
 

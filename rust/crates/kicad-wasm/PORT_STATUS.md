@@ -13,20 +13,22 @@ ported libraries. API surface and status per call: `README.md`.
 | `strokeText` | `kicad_font` `FONT::Draw` + `CALLBACK_GAL` truncation | kicad-font oracle; 4 strings native == wasm |
 | `polygonBoolean` | `kicad_geom::ShapePolySet` boolean ops (vendored Clipper2) | kicad-geom oracle; 8 cases native == wasm |
 | `plotDemoGerber` | `kicad_plot::GerberPlotter` | byte-identical to the C++ `GERBER_PLOTTER` (`tests/golden/demo_gerber_cpp.gbr`, `tests/oracle/regen_demo_gerber.sh` via the kicad-plot oracle driver); native == wasm |
-| `newBoard`, `Board.nets/tracks/addTrack/addVia/remove` | `kicad_session::Session` on the kicad-pcb model | native unit test + node smoke test |
+| `newBoard`, `Board.nets/tracks/addTrack/addVia/remove/save` | `kicad_session::Session` on the kicad-pcb model | item lists and saved text native == wasm |
+| `loadBoard` + `nets/tracks/save` | `Session::load_board` (`kicad_pcb::io::parse_board`), `format_board` | `qa/data/pcbnew/issue10697.kicad_pcb`: native == wasm, and the saved text is byte-identical to the reference `kicad-cli pcb upgrade --force` (`loaded_board_save_matches_cpp`) |
 
-Pending (typed `NotYetPortedError`): `loadBoard` (parser), `runDrc`, `exportGerbers`,
-`exportDrill`, `plotSvg`, `save`, `ratsnest`, `refillZones`.
+Pending (typed `NotYetPortedError`): `loadBoard` of boards with constructs the parser has not
+landed yet (footprints, ...), `runDrc`, `exportGerbers`, `exportDrill`, `plotSvg`, `ratsnest`,
+`refillZones`.
 
 ## Pipeline
 
 `rust/scripts/build-wasm.sh [--test]`: `cargo build -p kicad-wasm --target
 wasm32-unknown-unknown --profile wasm-release`, `wasm-bindgen` 0.2.130 for `--target nodejs`
 (`web/pkg-node`) and `--target web` (`web/pkg`), sizes, optional `wasm-opt`, then
-`web/test/smoke.mjs` (43 checks) and `web/test/browser.mjs` (Playwright/Chromium on a local
+`web/test/smoke.mjs` (49 checks) and `web/test/browser.mjs` (Playwright/Chromium on a local
 static server, `web/index.html` + `web/app.js`).
 
-Size (wasm-release, no wasm-opt): 4,070,213 bytes from cargo, 3,592,509 after wasm-bindgen.
+Size (wasm-release, no wasm-opt): 4,757,372 bytes from cargo, 4,230,850 after wasm-bindgen.
 
 ## Deviations / notes
 

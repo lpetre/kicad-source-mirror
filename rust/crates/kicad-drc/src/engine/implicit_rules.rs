@@ -320,7 +320,10 @@ pub(crate) fn load_implicit_rules(
     );
     add(
         &mut u_via_rule,
-        min_constraint(DrcConstraintT::ViaDiameterConstraint, bds.micro_vias_min_size),
+        min_constraint(
+            DrcConstraintT::ViaDiameterConstraint,
+            bds.micro_vias_min_size,
+        ),
     );
     rules.push(u_via_rule);
 
@@ -475,13 +478,14 @@ pub(crate) fn load_implicit_rules(
 
         if nc.has_uvia_drill() {
             let mut netclass_rule = new_rule(
-                format!("netclass '{}' uvia", parent_name(nc, &nc.parents.uvia_drill)),
+                format!(
+                    "netclass '{}' uvia",
+                    parent_name(nc, &nc.parents.uvia_drill)
+                ),
                 format!("A.hasExactNetclass('{nc_name}') && A.Via_Type == 'Micro'"),
             );
-            let mut constraint = min_constraint(
-                DrcConstraintT::HoleSizeConstraint,
-                bds.micro_vias_min_drill,
-            );
+            let mut constraint =
+                min_constraint(DrcConstraintT::HoleSizeConstraint, bds.micro_vias_min_drill);
             constraint.value.set_opt(nc.uvia_drill());
             add(&mut netclass_rule, constraint);
             netclass_item_specific_rules.push(netclass_rule);
@@ -521,7 +525,8 @@ pub(crate) fn load_implicit_rules(
     }
 
     for (name, rule_seq) in registrations {
-        out.netclass_clearances.push((name, index_of_seq[&rule_seq]));
+        out.netclass_clearances
+            .push((name, index_of_seq[&rule_seq]));
     }
 
     rules.extend(netclass_item_specific_rules);
@@ -643,66 +648,68 @@ pub(crate) fn load_implicit_rules(
 
     let ctx = BoardCtx::bare(board);
 
-    let add_keepout_zone_rule = |rules: &mut Vec<DrcRule>,
-                                 zone_id: ItemId,
-                                 zone: &Zone,
-                                 parent_fp: Option<&kicad_pcb::footprint::Footprint>| {
-        let name = zone.zone_name();
-        let describe_parent =
-            |fp: &kicad_pcb::footprint::Footprint| describe_ref(&fp.reference(&ctx));
+    let add_keepout_zone_rule =
+        |rules: &mut Vec<DrcRule>,
+         zone_id: ItemId,
+         zone: &Zone,
+         parent_fp: Option<&kicad_pcb::footprint::Footprint>| {
+            let name = zone.zone_name();
+            let describe_parent =
+                |fp: &kicad_pcb::footprint::Footprint| describe_ref(&fp.reference(&ctx));
 
-        let rule_name = if name.is_empty() {
-            match parent_fp {
-                Some(fp) => format!("keepout area of {}", describe_parent(fp)),
-                None => "keepout area".to_string(),
+            let rule_name = if name.is_empty() {
+                match parent_fp {
+                    Some(fp) => format!("keepout area of {}", describe_parent(fp)),
+                    None => "keepout area".to_string(),
+                }
+            } else {
+                match parent_fp {
+                    Some(fp) => format!("keepout area '{}' of {}", name, describe_parent(fp)),
+                    None => format!("keepout area '{name}'"),
+                }
+            };
+
+            let mut rule = create_implicit_rule(&rule_name, DrcImplicitSource::Keepout);
+
+            rule.implicit_item_id = zone.base.item.uuid;
+            rule.implicit_item = Some(zone_id);
+
+            rule.condition = condition(&format!(
+                "A.intersectsKeepout('{}')",
+                zone.base.item.uuid.as_string()
+            ));
+
+            rule.layer_condition = zone.layer_set(&ctx);
+
+            let mut disallow_flags = 0;
+
+            if zone.do_not_allow_tracks {
+                disallow_flags |= drc_disallow::TRACKS;
             }
-        } else {
-            match parent_fp {
-                Some(fp) => format!("keepout area '{}' of {}", name, describe_parent(fp)),
-                None => format!("keepout area '{name}'"),
+
+            if zone.do_not_allow_vias {
+                disallow_flags |= drc_disallow::VIAS;
             }
+
+            if zone.do_not_allow_pads {
+                disallow_flags |= drc_disallow::PADS;
+            }
+
+            if zone.do_not_allow_zone_fills {
+                disallow_flags |= drc_disallow::ZONES;
+            }
+
+            if zone.do_not_allow_footprints {
+                disallow_flags |= drc_disallow::FOOTPRINTS;
+            }
+
+            let mut disallow_constraint =
+                DrcConstraint::new(DrcConstraintT::DisallowConstraint, "");
+            disallow_constraint.disallow_flags = disallow_flags;
+            add(&mut rule, disallow_constraint);
+
+            rules.push(rule);
         };
-
-        let mut rule = create_implicit_rule(&rule_name, DrcImplicitSource::Keepout);
-
-        rule.implicit_item_id = zone.base.item.uuid;
-        rule.implicit_item = Some(zone_id);
-
-        rule.condition = condition(&format!(
-            "A.intersectsKeepout('{}')",
-            zone.base.item.uuid.as_string()
-        ));
-
-        rule.layer_condition = zone.layer_set(&ctx);
-
-        let mut disallow_flags = 0;
-
-        if zone.do_not_allow_tracks {
-            disallow_flags |= drc_disallow::TRACKS;
-        }
-
-        if zone.do_not_allow_vias {
-            disallow_flags |= drc_disallow::VIAS;
-        }
-
-        if zone.do_not_allow_pads {
-            disallow_flags |= drc_disallow::PADS;
-        }
-
-        if zone.do_not_allow_zone_fills {
-            disallow_flags |= drc_disallow::ZONES;
-        }
-
-        if zone.do_not_allow_footprints {
-            disallow_flags |= drc_disallow::FOOTPRINTS;
-        }
-
-        let mut disallow_constraint = DrcConstraint::new(DrcConstraintT::DisallowConstraint, "");
-        disallow_constraint.disallow_flags = disallow_flags;
-        add(&mut rule, disallow_constraint);
-
-        rules.push(rule);
-    };
 
     for (zone_id, zone) in board.zones() {
         if is_keepout_zone(zone, true) {

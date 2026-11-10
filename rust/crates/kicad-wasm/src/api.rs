@@ -28,7 +28,7 @@ use kicad_font::{FontExt, Metrics, StrokeCollector, default_font};
 use kicad_geom::{DEGREES_T, EdaAngle, ShapeLineChain, ShapePolySet, Vector2D, Vector2I};
 use kicad_plot::{FillT, GerberPlotter, Plotter, RenderSettings};
 use kicad_sexpr::keywords::pcb_keys_t::T;
-use kicad_sexpr::{DSN_NUMBER, DSN_STRING, DSN_SYMBOL, DsnLexer, FormatMode, KeywordSet};
+use kicad_sexpr::{DSN_NUMBER, DSN_STRING, DsnLexer, FormatMode, KeywordSet};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -128,9 +128,8 @@ pub fn token_stats(text: &str, source: &str) -> Result<TokenStats, String> {
                     stats.numbers += 1;
                 } else if v == DSN_STRING {
                     stats.strings += 1;
-                } else if v == DSN_SYMBOL {
-                    stats.symbols += 1;
                 } else {
+                    // DSN_SYMBOL (and any other negative token) counts as a symbol.
                     stats.symbols += 1;
                 }
             }

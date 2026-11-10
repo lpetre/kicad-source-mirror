@@ -532,10 +532,18 @@ fn compare_with_oracle(name: &str, board_rel: &str, args: &[&str]) -> Outcome {
         b.keys().collect::<Vec<_>>(),
         "{args:?} files"
     );
+    // The input board itself: unchanged by the export jobs, re-saved in place by
+    // `pcb upgrade` (the writer has no dates, so the bytes must be equal).
+    assert!(
+        std::fs::read(mine.join(&board)).unwrap() == std::fs::read(theirs.join(&board)).unwrap(),
+        "{args:?} board file after the run"
+    );
     Outcome::Compared
 }
 
 const BOARDS: &[&str] = &[
+    // Parsed and written in full today: `pcb upgrade` is compared byte for byte.
+    "qa/data/pcbnew/issue10697.kicad_pcb",
     "qa/data/pcbnew/issue7241.kicad_pcb",
     "qa/data/pcbnew/via_stacks.kicad_pcb",
     "demos/pic_programmer/pic_programmer.kicad_pcb",
@@ -585,6 +593,7 @@ fn board_jobs_pending_or_equal() {
             ],
         ),
         ("upgrade", &["pcb", "upgrade", "--force", "B"]),
+        ("upgrade-noforce", &["pcb", "upgrade", "B"]),
     ];
 
     for (i, board) in BOARDS.iter().enumerate() {
@@ -592,7 +601,7 @@ fn board_jobs_pending_or_equal() {
             let outcome = compare_with_oracle(&format!("{name}-{i}"), board, args);
 
             if let Outcome::Pending(subsystem) = &outcome {
-                // Today every job stops at the board parser.
+                // A job that cannot run yet names the missing subsystem.
                 assert!(subsystem.contains("kicad-"), "{name}: {subsystem}");
             }
         }

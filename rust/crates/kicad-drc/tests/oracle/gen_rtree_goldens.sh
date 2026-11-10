@@ -27,13 +27,14 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 # Synthetic boards (gen_rtree_boards.py) first, then small QA boards with pads, zones and
-# graphics (the Rust replay reports those as pending until the model shapes them).
+# graphics (the Rust replay reports those as pending until the model shapes them); the last four
+# have filled zones (triangulated zone trees, the polygon fast path of QueryColliding).
 BOARDS=( "$HERE/../data/rtree/rtree_small.kicad_pcb"
          "$HERE/../data/rtree/rtree_ties.kicad_pcb"
          "$HERE/../data/rtree/rtree_4layer.kicad_pcb" )
 
 for b in issue7267 issue18203 issue16566 net_tie_hole_clearance via_stacks \
-         connection_width_rules issue24649; do
+         connection_width_rules issue24649 two_segment_teardrop issue18142 fill_bad issue14334; do
     BOARDS+=( "$KICAD_SRC/qa/data/pcbnew/$b.kicad_pcb" )
 done
 

@@ -309,9 +309,13 @@ impl PcbParser {
 
                 if self.board_present {
                     let max_error = self.board.design_settings().max_error;
-                    shape.shape.rebuild_bezier_to_segments_points_list(max_error);
+                    shape
+                        .shape
+                        .rebuild_bezier_to_segments_points_list(max_error);
                 } else {
-                    shape.shape.rebuild_bezier_to_segments_points_list(ARC_HIGH_DEF);
+                    shape
+                        .shape
+                        .rebuild_bezier_to_segments_points_list(ARC_HIGH_DEF);
                 }
 
                 self.lexer.need_right()?;
@@ -430,10 +434,8 @@ impl PcbParser {
                 }
                 // legacy token
                 T::T_width => {
-                    let width = self.parse_board_units_tok(
-                        T::T_width,
-                        kicad_core::EdaDataType::Distance,
-                    )?;
+                    let width =
+                        self.parse_board_units_tok(T::T_width, kicad_core::EdaDataType::Distance)?;
                     stroke.set_width(width);
                     self.lexer.need_right()?;
                 }
@@ -505,7 +507,8 @@ impl PcbParser {
                     self.lexer.need_right()?;
                 }
                 T::T_start_angle => {
-                    ellipse_start = EdaAngle::from_degrees(self.parse_double_expected("start angle")?);
+                    ellipse_start =
+                        EdaAngle::from_degrees(self.parse_double_expected("start angle")?);
                     self.lexer.need_right()?;
                 }
                 T::T_end_angle => {

@@ -31,14 +31,14 @@ use kicad_geom::geometry::geometry_utils::ARC_LOW_DEF;
 use kicad_geom::geometry::shape_utils::get_circle_key_points;
 use kicad_geom::{ShapePolySet, Vector2I, ki_round};
 
+use crate::board_item;
 use crate::ctx::BoardCtx;
 use crate::eda_shape::{EdaShape, ShapeT, hatching_data};
 use crate::ids::ItemId;
+use crate::item::RecurseMode;
 use crate::item_ref::{AnyItem, ItemRef};
 use crate::pcb_shape::PcbShape;
-use crate::item::RecurseMode;
 use crate::traits::EdaShapeItem;
-use crate::board_item;
 
 /// Port of `EDA_SHAPE::getFriendlyName( FRAME_PCB_EDITOR )` (English; `_()` untranslated).
 /// `is_proxy` is the virtual `IsProxyItem()` of the host.
@@ -88,7 +88,14 @@ pub fn hatching_knockouts(shape: &PcbShape, ctx: &BoardCtx<'_>) -> ShapePolySet 
             margin = 0;
         }
 
-        item.transform_shape_to_polygon(knockouts, layer, margin, max_error, ErrorLoc::Outside, false);
+        item.transform_shape_to_polygon(
+            knockouts,
+            layer,
+            margin,
+            max_error,
+            ErrorLoc::Outside,
+            false,
+        );
     };
 
     for (id, _) in ctx.board.drawings() {
@@ -229,7 +236,9 @@ impl PcbShape {
                 let b = e.minor_radius;
                 let c = e.center;
 
-                ret.push(c + Vector2I::new(ki_round(a as f64 * cos_phi), ki_round(a as f64 * sin_phi)));
+                ret.push(
+                    c + Vector2I::new(ki_round(a as f64 * cos_phi), ki_round(a as f64 * sin_phi)),
+                );
                 ret.push(
                     c + Vector2I::new(ki_round(-a as f64 * cos_phi), ki_round(-a as f64 * sin_phi)),
                 );

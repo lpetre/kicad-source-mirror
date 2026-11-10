@@ -53,6 +53,11 @@ Load paths:
   project is bound, `SynchronizeComponentClasses( {} )`. After each file the empty project is
   loaded again so every file starts from the same state.
 * `--no-init`: the parser only (no project, no DRC engine, no connectivity).
+
+Opt-in sections (printed only when listed in `--sections`): `connectivity`
+(`dump_connectivity.cpp`) and `engine` (`dump_engine.cpp`: the rules, compiled constraint lists
+and provider order of the load path's `DRC_ENGINE`); formats in `PCB_DUMP_FORMAT.md` sections 8
+and 9.
 * `--loader`: the kicad-cli path (`PCBNEW_JOBS_HANDLER::getBoard`): project
   `<base>.kicad_pro` (created in memory if missing), `BOARD_LOADER::Load` with the plugin type of
   `PCB_IO_MGR::FindPluginTypeFromBoardPath`.

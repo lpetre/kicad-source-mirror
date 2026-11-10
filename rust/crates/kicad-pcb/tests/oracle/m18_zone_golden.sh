@@ -36,13 +36,15 @@ QA="$KICAD_SRC/qa"
 CFLAGS+=( -I"$DUMP_SRC" -I"$QA/qa_utils/include" -I"$QA/pcbnew_utils/include" -I"$QA/mocks/include" -I"$KICAD_SRC/thirdparty/turtle" -I"$KICAD_SRC/pcbnew/router" -I"$KICAD_SRC/pcbnew/tools"
           $(pkg-config --cflags gtk+-3.0) -w )
 
-nice -n 15 c++ "${CFLAGS[@]}" -c "$HERE/m18_zone_oracle.cpp" -o "$SCRATCH/m18_zone_oracle.o"
+# Every C++ compile / link runs under the machine-wide lock (PORTING.md section 7).
+LOCK=/home/user/kicad-oracle/cxx-build.lock
+flock "$LOCK" nice -n 15 c++ "${CFLAGS[@]}" -c "$HERE/m18_zone_oracle.cpp" -o "$SCRATCH/m18_zone_oracle.o"
 
 # The pcb-dump link line with our object in place of main.cpp.o and our output.
 sed -e "s#$OBJ_DIR/rust_tools_pcb-dump_main.cpp.o#$SCRATCH/m18_zone_oracle.o#" \
     -e "s#-o /home/user/kicad-oracle/bin/pcb-dump#-o $SCRATCH/m18_zone_oracle#" \
     "$OBJ_DIR/link.sh" > "$SCRATCH/link.sh"
-bash "$SCRATCH/link.sh"
+flock "$LOCK" nice -n 15 bash "$SCRATCH/link.sh"
 
 cp "$HERE/m18_zones.kicad_pcb" "$SCRATCH/m18_zones.kicad_pcb"
 KICAD_CONFIG_HOME="$SCRATCH/home" HOME="$SCRATCH/home" \

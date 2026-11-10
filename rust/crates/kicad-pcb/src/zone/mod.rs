@@ -1807,6 +1807,84 @@ mod tests {
         assert_eq!(zone.position(&ctx), Vector2I::new(0, 0));
     }
 
+    /// `test_board_item.cpp` `BoardlessItemsUseStandardLayerMetadata` (zone part): `GetInteractingZones` of a
+    /// zone without a board (C++: its parent footprint has none) returns nothing.
+    #[test]
+    fn boardless_zone_interacting_zones() {
+        let board = Board::new();
+        let mut kiids = KiidGenerator::default();
+        let zone = Zone::new(&mut kiids);
+        let ctx = BoardCtx::bare(&board);
+        let (same, other) = zone.interacting_zones(&ctx, PcbLayerId::FCu);
+
+        assert!(same.is_empty());
+        assert!(other.is_empty());
+    }
+
+    /// `CircleZoneCutoutRoundTrip`: a circular outline with its arcs dropped before the
+    /// boolean, as `ZONE_CREATE_HELPER::performZoneCutout` does.
+    /// https://gitlab.com/kicad/code/kicad/-/issues/24053
+    #[test]
+    fn circle_zone_cutout_round_trip() {
+        use kicad_geom::geometry::shape_arc::ShapeArc;
+
+        // Build a circular zone outline the same way convert_tool.cpp does for CIRCLE shapes
+        let center = Vector2I::new(0, 0);
+        let radius = mm(10.0);
+        let full_circle = ShapeArc::from_start_mid_end(
+            center - Vector2I::new(radius, 0),
+            center + Vector2I::new(radius, 0),
+            center - Vector2I::new(radius, 0),
+            0,
+        );
+
+        let mut source_outline = ShapePolySet::new();
+        source_outline.new_outline();
+        source_outline.append_arc(&full_circle, -1, -1, None);
+
+        assert!(source_outline.arc_count() > 0);
+        let source_area = source_outline.area();
+        assert!(source_area > 0.0);
+
+        // Draw a small rectangular cutout well inside the circle
+        let mut cutout_outline = ShapePolySet::new();
+        cutout_outline.new_outline();
+        let cutout_half = mm(1.0);
+        cutout_outline.append_point(Vector2I::new(-cutout_half, -cutout_half), -1, -1);
+        cutout_outline.append_point(Vector2I::new(cutout_half, -cutout_half), -1, -1);
+        cutout_outline.append_point(Vector2I::new(cutout_half, cutout_half), -1, -1);
+        cutout_outline.append_point(Vector2I::new(-cutout_half, cutout_half), -1, -1);
+
+        // Mirror the fix applied in ZONE_CREATE_HELPER::performZoneCutout: drop arcs before
+        // the boolean so the saved outline cannot reference stale arc endpoints.
+        let mut working = source_outline.clone();
+        working.clear_arcs();
+
+        let mut cutout = cutout_outline.clone();
+        cutout.clear_arcs();
+
+        working.boolean_subtract(&cutout);
+
+        assert_eq!(working.arc_count(), 0);
+        assert_eq!(working.outline_count(), 1);
+        assert_eq!(working.hole_count(0), 1);
+
+        // BOOST_CHECK_CLOSE( .., 0.1 ): relative difference in percent
+        let expected_area = source_area - cutout_outline.area();
+        let rel = (working.area() - expected_area).abs() / expected_area.abs();
+        assert!(rel * 100.0 <= 0.1, "{} vs {expected_area}", working.area());
+
+        // Outline must be a simple closed curve with reasonable point count
+        let outer_chain = working.c_outline(0);
+        assert!(outer_chain.is_closed());
+        assert!(outer_chain.point_count() >= 8);
+        assert!(outer_chain.self_intersecting().is_none());
+
+        let hole_chain = working.c_hole(0, 0);
+        assert!(hole_chain.is_closed());
+        assert_eq!(hole_chain.point_count(), 4);
+    }
+
     #[test]
     fn zone_merge_null() {
         let mut board = Board::new();

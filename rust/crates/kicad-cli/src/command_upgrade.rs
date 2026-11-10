@@ -63,7 +63,7 @@ pub fn pcb_perform(m: &ArgMatches) -> i32 {
     upgrade_job.force = get_flag(m, ARG_FORCE);
 
     if !Path::new(&upgrade_job.filename).is_file() {
-        eprint!("Board file does not exist or is not accessible\n");
+        eprintln!("Board file does not exist or is not accessible");
         return exit_codes::ERR_INVALID_INPUT_FILE;
     }
 

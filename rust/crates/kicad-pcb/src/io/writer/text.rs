@@ -29,8 +29,8 @@ use kicad_core::eda_units::format_angle;
 use kicad_core::string_utils::format_double2_str;
 use kicad_core::text_vars::ResolutionContext;
 use kicad_core::{Color4D, GrTextHAlignT, GrTextVAlignT, PCB_IU_SCALE};
-use kicad_geom::{EdaAngle, Vector2I, ki_round};
 use kicad_font::Glyph;
+use kicad_geom::{EdaAngle, Vector2I, ki_round};
 use kicad_sexpr::{IoError, format_bool, format_custom_properties, format_uuid};
 
 use super::{CTL_OMIT_COLOR, CTL_OMIT_HYPERLINK, PcbWriter, format_iu, format_iu_pt};
@@ -75,7 +75,7 @@ impl PcbWriter<'_> {
         field: Option<&PcbField>,
         is_dimension: bool,
     ) -> Result<(), IoError> {
-        let ctx = self.ctx.clone();
+        let ctx = self.ctx;
         let mut parent_fp = board_item::parent_footprint(text, &ctx);
         let prefix;
         let mut type_ = "";
@@ -135,14 +135,7 @@ impl PcbWriter<'_> {
             let attrs = &text.text.attributes;
             let size = Vector2I::new(attrs.size.0, attrs.size.1);
             let thickness = attrs.stroke_width;
-            format_eda_text(
-                self,
-                &text.text,
-                size,
-                thickness,
-                "",
-                ctl_flags,
-            )?;
+            format_eda_text(self, &text.text, size, thickness, "", ctl_flags)?;
         } else {
             format_eda_text(
                 self,
@@ -185,7 +178,7 @@ impl PcbWriter<'_> {
         textbox: &PcbTextbox,
         cell_span: Option<(i32, i32)>,
     ) -> Result<(), IoError> {
-        let ctx = self.ctx.clone();
+        let ctx = self.ctx;
         let parent_fp = board_item::parent_footprint(host, &ctx);
 
         let keyword = if cell_span.is_some() {
@@ -291,7 +284,7 @@ impl PcbWriter<'_> {
     /// Port of `formatRenderCache( const EDA_TEXT* aText )`: `(render_cache ..)` of the text
     /// item `text` (any item with an `EDA_TEXT`).
     pub(crate) fn format_render_cache(&mut self, text: ItemId) -> Result<(), IoError> {
-        let ctx = self.ctx.clone();
+        let ctx = self.ctx;
 
         match ctx.item(text) {
             Some(item) => match item.as_eda_text() {
@@ -311,7 +304,7 @@ impl PcbWriter<'_> {
         &mut self,
         host: &H,
     ) -> Result<(), IoError> {
-        let ctx = self.ctx.clone();
+        let ctx = self.ctx;
         let resolved_text = host.shown_text(&ctx, ResolutionContext::ForCanvas, 0);
         let cache = eda_text::render_cache(host, &ctx, &resolved_text, Vector2I::new(0, 0));
 
@@ -384,7 +377,11 @@ fn format_eda_text(
     }
 
     // Text size
-    out.print(format_args!("(size {} {})", format_iu(size.y), format_iu(size.x)))?;
+    out.print(format_args!(
+        "(size {} {})",
+        format_iu(size.y),
+        format_iu(size.x)
+    ))?;
 
     if text.line_spacing() != 1.0 {
         out.print(format_args!(

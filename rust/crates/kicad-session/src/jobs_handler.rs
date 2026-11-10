@@ -491,7 +491,17 @@ pub fn run_pcb_upgrade(
     // board-model.md 17).
 
     if should_save {
-        let text = session.save()?;
+        let text = match session.save() {
+            Ok(text) => text,
+            Err(SessionError::Save { message }) => {
+                reporter.report(
+                    format!("Error saving board file '{}'.\n{}", job.filename, message),
+                    Severity::Error,
+                );
+                return Ok(JobOutcome::exit(exit_codes::ERR_UNKNOWN));
+            }
+            Err(e) => return Err(e),
+        };
         reporter.report(
             "Successfully saved board file using the latest format\n",
             Severity::Info,

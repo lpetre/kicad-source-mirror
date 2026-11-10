@@ -110,25 +110,23 @@ impl PcbPlotParamsParser<'_> {
                     let cur = self.lexer.cur_str().to_string();
 
                     if find_first_of_0x_is_0(&cur) {
-                        let layers;
-
                         // The layers were renumbered in 5e0abadb23425765e164f49ee2f893e94ddb97fc,
                         // but there wasn't a board file version change with it, so this value
                         // is the one immediately after that happened.
-                        if self.board_file_version < 20240819 {
+                        let layers = if self.board_file_version < 20240819 {
                             let mut legacy_lset = BaseSet::new(LEGACY_PCB_LAYER_ID_COUNT);
 
                             // skip the leading 2 0x bytes.
                             legacy_lset.parse_hex_bytes(after_0x(&cur));
 
-                            layers = remap_legacy_layer_lset(&legacy_lset);
+                            remap_legacy_layer_lset(&legacy_lset)
                         } else {
                             let mut parsed = Lset::new();
 
                             // skip the leading 2 0x bytes.
                             parsed.parse_hex_bytes(after_0x(&cur));
-                            layers = parsed;
-                        }
+                            parsed
+                        };
 
                         params.set_plot_on_all_layers_sequence(layers.seq_stackup_for_plotting().0);
                     } else {
@@ -136,7 +134,9 @@ impl PcbPlotParamsParser<'_> {
                     }
                 }
 
-                T::T_disableapertmacros => params.gerber_disable_apert_macros = self.parse_bool()?,
+                T::T_disableapertmacros => {
+                    params.gerber_disable_apert_macros = self.parse_bool()?
+                }
                 T::T_usegerberextensions => {
                     params.use_gerber_protel_extensions = self.parse_bool()?
                 }
@@ -149,7 +149,9 @@ impl PcbPlotParamsParser<'_> {
                     params.gerber_precision =
                         self.parse_int(GBR_DEFAULT_PRECISION - 1, GBR_DEFAULT_PRECISION)?;
                 }
-                T::T_dashed_line_dash_ratio => params.dashed_line_dash_ratio = self.parse_double()?,
+                T::T_dashed_line_dash_ratio => {
+                    params.dashed_line_dash_ratio = self.parse_double()?
+                }
                 T::T_dashed_line_gap_ratio => params.dashed_line_gap_ratio = self.parse_double()?,
                 T::T_svgprecision => {
                     // parseInt returns an int stored in an unsigned member
@@ -164,7 +166,9 @@ impl PcbPlotParamsParser<'_> {
                 T::T_psa4output => params.a4_output = self.parse_bool()?,
                 T::T_excludeedgelayer => {
                     if !self.parse_bool()? {
-                        params.plot_on_all_layers_sequence.push(PcbLayerId::EdgeCuts);
+                        params
+                            .plot_on_all_layers_sequence
+                            .push(PcbLayerId::EdgeCuts);
                     }
                 }
                 T::T_plotframeref => params.plot_drawing_sheet = self.parse_bool()?,

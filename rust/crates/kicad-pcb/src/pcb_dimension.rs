@@ -1631,17 +1631,16 @@ impl PcbDimension {
             DimensionKind::Aligned(a) => {
                 a.height = -a.height;
             }
+            // Only reverse the height if the height is aligned with the flip
             DimensionKind::Orthogonal {
                 aligned,
                 orientation,
-            } => {
-                // Only reverse the height if the height is aligned with the flip
-                if (*orientation == DimOrthogonalDir::Horizontal && dir == FlipDirection::TopBottom)
-                    || (*orientation == DimOrthogonalDir::Vertical
-                        && dir == FlipDirection::LeftRight)
-                {
-                    aligned.height = -aligned.height;
-                }
+            } if (*orientation == DimOrthogonalDir::Horizontal
+                && dir == FlipDirection::TopBottom)
+                || (*orientation == DimOrthogonalDir::Vertical
+                    && dir == FlipDirection::LeftRight) =>
+            {
+                aligned.height = -aligned.height;
             }
             _ => {}
         }
@@ -2023,6 +2022,104 @@ mod tests {
         assert_eq!(d.units, EdaUnits::Mm);
     }
 
+    // ---- qa/tests/pcbnew/test_board_item.cpp (the five PCB_DIM_* rows) ----
+
+    /// `IterateOverPositionsAndReferences` (`qa/qa_utils/eda_item_test_utils.h`).
+    fn iterate_positions(mut f: impl FnMut(Vector2I, Vector2I)) {
+        let (xstep, ystep) = (1_000_000, 500_000); // schIUScale.mmToIU( 100 ), ( 50 )
+
+        for pos_x in [-xstep, 0, xstep] {
+            for pos_y in [-ystep, 0, ystep] {
+                for ref_x in [-xstep, 0, xstep] {
+                    for ref_y in [-ystep, 0, ystep] {
+                        f(Vector2I::new(pos_x, pos_y), Vector2I::new(ref_x, ref_y));
+                    }
+                }
+            }
+        }
+    }
+
+    /// `CompareItems`: position and bounding box edges.
+    fn compare_items(ctx: &BoardCtx<'_>, a: &PcbDimension, b: &PcbDimension) {
+        assert_eq!(a.position(ctx), b.position(ctx));
+        let (ba, bb) = (a.bounding_box(ctx), b.bounding_box(ctx));
+        assert_eq!(
+            (ba.top(), ba.left(), ba.bottom(), ba.right()),
+            (bb.top(), bb.left(), bb.bottom(), bb.right())
+        );
+    }
+
+    /// `Move`, `Rotate`, `FlipLeftRight`, `FlipUpDown` of `test_board_item.cpp` for the
+    /// dimensions `Instantiate()` makes (parent: the board): move there and back, four
+    /// quarter turns and two flips are identities.
+    #[test]
+    fn board_item_move_rotate_flip_are_identities() {
+        let board = Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let env = MutEnv::detached();
+
+        for type_ in [
+            KicadT::PcbDimAlignedT,
+            KicadT::PcbDimLeaderT,
+            KicadT::PcbDimCenterT,
+            KicadT::PcbDimRadialT,
+            KicadT::PcbDimOrthogonalT,
+        ] {
+            let mut item = PcbDimension::of_type(type_).unwrap();
+            item.text.base.parent = crate::item::ParentRef::Board;
+
+            iterate_positions(|pos, r| {
+                let mut original = item.clone();
+                original.set_position(&env, pos);
+                // FIXME: Update() has to be called after SetPosition() to update dimension
+                // shapes.
+                original.update(&ctx);
+
+                // Move to a point, then go back.
+                let mut moved = original.clone();
+                let before = moved.position(&ctx);
+                moved.move_by(&env, r);
+                assert_eq!(moved.position(&ctx), before + r);
+                moved.move_by(&env, -r);
+                compare_items(&ctx, &moved, &original);
+
+                // Four equivalent 90 degree rotations are an identity.
+                let mut rotated = original.clone();
+
+                for _ in 0..4 {
+                    rotated.rotate(&env, r, EdaAngle::from_degrees(90.0));
+                }
+
+                compare_items(&ctx, &rotated, &original);
+
+                // Two equivalent flips are an identity.
+                for dir in [FlipDirection::LeftRight, FlipDirection::TopBottom] {
+                    let mut flipped = original.clone();
+                    flipped.flip(&env, r, dir);
+                    flipped.flip(&env, r, dir);
+                    compare_items(&ctx, &flipped, &original);
+                    assert_eq!(flipped.text.base.layer, original.text.base.layer);
+                }
+            });
+        }
+    }
+
+    /// `qa/tests/pcbnew/test_group_mirror.cpp`: `GroupWithDimensionStillMirrors`, the
+    /// dimension part (the group cascade is `PCB_GROUP::Mirror`, package M23).
+    #[test]
+    fn dimension_mirrors_across_axis() {
+        let env = MutEnv::detached();
+        let mut dim = PcbDimension::of_type(KicadT::PcbDimAlignedT).unwrap();
+        dim.text.base.parent = crate::item::ParentRef::Board;
+        dim.set_start(&env, Vector2I::new(1_000_000, 0));
+        dim.set_end(&env, Vector2I::new(5_000_000, 0));
+
+        dim.mirror(&env, Vector2I::new(0, 0), FlipDirection::LeftRight);
+
+        assert_eq!(dim.lib_start(), Vector2I::new(-1_000_000, 0));
+        assert_eq!(dim.lib_end(), Vector2I::new(-5_000_000, 0));
+    }
+
     /// `FooBar` / `X_XX` -> `FOO_BAR` / `X_XX` (the dump's enum names).
     fn upper_snake(name: &str) -> String {
         let mut out = String::new();
@@ -2182,7 +2279,9 @@ mod tests {
                 GrTextHAlignT::Center,
                 GrTextHAlignT::Right,
             ],
-            get("h_justify").unwrap().trim_start_matches("GR_TEXT_H_ALIGN_"),
+            get("h_justify")
+                .unwrap()
+                .trim_start_matches("GR_TEXT_H_ALIGN_"),
         ));
         et.set_vert_justify(enum_name(
             &[
@@ -2190,7 +2289,9 @@ mod tests {
                 GrTextVAlignT::Center,
                 GrTextVAlignT::Bottom,
             ],
-            get("v_justify").unwrap().trim_start_matches("GR_TEXT_V_ALIGN_"),
+            get("v_justify")
+                .unwrap()
+                .trim_start_matches("GR_TEXT_V_ALIGN_"),
         ));
 
         d.set_text_pos(env, vec2(get("text_pos").unwrap()));
@@ -2302,9 +2403,9 @@ mod tests {
         }
     }
 
-    /// Oracle without the dump feature: value text, measured value, text, text position and
-    /// angle, crossbar, every cached shape, `GetTextBox`, `GetBoundingBox` and `GetPosition` of
-    /// the 30 oracle dimensions (five corpus boards and `tests/golden/m12_dimensions.kicad_pcb`:
+    /// Oracle without the dump feature: value text, measured value, units mode, text, text
+    /// position and angle, crossbar, `GetAngle`, `GetKnee`, every cached shape, `GetTextBox`,
+    /// `GetBoundingBox` and `GetPosition` of the 31 oracle dimensions (five corpus boards and `tests/golden/m12_dimensions.kicad_pcb`:
     /// all five classes, both arrow directions, the three text position modes, all unit
     /// formats, zero suppression, the `V_*` precisions, the three leader frames, mirrored bold
     /// text, `${LAYER}`, two dimensions in a rotated, non-uniformly scaled footprint).
@@ -2331,6 +2432,19 @@ mod tests {
             put("dim", "measured_value", d.measured_value.to_string());
             put("dim", "value_text", format!("\"{}\"", d.value_text()));
             put("dim", "shape_count", d.shapes.len().to_string());
+            put(
+                "dim",
+                "units_mode",
+                upper_snake(&format!("{:?}", d.units_mode())),
+            );
+
+            match d.kind {
+                DimensionKind::Aligned(_) | DimensionKind::Orthogonal { .. } => {
+                    angles.insert(format!("dim|{key}|angle"), d.angle(&ctx));
+                }
+                DimensionKind::Radial { .. } => put("dim", "knee", v(d.knee(&ctx))),
+                _ => {}
+            }
 
             for (i, s) in d.shapes.iter().enumerate() {
                 put("dim", &format!("shapes.{i}"), shape_text(s));
@@ -2375,7 +2489,7 @@ mod tests {
             failures.len(),
             failures.join("\n")
         );
-        assert!(compared > 600, "only {compared} fields compared");
+        assert!(compared >= 616, "only {compared} fields compared");
     }
 
     /// The full reference dump of the oracle dimensions (`--features dump`): the fields above

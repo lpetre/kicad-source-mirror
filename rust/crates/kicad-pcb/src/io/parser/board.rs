@@ -164,15 +164,9 @@ impl PcbParser {
         }
 
         for child in children {
-            let is_text = {
-                let ctx = BoardCtx::bare(&self.board);
-                ctx.item(child).is_some_and(|c| c.as_eda_text().is_some())
-            };
-
-            if is_text {
-                // EDA_TEXT::ResolveFont( embeddedFonts ): no model API yet (change request).
-                crate::port_pending!("EDA_TEXT::ResolveFont", embedded_fonts);
-            }
+            // if( EDA_TEXT* textItem = dynamic_cast<EDA_TEXT*>( aChild ) )
+            //     textItem->ResolveFont( embeddedFonts );
+            self.resolve_child_font(child, &embedded_fonts);
         }
 
         self.resolve_groups(parent)?;

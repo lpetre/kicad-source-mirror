@@ -462,7 +462,10 @@ impl PcbParser {
                     };
 
                     for layer in cu_layers.seq() {
-                        via.set_zone_layer_override(layer, ZoneLayerOverride::ForceNoZoneConnection);
+                        via.set_zone_layer_override(
+                            layer,
+                            ZoneLayerOverride::ForceNoZoneConnection,
+                        );
                     }
 
                     token = self.lexer.next_tok()?;

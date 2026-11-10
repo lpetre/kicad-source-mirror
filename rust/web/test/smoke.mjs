@@ -76,6 +76,7 @@ assert.ok(b.nets().some((n) => n.code === 0));
 const t = b.addTrack({ start: [0, 0], end: [1000000, 0], width: 250000, layer: 'F.Cu', net: 0 });
 const v = b.addVia({ at: [1000000, 0], diameter: 600000, drill: 300000, net: 0 });
 let tracks = b.tracks();
+same(tracks, ref.itemBoard.tracks, 'newBoard tracks (ids, uuids, geometry)');
 assert.equal(tracks.length, 2);
 assert.equal(tracks[0].id, t);
 assert.equal(tracks[0].kind, 'track');
@@ -90,6 +91,27 @@ tracks = b.tracks();
 assert.equal(tracks.length, 1);
 assert.equal(tracks[0].id, v);
 checks += 12;
+same(b.nets(), ref.itemBoard.nets, 'newBoard nets');
+{
+    const saved = b.save();
+    same({ length: Buffer.byteLength(saved, 'utf8'), fnv: fnv1a64(saved) }, ref.itemBoard.save,
+         'newBoard save');
+}
+
+// loadBoard on the corpus boards the parser and writer support in full: the item lists and the
+// saved text equal the native results (and the native save equals the reference kicad-cli).
+for (const l of ref.loadBoard) {
+    const lb = k.loadBoard(readFileSync(join(kicad, l.file), 'utf8'), { name: l.name });
+    assert.equal(lb.name, l.name);
+    same(lb.nets(), l.nets, `loadBoard ${l.file} nets`);
+    same(lb.tracks(), l.tracks, `loadBoard ${l.file} tracks`);
+    const saved = lb.save();
+    same({ length: Buffer.byteLength(saved, 'utf8'), fnv: fnv1a64(saved) }, l.save,
+         `loadBoard ${l.file} save`);
+    assert.throws(() => lb.runDrc({}),
+                  (e) => e.name === 'NotYetPortedError' && /kicad-drc/.test(e.subsystem));
+    checks++;
+}
 
 // Not yet ported: every board job names its subsystem. Each call gets a fresh board: a job that
 // reaches a kicad-pcb `port_pending!` stub before its own subsystem panics, which is a wasm trap
@@ -97,7 +119,6 @@ checks += 12;
 for (const [what, call, stubOk] of [
     ['runDrc', (x) => x.runDrc({}), false],
     ['exportDrill', (x) => x.exportDrill({}), false],
-    ['save', (x) => x.save(), false],
     ['ratsnest', (x) => x.ratsnest(), false],
     ['refillZones', (x) => x.refillZones(), false],
     ['exportGerbers', (x) => x.exportGerbers({ layers: 'F.Cu' }), true],

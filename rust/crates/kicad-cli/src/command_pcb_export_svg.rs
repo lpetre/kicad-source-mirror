@@ -198,7 +198,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbSvg, i
     plot.arg_common_layers = Some(get_string(m, ARG_COMMON_LAYERS));
 
     if !Path::new(&plot.filename).is_file() {
-        eprint!("Board file does not exist or is not accessible\n");
+        eprintln!("Board file does not exist or is not accessible");
         return Err(exit_codes::ERR_INVALID_INPUT_FILE);
     }
 
@@ -208,15 +208,12 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbSvg, i
         svg_job.gen_mode = SvgGenMode::Single;
     } else if svg_job.gen_mode == SvgGenMode::Single {
         // TODO remove this block when changing the default for JOB_EXPORT_PCB_SVG::m_genMode
+        // C++: wxFprintf( stdout, "\033[33;1m%s\033[0m\n", ... )
         println!(
-            "\x1b[33;1m{}\x1b[0m",
-            "This command has deprecated behavior as of KiCad 9.0, the default behavior of this \
-             command will change in a future release."
+            "\x1b[33;1mThis command has deprecated behavior as of KiCad 9.0, the default \
+             behavior of this command will change in a future release.\x1b[0m"
         );
-        println!(
-            "\x1b[33;1m{}\x1b[0m",
-            "The new behavior will match --mode-multi"
-        );
+        println!("\x1b[33;1mThe new behavior will match --mode-multi\x1b[0m");
     }
 
     Ok(svg_job)

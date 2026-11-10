@@ -56,7 +56,7 @@ pub fn perform(m: Option<&ArgMatches>) -> i32 {
     } else if format == "about" {
         println!("{}", build_version::version_info_data("kicad-rs"));
     } else {
-        eprint!("Invalid format\n");
+        eprintln!("Invalid format");
         return exit_codes::ERR_ARGS;
     }
 

@@ -37,8 +37,8 @@ use crate::board_design_settings::{
     LAYER_CLASS_FAB, LAYER_CLASS_OTHERS, LAYER_CLASS_SILK, ViaDimension,
 };
 use crate::board_stackup::{
-    BoardStackupItem, BoardStackupItemType, BsEdgeConnectorConstraints,
-    DEFAULT_SOLDERMASK_OPACITY, DielectricModel,
+    BoardStackupItem, BoardStackupItemType, BsEdgeConnectorConstraints, DEFAULT_SOLDERMASK_OPACITY,
+    DielectricModel,
 };
 use crate::pcb_dimension::{DimPrecision, DimUnitsMode};
 use crate::pcb_plot_params::PcbPlotParams;
@@ -225,8 +225,8 @@ impl PcbParser {
                             }
 
                             T::T_thickness => {
-                                let thickness =
-                                    self.parse_board_units_tok(T::T_thickness, EdaDataType::Distance)?;
+                                let thickness = self
+                                    .parse_board_units_tok(T::T_thickness, EdaDataType::Distance)?;
                                 item.set_thickness(thickness, sublayer_idx);
                                 token = self.lexer.next_tok()?;
 
@@ -274,8 +274,10 @@ impl PcbParser {
                                 token = self.lexer.next_tok()?;
 
                                 match token {
-                                    T::T_constant => item
-                                        .set_dielectric_model(DielectricModel::Constant, sublayer_idx),
+                                    T::T_constant => item.set_dielectric_model(
+                                        DielectricModel::Constant,
+                                        sublayer_idx,
+                                    ),
                                     T::T_djordjevic_sarkar => item.set_dielectric_model(
                                         DielectricModel::DjordjevicSarkar,
                                         sublayer_idx,
@@ -295,8 +297,7 @@ impl PcbParser {
                                 let mut color_name = self.lexer.from_utf8();
 
                                 // Older versions didn't store opacity with custom colors
-                                if color_name.starts_with('#') && self.required_version < 20210824
-                                {
+                                if color_name.starts_with('#') && self.required_version < 20210824 {
                                     let mut color = Color4D::from_string(&color_name);
 
                                     if item.type_() == BoardStackupItemType::Soldermask {

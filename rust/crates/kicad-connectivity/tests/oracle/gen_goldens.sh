@@ -14,7 +14,10 @@ trap 'rm -rf "$SCRATCH"' EXIT
 PLAIN=( via_dangling issue18839 teardrop_close_via issue23123_minimal issue23339_zone_layer_rules
         soldermask_track_to_pad custom_pads padstacks_complex via_stacks tracks_arcs_vias fill_bad
         net_tie_drc connection_width_rules issue8003 test_copper_graphics intersectingzones
-        issue14334 notched_zones issue9870 )
+        issue14334 notched_zones issue9870
+        issue10697 issue18142 issue19574 issue2512 teardrop_multi_inside_via
+        teardrop_offcenter_two_segment tuning_generators_load_save two_segment_teardrop
+        via_stack_track_width zone_thieving_track_bisection bad_triangulation_case )
 HASHED=( issue16182 )
 
 for b in "${PLAIN[@]}" "${HASHED[@]}"; do

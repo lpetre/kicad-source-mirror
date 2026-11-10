@@ -32,7 +32,7 @@ use crate::eda_shape::{FillT, ShapeT};
 use crate::ids::{ItemId, NetCode, ShapeId};
 use crate::item::ParentRef;
 use crate::test_support::{FrameFixture, board_with_footprint};
-use crate::traits::{BoardItem, EdaShapeItem};
+use crate::traits::EdaShapeItem;
 
 fn v(x: i32, y: i32) -> Vector2I {
     Vector2I::new(x, y)
@@ -136,7 +136,8 @@ fn bezier_shape_scales_with_footprint() {
         s.set_bezier_c1(env, v(1000000, 0));
         s.set_bezier_c2(env, v(1000000, 1000000));
         s.set_end(env, v(2000000, 1000000));
-        s.shape.rebuild_bezier_to_segments_points_list(env.max_error);
+        s.shape
+            .rebuild_bezier_to_segments_points_list(env.max_error);
     });
 
     set_fp_transform(&mut fx, id, xform(0.0, 2.0, 1.0));
@@ -241,7 +242,10 @@ fn rectangle_folded_back_from_poly() {
     assert_eq!(rect.shape.shape, ShapeT::Rectangle);
     assert!(rect.shape.start().x <= rect.shape.end().x);
     assert!(rect.shape.start().y <= rect.shape.end().y);
-    assert_eq!((rect.lib_start(), rect.lib_end()), (rect.shape.start(), rect.shape.end()));
+    assert_eq!(
+        (rect.lib_start(), rect.lib_end()),
+        (rect.shape.start(), rect.shape.end())
+    );
 }
 
 fn unit_ellipse(fx: &mut FrameFixture, rotation: f64) -> ShapeId {
@@ -304,9 +308,9 @@ fn native_ellipse_continuous_at_uniform_limit() {
     let id = unit_ellipse(&mut fx, 0.0);
     set_fp_transform(&mut fx, id, xform(30.0, 1.0, 1.0));
     set_fp_transform(&mut fx, id, xform(30.0, 2.0, 2.0));
-    let u = fx.board[id].shape.ellipse.clone();
+    let u = fx.board[id].shape.ellipse;
     set_fp_transform(&mut fx, id, xform(30.0, 2.0, 2.1));
-    let n = fx.board[id].shape.ellipse.clone();
+    let n = fx.board[id].shape.ellipse;
 
     assert!(close(n.major_radius as f64, u.major_radius as f64, 1.0));
     assert!(close(n.minor_radius as f64, u.minor_radius as f64, 6.0));
@@ -374,7 +378,11 @@ fn circle_to_ellipse_rotates_with_parent() {
     set_fp_transform(&mut fx, id, xform(30.0, 2.0, 1.0));
 
     // Parent rotated +30 in screen frame so ellipse math rotation = -30 deg.
-    assert!(close(fx.board[id].shape.ellipse.rotation.as_degrees(), -30.0, 0.001));
+    assert!(close(
+        fx.board[id].shape.ellipse.rotation.as_degrees(),
+        -30.0,
+        0.001
+    ));
 }
 
 /// `NonUniformScaleSwapsAxesWhenMinorWouldExceedMajor`.
@@ -453,7 +461,10 @@ fn layers_mask_and_net() {
     let mut board = Board::new();
     let env = board.child_env(ParentRef::Board);
     let mut s = PcbShape::with_shape(ShapeT::Rectangle);
-    s.set_layer_set(&env, Lset::from_layers(&[PcbLayerId::BCu, PcbLayerId::BMask]));
+    s.set_layer_set(
+        &env,
+        Lset::from_layers(&[PcbLayerId::BCu, PcbLayerId::BMask]),
+    );
     assert_eq!(s.base.item.layer, PcbLayerId::BCu);
     assert!(s.has_solder_mask());
     s.base.net = NetCode(3);
@@ -473,13 +484,19 @@ fn layers_mask_and_net() {
     let mut off = s.clone();
     off.set_layer(&env, PcbLayerId::BSilkS);
     assert_eq!(off.base.net, NetCode::UNCONNECTED);
-    assert_eq!(off.layer_set(&ctx), Lset::from_layers(&[PcbLayerId::BSilkS]));
+    assert_eq!(
+        off.layer_set(&ctx),
+        Lset::from_layers(&[PcbLayerId::BSilkS])
+    );
     assert!(!off.is_on_layer(&ctx, PcbLayerId::BMask));
     assert!(!off.is_connected(&ctx));
 
     let fx = identity_fp();
     let ctx = BoardCtx::bare(&fx.board);
-    let child = &fx.board[fx.child(crate::ids::ItemKind::Shape).typed::<PcbShape>().unwrap()];
+    let child = &fx.board[fx
+        .child(crate::ids::ItemKind::Shape)
+        .typed::<PcbShape>()
+        .unwrap()];
     // Only board-level copper shapes are connectable
     assert!(!child.is_connected(&ctx));
 }
@@ -503,8 +520,10 @@ fn solder_mask_expansion() {
     assert_eq!(s.solder_mask_expansion(&ctx), -300000);
 }
 
-/// `PCB_SHAPE::GetEffectiveShape`: the mask layer of a copper shape with solder mask is
-/// widened by twice the expansion.
+/// `PCB_SHAPE::GetEffectiveShape`: the mask layer of a copper shape with solder mask passes
+/// a width widened by twice the expansion to `MakeEffectiveShapesWithLineEndings`, but (as in
+/// the C++) that width only reaches the line endings: the body shapes come from
+/// `makeEffectiveShapes()` / `GetEffectiveWidth()`, so a plain segment keeps its width.
 #[test]
 fn effective_shape_widens_on_mask() {
     let board = Board::new();
@@ -521,7 +540,7 @@ fn effective_shape_widens_on_mask() {
     let cu = s.effective_shape(&ctx, PcbLayerId::FCu, Flashing::Default, usage);
     let mask = s.effective_shape(&ctx, PcbLayerId::FMask, Flashing::Default, usage);
     assert_eq!(cu.bbox(0).height(), 200000);
-    assert_eq!(mask.bbox(0).height(), 300000);
+    assert_eq!(mask.bbox(0).height(), 200000);
 
     // Not on copper: no widening.
     s.base.item.layer = PcbLayerId::FSilkS;
@@ -534,17 +553,21 @@ fn effective_shape_widens_on_mask() {
 fn item_description() {
     let board = Board::new();
     let ctx = BoardCtx::bare(&board);
-    let units = kicad_core::units_provider::UnitsProvider::new(
-        &PCB_IU_SCALE,
-        kicad_core::EdaUnits::Mm,
-    );
+    let units =
+        kicad_core::units_provider::UnitsProvider::new(&PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
     let mut s = PcbShape::with_shape(ShapeT::Arc);
     s.base.item.parent = ParentRef::Board;
     s.base.item.layer = PcbLayerId::FSilkS;
-    assert_eq!(s.item_description(&ctx, &units, true), "Arc on F.Silkscreen");
+    assert_eq!(
+        s.item_description(&ctx, &units, true),
+        "Arc on F.Silkscreen"
+    );
 
     s.base.item.layer = PcbLayerId::FCu;
-    assert_eq!(s.item_description(&ctx, &units, true), "Arc [<no net>] on F.Cu");
+    assert_eq!(
+        s.item_description(&ctx, &units, true),
+        "Arc [<no net>] on F.Cu"
+    );
 
     s.shape.shape = ShapeT::Segment;
     s.shape.proxy_item = true;
@@ -580,8 +603,14 @@ fn flip_board_and_footprint_shapes() {
     s.set_end(&env, v(5000, 2000));
     s.flip(&env, v(0, 0), FlipDirection::LeftRight);
     assert_eq!(s.base.item.layer, PcbLayerId::BSilkS);
-    assert_eq!((s.shape.start(), s.shape.end()), (v(-1000, 2000), v(-5000, 2000)));
-    assert_eq!((s.lib_start(), s.lib_end()), (v(-1000, 2000), v(-5000, 2000)));
+    assert_eq!(
+        (s.shape.start(), s.shape.end()),
+        (v(-1000, 2000), v(-5000, 2000))
+    );
+    assert_eq!(
+        (s.lib_start(), s.lib_end()),
+        (v(-1000, 2000), v(-5000, 2000))
+    );
 
     // footprint child: lib mirrored about the lib-frame image of the centre
     let mut fx = board_with_footprint(
@@ -589,7 +618,12 @@ fn flip_board_and_footprint_shapes() {
         false,
     );
     let id = add_fp_shape(&mut fx, ShapeT::Arc, |s, env| {
-        s.set_arc_geometry(env, v(11000000, 0), v(10707107, 707107), v(10000000, 1000000));
+        s.set_arc_geometry(
+            env,
+            v(11000000, 0),
+            v(10707107, 707107),
+            v(10000000, 1000000),
+        );
     });
     let (lib_start, lib_mid, lib_end) = {
         let a = &fx.board[id];
@@ -640,7 +674,10 @@ fn transform_poly_vertices_keeps_arcs() {
     let mut skewed = poly.clone();
     let x = TransformTrs::new(v(0, 0), ANGLE_0, 2.0, 1.0);
     lib_frame::transform_poly_vertices(&mut skewed, &x, false);
-    assert_eq!(skewed.c_outline(0).point_count(), poly.c_outline(0).point_count());
+    assert_eq!(
+        skewed.c_outline(0).point_count(),
+        poly.c_outline(0).point_count()
+    );
     assert_eq!(skewed.c_outline(0).c_point(1), v(2000000, 0));
 }
 
@@ -660,9 +697,18 @@ fn cmp_drawings() {
     let idb: ItemId = board.add_shape(b, crate::board::AddMode::Append).into();
     let ctx = BoardCtx::bare(&board);
 
-    assert_eq!(shapes::pcb_shape_cmp_drawings(&ctx, ida, idb), Ordering::Less);
-    assert_eq!(shapes::pcb_shape_cmp_drawings(&ctx, idb, ida), Ordering::Greater);
-    assert_eq!(shapes::pcb_shape_cmp_drawings(&ctx, ida, ida), Ordering::Equal);
+    assert_eq!(
+        shapes::pcb_shape_cmp_drawings(&ctx, ida, idb),
+        Ordering::Less
+    );
+    assert_eq!(
+        shapes::pcb_shape_cmp_drawings(&ctx, idb, ida),
+        Ordering::Greater
+    );
+    assert_eq!(
+        shapes::pcb_shape_cmp_drawings(&ctx, ida, ida),
+        Ordering::Equal
+    );
     let _ = (ua, ub, KicadT::PcbShapeT, Box2I::default());
 }
 
@@ -714,7 +760,10 @@ mod oracle {
 
     fn opts() -> DumpOptions {
         DumpOptions {
-            sections: ["item", "bbox", "shape"].iter().map(|s| s.to_string()).collect(),
+            sections: ["item", "bbox", "shape"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
             hash: false,
             file_uuids: Some(scan_file_uuids(SOURCE.as_bytes())),
         }
@@ -737,7 +786,10 @@ mod oracle {
                 current = Some((String::new(), Vec::new()));
             } else if let Some((uuid, lines)) = current.as_mut() {
                 if uuid.is_empty() && t.starts_with("(uuid ") {
-                    *uuid = t.trim_start_matches("(uuid \"").trim_end_matches("\")").to_string();
+                    *uuid = t
+                        .trim_start_matches("(uuid \"")
+                        .trim_end_matches("\")")
+                        .to_string();
                 } else if t.starts_with("(fp_") {
                     lines.push(t);
                 } else if line == "\t)" {
@@ -762,8 +814,14 @@ mod oracle {
         let mut pending: BTreeSet<String> = BTreeSet::new();
 
         // Board-level shapes.
-        let board = crate::io::parse_board(SOURCE, "", &ParseOptions { allow_pending: true })
-            .expect("parse");
+        let board = crate::io::parse_board(
+            SOURCE,
+            "",
+            &ParseOptions {
+                allow_pending: true,
+            },
+        )
+        .expect("parse");
         let (values, p) = parse_dump(&dump_board(&board, &opts()));
         got.extend(values);
         pending.extend(p);
@@ -807,7 +865,9 @@ mod oracle {
             let ctx = BoardCtx::bare(&fx.board);
 
             for &id in &fx.board[fx.footprint].drawings {
-                let Some(AnyItem::Shape(s)) = fx.board.get(id) else { continue };
+                let Some(AnyItem::Shape(s)) = fx.board.get(id) else {
+                    continue;
+                };
                 let key = format!("shape|{}|lib.", s.base.item.uuid.as_string());
                 library_values(s, &ctx, &key, &mut got);
             }

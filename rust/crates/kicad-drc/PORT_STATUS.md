@@ -198,3 +198,73 @@ the whole DRC on boards and save projects; they need the engine and the project 
   packages, currently `port_pending!`).
 - The CLI flow (providers per marker type, severities from the job, messages, exit codes) is
   DRC-12; the reference reports wait for it.
+
+## DRC-02: DRC r-tree, zone index, provider base
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_rtree.h` `DRC_RTREE`: `Insert` (both overloads: sub-shape decomposition, `SHAPE_NULL` skip, invisible fields, atomic tables, pad hole entry, `recordPadding`), `Build`, `clear`, `CheckColliding`, `QueryColliding` (item / box-with-actual / box yes-no with the single-outline polygon fast path), `QueryCollidingPreparedCopper` (padding credit), `GetObjectsAt`, `QueryCollidingPairs`, `size`, `empty`, `OnLayer`, both `Overlapping` | `src/rtree.rs` (`DrcRtree`, `ItemWithShape`, `LayerPair`, `ATOMIC_TABLES`) | ported |
+| `ITEM_WITH_SHAPE` (`parent`, `shape`, `shapeStorage`, `parentShape`) | `ItemWithShape { parent: ItemId, parent_shape: SharedShape, sub: Option<u32>, shape_storage }`, `shape()` via `Shape::indexable_subshape` | ported (payload per `drc.md`; the tree owns `Arc`s, so it is `Send + Sync`) |
+| `KIRTREE::PACKED_RTREE<ITEM_WITH_SHAPE*, int, 2>` | `kicad_geom::geometry::rtree::PackedRTree<u32, 2, 16>` (payload = index into the owned entries) | same tree type and visit order as the C++ |
+| `pcbnew/drc/drc_zone_index.h`: `CollectOverlappingPairs`, `DRC_ZONE_INDEX` (`Build`, `HasLayer`, `Query`, `Clear`) | `src/zone_index.rs` | ported |
+| `pcbnew/drc/drc_test_provider.h/.cpp`: `s_allBasicItems`, `s_allBasicItemsButZones` (`Init`), `GetName`, `reportViolation`, `reportTwoPointGeometry`, `reportTwoShapeGeometry`, `reportTwoItemGeometry`, `reportProgress`, `reportPhase`, `forEachGeometryItem`, `isInvisibleText`, the three `formatMsg` overloads | `src/test_provider.rs` (`DrcTestProviderBase`, `DrcRunHost`, `for_each_geometry_item`, `all_basic_items`, ...) | ported; the engine side is the `DrcRunHost` trait (implemented by the engine run state) |
+| `DRC_TEST_PROVIDER_REGISTRY` (static registration, link order) | `test_provider::DRC_TEST_PROVIDERS` (module, `GetName()`) | ported as data, order confirmed by the oracle |
+| `DRC_SHOWMATCHES_PROVIDER_REGISTRY`, progress reporter plumbing | - | skipped: GUI; progress hooks are `DrcRunHost` defaults (no-ops returning true) |
+
+### Verification
+
+Differential oracle `tests/oracle/drc_rtree_oracle.cpp` (built by `tests/oracle/build_rtree_oracle.sh`
+against the reference build like pcb-dump, under the machine-wide build lock; binary
+`/home/user/kicad-oracle/bin/drc-rtree-oracle`). It runs the real `DRC_RTREE`, `DRC_ZONE_INDEX`,
+`CollectOverlappingPairs` and `DRC_TEST_PROVIDER` code and prints: the provider registry,
+`s_allBasicItems(ButZones)`, `GetName()`, 1096 `formatMsg` results (all units x data types x
+value pairs incl. the "equal strings -> precise formatting" branch, plus angles),
+`CollectOverlappingPairs` on pseudo-random boxes (empty / negative boxes, absent entries), and per
+board: `forEachGeometryItem` for 7 type / layer lists (incl. an early stop), the copper tree as
+the cache generator builds it (storage order per layer, size), and for every copper item, layer
+and clearance: `QueryColliding` (plain, and with filter + stopping visitor: filter call counts),
+the raw search order, `QueryCollidingPreparedCopper` with and without padding credit,
+`CheckColliding`, `GetObjectsAt`, `QueryCollidingPairs` (full visit sequence with dedup, and the
+visitor / progress stop), then one zone tree per copper zone (triangulated fills) queried with
+`QueryColliding( box, shape, layer, clr, &actual, &pos )`, the yes / no overload and its polygon
+fast path, and the `DRC_ZONE_INDEX` queries. Golden: `tests/golden/rtree_oracle.txt`
+(`tests/oracle/gen_rtree_goldens.sh`, 8886 lines, deterministic over runs). Rust replay:
+`tests/rtree_oracle.rs`.
+
+| Input | Result |
+|---|---|
+| board-independent sections (registry, type lists, 1096 `formatMsg`, 3 `CollectOverlappingPairs` sets) | identical |
+| `tests/data/rtree/rtree_small`, `rtree_ties` (Hilbert centre ties), `rtree_4layer` (multi-level trees, blind / buried / micro vias); `gen_rtree_boards.py` | identical (5855 lines) |
+| `qa/data/pcbnew` `issue7267`, `issue18203`, `issue16566`, `net_tie_hole_clearance`, `via_stacks`, `connection_width_rules`, `issue24649` (pads, holes, graphics, fields, zones), `two_segment_teardrop`, `issue18142`, `fill_bad`, `issue14334` (filled zones: triangle entries, `actual` / position, polygon fast path) | pending: the board parser does not load footprints / zones yet (PCBIO-06, PCBIO-08); the replay reports them as pending and compares them automatically once they load |
+
+### Ported C++ tests
+
+| C++ | Rust |
+|---|---|
+| `qa/tests/pcbnew/drc/test_drc_prepared_candidates.cpp` (all 7 cases) | `tests/test_drc_prepared_candidates.rs`: the r-tree cases run on the synthetic boards with a fixed stand-in for `m_DRCMaxClearance` (the C++ fixture runs the whole DRC on QA boards with footprints), the zone index / pair cases on synthetic boxes; `DRCGraphicBoundsDoNotContainTheirEffectiveShape` runs on `issue22102` and reports itself as pending until that board loads |
+
+### Deviations
+
+- **`GetObjectsAt`** returns the parents without duplicates in tree search order (C++: an
+  `std::unordered_set`, hash order); the oracle compares it sorted. Callers must not depend on
+  the order (`drc.md` 4.12).
+- **`QueryCollidingPairs` dedup key**: C++ orders the two parents by address; the port orders by
+  `ItemId`. Only the canonical pairing matters (set membership), so results are identical.
+- **Null pad shape**: C++ `PAD::GetEffectiveShape` returns a null pointer for a layer without a
+  cached shape; kicad-pcb returns a bare `SHAPE_NULL` there. `Insert` and
+  `QueryCollidingPreparedCopper` treat a bare null shape of a pad as the C++ null pointer
+  (`wxCHECK` early return, so no hole entry either).
+- Items without a handle (detached values) cannot be indexed (`Insert` skips them; debug assert).
+- `wxCHECK` failures (insert after `Build`, `UNDEFINED_LAYER`) return early with a debug assertion.
+- Filters and visitors receive the parent's `ItemId` (C++ `BOARD_ITEM*`); resolve with `ctx.item`.
+
+### Known gaps
+
+- Pads (hole entries), zones (triangulated fills, `actual` / position of the box queries, the
+  polygon fast path), graphics, fields and tables are verified only once the parser loads the
+  QA boards (PCBIO-06 / PCBIO-08); the code paths are ported statement by statement and the
+  goldens already contain them.
+- `reportViolation` / `reportTwo*Geometry` are checked by unit tests against a recording host;
+  the engine side (`DRC_ENGINE::ReportViolation`, marker creation) is DRC-03.

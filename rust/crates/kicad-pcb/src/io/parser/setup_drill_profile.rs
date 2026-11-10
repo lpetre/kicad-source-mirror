@@ -72,19 +72,19 @@ pub(crate) struct DrillSymbolAssignment {
     pub mark_mode: DrillMarkMode, // m_MarkMode
     pub shape_index: i32,         // m_ShapeIndex
     pub letter: String,           // m_Letter
-    pub description: String,     // m_Description
+    pub description: String,      // m_Description
 }
 
 /// `DRILL_SYMBOL_PROFILE` (without the KIID, which is neither read nor written by the board
 /// file I/O, and without `GroupKeyString` / `Fingerprint`).
 #[derive(Clone, Debug)]
 pub(crate) struct DrillSymbolProfile {
-    pub name: String,                     // m_name
+    pub name: String,                      // m_name
     pub group_by: BTreeSet<DrillGroupKey>, // m_groupBy (std::set)
-    pub mark_policy: DrillMarkPolicy,     // m_markPolicy
-    pub symbol_size: i32,                 // m_symbolSize
-    pub symbol_width: i32,                // m_symbolWidth
-    pub freeze_assignments: bool,         // m_freezeAssignments
+    pub mark_policy: DrillMarkPolicy,      // m_markPolicy
+    pub symbol_size: i32,                  // m_symbolSize
+    pub symbol_width: i32,                 // m_symbolWidth
+    pub freeze_assignments: bool,          // m_freezeAssignments
     /// `m_assignments` (`std::map<std::string, ...>`: byte order of the keys).
     pub assignments: BTreeMap<String, DrillSymbolAssignment>,
 }

@@ -148,7 +148,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if format == "gerber" {
         drill_job.format = DrillFormat::Gerber;
     } else {
-        eprint!("Invalid drill format\n");
+        eprintln!("Invalid drill format");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -159,7 +159,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if units == "in" {
         drill_job.drill_units = DrillUnits::Inch;
     } else {
-        eprint!("Invalid units specified\n");
+        eprintln!("Invalid units specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -174,7 +174,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if zero_format == "keep" {
         drill_job.zero_format = ZerosFormat::KeepZeros;
     } else {
-        eprint!("Invalid zeros format specified\n");
+        eprintln!("Invalid zeros format specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -185,7 +185,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if drill_format == "alternate" {
         drill_job.excellon_oval_drill_route = false;
     } else {
-        eprint!("Invalid oval drill format specified\n");
+        eprintln!("Invalid oval drill format specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -202,7 +202,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if map_format == "svg" {
         drill_job.map_format = MapFormat::Svg;
     } else {
-        eprint!("Invalid map format specified\n");
+        eprintln!("Invalid map format specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -213,7 +213,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     } else if origin == "plot" {
         drill_job.drill_origin = DrillOrigin::Plot;
     } else {
-        eprint!("Invalid origin mode specified\n");
+        eprintln!("Invalid origin mode specified");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -226,7 +226,7 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     drill_job.gerber_precision = get_int(m, ARG_GERBER_PRECISION);
 
     if drill_job.gerber_precision != 5 && drill_job.gerber_precision != 6 {
-        eprint!("Gerber coordinate precision should be either 5 or 6\n");
+        eprintln!("Gerber coordinate precision should be either 5 or 6");
         return Err(exit_codes::ERR_ARGS);
     }
 
@@ -236,9 +236,9 @@ pub fn build_job(m: &ArgMatches, args: &CommonArgs) -> Result<JobExportPcbDrill,
     if drill_job.generate_report {
         drill_job.report_path = report_path;
     } else if !report_path.is_empty() {
-        eprint!(
+        eprintln!(
             "Warning: Report path supplied without --generate-report, no report will be \
-             generated\n"
+             generated"
         );
     }
 

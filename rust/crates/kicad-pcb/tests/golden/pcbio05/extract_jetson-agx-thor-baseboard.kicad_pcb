@@ -1,0 +1,1792 @@
+(kicad_pcb
+	(version 20261031)
+	(generator "pcbnew")
+	(generator_version "10.99")
+	(general
+		(thickness 1.711)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(title_block
+		(title "Antmicro Baseboard for Jetson AGX Thor")
+		(date "2026-02-18")
+		(rev "1.1.0")
+		(company "Antmicro Ltd")
+		(comment 1 "www.antmicro.com")
+	)
+	(layers
+		(0 "F.Cu" signal)
+		(4 "In1.Cu" signal)
+		(6 "In2.Cu" signal)
+		(8 "In3.Cu" signal)
+		(10 "In4.Cu" jumper)
+		(12 "In5.Cu" signal)
+		(14 "In6.Cu" signal)
+		(16 "In7.Cu" signal)
+		(18 "In8.Cu" signal)
+		(2 "B.Cu" signal)
+		(9 "F.Adhes" user "F.Adhesive")
+		(11 "B.Adhes" user "B.Adhesive")
+		(13 "F.Paste" user)
+		(15 "B.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(17 "Dwgs.User" user "User.Drawings")
+		(19 "Cmts.User" user "User.Comments")
+		(21 "Eco1.User" user "User.Eco1")
+		(23 "Eco2.User" user "User.Eco2")
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+		(33 "B.Fab" user)
+		(39 "User.1" user)
+		(41 "User.2" user)
+		(43 "User.3" user)
+		(45 "User.4" user)
+		(47 "User.5" user)
+		(49 "User.6" user)
+		(51 "User.7" user)
+		(53 "User.8" user)
+		(55 "User.9" user "overlay")
+	)
+	(setup
+		(stackup
+			(layer "F.SilkS"
+				(type "Top Silk Screen")
+				(color "White")
+			)
+			(layer "F.Paste"
+				(type "Top Solder Paste")
+			)
+			(layer "F.Mask"
+				(type "Top Solder Mask")
+				(color "Black")
+				(thickness 0.01)
+			)
+			(layer "F.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 1"
+				(type "prepreg")
+				(thickness 0.12)
+				(material "PR2116")
+				(epsilon_r 4.1)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "In1.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 2"
+				(type "core")
+				(thickness 0.2)
+				(material "FR4")
+				(epsilon_r 4.3)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "In2.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 3"
+				(type "prepreg")
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant) addsublayer
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0)
+				(spec_frequency 0)
+				(dielectric_model constant)
+			)
+			(layer "In3.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 4"
+				(type "core")
+				(thickness 0.2)
+				(material "FR4")
+				(epsilon_r 4.3)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "In4.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 5"
+				(type "prepreg")
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant) addsublayer
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0)
+				(spec_frequency 0)
+				(dielectric_model constant)
+			)
+			(layer "In5.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 6"
+				(type "core")
+				(thickness 0.2)
+				(material "FR4")
+				(epsilon_r 4.3)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "In6.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "dielectric 7"
+				(type "prepreg")
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant) addsublayer
+				(thickness 0.07)
+				(material "PR1080")
+				(epsilon_r 3.96)
+				(loss_tangent 0)
+				(spec_frequency 0)
+				(dielectric_model constant)
+			)
+			(layer "In7.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 8"
+				(type "core")
+				(thickness 0.2)
+				(material "FR4")
+				(epsilon_r 4.3)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "In8.Cu"
+				(type "copper")
+				(thickness 0.018)
+			)
+			(layer "dielectric 9"
+				(type "prepreg")
+				(thickness 0.12)
+				(material "PR2116")
+				(epsilon_r 4.1)
+				(loss_tangent 0.02)
+				(spec_frequency 1000000000)
+				(dielectric_model constant)
+			)
+			(layer "B.Cu"
+				(type "copper")
+				(thickness 0.035)
+			)
+			(layer "B.Mask"
+				(type "Bottom Solder Mask")
+				(color "Black")
+				(thickness 0.01)
+			)
+			(layer "B.Paste"
+				(type "Bottom Solder Paste")
+			)
+			(layer "B.SilkS"
+				(type "Bottom Silk Screen")
+				(color "White")
+			)
+			(copper_finish "ENIG")
+			(dielectric_constraints no)
+		)
+		(pad_to_mask_clearance 0)
+		(allow_soldermask_bridges_in_footprints no)
+		(tenting
+			(front yes)
+			(back yes)
+		)
+		(covering
+			(front no)
+			(back no)
+		)
+		(plugging
+			(front no)
+			(back no)
+		)
+		(capping no)
+		(filling no)
+		(pcbplotparams
+			(layerselection 0x00000000_00000000_55555555_5755f5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
+			(disableapertmacros no)
+			(usegerberextensions no)
+			(usegerberattributes yes)
+			(usegerberadvancedattributes yes)
+			(creategerberjobfile yes)
+			(dashed_line_dash_ratio 12)
+			(dashed_line_gap_ratio 3)
+			(svgprecision 4)
+			(pngdpi 300)
+			(pngantialias yes)
+			(plotframeref no)
+			(mode 1)
+			(useauxorigin no)
+			(pdf_front_fp_property_popups yes)
+			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
+			(dxfpolygonmode yes)
+			(dxfimperialunits yes)
+			(dxfusepcbnewfont yes)
+			(psnegative no)
+			(psa4output no)
+			(plot_black_and_white yes)
+			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
+			(subtractmaskfromsilk no)
+			(outputformat 1)
+			(mirror no)
+			(drillshape 1)
+			(scaleselection 1)
+			(outputdirectory "")
+		)
+	)
+	(gr_text "Baseboard for Jetson AGX Thor\nRev. ${REVISION}   02/2026"
+		(at 69.270532 143.935138 90)
+		(layer "F.Mask")
+		(uuid "93d8184c-5fc2-476d-a57f-4767a7ac7f3a")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.078125)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "PCB SHA ########"
+		(at 103.5 151 0)
+		(layer "F.SilkS")
+		(uuid "131af42f-9d97-4402-a568-7380eb9782e0")
+		(effects
+			(font
+				(size 0.65 0.65)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "FAN"
+		(at 162.75 151.75 0)
+		(layer "F.SilkS" knockout)
+		(uuid "87d9ba2c-ab6d-470d-8e8b-023ccb5e838b")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "24 V DC 15 A\nPeak 20 A\n"
+		(at 220.3 56.3 0)
+		(layer "F.SilkS")
+		(uuid "a67dfeaa-4596-4ddf-a701-656eb64cfde2")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "+"
+		(at 225.5 57.5 0)
+		(layer "F.SilkS")
+		(uuid "ec3a3812-b3cd-42b6-a9ab-d37e581a4c17")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "ON | OFF Auto-startup"
+		(at 92.75 54.25 0)
+		(layer "F.SilkS" knockout)
+		(uuid "e31db9a9-a84e-4755-8015-3902b20a78a1")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify top)
+		)
+	)
+	(gr_text "DC POWER"
+		(at 236.8 55.2 0)
+		(layer "F.SilkS" knockout)
+		(uuid "25af9cf2-0e37-4186-824d-3a6f8829d573")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USB-C 4"
+		(at 236.8 132.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "06fe3030-99e3-43d6-9e92-c94eb8eaca84")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "SFP28"
+		(at 236.8 135.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "8870d680-24fa-46a9-adf0-e5e9ef1f4d7e")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USB-C 0 DBG"
+		(at 237 80.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "56b82852-4292-4bdf-be30-20d09c2a6e59")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USB-C 1 DP"
+		(at 237 93.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "16a2a1a5-687d-4cf3-8401-fe25d02e81dd")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USB-C 2"
+		(at 237 106.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "fd6f9747-e16f-4c44-9af5-1352800fabb2")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USB-C 3"
+		(at 237 119.8 0)
+		(layer "F.SilkS" knockout)
+		(uuid "23a1b4ac-47a9-44af-aab4-7925cac338f8")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "BOOT"
+		(at 66.9 57.3 90)
+		(layer "F.SilkS" knockout)
+		(uuid "018bb017-d125-47f6-9f9c-07ceecc9b97c")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "USR0"
+		(at 190.19 60.37 90)
+		(layer "F.SilkS" knockout)
+		(uuid "500f0620-4629-47d3-9fa1-fea487fd2554")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "USR1"
+		(at 196.17 60.23 90)
+		(layer "F.SilkS" knockout)
+		(uuid "9bf8735b-9171-4c37-aea9-2dbb50572e78")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "RESET"
+		(at 202.63 60.69 90)
+		(layer "F.SilkS" knockout)
+		(uuid "036e9ab0-d6ab-4930-9039-4f027dad4d9b")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "RECOV"
+		(at 208.578 61.009468 90)
+		(layer "F.SilkS" knockout)
+		(uuid "fd7af8c4-1a19-4a05-a6df-09b2745dfe6f")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "POWER"
+		(at 214.64 61.11 90)
+		(layer "F.SilkS" knockout)
+		(uuid "7f816da1-010d-4310-9e9f-5b3ea01d570f")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "1V15"
+		(at 161.75 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "1aa850b0-398f-456d-921d-6cad2e4eba10")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "1V8"
+		(at 164 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "bd8627cf-7c9d-499c-9d10-1ab58195f056")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "3V3"
+		(at 166.25 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "4a862736-717a-42c8-b365-1c66ffcd6d14")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "3V3_{AON}"
+		(at 168.5 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "465b1b9b-7d8e-4889-913d-98f9a216589c")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "5V"
+		(at 170.75 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "dea5e7ac-ac94-49ca-98ac-ca356c0ad01d")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "5V_{AON}"
+		(at 173 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "00b7e2ef-5e2d-49f5-b52b-3a17fbdf8b7e")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "5V_{SOM}"
+		(at 175.25 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "2684566f-f869-4c3d-8b8c-17bfbc0f2154")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "12V"
+		(at 177.5 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "2e7a8a78-5a39-4af9-8e93-4d9ec2cfc6d9")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "16V"
+		(at 179.75 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "3e9251e3-eafe-4f5f-ba10-176ae58e9813")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "20V"
+		(at 182 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "c97ed44a-22c0-456e-940d-e3282c9f0b5e")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "VCC"
+		(at 184.25 58 90)
+		(layer "F.SilkS" knockout)
+		(uuid "4423415d-689d-4923-a282-be40588abd57")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "GND"
+		(at 186.5 61.25 90)
+		(layer "F.SilkS" knockout)
+		(uuid "2d9776d0-b18f-4988-9930-e873e1ffc426")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "USR0"
+		(at 169.53 64.46 270)
+		(layer "F.SilkS" knockout)
+		(uuid "ccf5cdb3-31b5-471e-9f01-9567a41176bc")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "USR1"
+		(at 171.684468 64.41 270)
+		(layer "F.SilkS" knockout)
+		(uuid "f1b716f4-2d9c-4bb5-aa89-82c8ee8204e9")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "CSI A"
+		(at 63 121 0)
+		(layer "B.SilkS" knockout)
+		(uuid "b8916346-03b6-4a6f-a1f8-75353ac30c62")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "JTAG"
+		(at 167.2 71.5 0)
+		(layer "B.SilkS")
+		(uuid "36469a1a-85e7-4f37-a5a0-434baaf3c359")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "CSI B"
+		(at 189.6 54.8 0)
+		(layer "B.SilkS" knockout)
+		(uuid "4c76045e-9810-408b-b4c6-14b804a9febd")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "USB PD/HUB"
+		(at 201.2 94.6 0)
+		(layer "B.SilkS")
+		(uuid "07bfaac2-4165-43b2-b000-70500d532478")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify left bottom mirror)
+		)
+	)
+	(gr_text "DRV"
+		(at 110 117 0)
+		(layer "B.SilkS" knockout)
+		(uuid "90547132-757a-4d23-ad79-b3752c54a4ec")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "M.2 M"
+		(at 112.6 93.2 0)
+		(layer "B.SilkS" knockout)
+		(uuid "88351410-d713-4828-ad5e-0f20bbac5b51")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "M.2 E"
+		(at 112.6 142.4 0)
+		(layer "B.SilkS" knockout)
+		(uuid "9894128e-d2f6-4cf1-97c3-4b45aefc6dd8")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "BT"
+		(at 109.2 143.4 90)
+		(layer "B.SilkS" knockout)
+		(uuid "bb1b4370-d793-4230-af7c-1093e777d18a")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "WLAN"
+		(at 110.6 145 90)
+		(layer "B.SilkS" knockout)
+		(uuid "e68feece-2a41-427a-94f7-b82aa437c3da")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "I2C x2"
+		(at 152 59.6 90)
+		(layer "B.SilkS" knockout)
+		(uuid "deb28e03-7f06-4ee7-b64f-fee0de003a29")
+		(effects
+			(font
+				(size 0.7 0.7)
+				(thickness 0.15)
+			)
+			(justify right bottom mirror)
+		)
+	)
+	(gr_text "6-pin Molex Mini-Fit \npower connector (J2)"
+		(at 245.72 63.49 0)
+		(layer "Eco1.User")
+		(uuid "e579b85f-a0be-4e49-ae81-f8e9f877efa1")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "6-pin Molex Mini-Fit \npower connector (J2)" 0)
+	)
+	(gr_text "USB-C 0 LED"
+		(at 245.72 71.59 0)
+		(layer "Eco1.User")
+		(uuid "57a8cbae-4dcf-4285-99d9-cfdcc99f97da")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 0 LED" 0)
+	)
+	(gr_text "USB-C 0 (J7)"
+		(at 245.72 76.49 0)
+		(layer "Eco1.User")
+		(uuid "782cfd42-0bd6-428d-a875-fefdd78b8d9e")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 0 (J7)" 0)
+	)
+	(gr_text "USB-C 1 LED"
+		(at 245.72 83.59 0)
+		(layer "Eco1.User")
+		(uuid "63ca9299-d7e5-46eb-88eb-8194d138331e")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 1 LED" 0)
+	)
+	(gr_text "USB-C 1 (J9)"
+		(at 245.72 89.49 0)
+		(layer "Eco1.User")
+		(uuid "647a8456-ba97-479c-ad65-0764c9e1dd20")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 1 (J9)" 0)
+	)
+	(gr_text "USB-C 2 LED"
+		(at 245.72 96.59 0)
+		(layer "Eco1.User")
+		(uuid "d602af8f-8a08-4b24-9547-0aa8a67d767b")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 2 LED" 0)
+	)
+	(gr_text "USB-C 2 (J3)"
+		(at 245.72 102.49 0)
+		(layer "Eco1.User")
+		(uuid "86a58c16-9f1d-49d2-a299-8530c653c1e6")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 2 (J3)" 0)
+	)
+	(gr_text "USB-C 3 LED"
+		(at 245.72 109.59 0)
+		(layer "Eco1.User")
+		(uuid "75eeecd9-4367-4646-8074-b264b31840a1")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 3 LED" 0)
+	)
+	(gr_text "USB-C 3 (J6)"
+		(at 245.72 115.49 0)
+		(layer "Eco1.User")
+		(uuid "18304e48-558d-453c-a187-0e8202c09752")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 3 (J6)" 0)
+	)
+	(gr_text "USB-C 4 LED"
+		(at 245.72 122.49 0)
+		(layer "Eco1.User")
+		(uuid "110d9dc8-3776-4dc4-946a-4eb1c94c7d89")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 4 LED" 0)
+	)
+	(gr_text "USB-C 4 (J5)"
+		(at 245.72 128.49 0)
+		(layer "Eco1.User")
+		(uuid "5e922dde-03bd-42db-8d0e-cb5ec97ee2ff")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 4 (J5)" 0)
+	)
+	(gr_text "SFP+ LEDs"
+		(at 245.72 135.09 0)
+		(layer "Eco1.User")
+		(uuid "b16a440a-a3ad-49af-988e-c0eb13a4d98a")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "SFP+ LEDs" 0)
+	)
+	(gr_text "SFP+ connector (J12)"
+		(at 245.72 144.49 0)
+		(layer "Eco1.User")
+		(uuid "8d9ba2ad-b9a1-4424-98e4-23d10feeed06")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "SFP+ connector (J12)" 0)
+	)
+	(gr_text "6-pin Molex Mini-Fit \npower connector (J2)"
+		(at 245.8 63.4 0)
+		(layer "Eco1.User")
+		(uuid "a745a215-e054-4acf-9197-2193c838b280")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "6-pin Molex Mini-Fit \npower connector (J2)" 0)
+	)
+	(gr_text "USB-C 0 LED"
+		(at 245.8 71.5 0)
+		(layer "Eco1.User")
+		(uuid "a907bbe5-d441-4991-86b1-f67f19900807")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 0 LED" 0)
+	)
+	(gr_text "USB-C 0 (J7)"
+		(at 245.8 76.4 0)
+		(layer "Eco1.User")
+		(uuid "f169513d-5363-450d-b889-b74c40af140f")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 0 (J7)" 0)
+	)
+	(gr_text "USB-C 1 LED"
+		(at 245.8 83.5 0)
+		(layer "Eco1.User")
+		(uuid "c2668fab-5f0e-45b9-a76a-e07c0003a948")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 1 LED" 0)
+	)
+	(gr_text "USB-C 1 (J9)"
+		(at 245.8 89.4 0)
+		(layer "Eco1.User")
+		(uuid "921ba647-5977-4f87-9576-7189dce1cc29")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 1 (J9)" 0)
+	)
+	(gr_text "USB-C 2 LED"
+		(at 245.8 96.5 0)
+		(layer "Eco1.User")
+		(uuid "5af9709b-e416-43cb-b4df-54cc682f4399")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 2 LED" 0)
+	)
+	(gr_text "USB-C 2 (J3)"
+		(at 245.8 102.4 0)
+		(layer "Eco1.User")
+		(uuid "0ef51764-6489-4f40-9e24-a013c5a26c7b")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 2 (J3)" 0)
+	)
+	(gr_text "USB-C 3 LED"
+		(at 245.8 109.5 0)
+		(layer "Eco1.User")
+		(uuid "f2fa006b-e5fd-4e87-b258-62f3638fae89")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 3 LED" 0)
+	)
+	(gr_text "USB-C 3 (J6)"
+		(at 245.8 115.4 0)
+		(layer "Eco1.User")
+		(uuid "e59a5d9f-16a6-49e9-b9c0-3ca8ead57258")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 3 (J6)" 0)
+	)
+	(gr_text "USB-C 4 LED"
+		(at 245.8 122.4 0)
+		(layer "Eco1.User")
+		(uuid "2ad62bc7-2b3a-4dd6-8f26-97bdd3f29f16")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 4 LED" 0)
+	)
+	(gr_text "USB-C 4 (J5)"
+		(at 245.8 128.4 0)
+		(layer "Eco1.User")
+		(uuid "5191b883-da40-4c5c-b6fa-7aac649c4579")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "USB-C 4 (J5)" 0)
+	)
+	(gr_text "SFP+ LEDs"
+		(at 245.8 135 0)
+		(layer "Eco1.User")
+		(uuid "1feb9fe4-c81a-40ff-b496-1e4912688642")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "SFP+ LEDs" 0)
+	)
+	(gr_text "SFP+ connector (J12)"
+		(at 245.8 144.4 0)
+		(layer "Eco1.User")
+		(uuid "6a0541e9-cd9b-4cb6-bca4-ae3ef5885236")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "SFP+ connector (J12)" 0)
+	)
+	(gr_text "Jetson connector (J1)"
+		(at 116.750532 61.4 0)
+		(layer "Eco1.User")
+		(uuid "248e1dcb-4069-4bbb-af01-bf45121d0db5")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Jetson connector (J1)" 0)
+	)
+	(gr_text "Jetson connector (J1)"
+		(at 116.830532 61.31 0)
+		(layer "Eco1.User")
+		(uuid "de24903c-b538-49b1-8a57-b4d2c385d7a3")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Jetson connector (J1)" 0)
+	)
+	(gr_text "JTAG Debug connector (J4)"
+		(at 190.92 125.09 0)
+		(layer "Eco1.User")
+		(uuid "042e70b0-9286-4063-b8fd-5ab57d4d0c95")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "JTAG Debug connector (J4)" 0)
+	)
+	(gr_text "JTAG Debug connector (J4)"
+		(at 191 125 0)
+		(layer "Eco1.User")
+		(uuid "dac6f1c2-6c30-408c-a966-85f572ce58e5")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "JTAG Debug connector (J4)" 0)
+	)
+	(gr_text "FAN connector (J15)"
+		(at 163.670532 133.377757 270)
+		(layer "Eco1.User")
+		(uuid "3b48cc72-c925-4e34-94b9-df6d84ced8c8")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "FAN connector (J15)" 270)
+	)
+	(gr_text "FAN connector (J15)"
+		(at 163.750532 133.287757 270)
+		(layer "Eco1.User")
+		(uuid "825989a6-c4d1-4fed-ac6f-4a45a6b5530b")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "FAN connector (J15)" 270)
+	)
+	(gr_text "Power status LEDs"
+		(at 169.64 44.22 270)
+		(layer "Eco1.User")
+		(uuid "8ebb0f3f-fb7c-4b25-b0cb-73903dfad446")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Power status LEDs" 270)
+	)
+	(gr_text "Power status LEDs"
+		(at 169.72 44.13 270)
+		(layer "Eco1.User")
+		(uuid "95894423-eff0-44c5-b27e-804c6cb54e21")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Power status LEDs" 270)
+	)
+	(gr_text "USR0 LED"
+		(at 169.77 70.97 270)
+		(layer "Eco1.User")
+		(uuid "f576d847-aeb9-4e8b-842a-f7c3f42bd567")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR0 LED" 270)
+	)
+	(gr_text "USR0 LED"
+		(at 169.85 70.88 270)
+		(layer "Eco1.User")
+		(uuid "fd1f11e3-007f-4f7d-a321-d4d3f8f7e2e6")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR0 LED" 270)
+	)
+	(gr_text "USR1 LED"
+		(at 171.93 70.98 270)
+		(layer "Eco1.User")
+		(uuid "910011b0-ab9e-47b2-be42-f7c306becf77")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR1 LED" 270)
+	)
+	(gr_text "USR1 LED"
+		(at 172.01 70.89 270)
+		(layer "Eco1.User")
+		(uuid "32e8c07d-f6f6-46e8-a6f0-b8e80c87c4d9")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR1 LED" 270)
+	)
+	(gr_text "USR0 button"
+		(at 184.76 49.74 270)
+		(layer "Eco1.User")
+		(uuid "5f6feebc-5e11-4ecf-bc91-8846803d26c1")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR0 button" 270)
+	)
+	(gr_text "USR0 button"
+		(at 184.84 49.65 270)
+		(layer "Eco1.User")
+		(uuid "a3504afa-c61b-44b1-af2c-8696bdf8f77a")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR0 button" 270)
+	)
+	(gr_text "USR1 button"
+		(at 190.82 49.86 270)
+		(layer "Eco1.User")
+		(uuid "0e24f223-98c5-4bfa-beb5-63087afc7d5f")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR1 button" 270)
+	)
+	(gr_text "USR1 button"
+		(at 190.9 49.77 270)
+		(layer "Eco1.User")
+		(uuid "0be7d4d0-efb4-40a1-8c58-7e3ba8c00272")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "USR1 button" 270)
+	)
+	(gr_text "Reset button"
+		(at 197.34 49.84 270)
+		(layer "Eco1.User")
+		(uuid "52c2d060-ecf6-4426-9dc9-ead189e0197a")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Reset button" 270)
+	)
+	(gr_text "Reset button"
+		(at 197.42 49.75 270)
+		(layer "Eco1.User")
+		(uuid "ba050f71-3b18-4ebc-a130-30bf0d3315ed")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Reset button" 270)
+	)
+	(gr_text "Recovery button"
+		(at 203.36 50.07 270)
+		(layer "Eco1.User")
+		(uuid "32e45d47-32be-4ca4-9208-513cbb38ab0f")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Recovery button" 270)
+	)
+	(gr_text "Recovery button"
+		(at 203.44 49.98 270)
+		(layer "Eco1.User")
+		(uuid "8ee816ca-ee09-4aa1-9126-b46cdd82196d")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Recovery button" 270)
+	)
+	(gr_text "Power button"
+		(at 209.21 49.59 270)
+		(layer "Eco1.User")
+		(uuid "f0e751dc-f643-4d4b-83f1-3cbe4ea7af70")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Power button" 270)
+	)
+	(gr_text "Power button"
+		(at 209.29 49.5 270)
+		(layer "Eco1.User")
+		(uuid "754203a4-bdac-4ebb-b2eb-0b2b99776e10")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Power button" 270)
+	)
+	(gr_text "FMC+ expansion connector (J18)"
+		(at 91.92 102.09 0)
+		(layer "Eco2.User")
+		(uuid "9609aee2-69d9-4ea7-abbe-3b679c1c4b41")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "FMC+ expansion connector (J18)" 0)
+	)
+	(gr_text "FMC+ expansion connector (J18)"
+		(at 92 102 0)
+		(layer "Eco2.User")
+		(uuid "0bfebca3-e5d0-436f-a5e9-1cfca090fd70")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "FMC+ expansion connector (J18)" 0)
+	)
+	(gr_text "M.2 key M (13)"
+		(at 126.72 104.09 0)
+		(layer "Eco2.User")
+		(uuid "153f1e07-1e0c-4410-ad7b-9ce1030b6b7d")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "M.2 key M (13)" 0)
+	)
+	(gr_text "M.2 key E (14)"
+		(at 126.72 129.09 0)
+		(layer "Eco2.User")
+		(uuid "39cb6418-e90b-42cd-9e1f-4703b7d3c9b6")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "M.2 key E (14)" 0)
+	)
+	(gr_text "M.2 key M (13)"
+		(at 126.8 104 0)
+		(layer "Eco2.User")
+		(uuid "9c9acd8c-0c3a-4d73-b3d3-edab87507282")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "M.2 key M (13)" 0)
+	)
+	(gr_text "M.2 key E (14)"
+		(at 126.8 129 0)
+		(layer "Eco2.User")
+		(uuid "b1a433b0-b996-45a4-9ced-cf622a33bd23")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left)
+		)
+		(render_cache "M.2 key E (14)" 0)
+	)
+	(gr_text "CSI A (J11)"
+		(at 53 101 0)
+		(layer "Eco2.User")
+		(uuid "5a009c04-6a0f-437f-9b9c-d3571de38fdd")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "CSI A (J11)" 0)
+	)
+	(gr_text "CSI A (J11)"
+		(at 53.08 100.91 0)
+		(layer "Eco2.User")
+		(uuid "10246059-e4eb-4708-bb45-d52d0753b61c")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "CSI A (J11)" 0)
+	)
+	(gr_text "Automatic boot switch"
+		(at 89.32 49.29 0)
+		(layer "Eco2.User")
+		(uuid "a107c007-0400-45dc-bcce-9f5e6e7eb043")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Automatic boot switch" 0)
+	)
+	(gr_text "Automatic boot switch"
+		(at 89.4 49.2 0)
+		(layer "Eco2.User")
+		(uuid "c3f3e8a2-1217-40bf-b4a6-23915316abcc")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Automatic boot switch" 0)
+	)
+	(gr_text "Power expansion connector (J8)"
+		(at 93.92 148.89 0)
+		(layer "Eco2.User")
+		(uuid "ea2580ea-3815-495e-9cd2-48b9ddebb4cc")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Power expansion connector (J8)" 0)
+	)
+	(gr_text "Power expansion connector (J8)"
+		(at 94 148.8 0)
+		(layer "Eco2.User")
+		(uuid "814ab770-9a7e-4419-be6a-bbbb71edd364")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "Power expansion connector (J8)" 0)
+	)
+	(gr_text "CSI B (J10)"
+		(at 204.43 49.59 0)
+		(layer "Eco2.User")
+		(uuid "aa78938c-1ce9-471b-9d76-ca133631188b")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "CSI B (J10)" 0)
+	)
+	(gr_text "CSI B (J10)"
+		(at 204.51 49.5 0)
+		(layer "Eco2.User")
+		(uuid "a667f3df-51bf-4d50-822d-84c7b3e62f4a")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+		(render_cache "CSI B (J10)" 0)
+	)
+	(gr_text "Storage LED"
+		(at 108.12 116.49 0)
+		(layer "Eco2.User")
+		(uuid "435d220e-0084-4abc-b86c-a9fe84c9bd40")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Storage LED" 0)
+	)
+	(gr_text "Storage LED"
+		(at 108.2 116.4 0)
+		(layer "Eco2.User")
+		(uuid "0b75f372-e8df-427c-aeb1-e203b70c8433")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "Storage LED" 0)
+	)
+	(gr_text "BT LED"
+		(at 108.32 135.29 270)
+		(layer "Eco2.User")
+		(uuid "db3f3815-caaf-429c-9740-87b8a3ee7636")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "BT LED" 270)
+	)
+	(gr_text "BT LED"
+		(at 108.4 135.2 270)
+		(layer "Eco2.User")
+		(uuid "4eae3198-0aba-44e4-8191-67f177281be6")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "BT LED" 270)
+	)
+	(gr_text "WiFi LED"
+		(at 109.92 135.29 270)
+		(layer "Eco2.User")
+		(uuid "a26a2e86-2581-4933-8882-3dbb99696aa3")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "WiFi LED" 270)
+	)
+	(gr_text "WiFi LED"
+		(at 110 135.2 270)
+		(layer "Eco2.User")
+		(uuid "41e59fbf-b001-4ab5-b50c-8f3af5271e20")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "WiFi LED" 270)
+	)
+	(gr_text "I2C QWIIC connector (J16)"
+		(at 139.22 49.81 270)
+		(layer "Eco2.User")
+		(uuid "6d408606-4bdc-4660-a566-d6643f276bf3")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "I2C QWIIC connector (J16)" 270)
+	)
+	(gr_text "I2C QWIIC connector (J16)"
+		(at 139.3 49.72 270)
+		(layer "Eco2.User")
+		(uuid "602989d3-d505-4731-8a14-538badf6f3ed")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "I2C QWIIC connector (J16)" 270)
+	)
+	(gr_text "I2C QWIIC connector (J17)"
+		(at 146.82 50.01 270)
+		(layer "Eco2.User")
+		(uuid "c63e7c44-aad2-4b3a-914e-6c0427cbf71d")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "I2C QWIIC connector (J17)" 270)
+	)
+	(gr_text "I2C QWIIC connector (J17)"
+		(at 146.9 49.92 270)
+		(layer "Eco2.User")
+		(uuid "3907e44a-241a-41c8-837e-da8481538b80")
+		(effects
+			(font
+				(face "Lato")
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+		(render_cache "I2C QWIIC connector (J17)" 270)
+	)
+	(embedded_fonts no)
+)

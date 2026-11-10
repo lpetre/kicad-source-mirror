@@ -105,7 +105,11 @@ impl ImplicitCondition {
             ("A.hasExactNetclass('", ")", ImplicitAtom::HasExactNetclass),
             ("A.inDiffPair('", ")", ImplicitAtom::InDiffPair),
             ("A.Layer == '", "", ImplicitAtom::LayerIs),
-            ("A.intersectsKeepout('", ")", ImplicitAtom::IntersectsKeepout),
+            (
+                "A.intersectsKeepout('",
+                ")",
+                ImplicitAtom::IntersectsKeepout,
+            ),
         ];
         const PLAIN_ATOMS: &[(&str, ImplicitAtom)] = &[
             ("AB.isCoupledDiffPair()", ImplicitAtom::IsCoupledDiffPair),
@@ -418,8 +422,7 @@ impl EngineCondition {
                     return true;
                 }
 
-                if condition.run(item_a, item_b, constraint, layer, reborrow(&mut reporter))
-                    != 0.0
+                if condition.run(item_a, item_b, constraint, layer, reborrow(&mut reporter)) != 0.0
                 {
                     return true;
                 } else if item_b.is_some() {
@@ -527,8 +530,8 @@ mod tests {
 
     #[test]
     fn usage_flags_follow_the_compiled_form() {
-        let c = ImplicitCondition::parse("A.hasExactNetclass('n') && AB.isCoupledDiffPair()")
-            .unwrap();
+        let c =
+            ImplicitCondition::parse("A.hasExactNetclass('n') && AB.isCoupledDiffPair()").unwrap();
         assert!(c.requires_pair_items());
         assert!(!c.references_item_b());
         assert!(!c.has_geometry_dependent_functions());
