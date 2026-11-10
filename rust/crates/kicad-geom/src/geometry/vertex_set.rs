@@ -434,7 +434,7 @@ impl VertexSet {
         let min_z = self.z_order(min_tx, min_ty);
         let max_z = self.z_order(max_tx, max_ty);
 
-        if !a_match_user_data && self.reflex_index_valid {
+        if self.reflex_index_valid {
             let index = &self.reflex_index;
             let mut it = index.partition_point(|e| e.z < min_z);
 
@@ -451,10 +451,11 @@ impl VertexSet {
                     continue;
                 }
 
-                // Entries of clipped ears stay behind with a null link
+                // Entries of clipped ears stay behind with a null link. The z-order walk below
+                // never meets `this`, and with `a_match_user_data` it can be reflex here.
                 let ev = e.v;
 
-                if self.vertices[ev].next != NIL && blocks_ear(self, ev) {
+                if ev != this && self.vertices[ev].next != NIL && blocks_ear(self, ev) {
                     self.vm(this).ear_blocker = ev;
                     return false;
                 }

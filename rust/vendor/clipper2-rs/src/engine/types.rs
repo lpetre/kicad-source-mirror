@@ -109,6 +109,8 @@ pub(crate) struct Active {
     pub bot: Point64,
     pub top: Point64,
     pub curr_x: i64,
+    /// Rank in the AEL, valid between `adjust_curr_x_and_copy_to_sel` and the end of the scanbeam.
+    pub ael_pos: u32,
     pub dx: f64,
     pub wind_dx: i32,
     pub wind_cnt: i32,
@@ -126,6 +128,7 @@ impl Default for Active {
             bot: Point64::default(),
             top: Point64::default(),
             curr_x: 0,
+            ael_pos: 0,
             dx: 0.0,
             wind_dx: 1,
             wind_cnt: 0,

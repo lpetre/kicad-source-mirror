@@ -148,7 +148,7 @@ impl ClipperBase {
             if self.or(owner).pts != NONE
                 && self.check_bounds(owner)
                 && self.or(owner).bounds.contains_rect(&self.or(outrec).bounds)
-                && self.path2_contains_path1_op(self.or(outrec).pts, self.or(owner).pts)
+                && self.path2_contains_owner_ring(self.or(outrec).pts, owner)
             {
                 break;
             }

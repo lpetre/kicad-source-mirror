@@ -508,7 +508,10 @@ impl ClipperBase {
     /// can be skipped.
     pub(crate) fn adjust_curr_x_and_copy_to_sel(&mut self, top_y: i64) -> bool {
         let (edges, links) = (&mut self.edges[..], &mut self.links);
+        let ending = &mut self.edges_ending;
+        ending.clear();
         let mut e = self.actives;
+        let mut pos = 0;
         self.sel = e;
         let mut prev_x = i64::MIN;
         let mut sorted = true;
@@ -520,6 +523,11 @@ impl ClipperBase {
             links.jump[i] = next;
             let a = &mut edges[i];
             a.curr_x = top_x(a, top_y);
+            a.ael_pos = pos;
+            pos += 1;
+            if a.top.y == top_y {
+                ending.push(e);
+            }
             sorted &= a.curr_x >= prev_x;
             prev_x = a.curr_x;
             e = next;

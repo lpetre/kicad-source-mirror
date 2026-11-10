@@ -5,12 +5,13 @@ mod horizontal;
 mod input;
 mod intersect;
 mod output;
+mod owner_index;
 mod results;
 mod reuse;
 mod scan;
 pub(crate) mod types;
 
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashMap};
 
 #[cfg(feature = "usingz")]
 use crate::core::Point64;
@@ -30,6 +31,8 @@ pub(crate) struct ClipperBase {
     cliptype: ClipType,
     fillrule: FillRule,
     bot_y: i64,
+    /// With `curr_x_at_top`, the active edges whose top is on this scanbeam's top, in AEL order.
+    edges_ending: Vec<Idx>,
     /// Every active edge's `curr_x` is already `top_x(top_y)`. Set by `do_intersections` and
     /// only valid for the `do_top_of_scanbeam` call that immediately follows it.
     curr_x_at_top: bool,
@@ -48,6 +51,8 @@ pub(crate) struct ClipperBase {
     links: Links,
     outpts: Vec<OutPt>,
     outrecs: Vec<OutRec>,
+    /// Indexes of owner rings for `RecursiveCheckOwners`; looked up by key, never iterated.
+    owner_rings: HashMap<Idx, owner_index::OwnerRing>,
     pub(crate) preserve_collinear: bool,
     pub(crate) reverse_solution: bool,
     pub(crate) has_open_paths: bool,
@@ -66,6 +71,7 @@ impl Default for ClipperBase {
             cliptype: ClipType::NoClip,
             fillrule: FillRule::EvenOdd,
             bot_y: 0,
+            edges_ending: Vec::new(),
             curr_x_at_top: false,
             minima_list_sorted: false,
             using_polytree: false,
@@ -82,6 +88,7 @@ impl Default for ClipperBase {
             links: Links::default(),
             outpts: Vec::new(),
             outrecs: Vec::new(),
+            owner_rings: HashMap::new(),
             preserve_collinear: true,
             reverse_solution: false,
             has_open_paths: false,
@@ -106,6 +113,7 @@ impl ClipperBase {
         self.intersect_nodes.clear();
         self.outpts.clear();
         self.outrecs.clear();
+        self.owner_rings.clear();
         self.horz_seg_list.clear();
         self.horz_join_list.clear();
     }

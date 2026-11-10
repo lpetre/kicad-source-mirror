@@ -51,6 +51,10 @@ impl ClipperBase {
 
     fn do_top_of_scanbeam(&mut self, y: i64) {
         self.sel = NONE; // reused to flag horizontals (see push_horz)
+        if self.curr_x_at_top {
+            self.do_top_of_ending_edges(y);
+            return;
+        }
         let mut e = self.actives;
         while e != NONE {
             if self.e(e).top.y == y {
@@ -68,11 +72,53 @@ impl ClipperBase {
                 if self.is_horizontal(e) {
                     self.push_horz(e);
                 }
-            } else if !self.curr_x_at_top {
+            } else {
                 let x = top_x(self.e(e), y);
                 self.em(e).curr_x = x;
             }
             e = self.links.next_ael[e as usize];
+        }
+    }
+
+    /// `DoTopOfScanbeam` when every other active edge already has its position at `y`: it only
+    /// acts on the edges ending at `y`, which it meets in AEL order. `DoMaxima` moves an edge
+    /// past the ones between it and its pair, which it then visits, so that order is kept.
+    fn do_top_of_ending_edges(&mut self, y: i64) {
+        if cfg!(debug_assertions) {
+            let (mut e, mut walked) = (self.actives, Vec::new());
+            while e != NONE {
+                debug_assert_eq!(self.e(e).curr_x, top_x(self.e(e), y));
+                if self.e(e).top.y == y {
+                    walked.push(e);
+                }
+                e = self.links.next_ael[e as usize];
+            }
+            debug_assert_eq!(walked, self.edges_ending);
+        }
+
+        for i in 0..self.edges_ending.len() {
+            let e = self.edges_ending[i];
+            // the second edge of a maxima pair has left with the first
+            if self.links.prev_ael[e as usize] == NONE
+                && self.links.next_ael[e as usize] == NONE
+                && self.actives != e
+            {
+                continue;
+            }
+            let tx = self.e(e).top.x;
+            self.em(e).curr_x = tx;
+            if self.is_maxima(e) {
+                self.do_maxima(e);
+                continue;
+            }
+            if self.is_hot(e) {
+                let top = self.e(e).top;
+                self.add_out_pt(e, top);
+            }
+            self.update_edge_into_ael(e);
+            if self.is_horizontal(e) {
+                self.push_horz(e);
+            }
         }
     }
 

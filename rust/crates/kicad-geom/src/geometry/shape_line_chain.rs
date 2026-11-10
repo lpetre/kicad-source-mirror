@@ -1352,6 +1352,38 @@ impl ShapeLineChain {
         debug_assert!(self.shapes.len() == self.points.len());
     }
 
+    /// The result of calling [`Self::insert_point`] with each `(vertex, point)` of `inserts` in
+    /// turn, without moving the tail of the chain once per point. `inserts` must not increase in
+    /// `vertex`. Returns `false` and changes nothing when that shortcut does not apply: the chain
+    /// has arcs, or a vertex is not an interior index (`insert_point` appends at the end).
+    pub fn insert_points_descending(&mut self, inserts: &[(usize, Vector2I)]) -> bool {
+        let count = self.points.len();
+
+        if inserts.iter().any(|&(vertex, _)| vertex >= count)
+            || !self.arcs.is_empty()
+            || inserts.windows(2).any(|w| w[1].0 > w[0].0)
+        {
+            return false;
+        }
+
+        let mut points = Vec::with_capacity(count + inserts.len());
+        let mut pending = inserts.iter().rev().peekable();
+
+        for (i, &point) in self.points.iter().enumerate() {
+            // Equal vertices: each insert lands before the previous one, hence last to first.
+            while let Some(&(_, inserted)) = pending.next_if(|&&(vertex, _)| vertex == i) {
+                points.push(inserted);
+            }
+
+            points.push(point);
+        }
+
+        self.points = points;
+        self.shapes
+            .resize(count + inserts.len(), Self::SHAPES_ARE_PT);
+        true
+    }
+
     /// Port of `SHAPE_LINE_CHAIN::Insert( size_t aVertex, const SHAPE_ARC& aArc )`.
     pub fn insert_arc(&mut self, a_vertex: usize, a_arc: &ShapeArc) {
         self.insert_arc_with_error(a_vertex, a_arc, get_arc_polygonization_max_error());

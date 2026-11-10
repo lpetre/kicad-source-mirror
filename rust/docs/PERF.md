@@ -459,6 +459,58 @@ polygons) but asserted nowhere; if a future caller passed the same zone twice to
 `fill()`, a stale seed could survive (remove the entry in that branch); while the cache
 holds fills they are shared, which costs memory until the loop ends.
 
+## Round 3 (zone refill, by hand on an Apple M4 laptop, 2026-11-10; base 14e82ca4)
+
+Kept: five changes. Dropped for no gain (under about 1 %, within noise): SEL links written only
+when a scanbeam is unsorted, cache-line alignment of `Active`, recomputing `curr_x` only for
+crossed edges on its own, de-duplicating scanline inserts.
+
+| what | files | gain on `zone_refill`, min ms of alternating runs |
+|---|---|---|
+| Index over the owner ring for `RecursiveCheckOwners`: y-bucketed edges answer `PointInOpPolygon` without walking a ring of many thousands of points for every hole | `vendor/clipper2-rs/src/engine/owner_index.rs` (new), `output.rs`, `results.rs`, `mod.rs` | jetson 10.7 s -> 7.5 s (-30 %) |
+| Merge pass of `BuildIntersectList` skips two runs that are already in order | `engine/intersect.rs` | -2 to -4 % |
+| `DoTopOfScanbeam` acts only on the edges ending on the scanline, collected in AEL order by the pass that computes `curr_x`; only crossed edges are recomputed and re-ranked | `engine/ael.rs`, `intersect.rs`, `scan.rs`, `types.rs`, `mod.rs` | -7 to -9 % |
+| `connect_nearby_polys` inserts its points in one pass (`ShapeLineChain::insert_points_descending`) | `kicad-geom/.../shape_line_chain.rs`, `kicad-zone/src/connect.rs` | -2 % on jetson, neutral on medium boards |
+| The connector's ear tests use the reflex-vertex index | `kicad-geom/.../vertex_set.rs`, `kicad-zone/src/connect.rs` | -3.5 % on jetson, neutral on medium boards |
+
+**Clipper2 was changed here**, which the rule in the next section lists as pinned. The pin is
+about results: the engine still visits the same edges in the same order and answers the same
+questions, and nothing below showed a different output. The rule against changing what Clipper2
+computes stands.
+
+All five together against the base, M4 laptop, load 3 to 5, minima of two alternating rounds:
+
+| board | zone_refill base -> head (ms) | drc_after_refill base -> head (ms) |
+|---|---|---|
+| kit-dev-coldfire-xilinx_5213 | 571.6 -> 375.7 (-34 %) | 149.3 -> 145.3 (-3 %) |
+| complex_hierarchy | 95.8 -> 67.3 (-30 %) | 66.8 -> 58.1 (-13 %) |
+| StickHub | 83.4 -> 75.3 (-10 %) | 78.0 -> 75.3 (-3 %) |
+| interf_u | 117.9 -> 63.6 (-46 %) | 47.2 -> 37.2 (-21 %) |
+| jetson-agx-thor-baseboard | 10934 -> 6171 (-44 %) | 4990 -> 4614 (-8 %) |
+| vme-wren | 16012 -> 10782 (-33 %) | 10382 -> 9955 (-4 %) |
+
+The client's small example board gains about 5 % (41.1 -> 39.1 ms): it has no large rings. Times
+are not comparable with the Xeon tables above.
+
+Verification, base against head on the same machine:
+
+* `kicad-rs pcb drc --refill-zones --save-board` with a fixed date and UUID seed on all 196
+  boards with zones in `demos/` and `qa/data/pcbnew`: base, head and a dev-profile head give the
+  same saved board and the same DRC report, 196 of 196. The dev build checks every index answer
+  against the walk, and the list of ending edges and every `curr_x` against a full AEL walk.
+* Compare saved boards, not only DRC reports: an intermediate version of the reflex-index change
+  moved one fill vertex on 14 boards while all their DRC reports stayed equal. (With
+  `a_match_user_data` the vertex under test can be reflex and blocked its own ear.)
+* New tests: `owner_index` (the index against the walk on random rings with many degenerate
+  cases), `kicad-geom/tests/slc_insert_points_descending.rs`.
+* NOT run: `scripts/perf-gate.sh` and any comparison with the reference kicad-cli (both need the
+  Linux reference build), the wasm build, and the output check on Linux x86-64. Run the gate there
+  before relying on this round.
+
+After this round the Clipper2 scan is `adjust_curr_x_and_copy_to_sel` (every active edge on every
+scanbeam, inherent to the algorithm) and `build_intersect_list`; next come triangulation
+(`is_ear`, `decimate_list`) and the connectivity of island removal.
+
 ## Where the performance work stands (handoff, 2026-11-10, at c1165e67)
 
 **Rule of the whole exercise**: no output byte may change. Pinned and never to be "optimised":

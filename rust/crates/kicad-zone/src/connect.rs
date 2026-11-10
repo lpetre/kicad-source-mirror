@@ -73,6 +73,9 @@ impl VertexConnector {
 
         if tail != NIL {
             set.update_list(tail);
+            // The list does not change from here on. Only reflex vertices can block an ear, and
+            // whether one does is all `is_ear` answers.
+            set.build_reflex_index(0);
         }
 
         VertexConnector {
@@ -238,9 +241,15 @@ pub fn connect_nearby_polys(polys: &mut ShapePolySet, distance: f64) {
         vertices.sort_by_key(|v| std::cmp::Reverse(v.0));
 
         let line = polys.outline(*outline);
+        let positions: Vec<(usize, Vector2I)> = vertices
+            .iter()
+            .map(|&(vertex, pt)| ((vertex + 1) as usize, pt))
+            .collect();
 
-        for &(vertex, pt) in vertices.iter() {
-            line.insert_point((vertex + 1) as usize, pt);
+        if !line.insert_points_descending(&positions) {
+            for &(vertex, pt) in &positions {
+                line.insert_point(vertex, pt);
+            }
         }
     }
 }

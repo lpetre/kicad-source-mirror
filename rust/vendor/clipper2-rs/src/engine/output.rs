@@ -1,6 +1,7 @@
 //! Output records: building, joining, splitting and cleaning the result polygons.
 
 use super::ClipperBase;
+use super::owner_index::{OwnerRing, RingIndex};
 use super::types::*;
 use crate::core::{
     Path64, Point64, PointInPolygonResult, Rect64, cross_product_sign_t, dot_product, get_bounds,
@@ -757,10 +758,48 @@ impl ClipperBase {
 
     /// `Path2ContainsPath1(OutPt*, OutPt*)`.
     pub(crate) fn path2_contains_path1_op(&self, op1: Idx, op2: Idx) -> bool {
+        self.path2_contains_path1_by(op1, op2, |pt| self.point_in_op_polygon(pt, op2))
+    }
+
+    /// `Path2ContainsPath1` for a ring and its owner, whose ring `CheckBounds` has finalized.
+    /// Owners asked about repeatedly are answered from an index (see [`super::owner_index`]).
+    pub(crate) fn path2_contains_owner_ring(&mut self, op1: Idx, owner: Idx) -> bool {
+        let op2 = self.or(owner).pts;
+        match self.owner_rings.get(&owner) {
+            None => {
+                self.owner_rings.insert(owner, OwnerRing::Seen);
+            }
+            Some(OwnerRing::Seen) => {
+                let ring = match RingIndex::build(&self.outpts, op2) {
+                    Some(index) => OwnerRing::Indexed(Box::new(index)),
+                    None => OwnerRing::Walk,
+                };
+                self.owner_rings.insert(owner, ring);
+            }
+            Some(_) => {}
+        }
+
+        if let Some(OwnerRing::Indexed(index)) = self.owner_rings.get(&owner) {
+            self.path2_contains_path1_by(op1, op2, |pt| {
+                let result = index.locate(&self.outpts, pt);
+                debug_assert_eq!(result, self.point_in_op_polygon(pt, op2));
+                result
+            })
+        } else {
+            self.path2_contains_path1_op(op1, op2)
+        }
+    }
+
+    fn path2_contains_path1_by(
+        &self,
+        op1: Idx,
+        op2: Idx,
+        locate: impl Fn(Point64) -> PointInPolygonResult,
+    ) -> bool {
         let mut pip = PointInPolygonResult::IsOn;
         let mut op = op1;
         loop {
-            match self.point_in_op_polygon(self.op(op).pt, op2) {
+            match locate(self.op(op).pt) {
                 PointInPolygonResult::IsOutside => {
                     if pip == PointInPolygonResult::IsOutside {
                         return false;

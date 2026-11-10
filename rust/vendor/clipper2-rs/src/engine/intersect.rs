@@ -241,7 +241,7 @@ impl ClipperBase {
     pub(crate) fn do_intersections(&mut self, top_y: i64) {
         self.curr_x_at_top = false;
         if self.build_intersect_list(top_y) {
-            self.process_intersect_list();
+            self.process_intersect_list(top_y);
             self.intersect_nodes.clear();
         }
     }
@@ -318,6 +318,11 @@ impl ClipperBase {
                 let mut l_end = right;
                 let r_end = self.links.jump[right as usize];
                 self.links.jump[left as usize] = r_end;
+                // Both runs are sorted: if the left run's last edge is not past the right run's
+                // first, the merge below would neither report a crossing nor move an edge.
+                if self.e(right).curr_x >= self.e(self.links.prev_sel[right as usize]).curr_x {
+                    left = l_end;
+                }
                 while left != l_end && right != r_end {
                     if self.e(right).curr_x < self.e(left).curr_x {
                         let mut tmp = self.links.prev_sel[right as usize];
@@ -358,7 +363,7 @@ impl ClipperBase {
             || self.links.prev_ael[node.edge1 as usize] == node.edge2
     }
 
-    fn process_intersect_list(&mut self) {
+    fn process_intersect_list(&mut self, top_y: i64) {
         // IntersectListSort: higher y first, then smaller x.  KiCad port patch: sorted like
         // libstdc++ std::sort (unstable) instead of a stable sort.
         crate::gnu_sort::gnu_sort(&mut self.intersect_nodes, |a, b| {
@@ -386,10 +391,26 @@ impl ClipperBase {
             let node = self.intersect_nodes[i];
             self.intersect_edges(node.edge1, node.edge2, node.pt);
             self.swap_positions_in_ael(node.edge1, node.edge2);
+            let (pos1, pos2) = (self.e(node.edge1).ael_pos, self.e(node.edge2).ael_pos);
+            self.em(node.edge1).ael_pos = pos2;
+            self.em(node.edge2).ael_pos = pos1;
             self.em(node.edge1).curr_x = node.pt.x;
             self.em(node.edge2).curr_x = node.pt.x;
             self.check_join_left(node.edge2, node.pt, true);
             self.check_join_right(node.edge1, node.pt, true);
         }
+        // Only the edges that crossed have left the position `adjust_curr_x_and_copy_to_sel`
+        // gave them, and only they have changed rank.
+        for i in 0..self.intersect_nodes.len() {
+            let node = self.intersect_nodes[i];
+            for e in [node.edge1, node.edge2] {
+                let x = top_x(self.e(e), top_y);
+                self.em(e).curr_x = x;
+            }
+        }
+        let edges = &self.edges;
+        self.edges_ending
+            .sort_unstable_by_key(|&e| edges[e as usize].ael_pos);
+        self.curr_x_at_top = true;
     }
 }

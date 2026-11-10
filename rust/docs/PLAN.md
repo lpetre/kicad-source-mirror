@@ -1202,6 +1202,10 @@ Goal: hill-climb the speed of the Rust port without changing a single output byt
 - Known duplication to consolidate later: printf-style formatting lives in
   kicad-sexpr/src/formatter/cformat.rs; kicad-libeval carries local copies of eda_units /
   string_utils helpers.
+  2026-11-10, local session on an Apple M4 laptop after the handoff: performance round 3 on the
+  zone refill, five changes kept, -10 to -46 % on six bench boards, 196 of 196 zone boards save
+  byte-identically against the previous build. Gate and reference comparison still to run on
+  the Linux machine. See docs/PERF.md "Round 3".
 
 ## Model policy (standing instruction from the user)
 
