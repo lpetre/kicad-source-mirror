@@ -258,7 +258,41 @@ fn corpus_name(board: &str) -> String {
 /// Parameter variants applied to the corpus boards to reach more of the code (curved /
 /// straight sides, clipping by the max width, two-segment teardrops, pads in zones,
 /// track-to-track teardrops). `base` is the board as it is.
-const VARIANTS: &[&str] = &["base", "curved", "sized", "trackend"];
+const VARIANTS: &[&str] = &["base", "curved", "sized", "trackend", "mask", "wide"];
+
+/// `mask` variant: every top-level segment / arc on an outer copper layer gets
+/// `(layers "F.Cu" "F.Mask") (solder_mask_margin 0.05)` (has_solder_mask + a local margin), so
+/// teardrops get their
+/// mask siblings (`createTeardropMask`).
+fn add_track_masks(board: &str) -> String {
+    let mut out = String::with_capacity(board.len());
+    let mut in_track = false;
+
+    for line in board.split_inclusive('\n') {
+        if line.starts_with("\t(segment") || line.starts_with("\t(arc") {
+            in_track = true;
+        } else if line.starts_with("\t(") || line.starts_with("\t)") || line.starts_with(')') {
+            in_track = line.starts_with("\t\t") && in_track;
+        }
+
+        let side = match line.trim() {
+            "(layer \"F.Cu\")" if in_track => Some("F"),
+            "(layer \"B.Cu\")" if in_track => Some("B"),
+            _ => None,
+        };
+
+        match side {
+            // parseLayersForCuItemWithSoldermask: the mask layer sets has_solder_mask.
+            Some(side) => {
+                out.push_str(&format!("\t\t(layers \"{side}.Cu\" \"{side}.Mask\")\n"));
+                out.push_str("\t\t(solder_mask_margin 0.05)\n");
+            }
+            None => out.push_str(line),
+        }
+    }
+
+    out
+}
 
 /// Replaces the value of every `(token value)` in `text`.
 fn set_token(text: &str, token: &str, value: impl Fn(&str) -> String) -> String {
@@ -288,7 +322,10 @@ fn flip(v: &str) -> String {
 /// The board and project texts of a variant.
 fn apply_variant(variant: &str, board: &str, pro: Option<&str>) -> (String, Option<String>) {
     match variant {
-        "curved" => (set_token(board, "curved_edges", flip), pro.map(str::to_string)),
+        "curved" => (
+            set_token(board, "curved_edges", flip),
+            pro.map(str::to_string),
+        ),
         "sized" => {
             let mut b = set_token(board, "best_length_ratio", |_| "0.8".to_string());
             b = set_token(&b, "max_length", |_| "0.5".to_string());
@@ -296,6 +333,17 @@ fn apply_variant(variant: &str, board: &str, pro: Option<&str>) -> (String, Opti
             b = set_token(&b, "max_width", |_| "0.6".to_string());
             b = set_token(&b, "allow_two_segments", flip);
             b = set_token(&b, "prefer_zone_connections", flip);
+            (b, pro.map(str::to_string))
+        }
+        "mask" => (add_track_masks(board), pro.map(str::to_string)),
+        // No max width / length: the teardrops run into neighbouring copper and go through
+        // the clearance fit (collidesWithOtherNets, the width bisection).
+        "wide" => {
+            let mut b = set_token(board, "max_length", |_| "0".to_string());
+            b = set_token(&b, "max_width", |_| "0".to_string());
+            b = set_token(&b, "best_length_ratio", |_| "1.2".to_string());
+            b = set_token(&b, "best_width_ratio", |_| "1".to_string());
+            b = set_token(&b, "filter_ratio", |_| "0.95".to_string());
             (b, pro.map(str::to_string))
         }
         "trackend" => (
@@ -434,14 +482,14 @@ fn teardrop_corpus() {
             let input = dir.join("in").join(reference.file_name().unwrap());
 
             let ref_text = std::fs::read_to_string(&reference).unwrap_or_default();
-            let ref_board =
-                match parse_board(&ref_text, "ref.kicad_pcb", &ParseOptions::default()) {
-                    Ok(b) => b,
-                    Err(e) => {
-                        writeln!(report, "{label}: reference parse error {e:?}").unwrap();
-                        continue;
-                    }
-                };
+            let ref_board = match parse_board(&ref_text, "ref.kicad_pcb", &ParseOptions::default())
+            {
+                Ok(b) => b,
+                Err(e) => {
+                    writeln!(report, "{label}: reference parse error {e:?}").unwrap();
+                    continue;
+                }
+            };
 
             let ref_lines = teardrop_lines(&ref_board, false);
 
@@ -515,5 +563,8 @@ fn teardrop_golden() {
         }
     }
 
-    assert!(failures.is_empty(), "teardrops differ from the reference:\n{failures}");
+    assert!(
+        failures.is_empty(),
+        "teardrops differ from the reference:\n{failures}"
+    );
 }

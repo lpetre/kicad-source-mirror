@@ -788,7 +788,11 @@ impl TeardropManager {
             ii += 1;
         }
 
-        if fitted.is_empty() { None } else { Some(fitted) }
+        if fitted.is_empty() {
+            None
+        } else {
+            Some(fitted)
+        }
     }
 
     /// Port of `TEARDROP_MANAGER::computeChordThroughShape`: the centerline chord length
@@ -976,8 +980,14 @@ impl TeardropManager {
             true
         };
 
-        self.tracks_rtree
-            .query_colliding(ref_item, layer, layer, Some(&mut filter), Some(&mut visitor), 0);
+        self.tracks_rtree.query_colliding(
+            ref_item,
+            layer,
+            layer,
+            Some(&mut filter),
+            Some(&mut visitor),
+            0,
+        );
 
         candidate
     }
@@ -1155,11 +1165,13 @@ impl TeardropManager {
                     compute_corner_tangent_control_point(pts[2], corner_center, bias, toward_track);
             }
         } else if is_oval {
-            if let Some(arc_center) = is_point_on_oval_end(pts[2], other_pos, pad_size, pad_rotation)
+            if let Some(arc_center) =
+                is_point_on_oval_end(pts[2], other_pos, pad_size, pad_rotation)
             {
                 // Anchor is on a curved end - use tangent-based control point
                 let bias = 0.5 * side1.euclidean_norm() as f64;
-                ctrl2 = compute_corner_tangent_control_point(pts[2], arc_center, bias, toward_track);
+                ctrl2 =
+                    compute_corner_tangent_control_point(pts[2], arc_center, bias, toward_track);
             }
         }
 
@@ -1185,11 +1197,13 @@ impl TeardropManager {
                     compute_corner_tangent_control_point(pts[4], corner_center, bias, toward_track);
             }
         } else if is_oval {
-            if let Some(arc_center) = is_point_on_oval_end(pts[4], other_pos, pad_size, pad_rotation)
+            if let Some(arc_center) =
+                is_point_on_oval_end(pts[4], other_pos, pad_size, pad_rotation)
             {
                 // Anchor is on a curved end - use tangent-based control point
                 let bias = 0.5 * side2.euclidean_norm() as f64;
-                ctrl1 = compute_corner_tangent_control_point(pts[4], arc_center, bias, toward_track);
+                ctrl1 =
+                    compute_corner_tangent_control_point(pts[4], arc_center, bias, toward_track);
             }
         }
 
@@ -1255,7 +1269,8 @@ impl TeardropManager {
 
             force_clip = true;
 
-            preferred_width = ki_round(get_width(ctx, item, layer) as f64 * params.best_width_ratio);
+            preferred_width =
+                ki_round(get_width(ctx, item, layer) as f64 * params.best_width_ratio);
             pad_polygon(ctx, pad, layer, &mut c_buffer);
         }
 
@@ -1558,8 +1573,7 @@ impl TeardropManager {
                 consumed += actual_td_len;
                 // actualTdLen is the new distance from new start point and the teardrop anchor
                 // point
-                actual_td_len =
-                    (target_length - consumed).min(trunc_i32(connected_track.length()));
+                actual_td_len = (target_length - consumed).min(trunc_i32(connected_track.length()));
                 *track = TdTrack::Board(connected_id);
                 end = connected.end;
                 start = connected.start;
@@ -1743,21 +1757,13 @@ impl TeardropManager {
 
         let point_b = start
             + Vector2I::new(
-                trunc_i32(
-                    vec_t.x * track_stub_len as f64 + vec_t.y * track_halfwidth as f64,
-                ),
-                trunc_i32(
-                    vec_t.y * track_stub_len as f64 - vec_t.x * track_halfwidth as f64,
-                ),
+                trunc_i32(vec_t.x * track_stub_len as f64 + vec_t.y * track_halfwidth as f64),
+                trunc_i32(vec_t.y * track_stub_len as f64 - vec_t.x * track_halfwidth as f64),
             );
         let point_a = start
             + Vector2I::new(
-                trunc_i32(
-                    vec_t.x * track_stub_len as f64 - vec_t.y * track_halfwidth as f64,
-                ),
-                trunc_i32(
-                    vec_t.y * track_stub_len as f64 + vec_t.x * track_halfwidth as f64,
-                ),
+                trunc_i32(vec_t.x * track_stub_len as f64 - vec_t.y * track_halfwidth as f64),
+                trunc_i32(vec_t.y * track_stub_len as f64 + vec_t.x * track_halfwidth as f64),
             );
 
         let layer = track_value.as_track().base.item.layer;
@@ -1925,8 +1931,10 @@ impl TeardropManager {
 
         if two_segments {
             let hw = track_halfwidth as f64;
-            junction_b_seg2 = start + Vector2I::new(ki_round(vec_t.y * hw), ki_round(-vec_t.x * hw));
-            junction_a_seg2 = start + Vector2I::new(ki_round(-vec_t.y * hw), ki_round(vec_t.x * hw));
+            junction_b_seg2 =
+                start + Vector2I::new(ki_round(vec_t.y * hw), ki_round(-vec_t.x * hw));
+            junction_a_seg2 =
+                start + Vector2I::new(ki_round(-vec_t.y * hw), ki_round(vec_t.x * hw));
             junction_b_seg1 =
                 start + Vector2I::new(ki_round(vec_via.y * hw), ki_round(-vec_via.x * hw));
             junction_a_seg1 =

@@ -75,6 +75,29 @@ pub fn load_board(path: &Path) -> Result<Board, String> {
     Ok(board)
 }
 
+/// The board's `DRC_ENGINE` as `BOARD_LOADER::Load` initialises it for kicad-cli
+/// (`bds.m_DRCEngine->InitEngine( <board>.kicad_dru )`, kicad-session's
+/// `LoadStep::InitDrcEngine` on the CLI path: the board's layer names as layer choices, no
+/// tuning profiles); the plotter resolves solder mask / paste margins and clearances through
+/// it (`BoardCtx::with_rules`). A rule file that does not parse leaves the engine without
+/// rules, as the CLI loader does (it only reports the error when DRC runs).
+pub fn drc_engine(board: &mut Board, path: &Path) -> kicad_drc::engine::DrcEngine {
+    let rules_path = path.with_extension("kicad_dru");
+    let rules_text = std::fs::read_to_string(&rules_path).ok();
+    let mut engine = kicad_drc::engine::DrcEngine::new();
+    let layer_choices = kicad_drc::rule_parser::board_layer_choices(board);
+    let _ = engine.init_engine(
+        board,
+        rules_text
+            .as_deref()
+            .map(|t| (t, rules_path.to_str().unwrap())),
+        layer_choices,
+        &kicad_drc::engine::implicit_rules::TuningProfiles::default(),
+        None,
+    );
+    engine
+}
+
 /// `BOARD::BuildConnectivity()` as `BOARD_LOADER::Load` runs it after loading (pad and via
 /// flashing on copper layers asks it). `None` when the connectivity build reaches code that
 /// is still pending.

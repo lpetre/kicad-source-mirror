@@ -22,10 +22,11 @@
 //!
 //! On a mismatch, set `ZINT_ORACLE_BIN` to the built C driver (`rust/target/zint-oracle/
 //! zint_oracle`, see `tests/oracle/build_oracle.sh`) to have the first differing case printed.
+//! `ZINT_ORACLE_FULL=1` replays every block (default: every 8th).
 
 use kicad_zint::{
-    BARCODE_CODE39, BARCODE_CODE128, BARCODE_DATAMATRIX, BARCODE_MICROQR, BARCODE_QRCODE,
-    Options, Stage, encode,
+    BARCODE_CODE39, BARCODE_CODE128, BARCODE_DATAMATRIX, BARCODE_MICROQR, BARCODE_QRCODE, Options,
+    Stage, encode,
 };
 use std::fmt::Write as _;
 
@@ -109,7 +110,13 @@ struct GCase {
     data: Vec<u8>,
 }
 
-const SYMS: [i32; 5] = [BARCODE_CODE39, BARCODE_CODE128, BARCODE_QRCODE, BARCODE_MICROQR, BARCODE_DATAMATRIX];
+const SYMS: [i32; 5] = [
+    BARCODE_CODE39,
+    BARCODE_CODE128,
+    BARCODE_QRCODE,
+    BARCODE_MICROQR,
+    BARCODE_DATAMATRIX,
+];
 
 fn gen_text(rng: &mut Rng, n: i32, classes: &[u32]) -> Vec<u8> {
     let ncls = classes.len() as u32;
@@ -176,14 +183,40 @@ fn sweep_max(sym: i32, cls: u32) -> i32 {
 }
 
 /// Copies of zint's `qr_data_codewords` (qr.h) and `dm_matrixbytes` (dmatrix.h).
-const QR_CW: [i32; 160] = [19, 34, 55, 80, 108, 136, 156, 194, 232, 274, 324, 370, 428, 461, 523, 589, 647, 721, 795, 861, 932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735, 1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956, 16, 28, 44, 64, 86, 108, 124, 154, 182, 216, 254, 290, 334, 365, 415, 453, 507, 563, 627, 669, 714, 782, 860, 914, 1000, 1062, 1128, 1193, 1267, 1373, 1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334, 13, 22, 34, 48, 62, 76, 88, 110, 132, 154, 180, 206, 244, 261, 295, 325, 367, 397, 445, 485, 512, 568, 614, 664, 718, 754, 808, 871, 911, 985, 1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666, 9, 16, 26, 36, 46, 60, 66, 86, 100, 122, 140, 158, 180, 197, 223, 253, 283, 313, 341, 385, 406, 442, 464, 514, 538, 596, 628, 661, 701, 745, 793, 845, 901, 961, 986, 1054, 1096, 1142, 1222, 1276];
-const DM_BYTES: [i32; 48] = [3,5,5,8,10,12,16,18,18,22,22,24,30,32,32,36,38,43,44,44,49,49,56,62,62,63,64,70,72,80,84,86,90,108,114,118,144,174,204,280,368,456,576,696,816,1050,1304,1558];
+const QR_CW: [i32; 160] = [
+    19, 34, 55, 80, 108, 136, 156, 194, 232, 274, 324, 370, 428, 461, 523, 589, 647, 721, 795, 861,
+    932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735, 1843, 1955, 2071, 2191, 2306, 2434,
+    2566, 2702, 2812, 2956, 16, 28, 44, 64, 86, 108, 124, 154, 182, 216, 254, 290, 334, 365, 415,
+    453, 507, 563, 627, 669, 714, 782, 860, 914, 1000, 1062, 1128, 1193, 1267, 1373, 1455, 1541,
+    1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334, 13, 22, 34, 48, 62, 76, 88, 110, 132, 154, 180,
+    206, 244, 261, 295, 325, 367, 397, 445, 485, 512, 568, 614, 664, 718, 754, 808, 871, 911, 985,
+    1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666, 9, 16, 26, 36, 46, 60, 66, 86, 100,
+    122, 140, 158, 180, 197, 223, 253, 283, 313, 341, 385, 406, 442, 464, 514, 538, 596, 628, 661,
+    701, 745, 793, 845, 901, 961, 986, 1054, 1096, 1142, 1222, 1276,
+];
+const DM_BYTES: [i32; 48] = [
+    3, 5, 5, 8, 10, 12, 16, 18, 18, 22, 22, 24, 30, 32, 32, 36, 38, 43, 44, 44, 49, 49, 56, 62, 62,
+    63, 64, 70, 72, 80, 84, 86, 90, 108, 114, 118, 144, 174, 204, 280, 368, 456, 576, 696, 816,
+    1050, 1304, 1558,
+];
 
 fn qr_capacity(e: usize, v: i32, cls: u32) -> i32 {
     let cci = if cls == 0 {
-        if v < 10 { 10 } else if v < 27 { 12 } else { 14 }
+        if v < 10 {
+            10
+        } else if v < 27 {
+            12
+        } else {
+            14
+        }
     } else if cls == 1 {
-        if v < 10 { 9 } else if v < 27 { 11 } else { 13 }
+        if v < 10 {
+            9
+        } else if v < 27 {
+            11
+        } else {
+            13
+        }
     } else if v < 10 {
         8
     } else {
@@ -192,7 +225,14 @@ fn qr_capacity(e: usize, v: i32, cls: u32) -> i32 {
     let bits = 8 * QR_CW[e * 40 + v as usize - 1] - 4 - cci;
     if cls == 0 {
         let r = bits % 10;
-        return (bits / 10) * 3 + if r >= 7 { 2 } else if r >= 4 { 1 } else { 0 };
+        return (bits / 10) * 3
+            + if r >= 7 {
+                2
+            } else if r >= 4 {
+                1
+            } else {
+                0
+            };
     }
     if cls == 1 {
         return (bits / 11) * 2 + i32::from(bits % 11 >= 6);
@@ -215,7 +255,12 @@ fn sweep_list() -> Vec<SweepEntry> {
             for &cls in &SWEEP_CLASSES {
                 let mut len = 1;
                 while len <= sweep_max(s, cls) {
-                    v.push(SweepEntry { symbology: s, option_1: sweep_option1(s, k), cls, len });
+                    v.push(SweepEntry {
+                        symbology: s,
+                        option_1: sweep_option1(s, k),
+                        cls,
+                        len,
+                    });
                     len += sweep_step(s, len);
                 }
             }
@@ -228,7 +273,12 @@ fn sweep_list() -> Vec<SweepEntry> {
             for cls in [0u32, 1, 3] {
                 for d in -1..=1 {
                     let len = qr_capacity(e, ver, cls) + d;
-                    v.push(SweepEntry { symbology: BARCODE_QRCODE, option_1: e as i32 + 1, cls, len });
+                    v.push(SweepEntry {
+                        symbology: BARCODE_QRCODE,
+                        option_1: e as i32 + 1,
+                        cls,
+                        len,
+                    });
                 }
             }
         }
@@ -237,7 +287,12 @@ fn sweep_list() -> Vec<SweepEntry> {
         for d in -1..=1 {
             for e in 0..2u32 {
                 let len = if e == 0 { 2 * bytes } else { (3 * bytes) / 2 } + d;
-                v.push(SweepEntry { symbology: BARCODE_DATAMATRIX, option_1: -1, cls: e, len });
+                v.push(SweepEntry {
+                    symbology: BARCODE_DATAMATRIX,
+                    option_1: -1,
+                    cls: e,
+                    len,
+                });
             }
         }
     }
@@ -251,14 +306,23 @@ fn gen_case(sweep: &[SweepEntry], idx: usize) -> GCase {
         let e = &sweep[idx];
         let mut rng = Rng(0x5EED0000u64 + idx as u64);
         let data = gen_text(&mut rng, e.len, &[e.cls]);
-        return GCase { symbology: e.symbology, option_1: e.option_1, eci_rule: true, data };
+        return GCase {
+            symbology: e.symbology,
+            option_1: e.option_1,
+            eci_rule: true,
+            data,
+        };
     }
     let mut rng = Rng(0xC0FFEE0000000000u64.wrapping_add((idx - sweep.len()) as u64));
     let symbology = SYMS[rng.rnd(5) as usize];
     let option_1 = if symbology == BARCODE_QRCODE {
         1 + rng.rnd(4) as i32
     } else if symbology == BARCODE_MICROQR {
-        if rng.rnd(10) == 0 { 4 } else { 1 + rng.rnd(3) as i32 }
+        if rng.rnd(10) == 0 {
+            4
+        } else {
+            1 + rng.rnd(3) as i32
+        }
     } else {
         -1
     };
@@ -278,7 +342,12 @@ fn gen_case(sweep: &[SweepEntry], idx: usize) -> GCase {
         1 + rng.rnd(max_chars(symbology) as u32) as i32
     };
     let data = gen_text(&mut rng, nchars, &classes);
-    GCase { symbology, option_1, eci_rule, data }
+    GCase {
+        symbology,
+        option_1,
+        eci_rule,
+        data,
+    }
 }
 
 // ---- result line (mirror of `encode_line()`) -------------------------------------------------
@@ -286,7 +355,11 @@ fn gen_case(sweep: &[SweepEntry], idx: usize) -> GCase {
 fn encode_line(sym: i32, option_1: i32, eci: i32, data: &[u8]) -> String {
     let options = Options {
         symbology: sym,
-        option_1: if sym == BARCODE_QRCODE || sym == BARCODE_MICROQR { option_1 } else { -1 },
+        option_1: if sym == BARCODE_QRCODE || sym == BARCODE_MICROQR {
+            option_1
+        } else {
+            -1
+        },
         eci,
     };
     let mut s = String::new();
@@ -348,8 +421,15 @@ fn encode_line(sym: i32, option_1: i32, eci: i32, data: &[u8]) -> String {
             }
             s.push('|');
             for h in &sym.vector.hexagons {
-                write!(s, "{:08x},{:08x},{:08x},{};", h.x.to_bits(), h.y.to_bits(), h.diameter.to_bits(), h.rotation)
-                    .unwrap();
+                write!(
+                    s,
+                    "{:08x},{:08x},{:08x},{};",
+                    h.x.to_bits(),
+                    h.y.to_bits(),
+                    h.diameter.to_bits(),
+                    h.rotation
+                )
+                .unwrap();
             }
         }
     }
@@ -381,17 +461,33 @@ fn fnv1a(h: &mut u64, bytes: &[u8]) {
 fn zint_matches_oracle() {
     let golden = include_str!("golden/zint_hashes.txt");
     let mut lines = golden.lines();
-    let n: usize = lines.next().unwrap().strip_prefix("N ").unwrap().parse().unwrap();
+    let n: usize = lines
+        .next()
+        .unwrap()
+        .strip_prefix("N ")
+        .unwrap()
+        .parse()
+        .unwrap();
     let blocks: Vec<u64> = lines
         .map(|l| u64::from_str_radix(l.rsplit(' ').next().unwrap(), 16).unwrap())
         .collect();
 
     let sweep = sweep_list();
-    assert_eq!(n, sweep.len() + RANDOM_CASES, "case count (generator out of sync)");
+    assert_eq!(
+        n,
+        sweep.len() + RANDOM_CASES,
+        "case count (generator out of sync)"
+    );
 
     let mut first_bad: Option<usize> = None;
     let mut bad = 0;
+    // The whole corpus takes about 10 minutes; by default every 8th block (and the last) is
+    // replayed, `ZINT_ORACLE_FULL=1` replays all of them.
+    let full = std::env::var_os("ZINT_ORACLE_FULL").is_some();
     for (b, &expected) in blocks.iter().enumerate() {
+        if !full && b % 8 != 0 && b + 1 != blocks.len() {
+            continue;
+        }
         let mut h = 0xcbf29ce484222325u64;
         for idx in b * 1000..((b + 1) * 1000).min(n) {
             let mut line = case_line(&sweep, idx);
@@ -465,4 +561,33 @@ fn zint_cases_vs_driver() {
         }
     }
     assert_eq!(bad, 0, "{bad} cases differ");
+}
+
+/// Hand-picked inputs against the reference zint (`zint_oracle input <sym> <option_1> <eci>
+/// <hex>`, golden `tests/golden/zint_cases.txt`): every error / warning text reachable from
+/// KiCad, invalid UTF-8, BOM handling, Shift JIS conversion, the Data Matrix macro header, NUL
+/// bytes and the not-ported ECI retry.
+#[test]
+fn zint_cases_match_reference() {
+    let golden = include_str!("golden/zint_cases.txt");
+    let mut n = 0;
+    for line in golden.lines() {
+        let mut parts = line.splitn(5, ' ');
+        let sym: i32 = parts.next().unwrap().parse().unwrap();
+        let option_1: i32 = parts.next().unwrap().parse().unwrap();
+        let eci: i32 = parts.next().unwrap().parse().unwrap();
+        let hex = parts.next().unwrap();
+        let expected = parts.next().unwrap();
+        let data: Vec<u8> = (0..hex.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+            .collect();
+        assert_eq!(
+            encode_line(sym, option_1, eci, &data),
+            expected,
+            "{sym} {option_1} {eci} {hex}"
+        );
+        n += 1;
+    }
+    assert!(n >= 30);
 }

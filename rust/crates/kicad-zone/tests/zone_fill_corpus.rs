@@ -25,7 +25,7 @@
 //! outline and vertex), plus the `island` flags.
 //!
 //! The test skips silently without cached references. It reports and does not fail (boards
-//! still depend on pending packages: ZF-03 copper fill, footprints, teardrops) unless
+//! still depend on pending packages: ZF-03 copper fill, footprints) unless
 //! `ZONE_CORPUS_STRICT=1`. `ZONE_CORPUS_DIR` / `ZONE_CORPUS_DEBUG_STAGES=1` run the stage
 //! corpus of `tools/zone-corpus/stages.sh` (`DebugZoneFiller` dumps of every pipeline stage). The report is also written to `target/zone-corpus/report.txt`.
 
@@ -72,30 +72,6 @@ fn panic_text(payload: Box<dyn std::any::Any + Send>) -> String {
         .map(|s| s.to_string())
         .or_else(|| payload.downcast_ref::<String>().cloned())
         .unwrap_or_else(|| "panic".to_string())
-}
-
-/// Teardrop regeneration (`TEARDROP_MANAGER::UpdateTeardrops`, package TD-01) would change the
-/// board before the fill: boards with enabled teardrop parameters or teardrop zones are
-/// reported, not compared, unless they use legacy teardrops.
-fn needs_teardrops(text: &str) -> bool {
-    if text.contains("(legacy_teardrops yes)") {
-        return false;
-    }
-
-    // `(attr teardrop ...)` (older files) or `(attr\n (teardrop (type ...)))` (a teardrop
-    // zone written by the current writer).
-    if text.match_indices("(attr").any(|(i, m)| {
-        text[i + m.len()..].trim_start().starts_with("(teardrop")
-            || text[i + m.len()..].starts_with(" teardrop")
-    }) {
-        return true;
-    }
-
-    text.match_indices("(teardrops").any(|(i, _)| {
-        let end = (i + 600).min(text.len());
-        text.get(i..end)
-            .is_some_and(|s| s.contains("(enabled yes)"))
-    })
 }
 
 /// `BOARD_LOADER::Load` as kicad-cli runs it, with the DRC engine and connectivity of the
@@ -236,12 +212,6 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
         return "no reference".to_string();
     };
 
-    let text = std::fs::read_to_string(&input).unwrap_or_default();
-
-    if needs_teardrops(&text) {
-        return "skipped: teardrop regeneration (TD-01) pending".to_string();
-    }
-
     let loaded = catch_unwind(AssertUnwindSafe(|| load_cli(&input)));
     let (mut board, engine, mut connectivity, skipped_steps) = match loaded {
         Ok(Ok(l)) => l,
@@ -255,7 +225,16 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
         Err(e) => return format!("reference parse error: {e:?}"),
     };
 
-    // ZONE_FILLER_TOOL::FillAllZones: IncrementTimeStamp, then Fill( board->Zones() ).
+    // ZONE_FILLER_TOOL::FillAllZones: UpdateTeardrops( commit, nullptr, nullptr, true ),
+    // IncrementTimeStamp, then Fill( board->Zones() ).
+    let teardrops = catch_unwind(AssertUnwindSafe(|| {
+        kicad_zone::tool::update_teardrops(&mut board, &mut connectivity, &engine, true)
+    }));
+
+    if let Err(p) = teardrops {
+        return format!("teardrop panic: {}", panic_text(p));
+    }
+
     board.increment_time_stamp();
     let zones: Vec<ZoneId> = board.zones().map(|(id, _)| id).collect();
 
@@ -288,20 +267,59 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
     let mut first_diff = String::new();
 
     // Zones whose UUID the saved file does not carry (the writer omits it for teardrop
-    // areas; the reference reader then generates a fresh one) are matched by their position
-    // in `Zones()` (the writer keeps the zone count and order).
-    let ref_zone_list: Vec<ZoneId> = ref_board.zones().map(|(id, _)| id).collect();
+    // areas, and an input zone without one gets a fresh random UUID on both sides; the
+    // reference reader then generates a fresh one) are matched by position: teardrops in the
+    // writer's save order (`BOARD_ITEM::ptr_cmp`: type, layer set, UUID; the port's teardrops
+    // carry the C++ derived UUIDs), other zones in `Zones()` order (the writer keeps their
+    // count and, for zones without UUIDs, the reference order is random anyway).
+    let ref_list = |teardrop: bool| -> Vec<ZoneId> {
+        ref_board
+            .zones()
+            .filter(|(_, z)| z.is_teardrop_area() == teardrop)
+            .map(|(id, _)| id)
+            .collect()
+    };
+    let (ref_teardrops, ref_others) = (ref_list(true), ref_list(false));
+    let mut port_teardrops: Vec<ZoneId> = zones
+        .iter()
+        .copied()
+        .filter(|&z| board.zone(z).unwrap().is_teardrop_area())
+        .collect();
+    {
+        let ctx = kicad_pcb::ctx::BoardCtx::bare(&board);
+        port_teardrops.sort_by(|a, b| {
+            kicad_pcb::board_item::board_item_ptr_cmp(&ctx, (*a).into(), (*b).into())
+        });
+    }
+    let port_others: Vec<ZoneId> = zones
+        .iter()
+        .copied()
+        .filter(|&z| !board.zone(z).unwrap().is_teardrop_area())
+        .collect();
 
-    for (ordinal, &zone_id) in zones.iter().enumerate() {
+    for &zone_id in zones.iter() {
         let zone = board.zone(zone_id).unwrap();
 
         if zone.is_rule_area() {
             continue;
         }
 
+        let by_ordinal = if zone.is_teardrop_area() {
+            let ordinal = port_teardrops.iter().position(|&z| z == zone_id).unwrap();
+            ref_teardrops.get(ordinal).copied()
+        } else {
+            let ordinal = port_others.iter().position(|&z| z == zone_id).unwrap();
+            ref_others.get(ordinal).copied()
+        };
+
         let uuid = zone.base.item.uuid.as_string();
-        let by_ordinal = ref_zone_list.get(ordinal).copied();
-        let Some(ref_id) = ref_zones.get(&uuid).copied().or(by_ordinal) else {
+        // A UUID generated on load (deterministic generator) can equal one the reference
+        // reader generated for another zone: only a zone of the same kind counts.
+        let by_uuid = ref_zones
+            .get(&uuid)
+            .copied()
+            .filter(|&r| ref_board.zone(r).unwrap().is_teardrop_area() == zone.is_teardrop_area());
+        let Some(ref_id) = by_uuid.or(by_ordinal) else {
             local.different += 1;
             continue;
         };
@@ -355,6 +373,14 @@ fn smoke(input: &Path) -> String {
     else {
         return "driver smoke: load failed".to_string();
     };
+
+    if catch_unwind(AssertUnwindSafe(|| {
+        kicad_zone::tool::update_teardrops(&mut board, &mut connectivity, &engine, true)
+    }))
+    .is_err()
+    {
+        return "driver smoke: teardrop panic".to_string();
+    }
 
     board.increment_time_stamp();
     let zones: Vec<ZoneId> = board.zones().map(|(id, _)| id).collect();

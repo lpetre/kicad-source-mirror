@@ -1034,7 +1034,10 @@ mod tests {
             .expect("stand-in glyphs");
         assert_eq!(cache.glyphs.len(), 1);
         let glyph = cache.glyphs[0].as_outline().unwrap();
-        assert_eq!(glyph.poly.c_outline(0).c_point(0), Vector2I::new(1_000_000, 1_000_000));
+        assert_eq!(
+            glyph.poly.c_outline(0).c_point(0),
+            Vector2I::new(1_000_000, 1_000_000)
+        );
         assert_eq!(eda_text::outline_font_fallback(&text, &ctx), None);
 
         // Another resolved text, offset or angle: the C++ key does not match.
@@ -1047,7 +1050,10 @@ mod tests {
         let ctx = BoardCtx::bare(&p.board);
         let cache = eda_text::render_cache(&text, &ctx, "SCL", Vector2I::default()).unwrap();
         let glyph = cache.glyphs[0].as_outline().unwrap();
-        assert_eq!(glyph.poly.c_outline(0).c_point(0), Vector2I::new(1_000_010, 999_980));
+        assert_eq!(
+            glyph.poly.c_outline(0).c_point(0),
+            Vector2I::new(1_000_010, 999_980)
+        );
 
         // A size edit (SetTextSize clears the cache in C++, which then regenerates it with
         // the font): no stand-in any more, the text falls back to the stroke font.

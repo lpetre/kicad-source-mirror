@@ -1,0 +1,7 @@
+		(drill_symbol_profile
+			(group_by size plating span operation)
+			(default_marks letters)
+			(size 1.2)
+			(width 0.2)
+			(freeze_assignments yes)
+		)

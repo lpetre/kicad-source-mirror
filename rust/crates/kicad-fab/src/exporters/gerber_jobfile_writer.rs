@@ -32,13 +32,10 @@ use kicad_core::json::{Map, ObjectOrder, Value, dump_stream, float_value};
 use kicad_core::layer_ids::{is_copper_layer, is_user_layer};
 use kicad_core::printf::format_f;
 use kicad_core::report_severity::Severity;
-use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
-use kicad_pcb::board::Board;
 use kicad_pcb::board_stackup::{
     BoardStackupItemType, BsEdgeConnectorConstraints, is_prm_specified, standard_colors,
 };
 use kicad_pcb::ctx::BoardCtx;
-use kicad_pcb::padstack::PadProp;
 use kicad_pcb::pcb_track::Track;
 use kicad_pcb::traits::{BoardConnectedItem, BoardItem};
 use kicad_plot::gbr_metadata::{
@@ -147,81 +144,6 @@ fn push(value: &mut Value, new_value: Value) {
 /// A JSON string value.
 fn string(text: &str) -> Value {
     Value::String(text.to_string())
-}
-
-/// `ExpandTextVars( aSource, aBoard->GetProject(), FOR_GUI )`.
-///
-/// TEMPORARY: a copy of the private `pcbplot::expand_project_text_vars` (itself a mirror of the
-/// board's private `PROJECT::TextVarResolver`, same token list, empty clock, empty VCS hash)
-/// until the model exposes the project resolver; then both must call it.
-fn expand_project_text_vars(a_board: &Board, a_source: &str) -> String {
-    let Some(project) = &a_board.project else {
-        return expand_text_vars(a_source, None, ResolutionContext::ForGui);
-    };
-
-    let resolver = |token: &mut String| -> bool {
-        match token.as_str() {
-            "PROJECTNAME" => {
-                *token = WxFileName::new(&a_board.file_name).name().to_string();
-                true
-            }
-            "CURRENT_DATE"
-            | "CURRENT_TIME_HH_MM_SS"
-            | "CURRENT_TIME_LOCALE"
-            | "VCSHASH"
-            | "VCSSHORTHASH" => {
-                *token = String::new();
-                true
-            }
-            _ => match project.text_vars.get(token.as_str()) {
-                Some(value) => {
-                    *token = value.clone();
-                    true
-                }
-                None => false,
-            },
-        }
-    };
-
-    expand_text_vars(a_source, Some(&resolver), ResolutionContext::ForGui)
-}
-
-/// Port of `BOARD::GetPadWithPressFitAttrCount`: the number of pads with the Press-Fit
-/// fabrication property.
-///
-/// TEMPORARY: not declared by the board model yet (change request of FAB-09).
-fn pad_with_press_fit_attr_count(a_board: &Board) -> i32 {
-    // return the number of PTH with Press-Fit fabr attribute
-    let mut count = 0;
-
-    for (fp, _) in a_board.footprints() {
-        for (_, pad) in a_board.footprint_pads(fp) {
-            if pad.property() == PadProp::Pressfit {
-                count += 1;
-            }
-        }
-    }
-
-    count
-}
-
-/// Port of `BOARD::GetPadWithCastellatedAttrCount`: the number of pads with the Castellated
-/// fabrication property.
-///
-/// TEMPORARY: not declared by the board model yet (change request of FAB-09).
-fn pad_with_castellated_attr_count(a_board: &Board) -> i32 {
-    // @return the number of PTH with Castellated fabr attribute
-    let mut count = 0;
-
-    for (fp, _) in a_board.footprints() {
-        for (_, pad) in a_board.footprint_pads(fp) {
-            if pad.property() == PadProp::Castellated {
-                count += 1;
-            }
-        }
-    }
-
-    count
 }
 
 /// Port of `GERBER_JOBFILE_WRITER::mapValue` without the conversion factor: `"%.4f"` of `a_mm`
@@ -416,7 +338,7 @@ impl<'a, 'r> GerberJobfileWriter<'a, 'r> {
         let msg = fn_.name().to_string();
 
         // build the <rev> string. All non ASCII chars are in UTF8 form
-        let mut rev = expand_project_text_vars(brd, brd.titles.revision());
+        let mut rev = brd.expand_project_text_vars(brd.titles.revision());
 
         if rev.is_empty() {
             rev = "rev?".to_string();
@@ -469,11 +391,11 @@ impl<'a, 'r> GerberJobfileWriter<'a, 'r> {
         }
 
         // (`#if 0` in C++: the old way to set the property from m_CastellatedPads.)
-        if pad_with_castellated_attr_count(brd) != 0 {
+        if brd.pad_with_castellated_attr_count() != 0 {
             set(&mut specs, "Castellated", Value::Bool(true));
         }
 
-        if pad_with_press_fit_attr_count(brd) != 0 {
+        if brd.pad_with_press_fit_attr_count() != 0 {
             set(&mut specs, "Press-fit", Value::Bool(true));
         }
 

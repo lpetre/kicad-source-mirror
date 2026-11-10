@@ -1,0 +1,271 @@
+# Package M26: generated tables after the reference kicad-cli pcb upgrade --force
+# (tests/oracle/m26_generated_tables.py; cases: tests/data/m26/cases.txt)
+case|m26_backdrill|blocks=6|fixed_point=yes
+block|m26_backdrill|0|drill_symbol_profile|fnv=fcffd3aafcec8b04
+block|m26_backdrill|1|drill_chart|fnv=16e6d51369af7aaf
+column_widths|m26_backdrill|1|19.252918 12.419108 13.743541 9.395298 6.492441 16.108156
+row_heights|m26_backdrill|1|3.793589 4.208379 4.208379 4.208379 4.208379 3.794898
+texts|m26_backdrill|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.300 mm	—	Yes	4	F.Cu / B.Cu		0.330 mm	—	No	2	F.Cu / In3.Cu		0.330 mm	—	No	1	In3.Cu / B.Cu		0.330 mm	—	No	1	In6.Cu / B.Cu	8 OPS / 4 SITES					
+block|m26_backdrill|2|drill_chart|fnv=126e47795e173fdf
+column_widths|m26_backdrill|2|19.252918 10.362718 13.743541 9.395298 6.492441 13.92497 16.108156 12.963393 14.051965 18.466726 30
+row_heights|m26_backdrill|2|3.793589 4.208379 4.208379 4.208379 4.208379 3.794898
+texts|m26_backdrill|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0118″	—	Yes	4	4	F.Cu / B.Cu	Drill	tented	—	5.3:1		0.0130″	—	No	2	2	F.Cu / In3.Cu	Backdrill	—	0.0242″	1.5:1		0.0130″	—	No	1	1	In3.Cu / B.Cu	Backdrill	—	0.0450″	3.3:1		0.0130″	—	No	1	1	In6.Cu / B.Cu	Backdrill	—	0.0242″	1.5:1	8 OPS / 4 SITES										
+block|m26_backdrill|3|drill_chart|fnv=24060941461939dc
+column_widths|m26_backdrill|3|6.371488 6.492441 14.838156
+row_heights|m26_backdrill|3|3.43375 4.208379 4.208379 4.208379 4.208379
+texts|m26_backdrill|3|SYM	OPS	DESCRIPTION		4			2			1			1	
+block|m26_backdrill|4|stackup_table|fnv=a6055958c5855195
+column_widths|m26_backdrill|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_backdrill|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_backdrill|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.182 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.182 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In5.Cu	Copper		0.035 mm		1	0	Dielectric 6	Core	FR4	0.182 mm	Not specified	4.5	0.02	In6.Cu	Copper		0.035 mm		1	0	Dielectric 7	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In7.Cu	Copper		0.035 mm		1	0	Dielectric 8	Core	FR4	0.182 mm	Not specified	4.5	0.02	In8.Cu	Copper		0.035 mm		1	0	Dielectric 9	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_backdrill|5|stackup_table|fnv=9cfa4f8ccdad718b
+column_widths|m26_backdrill|5|30 17.493215 13.450358
+row_heights|m26_backdrill|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_backdrill|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	7.2 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	7.2 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	In5.Cu	1.4 mil	1	Dielectric 6	7.2 mil	4.5	In6.Cu	1.4 mil	1	Dielectric 7	3.9 mil	4.5	In7.Cu	1.4 mil	1	Dielectric 8	7.2 mil	4.5	In8.Cu	1.4 mil	1	Dielectric 9	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_npth_slot|blocks=6|fixed_point=yes
+block|m26_npth_slot|0|drill_symbol_profile|fnv=0773903e0868cec9
+block|m26_npth_slot|1|drill_chart|fnv=4b0126ea9cc831f8
+column_widths|m26_npth_slot|1|19.252718 12.473542 25.179384 9.395298 6.492441 14.233393
+row_heights|m26_npth_slot|1|3.793589 4.208379 4.208379 3.794898
+texts|m26_npth_slot|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.300 mm	—	Yes	3	F.Cu / B.Cu		2.000 mm	4.000 mm x 2.000 mm	No	1	F.Cu / B.Cu	4 OPS / 4 SITES					
+block|m26_npth_slot|2|drill_chart|fnv=1dda957bc763e9a9
+column_widths|m26_npth_slot|2|19.252718 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_npth_slot|2|3.793589 4.208379 4.208379 3.794898
+texts|m26_npth_slot|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0118″	—	Yes	3	3	F.Cu / B.Cu	Drill	tented	—	5.3:1		0.0787″	0.1575″ x 0.0787″	No	1	1	F.Cu / B.Cu	Slot	—	—	0.8:1	4 OPS / 4 SITES										
+block|m26_npth_slot|3|drill_chart|fnv=23effcfed2f70b81
+column_widths|m26_npth_slot|3|6.371488 6.492441 14.838156
+row_heights|m26_npth_slot|3|3.43375 4.208379 4.208379
+texts|m26_npth_slot|3|SYM	OPS	DESCRIPTION		3			1	
+block|m26_npth_slot|4|stackup_table|fnv=74ab453e581f902d
+column_widths|m26_npth_slot|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_npth_slot|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_npth_slot|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_npth_slot|5|stackup_table|fnv=1b2b8ba2f8748939
+column_widths|m26_npth_slot|5|30 17.493215 13.450358
+row_heights|m26_npth_slot|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_npth_slot|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_oval|blocks=6|fixed_point=yes
+block|m26_oval|0|drill_symbol_profile|fnv=0c19250e883f3b82
+block|m26_oval|1|drill_chart|fnv=4ca2832ceb0c9b16
+column_widths|m26_oval|1|19.307352 12.473542 25.17919 9.395298 6.492441 14.233393
+row_heights|m26_oval|1|3.793589 4.208379 4.208379 3.793589
+texts|m26_oval|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		2.200 mm	—	No	1	F.Cu / B.Cu		2.200 mm	5.000 mm x 2.200 mm	No	1	F.Cu / B.Cu	2 OPS / 2 SITES					
+block|m26_oval|2|drill_chart|fnv=5b255df93fa5f050
+column_widths|m26_oval|2|19.307352 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_oval|2|3.793589 4.208379 4.208379 3.793589
+texts|m26_oval|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0866″	—	No	1	1	F.Cu / B.Cu	Drill	—	—	0.7:1		0.0866″	0.1969″ x 0.0866″	No	1	1	F.Cu / B.Cu	Slot	—	—	0.7:1	2 OPS / 2 SITES										
+block|m26_oval|3|drill_chart|fnv=008ca964d0debde7
+column_widths|m26_oval|3|6.371488 6.492441 14.838156
+row_heights|m26_oval|3|3.43375 4.208379 4.208379
+texts|m26_oval|3|SYM	OPS	DESCRIPTION		1			1	
+block|m26_oval|4|stackup_table|fnv=72eb35e900d97228
+column_widths|m26_oval|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_oval|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_oval|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_oval|5|stackup_table|fnv=d001ba09f71384b8
+column_widths|m26_oval|5|30 17.493215 13.450358
+row_heights|m26_oval|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_oval|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_two_layer|blocks=6|fixed_point=yes
+block|m26_two_layer|0|drill_symbol_profile|fnv=0ab4ed013a7ea270
+block|m26_two_layer|1|drill_chart|fnv=6ba1a267dc851f56
+column_widths|m26_two_layer|1|19.307352 12.473542 25.234018 9.395298 6.492441 14.233393
+row_heights|m26_two_layer|1|3.793589 4.208379 4.208379 3.793589
+texts|m26_two_layer|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		1.600 mm	2.200 mm x 1.600 mm	No	1	F.Cu / B.Cu		2.100 mm	—	No	1	F.Cu / B.Cu	2 OPS / 2 SITES					
+block|m26_two_layer|2|drill_chart|fnv=a0f6f5de49073cef
+column_widths|m26_two_layer|2|19.307352 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_two_layer|2|3.793589 4.208379 4.208379 3.793589
+texts|m26_two_layer|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0630″	0.0866″ x 0.0630″	No	1	1	F.Cu / B.Cu	Slot	—	—	1.0:1		0.0827″	—	No	1	1	F.Cu / B.Cu	Drill	—	—	0.8:1	2 OPS / 2 SITES										
+block|m26_two_layer|3|drill_chart|fnv=7c11228a54c0c84f
+column_widths|m26_two_layer|3|6.371488 6.492441 14.838156
+row_heights|m26_two_layer|3|3.43375 4.208379 4.208379
+texts|m26_two_layer|3|SYM	OPS	DESCRIPTION		1			1	
+block|m26_two_layer|4|stackup_table|fnv=e1ec7aa7e0922cca
+column_widths|m26_two_layer|4|15.950358 25.490086 17.493216 14.13607 17.493216 13.450358 17.653226
+row_heights|m26_two_layer|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_two_layer|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0
+block|m26_two_layer|5|stackup_table|fnv=a97c85d6db7bc631
+column_widths|m26_two_layer|5|30 13.653225 13.450358
+row_heights|m26_two_layer|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_two_layer|5|Layer Name	Thickness	Epsilon R	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3
+case|m26_via_stacks|blocks=6|fixed_point=yes
+block|m26_via_stacks|0|drill_symbol_profile|fnv=9e6ae7c240d692d9
+block|m26_via_stacks|1|drill_chart|fnv=363816662dadac98
+column_widths|m26_via_stacks|1|19.252718 12.419108 13.743541 9.395298 6.492441 17.80149
+row_heights|m26_via_stacks|1|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_via_stacks|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.100 mm	—	Yes	1	F.Cu / In1.Cu		0.100 mm	—	Yes	2	In1.Cu / In2.Cu		0.100 mm	—	Yes	1	In2.Cu / In3.Cu	4 OPS / 3 SITES					
+block|m26_via_stacks|2|drill_chart|fnv=9f5b4f6c8826fa3b
+column_widths|m26_via_stacks|2|19.252718 10.362718 13.743541 9.395298 6.492441 13.92497 17.80149 12.963393 21.544969 18.466726 30
+row_heights|m26_via_stacks|2|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_via_stacks|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0039″	—	Yes	1	1	F.Cu / In1.Cu	Drill	filled,capped,tented	—	1.5:1		0.0039″	—	Yes	2	2	In1.Cu / In2.Cu	Drill	filled	—	5.7:1		0.0039″	—	Yes	1	1	In2.Cu / In3.Cu	Drill	—	—	1.4:1	4 OPS / 3 SITES										
+block|m26_via_stacks|3|drill_chart|fnv=62702e4ee0d24dbe
+column_widths|m26_via_stacks|3|6.371488 6.492441 14.838156
+row_heights|m26_via_stacks|3|3.43375 4.208379 4.208379 4.208379
+texts|m26_via_stacks|3|SYM	OPS	DESCRIPTION		1			2			1	
+block|m26_via_stacks|4|stackup_table|fnv=8a89c6488bcd427b
+column_widths|m26_via_stacks|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_via_stacks|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_via_stacks|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.535 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.535 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_via_stacks|5|stackup_table|fnv=47a60eacc3605994
+column_widths|m26_via_stacks|5|30 17.493215 13.450358
+row_heights|m26_via_stacks|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_via_stacks|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	21.1 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	21.1 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_letters|blocks=6|fixed_point=yes
+block|m26_letters|0|drill_symbol_profile|fnv=4a18b40d1320e2b4
+block|m26_letters|1|drill_chart|fnv=f0594d113e1ca63b
+column_widths|m26_letters|1|19.252718 12.419108 13.743541 9.395298 6.492441 17.80149
+row_heights|m26_letters|1|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_letters|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO	A	0.100 mm	—	Yes	1	F.Cu / In1.Cu	B	0.100 mm	—	Yes	2	In1.Cu / In2.Cu	C	0.100 mm	—	Yes	1	In2.Cu / In3.Cu	4 OPS / 3 SITES					
+block|m26_letters|2|drill_chart|fnv=94ff2a9eda6d3526
+column_widths|m26_letters|2|19.252718 10.362718 13.743541 9.395298 6.492441 13.92497 17.80149 12.963393 21.544969 18.466726 30
+row_heights|m26_letters|2|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_letters|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO	A	0.0039″	—	Yes	1	1	F.Cu / In1.Cu	Drill	filled,capped,tented	—	1.5:1	B	0.0039″	—	Yes	2	2	In1.Cu / In2.Cu	Drill	filled	—	5.7:1	C	0.0039″	—	Yes	1	1	In2.Cu / In3.Cu	Drill	—	—	1.4:1	4 OPS / 3 SITES										
+block|m26_letters|3|drill_chart|fnv=e2a115ec4cc5c9bd
+column_widths|m26_letters|3|6.371488 6.492441 14.838156
+row_heights|m26_letters|3|3.43375 4.208379 4.208379 4.208379
+texts|m26_letters|3|SYM	OPS	DESCRIPTION	A	1		B	2		C	1	
+block|m26_letters|4|stackup_table|fnv=9296e38c60f3d1ac
+column_widths|m26_letters|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_letters|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_letters|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.535 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.535 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_letters|5|stackup_table|fnv=551a08f8857154ed
+column_widths|m26_letters|5|30 17.493215 13.450358
+row_heights|m26_letters|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_letters|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	21.1 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	21.1 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_sizetext|blocks=6|fixed_point=yes
+block|m26_sizetext|0|drill_symbol_profile|fnv=a677399c7a20deeb
+block|m26_sizetext|1|drill_chart|fnv=dda1f21c55ff76ea
+column_widths|m26_sizetext|1|19.252718 12.473542 25.179384 9.395298 6.492441 14.233393
+row_heights|m26_sizetext|1|3.793589 4.208379 4.208379 3.794898
+texts|m26_sizetext|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO	0.300 mm	0.300 mm	—	Yes	3	F.Cu / B.Cu	2.000 mm	2.000 mm	4.000 mm x 2.000 mm	No	1	F.Cu / B.Cu	4 OPS / 4 SITES					
+block|m26_sizetext|2|drill_chart|fnv=6359f04e8c864a5a
+column_widths|m26_sizetext|2|19.252718 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_sizetext|2|3.793589 4.208379 4.208379 3.794898
+texts|m26_sizetext|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO	0.0118″	0.0118″	—	Yes	3	3	F.Cu / B.Cu	Drill	tented	—	5.3:1	0.0787″	0.0787″	0.1575″ x 0.0787″	No	1	1	F.Cu / B.Cu	Slot	—	—	0.8:1	4 OPS / 4 SITES										
+block|m26_sizetext|3|drill_chart|fnv=472aae70cbab389d
+column_widths|m26_sizetext|3|9.147151 6.492441 14.838156
+row_heights|m26_sizetext|3|3.43375 4.208379 4.208379
+texts|m26_sizetext|3|SYM	OPS	DESCRIPTION	12 mil	3		79 mil	1	
+block|m26_sizetext|4|stackup_table|fnv=c8a110c52b70cfb4
+column_widths|m26_sizetext|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_sizetext|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_sizetext|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_sizetext|5|stackup_table|fnv=1b75da0991b8eefc
+column_widths|m26_sizetext|5|30 17.493215 13.450358
+row_heights|m26_sizetext|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_sizetext|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_gen2_via_stacks|blocks=6|fixed_point=yes
+block|m26_gen2_via_stacks|0|drill_symbol_profile|fnv=9e6ae7c240d692d9
+block|m26_gen2_via_stacks|1|drill_chart|fnv=2a70d56f90c7b732
+column_widths|m26_gen2_via_stacks|1|19.252718 12.419108 13.743541 9.395298 6.492441 17.80149
+row_heights|m26_gen2_via_stacks|1|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_gen2_via_stacks|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.100 mm	—	Yes	1	F.Cu / In1.Cu		0.100 mm	—	Yes	2	In1.Cu / In2.Cu		0.100 mm	—	Yes	1	In2.Cu / In3.Cu	4 OPS / 3 SITES					
+block|m26_gen2_via_stacks|2|drill_chart|fnv=3cef2841cb2987a3
+column_widths|m26_gen2_via_stacks|2|19.252718 10.362718 13.743541 9.395298 6.492441 13.92497 17.80149 12.963393 21.544969 18.466726 30
+row_heights|m26_gen2_via_stacks|2|3.793589 4.208379 4.208379 4.208379 3.794898
+texts|m26_gen2_via_stacks|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0039″	—	Yes	1	1	F.Cu / In1.Cu	Drill	filled,capped,tented	—	1.5:1		0.0039″	—	Yes	2	2	In1.Cu / In2.Cu	Drill	filled	—	5.7:1		0.0039″	—	Yes	1	1	In2.Cu / In3.Cu	Drill	—	—	1.4:1	4 OPS / 3 SITES										
+block|m26_gen2_via_stacks|3|drill_chart|fnv=adf92bfb3ef96a2d
+column_widths|m26_gen2_via_stacks|3|6.371488 6.492441 14.838156
+row_heights|m26_gen2_via_stacks|3|3.43375 4.208379 4.208379 4.208379
+texts|m26_gen2_via_stacks|3|SYM	OPS	DESCRIPTION		1			2			1	
+block|m26_gen2_via_stacks|4|stackup_table|fnv=194a359dc3704ac7
+column_widths|m26_gen2_via_stacks|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_gen2_via_stacks|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen2_via_stacks|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.535 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.535 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_gen2_via_stacks|5|stackup_table|fnv=c632b20839ee38c3
+column_widths|m26_gen2_via_stacks|5|30 17.493216 13.450358
+row_heights|m26_gen2_via_stacks|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen2_via_stacks|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	21.1 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	21.1 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_gen2_npth_slot|blocks=6|fixed_point=yes
+block|m26_gen2_npth_slot|0|drill_symbol_profile|fnv=0773903e0868cec9
+block|m26_gen2_npth_slot|1|drill_chart|fnv=813e2031cec9bfa6
+column_widths|m26_gen2_npth_slot|1|19.252718 12.473542 25.179384 9.395298 6.492441 14.233393
+row_heights|m26_gen2_npth_slot|1|3.793589 4.208379 4.208379 3.794898
+texts|m26_gen2_npth_slot|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.300 mm	—	Yes	3	F.Cu / B.Cu		2.000 mm	4.000 mm x 2.000 mm	No	1	F.Cu / B.Cu	4 OPS / 4 SITES					
+block|m26_gen2_npth_slot|2|drill_chart|fnv=939ec6b6c71f6fa3
+column_widths|m26_gen2_npth_slot|2|19.252718 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_gen2_npth_slot|2|3.793589 4.208379 4.208379 3.794898
+texts|m26_gen2_npth_slot|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0118″	—	Yes	3	3	F.Cu / B.Cu	Drill	tented	—	5.3:1		0.0787″	0.1575″ x 0.0787″	No	1	1	F.Cu / B.Cu	Slot	—	—	0.8:1	4 OPS / 4 SITES										
+block|m26_gen2_npth_slot|3|drill_chart|fnv=5dd010edd1f16d79
+column_widths|m26_gen2_npth_slot|3|6.371488 6.492441 14.838156
+row_heights|m26_gen2_npth_slot|3|3.43375 4.208379 4.208379
+texts|m26_gen2_npth_slot|3|SYM	OPS	DESCRIPTION		3			1	
+block|m26_gen2_npth_slot|4|stackup_table|fnv=b20d4aba4de26ee4
+column_widths|m26_gen2_npth_slot|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_gen2_npth_slot|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen2_npth_slot|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_gen2_npth_slot|5|stackup_table|fnv=1aab912bc99bc56f
+column_widths|m26_gen2_npth_slot|5|30 17.493216 13.450358
+row_heights|m26_gen2_npth_slot|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen2_npth_slot|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_gen3_legacy|blocks=6|fixed_point=yes
+block|m26_gen3_legacy|0|drill_symbol_profile|fnv=0773903e0868cec9
+block|m26_gen3_legacy|1|drill_chart|fnv=c2993ac1e13d815c
+column_widths|m26_gen3_legacy|1|19.252718 12.473542 25.179384 9.395298 6.492441 14.233393
+row_heights|m26_gen3_legacy|1|3.793589 4.208379 4.208379 3.794898
+texts|m26_gen3_legacy|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.300 mm	—	Yes	3	F.Cu / B.Cu		2.000 mm	4.000 mm x 2.000 mm	No	1	F.Cu / B.Cu	4 OPS / 4 SITES					
+block|m26_gen3_legacy|2|drill_chart|fnv=fc94a862aa438a8a
+column_widths|m26_gen3_legacy|2|19.252718 10.362718 20.946052 9.395298 6.492441 13.92497 14.233393 12.963393 14.051965 18.466726 30
+row_heights|m26_gen3_legacy|2|3.793589 4.208379 4.208379 3.794898
+texts|m26_gen3_legacy|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0118″	—	Yes	3	3	F.Cu / B.Cu	Drill	tented	—	5.3:1		0.0787″	0.1575″ x 0.0787″	No	1	1	F.Cu / B.Cu	Slot	—	—	0.8:1	4 OPS / 4 SITES										
+block|m26_gen3_legacy|3|drill_chart|fnv=5fb776d748128a85
+column_widths|m26_gen3_legacy|3|6.371488 6.492441 14.838156
+row_heights|m26_gen3_legacy|3|3.43375 4.208379 4.208379
+texts|m26_gen3_legacy|3|SYM	OPS	DESCRIPTION		3			1	
+block|m26_gen3_legacy|4|stackup_table|fnv=4a7b173200ab99dc
+column_widths|m26_gen3_legacy|4|16.2075 25.77893 17.493216 17.493216 17.493216 13.450358 17.653226
+row_heights|m26_gen3_legacy|4|4.305 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen3_legacy|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Core	FR4	1.510 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_gen3_legacy|5|stackup_table|fnv=e33d019ab13c3adb
+column_widths|m26_gen3_legacy|5|30 17.493216 13.450358
+row_heights|m26_gen3_legacy|5|4.303426 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916
+texts|m26_gen3_legacy|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	59.4 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|m26_gen3_styled|blocks=6|fixed_point=no
+block|m26_gen3_styled|0|drill_symbol_profile|fnv=9e6ae7c240d692d9
+block|m26_gen3_styled|1|drill_chart|fnv=d6f3b4bbb5c51682
+column_widths|m26_gen3_styled|1|27.232832 15.613784 18.551445 11.709525 7.138095 17.900001
+row_heights|m26_gen3_styled|1|3.563824 4.208379 4.208379 4.208379 3.567123
+texts|m26_gen3_styled|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.100 mm	—	Yes	1	F.Cu / In1.Cu		0.100 mm	—	Yes	2	In1.Cu / In2.Cu		0.100 mm	—	Yes	1	In2.Cu / In3.Cu	4 OPS / 3 SITES					
+block|m26_gen3_styled|2|drill_chart|fnv=ad69a8d974e0dcc4
+column_widths|m26_gen3_styled|2|27.232832 10.362718 18.551445 11.709525 7.138095 18.837158 17.900001 17.328572 21.544969 25.99524 30
+row_heights|m26_gen3_styled|2|3.563824 4.208379 4.208379 4.208379 3.567123
+texts|m26_gen3_styled|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0039″	—	Yes	1	1	F.Cu / In1.Cu	Drill	filled,capped,tented	—	1.5:1		0.0039″	—	Yes	2	2	In1.Cu / In2.Cu	Drill	filled	—	5.7:1		0.0039″	—	Yes	1	1	In2.Cu / In3.Cu	Drill	—	—	1.4:1	4 OPS / 3 SITES										
+block|m26_gen3_styled|3|drill_chart|fnv=2a01d34a075f5577
+column_widths|m26_gen3_styled|3|6.947619 7.138095 20.280953
+row_heights|m26_gen3_styled|3|3.43375 4.208379 4.208379 4.208379
+texts|m26_gen3_styled|3|SYM	OPS	DESCRIPTION		1			2			1	
+block|m26_gen3_styled|4|stackup_table|fnv=c8aa306a68f24907
+column_widths|m26_gen3_styled|4|14.7 24.27143 15.985716 15.985716 15.985716 11.942858 16.145726
+row_heights|m26_gen3_styled|4|2.9 5.629832 5.629832 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 5.629832 5.629832
+texts|m26_gen3_styled|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.535 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.535 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_gen3_styled|5|stackup_table|fnv=841fe6d611d75785
+column_widths|m26_gen3_styled|5|30 15.985716 11.942858
+row_heights|m26_gen3_styled|5|2.898426 5.629832 5.629832 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 5.629832 5.629832
+texts|m26_gen3_styled|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	21.1 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	21.1 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+block|m26_gen3_styled@o2|0|drill_symbol_profile|fnv=9e6ae7c240d692d9
+block|m26_gen3_styled@o2|1|drill_chart|fnv=4e0567d62b5d0b84
+column_widths|m26_gen3_styled@o2|1|27.232833 15.613784 18.551445 11.709525 7.138095 17.900001
+row_heights|m26_gen3_styled@o2|1|3.563824 4.208379 4.208379 4.208379 3.567123
+texts|m26_gen3_styled@o2|1|SYM	DRILL DIA	SLOT W x L	PLATED	OPS	FROM / TO		0.100 mm	—	Yes	1	F.Cu / In1.Cu		0.100 mm	—	Yes	2	In1.Cu / In2.Cu		0.100 mm	—	Yes	1	In2.Cu / In3.Cu	4 OPS / 3 SITES					
+block|m26_gen3_styled@o2|2|drill_chart|fnv=8ec50de846cc0ce8
+column_widths|m26_gen3_styled@o2|2|27.232833 10.362718 18.551445 11.709525 7.138095 18.837158 17.900001 17.328572 21.544969 25.99524 30
+row_heights|m26_gen3_styled@o2|2|3.563824 4.208379 4.208379 4.208379 3.567123
+texts|m26_gen3_styled@o2|2|SYM	DIA	SLOT W x L	PLATED	OPS	SITE COUNT	FROM / TO	OPERATION	PROTECTION	BACKDRILL STUB	ASPECT RATIO		0.0039″	—	Yes	1	1	F.Cu / In1.Cu	Drill	filled,capped,tented	—	1.5:1		0.0039″	—	Yes	2	2	In1.Cu / In2.Cu	Drill	filled	—	5.7:1		0.0039″	—	Yes	1	1	In2.Cu / In3.Cu	Drill	—	—	1.4:1	4 OPS / 3 SITES										
+block|m26_gen3_styled@o2|3|drill_chart|fnv=2a01d34a075f5577
+column_widths|m26_gen3_styled@o2|3|6.947619 7.138095 20.280953
+row_heights|m26_gen3_styled@o2|3|3.43375 4.208379 4.208379 4.208379
+texts|m26_gen3_styled@o2|3|SYM	OPS	DESCRIPTION		1			2			1	
+block|m26_gen3_styled@o2|4|stackup_table|fnv=c8aa306a68f24907
+column_widths|m26_gen3_styled@o2|4|14.7 24.27143 15.985716 15.985716 15.985716 11.942858 16.145726
+row_heights|m26_gen3_styled@o2|4|2.9 5.629832 5.629832 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 4.619916 5.629832 5.629832 5.629832
+texts|m26_gen3_styled@o2|4|Layer Name	Type	Material	Thickness	Color	Epsilon R	Loss Tangent	F.Silkscreen	Top silk screen	Not specified	Not specified	Not specified	1	0	F.Paste	Top solder paste		Not specified		1	0	F.Mask	Top solder mask	Not specified	0.010 mm	Not specified	3.3	0	F.Cu	Copper		0.035 mm		1	0	Dielectric 1	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In1.Cu	Copper		0.035 mm		1	0	Dielectric 2	Core	FR4	0.535 mm	Not specified	4.5	0.02	In2.Cu	Copper		0.035 mm		1	0	Dielectric 3	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	In3.Cu	Copper		0.035 mm		1	0	Dielectric 4	Core	FR4	0.535 mm	Not specified	4.5	0.02	In4.Cu	Copper		0.035 mm		1	0	Dielectric 5	Prepreg	FR4	0.100 mm	Not specified	4.5	0.02	B.Cu	Copper		0.035 mm		1	0	B.Mask	Bottom solder mask	Not specified	0.010 mm	Not specified	3.3	0	B.Paste	Bottom solder paste		Not specified		1	0	B.Silkscreen	Bottom silk screen	Not specified	Not specified	Not specified	1	0
+block|m26_gen3_styled@o2|5|stackup_table|fnv=841fe6d611d75785
+column_widths|m26_gen3_styled@o2|5|30 15.985716 11.942858
+row_heights|m26_gen3_styled@o2|5|2.898426 5.629832 5.629832 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 4.619916 5.629832 5.629832
+texts|m26_gen3_styled@o2|5|Layer Name	Thickness	Epsilon R	F.Silkscreen	Not specified	1	F.Paste	Not specified	1	F.Mask	0.4 mil	3.3	F.Cu	1.4 mil	1	Dielectric 1	3.9 mil	4.5	In1.Cu	1.4 mil	1	Dielectric 2	21.1 mil	4.5	In2.Cu	1.4 mil	1	Dielectric 3	3.9 mil	4.5	In3.Cu	1.4 mil	1	Dielectric 4	21.1 mil	4.5	In4.Cu	1.4 mil	1	Dielectric 5	3.9 mil	4.5	B.Cu	1.4 mil	1	B.Mask	0.4 mil	3.3	B.Paste	Not specified	1	B.Silkscreen	Not specified	1
+case|api_kitchen_sink|blocks=2|fixed_point=yes
+block|api_kitchen_sink|0|drill_symbol_profile|fnv=b7b976cb96d4bfab
+block|api_kitchen_sink|1|drill_chart|fnv=eb97456a850ef933
+column_widths|api_kitchen_sink|1|16 16
+row_heights|api_kitchen_sink|1|2.639294 2.125 3.494026 3.43375
+texts|api_kitchen_sink|1|SYM	Drill (mm)		0.30 mm		1.14 mm		1.52 mm

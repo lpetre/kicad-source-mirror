@@ -44,7 +44,6 @@ use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::exclusion::{KiapiDrcExclusionCodec, resolve_drc_exclusions};
 use kicad_drc::rule_parser::{LayerChoices, board_layer_choices, default_layer_choices};
 use kicad_pcb::Board;
-use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::io::ParseOptions;
 use kicad_pcb::project::board_design_settings_json::DrcExclusionCodec;
 use kicad_pcb::project::{LoadPath, LoadStep, Project, load_project};
@@ -365,31 +364,16 @@ fn run_session_step(
 
 /// Port of `RefreshGeneratedTables( BOARD& )` (`pcbnew/board_tables/generated_table_refresh.cpp`):
 /// rebuilds every stale generated table (drill chart, stackup table) among the board's
-/// drawings and returns how many were rebuilt.
+/// drawings, commits the drill symbol profile and returns how many were rebuilt
+/// (`kicad_pcb::board_tables::refresh_generated_tables`, package M26). A board without one is
+/// never changed (0), as in the C++.
 ///
 /// # Errors
 ///
-/// `NotYetPorted` when the board holds a generated table: `PCB_GENERATED_TABLE::IsStale` and
-/// `RebuildCells` are tier 2 (package M26). A board without one is never changed (0), as in
-/// the C++.
-pub fn refresh_generated_tables(board: &Board) -> Result<i32, SessionError> {
-    let ctx = BoardCtx::bare(board);
-
-    for (id, _) in board.drawings() {
-        let Some(item) = ctx.item(id) else {
-            continue;
-        };
-
-        if !item.type_().is_generated_table_type() {
-            continue;
-        }
-
-        return Err(SessionError::not_yet_ported(
-            "kicad-pcb: RefreshGeneratedTables (PCB_GENERATED_TABLE::IsStale / RebuildCells, M26)",
-        ));
-    }
-
-    Ok(0)
+/// None: the `Result` is kept for the call sites (a model stub reached on the way panics with
+/// a "port pending" message, which the session reports as `NotYetPorted`).
+pub fn refresh_generated_tables(board: &mut Board) -> Result<i32, SessionError> {
+    Ok(kicad_pcb::board_tables::refresh_generated_tables(board))
 }
 
 /// Port of `BOARD_LOADER::SaveBoard( aFileName, aBoard )` up to the writer: the pre-steps

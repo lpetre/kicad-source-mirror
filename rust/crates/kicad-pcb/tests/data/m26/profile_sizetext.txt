@@ -1,0 +1,7 @@
+		(drill_symbol_profile
+			(group_by size slot plating hole_function protection)
+			(default_marks size_text)
+			(size 1.5)
+			(width 0.15)
+			(freeze_assignments no)
+		)

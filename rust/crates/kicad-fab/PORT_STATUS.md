@@ -10,8 +10,7 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `wx_file_name.rs` | `wxFileName` (Unix: `SplitPath`, `SetName/SetExt/SetPath`, `GetFullName/GetFullPath`) | FAB-01 | done (string part only) |
 | `drill/drill_span.rs` | `pcbnew/drill/drill_span.h` | FAB-01 | ported |
 | `drill/drill_operation.rs` | `pcbnew/drill/drill_operation.h` | FAB-01 | ported |
-| `drill/drill_enumerator.rs` | `pcbnew/drill/drill_enumerator.h/.cpp` | FAB-01 | ported; reaches model stubs (see below) |
-| `drill/via_access.rs` | placeholders for `PCB_VIA` accessors not yet declared by the model | FAB-01 | stub (panics, to be deleted when M17 lands) |
+| `drill/drill_enumerator.rs` | `pcbnew/drill/drill_enumerator.h/.cpp` | FAB-01, FAB-GLUE | ported; verified end to end (FAB-GLUE) |
 | `exporters/gendrill_writer_base.rs` | `gendrill_writer_base.h` (all types), `.cpp` L47-300, L303-355, L358-461, L464-501 | FAB-01 | ported |
 | `exporters/gendrill_map.rs` | `gendrill_writer_base.cpp` L506-847, L996-1019 | FAB-12 | stub: `gen_drill_map_file` returns `FabError::NotPorted` |
 | `exporters/gendrill_excellon_writer.rs` | `gendrill_excellon_writer.*` | FAB-02 | ported |
@@ -54,23 +53,21 @@ drill writers have none; Protel extensions are a Gerber layer feature, FAB-03), 
 "micro via" classification (micro / blind / buried vias are distinguished only by their layer
 pair, as in C++).
 
-### Model accessors used (final API; panics until the model package lands)
+### Model accessors used
 
-* Pad (M14): `Pad::position(ctx)`, `orientation(ctx)`, `drill_size(ctx)`, `has_hole(ctx)`
-  (`port_pending!` today); `attribute()`, `property()`, `lib_padstack()` (the C++ `Padstack()`,
+* Pad (M14): `Pad::position(ctx)`, `orientation(ctx)`, `drill_size(ctx)`, `has_hole(ctx)`,
+  `attribute()`, `property()`, `lib_padstack()` (the C++ `Padstack()`,
   for the drill shape, backdrills and post-machining) are real.
-* Via (M17): `drill/via_access.rs` placeholders for `GetDrillValue`, `LayerPair`,
-  `ResolveFillingMode`, `ResolveCappingMode`, `Resolve{Front,Back}{Covering,Plugging,Tenting}Mode`;
-  the model does not declare these yet (requested from M17; then the calls switch to the model
-  methods and the file goes). `PcbVia::padstack` and `track.start` are real.
-* Stackup (M6): `BoardStackup::get_drill_depth` (`port_pending!`), reached only for via
-  backdrills.
+* Via (M17): `PcbVia::drill_value(ctx)`, `layer_pair()`, `resolve_filling_mode(ctx)`,
+  `resolve_capping_mode(ctx)`, `resolve_{front,back}_{covering,plugging,tenting}_mode(ctx)`,
+  `padstack`, `track.start` (FAB-GLUE switched the enumerator to them and deleted the
+  `drill/via_access.rs` placeholders).
+* Stackup (M6): `BoardStackup::get_drill_depth`, reached only for via backdrills.
 * Board: `tracks()`, `footprints()`, `footprint_pads()`, `copper_layer_count()`,
   `design_settings()`, `file_name` are real.
 
-Consequence: `enumerate_drill_operations` / `enumerate_drill_spans` / `build_holes_list` panic
-with a "port pending" message on any board with vias or pads until M14 / M17 land. Everything
-downstream of the enumeration (sort, tools, names, file functions) is verified now.
+The enumerator draws no UUID (`DRILL_OPERATION::m_SourceId` is copied from the source item);
+its unit test creates its via from the board's `kiid_generator` (review finding R2-11).
 
 ### Tests and verification
 
@@ -86,14 +83,14 @@ downstream of the enumeration (sort, tools, names, file functions) is verified n
   everything: **228 cases, all identical**, including the libstdc++ order of tied holes (the
   golden contains cases where `std::sort` differs from a stable sort; a second test asserts
   that so that the test cannot pass with `slice::sort_by`).
-* `enumeration_matches_oracle` (ignored, `--features e2e`): enumeration from the parsed corpus
-  boards against the same raw lists. Needs `kicad_pcb::io::parse_board`, M14, M17.
+* `enumeration_matches_oracle`: enumeration from the corpus boards loaded as kicad-cli loads
+  them, against the same raw lists: all identical (FAB-GLUE; the `e2e` feature is gone).
 * `tests/drill_golden.rs`: kicad-cli goldens under `tests/golden/drill/<board>/<set>/` for the
   10 corpus boards x 5 option sets (`--format excellon`; `-u in`; `--excellon-mirror-y`;
   `--excellon-separate-th`; `--format gerber`), made by `tests/golden/drill/generate.sh`
   (commands recorded there, run on copies). Checks: golden set consistent; `basic_test` goldens
   equal the repository goldens of `qa/data/cli/basic_test/` after normalisation (all 4 equal);
-  normaliser. `drill_export_matches_cli_goldens` (ignored) is the end-to-end comparison; its
+  normaliser. `drill_export_matches_cli_goldens` is the end-to-end comparison (runs since FAB-GLUE); its
   `run_port` is to be wired by FAB-02 / FAB-08.
 * Unit tests (`gendrill_writer_base.rs`, `drill_span.rs`, `drill_enumerator.rs`,
   `wx_file_name.rs`): ordering and merge rules of the tool list, slot / stub / post-machining
@@ -114,7 +111,6 @@ downstream of the enumeration (sort, tools, names, file functions) is verified n
 ### Known gaps
 
 * Drill maps (`genDrillMapFile`, `plotDrillMarks`): FAB-12.
-* Enumeration end-to-end verification waits for the parser and M14 / M17.
 
 ## FAB-02: Excellon writer, drill report, drill job
 
@@ -168,9 +164,9 @@ maps onto (see the change request in the FAB-02 result).
   tests build them through the via model, M17).
 * `drill_job_outputs_and_pending_parts`: job output order (drill files, then the report),
   report path default / explicit / resolver hook, map and Gerber failures.
-* `tests/drill_golden.rs::drill_export_matches_cli_goldens`: `run_port` wired (parser, CLI
-  defaults, job); still ignored: needs the remaining parser packages (PCBIO-04 `setup`), the pad
-  / via model accessors (M14, M17) and the Gerber writer (FAB-08).
+* `tests/drill_golden.rs::drill_export_matches_cli_goldens`: board loaded as kicad-cli does,
+  CLI defaults, job: all 10 boards x 5 sets identical (FAB-GLUE; see also
+  `tests/excellon_corpus.rs` there).
 * Unit tests in `gendrill_excellon_writer.rs`, `gendrill_report.rs`, `jobs_handler.rs`.
 
 ### Deviations
@@ -188,10 +184,7 @@ maps onto (see the change request in the FAB-02 result).
 
 ### Known gaps
 
-* `--format gerber` in the job: `FabError::NotPorted` until FAB-08 (`GERBER_WRITER`; its report
-  must pass its own `getDrillFileName` override to `gen_drill_report_file`).
 * `--generate-map`: `FabError::NotPorted` until FAB-12 (as in FAB-01).
-* End-to-end from a `.kicad_pcb` file: waits for the parser / M14 / M17 (see above).
 
 ## FAB-03: board plot driver, Gerber X2 header, file names
 
@@ -425,12 +418,9 @@ tests).
 ### Known gaps
 
 * `PlotChartSymbols` FAB-13 (`PlotText` / `PlotFootprintTextItems`: FAB-06, done).
-* Model differences found by the corpus replay (reported as change requests, listed in
-  `KNOWN_DIFFERENCES` of `plot_graphics_corpus.rs` and `plot_items_corpus.rs`): the pad's
-  local solder mask margin is lost on B.Mask (`Pad::set_local_solder_mask_margin` sets the
-  front mask props only; C++ `PAD::SetLocalSolderMaskMargin` sets F_Mask and B_Mask; same
-  for the paste margin and ratio setters): 3 corpus B.Mask files differ. Barcodes plot
-  nothing until the model has the zint encoder (M25a).
+* (Resolved, FAB-GLUE) The model differences the corpus replay found (pad local mask margin
+  on B.Mask, barcodes without the zint encoder) are fixed in the model: `KNOWN_DIFFERENCES`
+  is empty and the barcode layers are compared.
 
 ## FAB-06: text items (footprint text rules, PlotText)
 
@@ -499,15 +489,14 @@ text (the engine is kicad-plot's; not compared here).
 
 ### Known gaps / change requests
 
-* Knockout or strike-out of a footprint dimension's text reaches a pending panic: the model
-  has no public `PcbDimension::transform_text_to_poly_set` (`pcb_text::
-  transform_text_to_poly_set` is crate-private).
+* Knockout or strike-out of a footprint dimension's text reaches a pending panic in
+  `plot_brditems_text.rs` (`pcb_text_transform_text_to_poly_set`). The model now has
+  `PcbDimension::transform_text_to_poly_set`; switching the call is a change request of
+  FAB-GLUE (that file belongs to FONT-RC-1 while it runs).
 * The model loader drops the render cache of footprint texts in an outline font (crafted
   `User.3`: C++ plots the cached glyphs, the port gets no cache).
-* `PcbTablecell::corners` / `draw_pos` of a table inside a footprint are footprint-local
-  (not moved by the footprint position) and degenerate when rotated:
-  `qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb` F.Cu / B.Cu differ (cell
-  text 40 / 28 mm off); the table borders match.
+* (Resolved in the model, FAB-GLUE) `embedded_table_rotated_legacy_v10.kicad_pcb` F.Cu /
+  B.Cu (footprint table cells) match now.
 
 ## FAB-07: the `gerbers` job
 
@@ -559,11 +548,8 @@ session load, layer selection, this package, kicad-fab plotting), against the re
 
 ### Deviations
 
-* The Gerber job file (`GERBER_JOBFILE_WRITER`, FAB-09) is not written: after the layer files
-  `job_export_gerbers` ends with `FabError::NotPorted`; `run_export_gerbers` returns the layer
-  files with exit code `NOT_YET_PORTED` and reports `not ported yet: GERBER_JOBFILE_WRITER::
-  CreateJobFile (FAB-09)` (an extra stdout line). `gbr_files` / `job_file_path` hold what
-  `AddGbrFile` and `CreateJobFile` receive.
+* (Obsolete since FAB-09) The export no longer ends with `NOT_YET_PORTED`: the job file is
+  written (`gbr_files` / `job_file_path` hold what `AddGbrFile` and `CreateJobFile` receive).
 * An error of `StartPlotBoard` (a format or drawing sheet outside the port) stops the export
   with that error instead of reporting `Failed to plot to '%s'.` and continuing (the C++ only
   fails there when the file cannot be created, which the port cannot).
@@ -670,14 +656,13 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
     boards (sources resolved by ordinal on the parsed board) x 3 sets: **30 runs, 103 files
     (PTH / NPTH / blind / buried / backdrill / backdrill pair, filling, tenting front/back),
     all identical**.
-  * `corpus_boards_match_cli`: parser + real enumeration + drill job: **831 of 1143 runs
-    identical (273 files; 603 runs of boards without holes, where kicad-cli writes nothing
-    either), 0 differ, 309 pending** (all on `PCB_VIA::LayerPair`: the `drill/via_access.rs`
-    placeholders of FAB-01 are still called although the via model has these methods now), 3
-    kicad-cli failures (`plugins/fakeboard.kicad_pcb`, not a board) skipped. When the
-    enumerator switches to the model methods, the pending runs (all boards with vias, incl.
-    the crafted board: covering, plugging, capping, front-back filling, different via widths)
-    are compared automatically. `KICAD_FAB_GERBER_DRILL_DUMP=<dir>` writes differing files.
+  * `corpus_boards_match_cli`: parser + real enumeration + drill job. FAB-08 state: 831 of
+    1143 runs identical, 309 pending on the `drill/via_access.rs` placeholders. Since
+    FAB-GLUE (enumerator on the M17 via methods, crafted board `tests/data/excellon_corpus/
+    drill_features.kicad_pcb` added to `generate.py`): **1143 of 1146 runs identical (1341
+    files; 603 runs without holes), 0 pending, 0 differ**, 3 kicad-cli failures
+    (`plugins/fakeboard.kicad_pcb`, not a board) skipped. `KICAD_FAB_GERBER_DRILL_DUMP=<dir>`
+    writes differing files.
   * `basic_test_golden`: `qa/data/cli/basic_test/basic_test-PTH-drl.gbr` reproduced as
     `test_pcb.py::test_pcb_export_drill` (gerber case, 9 lines skipped) checks it.
 * Unit tests in `gendrill_gerber_writer.rs` (`convertOblong2Segment`, names, precision).
@@ -692,4 +677,4 @@ property, the parent footprint reference (`TO.C`) and `PCB_VIA::GetWidth( Top/Bo
 ### Known gaps
 
 * `--generate-map`: FAB-12 (`FabError::NotPorted`, as for Excellon).
-* End-to-end on boards with vias waits for the enumerator to use the M17 via methods.
+* (Done, FAB-GLUE) End-to-end on boards with vias: see "FAB-GLUE" below.

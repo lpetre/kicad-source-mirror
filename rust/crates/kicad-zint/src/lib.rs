@@ -14,6 +14,38 @@
 //
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// This file ports code of zint 2.15.0 (thirdparty/zint/backend/library.c (API)):
+//
+//     libzint - the open source barcode library
+//     Copyright (C) 2009-2025 Robin Stuart <rstuart114@gmail.com>
+//
+//     Redistribution and use in source and binary forms, with or without
+//     modification, are permitted provided that the following conditions
+//     are met:
+//
+//     1. Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//     2. Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in the
+//        documentation and/or other materials provided with the distribution.
+//     3. Neither the name of the project nor the names of its contributors
+//        may be used to endorse or promote products derived from this software
+//        without specific prior written permission.
+//
+//     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+//     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+//     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+//     OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+//     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+//     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//     SUCH DAMAGE.
+//
+//     SPDX-License-Identifier: BSD-3-Clause
 
 //! Port of the subset of zint 2.15.0 (`thirdparty/zint/backend`) used by KiCad's `PCB_BARCODE`.
 //!
@@ -43,8 +75,8 @@ mod vector;
 
 pub use common::{
     ZINT_ERROR, ZINT_ERROR_ENCODING_PROBLEM, ZINT_ERROR_INVALID_DATA, ZINT_ERROR_INVALID_OPTION,
-    ZINT_ERROR_TOO_LONG, ZINT_WARN_HRT_TRUNCATED, ZINT_WARN_INVALID_OPTION,
-    ZINT_WARN_NONCOMPLIANT, ZINT_WARN_USES_ECI,
+    ZINT_ERROR_TOO_LONG, ZINT_WARN_HRT_TRUNCATED, ZINT_WARN_INVALID_OPTION, ZINT_WARN_NONCOMPLIANT,
+    ZINT_WARN_USES_ECI,
 };
 pub use library::{
     BARCODE_CODE39, BARCODE_CODE128, BARCODE_DATAMATRIX, BARCODE_MICROQR, BARCODE_QRCODE,
@@ -140,7 +172,9 @@ pub fn encode(options: &Options, data: &[u8]) -> Result<Symbol, EncodeError> {
     let mut warning = None;
     let ret = zbarcode_encode(&mut symbol, data);
     if ret == NOT_PORTED {
-        return Err(not_ported("input conversion or option outside KiCad's settings"));
+        return Err(not_ported(
+            "input conversion or option outside KiCad's settings",
+        ));
     }
     if ret >= ZINT_ERROR {
         return Err(EncodeError {
@@ -168,7 +202,11 @@ pub fn encode(options: &Options, data: &[u8]) -> Result<Symbol, EncodeError> {
     let rows = symbol.rows;
     let width = symbol.width;
     let modules = (0..rows)
-        .map(|r| (0..width).map(|c| common::module_is_set(&symbol, r, c)).collect())
+        .map(|r| {
+            (0..width)
+                .map(|c| common::module_is_set(&symbol, r, c))
+                .collect()
+        })
         .collect();
 
     Ok(Symbol {

@@ -29,31 +29,25 @@
 //! branches (`PlotLayer`'s DXF outline mode, `setupPlotterNewPDFPage`, `plotBackgroundColor`,
 //! `PlotInteractiveLayer`, `ClearPlottedFootprints`), the drawing sheet (PLOT-08).
 
-use std::sync::Arc;
-
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::layer_ids::{Flashing, LAYER_DNP_MARKER, LAYER_VIAS, is_copper_layer};
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
-use kicad_core::stroke_params::{LineStyle, StrokeParams};
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::cmath::f64_to_i32_x86;
-use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
 use kicad_geom::trigo::rotate_point_around;
-use kicad_geom::{ANGLE_0, Box2I, EdaAngle, Shape, ShapePolySet, Vector2D, Vector2I, ki_round};
+use kicad_geom::{ANGLE_0, Box2I, Shape, ShapePolySet, Vector2D, Vector2I, ki_round};
 use kicad_pcb::AnyItem;
 use kicad_pcb::board_design_settings::LAYER_CLASS_FAB;
-use kicad_pcb::ctx::{BoardCtx, MutEnv};
+use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::drc_api::DrcConstraintT;
-use kicad_pcb::eda_shape::ShapeT;
 use kicad_pcb::ids::{FootprintId, NetCode, PadId, TrackId, ZoneId};
-use kicad_pcb::item::{DetachedCopy, ParentRef};
+use kicad_pcb::item::DetachedCopy;
 use kicad_pcb::pad::Pad;
 use kicad_pcb::padstack::{PadAttrib, PadShape};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
-use kicad_pcb::pcb_shape::PcbShape;
 use kicad_pcb::pcb_track::Track;
 use kicad_plot::gbr_metadata::GbrApertureAttrib;
 use kicad_plot::gbr_metadata::GbrMetadata;
@@ -101,7 +95,7 @@ pub fn plot_board_layers(
 
     // Drill symbols go after the normal layers but before the physical marks, so a symbol is
     // never sitting under a knockout
-    let map_layers = drill_symbol_layers(a_board) & Lset::from_layers(a_layers);
+    let map_layers = a_board.board.drill_symbol_layers() & Lset::from_layers(a_layers);
 
     if map_layers.any() {
         let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, &plot_options);
@@ -123,26 +117,6 @@ pub fn plot_board_layers(
         itemplotter.set_layer_set(&Lset::from_layers(a_layers));
         itemplotter.plot_drill_marks();
     }
-}
-
-/// `BOARD::DrillSymbolLayers()`: the layers of the board's drill map items. C++ keeps
-/// `m_drillSymbolLayers`, refreshed (`RefreshDrillSymbolLayers`) after loading and whenever a
-/// drill map changes, so it always equals the layers of the `PCB_DRILL_MAP` items in
-/// `m_drawings`; the board model has no such field, so the port computes it on demand.
-fn drill_symbol_layers(a_board: &BoardCtx<'_>) -> Lset {
-    let mut layers = Lset::new();
-
-    for (id, item) in a_board.board.drawings() {
-        if !matches!(item, AnyItem::DrillMap(_)) {
-            continue;
-        }
-
-        if let Some(item) = a_board.item(id) {
-            layers.set(item.layer());
-        }
-    }
-
-    layers
 }
 
 /// Port of `PlotOneBoardLayer`: plot one layer with the function its kind needs.
@@ -744,8 +718,8 @@ fn plot_pad_layer(
                     CornerStrategy::RoundAllCorners,
                     max_error,
                 );
-                pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
-                pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &outline, 0, true);
+                dummy.delete_primitives_list(PcbLayerId::UndefinedLayer);
+                dummy.add_primitive_poly(&env, a_layer, &outline, 0, true);
 
                 // Be sure the anchor pad is not bigger than the deflated shape because this
                 // anchor will be added to the pad shape when plotting the pad. So now the
@@ -843,8 +817,8 @@ fn plot_pad_layer(
                 // Initialize the dummy pad shape:
                 dummy.set_anchor_pad_shape(a_layer, PadShape::Circle);
                 dummy.set_shape(a_layer, PadShape::Custom);
-                pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
-                pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &outline, 0, true);
+                dummy.delete_primitives_list(PcbLayerId::UndefinedLayer);
+                dummy.add_primitive_poly(&env, a_layer, &outline, 0, true);
 
                 // Be sure the anchor pad is not bigger than the deflated shape because this
                 // anchor will be added to the pad shape when plotting the pad.
@@ -880,8 +854,8 @@ fn plot_pad_layer(
                 CornerStrategy::RoundAllCorners,
                 max_error,
             );
-            pad_delete_primitives_list(&mut dummy, PcbLayerId::UndefinedLayer);
-            pad_add_primitive_poly(ctx, &env, &mut dummy, a_layer, &shape, 0, true);
+            dummy.delete_primitives_list(PcbLayerId::UndefinedLayer);
+            dummy.add_primitive_poly(&env, a_layer, &shape, 0, true);
 
             // Be sure the anchor pad is not bigger than the deflated shape because this
             // anchor will be added to the pad shape when plotting the pad. So now the
@@ -905,100 +879,6 @@ fn plot_pad_layer(
     }
 
     // Restore the pad parameters modified by the plot code: `work` is a copy.
-}
-
-/// Port of `PAD::DeletePrimitivesList( aLayer )` (`UNDEFINED_LAYER`: every unique layer of the
-/// padstack).
-///
-/// Local port: the model does not expose the pad's primitive list mutably (change request);
-/// it goes through the public `PAD::SetPadstack` (`PADSTACK::operator=`) of a modified copy.
-fn pad_delete_primitives_list(pad: &mut Pad, a_layer: PcbLayerId) {
-    let mut padstack = pad.lib_padstack().clone();
-
-    if a_layer == PcbLayerId::UndefinedLayer {
-        for l in padstack.unique_layers() {
-            padstack.clear_primitives(l);
-        }
-    } else {
-        padstack.clear_primitives(a_layer);
-    }
-
-    pad.set_padstack(&padstack);
-    pad.set_dirty();
-}
-
-/// Port of `PAD::AddPrimitivePoly( aLayer, const SHAPE_POLY_SET& aPoly, aThickness, aFilled )`
-/// with `PAD::AddPrimitive( aLayer, aPrimitive )` and `rebakePrimitiveToFootprint` inlined.
-///
-/// Local port (see [`pad_delete_primitives_list`]). `pad_env` is the environment of the
-/// board pad the copy was made from (its parent footprint frame, the board's `maxError`).
-/// The new primitives belong to the copy, which has no handle (`ParentRef::None`); C++ sets
-/// their parent to the copy's address. Pad primitives are never transformed by the
-/// footprint frame, so the parent only matters as "a pad" in C++ (`GetMaxError()` of the
-/// board, reproduced by `pad_env`).
-fn pad_add_primitive_poly(
-    ctx: &BoardCtx<'_>,
-    pad_env: &MutEnv,
-    pad: &mut Pad,
-    a_layer: PcbLayerId,
-    a_poly: &ShapePolySet,
-    a_thickness: i32,
-    a_filled: bool,
-) {
-    // If aPoly has holes, convert it to a polygon with no holes.
-    let mut poly_no_hole = ShapePolySet::new();
-    poly_no_hole.append_set(a_poly);
-
-    if poly_no_hole.has_holes() {
-        poly_no_hole.fracture(true);
-    }
-
-    // `new PCB_SHAPE()` has no parent: its setters see no footprint frame.
-    let shape_env = MutEnv::detached();
-    // `rebakePrimitiveToFootprint` (`GetParentFootprint()`, `GetPrimitiveLibScale`) and the
-    // primitive's `getMaxError()` (the pad's board).
-    let lib_scale = pad
-        .parent_footprint(ctx)
-        .map(|_| pad.primitive_lib_scale(ctx));
-    let prim_env = MutEnv {
-        parent: None,
-        ..pad_env.clone()
-    };
-    let mut padstack = pad.lib_padstack().clone();
-
-    // There should never be multiple shapes, but if there are, we split them into
-    // primitives so that we can edit them both.
-    for ii in 0..poly_no_hole.outline_count() {
-        let poly_outline = ShapePolySet::from_outline(poly_no_hole.c_outline(ii));
-        let mut item = PcbShape::default();
-        item.set_shape(&shape_env, ShapeT::Poly);
-        item.shape.set_filled(a_filled);
-        item.set_poly_shape(&shape_env, poly_outline);
-        item.set_stroke(
-            &shape_env,
-            StrokeParams::new(a_thickness, LineStyle::Solid, Color4D::UNSPECIFIED),
-        );
-
-        // PAD::AddPrimitive( aLayer, item ):
-        item.base.item.parent = ParentRef::None; // aPrimitive->SetParent( this )
-
-        // Seed lib state from the primitive's current values, then rebake so the
-        // runtime cache reflects the parent FP transform reachable via the pad.
-        let (start, end) = (item.shape.start(), item.shape.end());
-        item.override_lib_coords(start, end, Vector2I::new(0, 0));
-        let poly = item.shape.poly_shape().clone();
-        item.override_lib_poly(poly);
-
-        // Covers load, where the footprint scale is set before the primitives are parsed.
-        if let Some((local_sx, local_sy)) = lib_scale {
-            item.rebake_with_scale(&prim_env, local_sx, local_sy);
-        }
-
-        padstack.add_primitive(item, a_layer);
-    }
-
-    pad.set_padstack(&padstack);
-    pad.set_dirty();
 }
 
 /// The `getMetadata` lambda of `PlotStandardLayer`: the Gerber metadata for a Gerber
@@ -1212,36 +1092,6 @@ pub fn plot_standard_layer_zone(
     }
 }
 
-/// `TransformRoundChamferedRectToPolygon( buffer, pos, size, rotation, radius, chamferRatio,
-/// chamferCorners, 0, maxError, ERROR_INSIDE )` in the shape the plot engines take
-/// (`kicad_plot::plotter_gerber::RoundChamferedRectToPolygonFn`): installed into the SVG
-/// plotter for `FlashPadRoundRect`, and the argument FAB-04 passes to
-/// `GerberPlotter::flash_pad_chamfer_round_rect`.
-pub fn round_chamfered_rect_to_polygon(
-    a_position: Vector2I,
-    a_size: Vector2I,
-    a_rotation: EdaAngle,
-    a_corner_radius: i32,
-    a_chamfer_ratio: f64,
-    a_chamfer_corners: i32,
-    a_error: i32,
-) -> ShapePolySet {
-    let mut buffer = ShapePolySet::new();
-    transform_round_chamfered_rect_to_polygon(
-        &mut buffer,
-        a_position,
-        a_size,
-        a_rotation,
-        a_corner_radius,
-        a_chamfer_ratio,
-        a_chamfer_corners,
-        0,
-        a_error,
-        ErrorLoc::Inside,
-    );
-    buffer
-}
-
 /// Port of `initializePlotter` (`static`): set up most plot options for plotting a board
 /// (especially the viewport).
 ///
@@ -1419,7 +1269,6 @@ pub fn start_plot_board(
         PlotFormat::Svg => {
             let mut svg = SvgPlotter::new();
             svg.set_creation_date(&a_env.iso8601_date());
-            svg.set_round_rect_polygon_fn(Some(Arc::new(round_chamfered_rect_to_polygon)));
             Box::new(svg)
         }
 

@@ -583,7 +583,7 @@ pub fn run_export_gerbers(
     );
 
     // Once for the run, not per file, so an update rebuilds each chart once
-    crate::board_loader::refresh_generated_tables(&session.board)?;
+    crate::board_loader::refresh_generated_tables(&mut session.board)?;
 
     let fab_job = fab_gerbers_job(job);
     let env = kicad_fab::pcbplot::PlotEnv {
@@ -771,8 +771,7 @@ pub fn run_export_svg(
 /// [`Session::load_board`], the full `BOARD_LOADER::Load` sequence): decides whether to save
 /// and returns the re-saved board (`PCB_IO_KICAD_SEXPR::SaveBoard`, no `BOARD_LOADER::SaveBoard`
 /// pre-steps) as the one output file (named like the input: the C++ overwrites the board in
-/// place). A board holding a generated table is `NotYetPorted` (`RefreshGeneratedTables`,
-/// M26).
+/// place). `RefreshGeneratedTables` rebuilding a table marks the board as changed.
 pub fn run_pcb_upgrade(
     session: &mut Session,
     job: &mut JobPcbUpgrade,
@@ -786,7 +785,7 @@ pub fn run_pcb_upgrade(
 
     // A chart is derived data, so the upgrade brings every one up to date and saves if
     // that changed anything
-    if crate::board_loader::refresh_generated_tables(&session.board)? > 0 {
+    if crate::board_loader::refresh_generated_tables(&mut session.board)? > 0 {
         should_save = true;
     }
 

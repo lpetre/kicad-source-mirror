@@ -1,3 +1,52 @@
+// This program source code file is part of KiCad, a free EDA CAD application.
+//
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// This file ports code of zint 2.15.0 (thirdparty/zint/backend/common.c):
+//
+//     libzint - the open source barcode library
+//     Copyright (C) 2008-2025 Robin Stuart <rstuart114@gmail.com>
+//
+//     Redistribution and use in source and binary forms, with or without
+//     modification, are permitted provided that the following conditions
+//     are met:
+//
+//     1. Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//     2. Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in the
+//        documentation and/or other materials provided with the distribution.
+//     3. Neither the name of the project nor the names of its contributors
+//        may be used to endorse or promote products derived from this software
+//        without specific prior written permission.
+//
+//     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+//     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+//     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+//     OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+//     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+//     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//     SUCH DAMAGE.
+//
+//     SPDX-License-Identifier: BSD-3-Clause
+
 //! Port of the parts of `thirdparty/zint/backend/common.c` / `common.h` reached by the five
 //! symbologies KiCad uses: character classification, `errtxt()`, the module bitmap helpers,
 //! `expand()`, `set_height()`, `stripf()` and the UTF-8 decoder.
@@ -79,30 +128,102 @@ const IS_CLS_F: u16 = IS_CLI_F | IS_SIL_F;
 const FLGS: [u16; 256] = {
     let mut t = [0u16; 256];
     let row: [u16; 96] = [
-        IS_SPC_F, IS_C82_F, IS_C82_F, IS_HSH_F, // 20-23  !"#
-        IS_CLS_F, IS_SIL_F | IS_C82_F, IS_C82_F, IS_C82_F, // 24-27 $%&'
-        IS_C82_F, IS_C82_F, IS_AST_F, IS_PLS_F, // 28-2B ()*+
-        IS_C82_F, IS_MNS_F, IS_CLS_F | IS_C82_F, IS_CLS_F | IS_C82_F, // 2C-2F ,-./
-        IS_NUM_F, IS_NUM_F, IS_NUM_F, IS_NUM_F, // 30-33
-        IS_NUM_F, IS_NUM_F, IS_NUM_F, IS_NUM_F, // 34-37
-        IS_NUM_F, IS_NUM_F, IS_CLI_F | IS_C82_F, IS_C82_F, // 38-3B 89:;
-        IS_C82_F, IS_C82_F, IS_C82_F, IS_C82_F, // 3C-3F <=>?
-        0, IS_UHX_F | IS_ARS_F, IS_UHX_F | IS_ARS_F, IS_UHX_F | IS_ARS_F, // 40-43 @ABC
-        IS_UHX_F | IS_ARS_F, IS_UHX_F | IS_ARS_F, IS_UHX_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, // DEFG
-        IS_UPO_F | IS_ARS_F, IS_UPO_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, // HIJK
-        IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, IS_UPO_F, // LMNO
-        IS_UPO_F | IS_ARS_F, IS_UPO_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, // PQRS
-        IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, // TUVW
-        IS_UX__F | IS_ARS_F, IS_UPO_F | IS_ARS_F, IS_UPO_F | IS_ARS_F, 0, // XYZ[
-        0, 0, 0, IS_C82_F, // \]^_
-        0, IS_LHX_F, IS_LHX_F, IS_LHX_F, // `abc
-        IS_LHX_F, IS_LHX_F, IS_LHX_F, IS_LWO_F, // defg
-        IS_LWO_F, IS_LWO_F, IS_LWO_F, IS_LWO_F, // hijk
-        IS_LWO_F, IS_LWO_F, IS_LWO_F, IS_LWO_F, // lmno
-        IS_LWO_F, IS_LWO_F, IS_LWO_F, IS_LWO_F, // pqrs
-        IS_LWO_F, IS_LWO_F, IS_LWO_F, IS_LWO_F, // tuvw
-        IS_LX__F, IS_LWO_F, IS_LWO_F, 0, // xyz{
-        0, 0, 0, 0, // |}~ DEL
+        IS_SPC_F,
+        IS_C82_F,
+        IS_C82_F,
+        IS_HSH_F, // 20-23  !"#
+        IS_CLS_F,
+        IS_SIL_F | IS_C82_F,
+        IS_C82_F,
+        IS_C82_F, // 24-27 $%&'
+        IS_C82_F,
+        IS_C82_F,
+        IS_AST_F,
+        IS_PLS_F, // 28-2B ()*+
+        IS_C82_F,
+        IS_MNS_F,
+        IS_CLS_F | IS_C82_F,
+        IS_CLS_F | IS_C82_F, // 2C-2F ,-./
+        IS_NUM_F,
+        IS_NUM_F,
+        IS_NUM_F,
+        IS_NUM_F, // 30-33
+        IS_NUM_F,
+        IS_NUM_F,
+        IS_NUM_F,
+        IS_NUM_F, // 34-37
+        IS_NUM_F,
+        IS_NUM_F,
+        IS_CLI_F | IS_C82_F,
+        IS_C82_F, // 38-3B 89:;
+        IS_C82_F,
+        IS_C82_F,
+        IS_C82_F,
+        IS_C82_F, // 3C-3F <=>?
+        0,
+        IS_UHX_F | IS_ARS_F,
+        IS_UHX_F | IS_ARS_F,
+        IS_UHX_F | IS_ARS_F, // 40-43 @ABC
+        IS_UHX_F | IS_ARS_F,
+        IS_UHX_F | IS_ARS_F,
+        IS_UHX_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F, // DEFG
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F, // HIJK
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F, // LMNO
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F, // PQRS
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F, // TUVW
+        IS_UX__F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        IS_UPO_F | IS_ARS_F,
+        0, // XYZ[
+        0,
+        0,
+        0,
+        IS_C82_F, // \]^_
+        0,
+        IS_LHX_F,
+        IS_LHX_F,
+        IS_LHX_F, // `abc
+        IS_LHX_F,
+        IS_LHX_F,
+        IS_LHX_F,
+        IS_LWO_F, // defg
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F, // hijk
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F, // lmno
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F, // pqrs
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F,
+        IS_LWO_F, // tuvw
+        IS_LX__F,
+        IS_LWO_F,
+        IS_LWO_F,
+        0, // xyz{
+        0,
+        0,
+        0,
+        0, // |}~ DEL
     ];
     let mut i = 0;
     while i < 96 {
@@ -225,7 +346,11 @@ fn errtxt_id_str(num: i32) -> String {
     if num == -1 {
         return String::new();
     }
-    let mut num = if !(0..=9999).contains(&num) { 9999 } else { num };
+    let mut num = if !(0..=9999).contains(&num) {
+        9999
+    } else {
+        num
+    };
     let mut s = String::new();
     if num >= 1000 {
         s.push((b'0' + (num / 1000) as u8) as char);
@@ -319,7 +444,12 @@ pub(crate) fn set_height(
         if min_row_height != 0.0 && stripf(row_height + epsilon) < stripf(min_row_height) {
             error_number = ZINT_WARN_NONCOMPLIANT;
             if !no_errtxt {
-                errtxt(0, symbol, 247, "Height not compliant with standards (too small)");
+                errtxt(
+                    0,
+                    symbol,
+                    247,
+                    "Height not compliant with standards (too small)",
+                );
             }
         }
         row_height_v = row_height;
@@ -438,4 +568,45 @@ pub(crate) fn utf8_to_unicode(
     }
 
     0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `decode_utf8()`'s DFA table: `is_valid_utf8()` accepts exactly what the Rust standard
+    /// library accepts as UTF-8 (overlongs, surrogates and > U+10FFFF rejected).
+    #[test]
+    fn utf8_dfa_matches_std() {
+        let mut state = 0x1234_5678_9abc_def0u64;
+        let mut next = || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for _ in 0..200_000 {
+            let len = (next() % 6) as usize;
+            let bytes: Vec<u8> = (0..len)
+                .map(|_| {
+                    let r = next();
+                    // Bias towards lead / continuation bytes
+                    match r % 4 {
+                        0 => (r >> 8) as u8 & 0x7F,
+                        1 => 0x80 | ((r >> 8) as u8 & 0x3F),
+                        _ => 0xC0 | ((r >> 8) as u8 & 0x3F),
+                    }
+                })
+                .collect();
+            assert_eq!(
+                is_valid_utf8(&bytes),
+                std::str::from_utf8(&bytes).is_ok(),
+                "{bytes:02x?}"
+            );
+        }
+        for cp in (0..0x11_0000u32).filter_map(char::from_u32) {
+            let mut buf = [0u8; 4];
+            assert!(is_valid_utf8(cp.encode_utf8(&mut buf).as_bytes()));
+        }
+    }
 }

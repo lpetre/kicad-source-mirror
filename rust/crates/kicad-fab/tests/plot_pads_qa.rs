@@ -19,14 +19,11 @@
 //! (`NoDrillFlashesOnEdgeCuts`, `NoDrillMarksOnGerberFromStoredOptions`) and
 //! `qa/tests/pcbnew/test_plot_pad_mask.cpp` (`RoundRectGerberMaskApertureHasCorrectRadius`).
 //!
-//! The C++ tests call `PlotBoardLayers` / `PlotStandardLayer`, which first run the footprint
-//! text and graphic loops (FAB-05 / FAB-06, still pending stubs that panic for every
-//! footprint). Each test therefore runs twice: the C++ call itself, reported as pending while
-//! it reaches a pending stub; and the same plot through the FAB-04 part
-//! (`plot_standard_layer_pads_vias_tracks_zones`), which is what the assertions are about
-//! (the footprints of these boards have no text or graphics on the plotted layer).
-
-use std::panic::{AssertUnwindSafe, catch_unwind};
+//! The C++ tests call `PlotBoardLayers` / `PlotStandardLayer`; each test here makes that call
+//! and checks it, then checks the same plot through the FAB-04 part alone
+//! (`plot_standard_layer_pads_vias_tracks_zones`, the pads / vias / tracks / zones loop the
+//! assertions are about; the footprints of these boards have no text or graphics on the
+//! plotted layer).
 
 use kicad_core::plot_enums::{DrillMarks, PlotFormat};
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
@@ -118,27 +115,6 @@ fn plot_items(ctx: &BoardCtx<'_>, plotter: &mut dyn Plotter, layers: &Lset, opts
     plot_standard_layer_pads_vias_tracks_zones(&mut itemplotter, &flags);
 }
 
-/// Runs the C++ call `f`; `None` while it reaches a pending stub.
-fn unless_pending(f: impl FnOnce() -> String) -> Option<String> {
-    std::panic::set_hook(Box::new(|_| {}));
-    let result = catch_unwind(AssertUnwindSafe(f));
-    let _ = std::panic::take_hook();
-
-    match result {
-        Ok(text) => Some(text),
-        Err(e) => {
-            let msg = e
-                .downcast_ref::<String>()
-                .cloned()
-                .or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string()))
-                .unwrap_or_default();
-            assert!(msg.contains("port pending"), "unexpected panic: {msg}");
-            println!("pending: {msg}");
-            None
-        }
-    }
-}
-
 /// Occurrences of `D0*3\*` (a flash).
 fn flashes(text: &str) -> usize {
     text.match_indices("D03*").count() + text.match_indices("D003*").count()
@@ -175,16 +151,14 @@ fn no_drill_flashes_on_edge_cuts() {
     plot_opts.format = PlotFormat::Gerber;
     plot_opts.drill_marks = DrillMarks::FullDrillShape; // triggers PlotDrillMarks()
 
-    let full = unless_pending(|| {
+    let text = {
         let mut plotter = gerber_plotter(false, false);
         plot_board_layers(&ctx, &mut plotter, &[PcbLayerId::EdgeCuts], &plot_opts);
         assert!(plotter.end_plot());
         plotter.output().to_string()
-    });
+    };
 
-    if let Some(text) = full {
-        assert_eq!(flashes(&text), 0, "Edge_Cuts gerber flashes (#24416)");
-    }
+    assert_eq!(flashes(&text), 0, "Edge_Cuts gerber flashes (#24416)");
 
     // PlotBoardLayers forces the drill marks off for Gerber
     let mut opts = plot_opts.clone();
@@ -228,16 +202,14 @@ fn no_drill_marks_on_gerber_from_stored_options() {
     plot_opts.format = PlotFormat::Gerber;
     plot_opts.drill_marks = DrillMarks::SmallDrillShape; // what boards store by default
 
-    let full = unless_pending(|| {
+    let text = {
         let mut plotter = gerber_plotter(false, false);
         plot_board_layers(&ctx, &mut plotter, &[PcbLayerId::FCu], &plot_opts);
         assert!(plotter.end_plot());
         plotter.output().to_string()
-    });
+    };
 
-    if let Some(text) = full {
-        assert_eq!(flashes(&text), 0, "F_Cu gerber flashes (#25532)");
-    }
+    assert_eq!(flashes(&text), 0, "F_Cu gerber flashes (#25532)");
 
     // PlotBoardLayers: drill marks off for Gerber; PlotOneBoardLayer: skip NPTH pads on copper
     let mut opts = plot_opts.clone();
@@ -351,16 +323,14 @@ fn round_rect_gerber_mask_aperture_has_correct_radius() {
         assert_eq!(arcs.len(), 4);
     };
 
-    let full = unless_pending(|| {
+    let text = {
         let mut plotter = gerber_plotter(true, true);
         plot_standard_layer(&ctx, &mut plotter, &layers, &plot_opts);
         assert!(plotter.end_plot());
         plotter.output().to_string()
-    });
+    };
 
-    if let Some(text) = full {
-        check(&text);
-    }
+    check(&text);
 
     let mut plotter = gerber_plotter(true, true);
     plot_items(&ctx, &mut plotter, &layers, &plot_opts);

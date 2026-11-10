@@ -1,0 +1,28 @@
+<normalised>
+<normalised>
+%TF.ProjectId,drill_features,6472696c-6c5f-4666-9561-74757265732e,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,NonPlated,1,10,NPTH,Mixed*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 aperture for slot hole*
+%TA.AperFunction,ComponentDrill*%
+%ADD10C,1.100000*%
+%TD*%
+%TA.AperFunction,ComponentDrill*%
+%ADD11C,1.150000*%
+%TD*%
+G04 APERTURE END LIST*
+%TO.C,J1*%
+D10*
+X12197631Y-7432308D02*
+X12102369Y-7487308D01*
+D11*
+X11850000Y-6940192D03*
+M02*

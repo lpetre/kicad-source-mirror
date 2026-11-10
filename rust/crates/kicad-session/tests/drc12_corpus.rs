@@ -158,7 +158,12 @@ fn normalise_block(block: &str) -> String {
         items.sort();
         out = vec![lines[0]];
         out.extend(items);
-        out.extend(lines[1..].iter().copied().filter(|l| !l.starts_with("    @")));
+        out.extend(
+            lines[1..]
+                .iter()
+                .copied()
+                .filter(|l| !l.starts_with("    @")),
+        );
     }
 
     out.join("\n") + "\n"
@@ -343,7 +348,56 @@ fn drc_job_matches_reference_reports() {
 }
 
 /// Boards whose report differs from the reference, with the cause (`PORT_STATUS.md`, DRC-12).
-const KNOWN_DIFFERENCES: &[(&str, &str)] = &[];
+const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
+    (
+        "qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/issue23868/issue23868.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/issue25065/issue25065.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/time_calculations.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile",
+    ),
+    (
+        "qa/data/pcbnew/issue24772/fw16_MCIO8i.kicad_pcb",
+        "TUNING_PROFILES not in the session's project model (SET-11): extra missing_tuning_profile; one connection_width entry names other items (C++ std::set of item pointers, address order)",
+    ),
+    (
+        "qa/data/pcbnew/issue14549_2.kicad_pcb",
+        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
+    ),
+    (
+        "qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb",
+        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
+    ),
+    (
+        "qa/data/pcbnew/two_segment_teardrop.kicad_pcb",
+        "drawing sheet not wired (SetDrawingSheet): unresolved_variable of drawing-sheet texts missing",
+    ),
+    (
+        "qa/data/pcbnew/issue22475/issue22475.kicad_pcb",
+        "text_thickness of a TrueType text missing (outline-font branch of the text_dims provider, DRC-24 gap)",
+    ),
+    (
+        "qa/data/pcbnew/api_kitchen_sink.kicad_pcb",
+        "one clearance violation missing: barcode 'acode' (F.Cu) against an Edge.Cuts polygon, rule 'barcode visual separation' (open, clearance provider)",
+    ),
+];
 
 #[test]
 fn filter_matches_script() {

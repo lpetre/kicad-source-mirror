@@ -41,7 +41,6 @@ use super::drill_operation::{
     DrillOpKind, DrillOperation, DrillPostMachining, DrillQuery, DrillSource,
 };
 use super::drill_span::{DrillLayerPair, DrillSpan, HoleAttribute};
-use super::via_access;
 
 const F_CU: PcbLayerId = PcbLayerId::FCu;
 const B_CU: PcbLayerId = PcbLayerId::BCu;
@@ -150,13 +149,13 @@ fn enumerate_via(
         return;
     }
 
-    let hole_size = via_access::drill_value(ctx, via);
+    let hole_size = via.drill_value(ctx);
 
     if hole_size == 0 {
         return;
     }
 
-    let (top_layer, bottom_layer) = via_access::layer_pair(ctx, via);
+    let (top_layer, bottom_layer) = via.layer_pair();
 
     if (top_layer, bottom_layer) != span.pair() && (bottom_layer, top_layer) != span.pair() {
         return;
@@ -181,21 +180,19 @@ fn enumerate_via(
     op.position = via.track.start;
     op.top_layer = top_layer;
     op.bottom_layer = bottom_layer;
-    op.filled = via_access::resolve_filling_mode(ctx, via) == FillingMode::Filled;
-    op.capped = via_access::resolve_capping_mode(ctx, via) == CappingMode::Capped;
+    op.filled = via.resolve_filling_mode(ctx) == FillingMode::Filled;
+    op.capped = via.resolve_capping_mode(ctx) == CappingMode::Capped;
 
     if op.top_layer == F_CU {
-        op.top_covered = via_access::resolve_front_covering_mode(ctx, via) == CoveringMode::Covered;
-        op.top_plugged = via_access::resolve_front_plugging_mode(ctx, via) == PluggingMode::Plugged;
-        op.top_tented = via_access::resolve_front_tenting_mode(ctx, via) == TentingMode::Tented;
+        op.top_covered = via.resolve_front_covering_mode(ctx) == CoveringMode::Covered;
+        op.top_plugged = via.resolve_front_plugging_mode(ctx) == PluggingMode::Plugged;
+        op.top_tented = via.resolve_front_tenting_mode(ctx) == TentingMode::Tented;
     }
 
     if op.bottom_layer == B_CU {
-        op.bottom_covered =
-            via_access::resolve_back_covering_mode(ctx, via) == CoveringMode::Covered;
-        op.bottom_plugged =
-            via_access::resolve_back_plugging_mode(ctx, via) == PluggingMode::Plugged;
-        op.bottom_tented = via_access::resolve_back_tenting_mode(ctx, via) == TentingMode::Tented;
+        op.bottom_covered = via.resolve_back_covering_mode(ctx) == CoveringMode::Covered;
+        op.bottom_plugged = via.resolve_back_plugging_mode(ctx) == PluggingMode::Plugged;
+        op.bottom_tented = via.resolve_back_tenting_mode(ctx) == TentingMode::Tented;
     }
 
     op.front_post_machining = from_padstack(via.padstack.front_post_machining());
@@ -359,7 +356,7 @@ pub fn enumerate_drill_spans(ctx: &BoardCtx<'_>, pad_backdrills: bool) -> Vec<Dr
             continue;
         };
 
-        let (top, bottom) = via_access::layer_pair(ctx, via);
+        let (top, bottom) = via.layer_pair();
 
         if (top, bottom) != (F_CU, B_CU) {
             unique.insert(DrillSpan::new(top, bottom, false, false));
@@ -431,9 +428,8 @@ mod tests {
     fn backdrill_operation_diameter_and_slot_rules() {
         let span = DrillSpan::new(B_CU, PcbLayerId::In2Cu, true, false);
         let mut board = kicad_pcb::Board::default();
-        let via = Track::Via(Box::new(PcbVia::new(
-            &mut kicad_core::KiidGenerator::default(),
-        )));
+        // Drawn from the board's generator (review finding R2-11), as the C++ `new PCB_VIA`.
+        let via = Track::Via(Box::new(PcbVia::new(&mut board.kiid_generator)));
         let src = DrillSource::Via(board.add_track(via, kicad_pcb::AddMode::Append).unwrap());
         let uuid = kicad_core::Kiid::default();
 

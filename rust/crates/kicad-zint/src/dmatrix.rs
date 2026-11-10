@@ -1,3 +1,54 @@
+// This program source code file is part of KiCad, a free EDA CAD application.
+//
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// This file ports code of zint 2.15.0 (thirdparty/zint/backend/dmatrix.c):
+//
+//     libzint - the open source barcode library
+//     Copyright (C) 2009-2025 Robin Stuart <rstuart114@gmail.com>
+//     developed from and including some functions from IEC16022 bar code generation,
+//     Adrian Kennard, Andrews & Arnold Ltd, with help from Cliff Hones on the RS coding
+//
+//     Redistribution and use in source and binary forms, with or without
+//     modification, are permitted provided that the following conditions
+//     are met:
+//
+//     1. Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//     2. Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in the
+//        documentation and/or other materials provided with the distribution.
+//     3. Neither the name of the project nor the names of its contributors
+//        may be used to endorse or promote products derived from this software
+//        without specific prior written permission.
+//
+//     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+//     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+//     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+//     OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+//     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+//     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//     SUCH DAMAGE.
+//
+//     SPDX-License-Identifier: BSD-3-Clause
+
 //! Port of `datamatrix()` (BARCODE_DATAMATRIX, ECC 200) of `thirdparty/zint/backend/dmatrix.c`:
 //! the default minimal encodation (`dm_define_mode`, Dijkstra-based algorithm by Alex Geller,
 //! and `dm_minimalenc`), end-of-data handling (`dm_encode`), the macro 05/06 header, automatic
@@ -247,7 +298,11 @@ fn dm_istext(input: u8) -> bool {
 
 /// Port of `dm_isc40text()`: is basic (non-shifted) C40/TEXT?
 fn dm_isc40text(current_mode: i32, input: u8) -> bool {
-    if current_mode == DM_C40 { dm_isc40(input) } else { dm_istext(input) }
+    if current_mode == DM_C40 {
+        dm_isc40(input)
+    } else {
+        dm_istext(input)
+    }
 }
 
 /// Port of `dm_isX12()`: whether a character is valid in the X12 set.
@@ -272,7 +327,8 @@ fn dm_ctx_buffer_xfer(
 
     let mut i = 0;
     while i < process_e {
-        let iv = (1600 * process_buffer[i]) + (40 * process_buffer[i + 1]) + process_buffer[i + 2] + 1;
+        let iv =
+            (1600 * process_buffer[i]) + (40 * process_buffer[i + 1]) + process_buffer[i + 2] + 1;
         target[*tp] = (iv >> 8) as u8;
         *tp += 1;
         target[*tp] = (iv & 0xFF) as u8;
@@ -410,7 +466,12 @@ fn dm_update_b256_field_length(target: &mut [u8], mut tp: usize, b256_start: usi
 }
 
 /// Port of `dm_switch_mode()`: switches from ASCII or Base 256 to another mode.
-fn dm_switch_mode(next_mode: i32, target: &mut [u8], mut tp: usize, p_b256_start: &mut usize) -> usize {
+fn dm_switch_mode(
+    next_mode: i32,
+    target: &mut [u8],
+    mut tp: usize,
+    p_b256_start: &mut usize,
+) -> usize {
     match next_mode {
         DM_C40 => {
             target[tp] = 230;
@@ -625,7 +686,8 @@ impl DmCtx<'_> {
                         // Only 1 ASCII-encodable allowed at EOD for X12, unlike C40/TEXT
                         size += 1; // We need an extra unlatch at the end
                     } else {
-                        let symbols_left = dm_codewords_remaining(self.symbol, size + last_ascii, 0);
+                        let symbols_left =
+                            dm_codewords_remaining(self.symbol, size + last_ascii, 0);
                         if symbols_left > 0 {
                             size += 1; // We need an extra unlatch at the end
                         }
@@ -758,7 +820,11 @@ impl DmCtx<'_> {
             let current_mode = i32::from(edges[ei].mode);
             mode_len += edges[ei].len as usize;
             // DM_PREVIOUS: 1st row of edges not used so valid previous cannot point there
-            edge = if edges[ei].previous != 0 { Some(edges[ei].previous as usize) } else { None };
+            edge = if edges[ei].previous != 0 {
+                Some(edges[ei].previous as usize)
+            } else {
+                None
+            };
             if edge.is_none_or(|p| i32::from(edges[p].mode) != current_mode) {
                 for m in modes.iter_mut().take(mode_end).skip(mode_end - mode_len) {
                     *m = current_mode;
@@ -849,15 +915,19 @@ fn dm_minimalenc(
                             process_buffer[process_p] = 31; // Unlatch
                             process_p += 1;
                         } else {
-                            let symbols_left =
-                                dm_codewords_remaining(symbol, tp as i32 + last_ascii, process_p as i32);
+                            let symbols_left = dm_codewords_remaining(
+                                symbol,
+                                tp as i32 + last_ascii,
+                                process_p as i32,
+                            );
                             if symbols_left > 2 - last_ascii {
                                 process_buffer[process_p] = 31; // Unlatch
                                 process_p += 1;
                             }
                         }
                     }
-                    process_p = dm_edi_buffer_xfer(process_buffer, process_p, target, &mut tp, true);
+                    process_p =
+                        dm_edi_buffer_xfer(process_buffer, process_p, target, &mut tp, true);
                 }
                 DM_BASE256 => {
                     tp = dm_update_b256_field_length(target, tp, st.b256_start);
@@ -1062,7 +1132,9 @@ fn dm_encode(
             process_buffer[process_p] = 0; // Shift 1
             process_p += 1;
             let _ = dm_ctx_buffer_xfer(&mut process_buffer, process_p, target, &mut tp);
-        } else if process_p == 1 && symbols_left <= 2 && dm_isc40text(current_mode, source[length - 1])
+        } else if process_p == 1
+            && symbols_left <= 2
+            && dm_isc40text(current_mode, source[length - 1])
         {
             // 5.2.5.2 (c)/(d)
             if symbols_left > 1 {
@@ -1085,7 +1157,11 @@ fn dm_encode(
             push(target, &mut tp, 254); // Unlatch
             while sp < length {
                 if is_twodigits(source, sp) {
-                    push(target, &mut tp, (10 * ctoi(source[sp])) + ctoi(source[sp + 1]) + 130);
+                    push(
+                        target,
+                        &mut tp,
+                        (10 * ctoi(source[sp])) + ctoi(source[sp + 1]) + 130,
+                    );
                     sp += 1;
                 } else if source[sp] & 0x80 != 0 {
                     push(target, &mut tp, 235); // FNC4
@@ -1147,7 +1223,12 @@ fn dm_encode(
 
 /// Port of `dm_encode_segs()` (one segment, no structured append / GS1 / READER_INIT): the
 /// macro 05/06 header check and `dm_encode()`.
-fn dm_encode_segs(symbol: &mut ZintSymbol, seg: &ZintSeg, target: &mut [u8], p_binlen: &mut usize) -> i32 {
+fn dm_encode_segs(
+    symbol: &mut ZintSymbol,
+    seg: &ZintSeg,
+    target: &mut [u8],
+    p_binlen: &mut usize,
+) -> i32 {
     let mut tp = 0usize;
     let mut in_macro = false;
     let source = &seg.source;

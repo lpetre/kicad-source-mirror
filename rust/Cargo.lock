@@ -183,6 +183,7 @@ version = "0.1.0"
 dependencies = [
  "kicad-connectivity",
  "kicad-core",
+ "kicad-drc",
  "kicad-font",
  "kicad-geom",
  "kicad-pcb",
@@ -225,6 +226,7 @@ dependencies = [
  "kicad-plot",
  "kicad-qa",
  "kicad-sexpr",
+ "kicad-zint",
  "ruzstd",
 ]
 

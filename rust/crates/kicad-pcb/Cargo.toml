@@ -27,6 +27,8 @@ kicad-sexpr = { path = "../kicad-sexpr" }
 kicad-font = { path = "../kicad-font" }
 # DRILL_MARKERS::CuratedShapeCount for the drill symbol assigner (package M26).
 kicad-plot = { path = "../kicad-plot" }
+# The barcode symbol encoder (port of the bundled zint, package ZINT-1).
+kicad-zint = { path = "../kicad-zint" }
 # Embedded files (docs/THIRD_PARTY_EQUIVALENTS.md 3.5): pure-Rust zstd and base64.
 ruzstd = "0.9.1"
 base64 = "0.23.1"

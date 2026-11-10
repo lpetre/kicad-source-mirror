@@ -1,0 +1,20 @@
+<normalised>
+<normalised>
+%TF.ProjectId,drill_features,6472696c-6c5f-4666-9561-74757265732e,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Plated,7,10,Blind,Drill*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,ViaDrill*%
+%ADD10C,0.250000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X11200000Y-7400000D03*
+M02*

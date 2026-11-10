@@ -27,13 +27,13 @@
 
 use std::path::Path;
 
+use kicad_core::text_vars::ResolutionContext;
+use kicad_geom::{EdaAngle, Vector2I};
 use kicad_pcb::board::Board;
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::eda_text::{self, EdaTextExt};
 use kicad_pcb::io::{FormatOptions, ParseOptions, format_board, parse_board};
 use kicad_pcb::item::RecurseMode;
-use kicad_core::text_vars::ResolutionContext;
-use kicad_geom::{EdaAngle, Vector2I};
 
 fn data(name: &str) -> String {
     std::fs::read_to_string(
@@ -121,9 +121,15 @@ fn every_outline_text_has_a_stand_in() {
             continue;
         }
 
-        assert!(host.eda_text().render_cache_data().is_none(), "{shown}: C++ clears it at load");
+        assert!(
+            host.eda_text().render_cache_data().is_none(),
+            "{shown}: C++ clears it at load"
+        );
         let cache = eda_text::render_cache(host, &ctx, &shown, Vector2I::default());
-        assert!(cache.is_some_and(|c| !c.glyphs.is_empty()), "{shown}: no stand-in");
+        assert!(
+            cache.is_some_and(|c| !c.glyphs.is_empty()),
+            "{shown}: no stand-in"
+        );
         with_glyphs += 1;
     }
 

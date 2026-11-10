@@ -40,36 +40,9 @@ use plot_common::*;
 
 /// Whole files that differ for a reason outside this crate (`<board> <layer>`, reason); they
 /// are counted, not failed (the same causes as in `plot_graphics_corpus.rs`).
-const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
-    (
-        "qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb B.Mask",
-        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
-    ),
-    (
-        "qa/data/pcbnew/issue7086.kicad_pcb B.Mask",
-        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
-    ),
-    (
-        "qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb B.Mask",
-        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
-    ),
-    (
-        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb F.Cu",
-        "footprint table cell geometry (model: PcbTablecell corners / draw_pos)",
-    ),
-    (
-        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb B.Cu",
-        "footprint table cell geometry (model: PcbTablecell corners / draw_pos)",
-    ),
-    (
-        "qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb F.Silkscreen",
-        "barcode without symbol encoder (model, M25a)",
-    ),
-    (
-        "qa/data/pcbnew/issue24525/issue24525.kicad_pcb Edge.Cuts",
-        "barcode without symbol encoder (model, M25a)",
-    ),
-];
+// Empty since FAB-GLUE: the pad mask margin (model), footprint table cell (model) and barcode
+// (zint, M25a) differences of FAB-05 / FAB-06 are gone; every compared file matches.
+const KNOWN_DIFFERENCES: &[(&str, &str)] = &[];
 
 struct BoardCase {
     path: String,
@@ -166,6 +139,7 @@ fn corpus_replay() {
             }
         };
 
+        let engine = plot_common::drc_engine(&mut board, &path);
         let Some(connectivity) = build_connectivity(&mut board) else {
             score.boards_not_loadable += 1;
             if report {
@@ -173,7 +147,9 @@ fn corpus_replay() {
             }
             continue;
         };
-        let ctx = BoardCtx::bare(&board).with_connectivity(&connectivity);
+        let ctx = BoardCtx::bare(&board)
+            .with_connectivity(&connectivity)
+            .with_rules(&engine);
         let opts = cli_gerber_opts(false, 6, false, false);
 
         // file name hash -> (layer, file name) for every enabled layer

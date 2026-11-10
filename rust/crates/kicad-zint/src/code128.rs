@@ -1,3 +1,52 @@
+// This program source code file is part of KiCad, a free EDA CAD application.
+//
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// This file ports code of zint 2.15.0 (thirdparty/zint/backend/code128.c):
+//
+//     libzint - the open source barcode library
+//     Copyright (C) 2008-2025 Robin Stuart <rstuart114@gmail.com>
+//
+//     Redistribution and use in source and binary forms, with or without
+//     modification, are permitted provided that the following conditions
+//     are met:
+//
+//     1. Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//     2. Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in the
+//        documentation and/or other materials provided with the distribution.
+//     3. Neither the name of the project nor the names of its contributors
+//        may be used to endorse or promote products derived from this software
+//        without specific prior written permission.
+//
+//     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+//     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+//     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+//     OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+//     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+//     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//     SUCH DAMAGE.
+//
+//     SPDX-License-Identifier: BSD-3-Clause
+
 //! Port of `code128()` of `thirdparty/zint/backend/code128.c` (BARCODE_CODE128): the minimal
 //! Code Set selection (`c128_cost`, `c128_set_values`), `c128_expand` and `c128_set_priority`.
 //! Not reached with KiCad's settings (and not ported): EXTRA_ESCAPE_MODE manual Code Set / FNC1
@@ -67,17 +116,65 @@ fn c128_ab(cset: usize) -> usize {
 const C128_LATCH_SEQ: [[[i32; 3]; C128_STATES]; C128_STATES] = [
     [[0; 3]; 7],
     // A0
-    [[0; 3], [0, 0, 0], [100, 0, 0], [101, 101, 0], [100, 100, 100], [99, 0, 0], [101, 101, 99]],
+    [
+        [0; 3],
+        [0, 0, 0],
+        [100, 0, 0],
+        [101, 101, 0],
+        [100, 100, 100],
+        [99, 0, 0],
+        [101, 101, 99],
+    ],
     // B0
-    [[0; 3], [101, 0, 0], [0, 0, 0], [101, 101, 101], [100, 100, 0], [99, 0, 0], [100, 100, 99]],
+    [
+        [0; 3],
+        [101, 0, 0],
+        [0, 0, 0],
+        [101, 101, 101],
+        [100, 100, 0],
+        [99, 0, 0],
+        [100, 100, 99],
+    ],
     // A1
-    [[0; 3], [101, 101, 0], [100, 100, 100], [0, 0, 0], [100, 0, 0], [101, 101, 99], [99, 0, 0]],
+    [
+        [0; 3],
+        [101, 101, 0],
+        [100, 100, 100],
+        [0, 0, 0],
+        [100, 0, 0],
+        [101, 101, 99],
+        [99, 0, 0],
+    ],
     // B1
-    [[0; 3], [101, 101, 101], [100, 100, 0], [101, 0, 0], [0, 0, 0], [100, 100, 99], [99, 0, 0]],
+    [
+        [0; 3],
+        [101, 101, 101],
+        [100, 100, 0],
+        [101, 0, 0],
+        [0, 0, 0],
+        [100, 100, 99],
+        [99, 0, 0],
+    ],
     // C0
-    [[0; 3], [101, 0, 0], [100, 0, 0], [101, 101, 101], [100, 100, 100], [0, 0, 0], [0, 0, 0]],
+    [
+        [0; 3],
+        [101, 0, 0],
+        [100, 0, 0],
+        [101, 101, 101],
+        [100, 100, 100],
+        [0, 0, 0],
+        [0, 0, 0],
+    ],
     // C1
-    [[0; 3], [101, 101, 101], [100, 100, 100], [101, 0, 0], [100, 0, 0], [0, 0, 0], [0, 0, 0]],
+    [
+        [0; 3],
+        [101, 101, 101],
+        [100, 100, 100],
+        [101, 0, 0],
+        [100, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+    ],
 ];
 /// `c128_latch_len`: lengths of the above.
 const C128_LATCH_LEN: [[i32; C128_STATES]; C128_STATES] = [
@@ -185,7 +282,11 @@ impl C128Search<'_> {
             } else {
                 let _ = (manual_c_fail, c128_ab(cset)); // `!manuals[i] || ...` always true
                 let mut mode = cset;
-                let mut cost = if is_fnc1 { 1 } else { c128_cost_ab(cset, ch, &mut mode) };
+                let mut cost = if is_fnc1 {
+                    1
+                } else {
+                    c128_cost_ab(cset, ch, &mut mode)
+                };
                 if prior_cset != cset {
                     cost += latch_len[cset];
                 }
@@ -269,7 +370,9 @@ fn c128_set_values(source: &[u8], priority: &[usize], values: &mut Vec<i32>) -> 
         if c128_c0c1(cset) {
             debug_assert!(i + 1 < length); // Guaranteed by algorithm
             i += 1;
-            values.push((i32::from(ch) - i32::from(b'0')) * 10 + i32::from(source[i]) - i32::from(b'0'));
+            values.push(
+                (i32::from(ch) - i32::from(b'0')) * 10 + i32::from(source[i]) - i32::from(b'0'),
+            );
         } else {
             // (ch & 0x7F) < 32 ? (ch & 0x7F) + 64 : (ch & 0x7F) - 32
             values.push(i32::from(ch & 0x7F) + 96 * i32::from(ch & 0x60 == 0) - 32);
@@ -371,9 +474,7 @@ pub(crate) fn code128(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
             ZINT_ERROR_TOO_LONG,
             symbol,
             341,
-            &format!(
-                "Input too long, requires {glyph_count} symbol characters (maximum 102)"
-            ),
+            &format!("Input too long, requires {glyph_count} symbol characters (maximum 102)"),
         );
     }
 

@@ -85,6 +85,16 @@ impl Board {
         }
     }
 
+    /// `ExpandTextVars( aSource, GetProject(), FOR_GUI )` (`common/common.cpp`, the
+    /// `const PROJECT*` overload): `aSource` with every `${TOKEN}` the bound project resolves
+    /// (`PROJECT::TextVarResolver`, [`Board::project_text_var_resolver`]) expanded. Without a
+    /// project nothing resolves (`PROJECT::TextVarResolver` returns `false` without a
+    /// project file).
+    pub fn expand_project_text_vars(&self, source: &str) -> String {
+        let resolver = |token: &mut String| -> bool { self.project_text_var_resolver(token) };
+        expand_text_vars(source, Some(&resolver), ResolutionContext::ForGui)
+    }
+
     /// `TITLE_BLOCK::TextVarResolver( aToken, m_project, INTERNAL )` of the board's title block:
     /// `kicad_core::TitleBlock::text_var_resolver` plus the project step it leaves to the
     /// caller (the value is expanded against the project, and a value that is still

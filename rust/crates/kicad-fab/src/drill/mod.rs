@@ -23,7 +23,6 @@
 pub mod drill_enumerator;
 pub mod drill_operation;
 pub mod drill_span;
-mod via_access;
 
 pub use drill_enumerator::{enumerate_drill_operations, enumerate_drill_spans, is_drill_slot};
 pub use drill_operation::{

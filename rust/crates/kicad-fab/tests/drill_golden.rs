@@ -29,6 +29,8 @@
 //!   (FAB-08). The Excellon sets are already
 //!   reproduced from the C++ enumeration in `tests/excellon_oracle.rs`.
 
+mod plot_common;
+
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -202,20 +204,15 @@ fn normaliser_replaces_only_header_lines() {
 /// `pcb export drill` through the port, compared with the oracle goldens: same file names in
 /// the same order and identical contents after normalisation.
 #[test]
-#[ignore = "needs the remaining board parser packages (PCBIO, e.g. setup PCBIO-04), the pad \
-            (M14) and via (M17) model accessors the drill enumerator calls (port_pending \
-            today) and the Gerber drill writer (FAB-08); the Excellon writer and the job \
-            (FAB-02) are wired"]
 fn drill_export_matches_cli_goldens() {
     for board in corpus_boards() {
         let path = kicad_qa::kicad_source_root().join(&board);
         let stem = path.file_stem().unwrap().to_str().unwrap().to_string();
-        let text = fs::read_to_string(&path).unwrap();
 
         for (set, args) in OPTION_SETS {
             let dir = golden_dir().join(&stem).join(set);
             let expected_names = listed_files(&dir);
-            let outputs = run_port(&path, &text, args);
+            let outputs = run_port(&path, args);
             let names: Vec<String> = outputs.iter().map(|(n, _)| n.clone()).collect();
             assert_eq!(names, expected_names, "{stem}/{set}: created files");
 
@@ -232,21 +229,15 @@ fn drill_export_matches_cli_goldens() {
 }
 
 /// Runs the port's drill export for one board and option set; returns `(file name, text)` in
-/// creation order: parse with `kicad_pcb::io::parse_board`, apply the CLI defaults of
+/// creation order: load it as kicad-cli does (`plot_common::load_board`), apply the CLI defaults of
 /// `docs/analysis/plot-fab.md` 1.3 (`kicad/cli/command_pcb_export_drill.cpp`) plus `args`, run
 /// the drill job (`jobs_handler::job_export_drill`) into `out/` and keep the file names.
-fn run_port(path: &Path, text: &str, args: &[&str]) -> Vec<(String, String)> {
+fn run_port(path: &Path, args: &[&str]) -> Vec<(String, String)> {
     use kicad_fab::jobs::job_export_pcb_drill::{
         DrillExportEnv, DrillFormat, DrillUnits, JobExportPcbDrill,
     };
 
-    let mut board = kicad_pcb::io::parse_board(
-        text,
-        path.to_str().unwrap(),
-        &kicad_pcb::io::ParseOptions::default(),
-    )
-    .unwrap_or_else(|e| panic!("{}: {e:?}", path.display()));
-    board.file_name = path.to_str().unwrap().to_string();
+    let board = plot_common::load_board(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
 
     // CLI defaults: excellon, absolute origin, decimal, alternate (G85) slots, mm, merged.
     let mut job = JobExportPcbDrill {

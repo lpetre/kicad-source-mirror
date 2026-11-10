@@ -19,8 +19,8 @@
 //! constructor and delegation shims (package M0c); accessors, setters, `Move` / `Rotate` /
 //! `Flip`, `SetLayer`, `GetBoundingBox`, the hit tests, `TransformShapeToPolygon` /
 //! `GetEffectiveShape`, `Compare` and the complete `AssembleBarcode` around the symbol encoder
-//! (package M25a). The zint call is isolated in [`encode_symbol`], which has no encoder yet and
-//! fails like zint does on rejected content (PORT_STATUS.md, M25a).
+//! (package M25a). The zint call is isolated in [`encode_symbol`], which calls the zint port
+//! `kicad-zint` (package ZINT-1).
 //!
 //! Original copyright: (C) 2020 Thomas Pointhuber <thomas.pointhuber@gmx.at>.
 
@@ -1083,16 +1083,21 @@ impl PcbBarcode {
             return;
         }
 
-        let Some(symbol) = encode_symbol(self.kind, &text, self.error_correction) else {
-            if !text.is_ascii() {
-                cache.last_error = "This barcode type does not support international \
-                                    characters. Use QR Code or Data Matrix instead."
-                    .to_string();
-            } else {
-                cache.last_error = ENCODER_NOT_AVAILABLE.to_string();
-            }
+        let symbol = match encode_symbol(self.kind, &text, self.error_correction) {
+            Ok(symbol) => symbol,
+            Err(err) => {
+                // `ZBarcode_Encode( ... ) >= ZINT_ERROR`
+                if err.stage == kicad_zint::Stage::Encode && !text.is_ascii() {
+                    cache.last_error = "This barcode type does not support international \
+                                        characters. Use QR Code or Data Matrix instead."
+                        .to_string();
+                } else {
+                    // zint's `errtxt` (also for `ZBarcode_Buffer_Vector( ... ) >= ZINT_ERROR`)
+                    cache.last_error = err.errtxt;
+                }
 
-            return;
+                return;
+            }
         };
 
         for rect in &symbol.rectangles {
@@ -1187,10 +1192,6 @@ fn rescale_symbol_poly(cache: &mut PcbBarcodeCache, top_left: Vector2I, bot_righ
 
 // ---- the symbol encoder (zint) boundary ----------------------------------------------------
 
-/// `last_error` of a barcode whose symbol could not be encoded because the port has no
-/// encoder yet (in C++ this is zint's `errtxt`).
-pub const ENCODER_NOT_AVAILABLE: &str = "Barcode symbol encoder not available in this port";
-
 /// `ECI_UTF8` (pcb_barcode.cpp): the ECI selected for non-ASCII QR / Data Matrix content.
 pub const ECI_UTF8: i32 = 26;
 
@@ -1284,20 +1285,48 @@ pub struct ModuleMatrix {
     pub hexagons: Vec<ModuleHexagon>,
 }
 
-/// The single call into the symbol encoder: `ZBarcode_Create`, the settings of
-/// [`zint_options`], `ZBarcode_Encode( symbol, utf8, length )` and
-/// `ZBarcode_Buffer_Vector( symbol, 0 )`. `None` = encoding failed (`>= ZINT_ERROR`).
-///
-/// The port has no encoder yet (PORT_STATUS.md, package M25a): this always returns `None`,
-/// so every non-empty barcode assembles exactly like a C++ barcode whose content zint
-/// rejects (empty symbol, no text polygon, knockout box around the origin).
+/// The single call into the symbol encoder (kicad-zint, the port of the bundled zint 2.15.0):
+/// `ZBarcode_Create`, the settings of [`zint_options`], `ZBarcode_Encode( symbol, utf8,
+/// length )` and `ZBarcode_Buffer_Vector( symbol, 0 )`. `Err` = one of them returned
+/// `>= ZINT_ERROR` (its stage and zint's `errtxt`).
 pub fn encode_symbol(
     kind: BarcodeT,
     text: &str,
     error_correction: BarcodeEccT,
-) -> Option<ModuleMatrix> {
-    let _options = zint_options(kind, text, error_correction);
-    None
+) -> Result<ModuleMatrix, kicad_zint::EncodeError> {
+    let options = zint_options(kind, text, error_correction);
+    let zopts = kicad_zint::Options {
+        symbology: options.symbology,
+        option_1: options.option_1,
+        eci: options.eci,
+    };
+    let symbol = kicad_zint::encode(&zopts, text.as_bytes())?;
+
+    Ok(ModuleMatrix {
+        scale: symbol.scale,
+        rectangles: symbol
+            .vector
+            .rectangles
+            .iter()
+            .map(|r| ModuleRect {
+                x: r.x,
+                y: r.y,
+                width: r.width,
+                height: r.height,
+            })
+            .collect(),
+        hexagons: symbol
+            .vector
+            .hexagons
+            .iter()
+            .map(|h| ModuleHexagon {
+                x: h.x,
+                y: h.y,
+                diameter: h.diameter,
+                rotation: h.rotation,
+            })
+            .collect(),
+    })
 }
 
 #[cfg(test)]
@@ -1526,10 +1555,11 @@ mod tests {
             assert_eq!(barcode_of(&board, uuid).text_size(&ctx), size, "{uuid}");
         }
 
-        // Non-empty text: the encoder is not available (C++: zint encodes it).
+        // Non-empty text: encoded by zint (package ZINT-1; compared with the reference in
+        // `barcodes_match_reference_dump`).
         let b = barcode_of(&board, "40000000-0000-0000-0000-000000000004");
-        assert_eq!(b.last_error(&ctx), ENCODER_NOT_AVAILABLE);
-        assert_eq!(b.symbol_poly(&ctx).outline_count(), 0);
+        assert_eq!(b.last_error(&ctx), "");
+        assert!(b.symbol_poly(&ctx).outline_count() > 0);
     }
 
     /// Frame handling of the parser path (`SetPosition`, `SetOrientation` -> `Rotate`) against
@@ -1801,9 +1831,8 @@ mod tests {
         assert_eq!(a.bbox(0).height(), b.bbox(0).height());
     }
 
-    /// `BarcodeUndefinedVariable` (test_barcode_load_save.cpp) as far as it does not need the
-    /// encoder: the raw and shown texts. (`GetSymbolPoly().OutlineCount() > 0` needs a QR
-    /// encoder, PORT_STATUS.md.)
+    /// Port of `BarcodeUndefinedVariable` (test_barcode_load_save.cpp): QR Code encodes the
+    /// unexpanded `${}` text.
     #[test]
     fn barcode_undefined_variable() {
         let mut board = Board::new();
@@ -1818,6 +1847,9 @@ mod tests {
             board[id].shown_text(&ctx, ResolutionContext::ForCanvas),
             "${UNDEFINED_VAR}"
         );
+
+        // QR codes should still generate a polygon even with ${} in the text
+        assert!(board[id].symbol_poly(&ctx).outline_count() > 0);
     }
 
     /// Port of `BarcodeCode39UndefinedVariable` (test_barcode_load_save.cpp): CODE_39 cannot
@@ -2078,5 +2110,102 @@ mod tests {
                 assert_eq!(g, &w);
             }
         }
+    }
+
+    /// End to end against the reference (package ZINT-1): `pcb-dump board --hash --sections
+    /// misc,bbox` of the barcode boards (golden `kicad-zint/tests/golden/pcb_barcode_dump.txt`):
+    /// every barcode's `GetPolyShape`, `GetSymbolPoly`, `GetTextPoly` and `GetLastError`, and
+    /// every `bbox` line of those boards (barcodes, their footprints, everything else).
+    #[cfg(feature = "dump")]
+    #[test]
+    fn barcodes_match_reference_dump() {
+        use crate::dump::format::{v_polyset, v_str};
+        use crate::dump::{
+            DumpLoadMode, DumpOptions, dump_board, fnv1a64, load_board_for_dump_mode,
+            scan_file_uuids,
+        };
+        use std::collections::BTreeMap;
+        use std::path::PathBuf;
+
+        let golden = include_str!("../../kicad-zint/tests/golden/pcb_barcode_dump.txt");
+        let zint_data = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../kicad-zint/tests/data");
+        let qa = kicad_qa::qa_data_dir();
+        let hash = |v: &str| format!("#{:016x}", fnv1a64(v.as_bytes()));
+
+        let mut boards: Vec<(String, BTreeMap<String, String>)> = Vec::new();
+        for line in golden.lines() {
+            if let Some(name) = line.strip_prefix("board ") {
+                boards.push((name.to_string(), BTreeMap::new()));
+            } else if let Some((key, value)) = line.split_once('=') {
+                boards
+                    .last_mut()
+                    .unwrap()
+                    .1
+                    .insert(key.to_string(), value.to_string());
+            }
+        }
+
+        let mut checked = 0;
+        let mut mismatches = Vec::new();
+        for (name, expected) in &boards {
+            let path = match name.as_str() {
+                "barcode_frames.kicad_pcb" | "barcode_cases.kicad_pcb" => zint_data.join(name),
+                "api_kitchen_sink.kicad_pcb" => qa.join("pcbnew").join(name),
+                "project_barcode/project_barcode.kicad_pcb" => {
+                    qa.join("downgrade/regressions").join(name)
+                }
+                _ => qa.join("pcbnew").join(name),
+            };
+            let (board, _) = load_board_for_dump_mode(&path, DumpLoadMode::Qa).unwrap();
+            let ctx = BoardCtx::bare(&board);
+
+            let mut opts = DumpOptions {
+                hash: true,
+                ..DumpOptions::default()
+            };
+            opts.sections.insert("bbox".to_string());
+            opts.file_uuids = Some(scan_file_uuids(&std::fs::read(&path).unwrap()));
+            let rust: BTreeMap<String, String> = dump_board(&board, &opts)
+                .lines()
+                .filter_map(|l| {
+                    l.split_once('=')
+                        .map(|(k, v)| (k.to_string(), v.to_string()))
+                })
+                .collect();
+
+            for (key, value) in expected {
+                let mut parts = key.split('|');
+                let (section, uuid, field) = (
+                    parts.next().unwrap(),
+                    parts.next().unwrap(),
+                    parts.next().unwrap(),
+                );
+                let got = if section == "misc" {
+                    let b = barcode_of(&board, uuid);
+                    match field {
+                        "barcode.poly" => hash(&v_polyset(&b.poly_shape(&ctx))),
+                        "barcode.symbol_poly" => hash(&v_polyset(&b.symbol_poly(&ctx))),
+                        "barcode.text_poly" => hash(&v_polyset(&b.text_poly(&ctx))),
+                        "barcode.last_error" => hash(&v_str(&b.last_error(&ctx))),
+                        _ => unreachable!("{key}"),
+                    }
+                } else {
+                    rust.get(key)
+                        .cloned()
+                        .unwrap_or_else(|| "<missing>".to_string())
+                };
+                checked += 1;
+                if &got != value {
+                    mismatches.push(format!("{name}: {key}"));
+                }
+            }
+        }
+
+        assert!(checked > 500, "{checked} values");
+        assert!(
+            mismatches.is_empty(),
+            "{} of {checked} differ: {mismatches:#?}",
+            mismatches.len()
+        );
     }
 }

@@ -1,0 +1,17 @@
+# Package M26 differential cases: name | base board (relative to qa/data/pcbnew) | profile | tables
+# Stage 1: the base board, the profile inserted after "(setup", tables.txt appended (UUID
+# placeholders @UUIDk@ -> 26<case>-0000-4000-8000-<k>). Stage 2 ("gen2" / "gen3"): the table
+# blocks of the refreshed m26_backdrill (new cell UUIDs normalised) appended, as they are
+# (gen2), without their row keys (legacy) or restyled (styled).
+m26_backdrill | issue25021/backdrill.kicad_pcb | - | tables
+m26_npth_slot | odbpp/npth_pressfit_slot.kicad_pcb | - | tables
+m26_oval | issue24799/issue24799.kicad_pcb | - | tables
+m26_two_layer | issue23467/issue23467.kicad_pcb | - | tables
+m26_via_stacks | via_stacks.kicad_pcb | - | tables
+m26_letters | via_stacks.kicad_pcb | profile_letters.txt | tables
+m26_sizetext | odbpp/npth_pressfit_slot.kicad_pcb | profile_sizetext.txt | tables
+m26_gen2_via_stacks | via_stacks.kicad_pcb | - | gen2
+m26_gen2_npth_slot | odbpp/npth_pressfit_slot.kicad_pcb | - | gen2
+m26_gen3_legacy | odbpp/npth_pressfit_slot.kicad_pcb | - | legacy
+m26_gen3_styled | via_stacks.kicad_pcb | - | styled
+api_kitchen_sink | api_kitchen_sink.kicad_pcb | - | -

@@ -53,13 +53,9 @@ use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use plot_common::*;
 
-/// Files that differ because of a model bug outside this crate: the pad's local solder mask
-/// margin is lost on B.Mask (change request to kicad-pcb, FAB-05 result).
-const KNOWN_DIFFERENCES: &[&str] = &[
-    "qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb B.Mask",
-    "qa/data/pcbnew/issue7086.kicad_pcb B.Mask",
-    "qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb B.Mask",
-];
+/// Files that differ because of a bug outside this crate (`<board> <layer>`). Empty since
+/// FAB-GLUE: the B.Mask pad margin difference of FAB-05 is gone.
+const KNOWN_DIFFERENCES: &[&str] = &[];
 
 /// Why a layer is not compared.
 #[derive(Debug, PartialEq)]
@@ -205,13 +201,17 @@ fn replay_board(
 ) {
     score.boards += 1;
 
+    let board_path = std::path::PathBuf::from(&board.file_name);
+    let engine = plot_common::drc_engine(board, &board_path);
     let Some(connectivity) = build_connectivity(board) else {
         if report {
             println!("{label}: connectivity pending");
         }
         return;
     };
-    let ctx = BoardCtx::bare(board).with_connectivity(&connectivity);
+    let ctx = BoardCtx::bare(board)
+        .with_connectivity(&connectivity)
+        .with_rules(&engine);
     // `bp_*` crafted boards are plotted with `--board-plot-params` (generate.py)
     let board_params = std::path::Path::new(label)
         .file_name()
@@ -271,8 +271,7 @@ fn replay_board(
                 }
                 let what = format!("{label} {}", board.layer_name(layer));
 
-                // Known model difference (see `plot_graphics_corpus.rs`, KNOWN_DIFFERENCES):
-                // `Pad::set_local_solder_mask_margin` sets the front mask margin only.
+                // Known difference outside this crate (KNOWN_DIFFERENCES).
                 if KNOWN_DIFFERENCES.contains(&what.as_str()) {
                     line.push('k');
                 } else {

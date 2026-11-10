@@ -45,8 +45,6 @@ use kicad_plot::Plotter;
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
 
-use crate::plot_board_layers::round_chamfered_rect_to_polygon;
-
 /// Panic with a "port pending" message naming the C++ function and the work package that
 /// ports it (the plotting counterpart of `kicad_pcb::port_pending!`).
 macro_rules! fab_port_pending {
@@ -441,7 +439,7 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
                 {
                     let gerber_plotter = self.plotter.as_gerber_mut().expect("a Gerber plotter");
 
-                    gerber_plotter.flash_pad_chamfer_round_rect(
+                    gerber_plotter.flash_pad_chamfer_round_rect_default(
                         shape_pos,
                         pad.size(ctx, a_layer),
                         pad.round_rect_corner_radius(a_layer),
@@ -449,7 +447,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
                         pad.chamfer_positions(a_layer),
                         orientation,
                         Some(&metadata),
-                        &round_chamfered_rect_to_polygon,
                     );
                     return;
                 }

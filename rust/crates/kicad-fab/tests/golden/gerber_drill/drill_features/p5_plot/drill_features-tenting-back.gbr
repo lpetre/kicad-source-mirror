@@ -1,0 +1,39 @@
+<normalised>
+<normalised>
+%TF.ProjectId,drill_features,6472696c-6c5f-4666-9561-74757265732e,rev?*%
+%TF.SameCoordinates,Original*%
+%TF,FileFunction,Other,Tenting-Back*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+%TA.AperFunction,Other,Tenting*%
+%ADD10C,0.600000*%
+%TD*%
+%TA.AperFunction,Other,Tenting*%
+%ADD11C,0.800000*%
+%TD*%
+%TA.AperFunction,Other,Tenting*%
+%ADD12C,0.500000*%
+%TD*%
+%TA.AperFunction,Other,Tenting*%
+%ADD13C,0.300000*%
+%TD*%
+G04 APERTURE END LIST*
+D10*
+X10500000Y-6600000D03*
+X10500000Y-7000000D03*
+X10500000Y-7400000D03*
+X10500000Y-7800000D03*
+X11000000Y-7000000D03*
+D11*
+X11000000Y-6600000D03*
+D12*
+X11200000Y-7400000D03*
+D13*
+X11200000Y-7800000D03*
+M02*

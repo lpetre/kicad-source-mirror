@@ -242,7 +242,8 @@ impl TeardropManager {
     /// settings `createTeardrop` / `createTeardropMask` share.
     fn new_teardrop_zone(board: &mut Board, variant: TeardropVariant, uuid: Kiid) -> Zone {
         let board_defaults = board.design_settings().default_zone_settings().clone();
-        let mut teardrop = Zone::new_with_settings(&mut board.kiid_generator, &board_defaults, false);
+        let mut teardrop =
+            Zone::new_with_settings(&mut board.kiid_generator, &board_defaults, false);
 
         teardrop.base.item.uuid = uuid;
 
@@ -518,8 +519,7 @@ impl TeardropManager {
 
             // A footprint move pushes every copper descendant, and the test below runs against
             // the whole list once per teardrop.
-            let mut dirty_copper_by_layer: BTreeMap<PcbLayerId, Vec<DirtyCopper>> =
-                BTreeMap::new();
+            let mut dirty_copper_by_layer: BTreeMap<PcbLayerId, Vec<DirtyCopper>> = BTreeMap::new();
 
             if let Some(dirty_copper) = dirty_copper {
                 for &item in dirty_copper {
@@ -662,10 +662,8 @@ impl TeardropManager {
                         .into_iter()
                         .flatten()
                         .any(|&copper_id| {
-                            let copper_bbox = board
-                                .zone(copper_id)
-                                .expect("live zone")
-                                .bounding_box(&ctx);
+                            let copper_bbox =
+                                board.zone(copper_id).expect("live zone").bounding_box(&ctx);
 
                             mask_bbox.contains(copper_bbox.center())
                                 && copper_bbox.contains(mask_bbox.center())
@@ -748,14 +746,9 @@ impl TeardropManager {
                     continue;
                 }
 
-                let Some(plan) = self.plan_pad_via_teardrop(
-                    board,
-                    connectivity,
-                    rules,
-                    track_id,
-                    pad_id,
-                    true,
-                ) else {
+                let Some(plan) =
+                    self.plan_pad_via_teardrop(board, connectivity, rules, track_id, pad_id, true)
+                else {
                     continue;
                 };
 
@@ -767,14 +760,9 @@ impl TeardropManager {
                     continue;
                 }
 
-                let Some(plan) = self.plan_pad_via_teardrop(
-                    board,
-                    connectivity,
-                    rules,
-                    track_id,
-                    via_id,
-                    false,
-                ) else {
+                let Some(plan) =
+                    self.plan_pad_via_teardrop(board, connectivity, rules, track_id, via_id, false)
+                else {
                     continue;
                 };
 
@@ -862,10 +850,7 @@ impl TeardropManager {
             )
         } else {
             let via = item_ref.as_via()?;
-            (
-                via.hit_test(&ctx, t.start, 0),
-                via.hit_test(&ctx, t.end, 0),
-            )
+            (via.hit_test(&ctx, t.start, 0), via.hit_test(&ctx, t.end, 0))
         };
 
         // The track is entirely inside the pad / via; cannot create a teardrop
@@ -896,8 +881,7 @@ impl TeardropManager {
         }
 
         // A track crossing the pad earns one teardrop per side, not one over the whole track.
-        let crossing =
-            !start_hits && !end_hits && BoardItem::hit_test(track, &ctx, position, 0);
+        let crossing = !start_hits && !end_hits && BoardItem::hit_test(track, &ctx, position, 0);
 
         Some(TeardropPlan {
             params: td_params,

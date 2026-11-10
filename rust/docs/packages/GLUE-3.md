@@ -32,3 +32,9 @@ DRC-23..28, FAB-04..06, ZF-03, PCBIO-15. Triage first (some may be done), then a
 
 Verification: every touched crate's tests and corpus replays before and after (no count
 gets worse; list the counts), clippy, wasm32 builds.
+
+- From ZINT-1 (barcode encoder, done): kicad-pcb src/dump/defaults.rs - switch barcode
+  poly / symbol_poly / text_poly / last_error back on for non-empty texts; remove the
+  barcode entries of the skip / KNOWN_DIFFERENCES lists in kicad-fab
+  tests/plot_driver_corpus.rs, tests/plot_graphics_corpus.rs and kicad-session
+  tests/gerbers_job.rs if FAB-GLUE has not done it.

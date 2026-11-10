@@ -42,6 +42,8 @@
 //! * `tool|<diameter>|<total>|<oval>|<not plated>|<attribute>|<backdrill>|<post-machining>|<min stub>|<max stub>`
 //! * `ffs|<type>|<compat>|<string>`, `name|<ext>|<name>`
 
+mod plot_common;
+
 use kicad_core::Kiid;
 use kicad_core::layer_ids::PcbLayerId;
 use kicad_fab::drill::{DrillOpKind, DrillOperation, DrillPostMachining, DrillSpan, HoleAttribute};
@@ -397,12 +399,10 @@ fn oracle_contains_unstable_tie_order() {
 /// Enumeration from a loaded board (`EnumerateDrillOperations` / `EnumerateDrillSpans`)
 /// against the oracle's raw lists, for the corpus boards of the golden.
 ///
-/// Needs `kicad_pcb::io::parse_board` (PCBIO packages) and the pad (M14) and via (M17)
-/// accessors; enable with `--features e2e` once they exist (see `PORT_STATUS.md`).
+/// The boards are loaded as kicad-cli loads them (parser, project binding;
+/// `plot_common::load_board`).
 #[test]
-#[ignore = "needs kicad_pcb::io::parse_board and the pad / via model (M14, M17)"]
 fn enumeration_matches_oracle() {
-    #[cfg(feature = "e2e")]
     {
         use kicad_fab::drill::enumerate_drill_spans;
         use kicad_fab::drill::{DrillQuery, DrillSource, enumerate_drill_operations};
@@ -418,11 +418,7 @@ fn enumeration_matches_oracle() {
                 .find(|l| l.ends_with(&format!("/{}.kicad_pcb", ob.name)))
                 .expect("board listed in generate.sh");
             let path = kicad_qa::kicad_source_root().join(rel);
-            let text = std::fs::read_to_string(&path).unwrap();
-            let (mut board, _warnings) =
-                kicad_pcb::io::parse_board(&text, &Default::default()).expect("parse");
-            board.file_name = path.to_string_lossy().into_owned();
-            board.project = Some(Default::default());
+            let board = plot_common::load_board(&path).expect("board loads");
             let ctx = BoardCtx::bare(&board);
 
             // Ordinals as the oracle prints them.
@@ -470,6 +466,4 @@ fn enumeration_matches_oracle() {
             }
         }
     }
-    #[cfg(not(feature = "e2e"))]
-    panic!("enable with --features e2e once kicad_pcb::io::parse_board exists");
 }

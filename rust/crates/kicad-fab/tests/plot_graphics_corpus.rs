@@ -22,8 +22,8 @@
 //! `PlotStandardLayer` runs `PlotBoardGraphicItem` for every board drawing,
 //! `PlotFootprintTextItems` for every footprint, `PlotFootprintGraphicItems` for every
 //! footprint, then the FAB-04 part. This test runs the same sequence on every layer (it
-//! reports how many matched files carry footprint text). Layers with drill maps (FAB-13), a
-//! solder mask minimum width (FAB-10) or a barcode (no symbol encoder) are skipped. Goldens: the corpus (`tests/golden/plot_driver/corpus.txt`,
+//! reports how many matched files carry footprint text). Layers with drill maps (FAB-13) or a
+//! solder mask minimum width (FAB-10) are skipped. Goldens: the corpus (`tests/golden/plot_driver/corpus.txt`,
 //! CLI defaults), the FAB-04 crafted boards (`tests/golden/plot_items/crafted.txt`) and the
 //! FAB-05 crafted boards (`tests/golden/plot_graphics/crafted.txt`, `generate.py` there).
 //! `KICAD_FAB_CORPUS_REPORT=1` prints per-board results (`F` match, `.` pending, `X` differs,
@@ -53,35 +53,9 @@ use plot_common::*;
 
 /// Files that differ for a reason outside this crate (board label and layer name, reason).
 /// They are reported, not failed; once the cause is fixed they match and count as matched.
-const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
-    // A table inside a footprint (rotated by 33 degrees): the model's `PcbTablecell`
-    // `corners()` / `draw_pos()` are footprint-local (not moved by the footprint position)
-    // and two of the four rotated corners coincide, so the cell text is drawn 40 mm / 28 mm
-    // off (FAB-06 found it; change request to kicad-pcb). The table borders match.
-    (
-        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb F.Cu",
-        "footprint table cell geometry (model)",
-    ),
-    (
-        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb B.Cu",
-        "footprint table cell geometry (model)",
-    ),
-    // `PAD::SetLocalSolderMaskMargin` sets the margin of the front AND the back mask layer
-    // (`pcbnew/pad.h`); the model's `Pad::set_local_solder_mask_margin` sets the front only,
-    // so a pad's local mask margin is lost on B.Mask (change request to kicad-pcb).
-    (
-        "qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb B.Mask",
-        "pad local mask margin (model)",
-    ),
-    (
-        "qa/data/pcbnew/issue7086.kicad_pcb B.Mask",
-        "pad local mask margin (model)",
-    ),
-    (
-        "qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb B.Mask",
-        "pad local mask margin (model)",
-    ),
-];
+// Empty since FAB-GLUE: the pad mask margin (model), footprint table cell (model) and barcode
+// (zint, M25a) differences of FAB-05 / FAB-06 are gone; every compared file matches.
+const KNOWN_DIFFERENCES: &[(&str, &str)] = &[];
 
 /// How a layer is treated.
 #[derive(Debug, PartialEq)]
@@ -92,9 +66,6 @@ enum Class {
     DrillMap,
     /// Solder mask with a minimum width (FAB-10).
     MaskMinWidth,
-    /// A barcode on the layer: the model has no symbol encoder yet (zint, M25a), so the
-    /// barcode polygon is empty and `PlotBarCode` plots nothing.
-    Barcode,
 }
 
 fn classify(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> Class {
@@ -121,23 +92,6 @@ fn classify(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> Class {
         .unwrap_or(true)
     };
     let mut fp_text = false;
-    let is_barcode = |id| {
-        ctx.item(id)
-            .is_some_and(|item| item.type_() == KicadT::PcbBarcodeT)
-    };
-
-    if board
-        .drawings()
-        .any(|(id, _)| is_barcode(id) && on_layer(id))
-        || board.footprints().any(|(fp, _)| {
-            board
-                .footprint_drawings(fp)
-                .any(|(id, _)| is_barcode(id) && on_layer(id))
-        })
-    {
-        return Class::Barcode;
-    }
-
     for (fp, _) in board.footprints() {
         for (id, field) in board.footprint_fields(fp) {
             if field.text.text.is_visible() && on_layer(id.into()) {
@@ -274,7 +228,6 @@ struct Score {
     fp_text_matched: usize,
     skipped_drill_map: usize,
     skipped_mask_min_width: usize,
-    skipped_barcode: usize,
     /// Files in `KNOWN_DIFFERENCES` that still differ.
     known: usize,
     /// Pending files per panic message (the first line).
@@ -291,13 +244,17 @@ fn replay_board(
 ) {
     score.boards += 1;
 
+    let board_path = std::path::PathBuf::from(&board.file_name);
+    let engine = plot_common::drc_engine(board, &board_path);
     let Some(connectivity) = build_connectivity(board) else {
         if report {
             println!("{label}: connectivity pending");
         }
         return;
     };
-    let ctx = BoardCtx::bare(board).with_connectivity(&connectivity);
+    let ctx = BoardCtx::bare(board)
+        .with_connectivity(&connectivity)
+        .with_rules(&engine);
     // `bp_*` crafted boards are plotted with `--board-plot-params` (generate.py)
     let board_params = std::path::Path::new(label)
         .file_name()
@@ -341,11 +298,6 @@ fn replay_board(
             }
             Class::MaskMinWidth => {
                 score.skipped_mask_min_width += 1;
-                line.push('-');
-                continue;
-            }
-            Class::Barcode => {
-                score.skipped_barcode += 1;
                 line.push('-');
                 continue;
             }
@@ -451,7 +403,7 @@ fn run(
 fn finish(what: &str, score: &Score) {
     println!(
         "{what}: {} boards loaded: files {} matched ({} graphic items on them, {} with footprint text) / {} pending, skipped {} (drill map) + {} \
-         (mask min width) + {} (barcode), {} known differences, {} failures",
+         (mask min width), {} known differences, {} failures",
         score.boards,
         score.files_matched,
         score.graphics_matched,
@@ -459,7 +411,6 @@ fn finish(what: &str, score: &Score) {
         score.files_pending,
         score.skipped_drill_map,
         score.skipped_mask_min_width,
-        score.skipped_barcode,
         score.known,
         score.failures.len()
     );

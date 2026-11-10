@@ -84,6 +84,15 @@ fn resave(text: &str, name: &str) -> String {
     format_board(&board, &staging()).unwrap_or_else(|e| panic!("{name}: {}", e.what()))
 }
 
+/// What the reference `kicad-cli pcb upgrade` writes for the items of this package: parse,
+/// `RefreshGeneratedTables` (the generated tables are derived data, rebuilt from the board:
+/// package M26), write. The pure parse + write path is [`resave`].
+fn upgrade(text: &str, name: &str) -> String {
+    let mut board = parse(text, name);
+    kicad_pcb::board_tables::refresh_generated_tables(&mut board);
+    format_board(&board, &staging()).unwrap_or_else(|e| panic!("{name}: {}", e.what()))
+}
+
 /// The top-level keywords of this package.
 const KINDS: [&str; 9] = [
     "image",
@@ -138,39 +147,44 @@ fn blocks(text: &str) -> Vec<String> {
     out
 }
 
-/// `(uuid "..")` values replaced by `*`.
-fn mask_uuids(block: &str) -> String {
+/// `(uuid "..")` values that do not occur in `input` replaced by `*`.
+fn mask_new_uuids(block: &str, input: &str) -> String {
     let mut out = String::new();
     let mut rest = block;
 
     while let Some(i) = rest.find("(uuid ") {
         out.push_str(&rest[..i]);
-        out.push_str("(uuid *)");
         rest = &rest[i..];
-        rest = &rest[rest.find(')').map_or(rest.len(), |j| j + 1)..];
+        let end = rest.find(')').map_or(rest.len(), |j| j + 1);
+
+        if input.contains(&rest[..end]) {
+            out.push_str(&rest[..end]);
+        } else {
+            out.push_str("(uuid *)");
+        }
+
+        rest = &rest[end..];
     }
 
     out.push_str(rest);
     out
 }
 
-/// The `(uuid "..")` value of a block.
-fn uuid_of(block: &str) -> Option<&str> {
-    let i = block.find("(uuid \"")? + 7;
-    Some(&block[i..i + block[i..].find('"')?])
-}
-
 /// Compare the blocks of this package in `out` with those of `expected`, block by block. An
 /// item without a uuid in `input` gets a random one in the reference build (R1 of
-/// `pcb-io.md` 11.1): such a block is compared with its uuid masked. Returns the number of
-/// blocks compared.
+/// `pcb-io.md` 11.1), and so does a table cell a generated table creates: such uuids (the
+/// ones not in `input`) are masked. Returns the number of blocks compared.
 fn assert_same_blocks(name: &str, out: &str, expected: &str, input: &str) -> usize {
     let got = blocks(out);
     let want = blocks(expected);
 
     for (k, (g, w)) in got.iter().zip(want.iter()).enumerate() {
-        if g != w && uuid_of(w).is_some_and(|u| !input.contains(u)) {
-            assert_eq!(mask_uuids(g), mask_uuids(w), "{name}: block {k} differs");
+        if g != w {
+            assert_eq!(
+                mask_new_uuids(g, input),
+                mask_new_uuids(w, input),
+                "{name}: block {k} differs"
+            );
             continue;
         }
 
@@ -205,9 +219,10 @@ fn golden_inputs() -> Vec<(String, PathBuf)> {
 }
 
 /// Differential oracle on the hand-made boards (`tests/data/pcbio12/`) and the small corpus
-/// boards of the golden script: parse + format of the input reproduces the blocks of this
-/// package in the reference re-save (O1) byte for byte and in order, and parse + format of O1
-/// reproduces the reference re-save of O1 (O2, or O1 for a fixed point).
+/// boards of the golden script: parse + refresh + format of the input reproduces the blocks of
+/// this package in the reference re-save (O1) byte for byte and in order (new table cells with
+/// their UUIDs masked), and the same of O1 reproduces the reference re-save of O1 (O2, or O1
+/// for a fixed point).
 #[test]
 fn oracle_resave_blocks() {
     let golden = crate_dir().join("tests/golden/pcbio12");
@@ -217,20 +232,13 @@ fn oracle_resave_blocks() {
     for (name, input) in golden_inputs() {
         let input = String::from_utf8_lossy(&std::fs::read(&input).unwrap()).into_owned();
 
-        // kicad-cli's loader rebuilds the cells of generated tables from the board
-        // (RefreshGeneratedTables, tier 2): those boards are compared with the pure parse + write
-        // driver only (oracle_parse_write_blocks).
-        if input.contains("(drill_chart") || input.contains("(stackup_table") {
-            continue;
-        }
-
         let o1 = std::fs::read_to_string(golden.join(format!("{name}.kicad_pcb"))).unwrap();
         let o2 = std::fs::read_to_string(golden.join(format!("{name}_o2.kicad_pcb")))
             .unwrap_or_else(|_| o1.clone());
 
         match model(|| {
-            assert_same_blocks(&name, &resave(&input, &name), &o1, &input)
-                + assert_same_blocks(&format!("{name} (O1)"), &resave(&o1, &name), &o2, &o1)
+            assert_same_blocks(&name, &upgrade(&input, &name), &o1, &input)
+                + assert_same_blocks(&format!("{name} (O1)"), &upgrade(&o1, &name), &o2, &o1)
         }) {
             Ok(n) => {
                 println!("{name}: {n} blocks identical");
@@ -306,18 +314,16 @@ fn oracle_corpus_blocks() {
 
         match model(|| {
             parse_board_report(&input, path, &staging_parse())
-                .and_then(|(board, _)| format_board(&board, &staging()))
+                .and_then(|(mut board, _)| {
+                    // kicad-cli pcb upgrade rebuilds the cells of generated tables from the
+                    // board (RefreshGeneratedTables, M26): api_kitchen_sink's stored drill chart
+                    // cells "0.30" are re-saved as "0.30 mm"
+                    kicad_pcb::board_tables::refresh_generated_tables(&mut board);
+                    format_board(&board, &staging())
+                })
                 .map_err(|e| e.what().to_string())
         }) {
             Ok(Ok(out)) => {
-                // kicad-cli's loader rebuilds the cells of generated tables from the board
-                // (board_loader.cpp RefreshGeneratedTables, M26): api_kitchen_sink's stored
-                // drill chart cells "0.30" are re-saved as "0.30 mm". Those blocks are compared
-                // by the pure parse + write driver only (oracle_parse_write_blocks).
-                let (out, o1) = (
-                    without_generated_tables(&out),
-                    without_generated_tables(&o1),
-                );
                 let n = assert_same_blocks(path, &out, &o1, &input);
                 println!("{path}: {n} blocks identical");
             }
@@ -325,30 +331,6 @@ fn oracle_corpus_blocks() {
             Err(stub) => println!("{path}: pending on model stub {stub}"),
         }
     }
-}
-
-/// `text` without its top-level `(drill_chart ..)` and `(stackup_table ..)` blocks (generated
-/// tables, refreshed by the reference loader).
-fn without_generated_tables(text: &str) -> String {
-    let mut out = String::new();
-    let mut skipping = false;
-
-    for line in text.split_inclusive('\n') {
-        if !skipping && (line.starts_with("\t(drill_chart") || line.starts_with("\t(stackup_table"))
-        {
-            skipping = line.matches('(').count() != line.matches(')').count();
-            continue;
-        }
-
-        if skipping {
-            skipping = line != "\t)\n";
-            continue;
-        }
-
-        out.push_str(line);
-    }
-
-    out
 }
 
 /// The items of `board`'s drawing list of one kind.

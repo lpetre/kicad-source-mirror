@@ -508,6 +508,60 @@ impl Board {
     }
 }
 
+/// The fabrication queries of `pcbnew/board.cpp` the drill and job file writers use
+/// (package FAB-GLUE).
+impl Board {
+    /// Port of `BOARD::GetPadWithPressFitAttrCount`: the number of pads with the Press-Fit
+    /// fabrication property.
+    pub fn pad_with_press_fit_attr_count(&self) -> i32 {
+        // return the number of PTH with Press-Fit fabr attribute
+        let mut count = 0;
+
+        for (fp, _) in self.footprints() {
+            for (_, pad) in self.footprint_pads(fp) {
+                if pad.property() == crate::padstack::PadProp::Pressfit {
+                    count += 1;
+                }
+            }
+        }
+
+        count
+    }
+
+    /// Port of `BOARD::GetPadWithCastellatedAttrCount`: the number of pads with the
+    /// Castellated fabrication property.
+    pub fn pad_with_castellated_attr_count(&self) -> i32 {
+        // @return the number of PTH with Castellated fabr attribute
+        let mut count = 0;
+
+        for (fp, _) in self.footprints() {
+            for (_, pad) in self.footprint_pads(fp) {
+                if pad.property() == crate::padstack::PadProp::Castellated {
+                    count += 1;
+                }
+            }
+        }
+
+        count
+    }
+
+    /// Port of `BOARD::DrillSymbolLayers()`: the layers of the board's drill map items
+    /// (`PCB_DRILL_MAP` in `m_drawings`). C++ caches `m_drillSymbolLayers`, refreshed by
+    /// `RefreshDrillSymbolLayers` after loading and whenever a drill map changes, so it always
+    /// equals what this computes on demand.
+    pub fn drill_symbol_layers(&self) -> Lset {
+        let mut layers = Lset::new();
+
+        for (_, item) in self.drawings() {
+            if let crate::item_ref::AnyItem::DrillMap(map) = item {
+                layers.set(map.base.layer);
+            }
+        }
+
+        layers
+    }
+}
+
 /// Package M22 tests. `InvalidGroups` is ported from `qa/tests/pcbnew/group_saveload.cpp`
 /// (the cycles are built directly, as `createBoard( .., aAllowInvalidGroups = true )` does).
 #[cfg(test)]

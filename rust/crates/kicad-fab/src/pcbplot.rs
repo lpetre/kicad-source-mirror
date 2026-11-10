@@ -29,7 +29,6 @@
 use kicad_core::PcbLayerId;
 use kicad_core::layer_ids::copper_layer_to_ordinal;
 use kicad_core::layer_ids::is_copper_layer;
-use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_pcb::board::Board;
 use kicad_plot::Plotter;
 use kicad_plot::gbr_metadata::{
@@ -219,45 +218,6 @@ fn wx_to_ascii(a_text: &str) -> String {
         .collect()
 }
 
-/// `ExpandTextVars( aSource, aBoard->GetProject(), FOR_GUI )`.
-///
-/// TEMPORARY: the board's `PROJECT::TextVarResolver` is private in `kicad-pcb`
-/// (`board/text_vars.rs`, `project_text_var_resolver`); this mirrors it (same token list,
-/// empty clock, empty VCS hash) until the model exposes it (change request of FAB-03), and
-/// must then be replaced by that call. Without a project the C++ would dereference a null
-/// project; kicad-cli always binds one, the port resolves nothing.
-fn expand_project_text_vars(a_board: &Board, a_source: &str) -> String {
-    let Some(project) = &a_board.project else {
-        return expand_text_vars(a_source, None, ResolutionContext::ForGui);
-    };
-
-    let resolver = |token: &mut String| -> bool {
-        match token.as_str() {
-            "PROJECTNAME" => {
-                *token = WxFileName::new(&a_board.file_name).name().to_string();
-                true
-            }
-            "CURRENT_DATE"
-            | "CURRENT_TIME_HH_MM_SS"
-            | "CURRENT_TIME_LOCALE"
-            | "VCSHASH"
-            | "VCSSHORTHASH" => {
-                *token = String::new();
-                true
-            }
-            _ => match project.text_vars.get(token.as_str()) {
-                Some(value) => {
-                    *token = value.clone();
-                    true
-                }
-                None => false,
-            },
-        }
-    };
-
-    expand_text_vars(a_source, Some(&resolver), ResolutionContext::ForGui)
-}
-
 /// Port of `AddGerberX2Header`: add the X2 file header attributes `TF.GenerationSoftware`,
 /// `TF.CreationDate`, `TF.ProjectId` and `TF.SameCoordinates` (as defined in the Gerber file
 /// format specification J4 and "Revision 2015.06") to the plotter header, as `G04 #@!`
@@ -309,7 +269,7 @@ pub fn add_gerber_x2_header(
     replace_reserved_chars_field(&mut msg);
 
     // build the <revision id> string. All non ASCII chars and reserved chars are replaced by '_'
-    let mut rev = expand_project_text_vars(a_board, a_board.titles.revision());
+    let mut rev = a_board.expand_project_text_vars(a_board.titles.revision());
     replace_reserved_chars_field(&mut rev);
 
     if rev.is_empty() {

@@ -86,6 +86,43 @@ fn without_render_cache(block: &str) -> String {
     out
 }
 
+/// `block` with the glyph polygons of its `(render_cache ..)` lists removed, the header kept
+/// (`(render_cache "text" angle)`, as the golden script writes it). Package FONT-RC-1: the port
+/// writes the glyphs stored in the input file, the oracle those of its host fonts (fontconfig
+/// substitutes for fonts it lacks), so only the header is comparable.
+fn with_cache_glyphs_masked(block: &str) -> String {
+    fn collect(node: &SexprNode, out: &mut Vec<(usize, usize)>) {
+        if node.keyword == "render_cache" {
+            out.push((node.start, node.end));
+        } else {
+            for c in &node.children {
+                collect(c, out);
+            }
+        }
+    }
+
+    let mut spans = Vec::new();
+
+    for n in parse_lists(block) {
+        collect(&n, &mut spans);
+    }
+
+    let mut out = String::new();
+    let mut last = 0;
+
+    for (s, e) in spans {
+        let cache = &block[s..e];
+        let header = cache.find("(polygon").map_or(cache, |i| &cache[..i]);
+        out.push_str(&block[last..s]);
+        out.push_str(header.trim_end());
+        out.push(')');
+        last = e + 1;
+    }
+
+    out.push_str(&block[last..]);
+    out
+}
+
 /// The text keywords of this package.
 const TEXT_KEYWORDS: [&str; 2] = ["gr_text", "gr_text_box"];
 
@@ -116,7 +153,7 @@ fn compare_blocks(expected: &str, actual: &str) -> Result<BlockCompare, String> 
     };
 
     for (e, a) in exp.iter().zip(act.iter()) {
-        if e == a {
+        if e == a || with_cache_glyphs_masked(e) == with_cache_glyphs_masked(a) {
             r.identical += 1;
         } else if without_render_cache(e) == without_render_cache(a) {
             r.identical_modulo_cache += 1;

@@ -46,6 +46,7 @@ SCRATCH = os.environ.get("SCRATCH", os.path.join(KICAD, "rust/target/fab-gerber-
 # Crafted boards (relative to the KiCad tree), after the corpus boards.
 EXTRA_DIRS = [
     "rust/crates/kicad-fab/tests/data/gerber_drill",
+    "rust/crates/kicad-fab/tests/data/excellon_corpus",
 ]
 
 SETS = [

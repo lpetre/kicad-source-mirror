@@ -1,3 +1,52 @@
+// This program source code file is part of KiCad, a free EDA CAD application.
+//
+// Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by the
+// Free Software Foundation, either version 3 of the License, or (at your
+// option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program.  If not, see <http://www.gnu.org/licenses/>.
+//
+// This file ports code of zint 2.15.0 (thirdparty/zint/backend/qr.c):
+//
+//     libzint - the open source barcode library
+//     Copyright (C) 2009-2025 Robin Stuart <rstuart114@gmail.com>
+//
+//     Redistribution and use in source and binary forms, with or without
+//     modification, are permitted provided that the following conditions
+//     are met:
+//
+//     1. Redistributions of source code must retain the above copyright
+//        notice, this list of conditions and the following disclaimer.
+//     2. Redistributions in binary form must reproduce the above copyright
+//        notice, this list of conditions and the following disclaimer in the
+//        documentation and/or other materials provided with the distribution.
+//     3. Neither the name of the project nor the names of its contributors
+//        may be used to endorse or promote products derived from this software
+//        without specific prior written permission.
+//
+//     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+//     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//     IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+//     ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+//     FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//     DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+//     OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+//     HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+//     LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+//     OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+//     SUCH DAMAGE.
+//
+//     SPDX-License-Identifier: BSD-3-Clause
+
 //! Port of `qrcode()` (BARCODE_QRCODE) and `microqr()` (BARCODE_MICROQR) of
 //! `thirdparty/zint/backend/qr.c` with their helpers: the mode optimisation
 //! (`qr_define_mode`, adapted from Project Nayuki), binary length estimation, bit stream,
@@ -132,7 +181,7 @@ const QR_B: usize = 2; // Byte
 const QR_K: usize = 3; // Kanji
 
 /// `qr_mode_types`: must be in same order as QR_N etc.
-const QR_MODE_TYPES: [u8; 4] = [b'N', b'A', b'B', b'K'];
+const QR_MODE_TYPES: [u8; 4] = *b"NABK";
 
 const QR_NUM_MODES: usize = 4;
 
@@ -144,13 +193,43 @@ const QR_MICROQR_MAX: u32 = 774; // (128 + 1) * QR_MULT
 fn qr_head_costs(version: i32) -> [u32; QR_NUM_MODES] {
     const HEAD_COSTS: [[u32; QR_NUM_MODES]; 7] = [
         // N A B K
-        [(10 + 4) * QR_MULT, (9 + 4) * QR_MULT, (8 + 4) * QR_MULT, (8 + 4) * QR_MULT], // QR
-        [(12 + 4) * QR_MULT, (11 + 4) * QR_MULT, (16 + 4) * QR_MULT, (10 + 4) * QR_MULT],
-        [(14 + 4) * QR_MULT, (13 + 4) * QR_MULT, (16 + 4) * QR_MULT, (12 + 4) * QR_MULT],
+        [
+            (10 + 4) * QR_MULT,
+            (9 + 4) * QR_MULT,
+            (8 + 4) * QR_MULT,
+            (8 + 4) * QR_MULT,
+        ], // QR
+        [
+            (12 + 4) * QR_MULT,
+            (11 + 4) * QR_MULT,
+            (16 + 4) * QR_MULT,
+            (10 + 4) * QR_MULT,
+        ],
+        [
+            (14 + 4) * QR_MULT,
+            (13 + 4) * QR_MULT,
+            (16 + 4) * QR_MULT,
+            (12 + 4) * QR_MULT,
+        ],
         [3 * QR_MULT, QR_MICROQR_MAX, QR_MICROQR_MAX, QR_MICROQR_MAX], // MICROQR
-        [(4 + 1) * QR_MULT, (3 + 1) * QR_MULT, QR_MICROQR_MAX, QR_MICROQR_MAX],
-        [(5 + 2) * QR_MULT, (4 + 2) * QR_MULT, (4 + 2) * QR_MULT, (3 + 2) * QR_MULT],
-        [(6 + 3) * QR_MULT, (5 + 3) * QR_MULT, (5 + 3) * QR_MULT, (4 + 3) * QR_MULT],
+        [
+            (4 + 1) * QR_MULT,
+            (3 + 1) * QR_MULT,
+            QR_MICROQR_MAX,
+            QR_MICROQR_MAX,
+        ],
+        [
+            (5 + 2) * QR_MULT,
+            (4 + 2) * QR_MULT,
+            (4 + 2) * QR_MULT,
+            (3 + 2) * QR_MULT,
+        ],
+        [
+            (6 + 3) * QR_MULT,
+            (5 + 3) * QR_MULT,
+            (5 + 3) * QR_MULT,
+            (4 + 3) * QR_MULT,
+        ],
     ];
 
     if version < RMQR_VERSION {
@@ -374,7 +453,11 @@ fn qr_binary(binary: &mut Vec<u8>, version: i32, mode: &[u8], ddata: &[u32], eci
             b'K' => {
                 // Kanji mode
                 // Character count indicator
-                bin_append(short_data_block_length as i32, qr_cci_bits(version, data_block), binary);
+                bin_append(
+                    short_data_block_length as i32,
+                    qr_cci_bits(version, data_block),
+                    binary,
+                );
 
                 // Character representation
                 for i in 0..short_data_block_length {
@@ -410,7 +493,11 @@ fn qr_binary(binary: &mut Vec<u8>, version: i32, mode: &[u8], ddata: &[u32], eci
             b'A' => {
                 // Alphanumeric mode (gs1 0: no percent doubling, no FNC1)
                 // Character count indicator
-                bin_append(short_data_block_length as i32, qr_cci_bits(version, data_block), binary);
+                bin_append(
+                    short_data_block_length as i32,
+                    qr_cci_bits(version, data_block),
+                    binary,
+                );
 
                 // Character representation
                 let mut i = 0;
@@ -421,7 +508,8 @@ fn qr_binary(binary: &mut Vec<u8>, version: i32, mode: &[u8], ddata: &[u32], eci
                     let mut prod = first;
 
                     if i < short_data_block_length && mode[position + i] == b'A' {
-                        let second = i32::from(QR_ALPHANUMERIC[(ddata[position + i] - 32) as usize]);
+                        let second =
+                            i32::from(QR_ALPHANUMERIC[(ddata[position + i] - 32) as usize]);
                         count = 2;
                         i += 1;
                         prod = (first * 45) + second;
@@ -433,7 +521,11 @@ fn qr_binary(binary: &mut Vec<u8>, version: i32, mode: &[u8], ddata: &[u32], eci
             b'N' => {
                 // Numeric mode
                 // Character count indicator
-                bin_append(short_data_block_length as i32, qr_cci_bits(version, data_block), binary);
+                bin_append(
+                    short_data_block_length as i32,
+                    qr_cci_bits(version, data_block),
+                    binary,
+                );
 
                 // Character representation
                 let mut i = 0;
@@ -605,8 +697,11 @@ fn qr_place_finder(grid: &mut [u8], size: usize, x: usize, y: usize) {
 
     for xp in 0..7 {
         for yp in 0..7 {
-            grid[((yp + y) * size) + (xp + x)] =
-                if FINDER[yp] & (0x40 >> xp) != 0 { 0x11 } else { 0x10 };
+            grid[((yp + y) * size) + (xp + x)] = if FINDER[yp] & (0x40 >> xp) != 0 {
+                0x11
+            } else {
+                0x10
+            };
         }
     }
 }
@@ -620,8 +715,11 @@ fn qr_place_align(grid: &mut [u8], size: usize, x: usize, y: usize) {
 
     for xp in 0..5 {
         for yp in 0..5 {
-            grid[((yp + y) * size) + (xp + x)] =
-                if ALIGNMENT[yp] & (0x10 >> xp) != 0 { 0x11 } else { 0x10 };
+            grid[((yp + y) * size) + (xp + x)] = if ALIGNMENT[yp] & (0x10 >> xp) != 0 {
+                0x11
+            } else {
+                0x10
+            };
         }
     }
 }
@@ -1561,7 +1659,11 @@ fn microqr_evaluate(grid: &[u8], size: usize, pattern: usize) -> i32 {
         }
     }
 
-    if sum1 <= sum2 { (sum1 * 16) + sum2 } else { (sum2 * 16) + sum1 }
+    if sum1 <= sum2 {
+        (sum1 * 16) + sum2
+    } else {
+        (sum2 * 16) + sum1
+    }
 }
 
 /// Port of `microqr_apply_bitmask()`.
@@ -1783,7 +1885,9 @@ pub(crate) fn microqr(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
                 );
                 return errtxt(ZINT_ERROR_INVALID_DATA, symbol, 758, &msg);
             }
-        } else if symbol.option_2 == 2 && not_sane(QR_ALPHA, &source[..length.min(source.len())]) != 0 {
+        } else if symbol.option_2 == 2
+            && not_sane(QR_ALPHA, &source[..length.min(source.len())]) != 0
+        {
             return errtxt(
                 ZINT_ERROR_INVALID_DATA,
                 symbol,
@@ -1817,7 +1921,8 @@ pub(crate) fn microqr(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
 
     qr_define_mode(&mut mode, &ddata, MICROQR_VERSION + version as i32);
 
-    let (_, mut full_stream) = qr_binary_segs(MICROQR_VERSION + version as i32, 0, &mode, &ddata, 0);
+    let (_, mut full_stream) =
+        qr_binary_segs(MICROQR_VERSION + version as i32, 0, &mode, &ddata, 0);
 
     microqr_end(&mut full_stream, ecc_level, version);
     let bp = full_stream.len();
@@ -1837,7 +1942,11 @@ pub(crate) fn microqr(symbol: &mut ZintSymbol, source: &[u8]) -> i32 {
     symbol.option_3 = (symbol.option_3 & 0xFF) | ((bitmask as i32 + 1) << 8);
 
     // Add format data
-    let format = if version != 0 { (version - 1) * 2 + ecc_level + 1 } else { 0 };
+    let format = if version != 0 {
+        (version - 1) * 2 + ecc_level + 1
+    } else {
+        0
+    };
 
     let format_full = u32::from(QR_ANNEX_C1[(format << 2) + bitmask]);
 

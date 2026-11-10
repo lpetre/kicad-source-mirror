@@ -21,7 +21,6 @@
 //! the reference `kicad-cli pcb drc --refill-zones --save-board` is
 //! `kicad-session/tests/zf06_refill_save.rs`.
 
-
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::PcbLayerId;
 use kicad_drc::engine::DrcEngine;

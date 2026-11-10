@@ -3535,3 +3535,109 @@ Deviations: none new. Known gaps: R2-09 cell `lib.start` / `lib.end` (unread);
 `PCB_DIMENSION_BASE::GetValueFieldText`; out-of-range `zone_connect` in DRC report texts
 (`PrintZoneConnection`) and library parity comparisons depend on callers switching to the raw
 accessors (change requests).
+
+## Package FONT-RC-1: outline-font text without a font engine (stored render cache as stand-in)
+
+The reference never uses the `(render_cache ...)` read from a board file: the load path clears
+it (`SetVisible( true )` for board text, `SetLibTextSize` for footprint text) and every reader
+(`formatRenderCache`, plotting, `TransformTextToPolySet`, `GetEffectiveTextShape`, the TrueType
+branch of the DRC text thickness check) regenerates the glyphs through `GetRenderCache` with
+FreeType / HarfBuzz from the font installed on the host. The port has no outline font engine
+(kicad-font D1). Decision (R2-06, orchestrator): the glyphs stored in the file stand in for the
+regenerated ones while the text is unchanged. This is a documented deviation from the C++
+control flow, not from its results on a machine that has the font.
+
+| C++ | Rust | state |
+|---|---|---|
+| `parseRenderCache` (`SetupRenderCache`, `AddRenderCacheGlyph`) | `parse_render_cache`, then `EdaText::keep_file_render_cache` (not in C++) | ported + stand-in copy |
+| (not in C++) | `EdaText::file_render_cache` (`EdaTextFileRenderCache`: the loaded cache + key), `eda_text::seal_file_render_cache` (end of `parse_pcb_text_effects`: board / footprint / dimension text and fields; end of `bake_text_box_lib`: text boxes, table cells) | new |
+| `EDA_TEXT::GetRenderCache` | `eda_text::render_cache`: the live cache as before, else `file_render_cache_stand_in` where C++ would regenerate | ported + stand-in |
+| (not in C++) | `eda_text::outline_font_fallback`, `outline_font_fallbacks( ctx )` (`OutlineFontFallback::message()`: "text uses font X which is not available; drawn with the stroke font"): visible outline texts without a valid stand-in, `RunOnChildren` order | new |
+| `formatRenderCache` | unchanged: writes the stand-in glyphs (fractured as `CALLBACK_GAL` does), header from the current text as before | ported |
+
+Validity of the stand-in: sealed, glyphs not empty; resolved text (`GetShownText( FOR_CANVAS )`),
+angle (draw rotation, compared normalised to [0, 360): older files record -90 where the draw
+rotation is 270), offset and mirroring as in `GetRenderCache`; plus face name, size,
+justification, line spacing, italic, bold and multi-line as recorded at seal time (everything
+whose setter clears the cache and that `OUTLINE_FONT::GetLinesAsGlyphs` reads; not the stroke
+width, colour, keep-upright). A changed draw position translates the glyphs (what
+`EDA_TEXT::Offset` does to a live cache), so footprint moves keep the stand-in; a rotation does
+not. Readers (writer, `PCB_TEXT::TransformTextToPolySet`, `PCB_TEXTBOX`, `GetEffectiveTextShape`,
+kicad-fab `PlotText`, kicad-drc `checkTextThickness`) all go through `render_cache`, so no reader
+changed. `GetTextBox` / `StringBoundaryLimits` use the face's ascender, descender and HarfBuzz
+advances, not the glyph polygons: the text bounding box stays on the stroke-font fallback (known
+gap below).
+
+Without a valid stand-in the writer writes the header only (`(render_cache "text" angle)`), as
+before: the reference always produces glyphs (fontconfig substitutes a font for a missing one:
+Calibri -> Carlito Bold, Ubuntu Sans -> Inter Bold), so "what the reference writes when it
+cannot produce glyphs" does not occur on the oracle machine. The header is unchanged and matches
+the reference's header on all corpus caches.
+
+Verification:
+
+* (a) Crafted board `tests/data/font_rc1/frc.kicad_pcb` (from `frc_input.kicad_pcb`, re-saved by
+  the reference; fonts the oracle machine has: DejaVu Sans / Serif / Sans Mono, Liberation
+  Sans / Serif / Mono; board texts incl. rotated bold italic, multi-line justified, mirrored on
+  B.SilkS, a text variable, footprint fields and text in a 90 degree footprint, a rotated text
+  box; 10 caches). The reference re-save of it is byte-identical to it (idempotent).
+  - re-save: `kicad-rs pcb upgrade --force` byte-identical to the reference
+    (`font_rc1_stand_in::resave_reproduces_reference`, parse + format; also checked at session
+    level with the CLI);
+  - Gerber: `pcb export gerbers -l F.Cu,B.Cu,F.SilkS,B.SilkS,F.Fab,User.1,User.2,User.3`: all 8
+    layer files and the job file identical to the reference (CreationDate masked);
+    kicad-fab `plot_text::crafted_text_matches_cli` now matches User.2 / User.3 too (75 files
+    matched, 0 known differences, was 10 known);
+  - DRC (`frc.kicad_dru`: text_height min 1 mm, text_thickness min 0.15 / 0.2 / 0.25 mm): the
+    text_height and text_thickness violations identical to the reference (11 / 11). At
+    text_thickness min 0.1 mm the port reports one more (`Liberation Bold`): see known gaps.
+* (b) Marker triangle (`marker_triangle_cache_is_used_and_written`): a cache replaced by a
+  triangle no font produces is exactly what `GetEffectiveTextShape` returns (outline and
+  triangulated) and what the writer writes back; the plot path reads the same `render_cache`.
+  Edited text (`edited_text_has_no_stand_in`): no stand-in, reported by `outline_font_fallbacks`,
+  header-only cache written. Unit tests in `io/parser/text.rs` (move translates, size / angle /
+  justification edits invalidate, footprint text legacy and new format).
+* (c) Corpus boards with outline fonts (parser-level load, visible outline texts with a valid
+  stand-in / total): issue22475 1/1, issue14549 6/6 (one cache recorded with angle -90, see
+  above), RoyalBlue54L-Feather 72/72, tinytapeout-demo 4/4, jetson-agx-thor-baseboard 72/72; no
+  fallback on any corpus board. Their reference outputs come from substitute fonts, so they are
+  not compared byte for byte: kicad-session `upgrade_corpus` keeps masking render-cache glyph
+  polygons. kicad-drc `drc24_courtyard_text::text_providers_match_reference_corpus` now compares
+  issue22475 (before: pending) and the port does not report the `text_thickness` the reference
+  reports on its `Franklin Gothic Medium` text, which the reference measures on fontconfig's
+  substitute (change request: expected difference).
+
+Deviations: the stand-in itself (above); the stand-in angle comparison is normalised.
+
+Known gaps:
+
+* Stored glyphs are fractured: `formatRenderCache` writes each outline of a glyph as its own
+  `(polygon ...)` with holes bridged (`Fracture`), and `parseRenderCache` makes one glyph per
+  polygon. The DRC thickness check (deflate, compare outline / hole counts) therefore sees slit
+  outlines where the font gives outlines with holes; on the crafted board this flags one text at
+  min 0.1 mm that the reference does not (`Unfracture()` of the stored glyph would match the
+  reference there, but changes point order, so it would break the byte-identical re-save and
+  plot if applied to the stand-in; not done, decision pending).
+* Bounding box (`GetTextBox`) of outline text: stroke-font metrics (needs the face's metrics).
+* Embedded fonts (out of scope; kicad-fab plots stroke text when fonts are embedded). What an
+  outline engine package needs: FreeType outline decomposition (`OUTLINE_DECOMPOSER`, contour
+  orientation, hole assignment by `PointInside`), HarfBuzz shaping (`getHarfbuzzShape`:
+  advances, cluster order), the font lookup order (`FONT::GetFont`: embedded files of the board
+  first, then fontconfig with its substitution rules), fake bold / italic, the outline font
+  metrics for `GetTextBox`, and the oracle machine's installed fonts (`fc-list`: DejaVu,
+  Liberation, Carlito, Caladea, Inter, JetBrains Mono, Free*, Noto, IPA, ...) to reproduce the
+  reference's substitutes.
+
+## Package ZINT-1: barcode symbol encoder wiring
+
+`pcb_barcode.rs` `encode_symbol` now calls `kicad_zint::encode` (the port of the bundled
+zint 2.15.0, crate `kicad-zint`, see its PORT_STATUS.md) with the settings of `zint_options`
+and maps the vector rectangles / hexagons into `ModuleMatrix`; `compute_barcode` sets
+`last_error` like `ComputeBarcode` (the international-characters text when `ZBarcode_Encode`
+fails on non-ASCII text, zint's `errtxt` otherwise). `ENCODER_NOT_AVAILABLE` is removed; this
+supersedes the M25a deviation "No symbol encoder" and the gap "`encode_symbol` always `None`".
+`BarcodeUndefinedVariable` now checks `GetSymbolPoly().OutlineCount() > 0` as in C++.
+
+Verification: `barcodes_match_reference_dump` (feature `dump`): 600 values (barcode polygons,
+`last_error`, all bounding boxes of five boards with 36 barcodes) equal to `pcb-dump`.
+

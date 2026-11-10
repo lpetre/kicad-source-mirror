@@ -375,6 +375,14 @@ Progress log:
   (enumerator on the real via model + the crate's leftovers, drill export verified on every
   corpus board with holes) -> FAB-10 mask minimum width / clipped silk -> FAB-11 SVG plots,
   drill marks, svg job -> FAB-12 drill maps (wvkfmdjv4).
+  05:20 UTC: done ZINT-1 - new crate kicad-zint (port of the zint 2.15.0 subset behind
+  PCB_BARCODE: Code 39, Code 128, QR, Micro QR, Data Matrix, vector output; BSD-3 / MIT
+  notices kept in the files - list them in the final README / third-party document):
+  319,061 cases against the reference build's libzint identical (return code, error text,
+  bitmap, every rectangle as float bits); barcode polygons, error texts and boxes equal the
+  reference dump on 600 of 600 lines; the plot and gerbers-job corpora now have 0 known
+  differences. Leftover switches named in its report (dump defaults, test skip lists) go to
+  FAB-GLUE / GLUE-3.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

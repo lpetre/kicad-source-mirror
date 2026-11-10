@@ -42,4 +42,37 @@ Deviations:
   uses here (identical output); the `%.4g` message of `set_height` is unreachable (max height
   is always 0) and not produced.
 
-Verification: see "Oracle" below.
+Tests:
+- `tests/zint_oracle.rs` `zint_matches_oracle`: differential replay of
+  `tests/oracle/zint_oracle.c`, a C driver linked against the reference build's `libzint.a`
+  (the zint objects `kicad-cli` uses, -O3 -DNDEBUG), built by `tests/oracle/build_oracle.sh`
+  under the machine-wide lock. 319,061 generated cases, encoded exactly as `ComputeBarcode`
+  does, each compared as a line (return code, `errtxt`, rows, width, height bits,
+  option_1/2/3 feedback, row heights, module bitmap, `ZBarcode_Buffer_Vector` return / errtxt,
+  vector size and every rectangle as float bits, hexagons), FNV-1a hashed per block of 1000
+  (golden `tests/golden/zint_hashes.txt`, 321 lines):
+  * sweep: every symbology x ECC (QR / Micro QR 1..4) x class (digits, QR alphanumerics,
+    printable ASCII, any ASCII incl. control / NUL, Latin-1, kanji) x length 1 .. beyond the
+    capacity (step 1 below 400 characters, then 41 (QR) / 29 (DM)), plus every QR version
+    capacity (digits / alphanumerics / bytes, -1 / 0 / +1, 4 ECC levels) and every Data Matrix
+    size capacity (digits, C40 text, -1 / 0 / +1);
+  * 300,000 pseudo-random inputs (fixed seed, splitmix64 mirrored in C and Rust): symbology,
+    ECC (incl. Micro QR H), KiCad's ECI rule or none (10 %), 1-3 character classes in runs
+    (adding 2-byte, 3-byte, 4-byte UTF-8, Shift JIS specials, digit-heavy mixes), lengths up
+    to 7200 (QR) / 3200 (DM) characters.
+  Result: all 321 blocks identical (full run, `ZINT_ORACLE_FULL=1`, 580 s; the default run
+  replays every 8th block, about 60 s). The cases that need the not-ported ECI retry are
+  compared as "not ported" on both sides (the C driver detects the retry by the changed
+  `symbol->eci`).
+- `zint_cases_match_reference`: 35 hand-picked inputs (`tests/golden/zint_cases.txt`, from
+  `zint_oracle input`): every error / warning text KiCad can show, invalid UTF-8, BOM,
+  Shift JIS conversion warnings, Data Matrix macro 05, NUL, ECI range check.
+- `common::tests::utf8_dfa_matches_std`: the UTF-8 DFA table accepts exactly valid UTF-8.
+- End to end (kicad-pcb `pcb_barcode::tests::barcodes_match_reference_dump`, feature `dump`):
+  `pcb-dump board --hash --sections misc,bbox` of `barcode_frames` / `barcode_cases`
+  (`tests/data`, 32 barcodes incl. every error path), `issue24525`, `api_kitchen_sink`,
+  `project_barcode` (golden `tests/golden/pcb_barcode_dump.txt`): barcode `poly`,
+  `symbol_poly`, `text_poly`, `last_error` and every `bbox` line of those boards (barcodes and
+  footprints around them): 600 / 600 equal. The kicad-fab plot corpus (`project_barcode`
+  F.Silkscreen, `issue24525` Edge.Cuts) and the kicad-session gerbers job corpus now report
+  0 known differences (the barcode layers are byte-identical).

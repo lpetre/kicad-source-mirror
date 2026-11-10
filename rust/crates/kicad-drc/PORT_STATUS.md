@@ -1750,3 +1750,75 @@ diff-pair nets.
   build of the same connectivity (built only when the board has copper zones).
 - Providers run sequentially in registry order; report order of the thread-pool providers
   is the index order (drc.md 4.12) and is compared order-insensitively.
+
+### Verification
+
+`tests/oracle/drc12_cli_compare.py` (`ref`: reference `kicad-cli pcb drc --severity-all --units
+mm` in text and JSON on a copy of each of the 365 corpus boards of `drc_corpus.txt`, outputs
+cached under `rust/target/drc12-cli/`; `cmp`: the same with `kicad-rs`, comparing the text
+report, the JSON report, stdout and the exit code; `golden`: `tests/golden/drc12_cli.txt`).
+Normalisation: the date line only for the exact comparison; for the filtered comparison the
+entries of the unported providers' codes (`UNPORTED_PROVIDERS`) and the not-run section are
+removed (counts recomputed, stdout counts checked against each side's own report), and three
+documented reference effects are neutralised: the item line of the board itself (`PCB`: a
+random UUID in C++, the port's board has no UUID yet, DRC-23 gap), the item order of
+`connection_width` (C++ `std::set` of pointers), types at the error limit (199 / 499:
+count only, drc.md 9.4 (3)); JSON item UUIDs absent from the board file are compared as
+generated (drc.md 9.4 (4)). Rust replay without the oracle: `kicad-session/tests/
+drc12_corpus.rs` (FNV-1a of the filtered text report, in order and with sorted sections).
+
+Result (state of 2026-11-10, 364 boards compared; `plugins/fakeboard` fails in the reference):
+
+| Outcome | Boards |
+|---|---|
+| byte for byte equal (text, JSON, stdout, exit code) | 47 |
+| equal after filtering the unported codes, in report order | 254 |
+| equal as sets (order differs: reference thread pool) | 51 |
+| different | 12 |
+
+Every difference has a known cause outside this package (`KNOWN_DIFFERENCES` in the replay):
+7 boards `missing_tuning_profile` extra (18 entries): `TUNING_PROFILES` is not in the
+session's project model (SET-11), so the misc provider and the implicit rules see no
+profiles; 3 boards `unresolved_variable` of drawing-sheet texts missing (8): `SetDrawingSheet`
+is not wired (drawing sheet model); `issue22475` one `text_thickness` of a TrueType text
+missing (outline-font branch of text_dims, DRC-24 gap); `fw16_MCIO8i` one `connection_width`
+entry names other items (pointer-set order); `api_kitchen_sink` one `clearance` missing
+(barcode 'acode' on F.Cu against an Edge.Cuts polygon, rule `barcode visual separation`;
+open, belongs to the clearance providers). Matched per code: every code of the ported
+providers on the other 352 boards; stdout and exit codes equal on all 364 boards
+(the Rust stdout additionally carries the not-run lines).
+
+Error codes compared (ported providers): all codes of annular_width, disallow, connectivity,
+copper width, clearance, physical_clearance, courtyard_clearance, edge_clearance, footprint
+checks, hole_to_hole_clearance, hole_size, miscellaneous, text_dimensions, track angle,
+width, segment_length, zone connections, diameter, microvia_stack, solder_mask_issues,
+silk_clearance, sliver checker, text_mirroring. Not compared: the codes of
+`UNPORTED_PROVIDERS` (creepage, lib_footprint_*, schematic parity codes,
+net_chain_tuning_profiles, via_stitch_overlap, length / skew / via count / net chain codes,
+diff pair codes).
+
+Not verified yet: `--refill-zones` / `--save-board` (kicad-zone path, not run against the
+reference), `--units in|mils`, `--severity-error|warning|exclusions`, `--all-track-errors`,
+`--exit-code-violations` with the job (the report writers are verified for units and
+severities by DRC-11), the rule-file error exit (unit-level only: `run_drc` path), parity
+messages.
+
+### Ported C++ tests
+
+| C++ | Rust |
+|---|---|
+| `qa/tests/pcbnew/drc/test_drc_regressions.cpp` `DRCFalsePositiveRegressions` (21 boards) | `kicad-session/tests/drc12_regressions.rs` `drc_false_positive_regressions`: 21 of 21 pass |
+| `DRCFalseNegativeRegressions` (23 boards, exact counts) | `drc_false_negative_regressions`: all 23 counts equal the C++ expectation; asserted only when no check was left out, which currently is never (diff pair coupling runs on every board with diff-pair nets, library parity where its codes are not ignored), so they are reported as pending with the missing providers |
+| `DRCHoleToHoleReportsRuleValue` | `drc_hole_to_hole_reports_rule_value`: passes |
+| `DRCZoneFalsePositiveRegressions`, `DRCTeardropOverCopperField` | not ported (need `KI_TEST::FillZones`) |
+
+### Known gaps
+
+- Engine change requests of the provider packages not done: `DrcRunHost` for `DrcRunState`
+  (the `RunHost` wrapper stays), `DrcEngine::run_tests` still takes a cache closure (the real
+  run is `run_flow::run_tests`), `DrcRtree` insert with an explicit parent, `silk_over_copper`
+  from two providers (both run; report order follows the registry).
+- `TUNING_PROFILES`, the drawing sheet and the footprint libraries are not passed by the
+  session (see Verification).
+- The shared harness `tests/drc_harness` now builds the connectivity
+  (`build_connectivity`) and runs the providers with it (orchestrator note).
