@@ -267,15 +267,16 @@ fn edits_change_the_board() {
     assert_eq!(new_via.width, sizes.via_diameter);
     assert_eq!(new_via.via.as_ref().unwrap().drill, sizes.via_drill);
 
-    // SetNetCode on an isolated track sticks (a track touching pads gets their net back
-    // from the connectivity rebuild's net propagation, as in KiCad).
+    // SetNetCode on a track connected to a via of another net: the net propagation of the
+    // commit gives it the via's net back, as the reference's BOARD_COMMIT::Push does (LIVE-1:
+    // tests/oracle/live1_oracle.cpp on this edit, incrementally and after a full rebuild).
     s.change(&ItemChange {
         id: added.added[0],
         net: Some(t.net),
         ..ItemChange::default()
     })
     .unwrap();
-    assert_eq!(s.route_item(added.added[0]).unwrap().net, t.net);
+    assert_eq!(s.route_item(added.added[0]).unwrap().net, other_net);
 
     // Errors leave the board as it was.
     let before = s.route_items();

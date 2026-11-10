@@ -52,9 +52,11 @@ const PROVEN_HISTORY: &[(&str, usize)] = &[
 /// The reference driver, if built (`tests/oracle/gen_live1_golden.sh` with
 /// `KEEP=<rust>/target/live1`, or `LIVE1_ORACLE_BIN`).
 fn oracle_bin() -> Option<std::path::PathBuf> {
-    let p = std::env::var("LIVE1_ORACLE_BIN").map(Into::into).unwrap_or_else(|_| {
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/live1/live1_oracle")
-    });
+    let p = std::env::var("LIVE1_ORACLE_BIN")
+        .map(Into::into)
+        .unwrap_or_else(|_| {
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/live1/live1_oracle")
+        });
     p.exists().then_some(p)
 }
 
@@ -81,8 +83,11 @@ fn classify(rel: &str, script: &str, k: usize, live: &[String], full: &[String])
     let text = String::from_utf8_lossy(&out.stdout);
     let commit = |c: usize| -> Vec<String> {
         let p = format!("{c}|");
-        let mut v: Vec<String> =
-            text.lines().filter_map(|l| l.strip_prefix(&p)).map(String::from).collect();
+        let mut v: Vec<String> = text
+            .lines()
+            .filter_map(|l| l.strip_prefix(&p))
+            .map(String::from)
+            .collect();
         v.sort();
         v
     };
@@ -181,7 +186,8 @@ fn live1_incremental_equals_full_build() {
                 if let Ok(dir) = std::env::var("LIVE1_FAIL_DIR") {
                     let st = stem(rel);
                     let dir = std::path::Path::new(&dir);
-                    std::fs::write(dir.join(format!("{st}.script")), format!("{script}F\n")).unwrap();
+                    std::fs::write(dir.join(format!("{st}.script")), format!("{script}F\n"))
+                        .unwrap();
                     let mut text = String::new();
                     for (c, lines) in [(k + 1, &la), (k + 2, &fa)] {
                         for l in lines.iter() {
@@ -194,7 +200,11 @@ fn live1_incremental_equals_full_build() {
                 let mut d = diff(&lr, &fr, max);
                 d.extend(diff(&lb, &fb, max));
                 for n in &bad_nets {
-                    d.push(format!("edges of net {n}: {:?} vs {:?}", le.get(n), fe.get(n)));
+                    d.push(format!(
+                        "edges of net {n}: {:?} vs {:?}",
+                        le.get(n),
+                        fe.get(n)
+                    ));
                 }
                 let ops: Vec<String> = ops.iter().map(Op::line).collect();
                 failures.push(format!(
@@ -222,7 +232,6 @@ fn live1_incremental_equals_full_build() {
 
 #[test]
 fn live1_rollback_restores_the_base_state_exactly() {
-
     for (bi, rel) in boards().iter().take(12).enumerate() {
         let mut s = load(rel).expect("load");
         let base_save = s.save().expect("save");
@@ -265,10 +274,25 @@ fn live1_rollback_restores_the_base_state_exactly() {
 
         let first = run(&mut s);
         s.rollback(&cp);
-        assert_eq!(s.save().expect("save"), base_save, "{rel}: save after rollback");
-        assert_eq!(live_facts(&s), base_facts, "{rel}: connectivity after rollback");
-        assert_eq!(uuid_handles(&s), base_uuids, "{rel}: handles after rollback");
-        assert!(!s.connectivity.is_stale(&s.board), "{rel}: connectivity stale");
+        assert_eq!(
+            s.save().expect("save"),
+            base_save,
+            "{rel}: save after rollback"
+        );
+        assert_eq!(
+            live_facts(&s),
+            base_facts,
+            "{rel}: connectivity after rollback"
+        );
+        assert_eq!(
+            uuid_handles(&s),
+            base_uuids,
+            "{rel}: handles after rollback"
+        );
+        assert!(
+            !s.connectivity.is_stale(&s.board),
+            "{rel}: connectivity stale"
+        );
 
         let second = run(&mut s);
         assert_eq!(first.len(), second.len());
@@ -277,6 +301,10 @@ fn live1_rollback_restores_the_base_state_exactly() {
         }
 
         s.restore(cp);
-        assert_eq!(s.save().expect("save"), base_save, "{rel}: save after restore");
+        assert_eq!(
+            s.save().expect("save"),
+            base_save,
+            "{rel}: save after restore"
+        );
     }
 }

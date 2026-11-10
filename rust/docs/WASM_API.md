@@ -26,8 +26,9 @@ reads, writes, checks and saves.
 | enums | the C++ enumerator names: `PTH`, `ROUNDRECT`, `CHAMFERED_RECT`, `THERMAL`, ... |
 
 Every bulk call returns one JSON value: never one wasm call per item. Every edit call returns
-`EditResult` `{ added, addedUuids, removed, changed }` (handles) and ends with one connectivity
-rebuild (`BOARD::BuildConnectivity`); `applyEdits` takes any number of edits for one rebuild.
+`EditResult` `{ added, addedUuids, removed, changed }` (handles) and is one transaction (LIVE-1:
+`BOARD_COMMIT::Push` with incremental connectivity, see "Live router loop"); `applyEdits`
+takes any number of edits for one transaction.
 Errors are JavaScript `Error`s named `<Kind>Error` (`InvalidArgumentError`, `StaleIdError`,
 `NotYetPortedError` with a `subsystem` property, ...).
 
@@ -68,7 +69,7 @@ Errors are JavaScript `Error`s named `<Kind>Error` (`InvalidArgumentError`, `Sta
 
 | Call | Takes |
 |---|---|
-| `applyEdits(batch)` | `EditBatch` `{ remove?: [id], removeRouting?: { nets?, keepLocked?, vias? }, change?: [ItemChange], add?: [NewItem] }`, applied in that order; one connectivity rebuild |
+| `applyEdits(batch)` | `EditBatch` `{ remove?: [id], removeRouting?: { nets?, keepLocked?, vias? }, change?: [ItemChange], add?: [NewItem] }`, applied in that order; one transaction (new items appended) |
 | `addTrackSegment(t)`, `addArc(a)`, `placeVia(v)` | one `NewTrack` / `NewArc` / `NewVia` |
 | `changeItem(c)` | `ItemChange` `{ id, start?, end?, mid?, width?, drill?, layer?, bottom?, net?, locked?, free? }` (a via: `start` moves it, `layer` / `bottom` set the layer pair) |
 | `removeItems([id])`, `removeRouting({ nets, keepLocked, vias })` | |
@@ -151,6 +152,58 @@ const routed = b.save();                          // the routed .kicad_pcb
 
 `web/test/router_loop.mjs` runs this loop (record, remove all routing, re-add, teardrops,
 refill, DRC, save) on three boards and compares every result with the native run.
+
+## Live router loop (package LIVE-1)
+
+A candidate loop per routing attempt: start from the same base board each time, edit in
+transactions (connectivity is updated incrementally, the ratsnest of the dirty nets only),
+read connectivity / quick DRC, roll back; for the winner, `finalize()` before the full refill,
+DRC and save.
+
+| Call | Does |
+|---|---|
+| `new Transaction()` | an empty staged commit; `remove(handles)` (`Float64Array` or numbers), `removeRouting(opts)`, `change(ItemChange)`, `add(NewItem)`, `stage(EditBatch)`, `addTracks(Int32Array)`, `addArcs(Int32Array)`, `addVias(Int32Array)`; `length`; `append = true` adds at the end of the track list (`ADD_MODE::APPEND`) instead of the front (`BULK_INSERT`, as `Push`); `skipConnectivity = true` is `SKIP_CONNECTIVITY` |
+| `commit(txn)` | `BOARD_COMMIT::Push`: entries in staging order (`Add` / `Remove` / `MarkItemNetAsDirty` + `Update`), `RecalculateRatsnest`, `UpdateRatsnestExclusions`; returns `CommitReport` = `EditResult` + `{ dirtyNets, netUnconnected: [[net, edges]], unconnected, unconnectedVisible, netChanges: [{ id, from, to }] }` (`netChanges`: items whose net the propagation changed) |
+| `commitBulk(txn)` | the same, typed arrays: `added` / `removed` / `changed` `Float64Array`, `dirtyNets` `Int32Array`, `netUnconnected` `Int32Array` pairs, `netChanges` `Float64Array` triples `[id, from, to]`, no UUID strings |
+| `checkpoint()` | saves board and connectivity (deep copy), returns a token |
+| `rollback(token)` | restores board and connectivity exactly: same items, handles, UUIDs, nets, fills, UUID generator state; the checkpoint stays usable; `releaseCheckpoint(token)` frees it |
+| `finalize()` | `BOARD::BuildConnectivity()`, what a reload of the saved board computes |
+| `routeRecords()` | `{ trackIds, tracks, arcIds, arcs, viaIds, vias }`: the routing as flat records in board order |
+
+Flat records (`Int32Array`, layers as `PCB_LAYER_ID` values: `F.Cu` 0, `B.Cu` 2, `In1.Cu` 4,
+...): track `x1, y1, x2, y2, width, layer, net` (7), arc the same plus `midX, midY` (9), via
+`x, y, diameter, drill, top, bottom, net, type` (8; type 0 through, 1 blind, 2 buried, 3
+micro). Every other property is the `NewTrack` / `NewArc` / `NewVia` default.
+
+```js
+const base = b.checkpoint();
+for (const candidate of candidates) {
+    b.rollback(base);
+    const t = new Transaction();
+    t.remove(candidate.ripUp);            // Float64Array of handles
+    t.addTracks(candidate.segments);      // Int32Array, 7 values per segment
+    t.addVias(candidate.vias);            // Int32Array, 8 values per via
+    const r = b.commitBulk(t);            // incremental connectivity
+    score(candidate, r.unconnected, b.quickDrc({ providers: ['clearance'] }));
+}
+b.rollback(base);
+b.commit(best);                           // or replay the best candidate
+b.finalize();                             // full rebuild, as a reload would
+b.updateTeardrops(); b.refillZones(); b.runDrc({ format: 'json' }); b.save();
+```
+
+Semantics. The incremental state is the reference's own incremental state: after every commit,
+nets, clusters, ratsnest nodes and edge weights, unconnected counts, dangling ends and
+`IsConnectedOnLayer` equal what KiCad's `BOARD_COMMIT::Push` leaves (verified against the
+reference build, `crates/kicad-session/tests/live1_oracle.rs`). Like KiCad, that state can
+differ from a full rebuild of the same board (net propagation and the ends of ratsnest edges
+depend on the build history); `finalize()` is the full rebuild. Teardrops are not updated by
+a commit (`SKIP_TEARDROPS`): call `updateTeardrops()`.
+
+Cost (release / wasm-release, medium board `complex_hierarchy`, median of 60 commits that
+remove or re-add a tenth of the routing): commit 0.50 ms native / 0.99 ms wasm, against 4.5 /
+8.0 ms with a full rebuild per commit; checkpoint 0.9 / 1.2 ms; rollback 1.6 / 2.5 ms
+(`docs/PERF.md`, LIVE-1).
 
 ## Verification (package WASM-API-1)
 

@@ -22,7 +22,7 @@ import { performance } from 'node:perf_hooks';
 const here = dirname(fileURLToPath(import.meta.url));
 const rust = join(here, '..', '..', '..');
 const args = process.argv.slice(2);
-let reps = 7, warmup = 1, pkg = join(rust, 'web', 'pkg-node'), commit = '-';
+let reps = 7, warmup = 1, pkg = join(rust, 'web', 'pkg-node'), commit = '-', only = null;
 const boards = [];
 
 while (args.length) {
@@ -31,6 +31,7 @@ while (args.length) {
     else if (a === '--warmup') warmup = Number(args.shift());
     else if (a === '--pkg') pkg = resolve(args.shift());
     else if (a === '--commit') commit = args.shift();
+    else if (a === '--pipelines') only = args.shift().split(',');
     else boards.push(resolve(a));
 }
 
@@ -96,7 +97,42 @@ for (const board of boards) {
             stage('drc_after_refill', () => b.runDrc({}));
             b.free();
         },
+        // LIVE-1 (not in the default set, `--pipelines live`): the `live` pipeline of
+        // kicad-bench through Transaction / commitBulk / checkpoint / rollback.
+        live: () => {
+            const b = k.loadBoard(text, opts);
+            const rec = b.routeRecords();
+            const ids = Float64Array.from([...rec.trackIds, ...rec.arcIds, ...rec.viaIds]);
+            const part = (a, stride, i) => {
+                const n = a.length / stride, per = Math.ceil(n / 10);
+                return a.subarray(Math.min(i * per, n) * stride, Math.min((i + 1) * per, n) * stride);
+            };
+            const batches = [];
+            for (let i = 0; i < 10; i++) {
+                const t = new k.Transaction();
+                t.remove(part(ids, 1, i).slice());
+                batches.push(t);
+            }
+            for (let i = 0; i < 10; i++) {
+                const t = new k.Transaction();
+                t.append = true;
+                t.addTracks(part(rec.tracks, 7, i));
+                t.addArcs(part(rec.arcs, 9, i));
+                t.addVias(part(rec.vias, 8, i));
+                batches.push(t);
+            }
+            const cp = stage('live.checkpoint', () => b.checkpoint());
+            for (const t of batches) stage('live.commit', () => b.commitBulk(t));
+            stage('live.rollback', () => b.rollback(cp));
+            for (const t of batches) {
+                stage('live.commit_full', () => { b.commitBulk(t); b.rebuildConnectivity(); });
+            }
+            stage('live.rollback', () => b.rollback(cp));
+            b.free();
+        },
     };
+    if (!only) delete pipelines.live;
+    else for (const n of Object.keys(pipelines)) if (!only.includes(n)) delete pipelines[n];
 
     for (let rep = 0; rep < warmup + reps; rep++) {
         keep = rep >= warmup;

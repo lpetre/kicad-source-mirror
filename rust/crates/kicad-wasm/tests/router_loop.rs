@@ -154,6 +154,8 @@ fn run_loop(rel: &str) -> Value {
         Value::Null
     };
 
+    // LIVE-1: the full rebuild a reload of the saved board runs, before refill / DRC / save
+    s.finalize();
     s.refill_zones().unwrap();
     let drc = drc_json(&mut s);
     let violations = s.drc_violations(

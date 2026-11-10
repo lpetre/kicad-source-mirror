@@ -656,6 +656,27 @@ Progress log:
   executables older than 45 min) and check df; the two agent groups now running
   (performance loop, LIVE-1) follow the disk rules of PORTING.md section 7. Disk now: 16 GB
   free.
+  09:20 UTC: the user shared two files of the friend's repo (the JavaScript wrapper around
+  his KiCad module and a README; the repo itself is not attached - the session has no
+  GitHub access to it).
+  Facts: his KiCad is "kicad-wasm, KiCad 10.0.5's board code" compiled with Emscripten
+  (5 MB gzipped, about 900 MB at run time, wasm threads, so the page needs cross-origin
+  isolation headers), driven through a set of C entry points (open, save, fill, DRC,
+  export and import of the routing, teardrops, stitching, island query and a few more)
+  exchanging JSON files in a memory file system (formats not seen). Its sessions re-open
+  the source board for every check (see docs/PERF.md).
+  Port's module for comparison: 8.6 MB raw / 2.9 MB gzipped, single-threaded.
+  FOUND: VERSION MISMATCH. He uses KiCad 10.0.5 (board file format 20260206); the port
+  follows this tree = KiCad master 10.99 (format 20261031, 25 format bumps into 11.0
+  development). The port READS every older format, but it WRITES only the newest, which
+  KiCad 10.0.x refuses to open ("created with a more recent version"). DRC behaviour of
+  master may also differ from 10.0.5. Mitigation to decide with the user: a "save as KiCad
+  10" writer mode (inverse of the 25 bumps, e.g. footprint lib-frame storage, bold stroke
+  width, via-type split), verified against a second reference built from the 10.0.5 tag
+  (not in this clone: needs a fetch and a second multi-hour oracle build, about 3 GB).
+  To build an exact drop-in for his wrapper still needed: the code behind his export,
+  import, hint, island and GND-fill steps, the JavaScript that reads the DRC report and
+  the board export, and a sample of each JSON file for one board.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

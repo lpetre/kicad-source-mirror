@@ -86,7 +86,11 @@ impl Rng {
     }
 
     pub fn below(&mut self, n: usize) -> usize {
-        if n == 0 { 0 } else { (self.next() % n as u64) as usize }
+        if n == 0 {
+            0
+        } else {
+            (self.next() % n as u64) as usize
+        }
     }
 
     pub fn chance(&mut self, percent: u64) -> bool {
@@ -117,9 +121,23 @@ pub enum Op {
     /// `R <uuid>`
     Remove(String),
     /// `T <uuid> x1 y1 x2 y2 width layer net`
-    Track { uuid: String, s: [i32; 2], e: [i32; 2], w: i32, layer: i32, net: i32 },
+    Track {
+        uuid: String,
+        s: [i32; 2],
+        e: [i32; 2],
+        w: i32,
+        layer: i32,
+        net: i32,
+    },
     /// `V <uuid> x y diameter drill net free`
-    Via { uuid: String, at: [i32; 2], d: i32, drill: i32, net: i32, free: bool },
+    Via {
+        uuid: String,
+        at: [i32; 2],
+        d: i32,
+        drill: i32,
+        net: i32,
+        free: bool,
+    },
     /// `M <uuid> x y` (`SetPosition` of a via, `SetStart` of a track)
     Move { uuid: String, at: [i32; 2] },
     /// `N <uuid> net`
@@ -130,11 +148,31 @@ impl Op {
     pub fn line(&self) -> String {
         match self {
             Op::Remove(u) => format!("R {u}"),
-            Op::Track { uuid, s, e, w, layer, net } => {
-                format!("T {uuid} {} {} {} {} {w} {layer} {net}", s[0], s[1], e[0], e[1])
+            Op::Track {
+                uuid,
+                s,
+                e,
+                w,
+                layer,
+                net,
+            } => {
+                format!(
+                    "T {uuid} {} {} {} {} {w} {layer} {net}",
+                    s[0], s[1], e[0], e[1]
+                )
             }
-            Op::Via { uuid, at, d, drill, net, free } => {
-                format!("V {uuid} {} {} {d} {drill} {net} {}", at[0], at[1], *free as i32)
+            Op::Via {
+                uuid,
+                at,
+                d,
+                drill,
+                net,
+                free,
+            } => {
+                format!(
+                    "V {uuid} {} {} {d} {drill} {net} {}",
+                    at[0], at[1], *free as i32
+                )
             }
             Op::Move { uuid, at } => format!("M {uuid} {} {}", at[0], at[1]),
             Op::Net { uuid, net } => format!("N {uuid} {net}"),
@@ -178,7 +216,11 @@ impl Gen {
                 net: r.net,
             })
             .collect::<Vec<_>>();
-        let pads = s.pads(false).into_iter().map(|p| (p.position, p.net)).collect();
+        let pads = s
+            .pads(false)
+            .into_iter()
+            .map(|p| (p.position, p.net))
+            .collect();
         let zone_points = s
             .zones_info(false)
             .into_iter()
@@ -210,7 +252,15 @@ impl Gen {
             widths.push(250_000);
         }
 
-        Gen { rng: Rng::new(seed), routed, pads, zone_points, nets, layers, widths }
+        Gen {
+            rng: Rng::new(seed),
+            routed,
+            pads,
+            zone_points,
+            nets,
+            layers,
+            widths,
+        }
     }
 
     fn point(&mut self) -> ([i32; 2], i32) {
@@ -226,7 +276,10 @@ impl Gen {
         } else if !self.pads.is_empty() {
             self.pads[self.rng.below(self.pads.len())]
         } else {
-            ([self.rng.offset(50_000_000), self.rng.offset(50_000_000)], 0)
+            (
+                [self.rng.offset(50_000_000), self.rng.offset(50_000_000)],
+                0,
+            )
         }
     }
 
@@ -255,8 +308,9 @@ impl Gen {
         }
 
         for _ in 0..self.rng.below(3) {
-            let vias: Vec<usize> =
-                (0..self.routed.len()).filter(|&i| self.routed[i].via).collect();
+            let vias: Vec<usize> = (0..self.routed.len())
+                .filter(|&i| self.routed[i].via)
+                .collect();
             if vias.is_empty() {
                 break;
             }
@@ -268,12 +322,18 @@ impl Gen {
                 self.point().0
             } else {
                 let p = self.routed[i].start;
-                [p[0] + self.rng.offset(400_000), p[1] + self.rng.offset(400_000)]
+                [
+                    p[0] + self.rng.offset(400_000),
+                    p[1] + self.rng.offset(400_000),
+                ]
             };
             self.routed[i].start = at;
             self.routed[i].end = at;
             touched.insert(self.routed[i].uuid.clone());
-            ops.push(Op::Move { uuid: self.routed[i].uuid.clone(), at });
+            ops.push(Op::Move {
+                uuid: self.routed[i].uuid.clone(),
+                at,
+            });
         }
 
         for _ in 0..self.rng.below(3) {
@@ -287,7 +347,10 @@ impl Gen {
             let net = self.nets[self.rng.below(self.nets.len())];
             self.routed[i].net = net;
             touched.insert(self.routed[i].uuid.clone());
-            ops.push(Op::Net { uuid: self.routed[i].uuid.clone(), net });
+            ops.push(Op::Net {
+                uuid: self.routed[i].uuid.clone(),
+                net,
+            });
         }
 
         for _ in 0..1 + self.rng.below(6) {
@@ -295,14 +358,33 @@ impl Gen {
             let (b, nb) = if self.rng.chance(60) {
                 self.point()
             } else {
-                ([a[0] + self.rng.offset(2_000_000), a[1] + self.rng.offset(2_000_000)], na)
+                (
+                    [
+                        a[0] + self.rng.offset(2_000_000),
+                        a[1] + self.rng.offset(2_000_000),
+                    ],
+                    na,
+                )
             };
             let net = self.net_for(na, nb);
             let layer = self.layers[self.rng.below(self.layers.len())];
             let w = self.widths[self.rng.below(self.widths.len())];
             let uuid = self.rng.uuid();
-            self.routed.push(Routed { uuid: uuid.clone(), via: false, start: a, end: b, net });
-            ops.push(Op::Track { uuid, s: a, e: b, w, layer, net });
+            self.routed.push(Routed {
+                uuid: uuid.clone(),
+                via: false,
+                start: a,
+                end: b,
+                net,
+            });
+            ops.push(Op::Track {
+                uuid,
+                s: a,
+                e: b,
+                w,
+                layer,
+                net,
+            });
         }
 
         for _ in 0..self.rng.below(3) {
@@ -310,8 +392,21 @@ impl Gen {
             let net = self.net_for(na, 0);
             let free = self.rng.chance(20);
             let uuid = self.rng.uuid();
-            self.routed.push(Routed { uuid: uuid.clone(), via: true, start: at, end: at, net });
-            ops.push(Op::Via { uuid, at, d: 600_000, drill: 300_000, net, free });
+            self.routed.push(Routed {
+                uuid: uuid.clone(),
+                via: true,
+                start: at,
+                end: at,
+                net,
+            });
+            ops.push(Op::Via {
+                uuid,
+                at,
+                d: 600_000,
+                drill: 300_000,
+                net,
+                free,
+            });
         }
 
         // a random staging order (C++ m_entries order)
@@ -326,7 +421,10 @@ impl Gen {
 
 /// UUID string -> handle of every item a script can name.
 pub fn uuid_handles(s: &Session) -> HashMap<String, u64> {
-    s.route_items().into_iter().map(|r| (r.uuid, r.id)).collect()
+    s.route_items()
+        .into_iter()
+        .map(|r| (r.uuid, r.id))
+        .collect()
 }
 
 /// The batch as a [`Transaction`] (handles resolved through `handles`).
@@ -353,7 +451,14 @@ pub fn transaction(ops: &[Op], handles: &HashMap<String, u64>) -> Transaction {
                     ..ItemChange::default()
                 });
             }
-            Op::Track { uuid, s, e, w, layer: l, net } => {
+            Op::Track {
+                uuid,
+                s,
+                e,
+                w,
+                layer: l,
+                net,
+            } => {
                 txn.stage_add(NewItem::Track(NewTrack {
                     start: *s,
                     end: *e,
@@ -364,7 +469,14 @@ pub fn transaction(ops: &[Op], handles: &HashMap<String, u64>) -> Transaction {
                     ..NewTrack::default()
                 }));
             }
-            Op::Via { uuid, at, d, drill, net, free } => {
+            Op::Via {
+                uuid,
+                at,
+                d,
+                drill,
+                net,
+                free,
+            } => {
                 txn.stage_add(NewItem::Via(NewVia {
                     at: *at,
                     diameter: Some(*d),
@@ -386,7 +498,8 @@ pub fn transaction(ops: &[Op], handles: &HashMap<String, u64>) -> Transaction {
 // ------------------------------------------------------------------------------------------
 
 fn uuid_of(ctx: &BoardCtx<'_>, id: ItemId) -> String {
-    ctx.item(id).map_or_else(|| "null".into(), |it| it.uuid().as_string())
+    ctx.item(id)
+        .map_or_else(|| "null".into(), |it| it.uuid().as_string())
 }
 
 /// The reference name of a connectivity item: the parent's UUID, plus
@@ -401,14 +514,24 @@ fn cn_ref(ctx: &BoardCtx<'_>, list: &CnList, id: CnItemId) -> String {
     let mut r = uuid_of(ctx, item.parent());
 
     if let Some(zl) = item.zone_layer() {
-        r.push_str(&format!("/{}/{}", i32::from(item.board_layer()), zl.subpoly_index()));
+        r.push_str(&format!(
+            "/{}/{}",
+            i32::from(item.board_layer()),
+            zl.subpoly_index()
+        ));
     }
 
     r
 }
 
-fn anchor_text(ctx: &BoardCtx<'_>, list: &CnList, a: &kicad_connectivity::items::CnAnchor) -> String {
-    let r = a.item().map_or_else(|| "null".into(), |i| cn_ref(ctx, list, i));
+fn anchor_text(
+    ctx: &BoardCtx<'_>,
+    list: &CnList,
+    a: &kicad_connectivity::items::CnAnchor,
+) -> String {
+    let r = a
+        .item()
+        .map_or_else(|| "null".into(), |i| cn_ref(ctx, list, i));
     format!("{},{}@{}", a.pos().x, a.pos().y, r)
 }
 
@@ -421,7 +544,9 @@ fn end_text(a: &kicad_connectivity::items::CnAnchor) -> String {
 
 /// An edge end as the reference driver prints it: the position, `/z` for a zone layer anchor.
 fn flagged_end(list: &CnList, a: &kicad_connectivity::items::CnAnchor) -> String {
-    let zone = a.item().is_some_and(|i| list.item(i).zone_layer().is_some());
+    let zone = a
+        .item()
+        .is_some_and(|i| list.item(i).zone_layer().is_some());
     format!("{}{}", end_text(a), if zone { "/z" } else { "" })
 }
 
@@ -478,7 +603,10 @@ pub fn edges_equivalent(a: &[EdgeRec], b: &[EdgeRec]) -> bool {
             let hit = pool
                 .iter()
                 .position(|p| eligible(p) && p.ends == e.ends)
-                .or_else(|| pool.iter().position(|p| !eligible(p) && p.weight == e.weight));
+                .or_else(|| {
+                    pool.iter()
+                        .position(|p| !eligible(p) && p.weight == e.weight)
+                });
             match hit {
                 Some(i) => {
                     pool.swap_remove(i);
@@ -508,7 +636,10 @@ pub fn split_edges(lines: &[String]) -> (BTreeMap<i32, Vec<EdgeRec>>, Vec<String
 }
 
 /// The nets whose edge sets are not [`edges_equivalent`].
-pub fn edge_differences(a: &BTreeMap<i32, Vec<EdgeRec>>, b: &BTreeMap<i32, Vec<EdgeRec>>) -> Vec<i32> {
+pub fn edge_differences(
+    a: &BTreeMap<i32, Vec<EdgeRec>>,
+    b: &BTreeMap<i32, Vec<EdgeRec>>,
+) -> Vec<i32> {
     let nets: BTreeSet<i32> = a.keys().chain(b.keys()).copied().collect();
     nets.into_iter()
         .filter(|n| {
@@ -520,8 +651,12 @@ pub fn edge_differences(a: &BTreeMap<i32, Vec<EdgeRec>>, b: &BTreeMap<i32, Vec<E
         .collect()
 }
 
-const NON_ZONE: [KicadT; 4] =
-    [KicadT::PcbTraceT, KicadT::PcbArcT, KicadT::PcbViaT, KicadT::PcbPadT];
+const NON_ZONE: [KicadT; 4] = [
+    KicadT::PcbTraceT,
+    KicadT::PcbArcT,
+    KicadT::PcbViaT,
+    KicadT::PcbPadT,
+];
 
 /// The connectivity facts of the oracle (printed identically by the C++ driver), sorted.
 /// Mutates `conn` (`GetClusters` re-runs the cluster search): pass a copy where the live
@@ -532,7 +667,11 @@ pub fn fact_lines(board: &Board, conn: &mut ConnectivityData) -> Vec<String> {
 
     // net of every connected item
     for (id, t) in board.tracks() {
-        out.push(format!("net|{}|{}", uuid_of(&ctx, id.into()), t.as_track().base.net.0));
+        out.push(format!(
+            "net|{}|{}",
+            uuid_of(&ctx, id.into()),
+            t.as_track().base.net.0
+        ));
     }
 
     let mut pads = Vec::new();
@@ -584,8 +723,12 @@ pub fn fact_lines(board: &Board, conn: &mut ConnectivityData) -> Vec<String> {
             .unsorted_edges()
             .iter()
             .map(|e| {
-                let a = e.source_anchor(list).map_or("none".into(), |a| flagged_end(list, a));
-                let b = e.target_anchor(list).map_or("none".into(), |a| flagged_end(list, a));
+                let a = e
+                    .source_anchor(list)
+                    .map_or("none".into(), |a| flagged_end(list, a));
+                let b = e
+                    .target_anchor(list)
+                    .map_or("none".into(), |a| flagged_end(list, a));
                 let (a, b) = if a <= b { (a, b) } else { (b, a) };
                 let tied = if e.is_tied() { "!" } else { "" };
                 format!("{a}>{b}:{}{tied}", e.weight())
@@ -608,13 +751,22 @@ pub fn fact_lines(board: &Board, conn: &mut ConnectivityData) -> Vec<String> {
         let item: ItemId = id.into();
         let (dangling, pos) = conn.test_track_endpoint_dangling(&ctx, item, false, None);
         let pos = pos.map_or("unset".into(), |p| format!("{},{}", p.x, p.y));
-        out.push(format!("dangling|{}|{}|{pos}", uuid_of(&ctx, item), dangling as i32));
+        out.push(format!(
+            "dangling|{}|{}|{pos}",
+            uuid_of(&ctx, item),
+            dangling as i32
+        ));
 
         if matches!(t, kicad_pcb::pcb_track::Track::Via(_)) {
             let it = ctx.item(item).unwrap();
             for &l in cu.iter().filter(|&&l| it.is_on_layer(l)) {
                 let on = conn.is_connected_on_layer(&ctx, it, i32::from(l), &NON_ZONE);
-                out.push(format!("conn_on_layer|{}|{}|{}", uuid_of(&ctx, item), i32::from(l), on as i32));
+                out.push(format!(
+                    "conn_on_layer|{}|{}|{}",
+                    uuid_of(&ctx, item),
+                    i32::from(l),
+                    on as i32
+                ));
             }
         }
     }
@@ -623,7 +775,12 @@ pub fn fact_lines(board: &Board, conn: &mut ConnectivityData) -> Vec<String> {
         let it = ctx.item(pad).unwrap();
         for &l in cu.iter().filter(|&&l| it.is_on_layer(l)) {
             let on = conn.is_connected_on_layer(&ctx, it, i32::from(l), &NON_ZONE);
-            out.push(format!("conn_on_layer|{}|{}|{}", uuid_of(&ctx, pad), i32::from(l), on as i32));
+            out.push(format!(
+                "conn_on_layer|{}|{}|{}",
+                uuid_of(&ctx, pad),
+                i32::from(l),
+                on as i32
+            ));
         }
     }
 
@@ -722,7 +879,9 @@ pub fn section_hashes(lines: &[String]) -> BTreeMap<String, String> {
         e.push_str(l);
         e.push('\n');
     }
-    by.into_iter().map(|(k, v)| (k, format!("{:016x}", fnv(&v)))).collect()
+    by.into_iter()
+        .map(|(k, v)| (k, format!("{:016x}", fnv(&v))))
+        .collect()
 }
 
 /// The golden directory of the reference replay.
@@ -732,7 +891,11 @@ pub fn golden_dir() -> PathBuf {
 
 /// The file stem of a board path.
 pub fn stem(rel: &str) -> String {
-    Path::new(rel).file_stem().unwrap().to_string_lossy().into_owned()
+    Path::new(rel)
+        .file_stem()
+        .unwrap()
+        .to_string_lossy()
+        .into_owned()
 }
 
 /// The script of the reference replay of a board: `batches` seeded batches, each followed by
@@ -757,10 +920,30 @@ pub fn parse_op(line: &str) -> Option<Op> {
     let u = || f[1].to_string();
     Some(match f[0] {
         "R" => Op::Remove(u()),
-        "T" => Op::Track { uuid: u(), s: [n(2), n(3)], e: [n(4), n(5)], w: n(6), layer: n(7), net: n(8) },
-        "V" => Op::Via { uuid: u(), at: [n(2), n(3)], d: n(4), drill: n(5), net: n(6), free: n(7) != 0 },
-        "M" => Op::Move { uuid: u(), at: [n(2), n(3)] },
-        "N" => Op::Net { uuid: u(), net: n(2) },
+        "T" => Op::Track {
+            uuid: u(),
+            s: [n(2), n(3)],
+            e: [n(4), n(5)],
+            w: n(6),
+            layer: n(7),
+            net: n(8),
+        },
+        "V" => Op::Via {
+            uuid: u(),
+            at: [n(2), n(3)],
+            d: n(4),
+            drill: n(5),
+            net: n(6),
+            free: n(7) != 0,
+        },
+        "M" => Op::Move {
+            uuid: u(),
+            at: [n(2), n(3)],
+        },
+        "N" => Op::Net {
+            uuid: u(),
+            net: n(2),
+        },
         _ => return None,
     })
 }

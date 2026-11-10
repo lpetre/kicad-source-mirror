@@ -178,7 +178,11 @@ fn bulk_report(r: &CommitReport) -> Result<JsValue, JsValue> {
         .collect();
     set(&o, "netChanges", &Float64Array::from(changes.as_slice()))?;
     set(&o, "unconnected", &JsValue::from(r.unconnected))?;
-    set(&o, "unconnectedVisible", &JsValue::from(r.unconnected_visible))?;
+    set(
+        &o,
+        "unconnectedVisible",
+        &JsValue::from(r.unconnected_visible),
+    )?;
     Ok(o.into())
 }
 

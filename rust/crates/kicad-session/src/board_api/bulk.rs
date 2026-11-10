@@ -68,7 +68,7 @@ fn records(values: &[i32], stride: usize, what: &str) -> Result<usize, SessionEr
 }
 
 fn layer_of(value: i32) -> Result<String, SessionError> {
-    if !(0..kicad_core::layer_ids::PCB_LAYER_ID_COUNT as i32).contains(&value) {
+    if !(0..kicad_core::layer_ids::PCB_LAYER_ID_COUNT).contains(&value) {
         return Err(SessionError::invalid_argument(format!(
             "invalid layer index {value}"
         )));

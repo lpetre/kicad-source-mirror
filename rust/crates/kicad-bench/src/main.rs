@@ -38,7 +38,11 @@
 //!   two halves of `pcb drc --refill-zones`);
 //! * `fill` (not in the default list): load and `FillAllZones` only;
 //! * `edit` (not in the default list): the router client loop of `board_api` (see
-//!   `edit_loop`).
+//!   `edit_loop`);
+//! * `live` (not in the default list, package LIVE-1): all routing removed and re-added in
+//!   ten transactions each, incremental (`live.commit`) and with a full connectivity rebuild
+//!   per commit (`live.commit_full`, the pre-LIVE-1 cost), `live.checkpoint`, `live.rollback`
+//!   (see `live_loop`).
 //!
 //! The load is `getBoard` split into its steps: `parse` (project file read + board parser, up
 //! to the first post-parse step), `load.<LoadStep>` (each step of `initializeLoadedBoard`,
@@ -594,6 +598,87 @@ fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result
     Ok(())
 }
 
+/// Package LIVE-1: the transaction layer on the whole routing. Remove all routing in ten
+/// commits and add it back from flat records in ten commits (incremental connectivity,
+/// `Session::commit`, stage `live.commit`), with a checkpoint before and a rollback after;
+/// then the same twenty batches with a full `BuildConnectivity` after each commit, the cost
+/// of the pre-LIVE-1 `apply_edits` (stage `live.commit_full`), and a second rollback.
+fn live_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result<(), String> {
+    use kicad_session::board_api::commit::Transaction;
+
+    const BATCHES: usize = 10;
+    let rec_all = session.route_records();
+    let ids: Vec<u64> = rec_all
+        .track_ids
+        .iter()
+        .chain(&rec_all.arc_ids)
+        .chain(&rec_all.via_ids)
+        .copied()
+        .collect();
+
+    let chunk = |len: usize, stride: usize, i: usize| {
+        let n = len / stride;
+        let per = n.div_ceil(BATCHES);
+        (i * per).min(n) * stride..((i + 1) * per).min(n) * stride
+    };
+    let mut batches = Vec::new();
+
+    for i in 0..BATCHES {
+        let mut t = Transaction::begin();
+        t.stage_removals(&ids[chunk(ids.len(), 1, i)]);
+        batches.push(t);
+    }
+
+    for i in 0..BATCHES {
+        let mut t = Transaction::begin();
+        t.append = true;
+        let tr = &rec_all.tracks[chunk(rec_all.tracks.len(), 7, i)];
+        let ar = &rec_all.arcs[chunk(rec_all.arcs.len(), 9, i)];
+        let vr = &rec_all.vias[chunk(rec_all.vias.len(), 8, i)];
+        t.stage_track_records(tr).map_err(|e| e.to_string())?;
+        t.stage_arc_records(ar).map_err(|e| e.to_string())?;
+        t.stage_via_records(vr).map_err(|e| e.to_string())?;
+        batches.push(t);
+    }
+
+    let cp = rec.stage("live.checkpoint", || session.checkpoint());
+    let mut unconnected = Vec::new();
+
+    for t in &batches {
+        let r = rec.stage("live.commit", || session.commit(t));
+        unconnected.push(r.map_err(|e| format!("commit: {e}"))?.unconnected);
+    }
+
+    rec.stage("live.rollback", || session.rollback(&cp));
+
+    for (k, t) in batches.iter().enumerate() {
+        let r = rec.stage("live.commit_full", || {
+            let r = session.commit(t);
+            session.rebuild_connectivity();
+            r
+        });
+        r.map_err(|e| format!("commit: {e}"))?;
+
+        // the incremental counts equal those of the full rebuild
+        if session.connectivity.unconnected_count(false) != unconnected[k] {
+            return Err(format!("batch {k}: incremental unconnected count differs"));
+        }
+    }
+
+    rec.stage("live.rollback", || session.rollback(&cp));
+
+    if verbose {
+        eprintln!(
+            "  live: {} items in {} batches, unconnected after removal {}",
+            ids.len(),
+            batches.len(),
+            unconnected[BATCHES - 1]
+        );
+    }
+
+    Ok(())
+}
+
 /// Runs one pipeline on a freshly loaded session.
 fn run_pipeline(
     rec: &mut Recorder,
@@ -687,6 +772,7 @@ fn run_pipeline(
             r.map_err(|e| format!("drc_after_refill: {e}"))?;
         }
         "edit" => edit_loop(rec, &mut session, verbose)?,
+        "live" => live_loop(rec, &mut session, verbose)?,
         other => return Err(format!("unknown pipeline '{other}'")),
     }
 

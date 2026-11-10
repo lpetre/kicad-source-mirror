@@ -231,8 +231,7 @@ impl Session {
             return; // already removed by an earlier entry
         }
 
-        self.connectivity
-            .remove(&BoardCtx::bare(&self.board), item);
+        self.connectivity.remove(&BoardCtx::bare(&self.board), item);
 
         if self.board.remove(item) {
             result.removed.push(item.to_bits());
@@ -318,7 +317,10 @@ impl Session {
             .edit
             .added
             .iter()
-            .filter_map(|&id| ctx.item(ItemId::from_bits(id)?).map(|it| it.uuid().as_string()))
+            .filter_map(|&id| {
+                ctx.item(ItemId::from_bits(id)?)
+                    .map(|it| it.uuid().as_string())
+            })
             .collect();
         Ok(report)
     }
@@ -351,8 +353,7 @@ impl Session {
 
                     // connectivity->Update( boardItem )
                     if !txn.skip_connectivity {
-                        self.connectivity
-                            .update(&BoardCtx::bare(&self.board), id);
+                        self.connectivity.update(&BoardCtx::bare(&self.board), id);
                     }
 
                     result.changed.push(id.to_bits());

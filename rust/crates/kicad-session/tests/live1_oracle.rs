@@ -54,13 +54,14 @@ fn replay_full(rel: &str, script: &str) -> (Vec<String>, Vec<BTreeMap<i32, Vec<E
     let mut handles = uuid_handles(&s);
     let mut hashes = Vec::new();
     let mut edges = Vec::new();
-    let emit = |k: usize, s: &kicad_session::Session, hashes: &mut Vec<String>, edges: &mut Vec<_>| {
-        let (e, facts) = split_edges(&fact_lines(&s.board, &mut s.connectivity.clone()));
-        for (sec, h) in section_hashes(&facts) {
-            hashes.push(format!("{k}|{sec}|{h}"));
-        }
-        edges.push(e);
-    };
+    let emit =
+        |k: usize, s: &kicad_session::Session, hashes: &mut Vec<String>, edges: &mut Vec<_>| {
+            let (e, facts) = split_edges(&fact_lines(&s.board, &mut s.connectivity.clone()));
+            for (sec, h) in section_hashes(&facts) {
+                hashes.push(format!("{k}|{sec}|{h}"));
+            }
+            edges.push(e);
+        };
 
     let mut commit = 0;
     emit(commit, &s, &mut hashes, &mut edges);
@@ -168,19 +169,28 @@ fn live1_incremental_matches_the_reference() {
         for (key, h) in &golden_hashes {
             compared += 1;
             if rust.get(key) != Some(h) {
-                failures.push(format!("{name}: commit {} section {} differs", key.0, key.1));
+                failures.push(format!(
+                    "{name}: commit {} section {} differs",
+                    key.0, key.1
+                ));
             }
         }
 
         if rust.len() != golden_hashes.len() {
-            failures.push(format!("{name}: {} rust vs {} reference sections", rust.len(), golden_hashes.len()));
+            failures.push(format!(
+                "{name}: {} rust vs {} reference sections",
+                rust.len(),
+                golden_hashes.len()
+            ));
         }
 
         let none = BTreeMap::new();
         for (k, nets) in edges.iter().enumerate() {
             compared += nets.len();
             for n in edge_differences(golden_edges.get(&k).unwrap_or(&none), nets) {
-                failures.push(format!("{name}: commit {k} ratsnest edges of net {n} differ"));
+                failures.push(format!(
+                    "{name}: commit {k} ratsnest edges of net {n} differ"
+                ));
             }
         }
     }
@@ -189,14 +199,18 @@ fn live1_incremental_matches_the_reference() {
     // `LIVE1_LINES=1 live1_oracle`).
     if let Ok(only) = std::env::var("LIVE1_LINES") {
         for rel in boards().iter().take(BOARDS).filter(|r| stem(r) == only) {
-            let script = std::fs::read_to_string(golden_dir().join(format!("{only}.script"))).unwrap();
+            let script =
+                std::fs::read_to_string(golden_dir().join(format!("{only}.script"))).unwrap();
             for l in replay(rel, &script, true) {
                 println!("{l}");
             }
         }
     }
 
-    eprintln!("live1 oracle: {compared} section hashes compared, {} differ", failures.len());
+    eprintln!(
+        "live1 oracle: {compared} section hashes compared, {} differ",
+        failures.len()
+    );
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
@@ -207,7 +221,11 @@ fn live1_debug_edges() {
     };
     let (name, k, net) = {
         let f: Vec<&str> = spec.split(':').collect();
-        (f[0].to_string(), f[1].parse::<usize>().unwrap(), f[2].parse::<i32>().unwrap())
+        (
+            f[0].to_string(),
+            f[1].parse::<usize>().unwrap(),
+            f[2].parse::<i32>().unwrap(),
+        )
     };
     let rel = boards().into_iter().find(|r| stem(r) == name).unwrap();
     let script = std::fs::read_to_string(golden_dir().join(format!("{name}.script"))).unwrap();

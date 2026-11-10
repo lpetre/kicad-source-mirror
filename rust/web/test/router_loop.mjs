@@ -85,6 +85,8 @@ function runLoop(rel) {
         teardrops = { teardrops: o.teardrops, candidates: o.candidates, without: o.without.length };
     }
 
+    // LIVE-1: the full rebuild a reload of the saved board runs, before refill / DRC / save
+    b.finalize();
     b.refillZones();
     const drc = b.runDrc({ format: 'json' });
     const violations = b.drcViolations({});
@@ -130,6 +132,46 @@ for (const expected of golden.boards) {
     const q = b.quickDrc({ providers: ['clearance', 'connectivity'] });
     assert.ok(Array.isArray(q.violations));
     checks += 5;
+}
+
+// LIVE-1: transactions with typed arrays, checkpoints. Per board: checkpoint, remove all
+// routing and add it back from flat records in one commitBulk each, the unconnected count is
+// the one of the JSON round trip; rollback restores the base save exactly, and a second run
+// after the rollback gives the same reports.
+for (const expected of golden.boards.slice(0, 6)) {
+    const path = join(kicadRoot, expected.file);
+    const b = k.loadBoard(readFileSync(path, 'utf8'), {
+        name: expected.file.split('/').pop(), project: sibling(path, '.kicad_pro'),
+        rules: sibling(path, '.kicad_dru'), uuidSeed: golden.uuidSeed, date: golden.fixedDate,
+    });
+    const base = b.save();
+    const cp = b.checkpoint();
+    const run = () => {
+        const rec = b.routeRecords();
+        const out = new k.Transaction();
+        out.remove(rec.trackIds); out.remove(rec.arcIds); out.remove(rec.viaIds);
+        const r1 = b.commitBulk(out);
+        assert.ok(r1.removed instanceof Float64Array);
+        assert.equal(r1.removed.length, rec.trackIds.length + rec.arcIds.length + rec.viaIds.length);
+        assert.equal(r1.unconnected, expected.unconnectedStripped, `${expected.file}: stripped`);
+        const back = new k.Transaction();
+        back.append = true;
+        back.addTracks(rec.tracks); back.addArcs(rec.arcs); back.addVias(rec.vias);
+        const r2 = b.commitBulk(back);
+        assert.equal(r2.added.length, r1.removed.length);
+        const again = b.routeRecords();
+        assert.deepStrictEqual(Array.from(again.tracks), Array.from(rec.tracks));
+        assert.deepStrictEqual(Array.from(again.vias), Array.from(rec.vias));
+        return [r1.unconnected, r2.unconnected, Array.from(r2.dirtyNets).join(','), b.save()];
+    };
+    const first = run();
+    b.rollback(cp);
+    assert.equal(b.save(), base, `${expected.file}: save after rollback`);
+    const second = run();
+    assert.deepStrictEqual(second, first, `${expected.file}: second run after rollback`);
+    b.rollback(cp);
+    assert.equal(b.releaseCheckpoint(cp), true);
+    checks += 4;
 }
 
 console.log(`router_loop: ${checks} checks passed`);

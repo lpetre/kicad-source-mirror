@@ -389,3 +389,83 @@ Known gaps:
   investigated (model or writer side).
 * `Session::ratsnest` (session.rs, not WASM-API-1's file) still returns `NotYetPorted`; the
   wasm `ratsnest()` now uses `connectivity_info`.
+
+## Package LIVE-1: transactions, incremental connectivity, checkpoints, bulk I/O
+
+| Part | Rust | C++ origin | State |
+|---|---|---|---|
+| transactions | `board_api/commit.rs` `Transaction`, `Session::commit` | `BOARD_COMMIT::Push` data flow without GUI (headless board editor, null frame): `CHT_ADD` `BOARD::Add( BULK_INSERT )` + `CONNECTIVITY_DATA::Add`, `CHT_REMOVE` `BOARD::Remove( BULK )` + `Remove`, `CHT_MODIFY` `MarkItemNetAsDirty( copy )` + `Update`, then `RecalculateRatsnest` (net propagation, dirty nets), `UpdateRatsnestExclusions`; `SKIP_CONNECTIVITY` -> `ClearRatsnest` | ported, oracle-verified |
+| change report | `CommitReport` | new handles / UUIDs, dirty nets, per-net and total unconnected counts, propagated net changes (`propagateConnections` `SetNetCode` calls) | new |
+| `apply_edits` | `board_api/edit.rs` | begin + `stage_batch` + commit with `append` | kept signature |
+| checkpoints | `Session::checkpoint / rollback / restore` | counterpart of `BOARD_COMMIT::Revert` / undo: snapshot of `Board` and `ConnectivityData` | new, verified |
+| finalize | `Session::finalize` | `BOARD::BuildConnectivity()` | ported |
+| bulk forms | `board_api/bulk.rs` (`stage_*_records`, `route_records`) | flat `i32` records of tracks / arcs / vias, `u64` handles | new |
+
+Tests (default run; goldens committed):
+
+* `tests/live1_incremental.rs` (a, c): 30 boards (`tests/oracle/live1_boards.txt`), seeded
+  random batches (removals, net changes, via moves, segments between pads / track ends / zone
+  points on random layers and nets incl. net 0 and foreign nets, free vias), after every
+  commit the live connectivity vs a full `BuildConnectivity` on a clone: item nets, cluster
+  partition, ratsnest nodes, edges (weights exact, ends where they cannot depend on history,
+  see below), unconnected counts, `TestTrackEndpointDangling`, `IsConnectedOnLayer` of every
+  via / pad layer, isolated-island map. Default 20 batches per board (584 commits, 2 boards
+  stop at a proven reference history dependence); `LIVE1_BATCHES=200`: 4958 commits compared,
+  0 failures, 9 boards stopped at a reference history dependence, each classified by the C++
+  driver (reference incremental == port incremental and reference full rebuild == port full
+  rebuild, the two reference states different). Rollback: 12 boards, 8 commits + one addition
+  with a generated UUID: save, facts and handles equal the base after rollback, a second run
+  gives the same reports, facts and saves, `restore` likewise.
+* `tests/live1_oracle.rs` (b): `tests/oracle/live1_oracle.cpp` (pcb-dump objects, one compile
+  and link under the C++ lock: `tests/oracle/gen_live1_golden.sh`) replays the scripts
+  `tests/golden/live1/<board>.script` (10 boards x 20 batches) exactly as `Push` and prints
+  per commit one hash per fact section plus the ratsnest edge lists; the Rust replay through
+  `Session::commit`: all 6300 comparisons identical (hashed sections exact; edges under the
+  rule below).
+* `board_api_round_trip.rs`, `kicad-wasm` `router_loop.rs` / `web/test/router_loop.mjs`
+  (with `finalize()`, typed arrays, checkpoints): unchanged results (290 boards
+  byte-identical, DRC JSON identical on 20; native == wasm).
+* `board_api_edit.rs` `edits_change_the_board`: a track set to another net while connected to
+  a via keeps the via's net (net propagation of the commit); the reference driver gives the
+  same, incrementally and after a full rebuild (the old expectation came from the port's
+  full rebuild with the old board order).
+
+Ratsnest edge comparison: the weights of a net's edges are equal as a multiset; an edge's ends
+are compared exactly unless its weight is 1 (coincident anchors of different clusters), an
+end is a zone layer anchor or the port has a tie record (review-connectivity.md F-1, sites P7
+to P9). Measured: two runs of the reference driver on the same script differ in such ends
+(heap order), so no stricter rule can hold.
+
+Decisions:
+
+* Checkpoints are snapshots (`Board: Clone`, `ConnectivityData: Clone`, added to
+  kicad-connectivity); a journal undo was not built (no API to put an item back into its arena
+  slot and rewind the UUID generator; the snapshot is exact and costs about two commits:
+  docs/PERF.md, LIVE-1).
+* A transaction's removal calls `CONNECTIVITY_DATA::Remove` before `BOARD::Remove`: the port's
+  `Remove` reads the item through the board, the C++ through the still-allocated item; same
+  result.
+* `commit` adds with `ADD_MODE::BULK_INSERT` (front of `m_tracks`, as `Push`); verification a
+  showed that a full build depends on that order (with append, `stitch_fp_rulearea` gave a
+  different full-build net propagation than the reference's). `Transaction::append` selects
+  `ADD_MODE::APPEND`; `apply_edits` uses it (WASM-API-1 contract: re-added routing keeps the
+  loaded order, which the round trip and the router loop rely on).
+* Teardrops are not touched by `commit` (`SKIP_TEARDROPS`); `update_teardrops` stays explicit.
+* The DRC engine's own-clearance memo is cleared after every commit and rollback (C++
+  invalidates it per item in the setters; clearing never changes a value).
+* After an incremental commit the connectivity re-records the board time stamp
+  (`ConnectivityData::mark_up_to_date`), so tier 1/2 staleness checks do not rebuild.
+* An empty transaction returns at once (`if( Empty() ) return;`).
+
+Known gaps:
+
+* `finalize()` gives exactly what `kicad-cli` computes on the saved board only when the
+  board's track order is the saved order (the writer sorts tracks, a reload reads them
+  sorted): true for routing re-added in recorded order with `append`; for new routing the
+  board order differs and so can history-dependent results (ratsnest edge ends under ties,
+  net propagation of conflicting clusters). Needs a board API that reorders `m_tracks` as
+  saved (change request).
+* The bulk record forms carry geometry, width, layer and net only (every other property at
+  its default, new UUIDs).
+* A change staged for an item that an earlier entry of the same transaction removed fails
+  mid-commit (the entries before it stay applied, connectivity brought up to date).

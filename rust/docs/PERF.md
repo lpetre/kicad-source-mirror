@@ -73,3 +73,39 @@ remove paths), `quickDrc` with few providers (how much fixed cost does a DRC run
 cache generator, r-tree builds, rule compilation on every call?), zone refill after a
 routing change, `updateTeardrops`, and the same numbers in wasm (`wasm_bench.mjs`), where
 the build profile currently optimises for size.
+
+## LIVE-1: transactions with incremental connectivity (pipeline `live`)
+
+`kicad-bench run --pipelines live` / `wasm_bench.mjs --pipelines live` (not in the default
+sets): all routing of the board removed in ten commits and re-added from flat records in ten
+commits. "before" = the same commits followed by a full `BuildConnectivity` (what
+`applyEdits` cost before LIVE-1, stage `live.commit_full`), "after" = the incremental commit
+(`live.commit`). Medians in ms (native: release, 3 reps + 1 warm-up, 60 commits; wasm:
+wasm-release under node 22, same counts). Machine shared with other agents.
+
+| board | items | commit before (native / wasm) | commit after (native / wasm) | checkpoint (native / wasm) | rollback (native / wasm) |
+|---|---|---|---|---|---|
+| ecc83-pp (small) | 59 | 0.61 / 1.25 | 0.06 / 0.18 | 0.21 / 0.37 | 0.33 / 0.64 |
+| complex_hierarchy (medium) | 364 | 4.52 / 7.97 | 0.50 / 0.99 | 0.93 / 1.15 | 1.62 / 2.45 |
+| interf_u (medium) | 815 | 6.65 / 10.85 | 1.15 / 1.98 | 1.04 / 1.13 | 2.30 / 3.25 |
+
+Checkpoints are snapshots (`Board::clone` + `ConnectivityData::clone`); `rollback` clones the
+checkpoint again so that it stays reusable (`Session::restore` consumes it without the copy).
+A journal undo in the manner of `BOARD_COMMIT::Revert` was not built: it would have to put
+re-added items back into their old arena slots (same handles) and rewind the UUID generator,
+which the board model has no API for, while the snapshot is exact by construction and costs
+about two incremental commits.
+
+### The client's sessions (added by the orchestrator)
+
+The autorouter drives KiCad as whole sessions on one board, each starting by RE-OPENING
+the source board from its file. A candidate check: open, import tracks (remove a few
+hundred, add about a thousand, move vias), fill all zones, full DRC (JSON), and when
+something is unconnected a GND island query. A stitched check: the same with stitching
+vias added before the fill. Finishing: the same with teardrops and a save, then possibly
+dangling vias removed, fill, DRC and save again. A baseline: open, fill, DRC. One KiCad instance
+(about 900 MB, threaded) serves all seeds in turn. For the port this means the numbers to
+watch are: parse + load, an edit batch, a full refill, a full DRC, teardrops and save on
+boards of a few hundred pads, in single-threaded wasm; and that checkpoint / rollback
+(instead of re-opening), scoped refill and scoped DRC, and one small instance per worker
+(checks in parallel) are where the port can beat that setup.

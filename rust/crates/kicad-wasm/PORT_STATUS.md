@@ -78,3 +78,14 @@ issue22010 with 24 copper layers, zones and 100 vias, teardrop_spike), asserts t
 leaves the board and the DRC report as a plain load + refill does, and pins the results in
 `tests/golden/router_loop_native.json`; `web/test/router_loop.mjs` runs the same loop on the
 wasm build: identical (8 checks). `smoke.mjs` still passes (58 checks).
+
+## Package LIVE-1: live router loop bindings
+
+`src/live.rs`: the `Transaction` class (`remove`, `removeRouting`, `change`, `add`, `stage`,
+`addTracks` / `addArcs` / `addVias` from `Int32Array` records, `append`, `skipConnectivity`),
+`Board.commit` / `commitBulk` (typed-array report), `checkpoint` / `rollback` /
+`releaseCheckpoint` (tokens; the checkpoints live in the `Board` object), `finalize`,
+`routeRecords`. Types in `types/board_api.d.ts`; reference `docs/WASM_API.md` ("Live router
+loop"). Verified by `web/test/router_loop.mjs` on the wasm build (bulk remove / re-add,
+rollback to a byte-identical save, second run identical) and `tests/router_loop.rs`
+(`finalize` in the loop, golden unchanged).

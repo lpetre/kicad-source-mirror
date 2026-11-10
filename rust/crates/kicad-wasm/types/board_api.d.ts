@@ -148,3 +148,25 @@ export interface DrcSummary {
 }
 export interface QuickDrcOptions { providers?: string[]; allTrackErrors?: boolean; severities?: string[] }
 export interface ReadOptions { polygons?: boolean }
+
+// LIVE-1: transactions (BOARD_COMMIT::Push with incremental connectivity), checkpoints and
+// the flat record forms (docs/WASM_API.md "Live router loop").
+export interface NetChange { id: Handle; from: number; to: number }
+export interface CommitReport extends EditResult {
+    dirtyNets: number[]; netUnconnected: [number, number][]; unconnected: number;
+    unconnectedVisible: number; netChanges: NetChange[];
+}
+/** `commitBulk`: handles as Float64Array, `netUnconnected` as [net, count] pairs,
+ *  `netChanges` as [id, from, to] triples. */
+export interface CommitReportBulk {
+    added: Float64Array; removed: Float64Array; changed: Float64Array; dirtyNets: Int32Array;
+    netUnconnected: Int32Array; netChanges: Float64Array; unconnected: number;
+    unconnectedVisible: number;
+}
+/** Flat records: tracks (x1, y1, x2, y2, width, layer, net), arcs (+ midX, midY),
+ *  vias (x, y, diameter, drill, top, bottom, net, type 0 through / 1 blind / 2 buried /
+ *  3 micro); layers are PCB_LAYER_ID values (F.Cu 0, B.Cu 2, In1.Cu 4, ...). */
+export interface RouteRecords {
+    trackIds: Float64Array; tracks: Int32Array; arcIds: Float64Array; arcs: Int32Array;
+    viaIds: Float64Array; vias: Int32Array;
+}
