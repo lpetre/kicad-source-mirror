@@ -445,6 +445,45 @@ Progress log:
   vertex-identical; the refill-and-save comparison is now 262 identical / 1 random in the
   reference / 0 not run. The zone filler has no stub left. Launched DS-1 (drawing sheet:
   model, .kicad_wks parser, default sheet, draw items, plotting, DRC hook).
+  06:20 UTC (machine clock): big batch read on Fable -
+  WIRE-1 end-to-end wiring: drill job, host clock / UUID seeding (KICAD_RS_DATE,
+  KICAD_RS_UUID_SEED for reproducible runs), tuning profiles, absolute project path, wasm
+  API options, browser demo (drop board + project, DRC, zip of Gerbers + drill), node smoke
+  test 58 checks (wasm == native incl. DRC, gerbers, drill on 3 boards), Playwright page
+  check equal to the native CLI; wasm module 7.7 MB. E2E SCOREBOARD of the real binary vs
+  the reference on 308 boards (kicad-cli/tests/oracle/e2e_cli.py + golden): gerbers 308 /
+  308, Excellon drill 308 / 308, Gerber drill 308 / 308, upgrade 253 identical + 54 after
+  the random-UUID mask + 1 (random teardrop order in the reference), DRC report 43
+  identical + 79 masked + 186 differing (175 of them only by library-parity entries; the
+  rest listed), svg not runnable yet (FAB-11 running).
+  STAB-DRC: all five red tests were test-setup defects, none a provider defect; the
+  harness now runs providers through the real run path; every provider replay: 362
+  boards, 0 missing and 0 extra entries for every error code (e.g. clearance 2084,
+  hole_clearance 1413, unconnected_items 1326, courtyards_overlap 135 ...); EvalRules
+  oracle with pads: 2393 categories match on 364 boards.
+  REV-ZF (docs/design/review-zone-fill.md): all 4820 lines of zone_filler.cpp read against
+  the port, no deviation on any input the reference survives; 15 crafted boards for
+  branches the corpus does not reach (65 zone layers) vertex-identical; two inputs crash /
+  hang the REFERENCE (mixed-layer zone with isolated copper: segfault; equal-priority
+  zones with equal UUID: endless loop) - the port now handles both with a warning; the real
+  fill is not thread-dependent in the reference (7 boards x 3-4 runs).
+  REV-FAB (docs/design/review-fab.md): about 2,300 differential runs of kicad-rs over every
+  gerbers / drill option, stored plot parameter and item kind on 33 boards: byte-identical
+  wherever no stub is hit; one real difference (1-3 nm in a mask macro of a chamfered pad in
+  a non-uniformly scaled footprint: the C++ plots by mutating the pad and restoring it
+  lossily - FIX-FAB-1), two minor (report path into a missing directory - FIX-FAB-2; dev
+  build overflow panic beyond 1.07 m - FIX-FAB-3).
+  Also done: DRC-30 diff pair coupling (630 of 630 entries on 32 cases), CN-05 from-to cache
+  (4671 pad pairs on 69 boards, 0 mismatches), DRC-32 creepage utilities part 1 (3460 of
+  3528 shape-pair results bit-equal; the other 68 are a use-after-free in the reference),
+  FAB-10 mask minimum width / clipped silk (gerbers job corpus now 766 of 770 runs
+  identical: 2 pending on drill-symbol plotting FAB-13, 2 not loadable in the reference).
+  Launched: DRC-LP library parity (the 175-board DRC difference) and STAB-DRC-2 (board
+  UUID as report item, from-to rebuild in the run, every remaining e2e DRC difference)
+  (wxnbvfijo); FIX-ZF-1 and FIX-FAB-3 (w058xrh5m). Running: DRC-31, DRC-33, FAB-11 ->
+  FAB-12, DS-1. Queue: FIX-FAB-1 / FIX-FAB-2 and GLUE-3 after the fabrication chain;
+  DRC-34 after DRC-31; FAB-13 drill / chart symbol plotting; FIX-GEN-1 / FIX-DIM-1 (editor
+  paths); then the cross-cutting adversarial review, README, performance phase.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

@@ -28,9 +28,10 @@
 //!   provider only.
 //!
 //! Comparison: the C++ groups items in `std::set<BOARD_CONNECTED_ITEM*>` and rules in
-//! `std::map<DRC_RULE*, ...>` (address order). So the entries are compared as a multiset, the
-//! items of an entry as a set, and the single item of a skew / via count entry (the last of
-//! the net's items in address order) by its net.
+//! `std::map<DRC_RULE*, ...>` (address order). So the entries are compared as a multiset; the
+//! report shows only the first two items of an entry (address order), so the items are
+//! compared by count, and the single item of a skew / via count entry (the last of the net's
+//! items in address order) by its net.
 
 mod drc_harness;
 
@@ -134,7 +135,10 @@ fn net_of(description: &str) -> &str {
     &description[start..end]
 }
 
-/// The comparison key: items as a set; the single item of a skew / via count entry by net.
+/// The comparison key. The report shows only the first two items of an entry, which are the
+/// first in address order in C++: the items of a length / stub / return path entry are
+/// compared by count (their description carries the measured values and, for stubs, the
+/// net), the single item of a skew / via count entry by its net.
 fn key(e: &Entry) -> String {
     let mut e = e.clone();
 
@@ -147,9 +151,11 @@ fn key(e: &Entry) -> String {
                 0.0,
             );
         }
+    } else {
+        let n = e.items.len();
+        e.items = vec![(String::new(), format!("{n} items"), 0.0, 0.0)];
     }
 
-    e.items.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
     e.key()
 }
 

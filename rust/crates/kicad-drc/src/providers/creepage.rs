@@ -129,7 +129,7 @@ impl DrcTestProviderCreepage {
 
     /// Port of `placeholderConstraint()`: the constraint from geometry-less net / layer
     /// placeholders; exact only when no rule is conditional.
-    fn placeholder_constraint(
+    pub fn placeholder_constraint(
         engine: &DrcEngine,
         ctx: &BoardCtx<'_>,
         a_net_code_a: i32,
