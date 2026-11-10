@@ -596,8 +596,11 @@ Known gaps:
   caches (`run_provider` is private there; files of the performance loop): change request.
 * a2: the DRC report of the live (edited) board differs from that of the reloaded saved board
   in order-dependent entries on most edited boards (ratsnest edge ends under ties, nets the
-  propagation gives to netless items touching two nets, report order). Cause: the writer saves
-  the tracks sorted (`PCB_TRACK::cmp_tracks`); the same as LIVE-1's `finalize()` gap.
+  propagation gives to netless items touching two nets, report order, the first hit per track
+  of a job run without all-track-errors, and which items and marker position a skew / length /
+  via-count / diff-pair entry names). Cause: the writer saves the tracks sorted
+  (`PCB_TRACK::cmp_tracks`); the same as LIVE-1's `finalize()` gap. The class "another net
+  after the reload" is accepted by the test without comparing its entries further.
 * The affected refill refills a zone in whole: a board-wide ground pour is refilled by any
   edit inside it, so boards with one big pour gain nothing (pic_programmer, complex_hierarchy:
   the pours dominate the fill time even when 3 of 168 zones are refilled).

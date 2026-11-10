@@ -29,9 +29,10 @@
 //! layer) order, adds the items of an entry in collection order (copper zones, tracks, pads),
 //! and takes the contributing items in the order libstdc++ iterates the `unordered_set` when
 //! no bucket collision reorders it (reverse insertion order of the distinct parents the tree
-//! search visits), then zones in `ZoneId` order. With one or two contributing tree items the
-//! order inside a violation (which also decides which two items `EvalRules` sees) is therefore
-//! the C++ one. With three or more it depends on heap addresses in C++: an insert into a
+//! search visits), then zones in `ZoneId` order. When the tree search finds one or two
+//! distinct parents at a neck, the order inside a violation (which also decides which two
+//! items `EvalRules` sees) is therefore the C++ one. With three or more found (even if only
+//! two of them contribute) it depends on heap addresses in C++: an insert into a
 //! non-empty bucket is linked after that bucket's predecessor node instead of at the front of
 //! the list (address modulo the bucket count: 13 buckets for up to 13 items, then 29, 59, ...), and
 //! a rehash re-links the whole list; the port's order is the collision-free one. The zone part

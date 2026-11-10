@@ -217,14 +217,17 @@ remove or re-add a tenth of the routing): commit 0.50 ms native / 0.99 ms wasm, 
 The session keeps the damage itself (natively too: `Session::refill_zones_affected( extra )`
 refills for what the session recorded plus `extra`): every `commit` / `commitBulk`, `quickDrc`,
 `checkItems` and `finalize` adds what it changed, `checkpoint` / `rollback` save and restore it
-with the board, a refill (`refillZones()` included) resets it. The edit calls (`applyEdits`,
-`addTrackSegment`, `addArc`, `placeVia`, `changeItem`, `removeItems`, `removeRouting`) are
-commits and are tracked like `commit`. The record is valid only while the board's time stamp
-and the rule text are those the last of these calls left, so any other change that bumps the
-time stamp (`updateTeardrops` when it adds, changes or removes a teardrop - on a board without
-a teardrop target it changes nothing and the record stays known -, the markers of `runDrc`,
-design and teardrop settings, a direct edit of `Session::board` through a `Board` mutator
-natively, ...) and the load make the next affected refill a full one. Writers of derived state
+with the board, a refill (`refillZones()` included) resets it. In this JS API only
+`commit` / `commitBulk` keep the record known: the single edit calls (`applyEdits`,
+`addTrackSegment`, `addArc`, `placeVia`, `changeItem`, `removeItems`, `removeRouting`) and
+`updateTeardrops` mark the damage as unknown, so the next affected refill after one of them is
+a full one - stage a router's edits in a `Transaction` to keep the refill local. (Natively the
+`Session` edit calls are commits and are tracked like `commit`, and `update_teardrops` leaves
+the record known when it changes no teardrop.) The record is valid only while the board's time
+stamp and the rule text are those the last tracked call left, so any other change that bumps
+the time stamp (the markers of `runDrc`, design and teardrop settings, a direct edit of
+`Session::board` through a `Board` mutator natively, ...) and the load make the next affected
+refill a full one. Writers of derived state
 are excluded: `Board::zone_fill_mut` (fill polygons and flags, written by the filler and the
 connectivity) does not bump the time stamp, as in C++, so fills written through it natively
 outside a refill are not noticed. The refill is also a full one when a commit removed a pad or

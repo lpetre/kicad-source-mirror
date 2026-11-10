@@ -281,7 +281,8 @@ fn check_items_and_live_drc() {
 
                 // (a1) repeated runs on the live state agree (nothing carried from one run to the
                 // next changes a result); (a2) the live state against a fresh load of the saved
-                // board, measured (see the module comment: the writer sorts the tracks).
+                // board, classified and asserted (see the module comment: the writer sorts the
+                // tracks).
                 let saved = s.save().expect("save");
                 let (live_report, _) = drc_job(&mut s, false);
                 let (again, _) = drc_job(&mut s, false);
@@ -481,11 +482,22 @@ fn check_items_and_live_drc() {
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
-/// The blocks ([`blocks`]) one of the two reports has and the other has not.
+/// The multiset difference of the two reports' blocks ([`blocks`]): every block that one
+/// report has more often than the other, once per surplus copy.
 fn differing_blocks(a: &str, b: &str) -> Vec<String> {
-    let (a, b) = (blocks(a), blocks(b));
-    let mut out: Vec<String> = a.iter().filter(|x| !b.contains(x)).cloned().collect();
-    out.extend(b.iter().filter(|x| !a.contains(x)).cloned());
+    let mut count: std::collections::BTreeMap<String, i64> = std::collections::BTreeMap::new();
+    for x in blocks(a) {
+        *count.entry(x).or_default() += 1;
+    }
+    for x in blocks(b) {
+        *count.entry(x).or_default() -= 1;
+    }
+    let mut out = Vec::new();
+    for (block, n) in count {
+        for _ in 0..n.unsigned_abs() {
+            out.push(block.clone());
+        }
+    }
     out
 }
 

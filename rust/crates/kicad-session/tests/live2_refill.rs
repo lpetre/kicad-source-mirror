@@ -1229,8 +1229,9 @@ mod review_cases {
 
     /// The positive case of `update_teardrops` in
     /// [`untracked_operations_make_the_next_affected_refill_full`]: on a board with a teardrop
-    /// target (a via with teardrops enabled and a track ending on it) the update adds a
-    /// teardrop zone, bumps the time stamp, and the record becomes unknown.
+    /// target (a via with teardrops enabled and a track ending on it) the update removes and
+    /// re-creates the teardrop zone the refill before it made, bumps the time stamp, and the
+    /// record becomes unknown.
     #[test]
     fn update_teardrops_with_a_target_makes_the_record_full() {
         const TD: &str = "(teardrops (best_length_ratio 0.5) (max_length 1) (best_width_ratio 1) \

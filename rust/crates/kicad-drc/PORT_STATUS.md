@@ -1438,9 +1438,10 @@ needs no caches.
   `std::unordered_map`). The port: (net code, layer) key order, items in collection order
   (copper zones, tracks, pads), the tree items at a neck in the order libstdc++ iterates the
   `unordered_set` when no bucket collision reorders it (the distinct parents of the tree search
-  reversed: reverse insertion order), then zones in `ZoneId` order. With one or two
-  contributing tree items the item order within a violation (which also decides which two
-  items `EvalRules` sees) is therefore the C++ one; with three or more it depends on heap
+  reversed: reverse insertion order), then zones in `ZoneId` order. When the tree search
+  finds one or two distinct parents at a neck, the item order within a violation (which also
+  decides which two items `EvalRules` sees) is therefore the C++ one; with three or more found
+  (even if only two of them contribute) it depends on heap
   addresses in C++ (an insert into a non-empty bucket is linked after that bucket's
   predecessor node; buckets are address modulo 13, 29, 59, ...; a rehash re-links the list),
   and the port's order is the collision-free one. The zone part and the report order are not

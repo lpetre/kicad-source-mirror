@@ -886,6 +886,19 @@ Progress log:
   adapter milestone together with the artifact: run /home/user/kicad-oracle/gloopy/sync/sync.py,
   then git add -A kicad-rs, commit and push in that clone (the session has push access
   to it). The folder stays excluded from this public repository.
+  14:32 UTC: LIVE-2 leftovers closed (Opus repair, Fable check, then five small
+  corrections by the orchestrator). Tests: live2_refill 30 of 30; live2_drc default and
+  30 boards x 6 batches green with the live-vs-reload comparison now classified AND
+  asserted as entry multisets (180 commits: 62 order only, 71 items on other nets after
+  the reload, 31 unconnected only, 2 equal once every track hit is reported, 4 then
+  unconnected only, 10 differing only in which items a length / diff-pair entry names,
+  0 unexplained). fromTo() detection covers every letter case (from the rule text; the
+  compiled rules do not expose called functions). Docs corrected: in the JS API only
+  commit / commitBulk keep the refill local, the single edit calls and updateTeardrops
+  force a full one; fill writers do not bump the time stamp; connection-width order is
+  exact when the tree search finds one or two distinct parents. LIVE-2 item 1
+  (DRC state kept between runs) remains NOT built - the open speed item for a router
+  loop. Task 13 is closed with that exception.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
