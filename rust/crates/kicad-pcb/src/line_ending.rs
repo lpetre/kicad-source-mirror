@@ -347,7 +347,13 @@ mod tests {
         );
         assert_eq!(
             pts(ending(LineEndingStyle::Square, 400, 200, 0)),
-            vec![(1200, 2100), (1200, 1900), (800, 1900), (800, 2100), (1200, 2100)]
+            vec![
+                (1200, 2100),
+                (1200, 1900),
+                (800, 1900),
+                (800, 2100),
+                (1200, 2100)
+            ]
         );
         let circle = pts(ending(LineEndingStyle::Circle, 400, 200, 0));
         assert_eq!(circle.len(), 33);
@@ -394,6 +400,9 @@ mod tests {
             assert_eq!(LineEnding::token_to_style(LineEnding::style_to_token(s)), s);
         }
         assert_eq!(LineEnding::token_to_style("bogus"), LineEndingStyle::None);
-        assert_eq!(LineEnding::style_to_choice_index(LineEndingStyle::Circle), 3);
+        assert_eq!(
+            LineEnding::style_to_choice_index(LineEndingStyle::Circle),
+            3
+        );
     }
 }

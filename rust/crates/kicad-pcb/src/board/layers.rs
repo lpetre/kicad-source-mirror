@@ -17,16 +17,20 @@
 
 //! Port of the layer functions of `pcbnew/board.cpp` (`GetCopperLayerCount`, `FlipLayer`,
 //! `recalcOpposites`, `GetLayerName`, `SetLayerDescr`, ...) and of `LAYER` / `LAYER_T`
-//! (`pcbnew/board.h`). Package M22; M0d wrote the types, the field-read hooks the kernel needs
+//! (`pcbnew/board.h`), and `pcbnew/layer_utils.cpp` (`LAYER_UTILS`). Package M22; M0d wrote the types, the field-read hooks the kernel needs
 //! (`copper_layer_count`, `flip_layer`, `build_layer_env`) and the constructor part
 //! (`recalc_opposites`).
 
-use kicad_core::layer_ids::{is_copper_layer, layer_name};
-use kicad_core::{Lset, PCB_LAYER_ID_COUNT, PcbLayerId};
+use kicad_core::layer_ids::{
+    self, copper_layer_to_ordinal, is_copper_layer, layer_name, to_layer_id,
+};
+use kicad_core::{LayerRange, Lseq, Lset, PCB_LAYER_ID_COUNT, PcbLayerId};
 
 use crate::board::Board;
 use crate::board_stackup::BoardStackup;
-use crate::ctx::LayerEnv;
+use crate::ctx::{BoardCtx, LayerEnv};
+use crate::ids::FootprintId;
+use crate::item::RecurseMode;
 
 /// `LAYER_T`; the values are written to files.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
@@ -228,14 +232,16 @@ impl Board {
         self.design_settings.enabled_layers().clone()
     }
 
-    /// `BOARD::SetEnabledLayers`.
+    /// `BOARD::SetEnabledLayers`: the design settings' mask (which also recounts the copper
+    /// and user-defined layers). `BumpDrillModelGeneration()` has no counterpart (the drill
+    /// model of the drill maps is tier 2).
     pub fn set_enabled_layers(&mut self, layers: Lset) {
-        crate::port_pending!("BOARD::SetEnabledLayers", layers)
+        self.design_settings_mut().set_enabled_layers(&layers);
     }
 
     /// `BOARD::IsLayerEnabled`.
     pub fn is_layer_enabled(&self, layer: PcbLayerId) -> bool {
-        crate::port_pending!("BOARD::IsLayerEnabled", layer)
+        self.design_settings.is_layer_enabled(layer)
     }
 
     /// `BOARD::GetStandardLayerName`: the fixed name of the layer id (`LayerName`).
@@ -245,49 +251,277 @@ impl Board {
 
     /// `BOARD::GetLayerName`: the user name of an enabled layer, else the standard name.
     pub fn layer_name(&self, layer: PcbLayerId) -> String {
-        crate::port_pending!("BOARD::GetLayerName", layer)
+        // All layer names are stored in the BOARD.
+        if self.is_layer_enabled(layer) {
+            // Standard names were set in BOARD::BOARD() but they may be over-ridden by
+            // BOARD::SetLayerName().  For copper layers, return the user defined layer name,
+            // if it was set.  Otherwise return the Standard English layer name.
+            if let Some(l) = self.layers.get(&layer.0) {
+                if !l.user_name.is_empty() {
+                    return l.user_name.clone();
+                }
+            }
+        }
+
+        Board::standard_layer_name(layer)
     }
 
-    /// `BOARD::GetLayerID`.
+    /// `BOARD::SetLayerName`: `false` for a name with a quote character or a disabled layer
+    /// (an empty name clears the user name of any layer and also returns `false`, as in C++).
+    /// `BumpDrillModelGeneration()` has no counterpart (tier 2 drill model).
+    pub fn set_layer_name(&mut self, layer: PcbLayerId, name: &str) -> bool {
+        if name.is_empty() {
+            // If the name is empty, we clear the user name.
+            self.layers.entry(layer.0).or_default().user_name.clear();
+            self.layers_changed();
+        } else {
+            // no quote chars in the name allowed
+            if name.contains('"') {
+                return false;
+            }
+
+            if self.is_layer_enabled(layer) {
+                self.layers.entry(layer.0).or_default().user_name = name.to_string();
+                self.layers_changed();
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// `BOARD::GetLayerID`: the layer whose canonical or user name is `name` (`m_layers` in
+    /// id order), else the layer whose standard name it is, else `UNDEFINED_LAYER`.
     pub fn layer_id(&self, name: &str) -> PcbLayerId {
-        crate::port_pending!("BOARD::GetLayerID", name)
+        // Check the BOARD physical layer names.
+        for (&layer_id, layer) in &self.layers {
+            if layer.name == name || layer.user_name == name {
+                return to_layer_id(layer_id);
+            }
+        }
+
+        // Otherwise fall back to the system standard layer names for virtual layers.
+        for layer in 0..PCB_LAYER_ID_COUNT {
+            if Board::standard_layer_name(to_layer_id(layer)) == name {
+                return to_layer_id(layer);
+            }
+        }
+
+        PcbLayerId::UndefinedLayer
     }
 
-    /// `BOARD::GetLayerType`.
+    /// `BOARD::GetLayerType`: the stored type of an enabled layer; otherwise auxiliary for a
+    /// non-copper layer from `User_1` on, signal for copper, else undefined.
     pub fn layer_type(&self, layer: PcbLayerId) -> LayerT {
-        crate::port_pending!("BOARD::GetLayerType", layer)
+        if self.is_layer_enabled(layer) {
+            if let Some(l) = self.layers.get(&layer.0) {
+                return l.type_;
+            }
+        }
+
+        if layer.0 >= PcbLayerId::User1.0 && !is_copper_layer(layer) {
+            LayerT::Aux
+        } else if is_copper_layer(layer) {
+            LayerT::Signal
+        } else {
+            LayerT::Undefined
+        }
     }
 
-    /// `BOARD::SetLayerDescr`.
+    /// `BOARD::SetLayerType`: only for an enabled layer.
+    pub fn set_layer_type(&mut self, layer: PcbLayerId, layer_type: LayerT) -> bool {
+        if self.is_layer_enabled(layer) {
+            self.layers.entry(layer.0).or_default().type_ = layer_type;
+            self.layers_changed();
+            return true;
+        }
+
+        false
+    }
+
+    /// `BOARD::SetLayerDescr`: store the `LAYER`, then `recalcOpposites()`.
     pub fn set_layer_descr(&mut self, layer: PcbLayerId, descr: Layer) -> bool {
-        crate::port_pending!("BOARD::SetLayerDescr", layer, descr)
+        self.layers.insert(layer.0, descr);
+        self.layers_changed();
+        true
     }
 
-    /// `BOARD::GetCopperLayerStackMaxId`.
+    /// `recalcOpposites()` after an edit of `m_layers`, plus the Rust bookkeeping: the flip
+    /// table feeds the `LayerEnv` snapshot (marked stale) and the time stamp moves on every
+    /// edit (`board-model.md` 8.5).
+    fn layers_changed(&mut self) {
+        self.recalc_opposites();
+        self.layer_env_stale = true;
+        self.increment_time_stamp();
+    }
+
+    /// `BOARD::GetUserDefinedLayerCount`.
+    pub fn user_defined_layer_count(&self) -> i32 {
+        self.design_settings.user_defined_layer_count()
+    }
+
+    /// `BOARD::SetUserDefinedLayerCount`.
+    pub fn set_user_defined_layer_count(&mut self, count: i32) {
+        self.design_settings_mut()
+            .set_user_defined_layer_count(count)
+    }
+
+    /// `BOARD::GetCopperLayerStackMaxId`: the id of the last copper layer of the stack in id
+    /// order (`B_Cu` for two layers).
     pub fn copper_layer_stack_max_id(&self) -> PcbLayerId {
-        crate::port_pending!("BOARD::GetCopperLayerStackMaxId")
+        let imax = self.copper_layer_count();
+
+        // layers IDs are F_Cu, B_Cu, and even IDs values (imax values)
+        if imax <= 2 {
+            // at least 2 layers are expected
+            return PcbLayerId::BCu;
+        }
+
+        // For a 4 layer, last ID is In2_Cu = 6 (IDs are 0, 2, 4, 6)
+        PcbLayerId((imax - 1) * 2)
     }
 
-    /// `BOARD::LayerDepth`.
+    /// `BOARD::LayerDepth`: the number of stack positions between two copper layers.
+    ///
+    /// C++ throws `std::invalid_argument` (from `LAYER_RANGE`) for a non-copper layer; that is
+    /// a programmer error, so it is a `debug_assert!` here and release builds return 0.
     pub fn layer_depth(&self, start: PcbLayerId, end: PcbLayerId) -> i32 {
-        crate::port_pending!("BOARD::LayerDepth", start, end)
+        // Copper IDs are not in stack order (B_Cu=2, In1_Cu=4), so count in stack positions
+        match LayerRange::new(start, end, self.copper_layer_count()) {
+            Ok(range) => range.size() as i32 - 1,
+            Err(_) => {
+                debug_assert!(false, "BOARD::LayerDepth: {start:?} / {end:?} not copper");
+                0
+            }
+        }
     }
 
-    /// `BOARD::IsFrontLayer`.
+    /// `BOARD::IsFrontLayer`: a front layer, or a user layer of type `LT_FRONT`.
     pub fn is_front_layer(&self, layer: PcbLayerId) -> bool {
-        crate::port_pending!("BOARD::IsFrontLayer", layer)
+        layer_ids::is_front_layer(layer) || self.layer_type(layer) == LayerT::Front
     }
 
-    /// `BOARD::IsBackLayer`.
+    /// `BOARD::IsBackLayer`: a back layer, or a user layer of type `LT_BACK`.
     pub fn is_back_layer(&self, layer: PcbLayerId) -> bool {
-        crate::port_pending!("BOARD::IsBackLayer", layer)
+        layer_ids::is_back_layer(layer) || self.layer_type(layer) == LayerT::Back
     }
 
     /// `BOARD::GetStackupOrDefault`: the settings' stack-up if the board has one, else a
     /// default list for the copper count.
     pub fn get_stackup_or_default(&self) -> BoardStackup {
-        crate::port_pending!("BOARD::GetStackupOrDefault")
+        if self.design_settings.has_stackup {
+            return self.design_settings.stackup.clone();
+        }
+
+        let mut stackup = BoardStackup::default();
+        stackup.build_default_stackup_list(Some(&self.design_settings), self.copper_layer_count());
+        stackup
     }
+}
+
+// ---- pcbnew/layer_utils.cpp (LAYER_UTILS) ---------------------------------------------------
+
+/// `LAYER_UTILS::AccumulateNames`: the layer names joined by `", "` (the board's names when a
+/// board is given, else the standard names).
+pub fn accumulate_names(layers: &Lseq, board: Option<&Board>) -> String {
+    let mut result = String::new();
+
+    for &layer in &layers.0 {
+        if !result.is_empty() {
+            result += ", ";
+        }
+
+        match board {
+            Some(board) => result += &board.layer_name(layer),
+            None => result += &layer_name(layer),
+        }
+    }
+
+    result
+}
+
+/// `LAYER_UTILS::GetAllFootprintLayers`: the union of the layer sets of every child of the
+/// footprint (recursively).
+pub fn get_all_footprint_layers(ctx: &BoardCtx<'_>, footprint: FootprintId) -> Lset {
+    let mut used_layers = Lset::default();
+
+    ctx.board
+        .item_run_on_children(footprint.into(), RecurseMode::Recurse, &mut |child| {
+            if let Some(item) = ctx.item(child) {
+                used_layers |= &item.layer_set();
+            }
+        });
+
+    used_layers
+}
+
+/// `LAYER_UTILS::GetUsedFootprintLayers`: like `get_all_footprint_layers`, but a pad on the
+/// `*.Cu` wildcard pins only the copper layers its padstack defines explicitly.
+pub fn get_used_footprint_layers(ctx: &BoardCtx<'_>, footprint: FootprintId) -> Lset {
+    let mut used_layers = Lset::default();
+
+    ctx.board
+        .item_run_on_children(footprint.into(), RecurseMode::Recurse, &mut |child| {
+            let Some(item) = ctx.item(child) else {
+                return;
+            };
+
+            let mut item_layers = item.layer_set();
+
+            // *.Cu wildcard pins no copper layer, an explicit padstack layer still does
+            if let Some(pad) = item.as_pad() {
+                let copper = &item_layers & Lset::all_cu_mask();
+
+                // A blind span such as F.Cu..In2.Cu is a real layer choice, not the wildcard
+                if copper.count() > 1 && copper == Lset::all_cu_mask_n(copper.count() as i32) {
+                    for layer in copper.seq().0 {
+                        if !pad.lib_padstack().has_explicit_definition_for_layer(layer) {
+                            item_layers.reset(layer);
+                        }
+                    }
+                }
+            }
+
+            used_layers |= &item_layers;
+        });
+
+    used_layers
+}
+
+/// `LAYER_UTILS::MinimalCopperLayerCount`: the smallest even copper count holding every inner
+/// copper layer of `layers` (at least 2).
+pub fn minimal_copper_layer_count(layers: &Lset) -> i32 {
+    let inner_copper = layers & Lset::internal_cu_mask();
+    let mut copper_count = 2;
+
+    for layer in inner_copper.seq().0 {
+        copper_count = copper_count.max(copper_layer_to_ordinal(layer) as i32 + 2);
+    }
+
+    // Stackups only come in even copper counts
+    copper_count + copper_count % 2
+}
+
+/// `LAYER_UTILS::GetOrphanedFootprintLayers`: the used layers of the footprint that are neither
+/// custom user layers, technical, user nor `Rescue`.
+pub fn get_orphaned_footprint_layers(
+    ctx: &BoardCtx<'_>,
+    footprint: FootprintId,
+    custom_user_layers: &Lset,
+) -> Lset {
+    let mut used_layers = get_used_footprint_layers(ctx, footprint);
+
+    used_layers &= &!custom_user_layers;
+    used_layers &= &!Lset::all_tech_mask();
+    used_layers &= &!Lset::user_mask();
+
+    // Rescue is a pseudo-layer used as a fallback for items referencing unknown layer
+    // names at load time. It is not exposed in any layer-selection UI, so the user has no
+    // way to "keep" it. Items on Rescue are an orphan state that predates any Footprint
+    // Properties edit and are surfaced through library-parity DRC instead.
+    used_layers.reset(PcbLayerId::Rescue);
+
+    used_layers
 }
 
 #[cfg(test)]
@@ -395,5 +629,226 @@ mod tests {
         assert_eq!(after_first_dot("NoDot"), "");
         assert_eq!(LayerT::parse_type("auxiliary"), LayerT::Aux);
         assert_eq!(LayerT::Undefined.show_type(), "signal");
+    }
+}
+
+/// Package M22 tests: the layer table queries of `BOARD` and `LAYER_UTILS`. Expected names and
+/// types also come from `pcb-dump board --sections board` (the `board_section_oracle` test in
+/// `board/queries.rs` replays those goldens).
+#[cfg(test)]
+mod m22_tests {
+    use kicad_core::{Lseq, Lset, PcbLayerId};
+
+    use super::*;
+
+    #[test]
+    fn layer_names_follow_enabled_state() {
+        let mut board = Board::default();
+
+        // Defaults: standard names (F.Silkscreen etc. are the standard names of LayerName).
+        assert_eq!(board.layer_name(PcbLayerId::FCu), "F.Cu");
+        assert_eq!(
+            board.layer_name(PcbLayerId::FSilkS),
+            layer_name(PcbLayerId::FSilkS)
+        );
+
+        // A disabled layer cannot be renamed and keeps its standard name.
+        assert!(!board.is_layer_enabled(PcbLayerId::In1Cu));
+        assert!(!board.set_layer_name(PcbLayerId::In1Cu, "Inner"));
+        assert_eq!(board.layer_name(PcbLayerId::In1Cu), "In1.Cu");
+
+        // Quotes are refused; a valid name is used and found by GetLayerID.
+        assert!(!board.set_layer_name(PcbLayerId::FCu, "Top\"Side"));
+        assert!(board.set_layer_name(PcbLayerId::FCu, "Top"));
+        assert_eq!(board.layer_name(PcbLayerId::FCu), "Top");
+        assert_eq!(board.layer_id("Top"), PcbLayerId::FCu);
+        assert_eq!(board.layer_id("F.Cu"), PcbLayerId::FCu);
+        assert_eq!(board.layer_id("B.Cu"), PcbLayerId::BCu);
+        assert_eq!(board.layer_id("no such layer"), PcbLayerId::UndefinedLayer);
+
+        // Clearing the name returns false (C++ quirk) but restores the standard name.
+        assert!(!board.set_layer_name(PcbLayerId::FCu, ""));
+        assert_eq!(board.layer_name(PcbLayerId::FCu), "F.Cu");
+        board.check_invariants().unwrap();
+    }
+
+    #[test]
+    fn layer_types_and_sides() {
+        let mut board = Board::default();
+        let user1 = PcbLayerId::User1;
+
+        assert_eq!(board.layer_type(PcbLayerId::FCu), LayerT::Signal);
+        assert_eq!(board.layer_type(PcbLayerId::In5Cu), LayerT::Signal); // disabled copper
+        assert_eq!(board.layer_type(PcbLayerId::FSilkS), LayerT::Undefined);
+        assert_eq!(board.layer_type(user1), LayerT::Aux);
+
+        assert!(board.is_layer_enabled(user1));
+        assert!(!board.is_front_layer(user1));
+        assert!(board.set_layer_type(user1, LayerT::Front));
+        assert!(board.is_front_layer(user1));
+        assert!(!board.is_back_layer(user1));
+        assert!(board.is_front_layer(PcbLayerId::FFab));
+        assert!(board.is_back_layer(PcbLayerId::BCu));
+
+        // Disabled layers cannot change type.
+        assert!(!board.set_layer_type(PcbLayerId(PcbLayerId::User1.0 + 20), LayerT::Back));
+
+        // SetLayerDescr re-runs recalcOpposites: a front / back pair of user layers.
+        let user3 = PcbLayerId(user1.0 + 2);
+        let mut descr = board.layers[&user3.0].clone();
+        descr.type_ = LayerT::Back;
+        assert!(board.set_layer_descr(user3, descr));
+        assert_eq!(board.flip_layer(user1), user3);
+        assert_eq!(board.build_layer_env().flip_layer(user1), user3);
+        assert!(board.layer_env_stale);
+    }
+
+    #[test]
+    fn copper_stack_queries() {
+        let mut board = Board::default();
+        assert_eq!(board.copper_layer_stack_max_id(), PcbLayerId::BCu);
+        assert_eq!(board.layer_depth(PcbLayerId::FCu, PcbLayerId::BCu), 1);
+
+        board.set_copper_layer_count(6);
+        assert_eq!(board.copper_layer_stack_max_id(), PcbLayerId(10));
+        assert_eq!(board.layer_depth(PcbLayerId::FCu, PcbLayerId::BCu), 5);
+        assert_eq!(board.layer_depth(PcbLayerId::In1Cu, PcbLayerId::BCu), 4);
+        assert_eq!(board.layer_depth(PcbLayerId::In2Cu, PcbLayerId::In1Cu), 1);
+
+        // SetEnabledLayers recounts the copper layers and forces the mandatory ones.
+        board.set_enabled_layers(Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu]));
+        assert_eq!(board.copper_layer_count(), 2);
+        assert!(board.is_layer_enabled(PcbLayerId::EdgeCuts));
+        assert!(!board.is_layer_enabled(PcbLayerId::In1Cu));
+        assert_eq!(board.user_defined_layer_count(), 0);
+        board.set_user_defined_layer_count(2);
+        assert!(board.is_layer_enabled(PcbLayerId::User1));
+    }
+
+    #[test]
+    fn stackup_or_default_without_stackup() {
+        let board = Board::default();
+        assert!(!board.design_settings().has_stackup);
+        let stackup = board.get_stackup_or_default();
+        let mut expected = BoardStackup::default();
+        expected.build_default_stackup_list(Some(board.design_settings()), 2);
+        assert_eq!(stackup.list.len(), expected.list.len());
+    }
+
+    #[test]
+    fn layer_utils() {
+        let board = Board::default();
+        let seq = Lseq(vec![PcbLayerId::FCu, PcbLayerId::EdgeCuts]);
+        assert_eq!(accumulate_names(&seq, Some(&board)), "F.Cu, Edge.Cuts");
+        assert_eq!(accumulate_names(&seq, None), "F.Cu, Edge.Cuts");
+        assert_eq!(accumulate_names(&Lseq(vec![]), None), "");
+
+        assert_eq!(
+            minimal_copper_layer_count(&Lset::from_layers(&[PcbLayerId::FCu])),
+            2
+        );
+        assert_eq!(
+            minimal_copper_layer_count(&Lset::from_layers(&[PcbLayerId::In1Cu])),
+            4
+        );
+        assert_eq!(
+            minimal_copper_layer_count(&Lset::from_layers(&[PcbLayerId::In2Cu])),
+            4
+        );
+        assert_eq!(
+            minimal_copper_layer_count(&Lset::from_layers(&[PcbLayerId::In3Cu])),
+            6
+        );
+    }
+}
+
+/// Replays `tests/golden/m22_board_layers.txt`: the `layer.<L>.name` / `layer.<L>.type` and
+/// `copper_layer_count` lines `pcb-dump board --sections board` printed for the boards named
+/// in its `file|` lines (`tests/data/m22/` or `qa/data/pcbnew/`).
+#[cfg(test)]
+mod m22_oracle {
+    use kicad_core::{Lset, PcbLayerId};
+
+    use super::LayerT;
+    use crate::board::Board;
+    use crate::io::{ParseOptions, parse_board};
+
+    /// `ENUM_TO_STRING( LAYER_T )` of the dump.
+    fn cpp_name(t: LayerT) -> &'static str {
+        match t {
+            LayerT::Undefined => "LT_UNDEFINED",
+            LayerT::Signal => "LT_SIGNAL",
+            LayerT::Power => "LT_POWER",
+            LayerT::Mixed => "LT_MIXED",
+            LayerT::Jumper => "LT_JUMPER",
+            LayerT::Aux => "LT_AUX",
+            LayerT::Front => "LT_FRONT",
+            LayerT::Back => "LT_BACK",
+        }
+    }
+
+    fn load(name: &str) -> Board {
+        let local = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/data/m22")
+            .join(format!("{name}.kicad_pcb"));
+        let path = if local.exists() {
+            local
+        } else {
+            kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
+        };
+        let text = std::fs::read_to_string(&path).unwrap();
+        // Staging: constructs whose parser package has not landed are skipped; the layer table
+        // is parsed by the board core (PCBIO-01).
+        let options = ParseOptions {
+            allow_pending: true,
+            ..ParseOptions::default()
+        };
+        parse_board(&text, &path.to_string_lossy(), &options).unwrap()
+    }
+
+    #[test]
+    fn board_layer_table_matches_reference() {
+        let golden = include_str!("../../tests/golden/m22_board_layers.txt");
+        let mut board: Option<Board> = None;
+        let mut checked = 0;
+
+        for line in golden.lines() {
+            if line.starts_with('#') {
+                continue;
+            }
+
+            if let Some(name) = line.strip_prefix("file|") {
+                board = Some(load(name));
+                continue;
+            }
+
+            let b = board.as_ref().unwrap();
+            let (key, value) = line
+                .strip_prefix("board|board|")
+                .unwrap()
+                .split_once('=')
+                .unwrap();
+
+            if key == "copper_layer_count" {
+                assert_eq!(b.copper_layer_count().to_string(), value, "{line}");
+            } else if let Some(rest) = key.strip_prefix("layer.") {
+                let (layer, field) = rest.rsplit_once('.').unwrap();
+                // The key is the canonical `LSET::Name`.
+                let id = PcbLayerId(Lset::name_to_layer(layer));
+                assert_ne!(id, PcbLayerId::UndefinedLayer, "{line}");
+
+                match field {
+                    "name" => assert_eq!(format!("\"{}\"", b.layer_name(id)), value, "{line}"),
+                    "type" => assert_eq!(cpp_name(b.layer_type(id)), value, "{line}"),
+                    _ => panic!("unexpected field {line}"),
+                }
+            } else {
+                continue;
+            }
+
+            checked += 1;
+        }
+
+        assert!(checked > 200, "{checked}");
     }
 }

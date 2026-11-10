@@ -45,8 +45,8 @@ fn check_polygon_fits_rect(a_width: i32, a_height: i32, a_radius: i32) {
 
     assert!((bbox.left() as i64 - pos.x as i64).abs() <= tol);
     assert!((bbox.top() as i64 - pos.y as i64).abs() <= tol);
-    assert!((bbox.width() as i64 - a_width as i64).abs() <= tol);
-    assert!((bbox.height() as i64 - a_height as i64).abs() <= tol);
+    assert!((bbox.width() - a_width as i64).abs() <= tol);
+    assert!((bbox.height() - a_height as i64).abs() <= tol);
 }
 
 /// Radius is half of both sides, so it becomes a circle (#24623).

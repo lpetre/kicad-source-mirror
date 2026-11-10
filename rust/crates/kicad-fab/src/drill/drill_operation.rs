@@ -102,7 +102,7 @@ pub struct DrillOperation {
     pub drill_start: PcbLayerId,  // m_DrillStart
     pub drill_end: PcbLayerId,    // m_DrillEnd
 
-    pub not_plated: bool,          // m_NotPlated
+    pub not_plated: bool,         // m_NotPlated
     pub attribute: HoleAttribute, // m_Attribute
 
     pub filled: bool,         // m_Filled
@@ -156,7 +156,10 @@ impl Default for DrillOperation {
 impl DrillOperation {
     /// `DRILL_OPERATION::Id()`.
     pub fn id(&self) -> DrillOperationId {
-        DrillOperationId { owner: self.source_id, kind: self.kind }
+        DrillOperationId {
+            owner: self.source_id,
+            kind: self.kind,
+        }
     }
 
     /// `DRILL_OPERATION::IsBackdrill()`.

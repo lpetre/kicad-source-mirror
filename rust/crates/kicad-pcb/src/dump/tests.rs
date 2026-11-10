@@ -87,8 +87,9 @@ fn fixture_board_dumps_every_item_and_section() {
     for i in 0..n {
         let key = format!("#{i}");
         let s = sections_of(&text, &key);
+        // `misc` prints nothing for most types.
         assert_eq!(s.first().map(String::as_str), Some("item"), "{key}: {s:?}");
-        assert!(s.iter().any(|x| x == "misc"), "{key}: {s:?}");
+        assert!(s.iter().any(|x| x == "bbox"), "{key}: {s:?}");
     }
 
     assert!(sections_of(&text, "#0").contains(&"footprint".to_string()));

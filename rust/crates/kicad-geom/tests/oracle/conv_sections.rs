@@ -165,6 +165,28 @@ fn min_seg_of(rng: &mut Rng) -> i32 {
     if k == 4 { 7 } else { k * 16 }
 }
 
+/// `std::cbrt` (the glibc port in `cmath`): random bit patterns and scaled values.
+fn section_cbrt(results: &mut Results, name: &'static str, seed: u64, count: i32) {
+    let mut sec = Section::new(results, name);
+    let mut rng = Rng::new(seed);
+
+    for _ in 0..count {
+        let bits = rng.next();
+        let x = f64::from_bits(bits);
+        let y = rng.dbl_scaled(-1022, 1023);
+        let z = rng.dbl(-1e9, 1e9);
+
+        let mut rec = Rec::default();
+        rec.d(x)
+            .d(cmath::cbrt(x))
+            .d(y)
+            .d(cmath::cbrt(y))
+            .d(z)
+            .d(cmath::cbrt(z));
+        sec.add(&rec);
+    }
+}
+
 fn section_circle(results: &mut Results, name: &'static str, seed: u64, count: i32) {
     let mut sec = Section::new(results, name);
     let mut rng = Rng::new(seed);
@@ -563,11 +585,11 @@ fn section_roundrect(results: &mut Results, name: &'static str, seed: u64, count
 
         let rect = ShapeRect::from_pos_size(p0, w, h);
 
-        rec_rr(&mut rec, &Roundrect::new(rect.clone(), radius, norm));
+        rec_rr(&mut rec, &Roundrect::new(rect, radius, norm));
         rec_rr(&mut rec, &Roundrect::outset_from(&rect, outset));
         rec_rr(
             &mut rec,
-            &Roundrect::new(rect.clone(), radius, norm).get_inflated(outset),
+            &Roundrect::new(rect, radius, norm).get_inflated(outset),
         );
 
         let mut rr = ShapeRect::from_pos_size(p0, w, h);
@@ -900,7 +922,12 @@ fn random_arc(rng: &mut Rng, grid: bool) -> ShapeArc {
     // Arcs whose rounded points are collinear get a clamped centre near the int limits, which
     // overflows int in the intersection code (undefined behaviour in C++)
     if arc.get_radius() > 2.0 * r as f64 + 1000.0 {
-        return ShapeArc::from_center_start_angle(c, c + v(r, 0), EdaAngle::new(90.0, DEGREES_T), 0);
+        return ShapeArc::from_center_start_angle(
+            c,
+            c + v(r, 0),
+            EdaAngle::new(90.0, DEGREES_T),
+            0,
+        );
     }
 
     arc
@@ -973,14 +1000,13 @@ fn section_intersection(results: &mut Results, name: &'static str, seed: u64, co
     let mut sec = Section::new(results, name);
     let mut rng = Rng::new(seed);
 
-    for dbg_n in 0..count {
+    for _ in 0..count {
         let grid = rng.flag();
         let (ga, ka) = random_geom(&mut rng, grid);
         let (gb, kb) = random_geom(&mut rng, grid);
 
         let mut rec = Rec::default();
         rec.b(grid).i(ka).i(kb);
-        if dbg_n == 6176 || dbg_n == 10633 { eprintln!("DBG {dbg_n} {ga:?} || {gb:?}"); }
 
         let mut pts = Vec::new();
         let mut contact = IntersectionContact::default();
@@ -1079,7 +1105,8 @@ fn section_ellipse(results: &mut Results, name: &'static str, seed: u64, count: 
         };
 
         let rot = rot_deg(&mut rng);
-        let sa = rng.range(-720, 720) as f64 + if rng.flag() { 0.0 } else { rng.dbl(0.0, 1.0) };
+        let mut sa = rng.range(-720, 720) as f64;
+        sa += if rng.flag() { 0.0 } else { rng.dbl(0.0, 1.0) };
         let ea = match rng.next() % 4 {
             0 => sa + sweep_deg(&mut rng),
             1 => sa + 360.0,
@@ -1255,7 +1282,8 @@ pub fn run_all(results: &mut Results) {
     }
 
     type SectionFn = fn(&mut Results, &'static str, u64, i32);
-    let sections: [(SectionFn, &'static str, u64, i32); 9] = [
+    let sections: [(SectionFn, &'static str, u64, i32); 10] = [
+        (section_cbrt, "cbrt", 609, 20000),
         (section_circle, "libm:conv_circle", 600, 20000),
         (section_oval, "libm:conv_oval", 601, 20000),
         (section_rect, "libm:conv_rect", 602, 30000),
@@ -1267,9 +1295,14 @@ pub fn run_all(results: &mut Results) {
         (section_ellipse, "libm:shape_ellipse", 608, 30000),
     ];
 
+    // `KICAD_CONV_ORACLE_COUNT=N` runs only the first N cases (like `conv_oracle --count N`)
+    let limit: Option<i32> = std::env::var("KICAD_CONV_ORACLE_COUNT")
+        .ok()
+        .and_then(|c| c.parse().ok());
+
     for (f, name, seed, count) in sections {
         if run(name) {
-            f(results, name, seed, count);
+            f(results, name, seed, limit.map_or(count, |l| l.min(count)));
         }
     }
 }

@@ -16,5 +16,5 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/exporters/gerber_jobfile_writer.h` / `.cpp` (`.gbrjob`).
-//! 
+//!
 //! Work package FAB-09 (`docs/analysis/plot-fab.md` 10.2); not started.

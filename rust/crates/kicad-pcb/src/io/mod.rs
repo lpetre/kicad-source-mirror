@@ -28,14 +28,21 @@
 //!   The QA helper `KI_TEST::ReadBoardFromFileOrStream` (the `pcb-dump --no-init` load path)
 //!   is the same parse without the board file name.
 //! * [`parse_footprint_file`]: the entry for `.kicad_mod` text (PCBIO-14, staging stub).
+//! * [`format_board`] / [`format_board_report`]: port of `PCB_IO_KICAD_SEXPR::SaveBoard`, the
+//!   writer is [`writer`] (PCBIO-02).
 
 pub mod parser;
+pub mod writer;
 
 use kicad_sexpr::IoError;
 
 use crate::board::Board;
 
 pub use parser::{ParseOptions, ParseReport, PcbParser, SkippedItem};
+pub use writer::{
+    FormatOptions, FormatReport, PcbWriter, SkippedFormat, format_board, format_board_report,
+    format_board_to_formatter, format_footprint_lib_file,
+};
 
 // ---- version history (pcb_io_kicad_sexpr.h) ------------------------------------------------
 
@@ -82,7 +89,11 @@ const _: () = assert!(SEXPR_FOOTPRINT_LIB_FILE_VERSION >= SEXPR_BOARD_FILE_VERSI
 /// names not in the fixed layer hash, ...), "This file does not contain a PCB." for a footprint
 /// file, and "port pending: ..." for constructs whose parser package has not landed yet
 /// (unless `options.allow_pending`).
-pub fn parse_board(text: &str, source_name: &str, options: &ParseOptions) -> Result<Board, IoError> {
+pub fn parse_board(
+    text: &str,
+    source_name: &str,
+    options: &ParseOptions,
+) -> Result<Board, IoError> {
     parse_board_report(text, source_name, options).map(|(board, _)| board)
 }
 
@@ -122,7 +133,9 @@ pub fn parse_board_report(
 
     if !matches!(item, parser::ParsedItem::Board) {
         // The parser loaded something that was valid, but wasn't a board.
-        return Err(parser.lexer.parse_error("This file does not contain a PCB."));
+        return Err(parser
+            .lexer
+            .parse_error("This file does not contain a PCB."));
     }
 
     // Report any non-fatal parse warnings to the load info reporter: returned in the report.

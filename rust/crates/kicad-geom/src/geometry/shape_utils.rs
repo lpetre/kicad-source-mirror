@@ -272,24 +272,24 @@ pub fn get_circle_key_points(a_circle: &Circle, a_include_center: bool) -> Vec<T
     let mut pts = Vec::new();
 
     if a_include_center {
-        pts.push(TypedPoint2I::new(Vector2I::new(0, 0), PT_CENTER as i32));
+        pts.push(TypedPoint2I::new(Vector2I::new(0, 0), PT_CENTER));
     }
 
     pts.push(TypedPoint2I::new(
         Vector2I::new(0, a_circle.radius),
-        PT_QUADRANT as i32,
+        PT_QUADRANT,
     ));
     pts.push(TypedPoint2I::new(
         Vector2I::new(a_circle.radius, 0),
-        PT_QUADRANT as i32,
+        PT_QUADRANT,
     ));
     pts.push(TypedPoint2I::new(
         Vector2I::new(0, -a_circle.radius),
-        PT_QUADRANT as i32,
+        PT_QUADRANT,
     ));
     pts.push(TypedPoint2I::new(
         Vector2I::new(-a_circle.radius, 0),
-        PT_QUADRANT as i32,
+        PT_QUADRANT,
     ));
 
     // Shift the points to the circle center

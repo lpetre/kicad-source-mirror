@@ -16,34 +16,35 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! The DRC test providers (`pcbnew/drc/drc_test_provider_*.cpp`), one module per C++ file, in
-//! the C++ registration (run) order. `drc_test_provider_schematic_parity.cpp` is not ported.
+//! alphabetical order (the run order is the registration order, see analysis section 4.4).
+//! `drc_test_provider_schematic_parity.cpp` is not ported.
 
 pub mod annular_width;
-pub mod disallow;
-pub mod creepage;
-pub mod connectivity;
 pub mod connection_width;
+pub mod connectivity;
 pub mod copper_clearance;
-pub mod physical_clearance;
 pub mod courtyard_clearance;
+pub mod creepage;
+pub mod diff_pair_coupling;
+pub mod disallow;
 pub mod edge_clearance;
 pub mod footprint_checks;
-pub mod hole_to_hole;
 pub mod hole_size;
+pub mod hole_to_hole;
 pub mod library_parity;
+pub mod matched_length;
 pub mod misc;
 pub mod net_chain_tuning_profiles;
+pub mod physical_clearance;
+pub mod silk_clearance;
+pub mod sliver_checker;
+pub mod solder_mask;
 pub mod text_dims;
+pub mod text_mirroring;
 pub mod track_angle;
-pub mod track_width;
 pub mod track_segment_length;
-pub mod zone_connections;
+pub mod track_width;
 pub mod via_diameter;
 pub mod via_stack;
 pub mod via_stitch;
-pub mod solder_mask;
-pub mod silk_clearance;
-pub mod matched_length;
-pub mod diff_pair_coupling;
-pub mod sliver_checker;
-pub mod text_mirroring;
+pub mod zone_connections;

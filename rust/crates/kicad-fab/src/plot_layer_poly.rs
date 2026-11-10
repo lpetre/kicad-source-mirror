@@ -17,5 +17,5 @@
 
 //! Port of `pcbnew/plot_board_layers.cpp` L49-125, L1020-1275 (solder mask minimum width,
 //! clipped silk, `GenerateLayerPoly`).
-//! 
+//!
 //! Work package FAB-10 (`docs/analysis/plot-fab.md` 10.2); not started.

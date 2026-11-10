@@ -280,7 +280,7 @@ pub(crate) fn dump_stackup(o: &mut Out, p: &str, s: &BoardStackup) {
 
     for (i, item) in s.list().iter().enumerate() {
         let ip = format!("{p}item.{i}.");
-        emit!(o, format!("{ip}type"), v_enum(item.type_));
+        emit!(o, format!("{ip}type"), format!("BS_ITEM_TYPE_{}", v_enum(item.type_)));
         emit!(o, format!("{ip}layer"), v_layer(item.layer_id));
         emit!(o, format!("{ip}layer_name"), v_str(&item.layer_name));
         emit!(o, format!("{ip}type_name"), v_str(&item.type_name));
@@ -795,7 +795,11 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
     if let Some(ls) = o.cond("layer.*", || b.enabled_layers()) {
         for l in ls.seq().iter().copied() {
             emit!(o, format!("layer.{}.name", v_layer(l)), v_str(&b.layer_name(l)));
-            emit!(o, format!("layer.{}.type", v_layer(l)), v_enum(b.layer_type(l)));
+            emit!(
+                o,
+                format!("layer.{}.type", v_layer(l)),
+                format!("LT_{}", v_enum(b.layer_type(l)))
+            );
         }
     }
 

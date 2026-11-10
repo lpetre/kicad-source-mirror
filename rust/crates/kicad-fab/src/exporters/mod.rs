@@ -20,5 +20,6 @@
 pub mod gendrill_excellon_writer;
 pub mod gendrill_gerber_writer;
 pub mod gendrill_map;
+pub mod gendrill_report;
 pub mod gendrill_writer_base;
 pub mod gerber_jobfile_writer;

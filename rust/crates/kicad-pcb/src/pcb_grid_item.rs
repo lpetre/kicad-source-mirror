@@ -20,12 +20,27 @@
 //! package M23 (`GRID_GEOMETRY`, `FindActiveGridAt` and the frame-angle helpers are editor /
 //! router code and not part of the model).
 
+use std::sync::Arc;
+
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{Color4D, KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId};
+use kicad_geom::cmath;
 use kicad_geom::geometry::approximation::ErrorLoc;
+use kicad_geom::geometry::geometry_utils::box_hit_test_shape;
+use kicad_geom::geometry::grid_geometry::{GridGeometry, GridKind};
+use kicad_geom::math::util::ki_round_to;
+use kicad_geom::trigo::{rotate_point, rotate_point_around};
 use kicad_geom::{
-    ANGLE_0, Box2I, DEGREES_T, EdaAngle, EdaOrientation, FlipDirection, ShapePolySet, Vector2I,
+    ANGLE_0, Box2I, DEGREES_T, EdaAngle, EdaOrientation, FlipDirection, Seg, Shape, ShapeLineChain,
+    ShapeNull, ShapePolySet, Vector2D, Vector2I, mirror_point,
 };
+
+use crate::board_item::mirror_axis;
+
+/// `MIRROR_AXIS( aFlipDirection )` (`kimath mirror.h`): the angle of the reflection axis.
+fn mirror_axis_angle(dir: FlipDirection) -> EdaAngle {
+    kicad_geom::mirror_axis(dir)
+}
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
@@ -359,18 +374,98 @@ impl PcbGridItem {
     }
 
     /// `PCB_GRID_ITEM::Rotate()`.
-    pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_GRID_ITEM::Rotate", env, centre, angle)
+    pub fn rotate(&mut self, _env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
+        rotate_point_around(&mut self.pos, centre, angle);
+        self.orientation += angle;
     }
 
     /// `PCB_GRID_ITEM::Flip()`.
-    pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_GRID_ITEM::Flip", env, centre, dir)
+    pub fn flip(&mut self, _env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
+        let axis = mirror_axis_angle(dir);
+
+        // Move the location and adjust rotation for the flip.
+        mirror_point(&mut self.pos, centre, dir);
+        self.orientation = self.orientation.reflect(axis);
     }
 
     /// `PCB_GRID_ITEM::Mirror( aCentre, aFlipDirection )`.
     pub fn mirror(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_GRID_ITEM::Mirror", env, centre, dir)
+        self.mirror_axis(env, &mirror_axis(centre, dir));
+    }
+
+    /// `PCB_GRID_ITEM::Mirror( const SEG& aAxis )`.
+    pub fn mirror_axis(&mut self, _env: &MutEnv, axis: &Seg) {
+        self.pos = axis.reflect_point(self.pos);
+        self.orientation = self
+            .orientation
+            .reflect(-EdaAngle::from_vector(axis.b - axis.a));
+    }
+
+    /// `PCB_GRID_ITEM::AsGridGeometry()`: the grid as the snapping engine sees it.
+    pub fn as_grid_geometry(&self) -> GridGeometry {
+        let mut g = GridGeometry {
+            origin: Vector2D::from(self.pos),
+            orientation: self.orientation.angle().as_radians(),
+            priority: self.priority,
+            ..GridGeometry::default()
+        };
+
+        match self.type_ {
+            PcbGridType::Polar => {
+                g.kind = GridKind::Polar;
+                g.pitch = Vector2D::new(f64::from(self.spacing.x), self.phi_spacing.as_radians());
+                g.extent = Vector2D::new(f64::from(self.extent.x), self.phi_extent.as_radians());
+            }
+            PcbGridType::Cartesian => {
+                g.kind = GridKind::Cartesian;
+                g.pitch = Vector2D::from(self.spacing);
+                g.extent = Vector2D::from(self.extent);
+            }
+        }
+
+        g
+    }
+
+    /// `PCB_GRID_ITEM::buildOutlineWorld()`: the rotated rectangle or polar wedge, closed.
+    fn build_outline_world(&self) -> ShapeLineChain {
+        let mut outline = ShapeLineChain::new();
+        let orientation = self.orientation.angle();
+        let pos = self.pos;
+
+        let mut push_world = |mut local: Vector2I| {
+            rotate_point(&mut local, orientation);
+            outline.append_point(pos + local, false);
+        };
+
+        match self.type_ {
+            PcbGridType::Polar => {
+                let r = self.extent.x;
+                let phi_max = self.phi_extent.as_radians();
+
+                if phi_max + 1e-9 < 2.0 * std::f64::consts::PI {
+                    push_world(Vector2I::new(0, 0)); // wedge apex
+                }
+
+                const K_ARC_SEGMENTS: i32 = 32;
+
+                for i in 0..=K_ARC_SEGMENTS {
+                    let phi = phi_max * f64::from(i) / f64::from(K_ARC_SEGMENTS);
+                    push_world(Vector2I::new(
+                        ki_round_to::<i32, f64>(f64::from(r) * cmath::cos(phi)),
+                        ki_round_to::<i32, f64>(f64::from(r) * cmath::sin(phi)),
+                    ));
+                }
+            }
+            PcbGridType::Cartesian => {
+                push_world(Vector2I::new(-self.extent.x, -self.extent.y));
+                push_world(Vector2I::new(self.extent.x, -self.extent.y));
+                push_world(Vector2I::new(self.extent.x, self.extent.y));
+                push_world(Vector2I::new(-self.extent.x, self.extent.y));
+            }
+        }
+
+        outline.set_closed(true);
+        outline
     }
 
     /// `PCB_GRID_ITEM::TransformShapeToPolygon()`: does nothing (no artwork).
@@ -387,8 +482,8 @@ impl PcbGridItem {
     }
 
     /// `PCB_GRID_ITEM::GetBoundingBox()`.
-    pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_GRID_ITEM::GetBoundingBox", ctx)
+    pub fn bounding_box(&self, _ctx: &BoardCtx<'_>) -> Box2I {
+        self.build_outline_world().bbox(0)
     }
 
     /// `PCB_GRID_ITEM::GetEffectiveShape()`.
@@ -397,14 +492,18 @@ impl PcbGridItem {
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         flash: Flashing,
-        usage: DrcConstraintT,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_GRID_ITEM::GetEffectiveShape", ctx, layer, flash, usage)
+        // No board geometry - return a null shape.
+        let _ = (ctx, layer, flash);
+        Arc::new(ShapeNull)
     }
 
     /// `PCB_GRID_ITEM::HitTest( aPosition, aAccuracy )`.
-    pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_GRID_ITEM::HitTest", ctx, pos, accuracy)
+    pub fn hit_test(&self, _ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
+        // Use the rotated shape (rect/wedge) rather than the axis-aligned bounding box.
+        self.as_grid_geometry()
+            .contains(Vector2D::from(pos), f64::from(accuracy))
     }
 
     /// `PCB_GRID_ITEM::HitTest( aRect, aContained, aAccuracy )`.
@@ -415,13 +514,18 @@ impl PcbGridItem {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!(
-            "PCB_GRID_ITEM::HitTest (rect)",
-            ctx,
-            rect,
-            contained,
-            accuracy
-        )
+        let _ = ctx;
+        let mut arect = *rect;
+        arect.inflate(accuracy);
+
+        let outline = self.build_outline_world();
+
+        // polygon inside an axis-aligned box  <=>  polygon.BBox inside the box.
+        if contained {
+            return arect.contains_box(&outline.bbox(0));
+        }
+
+        box_hit_test_shape(&outline, &arect, false)
     }
 
     /// `PCB_GRID_ITEM::GetItemDescription()`.
@@ -429,15 +533,54 @@ impl PcbGridItem {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_GRID_ITEM::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+        "Grid Item".to_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Geometry of `pcb_grid_item.cpp`: the rotated rectangle / wedge outline box, the
+    /// `GRID_GEOMETRY::Contains` hit test, rotation, flip and mirror.
+    #[test]
+    fn grid_item_geometry() {
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut g = PcbGridItem::default();
+        g.type_ = PcbGridType::Cartesian;
+        g.pos = Vector2I::new(1000, 0);
+        g.extent = Vector2I::new(200, 100);
+        assert_eq!(
+            g.bounding_box(&ctx),
+            Box2I::new(Vector2I::new(800, -100), Vector2I::new(400, 200))
+        );
+        assert!(g.hit_test(&ctx, Vector2I::new(1199, 99), 0));
+        assert!(!g.hit_test(&ctx, Vector2I::new(1199, 101), 0));
+        assert!(g.hit_test(&ctx, Vector2I::new(1199, 101), 1));
+
+        let env = MutEnv::detached();
+        g.rotate(&env, Vector2I::new(0, 0), EdaAngle::new(90.0, DEGREES_T));
+        assert_eq!(g.pos, Vector2I::new(0, -1000));
+        assert_eq!(
+            g.bounding_box(&ctx),
+            Box2I::new(Vector2I::new(-100, -1200), Vector2I::new(200, 400))
+        );
+        let r = Box2I::new(Vector2I::new(-150, -1250), Vector2I::new(300, 500));
+        assert!(g.hit_test_rect(&ctx, &r, true, 0));
+        assert!(!g.hit_test_rect(&ctx, &r, true, -60));
+
+        g.flip(&env, Vector2I::new(10, 0), FlipDirection::LeftRight);
+        assert_eq!(g.pos, Vector2I::new(20, -1000));
+        g.mirror(&env, Vector2I::new(0, 0), FlipDirection::TopBottom);
+        assert_eq!(g.pos, Vector2I::new(20, 1000));
+
+        let units = UnitsProvider::new(&PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(g.item_description(&ctx, &units, false), "Grid Item");
+    }
 
     /// `PCB_GRID_ITEM::PCB_GRID_ITEM( BOARD_ITEM* aParent )` (pcbnew/pcb_grid_item.cpp) and the
     /// in-class initialisers of pcb_grid_item.h.

@@ -17,6 +17,6 @@
 
 //! Port of `pcbnew/exporters/gendrill_gerber_writer.h` / `.cpp` (`GERBER_WRITER`: Gerber X2 drill
 //! and IPC-4761 via protection files).
-//! 
+//!
 //! Work package FAB-08 (`docs/analysis/plot-fab.md` 10.2); not started. It embeds
 //! `super::gendrill_writer_base::GendrillWriterBase` and overrides `getDrillFileName`.

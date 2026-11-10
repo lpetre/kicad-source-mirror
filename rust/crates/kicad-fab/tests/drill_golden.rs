@@ -34,8 +34,14 @@ use std::path::{Path, PathBuf};
 pub const OPTION_SETS: [(&str, &[&str]); 5] = [
     ("excellon_default", &["--format", "excellon"]),
     ("excellon_inches", &["--format", "excellon", "-u", "in"]),
-    ("excellon_mirror", &["--format", "excellon", "--excellon-mirror-y"]),
-    ("excellon_separate_th", &["--format", "excellon", "--excellon-separate-th"]),
+    (
+        "excellon_mirror",
+        &["--format", "excellon", "--excellon-mirror-y"],
+    ),
+    (
+        "excellon_separate_th",
+        &["--format", "excellon", "--excellon-separate-th"],
+    ),
     ("gerber_default", &["--format", "gerber"]),
 ];
 
@@ -48,7 +54,11 @@ fn corpus_boards() -> Vec<String> {
     let script = include_str!("golden/drill/generate.sh");
     let start = script.find("BOARDS=(").expect("BOARDS list");
     let end = start + script[start..].find("\n)").expect("end of BOARDS list");
-    script[start..end].lines().skip(1).map(|l| l.trim().to_string()).collect()
+    script[start..end]
+        .lines()
+        .skip(1)
+        .map(|l| l.trim().to_string())
+        .collect()
 }
 
 /// Replaces the header lines that carry dates / versions by fixed tokens
@@ -139,10 +149,26 @@ fn basic_test_goldens_match_repository_goldens() {
     let ours = golden_dir().join("basic_test");
 
     for (set, repo_file, our_file) in [
-        ("excellon_default", "basic_test_excellon_default.drl", "basic_test.drl"),
-        ("excellon_inches", "basic_test_excellon_inches.drl", "basic_test.drl"),
-        ("excellon_mirror", "basic_test_excellon_mirror.drl", "basic_test.drl"),
-        ("gerber_default", "basic_test-PTH-drl.gbr", "basic_test-PTH-drl.gbr"),
+        (
+            "excellon_default",
+            "basic_test_excellon_default.drl",
+            "basic_test.drl",
+        ),
+        (
+            "excellon_inches",
+            "basic_test_excellon_inches.drl",
+            "basic_test.drl",
+        ),
+        (
+            "excellon_mirror",
+            "basic_test_excellon_mirror.drl",
+            "basic_test.drl",
+        ),
+        (
+            "gerber_default",
+            "basic_test-PTH-drl.gbr",
+            "basic_test-PTH-drl.gbr",
+        ),
     ] {
         let expected = normalise(&fs::read_to_string(repo.join(repo_file)).unwrap());
         let got = normalise(&fs::read_to_string(ours.join(set).join(our_file)).unwrap());
@@ -189,7 +215,11 @@ fn drill_export_matches_cli_goldens() {
 
             for (name, contents) in &outputs {
                 let expected = fs::read_to_string(dir.join(name)).unwrap();
-                assert_eq!(normalise(contents), normalise(&expected), "{stem}/{set}/{name}");
+                assert_eq!(
+                    normalise(contents),
+                    normalise(&expected),
+                    "{stem}/{set}/{name}"
+                );
             }
         }
     }

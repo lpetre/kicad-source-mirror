@@ -391,9 +391,8 @@ impl Circle {
 
         // The C++ adds with int wrap-around (x86): for the clamped centre of a nearly straight
         // arc the chord end points overflow (`NearestPoints_ArcToSegment`, PORT_STATUS D11)
-        let wrapping_add = |a: Vector2I, b: Vector2I| {
-            Vector2I::new(a.x.wrapping_add(b.x), a.y.wrapping_add(b.y))
-        };
+        let wrapping_add =
+            |a: Vector2I, b: Vector2I| Vector2I::new(a.x.wrapping_add(b.x), a.y.wrapping_add(b.y));
 
         retval.push(wrapping_add(m_to1vec, m));
         retval.push(wrapping_add(m_to2vec, m));

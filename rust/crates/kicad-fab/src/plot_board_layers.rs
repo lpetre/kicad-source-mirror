@@ -17,5 +17,5 @@
 
 //! Port of `pcbnew/plot_board_layers.cpp` L128-171, L247-931, L1278-1595 (`PlotBoardLayers`,
 //! `PlotOneBoardLayer`, `PlotStandardLayer`, `initializePlotter`, `StartPlotBoard`).
-//! 
+//!
 //! Work packages FAB-03, FAB-04 (`docs/analysis/plot-fab.md` 10.2); not started.

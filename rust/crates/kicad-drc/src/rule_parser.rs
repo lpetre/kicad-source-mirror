@@ -97,8 +97,7 @@ fn strtol_int(text: &str) -> i32 {
     let bytes = text.as_bytes();
     let mut i = 0;
 
-    while i < bytes.len() && matches!(bytes[i], b' ' | b'\t' | b'\n' | b'\x0b' | b'\x0c' | b'\r')
-    {
+    while i < bytes.len() && matches!(bytes[i], b' ' | b'\t' | b'\n' | b'\x0b' | b'\x0c' | b'\r') {
         i += 1;
     }
 
@@ -116,10 +115,13 @@ fn strtol_int(text: &str) -> i32 {
         let digit = (bytes[i] - b'0') as i64;
 
         if !overflow {
-            match value
-                .checked_mul(10)
-                .and_then(|v| if negative { v.checked_sub(digit) } else { v.checked_add(digit) })
-            {
+            match value.checked_mul(10).and_then(|v| {
+                if negative {
+                    v.checked_sub(digit)
+                } else {
+                    v.checked_add(digit)
+                }
+            }) {
                 Some(v) => value = v,
                 None => overflow = true,
             }
@@ -1052,7 +1054,10 @@ where
                     if c.type_ == DrcConstraintT::SkewConstraint {
                         c.set_option(drc_constraint_options::SKEW_WITHIN_DIFF_PAIRS);
                     } else {
-                        self.report_error("within_diff_pairs option invalid for constraint type.", 0)?;
+                        self.report_error(
+                            "within_diff_pairs option invalid for constraint type.",
+                            0,
+                        )?;
                     }
 
                     if self.lexer.next_tok()? != T::T_RIGHT {

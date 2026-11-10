@@ -166,7 +166,14 @@ impl DrcRuleCondition {
 
         // (The C++ reuses a per-thread context on the no-reporter path; that is a performance
         // measure only.)
-        if ucode.run(item_a, item_b, constraint, layer, crate::reporter::reborrow(&mut reporter)) != 0.0 {
+        if ucode.run(
+            item_a,
+            item_b,
+            constraint,
+            layer,
+            crate::reporter::reborrow(&mut reporter),
+        ) != 0.0
+        {
             return true;
         } else if item_b.is_some() {
             // Conditions are commutative

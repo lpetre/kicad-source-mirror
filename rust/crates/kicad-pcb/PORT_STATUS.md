@@ -573,3 +573,516 @@ as pending instead of failing (`model()` in the test file); mismatches fail.
   exist): `EDA_TEXT::ResolveFont`, `ZONE::SetLayerSetAndRemoveUnusedFills`.
 - `resolveGroups` / `resolveConstraints` are PCBIO-09 / PCBIO-13 stubs: exact (no-op) while no
   declaration was recorded, i.e. while their declaring parsers are stubs too.
+
+## Package DUMP-RS: Rust side of the reference dump
+
+Files: `src/dump/{mod,format,board,items,settings,defaults,compare,tests}.rs` (crate feature
+`dump`), `src/bin/pcb_dump_rs.rs` (bin `pcb-dump-rs`), `tests/pcb_dump_defaults.rs`,
+`tests/golden/pcb_dump_defaults.txt`, `rust/tools/pcb-dump/compare.py`.
+
+- Mirrors `rust/tools/pcb-dump/*.cpp` file by file and field by field (same keys, field names,
+  order and value formatting, `--hash` = FNV-1a). Every field is evaluated under
+  `catch_unwind` with a silent, reference-counted panic hook: `port_pending!` gives
+  `pending|SECTION|KEY|FIELD=CXX::Name`, other panics `rust-error|...=message`. A failed
+  *condition* (a pending `IsOnLayer` deciding which fields exist) reports a field pattern
+  (`*.F.Cu`, `shape.*`, `a|b`), a pending constructor reports `FIELD=*` for the whole class.
+- C++ getters with logic that have **no Rust method yet** are reported as pending with the
+  suffix `(no Rust API)` (e.g. `PCB_TRACK::IsNull`, `EDA_SHAPE::GetArcMid`,
+  `PAD::GetBoundingBox (aLayer)`, most `PCB_VIA` getters, `PNS::MEANDER_SETTINGS`, which the
+  model keeps as JSON). The package that adds such a method replaces the `no_api(..)` call in
+  `src/dump/*.rs` by the real call (`rg 'no_api\(' crates/kicad-pcb/src/dump`). Plain C++
+  member getters are read from the public Rust fields.
+- Constructions in `defaults` follow `dump_defaults.cpp`: items with a default board as parent
+  (values, not added); pads, fields and `PCB_TEXT.in_footprint` with a footprint stored in the
+  board arena but not listed (fixture convention of `test_support.rs`); the table cell with a
+  table stored the same way. `FOOTPRINT` uses `Board::create_footprint`, `ZONE`
+  `Zone::new_with_settings` (both pending now: whole class pending);
+  `PCB_GENERATOR.PCB_TUNING_PATTERN` has no Rust constructor (pending); the marker's
+  `DRC_ITEM::Create( DRCE_CLEARANCE )` is built as an `RcItem` with code and settings key.
+- `dump_board(&Board, &DumpOptions)` covers all sections (item, bbox, track, pad, shape, text,
+  dim, zone, footprint, misc, board, order) and is unit-tested on the `test_support.rs`
+  fixture boards. `pcb-dump-rs board FILE` goes through `dump::load_board_for_dump`, which
+  returns "parser not ported" until the parser package fills it in. Order lists without a Rust
+  comparator (`PCB_TRACK::cmp_tracks`, `PCB_GROUP::ptr_cmp`) are pending.
+- Quirk kept from the C++ tool: `EMIT( "x." + std::to_string( i++ ), .. )` evaluates the field
+  twice, so `default_fp_text`, `netclass_pattern` and footprint `pad` / `drawing` / `zone`
+  indices are 1, 3, 5, ...
+- Defaults scoreboard (2026-11-09): 2150 match, 0 mismatch, 1532 pending, 0 rust-error,
+  0 missing, 0 extra, 5 ref-error (fields the C++ itself reports as `error|`).
+- Wrong constructor default found and fixed: `BOARD::m_fileFormatVersionAtLoad` was
+  20160815, C++ `LEGACY_BOARD_FILE_VERSION` is 2 (`cmake/config.h.cmake`)
+  (`src/board/mod.rs`, test in `src/board/layers.rs`).
+- Dump-side interpretations (documented in the code): a `None` netclass parent is the class
+  itself (`NETCLASS::ResetParents`), `EDA_TEXT::GetFontName` reads `attributes.font`, enum
+  names are the Rust variant names in UPPER_SNAKE case with explicit C++ prefixes where the
+  C++ enum is not an `enum class` (`GR_TEXT_H_ALIGN_`, `BS_EDGE_CONNECTOR_`, `RPT_SEVERITY_`,
+  the `DRCE_*` table).
+
+## Package M7: EdaShape core
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `EDA_SHAPE` inline setters / getters of `eda_shape.h` (`SetStartX/Y`, `SetEndX/Y`, `SetCenterX/Y`, `SetRadius`, `SetTop/Left/Right/Bottom`, `SetBezierC1/C2`, `SetEllipse*`, `SetFilled`, `GetStartEnding` / `GetEndEnding`, `SetPolyShape`) | `eda_shape/{mod,geometry}.rs`, inherent on `EdaShape` | ported |
+| `SHAPE_T_asString`, `ShowShape`, `IsClosed`, `SetFillMode`, `SetWidth`, `SetLineStyle` / `GetLineStyle`, `SetCornerRadius`, `SetRectangle*`, `GetRectangleWidth/Height`, `GetRectCorners` | inherent on `EdaShape`; `rectangle_size(host)` | ported |
+| arc maths: `SetArcGeometry`, `SetArcOrSegment`, `SetCachedArcData`, `SetCenter`, `SetArcAngleAndEnd`, `GetArcMid`, `CalcArcAngles`, `GetRadius`, `GetArcAngle`, `GetSegmentAngle`, `IsClockwiseArc` | inherent on `EdaShape` | ported |
+| polygon / bezier / ellipse: `GetPolyPoints`, `GetPointCount`, `IsPolyShapeValid`, `SetPolyPoints`, `RebuildBezierToSegmentsPointsList`, `buildBezierToSegmentsPointsList`, `buildShapeEllipse`, `recalcEllipseArcEndpoints` | inherent on `EdaShape` | ported |
+| `getPosition`, `setPosition`, `getCenter`, `GetLength` | `EdaShape::{position, set_position, center, length}`; `shape_position` / `shape_center` / `shape_length(host)` | ported |
+| `move`, `scale`, `rotate`, `flip`, `mirror( SEG )` | `EdaShape::{move_, scale, rotate, flip, mirror}` (`max_error` = host `getMaxError()`) | ported |
+| `getBoundingBox`, `computeArcBBox` | `EdaShape::bounding_box_core` + `shape_bounding_box(host, ctx)` (adds the host width), `compute_arc_bbox` | ported |
+| `GetTopLeft`, `GetBotRight`, `GetCornersInSequence` (base bodies) | `top_left`, `bot_right`, `corners_in_sequence` | ported (see deviations) |
+| `hitTest( VECTOR2I )`, `hitTest( BOX2I )` | `geometry::hit_test_point` / `hit_test_rect` via `shape_hit_test(_rect)` | ported except the line-ending branch (M8) |
+| `Compare`, `operator==`, `Similarity`, `SwapShape`, `alg::longest_common_subset` | `EdaShape::compare`, `impl PartialEq for EdaShape`, `similarity`, `swap_shape` | ported |
+| `LINE_ENDING::GetEffectiveSize`, `GetShortenDepth`, `GetCurveOrientationDepth`, `GetShapes`, `StyleToToken`, `TokenToStyle`, `StyleToChoiceIndex`, `s_defaultChoiceOrder` | `line_ending.rs` | ported |
+| `hitTest( SHAPE_LINE_CHAIN )`, `LINE_ENDING::Draw` / `Plot` / `Format`, `Serialize`, edit state (`beginEdit` ..), `getFriendlyName`, `ShapeGetMsgPanelInfo`, `UI_FILL_MODE` props | - | skipped: GAL / API / UI; lasso hit test and `Format` belong to the consumers (M8 effective shapes, writer) |
+
+### Tests
+
+`eda_shape::tests` (from qa/tests/common/test_eda_shape.cpp): `SetAngleAndEnd`,
+`SetArcGeometry`, `SetArcGeometryKeepsMidWhenEndsSwap`, `GetPolyPointsPreservesOrderAcrossOutlines`,
+`EllipseBasicAccessors` / `EllipseArcIsOpenCurve` / `EllipsePerimeterForCircleCase`;
+qa/tests/pcbnew/test_shape_corner_radius.cpp `PCBShapeCornerRadius` (on the `EDA_SHAPE` body);
+oracle values (`pcb-dump board --sections shape,bbox`) for issue2512 (legacy arc, rect, poly) and
+issue18839 (arc): start/end/centre/mid/radius/angles/clockwise/length/bbox/rect size, bit exact;
+plus transforms / Compare / hit-test checks. `line_ending::tests` (from
+qa/tests/common/test_line_ending.cpp): `GetEffectiveSizeUsesConfiguredAndAutoAxes`,
+`GetShapesProducesStyleGeometry`, `OpenArrowOrientationUsesVisualLength`,
+`GetShortenDepthUsesEndpointPolicy`. The line-ending shortening / effective-shape tests of
+test_eda_shape.cpp belong to M8.
+
+### Deviations / notes
+
+- Transforms that call `getMaxError()` (`scale`, `rotate`, `flip`, `mirror`) take it as a
+  `max_error` argument from the host (a `PCB_SHAPE` reads its board through `MutEnv`).
+- `getCenter()` of POLY / RECTANGLE / BEZIER uses the bounding box without the width inflation:
+  the centre of a box inflated symmetrically by `d >= 0` and normalized equals the centre of the
+  normalized box, so the result is identical and no context is needed.
+- `corners_in_sequence` (frozen trait signature without `ctx`) inflates by the stored stroke width
+  (`EDA_SHAPE::GetWidth`); `PCB_SHAPE::GetWidth` differs only inside a scaled footprint (change
+  request: give `EdaShapeItem::corners_in_sequence` a `ctx`).
+- `move` drops the hatching cache instead of translating it first (dirty means dropped in this
+  port; the translated cache is never read before regeneration outside interactive moves).
+- `UNIMPLEMENTED_FOR` branches return 0 / false / (0,0) silently; `getPosition` of an empty
+  polygon returns (0,0) (C++ throws), `GetLength` of a polygon without outline returns 0 (C++ UB).
+- `hitTest` on a shape with a line ending panics with the M8 port-pending message
+  (`MakeEffectiveShapesWithLineEndings`); `GetHatching()` in hit tests reads M8's
+  `hatching_data` stub.
+- Out-of-range `double -> int` conversions of the hit-test distance (`maxdist` passed to `int`
+  parameters) use Rust's saturating `as`; only reachable with accuracies near `INT_MAX`.
+
+## Package M16: tracks and arcs (PCB_TRACK, PCB_ARC)
+
+| C++ (`pcbnew/pcb_track.cpp`, `pcb_track.h`) | Rust | State |
+|---|---|---|
+| `PCB_TRACK` accessors (`Get/SetStart/End[X/Y]`, `GetEndPoint`, `Get/SetWidth`, `HasSolderMask`, `Get/SetLocalSolderMaskMargin`), `IsNull`, `IsPointOnEnds` (+ `STARTPOINT` / `ENDPOINT`), `ApproxCollinear`, `GetLength` | `pcb_track/mod.rs` (`PcbTrack`, `Track::is_null`) | ported |
+| `GetSolderMaskExpansion`, `GetWidthConstraint` | `PcbTrack::` / `PcbArc::solder_mask_expansion`, `width_constraint` (shared bodies `solder_mask_expansion_of`, `width_constraint_of`) | ported; the rule resolver gets the stored item (`this`), or a copy for an item without a handle |
+| `IsOnLayer`, `GetLayerSet`, `SetLayerSet`, `GetBoundingBox`, `GetEffectiveShape`, `TransformShapeToPolygon` (segment and arc branches), `HitTest` (point, rect), `Rotate`, `Flip`, `Mirror` (both), `GetItemDescription`, `GetFriendlyName`, `operator==`, `Similarity` | `PcbTrack` / `PcbArc` inherent methods (`eq_item`, `similarity`, `mirror_seg`) | ported |
+| `PCB_ARC` (`SHAPE_ARC` constructor, `CreateFromThreePoints`, `Get/SetMid`, `GetPosition` / `GetCenter`, `GetRadius`, `GetAngle`, `GetArcAngleStart/End`, `IsCCW`, `IsDegenerated`, `GetLength`, `Move`, `Rotate`, `Flip`, `Mirror`, `HitTest`s, `GetEffectiveShape`) | `pcb_track/arc.rs` | ported |
+| `PCB_TRACK::cmp_tracks` | `pcb_track::pcb_track_cmp_tracks(ctx, TrackId, TrackId) -> Ordering` | ported; pointer tie-break = `TrackId` order (`board-model.md` 3.1) |
+| `GetDelay`, `GetCoverageArea`, `HitTest( SHAPE_LINE_CHAIN )`, `Visit`, `View*`, `GetMsgPanelInfo*`, `GetMenuImage`, `Serialize` / `Deserialize`, `GetFocusPosition`, `swapData`, `CopyFrom`, `Clone` | - | skipped: tier 2 length / delay calculation, UI / selection, API; `Clone` / `CopyFrom` are `clone()` / `detached_copy()` |
+
+Tests (`pcb_track::tests`): a reference-dump golden of 40 segments and arcs (bbox, length,
+effective shape, position, layer set, solder mask expansion, IsNull, arc centre / radius /
+angles / IsCCW / IsDegenerated, and `TransformShapeToPolygon` for three (clearance, maxError,
+errorLoc) combos compared by FNV-1a hash), the `test_board_item.cpp` rows for `PCB_TRACK` /
+`PCB_ARC` (`Move`, `Rotate`, `FlipLeftRight`, `FlipUpDown`, `BoardlessItemsUseStandardLayerMetadata`),
+the null-board and rule-resolver branches of the mask expansion / width constraint, save
+order, `IsPointOnEnds`, `ApproxCollinear`, hit tests, texts, `CreateFromThreePoints`,
+`operator==` / `Similarity`. The golden comes from `pcb-dump` on `tracks_arcs_vias.kicad_pcb`
+upgraded to format 20241229 with `(pad_to_mask_clearance 0.07)` and eleven crafted tracks /
+arcs (solder mask openings with positive, negative and no local margin, zero length, a
+degenerated arc, half circles, a nearly straight arc); the parser does not load boards yet
+(`BOARD::SetLayerDescr` pending), so the test rebuilds the tracks from the dumped members.
+Not compared against the reference: hit tests, `GetItemDescription` (no dump field; checked
+against the C++ bodies by hand), the rule-resolver branches (need the DRC engine).
+
+Deviations:
+- `GetItemDescription` / `GetFriendlyName` are English (`_()` untranslated), as in M2.
+- `GetSolderMaskExpansion` is a non-virtual `PCB_TRACK` member that `PCB_VIA` hides; there is
+  no `Track` dispatcher for it (call the variant's method).
+- `PCB_TRACK::GetFriendlyName` as written (`switch( Type() )`, incl. "Via") is
+  `Track::track_friendly_name`; the per-type inherent methods answer for their own type.
+
+Stubs left: none in `pcb_track/{mod,arc}.rs`. `Track` has no `eq_item` / `similarity`
+dispatcher until M17 provides the `PCB_VIA` bodies.
+
+## Package M22: board queries (layers, properties, variants, text variables, bounding boxes, markers, comparators)
+
+### C++ to Rust map
+
+| C++ (`pcbnew/board.cpp` unless stated) | Rust | state |
+|---|---|---|
+| `SetLayerDescr`, `GetLayerID`, `GetLayerName`, `SetLayerName`, `GetLayerType`, `SetLayerType`, `IsLayerEnabled`, `SetEnabledLayers`, `Get/SetUserDefinedLayerCount`, `GetCopperLayerStackMaxId`, `LayerDepth`, `IsFrontLayer` / `IsBackLayer` (board), `GetStackupOrDefault` | `board/layers.rs` | ported; every `m_layers` edit re-runs `recalcOpposites()`, marks the `LayerEnv` stale and bumps the time stamp |
+| `pcbnew/layer_utils.cpp` (`AccumulateNames`, `GetAllFootprintLayers`, `GetUsedFootprintLayers`, `MinimalCopperLayerCount`, `GetOrphanedFootprintLayers`) | `board::layers::{accumulate_names, get_all_footprint_layers, ...}` | ported |
+| `FindFootprintByReference`, `FindFootprintByPath`, `FindPadByUuid`, `GetPad( pos, layers )`, `GetPad( padList, pos, layers )`, `GetSortedPadListByXthenYCoord`, `GetZoneList`, `GetMaxClearanceValue`, `GetVisibleLayers` (see deviations), `IsFootprintHolder`, `ComputeBoundingBox`, `GetBoardEdgesBoundingBox`, `GroupsSanityCheck(Internal)` | `board/queries.rs` (`get_pad_at`, `get_pad_in_sorted_list`, `visible_layers`, ...) | ported |
+| `GetTrackLength` | `queries.rs` | stub: needs `CONNECTIVITY_DATA::GetConnectedItems` and `LENGTH_DELAY_CALCULATION` |
+| `pcbnew/board_bounding_box.cpp` (`BOARD_BOUNDING_BOX`) | - | skipped: a view-only `EDA_ITEM` wrapper of a box |
+| `HasVariant`, `AddVariant`, `DeleteVariant`, `RenameVariant`, `SetCurrentVariant`, `GetCurrentVariant`, `Get/SetVariantDescription`, `SynchronizeProperties`, `GetContextualTextVars`, both `ResolveTextVar` overloads (`resolve_text_var`, `resolve_text_var_current`), `ConvertCrossReferencesToKIIDs`, `ConvertKIIDsToCrossReferences`, `FixupEmbeddedData`; `TITLE_BLOCK::TextVarResolver` with a project and `PROJECT::TextVarResolver` (board side) | `board/text_vars.rs` | ported, except the `DRILL_OPERATIONS` / `DRILL_SITES` / `DRILL_GROUPS` branch (stub: `DrillSymbolCache`, tier-2 drill model) |
+| `CopyVariant`, `GetVariantNamesForUI` | - | skipped: editor / UI only |
+| `ResolveDRCExclusions`, `RecordDRCExclusions` | `markers.rs` `resolve_drc_exclusions_with` / `record_drc_exclusions_with` (conversions passed in) | ported; the fixed-signature `resolve_drc_exclusions` / `record_drc_exclusions` stay stubs: `DRC_EXCLUSION::FromMarker` / `ToProto` / `PCB_MARKER::FromProto` are `kicad-drc` (DRC-11), above this crate |
+| `UpdateRatsnestExclusions` | `markers.rs` `ratsnest_exclusions` (the marker half) | partial: the edge visibility part belongs to the connectivity crate |
+| both `DeleteMARKERs` | `delete_all_markers`, `delete_markers` | ported |
+| `BOARD::cmp_items`, `BOARD::cmp_drawings` | `board::compare::{board_cmp_items, board_cmp_drawings}` | ported; pointer tie-break = `ItemId` order (`board-model.md` 3.1) |
+
+Inlined footprint functions (M19 / M20 have no Rust counterpart; each is a few statements,
+ported in place and named in the doc comment): `FOOTPRINT::FindPadByUuid`,
+`FOOTPRINT::GetPad( pos, mask )`, `FOOTPRINT::DeleteVariant`, `FOOTPRINT::RenameVariant`.
+Called through local `port_pending!` helpers until their packages land:
+`FOOTPRINT::ResolveTextVar` (cross references), `EDA_SHAPE::Compare`, `PCB_TABLE::Compare`,
+`PCB_BARCODE::Compare` (`cmp_drawings`).
+
+### Tests
+
+`board::{layers,queries,text_vars,markers,compare}::m22_tests` (26): ports of
+`test_text_variable_resolution.cpp` (`ProjectTextVarsTakePrecedence`,
+`ProjectTextVarsUpdateDynamically`, `TitleBlockVarsTakePrecedence`, `BoardPropertiesFallback`;
+`PcbTextResolvesProjectVars` needs `PCB_TEXT::GetShownText`), the board cases of
+`test_variant.cpp` (`BoardVariantRegistry`, `VariantCaseInsensitivity`, `BoardVariantTextVars`,
+`VariantDeletionClearsRegistry`, `RenameVariantPreservesData`), `group_saveload.cpp`
+`InvalidGroups`; new tests for the layer table, `layer_utils`, the sorted-pad binary search,
+bounding boxes of tracks, the clearance cache, exclusions with stand-in conversions,
+`cmp_items`. Oracle: `pcb-dump board --sections board,order` on copies of corpus boards and a
+crafted 4-layer board with front / back / auxiliary user layers (see the package report /
+`tests/golden/m22_*`).
+
+### Deviations / notes
+
+- `GetVisibleLayers`: `BoardProject` carries no `.kicad_prl` visibility; every layer is visible
+  (the `PROJECT_LOCAL_SETTINGS` default). `ComputeBoundingBox` therefore uses every layer.
+- `PROJECTNAME` resolves to the board file name without extension (`BoardProject` has no
+  project name; `kicad-cli` binds `<board>.kicad_pro`). `VCSHASH` / `VCSSHORTHASH` resolve to
+  "" (no git in library code). `CURRENT_DATE` / `CURRENT_TIME_*` use
+  `TitleBlockClock::default()` (empty) - no wall clock and no clock field on `Board`.
+- `FILEPATH` is the stored file name verbatim (`wxFileName::GetFullPath` without
+  normalisation).
+- `GroupsSanityCheckInternal` walks groups in `ItemId` order instead of the
+  `unordered_set<EDA_GROUP*>` hash order; the result text is the same, with `repair` the group
+  removed from a cycle may differ.
+- `GetMaxClearanceValue` is cached until the next time-stamp bump regardless of the rule
+  resolver of later calls, as the C++ cache ignores a later-attached engine.
+- `LayerDepth` with a non-copper layer (C++ throws from `LAYER_RANGE`) is a `debug_assert!`
+  and returns 0.
+- `BumpDrillModelGeneration()` calls (layer renames, counts) have no counterpart (tier 2).
+
+## Package M5: design settings, zone settings, teardrop parameters (model logic)
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `BOARD_DESIGN_SETTINGS::SetEnabledLayers`, `IsLayerEnabled`, `SetBoardThickness`, `Set/GetAuxOrigin`, `Set/GetGridOrigin`, `Get/SetDefaultZoneSettings`, `GetTeadropParamsList`, `GetCurrentNetClassName`, `GetStackupDescriptor` | `board_design_settings.rs` | done |
+| `GetBiggestClearanceValue` (`m_DRCEngine->QueryWorstConstraint` = `RuleResolver::query_worst_constraint`), `GetSmallestClearanceValue`, `GetDRCEpsilon`, `GetHolePlatingThickness`, `MAXIMUM_CLEARANCE`, `MINIMUM/MAXIMUM_ERROR_SIZE_MM`, `MINIMUM/MAXIMUM_LINE_WIDTH_MM` | `board_design_settings.rs` | done |
+| track width / via size / diff pair lists: `Set/Get*Index`, `GetNext*Index` (`nextPredefinedIndex`), `GetCurrentTrackWidth`, `GetCurrentViaSize`, `GetCurrentViaDrill`, `GetCurrentDiffPairWidth/Gap/ViaGap`, `UseNetClassTrack/Via/DiffPair`, custom size setters / getters, `UseCustomTrackViaSize`, `UseCustomDiffPairDimensions`, `Get/SetViaStackIndex` | `board_design_settings.rs` | done |
+| `ValidateDesignRules`, `GetDesignRuleWarnings`, `VALIDATION_ERROR` | `board_design_settings.rs` | done (untranslated message texts) |
+| copy constructor / `operator=` (`initFromOther`) | `BoardDesignSettings::detached_copy` / `init_from_other` | done (BOM members dropped) |
+| `BOARD_DESIGN_SETTINGS::operator==` | - | not ported: needs `NET_SETTINGS::operator==` (no port yet); only dialogs use it |
+| `ZONE_SETTINGS::operator<<( const ZONE& )` | `ZoneSettings::import_from_zone` (zone not on a board: `IsLocked()` false), `import_from_zone_ctx` (board zone) | done; runs once M18 lands (`Zone::local_clearance` stub) |
+| `ZONE_SETTINGS::ExportSetting` | `ZoneSettings::export_setting` (detached zone, null-board env, net 0), `export_setting_env` (returns the net code instead of calling `SetNetCode`), `Board::export_zone_setting` (board zone: `modify_zone` + `set_item_net`) | done; runs once M18 lands (`Zone::set_fill_mode`, `set_min_thickness`, `set_corner_radius`, `set_layer_set`, `set_border_display_style` stubs) |
+| `ZONE_SETTINGS::SetupLayersList`, `LAYER_PROPERTIES_GRID_TABLE` | - | skipped: GUI |
+| `teardrop_parameters.cpp/.h` | `teardrop_parameters.rs` | done (M0b; nothing left for M5) |
+
+### Tests
+
+`board_design_settings::tests`: ported from `qa/tests/pcbnew/test_board_design_settings.cpp`:
+`BiggestClearanceIncludesPhysicalHoleClearance` (engine replaced by a `RuleResolver` answering
+`QueryWorstConstraint`), `PredefinedTrackWidthCyclingMonotonic`,
+`PredefinedViaSizeCyclingMonotonic`, `PredefinedDiffPairCyclingMonotonic`,
+`TrackWidthSwitchAdvancesFromConnectedWidth`; the JSON round-trip cases of that file belong to
+the JSON package. Own tests: derived getters (values from `pcb-dump defaults`),
+`SetEnabledLayers` counts, `ValidateDesignRules` / `GetDesignRuleWarnings` messages, copy
+constructor vs assignment.
+
+Oracle: `pcb-dump defaults` vs `pcb-dump-rs defaults`: all 344 `BOARD_DESIGN_SETTINGS|`,
+`ZONE_SETTINGS|`, `TEARDROP_*|` lines and all 283 `BOARD|ds.*` lines the Rust dump emits are
+identical (incl. `biggest_clearance`, `smallest_clearance`, `drc_epsilon`,
+`hole_plating_thickness`, `enabled_layers`, default zone settings); the 63 `meander.*` lines
+are not emitted by the Rust dump (the tuning settings are JSON objects, see the M0d section).
+
+### Deviations / notes
+
+- `GetDRCEpsilon` / `GetHolePlatingThickness` return the built-in `ADVANCED_CFG` defaults
+  (0.0005 mm, 0.020 mm): library crates read no advanced config file.
+- `ValidateDesignRules` checks the via list with a private port of the two-argument form of
+  `PCB_VIA::ValidateViaParameters` (`validate_via_diameter_and_drill`; the layer and
+  secondary / tertiary checks are no-ops for the defaulted arguments). The full function
+  belongs to `pcb_track/via.rs`.
+- `Board::export_zone_setting` applies `SetNetCode` after `SetBorderDisplayStyle` (C++:
+  before); the border hatch does not depend on the net.
+- `import_from_zone` reads `Zone::layer_set` directly: `ZONE::GetLayerSet()` returns
+  `m_layerSet` (the trait method takes `ctx` only by rule C1).
+- `init_from_other` clones `NetSettings` (C++ shares the `shared_ptr`).
+
+Stubs left: none in M5's files.
+
+## Package M10: text (EDA_TEXT, PCB_TEXT, PCB_FIELD)
+
+| C++ | Rust | State |
+|---|---|---|
+| `EDA_TEXT` setters (`SetText`, `cacheShownText`, `SetVisible`, `SetMirrored`, `SetMultilineAllowed`, `SetKeepUpright`, `SetHoriz/VertJustify`, `SetBold[Flag]`, `SetItalic[Flag]`, `SetLineSpacing`, `SetFont`, `SetAttributes`, `SetHyperlink`, `ResolveFont`, `SetupRenderCache`, `AddRenderCacheGlyph`, `IsDefaultFormatting`, `isStrokeFont`, `GetDrawFont`) | `eda_text.rs` inherent methods of `EdaText` (`draw_font_lookup`, `is_stroke_font`, `font_ref`) | ported |
+| `EDA_TEXT` virtual base bodies (`GetShownText`, `SetTextPos`, `SetTextSize`, `SetTextThickness`, `SetTextAngle`, `Offset`) and `SetAutoThickness`, `MigrateLegacyBoldStrokeWidth`, `TextHitTest` (both), `GetRenderCache` | generic functions in `eda_text.rs` | ported |
+| `GetTextBox`, `GetEffectiveTextPenWidth`, `GetEffectiveTextShape`, `GetLinePositions`, `GetInterline`, `Compare`, `GetTextStyleName` | `eda_text.rs` (`EdaTextExt`) | ported |
+| `PCB_TEXT` overrides (`GetTextPos/Size/Thickness/Angle`, setters, `Offset`, `GetDrawRotation`, `GetShownText`, `GetBoundingBox`, `TextHitTest`, `GetEffectiveShape`, `TransformTextToPolySet`, `buildBoundingHull`, `TransformShapeToPolygon`, `GetKnockoutCache`, `Rotate`, `Mirror`, `Flip`, `KeepUpright`, `OnFootprintTransformed/Rescaled`, `StyleFromSettings`, `GetItemDescription`, `SetLibText*`) | `pcb_text.rs`; bodies reaching `GetShownText` are generic over the host (`PcbTextHost`) and shared with `PcbField` | ported |
+| `PCB_FIELD` (`IsMandatory`, `GetOrdinal`, `GetName`, `GetShownText` both, `GetTextTypeDescription`, `GetItemDescription`), `GetDefaultFieldName` / `GetUserFieldName` (untranslated) | `pcb_field.rs` | ported |
+| `KIUI::EllipsizeMenuText` | `pcb_text::ellipsize_menu_text` | ported |
+
+Tests: `eda_text::tests` (`qa/tests/common/test_eda_text.cpp`: `Compare`,
+`BoldFlagLeavesStoredThicknessAlone`, `EffectiveWidthAppliesBoldMultiplierForStroke`,
+`EffectiveWidthAutoBoldMatchesLegacy`, `MigrateLegacyBoldStrokeWidthRecoversBase`,
+`AutoThicknessOffFreezesBaseNotEffective`; the hash checks and the `TextVarReferences_*` cases
+are not ported: no `std::hash<EDA_TEXT>`, no reactive reference tracker), plus shown-text
+caching and size clamping. Oracle (`pcb-dump board --sections text,bbox`, values in the
+tests): `pcb_text::tests::oracle_multiline_board_text` / `oracle_mirrored_board_text`
+(`qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb`), and
+`oracle_footprint_texts_scaled_rotated` (two fields and a user text in a footprint rotated 30
+degrees and scaled 1.5 x 0.75, keep-upright fold, mirror, left/right justification): text
+pos/size/thickness, draw rotation, `GetTextBox`, `GetBoundingBox`, interline,
+`GetEffectiveTextShape` segments, `TransformTextToPolySet` polygons - all bit-exact.
+`footprint_text_mutators_round_trip` (frame fixture), `pcb_field::tests` (names, ordinals,
+shown text, field geometry through the field's own `GetShownText`).
+
+Deviations:
+- Outline fonts: `m_Font` is a name; geometry is laid out with the stroke font
+  (`kicad-font` D1). `GetRenderCache` returns the stored glyphs only when the cache is valid
+  (font = `FontRef { name, bold, italic }`, text, draw rotation, offset, mirroring); where C++
+  would regenerate it the stroke font is drawn instead. `isStrokeFont` follows the requested
+  face (outline faces get no bold multiplier), `GetTextBox`'s stroke fudge follows the layout
+  font. The parser must set `render_cache.font` with `EdaText::font_ref()` (or call
+  `resolve_font`, which does).
+- `EDA_TEXT::SetTextPos` base body: the current position is computed from `MutEnv::parent`
+  (= `PCB_TEXT::GetTextPos`); exact for texts, fields, dimensions and barcode text. Text boxes
+  and cells (no `GetTextPos` override) would see their `m_pos` mapped through the footprint
+  transform; their board code does not use `m_pos`.
+- `PCB_TEXT::Flip`: `IsSideSpecific()` uses the layer-set test only (`MutEnv` carries no
+  `LAYER_T`; a user layer typed front/back is missed).
+- `PCB_TEXT::StyleFromSettings`: the trait method has no `MutEnv`, so `SetTextSize` /
+  `SetTextThickness` run without the parent scale, and `BOARD::IsBackLayer` is
+  `IsBackLayer( layer )`.
+- `GetKnockoutCache`: `aMaxError` is `GetMaxError()` (the painter passes its own value).
+- `IsDefaultFormatting`: `GetAutoThickness` reads the stored width.
+- `GetShownText` overrides: `ResolveTextVars` is inlined (`resolve_text_vars_shared_depth`) so
+  that the resolver sees the pass depth as the C++ lambda (captures `aDepth` by reference);
+  no expression evaluator (text_eval not ported). Texts are untranslated.
+- `PCB_FIELD::GetItemDescription` without a parent footprint uses an empty reference (C++
+  dereferences null). `-INDETERMINATE` justification stays indeterminate.
+- `Compare` returns -1/0/1 for the string comparisons (C++ `wxString::Cmp`: only the sign is
+  specified); position differences wrap like x86 `int`.
+
+Stubs left (depend on M19): `FOOTPRINT::ResolveTextVar` (`pcb_text::footprint_resolve_text_var`)
+and `FOOTPRINT::GetFieldValueForVariant` (`pcb_field.rs`) - neither is declared on `Footprint`
+yet; reached only by footprint texts with `${...}` and by fields of a footprint with a variant
+override.
+
+## Package M23: groups, generators and small items
+
+| C++ | Rust | State |
+|---|---|---|
+| `PCB_GROUP::GetBoundingBox` (footprints with text, +0.25 mm), `GetPosition`, `GetLayerSet`, `IsOnLayer`, `GetEffectiveShape` (compound), `RunOnChildren`, `GetItemDescription`, `operator==`, `GetBoardItems`; `EDA_GROUP::GetGroupMemberIds` | `pcb_group.rs` | ported |
+| `PCB_GROUP::TopLevelGroup`, `WithinScope` (`getClosestGroup`, `getNestedGroup`) | `pcb_group::{top_level_group, within_scope}` | ported (handles; `None` scope = no group) |
+| `PCB_GENERATOR::GetLayer` / `GetLayerSet` / `GetPosition` / `GetBoundingBox` / `HitTest` (point, rect) / `GetItemDescription` + the overrides of `PCB_TUNING_PATTERN`, `PCB_VIA_STACK`, `PCB_VIA_STITCH` | `pcb_generator.rs` (dispatch on `generator_type`) | ported; `PCB_TUNING_PATTERN::getOutline` ported (`TuningPatternData::outline`) |
+| `SetProperties` + `GetProperties` of `PCB_GENERATOR` and the three subclasses, `STRING_ANY_MAP` (`get_to`, `get_to_iu`, `get_opt`, `set`, `set_iu`), `MEANDER_SETTINGS` constructor / target setters, token helpers | `PcbGenerator::normalize_properties`, `TuningPatternData`, `ViaStackData`, `ViaStitchData` (typed views read from the map) | ported |
+| `GENERATORS_MGR::CreateFromType`, `LayerFollowsMembers` | `PcbGenerator::create_from_type`, `layer_follows_members` | ported (name = display name, layer F_Cu) |
+| `PCB_POINT` (`SetPosition`, `recomputePosition`, `OnFootprintTransformed`, `Rotate`, `Flip`, `Mirror` both, `GetBoundingBox`, `GetEffectiveShape`, hit tests, description, `operator==`), `PCB_POINT::cmp_points` | `pcb_point.rs` | ported |
+| `PCB_TARGET` (rotate, flip, bbox, shape, `TransformShapeToPolygon`, hit tests, description, `operator==`) | `pcb_target.rs` | ported (`TransformShapeToPolygon` reaches `PCB_SHAPE` setters, M9) |
+| `PCB_MARKER::GetSeverity`, `MARKER_BASE::IsTreatedAsExcluded`, `ShapeToPolygon`, `GetBoundingBoxMarker`, `HitTestMarker` (point, rect), `PCB_MARKER` bbox / shape / hit tests / description; `RC_ITEM::GetErrorMessage`, `SetErrorDetail` | `pcb_marker.rs` | ported; `MarkerScale()` is the constructor's `SCALING_FACTOR` (162500) |
+| `PCB_CONSTRAINT::GetEffectiveShape`, `GetItemDescription`, `RemapKIIDs`, `operator==`; `ConstraintsAreDuplicate`, `ConstraintTypeLabel` | `pcb_constraint.rs` | ported |
+| `PCB_3D_BODY::Flip` | `pcb_3d_body.rs` | ported |
+| `PCB_GRID_ITEM` (`Rotate`, `Flip`, `Mirror` both, `AsGridGeometry`, `buildOutlineWorld`, bbox, hit tests, description) | `pcb_grid_item.rs` | ported (`GRID_GEOMETRY` is kicad-geom's) |
+| `DRILL_SPAN::TopLayer` / `BottomLayer` / `Pair` / `operator<`; `PCB_DRILL_MAP::SetSymbolSize`, `Rotate`, `Flip`, rect hit test, description | `pcb_drill_map.rs` | ported |
+| `PCB_DRILL_MAP::GetSymbolExtent`, `GetBoundingBox`, `HitTest( point )` | `pcb_drill_map.rs` | **stub**: need `DRILL_SYMBOL_PROFILE::GetSymbolWidth` and the board's `DRILL_SYMBOL_CACHE` (tier-2 drill symbol package; the profile is kept verbatim); `symbol_extent` also lacks a `ctx` (change request) |
+
+Verification:
+- `pcb_generator::tests::normalize_properties_matches_the_oracle`: golden
+  `tests/golden/m23_generator_properties.txt` (script `m23_generator_properties.sh` + `.py`):
+  every `(generated ...)` block of 15 corpus boards before and after the reference
+  `kicad-cli pcb upgrade --force`; 35 generators (26 tuning patterns of every mode and vintage,
+  4 via stacks, 5 via stitches; one empty pattern is dropped by the writer) match key for key,
+  numbers as `{:.10g}` text. It reproduces the C++ reading of the uninitialised `val` /
+  `int_val` locals in `PCB_TUNING_PATTERN::SetProperties` (a missing `target_delay` takes the
+  value of `target_length_max`: `tuning_generators_load_save.kicad_pcb`).
+- `pcb_generator::tests::m23_items_board_matches_pcb_dump`: `tests/data/m23/m23_items.kicad_pcb`
+  (nested groups, targets, a point, two tuning patterns incl. a single-sided chamfered one, a
+  via stitch) rebuilt in the model; bounding boxes, positions, layers and layer sets equal
+  `pcb-dump board --sections item,bbox,misc` of the reference build (incl. the tuning outline
+  boxes 29650000,18400000,10700001,3200000 and 49591470,29650000,10758531,3429088). The parser
+  part of groups / generators (PCBIO-09 / -13) was not ready, so pcb-dump-rs could not be used.
+- `wxAny::GetAs` conversions were measured with a driver against the reference
+  `libwx_baseu-3.2` (number to integer truncates after a `long long` range check, no number to
+  bool, ...): `pcb_generator::tests::wx_any_conversions`.
+- Ported C++ tests: `qa/tests/pcbnew/constraints/test_pcb_constraint.cpp`
+  `CloneIsAFaithfulCopy`, `EqualityAndSimilarity` (equality part), `DuplicateDetection`,
+  `VertexIndexInDuplicateDetection`. Not ported here: `test_group_mirror.cpp` (the cascade is
+  `Board::mirror_item`, M2, and needs `PCB_SHAPE::Mirror`, M9), `group_saveload.cpp`,
+  `test_group_load_save.cpp`, `test_generator_load_save.cpp`, `test_via_stack_saveload.cpp`
+  (parser / writer packages).
+- Unit tests for targets, points (rotated / flipped / scaled footprint frame, `cmp_points`),
+  marker severity precedence and glyph, grid items, drill spans, 3D body flip.
+
+Deviations / notes:
+- The generator subclasses keep no typed state: `TuningPatternData` etc. are re-read from the
+  (normalised) property map on every call, which is lossless (IU values are stored as
+  `iu / 1e6` and read back with `KiROUND`).
+- `PCB_TUNING_PATTERN::SetProperties` reads `long long val` / `int int_val` uninitialised when
+  the first key is missing; Rust starts them at 0.
+- `wxAny` string conversions (`string -> bool` accepts yes/true/1, no/false/0) beyond the
+  measured cases are best effort; the parser only produces numbers, bools, strings, points,
+  chains and cells.
+- Group member order (C++ `unordered_set`) is insertion order: only the order of the compound
+  from `GetEffectiveShape` and of `RunOnChildren` can differ.
+- `MARKER_BASE::m_scalingFactor` is the constant `SCALING_FACTOR` (GUI zoom not ported).
+
+Known gaps:
+- The generator subclass overrides of `Move` / `Rotate` / `Flip` / `Mirror` / `SetLayer`
+  (tuning pattern end point and base lines, `IN_EDIT`, members' layer; via stack hops and
+  layers; via stitch moves only its outline) are not applied by the `Board::*_item` cascades
+  of M2 (change request); the typed views make them a few lines each.
+- Template items (`GetTemplateItems` / `SetTemplateItem`) are carried as data only.
+- `Similarity` (deferred by the design, section 17).
+
+## Package M4: net settings logic (effective netclasses, pattern assignments)
+
+### C++ to Rust map
+
+| C++ (`common/project/net_settings.cpp`, `include/project/net_settings.h`) | Rust (`net_settings.rs`) | state |
+|---|---|---|
+| `operator==` / `!=` | `impl PartialEq for NetSettings` | ported |
+| `Set/GetDefaultNetclass`, `HasNetclass`, `SetNetclass(es)`, `GetNetclasses`, `GetCompositeNetclasses`, `ClearNetclasses` | same names, snake_case | ported |
+| label assignments (`Get/Clear/Set/Append/HasNetclassLabelAssignment(s)`) | same names | ported |
+| `SetNetclassPatternAssignment(s)`, `addSinglePatternAssignment`, `Get/ClearNetclassPatternAssignments` | same names | ported |
+| `SetChainPatternAssignment`, `addSingleChainPatternAssignment`, `ClearChainPatternAssignments`, `HasChainPatternAssignments`, `GetChainPatternAssignments` | `set_chain_pattern_assignment`, ..., `chain_pattern_assignments` | ported |
+| net colour assignments, `RenameNetPathPrefix`, `RenameNets` | same names | ported |
+| inline chain-class accessors (`Set/Get/ClearNetChainClass(es)`, `...NetChainNetClass(es)`) | same names | ported |
+| `HasEffectiveNetClass`, `GetCachedEffectiveNetClass`, `GetEffectiveNetClass`, `GetNetClassByName`, `ClearCacheForNet`, `ClearAllCaches` | same names | ported |
+| `RecomputeEffectiveNetclasses`, `makeEffectiveNetclass`, `addMissingDefaults` | same names (last two private) | ported |
+| `ParseBusVector`, `ParseBusGroup`, `ForEachBusMember`, `isEscaped`, `isSuperSubOverbar` | same names | ported |
+| `CopyFrom`, constructor parameter registration, migrations | - | JSON package (next) |
+
+### Tests
+
+* `qa/tests/common/test_net_settings.cpp`: all in-memory cases ported as `net_settings::tests::*`
+  (equality, chain patterns, rename, shared bus parser, `CompositeOwnsConstituents`). Not
+  ported here (they need the JSON layer, next package): `NetChainClassesJsonRoundTrip*`,
+  `NetChainClassesJsonDropsEmptyValues`, `ChainNetclassesJsonRoundTrip`,
+  `RemovedChainNetclassIsDroppedFromProjectFile`, `CopyFrom*`.
+* Differential oracle: `tests/oracle/net_settings_oracle.cpp` links the reference
+  `libkicommon.so` and runs a command script (`tests/oracle/net_settings_golden.sh` builds and
+  runs it). `oracle_scenarios` replays `tests/data/net_settings/scenarios.txt` (247 output
+  lines: effective classes with every field, parent and constituent, composite naming and
+  priority ties, implicit classes, default tuning profile / colours / unset default fields,
+  chain sources, bus nets and `ClearCacheForNet` propagation, label management, renames,
+  ~70 `ParseBusVector` / `ParseBusGroup` / `ForEachBusMember` edge cases); 
+  `oracle_corpus_scenarios` replays `corpus_scenarios.txt`, generated by
+  `tests/oracle/net_settings_corpus.py` from every corpus `.kicad_pro` with netclass
+  patterns (3743 lines: regex compilability of all 1913 distinct patterns and the effective
+  netclass name of 1811 nets of the 19 boards next to such projects). Both match the C++ line
+  for line. Corpus patterns `regress` handles differently from wxRegEx at compile time: none
+  (61 patterns fail to compile as regex in both, e.g. `+3.3V`, `*clk`; they match as wildcards).
+
+### Deviations / notes
+
+* `GetEffectiveNetClass` collects the resolved classes in a `std::unordered_set` of
+  `shared_ptr` (hash order = pointer order) before the `std::sort`; here they are kept in
+  first-insertion order, de-duplicated by `Arc::ptr_eq`, and sorted with
+  `kicad_geom::stdsort::std_sort`. The order can only differ for two distinct classes with the
+  same priority and the same name (a `netclasses` key different from the class's own name).
+* `RecomputeEffectiveNetclasses` rebuilds each composite in place in C++. A shared
+  `Arc<Netclass>` is immutable, so the rebuilt composite is a new `Arc` that replaces the old
+  one in `composite_netclasses` and in every `effective_netclass_cache` entry holding it;
+  `NetinfoItem::netclass` keeps the old value until the next
+  `synchronize_nets_and_netclasses`. The constituents are the stored `Arc`s, so an edit made
+  by replacing a class (the only edit possible on an `Arc`) is not picked up, unlike a C++
+  in-place edit. Only the UI and the Altium importer call it.
+* `GetCachedEffectiveNetClass` (`std::map::at`, throws when missing) returns `None`;
+  `GetNetClassByName` always returns `Some` (default class when unknown).
+* `ParseBusVector` / `ParseBusGroup` keep the C++ out-parameters as `Option<&mut ..>` so that
+  partial writes match (`ParseBusGroup` writes the name before the member list can fail);
+  `prefix_end` is a character index like the C++ `size_t` string position.
+
+### Known gaps
+
+* End-to-end check against `pcb-dump board --sections board` (`effective_netclass.*` lines)
+  waits for the `.kicad_pro` JSON loader (next package): without it the Rust board has no
+  netclasses / patterns to resolve.
+
+## Package PCBIO-02: board file writer core and board skeleton
+
+Files: `src/io/writer/{mod,board,tests}.rs` (+ the staging stubs `src/io/writer/{tracks,shapes,
+setup,text,footprint,pad,zone,group,dimension,netclass_embedded,misc_items,generator,fp_lib}.rs`
+owned by PCBIO-03 .. 14), the writer entry in `src/io/mod.rs`, `tests/data/pcbio02/`,
+`tests/golden/pcbio02/`, `tests/golden/pcbio02_corpus.txt`,
+`tests/oracle/pcbio02_resave_golden.sh`, `tests/oracle/pcbio02_corpus_golden.sh`.
+
+### C++ to Rust map
+
+| C++ (`pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr.cpp`, `.h`, `include/ctl_flags.h`) | Rust (`src/io/writer/`) | state |
+|---|---|---|
+| `CTL_*` flags, `CTL_FOR_CLIPBOARD` / `CTL_FOR_LIBRARY` / `CTL_FOR_BOARD` | `mod.rs` constants | ported |
+| `PCB_IO_KICAD_SEXPR` writer state (`m_out`, `m_board`, `m_ctl`), constructor + `init()` | `mod.rs` `PcbWriter` | ported |
+| `SaveBoard` (`PRETTIFIED_FILE_OUTPUTFORMATTER` incl. `ADVANCED_CFG::m_CompactSave`, `Finish()`) | `mod.rs` `format_board`, `format_board_report` (text returned instead of the file write) | ported (`GroupsSanityCheck` not called: result used only with a GUI callback, no side effect without `repair`) |
+| `FormatBoardToFormatter` | `mod.rs` `format_board_to_formatter`, `board.rs` | ported (font embedding: see deviations) |
+| `Format( const BOARD_ITEM* )` dispatch | `mod.rs` `PcbWriter::format_item` | ported |
+| `formatInternalUnits` (3 overloads), `unbakeSize`, `unbakeSizeUniform`, `unbakeLinear` | `mod.rs` `format_internal_units_dt`, `format_iu`, `format_iu_pt`, `format_internal_units_pt_fp`, `unbake_size`, `unbake_size_uniform`, `unbake_linear` | ported |
+| `formatLayer`, `formatLayers`, `formatPolyPts` | `mod.rs` | ported |
+| `formatGeneral`, `formatBoardLayers`, `formatProperties`, `formatVariants`, `formatHeader`, `format( const BOARD* )` (section order, sorted containers, embedded files consolidation, `(embedded_fonts ..)`) | `board.rs` | ported |
+| `std::set<T*, CMP>( begin, end )` | `mod.rs` `sorted_set` (stable sort + drop of later equivalent elements = the set's content) | ported |
+| save-order comparators | model: `board_item_ptr_cmp`, `board_cmp_drawings`, `pcb_track_cmp_tracks`, `pcb_point_cmp_points` | called, not ported here |
+| `formatSetup`, `formatDrillSymbolProfile` | `setup.rs` | stub (PCBIO-04) |
+| net-chain section of `format( const BOARD* )` (W:962-1038) | `netclass_embedded.rs` `format_net_chains` | stub (PCBIO-11); writes nothing, like the C++, when no net has a chain name or terminal pad |
+| every other `format(...)`, `formatRenderCache`, `formatTeardropParameters`, `formatInitialComments`, `FormatFootprintLibFile` | `tracks.rs`, `shapes.rs`, `text.rs`, `footprint.rs`, `pad.rs`, `zone.rs`, `group.rs`, `dimension.rs`, `misc_items.rs`, `generator.rs`, `fp_lib.rs` | staging stubs with the final signatures (PCBIO-03 .. 14) |
+| `Parse( clipboard )`, `FP_CACHE`, `writers/pcb_writer_v9/v10` | - | skipped: GUI / file system / downgrade (`pcb-io.md` 2.2) |
+
+Staging: a stub called with `FormatOptions::allow_pending == false` fails with the `IO_ERROR`
+"port pending: <item kind> (PCBIO-nn)"; with `true` it writes nothing and records
+`(item, package)` in `FormatReport::skipped`.
+
+### Tests
+
+`src/io/writer/tests.rs`:
+
+- Differential oracle `oracle_resave`: 8 hand-made boards (`tests/data/pcbio02/`: current
+  format with the default layer set; title block with escapes / UTF-8 / all comment slots and
+  unsorted properties with a user paper size; 6 copper layers with user names and every layer
+  type, user layers with front/back/user/auxiliary types incl. `User.10`/`User.11`; a 2022 file
+  with old layer numbering and legacy `(net ..)` declarations; a version 4 file with `host` and
+  `(page ..)`; variants; `(embedded_fonts yes)`; a 2024 file with a portrait user paper size)
+  re-saved by the reference `kicad-cli pcb upgrade --force` (`tests/oracle/pcbio02_resave_golden.sh`).
+  Parse + format of every input reproduces the oracle bytes exactly, and parse + format of
+  the oracle output reproduces the oracle's second re-save (`v4_host_o2.kicad_pcb`, where the
+  reference build changes the legacy layer names once more), except the `(setup ..)` section
+  (PCBIO-04), which is removed from the expected text. Variants and the embedded-fonts flag
+  are read by PCBIO-11 parser stubs; the test sets them by hand from the input
+  (`apply_pending_parser_state`).
+- Corpus oracle `oracle_corpus_skeleton`: every board of `qa/data/pcbnew` + `demos` below 2 MB
+  re-saved by the reference build (`tests/oracle/pcbio02_corpus_golden.sh`, FNV-1a hashes in
+  `tests/golden/pcbio02_corpus.txt`); parse + format must give the same three skeleton regions
+  (A: everything before `(setup`; B: the `(property ..)` / `(variants ..)` blocks after it;
+  C: the `(embedded_fonts ..)` line). Results: see "Verification" below.
+- `test_prettifier.cpp` `BoardAndFootprintPrettifier` (`board_and_footprint_prettifier`):
+  golden check of `Prettify` for all three cases; for `group_and_image.kicad_pcb` the input
+  and its prettified text parse to boards whose formatted output is identical (stand-in for
+  `BOARD::operator==`); the two `.kicad_mod` cases report the footprint parser (PCBIO-14) as
+  pending.
+- Helpers: `format_layers_wildcards`, `format_layer_knockout`, `format_poly_pts_arcs`,
+  `unbake_without_footprint`, `sorted_set_is_std_set`, `ctl_flags`, `raw_token_stream` (the
+  stage-1 token stream before Prettify), `default_board_skeleton`, `staging_stubs` (strict
+  mode: "port pending: setup (PCBIO-04)" - PCBIO-04 must update it; "port pending:
+  kicad_footprint_lib (PCBIO-14)").
+
+### Deviations / notes
+
+- `FormatBoardToFormatter` mutates the board (`EmbedFonts()` / `ClearEmbeddedFonts()`); the
+  port takes `&Board`: with fonts not embedded, the board's font files are left out of the
+  consolidated `(embedded_files ..)` (the C++ removes them from the board), with fonts embedded
+  `EmbedFonts()` is a no-op that keeps the font files already embedded (no font files in the
+  port, `pcb-io.md` R7). The caller's board keeps its font files.
+- The `std::set` tie-break on pointer addresses is `ItemId` order (the model comparators).
+- `GetMajorMinorVersion()` is `FormatOptions::generator_version`, default `"10.99"`
+  (confirmed by the oracle).
+
+### Known gaps
+
+- `formatLayers`, `formatPolyPts`, `formatLayer` and the un-bake helpers are checked against
+  expectations derived from the C++ only; their oracle check comes with their callers (pads,
+  tracks, shapes, zones: PCBIO-03 / 07 / 08).
+- The `(setup ..)` section (PCBIO-04), net chains (PCBIO-11) and every item are staging stubs;
+  the oracle comparisons skip exactly the setup section and use boards without items.

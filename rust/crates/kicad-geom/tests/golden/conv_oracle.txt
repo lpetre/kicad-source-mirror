@@ -1,1 +1,11 @@
+libm_probe 200000 466c043dc6c994a4
+cbrt 20000 045909f53dc6fbcf
+libm:conv_circle 20000 bfbea50eb1587607
+libm:conv_oval 20000 2f14abf0fa53afc3
+libm:conv_rect 30000 f62f21214d026601
+libm:conv_arc 20000 889c0d68356e2e30
+libm:conv_roundrect 20000 5cf411fb5ded8b43
+libm:conv_corner_ops 20000 c3b80df73fca2346
+libm:conv_shape_utils 20000 97a38252b8ff1dff
 libm:intersection 30000 b88b8b565b633c85
+libm:shape_ellipse 30000 de5b2fb901b95926

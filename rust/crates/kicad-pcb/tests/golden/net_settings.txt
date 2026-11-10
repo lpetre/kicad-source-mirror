@@ -1,0 +1,247 @@
+reset
+q||kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|ANY|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+has|ANY|1
+has|NOPE|0
+byname|Nope|kind=default|Default
+byname|Default|kind=default|Default
+composites|0
+reset
+byname|HS|kind=class|HS
+byname|Nope|kind=default|Default
+pat|VCC*|PWR
+pat|/DDR*|HS
+pat|/USB_D[PN]|HS
+pat|/ALL*|FULL
+pat|/ALL*|HS
+haschain|0|0
+q|N1|kind=composite|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+q|N2|kind=composite|name=Undefined,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Undefined,Default,Default,Default,Undefined,Default,Undefined,Default,Undefined,Default,Undefined,Default|cons=Undefined;Default
+q|N3|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|N4|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,HS,HS,Default,HS,Default|cons=HS;Default
+q|N5|kind=composite|name=HS,Undefined,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Undefined,Default,Default,Default,HS,Undefined,Default,HS,HS,Undefined,Default,HS,Undefined,Default|cons=HS;Undefined;Default
+q|N6|kind=class|name=FULL|default=0|prio=2|cl=1|tw=2|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=0,0,1000,1000|sch=0,1000,0,1000|tp=FULLTP|par=FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL|cons=FULL
+q|N7|kind=composite|name=FULL,Undefined|default=0|prio=-1|cl=1|tw=2|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=0,0,1000,1000|sch=0,1000,0,1000|tp=FULLTP|par=FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL|cons=FULL;Undefined
+q|VCC_3V3|kind=composite|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+q|VCC_5V|kind=composite|name=PWR,Default|default=0|prio=-1|cl=300000|tw=200000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=0,500,0,1000|tp=PWRTP|par=PWR,Default,PWR,PWR,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,PWR|cons=PWR;Default
+q|xVCC|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|/DDR_DQ0|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,HS,Default,HS,Default|cons=HS;Default
+q|/USB_DP|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,HS,Default,HS,Default|cons=HS;Default
+q|/USB_DX|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|/ALL_1|kind=composite|name=HS,FULL|default=0|prio=-1|cl=100000|tw=150000|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=1000,0,0,1000|sch=0,1000,0,1000|tp=FULLTP|par=HS,HS,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,HS,FULL,FULL|cons=HS;FULL
+q|UNMATCHED|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+has|N1|1
+has|UNMATCHED|1
+has|NEVER|0
+comp|FULL,Undefined|name=FULL,Undefined|default=0|prio=-1|cl=1|tw=2|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=0,0,1000,1000|sch=0,1000,0,1000|tp=FULLTP|par=FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL|cons=FULL;Undefined
+comp|HS,Default|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,HS,Default,HS,Default|cons=HS;Default
+comp|HS,FULL|name=HS,FULL|default=0|prio=-1|cl=100000|tw=150000|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=1000,0,0,1000|sch=0,1000,0,1000|tp=FULLTP|par=HS,HS,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,HS,FULL,FULL|cons=HS;FULL
+comp|HS,PWR,Default|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+comp|HS,Undefined,Default|name=HS,Undefined,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Undefined,Default,Default,Default,HS,Undefined,Default,HS,HS,Undefined,Default,HS,Undefined,Default|cons=HS;Undefined;Default
+comp|PWR,Default|name=PWR,Default|default=0|prio=-1|cl=300000|tw=200000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=0,500,0,1000|tp=PWRTP|par=PWR,Default,PWR,PWR,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,PWR|cons=PWR;Default
+comp|Undefined,Default|name=Undefined,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Undefined,Default,Default,Default,Undefined,Default,Undefined,Default,Undefined,Default,Undefined,Default|cons=Undefined;Default
+composites|7
+comp|FULL,Undefined|name=FULL,Undefined|default=0|prio=-1|cl=1|tw=2|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=0,0,1000,1000|sch=0,1000,0,1000|tp=FULLTP|par=FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL|cons=FULL;Undefined
+comp|HS,Default|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,HS,Default,HS,Default|cons=HS;Default
+comp|HS,FULL|name=HS,FULL|default=0|prio=-1|cl=100000|tw=150000|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=1000,0,0,1000|sch=0,1000,0,1000|tp=FULLTP|par=HS,HS,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,HS,FULL,FULL|cons=HS;FULL
+comp|HS,PWR,Default|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+comp|HS,Undefined,Default|name=HS,Undefined,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Undefined,Default,Default,Default,HS,Undefined,Default,HS,HS,Undefined,Default,HS,Undefined,Default|cons=HS;Undefined;Default
+comp|PWR,Default|name=PWR,Default|default=0|prio=-1|cl=300000|tw=200000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=0,500,0,1000|tp=PWRTP|par=PWR,Default,PWR,PWR,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,PWR|cons=PWR;Default
+comp|Undefined,Default|name=Undefined,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Undefined,Default,Default,Default,Undefined,Default,Undefined,Default,Undefined,Default,Undefined,Default|cons=Undefined;Default
+composites|7
+q|N1|kind=other|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+q|N5|kind=composite|name=HS,Undefined,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Undefined,Default,Default,Default,HS,Undefined,Default,HS,HS,Undefined,Default,HS,Undefined,Default|cons=HS;Undefined;Default
+has|N1|0
+comp|FULL,Undefined|name=FULL,Undefined|default=0|prio=-1|cl=1|tw=2|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=0,0,1000,1000|sch=0,1000,0,1000|tp=FULLTP|par=FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL|cons=FULL;Undefined
+comp|HS,Default|name=HS,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,HS,Default,HS,Default|cons=HS;Default
+comp|HS,FULL|name=HS,FULL|default=0|prio=-1|cl=100000|tw=150000|vd=3|vdr=4|uvd=5|uvdr=6|dpw=7|dpg=8|dpvg=9|ww=10|bw=11|ls=2|pcb=1000,0,0,1000|sch=0,1000,0,1000|tp=FULLTP|par=HS,HS,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,FULL,HS,FULL,FULL|cons=HS;FULL
+comp|HS,Undefined,Default|name=HS,Undefined,Default|default=0|prio=-1|cl=100000|tw=150000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=~|tp=|par=HS,HS,Default,Default,Default,Default,Default,Default,HS,Undefined,Default,Default,Default,HS,Undefined,Default,HS,HS,Undefined,Default,HS,Undefined,Default|cons=HS;Undefined;Default
+comp|PWR,Default|name=PWR,Default|default=0|prio=-1|cl=300000|tw=200000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=0,500,0,1000|tp=PWRTP|par=PWR,Default,PWR,PWR,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,PWR|cons=PWR;Default
+comp|Undefined,Default|name=Undefined,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Undefined,Default,Default,Default,Undefined,Default,Undefined,Default,Undefined,Default,Undefined,Default|cons=Undefined;Default
+composites|6
+q|N1|kind=composite|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=150000|vd=800000|vdr=400000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=1000,0,0,1000|sch=0,500,0,1000|tp=PWRTP|par=HS,HS,PWR,PWR,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,PWR|cons=HS;PWR;Default
+has|N2|0
+composites|0
+reset
+q|T1|kind=composite|name=A,B,Default|default=0|prio=-1|cl=20|tw=30|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=A,A,Default,Default,Default,Default,Default,Default,A,B,Default,Default,Default,A,B,Default,A,B,Default,A,B,Default,A,B,Default|cons=A;B;Default
+q|T2|kind=composite|name=C,A,B,Default|default=0|prio=-1|cl=20|tw=40|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=A,C,Default,Default,Default,Default,Default,Default,C,A,B,Default,Default,Default,C,A,B,Default,C,A,B,Default,C,A,B,Default,C,A,B,Default|cons=C;A;B;Default
+q|T3|kind=composite|name=C,Z|default=0|prio=-1|cl=1|tw=40|vd=1|vdr=1|uvd=1|uvdr=1|dpw=1|dpg=1|dpvg=1|ww=1|bw=1|ls=1|pcb=~|sch=~|tp=ZT|par=Z,C,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,C,Z,C,Z,Z|cons=C;Z
+q|T4|kind=class|name=Z|default=0|prio=7|cl=1|tw=1|vd=1|vdr=1|uvd=1|uvdr=1|dpw=1|dpg=1|dpvg=1|ww=1|bw=1|ls=1|pcb=~|sch=~|tp=ZT|par=Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z|cons=Z
+comp|A,B,Default|name=A,B,Default|default=0|prio=-1|cl=20|tw=30|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=A,A,Default,Default,Default,Default,Default,Default,A,B,Default,Default,Default,A,B,Default,A,B,Default,A,B,Default,A,B,Default|cons=A;B;Default
+comp|C,A,B,Default|name=C,A,B,Default|default=0|prio=-1|cl=20|tw=40|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=A,C,Default,Default,Default,Default,Default,Default,C,A,B,Default,Default,Default,C,A,B,Default,C,A,B,Default,C,A,B,Default,C,A,B,Default|cons=C;A;B;Default
+comp|C,Z|name=C,Z|default=0|prio=-1|cl=1|tw=40|vd=1|vdr=1|uvd=1|uvdr=1|dpw=1|dpg=1|dpvg=1|ww=1|bw=1|ls=1|pcb=~|sch=~|tp=ZT|par=Z,C,Z,Z,Z,Z,Z,Z,Z,Z,Z,Z,C,Z,C,Z,Z|cons=C;Z
+composites|3
+reset
+q|D1|kind=composite|name=X,Default|default=0|prio=-1|cl=5|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=DEFTP|par=X,Default,Default,Default,Default,Default,Default,Default,X,Default,Default,Default,X,Default,X,Default,X,Default,Default|cons=X;Default
+q|D2|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=200,200,200,1000|sch=300,300,300,1000|tp=DEFTP|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+reset
+q|E1|kind=composite|name=Y,Default|default=0|prio=-1|cl=-1|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Y,Default,Default,Default,Y,Default,Y,Default,Y,Default,Y,Default|cons=Y;Default
+q|E2|kind=composite|name=Default,Default|default=0|prio=-1|cl=-1|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default;Default
+reset
+pat|VCC_*|PWR
+chainpat|S|DDR_DQ0|HS
+chainpat|S|NETX|HS
+chainpat|B|VCC_3V3|HS
+chainpat|B|NETX|PWR
+chainpat|B|BUSC0|HS
+chainpat|B|BUSC1|HS
+haschain|1|1
+q|DDR_DQ0|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|VCC_3V3|kind=composite|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,Default,HS,PWR,Default,HS,PWR,Default|cons=HS;PWR;Default
+q|VCC_1V8|kind=composite|name=PWR,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=PWR,Default,Default,Default,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,Default,PWR,Default|cons=PWR;Default
+q|NETX|kind=composite|name=HS,PWR,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,PWR,Default,Default,Default,HS,PWR,Default,HS,PWR,Default,HS,PWR,Default,HS,PWR,Default|cons=HS;PWR;Default
+q|BUSC1|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+pat|VCC_*|PWR
+chainpat|S|DDR_DQ0|HS
+chainpat|S|NETX|HS
+haschain|1|0
+q|VCC_3V3|kind=composite|name=PWR,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=PWR,Default,Default,Default,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,Default,PWR,Default|cons=PWR;Default
+q|NETX|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|DDR_DQ0|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|DDR_DQ0|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+pat|VCC_*|PWR
+haschain|0|0
+reset
+pat|DATA0|HS
+pat|DATA1|HS
+pat|DATA2|HS
+pat|DATA3|HS
+pat|DP|HS
+pat|DM|HS
+pat|A0|PWR
+pat|A1|PWR
+pat|B|PWR
+pat|VCC|PWR
+haschain|0|0
+q|DATA2|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|DATA[0..3]|kind=other|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|DATA[0..4]|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|USB{DP DM}|kind=other|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|MIX{DATA0 VCC}|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|NONE{X Y}|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|PCI{A[0..1] B}|kind=other|name=PWR,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=PWR,Default,Default,Default,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,Default,PWR,Default|cons=PWR;Default
+q|DM|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|A1|kind=other|name=PWR,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=PWR,Default,Default,Default,Default,Default,Default,Default,PWR,Default,Default,Default,PWR,Default,PWR,Default,PWR,Default,PWR,Default|cons=PWR;Default
+has|DATA[0..3]|1
+has|PCI{A[0..1] B}|1
+has|DATA1|1
+has|DATA[0..3]|0
+has|DATA1|0
+has|DATA2|1
+has|PCI{A[0..1] B}|1
+has|PCI{A[0..1] B}|0
+has|A0|1
+q|DATA[0..3]|kind=other|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+has|DATA[0..3]|1
+reset
+q|L1|kind=composite|name=HS,Other,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Other,Default,Default,Default,HS,Other,Default,HS,Other,Default,HS,Other,Default,HS,Other,Default|cons=HS;Other;Default
+q|L2|kind=composite|name=HS,Default|default=0|prio=-1|cl=100000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=HS,Default,Default,Default,Default,Default,Default,Default,HS,Default,Default,Default,HS,Default,HS,Default,HS,Default,HS,Default|cons=HS;Default
+q|L1|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|L2|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|L1|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+reset
+q|/Sheet1/CLK|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Sheet2/CLK|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+renameprefix|/Sheet1/|/Sheet2/|1
+pat|/Sheet2/CLK|HighSpeed
+pat|/Sheet2/DATA*|HighSpeed
+pat|/Sheet2/Sub/EN|HighSpeed
+pat|/Other/RST|HighSpeed
+pat|/Sheet10/BUS|HighSpeed
+haschain|0|0
+color|/Keep|0,1000,0,1000
+color|/Sheet2/CLK|1000,0,0,1000
+q|/Sheet2/CLK|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Sheet2/DATA0|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Sheet2/Sub/EN|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Sheet1/CLK|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+q|/Other/RST|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Sheet10/BUS|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+renameprefix|/Nope/|/Nada/|0
+renameprefix||/X/|0
+renameprefix|/Sheet2/|/Sheet2/|0
+renamenets|/Other/RST=/Other/RESET,/Sheet2/CLK=/Sheet2/CLK,/Keep=/Kept,/Sheet2/DATA*=/D*|1
+pat|/Sheet2/CLK|HighSpeed
+pat|/D*|HighSpeed
+pat|/Sheet2/Sub/EN|HighSpeed
+pat|/Other/RESET|HighSpeed
+pat|/Sheet10/BUS|HighSpeed
+haschain|0|0
+color|/Kept|0,1000,0,1000
+color|/Sheet2/CLK|1000,0,0,1000
+renamenets||0
+renamenets|/None=/Other|0
+q|/Other/RESET|kind=composite|name=HighSpeed,Default|default=0|prio=-1|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=~|ww=1524|bw=3048|ls=~|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,HighSpeed,Default,Default,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default,HighSpeed,Default|cons=HighSpeed;Default
+q|/Other/RST|kind=default|name=Default|default=1|prio=2147483647|cl=200000|tw=200000|vd=600000|vdr=300000|uvd=300000|uvdr=100000|dpw=200000|dpg=250000|dpvg=250000|ww=1524|bw=3048|ls=0|pcb=~|sch=~|tp=|par=Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default,Default|cons=Default
+bv|D[..2]|ok=0|name=?|members=
+bv|D[1..]|ok=0|name=?|members=
+bv|D[1..2|ok=0|name=?|members=
+bv|D[1..999999999999999999999999999999]|ok=0|name=?|members=
+bv|D[9223372036854775806..9223372036854775807]|ok=1|name=D|members=D9223372036854775806;D9223372036854775807
+bv|D[01..03]|ok=1|name=D|members=D01;D02;D03
+bv|D[1..2]|ok=1|name=D|members=D1;D2
+bv|D[2..1]|ok=1|name=D|members=D1;D2
+bv|D[1..1]|ok=0|name=?|members=
+bv|D[0..10]|ok=1|name=D|members=D0;D1;D2;D3;D4;D5;D6;D7;D8;D9;D10
+bv|D[8..010]|ok=1|name=D|members=D008;D009;D010
+bv|D[1..2]+|ok=1|name=D|members=D1+;D2+
+bv|D[1..2]P|ok=1|name=D|members=D1P;D2P
+bv|D[1..2]-N|ok=1|name=D|members=D1-N;D2-N
+bv|D[1..2]x|ok=0|name=?|members=
+bv|D[1..2]}|ok=0|name=?|members=
+bv|D_{[1..2]}|ok=1|name=D|members=D1;D2
+bv|~{BE[0..3]}|ok=1|name=~{BE|members=~{BE0};~{BE1};~{BE2};~{BE3}
+bv|I^{2}C[0..1]|ok=1|name=I^{2}C|members=I^{2}C0;I^{2}C1
+bv|"my bus"[0..1]|ok=1|name=my bus|members=my bus0;my bus1
+bv|"a\"b"[0..1]|ok=1|name=a"b|members=a"b0;a"b1
+bv|my\ bus[0..1]|ok=1|name=my bus|members=my bus0;my bus1
+bv|my bus[0..1]|ok=0|name=?|members=
+bv|D]1..2]|ok=0|name=?|members=
+bv|D{[1..2]}|ok=0|name=?|members=
+bv|[1..2]|ok=1|name=|members=1;2
+bv|D[a..2]|ok=0|name=?|members=
+bv|D[1.2]|ok=0|name=?|members=
+bv|D|ok=0|name=?|members=
+bv||ok=0|name=?|members=
+bv|D[1..2][3..4]|ok=0|name=?|members=
+bv|~{A}B[1..2]|ok=1|name=~{A}B|members=~{A}B1;~{A}B2
+bv|DATA[0..3]|ok=1|name=DATA|members=DATA0;DATA1;DATA2;DATA3
+bv|D\\[1..2]|ok=1|name=D\\|members=D\\1;D\\2
+bg|{A}|ok=1|name=|members=A|prefix_end=0
+bg|G{A|ok=0|name=G|members=|prefix_end=99
+bg|I^{2}C\ BUS{A}|ok=1|name=I^{2}C BUS|members=A|prefix_end=11
+bg|USB{DP DM}|ok=1|name=USB|members=DP;DM|prefix_end=3
+bg|PCI{A[0..1] B}|ok=1|name=PCI|members=A[0..1];B|prefix_end=3
+bg|G{"a b" c}|ok=1|name=G|members=a\ b;c|prefix_end=1
+bg|G{a,b}|ok=1|name=G|members=a;b|prefix_end=1
+bg|G{a,,b}|ok=1|name=G|members=a;b|prefix_end=1
+bg|G{a/b}|ok=1|name=G|members=a{slash}b|prefix_end=1
+bg|G{~{CAS} RAS}|ok=1|name=G|members=~{CAS};RAS|prefix_end=1
+bg|G{D_{[1..2]}}|ok=1|name=G|members=D_{[1..2]}|prefix_end=1
+bg|G{}|ok=1|name=G|members=|prefix_end=1
+bg|G{ }|ok=1|name=G|members=|prefix_end=1
+bg|{}|ok=1|name=|members=|prefix_end=0
+bg|G[0]|ok=0|name=?|members=|prefix_end=99
+bg||ok=0|name=|members=|prefix_end=99
+bg|A|ok=0|name=A|members=|prefix_end=99
+bg|A{B{C}}|ok=0|name=A|members=|prefix_end=99
+bg|X\"{a}|ok=1|name=X\"|members=a|prefix_end=3
+bg|"q\"x"{a}|ok=1|name=q"x|members=a|prefix_end=6
+bg|G{a\ b c}|ok=1|name=G|members=a\ b;c|prefix_end=1
+bg|G{"x\"y" z}|ok=1|name=G|members=x"y;z|prefix_end=1
+bg|~{N}{a b}|ok=1|name=~{N}|members=a;b|prefix_end=4
+bg|G}{a}|ok=0|name=?|members=|prefix_end=99
+bg|G{a}trailing|ok=1|name=G|members=a|prefix_end=1
+bg|G\ {a}|ok=1|name=G |members=a|prefix_end=3
+bg|"G{x}"{a}|ok=1|name=G{x}|members=a|prefix_end=6
+fe|DATA[0..3]|DATA0;DATA1;DATA2;DATA3
+fe|USB{DP DM}|DP;DM
+fe|PCI{A[0..1] B}|A0;A1;B
+fe|G{D_{[1..2]} X}|D1;D2;X
+fe|G{"a b" c}|a\ b;c
+fe|G{a\ b[0..1]}|a b0;a b1
+fe|OUT{IN{X Y} Z}|OUT{IN{X Y} Z}
+fe|G{a/b}|slash
+fe|plain|plain
+fe||
+fe|G{}|

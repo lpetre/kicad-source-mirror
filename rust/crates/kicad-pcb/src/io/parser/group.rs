@@ -26,13 +26,16 @@
 
 use kicad_sexpr::IoError;
 
-use super::PcbParser;
 use super::GroupInfo;
+use super::PcbParser;
 use crate::item::ParentRef;
 
 impl PcbParser {
     /// Port of `parseGROUP_members( GROUP_INFO& )`. Staging stub (PCBIO-09).
-    pub(crate) fn parse_group_members(&mut self, group_info: &mut GroupInfo) -> Result<(), IoError> {
+    pub(crate) fn parse_group_members(
+        &mut self,
+        group_info: &mut GroupInfo,
+    ) -> Result<(), IoError> {
         let _ = &group_info;
         self.pending("PCBIO-09")?;
         Ok(())

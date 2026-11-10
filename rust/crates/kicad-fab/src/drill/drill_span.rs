@@ -85,7 +85,12 @@ impl DrillSpan {
         is_backdrill: bool,
         is_non_plated: bool,
     ) -> Self {
-        DrillSpan { start_layer, end_layer, is_backdrill, is_non_plated_file: is_non_plated }
+        DrillSpan {
+            start_layer,
+            end_layer,
+            is_backdrill,
+            is_non_plated_file: is_non_plated,
+        }
     }
 
     /// `DRILL_SPAN::TopLayer()`.
@@ -139,11 +144,19 @@ impl Ord for DrillSpan {
         }
 
         if self.is_backdrill != other.is_backdrill {
-            return if self.is_backdrill { Ordering::Less } else { Ordering::Greater };
+            return if self.is_backdrill {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            };
         }
 
         if self.is_non_plated_file != other.is_non_plated_file {
-            return if self.is_non_plated_file { Ordering::Less } else { Ordering::Greater };
+            return if self.is_non_plated_file {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            };
         }
 
         if self.start_layer != other.start_layer {

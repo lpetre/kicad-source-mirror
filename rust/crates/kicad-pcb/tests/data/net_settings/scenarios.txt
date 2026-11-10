@@ -1,0 +1,294 @@
+# NET_SETTINGS logic scenarios (package M4), replayed by the C++ driver
+# tests/oracle/net_settings_oracle.cpp (writes tests/golden/net_settings.txt) and by the Rust
+# test `net_settings::tests::oracle_scenarios`. One command per line, fields separated by '|'.
+#
+# class|NAME|PRIO|clearance|track|via_dia|via_drill|uvia_dia|uvia_drill|dp_width|dp_gap|dp_via_gap|wire|bus|line_style|pcb_color|sch_color|tuning
+#   SetNetclass( NAME, make_shared<NETCLASS>( NAME, false ) with the given fields )
+# default|...same fields...     edits the default netclass (before any query)
+#   field values: integer, '~' = unset (std::nullopt), '=' = leave unchanged
+#   colours: r,g,b,a or '~' (UNSPECIFIED); tuning: text, empty = none
+# reset | setclasses | clearclasses | clearcaches | recompute | composites | patterns | colors
+# label|NET|A,B  appendlabel|NET|A,B  clearlabel|NET  clearlabels
+# pattern|PAT|CLASS  clearpatterns  chain|S or B|PAT|CLASS  clearchain|S or B
+# q|NET  has|NET  clearnet|NET  byname|NAME  color|NET|r,g,b,a
+# renameprefix|OLD|NEW  renamenets|OLD=NEW,OLD=NEW
+# bv|TEXT  bg|TEXT  fe|TEXT   (ParseBusVector / ParseBusGroup / ForEachBusMember)
+
+reset
+q|
+q|ANY
+has|ANY
+has|NOPE
+byname|Nope
+byname|Default
+composites
+
+# ---- explicit, implicit and pattern classes, field composition ----
+reset
+class|HS|0|100000|150000|~|~|~|~|~|~|~|~|~|~|1,0,0,1|~|
+class|PWR|1|300000|~|800000|400000|~|~|~|~|~|~|~|~|~|0,0.5,0,1|PWRTP
+class|FULL|2|1|2|3|4|5|6|7|8|9|10|11|2|0,0,1,1|0,1,0,1|FULLTP
+setclasses
+byname|HS
+byname|Nope
+pattern|VCC*|PWR
+pattern|/DDR*|HS
+pattern|/USB_D[PN]|HS
+pattern|/ALL*|FULL
+pattern|/ALL*|HS
+pattern|VCC*|PWR
+patterns
+label|N1|HS,PWR
+label|N2|Undefined
+label|N3|Default
+label|N4|Default,HS
+label|N5|Undefined,HS
+label|N6|FULL
+label|N7|FULL,Undefined
+label|VCC_3V3|HS
+q|N1
+q|N2
+q|N3
+q|N4
+q|N5
+q|N6
+q|N7
+q|VCC_3V3
+q|VCC_5V
+q|xVCC
+q|/DDR_DQ0
+q|/USB_DP
+q|/USB_DX
+q|/ALL_1
+q|UNMATCHED
+has|N1
+has|UNMATCHED
+has|NEVER
+composites
+recompute
+composites
+q|N1
+q|N5
+clearnet|N1
+has|N1
+composites
+q|N1
+clearall
+has|N2
+composites
+
+# ---- priority ties: alphabetical, lower priority number wins ----
+reset
+class|B|5|10|~|~|~|~|~|~|~|~|~|~|~|~|~|
+class|A|5|20|30|~|~|~|~|~|~|~|~|~|~|~|~|
+class|C|-3|~|40|~|~|~|~|~|~|~|~|~|~|~|~|
+class|Z|7|1|1|1|1|1|1|1|1|1|1|1|1|~|~|ZT
+label|T1|B,A
+label|T2|A,B,C
+label|T3|Z,C
+label|T4|Z
+q|T1
+q|T2
+q|T3
+q|T4
+composites
+
+# ---- default netclass edits: tuning profile, colours, missing fields ----
+reset
+default|=|=|=|=|=|=|=|=|=|=|=|=|=|0.2,0.2,0.2,1|0.3,0.3,0.3,1|DEFTP
+class|X|0|5|~|~|~|~|~|~|~|~|~|~|~|~|~|
+label|D1|X
+label|D2|Default
+q|D1
+q|D2
+reset
+default|=|~|=|=|=|=|=|=|=|=|=|=|=|=|=|
+class|Y|0|~|~|~|~|~|~|~|~|~|~|~|~|~|~|
+label|E1|Y
+label|E2|Default
+q|E1
+q|E2
+
+# ---- chain-derived pattern assignments ----
+reset
+class|HS|0|100000|~|~|~|~|~|~|~|~|~|~|~|~|~|
+class|PWR|1|200000|~|~|~|~|~|~|~|~|~|~|~|~|~|
+setclasses
+pattern|VCC_*|PWR
+chain|S|DDR_DQ0|HS
+chain|B|VCC_3V3|HS
+chain|B|VCC_3V3|HS
+chain|S|NETX|HS
+chain|B|NETX|PWR
+chain|B|BUSC[0..1]|HS
+patterns
+q|DDR_DQ0
+q|VCC_3V3
+q|VCC_1V8
+q|NETX
+q|BUSC1
+clearchain|B
+patterns
+q|VCC_3V3
+q|NETX
+q|DDR_DQ0
+clearchain|S
+q|DDR_DQ0
+patterns
+
+# ---- bus patterns and bus nets ----
+reset
+class|HS|0|100000|~|~|~|~|~|~|~|~|~|~|~|~|~|
+class|PWR|1|200000|~|~|~|~|~|~|~|~|~|~|~|~|~|
+setclasses
+pattern|DATA[0..3]|HS
+pattern|USB{DP DM}|HS
+pattern|PCI{A[0..1] B}|PWR
+pattern|VCC|PWR
+patterns
+q|DATA2
+q|DATA[0..3]
+q|DATA[0..4]
+q|USB{DP DM}
+q|MIX{DATA0 VCC}
+q|NONE{X Y}
+q|PCI{A[0..1] B}
+q|DM
+q|A1
+has|DATA[0..3]
+has|PCI{A[0..1] B}
+has|DATA1
+clearnet|DATA1
+has|DATA[0..3]
+has|DATA1
+has|DATA2
+has|PCI{A[0..1] B}
+clearnet|A1
+has|PCI{A[0..1] B}
+has|A0
+q|DATA[0..3]
+has|DATA[0..3]
+
+# ---- label assignment management ----
+reset
+class|HS|0|100000|~|~|~|~|~|~|~|~|~|~|~|~|~|
+label|L1|HS
+appendlabel|L1|Other
+appendlabel|L2|HS
+q|L1
+q|L2
+clearlabel|L1
+clearcaches
+q|L1
+clearlabels
+clearcaches
+q|L2
+clearclasses
+q|L1
+
+# ---- RenameNetPathPrefix / RenameNets (qa/tests/common/test_net_settings.cpp) ----
+reset
+class|HighSpeed|0|~|~|~|~|~|~|~|~|~|~|~|~|~|~|
+setclasses
+pattern|/Sheet1/CLK|HighSpeed
+pattern|/Sheet1/DATA*|HighSpeed
+pattern|/Sheet1/Sub/EN|HighSpeed
+pattern|/Other/RST|HighSpeed
+pattern|/Sheet10/BUS|HighSpeed
+color|/Sheet1/CLK|1,0,0,1
+color|/Keep|0,1,0,1
+q|/Sheet1/CLK
+q|/Sheet2/CLK
+renameprefix|/Sheet1/|/Sheet2/
+patterns
+colors
+q|/Sheet2/CLK
+q|/Sheet2/DATA0
+q|/Sheet2/Sub/EN
+q|/Sheet1/CLK
+q|/Other/RST
+q|/Sheet10/BUS
+renameprefix|/Nope/|/Nada/
+renameprefix||/X/
+renameprefix|/Sheet2/|/Sheet2/
+renamenets|/Other/RST=/Other/RESET,/Sheet2/CLK=/Sheet2/CLK,/Keep=/Kept,/Sheet2/DATA*=/D*
+patterns
+colors
+renamenets|
+renamenets|/None=/Other
+q|/Other/RESET
+q|/Other/RST
+
+# ---- bus parsing (qa/tests/common/test_net_settings.cpp and edge cases) ----
+bv|D[..2]
+bv|D[1..]
+bv|D[1..2
+bv|D[1..999999999999999999999999999999]
+bv|D[9223372036854775806..9223372036854775807]
+bv|D[01..03]
+bv|D[1..2]
+bv|D[2..1]
+bv|D[1..1]
+bv|D[0..10]
+bv|D[8..010]
+bv|D[1..2]+
+bv|D[1..2]P
+bv|D[1..2]-N
+bv|D[1..2]x
+bv|D[1..2]}
+bv|D_{[1..2]}
+bv|~{BE[0..3]}
+bv|I^{2}C[0..1]
+bv|"my bus"[0..1]
+bv|"a\"b"[0..1]
+bv|my\ bus[0..1]
+bv|my bus[0..1]
+bv|D]1..2]
+bv|D{[1..2]}
+bv|[1..2]
+bv|D[a..2]
+bv|D[1.2]
+bv|D
+bv|
+bv|D[1..2][3..4]
+bv|~{A}B[1..2]
+bv|DATA[0..3]
+bv|D\\[1..2]
+bg|{A}
+bg|G{A
+bg|I^{2}C\ BUS{A}
+bg|USB{DP DM}
+bg|PCI{A[0..1] B}
+bg|G{"a b" c}
+bg|G{a,b}
+bg|G{a,,b}
+bg|G{a/b}
+bg|G{~{CAS} RAS}
+bg|G{D_{[1..2]}}
+bg|G{}
+bg|G{ }
+bg|{}
+bg|G[0]
+bg|
+bg|A
+bg|A{B{C}}
+bg|X\"{a}
+bg|"q\"x"{a}
+bg|G{a\ b c}
+bg|G{"x\"y" z}
+bg|~{N}{a b}
+bg|G}{a}
+bg|G{a}trailing
+bg|G\ {a}
+bg|"G{x}"{a}
+fe|DATA[0..3]
+fe|USB{DP DM}
+fe|PCI{A[0..1] B}
+fe|G{D_{[1..2]} X}
+fe|G{"a b" c}
+fe|G{a\ b[0..1]}
+fe|OUT{IN{X Y} Z}
+fe|G{a/b}
+fe|plain
+fe|
+fe|G{}

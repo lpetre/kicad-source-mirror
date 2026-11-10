@@ -150,24 +150,35 @@ Reusable workflow scripts (invoke with `scriptPath` + `args`, no need to resend 
 (Directory: /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/)
 
 Progress log of launches (workflow task ids):
-- done: M1 containers/index/create-attach, M2 item base (wnw19yvig); M3 nets + netclasses,
-  M13 padstack (w1sw02b68; padstack reproduces the libstdc++ unordered_map iteration order
-  of m_copperProps and matches the oracle; all 153 padstack default lines identical). All
-  Opus, Fable-reviewed, decisions accepted.
-- running: geometry G4b -> G5 and G6b (wvunbqm6s); Fable integration of wave 0b -> M7, M10
-  (wawxgug4p); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02 -> PCBIO-17 and DRC-20 -> DRC-11
-  (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 -> FAB-02 (wqbof03ge); M5 -> SET-4
-  and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk); M4 -> SET-3 and M14 (wi1yj6pr0); M22
-  and M24 (wjpjy2o11). kicad-pcb Cargo.toml now has ruzstd 0.9.1 and base64 0.23.1 (M24).
-- next up when their dependencies land: M8 (after M7), M18 (after M5), M9 (after M8), M12
-  (after M10, M8), then M11, M15, M21, M19, M20; PCBIO fan-out after PCBIO-02; connectivity
-  after G5; DRC engine after DRC-20.
-- small follow-ups collected from package reports: wire Board::apply_net_chain_netclasses to
-  M4's chain-pattern functions; move wx_string_matches (netclass.rs) to kicad_core; an
-  unbind_uuid helper in board/index.rs; ConnectivityQuery::net_items for
-  NETINFO_ITEM::GetBoundingBox (GUI only); a SetNet virtual for the zone copper-thieving
-  override; Board table rotate / flip / mirror stubs (M11); own_clearance for an item
-  without a handle.
+- done (Opus, Fable-reviewed, decisions accepted unless noted): M1 containers/index/
+  create-attach, M2 item base (wnw19yvig); M3 nets + netclasses, M13 padstack (w1sw02b68);
+  Fable integration of wave 0b (design revision 2.2: EdaShapeItem::width / top_left /
+  bot_right take ctx; compiled matchers in NetSettings; ComponentClass is_constituent flag;
+  PcbPlotParams::layer default corrected from the oracle; tests/test_defaults_oracle.rs),
+  M7 EdaShape core, M10 text (wawxgug4p; M10 matches pcb-dump bit for bit on five texts incl.
+  a rotated + scaled footprint).
+- running: geometry G4b -> G5 and G6b (wvunbqm6s); DUMP-RS (wwiji4o61); PCBIO-01 -> PCBIO-02
+  -> PCBIO-17 and DRC-20 -> DRC-11 (wh3q6gcxx); W1 session/cli/wasm skeleton and FAB-01 ->
+  FAB-02 (wqbof03ge); M5 -> SET-4 and M6 (w2szwoq36); M16 -> M17 and M23 (w5kruddbk); M4 ->
+  SET-3 and M14 (wi1yj6pr0); M22 and M24 (wjpjy2o11); M8 -> M9 -> M11 (w3pcibnu5).
+- next up when their dependencies land: M18 (after M5), M12 (after M8), M15 (after M14, M9),
+  M21 (after M9), M19 (after M14, M9, M10, M18), M20; PCBIO fan-out after PCBIO-02;
+  connectivity after G5; DRC engine after DRC-20.
+- frozen-file change requests to apply in the NEXT Fable integration step (after wave 1/2):
+  traits.rs: EdaShapeItem::corners_in_sequence needs ctx; BoardItemMut::style_from_settings
+  needs &MutEnv; a SetNet virtual for the zone copper-thieving override. ctx.rs: LayerEnv
+  per-layer LAYER_T (PCB_TEXT::Flip side-specific test); ConnectivityQuery::net_items (GUI
+  only). padstack.rs: CopperLayerProps::compare can now call EdaShape::compare. footprint:
+  declare ResolveTextVar and GetFieldValueForVariant (M19) and wire pcb_text / pcb_field
+  stubs. board/nets.rs: wire apply_net_chain_netclasses to M4's chain-pattern functions.
+  Parser: after (render_cache ...) call EdaText::resolve_font. Misc: wx_string_matches to
+  kicad_core; unbind_uuid helper; own_clearance for an item without a handle; a pad created
+  under a board needs zone_layer_overrides for the board's copper count.
+- incidents: the disk filled once (multi-GB oracle scratch dumps); recovered, a watchdog
+  (/home/user/kicad-oracle/bin/disk-watchdog.sh, background task, 2 h lifetime: restart it
+  when it ends) removes scratch files over 1 GB; PORTING.md section 7 has the disk rule.
+  crates/kicad-pcb/tests/pcb_dump_defaults.rs was truncated to 0 bytes at that moment: check
+  it when DUMP-RS reports.
 
 Queue - launch each item as soon as its dependencies have landed (model package rows and
 run-time dependencies: docs/design/board-model.md section 16; other packages: the analysis

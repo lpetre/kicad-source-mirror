@@ -309,11 +309,16 @@ pub fn argparse_message(
     takes_input: bool,
     first_value_option: Option<&str>,
 ) -> String {
-    let invalid_arg = match err.get(ContextKind::InvalidArg) {
+    let context = |kind: ContextKind| match err.get(kind) {
         Some(ContextValue::String(s)) => s.clone(),
         Some(ContextValue::Strings(v)) => v.first().cloned().unwrap_or_default(),
         _ => String::new(),
     };
+    let mut invalid_arg = context(ContextKind::InvalidArg);
+
+    if invalid_arg.is_empty() {
+        invalid_arg = context(ContextKind::InvalidSubcommand);
+    }
 
     // "--format <FORMAT>" -> "--format"
     let option_name = invalid_arg

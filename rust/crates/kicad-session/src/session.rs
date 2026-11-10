@@ -131,6 +131,7 @@ pub struct NetInfo {
 
 /// A track segment, arc or via as the item access API returns it (board frame, nm).
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrackInfo {
     /// The handle: `ItemId::to_bits()` (exact as a JS number).
     pub id: u64,

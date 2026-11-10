@@ -16,5 +16,5 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/plot_brditems_plotter.cpp`: `PlotFootprintTextItems`, `PlotText`.
-//! 
+//!
 //! Work package FAB-06 (`docs/analysis/plot-fab.md` 10.2); not started.

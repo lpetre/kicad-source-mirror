@@ -1,0 +1,31 @@
+[package]
+name = "kicad-wasm"
+description = "WebAssembly / JavaScript API of the KiCad Rust port (wasm-bindgen)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+kicad-core = { path = "../kicad-core" }
+kicad-geom = { path = "../kicad-geom" }
+kicad-sexpr = { path = "../kicad-sexpr" }
+kicad-font = { path = "../kicad-font" }
+kicad-plot = { path = "../kicad-plot" }
+kicad-session = { path = "../kicad-session" }
+serde = { version = "1.0.229", features = ["derive"] }
+wasm-bindgen = "=0.2.130"
+js-sys = "0.3.107"
+serde-wasm-bindgen = "0.6.5"
+console_error_panic_hook = "0.1.7"
+
+[dev-dependencies]
+kicad-qa = { path = "../kicad-qa" }
+serde_json = "1.0.154"

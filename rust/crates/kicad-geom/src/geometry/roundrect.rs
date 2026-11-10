@@ -144,7 +144,7 @@ impl Roundrect {
 
         // Handle non normalized rect (i.e. w or h < 0 )
         if w < 0 || h < 0 {
-            let norm_rr = Roundrect::new(self.rect.clone(), self.radius, true); // build a normalized ROUNDRECT (w,h >= 0)
+            let norm_rr = Roundrect::new(self.rect, self.radius, true); // build a normalized ROUNDRECT (w,h >= 0)
             norm_rr.transform_to_polygon(a_buffer, a_max_error);
             return;
         }

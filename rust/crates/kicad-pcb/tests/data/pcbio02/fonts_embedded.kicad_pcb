@@ -1,0 +1,5 @@
+(kicad_pcb (version 20261031) (generator "pcbnew") (generator_version "10.99")
+  (general (thickness 1.6) (legacy_teardrops no))
+  (paper "A4")
+  (layers (0 "F.Cu" signal) (2 "B.Cu" signal) (25 "Edge.Cuts" user))
+  (embedded_fonts yes))

@@ -159,3 +159,41 @@ PCB_PLOT_PARAMS TEARDROP_PARAMETERS ZONE_SETTINGS BOARD`.
 * Fields are only ever added (within a section or as new sections); renaming a field or changing
   its value format requires regenerating every golden that contains it, so say so in the commit.
 * Values are what the C++ returns, including its quirks; do not "fix" them in the dumper.
+
+## 7. rules
+
+`pcb-dump rules [--component-classes] FILE...` (source `dump_rules.cpp`) parses each `.kicad_dru`
+file with the real `DRC_RULES_PARSER` (source name = the file's basename) twice: with a
+collecting `REPORTER` (key `report`, the rule editor path: errors are reported and parsing goes on)
+and without one (key `throw`, the DRC engine / kicad-cli path: the first error throws a
+`PARSE_ERROR`). The text is passed as is (not through `DRC_ENGINE::loadRules`, which doubles every
+line break and expands text variables). Layer names are matched against the start-up
+`ENUM_MAP<PCB_LAYER_ID>` (canonical names only). `PROPERTY_MANAGER::Rebuild()` runs first.
+With `--component-classes`, `ParseComponentClassAssignmentRules` is used instead of `Parse`.
+
+```
+file|<basename>|
+rules|<mode>|status=ok | parse_error | io_error
+rules|<mode>|error="<What()>"                    (parse_error / io_error only)
+rules|<mode>|error.problem="<ParseProblem()>"    (parse_error only, also .line, .offset,
+rules|<mode>|error.line=<n>                       .input_line = the source line as stored)
+rules|<mode>|msg.<i>=<SEVERITY> "<text>"         every REPORTER::Report call, in order
+rules|<mode>|count=<number of rules>
+rules|<mode>|rule.<i>.name / .implicit / .unary / .layer_source / .layers (LSET hex) / .severity
+rules|<mode>|rule.<i>.condition=none | "<expression>"   then .condition.pair (RequiresPairItems),
+                                     .condition.item_b (ReferencesItemB), .condition.geometry
+rules|<mode>|rule.<i>.constraints=<n>
+rules|<mode>|rule.<i>.c.<j>.type (DRC_CONSTRAINT_T name) / .min / .opt / .max (none or IU)
+             / .disallow (flag bits) / .zone_connection / .test (assertion, like .condition)
+             / .implicit_min / .reference_layer / .reference_net
+             / .option.skew_within_diff_pairs / .option.space_domain / .option.time_domain
+             / .name (GetName()) / .severity (GetSeverity())
+             / .parent_rule / .min_rule / .opt_rule / .max_rule (none | self | other)
+rules|<mode>|ccrule.<i>.class="<name>" | ccrule.<i>=null     (--component-classes)
+warn|rules|<basename>|wx assertions: <n>          assertions raised while parsing (counted, not thrown)
+```
+
+Severities print as the C++ enumerator names (`RPT_SEVERITY_ERROR`, ...). Fields come in the
+order shown. Rust twin: `rust/crates/kicad-drc/tests/common/mod.rs` (`dump_rules`), runnable as
+`cargo run -p kicad-drc --example rules_dump -- FILE...`; goldens in
+`rust/crates/kicad-drc/tests/golden/rules_*.txt` (generator `tests/oracle/gen_rules_goldens.py`).

@@ -20,9 +20,11 @@
 //! `board-model-types.md` section 10: pure data with `KIID` member references (dangling
 //! members survive a round trip); no solver. Behaviour: package M23.
 
+use std::sync::Arc;
+
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PcbLayerId};
-use kicad_geom::{Box2I, EdaAngle, FlipDirection, Vector2I};
+use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapeCompound, Vector2I};
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
@@ -345,15 +347,11 @@ impl PcbConstraint {
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         flash: Flashing,
-        usage: DrcConstraintT,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!(
-            "PCB_CONSTRAINT::GetEffectiveShape",
-            ctx,
-            layer,
-            flash,
-            usage
-        )
+        // A constraint has no geometry: an empty compound.
+        let _ = (ctx, layer, flash);
+        Arc::new(ShapeCompound::new())
     }
 
     /// `PCB_CONSTRAINT::GetItemDescription()`.
@@ -361,15 +359,34 @@ impl PcbConstraint {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_CONSTRAINT::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+        format!(
+            "Constraint: {} ({} members)",
+            constraint_type_label(self.type_),
+            self.members.len()
+        )
     }
 
     /// `PCB_CONSTRAINT::RemapKIIDs( aIdMap )`: members whose item is in the map get the new
     /// UUID.
     pub fn remap_kiids(&mut self, id_map: &std::collections::BTreeMap<Kiid, Kiid>) {
-        crate::port_pending!("PCB_CONSTRAINT::RemapKIIDs", id_map)
+        for member in &mut self.members {
+            if let Some(new_id) = id_map.get(&member.item) {
+                member.item = *new_id;
+            }
+        }
+    }
+
+    /// `PCB_CONSTRAINT::operator==( const PCB_CONSTRAINT& )`: members are positional (a
+    /// symmetric constraint's axis is not interchangeable with its mirrored points), so they are
+    /// compared in order.
+    pub fn eq_item(&self, other: &PcbConstraint) -> bool {
+        self.type_ == other.type_
+            && self.driving == other.driving
+            && self.value == other.value
+            && self.members == other.members
     }
 }
 
@@ -472,12 +489,186 @@ pub fn constraint_anchor_from_token(token: &str) -> ConstraintAnchor {
 
 /// `ConstraintsAreDuplicate( aA, aB )`.
 pub fn constraints_are_duplicate(a: &PcbConstraint, b: &PcbConstraint) -> bool {
-    crate::port_pending!("ConstraintsAreDuplicate", a, b)
+    if a.type_ != b.type_ {
+        return false;
+    }
+
+    let (a, b) = (&a.members, &b.members);
+
+    if a.is_empty() || a.len() != b.len() {
+        return false;
+    }
+
+    // Match members as a multiset so member order does not matter (A-B is the same as B-A).
+    // Roles survive this because a member's anchor encodes them; in SYMMETRIC and the point
+    // families the mirror/probe points carry endpoint anchors while the axis/line is WHOLE, so
+    // two constraints with the same multiset genuinely relate the same geometry the same way.
+    // (std::is_permutation with operator==)
+    a.iter()
+        .all(|m| a.iter().filter(|x| *x == m).count() == b.iter().filter(|x| *x == m).count())
+}
+
+/// `ConstraintTypeLabel( aType )` (untranslated).
+pub fn constraint_type_label(type_: PcbConstraintType) -> &'static str {
+    match type_ {
+        PcbConstraintType::Coincident => "Coincident",
+        PcbConstraintType::Horizontal => "Horizontal",
+        PcbConstraintType::Vertical => "Vertical",
+        PcbConstraintType::Parallel => "Parallel",
+        PcbConstraintType::Perpendicular => "Perpendicular",
+        PcbConstraintType::Collinear => "Collinear",
+        PcbConstraintType::Symmetric => "Symmetric",
+        PcbConstraintType::EqualLength => "Equal length",
+        PcbConstraintType::EqualRadius => "Equal radius",
+        PcbConstraintType::PointOnLine => "Point on line",
+        PcbConstraintType::Midpoint => "Midpoint",
+        PcbConstraintType::FixedPosition => "Fixed position",
+        PcbConstraintType::FixedLength => "Fixed length",
+        PcbConstraintType::Concentric => "Concentric",
+        PcbConstraintType::FixedRadius => "Fixed radius",
+        PcbConstraintType::AngularDimension => "Angular dimension",
+        PcbConstraintType::Tangent => "Tangent",
+        PcbConstraintType::ArcAngle => "Arc angle",
+        PcbConstraintType::Undefined => "Undefined",
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ---- qa/tests/pcbnew/constraints/test_pcb_constraint.cpp (package M23 part) ----------
+
+    fn kiid(g: &mut KiidGenerator) -> Kiid {
+        Kiid::new(g)
+    }
+
+    /// `CloneIsAFaithfulCopy`: the clone keeps the UUID and compares equal (operator==).
+    #[test]
+    fn clone_is_a_faithful_copy() {
+        let mut g = KiidGenerator::default();
+        let mut c = PcbConstraint::new(&mut g, PcbConstraintType::EqualRadius);
+        c.add_member(kiid(&mut g), ConstraintAnchor::Radius, -1);
+        c.add_member(kiid(&mut g), ConstraintAnchor::Radius, -1);
+        c.set_value(Some(2.5));
+
+        let clone = c.clone();
+        assert!(clone.base.uuid == c.base.uuid);
+        assert!(clone.eq_item(&c));
+        assert!(c.eq_item(&clone));
+    }
+
+    /// `EqualityAndSimilarity` (the operator== checks; `Similarity` is deferred, see
+    /// PORT_STATUS.md).
+    #[test]
+    fn equality() {
+        let mut g = KiidGenerator::default();
+        let (a, b) = (kiid(&mut g), kiid(&mut g));
+        let make = |g: &mut KiidGenerator, t, members: &[Kiid]| {
+            let mut c = PcbConstraint::new(g, t);
+            for m in members {
+                c.add_member(*m, ConstraintAnchor::Whole, -1);
+            }
+            c
+        };
+
+        let c1 = make(&mut g, PcbConstraintType::Parallel, &[a, b]);
+        let c2 = make(&mut g, PcbConstraintType::Parallel, &[a, b]);
+        assert!(c1.eq_item(&c2));
+
+        // A different type is wholly dissimilar.
+        let perp = make(&mut g, PcbConstraintType::Perpendicular, &[a, b]);
+        assert!(!c1.eq_item(&perp));
+
+        // Same type, different members compares unequal.
+        let other = kiid(&mut g);
+        let c3 = make(&mut g, PcbConstraintType::Parallel, &[other]);
+        assert!(!c1.eq_item(&c3));
+    }
+
+    /// `DuplicateDetection`.
+    #[test]
+    fn duplicate_detection() {
+        let mut g = KiidGenerator::default();
+        let (a, b, c) = (kiid(&mut g), kiid(&mut g), kiid(&mut g));
+        let make = |g: &mut KiidGenerator, t, first: Kiid, second: Kiid| {
+            let mut constraint = PcbConstraint::new(g, t);
+            constraint.add_member(first, ConstraintAnchor::Whole, -1);
+            constraint.add_member(second, ConstraintAnchor::Whole, -1);
+            constraint
+        };
+
+        let parallel_ab = make(&mut g, PcbConstraintType::Parallel, a, b);
+
+        // Same type and members is a duplicate, and member order does not matter (A-B == B-A).
+        let x = make(&mut g, PcbConstraintType::Parallel, a, b);
+        assert!(constraints_are_duplicate(&parallel_ab, &x));
+        let x = make(&mut g, PcbConstraintType::Parallel, b, a);
+        assert!(constraints_are_duplicate(&parallel_ab, &x));
+
+        // A different type or a different member is not a duplicate.
+        let x = make(&mut g, PcbConstraintType::Perpendicular, a, b);
+        assert!(!constraints_are_duplicate(&parallel_ab, &x));
+        let x = make(&mut g, PcbConstraintType::Parallel, a, c);
+        assert!(!constraints_are_duplicate(&parallel_ab, &x));
+
+        // Value and driving are ignored.
+        let mut len1 = PcbConstraint::new(&mut g, PcbConstraintType::FixedLength);
+        len1.add_member(a, ConstraintAnchor::Whole, -1);
+        len1.set_value(Some(5.0));
+        let mut len2 = PcbConstraint::new(&mut g, PcbConstraintType::FixedLength);
+        len2.add_member(a, ConstraintAnchor::Whole, -1);
+        len2.set_value(Some(9.0));
+        len2.set_driving(false);
+        assert!(constraints_are_duplicate(&len1, &len2));
+
+        // An empty-member constraint is never a duplicate.
+        let empty1 = PcbConstraint::new(&mut g, PcbConstraintType::Parallel);
+        let empty2 = PcbConstraint::new(&mut g, PcbConstraintType::Parallel);
+        assert!(!constraints_are_duplicate(&empty1, &empty2));
+    }
+
+    /// `VertexIndexInDuplicateDetection`.
+    #[test]
+    fn vertex_index_in_duplicate_detection() {
+        let mut g = KiidGenerator::default();
+        let (item, other) = (kiid(&mut g), kiid(&mut g));
+        let make = |g: &mut KiidGenerator, first: i32, second: i32| {
+            let mut constraint = PcbConstraint::new(g, PcbConstraintType::Coincident);
+            constraint.add_member(item, ConstraintAnchor::Vertex, first);
+            constraint.add_member(other, ConstraintAnchor::Vertex, second);
+            constraint
+        };
+
+        let vertex02 = make(&mut g, 0, 2);
+        let x = make(&mut g, 0, 2);
+        assert!(constraints_are_duplicate(&vertex02, &x));
+        let x = make(&mut g, 2, 2);
+        assert!(!constraints_are_duplicate(&vertex02, &x));
+        let x = make(&mut g, 0, 3);
+        assert!(!constraints_are_duplicate(&vertex02, &x));
+    }
+
+    /// `RemapKIIDs` and the description.
+    #[test]
+    fn remap_kiids_and_description() {
+        let mut g = KiidGenerator::default();
+        let (a, b, n) = (kiid(&mut g), kiid(&mut g), kiid(&mut g));
+        let mut c = PcbConstraint::new(&mut g, PcbConstraintType::EqualLength);
+        c.add_member(a, ConstraintAnchor::Whole, -1);
+        c.add_member(b, ConstraintAnchor::Start, -1);
+        let map = std::collections::BTreeMap::from([(b, n)]);
+        c.remap_kiids(&map);
+        assert!(c.members[0].item == a && c.members[1].item == n);
+
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let units = UnitsProvider::new(&kicad_core::PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(
+            BoardItem::item_description(&c, &ctx, &units, false),
+            "Constraint: Equal length (2 members)"
+        );
+    }
     use crate::ids::ItemKind;
     use crate::test_support::rotated_flipped_scaled;
 

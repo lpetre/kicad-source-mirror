@@ -44,28 +44,41 @@ use crate::pcb_target::PcbTarget;
 
 impl PcbParser {
     /// Port of `parsePCB_REFERENCE_IMAGE( BOARD_ITEM* aParent )`. Staging stub (PCBIO-12).
-    pub(crate) fn parse_pcb_reference_image(&mut self, parent: ParentRef) -> Result<Option<PcbReferenceImage>, IoError> {
+    pub(crate) fn parse_pcb_reference_image(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<PcbReferenceImage>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-12")?;
         Ok(None)
     }
 
     /// Port of `parsePCB_BARCODE( BOARD_ITEM* aParent )`. Staging stub (PCBIO-12).
-    pub(crate) fn parse_pcb_barcode(&mut self, parent: ParentRef) -> Result<Option<PcbBarcode>, IoError> {
+    pub(crate) fn parse_pcb_barcode(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<PcbBarcode>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-12")?;
         Ok(None)
     }
 
     /// Port of `parsePCB_TABLE( BOARD_ITEM* aParent )`: a created, unattached table. Staging stub (PCBIO-12).
-    pub(crate) fn parse_pcb_table(&mut self, parent: ParentRef) -> Result<Option<TableId>, IoError> {
+    pub(crate) fn parse_pcb_table(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<TableId>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-12")?;
         Ok(None)
     }
 
     /// Port of `parseGeneratedTable( std::unique_ptr<PCB_GENERATED_TABLE> )`: `drill_chart` / `stackup_table`, created, unattached. Staging stub (PCBIO-12).
-    pub(crate) fn parse_generated_table(&mut self, kind: GeneratedTableKind, parent: ParentRef) -> Result<Option<TableId>, IoError> {
+    pub(crate) fn parse_generated_table(
+        &mut self,
+        kind: GeneratedTableKind,
+        parent: ParentRef,
+    ) -> Result<Option<TableId>, IoError> {
         let _ = &(kind, parent);
         self.pending("PCBIO-12")?;
         Ok(None)
@@ -78,7 +91,10 @@ impl PcbParser {
     }
 
     /// Port of `parsePCB_DRILL_MAP( BOARD_ITEM* aParent )`. Staging stub (PCBIO-12).
-    pub(crate) fn parse_pcb_drill_map(&mut self, parent: ParentRef) -> Result<Option<PcbDrillMap>, IoError> {
+    pub(crate) fn parse_pcb_drill_map(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<PcbDrillMap>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-12")?;
         Ok(None)

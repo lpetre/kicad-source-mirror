@@ -33,7 +33,10 @@ use crate::teardrop_parameters::TeardropParameters;
 
 impl PcbParser {
     /// Port of `parseTEARDROP_PARAMETERS( TEARDROP_PARAMETERS* )`: call with `CurTok() == T_teardrops`. Staging stub (PCBIO-03).
-    pub(crate) fn parse_teardrop_parameters(&mut self, td_params: &mut TeardropParameters) -> Result<(), IoError> {
+    pub(crate) fn parse_teardrop_parameters(
+        &mut self,
+        td_params: &mut TeardropParameters,
+    ) -> Result<(), IoError> {
         let _ = &td_params;
         self.pending("PCBIO-03")?;
         Ok(())

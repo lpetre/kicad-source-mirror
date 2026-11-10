@@ -33,16 +33,14 @@
 #![allow(dead_code)]
 
 use kicad_core::{Lset, PcbLayerId, Severity};
+use kicad_drc::constraint_types::drc_constraint_options;
 use kicad_drc::pcbexpr::evaluator::PcbExprBinder;
 use kicad_drc::reporter::WxStringReporter;
 use kicad_drc::rule::DrcConstraintExt;
 use kicad_drc::rule_condition::DrcRuleCondition;
 use kicad_drc::rule_parser::{ComponentClassAssignmentRule, DrcRulesParser};
 use kicad_drc::{DrcConstraintT, DrcRule};
-use kicad_drc::constraint_types::drc_constraint_options;
-use kicad_libeval::{
-    Context, FuncCallRef, NoCustomValue, UcodeBinder, Value, VarRef, VarType,
-};
+use kicad_libeval::{Context, FuncCallRef, NoCustomValue, UcodeBinder, Value, VarRef, VarType};
 use kicad_pcb::ItemRef;
 use kicad_pcb::drc_api::DrcRuleInfo;
 use kicad_pcb::zone_settings::ZoneConnection;
@@ -401,7 +399,8 @@ struct Out {
 
 impl Out {
     fn emit(&mut self, field: &str, value: &str) {
-        self.lines.push(format!("{}{}={}", self.prefix, field, value));
+        self.lines
+            .push(format!("{}{}={}", self.prefix, field, value));
     }
 }
 
@@ -438,7 +437,10 @@ fn dump_rule(out: &mut Out, prefix: &str, rule: &DrcRule) {
     out.emit(&format!("{prefix}.name"), &v_str(&rule.name));
     out.emit(&format!("{prefix}.implicit"), &v_bool(rule.is_implicit()));
     out.emit(&format!("{prefix}.unary"), &v_bool(rule.unary));
-    out.emit(&format!("{prefix}.layer_source"), &v_str(&rule.layer_source));
+    out.emit(
+        &format!("{prefix}.layer_source"),
+        &v_str(&rule.layer_source),
+    );
     out.emit(&format!("{prefix}.layers"), &v_lset(&rule.layer_condition));
     out.emit(&format!("{prefix}.severity"), severity_name(rule.severity));
     dump_condition(
@@ -528,12 +530,14 @@ fn dump_error(out: &mut Out, error: &IoError) {
     }
 }
 
-fn dump_parse(text: &str, source: &str, with_reporter: bool, component_classes: bool) -> Vec<String> {
+fn dump_parse(
+    text: &str,
+    source: &str,
+    with_reporter: bool,
+    component_classes: bool,
+) -> Vec<String> {
     let mut out = Out {
-        prefix: format!(
-            "rules|{}|",
-            if with_reporter { "report" } else { "throw" }
-        ),
+        prefix: format!("rules|{}|", if with_reporter { "report" } else { "throw" }),
         lines: Vec::new(),
     };
     let mut reporter = WxStringReporter::new();

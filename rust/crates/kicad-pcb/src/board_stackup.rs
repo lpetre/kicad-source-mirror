@@ -989,4 +989,377 @@ mod tests {
         assert_eq!(paste.thickness(0), 0);
         assert_eq!(paste.sublayers_count(), 1);
     }
+
+    // ---- Differential oracle replay (tests/oracle/m6_stackup_oracle.cpp) ----------------
+
+    const M6_GOLDEN: &str = include_str!("../tests/golden/m6_stackup_oracle.txt");
+
+    fn bits(v: f64) -> String {
+        format!("{:016x}", v.to_bits())
+    }
+
+    fn b(v: bool) -> i32 {
+        v as i32
+    }
+
+    /// `dumpStackup` of the C++ driver.
+    fn dump_stackup(out: &mut Vec<String>, p: &str, s: &BoardStackup) {
+        out.push(format!(
+            "{p}|finish={}|diel_c={}|thick_c={}|edge={}|plating={}|count={}|thickness={}",
+            s.finish_type,
+            b(s.has_dielectric_constrains),
+            b(s.has_thickness_constrains),
+            s.edge_connector_constraints as i32,
+            b(s.edge_plating),
+            s.count(),
+            s.build_board_thickness_from_stackup()
+        ));
+
+        for (i, item) in s.list().iter().enumerate() {
+            out.push(format!(
+                "{p}|{i}|{}|{}|{}|{}|{}|{}|{}",
+                item.type_() as i32,
+                item.brd_layer_id().0,
+                item.layer_name(),
+                item.type_name(),
+                item.dielectric_layer_id(),
+                b(item.is_enabled()),
+                item.sublayers_count()
+            ));
+
+            for sl in 0..item.sublayers_count() {
+                out.push(format!(
+                    "{p}|{i}.{sl}|{}|{}|{}|{}|{}|{}|{}|{}|{}",
+                    item.thickness(sl),
+                    b(item.is_thickness_locked(sl)),
+                    item.material(sl),
+                    item.color(sl),
+                    bits(item.epsilon_r(sl)),
+                    bits(item.loss_tangent(sl)),
+                    bits(item.spec_freq(sl)),
+                    item.dielectric_model(sl) as i32,
+                    b(item.has_material_value(sl))
+                ));
+            }
+        }
+    }
+
+    fn dump_distances(out: &mut Vec<String>, p: &str, s: &BoardStackup, layers: &[PcbLayerId]) {
+        for &a in layers {
+            for &bl in layers {
+                out.push(format!(
+                    "{p}|dist|{}|{}|{}|{}",
+                    a.0,
+                    bl.0,
+                    s.get_layer_distance(a, bl),
+                    s.get_drill_depth(a, bl)
+                ));
+            }
+        }
+    }
+
+    fn scenario_mask(cu: i32, tech_mode: i32) -> Lset {
+        let mut mask = Lset::all_cu_mask_n(cu);
+
+        if tech_mode == 0 {
+            mask |= Lset::all_tech_mask();
+        } else if tech_mode == 1 {
+            mask |= &Lset::from_layers(&[PcbLayerId::FSilkS, PcbLayerId::BMask]);
+        }
+
+        mask
+    }
+
+    /// `BOARD_DESIGN_SETTINGS( nullptr, .. )` + `SetEnabledLayers( mask )` (emulated: that
+    /// setter belongs to another package) + `SetCopperLayerCount` + `SetBoardThickness`.
+    fn settings(cu: i32, tech_mode: i32, thickness: i32) -> BoardDesignSettings {
+        let mut bds = BoardDesignSettings::default();
+        let mask = scenario_mask(cu, tech_mode);
+        let mut enabled = mask.clone();
+        enabled |= &Lset::from_layers(&[
+            PcbLayerId::BCu,
+            PcbLayerId::FCu,
+            PcbLayerId::BCrtYd,
+            PcbLayerId::FCrtYd,
+            PcbLayerId::EdgeCuts,
+            PcbLayerId::Margin,
+        ]);
+        bds.enabled_layers = enabled;
+        bds.copper_layer_count = mask.copper_layers().count() as i32;
+        bds.set_copper_layer_count(cu);
+        bds.board_thickness = thickness;
+        bds
+    }
+
+    fn distance_layers(s: &BoardStackup) -> Vec<PcbLayerId> {
+        let mut layers = Vec::new();
+
+        for item in s.list() {
+            let l = item.brd_layer_id();
+
+            if !is_copper_layer(l) {
+                continue;
+            }
+
+            if s.count() > 40
+                && !(l == PcbLayerId::FCu
+                    || l == PcbLayerId::BCu
+                    || l == PcbLayerId::In1Cu
+                    || l == PcbLayerId::In2Cu
+                    || l == PcbLayerId::In15Cu
+                    || l == PcbLayerId::In30Cu)
+            {
+                continue;
+            }
+
+            layers.push(l);
+        }
+
+        layers
+    }
+
+    fn customise(s: &mut BoardStackup) {
+        for (i, item) in s.list.iter_mut().enumerate() {
+            if item.type_() == BoardStackupItemType::Dielectric && item.dielectric_layer_id() == 2 {
+                item.add_dielectric_prms(1);
+                item.set_thickness(50001, 1);
+                item.set_material("PTFE".to_string(), 1);
+                item.set_epsilon_r(2.1, 1);
+                item.set_loss_tangent(0.0002, 1);
+                item.set_thickness_locked(true, 1);
+                item.add_dielectric_prms(0);
+                item.set_thickness(33333, 0);
+                item.remove_dielectric_prms(5); // out of range: ignored
+            }
+
+            if item.brd_layer_id() == PcbLayerId::In1Cu {
+                item.set_thickness(18001, 0);
+            }
+
+            if item.type_() == BoardStackupItemType::Solderpaste {
+                item.set_enabled(false);
+            }
+
+            if item.type_() == BoardStackupItemType::Soldermask {
+                item.set_color("Green".to_string(), 0);
+                item.set_enabled(i % 2 == 0);
+            }
+
+            item.set_layer_name(&format!("L{i}"));
+        }
+    }
+
+    fn stackup_scenarios(out: &mut Vec<String>) {
+        let scenarios: [(&str, i32, i32, i32); 8] = [
+            ("cu2", 2, 1_600_000, 0),
+            ("cu4", 4, 1_600_000, 0),
+            ("cu6", 6, 1_200_000, 0),
+            ("cu32", 32, 1_600_000, 0),
+            ("cu4m", 4, 800_000, 1),
+            ("cu1", 1, 1_600_000, 0),
+            ("cu32thin", 32, 100_000, 2),
+            ("cu8", 8, 1_000_001, 0),
+        ];
+
+        for (name, cu, thickness, tech) in scenarios {
+            let mut bds = settings(cu, tech, thickness);
+            bds.stackup.finish_type = "ENIG".to_string();
+            bds.stackup.edge_plating = true;
+            bds.stackup.edge_connector_constraints = BsEdgeConnectorConstraints::Bevelled;
+            bds.stackup.has_dielectric_constrains = true;
+            bds.stackup.has_thickness_constrains = true;
+
+            let mut s = BoardStackup::default();
+            s.build_default_stackup_list(Some(&bds), 2);
+            let p = format!("default.{name}");
+            dump_stackup(out, &p, &s);
+            dump_distances(out, &p, &s, &distance_layers(&s));
+
+            // BuildDefaultStackupList appends to an existing list.
+            if cu == 2 {
+                s.build_default_stackup_list(Some(&bds), 0);
+                dump_stackup(out, &format!("{p}.again"), &s);
+            }
+
+            let mut c = s.clone();
+            customise(&mut c);
+            dump_stackup(out, &format!("{p}.custom"), &c);
+            dump_distances(out, &format!("{p}.custom"), &c, &distance_layers(&c));
+
+            // Synchronise the customised stackup with other copper counts.
+            for new_cu in [cu, 2, 6] {
+                if new_cu == cu && cu >= 32 {
+                    continue;
+                }
+
+                let mut bds2 = settings(new_cu, tech, thickness);
+                bds2.stackup.finish_type = "OSP".to_string();
+                bds2.stackup.edge_connector_constraints = BsEdgeConnectorConstraints::InUse;
+
+                let mut sy = c.clone();
+                let changed = sy.synchronize_with_board(&bds2);
+                let sp = format!("{p}.sync{new_cu}");
+                out.push(format!("{sp}|changed={}", b(changed)));
+                dump_stackup(out, &sp, &sy);
+            }
+        }
+
+        for n in [0, 2, 4, 6] {
+            let mut s = BoardStackup::default();
+            s.build_default_stackup_list(None, n);
+            dump_stackup(out, &format!("null.{n}"), &s);
+        }
+
+        // Allowed layers.
+        let allowed: String = BoardStackup::stackup_allowed_brd_layers()
+            .seq()
+            .iter()
+            .map(|l| format!("{},", l.0))
+            .collect();
+        out.push(format!("allowed|{allowed}"));
+    }
+
+    fn predefined_scenarios(out: &mut Vec<String>) {
+        for s in standard_copper_finishes() {
+            out.push(format!("finish|{s}"));
+        }
+
+        let types = [
+            BoardStackupItemType::Undefined,
+            BoardStackupItemType::Copper,
+            BoardStackupItemType::Dielectric,
+            BoardStackupItemType::Solderpaste,
+            BoardStackupItemType::Soldermask,
+            BoardStackupItemType::Silkscreen,
+        ];
+
+        for t in types {
+            let list = standard_colors(t);
+            out.push(format!(
+                "colors|{}|n={}|user={}",
+                t as i32,
+                list.len(),
+                color_user_defined_list_idx(t)
+            ));
+
+            for (i, fc) in list.iter().enumerate() {
+                let c = standard_color(t, i as i32).unwrap();
+                out.push(format!(
+                    "colors|{}|{i}|{}|{}|{}|{}|{}|{}|{}|custom={}",
+                    t as i32,
+                    standard_color_name(t, i as i32).unwrap(),
+                    fc.color_as_string(),
+                    bits(c.r),
+                    bits(c.g),
+                    bits(c.b),
+                    bits(c.a),
+                    bits(default_user_color(t).unwrap().a),
+                    b(is_custom_color_idx(t, i as i32))
+                ));
+            }
+        }
+
+        for s in [
+            "",
+            "Not specified",
+            "not SPECIFIED",
+            "FR4",
+            "Not specified ",
+            "Green",
+            "green",
+            "GREEN",
+            "Purple",
+            "R1G2B3",
+        ] {
+            out.push(format!(
+                "prm|{s}|spec={}|norm={}",
+                b(is_prm_specified(s)),
+                b(is_color_name_normalized(s))
+            ));
+        }
+
+        for t in types {
+            let mut it = BoardStackupItem::new(t);
+            it.set_dielectric_layer_id(7);
+            out.push(format!(
+                "flags|{}|eps={}|lt={}|sf={}|mat_ed={}|col_ed={}|thk_ed={}|{}",
+                t as i32,
+                b(it.has_epsilon_r_value()),
+                b(it.has_loss_tangent_value()),
+                b(it.has_spec_freq_value()),
+                b(it.is_material_editable()),
+                b(it.is_color_editable()),
+                b(it.is_thickness_editable()),
+                it.format_dielectric_layer_name()
+            ));
+        }
+
+        // Formatting of epsilon R / loss tangent.
+        let mut item = BoardStackupItem::new(BoardStackupItemType::Dielectric);
+
+        for v in [
+            4.5,
+            0.02,
+            3.3,
+            1e-5,
+            0.0001,
+            0.00012,
+            12.345678901,
+            1e9,
+            0.0,
+            -0.5,
+            1.0 / 3.0,
+            123456789.123,
+        ] {
+            item.set_epsilon_r(v, 0);
+            item.set_loss_tangent(v, 0);
+            out.push(format!(
+                "fmt|{}|{}|{}",
+                bits(v),
+                item.format_epsilon_r(0),
+                item.format_loss_tangent(0)
+            ));
+        }
+    }
+
+    /// Replays the stackup and predefined-parameter sections of the C++ oracle
+    /// (`tests/oracle/m6_stackup_oracle.cpp`, golden `tests/golden/m6_stackup_oracle.txt`).
+    #[test]
+    fn m6_oracle() {
+        let mut out = Vec::new();
+        stackup_scenarios(&mut out);
+        predefined_scenarios(&mut out);
+
+        let expected: Vec<&str> = M6_GOLDEN
+            .lines()
+            .filter(|l| {
+                !(l.starts_with("gbrprec|") || l.starts_with("svgprec|") || l.starts_with("same|"))
+            })
+            .collect();
+
+        for (i, (got, want)) in out.iter().zip(expected.iter()).enumerate() {
+            assert_eq!(got, want, "line {i}");
+        }
+
+        assert_eq!(out.len(), expected.len());
+    }
+
+    /// `test_fab_stackup.cpp::FabStackupSnapshotsRealBoard`, the model part: a copy of a
+    /// stackup is a deep, equal copy and keeps its board thickness.
+    #[test]
+    fn copy_semantics() {
+        let mut bds = BoardDesignSettings::default();
+        bds.set_copper_layer_count(4);
+        let mut before = BoardStackup::default();
+        before.build_default_stackup_list(Some(&bds), 4);
+        let mut expected = before.clone();
+        expected.list[3].set_thickness(1, 0);
+        assert_ne!(expected, before);
+        expected = before.clone();
+        assert_eq!(expected, before);
+        assert_eq!(
+            expected.build_board_thickness_from_stackup(),
+            before.build_board_thickness_from_stackup()
+        );
+    }
 }

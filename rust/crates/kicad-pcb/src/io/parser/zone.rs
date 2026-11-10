@@ -44,14 +44,20 @@ impl PcbParser {
     }
 
     /// Port of `parseZoneDefaults( std::map<PCB_LAYER_ID, ZONE_LAYER_PROPERTIES>& )`. Staging stub (PCBIO-08).
-    pub(crate) fn parse_zone_defaults(&mut self, properties: &mut BTreeMap<PcbLayerId, ZoneLayerProperties>) -> Result<(), IoError> {
+    pub(crate) fn parse_zone_defaults(
+        &mut self,
+        properties: &mut BTreeMap<PcbLayerId, ZoneLayerProperties>,
+    ) -> Result<(), IoError> {
         let _ = &properties;
         self.pending("PCBIO-08")?;
         Ok(())
     }
 
     /// Port of `parseZoneLayerProperty( std::map<PCB_LAYER_ID, ZONE_LAYER_PROPERTIES>& )`. Staging stub (PCBIO-08).
-    pub(crate) fn parse_zone_layer_property(&mut self, properties: &mut BTreeMap<PcbLayerId, ZoneLayerProperties>) -> Result<(), IoError> {
+    pub(crate) fn parse_zone_layer_property(
+        &mut self,
+        properties: &mut BTreeMap<PcbLayerId, ZoneLayerProperties>,
+    ) -> Result<(), IoError> {
         let _ = &properties;
         self.pending("PCBIO-08")?;
         Ok(())

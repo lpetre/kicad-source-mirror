@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Port of `libs/kimath/include/geometry/shape_index_list.h` (`SHAPE_INDEX_LIST`): a plain
 //! list of items with shapes and cached bounding boxes, queried linearly in insertion order.
 //!

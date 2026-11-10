@@ -36,5 +36,7 @@ pub fn gen_drill_map_file(
     format: PlotFormat,
 ) -> Result<Vec<u8>, FabError> {
     let _ = (writer, full_file_name, format);
-    Err(FabError::NotPorted("GENDRILL_WRITER_BASE::genDrillMapFile (FAB-12)"))
+    Err(FabError::NotPorted(
+        "GENDRILL_WRITER_BASE::genDrillMapFile (FAB-12)",
+    ))
 }

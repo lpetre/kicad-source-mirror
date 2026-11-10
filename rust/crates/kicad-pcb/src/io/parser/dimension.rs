@@ -32,7 +32,10 @@ use crate::pcb_dimension::PcbDimension;
 
 impl PcbParser {
     /// Port of `parseDIMENSION( BOARD_ITEM* aParent )` (ends with `Update()`). Staging stub (PCBIO-10).
-    pub(crate) fn parse_dimension(&mut self, parent: ParentRef) -> Result<Option<PcbDimension>, IoError> {
+    pub(crate) fn parse_dimension(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<PcbDimension>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-10")?;
         Ok(None)

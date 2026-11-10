@@ -100,7 +100,16 @@ fn board_units() {
 
     assert_eq!(
         values,
-        [4_170_000, -45, 2_147_483_637, -2_147_483_637, 1, -1, 1_000_000, 3]
+        [
+            4_170_000,
+            -45,
+            2_147_483_637,
+            -2_147_483_637,
+            1,
+            -1,
+            1_000_000,
+            3
+        ]
     );
 
     // A symbol is not a number.
@@ -112,7 +121,10 @@ fn board_units() {
     p.lexer.next_tok().unwrap();
     p.lexer.next_tok().unwrap();
     let e = p.parse_board_units_str("width").unwrap_err();
-    assert_eq!(e.what(), "need a number for 'width' in '', line 1, offset 8.");
+    assert_eq!(
+        e.what(),
+        "need a number for 'width' in '', line 1, offset 8."
+    );
 }
 
 /// `parseMaybeAbsentBool`: `hide`, `(hide)`, `(hide yes)`, `(hide false)`.
@@ -129,7 +141,7 @@ fn maybe_absent_bool() {
 
     // bare "hide": the default, nothing consumed.
     p.lexer.next_tok().unwrap();
-    assert_eq!(p.parse_maybe_absent_bool(false).unwrap(), false);
+    assert!(!p.parse_maybe_absent_bool(false).unwrap());
     assert_eq!(p.lexer.cur_tok(), T::T_hide);
     p.lexer.next_tok().unwrap();
     assert_eq!(p.lexer.cur_text(), "x");
@@ -200,7 +212,10 @@ fn required_version() {
     for v in [20230229, 99999999, 20261300, 20260100, 20260431, 0] {
         p.required_version = v;
         let e = p.get_required_version().unwrap_err();
-        assert!(e.what().starts_with(&format!("Cannot interpret date code {v} in ''")));
+        assert!(
+            e.what()
+                .starts_with(&format!("Cannot interpret date code {v} in ''"))
+        );
     }
 }
 
@@ -208,7 +223,9 @@ fn required_version() {
 /// `parseLayersForCuItemWithSoldermask` on the maps seeded by `init()`.
 #[test]
 fn layer_lookups() {
-    let mut p = parser("F.Cu Foo Rescue UNDEFINED (layers *.Cu F.SilkS Bar) (layers F.Cu B.Mask) (layers In1.Cu F.Mask) (layers B.Cu B.Mask) Inner1.Cu");
+    let mut p = parser(
+        "F.Cu Foo Rescue UNDEFINED (layers *.Cu F.SilkS Bar) (layers F.Cu B.Mask) (layers In1.Cu F.Mask) (layers B.Cu B.Mask) Inner1.Cu",
+    );
     p.lexer.next_tok().unwrap();
     assert_eq!(p.look_up_layer(false), PcbLayerId::FCu);
     p.lexer.next_tok().unwrap();
@@ -266,9 +283,15 @@ fn outline_points() {
     assert_eq!(chain.c_last_point(), Vector2I::new(2_000_000, 0));
 
     let e = p.parse_outline_points(&mut chain).unwrap_err();
-    assert_eq!(e.what(), "Expecting mid. Got '')'' in '', line 1, offset 84.");
+    assert_eq!(
+        e.what(),
+        "Expecting mid. Got '')'' in '', line 1, offset 84."
+    );
     let e = p.parse_outline_points(&mut chain).unwrap_err();
-    assert_eq!(e.what(), "Expecting xy or arc. Got ''pts'' in '', line 1, offset 87.");
+    assert_eq!(
+        e.what(),
+        "Expecting xy or arc. Got ''pts'' in '', line 1, offset 87."
+    );
 }
 
 /// `skipCurrent`, `pushValueIntoMap` / `getNetCode`, `parseBoardProperty`, both
@@ -417,7 +440,10 @@ fn layer_errors() {
 #[test]
 fn footprint_is_not_a_board() {
     match parse_error("(footprint \"R\" (version 20240101))", &staging()) {
-        Ok(e) => assert_eq!(e, "This file does not contain a PCB. in '', line 1, offset 34."),
+        Ok(e) => assert_eq!(
+            e,
+            "This file does not contain a PCB. in '', line 1, offset 34."
+        ),
         Err(pending) => println!("footprint_is_not_a_board: pending on {pending}"),
     }
 }
@@ -472,7 +498,13 @@ fn run_corpus(files: &[PathBuf]) -> (usize, usize) {
                 println!("corpus: {} pending on {stub}", path.display());
             }
             Ok(Err(e)) => {
-                assert_eq!(name, "fakeboard.kicad_pcb", "{}: {}", path.display(), e.what());
+                assert_eq!(
+                    name,
+                    "fakeboard.kicad_pcb",
+                    "{}: {}",
+                    path.display(),
+                    e.what()
+                );
                 assert_eq!(e.what(), "Expecting ''('' in '', line 1, offset 1.");
                 parsed += 1;
             }
@@ -529,7 +561,10 @@ fn scientific_notation_loading() {
         }
         Ok(Err(e)) => {
             assert!(e.what().starts_with("port pending: "), "{}", e.what());
-            assert!(model(|| parse_board(&text, "", &staging()).map(|_| ())).map_or(true, |r| r.is_ok()));
+            assert!(
+                model(|| parse_board(&text, "", &staging()).map(|_| ()))
+                    .map_or(true, |r| r.is_ok())
+            );
         }
         Err(pending) => println!("scientific_notation_loading: pending on {pending}"),
     }
@@ -624,7 +659,10 @@ fn rust_value(board: &Board, key: &str) -> String {
             if let Some(i) = key.strip_prefix("title_block.comment.") {
                 v_str(tb.comment(i.parse().unwrap()))
             } else if let Some(k) = key.strip_prefix("property.") {
-                board.properties.get(k).map_or("<absent>".into(), |v| v_str(v))
+                board
+                    .properties
+                    .get(k)
+                    .map_or("<absent>".into(), |v| v_str(v))
             } else if let Some(rest) = key.strip_prefix("layer.") {
                 if let Some(name) = rest.strip_suffix(".name") {
                     v_str(&board.layer_name(layer_by_name(name)))
@@ -662,7 +700,11 @@ fn oracle_board_section() {
             boards.push((file.to_string(), Vec::new()));
         } else {
             let (k, v) = line.split_once('=').unwrap();
-            boards.last_mut().unwrap().1.push((k.to_string(), v.to_string()));
+            boards
+                .last_mut()
+                .unwrap()
+                .1
+                .push((k.to_string(), v.to_string()));
         }
     }
 
@@ -687,7 +729,10 @@ fn oracle_board_section() {
         let (board, report) = match result {
             Ok(r) => r,
             Err(e) => {
-                let expected = fields.iter().find(|(k, _)| k == "error").map(|(_, v)| v.clone());
+                let expected = fields
+                    .iter()
+                    .find(|(k, _)| k == "error")
+                    .map(|(_, v)| v.clone());
                 let got = e.what().replace(['\n', '\r'], " ");
 
                 if expected.as_deref() == Some(got.as_str()) {
@@ -704,7 +749,11 @@ fn oracle_board_section() {
             match model(|| rust_value(&board, key)) {
                 Err(_) => pending += 1,
                 Ok(got) if &got == expected => matched += 1,
-                Ok(got) if key.starts_with("net.") && got == "<absent>" && !report.skipped.is_empty() => {
+                Ok(got)
+                    if key.starts_with("net.")
+                        && got == "<absent>"
+                        && !report.skipped.is_empty() =>
+                {
                     pending += 1
                 }
                 Ok(got) => mismatches.push(format!("{file}: {key}: rust {got}, oracle {expected}")),
@@ -713,7 +762,10 @@ fn oracle_board_section() {
 
         // No property the C++ does not have.
         for k in board.properties.keys() {
-            if !fields.iter().any(|(key, _)| key == &format!("property.{k}")) {
+            if !fields
+                .iter()
+                .any(|(key, _)| key == &format!("property.{k}"))
+            {
                 mismatches.push(format!("{file}: extra property {k}"));
             }
         }

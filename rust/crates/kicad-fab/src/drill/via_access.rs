@@ -28,7 +28,9 @@
 
 use kicad_core::layer_ids::PcbLayerId;
 use kicad_pcb::BoardCtx;
-use kicad_pcb::pcb_track::{CappingMode, CoveringMode, FillingMode, PcbVia, PluggingMode, TentingMode};
+use kicad_pcb::pcb_track::{
+    CappingMode, CoveringMode, FillingMode, PcbVia, PluggingMode, TentingMode,
+};
 
 /// `PCB_VIA::GetDrillValue()` (netclass default when the via drill is undefined).
 pub(crate) fn drill_value(ctx: &BoardCtx<'_>, via: &PcbVia) -> i32 {

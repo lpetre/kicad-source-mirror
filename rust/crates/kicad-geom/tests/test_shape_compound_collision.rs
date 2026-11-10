@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Port of `qa/tests/libs/kimath/geometry/test_shape_compound_collision.cpp` (suite
 //! `SCompoundCollision`) and `test_shape_rect_corner.cpp`.
 
@@ -63,13 +62,22 @@ fn shape_compound_collide() {
     let mut actual = 0;
 
     // Check points on corners
-    assert!(f.compound_a.collide(&f.compound_b, 0, Some(&mut actual), None));
+    assert!(
+        f.compound_a
+            .collide(&f.compound_b, 0, Some(&mut actual), None)
+    );
     assert_eq!(actual, 0);
 
-    assert!(!f.compound_a.collide(&f.compound_c, 0, Some(&mut actual), None));
+    assert!(
+        !f.compound_a
+            .collide(&f.compound_c, 0, Some(&mut actual), None)
+    );
     assert_eq!(actual, 0);
 
-    assert!(f.compound_a.collide(&f.compound_c, 100, Some(&mut actual), None));
+    assert!(
+        f.compound_a
+            .collide(&f.compound_c, 100, Some(&mut actual), None)
+    );
     assert_eq!(actual, 80);
 
     assert!(f.shapes_a[0].collide(&f.compound_b, 0, None, None));
@@ -96,9 +104,15 @@ fn shape_compound_collide() {
     assert_eq!(actual, 80);
     assert!(f.shapes_c[1].collide(&f.compound_a, 100, Some(&mut actual), None));
     assert_eq!(actual, 80);
-    assert!(f.compound_a.collide(&f.shapes_c[0], 100, Some(&mut actual), None));
+    assert!(
+        f.compound_a
+            .collide(&f.shapes_c[0], 100, Some(&mut actual), None)
+    );
     assert_eq!(actual, 80);
-    assert!(f.compound_a.collide(&f.shapes_c[1], 100, Some(&mut actual), None));
+    assert!(
+        f.compound_a
+            .collide(&f.shapes_c[1], 100, Some(&mut actual), None)
+    );
     assert_eq!(actual, 80);
 }
 

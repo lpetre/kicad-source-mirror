@@ -20,10 +20,12 @@
 //! (`pcbnew/drill/drill_span.h`), `board-model-types.md` section 10. The rendering cache
 //! (`m_outlineCache*`) is dropped. Behaviour: package M23.
 
+use kicad_core::layer_ids::is_copper_layer_lower_than;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, Vector2I};
 
+use crate::board_item;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::item::BoardItemBase;
 use crate::traits::{BoardItem, BoardItemMut, Invalidate};
@@ -93,17 +95,65 @@ impl DrillSpan {
 
     /// `TopLayer()`: the upper of the two layers (`IsCopperLayerLowerThan`).
     pub fn top_layer(&self) -> PcbLayerId {
-        crate::port_pending!("DRILL_SPAN::TopLayer")
+        // B_Cu (id=2) is numerically less than inner layers (id>=4), but is physically
+        // at the bottom of the stack. Use IsCopperLayerLowerThan for correct ordering.
+        if is_copper_layer_lower_than(self.start_layer, self.end_layer) {
+            self.end_layer
+        } else {
+            self.start_layer
+        }
     }
 
     /// `BottomLayer()`.
     pub fn bottom_layer(&self) -> PcbLayerId {
-        crate::port_pending!("DRILL_SPAN::BottomLayer")
+        if is_copper_layer_lower_than(self.start_layer, self.end_layer) {
+            self.start_layer
+        } else {
+            self.end_layer
+        }
     }
 
-    /// `operator<` (drill file / map order).
+    /// `Pair()`: `( TopLayer(), BottomLayer() )`.
+    pub fn pair(&self) -> (PcbLayerId, PcbLayerId) {
+        (self.top_layer(), self.bottom_layer())
+    }
+
+    /// `operator<( const DRILL_SPAN& )`: top layer, bottom layer, backdrill first, non-plated
+    /// first, then the stored start and end layers.
+    pub fn less(&self, other: &DrillSpan) -> bool {
+        if self.top_layer() != other.top_layer() {
+            return self.top_layer() < other.top_layer();
+        }
+
+        if self.bottom_layer() != other.bottom_layer() {
+            return self.bottom_layer() < other.bottom_layer();
+        }
+
+        if self.is_backdrill != other.is_backdrill {
+            return self.is_backdrill && !other.is_backdrill;
+        }
+
+        if self.is_non_plated_file != other.is_non_plated_file {
+            return self.is_non_plated_file && !other.is_non_plated_file;
+        }
+
+        if self.start_layer != other.start_layer {
+            return self.start_layer < other.start_layer;
+        }
+
+        self.end_layer < other.end_layer
+    }
+
+    /// `operator<` (drill file / map order) as an `Ordering`: `Less` when `self < other`,
+    /// `Greater` when `other < self`, else `Equal` (the order is total, see `less`).
     pub fn cmp(&self, other: &DrillSpan) -> std::cmp::Ordering {
-        crate::port_pending!("DRILL_SPAN::operator<", other)
+        if self.less(other) {
+            std::cmp::Ordering::Less
+        } else if other.less(self) {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Equal
+        }
     }
 }
 
@@ -220,12 +270,15 @@ impl PcbDrillMap {
 
     /// `SetSymbolSize()`.
     pub fn set_symbol_size(&mut self, size: i32) {
-        crate::port_pending!("PCB_DRILL_MAP::SetSymbolSize", size)
+        self.symbol_size = size.max(1);
     }
 
-    /// `GetSymbolExtent()`.
+    /// `GetSymbolExtent()`: `3 * m_symbolSize + 2 * width`, the width being the board drill
+    /// symbol profile's `GetSymbolWidth()` (0 without a board). Not ported yet: the profile is
+    /// kept verbatim (`BoardDesignSettings::drill_symbol_profile`) until the tier-2 drill
+    /// symbol package lands, and the signature has no `ctx` to reach the board.
     pub fn symbol_extent(&self) -> i32 {
-        crate::port_pending!("PCB_DRILL_MAP::GetSymbolExtent")
+        crate::port_pending!("PCB_DRILL_MAP::GetSymbolExtent (DRILL_SYMBOL_PROFILE)")
     }
 
     /// `GetOutlineSlots()`.
@@ -284,23 +337,36 @@ impl PcbDrillMap {
     }
 
     /// `PCB_DRILL_MAP::Rotate()`.
-    pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_DRILL_MAP::Rotate", env, centre, angle)
+    pub fn rotate(&mut self, _env: &MutEnv, _centre: Vector2I, _angle: EdaAngle) {
+        // The marks sit at their own holes and the offset is a displacement from each one, so
+        // there is no geometry here to turn
     }
 
     /// `PCB_DRILL_MAP::Flip()`.
-    pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_DRILL_MAP::Flip", env, centre, dir)
+    pub fn flip(&mut self, env: &MutEnv, _centre: Vector2I, _dir: FlipDirection) {
+        // The offset is a displacement of every mark from its own hole, so there is nothing to
+        // mirror. The side the map documents is still the side it belongs on
+        // SetLayer( GetFlippedLayer( GetLayer() ) ): BOARD_ITEM::SetLayer.
+        self.base.layer = env.layers.flip_layer(self.base.layer);
     }
 
-    /// `PCB_DRILL_MAP::GetBoundingBox()` (reads the board's holes).
+    /// `PCB_DRILL_MAP::GetBoundingBox()`: the hole extent of the board's
+    /// `DRILL_SYMBOL_CACHE` inflated by `GetSymbolExtent()`, merged with the board edges box,
+    /// moved by the offset. Not ported yet: the drill symbol cache is a drill-writer cache
+    /// (class 3, `board-model.md` 9) of the tier-2 drill symbol package.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_DRILL_MAP::GetBoundingBox", ctx)
+        crate::port_pending!("PCB_DRILL_MAP::GetBoundingBox (DRILL_SYMBOL_CACHE)", ctx)
     }
 
-    /// `PCB_DRILL_MAP::HitTest( aPosition, aAccuracy )`.
+    /// `PCB_DRILL_MAP::HitTest( aPosition, aAccuracy )`: false without a board, else the marks
+    /// of the board's `DRILL_SYMBOL_CACHE` and the board outline. Not ported yet (see
+    /// `bounding_box`).
     pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_DRILL_MAP::HitTest", ctx, pos, accuracy)
+        if !board_item::has_board(self, ctx) {
+            return false;
+        }
+
+        crate::port_pending!("PCB_DRILL_MAP::HitTest (DRILL_SYMBOL_CACHE)", pos, accuracy)
     }
 
     /// `PCB_DRILL_MAP::HitTest( aRect, aContained, aAccuracy )`.
@@ -311,13 +377,14 @@ impl PcbDrillMap {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!(
-            "PCB_DRILL_MAP::HitTest (rect)",
-            ctx,
-            rect,
-            contained,
-            accuracy
-        )
+        let mut r = *rect;
+        r.inflate(accuracy);
+
+        if contained {
+            return r.contains_box(&self.bounding_box(ctx));
+        }
+
+        r.intersects(&self.bounding_box(ctx))
     }
 
     /// `PCB_DRILL_MAP::GetItemDescription()`.
@@ -325,15 +392,71 @@ impl PcbDrillMap {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_DRILL_MAP::GetItemDescription", ctx, units, full)
+        let _ = units;
+        format!("Drill Map on {}", board_item::layer_name(self, ctx))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `DRILL_SPAN::TopLayer` / `BottomLayer` / `operator<` (drill/drill_span.h).
+    #[test]
+    fn drill_span_order() {
+        let span = |a, b, back, np| DrillSpan::new(a, b, back, np);
+        let through = span(PcbLayerId::FCu, PcbLayerId::BCu, false, false);
+        assert_eq!(through.top_layer(), PcbLayerId::FCu);
+        assert_eq!(through.bottom_layer(), PcbLayerId::BCu);
+        let reversed = span(PcbLayerId::BCu, PcbLayerId::FCu, false, false);
+        assert_eq!(reversed.pair(), (PcbLayerId::FCu, PcbLayerId::BCu));
+        let buried = span(PcbLayerId::In1Cu, PcbLayerId::In2Cu, false, false);
+        assert_eq!(buried.top_layer(), PcbLayerId::In1Cu);
+        let back = span(PcbLayerId::BCu, PcbLayerId::In2Cu, true, false);
+        assert_eq!(back.top_layer(), PcbLayerId::In2Cu);
+        assert_eq!(back.bottom_layer(), PcbLayerId::BCu);
+
+        use std::cmp::Ordering::*;
+        // same pair: backdrill first, then non-plated, then stored start layer
+        assert_eq!(
+            span(PcbLayerId::FCu, PcbLayerId::BCu, true, false).cmp(&through),
+            Less
+        );
+        assert_eq!(
+            span(PcbLayerId::FCu, PcbLayerId::BCu, false, true).cmp(&through),
+            Less
+        );
+        assert_eq!(through.cmp(&reversed), Less); // F_Cu (0) < B_Cu (2)
+        assert_eq!(through.cmp(&through.clone()), Equal);
+        assert_eq!(buried.cmp(&through), Greater); // top In1_Cu (4) > F_Cu (0)
+    }
+
+    /// `SetSymbolSize` clamps at 1; `Flip` flips the layer only; the description.
+    #[test]
+    fn drill_map_setters_and_flip() {
+        let mut m = PcbDrillMap::default();
+        m.set_symbol_size(-5);
+        assert_eq!(m.symbol_size(), 1);
+        m.base.layer = PcbLayerId::FFab;
+        m.set_offset(Vector2I::new(3, 4));
+        let env = MutEnv::detached();
+        m.flip(&env, Vector2I::new(100, 100), FlipDirection::LeftRight);
+        m.rotate(&env, Vector2I::new(100, 100), EdaAngle::default());
+        assert_eq!(m.base.layer, PcbLayerId::BFab);
+        assert_eq!(m.offset(), Vector2I::new(3, 4));
+
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        assert!(!m.hit_test(&ctx, Vector2I::new(0, 0), 0)); // no board: false
+        let units =
+            kicad_core::units_provider::UnitsProvider::new(&PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(
+            m.item_description(&ctx, &units, false),
+            "Drill Map on B.Fab"
+        );
+    }
 
     /// `PCB_DRILL_MAP::PCB_DRILL_MAP( aParent )` (pcbnew/pcb_drill_map.cpp, no-board branch),
     /// `DRILL_SPAN()` (drill_span.h), `DRILL_SYMBOL_PROFILE()` (drill_symbol_profile.cpp).

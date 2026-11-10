@@ -69,11 +69,20 @@ impl WxFileName {
         };
 
         let (name, ext, has_ext) = match last_dot {
-            Some(dot) => (full_path[name_start..dot].to_string(), full_path[dot + 1..].to_string(), true),
+            Some(dot) => (
+                full_path[name_start..dot].to_string(),
+                full_path[dot + 1..].to_string(),
+                true,
+            ),
             None => (full_path[name_start..].to_string(), String::new(), false),
         };
 
-        WxFileName { path, name, ext, has_ext }
+        WxFileName {
+            path,
+            name,
+            ext,
+            has_ext,
+        }
     }
 
     /// `wxFileName::GetName()`.
@@ -130,7 +139,10 @@ mod tests {
     #[test]
     fn split_like_wx_unix() {
         let f = WxFileName::new("/home/u/board.kicad_pcb");
-        assert_eq!((f.path.as_str(), f.name(), f.ext.as_str()), ("/home/u", "board", "kicad_pcb"));
+        assert_eq!(
+            (f.path.as_str(), f.name(), f.ext.as_str()),
+            ("/home/u", "board", "kicad_pcb")
+        );
         assert_eq!(f.full_name(), "board.kicad_pcb");
         assert_eq!(f.full_path(), "/home/u/board.kicad_pcb");
 

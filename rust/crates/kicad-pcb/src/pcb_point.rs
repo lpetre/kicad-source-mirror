@@ -25,11 +25,19 @@
 //! (M1 / M19). Behaviour: package M23.
 
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
+use kicad_geom::geometry::geometry_utils::box_hit_test_box;
+use kicad_geom::trigo::rotate_point_around;
+use kicad_geom::{
+    Box2I, EdaAngle, FlipDirection, Seg, Shape, ShapeCircle, ShapePolySet, ShapeRect, Vector2I,
+    mirror_point,
+};
+
+use crate::board_item::mirror_axis;
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
@@ -213,7 +221,23 @@ impl PcbPoint {
     /// `PCB_POINT::SetPosition()`: `m_libPos` from the parent footprint's inverse transform
     /// (or `aPos` without one), then `recomputePosition()`.
     pub fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
-        crate::port_pending!("PCB_POINT::SetPosition", env, pos)
+        if let Some(fp) = &env.parent {
+            self.lib_pos = fp.transform.inverse_apply(pos);
+        } else {
+            self.lib_pos = pos;
+        }
+
+        self.recompute_position(env);
+    }
+
+    /// `PCB_POINT::recomputePosition()`: `m_pos` = the parent footprint's transform applied to
+    /// `m_libPos`, or `m_libPos` without a parent footprint.
+    fn recompute_position(&mut self, env: &MutEnv) {
+        if let Some(fp) = &env.parent {
+            self.pos = fp.transform.apply(self.lib_pos);
+        } else {
+            self.pos = self.lib_pos;
+        }
     }
 
     /// `PCB_POINT::Move()`: `SetPosition( GetPosition() + aMoveVector )`.
@@ -225,27 +249,46 @@ impl PcbPoint {
     /// `PCB_POINT::OnFootprintTransformed()`: `recomputePosition()` (`m_pos` = the parent
     /// footprint's transform applied to `m_libPos`, or `m_libPos` without one).
     pub fn on_footprint_transformed(&mut self, env: &MutEnv) {
-        crate::port_pending!("PCB_POINT::OnFootprintTransformed", env)
+        self.recompute_position(env);
     }
 
     /// `PCB_POINT::Rotate()`.
     pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_POINT::Rotate", env, centre, angle)
+        let mut new_pos = self.pos;
+        rotate_point_around(&mut new_pos, centre, angle);
+        self.set_position(env, new_pos);
     }
 
     /// `PCB_POINT::Flip()`.
     pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_POINT::Flip", env, centre, dir)
+        if let Some(fp) = &env.parent {
+            // Mirror the library-frame position (rotation-independent).
+            let lib_axis = fp.transform.inverse_apply(centre);
+            mirror_point(&mut self.lib_pos, lib_axis, dir);
+            self.recompute_position(env);
+        } else {
+            let mut new_pos = self.pos;
+            mirror_point(&mut new_pos, centre, dir);
+            self.set_position(env, new_pos);
+            // SetLayer( GetFlippedLayer( GetLayer() ) ): BOARD_ITEM::SetLayer.
+            self.base.layer = env.layers.flip_layer(self.base.layer);
+        }
     }
 
     /// `PCB_POINT::Mirror( aCentre, aFlipDirection )`.
     pub fn mirror(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_POINT::Mirror", env, centre, dir)
+        self.mirror_axis(env, &mirror_axis(centre, dir));
+    }
+
+    /// `PCB_POINT::Mirror( const SEG& aAxis )`: `SetPosition( aAxis.ReflectPoint( GetPosition() ) )`.
+    pub fn mirror_axis(&mut self, env: &MutEnv, axis: &Seg) {
+        let reflected = axis.reflect_point(self.pos);
+        self.set_position(env, reflected);
     }
 
     /// `PCB_POINT::GetBoundingBox()`.
-    pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_POINT::GetBoundingBox", ctx)
+    pub fn bounding_box(&self, _ctx: &BoardCtx<'_>) -> Box2I {
+        Box2I::by_center(self.pos, Vector2I::new(self.size, self.size))
     }
 
     /// `PCB_POINT::GetEffectiveShape()`.
@@ -254,9 +297,10 @@ impl PcbPoint {
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         flash: Flashing,
-        usage: DrcConstraintT,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_POINT::GetEffectiveShape", ctx, layer, flash, usage)
+        let _ = (layer, flash);
+        Arc::new(ShapeRect::from_box(&self.bounding_box(ctx)))
     }
 
     /// `PCB_POINT::TransformShapeToPolygon()`.
@@ -270,21 +314,35 @@ impl PcbPoint {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_POINT::TransformShapeToPolygon",
+        // Points have no physical representation: nothing is added.
+        let _ = (
             ctx,
             buffer,
             layer,
             clearance,
             error,
             error_loc,
-            ignore_line_width
-        )
+            ignore_line_width,
+        );
     }
 
     /// `PCB_POINT::HitTest( aPosition, aAccuracy )`: on the bars of the X.
-    pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_POINT::HitTest", ctx, pos, accuracy)
+    pub fn hit_test(&self, _ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
+        // Compute the hit on the bars of the X
+        let size = self.size / 2;
+        let p = self.pos;
+        let loc = Seg::new(pos, pos);
+
+        let seg1 = Seg::new(p - Vector2I::new(size, size), p + Vector2I::new(size, size));
+        let seg2 = Seg::new(
+            p - Vector2I::new(size, -size),
+            p + Vector2I::new(size, -size),
+        );
+        let circle = ShapeCircle::new(p, size / 2);
+
+        seg1.collide(&loc, accuracy)
+            || seg2.collide(&loc, accuracy)
+            || circle.collide_seg(&loc, accuracy, None, None)
     }
 
     /// `PCB_POINT::HitTest( aRect, aContained, aAccuracy )`.
@@ -295,7 +353,7 @@ impl PcbPoint {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!("PCB_POINT::HitTest (rect)", ctx, rect, contained, accuracy)
+        box_hit_test_box(rect, &self.bounding_box(ctx), contained, accuracy)
     }
 
     /// `PCB_POINT::GetItemDescription()`.
@@ -303,21 +361,135 @@ impl PcbPoint {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_POINT::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+        "Point".to_string()
+    }
+
+    /// `PCB_POINT::operator==( const PCB_POINT& )`: position and size.
+    pub fn eq_item(&self, other: &PcbPoint) -> bool {
+        self.pos == other.pos && self.size == other.size
     }
 }
 
 /// `PCB_POINT::cmp_points` (save order): layer, position x, y, size, UUID, then pointer order
 /// (`ItemId` order, `board-model.md` 3.1). `a` and `b` are points.
 pub fn pcb_point_cmp_points(ctx: &BoardCtx<'_>, a: ItemId, b: ItemId) -> Ordering {
-    crate::port_pending!("PCB_POINT::cmp_points", ctx, a, b)
+    let pa: &PcbPoint = &ctx.board[a.typed::<PcbPoint>().expect("cmp_points: a is not a point")];
+    let pb: &PcbPoint = &ctx.board[b.typed::<PcbPoint>().expect("cmp_points: b is not a point")];
+
+    // GetLayer() is the BOARD_ITEM body (m_layer); GetPosition() the baked board position.
+    if pa.base.layer != pb.base.layer {
+        return pa.base.layer.cmp(&pb.base.layer);
+    }
+
+    if pa.pos.x != pb.pos.x {
+        return pa.pos.x.cmp(&pb.pos.x);
+    }
+
+    if pa.pos.y != pb.pos.y {
+        return pa.pos.y.cmp(&pb.pos.y);
+    }
+
+    if pa.size != pb.size {
+        return pa.size.cmp(&pb.size);
+    }
+
+    if pa.base.uuid != pb.base.uuid {
+        return pa.base.uuid.cmp(&pb.base.uuid);
+    }
+
+    // a < b on the pointers: ItemId order (board-model.md 3.1).
+    a.cmp(&b)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `SetPosition` / `recomputePosition` / `Flip` in the rotated, flipped and scaled fixture
+    /// footprint: the library position is the inverse transform, the baked position the
+    /// forward one, and a flip mirrors the library position about the transformed axis.
+    #[test]
+    fn point_frames_and_transforms() {
+        let fx = rotated_flipped_scaled();
+        let fp = fx.child(ItemKind::Point).typed::<PcbPoint>().unwrap();
+        let env = fx.board.mut_env(fp.into());
+        let frame = env.parent.expect("the fixture point is a footprint child");
+
+        let mut p = PcbPoint::default();
+        p.set_position(&env, Vector2I::new(5_000_000, -3_000_000));
+        assert_eq!(
+            p.lib_pos(),
+            frame
+                .transform
+                .inverse_apply(Vector2I::new(5_000_000, -3_000_000))
+        );
+        assert_eq!(p.pos, frame.transform.apply(p.lib_pos()));
+
+        let lib_before = p.lib_pos();
+        p.flip(&env, Vector2I::new(1_000_000, 0), FlipDirection::LeftRight);
+        let axis = frame.transform.inverse_apply(Vector2I::new(1_000_000, 0));
+        assert_eq!(
+            p.lib_pos(),
+            Vector2I::new(2 * axis.x - lib_before.x, lib_before.y)
+        );
+        assert_eq!(p.base.layer, PcbLayerId::FCu); // footprint children keep their layer
+
+        // Board level: position = library position, flip also flips the layer.
+        let env = MutEnv::detached();
+        let mut q = PcbPoint::default();
+        q.set_position(&env, Vector2I::new(10, 20));
+        q.rotate(
+            &env,
+            Vector2I::new(0, 0),
+            EdaAngle::new(90.0, kicad_geom::DEGREES_T),
+        );
+        assert_eq!(q.pos, Vector2I::new(20, -10));
+        q.flip(&env, Vector2I::new(0, 0), FlipDirection::TopBottom);
+        assert_eq!(
+            (q.pos, q.lib_pos()),
+            (Vector2I::new(20, 10), Vector2I::new(20, 10))
+        );
+        assert_eq!(q.base.layer, PcbLayerId::BCu);
+        q.mirror(&env, Vector2I::new(5, 0), FlipDirection::LeftRight);
+        assert_eq!(q.pos, Vector2I::new(-10, 10));
+    }
+
+    /// `PCB_POINT::HitTest` (the bars of the X and the circle) and `cmp_points`.
+    #[test]
+    fn point_hit_test_and_save_order() {
+        let mut board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut p = PcbPoint::default();
+        p.set_position(&MutEnv::detached(), Vector2I::new(0, 0));
+        p.set_size(1000);
+        assert!(p.hit_test(&ctx, Vector2I::new(300, 300), 0)); // on a bar
+        assert!(p.hit_test(&ctx, Vector2I::new(249, 0), 0)); // in the circle (r = 250, strict)
+        assert!(!p.hit_test(&ctx, Vector2I::new(250, 0), 0));
+        assert!(!p.hit_test(&ctx, Vector2I::new(400, 0), 0));
+        assert!(!p.hit_test(&ctx, Vector2I::new(400, 0), 150)); // 400 < 250 + 150 is strict
+        assert!(p.hit_test(&ctx, Vector2I::new(400, 0), 151));
+
+        let mut add = |layer, x, size, n: u8| {
+            let mut q = PcbPoint::default();
+            q.base.layer = layer;
+            q.set_position(&MutEnv::detached(), Vector2I::new(x, 0));
+            q.set_size(size);
+            q.base.uuid =
+                Kiid::parse(&format!("00000000-0000-0000-0000-0000000000{n:02}")).unwrap();
+            ItemId::from(board.add_point(q, crate::board::AddMode::BulkAppend))
+        };
+        let a = add(PcbLayerId::BCu, 0, 10, 1);
+        let b = add(PcbLayerId::FCu, 5, 10, 2);
+        let c = add(PcbLayerId::FCu, 5, 9, 3);
+        let d = add(PcbLayerId::FCu, 5, 9, 2);
+        let ctx = BoardCtx::bare(&board);
+        let mut ids = vec![a, b, c, d];
+        ids.sort_by(|x, y| pcb_point_cmp_points(&ctx, *x, *y));
+        assert_eq!(ids, vec![d, c, b, a]);
+    }
     use crate::ids::ItemKind;
     use crate::test_support::rotated_flipped_scaled;
 

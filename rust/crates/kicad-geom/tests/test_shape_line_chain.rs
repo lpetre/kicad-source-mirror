@@ -2510,7 +2510,11 @@ fn load_zone(a_filename: &str, a_zone: i32) -> kicad_geom::geometry::shape_poly_
 }
 
 /// `extractSubchain()`
-fn extract_subchain(a_source: &ShapeLineChain, a_start: i32, a_segment_count: i32) -> ShapeLineChain {
+fn extract_subchain(
+    a_source: &ShapeLineChain,
+    a_start: i32,
+    a_segment_count: i32,
+) -> ShapeLineChain {
     let mut result = ShapeLineChain::new();
     result.append_point(a_source.c_segment(a_start).a, false);
 
@@ -2554,7 +2558,8 @@ fn reference_collision(
         let mut b_segments: Vec<Seg> = (0..a_b.segment_count()).map(|i| a_b.c_segment(i)).collect();
 
         let segment_sort = |a_first: &Seg, a_second: &Seg| {
-            a_first.a.x < a_second.a.x || (a_first.a.x == a_second.a.x && a_first.a.y < a_second.a.y)
+            a_first.a.x < a_second.a.x
+                || (a_first.a.x == a_second.a.x && a_first.a.y < a_second.a.y)
         };
 
         kicad_geom::stdsort::std_sort(&mut a_segments, segment_sort);

@@ -37,14 +37,20 @@ use crate::ids::FootprintId;
 
 impl PcbParser {
     /// Port of `parseFOOTPRINT( wxArrayString* aInitialComments )`: `parseFOOTPRINT_unchecked` with a `PARSE_ERROR` of a too recent footprint turned into a `FUTURE_FORMAT_ERROR`. Staging stub (PCBIO-06).
-    pub(crate) fn parse_footprint(&mut self, initial_comments: Option<Vec<String>>) -> Result<Option<FootprintId>, IoError> {
+    pub(crate) fn parse_footprint(
+        &mut self,
+        initial_comments: Option<Vec<String>>,
+    ) -> Result<Option<FootprintId>, IoError> {
         let _ = &initial_comments;
         self.pending("PCBIO-06")?;
         Ok(None)
     }
 
     /// Port of `parse3DModel( bool aFileNameAlreadyParsed )`. Staging stub (PCBIO-06).
-    pub(crate) fn parse_3d_model(&mut self, file_name_already_parsed: bool) -> Result<Option<Fp3dmodel>, IoError> {
+    pub(crate) fn parse_3d_model(
+        &mut self,
+        file_name_already_parsed: bool,
+    ) -> Result<Option<Fp3dmodel>, IoError> {
         let _ = &file_name_already_parsed;
         self.pending("PCBIO-06")?;
         Ok(None)

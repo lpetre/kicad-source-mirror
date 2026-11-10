@@ -16,25 +16,31 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcb_field.h` and `pcbnew/pcb_field.cpp` (`PCB_FIELD : PCB_TEXT`): data,
-//! constructors and delegation shims (package M0c), the overrides (stubs for package M10).
+//! constructors and delegation shims (package M0c), the overrides (package M10).
 //!
 //! `PcbField` is its own `EDA_TEXT` host (`board-model.md` 6.2a): it has a shim for every
 //! virtual that `PCB_FIELD` or `PCB_TEXT` overrides. An inherited `PCB_TEXT` body calls the
 //! embedded `PcbText` where it reaches no virtual that `PCB_FIELD` overrides (`GetShownText`,
 //! `GetItemDescription`, `GetTextTypeDescription`); the others are stubs here.
 
-use kicad_core::text_vars::ResolutionContext;
+use std::cell::Cell;
+
+use kicad_core::string_utils::{get_default_variant_name, unescape_string};
+use kicad_core::text_vars::{ResolutionContext, finalize_text_var_expansion};
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PcbLayerId};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
 
 use crate::board_design_settings::BoardDesignSettings;
+use crate::board_item;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::eda_text::EdaText;
+use crate::eda_text::resolve_text_vars_shared_depth;
+use crate::footprint::Footprint;
 use crate::item::{BoardItemBase, SharedShape};
-use crate::pcb_text::PcbText;
+use crate::pcb_text::{self, PcbText, ellipsize_menu_text, footprint_resolve_text_var};
 use crate::traits::{BoardItem, BoardItemMut, EdaTextItem, Flashing, Invalidate};
 
 /// `FIELD_T` (`include/template_fieldnames.h`); the values are written to files.
@@ -54,6 +60,44 @@ pub enum FieldT {
     SheetFilename,
     SheetUser,
     SheetRefSuffix,
+}
+
+/// `GetDefaultFieldName( aFieldId, UNTRANSLATED )` (`common/template_fieldnames.cpp`).
+pub fn get_default_field_name(id: FieldT) -> String {
+    match id {
+        FieldT::Reference => "Reference".to_string(), // The symbol reference, R1, C1, etc.
+        FieldT::Value => "Value".to_string(),         // The symbol value
+        FieldT::Footprint => "Footprint".to_string(), // The footprint for use with Pcbnew
+        FieldT::Datasheet => "Datasheet".to_string(), // Link to a datasheet for symbol
+        FieldT::Description => "Description".to_string(), // The symbol description
+        FieldT::SheetName => "Sheetname".to_string(),
+        FieldT::SheetFilename => "Sheetfile".to_string(),
+        FieldT::SheetRefSuffix => "Reference Suffix".to_string(),
+        FieldT::IntersheetRefs => "Intersheetrefs".to_string(),
+        _ => get_user_field_name(42),
+    }
+}
+
+/// `GetUserFieldName( aFieldNdx, UNTRANSLATED )`: `Field%d`.
+pub fn get_user_field_name(field_ndx: i32) -> String {
+    format!("Field{field_ndx}")
+}
+
+/// `FOOTPRINT::GetFieldValueForVariant( aVariantName, aFieldName )` (package M19; not
+/// declared on `Footprint` yet).
+fn footprint_field_value_for_variant(
+    fp: &Footprint,
+    ctx: &BoardCtx<'_>,
+    variant_name: &str,
+    field_name: &str,
+) -> String {
+    crate::port_pending!(
+        "FOOTPRINT::GetFieldValueForVariant",
+        fp,
+        ctx,
+        variant_name,
+        field_name
+    )
 }
 
 /// `PCB_FIELD : PCB_TEXT`.
@@ -138,12 +182,19 @@ impl PcbField {
 
     /// `IsMandatory()`.
     pub fn is_mandatory(&self) -> bool {
-        crate::port_pending!("PCB_FIELD::IsMandatory")
+        self.id == FieldT::Reference
+            || self.id == FieldT::Value
+            || self.id == FieldT::Datasheet
+            || self.id == FieldT::Description
     }
 
     /// `GetOrdinal()`: the id for a mandatory field, else `m_ordinal`.
     pub fn ordinal(&self) -> i32 {
-        crate::port_pending!("PCB_FIELD::GetOrdinal")
+        if self.is_mandatory() {
+            self.id as i32
+        } else {
+            self.ordinal
+        }
     }
 
     /// `SetOrdinal( aOrdinal, aType )`.
@@ -154,12 +205,18 @@ impl PcbField {
 
     /// `GetName( aUseDefaultName )`.
     pub fn name(&self, use_default_name: bool) -> String {
-        crate::port_pending!("PCB_FIELD::GetName", use_default_name)
+        if self.is_mandatory() {
+            get_default_field_name(self.id)
+        } else if self.name.is_empty() && use_default_name {
+            get_user_field_name(self.ordinal)
+        } else {
+            self.name.clone()
+        }
     }
 
     /// `GetUntranslatedName()`.
     pub fn untranslated_name(&self) -> String {
-        crate::port_pending!("PCB_FIELD::GetUntranslatedName")
+        self.name(true)
     }
 
     /// `SetName()`.
@@ -175,23 +232,93 @@ impl PcbField {
         context: ResolutionContext,
         depth: i32,
     ) -> String {
-        crate::port_pending!(
-            "PCB_FIELD::GetShownText (variant)",
-            ctx,
-            variant_name,
-            context,
-            depth
-        )
+        let parent_footprint = board_item::parent_footprint(self, ctx);
+        let has_board = board_item::has_board(self, ctx);
+        let mut text = String::new();
+        let mut has_variant_override = false;
+        let mut has_text_vars = self.text.text.has_text_vars();
+
+        if let Some(fp) = parent_footprint {
+            if has_board
+                && !variant_name.is_empty()
+                && !variant_name.eq_ignore_ascii_case(&get_default_variant_name())
+            {
+                if let Some(variant) = fp.variant(variant_name) {
+                    if variant.has_field_value(&self.name(true)) {
+                        text = footprint_field_value_for_variant(
+                            fp,
+                            ctx,
+                            variant_name,
+                            &self.name(true),
+                        );
+
+                        // Variable references in variant values are considered to be in
+                        // schematic scope, and are thus resolved before the footprint gets them.
+                        has_text_vars = false;
+
+                        has_variant_override = true;
+                    }
+                }
+            }
+        }
+
+        if !has_variant_override {
+            text = self.text.text.text().to_string();
+        }
+
+        text = unescape_string(&text);
+
+        let depth_cell = Cell::new(depth);
+
+        let resolver = |token: &mut String| -> bool {
+            if token == "LAYER" {
+                *token = board_item::layer_name(self, ctx);
+                return true;
+            }
+
+            if let Some(fp) = parent_footprint {
+                if footprint_resolve_text_var(
+                    fp,
+                    ctx,
+                    token,
+                    Some(variant_name),
+                    depth_cell.get() + 1,
+                ) {
+                    return true;
+                }
+            }
+
+            if has_board
+                && ctx
+                    .board
+                    .resolve_text_var(token, variant_name, depth_cell.get() + 1)
+            {
+                return true;
+            }
+
+            false
+        };
+
+        if has_text_vars && context != ResolutionContext::RawValue {
+            text = resolve_text_vars_shared_depth(&text, &resolver, &depth_cell);
+            finalize_text_var_expansion(&mut text, context);
+        }
+
+        text
     }
 
     /// `PCB_FIELD::GetTextTypeDescription()`.
-    pub fn text_type_description(&self, ctx: &BoardCtx<'_>) -> String {
-        crate::port_pending!("PCB_FIELD::GetTextTypeDescription", ctx)
+    pub fn text_type_description(&self, _ctx: &BoardCtx<'_>) -> String {
+        if self.is_mandatory() {
+            get_default_field_name(self.id)
+        } else {
+            "User Field".to_string()
+        }
     }
 
     /// `PCB_TEXT::TextHitTest (PCB_FIELD)`: the box comes from the field's shown text.
     pub fn text_hit_test(&self, ctx: &BoardCtx<'_>, point: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXT::TextHitTest (PCB_FIELD)", ctx, point, accuracy)
+        pcb_text::text_hit_test(self, ctx, point, accuracy)
     }
 
     /// `PCB_TEXT::TextHitTest (PCB_FIELD, rect)`.
@@ -202,13 +329,24 @@ impl PcbField {
         contains: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!(
-            "PCB_TEXT::TextHitTest (PCB_FIELD, rect)",
-            ctx,
-            rect,
-            contains,
-            accuracy
-        )
+        pcb_text::text_hit_test_rect(self, ctx, rect, contains, accuracy)
+    }
+
+    /// `PCB_TEXT::TransformTextToPolySet (PCB_FIELD)`: the body reaches `GetShownText`.
+    pub fn transform_text_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        clearance: i32,
+        max_error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        pcb_text::transform_text_to_poly_set(self, ctx, buffer, clearance, max_error, error_loc)
+    }
+
+    /// `PCB_TEXT::GetKnockoutCache (PCB_FIELD)`.
+    pub fn knockout_cache(&self, ctx: &BoardCtx<'_>, resolved_text: &str) -> ShapePolySet {
+        pcb_text::knockout_cache(self, ctx, &self.text.knockout_cache, resolved_text)
     }
 }
 
@@ -381,29 +519,23 @@ impl EdaTextItem for PcbField {
 impl PcbField {
     /// `PCB_TEXT::GetBoundingBox (PCB_FIELD)`.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_TEXT::GetBoundingBox (PCB_FIELD)", ctx)
+        pcb_text::bounding_box(self, ctx)
     }
 
     /// `PCB_TEXT::GetEffectiveShape (PCB_FIELD)`.
     pub fn effective_shape(
         &self,
         ctx: &BoardCtx<'_>,
-        layer: PcbLayerId,
-        flash: Flashing,
-        usage: DrcConstraintT,
+        _layer: PcbLayerId,
+        _flash: Flashing,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!(
-            "PCB_TEXT::GetEffectiveShape (PCB_FIELD)",
-            ctx,
-            layer,
-            flash,
-            usage
-        )
+        pcb_text::effective_shape(self, ctx)
     }
 
     /// `PCB_TEXT::HitTest (PCB_FIELD)`.
     pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TEXT::HitTest (PCB_FIELD)", ctx, pos, accuracy)
+        self.text_hit_test(ctx, pos, accuracy)
     }
 
     /// `PCB_TEXT::HitTest (PCB_FIELD)`.
@@ -414,23 +546,41 @@ impl PcbField {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!(
-            "PCB_TEXT::HitTest (PCB_FIELD)",
-            ctx,
-            rect,
-            contained,
-            accuracy
-        )
+        self.text_hit_test_rect(ctx, rect, contained, accuracy)
     }
 
     /// `PCB_FIELD::GetItemDescription`.
     pub fn item_description(
         &self,
         ctx: &BoardCtx<'_>,
-        units: &UnitsProvider<'_>,
+        _units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("PCB_FIELD::GetItemDescription", ctx, units, full)
+        let content = if full {
+            self.shown_text(ctx, ResolutionContext::ForGui, 0)
+        } else {
+            ellipsize_menu_text(self.text.text.text())
+        };
+        // C++ dereferences GetParentFootprint() unchecked; a field without one gets "".
+        let reference = board_item::parent_footprint(self, ctx)
+            .map(|fp| fp.reference(ctx))
+            .unwrap_or_default();
+
+        match self.id {
+            FieldT::Reference => format!("Reference field of {reference}"),
+            FieldT::Value => format!("Value field of {reference} ({content})"),
+            FieldT::Footprint => format!("Footprint field of {reference} ({content})"),
+            FieldT::Datasheet => format!("Datasheet field of {reference} ({content})"),
+            _ => {
+                let name = self.name(true);
+
+                if name.is_empty() {
+                    format!("Field of {reference} ({content})")
+                } else {
+                    format!("{name} field of {reference} ({content})")
+                }
+            }
+        }
     }
 
     /// `PCB_TEXT::GetPosition`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
@@ -443,22 +593,13 @@ impl PcbField {
         &self,
         ctx: &BoardCtx<'_>,
         buffer: &mut ShapePolySet,
-        layer: PcbLayerId,
+        _layer: PcbLayerId,
         clearance: i32,
         error: i32,
         error_loc: ErrorLoc,
-        ignore_line_width: bool,
+        _ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_TEXT::TransformShapeToPolygon (PCB_FIELD)",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc,
-            ignore_line_width
-        )
+        pcb_text::transform_shape_to_polygon(self, ctx, buffer, clearance, error, error_loc)
     }
 
     /// `PCB_TEXT::Flip`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
@@ -542,7 +683,13 @@ impl PcbField {
 
     /// `PCB_FIELD::GetShownText`.
     pub fn shown_text(&self, ctx: &BoardCtx<'_>, context: ResolutionContext, depth: i32) -> String {
-        crate::port_pending!("PCB_FIELD::GetShownText", ctx, context, depth)
+        let variant = if board_item::has_board(self, ctx) {
+            ctx.board.current_variant.clone()
+        } else {
+            String::new()
+        };
+
+        self.shown_text_for_variant(ctx, &variant, context, depth)
     }
 
     /// `PCB_TEXT::GetTextAngle`, inherited by `PCB_FIELD` (the base body reaches no virtual that `PCB_FIELD` overrides).
@@ -595,5 +742,79 @@ mod tests {
         fx.board.check_invariants().unwrap();
         assert_eq!(fx.board[id].name, "Value");
         assert_eq!(fx.board[id].type_(), KicadT::PcbFieldT);
+    }
+
+    /// `PCB_FIELD::IsMandatory`, `GetOrdinal`, `GetName`, `GetTextTypeDescription`
+    /// (pcbnew/pcb_field.cpp, common/template_fieldnames.cpp).
+    #[test]
+    fn names_and_ordinals() {
+        let board = crate::board::Board::default();
+        let ctx = BoardCtx::bare(&board);
+        let mut kiids = KiidGenerator::default();
+
+        let reference = PcbField::new(&mut kiids, None, FieldT::Reference, "");
+        assert!(reference.is_mandatory());
+        assert_eq!(reference.ordinal(), 1);
+        assert_eq!(reference.name(true), "Reference");
+        assert_eq!(reference.text_type_description(&ctx), "Reference");
+
+        let mut user = PcbField::new(&mut kiids, None, FieldT::User, "");
+        user.set_ordinal(7, FieldT::User);
+        assert!(!user.is_mandatory());
+        assert_eq!(user.ordinal(), 7);
+        assert_eq!(user.name(true), "Field7");
+        assert_eq!(user.name(false), "");
+        assert_eq!(user.untranslated_name(), "Field7");
+        assert_eq!(user.text_type_description(&ctx), "User Field");
+        user.set_name("MPN");
+        assert_eq!(user.name(true), "MPN");
+
+        let footprint = PcbField::new(&mut kiids, None, FieldT::Footprint, "Footprint");
+        assert!(!footprint.is_mandatory());
+        assert_eq!(
+            get_default_field_name(FieldT::SheetRefSuffix),
+            "Reference Suffix"
+        );
+        assert_eq!(get_default_field_name(FieldT::User), "Field42");
+    }
+
+    /// `PCB_FIELD::GetShownText` without a parent footprint / board: the unescaped text, no
+    /// variant lookup; `${LAYER}` resolves to the standard layer name.
+    #[test]
+    fn shown_text_without_board() {
+        let board = crate::board::Board::default();
+        let ctx = BoardCtx::bare(&board);
+        let mut kiids = KiidGenerator::default();
+        let mut field = PcbField::new(&mut kiids, None, FieldT::Value, "");
+        field.text.text.set_text("10k{slash}1% on ${LAYER}");
+
+        assert_eq!(
+            field.shown_text(&ctx, ResolutionContext::ForCanvas, 0),
+            "10k/1% on F.Silkscreen"
+        );
+        assert_eq!(
+            field.shown_text(&ctx, ResolutionContext::RawValue, 0),
+            "10k/1% on ${LAYER}"
+        );
+        assert_eq!(field.text.text.text(), "10k{slash}1% on ${LAYER}");
+    }
+
+    /// The field reaches the `PCB_TEXT` geometry through its own host (its `GetShownText`):
+    /// a field whose text is a layer reference measures the resolved text.
+    #[test]
+    fn field_geometry_uses_field_shown_text() {
+        use crate::eda_text::EdaTextExt;
+
+        let board = crate::board::Board::default();
+        let ctx = BoardCtx::bare(&board);
+        let mut kiids = KiidGenerator::default();
+        let mut field = PcbField::new(&mut kiids, None, FieldT::Value, "");
+        field.text.text.set_text("${LAYER}");
+
+        let mut plain = PcbText::for_footprint(None);
+        plain.text.set_text("F.Silkscreen");
+
+        assert_eq!(field.text_box(&ctx, None), plain.text_box(&ctx, None));
+        assert_eq!(field.bounding_box(&ctx), plain.bounding_box(&ctx));
     }
 }

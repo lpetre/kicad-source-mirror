@@ -388,7 +388,8 @@ impl<'a> GendrillWriterBase<'a> {
 
         std_sort(&mut self.hole_list_buffer, cmp_hole_sorting);
 
-        self.hole_tool_references.resize(self.hole_list_buffer.len(), -1);
+        self.hole_tool_references
+            .resize(self.hole_list_buffer.len(), -1);
 
         let mut last_hole: i32 = -1;
         let mut last_notplated_opt = false;
@@ -567,7 +568,12 @@ impl<'a> GendrillWriterBase<'a> {
         let mut hole_sets = enumerate_drill_spans(&self.pcb, false);
 
         if !self.merge_pth_npth {
-            hole_sets.push(DrillSpan::new(PcbLayerId::FCu, PcbLayerId::BCu, false, true));
+            hole_sets.push(DrillSpan::new(
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+                false,
+                true,
+            ));
         }
 
         for span in &hole_sets {
@@ -590,8 +596,11 @@ impl<'a> GendrillWriterBase<'a> {
                     get_default_plot_extension(self.map_file_fmt)
                 );
 
-                match super::gendrill_map::gen_drill_map_file(self, &fullfilename, self.map_file_fmt)
-                {
+                match super::gendrill_map::gen_drill_map_file(
+                    self,
+                    &fullfilename,
+                    self.map_file_fmt,
+                ) {
                     Err(err) => {
                         if let Some(rep) = reporter.as_deref_mut() {
                             let msg = format!("Failed to create file '{fullfilename}'.");
@@ -606,7 +615,10 @@ impl<'a> GendrillWriterBase<'a> {
                             rep.report(&msg, Severity::Action);
                         }
 
-                        self.outputs.push(OutputFile { name: fullfilename.clone(), contents });
+                        self.outputs.push(OutputFile {
+                            name: fullfilename.clone(),
+                            contents,
+                        });
                         self.add_created_file(&fullfilename);
                     }
                 }
@@ -633,7 +645,11 @@ impl<'a> GendrillWriterBase<'a> {
         // %TF.FileFunction,Plated[NonPlated],layer1num,layer2num,PTH[NPTH][Blind][Buried],Drill[Route][Mixed]*%
         let copper_layer_count = self.pcb.board.copper_layer_count();
 
-        let mut text = if compat_nc_drill { "; #@! ".to_string() } else { "%".to_string() };
+        let mut text = if compat_nc_drill {
+            "; #@! ".to_string()
+        } else {
+            "%".to_string()
+        };
 
         text.push_str("TF.FileFunction,");
 
@@ -733,5 +749,346 @@ impl<'a> GendrillWriterBase<'a> {
         text.push_str("*%");
 
         text
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::drill::DrillOpKind;
+    use kicad_pcb::Board;
+
+    const MM: i32 = 1_000_000;
+
+    fn board(file: &str, copper: i32) -> Board {
+        let mut b = Board::default();
+        b.file_name = file.to_string();
+        b.set_copper_layer_count(copper);
+        b
+    }
+
+    fn hole(dia: i32, not_plated: bool, attr: HoleAttribute, x: i32, y: i32) -> DrillOperation {
+        DrillOperation {
+            diameter: dia,
+            size_xy: Vector2I::new(dia, dia),
+            not_plated,
+            attribute: attr,
+            position: Vector2I::new(x, y),
+            ..DrillOperation::default()
+        }
+    }
+
+    #[test]
+    fn holes_sorted_plated_first_then_diameter_attribute_x_y() {
+        let b = board("/p/demo.kicad_pcb", 2);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        use HoleAttribute::*;
+        w.build_tool_list(vec![
+            hole(MM, true, HoleMechanical, 0, 0),
+            hole(MM, false, HolePad, 5, 0),
+            hole(MM, false, HoleViaThrough, 9, 9),
+            hole(MM / 2, false, HolePad, 0, 0),
+            hole(MM, false, HolePad, 5, -1),
+            hole(MM, false, HolePad, 1, 7),
+        ]);
+        let got: Vec<_> = w
+            .hole_list_buffer
+            .iter()
+            .map(|h| {
+                (
+                    h.not_plated,
+                    h.diameter,
+                    h.attribute,
+                    h.position.x,
+                    h.position.y,
+                )
+            })
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                (false, MM / 2, HolePad, 0, 0),
+                (false, MM, HoleViaThrough, 9, 9),
+                (false, MM, HolePad, 1, 7),
+                (false, MM, HolePad, 5, -1),
+                (false, MM, HolePad, 5, 0),
+                (true, MM, HoleMechanical, 0, 0),
+            ]
+        );
+        // A new tool whenever diameter, plating or attribute changes.
+        assert_eq!(w.hole_tool_references, vec![1, 2, 3, 3, 3, 4]);
+        let tools: Vec<_> = w
+            .tool_list_buffer
+            .iter()
+            .map(|t| {
+                (
+                    t.diameter,
+                    t.hole_not_plated,
+                    t.hole_attribute,
+                    t.total_count,
+                )
+            })
+            .collect();
+        assert_eq!(
+            tools,
+            vec![
+                (MM / 2, false, HolePad, 1),
+                (MM, false, HoleViaThrough, 1),
+                (MM, false, HolePad, 3),
+                (MM, true, HoleMechanical, 1),
+            ]
+        );
+    }
+
+    #[test]
+    fn tool_counts_slots_stubs_and_post_machining() {
+        let b = board("demo.kicad_pcb", 4);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        let mut slot = hole(MM, false, HoleAttribute::HolePad, 0, 0);
+        slot.is_slot = true;
+        let mut pm = hole(MM, false, HoleAttribute::HolePad, 1, 0);
+        pm.front_post_machining.mode = PadDrillPostMachiningMode::Countersink;
+        let mut not_pm = hole(MM, false, HoleAttribute::HolePad, 2, 0);
+        not_pm.back_post_machining.mode = PadDrillPostMachiningMode::NotPostMachined;
+        let bd = |x, stub| {
+            let mut h = hole(2 * MM, true, HoleAttribute::HoleViaBackdrill, x, 0);
+            h.kind = DrillOpKind::SecondaryDrill;
+            h.stub_length = stub;
+            h
+        };
+        w.build_tool_list(vec![
+            slot,
+            pm,
+            not_pm,
+            bd(0, Some(300)),
+            bd(1, None),
+            bd(2, Some(100)),
+            bd(3, Some(200)),
+        ]);
+        assert_eq!(w.tool_list_buffer.len(), 2);
+        let t = &w.tool_list_buffer[0];
+        assert_eq!(
+            (
+                t.total_count,
+                t.oval_count,
+                t.has_post_machining,
+                t.is_backdrill
+            ),
+            (3, 1, true, false)
+        );
+        let t = &w.tool_list_buffer[1];
+        assert_eq!(
+            (t.total_count, t.is_backdrill, t.has_post_machining),
+            (4, true, true)
+        );
+        assert_eq!(
+            (t.min_stub_length, t.max_stub_length),
+            (Some(100), Some(300))
+        );
+
+        // Only "not post machined": no flag.
+        w.build_tool_list(vec![hole(MM, false, HoleAttribute::HolePad, 2, 0), {
+            let mut h = hole(MM, false, HoleAttribute::HolePad, 3, 0);
+            h.back_post_machining.mode = PadDrillPostMachiningMode::NotPostMachined;
+            h
+        }]);
+        assert!(!w.tool_list_buffer[0].has_post_machining);
+        assert_eq!(w.tool_list_buffer[0].min_stub_length, None);
+    }
+
+    #[test]
+    fn empty_list_and_unset_diameter() {
+        let b = board("demo.kicad_pcb", 2);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        w.build_tool_list(Vec::new());
+        assert!(w.tool_list_buffer.is_empty() && w.hole_tool_references.is_empty());
+        // A first hole equal to the initial "last" values (-1, plated, unknown) gets no tool
+        // and keeps the reference -1, as in C++.
+        w.build_tool_list(vec![hole(-1, false, HoleAttribute::HoleUnknown, 0, 0)]);
+        assert!(w.tool_list_buffer.is_empty());
+        assert_eq!(w.hole_tool_references, vec![-1]);
+    }
+
+    #[test]
+    fn drill_file_names() {
+        let b = board("/home/u/proj/demo.kicad_pcb", 4);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        w.drill_file_extension = "drl".to_string();
+        let (f, b_, in1, in2) = (
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+            PcbLayerId::In1Cu,
+            PcbLayerId::In2Cu,
+        );
+        let through = DrillSpan::new(f, b_, false, false);
+        assert_eq!(w.drill_file_name(&through, false, true), "demo.drl");
+        assert_eq!(w.drill_file_name(&through, false, false), "demo-PTH.drl");
+        assert_eq!(w.drill_file_name(&through, true, false), "demo-NPTH.drl");
+        assert_eq!(w.drill_file_name(&through, true, true), "demo-NPTH.drl");
+        assert_eq!(
+            w.drill_file_name(&DrillSpan::new(f, in1, false, false), false, true),
+            "demo-front-in1.drl"
+        );
+        assert_eq!(
+            w.drill_file_name(&DrillSpan::new(in1, in2, false, false), false, false),
+            "demo-in1-in2.drl"
+        );
+        // DrillFileLayerOrderInFilename (qa/tests/pcbnew/test_cam_backdrill.cpp), naming part:
+        // a via from In2 to B_Cu gives "in2-back", not "back-in2".
+        assert_eq!(
+            w.drill_file_name(&DrillSpan::new(b_, in2, false, false), false, false),
+            "demo-in2-back.drl"
+        );
+        // Backdrills: 1-based positions of the stored start / end layer in UIOrder
+        // (F_Cu = 1, In1 = 2, In2 = 3, B_Cu = 4), stored order kept.
+        assert_eq!(
+            w.drill_file_name(&DrillSpan::new(b_, in2, true, false), false, false),
+            "demo_Backdrills_Drill_4_3.drl"
+        );
+        assert_eq!(
+            w.drill_file_name(&DrillSpan::new(f, in1, true, false), true, true),
+            "demo_Backdrills_Drill_1_2.drl"
+        );
+        // A layer outside the board's copper set gets count + 1.
+        assert_eq!(
+            w.drill_file_name(
+                &DrillSpan::new(f, PcbLayerId::In5Cu, true, false),
+                false,
+                false
+            ),
+            "demo_Backdrills_Drill_1_5.drl"
+        );
+        w.drill_file_extension = "gbr".to_string();
+        assert_eq!(w.drill_file_name(&through, false, false), "demo-PTH.gbr");
+    }
+
+    #[test]
+    fn protection_file_names() {
+        let b = board("demo.kicad_pcb", 6);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        w.drill_file_extension = "gbr".to_string();
+        let span = DrillSpan::new(PcbLayerId::BCu, PcbLayerId::In2Cu, false, false);
+        use Ipc4761Features::*;
+        let got: Vec<_> = [
+            Filled,
+            Capped,
+            PluggedFront,
+            PluggedBack,
+            CoveredFront,
+            CoveredBack,
+            TentedFront,
+            TentedBack,
+        ]
+        .into_iter()
+        .map(|f| w.protection_file_name(&span, f))
+        .collect();
+        assert_eq!(
+            got,
+            vec![
+                "demo-filling-in2-back.gbr",
+                "demo-capping-in2-back.gbr",
+                "demo-plugging-in2.gbr",
+                "demo-plugging-back.gbr",
+                "demo-covering-in2.gbr",
+                "demo-covering-back.gbr",
+                "demo-tenting-in2.gbr",
+                "demo-tenting-back.gbr",
+            ]
+        );
+    }
+
+    #[test]
+    fn file_function_strings() {
+        let b = board("demo.kicad_pcb", 4);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        let (f, b_, in1, in2) = (
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+            PcbLayerId::In1Cu,
+            PcbLayerId::In2Cu,
+        );
+        let through = DrillSpan::new(f, b_, false, false);
+        assert_eq!(
+            w.build_file_function_attribute_string(&through, TypeFile::MixedFile, true),
+            "; #@! TF.FileFunction,MixedPlating,1,4"
+        );
+        assert_eq!(
+            w.build_file_function_attribute_string(&through, TypeFile::PthFile, false),
+            "%TF.FileFunction,Plated,1,4,PTH*%"
+        );
+        let mut slot = hole(MM, false, HoleAttribute::HolePad, 0, 0);
+        slot.is_slot = true;
+        w.build_tool_list(vec![slot.clone()]);
+        assert_eq!(
+            w.build_file_function_attribute_string(&through, TypeFile::NpthFile, false),
+            "%TF.FileFunction,NonPlated,1,4,NPTH,Rout*%"
+        );
+        w.build_tool_list(vec![slot, hole(MM, false, HoleAttribute::HolePad, 1, 0)]);
+        assert_eq!(
+            w.build_file_function_attribute_string(
+                &DrillSpan::new(f, in1, false, false),
+                TypeFile::PthFile,
+                false
+            ),
+            "%TF.FileFunction,Plated,1,2,Blind,Mixed*%"
+        );
+        w.build_tool_list(vec![hole(MM, false, HoleAttribute::HoleViaBuried, 1, 0)]);
+        assert_eq!(
+            w.build_file_function_attribute_string(
+                &DrillSpan::new(in1, in2, false, false),
+                TypeFile::PthFile,
+                false
+            ),
+            "%TF.FileFunction,Plated,2,3,Buried,Drill*%"
+        );
+        // Backdrills are non-plated and "Blind" whatever the file type; layers smaller first.
+        assert_eq!(
+            w.build_file_function_attribute_string(
+                &DrillSpan::new(b_, in2, true, false),
+                TypeFile::PthFile,
+                true
+            ),
+            "; #@! TF.FileFunction,NonPlated,3,4,Blind"
+        );
+    }
+
+    #[test]
+    fn helpers() {
+        assert_eq!(layer_name(PcbLayerId::FCu), "front");
+        assert_eq!(layer_name(PcbLayerId::BCu), "back");
+        assert_eq!(layer_name(PcbLayerId::In1Cu), "in1");
+        assert_eq!(layer_name(PcbLayerId::In30Cu), "in30");
+        assert_eq!(
+            layer_pair_name((PcbLayerId::In2Cu, PcbLayerId::BCu)),
+            "in2-back"
+        );
+        assert_eq!(DrillPrecision::default().precision_string(), "2:4");
+        assert_eq!(DrillPrecision::new(3, 3).precision_string(), "3:3");
+        assert_eq!(diameter_in_mm(300_000.0), 0.3);
+        assert_eq!(diameter_in_inches(254_000.0), 0.01);
+        assert_eq!(get_marker_best_pen_size(300_000), 100_000);
+        assert_eq!(get_marker_best_pen_size(3_000_000), 300_000);
+        assert_eq!(get_sketch_oval_best_pen_size(), 100_000);
+        assert_eq!(get_default_pen_size(), 200_000);
+    }
+
+    #[test]
+    fn map_files_report_not_ported() {
+        // The map writer is FAB-12; the loop reports the C++ failure message and stops.
+        // Enumerating spans needs the via model when the board has vias; this board has none.
+        let b = board("/p/demo.kicad_pcb", 2);
+        let mut w = GendrillWriterBase::new(BoardCtx::bare(&b));
+        w.drill_file_extension = "drl".to_string();
+        w.set_map_file_format(PlotFormat::Svg);
+        let mut rep = crate::VecReporter::default();
+        let res = w.create_map_files_set("out", Some(&mut rep));
+        assert!(matches!(res, Err(FabError::NotPorted(_))));
+        assert_eq!(
+            rep.messages,
+            vec![(
+                "Failed to create file 'out/demo-PTH-drl_map.svg'.".to_string(),
+                Severity::Error
+            )]
+        );
     }
 }

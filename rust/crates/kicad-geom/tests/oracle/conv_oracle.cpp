@@ -26,6 +26,8 @@
  */
 
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <optional>
 #include <string>
 #include <variant>
@@ -180,6 +182,27 @@ int minSegOf( RNG& rng )
 {
     int k = (int) rng.range( 0, 4 );
     return k == 4 ? 7 : k * 16;
+}
+
+
+// std::cbrt (ported by hand in the Rust cmath): random bit patterns and scaled values
+void sectionCbrt( const char* aName, uint64_t aSeed, int aCount )
+{
+    SECTION sec( aName );
+    RNG     rng( aSeed );
+
+    for( int n = 0; n < aCount; n++ )
+    {
+        uint64_t bits = rng.next();
+        double   x;
+        std::memcpy( &x, &bits, sizeof( x ) );
+        double y = rng.dblScaled( -1022, 1023 );
+        double z = rng.dbl( -1e9, 1e9 );
+
+        REC rec;
+        rec.d( x ).d( std::cbrt( x ) ).d( y ).d( std::cbrt( y ) ).d( z ).d( std::cbrt( z ) );
+        sec.add( rec );
+    }
 }
 
 
@@ -839,8 +862,8 @@ double sweepDeg( RNG& rng )
 {
     switch( rng.next() % 3 )
     {
-    case 0: return 90.0 * (double) rng.range( 1, 4 ) * ( rng.flag() ? 1.0 : -1.0 );
-    case 1: return rng.dbl( 1.0, 359.0 ) * ( rng.flag() ? 1.0 : -1.0 );
+    case 0: { double k = (double) rng.range( 1, 4 ); return 90.0 * k * ( rng.flag() ? 1.0 : -1.0 ); }
+    case 1: { double a = rng.dbl( 1.0, 359.0 ); return a * ( rng.flag() ? 1.0 : -1.0 ); }
     default: return 45.0 * (double) rng.range( 1, 7 );
     }
 }
@@ -1002,7 +1025,8 @@ void sectionEllipse( const char* aName, uint64_t aSeed, int aCount )
         }
 
         double rot = rotDeg( rng );
-        double sa = (double) rng.range( -720, 720 ) + ( rng.flag() ? 0.0 : rng.dbl( 0.0, 1.0 ) );
+        double sa = (double) rng.range( -720, 720 );
+        sa += rng.flag() ? 0.0 : rng.dbl( 0.0, 1.0 );
         double ea = 0.0;
 
         switch( rng.next() % 4 )
@@ -1079,7 +1103,9 @@ void sectionEllipse( const char* aName, uint64_t aSeed, int aCount )
         recPoly( rec, ps );
 
         // Intersections with other curves
-        CIRCLE        circ( e.GetCenter() + rng.ptR( -span, span ), (int) rng.range( 0, span ) );
+        VECTOR2I      cc = e.GetCenter() + rng.ptR( -span, span );
+        int           cr = (int) rng.range( 0, span );
+        CIRCLE        circ( cc, cr );
         SHAPE_ARC     arc = randomArc( rng, false );
         SHAPE_ELLIPSE other = randomEllipse( rng, false );
 
@@ -1139,6 +1165,7 @@ int main( int argc, char** argv )
 {
     wxSetAssertHandler( nullptr );
     std::string only;
+    int         countOverride = 0;
 
     for( int i = 1; i + 1 < argc; i += 2 )
     {
@@ -1147,21 +1174,28 @@ int main( int argc, char** argv )
 
         if( std::string( argv[i] ) == "--only" )
             only = argv[i + 1];
+
+        if( std::string( argv[i] ) == "--count" )
+            countOverride = std::atoi( argv[i + 1] );
     }
 
     // --only NAME runs just that section (to dump a mismatch quickly)
     auto run = [&]( const char* aName ) { return only.empty() || only == aName; };
 
+    // --count N runs only the first N cases of each section (dumps of all cases are large)
+    auto cnt = [&]( int aCount ) { return countOverride > 0 ? std::min( aCount, countOverride ) : aCount; };
+
     if( run( "libm_probe" ) ) sectionLibmProbe();
-    if( run( "libm:conv_circle" ) ) sectionCircle( "libm:conv_circle", 600, 20000  );
-    if( run( "libm:conv_oval" ) ) sectionOval( "libm:conv_oval", 601, 20000  );
-    if( run( "libm:conv_rect" ) ) sectionRect( "libm:conv_rect", 602, 30000  );
-    if( run( "libm:conv_arc" ) ) sectionArc( "libm:conv_arc", 603, 20000  );
-    if( run( "libm:conv_roundrect" ) ) sectionRoundrect( "libm:conv_roundrect", 604, 20000  );
-    if( run( "libm:conv_corner_ops" ) ) sectionCornerOps( "libm:conv_corner_ops", 605, 20000  );
-    if( run( "libm:conv_shape_utils" ) ) sectionShapeUtils( "libm:conv_shape_utils", 606, 20000  );
-    if( run( "libm:intersection" ) ) sectionIntersection( "libm:intersection", 607, 30000  );
-    if( run( "libm:shape_ellipse" ) ) sectionEllipse( "libm:shape_ellipse", 608, 30000  );
+    if( run( "cbrt" ) ) sectionCbrt( "cbrt", 609, cnt( 20000 ) );
+    if( run( "libm:conv_circle" ) ) sectionCircle( "libm:conv_circle", 600, cnt( 20000 )  );
+    if( run( "libm:conv_oval" ) ) sectionOval( "libm:conv_oval", 601, cnt( 20000 )  );
+    if( run( "libm:conv_rect" ) ) sectionRect( "libm:conv_rect", 602, cnt( 30000 )  );
+    if( run( "libm:conv_arc" ) ) sectionArc( "libm:conv_arc", 603, cnt( 20000 )  );
+    if( run( "libm:conv_roundrect" ) ) sectionRoundrect( "libm:conv_roundrect", 604, cnt( 20000 )  );
+    if( run( "libm:conv_corner_ops" ) ) sectionCornerOps( "libm:conv_corner_ops", 605, cnt( 20000 )  );
+    if( run( "libm:conv_shape_utils" ) ) sectionShapeUtils( "libm:conv_shape_utils", 606, cnt( 20000 )  );
+    if( run( "libm:intersection" ) ) sectionIntersection( "libm:intersection", 607, cnt( 30000 )  );
+    if( run( "libm:shape_ellipse" ) ) sectionEllipse( "libm:shape_ellipse", 608, cnt( 30000 )  );
 
     if( g_dump )
         fclose( g_dump );

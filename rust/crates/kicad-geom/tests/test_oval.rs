@@ -42,7 +42,7 @@ fn check_collections_same_unordered(expected: &[TypedPoint2I], actual: &[TypedPo
 }
 
 fn tp(x: i32, y: i32, t: PointType) -> TypedPoint2I {
-    TypedPoint2I::new(Vector2I::new(x, y), t as i32)
+    TypedPoint2I::new(Vector2I::new(x, y), t)
 }
 
 fn do_oval_point_test_checks(a_oval: &ShapeSegment, a_expected_points: &[TypedPoint2I]) {

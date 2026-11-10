@@ -451,10 +451,8 @@ impl PcbParser {
         expected: &str,
         data_type: EdaDataType,
     ) -> Result<i32, IoError> {
-        let scale = kicad_core::eda_units::get_scale_for_internal_unit_type(
-            &PCB_IU_SCALE,
-            data_type,
-        );
+        let scale =
+            kicad_core::eda_units::get_scale_for_internal_unit_type(&PCB_IU_SCALE, data_type);
         let retval = self.lexer.parse_double_expected(expected)? * scale;
 
         Ok(ki_round(clamp(retval, -INT_LIMIT, INT_LIMIT)))
@@ -757,7 +755,12 @@ impl PcbParser {
         }
 
         // strftime %y: the year modulo 100, two digits.
-        Ok(format!("{:02}/{:02}/{:02}", month, day, year.rem_euclid(100)))
+        Ok(format!(
+            "{:02}/{:02}/{:02}",
+            month,
+            day,
+            year.rem_euclid(100)
+        ))
     }
 
     // ---- geometry helpers ----------------------------------------------------------------------
@@ -786,7 +789,10 @@ impl PcbParser {
     /// Port of `parseOutlinePoints( SHAPE_LINE_CHAIN& aPoly )`: one `(xy x y)` or
     /// `(arc (start ..) (mid ..) (end ..))` (sub-tokens in any order, all three required),
     /// appended to `poly`.
-    pub(crate) fn parse_outline_points(&mut self, poly: &mut ShapeLineChain) -> Result<(), IoError> {
+    pub(crate) fn parse_outline_points(
+        &mut self,
+        poly: &mut ShapeLineChain,
+    ) -> Result<(), IoError> {
         if self.lexer.cur_tok() != T::T_LEFT {
             self.lexer.need_left()?;
         }

@@ -321,6 +321,13 @@ fn construct<T>(o: &mut Out, class: &str, f: impl FnOnce() -> T) -> Option<T> {
     }
 }
 
+/// `FOOTPRINT::GetNextFieldOrdinal()` (no Rust method yet; replace by it once it exists).
+fn next_field_ordinal(board: &Board, fp: crate::ids::FootprintId) -> i32 {
+    board
+        .footprint_fields(fp)
+        .fold(42, |ordinal, (_, f)| ordinal.max(f.ordinal + 1))
+}
+
 fn parented<T: BoardItem>(mut item: T, parent: ParentRef) -> T {
     item.base_mut().parent = parent;
     item
@@ -370,7 +377,17 @@ pub(crate) fn dump_defaults_into(o: &mut Out) {
     let fields: Vec<(FieldT, Option<PcbField>)> = FIELDS
         .iter()
         .map(|&id| {
-            let f = attempt(|| PcbField::new(&mut board.kiid_generator, Some(fp_layer), id, ""));
+            let f = attempt(|| {
+                let mut f = PcbField::new(&mut board.kiid_generator, Some(fp_layer), id, "");
+
+                // The C++ constructor numbers a user field with GetNextFieldOrdinal(); the Rust
+                // constructor leaves that to the caller.
+                if id == FieldT::User {
+                    f.ordinal = next_field_ordinal(&board, fp);
+                }
+
+                f
+            });
             (id, f.ok().map(|f| parented(f, fp_parent)))
         })
         .collect();

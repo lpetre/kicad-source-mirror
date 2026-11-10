@@ -16,5 +16,5 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcb_plotter.h` / `pcb_plotter.cpp` (`PCB_PLOTTER`, `BuildPlotFileName`, `PlotJobToPlotOpts`).
-//! 
+//!
 //! Work packages FAB-03, FAB-07, FAB-11 (`docs/analysis/plot-fab.md` 10.2); not started.

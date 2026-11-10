@@ -16,7 +16,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Port of `libs/kimath/include/geometry/shape_index.h` (`SHAPE_INDEX` and its helper templates
 //! `shapeFunctor`, `boundingBox`, `acceptVisitor`, `collide`, `queryCallback`).
 //!

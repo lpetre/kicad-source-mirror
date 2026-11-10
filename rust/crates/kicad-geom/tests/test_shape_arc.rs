@@ -1615,8 +1615,8 @@ fn transform_shallow_arc_to_polygon() {
 
         // The bounding box should be reasonable (roughly the track width around the chord)
         let bbox = outline.bbox(0);
-        assert!(bbox.width() as i64 <= (end.x + width * 2) as i64);
-        assert!(bbox.height() as i64 <= (width * 2 + 100) as i64); // Allow some tolerance
+        assert!(bbox.width() <= (end.x + width * 2) as i64);
+        assert!(bbox.height() <= (width * 2 + 100) as i64); // Allow some tolerance
     }
 }
 

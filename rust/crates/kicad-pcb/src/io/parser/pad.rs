@@ -36,28 +36,42 @@ use crate::padstack::PostMachiningProps;
 
 impl PcbParser {
     /// Port of `parsePAD( FOOTPRINT* aParent )`: the pad as a local value with `parent = Item(fp)`; the caller adds it. Staging stub (PCBIO-07).
-    pub(crate) fn parse_pad(&mut self, parent: Option<FootprintId>) -> Result<Option<Pad>, IoError> {
+    pub(crate) fn parse_pad(
+        &mut self,
+        parent: Option<FootprintId>,
+    ) -> Result<Option<Pad>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-07")?;
         Ok(None)
     }
 
     /// Port of `parsePAD_primitives( PAD*, PCB_LAYER_ID )`. Staging stub (PCBIO-07).
-    pub(crate) fn parse_pad_primitives(&mut self, pad: &mut Pad, layer: PcbLayerId) -> Result<(), IoError> {
+    pub(crate) fn parse_pad_primitives(
+        &mut self,
+        pad: &mut Pad,
+        layer: PcbLayerId,
+    ) -> Result<(), IoError> {
         let _ = &(pad, layer);
         self.pending("PCBIO-07")?;
         Ok(())
     }
 
     /// Port of `parsePAD_option( PAD*, PCB_LAYER_ID )`. Staging stub (PCBIO-07).
-    pub(crate) fn parse_pad_option(&mut self, pad: &mut Pad, layer: PcbLayerId) -> Result<(), IoError> {
+    pub(crate) fn parse_pad_option(
+        &mut self,
+        pad: &mut Pad,
+        layer: PcbLayerId,
+    ) -> Result<(), IoError> {
         let _ = &(pad, layer);
         self.pending("PCBIO-07")?;
         Ok(())
     }
 
     /// Port of `parsePostMachining( PADSTACK::POST_MACHINING_PROPS& )`. Staging stub (PCBIO-07).
-    pub(crate) fn parse_post_machining(&mut self, props: &mut PostMachiningProps) -> Result<(), IoError> {
+    pub(crate) fn parse_post_machining(
+        &mut self,
+        props: &mut PostMachiningProps,
+    ) -> Result<(), IoError> {
         let _ = &props;
         self.pending("PCBIO-07")?;
         Ok(())

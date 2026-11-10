@@ -204,14 +204,33 @@ impl Pcb3dBody {
 
     /// `PCB_3D_BODY::Flip()`: an explicit layer goes to the board's flipped layer
     /// (`BOARD::FlipLayer`, or `::FlipLayer` without a board); `UNDEFINED_LAYER` stays.
-    pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_3D_BODY::Flip", env, centre, dir)
+    pub fn flip(&mut self, env: &MutEnv, _centre: Vector2I, _dir: FlipDirection) {
+        if self.layer == PcbLayerId::UndefinedLayer {
+            return;
+        }
+
+        // board->FlipLayer( m_layer ), ::FlipLayer( m_layer ) without a board: the layer table
+        // of the environment is the board's or the standard one.
+        self.layer = env.layers.flip_layer(self.layer);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `PCB_3D_BODY::Flip`: an explicit layer flips, UNDEFINED_LAYER (auto) stays.
+    #[test]
+    fn body_flip() {
+        let env = MutEnv::detached();
+        let mut b = Pcb3dBody::default();
+        b.layer = PcbLayerId::FSilkS;
+        b.flip(&env, Vector2I::new(0, 0), FlipDirection::LeftRight);
+        assert_eq!(b.layer, PcbLayerId::BSilkS);
+        b.layer = PcbLayerId::UndefinedLayer;
+        b.flip(&env, Vector2I::new(0, 0), FlipDirection::LeftRight);
+        assert_eq!(b.layer, PcbLayerId::UndefinedLayer);
+    }
     use crate::ids::ItemKind;
     use crate::test_support::rotated_flipped_scaled;
 

@@ -45,10 +45,7 @@ fn read_golden(name: &str) -> BTreeMap<String, Vec<String>> {
             continue;
         }
 
-        if let Some(file) = line
-            .strip_prefix("file|")
-            .and_then(|l| l.strip_suffix('|'))
-        {
+        if let Some(file) = line.strip_prefix("file|").and_then(|l| l.strip_suffix('|')) {
             current = Some(file.to_string());
             map.insert(file.to_string(), Vec::new());
         } else if let Some(file) = &current {
@@ -96,7 +93,11 @@ fn corpus() {
     let root = kicad_qa::kicad_source_root();
     let golden = read_golden("rules_corpus.txt");
 
-    assert!(golden.len() >= 70, "corpus golden has {} files", golden.len());
+    assert!(
+        golden.len() >= 70,
+        "corpus golden has {} files",
+        golden.len()
+    );
 
     check(&golden, |rel| {
         let path = root.join(rel);
@@ -111,7 +112,11 @@ fn broken_files() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/rules");
     let golden = read_golden("rules_errors.txt");
 
-    assert!(golden.len() >= 90, "error golden has {} files", golden.len());
+    assert!(
+        golden.len() >= 90,
+        "error golden has {} files",
+        golden.len()
+    );
 
     check(&golden, |name| {
         let lines = common::dump_rules(&read_text(&dir.join(name)), name, false);
@@ -165,6 +170,6 @@ fn return_path_unknown_option_at_eof_terminates() {
     let error = result.unwrap_err();
     assert_eq!(
         error.what(),
-        "ERROR: Missing ')'. in 't', line 2, offset 41."
+        "ERROR: Missing ')'. in 't', line 3, offset 41." // (EOF counts as a line, as in C++)
     );
 }

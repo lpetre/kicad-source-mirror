@@ -25,9 +25,11 @@
 //! `SetPosition`, `SetLocked`) cascade through `Board::move_item` etc. (`board-model.md` 8.3),
 //! so it has no `BoardItemMut` impl. Behaviour belongs to package M23 (inherent stubs below).
 
+use std::sync::Arc;
+
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{KicadT, Kiid, KiidGenerator, LibId, Lset, PcbLayerId};
-use kicad_geom::{Box2I, Vector2I};
+use kicad_core::{KicadT, Kiid, KiidGenerator, LibId, Lset, PCB_IU_SCALE, PcbLayerId};
+use kicad_geom::{Box2I, ShapeCompound, Vector2I};
 
 use crate::ctx::BoardCtx;
 use crate::drc_api::DrcConstraintT;
@@ -184,7 +186,21 @@ impl PcbGroup {
     /// `EDA_GROUP::GetGroupMemberIds()`: the members' UUIDs (C++ iterates the
     /// `unordered_set`; here insertion order, see PORT_STATUS.md).
     pub fn group_member_ids(&self, ctx: &BoardCtx<'_>) -> Vec<Kiid> {
-        crate::port_pending!("EDA_GROUP::GetGroupMemberIds", ctx)
+        self.members
+            .iter()
+            .filter_map(|&member| ctx.item(member))
+            .map(|item| item.uuid())
+            .collect()
+    }
+
+    /// `PCB_GROUP::GetBoardItems()`: the members that are board items (all of them: a Rust
+    /// member is always a board item), resolved; stale handles are skipped. C++ iterates an
+    /// `unordered_set` here; the Rust order is insertion order (PORT_STATUS.md).
+    pub fn board_items<'a>(&self, ctx: &'a BoardCtx<'a>) -> Vec<ItemRef<'a>> {
+        self.members
+            .iter()
+            .filter_map(|&member| ctx.item(member))
+            .collect()
     }
 
     /// `EDA_GROUP::HasDesignBlockLink()`: `m_designBlockLibId.IsValid()`.
@@ -213,12 +229,21 @@ impl PcbGroup {
 
     /// `PCB_GROUP::GetLayerSet()`: the union of the members' layer sets.
     pub fn layer_set(&self, ctx: &BoardCtx<'_>) -> Lset {
-        crate::port_pending!("PCB_GROUP::GetLayerSet", ctx)
+        let mut set = Lset::new();
+
+        for item in self.board_items(ctx) {
+            set |= item.layer_set();
+        }
+
+        set
     }
 
     /// `PCB_GROUP::IsOnLayer()`: true if any member is on `layer`.
     pub fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
-        crate::port_pending!("PCB_GROUP::IsOnLayer", ctx, layer)
+        // A group is on a layer if any item is on the layer
+        self.board_items(ctx)
+            .iter()
+            .any(|item| item.is_on_layer(layer))
     }
 
     /// `PCB_GROUP::IsOnCopperLayer()`: false.
@@ -233,13 +258,25 @@ impl PcbGroup {
 
     /// `PCB_GROUP::GetPosition()`: `GetBoundingBox().Centre()`.
     pub fn position(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("PCB_GROUP::GetPosition", ctx)
+        self.bounding_box(ctx).centre()
     }
 
     /// `PCB_GROUP::GetBoundingBox()`: members merged (footprints with their text-including
     /// box), inflated by 0.25 mm.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_GROUP::GetBoundingBox", ctx)
+        let mut bbox = Box2I::default();
+
+        for item in self.board_items(ctx) {
+            if let Some(fp) = item.as_footprint() {
+                bbox.merge(&fp.bounding_box_with_text(ctx, true));
+            } else {
+                bbox.merge(&item.bounding_box());
+            }
+        }
+
+        bbox.inflate(PCB_IU_SCALE.mm_to_iu(0.25)); // Give a min size to the bbox
+
+        bbox
     }
 
     /// `PCB_GROUP::GetEffectiveShape()`: a compound of the members' effective shapes.
@@ -250,7 +287,13 @@ impl PcbGroup {
         flash: Flashing,
         usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_GROUP::GetEffectiveShape", ctx, layer, flash, usage)
+        let mut shape = ShapeCompound::new();
+
+        for item in self.board_items(ctx) {
+            shape.add_shape(item.effective_shape(layer, flash, usage).clone_shape());
+        }
+
+        Arc::new(shape)
     }
 
     /// `PCB_GROUP::HitTest( aPosition, aAccuracy )`: false (groups are selected by promoting
@@ -278,7 +321,15 @@ impl PcbGroup {
         mode: RecurseMode,
         f: &mut dyn FnMut(ItemRef<'_>),
     ) {
-        crate::port_pending!("PCB_GROUP::RunOnChildren", ctx, mode, f)
+        for item in self.board_items(ctx) {
+            f(item);
+
+            if mode == RecurseMode::Recurse
+                && (item.type_() == KicadT::PcbGroupT || item.type_() == KicadT::PcbGeneratorT)
+            {
+                item.as_dyn().run_on_children(ctx, RecurseMode::Recurse, f);
+            }
+        }
     }
 
     /// `PCB_GROUP::GetItemDescription()`: "Unnamed Group, %zu members" / "Group '%s', %zu
@@ -287,9 +338,113 @@ impl PcbGroup {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_GROUP::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+
+        if self.name.is_empty() {
+            format!("Unnamed Group, {} members", self.members.len())
+        } else {
+            format!("Group '{}', {} members", self.name, self.members.len())
+        }
+    }
+
+    /// `PCB_GROUP::operator==( const PCB_GROUP& )`: same member count and the same member UUIDs
+    /// (compared in UUID order, `EDA_ITEM_SET`).
+    pub fn eq_item(&self, ctx: &BoardCtx<'_>, other: &PcbGroup) -> bool {
+        if self.members.len() != other.members.len() {
+            return false;
+        }
+
+        let mut mine = self.group_member_ids(ctx);
+        let mut theirs = other.group_member_ids(ctx);
+        mine.sort();
+        theirs.sort();
+        mine == theirs
+    }
+}
+
+// ---- free functions: PCB_GROUP statics -----------------------------------------------------
+
+/// `getClosestGroup( aItem, isFootprintEditor )` (pcb_group.cpp): outside the footprint editor
+/// an item inside a footprint answers with the footprint's group, otherwise with its own.
+fn closest_group(item: ItemRef<'_>, is_footprint_editor: bool) -> Option<ItemId> {
+    if !is_footprint_editor {
+        if let Some(parent) = item.parent() {
+            if parent.type_() == KicadT::PcbFootprintT {
+                return parent.parent_group().and_then(|g| g.id());
+            }
+        }
+    }
+
+    item.parent_group().and_then(|g| g.id())
+}
+
+/// `getNestedGroup( aItem, aScope, isFootprintEditor )`: the top level group inside the
+/// `scope` group (`None` = no scope), or `None`.
+fn nested_group(
+    ctx: &BoardCtx<'_>,
+    item: ItemRef<'_>,
+    scope: Option<ItemId>,
+    is_footprint_editor: bool,
+) -> Option<ItemId> {
+    let mut group = closest_group(item, is_footprint_editor);
+
+    if group == scope {
+        return None;
+    }
+
+    while let Some(g) = group {
+        let Some(parent) = ctx
+            .item(g)
+            .and_then(|g| g.parent_group())
+            .and_then(|p| p.id())
+        else {
+            break;
+        };
+
+        if Some(parent) == scope {
+            break;
+        }
+
+        group = Some(parent);
+    }
+
+    group
+}
+
+/// `PCB_GROUP::TopLevelGroup( aItem, aScope, isFootprintEditor )`: the top level group inside
+/// the `scope` group, or `None`.
+pub fn top_level_group(
+    ctx: &BoardCtx<'_>,
+    item: ItemRef<'_>,
+    scope: Option<ItemId>,
+    is_footprint_editor: bool,
+) -> Option<ItemId> {
+    nested_group(ctx, item, scope, is_footprint_editor)
+}
+
+/// `PCB_GROUP::WithinScope( aItem, aScope, isFootprintEditor )`.
+pub fn within_scope(
+    ctx: &BoardCtx<'_>,
+    item: ItemRef<'_>,
+    scope: Option<ItemId>,
+    is_footprint_editor: bool,
+) -> bool {
+    let group = closest_group(item, is_footprint_editor);
+
+    if group.is_some() && group == scope {
+        return true;
+    }
+
+    let nested = nested_group(ctx, item, scope, is_footprint_editor);
+
+    match nested
+        .and_then(|n| ctx.item(n))
+        .and_then(|n| n.parent_group())
+    {
+        Some(parent) => parent.id() == scope,
+        None => false,
     }
 }
 

@@ -16,5 +16,5 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `pcbnew/pcbplot.h` / `pcbplot.cpp` (Protel extensions, X2 file function and header).
-//! 
+//!
 //! Work package FAB-03 (`docs/analysis/plot-fab.md` 10.2); not started.

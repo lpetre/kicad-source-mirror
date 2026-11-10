@@ -295,7 +295,7 @@ impl Shape for ShapeRect {
         _a_error_loc: ErrorLoc,
     ) {
         if self.radius > 0 {
-            let rr = crate::geometry::roundrect::Roundrect::new(self.clone(), self.radius, false);
+            let rr = crate::geometry::roundrect::Roundrect::new(*self, self.radius, false);
             rr.transform_to_polygon(a_buffer, a_error);
             return;
         }

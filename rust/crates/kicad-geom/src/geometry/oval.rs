@@ -82,7 +82,7 @@ pub fn get_oval_key_points(a_oval: &ShapeSegment, a_flags: OvalKeyPointFlags) ->
     // Points on a non-rotated pad at the origin, long-axis is y
     // (so for now, width is left/right, len is up/down)
     let mut pts: Vec<TypedPoint2I> = Vec::new();
-    let mut add = |pt: Vector2I, ty| pts.push(TypedPoint2I::new(pt, ty as i32));
+    let mut add = |pt: Vector2I, ty| pts.push(TypedPoint2I::new(pt, ty));
 
     if a_flags & OVAL_CENTER != 0 {
         // Centre is easy

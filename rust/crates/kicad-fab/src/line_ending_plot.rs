@@ -17,5 +17,5 @@
 
 //! Port of `common/line_ending.cpp` L62-190, L240-265 (`LINE_ENDING::GetShapes`, `Plot`), unless
 //! the board model owns it.
-//! 
+//!
 //! Work package FAB-05 (`docs/analysis/plot-fab.md` 10.2); not started.

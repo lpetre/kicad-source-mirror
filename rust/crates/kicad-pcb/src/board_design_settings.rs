@@ -41,7 +41,9 @@ use crate::drc_api::*;
 use crate::net_settings::NetSettings;
 use crate::pcb_dimension::{DimPrecision, DimTextPosition, DimUnitsFormat, DimUnitsMode};
 use crate::pcb_track::Viatype;
-use crate::teardrop_parameters::{TargetTd, TeardropParametersList, teardrop_target_canonical_name};
+use crate::teardrop_parameters::{
+    TargetTd, TeardropParametersList, teardrop_target_canonical_name,
+};
 use crate::zone_settings::{ZoneLayerProperties, ZoneSettings};
 
 // ---- include/board_design_settings_defaults.h (values in mm unless stated) ----
@@ -1276,21 +1278,18 @@ impl BoardDesignSettings {
         let units = units.unwrap_or(EdaUnits::Mm);
         let mm = |v: f64| PCB_IU_SCALE.mm_to_iu(v);
 
-        let add_range_error = |errors: &mut Vec<ValidationError>,
-                                   field: &str,
-                                   value: i32,
-                                   min: i32,
-                                   max: i32| {
-            if value < min || value > max {
-                let min = string_from_iu(units, min);
-                let max = string_from_iu(units, max);
+        let add_range_error =
+            |errors: &mut Vec<ValidationError>, field: &str, value: i32, min: i32, max: i32| {
+                if value < min || value > max {
+                    let min = string_from_iu(units, min);
+                    let max = string_from_iu(units, max);
 
-                errors.push(ValidationError::new(
-                    field,
-                    &format!("Value must be between {min} and {max}."),
-                ));
-            }
-        };
+                    errors.push(ValidationError::new(
+                        field,
+                        &format!("Value must be between {min} and {max}."),
+                    ));
+                }
+            };
 
         let add_ratio_range_error =
             |errors: &mut Vec<ValidationError>, field: &str, value: f64, min: f64, max: f64| {
@@ -1305,7 +1304,13 @@ impl BoardDesignSettings {
         let e = &mut errors;
         add_range_error(e, "min_clearance", self.min_clearance, mm(0.00), mm(25.0));
         add_range_error(e, "min_connection", self.min_conn, mm(0.00), mm(100.0));
-        add_range_error(e, "min_track_width", self.track_min_width, mm(0.00), mm(25.0));
+        add_range_error(
+            e,
+            "min_track_width",
+            self.track_min_width,
+            mm(0.00),
+            mm(25.0),
+        );
         add_range_error(
             e,
             "min_via_annular_width",
@@ -1313,7 +1318,13 @@ impl BoardDesignSettings {
             mm(0.00),
             mm(25.0),
         );
-        add_range_error(e, "min_via_diameter", self.vias_min_size, mm(0.00), mm(25.0));
+        add_range_error(
+            e,
+            "min_via_diameter",
+            self.vias_min_size,
+            mm(0.00),
+            mm(25.0),
+        );
         add_range_error(
             e,
             "min_through_hole_diameter",
@@ -1335,11 +1346,41 @@ impl BoardDesignSettings {
             mm(0.00),
             mm(10.0),
         );
-        add_range_error(e, "min_hole_to_hole", self.hole_to_hole_min, mm(0.00), mm(10.0));
-        add_range_error(e, "min_hole_clearance", self.hole_clearance, mm(0.00), mm(100.0));
-        add_range_error(e, "min_silk_clearance", self.silk_clearance, mm(-10.0), mm(100.0));
-        add_range_error(e, "min_groove_width", self.min_groove_width, mm(0.00), mm(25.0));
-        add_range_error(e, "min_text_height", self.min_silk_text_height, mm(0.00), mm(100.0));
+        add_range_error(
+            e,
+            "min_hole_to_hole",
+            self.hole_to_hole_min,
+            mm(0.00),
+            mm(10.0),
+        );
+        add_range_error(
+            e,
+            "min_hole_clearance",
+            self.hole_clearance,
+            mm(0.00),
+            mm(100.0),
+        );
+        add_range_error(
+            e,
+            "min_silk_clearance",
+            self.silk_clearance,
+            mm(-10.0),
+            mm(100.0),
+        );
+        add_range_error(
+            e,
+            "min_groove_width",
+            self.min_groove_width,
+            mm(0.00),
+            mm(25.0),
+        );
+        add_range_error(
+            e,
+            "min_text_height",
+            self.min_silk_text_height,
+            mm(0.00),
+            mm(100.0),
+        );
         add_range_error(
             e,
             "min_text_thickness",
@@ -1617,5 +1658,496 @@ mod tests {
         assert_eq!(b.get_severity(DRCE_CLEARANCE), Severity::Error);
         assert_eq!(b.get_severity(999), Severity::Error);
         assert!(b.ignore(DRCE_MISSING_COURTYARD));
+    }
+
+    fn mm(v: f64) -> i32 {
+        PCB_IU_SCALE.mm_to_iu(v)
+    }
+
+    /// A rule resolver that only answers `QueryWorstConstraint` for one constraint type.
+    struct WorstOnly {
+        constraint: DrcConstraintT,
+        min: i32,
+    }
+
+    impl RuleResolver for WorstOnly {
+        fn eval_rules(
+            &self,
+            _ctx: &crate::ctx::BoardCtx<'_>,
+            constraint: DrcConstraintT,
+            _a: Option<crate::item_ref::ItemRef<'_>>,
+            _b: Option<crate::item_ref::ItemRef<'_>>,
+            _layer: PcbLayerId,
+        ) -> DrcConstraint {
+            DrcConstraint::new(constraint, "")
+        }
+
+        fn has_rules_for_constraint_type(&self, constraint: DrcConstraintT) -> bool {
+            constraint == self.constraint
+        }
+
+        fn cached_own_clearance(
+            &self,
+            _ctx: &crate::ctx::BoardCtx<'_>,
+            _item: crate::item_ref::ItemRef<'_>,
+            _layer: PcbLayerId,
+            _want_source: bool,
+        ) -> (i32, Option<String>) {
+            (0, None)
+        }
+
+        fn query_worst_constraint(&self, constraint: DrcConstraintT) -> Option<DrcConstraint> {
+            if constraint != self.constraint {
+                return None;
+            }
+
+            let mut c = DrcConstraint::new(constraint, "");
+            c.value.set_min(self.min);
+            Some(c)
+        }
+    }
+
+    /// `qa/tests/pcbnew/test_board_design_settings.cpp`:
+    /// `BiggestClearanceIncludesPhysicalHoleClearance` (the DRC engine is replaced by a
+    /// resolver answering `QueryWorstConstraint` like an engine initialised with the one
+    /// rule), plus the null-engine branch and the `MAXIMUM_CLEARANCE` clip.
+    #[test]
+    fn biggest_clearance_includes_physical_hole_clearance() {
+        let bds = BoardDesignSettings::default();
+
+        // Larger than any default clearance, so it can only come from the rule below.
+        let rule_clearance = mm(4.0);
+        let engine = WorstOnly {
+            constraint: DrcConstraintT::PhysicalHoleClearanceConstraint,
+            min: rule_clearance,
+        };
+
+        assert!(bds.get_biggest_clearance_value(Some(&engine)) >= rule_clearance);
+        assert_eq!(
+            bds.get_biggest_clearance_value(Some(&engine)),
+            rule_clearance
+        );
+
+        // pcb-dump defaults: BOARD_DESIGN_SETTINGS|biggest_clearance=500000 (no engine).
+        assert_eq!(bds.get_biggest_clearance_value(None), 500_000);
+
+        let huge = WorstOnly {
+            constraint: DrcConstraintT::HoleToHoleConstraint,
+            min: mm(900.0),
+        };
+        assert_eq!(bds.get_biggest_clearance_value(Some(&huge)), mm(500.0));
+    }
+
+    /// `test_board_design_settings.cpp`: `PredefinedTrackWidthCyclingMonotonic`
+    /// (https://gitlab.com/kicad/code/kicad/-/issues/24646).
+    #[test]
+    fn predefined_track_width_cycling_monotonic() {
+        let mut bds = BoardDesignSettings::default();
+
+        // Index 0 is the netclass placeholder; indices 1..5 are sorted predefined sizes.
+        bds.track_width_list = vec![0, mm(0.5), mm(0.6), mm(0.8), mm(1.0), mm(1.2)];
+
+        let last_real = bds.track_width_list.len() as i32 - 1;
+
+        // Increment: netclass(0) -> smallest(1) -> ... -> largest, then roll over to smallest,
+        // never 0.
+        assert_eq!(bds.get_next_track_width_index(0, true), 1);
+
+        let mut idx = 1;
+
+        for step in 2..=last_real {
+            idx = bds.get_next_track_width_index(idx, true);
+            assert_eq!(idx, step);
+        }
+
+        // Roll-over from the largest must skip the placeholder and land on the smallest real
+        // size.
+        assert_eq!(bds.get_next_track_width_index(last_real, true), 1);
+
+        // Decrement: smallest(1) rolls over to the largest, never to the placeholder.
+        assert_eq!(bds.get_next_track_width_index(1, false), last_real);
+
+        idx = last_real;
+
+        for step in (1..last_real).rev() {
+            idx = bds.get_next_track_width_index(idx, false);
+            assert_eq!(idx, step);
+        }
+
+        // A full forward cycle must never report the netclass placeholder once stepping has
+        // started.
+        idx = bds.get_next_track_width_index(0, true);
+
+        for _ in 0..last_real * 3 {
+            assert!(idx >= 1);
+            idx = bds.get_next_track_width_index(idx, true);
+        }
+
+        // An empty list (no placeholder, no predefined sizes) must stay at index 0 and never
+        // store a negative index through SetTrackWidthIndex.
+        bds.track_width_list.clear();
+        assert_eq!(bds.get_next_track_width_index(0, true), 0);
+        assert_eq!(bds.get_next_track_width_index(0, false), 0);
+        bds.set_track_width_index(bds.get_next_track_width_index(0, false));
+        assert_eq!(bds.track_width_index(), 0);
+    }
+
+    /// `test_board_design_settings.cpp`: `PredefinedViaSizeCyclingMonotonic`.
+    #[test]
+    fn predefined_via_size_cycling_monotonic() {
+        let mut bds = BoardDesignSettings::default();
+        let via = |diameter: f64, drill: f64| ViaDimension {
+            diameter: mm(diameter),
+            drill: mm(drill),
+        };
+
+        // Index 0 is the netclass placeholder; indices 1..3 are sorted predefined via sizes.
+        bds.vias_dimensions_list = vec![
+            ViaDimension::default(),
+            via(0.6, 0.3),
+            via(0.8, 0.4),
+            via(1.0, 0.5),
+        ];
+
+        let last_real = bds.vias_dimensions_list.len() as i32 - 1;
+
+        assert_eq!(bds.get_next_via_size_index(0, true), 1);
+        assert_eq!(bds.get_next_via_size_index(last_real, true), 1);
+        assert_eq!(bds.get_next_via_size_index(1, false), last_real);
+
+        // A list holding only the netclass placeholder must stay put in both directions.
+        bds.vias_dimensions_list = vec![ViaDimension::default()];
+        assert_eq!(bds.get_next_via_size_index(0, true), 0);
+        assert_eq!(bds.get_next_via_size_index(0, false), 0);
+
+        // An empty list must stay at index 0 and never store a negative index.
+        bds.vias_dimensions_list.clear();
+        assert_eq!(bds.get_next_via_size_index(0, true), 0);
+        assert_eq!(bds.get_next_via_size_index(0, false), 0);
+        bds.set_via_size_index(bds.get_next_via_size_index(0, false));
+        assert_eq!(bds.via_size_index(), 0);
+    }
+
+    /// `test_board_design_settings.cpp`: `PredefinedDiffPairCyclingMonotonic`.
+    #[test]
+    fn predefined_diff_pair_cycling_monotonic() {
+        let mut bds = BoardDesignSettings::default();
+        let dp = |w: f64, g: f64| DiffPairDimension {
+            width: mm(w),
+            gap: mm(g),
+            via_gap: 0,
+        };
+
+        // Index 0 is the netclass placeholder; indices 1..3 are sorted predefined diff-pair
+        // dimensions.
+        bds.diff_pair_dimensions_list = vec![
+            DiffPairDimension::default(),
+            dp(0.2, 0.2),
+            dp(0.25, 0.25),
+            dp(0.3, 0.3),
+        ];
+
+        let last_real = bds.diff_pair_dimensions_list.len() as i32 - 1;
+
+        assert_eq!(bds.get_next_diff_pair_index(0, true), 1);
+        assert_eq!(bds.get_next_diff_pair_index(last_real, true), 1);
+        assert_eq!(bds.get_next_diff_pair_index(1, false), last_real);
+
+        // An empty list must stay at index 0 and never store a negative index.
+        bds.diff_pair_dimensions_list.clear();
+        assert_eq!(bds.get_next_diff_pair_index(0, true), 0);
+        assert_eq!(bds.get_next_diff_pair_index(0, false), 0);
+        bds.set_diff_pair_index(bds.get_next_diff_pair_index(0, false));
+        assert_eq!(bds.diff_pair_index(), 0);
+    }
+
+    /// `test_board_design_settings.cpp`: `TrackWidthSwitchAdvancesFromConnectedWidth`
+    /// (https://gitlab.com/kicad/code/kicad/-/issues/24644).
+    #[test]
+    fn track_width_switch_advances_from_connected_width() {
+        let mut bds = BoardDesignSettings::default();
+
+        let size1 = mm(0.25);
+        let size2 = mm(0.50);
+        let size3 = mm(1.00);
+
+        // Index 0 is the netclass/connected-width placeholder; the rest are real predefined
+        // sizes.
+        bds.track_width_list = vec![0, size1, size2, size3];
+        bds.set_use_custom_track_via_size(false);
+
+        // Start on the connected-width placeholder, as the router does before any override.
+        bds.set_track_width_index(0);
+        assert_eq!(bds.track_width_index(), 0);
+
+        let inc_index = |bds: &mut BoardDesignSettings| {
+            let next = bds.get_next_track_width_index(bds.track_width_index(), true);
+            bds.set_track_width_index(next);
+        };
+        let dec_index = |bds: &mut BoardDesignSettings| {
+            let next = bds.get_next_track_width_index(bds.track_width_index(), false);
+            bds.set_track_width_index(next);
+        };
+
+        // First "Next" press must move to the first real predefined size, not no-op.
+        inc_index(&mut bds);
+        assert_eq!(bds.track_width_index(), 1);
+        assert_eq!(bds.get_current_track_width(), size1);
+
+        // Subsequent presses step through the list, then roll over to the smallest real size,
+        // skipping the netclass placeholder at index 0.
+        inc_index(&mut bds);
+        assert_eq!(bds.get_current_track_width(), size2);
+        inc_index(&mut bds);
+        assert_eq!(bds.get_current_track_width(), size3);
+        inc_index(&mut bds);
+        assert_eq!(bds.track_width_index(), 1);
+        assert_eq!(bds.get_current_track_width(), size1);
+
+        // First "Previous" press from the placeholder must roll over to the last real size.
+        bds.set_track_width_index(0);
+        dec_index(&mut bds);
+        assert_eq!(bds.track_width_index(), 3);
+        assert_eq!(bds.get_current_track_width(), size3);
+    }
+
+    /// The derived getters on default settings, against `pcb-dump defaults`
+    /// (`BOARD_DESIGN_SETTINGS|smallest_clearance=200000`, `drc_epsilon=500`,
+    /// `hole_plating_thickness=20000`), and the current-size fallbacks to the default
+    /// netclass.
+    #[test]
+    fn derived_getters_defaults() {
+        let mut b = BoardDesignSettings::default();
+        assert_eq!(b.get_smallest_clearance_value(), 200_000);
+        assert_eq!(b.get_drc_epsilon(), 500);
+        assert_eq!(b.get_hole_plating_thickness(), 20_000);
+
+        let nc = b.net_settings.default_netclass().clone();
+        assert!(b.use_net_class_track() && b.use_net_class_via());
+        assert!(b.use_net_class_diff_pair());
+        assert_eq!(b.get_current_track_width(), nc.track_width());
+        assert_eq!(b.get_current_via_size(), nc.via_diameter());
+        assert_eq!(
+            b.get_current_via_drill(),
+            if nc.via_drill() > 0 {
+                nc.via_drill()
+            } else {
+                -1
+            }
+        );
+        let expected_dp_width = if nc.has_diff_pair_width() {
+            nc.diff_pair_width()
+        } else {
+            nc.track_width()
+        };
+        assert_eq!(b.get_current_diff_pair_width(), expected_dp_width);
+        let expected_dp_gap = if nc.has_diff_pair_gap() {
+            nc.diff_pair_gap()
+        } else {
+            nc.clearance()
+        };
+        assert_eq!(b.get_current_diff_pair_gap(), expected_dp_gap);
+        let expected_dp_via_gap = if nc.has_diff_pair_via_gap() {
+            nc.diff_pair_via_gap()
+        } else {
+            expected_dp_gap
+        };
+        assert_eq!(b.get_current_diff_pair_via_gap(), expected_dp_via_gap);
+
+        // Custom sizes.
+        b.set_use_custom_track_via_size(true);
+        b.set_custom_via_drill(0);
+        assert!(!b.use_net_class_track() && !b.use_net_class_via());
+        assert_eq!(b.get_current_track_width(), 200_000);
+        assert_eq!(b.get_current_via_size(), 500_000);
+        assert_eq!(b.get_current_via_drill(), -1);
+        b.set_use_custom_diff_pair_dimensions(true);
+        b.set_custom_diff_pair_via_gap(0);
+        assert_eq!(b.get_current_diff_pair_via_gap(), 0);
+        assert_eq!(b.custom_diff_pair_via_gap(), 180_000);
+
+        // Predefined entries; index 0 / out of range fall back to the netclass.
+        b.set_use_custom_track_via_size(false);
+        b.vias_dimensions_list = vec![
+            ViaDimension::default(),
+            ViaDimension {
+                diameter: 800_000,
+                drill: 400_000,
+            },
+        ];
+        b.set_via_size_index(7);
+        assert_eq!(b.via_size_index(), 1);
+        assert_eq!(
+            (b.get_current_via_size(), b.get_current_via_drill()),
+            (800_000, 400_000)
+        );
+        b.via_size_index = 5;
+        assert_eq!(b.get_current_via_size(), nc.via_diameter());
+
+        // Smallest clearance looks at every netclass with a clearance.
+        let mut low = (*nc).clone();
+        low.clearance = Some(50_000);
+        b.net_settings
+            .netclasses
+            .insert("Low".into(), std::sync::Arc::new(low));
+        assert_eq!(b.get_smallest_clearance_value(), 50_000);
+    }
+
+    /// `SetEnabledLayers` forces the mandatory layers and recounts from the argument mask
+    /// (not from the forced set); `IsLayerEnabled` range checks.
+    #[test]
+    fn set_enabled_layers_counts() {
+        let mut b = BoardDesignSettings::default();
+        let mask = Lset::from_layers(&[
+            PcbLayerId::FCu,
+            PcbLayerId::In1Cu,
+            PcbLayerId::In2Cu,
+            PcbLayerId::User1,
+            PcbLayerId::FSilkS,
+        ]);
+        b.set_enabled_layers(&mask);
+        assert_eq!(b.copper_layer_count(), 3);
+        assert_eq!(b.user_defined_layer_count(), 1);
+        for l in [
+            PcbLayerId::BCu,
+            PcbLayerId::FCu,
+            PcbLayerId::BCrtYd,
+            PcbLayerId::FCrtYd,
+            PcbLayerId::EdgeCuts,
+            PcbLayerId::Margin,
+            PcbLayerId::In2Cu,
+            PcbLayerId::FSilkS,
+        ] {
+            assert!(b.is_layer_enabled(l));
+        }
+        assert!(!b.is_layer_enabled(PcbLayerId::BSilkS));
+        assert!(!b.is_layer_enabled(PcbLayerId::UndefinedLayer));
+        assert!(!b.is_layer_enabled(PcbLayerId(PCB_LAYER_ID_COUNT)));
+
+        // An empty mask: counts 0, only the mandatory layers.
+        b.set_enabled_layers(&Lset::new());
+        assert_eq!(
+            (b.copper_layer_count(), b.user_defined_layer_count()),
+            (0, 0)
+        );
+        assert_eq!(b.enabled_layers().count(), 6);
+    }
+
+    /// `ValidateDesignRules` / `GetDesignRuleWarnings`: defaults are clean; out-of-range
+    /// values, ratios, diff pairs and via list entries are reported in C++ order.
+    #[test]
+    fn validate_design_rules() {
+        let mut b = BoardDesignSettings::default();
+        assert!(b.validate_design_rules(None).is_empty());
+        assert!(b.get_design_rule_warnings(None).is_empty());
+
+        b.min_clearance = mm(30.0);
+        b.min_resolved_spokes = 100;
+        b.max_error = 0;
+        b.solder_paste_margin_ratio = f64::NAN;
+        b.teardrop_params_list.params_list[2].best_width_ratio = 1.5;
+        b.diff_pair_dimensions_list = vec![
+            DiffPairDimension {
+                width: 100,
+                gap: 0,
+                via_gap: 0,
+            },
+            DiffPairDimension {
+                width: 100_000,
+                gap: 0,
+                via_gap: 0,
+            },
+        ];
+        b.vias_dimensions_list = vec![
+            ViaDimension::default(),
+            ViaDimension {
+                diameter: 300_000,
+                drill: 300_000,
+            },
+            ViaDimension {
+                diameter: 300_000,
+                drill: 0,
+            },
+            ViaDimension {
+                diameter: 500,
+                drill: 0,
+            },
+        ];
+
+        let errors = b.validate_design_rules(None);
+        let pairs: Vec<(&str, &str)> = errors
+            .iter()
+            .map(|e| (e.setting_name.as_str(), e.error_message.as_str()))
+            .collect();
+        assert_eq!(
+            pairs,
+            vec![
+                ("min_clearance", "Value must be between 0 mm and 25 mm."),
+                ("min_resolved_spokes", "Value must be between 0 and 99."),
+                ("max_error", "Value must be between 0.001 mm and 0.1 mm."),
+                (
+                    "solder_paste_margin_ratio",
+                    "Value must be between -1.000 and 1.000."
+                ),
+                (
+                    "teardrop_parameters[td_track_end].best_width_ratio",
+                    "Value must be between 0.000 and 1.000."
+                ),
+                (
+                    "diff_pair_dimensions_list[1].gap",
+                    "No differential pair gap defined."
+                ),
+                (
+                    "via_dimensions_list[1]",
+                    "Via hole size must be smaller than via diameter"
+                ),
+                ("via_dimensions_list[2]", "No via hole size defined."),
+                ("via_dimensions_list[3]", "Via diameter is too small."),
+            ]
+        );
+
+        let mut w = BoardDesignSettings::default();
+        w.vias_min_size = mm(0.4);
+        let warnings = w.get_design_rule_warnings(Some(EdaUnits::Mm));
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].setting_name, "min_via_diameter");
+        assert_eq!(
+            warnings[0].error_message,
+            "Minimum via diameter (0.4 mm) is smaller than the minimum drill size (0.3 mm) \
+             plus twice the minimum annular width (0.1 mm), so it has no effect. The \
+             effective minimum via diameter is 0.5 mm."
+        );
+    }
+
+    /// The copy constructor (`initFromOther` members copied, the others default-constructed)
+    /// and `operator=` (the others left unchanged).
+    #[test]
+    fn copy_constructor_and_assignment() {
+        let mut src = BoardDesignSettings::default();
+        src.min_clearance = 123;
+        src.track_width_list = vec![0, 250_000];
+        src.teardrop_params_list.target_vias = false;
+        src.zone_layer_properties
+            .insert(PcbLayerId::FCu, ZoneLayerProperties::default());
+        src.set_copper_layer_count(4);
+
+        let copy = src.detached_copy();
+        assert_eq!(copy.min_clearance, 123);
+        assert_eq!(copy.track_width_list, vec![0, 250_000]);
+        assert_eq!(copy.copper_layer_count(), 4);
+        assert_eq!(copy.enabled_layers(), src.enabled_layers());
+        assert!(copy.teardrop_params_list.target_vias);
+        assert!(copy.zone_layer_properties.is_empty());
+        // MEANDER_SETTINGS() for all three (the 1 mm diff pair spacing is the main
+        // constructor's).
+        assert_eq!(copy.meander_settings[1]["spacing"], JsonValue::from(0.6));
+
+        let mut dst = BoardDesignSettings::default();
+        dst.teardrop_params_list.target_smd_pads = false;
+        dst.init_from_other(&src);
+        assert_eq!(dst.min_clearance, 123);
+        assert!(!dst.teardrop_params_list.target_smd_pads);
+        assert!(dst.teardrop_params_list.target_vias);
+        assert_eq!(dst.meander_settings[1]["spacing"], JsonValue::from(1.0));
     }
 }

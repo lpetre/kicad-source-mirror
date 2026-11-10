@@ -107,7 +107,8 @@ impl PcbParser {
             T::T_module | T::T_footprint => match self.parse_footprint(initial_comments)? {
                 Some(fp) => {
                     // Locking a footprint has no meaning outside of a board.
-                    self.board.modify_footprint(fp, |fp, _| fp.base.is_locked = false);
+                    self.board
+                        .modify_footprint(fp, |fp, _| fp.base.is_locked = false);
                     ParsedItem::Footprint(fp)
                 }
                 // Staging (PCBIO-06): the footprint was skipped; there is nothing to finish.
@@ -321,16 +322,20 @@ impl PcbParser {
                     }
                 }
                 T::T_drill_chart => {
-                    let table =
-                        self.parse_generated_table(GeneratedTableKind::drill_chart(), ParentRef::Board)?;
+                    let table = self.parse_generated_table(
+                        GeneratedTableKind::drill_chart(),
+                        ParentRef::Board,
+                    )?;
 
                     if let Some(table) = table {
                         self.board.attach_table(table, AddMode::BulkAppend);
                     }
                 }
                 T::T_stackup_table => {
-                    let table = self
-                        .parse_generated_table(GeneratedTableKind::StackupTable, ParentRef::Board)?;
+                    let table = self.parse_generated_table(
+                        GeneratedTableKind::StackupTable,
+                        ParentRef::Board,
+                    )?;
 
                     if let Some(table) = table {
                         self.board.attach_table(table, AddMode::BulkAppend);
@@ -444,11 +449,9 @@ impl PcbParser {
         if !zone_ids.is_empty() {
             let layers = self.board.enabled_layers();
 
-            for zone in zone_ids {
-                // z->SetLayerSetAndRemoveUnusedFills( z->GetLayerSet() & layers ): no model
-                // API yet (change request).
-                crate::port_pending!("ZONE::SetLayerSetAndRemoveUnusedFills", zone, layers);
-            }
+            // z->SetLayerSetAndRemoveUnusedFills( z->GetLayerSet() & layers ) for every zone:
+            // no model API yet (change request).
+            crate::port_pending!("ZONE::SetLayerSetAndRemoveUnusedFills", zone_ids, layers);
         }
 
         // Appended items get fresh UUIDs, so remap the links read in this parse and leave
@@ -580,6 +583,7 @@ impl PcbParser {
 
     /// Port of `parsePAGE_INFO`: `"A4" | "User" w h [portrait])`, user sizes in mm clamped to
     /// `MIN_PAGE_SIZE_MM .. MAX_PAGE_SIZE_PCBNEW_MM`.
+    #[allow(clippy::manual_clamp)] // the C++ comparison chain
     fn parse_page_info(&mut self) -> Result<(), IoError> {
         debug_assert!(
             (self.lexer.cur_tok() == T::T_page && self.required_version <= 20200119)
@@ -680,7 +684,11 @@ impl PcbParser {
                     self.lexer.next_tok()?;
                     title_block.set_comment((comment_number - 1) as usize, &self.lexer.from_utf8());
                 }
-                _ => return Err(self.lexer.expecting_str("title, date, rev, company, or comment")),
+                _ => {
+                    return Err(self
+                        .lexer
+                        .expecting_str("title, date, rev, company, or comment"));
+                }
             }
 
             self.lexer.need_right()?;

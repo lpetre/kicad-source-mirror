@@ -17,5 +17,5 @@
 
 //! Port of `pcbnew/plot_brditems_plotter.cpp`: `BRDITEMS_PLOTTER` struct, `getColor`, pads, zones,
 //! drill marks.
-//! 
+//!
 //! Work packages FAB-04, FAB-11 (`docs/analysis/plot-fab.md` 10.2); not started.

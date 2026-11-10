@@ -40,7 +40,10 @@ impl PcbParser {
     }
 
     /// Port of `parsePCB_SHAPE( BOARD_ITEM* aParent )`: `gr_*` / `fp_*` shapes (and pad primitives). Staging stub (PCBIO-03).
-    pub(crate) fn parse_pcb_shape(&mut self, parent: ParentRef) -> Result<Option<PcbShape>, IoError> {
+    pub(crate) fn parse_pcb_shape(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<PcbShape>, IoError> {
         let _ = &parent;
         self.pending("PCBIO-03")?;
         Ok(None)

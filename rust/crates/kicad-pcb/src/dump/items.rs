@@ -876,7 +876,7 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
 
     if let AnyItem::Field(f) = it.any() {
         emit!(o, "field.id", v_enum(f.field_id()));
-        emit!(o, "field.name", v_str(&f.name(false)));
+        emit!(o, "field.name", v_str(&f.name(true)));
         emit!(o, "field.default_name", v_str(&f.name(true)));
         emit!(o, "field.raw_name", v_str(&f.name(false)));
         emit!(o, "field.ordinal", v_int(f.ordinal()));
@@ -1218,7 +1218,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
             let p = format!("field.{i}.");
             let k = o.item_key(Some(fid.into()));
             emit!(o, format!("{p}key"), k);
-            emit!(o, format!("{p}name"), v_str(&f.name(false)));
+            emit!(o, format!("{p}name"), v_str(&f.name(true)));
             emit!(o, format!("{p}text"), v_str(f.text.text.text()));
         }
 

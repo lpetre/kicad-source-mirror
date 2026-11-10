@@ -686,7 +686,10 @@ pub fn nearest_points_single_shapes(
         (S::Segment(a), S::Arc(b)) => return np_arc_segment(b, a, pb, pa),
 
         (S::Simple(_) | S::PolySetTriangle(_), _)
-            if !matches!(a_b, S::PolySet(_) | S::Compound(_) | S::Null(_) | S::Ellipse(_)) =>
+            if !matches!(
+                a_b,
+                S::PolySet(_) | S::Compound(_) | S::Null(_) | S::Ellipse(_)
+            ) =>
         {
             let a: &dyn ShapeLineChainBase = a_a.as_line_chain_base().expect("line chain base");
 

@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- KiCad Rust port: WebAssembly demo page. Copyright The KiCad Developers. GPL-3.0-or-later. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KiCad Rust WebAssembly</title>
+<style>
+  :root { --bg: #fafafa; --fg: #1d1d1f; --muted: #666; --card: #fff; --line: #ddd; --accent: #1b5e9e; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #17181a; --fg: #e8e8e8; --muted: #999; --card: #222326; --line: #3a3b3f; --accent: #6aa8e8; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; font: 15px/1.45 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.4em; margin: 0 0 4px; }
+  .muted { color: var(--muted); }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+  #drop { border: 2px dashed var(--line); border-radius: 8px; padding: 28px; text-align: center; cursor: pointer; }
+  #drop.over { border-color: var(--accent); }
+  table { border-collapse: collapse; }
+  td, th { padding: 2px 12px 2px 0; text-align: left; font-variant-numeric: tabular-nums; }
+  pre { overflow-x: auto; max-height: 260px; background: var(--bg); padding: 8px; border-radius: 4px; }
+  svg { max-width: 100%; height: auto; }
+  .placeholder { opacity: 0.75; }
+  button { font: inherit; padding: 4px 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>KiCad, ported to Rust, running as WebAssembly</h1>
+  <p class="muted">Module status: <span id="status">loading...</span></p>
+
+  <section>
+    <div id="drop">Drop a <code>.kicad_pcb</code> here, or click to choose one</div>
+    <input id="file" type="file" accept=".kicad_pcb,.kicad_mod,.kicad_sch" hidden>
+  </section>
+
+  <section id="stats-section">
+    <h2>Token statistics</h2>
+    <p id="stats-empty" class="muted">No file yet.</p>
+    <table id="stats" hidden></table>
+    <p id="pretty"></p>
+  </section>
+
+  <section>
+    <h2>Board</h2>
+    <p id="board-result" class="muted">Load a board to try the board loader.</p>
+  </section>
+
+  <section class="placeholder">
+    <h2>Design rule check <small class="muted">(placeholder: kicad-drc not ported yet)</small></h2>
+    <button id="drc" disabled>Run DRC</button> <span id="drc-result"></span>
+  </section>
+
+  <section class="placeholder">
+    <h2>Gerber export <small class="muted">(placeholder: kicad-fab not ported yet)</small></h2>
+    <button id="gerbers" disabled>Export Gerbers</button> <span id="gerbers-result"></span>
+  </section>
+
+  <section>
+    <h2>Rust Gerber plotter</h2>
+    <p class="muted">A small file from <code>plotDemoGerber()</code>; it equals the C++ <code>GERBER_PLOTTER</code> output byte for byte.</p>
+    <pre id="demo-gerber"></pre>
+  </section>
+
+  <section>
+    <h2>Stroke font</h2>
+    <div id="stroke"></div>
+  </section>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

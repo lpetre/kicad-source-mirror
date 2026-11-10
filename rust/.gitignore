@@ -2,3 +2,4 @@ target/
 **/*.rs.bk
 /web/pkg/
 /out/
+/web/pkg-node/

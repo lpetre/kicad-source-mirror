@@ -86,3 +86,35 @@ field and dumping continues.
 | `dump_settings.cpp` | design settings, netclass, stackup, plot params, teardrops, zone settings, `board`, `order` |
 | `dump_defaults.cpp` | `misc` section, `defaults` command |
 | `boost_test_impl.cpp` | header-only Boost.Test implementation for the reused QA sources |
+
+## Rust side (`pcb-dump-rs`) and comparing
+
+`kicad_pcb::dump` (crate feature `dump`, bin `pcb-dump-rs`) prints the Rust board model in the
+same format; fields whose Rust code is still a `port_pending!` stub print
+`pending|SECTION|KEY|FIELD=CXX::Name` instead of a value (`(no Rust API)` = the getter does not
+exist in Rust yet: add it and replace the `no_api(..)` call in `crates/kicad-pcb/src/dump/`),
+other panics `rust-error|...`. `compare.py REF RUST [--section S] [--show N] [--summary-json]`
+prints match / mismatch / pending / rust-error / missing / extra per section (per class for
+`defaults`) and exits 0 only without mismatch / rust-error / missing / extra lines.
+
+Workflow for a package (run cargo from `rust/`, one cargo command at a time):
+
+```
+S=$(mktemp -d)                                   # never run the tools on repository files
+cp path/to/small.kicad_pcb $S/                   # plus .kicad_pro / .kicad_dru if any
+/home/user/kicad-oracle/bin/pcb-dump board --sections pad $S/small.kicad_pcb > $S/ref.txt 2>/dev/null
+cargo run -q -p kicad-pcb --features dump --bin pcb-dump-rs -- board --sections pad $S/small.kicad_pcb > $S/rust.txt
+python3 tools/pcb-dump/compare.py $S/ref.txt $S/rust.txt --section pad --show 20
+```
+
+`board FILE` needs the `.kicad_pcb` parser: until the parser package fills in
+`kicad_pcb::dump::load_board_for_dump` it prints `error|load|...`. In unit tests, call
+`kicad_pcb::dump::dump_board(&board, &opts)` on a board built in memory and compare with
+`kicad_pcb::dump::compare::compare(golden, &rust)` (same rules as `compare.py`).
+
+`defaults` works now: `cargo test -p kicad-pcb --features dump --test pcb_dump_defaults --
+--nocapture` compares `pcb-dump-rs defaults` with the committed golden
+`crates/kicad-pcb/tests/golden/pcb_dump_defaults.txt` (regenerate with
+`pcb-dump defaults`, keep the `#` header) and fails on any mismatch / rust-error / missing /
+extra line; a field turning from pending into a wrong value fails it, so run it after porting a
+constructor or a getter used there.

@@ -16,5 +16,5 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Port of `common/jobs/job_export_pcb_plot.h` / `.cpp` (job members and defaults).
-//! 
+//!
 //! Work package FAB-07 (`docs/analysis/plot-fab.md` 10.2); not started.

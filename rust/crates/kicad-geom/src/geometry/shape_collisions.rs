@@ -28,20 +28,20 @@
 //! overload.  Poly sets go through `SHAPE_POLY_SET::Collide( const SHAPE* )`
 //! ([`crate::geometry::shape_poly_set::ShapePolySet::collide_shape`]) as in C++.
 
+use crate::cmath::f64_to_i32_x86;
 use crate::geometry::seg::Ecoord;
 use crate::geometry::seg::Seg;
+use crate::geometry::segment_index::SegmentIndex;
 use crate::geometry::shape::{Shape, ShapeLineChainBase, ShapeRef};
 use crate::geometry::shape_arc::ShapeArc;
-use crate::cmath::f64_to_i32_x86;
-use crate::geometry::segment_index::SegmentIndex;
 use crate::geometry::shape_circle::ShapeCircle;
 use crate::geometry::shape_ellipse::ShapeEllipse;
 use crate::geometry::shape_line_chain::ShapeLineChain;
 use crate::geometry::shape_rect::ShapeRect;
 use crate::geometry::shape_segment::ShapeSegment;
 use crate::math::util::ki_round;
-use crate::stdsort::std_sort;
 use crate::math::vector2::Vector2I;
+use crate::stdsort::std_sort;
 
 /// Writes `v` through an optional out-parameter.
 fn set<T>(a_out: &mut Option<&mut T>, v: T) {
@@ -968,9 +968,8 @@ pub fn collide_lcb_lcb(
         let pair_count: i64 = a_segs.len() as i64 * b_segs.len() as i64;
 
         if !need_output {
-            let mut use_index = a_clearance >= 0
-                && a_segs.len().min(b_segs.len()) >= 64
-                && pair_count >= 4096;
+            let mut use_index =
+                a_clearance >= 0 && a_segs.len().min(b_segs.len()) >= 64 && pair_count >= 4096;
 
             if use_index {
                 let (queries, indexed) = if b_segs.len() >= a_segs.len() {
@@ -1074,9 +1073,9 @@ pub fn collide_lcb_lcb(
                 }
 
                 let collide_pair = |a_a_seg: &Seg,
-                                        a_b_seg: &Seg,
-                                        closest_dist: &mut i32,
-                                        nearest: &mut Vector2I|
+                                    a_b_seg: &Seg,
+                                    closest_dist: &mut i32,
+                                    nearest: &mut Vector2I|
                  -> CollisionResult {
                     let (collides, dist) = a_a_seg.collide_actual(a_b_seg, a_clearance);
 
@@ -1323,7 +1322,7 @@ fn collide_ellipse_circle(
     let eff_sq: Ecoord = eff_clr as Ecoord * eff_clr as Ecoord;
 
     if d_sq == 0 || d_sq < eff_sq {
-        if let Some(a) = a_actual.as_deref_mut() {
+        if let Some(a) = a_actual {
             let d: i32 = f64_to_i32_x86((d_sq as f64).sqrt().round());
             *a = 0.max(d - r);
         }
@@ -1498,7 +1497,7 @@ fn collide_single_shapes(
         (S::LineChain(a), S::Rect(b)) => collide_rect_lcb(b, a, cl, act, loc, a_mtv),
         (S::LineChain(a), S::Circle(b)) => collide_circle_lcb(b, a, cl, act, loc, a_mtv),
         (S::LineChain(a), S::Segment(b)) => collide_lcb_segment(a, b, cl, act, loc),
-        (S::LineChain(a), S::Arc(b)) => collide_arc_line_chain(b, a, cl, act, loc),
+        (S::LineChain(a), S::Arc(b)) => reversed(collide_arc_line_chain(b, a, cl, act, loc), a_mtv),
 
         (S::Segment(a), S::Rect(b)) => collide_rect_segment(b, a, cl, act, loc),
         (S::Segment(a), S::Circle(b)) => reversed(
@@ -1509,7 +1508,7 @@ fn collide_single_shapes(
         (S::Segment(a), S::Segment(b)) => collide_segment_segment(a, b, cl, act, loc),
         (S::Segment(a), S::Simple(b)) => collide_lcb_segment(b, a, cl, act, loc),
         (S::Segment(a), S::PolySetTriangle(b)) => collide_lcb_segment(b, a, cl, act, loc),
-        (S::Segment(a), S::Arc(b)) => collide_arc_segment(b, a, cl, act, loc),
+        (S::Segment(a), S::Arc(b)) => reversed(collide_arc_segment(b, a, cl, act, loc), a_mtv),
 
         (S::Simple(a), S::Rect(b)) => collide_rect_lcb(b, a, cl, act, loc, a_mtv),
         (S::PolySetTriangle(a), S::Rect(b)) => collide_rect_lcb(b, a, cl, act, loc, a_mtv),
@@ -1517,8 +1516,8 @@ fn collide_single_shapes(
         (S::PolySetTriangle(a), S::Circle(b)) => collide_circle_lcb(b, a, cl, act, loc, a_mtv),
         (S::Simple(a), S::Segment(b)) => collide_lcb_segment(a, b, cl, act, loc),
         (S::PolySetTriangle(a), S::Segment(b)) => collide_lcb_segment(a, b, cl, act, loc),
-        (S::Simple(a), S::Arc(b)) => collide_arc_lcb(b, a, cl, act, loc),
-        (S::PolySetTriangle(a), S::Arc(b)) => collide_arc_lcb(b, a, cl, act, loc),
+        (S::Simple(a), S::Arc(b)) => reversed(collide_arc_lcb(b, a, cl, act, loc), a_mtv),
+        (S::PolySetTriangle(a), S::Arc(b)) => reversed(collide_arc_lcb(b, a, cl, act, loc), a_mtv),
 
         (S::Arc(a), S::Rect(b)) => collide_arc_rect(a, b, cl, act, loc, a_mtv),
         (S::Arc(a), S::Circle(b)) => collide_arc_circle(a, b, cl, act, loc, a_mtv),

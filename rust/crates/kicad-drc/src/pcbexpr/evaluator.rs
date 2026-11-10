@@ -41,8 +41,8 @@
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{EdaDataType, EdaUnits, PcbLayerId};
 use kicad_geom::math::util::ki_round;
-use kicad_libeval::eda_units::{PCB_IU_SCALE, double_value_from_string_with_units};
 use kicad_libeval::eda_units::EdaDataType as LibevalDataType;
+use kicad_libeval::eda_units::{PCB_IU_SCALE, double_value_from_string_with_units};
 use kicad_libeval::{
     Compiler, Context, ErrorStatus, FuncCallRef, NoCustomValue, NoVarRef, Ucode, UcodeBinder,
     UnitResolver, VarType,
@@ -223,8 +223,10 @@ where
     /// result is only updated when the expression evaluates to a number.
     pub fn evaluate(&mut self, expr: &str) -> bool {
         let mut ucode: Ucode<B> = Ucode::new(B::default());
-        let mut preflight_context: Context<'_, B> =
-            Context::new(B::new_env(DrcConstraintT::NullConstraint as i32, PcbLayerId::FCu));
+        let mut preflight_context: Context<'_, B> = Context::new(B::new_env(
+            DrcConstraintT::NullConstraint as i32,
+            PcbLayerId::FCu,
+        ));
 
         if !self
             .compiler
@@ -233,8 +235,10 @@ where
             return false;
         }
 
-        let mut evaluation_context: Context<'_, B> =
-            Context::new(B::new_env(DrcConstraintT::NullConstraint as i32, PcbLayerId::FCu));
+        let mut evaluation_context: Context<'_, B> = Context::new(B::new_env(
+            DrcConstraintT::NullConstraint as i32,
+            PcbLayerId::FCu,
+        ));
         let result = ucode.run(&mut evaluation_context);
         let value = evaluation_context.value(result);
 

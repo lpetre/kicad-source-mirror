@@ -17,5 +17,5 @@
 
 //! Port of `pcbnew/plot_brditems_plotter.cpp`: `PlotBoardGraphicItem`, `PlotFootprintGraphicItems`,
 //! `PlotShape`, `PlotDimension`, `PlotPcbTarget`, `PlotBarCode`, `PlotTableBorders`.
-//! 
+//!
 //! Work package FAB-05 (`docs/analysis/plot-fab.md` 10.2); not started.

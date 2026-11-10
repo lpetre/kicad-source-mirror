@@ -455,4 +455,127 @@ mod tests {
         p.set_svg_precision(9);
         assert_eq!(p.svg_precision, 6);
     }
+
+    /// One modification of the C++ oracle's `modify( p, i )`; false past the last one.
+    fn modify(p: &mut PcbPlotParams, i: i32) -> bool {
+        match i {
+            0 => p.set_layer_selection(&Lset::from_layers(&[PcbLayerId::FCu])),
+            1 => p.set_plot_on_all_layers_sequence(vec![PcbLayerId::FCu]),
+            2 => p.use_gerber_protel_extensions = true,
+            3 => p.gerber_disable_apert_macros = true,
+            4 => p.use_gerber_x2_format = false,
+            5 => p.include_gerber_netlist_info = false,
+            6 => p.create_gerber_job_file = false,
+            7 => p.set_gerber_precision(5),
+            8 => p.dashed_line_dash_ratio = 5.0,
+            9 => p.dashed_line_gap_ratio = 5.0,
+            10 => p.plot_drawing_sheet = true,
+            11 => p.dxf_plot_mode = DxfOutlineMode::Sketch,
+            12 => p.dxf_polygon_mode = false,
+            13 => p.dxf_units = DxfUnits::Mm,
+            14 => p.dxf_export_as_multi_layered_file = true,
+            15 => p.set_svg_precision(3),
+            16 => p.png_dpi = 600,
+            17 => p.png_antialias = false,
+            18 => p.use_aux_origin = true,
+            19 => p.negative = true,
+            20 => p.mirror = true,
+            21 => p.pdf_front_fp_property_popups = false,
+            22 => p.pdf_back_fp_property_popups = false,
+            23 => p.pdf_metadata = false,
+            24 => p.plot_reference = false,
+            25 => p.plot_value = false,
+            26 => p.plot_fp_text = false,
+            27 => p.sketch_pads_on_fab_layers = true,
+            28 => p.plot_pad_numbers = true,
+            29 => p.hide_dnp_fps_on_fab_layers = true,
+            30 => p.sketch_dnp_fps_on_fab_layers = false,
+            31 => p.crossout_dnp_fps_on_fab_layers = false,
+            32 => p.subtract_mask_from_silk = true,
+            33 => p.drill_marks = DrillMarks::NoDrillShape,
+            34 => p.scale_selection = 3,
+            35 => p.auto_scale = true,
+            36 => p.scale = 2.0,
+            37 => p.a4_output = true,
+            38 => p.fine_scale_adjust_x = 0.5,
+            39 => p.fine_scale_adjust_y = 0.5,
+            40 => p.width_adjust = 7,
+            41 => p.text_mode = PlotTextMode::Stroke,
+            42 => p.black_and_white = false,
+            43 => p.output_directory = "out".to_string(),
+            44 => p.skip_npth_pads = true,        // not compared
+            45 => p.sketch_pad_line_width = 5,    // not compared
+            46 => p.pdf_single = true,            // not compared
+            47 => p.svg_fit_page_to_board = true, // not compared
+            48 => p.layer = PcbLayerId::BCu,      // not compared
+            _ => return false,
+        }
+
+        true
+    }
+
+    /// Replays the plot-params section of the C++ oracle (`tests/oracle/m6_stackup_oracle.cpp`,
+    /// golden `tests/golden/m6_stackup_oracle.txt`): precision clamping and the `IsSameAs`
+    /// matrix (every modification, both directions, for every plot format).
+    #[test]
+    fn m6_oracle_plot_params() {
+        let mut out = Vec::new();
+
+        for prec in [-1, 0, 4, 5, 6, 7] {
+            let mut p = PcbPlotParams::default();
+            p.set_gerber_precision(prec);
+            out.push(format!("gbrprec|{prec}|{}", p.gerber_precision()));
+        }
+
+        for prec in [0u32, 2, 3, 4, 6, 7, u32::MAX] {
+            let mut p = PcbPlotParams::default();
+            p.set_svg_precision(prec);
+            out.push(format!("svgprec|{prec}|{}", p.svg_precision()));
+        }
+
+        for f in [
+            PlotFormat::Hpgl,
+            PlotFormat::Gerber,
+            PlotFormat::Post,
+            PlotFormat::Dxf,
+            PlotFormat::Pdf,
+            PlotFormat::Svg,
+        ] {
+            let mut line = format!("same|{}|", f as i32);
+
+            for i in 0.. {
+                let a = PcbPlotParams {
+                    format: f,
+                    ..PcbPlotParams::default()
+                };
+                let mut b = a.clone();
+
+                if !modify(&mut b, i) {
+                    break;
+                }
+
+                line += if a.is_same_as(&b) { "1" } else { "0" };
+                line += if b.is_same_as(&a) { "1" } else { "0" };
+            }
+
+            let a = PcbPlotParams {
+                format: f,
+                ..PcbPlotParams::default()
+            };
+            let b = PcbPlotParams::default();
+            out.push(format!(
+                "{line}|{}|{}",
+                a.is_same_as(&a) as i32,
+                a.is_same_as(&b) as i32
+            ));
+        }
+
+        let expected: Vec<&str> = include_str!("../tests/golden/m6_stackup_oracle.txt")
+            .lines()
+            .filter(|l| {
+                l.starts_with("gbrprec|") || l.starts_with("svgprec|") || l.starts_with("same|")
+            })
+            .collect();
+        assert_eq!(out, expected);
+    }
 }

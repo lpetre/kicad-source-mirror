@@ -39,6 +39,15 @@ fracture / self-touching fallbacks and hash check, the triangle index, the trian
 `Collide( SHAPE* )`), closing GAP-P1, GAP-5 and GAP-P4; verified by the `tri_oracle` (140,000
 cases, bit for bit, triangle lists and their order included).
 
+**Work package G5** (collision matrix) completed `shape_collisions.cpp` (every `Collide( A, B )`
+pair incl. `SHAPE_LINE_CHAIN_BASE` against `SHAPE_LINE_CHAIN_BASE` with its `SEGMENT_INDEX`
+gates, rounded rectangles, the ellipse pairs, the poly-set dispatch through
+`SHAPE_POLY_SET::Collide( SHAPE* )`, compounds), ported `shape_nearest_points.cpp`
+(`SHAPE::NearestPoints`, which also completes `SHAPE_ARC::NearestPoints( SHAPE_RECT )`),
+`shape_index.h` and `shape_index_list.h`, added `Shape::indexable_subshape( i )`, and closed
+GAP-4, GAP-P2 and GAP-P3; verified by the `coll_oracle` (245,000 cases, every ordered pair of 13
+shape kinds, bit for bit).
+
 Everything in this crate builds for `wasm32-unknown-unknown` and has no `unsafe`.  Its only
 dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependency, feature
 `usingz`; pure Rust, BSL-1.0; PORTING.md section 9).
@@ -75,7 +84,7 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `libs/kimath/include/geometry/rtree/rtree_node.h` | `src/geometry/rtree/rtree_node.rs` | ported: `HilbertXY2D` (`hilbert_xy2d`), `HilbertND2D` (`hilbert_nd2d`), `OverlapMask2D` (`overlap_mask`, all `D`), `RTREE_NODE` (`RtreeNode`, all methods), `SLAB_ALLOCATOR` (`NodeArena`: `allocate`, `free`, `memory_usage`); see D12 |
 | `libs/kimath/include/geometry/rtree/packed_rtree.h` | `src/geometry/rtree/packed_rtree.rs` (`PackedRTree`, `PackedRTreeBuilder`) | ported (`Builder::Reserve/Add/Build`, `Search`, `begin/end`, `size`, `empty`, `MemoryUsage`; move = `std::mem::take`) |
 | `libs/kimath/include/geometry/rtree/dynamic_rtree.h` | `src/geometry/rtree/dynamic_rtree.rs` (`DynamicRTree`, `BulkEntry`, `Iter`) | ported: `Insert`, `Remove` (with the insertion-bbox fallback), `Search`, `RemoveAll`, `BulkLoad`, `size`, `empty`, `MemoryUsage`, `Iterator` (`iter`), `Overlapping` / `SearchRange` / `SearchIterator` (`overlapping`), `NearestNeighbors` (`nearest_neighbors`), and every private R*-tree helper; see D11, D12 |
-| `libs/kimath/include/geometry/rtree/dynamic_rtree_cow.h` (`COW_RTREE`) | - | skipped: only used by the interactive router (`SHAPE_INDEX`), see GAP-4 |
+| `libs/kimath/include/geometry/rtree/dynamic_rtree_cow.h` (`COW_RTREE`) | - | skipped: only used by the interactive router through `SHAPE_INDEX`, which the port builds on `DynamicRTree` (D-C2), see GAP-4b |
 | `thirdparty/delaunator/delaunator.cpp`, `.hpp` | `src/thirdparty/delaunator.rs` (`Delaunator`, `Point`, `INVALID_INDEX`, `DelaunatorError`) | ported statement by statement (incl. `get_hull_area`, `get_triangle_area`; the unused `clockwise` helpers are omitted); MIT notice kept; see D13 |
 | `thirdparty/nanoflann/nanoflann.hpp` | `src/thirdparty/nanoflann.rs` (`KdTreeSingleIndexAdaptor`, `DatasetAdaptor`, `KnnResultSet`, `RadiusResultSet`, `ResultItem`, `SearchParameters`, `KdTreeSingleIndexAdaptorParams`) | partial: exactly the subset KiCad uses (`convert_shape_list_to_polygon.cpp`, `fix_board_shape.cpp`): static kd-tree, `L2_Simple_Adaptor`, `knnSearch`, `radiusSearch`, `findNeighbors`; BSD notice kept; see GAP-6 |
 | `libs/kimath/include/geometry/polygon_triangulation.h` (`POLYGON_TRIANGULATION`) | `src/geometry/polygon_triangulation.rs` (`PolygonTriangulation`; consts `TRIANGULATE_SIMPLIFICATION_LEVEL`, `TRIANGULATE_MINIMUM_AREA`, `TRIANGULATE_DELAUNAY_REFINE`) | ported (G4b): both `TesselatePolygon`s (`tesselate_chain`, `tesselate_polygon`), `PartitionAreaFractionsForTesting`, and every private helper (scanline splitting, balanced partition, `simplifyList`, `decimateList`, `removeNullTriangles`, `earcutList` / `earcutRing` with the ear lookahead and reflex index, `createRing`, `eliminateHoles`, `filterPoints`, `findHoleBridge`, `subdividePolygon`, `splitPolygon`, `clipRemainingEars`, `goodSplit`, `intersects`, `intersectsPolygon`); `logRemaining` / `logVertices` (trace output only) dropped; see D-T1..D-T3 |
@@ -89,9 +98,9 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `geometry/approximation.h` (`ERROR_LOC`) | `src/geometry/approximation.rs` (`ErrorLoc`, `ERROR_INSIDE`, `ERROR_OUTSIDE`) | ported |
 | `geometry/shape.h`, `src/geometry/shape.cpp` | `src/geometry/shape.rs` | ported (design: `docs/design/geom-shapes.md`) |
 | - `SHAPE_TYPE`, `SHAPE_TYPE_asString` | `ShapeType`, `shape_type_as_string` | ported |
-| - `SHAPE_BASE`, `SHAPE` (virtual interface) | trait `Shape` (+ enum `ShapeRef` for dispatch) | ported; `GetClearance` (also free fn `get_clearance`), `Distance`, `SquaredDistance`, `PointInside`, `Format`, `Centre` defaults; `Parse` is not part of the trait (only `SHAPE_LINE_CHAIN` implements it: `ShapeLineChain::parse`); `NearestPoints( SHAPE* )` is the G5 stub `shape_collisions::nearest_points` |
+| - `SHAPE_BASE`, `SHAPE` (virtual interface) | trait `Shape` (+ enum `ShapeRef` for dispatch) | ported; `GetClearance` (also free fn `get_clearance`), `Distance`, `SquaredDistance`, `PointInside`, `Format`, `Centre` defaults; `Parse` is not part of the trait (the base `SHAPE::Parse` is `assert( false )`; `SHAPE_LINE_CHAIN` / `SHAPE_POLY_SET` implement it: `ShapeLineChain::parse`, `ShapePolySet::parse`); `NearestPoints( SHAPE* )` is `Shape::nearest_points` (G5); `indexable_subshape( i )` (no C++ counterpart, G5) returns the `i`-th of `indexable_subshapes()` without allocating (compounds, triangulated poly sets) |
 | - `SHAPE_LINE_CHAIN_BASE` + its methods in `shape_line_chain.cpp` | trait `ShapeLineChainBase` (`lcb_collide_point`, `lcb_collide_seg`, `lcb_squared_distance`, `lcb_point_inside`, `point_on_edge`, `edge_containing_point`) | ported |
-| `geometry/shape_arc.h`, `src/geometry/shape_arc.cpp` | `src/geometry/shape_arc.rs` (`ShapeArc`) | ported, except `TransformToPolygon` (GAP-5) and `NearestPoints( SHAPE_RECT )` (G5 stub, GAP-4) |
+| `geometry/shape_arc.h`, `src/geometry/shape_arc.cpp` | `src/geometry/shape_arc.rs` (`ShapeArc`) | ported (`NearestPoints( SHAPE_RECT )` completed in G5) |
 | `geometry/shape_circle.h` (+ `Format`, `TransformToPolygon` from `shape_segment.cpp`) | `src/geometry/shape_circle.rs` | ported, except `TransformToPolygon` (GAP-5) |
 | `geometry/shape_rect.h`, `src/geometry/shape_rect.cpp` | `src/geometry/shape_rect.rs` | ported; rounded corners (`ROUNDRECT`) GAP-5 |
 | `geometry/shape_segment.h`, `src/geometry/shape_segment.cpp` | `src/geometry/shape_segment.rs` | ported, except `TransformToPolygon` (GAP-5) |
@@ -113,7 +122,10 @@ dependency is the vendored, fidelity-patched `clipper2-rs` 0.3.0 (path dependenc
 | `geometry/segment_index.h` (`SEGMENT_INDEX`) | `src/geometry/segment_index.rs` (`SegmentIndex`) | ported (over the ported `PACKED_RTREE`, same visit order) |
 | `geometry/fracture_edge_index_utils.h` (`KIGEOM::FRACTURE_INDEX`) | `src/geometry/fracture_edge_index_utils.rs` | ported (`size_t` = `u64`) |
 | `thirdparty/clipper2` (Clipper2, built with `USINGZ`) | `rust/vendor/clipper2-rs` (crate `clipper2_rs` 0.3.0 + `clipper2-rs-0.3.0-kicad-fidelity.patch`, see its `README-KICAD.md`) | vendored, re-validated (see "Clipper2 re-validation") |
-| `src/geometry/shape_collisions.cpp` | `src/geometry/shape_collisions.rs` | **partial** (G5): `collideShapes` (compounds), the matrix `collideSingleShapes`, and every pair listed in GAP-4 as served |
+| `src/geometry/shape_collisions.cpp` | `src/geometry/shape_collisions.rs` | ported (G5): every static `Collide( A, B )` (`collide_<a>_<b>`; `Collide( SHAPE_LINE_CHAIN_BASE, SHAPE_LINE_CHAIN_BASE )` is the public `collide_lcb_lcb`), `collideEllipseVsSegments`, `pushoutForce`, `CollCase` / `CollCaseReversed` (spelled out per pair in `collide_single_shapes`, with the C++ overload resolution), `collideSingleShapes`, `collideShapes` (`collide_shapes`), `SHAPE::Collide` (trait `collide` / `collide_mtv`); `unsupported_g5` remains as the "Unsupported collision" fallback (nested compounds); D-C1 |
+| `src/geometry/shape_nearest_points.cpp` | `src/geometry/shape_nearest_points.rs` | ported (G5): every static `NearestPoints( A, B )` (`np_<a>_<b>`), `NearestPointsCase(Reversed)`, `nearestPointsSingleShapes` (`nearest_points_single_shapes`), `nearestPoints` / `SHAPE::NearestPoints` (`nearest_points`, also `shape_collisions::nearest_points` and `Shape::nearest_points`) |
+| `geometry/shape_index.h` (`SHAPE_INDEX`, `shapeFunctor`, `boundingBox`, `acceptVisitor`, `collide`, `queryCallback`) | `src/geometry/shape_index.rs` (`ShapeIndex<T>`, trait `ShapeIndexItem` = `T::Shape( aLayer )`, `SharedShape` = `SHAPE*` item compared by identity) | ported (G5) over `DynamicRTree` instead of `COW_RTREE` (D-C2): `Add` (both), `Remove`, `RemoveAll`, `Accept`, `BulkLoad`, `Reindex`, `Query`, `Clone` (`clone_index`), iteration, `Size` |
+| `geometry/shape_index_list.h` (`SHAPE_INDEX_LIST`) | `src/geometry/shape_index_list.rs` (`ShapeIndexList<T>`, `ShapeEntry`, `QueryIterator`) | ported (G5): `Add`, `Remove`, `Size`, `Query` (exact / bbox only), `Clear`, `qbegin` / `qend` (an `Iterator`), `begin` / `end` |
 | `geometry/circle.h`, `src/geometry/circle.cpp` | `src/geometry/circle.rs` (`Circle`) | ported; the non-const `Contains()` overload is `contains_inside()` |
 | `geometry/arc_chord_params.h/.cpp` | `src/geometry/arc_chord_params.rs` (`ArcChordParams`) | ported |
 | `geometry/arc_construction.h/.cpp` | `src/geometry/arc_construction.rs` | ported |
@@ -221,9 +233,14 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/test_distribute.cpp` | `tests/test_distribute.rs` | 6 of 6 |
 | `qa/tests/libs/kimath/math/test_vector3.cpp` | `tests/test_vector3.rs` | 5 of 5 (+1 extra: norm, normalize, stream output) |
 | `qa/tests/libs/kimath/math/test_matrix3x3.cpp` | - | not ported (`matrix3x3.h` skipped) |
-| `qa/tests/libs/kimath/geometry/test_shape_arc.cpp` | `tests/test_shape_arc.rs` | 36 of 36 test cases (the data tables in full); 31 pass, 5 `#[ignore]`d: `CollideArcToPolygonApproximation`, the three `Transform*ArcToPolygon` tests (need `TransformArcToPolygon` / poly-set collisions) and the chain-to-chain quarter of `CollideArc` (split out as `collide_arc_chain_to_chain`, needs G5) |
+| `qa/tests/libs/kimath/geometry/test_shape_arc.cpp` | `tests/test_shape_arc.rs` | all 35 test cases (the data tables in full; the chain-to-chain quarter of `CollideArc` is split out as `collide_arc_chain_to_chain`); nothing `#[ignore]`d since G5 |
 | `qa/tests/libs/kimath/geometry/test_shape_line_chain.cpp` | `tests/test_shape_line_chain.rs` | 38 of 38 (all data tables; + 2 extra: `Format` / `Parse`, Clipper2 round trip) |
-| `qa/tests/libs/kimath/geometry/test_shape_line_chain_collision.cpp` | `tests/test_shape_line_chain.rs` | 5 of 10 ported, all `#[ignore]`d (`Collide_LineToLine`, `_LineToArc`, `_ArcToArc`, `_WithClearance`, `_NoClearance`: chain-to-chain `SHAPE::Collide`, collision matrix G5); the 4 corpus tests need `SHAPE_POLY_SET::Parse` and `SEGMENT_INDEX` (G4 / G5) and are not ported |
+| `qa/tests/libs/kimath/geometry/test_shape_line_chain_collision.cpp` | `tests/test_shape_line_chain.rs` | 9 of 9 (G5): `Collide_LineToLine`, `_LineToArc`, `_ArcToArc`, `_WithClearance`, `_NoClearance` and the corpus tests `Collide_RealContourParity`, `_RealContourGateBoundaries`, `_RealContourSharedSegments`, `SegmentIndex_RealContourCandidateSet` (data `qa/data/triangulation`) |
+| `qa/tests/libs/kimath/geometry/test_shape_compound_collision.cpp` | `tests/test_shape_compound_collision.rs` | 1 of 1 (+1 extra: `indexable_subshape`) |
+| `qa/tests/libs/kimath/geometry/test_shape_rect_corner.cpp` | `tests/test_shape_compound_collision.rs` | 1 of 1 |
+| `qa/tests/libs/kimath/geometry/test_shape_nearest_points.cpp` | `tests/test_shape_nearest_points.rs` | 35 of 35 |
+| (`shape_index.h`, `shape_index_list.h`: no C++ tests) | `tests/test_shape_index.rs` | 2 extra |
+| `qa/tests/libs/kimath/geometry/test_shape_ellipse.cpp` (collision cases) | `tests/test_shape_ellipse.rs` | the 9 `SHAPE::Collide` cases are no longer `#[ignore]`d (G5) |
 | `qa/tests/libs/kimath/geometry/test_circle.cpp` | `tests/test_circle.rs` | 7 of 7 |
 | `qa/tests/libs/kimath/geometry/test_arc_chord_params.cpp` | `tests/test_arc_chord_params.rs` | 10 of 10 |
 | `qa/tests/libs/kimath/geometry/test_half_line.cpp` | `tests/test_half_line.rs` | 3 of 3 |
@@ -235,7 +252,7 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/geom_test_utils.h/.cpp` | `test_utils::{Quadrant, is_in_quadrant, segment_completely_in_quadrant, segment_ends_in_quadrant, segment_completely_within_radius, is_point_at_distance, are_points_near_circle, are_perpendicular, segments_have_same_end_points, triangle_min_angle_deg, is_outline_valid}` | `IsOutlineValid` added in G3; `FilletPolySet`, `IsPolySetValid`, `toString( POINT_TYPE )`, `operator<<( TYPED_POINT2I )` need shapes / `point_types.h`: later |
 | `qa/tests/libs/kimath/geometry/fixtures_geometry.h` | `test_utils::CommonTestData` (`unique_points`, `holey_points`, `holey_segments`) | the polygon sets are built by the shapes package |
 | `qa/tests/libs/kimath/geometry/test_packed_rtree.cpp` | `tests/test_packed_rtree.rs` | 11 of 11 |
-| `qa/tests/libs/kimath/geometry/test_dynamic_rtree.cpp` | `tests/test_dynamic_rtree.rs` | suite `DynamicRTree`: 22 of 22 (+1 extra: `Overlapping` order equals `Search` order); suite `CowRTree`: 0 of 6 (GAP-4) |
+| `qa/tests/libs/kimath/geometry/test_dynamic_rtree.cpp` | `tests/test_dynamic_rtree.rs` | suite `DynamicRTree`: 22 of 22 (+1 extra: `Overlapping` order equals `Search` order); suite `CowRTree`: 0 of 6 (GAP-4b) |
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set.cpp` | `tests/test_shape_poly_set.rs` | 3 of 3 |
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_arcs.cpp` | `tests/test_shape_poly_set_arcs.rs` | 3 of 3 (the C++ cases commented out stay commented out) |
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_iterator.cpp` | `tests/test_shape_poly_set_iterator.rs` | 6 of 6 |
@@ -245,7 +262,7 @@ Support modules without a C++ counterpart:
 | `qa/tests/libs/kimath/geometry/test_shape_poly_set_triangle_index.cpp` | `tests/test_shape_poly_set_triangle_index.rs` | 6 of 6 (the cases relying on `Collide()` caching through `const_cast` use `collide_shape_mut`; pointer identity in `TriPointersSurviveMove` becomes "same triangles, moved") |
 | `qa/tests/libs/kimath/geometry/test_poly_triangulation.cpp` | `tests/test_poly_triangulation.rs` | 39 of 39 (data under `qa/data/triangulation`); `FractureEdgeIndexMatchesLinearScan` can only check the indexed fracture (the linear variant is not ported, D-P7); `ConcurrentTriangulation` / `ParallelPartitionTriangulation` run sequentially (the latter with `cache_triangulation_with( .., true, .. )`) |
 | `qa/tests/libs/kimath/geometry/test_poly_ystripes_index.cpp` | `tests/test_poly_ystripes_index.rs` | 3 of 3 (`std::mt19937` / `uniform_int_distribution` replicas) |
-| `test_shape_poly_set_collision.cpp`, triangulation-dependent cases | - | none: all 8 cases use segments / points, already ported; the triangle-based collisions are covered by the two files above and `tri_collide` |
+| `test_shape_poly_set_collision.cpp`, triangulation-dependent cases | - | none: all 8 cases use segments / points, already ported; the triangle-based collisions are covered by the two files above, `tri_collide` and the `coll_oracle` |
 | `fixtures_geometry.h` (poly sets), `geom_test_utils.h` (`IsPolySetValid`, `FilletPolySet`), `qa_utils/geometry/poly_set_construction` / `line_chain_construction` (`BuildPolyset`, `BuildHollowSquare`, `BuildRectChain`, `BuildSquareChain`) | `tests/common_poly/mod.rs` | added in G4a (closes GAP-3 except `ChainsAreCyclicallyEqual`) |
 | (Clipper2 fidelity patch, `gnu_sort.rs`) | `tests/test_stdsort.rs` | `std_sort` and the vendored Clipper2's private libstdc++ sort copy give identical permutations on 4000 tie-heavy arrays |
 
@@ -271,6 +288,42 @@ In-module unit tests (`#[cfg(test)]`, 55 tests) cover additional behaviour of ev
 Two oracles: `geom_oracle` (package G1, compiles the kimath sources it needs with stub wx
 headers) and `shapes_oracle` (package G2, links the static libraries of the reference build).
 
+### `coll_oracle` (G5)
+
+`tests/oracle/coll_oracle.cpp` links `libkimath.a` (+ `libcore.a`, `libclipper2.a`,
+`libkicommon.so`) and prints 7 sections; replay: `tests/oracle_coll_diff.rs` with
+`tests/oracle/coll_sections.rs`, golden `tests/golden/coll_oracle.txt`.  Shapes of 13 kinds:
+rectangle, rounded rectangle, segment (zero length, widths), circle, arc (widths, effectively
+straight three-point arcs), simple polygon, line chain without arcs (short; 64..200 point random
+walks for the index gates) and with arcs, poly set (star / rectangle outlines, holes; cold,
+cached and indexed triangulation), compound (1..3 members of the first 8 kinds), poly-set
+triangle, ellipse (full / arc, any rotation), null; at scales 20 .. 2e7 nm.  Every record holds
+the inputs' bounding boxes and, for both orders, `Collide( b, cl )`, `( b, cl, &actual )`,
+`( b, cl, &actual, &loc )`, `( b, cl, nullptr, &loc )` and `Collide( b, cl, &mtv )` (with preset
+outputs, so untouched outputs are checked too), or `NearestPoints` in both orders.  All sections
+match bit for bit:
+
+| Section | Cases | Content |
+|---|---|---|
+| `libm:coll_matrix` | 100000 | random ordered pairs of all 13 x 13 kinds, clearance 0 / 1..10 / up to half the scale |
+| `libm:coll_touching` | 40000 | the same with B moved so that its bounding box touches A's (+-2 nm, along an edge or at a corner) |
+| `libm:coll_degenerate` | 20000 | degenerate inputs: rectangles of size -1..1, minimal rounded rectangles, zero-length segments, radius 0..3 circles, radius 1..3 arcs, collapsed simple polygons, empty / one-point / duplicate-point chains, empty / 1 nm poly sets, empty compounds, 1 nm triangles and ellipses |
+| `libm:coll_nearest` | 60000 | `SHAPE::NearestPoints` on random pairs of all kinds (also null / ellipse: false, points untouched) |
+| `libm:coll_nearest_touching` | 20000 | the same on touching pairs |
+| `coll_chain_index` | 5000 | 20..300 point random walks against each other or against a +-2 nm shifted copy of a part of A, open / closed, clearances -1 .. 100 steps: every `SEGMENT_INDEX` gate of `Collide( SHAPE_LINE_CHAIN_BASE, SHAPE_LINE_CHAIN_BASE )` (probe, both index orientations, candidate / direct scan, exact-hit exit), plus `NearestPoints` |
+
+- Regenerate: `tests/oracle/build_coll_oracle.sh` (about 45 s); find a mismatch with
+  `--dump cpp.txt` and `KICAD_GEOM_ORACLE_DUMP=rust.txt`.  The replay takes about 35 s.
+- Inputs avoid the C++ undefined behaviour (identically on both sides): an arc built from
+  centre, start and angle whose points coincide after rounding (its three-point centre is
+  clamped near the `int` limits and later arithmetic overflows) is replaced by a quarter circle
+  (`safeArc`); effectively straight three-point arcs (clamped centre too) are generated only
+  where the matrix routes them to segments, i.e. not for `NearestPoints` and not against
+  ellipses (`ConvertToPolyline` converts their radius, see the `shapes_oracle` notes).
+- The oracle found one bug of the G2 dispatch: line chain / segment / simple / triangle against
+  an arc are `CollCaseReversed` in C++ (the MTV is negated although the arc functions never
+  write it); fixed in G5.
+
 ### `tri_oracle` (G4b)
 
 `tests/oracle/tri_oracle.cpp` links `libkimath.a` (+ `libcore.a`, `libkicommon.so` for
@@ -295,8 +348,8 @@ Steiner points, every triangle's indices in order).  All sections match bit for 
 - Regenerate: `tests/oracle/build_tri_oracle.sh` (about 2.5 minutes); find a mismatch with
   `--dump cpp.txt` and `KICAD_GEOM_ORACLE_DUMP=rust.txt`.  The replay takes about 2.5 minutes.
 - Not covered: arcs in triangulated sets (`ClearArcs` path; arc construction is libm and G2/G5
-  territory), shapes other than rect / segment / circle / compound in `Collide( SHAPE* )`
-  (line chain / simple against triangles is not served by the G5 collision matrix yet, GAP-4).
+  territory); shapes other than rect / segment / circle / compound in `Collide( SHAPE* )` are
+  covered by the `coll_oracle` (G5).
 
 ### `sps_oracle` (G4a)
 
@@ -685,6 +738,20 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
   `GetArcToSegmentCount`, `SHAPE_POLY_SET( BOX2D )`, `CollideVertex`'s squared norm) use
   `cmath::f64_to_i32_x86` / `f64_to_i64_x86`.
 
+- **D-C1 Collision matrix (G5).** The "MTV not implemented" `wxASSERT_MSG`s are not reproduced
+  (release behaviour: the MTV is left as passed in, then negated by `CollCaseReversed` exactly
+  as in C++).  `Collide( SHAPE_LINE_CHAIN_BASE, SHAPE_LINE_CHAIN_BASE )` sorts its segments with
+  the libstdc++-exact `std_sort` (ties of equal start points keep the reference order) and uses
+  the ported `SEGMENT_INDEX` (same visit order).  `CIRCLE::IntersectLine` adds the chord
+  vector to the projected centre with `int` wrap-around, which the reference build does for the
+  clamped centre of a nearly straight arc (`NearestPoints_ArcToSegment`; same rule as D11).
+- **D-C2 `SHAPE_INDEX` storage.** The C++ class stores its items in a `COW_RTREE` (copy-on-write
+  dynamic R*-tree with shared nodes, not ported); the port uses `DynamicRTree` with the same
+  node size, so `clone_index()` (C++ `Clone()`) is a deep copy.  Query results are the same set;
+  their visit order is the one of `DynamicRTree`, which was not compared with `COW_RTREE` (the
+  only user, the interactive router, is out of scope).  `SHAPE_INDEX_LIST` caches the item's
+  `SHAPE*` in each entry; the port asks the item for its shape when needed.
+
 - **D-T1 Vertex arena (G4b).** `VERTEX` objects live in `VertexSet::vertices` (creation order,
   as the C++ `std::deque`, which `intersectsPolygon` relies on) and link through indices; a null
   dereference of the C++ panics.  `void* m_userData` is a `usize` (0 = `nullptr`).  The vertex
@@ -733,17 +800,8 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **GAP-H1 (G6b)** `nearest.h/.cpp` (needs `SHAPE_ELLIPSE`), `SHAPE_ELLIPSE` and the private
   root-finding / integration helpers of `shape_ellipse.cpp`; `matrix3x3.h` (skipped, no user in
   scope).
-- **GAP-4 Collision matrix (package G5).** `shape_collisions::collide_shapes` serves: null with
-  anything; rect-rect without clearance / distance / location / MTV; rect-circle, rect-segment,
-  rect-line chain / simple / triangle (sharp corners); circle-circle, circle-segment,
-  circle-line chain / simple / triangle (with MTV); segment-segment, segment-line chain /
-  simple / triangle; arc-circle (with MTV), arc-segment, arc-line chain (with its arcs),
-  arc-simple / triangle, arc-arc, arc-rect for effectively straight arcs; compounds of all of
-  these.  It returns false via `unsupported_g5` for: line chain / simple / triangle against each
-  other, rect-rect with clearance / distance / location / MTV or rounded corners, other arc-rect
-  pairs (need `SHAPE::NearestPoints`), and everything involving a poly set.
-  `shape_collisions::nearest_points` (`SHAPE::NearestPoints`, `shape_nearest_points.cpp`) is a
-  stub returning false, which `SHAPE_ARC::NearestPoints( SHAPE_RECT )` relies on.
+- **GAP-4** (closed in G5) the collision matrix and `SHAPE::NearestPoints`: see the map, D-C1
+  and the `coll_oracle`.
 - **GAP-5 Polygonisation of round shapes.** `TransformToPolygon` of `ShapeCircle`,
   `ShapeSegment`, `ShapeArc` and of `ShapeRect` with rounded corners needs
   `convert_basic_shapes_to_polygon` / `ROUNDRECT` (later packages) and leaves the buffer
@@ -754,19 +812,18 @@ Not covered by the oracle (unit tests only): `Box2IMinMax`, `kicore::mirror`,
 - **GAP-S1** (closed in G4a) `SHAPE_LINE_CHAIN::OffsetLine` is `ShapeLineChain::offset_line`
   (verified by `libm:sps_inflate`).
 - **GAP-P1** (closed in G4b) the triangulation: see the map, D-T1..D-T3 and the `tri_oracle`.
-- **GAP-P2 Collision matrix.** `shape_collisions::collide_shapes` (G5) still routes poly-set
-  pairs to `unsupported_g5`; G5 should call `ShapePolySet::collide_shape` like the C++
-  `collideSingleShapes`.
-- **GAP-P3** `SHAPE_LINE_CHAIN` collision corpus tests (`test_shape_line_chain_collision.cpp`)
-  that need `SHAPE_POLY_SET::Parse` and `SEGMENT_INDEX` are now unblocked but not ported (G3/G5
-  test files).
+- **GAP-P2** (closed in G5) poly-set pairs go through `ShapePolySet::collide_shape` like the
+  C++ `collideSingleShapes`.
+- **GAP-P3** (closed in G5) the corpus tests of `test_shape_line_chain_collision.cpp` are
+  ported.
 - **GAP-P4** (closed in G4b) `Seg::intersects_line` converts `aSlope * 1000` with
   `f64_to_i64_x86` (`INT64_MIN` for infinite / NaN / huge slopes, like the reference build) and
   computes the then overflowing cross product with wrapping arithmetic; verified by
   `seg_intersects_line`.
-- **GAP-4 `COW_RTREE`** (`dynamic_rtree_cow.h`, 834 lines) is not ported: its only user is
-  `SHAPE_INDEX` in the interactive router, which is out of scope.  Its 6 tests (suite
-  `CowRTree` of `test_dynamic_rtree.cpp`) are not ported either.
+- **GAP-4b `COW_RTREE`** (`dynamic_rtree_cow.h`, 834 lines) is not ported: its only user is
+  `SHAPE_INDEX` in the interactive router, which is out of scope (the port's `ShapeIndex` uses
+  `DynamicRTree`, D-C2).  Its 6 tests (suite `CowRTree` of `test_dynamic_rtree.cpp`) are not
+  ported either.
 - **GAP-5 `polygon_triangulation.h`** (closed in G4b).
 - **GAP-6 nanoflann subset.** Only what KiCad uses is ported: the static single-index kd-tree
   with the L2 metric (`L2_Simple_Adaptor`), `KNNResultSet` (without `NANOFLANN_FIRST_MATCH`),

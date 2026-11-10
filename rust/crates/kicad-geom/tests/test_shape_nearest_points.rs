@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 //! Port of `qa/tests/libs/kimath/geometry/test_shape_nearest_points.cpp`
 //! (suite `SHAPE_NEAREST_POINTS_TEST`): `SHAPE::NearestPoints()` and the
 //! `SHAPE_ARC::NearestPoints()` overloads.
@@ -61,7 +60,10 @@ fn arc3(a: (i32, i32), m: (i32, i32), e: (i32, i32)) -> ShapeArc {
 
 #[test]
 fn nearest_points_circle_to_circle_separate() {
-    let (r, a, b) = np(&ShapeCircle::new(v(0, 0), 5), &ShapeCircle::new(v(20, 0), 5));
+    let (r, a, b) = np(
+        &ShapeCircle::new(v(0, 0), 5),
+        &ShapeCircle::new(v(20, 0), 5),
+    );
     assert!(r);
     assert_eq!(a, v(5, 0));
     assert_eq!(b, v(15, 0));
@@ -69,7 +71,10 @@ fn nearest_points_circle_to_circle_separate() {
 
 #[test]
 fn nearest_points_circle_to_circle_concentric() {
-    let (r, a, b) = np(&ShapeCircle::new(v(0, 0), 5), &ShapeCircle::new(v(0, 0), 10));
+    let (r, a, b) = np(
+        &ShapeCircle::new(v(0, 0), 5),
+        &ShapeCircle::new(v(0, 0), 10),
+    );
     assert!(r);
     // For concentric circles, points should be on arbitrary direction (positive X by
     // convention)
@@ -342,7 +347,10 @@ fn nearest_points_arc_to_line_chain() {
 
 #[test]
 fn nearest_points_distance_validation() {
-    let (r, a, b) = np(&ShapeCircle::new(v(0, 0), 5), &ShapeCircle::new(v(20, 0), 3));
+    let (r, a, b) = np(
+        &ShapeCircle::new(v(0, 0), 5),
+        &ShapeCircle::new(v(20, 0), 3),
+    );
     assert!(r);
     // Calculate expected distance: center distance - both radii
     let expected_distance = 20 - 5 - 3; // 12
@@ -362,7 +370,10 @@ fn nearest_points_symmetry_test() {
     assert!(result1 && result2);
 
     // Distance should be the same both ways
-    assert_eq!((pt_b1 - pt_a1).euclidean_norm(), (pt_b2 - pt_a2).euclidean_norm());
+    assert_eq!(
+        (pt_b1 - pt_a1).euclidean_norm(),
+        (pt_b2 - pt_a2).euclidean_norm()
+    );
 
     // Points should be swapped (ptA1 should equal ptB2, ptB1 should equal ptA2)
     assert_eq!(pt_a1, pt_b2);
@@ -455,7 +466,10 @@ fn nearest_points_identical_shapes() {
 
 #[test]
 fn nearest_points_zero_size_shapes() {
-    let (r, a, b) = np(&ShapeCircle::new(v(0, 0), 0), &ShapeCircle::new(v(10, 0), 5));
+    let (r, a, b) = np(
+        &ShapeCircle::new(v(0, 0), 0),
+        &ShapeCircle::new(v(10, 0), 5),
+    );
     assert!(r);
     assert_eq!(a, v(0, 0));
     assert_eq!(b, v(5, 0));
@@ -464,7 +478,10 @@ fn nearest_points_zero_size_shapes() {
 #[test]
 fn nearest_points_very_close_shapes() {
     // Just touching
-    let (r, a, b) = np(&ShapeCircle::new(v(0, 0), 5), &ShapeCircle::new(v(10, 0), 5));
+    let (r, a, b) = np(
+        &ShapeCircle::new(v(0, 0), 5),
+        &ShapeCircle::new(v(10, 0), 5),
+    );
     assert!(r);
     assert_eq!(a, v(5, 0));
     assert_eq!(b, v(5, 0));

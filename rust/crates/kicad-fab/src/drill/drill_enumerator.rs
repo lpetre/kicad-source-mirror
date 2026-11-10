@@ -95,7 +95,11 @@ fn backdrill_operation(
     };
 
     if drill.size.y > 0 {
-        op.diameter = if op.diameter > 0 { op.diameter.min(drill.size.y) } else { drill.size.y };
+        op.diameter = if op.diameter > 0 {
+            op.diameter.min(drill.size.y)
+        } else {
+            drill.size.y
+        };
     }
 
     op.is_slot = drill.shape != PadDrillShape::Circle && drill.size.x != drill.size.y;
@@ -233,8 +237,14 @@ fn enumerate_pad(
             out.push(op);
         };
 
-        add_backdrill(pad.lib_padstack().secondary_drill(), DrillOpKind::SecondaryDrill);
-        add_backdrill(pad.lib_padstack().tertiary_drill(), DrillOpKind::TertiaryDrill);
+        add_backdrill(
+            pad.lib_padstack().secondary_drill(),
+            DrillOpKind::SecondaryDrill,
+        );
+        add_backdrill(
+            pad.lib_padstack().tertiary_drill(),
+            DrillOpKind::TertiaryDrill,
+        );
         return;
     }
 
@@ -395,10 +405,25 @@ mod tests {
 
     #[test]
     fn backdrill_set_needs_both_layers_and_a_size() {
-        assert!(is_backdrill_set(&drill(B_CU, PcbLayerId::In2Cu, 300_000, 0)));
-        assert!(is_backdrill_set(&drill(B_CU, PcbLayerId::In2Cu, 0, 300_000)));
+        assert!(is_backdrill_set(&drill(
+            B_CU,
+            PcbLayerId::In2Cu,
+            300_000,
+            0
+        )));
+        assert!(is_backdrill_set(&drill(
+            B_CU,
+            PcbLayerId::In2Cu,
+            0,
+            300_000
+        )));
         assert!(!is_backdrill_set(&drill(B_CU, PcbLayerId::In2Cu, 0, 0)));
-        assert!(!is_backdrill_set(&drill(UNDEFINED_LAYER, PcbLayerId::In2Cu, 1, 1)));
+        assert!(!is_backdrill_set(&drill(
+            UNDEFINED_LAYER,
+            PcbLayerId::In2Cu,
+            1,
+            1
+        )));
         assert!(!is_backdrill_set(&drill(B_CU, UNDEFINED_LAYER, 1, 1)));
     }
 
@@ -406,7 +431,9 @@ mod tests {
     fn backdrill_operation_diameter_and_slot_rules() {
         let span = DrillSpan::new(B_CU, PcbLayerId::In2Cu, true, false);
         let mut board = kicad_pcb::Board::default();
-        let via = Track::Via(Box::new(PcbVia::new(&mut kicad_core::KiidGenerator::default())));
+        let via = Track::Via(Box::new(PcbVia::new(
+            &mut kicad_core::KiidGenerator::default(),
+        )));
         let src = DrillSource::Via(board.add_track(via, kicad_pcb::AddMode::Append).unwrap());
         let uuid = kicad_core::Kiid::default();
 

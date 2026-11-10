@@ -44,9 +44,7 @@
 
 use kicad_core::Kiid;
 use kicad_core::layer_ids::PcbLayerId;
-use kicad_fab::drill::{
-    DrillOpKind, DrillOperation, DrillPostMachining, DrillSpan, HoleAttribute,
-};
+use kicad_fab::drill::{DrillOpKind, DrillOperation, DrillPostMachining, DrillSpan, HoleAttribute};
 use kicad_fab::exporters::gendrill_writer_base::{
     DrillTool, GendrillWriterBase, Ipc4761Features, TypeFile,
 };
@@ -95,7 +93,11 @@ fn type_file(v: i32) -> TypeFile {
 }
 
 fn opt(s: &str) -> Option<i32> {
-    if s == "-" { None } else { Some(s.parse().unwrap()) }
+    if s == "-" {
+        None
+    } else {
+        Some(s.parse().unwrap())
+    }
 }
 
 /// The source ordinal is carried in the source UUID (the port compares holes by value; the
@@ -117,8 +119,11 @@ fn parse_op(f: &[&str]) -> DrillOperation {
     let l = |k: usize| -> PcbLayerId { PcbLayerId(i(k)) };
     assert_eq!(f.len(), 32, "op field count: {f:?}");
     DrillOperation {
-        kind: [DrillOpKind::PrimaryDrill, DrillOpKind::SecondaryDrill, DrillOpKind::TertiaryDrill]
-            [i(0) as usize],
+        kind: [
+            DrillOpKind::PrimaryDrill,
+            DrillOpKind::SecondaryDrill,
+            DrillOpKind::TertiaryDrill,
+        ][i(0) as usize],
         // The handle is not reproducible without a board; holes are identified by `source_id`.
         source_item: None,
         source_id: source_kiid(f[1]),
@@ -214,12 +219,22 @@ fn parse_golden() -> Vec<OracleBoard> {
                 let i = |k: usize| -> i32 { f[k].parse().unwrap() };
                 let b = boards.last_mut().unwrap();
                 assert_eq!(b.spans.len(), i(1) as usize);
-                b.spans.push(DrillSpan::new(PcbLayerId(i(2)), PcbLayerId(i(3)), i(4) != 0, i(5) != 0));
+                b.spans.push(DrillSpan::new(
+                    PcbLayerId(i(2)),
+                    PcbLayerId(i(3)),
+                    i(4) != 0,
+                    i(5) != 0,
+                ));
             }
             "prot" => {
                 let b = boards.last_mut().unwrap();
                 let span = b.spans.len() - 1;
-                b.prots.push((span, feature(f[1].parse().unwrap()), f[2].to_string(), f[3].to_string()));
+                b.prots.push((
+                    span,
+                    feature(f[1].parse().unwrap()),
+                    f[2].to_string(),
+                    f[3].to_string(),
+                ));
             }
             "case" => boards.last_mut().unwrap().cases.push(Case {
                 span: f[1].parse().unwrap(),
@@ -242,7 +257,11 @@ fn parse_golden() -> Vec<OracleBoard> {
             "ffs" => {
                 let c = boards.last_mut().unwrap().cases.last_mut().unwrap();
                 // The NC form starts with "; #@! "; nothing in the strings contains '|'.
-                c.ffs.push((type_file(f[1].parse().unwrap()), f[2] == "1", f[3..].join("|")));
+                c.ffs.push((
+                    type_file(f[1].parse().unwrap()),
+                    f[2] == "1",
+                    f[3..].join("|"),
+                ));
             }
             "name" => {
                 let c = boards.last_mut().unwrap().cases.last_mut().unwrap();
@@ -277,7 +296,11 @@ fn tool_list_names_and_file_functions_match_oracle() {
         for (span_idx, feat, ext, expected) in &ob.prots {
             w.drill_file_extension = ext.clone();
             let got = w.protection_file_name(&ob.spans[*span_idx], *feat);
-            assert_eq!(&got, expected, "{}: protection name {feat:?} span {span_idx}", ob.name);
+            assert_eq!(
+                &got, expected,
+                "{}: protection name {feat:?} span {span_idx}",
+                ob.name
+            );
         }
 
         for case in &ob.cases {
@@ -290,7 +313,11 @@ fn tool_list_names_and_file_functions_match_oracle() {
             w.set_merge_option(case.merge);
             w.build_tool_list(case.raw.clone());
 
-            assert_eq!(w.hole_list_buffer.len(), case.sorted.len(), "{what}: hole count");
+            assert_eq!(
+                w.hole_list_buffer.len(),
+                case.sorted.len(),
+                "{what}: hole count"
+            );
             for (k, (tool_ref, op)) in case.sorted.iter().enumerate() {
                 assert_eq!(&w.hole_list_buffer[k], op, "{what}: sorted hole {k}");
                 assert_eq!(w.hole_tool_references[k], *tool_ref, "{what}: tool ref {k}");
@@ -299,7 +326,10 @@ fn tool_list_names_and_file_functions_match_oracle() {
 
             for (type_, compat, expected) in &case.ffs {
                 let got = w.build_file_function_attribute_string(&span, *type_, *compat);
-                assert_eq!(&got, expected, "{what}: file function {type_:?} compat {compat}");
+                assert_eq!(
+                    &got, expected,
+                    "{what}: file function {type_:?} compat {compat}"
+                );
             }
 
             for (ext, expected) in &case.names {
@@ -358,7 +388,10 @@ fn oracle_contains_unstable_tie_order() {
         }
     }
 
-    assert!(reordered > 0, "no case distinguishes std::sort from a stable sort");
+    assert!(
+        reordered > 0,
+        "no case distinguishes std::sort from a stable sort"
+    );
 }
 
 /// Enumeration from a loaded board (`EnumerateDrillOperations` / `EnumerateDrillSpans`)
@@ -371,8 +404,8 @@ fn oracle_contains_unstable_tie_order() {
 fn enumeration_matches_oracle() {
     #[cfg(feature = "e2e")]
     {
-        use kicad_fab::drill::{DrillQuery, DrillSource, enumerate_drill_operations};
         use kicad_fab::drill::enumerate_drill_spans;
+        use kicad_fab::drill::{DrillQuery, DrillSource, enumerate_drill_operations};
 
         let boards = parse_golden();
         // The corpus list of tests/golden/drill/generate.sh.
@@ -406,7 +439,12 @@ fn enumeration_matches_oracle() {
             }
 
             let mut spans = enumerate_drill_spans(&ctx, false);
-            spans.push(DrillSpan::new(PcbLayerId::FCu, PcbLayerId::BCu, false, true));
+            spans.push(DrillSpan::new(
+                PcbLayerId::FCu,
+                PcbLayerId::BCu,
+                false,
+                true,
+            ));
             assert_eq!(spans, ob.spans, "{}: spans", ob.name);
 
             for case in &ob.cases {
@@ -424,8 +462,11 @@ fn enumeration_matches_oracle() {
                         op
                     })
                     .collect();
-                assert_eq!(got, case.raw, "{}: case span {} merge {} npth {}", ob.name,
-                    case.span, case.merge, case.npth);
+                assert_eq!(
+                    got, case.raw,
+                    "{}: case span {} merge {} npth {}",
+                    ob.name, case.span, case.merge, case.npth
+                );
             }
         }
     }

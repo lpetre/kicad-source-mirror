@@ -29,9 +29,11 @@
 use std::sync::Arc;
 
 use kicad_core::units_provider::UnitsProvider;
-use kicad_core::{KicadT, Kiid, KiidGenerator, PcbLayerId, Severity};
+use kicad_core::{KicadT, Kiid, KiidGenerator, PCB_IU_SCALE, PcbLayerId, Severity};
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
+use kicad_geom::{
+    Box2I, EdaAngle, FlipDirection, Shape, ShapeLineChain, ShapeNull, ShapePolySet, Vector2I,
+};
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::{self, DrcConstraintT, DrcRuleInfo};
@@ -107,12 +109,17 @@ impl RcItem {
 
     /// `GetErrorMessage( aTranslate )`: `m_errorMessage`, or the error text when it is empty.
     pub fn error_message(&self) -> String {
-        crate::port_pending!("RC_ITEM::GetErrorMessage")
+        if self.error_message.is_empty() {
+            self.error_text().to_string()
+        } else {
+            self.error_message.clone()
+        }
     }
 
     /// `SetErrorDetail( aMsg )`: `GetErrorText() + " " + aMsg`.
     pub fn set_error_detail(&mut self, msg: &str) {
-        crate::port_pending!("RC_ITEM::SetErrorDetail", msg)
+        let message = format!("{} {}", self.error_text(), msg);
+        self.set_error_message(&message);
     }
 
     /// `GetSettingsKey()`.
@@ -366,18 +373,96 @@ impl PcbMarker {
     /// warning / error codes, the violating rule's severity, else the board's per-code
     /// severity.
     pub fn severity(&self, ctx: &BoardCtx<'_>) -> Severity {
-        crate::port_pending!("PCB_MARKER::GetSeverity", ctx)
+        if self.is_excluded() {
+            return Severity::Exclusion;
+        }
+
+        let item = &self.rc_item;
+
+        if item.error_code() == drc_api::DRCE_GENERIC_WARNING {
+            return Severity::Warning;
+        } else if item.error_code() == drc_api::DRCE_GENERIC_ERROR {
+            return Severity::Error;
+        }
+
+        if let Some(rule) = item.violating_rule() {
+            if rule.severity != Severity::Undefined {
+                return rule.severity;
+            }
+        }
+
+        ctx.board.design_settings().get_severity(item.error_code())
     }
 
     /// `MARKER_BASE::IsTreatedAsExcluded()`: `m_excluded || GetSeverity() ==
     /// RPT_SEVERITY_EXCLUSION`.
     pub fn is_treated_as_excluded(&self, ctx: &BoardCtx<'_>) -> bool {
-        crate::port_pending!("MARKER_BASE::IsTreatedAsExcluded", ctx)
+        self.excluded || self.severity(ctx) == Severity::Exclusion
+    }
+
+    /// `MARKER_BASE::MarkerScale()`: `m_scalingFactor`, which is the constructor's
+    /// `SCALING_FACTOR` until a GUI calls `SetZoom` (not ported).
+    pub fn marker_scale(&self) -> i32 {
+        PCB_IU_SCALE.mm_to_iu(PCB_MARKER_SCALING_FACTOR_MM)
+    }
+
+    /// `MARKER_BASE::GetBoundingBoxMarker()`: the glyph box (`m_shapeBoundingBox`, the extent
+    /// of `MarkerShapeCorners`) scaled and placed at `m_Pos`.
+    pub fn bounding_box_marker(&self) -> Box2I {
+        let bbox = marker_shape_bounding_box();
+        let scale = self.marker_scale();
+
+        let mut pos = self.pos;
+        pos += bbox.position() * scale;
+
+        Box2I::new(pos, bbox.size() * scale)
+    }
+
+    /// `MARKER_BASE::HitTestMarker( aHitPosition, aAccuracy )`.
+    pub fn hit_test_marker(&self, hit_position: Vector2I, accuracy: i32) -> bool {
+        let bbox = self.bounding_box_marker().inflated(accuracy);
+
+        // Fast hit test using boundary box. A finer test will be made if requested
+        let mut hit = bbox.contains(hit_position);
+
+        if hit {
+            // Fine test
+            let polygon = self.shape_to_polygon(-1);
+            let rel_pos = hit_position - self.pos;
+            hit = polygon.point_inside(rel_pos, accuracy, false);
+        }
+
+        hit
+    }
+
+    /// `MARKER_BASE::HitTestMarker( aRect, aContained, aAccuracy )`.
+    pub fn hit_test_marker_rect(&self, rect: &Box2I, contained: bool, accuracy: i32) -> bool {
+        let bbox = self.bounding_box_marker().inflated(accuracy);
+
+        if contained {
+            return rect.contains_box(&bbox);
+        }
+
+        rect.intersects(&bbox)
     }
 
     /// `MARKER_BASE::ShapeToPolygon( aPolygon, aScale )`: the marker glyph outline.
-    pub fn shape_to_polygon(&self, scale: i32) -> kicad_geom::ShapeLineChain {
-        crate::port_pending!("MARKER_BASE::ShapeToPolygon", scale)
+    /// A negative `scale` (the C++ default -1) uses `MarkerScale()`.
+    pub fn shape_to_polygon(&self, scale: i32) -> ShapeLineChain {
+        let scale = if scale < 0 {
+            self.marker_scale()
+        } else {
+            scale
+        };
+        let mut polygon = ShapeLineChain::new();
+
+        for corner in MARKER_SHAPE_CORNERS {
+            polygon.append_point(corner * scale, false);
+        }
+
+        // Be sure aPolygon is seen as a closed polyline:
+        polygon.set_closed(true);
+        polygon
     }
 
     /// `PCB_MARKER::SetPath( aShapes, aStart, aEnd )`.
@@ -417,18 +502,24 @@ impl PcbMarker {
     }
 
     /// `PCB_MARKER::Rotate()`.
-    pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_MARKER::Rotate", env, centre, angle)
+    pub fn rotate(&mut self, _env: &MutEnv, _centre: Vector2I, _angle: EdaAngle) {
+        // Marker geometry isn't user-editable
     }
 
     /// `PCB_MARKER::Flip()`.
-    pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_MARKER::Flip", env, centre, dir)
+    pub fn flip(&mut self, _env: &MutEnv, _centre: Vector2I, _dir: FlipDirection) {
+        // Marker geometry isn't user-editable
     }
 
-    /// `PCB_MARKER::GetBoundingBox()`.
+    /// `PCB_MARKER::GetBoundingBox()`: the glyph box merged with the path shapes' boxes.
     pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_MARKER::GetBoundingBox", ctx)
+        let mut bbox = self.bounding_box_marker();
+
+        for shape in &self.path_shapes {
+            bbox.merge(&BoardItem::bounding_box(shape, ctx));
+        }
+
+        bbox
     }
 
     /// `PCB_MARKER::GetEffectiveShape()`.
@@ -437,9 +528,12 @@ impl PcbMarker {
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         flash: Flashing,
-        usage: DrcConstraintT,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_MARKER::GetEffectiveShape", ctx, layer, flash, usage)
+        let _ = (ctx, layer, flash);
+        // Markers do not participate in the board geometry space, and therefore have no
+        // effective shape.
+        Arc::new(ShapeNull)
     }
 
     /// `PCB_MARKER::TransformShapeToPolygon()`.
@@ -453,22 +547,26 @@ impl PcbMarker {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_MARKER::TransformShapeToPolygon",
+        // Markers do not participate in the board geometry space, and therefore have no shape.
+        let _ = (
             ctx,
             buffer,
             layer,
             clearance,
             error,
             error_loc,
-            ignore_line_width
-        )
+            ignore_line_width,
+        );
     }
 
     /// `PCB_MARKER::HitTest( aPosition, aAccuracy )`: false for a ratsnest marker, else
     /// `HitTestMarker`.
-    pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_MARKER::HitTest", ctx, pos, accuracy)
+    pub fn hit_test(&self, _ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
+        if self.marker_type == MarkerT::Ratsnest {
+            false
+        } else {
+            self.hit_test_marker(pos, accuracy)
+        }
     }
 
     /// `PCB_MARKER::HitTest( aRect, aContained, aAccuracy )`.
@@ -479,7 +577,13 @@ impl PcbMarker {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!("PCB_MARKER::HitTest (rect)", ctx, rect, contained, accuracy)
+        let _ = ctx;
+
+        if self.marker_type == MarkerT::Ratsnest {
+            return false;
+        }
+
+        self.hit_test_marker_rect(rect, contained, accuracy)
     }
 
     /// `PCB_MARKER::GetItemDescription()`.
@@ -489,13 +593,156 @@ impl PcbMarker {
         units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("PCB_MARKER::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+        let text = if full {
+            self.rc_item.error_message()
+        } else {
+            self.rc_item.error_text().to_string()
+        };
+
+        format!("Marker ({text})")
     }
+}
+
+/// `SCALING_FACTOR` of `pcbnew/pcb_marker.cpp`: `pcbIUScale.mmToIU( 0.1625 )`.
+const PCB_MARKER_SCALING_FACTOR_MM: f64 = 0.1625;
+
+/// `MarkerShapeCorners` (`common/marker_base.cpp`): the corners of the marker glyph in
+/// arbitrary units, scaled by `MarkerScale()`.
+const MARKER_SHAPE_CORNERS: [Vector2I; 9] = [
+    Vector2I::new(0, 0),
+    Vector2I::new(8, 1),
+    Vector2I::new(4, 3),
+    Vector2I::new(13, 8),
+    Vector2I::new(9, 9),
+    Vector2I::new(8, 13),
+    Vector2I::new(3, 4),
+    Vector2I::new(1, 8),
+    Vector2I::new(0, 0),
+];
+
+/// `MARKER_BASE::m_shapeBoundingBox` as the constructor computes it: origin = the minimum,
+/// end = the maximum of the corners.
+fn marker_shape_bounding_box() -> Box2I {
+    let mut start = MARKER_SHAPE_CORNERS[0];
+    let mut end = start;
+
+    for point in &MARKER_SHAPE_CORNERS[1..] {
+        start.x = start.x.min(point.x);
+        start.y = start.y.min(point.y);
+        end.x = end.x.max(point.x);
+        end.y = end.y.max(point.y);
+    }
+
+    let mut bbox = Box2I::default();
+    bbox.set_origin(start);
+    bbox.set_end(end);
+    bbox
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn marker_with(code: i32, rule: Option<Severity>) -> PcbMarker {
+        let mut item = RcItem {
+            error_code: code,
+            error_title: "Title".to_string(),
+            ..RcItem::default()
+        };
+        item.violating_rule = rule.map(|severity| DrcRuleInfo {
+            severity,
+            ..DrcRuleInfo::default()
+        });
+        let mut g = KiidGenerator::default();
+        PcbMarker::new(&mut g, Arc::new(item), Vector2I::new(1000, 2000), 0)
+    }
+
+    /// `PCB_MARKER::GetSeverity` precedence: exclusion, the generic codes, the violating rule's
+    /// own severity, then the board's per-code severity; `IsTreatedAsExcluded`.
+    #[test]
+    fn marker_severity_precedence() {
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let code = drc_api::DRCE_CLEARANCE;
+        let board_severity = board.design_settings().get_severity(code);
+
+        assert_eq!(marker_with(code, None).severity(&ctx), board_severity);
+        assert_eq!(
+            marker_with(code, Some(Severity::Undefined)).severity(&ctx),
+            board_severity
+        );
+        assert_eq!(
+            marker_with(code, Some(Severity::Warning)).severity(&ctx),
+            Severity::Warning
+        );
+        assert_eq!(
+            marker_with(drc_api::DRCE_GENERIC_WARNING, Some(Severity::Error)).severity(&ctx),
+            Severity::Warning
+        );
+        assert_eq!(
+            marker_with(drc_api::DRCE_GENERIC_ERROR, None).severity(&ctx),
+            Severity::Error
+        );
+
+        let mut m = marker_with(code, Some(Severity::Warning));
+        assert!(!m.is_treated_as_excluded(&ctx));
+        m.set_excluded(true, "ok");
+        assert_eq!(m.severity(&ctx), Severity::Exclusion);
+        assert!(m.is_treated_as_excluded(&ctx));
+        assert!(marker_with(code, Some(Severity::Exclusion)).is_treated_as_excluded(&ctx));
+    }
+
+    /// The glyph: `MarkerShapeCorners` scaled by `mmToIU( 0.1625 )` = 162500, its box at
+    /// `m_Pos`, the fine hit test inside the polygon, and the ratsnest exception.
+    #[test]
+    fn marker_glyph_box_and_hit_test() {
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let m = marker_with(drc_api::DRCE_CLEARANCE, None);
+        assert_eq!(m.marker_scale(), 162_500);
+        assert_eq!(
+            m.bounding_box(&ctx),
+            Box2I::new(
+                Vector2I::new(1000, 2000),
+                Vector2I::new(13 * 162_500, 13 * 162_500)
+            )
+        );
+        let chain = m.shape_to_polygon(-1);
+        assert_eq!(chain.point_count(), 8); // SetClosed merges the repeated first point
+        assert_eq!(chain.c_point(3), Vector2I::new(13 * 162_500, 8 * 162_500));
+
+        // inside the arrow near its tip, outside in the empty corner of the box
+        assert!(m.hit_test(
+            &ctx,
+            Vector2I::new(1000 + 4 * 162_500, 2000 + 4 * 162_500),
+            0
+        ));
+        assert!(!m.hit_test(&ctx, Vector2I::new(1000 + 12 * 162_500, 2000 + 162_500), 0));
+
+        let mut r = marker_with(drc_api::DRCE_UNCONNECTED_ITEMS, None);
+        assert_eq!(r.marker_type(), MarkerT::Ratsnest);
+        assert!(!r.hit_test(
+            &ctx,
+            Vector2I::new(1000 + 4 * 162_500, 2000 + 4 * 162_500),
+            0
+        ));
+        let all = Box2I::new(
+            Vector2I::new(0, 0),
+            Vector2I::new(i32::MAX / 2, i32::MAX / 2),
+        );
+        assert!(!r.hit_test_rect(&ctx, &all, false, 0));
+        assert!(m.hit_test_rect(&ctx, &all, true, 0));
+
+        let units = UnitsProvider::new(&kicad_core::PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(r.item_description(&ctx, &units, false), "Marker (Title)");
+        Arc::make_mut(&mut r.rc_item).set_error_detail("(detail)");
+        assert_eq!(r.rc_item.error_message(), "Title (detail)");
+        assert_eq!(
+            r.item_description(&ctx, &units, true),
+            "Marker (Title (detail))"
+        );
+    }
 
     /// `RC_ITEM()` (include/rc_item.h), `MARKER_BASE( .. )` (common/marker_base.cpp) and
     /// `PCB_MARKER( aItem, aPosition, aLayer )` (pcbnew/pcb_marker.cpp).

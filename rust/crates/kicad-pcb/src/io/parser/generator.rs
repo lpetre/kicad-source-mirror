@@ -27,8 +27,8 @@
 
 use kicad_sexpr::IoError;
 
-use super::PcbParser;
 use super::GeneratorInfo;
+use super::PcbParser;
 use crate::item::ParentRef;
 
 impl PcbParser {
@@ -40,7 +40,10 @@ impl PcbParser {
     }
 
     /// Port of `parseGENERATOR_templates( GENERATOR_INFO& )`. Staging stub (PCBIO-13).
-    pub(crate) fn parse_generator_templates(&mut self, gen_info: &mut GeneratorInfo) -> Result<(), IoError> {
+    pub(crate) fn parse_generator_templates(
+        &mut self,
+        gen_info: &mut GeneratorInfo,
+    ) -> Result<(), IoError> {
         let _ = &gen_info;
         self.pending("PCBIO-13")?;
         Ok(())

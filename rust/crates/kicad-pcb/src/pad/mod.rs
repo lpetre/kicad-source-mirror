@@ -528,13 +528,51 @@ impl Board {
         layer: PcbLayerId,
         value: ZoneLayerOverride,
     ) {
-        crate::port_pending!("PAD/PCB_VIA::SetZoneLayerOverride", id, layer, value)
+        if let Some(pad_id) = id.typed::<Pad>() {
+            // PAD::SetZoneLayerOverride: m_zoneLayerOverrides[aLayer] = aOverride.
+            if let Some(pad) = self.pads.get_mut(pad_id) {
+                pad.zone_layer_overrides.insert(layer, value);
+            }
+        } else if let Some(track_id) = id.typed::<crate::pcb_track::Track>() {
+            if let Some(crate::pcb_track::Track::Via(_)) = self.tracks.get(track_id) {
+                crate::port_pending!("PCB_VIA::SetZoneLayerOverride (M17)", id, layer, value)
+            }
+        }
     }
 
     /// `PAD::ClearZoneLayerOverrides` (the board's copper layers) / `PCB_VIA::
     /// ClearZoneLayerOverrides` (every slot) on the pad or via `id`. Derived state.
     pub fn clear_zone_layer_overrides(&mut self, id: ItemId) {
-        crate::port_pending!("PAD/PCB_VIA::ClearZoneLayerOverrides", id)
+        if let Some(pad_id) = id.typed::<Pad>() {
+            // PAD::ClearZoneLayerOverrides: ZLO_NONE on LAYER_RANGE( F_Cu, B_Cu,
+            // BoardCopperLayerCount() ); other entries are kept, as C++.
+            let copper_layer_count = match self.pads.get(pad_id) {
+                Some(pad) => {
+                    let ctx = BoardCtx::bare(self);
+
+                    if crate::board_item::has_board(pad, &ctx) {
+                        ctx.copper_layer_count()
+                    } else {
+                        32
+                    }
+                }
+                None => return,
+            };
+
+            let layers = LayerRange::new(PcbLayerId::FCu, PcbLayerId::BCu, copper_layer_count)
+                .expect("copper layers");
+
+            if let Some(pad) = self.pads.get_mut(pad_id) {
+                for layer in layers.iter() {
+                    pad.zone_layer_overrides
+                        .insert(layer, ZoneLayerOverride::None);
+                }
+            }
+        } else if let Some(track_id) = id.typed::<crate::pcb_track::Track>() {
+            if let Some(crate::pcb_track::Track::Via(_)) = self.tracks.get(track_id) {
+                crate::port_pending!("PCB_VIA::ClearZoneLayerOverrides (M17)", id)
+            }
+        }
     }
 }
 

@@ -18,10 +18,18 @@
 //! Port of `pcbnew/pcb_target.h` and `pcbnew/pcb_target.cpp` (`PCB_TARGET`, the layer
 //! alignment target), `board-model-types.md` section 10. Behaviour: package M23.
 
+use std::sync::Arc;
+
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, PCB_IU_SCALE, PcbLayerId};
+use kicad_geom::ShapeCircle;
 use kicad_geom::geometry::approximation::ErrorLoc;
-use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
+use kicad_geom::math::util::ki_round_to;
+use kicad_geom::trigo::rotate_point_around;
+use kicad_geom::{Box2I, DEGREES_T, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
+
+use crate::eda_shape::ShapeT;
+use crate::pcb_shape::PcbShape;
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
@@ -228,18 +236,30 @@ impl PcbTarget {
     }
 
     /// `PCB_TARGET::Rotate()`.
-    pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("PCB_TARGET::Rotate", env, centre, angle)
+    pub fn rotate(&mut self, _env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
+        rotate_point_around(&mut self.pos, centre, angle);
     }
 
     /// `PCB_TARGET::Flip()`.
     pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("PCB_TARGET::Flip", env, centre, dir)
+        if dir == FlipDirection::LeftRight {
+            self.pos.x = centre.x - (self.pos.x - centre.x);
+        } else {
+            self.pos.y = centre.y - (self.pos.y - centre.y);
+        }
+
+        // SetLayer( GetFlippedLayer( GetLayer() ) ): BOARD_ITEM::SetLayer is m_layer = aLayer.
+        self.base.layer = env.layers.flip_layer(self.base.layer);
     }
 
     /// `PCB_TARGET::GetBoundingBox()`.
-    pub fn bounding_box(&self, ctx: &BoardCtx<'_>) -> Box2I {
-        crate::port_pending!("PCB_TARGET::GetBoundingBox", ctx)
+    pub fn bounding_box(&self, _ctx: &BoardCtx<'_>) -> Box2I {
+        let mut bbox = Box2I::default();
+        bbox.set_x(self.pos.x - self.size / 2);
+        bbox.set_y(self.pos.y - self.size / 2);
+        bbox.set_width(self.size.into());
+        bbox.set_height(self.size.into());
+        bbox
     }
 
     /// `PCB_TARGET::GetEffectiveShape()`.
@@ -248,9 +268,10 @@ impl PcbTarget {
         ctx: &BoardCtx<'_>,
         layer: PcbLayerId,
         flash: Flashing,
-        usage: DrcConstraintT,
+        _usage: DrcConstraintT,
     ) -> SharedShape {
-        crate::port_pending!("PCB_TARGET::GetEffectiveShape", ctx, layer, flash, usage)
+        let _ = (ctx, layer, flash);
+        Arc::new(ShapeCircle::new(self.pos, self.size / 2))
     }
 
     /// `PCB_TARGET::TransformShapeToPolygon()`.
@@ -264,21 +285,58 @@ impl PcbTarget {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        crate::port_pending!(
-            "PCB_TARGET::TransformShapeToPolygon",
-            ctx,
-            buffer,
-            layer,
-            clearance,
-            error,
-            error_loc,
-            ignore_line_width
-        )
+        let size = ki_round_to::<i32, f64>(if self.shape != 0 {
+            self.size as f64 / 1.5
+        } else {
+            self.size as f64 / 2.0
+        });
+        let radius = ki_round_to::<i32, f64>(if self.shape != 0 {
+            self.size as f64 / 2.0
+        } else {
+            self.size as f64 / 3.0
+        });
+
+        // The three PCB_SHAPEs have no parent (`nullptr`): the null-board environment.
+        let env = MutEnv::detached();
+        let mut line1 = PcbShape::default();
+        let mut line2 = PcbShape::default();
+        let mut circle = PcbShape::with_shape(ShapeT::Circle);
+
+        line1.set_start(&env, Vector2I::new(-size, 0));
+        line1.set_end(&env, Vector2I::new(size, 0));
+        line2.set_start(&env, Vector2I::new(0, -size));
+        line2.set_end(&env, Vector2I::new(0, size));
+        // circle.SetEndX( radius )
+        let end_y = circle.shape.end.y;
+        circle.set_end(&env, Vector2I::new(radius, end_y));
+
+        if self.shape != 0 {
+            // shape x
+            line1.rotate(&env, Vector2I::new(0, 0), EdaAngle::new(45.0, DEGREES_T));
+            line2.rotate(&env, Vector2I::new(0, 0), EdaAngle::new(45.0, DEGREES_T));
+        }
+
+        for item in [&mut line1, &mut line2, &mut circle] {
+            item.set_width(&env, self.line_width);
+            item.move_by(&env, self.pos);
+            item.transform_shape_to_polygon(
+                ctx,
+                buffer,
+                layer,
+                clearance,
+                error,
+                error_loc,
+                ignore_line_width,
+            );
+        }
     }
 
     /// `PCB_TARGET::HitTest( aPosition, aAccuracy )`.
-    pub fn hit_test(&self, ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
-        crate::port_pending!("PCB_TARGET::HitTest", ctx, pos, accuracy)
+    pub fn hit_test(&self, _ctx: &BoardCtx<'_>, pos: Vector2I, accuracy: i32) -> bool {
+        let dx = pos.x - self.pos.x;
+        let dy = pos.y - self.pos.y;
+        let radius = accuracy + (self.size / 2);
+        dx.abs() <= radius && dy.abs() <= radius
     }
 
     /// `PCB_TARGET::HitTest( aRect, aContained, aAccuracy )`.
@@ -289,7 +347,14 @@ impl PcbTarget {
         contained: bool,
         accuracy: i32,
     ) -> bool {
-        crate::port_pending!("PCB_TARGET::HitTest (rect)", ctx, rect, contained, accuracy)
+        let mut arect = *rect;
+        arect.inflate(accuracy);
+
+        if contained {
+            arect.contains_box(&self.bounding_box(ctx))
+        } else {
+            self.bounding_box(ctx).intersects(&arect)
+        }
     }
 
     /// `PCB_TARGET::GetItemDescription()`.
@@ -297,15 +362,59 @@ impl PcbTarget {
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
-        full: bool,
+        _full: bool,
     ) -> String {
-        crate::port_pending!("PCB_TARGET::GetItemDescription", ctx, units, full)
+        let _ = (ctx, units);
+        // Targets are on *every* layer by definition
+        "Target".to_string()
+    }
+
+    /// `PCB_TARGET::operator==( const PCB_TARGET& )`.
+    pub fn eq_item(&self, other: &PcbTarget) -> bool {
+        self.shape == other.shape
+            && self.size == other.size
+            && self.line_width == other.line_width
+            && self.base.layer == other.base.layer
+            && self.pos == other.pos
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Hit tests, rotation and flip (`pcb_target.cpp`); boxes against `pcb-dump` are in
+    /// `pcb_generator::tests::m23_items_board_matches_pcb_dump`.
+    #[test]
+    fn target_hit_test_rotate_flip() {
+        let board = crate::board::Board::new();
+        let ctx = BoardCtx::bare(&board);
+        let mut t = PcbTarget::default();
+        t.pos = Vector2I::new(1000, 2000);
+        t.size = 400;
+        assert!(t.hit_test(&ctx, Vector2I::new(1200, 2200), 0));
+        assert!(!t.hit_test(&ctx, Vector2I::new(1201, 2200), 0));
+        assert!(t.hit_test(&ctx, Vector2I::new(1201, 2200), 1));
+        let r = Box2I::new(Vector2I::new(700, 1700), Vector2I::new(600, 600));
+        assert!(t.hit_test_rect(&ctx, &r, true, 0));
+        let r = Box2I::new(Vector2I::new(1150, 2150), Vector2I::new(10, 10));
+        assert!(t.hit_test_rect(&ctx, &r, false, 0));
+        assert!(!t.hit_test_rect(&ctx, &r, true, 0));
+
+        let env = MutEnv::detached();
+        t.rotate(&env, Vector2I::new(0, 0), EdaAngle::new(90.0, DEGREES_T));
+        assert_eq!(t.pos, Vector2I::new(2000, -1000));
+        t.flip(&env, Vector2I::new(100, 0), FlipDirection::LeftRight);
+        assert_eq!(t.pos, Vector2I::new(-1800, -1000));
+        assert_eq!(t.base.layer, PcbLayerId::EdgeCuts);
+        t.base.layer = PcbLayerId::FSilkS;
+        t.flip(&env, Vector2I::new(0, 0), FlipDirection::TopBottom);
+        assert_eq!(t.pos, Vector2I::new(-1800, 1000));
+        assert_eq!(t.base.layer, PcbLayerId::BSilkS);
+
+        let units = UnitsProvider::new(&PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(t.item_description(&ctx, &units, true), "Target");
+    }
 
     /// `PCB_TARGET::PCB_TARGET( BOARD_ITEM* aParent )` (pcbnew/pcb_target.cpp).
     #[test]

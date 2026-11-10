@@ -27,7 +27,11 @@ use std::collections::BTreeMap;
 use kicad_core::{Kiid, Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::{ANGLE_0, EdaAngle, EdaOrientation, Vector2I};
 
+use crate::board::Board;
+use crate::ctx::{BoardCtx, MutEnv};
+use crate::ids::{NetCode, ZoneId};
 use crate::teardrop_parameters::TeardropType;
+use crate::traits::BoardItem;
 use crate::zone::Zone;
 
 /// `ZONE_THERMAL_RELIEF_GAP_MM`: default of `ZONE_SETTINGS::m_ThermalReliefGap`.
@@ -348,16 +352,183 @@ impl ZoneSettings {
         ZoneSettings::default()
     }
 
-    /// `ZONE_SETTINGS::operator<<( const ZONE& )`: copy the settings of `source`.
+    /// `ZONE_SETTINGS::operator<<( const ZONE& )`: copy the settings of `source`, a zone that
+    /// is not on a board (`IsLocked()` is then always false). For a zone on a board use
+    /// [`ZoneSettings::import_from_zone_ctx`].
     pub fn import_from_zone(&mut self, source: &Zone) {
-        crate::port_pending!("ZONE_SETTINGS::operator<<", source)
+        self.import_from_zone_impl(source, false);
     }
 
-    /// `ZONE_SETTINGS::ExportSetting( aTarget, aFullExport )`: copy the settings into
-    /// `target` through its setters (the layer set, name, priority and net only when
-    /// `full_export`).
+    /// `ZONE_SETTINGS::operator<<( const ZONE& )` for a zone on the board of `ctx`
+    /// (`IsLocked()` sees the parent group and the board use).
+    pub fn import_from_zone_ctx(&mut self, ctx: &BoardCtx<'_>, source: &Zone) {
+        let locked = BoardItem::is_locked(source, ctx);
+        self.import_from_zone_impl(source, locked);
+    }
+
+    /// The body of `ZONE_SETTINGS::operator<<`; `locked` is `aSource.IsLocked()`.
+    fn import_from_zone_impl(&mut self, source: &Zone, locked: bool) {
+        self.zone_priority = source.assigned_priority();
+        self.fill_mode = source.fill_mode();
+        // ZONE::GetLocalClearance() (no source argument) always holds a value (0 for a rule
+        // area), so the C++ `.value()` never throws.
+        self.zone_clearance = source.local_clearance().unwrap_or(0);
+        self.zone_min_thickness = source.min_thickness();
+        self.hatch_thickness = source.hatch_thickness;
+        self.hatch_gap = source.hatch_gap;
+        self.hatch_orientation = source.hatch_orientation();
+        self.hatch_smoothing_level = source.hatch_smoothing_level;
+        self.hatch_smoothing_value = source.hatch_smoothing_value;
+        self.hatch_border_algorithm = source.hatch_border_algorithm;
+        self.hatch_hole_min_area = source.hatch_hole_min_area;
+        self.thieving_settings = source.thieving_settings.clone();
+        // GetNetCode(): the stored code (ORPHANED = -1 for a null m_netinfo).
+        self.netcode = source.base.net.0;
+        self.name = source.zone_name().to_string();
+        self.zone_border_display_style = source.border_style;
+        self.border_hatch_pitch = source.border_hatch_pitch;
+        self.thermal_relief_gap = i64::from(source.thermal_relief_gap);
+        self.thermal_relief_spoke_width = i64::from(source.thermal_relief_spoke_width);
+        self.pad_connection = source.pad_connection();
+        self.corner_smoothing_type = source.corner_smoothing_type;
+        self.corner_radius = source.corner_radius;
+        self.is_rule_area = source.is_rule_area();
+        self.placement_area_enabled = source.placement_area_enabled;
+        self.placement_area_source_type = source.placement_area_source_type;
+        self.placement_area_source = source.placement_area_source.clone();
+        self.keepout_do_not_allow_zone_fills = source.do_not_allow_zone_fills;
+        self.keepout_do_not_allow_vias = source.do_not_allow_vias;
+        self.keepout_do_not_allow_tracks = source.do_not_allow_tracks;
+        self.keepout_do_not_allow_pads = source.do_not_allow_pads;
+        self.keepout_do_not_allow_footprints = source.do_not_allow_footprints;
+        self.locked = locked;
+        self.remove_islands = source.island_removal_mode;
+        self.min_island_area = source.min_island_area;
+        self.layer_properties = source.layer_properties.clone();
+
+        // Currently, the teardrop area type is not really a ZONE_SETTINGS parameter,
+        // but a ZONE parameter only.
+        // However it can be used in dialogs
+        self.teardrop_type = source.teardrop_type;
+
+        // ZONE::GetLayerSet() returns m_layerSet (not frame dependent).
+        self.layers = source.layer_set.clone();
+    }
+
+    /// `ZONE_SETTINGS::ExportSetting( aTarget, aFullExport )` for a zone that is not on a
+    /// board (a new `ZONE( nullptr )`, the teardrop builder's template): the setters see the
+    /// null-board environment and `SetNetCode` gives net 0 (`OrphanedItem()`). For a zone on
+    /// a board use [`Board::export_zone_setting`].
     pub fn export_setting(&self, target: &mut Zone, full_export: bool) {
-        crate::port_pending!("ZONE_SETTINGS::ExportSetting", target, full_export)
+        if self
+            .export_setting_env(&MutEnv::detached(), target, full_export)
+            .is_some()
+        {
+            // BOARD_CONNECTED_ITEM::SetNetCode without a board: OrphanedItem() (net code 0),
+            // whatever the code and the copper layers.
+            target.base.net = NetCode::UNCONNECTED;
+        }
+    }
+
+    /// `ZONE_SETTINGS::ExportSetting( aTarget, aFullExport )` with the mutation environment
+    /// of `target`, except the `SetNetCode` call: the net code to give the zone (through
+    /// `BOARD_CONNECTED_ITEM::SetNetCode`) is returned instead, `Some` only when the C++
+    /// calls it. `SetNetCode` comes before `SetBorderDisplayStyle` in C++; the border hatch
+    /// does not depend on the net, so the caller may apply it afterwards.
+    pub fn export_setting_env(
+        &self,
+        env: &MutEnv,
+        target: &mut Zone,
+        full_export: bool,
+    ) -> Option<i32> {
+        let mut net_code = None;
+
+        target.set_fill_mode(self.fill_mode);
+        // SetLocalClearance( m_ZoneClearance ): m_ZoneClearance = aClearance.value_or( 0 ).
+        target.zone_clearance = self.zone_clearance;
+        target.set_min_thickness(self.zone_min_thickness);
+        target.hatch_thickness = self.hatch_thickness;
+        target.hatch_gap = self.hatch_gap;
+        target.hatch_orientation = EdaOrientation::new(self.hatch_orientation);
+        target.hatch_smoothing_level = self.hatch_smoothing_level;
+        target.hatch_smoothing_value = self.hatch_smoothing_value;
+        target.hatch_border_algorithm = self.hatch_border_algorithm;
+        target.hatch_hole_min_area = self.hatch_hole_min_area;
+
+        // ZONE::SetThievingSettings
+        if target.thieving_settings != self.thieving_settings {
+            target.fill.set_need_refill(true);
+        }
+        target.thieving_settings = self.thieving_settings.clone();
+
+        // ZONE::SetThermalReliefGap / SetThermalReliefSpokeWidth take an int (implicit
+        // long -> int conversion).
+        let thermal_relief_gap = self.thermal_relief_gap as i32;
+        if target.thermal_relief_gap != thermal_relief_gap {
+            target.fill.set_need_refill(true);
+        }
+        target.thermal_relief_gap = thermal_relief_gap;
+
+        let thermal_relief_spoke_width = self.thermal_relief_spoke_width as i32;
+        if target.thermal_relief_spoke_width != thermal_relief_spoke_width {
+            target.fill.set_need_refill(true);
+        }
+        target.thermal_relief_spoke_width = thermal_relief_spoke_width;
+
+        // Thieving zones are non-electrical and must never produce thermal reliefs.
+        // Force ZONE_CONNECTION::NONE so the filler skips thermal-spoke generation.
+        if self.fill_mode == ZoneFillMode::CopperThieving {
+            target.pad_connection = ZoneConnection::None;
+        } else {
+            target.pad_connection = self.pad_connection;
+        }
+
+        target.corner_smoothing_type = self.corner_smoothing_type;
+        target.set_corner_radius(self.corner_radius);
+        target.is_rule_area = self.is_rule_area;
+        target.placement_area_enabled = self.placement_area_enabled;
+        target.placement_area_source_type = self.placement_area_source_type;
+        target.placement_area_source = self.placement_area_source.clone();
+        target.do_not_allow_zone_fills = self.keepout_do_not_allow_zone_fills;
+        target.do_not_allow_vias = self.keepout_do_not_allow_vias;
+        target.do_not_allow_tracks = self.keepout_do_not_allow_tracks;
+        target.do_not_allow_pads = self.keepout_do_not_allow_pads;
+        target.do_not_allow_footprints = self.keepout_do_not_allow_footprints;
+        // BOARD_ITEM::SetLocked (ZONE does not override it).
+        target.base.item.is_locked = self.locked;
+        target.island_removal_mode = self.remove_islands;
+        target.min_island_area = self.min_island_area;
+
+        // Currently, the teardrop area type is not imported from a ZONE_SETTINGS, because
+        // it is not really a ZONE_SETTINGS parameter, but a ZONE parameter only
+        // (C++: `#if 0 aTarget.SetTeardropAreaType( m_TeardropType ); #endif`)
+
+        if full_export {
+            target.priority = self.zone_priority;
+
+            // ZONE::SetLayerProperties
+            target.layer_properties = self.layer_properties.clone();
+            target.set_layer_set(env, self.layers.clone());
+
+            target.zone_name = self.name.clone();
+
+            if self.fill_mode == ZoneFillMode::CopperThieving {
+                net_code = Some(0);
+            } else if !self.is_rule_area {
+                net_code = Some(self.netcode);
+            }
+        }
+
+        // call SetBorderDisplayStyle last, because hatch lines will be rebuilt,
+        // using new parameters values
+        target.set_border_display_style(
+            env,
+            self.zone_border_display_style,
+            self.border_hatch_pitch,
+            true,
+        );
+
+        net_code
     }
 
     /// `ZONE_SETTINGS::SetCornerRadius()`: negative radii become 0.
@@ -372,6 +543,31 @@ impl ZoneSettings {
             || self.keepout_do_not_allow_pads
             || self.keepout_do_not_allow_footprints
             || self.keepout_do_not_allow_zone_fills
+    }
+}
+
+impl Board {
+    /// `aSettings.ExportSetting( *zone, aFullExport )` for a zone on this board: the zone's
+    /// setters run with its mutation environment (`modify_zone`), then the net code goes
+    /// through `BOARD_CONNECTED_ITEM::SetNetCode` (`set_item_net`, board lookup, net 0 off
+    /// copper). `false` for a stale handle.
+    pub fn export_zone_setting(
+        &mut self,
+        id: ZoneId,
+        settings: &ZoneSettings,
+        full_export: bool,
+    ) -> bool {
+        let Some(net_code) = self.modify_zone(id, |zone, env| {
+            settings.export_setting_env(env, zone, full_export)
+        }) else {
+            return false;
+        };
+
+        if let Some(code) = net_code {
+            self.set_item_net(id.into(), NetCode(code), false);
+        }
+
+        true
     }
 }
 
