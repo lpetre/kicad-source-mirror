@@ -636,6 +636,19 @@ Progress log:
   (crates/kicad-bench + scripts) and raw numbers (rust/target/bench/*.tsv) are on disk;
   the gate agent writes the quiet baseline and the hotspot list. Only the performance loop
   is running now. Disk 8.2 GB free; watchdog ba2lo00ka runs until about 09:10 (restart).
+  08:50 UTC: the user asked whether the friend's loop and KiCad's incremental
+  connectivity can be built together behind a better API. Yes: the port already has the
+  incremental entry points (ConnectivityData::add / remove / update / recalculate_ratsnest)
+  and a change journal, only unused. Launched LIVE-1 -> LIVE-2 (wucffxd3p): LIVE-1 =
+  transactions following BOARD_COMMIT::Push with incremental connectivity, checkpoint /
+  rollback, typed-array bulk I/O, finalize() (full rebuild so the end state equals what
+  kicad-cli computes); verified incremental == full rebuild (30 boards x 200 random
+  batches), == a reference driver, rollback exact. LIVE-2 = persistent DRC state,
+  item-scoped checks (defined as the subset of a full all-track-errors run that involves
+  the items), affected-only zone refill (identical to a full refill), each proven equal to
+  the full computation. These own crates/kicad-session/src/board_api and crates/kicad-wasm,
+  which the performance loop's planner is told to leave alone; in kicad-drc / kicad-zone
+  they add new files only.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
