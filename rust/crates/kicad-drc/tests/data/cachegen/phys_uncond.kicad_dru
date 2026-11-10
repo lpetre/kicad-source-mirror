@@ -1,0 +1,11 @@
+(version 1)
+(rule uncond_phys
+	(constraint physical_clearance (min 0.3mm)))
+(rule cond_phys
+	(constraint physical_clearance (min 0.9mm))
+	(condition "A.Type == 'Via'"))
+(rule big_clearance
+	(constraint clearance (min 2mm)))
+(rule hole_to_hole
+	(constraint hole_to_hole (min 2.5mm))
+	(condition "A.Type == 'Via'"))

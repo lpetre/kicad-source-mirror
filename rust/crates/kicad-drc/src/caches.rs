@@ -95,7 +95,10 @@ impl ZoneIslandsMap {
 
     /// `find( zone )`.
     pub fn get(&self, zone: ZoneId) -> Option<&BTreeMap<PcbLayerId, IsolatedIslands>> {
-        self.entries.iter().find(|(z, _)| *z == zone).map(|(_, m)| m)
+        self.entries
+            .iter()
+            .find(|(z, _)| *z == zone)
+            .map(|(_, m)| m)
     }
 
     /// `find( zone )` for writing (`CONNECTIVITY_DATA::FillIsolatedIslandsMap`).
@@ -400,7 +403,13 @@ mod tests {
 
         assert_eq!(zone.border_style, ZoneBorderDisplayStyle::InvisibleBorder);
         assert_eq!(zone.outline().total_vertices(), 4);
-        assert_eq!(zone.outline().c_vertex_global(0), Vector2I::new(-infinity, -infinity));
-        assert_eq!(zone.outline().c_vertex_global(2), Vector2I::new(infinity, infinity));
+        assert_eq!(
+            zone.outline().c_vertex_global(0),
+            Vector2I::new(-infinity, -infinity)
+        );
+        assert_eq!(
+            zone.outline().c_vertex_global(2),
+            Vector2I::new(infinity, infinity)
+        );
     }
 }

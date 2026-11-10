@@ -427,8 +427,10 @@ impl DrcCacheGenerator {
                 return None; // DRC cancelled
             }
 
-            caches.copper_item_rtree =
-                Some(Arc::new(build_copper_item_rtree(&ctx, caches.max_clearance)));
+            caches.copper_item_rtree = Some(Arc::new(build_copper_item_rtree(
+                &ctx,
+                caches.max_clearance,
+            )));
 
             if !self.base.report_phase(host, "Tessellating copper zones...") {
                 return None; // DRC cancelled

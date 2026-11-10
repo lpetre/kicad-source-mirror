@@ -1,0 +1,7 @@
+(version 1)
+(rule cond_phys
+	(constraint physical_clearance (min 0.5mm))
+	(condition "A.Type == 'Via'"))
+(rule cond_phys_hole
+	(constraint physical_hole_clearance (min 0.7mm))
+	(condition "A.Type == 'Track'"))

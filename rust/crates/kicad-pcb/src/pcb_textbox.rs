@@ -1279,6 +1279,117 @@ impl TextboxHost for PcbTextbox {
     }
 }
 
+/// Port of `EDA_SHAPE::GetCornersInSequence( aAngle )` for a host whose context is at hand:
+/// `getBoundingBox()` reads the virtual `GetWidth()` (`PCB_SHAPE`'s, scaled by the parent
+/// footprint). The context-free `EdaShapeItem::corners_in_sequence` has to use the stored
+/// width (`PORT_STATUS.md`, M7), which differs for a polygon box in a scaled footprint.
+fn eda_shape_corners_in_sequence<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    mut angle: EdaAngle,
+) -> Vec<Vector2I> {
+    let es = host.eda_shape();
+    let mut pts: Vec<Vector2I> = Vec::new();
+
+    angle.normalize();
+
+    let mut bbox = crate::eda_shape::shape_bounding_box(host, ctx);
+    bbox.normalize();
+
+    let tl = Vector2I::new(bbox.left(), bbox.top());
+    let tr = Vector2I::new(bbox.right(), bbox.top());
+    let br = Vector2I::new(bbox.right(), bbox.bottom());
+    let bl = Vector2I::new(bbox.left(), bbox.bottom());
+
+    if angle.is_cardinal() {
+        if angle == ANGLE_0 {
+            pts.extend([tl, tr, br, bl]);
+        } else if angle == ANGLE_90 {
+            pts.extend([bl, tl, tr, br]);
+        } else if angle == ANGLE_180 {
+            pts.extend([br, bl, tl, tr]);
+        } else if angle == ANGLE_270 {
+            pts.extend([tr, br, bl, tl]);
+        }
+    } else if es.shape() == ShapeT::Rectangle {
+        // Axis-aligned rectangle with non-cardinal rotation (used by textboxes).
+        let center = bbox.center();
+        let (mut tl, mut tr, mut br, mut bl) = (tl, tr, br, bl);
+
+        rotate_point_around(&mut tl, center, angle);
+        rotate_point_around(&mut tr, center, angle);
+        rotate_point_around(&mut br, center, angle);
+        rotate_point_around(&mut bl, center, angle);
+
+        pts.extend([tl, tr, br, bl]);
+    } else {
+        // A portion of the getCorners implementation for SHAPE_T::POLY elements, replicated
+        // in EDA_SHAPE (see the comment there).
+        let mut corners: Vec<Vector2I> = Vec::new();
+
+        for ii in 0..es.poly.outline_count() {
+            corners.extend_from_slice(es.poly.c_outline(ii).c_points());
+        }
+
+        if corners.is_empty() {
+            return pts;
+        }
+
+        while corners.len() < 4 {
+            let last = corners[corners.len() - 1];
+            corners.push(last + Vector2I::new(10, 10));
+        }
+
+        let (mut min_x, mut max_x, mut min_y, mut max_y) =
+            (corners[0], corners[0], corners[0], corners[0]);
+
+        for corner in &corners {
+            if corner.x < min_x.x {
+                min_x = *corner;
+            }
+
+            if corner.x > max_x.x {
+                max_x = *corner;
+            }
+
+            if corner.y < min_y.y {
+                min_y = *corner;
+            }
+
+            if corner.y > max_y.y {
+                max_y = *corner;
+            }
+        }
+
+        if angle < ANGLE_90 {
+            pts.extend([min_x, min_y, max_x, max_y]);
+        } else if angle < ANGLE_180 {
+            pts.extend([max_y, min_x, min_y, max_x]);
+        } else if angle < ANGLE_270 {
+            pts.extend([max_x, max_y, min_x, min_y]);
+        } else {
+            pts.extend([min_y, max_x, max_y, min_x]);
+        }
+    }
+
+    pts
+}
+
+/// Port of `PCB_TEXTBOX::GetCornersInSequence( angle )` as the C++ evaluates it (with the
+/// virtual `GetWidth()` for a polygon box): the read-only bodies that have a context use this
+/// one.
+pub(crate) fn corners_in_sequence_ctx<H: TextboxHost + ?Sized>(
+    host: &H,
+    ctx: &BoardCtx<'_>,
+    angle: EdaAngle,
+) -> Vec<Vector2I> {
+    if host.eda_shape().shape() != ShapeT::Rectangle {
+        return eda_shape_corners_in_sequence(host, ctx, angle);
+    }
+
+    corners_in_sequence(host, angle)
+}
+
 /// Port of `PCB_TEXTBOX::GetCornersInSequence( angle )`: the four corners of the box, in
 /// reading order for the text angle; `EDA_SHAPE::GetCornersInSequence` for a polygon box.
 pub(crate) fn corners_in_sequence<H: TextboxHost + ?Sized>(
@@ -1319,7 +1430,7 @@ pub(crate) fn corners_in_sequence<H: TextboxHost + ?Sized>(
 
 /// Port of `PCB_TEXTBOX::GetCorners()`: `GetCornersInSequence( GetDrawRotation() )`.
 pub(crate) fn corners<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vec<Vector2I> {
-    host.corners_in_sequence(host.draw_rotation(ctx))
+    corners_in_sequence_ctx(host, ctx, host.draw_rotation(ctx))
 }
 
 /// Port of `PCB_TEXTBOX::GetTopLeft()`.
@@ -1398,7 +1509,7 @@ pub(crate) fn draw_pos_flipped<H: TextboxHost + ?Sized>(
     let tb = host.textbox();
     let et = host.eda_text();
     let draw_angle = host.draw_rotation(ctx);
-    let corners = host.corners_in_sequence(draw_angle);
+    let corners = corners_in_sequence_ctx(host, ctx, draw_angle);
     let mut horizontal_alignment = et.horiz_justify();
     let vertical_alignment = et.vert_justify();
     let mut text_anchor = Vector2I::default();
@@ -1471,7 +1582,7 @@ pub(crate) fn linebreak_to_box<H: TextboxHost + ?Sized>(
     let lookup = et.draw_font_lookup();
     let font = lookup.font();
     let draw_angle = host.draw_rotation(ctx);
-    let corners = host.corners_in_sequence(draw_angle);
+    let corners = corners_in_sequence_ctx(host, ctx, draw_angle);
     let mut col_width: i32 = (corners[1] - corners[0]).euclidean_norm();
 
     if host.text_angle(ctx).is_horizontal() {
@@ -1584,7 +1695,9 @@ fn pcb_shape_effective_shape<H: TextboxHost + ?Sized>(
     let shape = &host.textbox().shape;
     let mut width = host.effective_width(ctx);
 
-    if is_solder_mask_layer(layer) && shape.has_solder_mask && is_copper_layer(shape.base.item.layer)
+    if is_solder_mask_layer(layer)
+        && shape.has_solder_mask
+        && is_copper_layer(shape.base.item.layer)
     {
         width += 2 * solder_mask_expansion(host, ctx);
     }
@@ -1907,5 +2020,205 @@ mod tests {
         fx.set_child(id, tb);
         fx.board.check_invariants().unwrap();
         assert!(!fx.board[id].border_enabled);
+    }
+
+    // ---- ports of qa/tests/pcbnew/test_pcb_textbox.cpp (model parts) ----------------------
+
+    const MM: i32 = 1_000_000;
+
+    /// `PCB_TEXTBOX_FIXTURE`: "Hello World", 1 mm text, box (0, 0) - (20 mm, 5 mm) on a board.
+    fn fixture() -> (crate::board::Board, PcbTextbox) {
+        let board = crate::board::Board::new();
+        let env = MutEnv::detached();
+        let mut tb = PcbTextbox::default();
+        tb.shape.base.item.parent = crate::item::ParentRef::Board;
+        tb.text.set_text("Hello World");
+        tb.set_text_size(&env, Vector2I::new(MM, MM), true);
+        tb.set_start(&env, Vector2I::new(0, 0));
+        tb.set_end(&env, Vector2I::new(20 * MM, 5 * MM));
+        (board, tb)
+    }
+
+    /// `GetMinSizeReturnsHeightOnly`: width is unconstrained so text can rewrap, height is
+    /// bounded by the wrapped content.
+    #[test]
+    fn get_min_size_returns_height_only() {
+        let (board, tb) = fixture();
+        let ctx = BoardCtx::bare(&board);
+        let min_size = tb.min_size(&ctx);
+        assert_eq!(min_size.x, 0);
+        assert!(min_size.y > 0);
+    }
+
+    /// `GetMinSizeGrowsWithMoreText`.
+    #[test]
+    fn get_min_size_grows_with_more_text() {
+        let (board, mut tb) = fixture();
+        let short = tb.min_size(&BoardCtx::bare(&board));
+        tb.text.set_text("Hello World\nSecond Line\nThird Line");
+        tb.invalidate_caches();
+        let long = tb.min_size(&BoardCtx::bare(&board));
+        assert!(long.y > short.y);
+    }
+
+    /// `GetMinSizeIncludesMargins`.
+    #[test]
+    fn get_min_size_includes_margins() {
+        let (board, mut tb) = fixture();
+        tb.text.set_text("A");
+        (
+            tb.margin_left,
+            tb.margin_right,
+            tb.margin_top,
+            tb.margin_bottom,
+        ) = (0, 0, 0, 0);
+        let no_margin = tb.min_size(&BoardCtx::bare(&board));
+        tb.margin_top = MM;
+        tb.margin_bottom = MM;
+        let with_margin = tb.min_size(&BoardCtx::bare(&board));
+        assert_eq!((no_margin.x, with_margin.x), (0, 0));
+        assert!(with_margin.y > no_margin.y);
+    }
+
+    /// `GetMinSizeHeightAtLeastTextHeight`.
+    #[test]
+    fn get_min_size_height_at_least_text_height() {
+        let (board, mut tb) = fixture();
+        tb.text.set_text("A");
+        let ctx = BoardCtx::bare(&board);
+        assert!(tb.min_size(&ctx).y >= tb.text_size(&ctx).y);
+    }
+
+    /// `GetMinSizeEmptyText`.
+    #[test]
+    fn get_min_size_empty_text() {
+        let (board, mut tb) = fixture();
+        tb.text.set_text("");
+        assert_eq!(tb.min_size(&BoardCtx::bare(&board)), Vector2I::new(0, 0));
+    }
+
+    /// `GetMinSizeRotated90`: at 0 degrees the bound is on y, at 90 degrees it moves to x.
+    #[test]
+    fn get_min_size_rotated_90() {
+        let (board, mut tb) = fixture();
+        tb.text.set_text("Wide Text");
+        let min0 = tb.min_size(&BoardCtx::bare(&board));
+        tb.set_text_angle(&MutEnv::detached(), EdaAngle::from_degrees(90.0));
+        let min90 = tb.min_size(&BoardCtx::bare(&board));
+        assert_eq!(min0.x, 0);
+        assert!(min0.y > 0);
+        assert!(min90.x > 0);
+        assert_eq!(min90.y, 0);
+    }
+
+    /// `GetMinSizeAllowsWidthReduction`.
+    #[test]
+    fn get_min_size_allows_width_reduction() {
+        let (board, mut tb) = fixture();
+        tb.text
+            .set_text("This is a very long line of text that should exceed the box width");
+        let min_size = tb.min_size(&BoardCtx::bare(&board));
+        assert_eq!(min_size.x, 0);
+        assert!(min_size.y > 0);
+    }
+
+    /// `ThirtyDegreeIncrementsToCardinalKeepsVisualRotated`: guards a past snap-back where
+    /// 3x30 degrees landed on cardinal and GetCornersInSequence returned an un-rotated AABB.
+    #[test]
+    fn thirty_degree_increments_to_cardinal_keeps_visual_rotated() {
+        let (board, mut tb) = fixture();
+        let env = MutEnv::detached();
+
+        for _ in 0..3 {
+            tb.rotate(&env, Vector2I::new(0, 0), EdaAngle::from_degrees(30.0));
+        }
+
+        let ctx = BoardCtx::bare(&board);
+        assert!((tb.text_angle(&ctx).as_degrees() - 90.0).abs() < 1e-6 * 90.0);
+
+        let corners = tb.corners(&ctx);
+        assert_eq!(corners.len(), 4);
+        let mut visual = Box2I::default();
+
+        for p in &corners {
+            visual.merge_point(*p);
+        }
+
+        assert!((visual.width() - (5 * MM) as i64).abs() <= 1);
+        assert!((visual.height() - (20 * MM) as i64).abs() <= 1);
+    }
+
+    /// `NonCardinalRotationDoesNotCrash`.
+    #[test]
+    fn non_cardinal_rotation_does_not_crash() {
+        let (board, mut tb) = fixture();
+        tb.rotate(
+            &MutEnv::detached(),
+            Vector2I::new(0, 0),
+            EdaAngle::from_degrees(30.0),
+        );
+        let ctx = BoardCtx::bare(&board);
+        let corners = tb.corners(&ctx);
+        assert_eq!(corners.len(), 4);
+        let mut bbox = Box2I::default();
+
+        for p in &corners {
+            bbox.merge_point(*p);
+        }
+
+        assert!(bbox.width() > 0 && bbox.height() > 0);
+        let _ = tb.draw_pos(&ctx);
+    }
+
+    /// `CardinalRotationsRoundTrip`.
+    #[test]
+    fn cardinal_rotations_round_trip() {
+        let (_board, mut tb) = fixture();
+        let (start, end) = (tb.shape.shape.start(), tb.shape.shape.end());
+        let pivot = Vector2I::new(7 * MM, 11 * MM);
+
+        for _ in 0..4 {
+            tb.rotate(&MutEnv::detached(), pivot, EdaAngle::from_degrees(90.0));
+        }
+
+        assert_eq!(tb.shape.shape.start(), start);
+        assert_eq!(tb.shape.shape.end(), end);
+    }
+
+    /// `NonCardinalRotationKeepsLibShapeRectangle`: the on-disk form must stay a rectangle
+    /// even after a tilted rotation.
+    #[test]
+    fn non_cardinal_rotation_keeps_lib_shape_rectangle() {
+        let (_board, mut tb) = fixture();
+        tb.rotate(
+            &MutEnv::detached(),
+            Vector2I::new(0, 0),
+            EdaAngle::from_degrees(30.0),
+        );
+        assert_eq!(tb.shape.lib_shape(), ShapeT::Rectangle);
+    }
+
+    /// `TextBoxInFootprintKeepsRectangleShape` / the lib-frame round trip of
+    /// `test_footprint_transform_sync.cpp`: a text box in a rotated, flipped, non-uniformly
+    /// scaled footprint re-bakes from its library rectangle, and `syncLibCoords()` inverts
+    /// `OnFootprintTransformed()` (centre and half-extents).
+    #[test]
+    fn footprint_child_sync_inverts_rebake() {
+        let mut fx = rotated_flipped_scaled();
+        let id = fx.child(ItemKind::Textbox).typed::<PcbTextbox>().unwrap();
+        let mut tb = PcbTextbox::default();
+        tb.shape.lib.start = Vector2I::new(-2 * MM, -MM);
+        tb.shape.lib.end = Vector2I::new(4 * MM, 3 * MM);
+        fx.set_child(id, tb);
+        fx.board
+            .modify_textbox(id, |t, env| t.on_footprint_transformed(env));
+
+        let t = &fx.board[id];
+        assert_eq!(t.shape.shape.shape(), ShapeT::Rectangle);
+        let (lib_start, lib_end) = (t.shape.lib.start, t.shape.lib.end);
+        fx.board.modify_textbox(id, |t, env| t.sync_lib_coords(env));
+        let t = &fx.board[id];
+        assert!((t.shape.lib.start - lib_start).euclidean_norm() <= 1);
+        assert!((t.shape.lib.end - lib_end).euclidean_norm() <= 1);
     }
 }

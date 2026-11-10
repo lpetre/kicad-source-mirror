@@ -1,0 +1,1 @@
+Warning: Checksum error in embedded file m_bad.kicad_wks in '<file>', line 54, offset 4.

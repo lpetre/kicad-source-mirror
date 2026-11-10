@@ -355,3 +355,76 @@ Plus `run_tests_error_limits`, `run_tests_provider_order_and_cancel`, `default_b
 - User rule conditions compile only with a stand-in binding until DRC-21 (`init_engine` with the
   default binding panics with `port_pending!` on a rule file with conditions).
 - `TUNING_PROFILES` is not part of the Rust project model; callers build `TuningProfiles`.
+
+## DRC-05: cache generator and per-run board caches
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_cache_generator.h/.cpp` `DRC_CACHE_GENERATOR::Run` | `src/cache_generator.rs` (`DrcCacheGenerator::run`, split into the phase functions `prepare_board`, `compute_max_clearances`, `build_zone_lists`, `build_copper_item_rtree`, `build_courtyard_caches`, `build_zone_caches`, `init_zone_islands_map`) | ported; `run` reaches pending stubs of other packages (below) |
+| `CONNECTIVITY_DATA::ClearRatsnest`, `Build`, `FillIsolatedIslandsMap` as called by `Run` | `cache_generator::CacheGeneratorConnectivity` (trait; implemented by the connectivity peer once ported) | interface |
+| `BOARD` members `m_DRCZones`, `m_DRCCopperZones`, `m_DRCCopperZonesByLayer`, `m_DRCMaxClearance`, `m_DRCMaxPhysicalClearance`, `m_CopperItemRTreeCache`, `m_CopperZoneRTreeCache` / `GetCopperZoneRTree`, `m_ZoneIsolatedIslandsMap`, `m_SolderMaskBridges` (constructor part of `board.cpp`) | `src/caches.rs` (`DrcBoardCaches`, `ZoneIslandsMap`, `new_solder_mask_bridges`) | ported |
+| `BOARD` predicate caches `m_Intersects*Cache`, `m_EnclosedByArea*Cache`, `m_ItemFieldCache`, keys `PTR_PTR_CACHE_KEY`, `PTR_PTR_LAYER_CACHE_KEY`, `ITEM_SELECTOR_LAYER_CACHE_KEY`, `ITEM_FIELD_CACHE_KEY`; `SHARDED_CACHE` | `src/caches.rs` (`DrcPredicateCaches`, `MemoCache`) | ported (data only; owner: see Known gaps) |
+| `BOARD::IncrementTimeStamp` (DRC part) | `DrcBoardCaches::clear` / a fresh value; `DrcPredicateCaches::clear` | ported |
+| `BOARD::GetMaxClearanceValue`, `BOARD_DESIGN_SETTINGS::GetBiggestClearanceValue`, `m_ZoneBBoxCache`, `m_maxClearanceValue`, courtyard caches | kicad-pcb (`Board::get_max_clearance_value`, `Zone::cache_bounding_box` / `bounding_box`, `Footprint::build_courtyard_caches` / `courtyard`) | used, not owned |
+
+### Verification
+
+Differential oracle: `drc-rtree-oracle --cachegen` (new mode `runCacheGen` in
+`tests/oracle/drc_rtree_oracle.cpp`, built by `build_rtree_oracle.sh`; the DRC-02 output is
+unchanged, its golden regenerates byte-identical). It loads each board like `KI_TEST::LoadBoard`
+(project, `InitEngine` with the rule file, nets, connectivity), runs the real
+`DRC_CACHE_GENERATOR::Run()` and prints `GetBiggestClearanceValue`, `GetMaxClearanceValue`,
+`m_DRCMaxClearance`, `m_DRCMaxPhysicalClearance`, the three zone lists, the copper item tree
+(size, every entry per board copper layer in storage order), per zone the bounding box and the
+zone tree (size, per layer entry count and FNV-1a of the entry list) and the islands map keys.
+Golden `tests/golden/cachegen_oracle.txt` (`tests/oracle/gen_cachegen_goldens.sh`), replay
+`tests/cache_generator_oracle.rs` (runs the phase functions).
+
+| Input | Result |
+|---|---|
+| `tests/data/rtree/rtree_small`, `rtree_ties`, `rtree_4layer` (tracks, arcs, vias, 2 and 4 layers) | identical |
+| `tests/data/cachegen/phys_cond` (only conditional user physical rules: conditional maximum incl. the implicit barcode rule, 1 mm), `phys_uncond` (unconditional 0.3 mm beats conditional 0.9 mm; clearance 2 mm; conditional hole-to-hole 2.5 mm reaches `GetBiggestClearanceValue`), `huge` (600 mm clearance clipped to `MAXIMUM_CLEARANCE`, 800 mm physical clamped to `INT_MAX / 3`) | identical |
+| `qa/data/pcbnew` `issue4139`, `fill_bad`, `intersectingzones`, `issue7267`, `issue18203`, `net_tie_hole_clearance`, `via_stacks`, `issue14334`, `connection_width_rules`, `issue24649`, `issue5750` (pads, footprint zones, filled zones, projects, rule file) | pending: footprints (PCBIO-06), generated items (PCBIO-13), `ZONE::SetLayerSetAndRemoveUnusedFills`; compared automatically once they load |
+
+Not verifiable yet: `DrcCacheGenerator::run` end to end (it calls `Board::board_outline`,
+`Footprint::build_courtyard_caches` and `Board::build_net_tie_cache`, all `port_pending!` in
+kicad-pcb, and the connectivity rebuild, which has no implementation yet); zone bounding-box
+caches, zone trees, islands maps and pad hole entries wait for the QA boards above.
+
+### Ported C++ tests
+
+| C++ | Rust |
+|---|---|
+| `qa/tests/pcbnew/drc/test_drc_physical_clearance.cpp` (`DRCPhysicalClearanceNotInflatedByConditionalRules`) | `tests/cache_generator_oracle.rs::drc_physical_clearance_not_inflated_by_conditional_rules` (cache-generator part; `issue4139` pending until it loads, same property checked on `rtree_small`) |
+
+### Deviations
+
+- **Phase order**: the derived-state writes of `Run` (outline / fill bounding-box caches, zone
+  triangulation, net-tie caches) are done first (`prepare_board`), the reads after. They touch
+  only zone and net-tie data, which the clearance values and the copper item tree do not read;
+  each zone's bounding-box cache still precedes its triangulation, and the triangulation
+  precedes the zone trees. The zone outline writes go through `Board::modify_zone`, which bumps
+  the time stamp (no derived-state writer exists for the outline); harmless before the reads.
+- **`allZones`** (`std::set<ZONE*>`, address order) is replaced by board zones then footprint
+  zones; it only schedules independent per-zone work (`drc.md` 4.12).
+- **`m_ZoneIsolatedIslandsMap`** (`std::map<ZONE*>`, iterated): insertion order = board zone
+  order (`drc.md` 4.12). **`m_CopperZoneRTreeCache`** (`unordered_map`, iterated by the
+  connection width provider): `ZoneId` order.
+- **`ITEM_FIELD_CACHE_KEY`** keys by the field name instead of its `std::hash`.
+- **Cancellation / progress**: the `IsCancelled()` checks inside the item and zone loops and the
+  `reportProgress` calls of the 250 ms wait loops (thread-timing dependent) are not reproduced;
+  `reportPhase` returning false cancels as in C++.
+- **`m_SolderMaskBridges`** is created lazily in `DrcBoardCaches` instead of in the `BOARD`
+  constructor, behind a lock (the solder mask provider writes it during a run).
+- **Board outline**: `UpdateBoardOutline()` + `BuildBBoxCaches()` become `Board::board_outline`
+  (lazily rebuilt per time stamp by kicad-pcb).
+
+### Known gaps
+
+- The predicate caches need an owner reachable from both rule evaluation and the disallow
+  provider (proposed: `DrcEngine`); until then `DrcPredicateCaches` is unused.
+- `run` cannot be reached from `DrcEngine::run_tests` yet: its `regenerate_caches` callback
+  returns only `bool`, providers get no `&DrcBoardCaches`, and the connectivity is borrowed
+  before the rebuild (change requests to DRC-03).

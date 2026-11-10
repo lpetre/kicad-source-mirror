@@ -1,0 +1,97 @@
+(kicad_pcb (version 20261031) (generator "pcbnew") (generator_version "10.99")
+  (general (thickness 1.6) (legacy_teardrops no))
+  (paper "A4")
+  (layers (0 "F.Cu" signal) (4 "In1.Cu" signal) (6 "In2.Cu" signal) (2 "B.Cu" signal)
+    (9 "F.Adhes" user "F.Adhesive") (11 "B.Adhes" user "B.Adhesive")
+    (13 "F.Paste" user) (15 "B.Paste" user) (5 "F.SilkS" user "F.Silkscreen") (7 "B.SilkS" user "B.Silkscreen")
+    (1 "F.Mask" user) (3 "B.Mask" user) (17 "Dwgs.User" user "User.Drawings") (19 "Cmts.User" user "User.Comments")
+    (21 "Eco1.User" user "User.Eco1") (23 "Eco2.User" user "User.Eco2") (25 "Edge.Cuts" user) (27 "Margin" user)
+    (31 "F.CrtYd" user "F.Courtyard") (29 "B.CrtYd" user "B.Courtyard") (35 "F.Fab" user) (33 "B.Fab" user))
+	(table
+		(column_count 2)
+		(uuid "d6f049b1-ff3f-4087-ba96-404a150d1c9b")
+		(layer "Edge.Cuts")
+		(border
+			(external yes)
+			(header yes)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+		)
+		(separators
+			(rows yes)
+			(cols yes)
+			(stroke
+				(width 0.05)
+				(type solid)
+			)
+		)
+		(column_widths 18.5 18.5)
+		(row_heights 3.5 3.5)
+		(cells
+			(table_cell "A"
+				(start 146.5 75.5)
+				(end 165 79)
+				(margins 1.0025 1.0025 1.0025 1.0025)
+				(span 1 1)
+				(layer "Edge.Cuts")
+				(uuid "901ff6c4-c027-48f6-9ba1-2f6bede4ee3c")
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(table_cell "B"
+				(start 165 75.5)
+				(end 183.5 79)
+				(margins 1.0025 1.0025 1.0025 1.0025)
+				(span 1 1)
+				(layer "Edge.Cuts")
+				(uuid "33fa667d-208d-4e1c-933e-97cff982c595")
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(table_cell "C"
+				(start 146.5 79)
+				(end 165 82.5)
+				(margins 1.0025 1.0025 1.0025 1.0025)
+				(span 1 1)
+				(layer "Edge.Cuts")
+				(uuid "7ead30d7-ef7c-4b7c-a653-76b75977f1fa")
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+			(table_cell "D"
+				(start 165 79)
+				(end 183.5 82.5)
+				(margins 1.0025 1.0025 1.0025 1.0025)
+				(span 1 1)
+				(layer "Edge.Cuts")
+				(uuid "0b6dd750-4cba-4dfe-a748-e6ec1ce4a076")
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(justify left)
+				)
+			)
+		)
+	)
+  (table (uuid "00000000-0000-0000-0000-000000001251") (locked yes) (layer "Dwgs.User") (column_count 2)
+    (border (external no) (header yes) (stroke (width 0.2) (type dash)))
+    (separators (rows no) (cols no) (stroke (width 0.1) (type solid)))
+    (column_widths 10 10) (row_heights 4 4)
+    (cells (table_cell "a" (start 10 10) (end 20 14) (margins 1 1 1 1) (span 1 1) (layer "Dwgs.User") (uuid "00000000-0000-0000-0000-000000001252") (effects (font (size 1 1)) (justify left top))) (table_cell "b" (start 20 10) (end 30 14) (margins 1 1 1 1) (span 1 1) (layer "Dwgs.User") (uuid "00000000-0000-0000-0000-000000001253") (effects (font (size 1 1)) (justify left top))) (table_cell "c" (start 10 14) (end 20 18) (margins 1 1 1 1) (span 1 1) (layer "Dwgs.User") (uuid "00000000-0000-0000-0000-000000001254") (effects (font (size 1 1)) (justify left top))) (table_cell "d" (start 20 14) (end 30 18) (margins 1 1 1 1) (span 1 1) (layer "Dwgs.User") (uuid "00000000-0000-0000-0000-000000001255") (effects (font (size 1 1)) (justify left top))))
+    (custom_property "t" "u"))
+  (embedded_fonts no))

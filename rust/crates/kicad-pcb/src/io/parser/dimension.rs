@@ -444,8 +444,8 @@ impl PcbParser {
 
     /// `std::make_unique<PCB_DIM_*>( aParent )`: a fresh UUID, parent set.
     fn new_dimension(&mut self, type_: KicadT, parent: ParentRef) -> PcbDimension {
-        let mut dim = PcbDimension::new(&mut self.board.kiid_generator, type_)
-            .expect("dimension type");
+        let mut dim =
+            PcbDimension::new(&mut self.board.kiid_generator, type_).expect("dimension type");
         dim.text.base.parent = parent;
         dim
     }
@@ -481,8 +481,9 @@ impl PcbParser {
 
                     if let Some(mode) = units_mode_from_int(mode) {
                         // SetUnitsMode: GetBoard() ? GetBoard()->GetUserUnits() : MM
-                        let user_units =
-                            self.parent_reaches_board(parent).then_some(self.board.user_units);
+                        let user_units = self
+                            .parent_reaches_board(parent)
+                            .then_some(self.board.user_units);
                         dim.set_units_mode(mode, user_units);
                     }
 

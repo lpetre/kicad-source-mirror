@@ -84,32 +84,6 @@ fn with_writer<R>(
     (r, out.into_string())
 }
 
-/// `text` without the top-level `(setup ...)` block (the lines from `\t(setup` to the next
-/// `\t)`), which belongs to PCBIO-04.
-fn strip_setup(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    let mut in_setup = false;
-
-    for line in text.split_inclusive('\n') {
-        if in_setup {
-            if line == "\t)\n" {
-                in_setup = false;
-            }
-
-            continue;
-        }
-
-        if line == "\t(setup\n" {
-            in_setup = true;
-            continue;
-        }
-
-        out.push_str(line);
-    }
-
-    out
-}
-
 // ---- helpers ------------------------------------------------------------------------------
 
 /// `formatLayers`: the wildcard rules, with and without a board (copper count of the board vs.
@@ -290,20 +264,23 @@ fn ctl_flags() {
 // ---- staging stubs -------------------------------------------------------------------------
 
 /// A save that reaches a staging stub fails with its "port pending" text; with
-/// `allow_pending` the item is skipped and reported. The first stub of every board save is the
-/// setup section: PCBIO-04 must update this test.
+/// `allow_pending` the item is skipped and reported (a footprint while PCBIO-06 is pending).
 #[test]
 fn staging_stubs() {
-    let board = Board::new();
+    // The setup section (PCBIO-04) is ported; a footprint (PCBIO-06) is still a staging stub.
+    // When it lands, switch to another stub (generator, PCBIO-13; misc items, PCBIO-12).
+    let mut board = Board::new();
+    let fp = board.create_footprint();
+    board.attach_footprint(fp, crate::board::AddMode::Append);
     let e = format_board(&board, &FormatOptions::default()).unwrap_err();
-    assert_eq!(e.what(), "port pending: setup (PCBIO-04)");
+    assert_eq!(e.what(), "port pending: footprint (PCBIO-06)");
 
     let (_, report) = format_board_report(&board, &staging()).unwrap();
     assert_eq!(
         report.skipped,
         vec![SkippedFormat {
-            item: "setup".to_string(),
-            package: "PCBIO-04"
+            item: "footprint".to_string(),
+            package: "PCBIO-06"
         }]
     );
 
@@ -359,7 +336,7 @@ fn apply_pending_parser_state(name: &str, board: &mut Board) {
     }
 }
 
-/// Parse + format of `text` (staging), compared with `expected` minus its setup section.
+/// Parse + format of `text` (staging), compared with `expected` byte for byte.
 fn check_resave(label: &str, name: &str, text: &str, expected: &str) -> Result<(), String> {
     model(|| {
         let (mut board, parse_report) =
@@ -380,20 +357,11 @@ fn check_resave(label: &str, name: &str, text: &str, expected: &str) -> Result<(
         let (out, report) =
             format_board_report(&board, &staging()).map_err(|e| e.what().to_string())?;
 
-        assert_eq!(
-            report.skipped,
-            vec![SkippedFormat {
-                item: "setup".to_string(),
-                package: "PCBIO-04"
-            }],
-            "{label}"
-        );
+        // Nothing these boards contain is a staging stub any more (the setup section of
+        // PCBIO-04 is ported), so the whole file is compared.
+        assert_eq!(report.skipped, Vec::<SkippedFormat>::new(), "{label}");
 
-        assert_eq!(
-            out,
-            strip_setup(expected),
-            "{label}: bytes differ from the oracle"
-        );
+        assert_eq!(out, expected, "{label}: bytes differ from the oracle");
         Ok(())
     })
     .unwrap_or_else(|pending| {
@@ -405,8 +373,8 @@ fn check_resave(label: &str, name: &str, text: &str, expected: &str) -> Result<(
 /// Differential oracle: for every hand-made board of `tests/data/pcbio02/` (header, general,
 /// paper, title block, layers incl. user-defined and user-named layers, legacy net
 /// declarations, properties, variants, embedded-fonts flag; no items), parse + format must
-/// reproduce the bytes of the reference `kicad-cli pcb upgrade --force` everywhere except in
-/// the `(setup ..)` section (PCBIO-04, not written while its formatter is a staging stub).
+/// reproduce the bytes of the reference `kicad-cli pcb upgrade --force` (the whole file,
+/// including the `(setup ..)` section of PCBIO-04).
 /// The oracle output itself is replayed too (parse + format of O1 must give O1, or the stored
 /// second re-save `*_o2.kicad_pcb` where the reference build changes it once more).
 #[test]

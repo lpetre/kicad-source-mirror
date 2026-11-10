@@ -8,7 +8,12 @@
 # out (machine limits, PORTING.md 7). The board, its .kicad_pro, .kicad_prl and .kicad_dru are
 # copied to a scratch directory first. Nothing is committed; the summary goes to PORT_STATUS.md.
 #
-# Usage (from <kicad>/rust): crates/kicad-pcb/tests/oracle/set5_dump_compare.sh [OUT_LOG]
+# A second part runs synthetic cases: the PCBIO-04 boards (pre-V6 legacy setup, V6, current) with
+# four nets appended, each without a project (QA binds none, the CLI an empty one) and with
+# tests/data/set5/design.kicad_pro (design rules, classes, patterns, label assignment); the
+# pre-V6 board checks that legacy setup tokens disable board.design_settings.
+#
+# Usage (from <kicad>/rust): [SET5_SYNTHETIC_ONLY=1] crates/kicad-pcb/tests/oracle/set5_dump_compare.sh [OUT_LOG]
 set -uo pipefail
 rust=$(cd "$(dirname "$0")/../../../.." && pwd)
 root=$(cd "$rust/.." && pwd)
@@ -23,7 +28,8 @@ rsdump="$rust/target/debug/pcb-dump-rs"
 
 : > "$log"
 cd "$root"
-find qa/data demos -name '*.kicad_pcb' | sort | while read -r f; do
+# SET5_SYNTHETIC_ONLY=1 skips the corpus part.
+[ -n "${SET5_SYNTHETIC_ONLY:-}" ] || find qa/data demos -name '*.kicad_pcb' | sort | while read -r f; do
     base="${f%.kicad_pcb}"
     [ -f "$base.kicad_pro" ] || continue
     [ "$(stat -c %s "$f")" -le 6000000 ] || continue
@@ -48,5 +54,35 @@ find qa/data demos -name '*.kicad_pcb' | sort | while read -r f; do
         (cd "$scratch/w" && timeout 300 "$rsdump" board $flag --sections board \
             "$name.kicad_pcb" > "$scratch/rs.txt" 2> /dev/null)
         echo "[$mode] $(python3 -I "$cmp" "$scratch/ref.txt" "$scratch/rs.txt" "$f")" >> "$log"
+    done
+done
+
+run_case() { # name dir
+    for mode in qa loader; do
+        flag=""
+        [ "$mode" = loader ] && flag="--loader"
+        (cd "$2" && timeout 300 nice -n 10 "$dump" board $flag --sections board \
+            "$1.kicad_pcb" > "$scratch/ref.txt" 2> /dev/null)
+        rm -f "$2/$1.kicad_prl"
+        (cd "$2" && timeout 300 "$rsdump" board $flag --sections board \
+            "$1.kicad_pcb" > "$scratch/rs.txt" 2> /dev/null)
+        echo "[$mode] $(python3 -I "$cmp" "$scratch/ref.txt" "$scratch/rs.txt" "synthetic/$1")" >> "$log"
+    done
+}
+
+for f in "$rust"/crates/kicad-pcb/tests/data/pcbio04/{legacy_v5,stackup_v6,current_misc}.kicad_pcb; do
+    name=$(basename "${f%.kicad_pcb}")
+    for pro in none design; do
+        rm -rf "$scratch/w" && mkdir "$scratch/w"
+        python3 -I - "$f" "$scratch/w/$name-$pro.kicad_pcb" <<'PY'
+import sys
+text = open(sys.argv[1], encoding="utf-8").read().rstrip()
+assert text.endswith(")")
+nets = '  (net 1 "+5V")\n  (net 2 "/SIG")\n  (net 3 "GND")\n  (net 4 "Net-(R1-Pad1)")\n'
+open(sys.argv[2], "w", encoding="utf-8").write(text[:-1].rstrip() + "\n" + nets + ")\n")
+PY
+        [ "$pro" = design ] && cp "$rust/crates/kicad-pcb/tests/data/set5/design.kicad_pro" \
+            "$scratch/w/$name-$pro.kicad_pro"
+        run_case "$name-$pro" "$scratch/w"
     done
 done

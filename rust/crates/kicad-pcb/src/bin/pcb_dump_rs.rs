@@ -27,8 +27,7 @@ use std::io::Write;
 use std::path::Path;
 
 use kicad_pcb::dump::{
-    DumpLoadMode, DumpOptions, dump_board, dump_defaults, load_board_for_dump_mode,
-    scan_file_uuids,
+    DumpLoadMode, DumpOptions, dump_board, dump_defaults, load_board_for_dump_mode, scan_file_uuids,
 };
 
 fn usage() -> std::process::ExitCode {

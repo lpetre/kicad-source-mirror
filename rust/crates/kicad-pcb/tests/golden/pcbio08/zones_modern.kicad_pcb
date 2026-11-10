@@ -1,0 +1,355 @@
+(kicad_pcb
+	(version 20261031)
+	(generator "pcbnew")
+	(generator_version "10.99")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(4 "In1.Cu" signal)
+		(6 "In2.Cu" signal)
+		(2 "B.Cu" signal)
+		(9 "F.Adhes" user "F.Adhesive")
+		(13 "F.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+		(allow_soldermask_bridges_in_footprints no)
+		(tenting
+			(front yes)
+			(back yes)
+		)
+		(covering
+			(front no)
+			(back no)
+		)
+		(plugging
+			(front no)
+			(back no)
+		)
+		(capping no)
+		(filling no)
+		(zone_defaults
+			(property
+				(layer "F.Cu")
+				(hatch_position
+					(xy 0 0.5)
+				)
+			)
+			(property
+				(layer "In1.Cu")
+				(hatch_position
+					(xy 1.5 -2.25)
+				)
+			)
+		)
+		(pcbplotparams
+			(layerselection 0x00000000_00000000_55555555_5755f5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
+			(disableapertmacros no)
+			(usegerberextensions no)
+			(usegerberattributes yes)
+			(usegerberadvancedattributes yes)
+			(creategerberjobfile yes)
+			(dashed_line_dash_ratio 12)
+			(dashed_line_gap_ratio 3)
+			(svgprecision 4)
+			(pngdpi 300)
+			(pngantialias yes)
+			(plotframeref no)
+			(mode 1)
+			(useauxorigin no)
+			(pdf_front_fp_property_popups yes)
+			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
+			(dxfpolygonmode yes)
+			(dxfimperialunits yes)
+			(dxfusepcbnewfont yes)
+			(psnegative no)
+			(psa4output no)
+			(plot_black_and_white yes)
+			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
+			(subtractmaskfromsilk no)
+			(outputformat 1)
+			(mirror no)
+			(drillshape 1)
+			(scaleselection 1)
+			(outputdirectory "")
+		)
+	)
+	(zone
+		(layer "F.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000004")
+		(hatch none 0.1)
+		(connect_pads no
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias not_allowed)
+			(pads allowed)
+			(copperpour not_allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(group "grp")
+			(link "b0000000-0000-0000-0000-000000000001"
+				(placement yes)
+				(routing no)
+				(connected_routing yes)
+				(other_items no)
+				(group_items yes)
+				(locked_items no)
+				(anchor "c0000000-0000-0000-0000-000000000001")
+			)
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 70 70) (xy 80 70) (xy 80 80)
+			)
+		)
+	)
+	(zone
+		(layer "F.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000005")
+		(hatch edge 2)
+		(connect_pads
+			(clearance 0.3)
+		)
+		(min_thickness 0.3)
+		(fill yes
+			(mode thieving)
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+			(thieving
+				(type squares)
+				(size 0.8)
+				(gap 0.6)
+				(width 0.1)
+				(stagger yes)
+				(orientation 45)
+			)
+		)
+		(polygon
+			(pts
+				(xy 90 90) (xy 95 90) (xy 95 95) (xy 90 95)
+			)
+		)
+	)
+	(zone
+		(net "GND")
+		(layer "F.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000008")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 5 5) (xy 6 5)
+			)
+		)
+	)
+	(zone
+		(net "GND")
+		(locked yes)
+		(layers "F.Cu" "B.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000001")
+		(name "multi \"q\"")
+		(hatch full 0.508)
+		(priority 7)
+		(connect_pads yes
+			(clearance 0.2032)
+		)
+		(min_thickness 0.1778)
+		(fill yes
+			(mode hatch)
+			(thermal_gap 0.3)
+			(thermal_bridge_width 0.4)
+			(smoothing chamfer)
+			(radius 0.75)
+			(island_removal_mode 2)
+			(island_area_min 10.5)
+			(hatch_thickness 0.6)
+			(hatch_gap 0.9)
+			(hatch_orientation 33.3)
+			(hatch_smoothing_level 2)
+			(hatch_smoothing_value 0.15)
+			(hatch_border_algorithm hatch_thickness)
+			(hatch_min_hole_area 0.4)
+		)
+		(property
+			(layer "B.Cu")
+			(hatch_position
+				(xy 0.1 0.2)
+			)
+		)
+		(polygon
+			(pts
+				(xy 10 10)
+				(arc
+					(start 20 10)
+					(mid 25 15)
+					(end 20 20)
+				)
+				(xy 10 20)
+			)
+		)
+		(polygon
+			(pts
+				(xy 12 12) (xy 14 12) (xy 14 14)
+			)
+		)
+		(filled_polygon
+			(layer "F.Cu")
+			(island yes)
+			(pts
+				(xy 11 11) (xy 19 11) (xy 19 19) (xy 11 19)
+			)
+		)
+		(filled_polygon
+			(layer "F.Cu")
+			(pts
+				(xy 11.5 11.5) (xy 12 11.5) (xy 12 12)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 11 11) (xy 19 11) (xy 19 19)
+			)
+		)
+		(custom_property "k1" "v1")
+	)
+	(zone
+		(layers "F.Cu" "B.Cu" "In1.Cu" "In2.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000003")
+		(name "RA")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks not_allowed)
+			(vias allowed)
+			(pads not_allowed)
+			(copperpour allowed)
+			(footprints not_allowed)
+		)
+		(placement
+			(enabled yes)
+			(component_class "CC1")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 50 50) (xy 60 50) (xy 60 60)
+			)
+		)
+	)
+	(zone
+		(net "/sig~{A}")
+		(layer "B.Cu")
+		(hatch full 0.1)
+		(attr
+			(teardrop
+				(type track_end)
+			)
+		)
+		(connect_pads yes
+			(clearance 0)
+		)
+		(min_thickness 0.0254)
+		(fill yes
+			(island_removal_mode 1)
+		)
+		(polygon
+			(pts
+				(xy 1 1) (xy 2 1) (xy 2 2)
+			)
+		)
+		(filled_polygon
+			(layer "B.Cu")
+			(pts
+				(xy 1 1) (xy 2 1) (xy 2 2)
+			)
+		)
+	)
+	(zone
+		(net "/sig~{A}")
+		(layers "In1.Cu" "In2.Cu")
+		(uuid "a0000000-0000-0000-0000-000000000002")
+		(hatch edge 0.5)
+		(connect_pads thru_hole_only
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(smoothing fillet)
+			(radius 1)
+			(island_removal_mode 1)
+		)
+		(polygon
+			(pts
+				(xy 30 30) (xy 40 30) (xy 40 40) (xy 30 40)
+			)
+		)
+	)
+	(zone
+		(layers "F.SilkS" "F.Fab")
+		(uuid "a0000000-0000-0000-0000-000000000007")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 5 5) (xy 6 5) (xy 6 6)
+			)
+		)
+	)
+	(embedded_fonts no)
+)

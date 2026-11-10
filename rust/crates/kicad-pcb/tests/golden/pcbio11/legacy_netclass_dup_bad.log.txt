@@ -1,0 +1,1 @@
+Failed to load board: Duplicate NETCLASS name 'Fast' in file '<file>' at line 72, offset 3.

@@ -1,0 +1,56 @@
+(kicad_pcb
+	(version 20250926)
+	(generator "pcbnew")
+	(generator_version "9.99")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(2 "B.Cu" signal)
+		(25 "Edge.Cuts" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+	)
+	(embedded_fonts yes)
+	(embedded_files
+		(file
+			(name "SchematicTemplate.kicad_wks")
+			(type worksheet)
+			(data |KLUv/WC5BpURAGbZUiEA1TZqxQZ6FZeh64j+cowVDIEjqHQ8zSauRySqqq+oYAJIAEQATQB4Y94R
+				fI2LFFZp1ZwPMchJLFIYre0jfH7IvwAABASl5/2saDaBEw4dFMupzfzXdNI3VFZrtWxlm8z4NP1T
+				AAQEZwcEhjeDO4UK/8uY+kP+mJ86mSxi2sXH3875DklPNm9P/aSPY85c1lodkm6rQ0YPWGcXra7a
+				b94/p6l9vORn3Bzzf8aU+TkbbFa1yc7xBobSIOT672hmTZte3o6ydVo3wl4oZkw/mTUXxlk2yscp
+				1Zr6kaCHhCWZcB5ls4AMbcE9SASLZhZBE4ha+8zlVNo+jQFuFc/jSIQOAQF12QNmreuyFbNqZius
+				fpItIiJvOeaFvS4SrYtMFhlNOD6t+7bN4dWrUkREk2wQroEbGSzex03ZtgUARi1rg3zcJz7+MCzE
+				/R5loCE1ZGyktChJIR1wRMTGqB5q4GqzNKB3GBOu+GtahYkyZFcS03ASQmY2LGRM4OxqgBCC8NOe
+				t3guFV7ZEP8NQEEduwObkLoKswythBWzAHSlENBBQkX9coQdg9Zz4V5Wn1zEFvN473LwNYpW6MNq
+				btYPnW4GAJkI4jdnfSyaWRaKwLsuf7ULUx3eTzNGnEIFkq4LZPpgM0EQJxSuOMDxWmWyRUumOqZH
+				G1wTQsfZdfb9NgISX4Gz1HTomaILkLZBUsaKblJaISeDiRA78zv2Gh2a6qSduPVPeDyE/WSuAekY
+				vCo=|
+			)
+			(checksum "6003EC72C5978E83C182073E67278FCF")
+		)
+		(file
+			(name "SchematicTemplateEmpty.kicad_wks")
+			(type worksheet)
+			(data |KLUv/SDtTQQA8kcaGIDLAwBiogoFsUFMFCJNEHJ/tI5rJHMpFsopt9T/SjD1kcMt5EX9sHKJb7Ti
+				BH5wIT/9aeqKEx6vjvw+1N9SUkzzfeEbWGS2vs+OCsOWrS9t0z5aUm5g5gCAwKLVr22nJXWTJ05Z
+				eNICCyAQIoF8eJTajUPCXqolYFHFD/FgziWduMYHggI=|
+			)
+			(checksum "0D054F65E3E0563620A9E16BBBB777DD")
+		)
+		(file
+			(name "b_copy.step")
+			(type model)
+			(data |KLUv/SDtTQQA8kcaGIDLAwBiogoFsUFMFCJNEHJ/tI5rJHMpFsopt9T/SjD1kcMt5EX9sHKJb7Ti
+				BH5wIT/9aeqKEx6vjvw+1N9SUkzzfeEbWGS2vs+OCsOWrS9t0z5aUm5g5gCAwKLVr22nJXWTJ05Z
+				eNICCyAQIoF8eJTajUPCXqolYFHFD/FgziWduMYHggI=|
+			)
+			(checksum "0D054F65E3E0563620A9E16BBBB777DD")
+		)
+	)
+)

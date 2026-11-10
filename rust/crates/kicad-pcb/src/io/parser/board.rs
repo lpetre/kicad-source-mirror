@@ -443,9 +443,14 @@ impl PcbParser {
         if !zone_ids.is_empty() {
             let layers = self.board.enabled_layers();
 
-            // z->SetLayerSetAndRemoveUnusedFills( z->GetLayerSet() & layers ) for every zone:
-            // no model API yet (change request).
-            crate::port_pending!("ZONE::SetLayerSetAndRemoveUnusedFills", zone_ids, layers);
+            // z->SetLayerSetAndRemoveUnusedFills( z->GetLayerSet() & layers ) for every zone
+            // (PCBIO-08; derived state, no time-stamp bump, like C++).
+            for id in zone_ids {
+                if let Some(z) = self.board.zones.get_mut(id) {
+                    let zone_layers = z.layer_set.clone() & &layers;
+                    z.set_layer_set_and_remove_unused_fills(zone_layers);
+                }
+            }
         }
 
         // Appended items get fresh UUIDs, so remap the links read in this parse and leave

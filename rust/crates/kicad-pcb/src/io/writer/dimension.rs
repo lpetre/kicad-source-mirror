@@ -115,8 +115,7 @@ impl PcbWriter<'_> {
 
             if dim.override_text_enabled {
                 let value = self.out.quotew(dim.override_text());
-                self.out
-                    .print(format_args!("(override_value {})", value))?;
+                self.out.print(format_args!("(override_value {})", value))?;
             }
 
             if dim.suppress_zeroes {
@@ -140,8 +139,7 @@ impl PcbWriter<'_> {
                 }
                 DimArrowDirection::Inward => {
                     self.out.print(format_args!("(arrow_direction inward)"))?;
-                }
-                // No default, handle all cases
+                } // No default, handle all cases
             }
         }
 

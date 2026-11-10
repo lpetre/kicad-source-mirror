@@ -27,12 +27,16 @@ ORACLE="${ORACLE:-/home/user/kicad-oracle/bin/drc-rtree-oracle}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-# Synthetic boards (gen_rtree_boards.py: tracks, arcs, vias, no project), then small QA boards
+# Synthetic boards (gen_rtree_boards.py: tracks, arcs, vias, no project; the cachegen/ ones are
+# rtree_small with rule files for the physical / clearance branches), then small QA boards
 # with pads, zones, graphics, projects and rule files (the Rust replay reports those as pending
 # until the parser and the model load them).
 BOARDS=( "$HERE/../data/rtree/rtree_small.kicad_pcb"
          "$HERE/../data/rtree/rtree_ties.kicad_pcb"
-         "$HERE/../data/rtree/rtree_4layer.kicad_pcb" )
+         "$HERE/../data/rtree/rtree_4layer.kicad_pcb"
+         "$HERE/../data/cachegen/phys_cond.kicad_pcb"
+         "$HERE/../data/cachegen/phys_uncond.kicad_pcb"
+         "$HERE/../data/cachegen/huge.kicad_pcb" )
 
 for b in issue4139 fill_bad intersectingzones issue7267 issue18203 net_tie_hole_clearance \
          via_stacks issue14334 connection_width_rules issue24649 issue5750; do

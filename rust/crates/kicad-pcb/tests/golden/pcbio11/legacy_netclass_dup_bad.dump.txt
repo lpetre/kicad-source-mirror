@@ -1,0 +1,1 @@
+file|legacy_netclass_dup_bad.kicad_pcb|

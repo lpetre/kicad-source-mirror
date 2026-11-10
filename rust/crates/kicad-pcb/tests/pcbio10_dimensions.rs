@@ -97,9 +97,13 @@ struct BlockCompare {
     first_mismatch: Option<(String, String)>,
 }
 
-fn compare_blocks(expected: &str, actual: &str) -> Result<BlockCompare, String> {
-    let exp = top_level_blocks(expected, &DIMENSION_KEYWORDS);
-    let act = top_level_blocks(actual, &DIMENSION_KEYWORDS);
+/// Compare the top-level dimensions of `expected` and `actual`, after masking in both the
+/// UUIDs that do not occur in `original` (fresh UUIDs of dimensions without one in the file).
+fn compare_blocks(expected: &str, actual: &str, original: &str) -> Result<BlockCompare, String> {
+    let expected = kicad_qa::uuid_canon::canonicalise_uuids(expected, original);
+    let actual = kicad_qa::uuid_canon::canonicalise_uuids(actual, original);
+    let exp = top_level_blocks(&expected, &DIMENSION_KEYWORDS);
+    let act = top_level_blocks(&actual, &DIMENSION_KEYWORDS);
 
     if exp.len() != act.len() {
         return Err(format!(
@@ -175,7 +179,7 @@ fn golden_dimension_blocks() {
             let _ = std::fs::write(Path::new(&dir).join(format!("{stem}.kicad_pcb")), &actual);
         }
 
-        match compare_blocks(&expected, &actual) {
+        match compare_blocks(&expected, &actual, &text) {
             Ok(r) => {
                 if let Some((e, a)) = &r.first_mismatch {
                     failures.push(format!(
@@ -250,7 +254,7 @@ fn corpus_dimension_blocks() {
 
         boards += 1;
 
-        match compare_blocks(&expected, &actual) {
+        match compare_blocks(&expected, &actual, &o1) {
             Ok(r) => {
                 blocks += r.blocks;
                 identical += r.identical;

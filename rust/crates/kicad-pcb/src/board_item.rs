@@ -541,9 +541,10 @@ impl Board {
                     }
                 }
             }
+            // PCB_TABLE::Rotate (package M11, pcb_table.rs)
             ItemKind::Table => {
-                if self.contains(id) {
-                    crate::port_pending!("PCB_TABLE::Rotate (rotate_item)", id, centre, angle)
+                if let Some(table) = id.typed() {
+                    self.table_rotate(table, centre, angle);
                 }
             }
             _ => {
@@ -587,9 +588,10 @@ impl Board {
                     self.flip_item(member, centre, dir);
                 }
             }
+            // PCB_TABLE::Flip (package M11, pcb_table.rs)
             ItemKind::Table => {
-                if self.contains(id) {
-                    crate::port_pending!("PCB_TABLE::Flip (flip_item)", id, centre, dir)
+                if let Some(table) = id.typed() {
+                    self.table_flip(table, centre, dir);
                 }
             }
             _ => {
@@ -640,9 +642,10 @@ impl Board {
                     self.mirror_item(member, centre, dir);
                 }
             }
+            // PCB_TABLE::Mirror (package M11, pcb_table.rs)
             ItemKind::Table => {
-                if self.contains(id) {
-                    crate::port_pending!("PCB_TABLE::Mirror (mirror_item)", id, centre, dir)
+                if let Some(table) = id.typed() {
+                    self.table_mirror(table, centre, dir);
                 }
             }
             _ => {

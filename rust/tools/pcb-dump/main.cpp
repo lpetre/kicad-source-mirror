@@ -75,7 +75,8 @@ static void usage()
              "       pcb-dump rules [--component-classes] FILE...\n"
              "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n"
              "          connectivity (opt-in: printed only when listed explicitly)\n"
-             "          engine (opt-in: DRC engine rules and constraint lists)\n" );
+             "          engine (opt-in: DRC engine rules and constraint lists)\n"
+             "          evalrules (opt-in: EvalRules per item and for sampled pairs)\n" );
 }
 
 
@@ -207,6 +208,7 @@ static std::unique_ptr<BOARD> loadBoardCli( const wxString& aPath )
 
 int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses ); // dump_rules.cpp
 void DumpEngineSection( BOARD* aBoard );                                          // dump_engine.cpp
+void DumpEvalRulesSection( BOARD* aBoard );                                       // dump_evalrules.cpp
 void DumpConnectivity( BOARD* aBoard ); // dump_connectivity.cpp
 
 
@@ -353,6 +355,10 @@ int main( int argc, char** argv )
             // Opt-in (not part of "all sections"): the DRC engine of the load path.
             if( opts.sections.count( "engine" ) )
                 Guard( "engine", [&]() { DumpEngineSection( board.get() ); } );
+
+            // Opt-in: constraint resolution (EvalRules) for every item and a sample of pairs.
+            if( opts.sections.count( "evalrules" ) )
+                Guard( "evalrules", [&]() { DumpEvalRulesSection( board.get() ); } );
 
             if( opts.sections.count( "connectivity" ) )
                 Guard( "connectivity", [&]() { DumpConnectivity( board.get() ); } );

@@ -37,9 +37,11 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
-use kicad_core::{EdaUnits, Kiid, Lset, PcbLayerId, Severity};
+use kicad_core::{EdaUnits, Lset, PcbLayerId, Severity};
 use kicad_geom::math::vector2::Vector2I;
-use kicad_pcb::drc_api::{DRCE_CLEARANCE, DRCE_FIRST, DRCE_LAST, DRCE_UNCONNECTED_ITEMS};
+use kicad_pcb::drc_api::{
+    DRCE_CLEARANCE, DRCE_FIRST, DRCE_LAST, DRCE_UNCONNECTED_ITEMS, DrcRuleInfo,
+};
 use kicad_pcb::pcb_marker::{PcbMarker, RcItem};
 use kicad_pcb::{Board, BoardCtx, ConnectivityQuery, ItemId, ItemRef, RuleResolver};
 use kicad_sexpr::{IoError, ParseError};
@@ -51,6 +53,7 @@ use crate::rule::{DrcConstraint, DrcRule, is_component_class_selector};
 use crate::rule_condition::DrcRuleCondition;
 use crate::rule_parser::{DrcRulesParser, LayerChoices};
 
+pub use eval_rules::{DrcClearanceBatch, OwnClearanceCache};
 use implicit_condition::{EngineCondition, ImplicitCondition};
 use implicit_rules::{TuningProfiles, load_implicit_rules};
 
@@ -208,6 +211,11 @@ pub struct DrcEngineConstraint {
     /// Duplicate zone UUIDs make an item-by-id lookup return the wrong same-UUID zone and
     /// defeat self-exclusion, so use the rule's own zone.
     pub implicit_keepout_zone: Option<ItemId>,
+    /// `constraint.GetParentRule()` as the rule data the pointer gives access to (the
+    /// current state of `parentRule`; `None` for a constraint without a parent rule).
+    pub rule_info: Option<DrcRuleInfo>,
+    /// `constraint.m_Test`: the assertion condition of an `ASSERTION` constraint.
+    pub test: Option<Arc<DrcRuleCondition>>,
 }
 
 /// The per-constraint-type lists (`std::map<DRC_CONSTRAINT_T, std::vector<...>>`).
@@ -227,8 +235,9 @@ pub struct DrcEngine {
     explicit_constraints: ConstraintMap,
     /// `m_netclassClearances`: netclass name -> its implicit clearance rule (lookups only).
     netclass_clearances: BTreeMap<String, Arc<DrcRule>>,
-    /// `m_ownClearanceCache`: (uuid, layer) -> clearance (lookups only).
-    own_clearance_cache: Mutex<BTreeMap<(Kiid, PcbLayerId), i32>>,
+    /// `m_ownClearanceCache`: (uuid, layer) -> clearance (lookups only), stamped with the board
+    /// time stamp (see [`OwnClearanceCache`]).
+    own_clearance_cache: Mutex<OwnClearanceCache>,
     /// `m_hasExplicitClearanceRules`.
     has_explicit_clearance_rules: bool,
     /// `m_hasGeometryDependentRules`.
@@ -567,7 +576,7 @@ impl DrcEngine {
             constraint_map: BTreeMap::new(),
             explicit_constraints: BTreeMap::new(),
             netclass_clearances: BTreeMap::new(),
-            own_clearance_cache: Mutex::new(BTreeMap::new()),
+            own_clearance_cache: Mutex::new(OwnClearanceCache::default()),
             has_explicit_clearance_rules: false,
             has_geometry_dependent_rules: false,
             has_diff_pair_clearance_overrides: false,
@@ -817,7 +826,7 @@ impl DrcEngine {
 
             let rule = Arc::clone(&self.rules[index]);
 
-            for constraint in &rule.constraints {
+            for (constraint_index, constraint) in rule.constraints.iter().enumerate() {
                 let implicit_keepout_zone = if rule.is_implicit()
                     && constraint.type_ == DrcConstraintT::DisallowConstraint
                 {
@@ -833,6 +842,12 @@ impl DrcEngine {
                     parent_rule: Arc::clone(&rule),
                     constraint: constraint.clone(),
                     implicit_keepout_zone,
+                    rule_info: constraint.parent_rule.as_ref().map(|_| rule.info()),
+                    test: rule
+                        .constraint_tests
+                        .get(constraint_index)
+                        .cloned()
+                        .flatten(),
                 });
 
                 self.constraint_map
@@ -908,9 +923,7 @@ impl DrcEngine {
         Arc::clone(cond_arc)
     }
 
-    fn lock_own_clearance_cache(
-        &self,
-    ) -> std::sync::MutexGuard<'_, BTreeMap<(Kiid, PcbLayerId), i32>> {
+    fn lock_own_clearance_cache(&self) -> std::sync::MutexGuard<'_, OwnClearanceCache> {
         self.own_clearance_cache
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
@@ -1144,14 +1157,7 @@ impl RuleResolver for DrcEngine {
         b: Option<ItemRef<'_>>,
         layer: PcbLayerId,
     ) -> DrcConstraint {
-        crate::port_pending!(
-            "DRC_ENGINE::EvalRules (DRC-04)",
-            ctx,
-            constraint,
-            a,
-            b,
-            layer
-        )
+        self.eval_rules(ctx, constraint, a, b, layer)
     }
 
     fn has_rules_for_constraint_type(&self, constraint: DrcConstraintT) -> bool {
@@ -1165,13 +1171,7 @@ impl RuleResolver for DrcEngine {
         layer: PcbLayerId,
         want_source: bool,
     ) -> (i32, Option<String>) {
-        crate::port_pending!(
-            "DRC_ENGINE::GetCachedOwnClearance (DRC-04)",
-            ctx,
-            item,
-            layer,
-            want_source
-        )
+        self.cached_own_clearance_impl(ctx, item, layer, want_source)
     }
 
     fn query_worst_constraint(&self, constraint: DrcConstraintT) -> Option<DrcConstraint> {

@@ -108,7 +108,10 @@ impl PcbWriter<'_> {
 
         for (chain_name, si) in &chains {
             // Persist if: multi-net OR terminal pads OR explicit (non-empty) chain name
-            if si.nets.len() > 1 || si.pads[0].is_some() || si.pads[1].is_some() || !chain_name.is_empty()
+            if si.nets.len() > 1
+                || si.pads[0].is_some()
+                || si.pads[1].is_some()
+                || !chain_name.is_empty()
             {
                 count += 1;
             }
@@ -118,13 +121,17 @@ impl PcbWriter<'_> {
             self.out.print(format_args!("(net_chains"))?;
 
             for (name, si) in &chains {
-                if si.nets.len() == 1 && si.pads[0].is_none() && si.pads[1].is_none() && name.is_empty()
+                if si.nets.len() == 1
+                    && si.pads[0].is_none()
+                    && si.pads[1].is_none()
+                    && name.is_empty()
                 {
                     continue;
                 }
 
                 let quoted = self.out.quotew(name);
-                self.out.print(format_args!(" (net_chain (name {quoted})"))?;
+                self.out
+                    .print(format_args!(" (net_chain (name {quoted})"))?;
                 self.out.print(format_args!(" (members"))?;
 
                 for n in &si.nets {

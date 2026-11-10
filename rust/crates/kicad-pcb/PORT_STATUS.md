@@ -2152,7 +2152,38 @@ SynchronizeComponentClasses (only with a project). `*` = session step.
 
 ### Oracle result
 
-SET5_RESULT_PLACEHOLDER
+Corpus (256 boards with a `.kicad_pro`; 251 per path after the size / large-demo filter),
+identical numbers on both paths (QA and `--loader`), run of 2026-11-10 before another
+package's in-progress zone change made the Rust parser panic on most boards (a rerun the same
+day: 148 match, 2 mismatch (drc exclusions, below), 101 not loadable by the Rust parser):
+
+- 234 boards match completely (120 179 compared values per path; 1 142 pending: nets whose
+  items the Rust parser still skips; `ds.biggest_clearance` is a session value - it needs the
+  DRC engine's `QueryWorstConstraint` - and is not compared).
+- 5 boards not loadable by the Rust parser today (`port_pending!` items outside
+  `allow_pending`, e.g. `PCB_SHAPE::SetStart (PCB_TEXTBOX)`).
+- 12 mismatching boards, none in settings code:
+  - 5 (`issue14008`, `issue17429`, `skew_group_matched_drc`, `skew_within_diff_pairs_drc`,
+    `solder_mask_bridge_test`): `ds.drc_exclusions` count - `RawDrcExclusionCodec` drops legacy
+    marker strings (SET-4 deviation SET-4-1; needs the `kicad-drc` codec).
+  - 4 legacy `(net_class ...)` boards (`issue18839`, `line_ending_drc_{fail,pass}`,
+    `line_ending_zone_flood`): `parseNETCLASS` is a PCBIO-11 staging stub, so the board's
+    classes are empty when `SetProject` transfers them (Default class, `smallest_clearance`,
+    and on the CLI path `custom_track_width` follow).
+  - 2 net-chain boards (`net_chain_bridging_tuning_profiles`,
+    `test_drc_net_chain_tuning_profiles`): `BOARD::ApplyNetChainNetclasses` reaches the M4 stub
+    `NET_SETTINGS::ClearChainPatternAssignments / SetChainPatternAssignment`, so the
+    `BuildListOfNets` / `SynchronizeNetsAndNetClasses` steps stop there (chain composites
+    missing, CLI `custom_via_size` not reset).
+  - `issue23851`: composite classes `PowerLow,Default` / `Power,Default` missing because the
+    nets that create them (pad nets) are not loaded yet.
+
+Synthetic cases (second part of the script): the PCBIO-04 boards `legacy_v5` (pre-V6 setup),
+`stackup_v6`, `current_misc` with four nets, each without a project and with
+`tests/data/set5/design.kicad_pro` (rules, classes, patterns, a two-class label assignment,
+text variables): 12 / 12 runs match (464-623 values each), incl. QA without a project
+(`has_project=false`, no class sync) vs CLI with an empty one, and the legacy guard
+(`board.design_settings` ignored for the pre-V6 board).
 
 ### Deviations
 
@@ -2179,3 +2210,123 @@ SET5_RESULT_PLACEHOLDER
   `COMPONENT_CLASS_MANAGER::SyncDynamicComponentClassAssignments` (SET-10) on every bound board;
   `pcb-dump-rs` reports it as a pending step and continues.
 - Text variables are verified by unit tests only (the dump has no text-variable field).
+
+## Package PCBIO-10: board file dimensions (parse + write)
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `PCB_IO_KICAD_SEXPR_PARSER::parseDIMENSION` (P:5766-6231): bare `locked`, the skipped legacy value, the legacy `(width ..)` aligned form with `feature1` / `feature2` / `crossbar` (`UpdateHeight`, backwards) / `arrow1a..2b`, units read from the legacy text (`FetchUnitsFromString`, auto units otherwise), `(type ..)` for all five classes, `layer`, `tstamp` / `uuid`, `gr_text` (the `isStyleKnown` save / restore of keep-aligned and text position), `pts`, `height`, `leader_length`, `orientation`, `(format ..)` (prefix, suffix, units, units_format, precision, override_value, suppress_zeroes, with the C++ clamps), `(style ..)` (thickness, arrow_direction via `ChangeArrowDirection`, arrow_length, text_position_mode, extension_height, extension_offset, keep_text_aligned, text_frame), `(locked yes)`, `custom_property`, the closing `Update()`, all error texts | `src/io/parser/dimension.rs` `parse_dimension` (+ `parse_dimension_format`, `parse_dimension_style`) | ported |
+| `PCB_IO_KICAD_SEXPR::format( const PCB_DIMENSION_BASE* )` (W:1067-1180) | `src/io/writer/dimension.rs` `format_dimension` (text through PCBIO-05's `format_pcb_text_with(.., is_dimension = true)`) | ported |
+
+### Tests and verification
+
+`tests/pcbio10_dimensions.rs`:
+
+* `golden_dimension_blocks` (byte level, default run): the 36 boards of `tests/data/pcbio10/`
+  (hand-made `dims_v5` (legacy 20171130 form, units from mm / in / mils / µm / unit-less
+  texts, missing crossbar), `dims_v6` (6.0 order with the text before the style, all classes,
+  prefix / suffix / suppress_zeroes, inward arrows, automatic units, leader frames),
+  `dims_v7` (bare `locked`, radial, `V_*` precisions, mirrored text, zero-length dimension),
+  `dims_current` (current format, `(locked yes)`, out-of-range units mode 4 and orientation 7,
+  override value with a text variable, knockout text, custom property, center) and the
+  dimensions-only extracts of all 32 corpus boards under 10 MB with board-level dimensions,
+  taken from the ORIGINAL files) re-saved by the reference `kicad-cli pcb upgrade --force`
+  (`tests/oracle/pcbio10_golden.sh` + `pcbio10_blocks.py`, goldens `tests/golden/pcbio10/`):
+  parse + format reproduces **170 / 170 dimension blocks byte for byte** (fresh UUIDs of
+  dimensions without one masked, `kicad_qa::uuid_canon`).
+* `corpus_dimension_blocks` (ignored, needs the io-corpus oracle cache): `O2` vs the port's
+  re-save of `O1`: 5 boards / 24 dimension blocks compared, all identical; 27 boards stop at
+  the pending `ZONE::SetLayerSetAndRemoveUnusedFills` stub (their board-level dimensions are
+  covered by the extracts above).
+* Item level: `pcb-dump board --no-init --sections item,dim,text` vs `pcb-dump-rs` on copies of
+  the 36 boards: 13968 lines match, **0 mismatches**, 170 pending (`dim|value_mode`, no Rust
+  API, M12).
+* Ported C++ test: `MalformedDimensionTextThrowsCleanly` (`test_kicad_sexpr.cpp`) as
+  `malformed_dimension_text_throws_cleanly`; `dimension_parse_errors` checks the
+  `Expecting(..)` texts. `DimensionZeroSuppressionPreservesIntegerMagnitude` was ported by M12.
+
+### Deviations
+
+* `PCB_DIMENSION_BASE::ClearRenderCache()` runs `Update()`, and every `EDA_TEXT` setter that
+  `parsePCB_TEXT` calls on the dimension reaches it (the last is `SetVisible( true )`). The
+  model's text setters act on the embedded `PcbText` and do not dispatch to the dimension, so
+  the parser runs that last `Update()` itself right after the text is parsed. The
+  intermediate `Update()`s are not reproduced; they only rewrite derived state (text, text
+  position / angle in the non-manual modes, shapes) that the later setters and the final
+  `Update()` overwrite. Observable effect reproduced: a legacy dimension reads its units from
+  the regenerated `"<value> in"` text, so legacy dimensions always load in inches (as the
+  reference does), whatever units their file text names.
+* Values the C++ stores by `static_cast` outside the enumerators cannot be held by the Rust
+  enums: `units_format 3` is read as 0 (renders identically, re-saved as 0), `precision`
+  outside 0..9 is clamped into 0..9, `text_position_mode 3` is read as 2 (manual). `units 4`
+  is exact (ignored, as `SetUnitsMode`'s switch does).
+* An unknown `(type ..)` (null dereference in the C++) fails with "Cannot parse unknown
+  dimension type ..."; the `wxCHECK_MSG` returns (`extension_height` on a non-aligned,
+  `text_frame` on a non-leader dimension) return `Ok(None)` as the C++ returns `nullptr`
+  (the board parser continues from the same token position). A `crossbar` on a non-aligned
+  dimension is a no-op (C++: `static_cast` to the wrong class).
+
+### Known gaps
+
+* Footprint dimensions (`parseDIMENSION( footprint )`, P:6895) are parsed by this code but the
+  footprint parser (PCBIO-06) is still a staging stub: not oracle-verified yet; the corpus
+  test will cover them once it lands.
+
+## Package PCBIO-08: board file zones (parse + write)
+
+| C++ | Rust | State |
+|---|---|---|
+| `parseZONE` (P:9610-10480): every token and version branch (net by code / name with the `ZONE::SetNet` / `SetNetCode` thieving overrides, `net_name` repair, layer / layers, property, tstamp / uuid, hatch, priority, connect_pads, min_thickness, `filled_areas_thickness`, fill with every mode and option incl. thieving `>= 20260513`, placement incl. link, keepout, polygon with arcs, filled_polygon per layer with island flags, legacy `fill_segments`, name, attr teardrop, locked, custom_property), the post-parse fix-ups (non-copper / rule-area net 0, border hatch, stroked fill `< 20250210` inflated with `InflateWithLinkedHoles`, `fill_segments` -> `TransformOvalToPolygon` + `BooleanAdd`, legacy teardrops `< 20230517`, `m_linkedZones`) | `io/parser/zone.rs` | ported |
+| `parseZoneDefaults`, `parseZoneLayerProperty` (P:3450-3501) | `io/parser/zone.rs` | ported |
+| `parseBOARD` "Clear unused zone data" (`SetLayerSetAndRemoveUnusedFills( GetLayerSet() & enabled )`, P:1735-1744) | `io/parser/board.rs` (call site only) | ported |
+| `format( const ZONE* )`, `format( const ZONE_LAYER_PROPERTIES&, int, PCB_LAYER_ID )` (W:3499-3790) | `io/writer/zone.rs` | ported |
+
+### Tests
+
+`tests/pcbio08_zones.rs`: ports of `test_kicad_sexpr.cpp` `Issue19775_ZoneLayerWildcards`,
+`Issue23125_EmptyZoneDiscarded`, `CopperThievingZone_RoundTrip`,
+`CopperThievingZone_AllPatternsRoundTrip`, `CopperThievingZone_RejectedInOldFileVersion`,
+`CopperThievingZone_RejectsMalformedGeometry`; differential oracle `oracle_resave_handmade`: the
+hand-made boards `tests/data/pcbio08/zones_modern.kicad_pcb` (every modern token: arcs in
+outlines, hatch / thieving fills, smoothing, island area, keepout + placement rule areas with a
+link and anchor, teardrop area, per-layer properties, zone defaults, a non-copper zone, a zone
+with 2 corners) and `zones_legacy.kicad_pcb` (2020 format: legacy net codes, `net_name` repair
+creating a net, stroked fill inflation, `(mode segment)` + `fill_segments`, a non-copper zone
+with a net, old keepout) reproduce the zone blocks and zone defaults of the reference
+`kicad-cli pcb upgrade --force` byte for byte (golden `tests/golden/pcbio08/`, the modern board
+is identical as a whole file); `oracle_corpus_zones`: the zone blocks of the reference re-save of
+every corpus board with zones (`tests/golden/pcbio08_corpus.txt`, both written by
+`tests/oracle/pcbio08_golden.sh`), replayed from the original files (boards up to 4 MB).
+
+Verification at landing (other packages pending: footprints skipped by staging): item level,
+`pcb-dump board --no-init --sections zone` vs `pcb-dump-rs` on 182 corpus boards with zones:
+100999 matches, 0 mismatches (missing / extra lines only for footprint zones and for ordinal keys
+shifted by the skipped footprints; 3 boards stopped by a text-box model stub); `--sections item`
+zone keys: 43845 matches, 67 mismatches, all `net` codes of boards whose footprints (and so the
+net creation order) are skipped. Byte level: corpus replay 77 boards identical, 1 identical up to
+order (teardrop areas sort by their random UUIDs), 1 identical up to a random UUID (a zone
+without UUID in the file), 0 differ, 85 stopped in other packages' code (mostly the writer's
+`EDA_SHAPE::Compare` stub); O1 -> Rust vs O2: 79 boards, 76 identical, 3 identical up to order.
+
+### Deviations / notes
+
+- Zones without a UUID in the file (teardrop areas never write one) get a random UUID, which is
+  also a writer sort key (`docs/analysis/pcb-io.md` R1): their order among equal-layer zones and
+  the written UUID of a non-teardrop zone differ from the oracle run.
+- `parseNet` for a zone is a zone-local copy of `parse_net_with` so that both the legacy
+  net-code path (`ZONE::SetNetCode`: thieving -> 0) and the name path (`ZONE::SetNet`: thieving
+  -> no net, -1) apply the overrides.
+- `SetHatchSmoothingLevel( parseDouble() )` and the writer's `formatInternalUnits(
+  GetMinIslandArea() / IU_PER_MM )` convert double to int with `f64_to_i32_x86`.
+- The writer returns an `IoError` "map::at" where the C++ `GetFilledPolysList` would throw for a
+  zone layer without a fill entry (unreachable for parsed zones).
+- The C++ "unknown zone corner smoothing type" writer error is unreachable (closed enum).
+
+### Known gaps
+
+- Footprint zones (`parseFOOTPRINT`, `< 20260616` board-frame outline un-baking) are PCBIO-06;
+  only board-level zones are verified so far.
+- The dump (`src/dump/items.rs`) still reports `ZONE::GetNumCorners` / `ZONE::IsTeardropArea` as
+  pending although the model has them (change request to the dump owner).

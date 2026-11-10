@@ -34,7 +34,11 @@ pub mod transform;
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
-use kicad_core::case_insensitive_map::CaseInsensitiveMap;
+use kicad_core::case_insensitive_map::{CaseInsensitiveKey, CaseInsensitiveMap, case_insensitive_cmp};
+use kicad_core::layer_ids::{is_copper_layer, is_valid_layer};
+use kicad_core::lib_id::get_lib_filename_forbidden_chars;
+use kicad_core::string_utils::{get_default_variant_name, get_trailing_int};
+use kicad_core::text_vars::ResolutionContext;
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, KiidPath, LibId, Lset, PcbLayerId};
 use kicad_geom::geometry::transform_trs::TransformTrs;
@@ -51,9 +55,13 @@ use crate::embedded_files::EmbeddedFiles;
 use crate::ids::{
     Body3dId, ConstraintId, FieldId, FootprintId, GroupId, ItemId, NetCode, PadId, PointId, ZoneId,
 };
-use crate::item::{BoardItemBase, RecurseMode, SharedShape};
+use crate::ids::ItemKind;
+use crate::item::{BoardItemBase, BoardUse, ItemFlags, RecurseMode, SharedShape};
 use crate::item_ref::ItemRef;
-use crate::traits::{BoardItem, Flashing, Invalidate};
+use crate::padstack::{PadAttrib, PadProp};
+use crate::pcb_field::FieldT;
+use crate::traits::{BoardConnectedItem, BoardItem, Flashing, Invalidate};
+use crate::{board_connected_item, board_item};
 use crate::zone_settings::ZoneConnection;
 
 /// `FOOTPRINT`.
@@ -283,7 +291,7 @@ pub struct FootprintGeometryCacheData {
 /// `FOOTPRINT_COURTYARD_CACHE_DATA`. The MALFORMED_F/B_COURTYARD item flags that
 /// BuildCourtyardCaches sets live here (a `&self` build cannot write `base.flags`); consumers
 /// read them through `fp.courtyard_flags(ctx)` where C++ tests `GetFlags() & MALFORMED_*`.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct FootprintCourtyardCacheData {
     pub front: ShapePolySet,
     pub back: ShapePolySet,
@@ -420,9 +428,15 @@ impl Footprint {
         layer == PcbLayerId::FCu || layer == PcbLayerId::BCu
     }
 
-    /// `FOOTPRINT::IsOnLayer()`: the footprint or any child on `layer`.
+    /// `FOOTPRINT::IsOnLayer()`: any pad, zone, field or drawing on `layer` (in that order,
+    /// short-circuiting like `std::ranges::any_of`).
     pub fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
-        crate::port_pending!("FOOTPRINT::IsOnLayer", ctx, layer)
+        let on = |id: ItemId| ctx.item(id).is_some_and(|item| item.is_on_layer(layer));
+
+        self.pads.iter().any(|&p| on(p.into()))
+            || self.zones.iter().any(|&z| on(z.into()))
+            || self.fields.iter().any(|&f| on(f.into()))
+            || self.drawings.iter().any(|&d| on(d))
     }
 
     /// `FOOTPRINT::RunOnChildren()`: fields, pads, zones, groups, bodies, constraints,
@@ -433,35 +447,171 @@ impl Footprint {
         mode: RecurseMode,
         f: &mut dyn FnMut(ItemRef<'_>),
     ) {
-        crate::port_pending!("FOOTPRINT::RunOnChildren", ctx, mode, f)
+        let visit = |id: ItemId, f: &mut dyn FnMut(ItemRef<'_>)| {
+            if let Some(item) = ctx.item(id) {
+                f(item);
+            }
+        };
+
+        for &field in &self.fields {
+            visit(field.into(), f);
+        }
+
+        for &pad in &self.pads {
+            visit(pad.into(), f);
+        }
+
+        for &zone in &self.zones {
+            visit(zone.into(), f);
+        }
+
+        for &group in &self.groups {
+            visit(group.into(), f);
+        }
+
+        for &body in &self.bodies {
+            visit(body.into(), f);
+        }
+
+        for &constraint in &self.constraints {
+            visit(constraint.into(), f);
+        }
+
+        for &point in &self.points {
+            visit(point.into(), f);
+        }
+
+        for &drawing in &self.drawings {
+            if let Some(item) = ctx.item(drawing) {
+                f(item);
+
+                if mode == RecurseMode::Recurse {
+                    item.as_dyn().run_on_children(ctx, RecurseMode::Recurse, f);
+                }
+            }
+        }
     }
 
     /// `FOOTPRINT::GetItemDescription()`.
     pub fn item_description(
         &self,
         ctx: &BoardCtx<'_>,
+        _units: &UnitsProvider<'_>,
+        _full: bool,
+    ) -> String {
+        let mut reference = self.reference(ctx);
+
+        if reference.is_empty() {
+            reference = "<no reference designator>".to_string();
+        }
+
+        format!("Footprint {reference}")
+    }
+
+    /// `FOOTPRINT::DisambiguateItemDescription()`: the description and the library id.
+    pub fn disambiguate_item_description(
+        &self,
+        ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("FOOTPRINT::GetItemDescription", ctx, units, full)
+        format!(
+            "{} ({})",
+            self.item_description(ctx, units, full),
+            self.fpid_as_string()
+        )
     }
 
-    // ---- fields, attributes, variants (package M19) -------------------------------------
+    /// `GetFPIDAsString()`.
+    pub fn fpid_as_string(&self) -> String {
+        self.fpid.format()
+    }
+
+    // ---- fields (package M19) -------------------------------------------------------------
+
+    /// `GetField( FIELD_T )` (const overload): the first field with this id, `None` when it is
+    /// missing (the non-const overload creates it; see `PORT_STATUS.md`).
+    pub fn field(&self, ctx: &BoardCtx<'_>, field_type: FieldT) -> Option<FieldId> {
+        self.fields
+            .iter()
+            .copied()
+            .find(|&id| ctx.board.field(id).is_some_and(|f| f.field_id() == field_type))
+    }
+
+    /// The text of a mandatory field (`Reference().GetText()` etc.); empty when the field is
+    /// missing, where C++ dereferences a null pointer.
+    fn field_text(&self, ctx: &BoardCtx<'_>, field_type: FieldT) -> String {
+        self.field(ctx, field_type)
+            .and_then(|id| ctx.board.field(id))
+            .map(|f| f.text.text.text().to_string())
+            .unwrap_or_default()
+    }
 
     /// `GetReference()`: the text of the reference field.
     pub fn reference(&self, ctx: &BoardCtx<'_>) -> String {
-        crate::port_pending!("FOOTPRINT::GetReference", ctx)
+        self.field_text(ctx, FieldT::Reference)
     }
 
     /// `GetValue()`: the text of the value field.
     pub fn value(&self, ctx: &BoardCtx<'_>) -> String {
-        crate::port_pending!("FOOTPRINT::GetValue", ctx)
+        self.field_text(ctx, FieldT::Value)
     }
 
-    /// `GetField( aFieldName )` (by name, case-sensitive like C++).
-    pub fn field_by_name(&self, ctx: &BoardCtx<'_>, name: &str) -> Option<FieldId> {
-        crate::port_pending!("FOOTPRINT::GetField (name)", ctx, name)
+    /// `IsAnnotated()`: a reference that is not empty and does not end in `?`.
+    pub fn is_annotated(&self, ctx: &BoardCtx<'_>) -> bool {
+        let reference = self.reference(ctx);
+        !reference.is_empty() && !reference.ends_with('?')
     }
+
+    /// `GetField( aFieldName )` (by `GetName()`, case-sensitive like C++).
+    pub fn field_by_name(&self, ctx: &BoardCtx<'_>, name: &str) -> Option<FieldId> {
+        self.fields
+            .iter()
+            .copied()
+            .find(|&id| ctx.board.field(id).is_some_and(|f| f.name(true) == name))
+    }
+
+    /// `HasField( aFieldName )`.
+    pub fn has_field(&self, ctx: &BoardCtx<'_>, name: &str) -> bool {
+        self.field_by_name(ctx, name).is_some()
+    }
+
+    /// `GetFields( aVector, aVisibleOnly )`: the fields (only the visible, non-empty ones if
+    /// asked) sorted by ordinal with the libstdc++ `std::sort`.
+    pub fn fields_sorted(&self, ctx: &BoardCtx<'_>, visible_only: bool) -> Vec<FieldId> {
+        let mut fields: Vec<(FieldId, i32)> = Vec::new();
+
+        for &id in &self.fields {
+            let Some(field) = ctx.board.field(id) else {
+                continue;
+            };
+
+            if visible_only && (!field.text.text.is_visible() || field.text.text.text().is_empty())
+            {
+                continue;
+            }
+
+            fields.push((id, field.ordinal()));
+        }
+
+        kicad_geom::stdsort::std_sort(&mut fields, |lhs, rhs| lhs.1 < rhs.1);
+        fields.into_iter().map(|(id, _)| id).collect()
+    }
+
+    /// `GetNextFieldOrdinal()`: one more than the largest field ordinal, at least 42.
+    pub fn next_field_ordinal(&self, ctx: &BoardCtx<'_>) -> i32 {
+        let mut ordinal = 42; // Arbitrarily larger than any mandatory FIELD_T id
+
+        for &id in &self.fields {
+            if let Some(field) = ctx.board.field(id) {
+                ordinal = std::cmp::max(ordinal, field.ordinal() + 1);
+            }
+        }
+
+        ordinal
+    }
+
+    // ---- attributes (package M19) ---------------------------------------------------------
 
     /// `GetFPID()`.
     pub fn fpid(&self) -> &LibId {
@@ -478,9 +628,23 @@ impl Footprint {
         self.attributes = attributes;
     }
 
+    /// Set or clear one `FOOTPRINT_ATTR_T` bit (the bodies of the `Set*` attribute setters).
+    fn set_attribute_bit(&mut self, bit: i32, on: bool) {
+        if on {
+            self.attributes |= bit;
+        } else {
+            self.attributes &= !bit;
+        }
+    }
+
     /// `IsBoardOnly()`.
     pub fn is_board_only(&self) -> bool {
         self.attributes & footprint_attr::FP_BOARD_ONLY != 0
+    }
+
+    /// `SetBoardOnly()`.
+    pub fn set_board_only(&mut self, is_board_only: bool) {
+        self.set_attribute_bit(footprint_attr::FP_BOARD_ONLY, is_board_only);
     }
 
     /// `IsExcludedFromPosFiles()`.
@@ -488,9 +652,29 @@ impl Footprint {
         self.attributes & footprint_attr::FP_EXCLUDE_FROM_POS_FILES != 0
     }
 
+    /// `SetExcludedFromPosFiles()`.
+    pub fn set_excluded_from_pos_files(&mut self, exclude: bool) {
+        self.set_attribute_bit(footprint_attr::FP_EXCLUDE_FROM_POS_FILES, exclude);
+    }
+
     /// `IsExcludedFromBOM()`.
     pub fn is_excluded_from_bom(&self) -> bool {
         self.attributes & footprint_attr::FP_EXCLUDE_FROM_BOM != 0
+    }
+
+    /// `SetExcludedFromBOM()`.
+    pub fn set_excluded_from_bom(&mut self, exclude: bool) {
+        self.set_attribute_bit(footprint_attr::FP_EXCLUDE_FROM_BOM, exclude);
+    }
+
+    /// `IsExcludedFromSim()`.
+    pub fn is_excluded_from_sim(&self) -> bool {
+        self.attributes & footprint_attr::FP_EXCLUDE_FROM_SIM != 0
+    }
+
+    /// `SetExcludedFromSim()`.
+    pub fn set_excluded_from_sim(&mut self, exclude: bool) {
+        self.set_attribute_bit(footprint_attr::FP_EXCLUDE_FROM_SIM, exclude);
     }
 
     /// `IsDNP()`.
@@ -498,9 +682,23 @@ impl Footprint {
         self.attributes & footprint_attr::FP_DNP != 0
     }
 
+    /// `SetDNP()`.
+    pub fn set_dnp(&mut self, dnp: bool) {
+        self.set_attribute_bit(footprint_attr::FP_DNP, dnp);
+    }
+
     /// `IsPlaced()`.
     pub fn is_placed(&self) -> bool {
         self.fp_status & FP_IS_PLACED != 0
+    }
+
+    /// `SetIsPlaced()`.
+    pub fn set_is_placed(&mut self, is_placed: bool) {
+        if is_placed {
+            self.fp_status |= FP_IS_PLACED;
+        } else {
+            self.fp_status &= !FP_IS_PLACED;
+        }
     }
 
     /// `NeedsPlaced()`.
@@ -508,19 +706,157 @@ impl Footprint {
         self.fp_status & FP_TO_PLACE != 0
     }
 
+    /// `SetNeedsPlaced()`.
+    pub fn set_needs_placed(&mut self, needs_placed: bool) {
+        if needs_placed {
+            self.fp_status |= FP_TO_PLACE;
+        } else {
+            self.fp_status &= !FP_TO_PLACE;
+        }
+    }
+
+    /// `IsConflicting()`: the `COURTYARD_CONFLICT` flag.
+    pub fn is_conflicting(&self) -> bool {
+        self.base.flags.has(ItemFlags::COURTYARD_CONFLICT)
+    }
+
+    /// `AllowMissingCourtyard()`.
+    pub fn allow_missing_courtyard(&self) -> bool {
+        self.allow_missing_courtyard
+    }
+
+    /// `AllowSolderMaskBridges()`.
+    pub fn allow_solder_mask_bridges(&self) -> bool {
+        self.allow_solder_mask_bridges
+    }
+
+    /// `GetDuplicatePadNumbersAreJumpers()`.
+    pub fn duplicate_pad_numbers_are_jumpers(&self) -> bool {
+        self.duplicate_pad_numbers_are_jumpers
+    }
+
     /// `GetFootprintType()` (from the attributes).
     pub fn footprint_type(&self) -> FootprintType {
-        crate::port_pending!("FOOTPRINT::GetFootprintType")
+        if self.attributes & footprint_attr::FP_SMD != 0 {
+            return FootprintType::Smd;
+        }
+
+        if self.attributes & footprint_attr::FP_THROUGH_HOLE != 0 {
+            return FootprintType::ThroughHole;
+        }
+
+        FootprintType::Unspecified
     }
 
-    /// `GetVariant( aVariantName )` (case-insensitive lookup).
-    pub fn variant(&self, name: &str) -> Option<&FootprintVariant> {
-        kicad_core::case_insensitive_map::ci_get(&self.variants, name)
+    /// `SetFootprintType()`.
+    pub fn set_footprint_type(&mut self, mounting_style: FootprintType) {
+        self.attributes &= !(footprint_attr::FP_THROUGH_HOLE | footprint_attr::FP_SMD);
+
+        if mounting_style == FootprintType::ThroughHole {
+            self.attributes |= footprint_attr::FP_THROUGH_HOLE;
+        } else if mounting_style == FootprintType::Smd {
+            self.attributes |= footprint_attr::FP_SMD;
+        }
     }
 
-    /// `GetDNPForVariant( aVariantName )`.
-    pub fn dnp_for_variant(&self, variant_name: &str) -> bool {
-        crate::port_pending!("FOOTPRINT::GetDNPForVariant", variant_name)
+    /// `GetTypeName()` (untranslated).
+    pub fn type_name(&self) -> &'static str {
+        match self.footprint_type() {
+            FootprintType::Smd => "SMD",
+            FootprintType::ThroughHole => "Through hole",
+            FootprintType::Unspecified => "Unspecified",
+        }
+    }
+
+    /// `GetLikelyAttribute()`: `FP_THROUGH_HOLE` with any plated through-hole pad, else
+    /// `FP_SMD` with an SMD pad on copper, else 0 (fiducial, heatsink, castellated and
+    /// mechanical pads are ignored).
+    pub fn likely_attribute(&self, ctx: &BoardCtx<'_>) -> i32 {
+        let mut smd_count = 0;
+        let mut tht_count = 0;
+
+        for &id in &self.pads {
+            let Some(pad) = ctx.board.pad(id) else {
+                continue;
+            };
+
+            match pad.property() {
+                PadProp::FiducialGlbl | PadProp::FiducialLocal => continue,
+                PadProp::Heatsink | PadProp::Castellated | PadProp::Mechanical => continue,
+                PadProp::None | PadProp::Bga | PadProp::Testpoint | PadProp::Pressfit => {}
+            }
+
+            match pad.attribute() {
+                PadAttrib::Pth => tht_count += 1,
+                PadAttrib::Smd => {
+                    if BoardItem::is_on_copper_layer(pad, ctx) {
+                        smd_count += 1;
+                    }
+                }
+                PadAttrib::NonComponent | PadAttrib::Conn | PadAttrib::Npth => {}
+            }
+        }
+
+        // Footprints with plated through-hole pads should usually be marked through hole even
+        // if they also have SMD because they might not be auto-placed.  Exceptions to this
+        // might be shielded
+        if tht_count > 0 {
+            return footprint_attr::FP_THROUGH_HOLE;
+        }
+
+        if smd_count > 0 {
+            return footprint_attr::FP_SMD;
+        }
+
+        0
+    }
+
+    /// `HasThroughHolePads()`: a PTH or NPTH pad.
+    pub fn has_through_hole_pads(&self, ctx: &BoardCtx<'_>) -> bool {
+        self.pads.iter().any(|&id| {
+            ctx.board
+                .pad(id)
+                .is_some_and(|p| matches!(p.attribute(), PadAttrib::Pth | PadAttrib::Npth))
+        })
+    }
+
+    /// `SetStackupMode()`: EXPAND_INNER_LAYERS resets the stackup layers to
+    /// { F_Cu, In1_Cu, B_Cu }.
+    pub fn set_stackup_mode(&mut self, mode: FootprintStackup) {
+        self.stackup_mode = mode;
+
+        if self.stackup_mode == FootprintStackup::ExpandInnerLayers {
+            // Reset the stackup layers to the default values
+            self.stackup_layers =
+                Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::In1Cu, PcbLayerId::BCu]);
+        }
+    }
+
+    /// `SetStackupLayers()`: only in CUSTOM_LAYERS mode (`wxCHECK2`).
+    pub fn set_stackup_layers(&mut self, layers: Lset) {
+        debug_assert!(self.stackup_mode == FootprintStackup::CustomLayers);
+
+        if self.stackup_mode == FootprintStackup::CustomLayers {
+            self.stackup_layers = layers;
+        }
+    }
+
+    /// `GetLocalClearance( aSource )`: the override and, if set and asked for, its source text.
+    pub fn local_clearance_with_source(&self, ctx: &BoardCtx<'_>) -> (Option<i32>, Option<String>) {
+        let source = self
+            .clearance
+            .map(|_| format!("footprint {}", self.reference(ctx)));
+        (self.clearance, source)
+    }
+
+    /// `GetZoneConnectionOverrides( aSource )`.
+    pub fn zone_connection_overrides(
+        &self,
+        ctx: &BoardCtx<'_>,
+    ) -> (ZoneConnection, Option<String>) {
+        let source = (self.zone_connection != ZoneConnection::Inherited)
+            .then(|| format!("footprint {}", self.reference(ctx)));
+        (self.zone_connection, source)
     }
 
     /// `GetLocalClearance()`.
@@ -533,6 +869,584 @@ impl Footprint {
         self.zone_connection
     }
 
+    /// `Add3DModel( a3DModel )`.
+    pub fn add_3d_model(&mut self, model: Fp3dmodel) {
+        self.models.push(model);
+    }
+
+    /// `GetSide()`: the footprint layer when a pad, drawing or zone is on a side-specific
+    /// layer; `UNDEFINED_LAYER` for an unsided footprint and in a footprint holder.
+    pub fn side(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
+        if board_item::has_board(self, ctx) && ctx.board.is_footprint_holder() {
+            return PcbLayerId::UndefinedLayer;
+        }
+
+        let side_mask = Lset::side_specific_mask();
+
+        // Test pads first; they're the most likely to return a quick answer.
+        for &id in &self.pads {
+            if let Some(item) = ctx.item(id.into()) {
+                if (side_mask & &item.layer_set()).any() {
+                    return self.base.layer;
+                }
+            }
+        }
+
+        for &id in &self.drawings {
+            if let Some(item) = ctx.item(id) {
+                let layer = item.layer();
+
+                if is_valid_layer(layer) && side_mask.contains(layer) {
+                    return self.base.layer;
+                }
+            }
+        }
+
+        for &id in &self.zones {
+            if let Some(item) = ctx.item(id.into()) {
+                if (side_mask & &item.layer_set()).any() {
+                    return self.base.layer;
+                }
+            }
+        }
+
+        PcbLayerId::UndefinedLayer
+    }
+
+    /// `IsWithinSchematicSheet( aSheetPath )`: `m_path` (written by the netlist without the
+    /// root sheet) starts with the sheet path minus its root.
+    pub fn is_within_schematic_sheet(&self, sheet_path: &KiidPath) -> bool {
+        if sheet_path.is_empty() {
+            return false;
+        }
+
+        let sheet = &sheet_path[1..];
+        self.path.len() + 1 >= sheet_path.len() && self.path.len() >= sheet.len()
+            && self.path[..sheet.len()] == *sheet
+    }
+
+    // ---- variants (package M19) -----------------------------------------------------------
+
+    /// `GetVariant( aVariantName )` (case-insensitive lookup).
+    pub fn variant(&self, name: &str) -> Option<&FootprintVariant> {
+        kicad_core::case_insensitive_map::ci_get(&self.variants, name)
+    }
+
+    /// `GetVariant( aVariantName )` (non-const).
+    pub fn variant_mut(&mut self, name: &str) -> Option<&mut FootprintVariant> {
+        kicad_core::case_insensitive_map::ci_get_mut(&mut self.variants, name)
+    }
+
+    /// `SetVariant( aVariant )`: ignored for an empty or the default name; an existing entry
+    /// keeps its stored spelling.
+    pub fn set_variant(&mut self, variant: &FootprintVariant) {
+        if variant.name.is_empty() || same_no_case(&variant.name, &get_default_variant_name()) {
+            return;
+        }
+
+        if let Some((key, value)) = self
+            .variants
+            .iter_mut()
+            .find(|(k, _)| same_no_case(k.as_str(), &variant.name))
+        {
+            let mut updated = variant.clone();
+            updated.name = key.as_str().to_string();
+            *value = updated;
+            return;
+        }
+
+        self.variants
+            .insert(CaseInsensitiveKey(variant.name.clone()), variant.clone());
+    }
+
+    /// `AddVariant( aVariantName )`: the existing variant, or a new one initialised from the
+    /// footprint's DNP / exclusion attributes. `None` (and a `wxASSERT`) for an empty or the
+    /// default name.
+    pub fn add_variant(&mut self, name: &str) -> Option<&mut FootprintVariant> {
+        if name.is_empty() || same_no_case(name, &get_default_variant_name()) {
+            debug_assert!(false, "Variant name cannot be empty or default.");
+            return None;
+        }
+
+        if self.variant(name).is_none() {
+            let mut variant = FootprintVariant::new(name);
+            variant.dnp = self.is_dnp();
+            variant.excluded_from_bom = self.is_excluded_from_bom();
+            variant.excluded_from_sim = self.is_excluded_from_sim();
+            variant.excluded_from_pos_files = self.is_excluded_from_pos_files();
+            self.variants
+                .insert(CaseInsensitiveKey(name.to_string()), variant);
+        }
+
+        self.variant_mut(name)
+    }
+
+    /// `DeleteVariant( aVariantName )` (case-insensitive).
+    pub fn delete_variant(&mut self, name: &str) {
+        self.variants.remove(&CaseInsensitiveKey(name.to_string()));
+    }
+
+    /// `RenameVariant( aOldName, aNewName )`: refused for an empty or the default new name, an
+    /// unknown old name, or a new name taken by another variant; a no-op when the stored
+    /// spelling already equals the new name.
+    pub fn rename_variant(&mut self, old_name: &str, new_name: &str) {
+        if new_name.is_empty() || same_no_case(new_name, &get_default_variant_name()) {
+            return;
+        }
+
+        let old_key = CaseInsensitiveKey(old_name.to_string());
+        let new_key = CaseInsensitiveKey(new_name.to_string());
+
+        let Some((stored_old, _)) = self.variants.get_key_value(&old_key) else {
+            return;
+        };
+
+        let stored_old = stored_old.as_str().to_string();
+
+        // existingIt != it: a different entry under the new name
+        if self.variants.contains_key(&new_key) && !same_no_case(&stored_old, new_name) {
+            return;
+        }
+
+        if stored_old == new_name {
+            return;
+        }
+
+        let Some(mut variant) = self.variants.remove(&old_key) else {
+            return;
+        };
+
+        variant.name = new_name.to_string();
+        self.variants.insert(new_key, variant);
+    }
+
+    /// `HasVariant( aVariantName )`.
+    pub fn has_variant(&self, name: &str) -> bool {
+        self.variant(name).is_some()
+    }
+
+    /// The variant to consult for `aVariantName`: `None` for the empty or default name and
+    /// for an unknown variant (the callers fall back to the footprint attributes).
+    fn variant_for_query(&self, variant_name: &str) -> Option<&FootprintVariant> {
+        // Empty variant name means default
+        if variant_name.is_empty() || same_no_case(variant_name, &get_default_variant_name()) {
+            return None;
+        }
+
+        self.variant(variant_name)
+    }
+
+    /// `GetDNPForVariant( aVariantName )`.
+    pub fn dnp_for_variant(&self, variant_name: &str) -> bool {
+        self.variant_for_query(variant_name)
+            .map_or_else(|| self.is_dnp(), |v| v.dnp)
+    }
+
+    /// `GetExcludedFromBOMForVariant( aVariantName )`.
+    pub fn excluded_from_bom_for_variant(&self, variant_name: &str) -> bool {
+        self.variant_for_query(variant_name)
+            .map_or_else(|| self.is_excluded_from_bom(), |v| v.excluded_from_bom)
+    }
+
+    /// `GetExcludedFromSimForVariant( aVariantName )`.
+    pub fn excluded_from_sim_for_variant(&self, variant_name: &str) -> bool {
+        self.variant_for_query(variant_name)
+            .map_or_else(|| self.is_excluded_from_sim(), |v| v.excluded_from_sim)
+    }
+
+    /// `GetExcludedFromPosFilesForVariant( aVariantName )`.
+    pub fn excluded_from_pos_files_for_variant(&self, variant_name: &str) -> bool {
+        self.variant_for_query(variant_name).map_or_else(
+            || self.is_excluded_from_pos_files(),
+            |v| v.excluded_from_pos_files,
+        )
+    }
+
+    /// `GetFieldValueForVariant( aVariantName, aFieldName )`: the variant override if there
+    /// is one, else the text of the field with that name, else empty.
+    pub fn field_value_for_variant(
+        &self,
+        ctx: &BoardCtx<'_>,
+        variant_name: &str,
+        field_name: &str,
+    ) -> String {
+        // Check variant-specific override first
+        if !variant_name.is_empty() && !same_no_case(variant_name, &get_default_variant_name()) {
+            if let Some(variant) = self.variant(variant_name) {
+                if variant.has_field_value(field_name) {
+                    return variant.field_value(field_name);
+                }
+            }
+        }
+
+        // Fall back to default field value
+        self.field_by_name(ctx, field_name)
+            .and_then(|id| ctx.board.field(id))
+            .map(|f| f.text.text.text().to_string())
+            .unwrap_or_default()
+    }
+
+    // ---- text variables (package M19) -----------------------------------------------------
+
+    /// `GetContextualTextVars( aVars )`.
+    pub fn contextual_text_vars(&self, vars: &mut Vec<String>) {
+        for var in [
+            "REFERENCE",
+            "VALUE",
+            "LAYER",
+            "FOOTPRINT_LIBRARY",
+            "FOOTPRINT_NAME",
+            "SHORT_NET_NAME(<pad_number>)",
+            "NET_NAME(<pad_number>)",
+            "NET_CLASS(<pad_number>)",
+            "PIN_NAME(<pad_number>)",
+            "EXCLUDE_FROM_BOM",
+            "EXCLUDE_FROM_BOARD",
+            "EXCLUDE_FROM_SIM",
+            "EXCLUDE_FROM_POS_FILES",
+            "DNP",
+        ] {
+            vars.push(var.to_string());
+        }
+    }
+
+    /// `ResolveTextVar( token, aDepth )`: with the board's current variant.
+    pub fn resolve_text_var(&self, ctx: &BoardCtx<'_>, token: &mut String, depth: i32) -> bool {
+        let variant = if board_item::has_board(self, ctx) {
+            ctx.board.get_current_variant().to_string()
+        } else {
+            String::new()
+        };
+
+        self.resolve_text_var_for_variant(ctx, token, &variant, depth)
+    }
+
+    /// `ResolveTextVar( token, aVariantName, aDepth )`: the footprint variables, the fields
+    /// by name, then the board's variables. `${PROPERTY.<name>}` (the property manager) is not
+    /// ported and is left unresolved here (see `PORT_STATUS.md`).
+    pub fn resolve_text_var_for_variant(
+        &self,
+        ctx: &BoardCtx<'_>,
+        token: &mut String,
+        variant_name: &str,
+        depth: i32,
+    ) -> bool {
+        let has_board = board_item::has_board(self, ctx);
+
+        if has_board && ctx.board.board_use == BoardUse::FpHolder {
+            return false;
+        }
+
+        let variant = variant_name;
+
+        let shown_field = |field_type: FieldT| {
+            self.field(ctx, field_type)
+                .and_then(|id| ctx.board.field(id))
+                .map(|f| {
+                    f.shown_text_for_variant(ctx, variant, ResolutionContext::Internal, depth + 1)
+                })
+        };
+
+        match token.as_str() {
+            "REFERENCE" => {
+                *token = shown_field(FieldT::Reference).unwrap_or_default();
+                return true;
+            }
+            "VALUE" => {
+                *token = shown_field(FieldT::Value).unwrap_or_default();
+                return true;
+            }
+            "LAYER" => {
+                *token = board_item::layer_name(self, ctx);
+                return true;
+            }
+            "FOOTPRINT_LIBRARY" => {
+                *token = self.fpid.lib_nickname().to_string();
+                return true;
+            }
+            "FOOTPRINT_NAME" => {
+                *token = self.fpid.lib_item_name().to_string();
+                return true;
+            }
+            _ => {}
+        }
+
+        if token.starts_with("SHORT_NET_NAME(")
+            || token.starts_with("NET_NAME(")
+            || token.starts_with("NET_CLASS(")
+            || token.starts_with("PIN_NAME(")
+        {
+            // AfterFirst( '(' ), then BeforeLast( ')' ) (the whole string when there is none)
+            let after = token.split_once('(').map_or("", |(_, rest)| rest);
+            let pad_number = after.rsplit_once(')').map_or(after, |(head, _)| head);
+
+            for &id in &self.pads {
+                let Some(pad) = ctx.board.pad(id) else {
+                    continue;
+                };
+
+                if pad.number() == pad_number {
+                    *token = if token.starts_with("SHORT_NET_NAME") {
+                        board_connected_item::short_netname(pad, ctx).to_string()
+                    } else if token.starts_with("NET_NAME") {
+                        board_connected_item::netname(pad, ctx).to_string()
+                    } else if token.starts_with("NET_CLASS") {
+                        board_connected_item::net_class_name(pad, ctx)
+                    } else {
+                        pad.pin_function().to_string()
+                    };
+
+                    return true;
+                }
+            }
+        } else if token == "EXCLUDE_FROM_BOM" {
+            *token = if self.excluded_from_bom_for_variant(variant) {
+                "Excluded from BOM".to_string()
+            } else {
+                String::new()
+            };
+            return true;
+        } else if token == "EXCLUDE_FROM_POS_FILES" {
+            *token = if self.excluded_from_pos_files_for_variant(variant) {
+                "Excluded from position files".to_string()
+            } else {
+                String::new()
+            };
+            return true;
+        } else if token == "EXCLUDE_FROM_BOARD" {
+            // Footprints are never excluded from board by definition
+            token.clear();
+            return true;
+        } else if token == "EXCLUDE_FROM_SIM" {
+            *token = if self.excluded_from_sim_for_variant(variant) {
+                "Excluded from simulation".to_string()
+            } else {
+                String::new()
+            };
+            return true;
+        } else if token == "DNP" {
+            *token = if self.dnp_for_variant(variant) {
+                "DNP".to_string()
+            } else {
+                String::new()
+            };
+            return true;
+        } else if let Some(field) = self
+            .field_by_name(ctx, token)
+            .and_then(|id| ctx.board.field(id))
+        {
+            *token = field.shown_text_for_variant(
+                ctx,
+                variant,
+                ResolutionContext::Internal,
+                depth + 1,
+            );
+            return true;
+        } else if token.starts_with("PROPERTY.") {
+            // The great property resolver (PROPERTY_MANAGER): not ported, unresolved.
+            return false;
+        }
+
+        if has_board && ctx.board.resolve_text_var(token, variant_name, depth + 1) {
+            return true;
+        }
+
+        false
+    }
+
+    // ---- pads (package M19) ---------------------------------------------------------------
+
+    /// `FindPadByNumber( aPadNumber, aSearchAfterMe )`: the first pad with this number (after
+    /// `search_after_me` when given).
+    pub fn find_pad_by_number(
+        &self,
+        ctx: &BoardCtx<'_>,
+        pad_number: &str,
+        search_after_me: Option<PadId>,
+    ) -> Option<PadId> {
+        let mut can_select = search_after_me.is_none();
+
+        for &id in &self.pads {
+            if !can_select && Some(id) == search_after_me {
+                can_select = true;
+                continue;
+            }
+
+            if can_select && ctx.board.pad(id).is_some_and(|p| p.number() == pad_number) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+
+    /// `FindPadByUuid( aUuid )`.
+    pub fn find_pad_by_uuid(&self, ctx: &BoardCtx<'_>, uuid: &Kiid) -> Option<PadId> {
+        self.pads
+            .iter()
+            .copied()
+            .find(|&id| ctx.board.pad(id).is_some_and(|p| BoardItem::uuid(p) == uuid))
+    }
+
+    /// `GetPad( aPosition, aLayerMask )`: the first pad on one of `layer_mask` hit at `pos`.
+    pub fn get_pad_at(&self, ctx: &BoardCtx<'_>, pos: Vector2I, layer_mask: &Lset) -> Option<PadId> {
+        for &id in &self.pads {
+            let Some(pad) = ctx.board.pad(id) else {
+                continue;
+            };
+
+            // ... and on the correct layer.
+            if !(&pad.layer_set(ctx) & layer_mask).any() {
+                continue;
+            }
+
+            if pad.hit_test(ctx, pos, 0) {
+                return Some(id);
+            }
+        }
+
+        None
+    }
+
+    /// `GetPads( aPadNumber, aIgnore )`: every pad with this number except `ignore`.
+    pub fn pads_by_number(
+        &self,
+        ctx: &BoardCtx<'_>,
+        pad_number: &str,
+        ignore: Option<PadId>,
+    ) -> Vec<PadId> {
+        self.pads
+            .iter()
+            .copied()
+            .filter(|&id| {
+                Some(id) != ignore && ctx.board.pad(id).is_some_and(|p| p.number() == pad_number)
+            })
+            .collect()
+    }
+
+    /// `GetPadCount()`.
+    pub fn pad_count(&self) -> u32 {
+        self.pads.len() as u32
+    }
+
+    /// `GetUniquePadNumbers()`: the numbers of the named pads on copper.
+    pub fn unique_pad_numbers(&self, ctx: &BoardCtx<'_>) -> BTreeSet<String> {
+        let mut used_numbers = BTreeSet::new();
+
+        // Create a set of used pad numbers
+        for &id in &self.pads {
+            let Some(pad) = ctx.board.pad(id) else {
+                continue;
+            };
+
+            // Skip pads not on copper layers (used to build complex
+            // solder paste shapes for instance)
+            if (&pad.layer_set(ctx) & Lset::all_cu_mask()).none() {
+                continue;
+            }
+
+            // Skip pads with no name, because they are usually "mechanical"
+            // pads, not "electrical" pads
+            if pad.number().is_empty() {
+                continue;
+            }
+
+            used_numbers.insert(pad.number().to_string());
+        }
+
+        used_numbers
+    }
+
+    /// `GetUniquePadCount()`: the number of unique pad numbers.
+    pub fn unique_pad_count(&self, ctx: &BoardCtx<'_>) -> u32 {
+        self.unique_pad_numbers(ctx).len() as u32
+    }
+
+    /// `GetNumberedPadCount()`: the unique "electrical" pad numbers on copper (non-NPTH):
+    /// numeric, up to two letters plus digits, or two such joined by `_` (counted twice).
+    pub fn numbered_pad_count(&self, ctx: &BoardCtx<'_>) -> u32 {
+        let is_electrical_pad_number = |num: &str| -> bool {
+            if num.is_empty() {
+                return false;
+            }
+
+            let chars: Vec<char> = num.chars().collect();
+
+            // Walk past an optional alphabetic prefix of at most two characters.
+            let mut i = 0;
+
+            while i < chars.len() && wx_is_alpha(chars[i]) {
+                i += 1;
+            }
+
+            // Prefix must be 0-2 letters; anything longer is not a pin number.
+            if i > 2 {
+                return false;
+            }
+
+            // The remainder must be non-empty and consist entirely of digits.
+            if i == chars.len() {
+                return false; // no digits at all (e.g. "MP", "GND")
+            }
+
+            chars[i..].iter().all(|&c| wx_is_digit(c))
+        };
+
+        let mut counted = BTreeSet::new();
+
+        for &id in &self.pads {
+            let Some(pad) = ctx.board.pad(id) else {
+                continue;
+            };
+
+            // Must be on at least one copper layer.
+            if (&pad.layer_set(ctx) & Lset::all_cu_mask()).none() {
+                continue;
+            }
+
+            // Skip NPTH (mechanical holes).
+            if pad.attribute() == PadAttrib::Npth {
+                continue;
+            }
+
+            let num = pad.number();
+
+            if is_electrical_pad_number(num) {
+                counted.insert(num.to_string());
+            } else if num.contains('_') {
+                let (first, second) = num.split_once('_').unwrap_or((num, ""));
+
+                if is_electrical_pad_number(first) && is_electrical_pad_number(second) {
+                    counted.insert(first.to_string());
+                    counted.insert(second.to_string());
+                }
+            }
+        }
+
+        counted.len() as u32
+    }
+
+    /// `GetNextPadNumber( aLastPadNumber )`: the prefix of `last_pad_number` with the first
+    /// unused number from its trailing integer on.
+    pub fn next_pad_number(&self, ctx: &BoardCtx<'_>, last_pad_number: &str) -> String {
+        let used_numbers: BTreeSet<&str> = self
+            .pads
+            .iter()
+            .filter_map(|&id| ctx.board.pad(id).map(|p| p.number()))
+            .collect();
+
+        // Pad numbers aren't technically reference designators, but the formatting is close
+        // enough for these to give us what we need.
+        let prefix = get_ref_des_prefix(last_pad_number);
+        let mut num = get_trailing_int(last_pad_number);
+
+        while used_numbers.contains(format!("{prefix}{num}").as_str()) {
+            num = num.wrapping_add(1);
+        }
+
+        format!("{prefix}{num}")
+    }
+
     // ---- net ties and jumpers (package M19) ---------------------------------------------
 
     /// `GetNetTieCache( aItem )`: the net codes a footprint item may short (empty if none).
@@ -541,38 +1455,429 @@ impl Footprint {
         self.net_tie_cache.get(&item).unwrap_or(&EMPTY)
     }
 
-    /// `IsNetTie()`: the footprint has net-tie pad groups.
+    /// `IsNetTie()`: the footprint has a non-empty net-tie pad group.
     pub fn is_net_tie(&self) -> bool {
-        !self.net_tie_pad_groups.is_empty()
+        self.net_tie_pad_groups.iter().any(|group| !group.is_empty())
     }
 
-    /// `MapPadNumbersToNetTieGroups()`: pad number -> group index (-1: none).
+    /// `MapPadNumbersToNetTieGroups()`: pad number -> group index (-1: none). Every pad
+    /// number of the footprint is a key; the groups are comma-separated lists of pad numbers
+    /// (`\` escapes the next character), each entry trimmed.
     pub fn map_pad_numbers_to_net_tie_groups(&self, ctx: &BoardCtx<'_>) -> BTreeMap<String, i32> {
-        crate::port_pending!("FOOTPRINT::MapPadNumbersToNetTieGroups", ctx)
+        let mut pad_number_to_group_idx_map = BTreeMap::new();
+
+        for &id in &self.pads {
+            if let Some(pad) = ctx.board.pad(id) {
+                pad_number_to_group_idx_map.insert(pad.number().to_string(), -1);
+            }
+        }
+
+        for (ii, group) in self.net_tie_pad_groups.iter().enumerate() {
+            let group_idx = ii as i32;
+            let mut process_pad = |pad: &str| {
+                let pad = wx_trim(pad);
+
+                if !pad.is_empty() {
+                    pad_number_to_group_idx_map.insert(pad.to_string(), group_idx);
+                }
+            };
+
+            let mut esc = false;
+            let mut pad = String::new();
+
+            for ch in group.chars() {
+                if esc {
+                    esc = false;
+                    pad.push(ch);
+                    continue;
+                }
+
+                match ch {
+                    '\\' => esc = true,
+                    ',' => {
+                        process_pad(&pad);
+                        pad.clear();
+                    }
+                    _ => pad.push(ch),
+                }
+            }
+
+            process_pad(&pad);
+        }
+
+        pad_number_to_group_idx_map
     }
 
-    /// `GetNetTiePads( aPad )`.
+    /// `GetNetTiePads( aPad )`: the footprint's pads in the net-tie group of `pad` (`pad`
+    /// included); empty when it is in none. A number missing from the map counts as group 0
+    /// (`std::map::operator[]`).
     pub fn net_tie_pads(&self, ctx: &BoardCtx<'_>, pad: PadId) -> Vec<PadId> {
-        crate::port_pending!("FOOTPRINT::GetNetTiePads", ctx, pad)
+        // First build a map from pad numbers to allowed-shorting-group indexes.  This ends up
+        // being something like O(3n), but it still beats O(n^2) for large numbers of pads.
+        let pad_to_net_tie_group_map = self.map_pad_numbers_to_net_tie_groups(ctx);
+        let group_of = |number: &str| pad_to_net_tie_group_map.get(number).copied().unwrap_or(0);
+        let group_idx = ctx.board.pad(pad).map_or(0, |p| group_of(p.number()));
+        let mut other_pads = Vec::new();
+
+        if group_idx >= 0 {
+            for &id in &self.pads {
+                if ctx
+                    .board
+                    .pad(id)
+                    .is_some_and(|p| group_of(p.number()) == group_idx)
+                {
+                    other_pads.push(id);
+                }
+            }
+        }
+
+        other_pads
     }
 
-    /// `GetJumperPadGroup( aPadNumber )`: the jumper group of a pad number.
+    /// `JumperPadGroups().FindContaining( aPadNumber )`: the jumper group of a pad number.
     pub fn jumper_pad_group(&self, pad_number: &str) -> Option<&BTreeSet<String>> {
-        crate::port_pending!("FOOTPRINT::GetJumperPadGroup", pad_number)
+        self.jumper_pad_groups
+            .find_containing(pad_number)
+            .map(|group| &group.names)
     }
 
-    /// `GetEffectiveComponentClass()` (static class, or the dynamic one from the board's
-    /// component class manager, cached in `component_class_cache`).
+    // ---- component class (package M19) ----------------------------------------------------
+
+    /// `GetStaticComponentClass()`.
+    pub fn static_component_class(&self) -> Option<&Arc<ComponentClass>> {
+        self.static_component_class.as_ref()
+    }
+
+    /// `GetComponentClass()` (`COMPONENT_CLASS_CACHE_PROXY::GetComponentClass`) from `&self`:
+    /// the cached final class while the manager's ticker has not moved, else the class
+    /// recomputed against a copy of the board's manager (the effective class the C++ registers
+    /// in the manager on the way is not kept; use `Board::footprint_component_class` to keep
+    /// it). Dynamic assignment rules need the DRC condition matcher (kicad-drc): with rules
+    /// present this is `port_pending!`.
     pub fn component_class(&self, ctx: &BoardCtx<'_>) -> Option<Arc<ComponentClass>> {
-        crate::port_pending!("FOOTPRINT::GetComponentClass", ctx)
+        let manager = ctx.board.component_class_manager();
+
+        let cached = self.component_class_cache.with(|cache| {
+            (manager.ticker <= cache.last_ticker_value).then(|| cache.final_component_class.clone())
+        });
+
+        if let Some(final_class) = cached {
+            return final_class;
+        }
+
+        if !manager.assignment_rules.is_empty() {
+            crate::port_pending!("COMPONENT_CLASS_ASSIGNMENT_RULE::Matches (GetComponentClass)", ctx)
+        }
+
+        let mut scratch = manager.clone();
+        self.component_class_cache.with(|cache| {
+            scratch.get_component_class(cache, self.static_component_class.as_deref(), |_| false)
+        })
+    }
+
+    /// `GetComponentClassAsString()`: the class name, empty for the empty class.
+    pub fn component_class_as_string(&self, ctx: &BoardCtx<'_>) -> String {
+        match self.component_class(ctx) {
+            Some(class) if !class.is_empty() => class.name().to_string(),
+            _ => String::new(),
+        }
+    }
+
+    /// `InvalidateComponentClassCache()`.
+    pub fn invalidate_component_class_cache(&mut self) {
+        self.component_class_cache.clear();
+    }
+
+    /// `IsLibNameValid( aName )`: no character of `GetLibFilenameForbiddenChars()`.
+    pub fn is_lib_name_valid(name: &str) -> bool {
+        let invalids = string_lib_name_invalid_chars(false);
+        !name.chars().any(|c| invalids.contains(c))
+    }
+}
+
+/// `FOOTPRINT::StringLibNameInvalidChars( aUserReadable )`.
+pub fn string_lib_name_invalid_chars(user_readable: bool) -> &'static str {
+    if user_readable {
+        "% $ < > 'tab' 'return' 'line feed' \\ \" / :"
+    } else {
+        get_lib_filename_forbidden_chars()
+    }
+}
+
+/// `aName.CmpNoCase( aOther ) == 0`.
+fn same_no_case(a: &str, b: &str) -> bool {
+    case_insensitive_cmp(a, b).is_eq()
+}
+
+/// `wxString::Trim( true ).Trim( false )`: strips `wxSafeIsspace` characters (ASCII space,
+/// `\t`, `\n`, `\v`, `\f`, `\r`) from both ends.
+fn wx_trim(s: &str) -> &str {
+    s.trim_matches(|c: char| matches!(c, ' ' | '\t' | '\n' | '\x0b' | '\x0c' | '\r'))
+}
+
+/// `wxIsalpha` in the C locale.
+fn wx_is_alpha(c: char) -> bool {
+    c.is_ascii_alphabetic()
+}
+
+/// `wxIsdigit` in the C locale.
+fn wx_is_digit(c: char) -> bool {
+    c.is_ascii_digit()
+}
+
+/// `UTIL::GetRefDesPrefix( aRefDes )` (`common/refdes_utils.cpp`): the string without its
+/// trailing digits and question marks.
+pub fn get_ref_des_prefix(ref_des: &str) -> &str {
+    // find the first non-digit, non-question-mark character from the back
+    let end = ref_des
+        .char_indices()
+        .rev()
+        .find(|&(_, c)| c != '?' && !c.is_ascii_digit())
+        .map_or(0, |(i, c)| i + c.len_utf8());
+
+    &ref_des[..end]
+}
+
+impl JumperGroup {
+    /// `JUMPER_GROUP::Make( aNames )`: blank names dropped; `None` when nothing is left.
+    pub fn make(mut names: BTreeSet<String>) -> Option<JumperGroup> {
+        // A blank name can never resolve to a pin or pad.
+        names.retain(|name| !name.is_empty());
+
+        if names.is_empty() {
+            return None;
+        }
+
+        Some(JumperGroup { names })
+    }
+
+    /// `JUMPER_GROUP::Contains( aName )`.
+    pub fn contains(&self, name: &str) -> bool {
+        self.names.contains(name)
+    }
+
+    /// `GetNames()`.
+    pub fn names(&self) -> &BTreeSet<String> {
+        &self.names
+    }
+}
+
+impl JumperGroupSet {
+    /// `JUMPER_GROUP_SET::Add( JUMPER_GROUP )`.
+    pub fn add(&mut self, group: JumperGroup) {
+        self.groups.push(group);
+    }
+
+    /// `JUMPER_GROUP_SET::Add( std::set<wxString> )`: through `JUMPER_GROUP::Make`.
+    pub fn add_names(&mut self, names: BTreeSet<String>) {
+        if let Some(group) = JumperGroup::make(names) {
+            self.add(group);
+        }
+    }
+
+    /// `Clear()`.
+    pub fn clear(&mut self) {
+        self.groups.clear();
+    }
+
+    /// `GetAll()`.
+    pub fn all(&self) -> &[JumperGroup] {
+        &self.groups
+    }
+
+    /// `IsEmpty()`.
+    pub fn is_empty(&self) -> bool {
+        self.groups.is_empty()
+    }
+
+    /// `FindContaining( aName )`: the first group holding `name`.
+    pub fn find_containing(&self, name: &str) -> Option<&JumperGroup> {
+        self.groups.iter().find(|group| group.contains(name))
     }
 }
 
 impl Board {
     /// `FOOTPRINT::BuildNetTieCache()`: cache, per footprint item, the net codes it may
     /// short through the net-tie pad groups (derived state: no invalidation, no time stamp).
+    /// The pads of one group map to each other's nets; a copper `PCB_SHAPE` of the footprint
+    /// (on an enabled layer) touching such a pad inherits the pad's set.
     pub fn build_net_tie_cache(&mut self, fp: FootprintId) {
-        crate::port_pending!("FOOTPRINT::BuildNetTieCache", fp)
+        let Some(cache) = self.compute_net_tie_cache(fp) else {
+            return;
+        };
+
+        if let Some(footprint) = self.footprints.get_mut(fp) {
+            footprint.net_tie_cache = cache;
+        }
+    }
+
+    /// The body of `BuildNetTieCache` against the unmodified board.
+    fn compute_net_tie_cache(&self, fp: FootprintId) -> Option<BTreeMap<ItemId, BTreeSet<NetCode>>> {
+        let ctx = BoardCtx::bare(self);
+        let footprint = self.footprints.get(fp)?;
+        let mut cache: BTreeMap<ItemId, BTreeSet<NetCode>> = BTreeMap::new();
+        let map = footprint.map_pad_numbers_to_net_tie_groups(&ctx);
+        let mut layer_shapes: BTreeMap<PcbLayerId, Vec<ItemId>> = BTreeMap::new();
+        let has_board = board_item::has_board(footprint, &ctx);
+        let enabled_layers = self.enabled_layers();
+
+        for &item in &footprint.drawings {
+            if item.kind() != ItemKind::Shape {
+                continue;
+            }
+
+            let Some(item_ref) = ctx.item(item) else {
+                continue;
+            };
+
+            for layer in item_ref.layer_set().iter() {
+                if !is_copper_layer(layer) {
+                    continue;
+                }
+
+                if has_board && !enabled_layers.contains(layer) {
+                    continue;
+                }
+
+                layer_shapes.entry(layer).or_default().push(item);
+            }
+        }
+
+        let pads: Vec<PadId> = footprint.pads.iter().copied().collect();
+        let group_of = |id: PadId| {
+            self.pads
+                .get(id)
+                .and_then(|p| map.get(p.number()).copied())
+                .filter(|&g| g >= 0)
+        };
+        let net_of = |id: PadId| {
+            self.pads
+                .get(id)
+                .map_or(NetCode::ORPHANED, |p| BoardConnectedItem::net_code(p))
+        };
+
+        for (ii, &pad) in pads.iter().enumerate() {
+            let mut has_nettie = false;
+
+            let Some(group) = group_of(pad) else {
+                continue;
+            };
+
+            for (jj, &other) in pads.iter().enumerate() {
+                if jj == ii {
+                    continue;
+                }
+
+                let Some(other_group) = group_of(other) else {
+                    continue;
+                };
+
+                if other_group == group {
+                    let pad_net = net_of(pad);
+                    let other_net = net_of(other);
+                    let pad_set = cache.entry(pad.into()).or_default();
+                    pad_set.insert(pad_net);
+                    pad_set.insert(other_net);
+                    let other_set = cache.entry(other.into()).or_default();
+                    other_set.insert(other_net);
+                    other_set.insert(pad_net);
+                    has_nettie = true;
+                }
+            }
+
+            if !has_nettie {
+                continue;
+            }
+
+            let Some(pad_ref) = self.pads.get(pad) else {
+                continue;
+            };
+
+            for (&layer, shapes) in &layer_shapes {
+                let pad_shape = BoardItem::effective_shape(
+                    pad_ref,
+                    &ctx,
+                    layer,
+                    Flashing::Default,
+                    DrcConstraintT::NullConstraint,
+                );
+
+                for &other_shape in shapes {
+                    let Some(shape_ref) = ctx.item(other_shape) else {
+                        continue;
+                    };
+                    let shape =
+                        shape_ref.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+
+                    if pad_shape.collide(&*shape, 0, None, None) {
+                        let nettie = cache.entry(pad.into()).or_default().clone();
+                        cache.entry(other_shape).or_default().extend(nettie);
+                    }
+                }
+            }
+        }
+
+        Some(cache)
+    }
+
+    /// `FOOTPRINT::GetComponentClass()` with the manager updated in place (the effective
+    /// class the C++ creates on the way is registered like C++). `rule_matches` is
+    /// `COMPONENT_CLASS_ASSIGNMENT_RULE::Matches( footprint )` (the compiled DRC condition,
+    /// kicad-drc).
+    pub fn footprint_component_class(
+        &mut self,
+        fp: FootprintId,
+        rule_matches: impl FnMut(&crate::component_class::ComponentClassAssignmentRule) -> bool,
+    ) -> Option<Arc<ComponentClass>> {
+        let footprint = self.footprints.get(fp)?;
+        let static_class = footprint.static_component_class.clone();
+        let mut cache = footprint.component_class_cache.with(|c| c.clone());
+        let result = self.component_class_manager.get_component_class(
+            &mut cache,
+            static_class.as_deref(),
+            rule_matches,
+        );
+
+        if let Some(footprint) = self.footprints.get(fp) {
+            footprint.component_class_cache.with(|c| *c = cache);
+        }
+
+        result
+    }
+
+    /// `FOOTPRINT::FixUuids()`: replace the nil UUIDs of the fields, pads, drawings, groups,
+    /// zones and points by fresh ones (`ResetUuidDirect`); true when one was replaced. Goes
+    /// through `rebind_item_uuid`, which writes the UUID directly when the old one is not
+    /// indexed (the parser's case: an unattached footprint) and re-binds it otherwise.
+    pub fn footprint_fix_uuids(&mut self, fp: FootprintId) -> bool {
+        let Some(footprint) = self.footprints.get(fp) else {
+            return false;
+        };
+
+        // replace null UUIDs if any by a valid uuid
+        let mut item_list: Vec<ItemId> = Vec::new();
+        item_list.extend(footprint.fields.iter().map(|&id| ItemId::from(id)));
+        item_list.extend(footprint.pads.iter().map(|&id| ItemId::from(id)));
+        item_list.extend(footprint.drawings.iter().copied());
+        // Note: one cannot fix null UUIDs inside the group, but it should not happen
+        // because null uuids can be found in old footprints, therefore without group
+        item_list.extend(footprint.groups.iter().map(|&id| ItemId::from(id)));
+        // Probably not needed, because old fp do not have zones. But just in case.
+        item_list.extend(footprint.zones.iter().map(|&id| ItemId::from(id)));
+        // Ditto
+        item_list.extend(footprint.points.iter().map(|&id| ItemId::from(id)));
+
+        let mut changed = false;
+
+        for item in item_list {
+            if self.uuid_of(item) == Some(Kiid::nil()) {
+                let new_uuid = Kiid::new(&mut self.kiid_generator);
+                self.rebind_item_uuid(item, new_uuid);
+                changed = true;
+            }
+        }
+
+        changed
     }
 }
 

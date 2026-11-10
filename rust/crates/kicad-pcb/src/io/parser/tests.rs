@@ -39,6 +39,7 @@ use kicad_sexpr::keywords::pcb_keys_t::T;
 use super::*;
 use crate::board::{Board, LayerT};
 use crate::io::{parse_board, parse_board_report};
+use crate::traits::EdaShapeItem;
 
 /// The prefix of a `port_pending!` panic.
 const PENDING: &str = "kicad-pcb: port pending: ";
@@ -349,9 +350,11 @@ fn init_maps() {
 /// The staging stubs: an error without `allow_pending`, a recorded skip with it.
 #[test]
 fn staging_stubs() {
-    let text = "(kicad_pcb (version 20240101) (generator \"pcbnew\")\n  (segment (start 0 0) (end 1 (x)) (net 1))\n  (bogus))";
+    // `(segment ..)` (PCBIO-03) is ported; `(footprint ..)` is still a staging stub (PCBIO-06).
+    // When it lands, switch to another stub or to an artificial unknown token.
+    let text = "(kicad_pcb (version 20240101) (generator \"pcbnew\")\n  (footprint \"R\" (layer \"F.Cu\") (x))\n  (bogus))";
     let e = parse_error(text, &strict()).unwrap();
-    assert_eq!(e, "port pending: segment (PCBIO-03)");
+    assert_eq!(e, "port pending: footprint (PCBIO-06)");
 
     let e = parse_error(text, &staging()).unwrap();
     assert_eq!(e, "Unknown token 'bogus' in '', line 3, offset 4.");
@@ -542,8 +545,6 @@ fn corpus_large() {
 
 /// `test_kicad_sexpr.cpp` `ScientificNotationLoading`: the file contains 1 arc with
 /// scientific notation in its coordinates; its midpoint is (4.17, -4.5e-05) in file units.
-/// The arc is a `gr_arc` (PCBIO-03): until that package lands only the parse with staging is
-/// checked (the coordinate conversion itself is `board_units`).
 #[test]
 fn scientific_notation_loading() {
     let path = kicad_qa::pcbnew_data_dir().join("plugins/kicad_sexpr/ScientificNotation.kicad_pcb");
@@ -556,8 +557,10 @@ fn scientific_notation_loading() {
             let crate::item_ref::AnyItem::Shape(arc) = drawings[0].1 else {
                 panic!("not a shape");
             };
-            // arc->GetArcMid() == ( 4170000, -45 ): no model API yet.
-            crate::port_pending!("EDA_SHAPE::GetArcMid", arc);
+            // The arc's midpoint should be located at (4.17, -4.5e-05) in file units
+            let mid = arc.eda_shape().arc_mid();
+            assert_eq!(mid.x, 4170000);
+            assert_eq!(mid.y, -45);
         }
         Ok(Err(e)) => {
             assert!(e.what().starts_with("port pending: "), "{}", e.what());

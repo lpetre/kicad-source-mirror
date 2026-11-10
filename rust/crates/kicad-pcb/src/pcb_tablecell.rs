@@ -35,16 +35,16 @@ use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, FlipDirection, ShapePolySet, Vector2I};
 
 use crate::board_design_settings::BoardDesignSettings;
+use crate::board_item;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
 use crate::eda_shape::EdaShape;
 use crate::eda_text::{self, EdaText, resolve_text_vars_shared_depth};
+use crate::ids::ItemId;
+use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
 use crate::item_ref::AnyItem;
 use crate::pcb_table::PcbTable;
 use crate::pcb_text::footprint_resolve_text_var;
-use crate::board_item;
-use crate::ids::ItemId;
-use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
 use crate::pcb_textbox::{self, PcbTextbox, TextboxHost};
 use crate::traits::{
     BoardConnectedItem, BoardItem, BoardItemMut, EdaShapeItem, EdaTextItem, Flashing, Invalidate,
@@ -688,7 +688,9 @@ impl PcbTablecell {
         error: i32,
         error_loc: ErrorLoc,
     ) {
-        pcb_textbox::transform_shape_to_poly_set(self, ctx, buffer, layer, clearance, error, error_loc)
+        pcb_textbox::transform_shape_to_poly_set(
+            self, ctx, buffer, layer, clearance, error, error_loc,
+        )
     }
 
     /// `PCB_TEXTBOX::TransformShapeToPolygon (PCB_TABLECELL)`.
@@ -702,7 +704,16 @@ impl PcbTablecell {
         error_loc: ErrorLoc,
         ignore_line_width: bool,
     ) {
-        pcb_textbox::transform_shape_to_polygon(self, ctx, buffer, layer, clearance, error, error_loc, ignore_line_width)
+        pcb_textbox::transform_shape_to_polygon(
+            self,
+            ctx,
+            buffer,
+            layer,
+            clearance,
+            error,
+            error_loc,
+            ignore_line_width,
+        )
     }
 
     /// `PCB_SHAPE::IsConnected`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).

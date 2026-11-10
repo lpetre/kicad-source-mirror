@@ -179,8 +179,14 @@ Progress log:
   every library crate builds for wasm32; orchestrator re-ran scripts/build-wasm.sh (5.0 MB
   module) and web/test/smoke.mjs: 49 checks pass, wasm == native). Launched: M19 -> PCBIO-06
   -> PCBIO-07 and M21 -> M20 (w3kdexuvx). Package files exist for PCBIO-13 (launch after
-  PCBIO-09/11 chain ends). Still to write: PCBIO-14, PCBIO-15, DRC-06..10, DRC-12,
-  FAB-03..09, ZF-*, TD-*.
+  PCBIO-09/11 chain ends). 01:40 UTC: done DRC-02 r-tree / provider base, DRC-05 cache
+  generator, PCBIO-04 setup section, SET-5 project binding + load sequences (w08hk2mca).
+  Launched: FAB-03 -> FAB-04 -> FAB-05 -> FAB-06 -> FAB-07 -> FAB-09 -> FAB-08 (board
+  plotting chain in kicad-fab) and PCBIO-13 generators (wb9xlvw89). Still running: M11 and
+  PCBIO-08 (w7nqnu6z5), PCBIO-10 (wxze6tto6), CN-02.. and DRC-03 -> DRC-04 (w6koa0hnk),
+  PCBIO-11 (wd75f0o07), GLUE-1 and PCBIO-12 (w3ztkctur), M19 -> PCBIO-06 -> PCBIO-07 and
+  M21 -> M20 (w3kdexuvx). Package files still to write: PCBIO-14, PCBIO-15, DRC-06..10,
+  DRC-12, DRC-21/22, ZF-*, TD-*.
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
   real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12

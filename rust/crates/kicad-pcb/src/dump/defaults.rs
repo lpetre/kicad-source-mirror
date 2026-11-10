@@ -653,6 +653,4 @@ pub(crate) fn dump_defaults_into(o: &mut Out) {
         super::format::init_item_keys(o, &board);
         settings::dump_board_section(o, &ctx);
     });
-
-    let _ = v_box;
 }
