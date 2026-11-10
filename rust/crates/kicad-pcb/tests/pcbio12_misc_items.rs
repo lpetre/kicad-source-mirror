@@ -257,7 +257,8 @@ fn oracle_corpus_blocks() {
     ];
 
     for path in boards {
-        let Ok(o1) = std::fs::read_to_string(cache.join(path.replace('/', "__")).join("o1.kicad_pcb"))
+        let Ok(o1) =
+            std::fs::read_to_string(cache.join(path.replace('/', "__")).join("o1.kicad_pcb"))
         else {
             continue;
         };
@@ -411,11 +412,14 @@ fn strict_errors() {
             .contains("Invalid drill map: not on a documentation layer")
     );
     assert!(err(r#"(image (at 1 2) (data "AAAA"))"#).contains("Failed to read image data."));
-    assert!(err(r#"(image (at 1 2) (foo 1))"#).contains(
-        "at, layer, rotate, opacity, scale, data, locked, uuid, or custom_property"
-    ));
-    assert!(err(r#"(target plus (at 1 2) (foo 1))"#)
-        .contains("x, plus, at, size, width, layer, uuid, or tstamp"));
+    assert!(
+        err(r#"(image (at 1 2) (foo 1))"#)
+            .contains("at, layer, rotate, opacity, scale, data, locked, uuid, or custom_property")
+    );
+    assert!(
+        err(r#"(target plus (at 1 2) (foo 1))"#)
+            .contains("x, plus, at, size, width, layer, uuid, or tstamp")
+    );
     assert!(err(r#"(point (at 1 2) (foo 1))"#).contains("at, size, layer or uuid"));
     assert!(err(r#"(grid_item xy (affects (foo yes)))"#).contains("cursor, routing or placement"));
     assert_eq!(err(r#"(target x (at 1 2) (size 1) (layer "F.Fab"))"#), "ok");

@@ -35,6 +35,7 @@ use kicad_connectivity::algo::{ClusterSearchMode, CnConnectivityAlgo};
 use kicad_connectivity::edge::CnEdge;
 use kicad_connectivity::items::{CnAnchor, CnList};
 use kicad_connectivity::ratsnest::RnNet;
+use kicad_core::lset::Lset;
 use kicad_pcb::Board;
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::ids::NetCode;
@@ -245,7 +246,7 @@ fn check_board(name: &str, stats: &mut Stats) -> bool {
 }
 
 /// Compares the `rn_net` lines. `golden_refs` are the dump's item refs by list position; `None`
-/// uses the parent UUIDs (boards whose items all have one, no zones).
+/// uses the parent UUIDs (boards whose items all have one).
 fn check_ratsnest(
     name: &str,
     golden: &Golden,
@@ -260,8 +261,12 @@ fn check_ratsnest(
     let golden_refs = golden_refs.unwrap_or_else(|| {
         list.iter()
             .map(|item| {
-                assert!(item.zone_layer().is_none());
-                ctx.item(item.parent()).unwrap().uuid().as_std_string()
+                let r = ctx.item(item.parent()).unwrap().uuid().as_std_string();
+
+                match item.zone_layer() {
+                    Some(zl) => format!("{r}/{}/{}", Lset::name(zl.layer()), zl.subpoly_index()),
+                    None => r,
+                }
             })
             .collect()
     });
@@ -433,8 +438,10 @@ fn cn03_ratsnest_matches_cpp() {
 
 /// The synthetic boards of `tests/golden/rn_random/` (`tests/oracle/gen_rn_random.sh`): random
 /// via / track point sets for the triangulation, the Filter-Kruskal recursion, collinear and
-/// near-collinear sets, coincident anchors of different clusters and the small-net cases.
+/// near-collinear sets, coincident anchors of different clusters, the small-net cases and the
+/// zone anchor optimisations (filled zones with vias inside and lone items outside).
 const RANDOM_BOARDS: &[&str] = &[
+    "rn_zones",
     "rn_dense",
     "rn_collinear",
     "rn_near_collinear",

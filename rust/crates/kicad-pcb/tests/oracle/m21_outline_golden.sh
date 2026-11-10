@@ -19,7 +19,7 @@
 # Package M21 (board outline): builds tests/oracle/m21_outline_oracle.cpp against the reference
 # build, reusing the pcb-dump objects (rust/tools/pcb-dump/build.sh must have run), runs it on
 # scratch copies of every corpus board under 500 KB (qa/data/pcbnew and demos, named by their
-# path relative to the KiCad root with '/' replaced by '__') and regenerates
+# path relative to the KiCad root; plus the fixtures of m21_fixtures.py, with '/' replaced by '__') and regenerates
 # tests/golden/m21_outlines.txt. The Rust replay is
 # convert_shape_list_to_polygon::tests::oracle_corpus.
 set -euo pipefail
@@ -48,7 +48,8 @@ flock "$LOCK" nice -n 15 bash "$SCRATCH/link.sh"
 
 mkdir -p "$SCRATCH/boards"
 cd "$KICAD_SRC"
-find qa/data/pcbnew demos -name '*.kicad_pcb' -size -500k -print0 | sort -z |
+find qa/data/pcbnew demos rust/crates/kicad-pcb/tests/oracle/m21_fixtures -name '*.kicad_pcb' \
+    -size -500k -print0 | sort -z |
     while IFS= read -r -d '' f; do
         cp "$f" "$SCRATCH/boards/${f//\//__}"
     done

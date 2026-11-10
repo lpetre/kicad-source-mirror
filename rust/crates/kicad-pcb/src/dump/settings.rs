@@ -1088,10 +1088,8 @@ fn emit_order(o: &mut Out, ctx: &BoardCtx<'_>, field: &str, items: Vec<ItemId>, 
         let Some(cmp) = cmp else {
             no_api(&format!("set comparator of {field}"))
         };
-        let mut v = items;
-        v.sort_by(|a, b| cmp(ctx, *a, *b));
-        v.dedup_by(|a, b| cmp(ctx, *b, *a) == Ordering::Equal);
-        v
+        // std::set( begin, end ): the exact libstdc++ tree (non-transitive comparators)
+        crate::io::writer::sorted_set(items, |a, b| cmp(ctx, *a, *b))
     });
 
     match set {

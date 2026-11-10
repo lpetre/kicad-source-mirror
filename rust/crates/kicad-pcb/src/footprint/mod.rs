@@ -2024,4 +2024,358 @@ mod tests {
         assert!(BoardItem::fits_enabled_layers(fp, &ctx, Lset::new(), 2));
         assert!(fp.net_tie_cache(fx.footprint.into()).is_empty());
     }
+
+    /// A board with one attached footprint (`new FOOTPRINT( &board ); board.Add( fp )`).
+    fn board_with_fp() -> (Board, FootprintId) {
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, crate::board::AddMode::Append);
+        (board, fp)
+    }
+
+    /// A pad with `number` on `layers` (APPEND).
+    fn add_pad(board: &mut Board, fp: FootprintId, number: &str, layers: Lset, net: NetCode) -> PadId {
+        let env = board.child_env(crate::item::ParentRef::Item(fp.into()));
+        let mut pad = crate::pad::Pad::new(&mut board.kiid_generator);
+        BoardItem::base_mut(&mut pad).parent = crate::item::ParentRef::Item(fp.into());
+        pad.set_number(number);
+        pad.set_layer_set(&env, layers);
+        pad.connected_mut().expect("connected item").net = net;
+        board
+            .footprint_add(
+                fp,
+                crate::item_ref::OwnedItem::Pad(Box::new(pad)),
+                crate::board::AddMode::Append,
+            )
+            .unwrap_or_else(|_| panic!("pad refused"))
+            .typed()
+            .unwrap()
+    }
+
+    /// test_variant.cpp `FootprintVariantBasics`.
+    #[test]
+    fn footprint_variant_basics() {
+        let mut variant = FootprintVariant::new("TestVariant");
+        assert_eq!(variant.name, "TestVariant");
+        assert!(!variant.dnp && !variant.excluded_from_bom);
+        assert!(!variant.excluded_from_sim && !variant.excluded_from_pos_files);
+        assert!(variant.fields.is_empty());
+        variant.dnp = true;
+        variant.set_field_value("Value", "100R");
+        assert!(variant.has_field_value("Value"));
+        assert_eq!(variant.field_value("Value"), "100R");
+    }
+
+    /// test_variant.cpp `FootprintDNPForVariant`, `VariantCaseInsensitivity`,
+    /// `EmptyVariantReturnsBase`, `UnknownVariantReturnsBase` and the BOM / sim / position
+    /// file exclusion cases.
+    #[test]
+    fn footprint_dnp_and_exclusions_for_variant() {
+        let mut fp = Footprint::default();
+        fp.set_attributes(0);
+        assert!(!fp.dnp_for_variant("") && !fp.dnp_for_variant("Production"));
+        fp.set_attributes(footprint_attr::FP_DNP);
+        assert!(fp.dnp_for_variant("") && fp.dnp_for_variant("Production"));
+
+        let mut prod = FootprintVariant::new("Production");
+        prod.dnp = false;
+        prod.excluded_from_bom = true;
+        prod.excluded_from_sim = true;
+        prod.excluded_from_pos_files = true;
+        fp.set_variant(&prod);
+
+        assert!(fp.dnp_for_variant(""));
+        assert!(fp.dnp_for_variant("< Default >"));
+        assert!(!fp.dnp_for_variant("Production"));
+        assert!(!fp.dnp_for_variant("production"));
+        assert!(!fp.dnp_for_variant("PrOdUcTiOn"));
+        assert!(fp.dnp_for_variant("Debug"));
+        assert!(fp.dnp_for_variant("NonExistentVariant"));
+        assert!(fp.excluded_from_bom_for_variant("PRODUCTION") && !fp.excluded_from_bom_for_variant(""));
+        assert!(fp.excluded_from_sim_for_variant("Production") && !fp.excluded_from_sim_for_variant(""));
+        assert!(fp.excluded_from_pos_files_for_variant("Production"));
+        assert!(!fp.excluded_from_pos_files_for_variant("Debug"));
+
+        // SetVariant on an existing entry keeps the stored spelling
+        let mut lower = FootprintVariant::new("production");
+        lower.dnp = true;
+        fp.set_variant(&lower);
+        assert_eq!(fp.variants.len(), 1);
+        assert_eq!(fp.variant("PRODUCTION").unwrap().name, "Production");
+        assert!(fp.dnp_for_variant("Production"));
+
+        // the default name and the empty name are refused
+        fp.set_variant(&FootprintVariant::new("< Default >"));
+        fp.set_variant(&FootprintVariant::new(""));
+        assert_eq!(fp.variants.len(), 1);
+    }
+
+    /// test_variant.cpp `RenameVariantPreservesData` / `VariantDeletionClearsRegistry`
+    /// (footprint side) and `AddVariant`.
+    #[test]
+    fn add_rename_delete_variant() {
+        let mut fp = Footprint::default();
+        fp.set_attributes(footprint_attr::FP_DNP | footprint_attr::FP_EXCLUDE_FROM_SIM);
+        let added = fp.add_variant("Alpha").unwrap();
+        assert!(added.dnp && added.excluded_from_sim && !added.excluded_from_bom);
+        added.set_field_value("Value", "1k");
+        assert!(fp.add_variant("ALPHA").is_some());
+        assert_eq!(fp.variants.len(), 1);
+
+        fp.add_variant("Beta");
+        fp.rename_variant("alpha", "Beta"); // taken by another variant: refused
+        assert!(fp.has_variant("Alpha"));
+        fp.rename_variant("alpha", "< Default >"); // refused
+        fp.rename_variant("missing", "Gamma"); // unknown: nothing
+        fp.rename_variant("alpha", "ALPHA"); // same entry, new spelling
+        assert_eq!(fp.variant("alpha").unwrap().name, "ALPHA");
+        fp.rename_variant("ALPHA", "Gamma");
+        assert!(!fp.has_variant("Alpha"));
+        let gamma = fp.variant("gamma").unwrap();
+        assert_eq!((gamma.name.as_str(), gamma.field_value("Value").as_str()), ("Gamma", "1k"));
+
+        fp.delete_variant("GAMMA");
+        assert!(!fp.has_variant("Gamma") && fp.has_variant("Beta"));
+    }
+
+    /// test_variant.cpp `FootprintVariantTextVarResolution` and the field-value fallback of
+    /// `GetFieldValueForVariant`.
+    #[test]
+    fn footprint_variant_text_var_resolution() {
+        let (mut board, fp) = board_with_fp();
+        board.add_variant("Production");
+        board.set_current_variant("Production");
+        let ctx = BoardCtx::bare(&board);
+        let value_field = board[fp].field(&ctx, FieldT::Value).unwrap();
+        board.modify_field(value_field, |f, _| f.text.text.set_text("10k"));
+        board.modify_footprint(fp, |f, _| {
+            f.set_attributes(0);
+            let mut prod = FootprintVariant::new("Production");
+            prod.dnp = true;
+            prod.excluded_from_sim = true;
+            prod.set_field_value("Value", "22k");
+            f.set_variant(&prod);
+        });
+
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+        let resolve = |token: &str, variant: Option<&str>| {
+            let mut t = token.to_string();
+            let ok = match variant {
+                Some(v) => f.resolve_text_var_for_variant(&ctx, &mut t, v, 0),
+                None => f.resolve_text_var(&ctx, &mut t, 0),
+            };
+            (ok, t)
+        };
+
+        assert_eq!(resolve("DNP", None), (true, "DNP".to_string()));
+        assert_eq!(resolve("DNP", Some("")), (true, String::new()));
+        assert_eq!(resolve("EXCLUDE_FROM_SIM", None), (true, "Excluded from simulation".to_string()));
+        assert_eq!(resolve("EXCLUDE_FROM_SIM", Some("")), (true, String::new()));
+        assert_eq!(resolve("EXCLUDE_FROM_BOARD", None), (true, String::new()));
+        assert_eq!(resolve("EXCLUDE_FROM_BOM", None), (true, String::new()));
+        assert_eq!(resolve("LAYER", None), (true, "F.Cu".to_string()));
+        assert_eq!(resolve("NOT_A_VAR", Some("")).0, false);
+        assert_eq!(f.field_value_for_variant(&ctx, "production", "Value"), "22k");
+        assert_eq!(f.field_value_for_variant(&ctx, "", "Value"), "10k");
+        assert_eq!(f.field_value_for_variant(&ctx, "Debug", "Value"), "10k");
+        assert_eq!(f.field_value_for_variant(&ctx, "Production", "Missing"), "");
+    }
+
+    /// Fields: mandatory lookup, by name, ordinals, `GetNextFieldOrdinal`, descriptions.
+    #[test]
+    fn fields_and_descriptions() {
+        let (mut board, fp) = board_with_fp();
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+        assert!(f.field(&ctx, FieldT::Reference).is_some());
+        assert_eq!(f.field_by_name(&ctx, "Value"), f.field(&ctx, FieldT::Value));
+        assert!(f.has_field(&ctx, "Datasheet") && !f.has_field(&ctx, "datasheet"));
+        assert_eq!(f.next_field_ordinal(&ctx), 42);
+        assert_eq!(f.reference(&ctx), "");
+        let units = UnitsProvider::new(&kicad_core::base_units::PCB_IU_SCALE, kicad_core::EdaUnits::Mm);
+        assert_eq!(
+            f.item_description(&ctx, &units, true),
+            "Footprint <no reference designator>"
+        );
+        let sorted = f.fields_sorted(&ctx, false);
+        assert_eq!(sorted.len(), 4);
+        // ordinals 1 (Reference), 2 (Value), 4 (Datasheet), 5 (Description)
+        assert_eq!(sorted[0], f.field(&ctx, FieldT::Reference).unwrap());
+
+        let reference = f.field(&ctx, FieldT::Reference).unwrap();
+        board.modify_field(reference, |x, _| x.text.text.set_text("U7?"));
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+        assert_eq!(f.reference(&ctx), "U7?");
+        assert!(!f.is_annotated(&ctx));
+        assert_eq!(f.item_description(&ctx, &units, false), "Footprint U7?");
+        // only the visible, non-empty fields: the reference (the value is empty)
+        assert_eq!(f.fields_sorted(&ctx, true), vec![reference]);
+    }
+
+    /// Pad queries: FindPadByNumber (incl. search-after), FindPadByUuid, GetPads,
+    /// GetUniquePadNumbers, GetNumberedPadCount, GetNextPadNumber, GetSide.
+    #[test]
+    fn pad_queries() {
+        let (mut board, fp) = board_with_fp();
+        let cu = Lset::from_layers(&[PcbLayerId::FCu]);
+        let p1 = add_pad(&mut board, fp, "1", cu.clone(), NetCode(0));
+        let p2 = add_pad(&mut board, fp, "2", cu.clone(), NetCode(0));
+        let p2b = add_pad(&mut board, fp, "2", cu.clone(), NetCode(0));
+        add_pad(&mut board, fp, "", cu.clone(), NetCode(0));
+        add_pad(&mut board, fp, "A12_B1", cu.clone(), NetCode(0));
+        add_pad(&mut board, fp, "MP", cu.clone(), NetCode(0));
+        add_pad(&mut board, fp, "PASTE", Lset::from_layers(&[PcbLayerId::FPaste]), NetCode(0));
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+
+        assert_eq!(f.find_pad_by_number(&ctx, "2", None), Some(p2));
+        assert_eq!(f.find_pad_by_number(&ctx, "2", Some(p2)), Some(p2b));
+        assert_eq!(f.find_pad_by_number(&ctx, "1", Some(p2)), None);
+        let uuid = *BoardItem::uuid(&board[p1]);
+        assert_eq!(f.find_pad_by_uuid(&ctx, &uuid), Some(p1));
+        assert_eq!(f.pads_by_number(&ctx, "2", Some(p2)), vec![p2b]);
+        assert_eq!(f.pad_count(), 7);
+        let unique: Vec<String> = f.unique_pad_numbers(&ctx).into_iter().collect();
+        assert_eq!(unique, ["1", "2", "A12_B1", "MP"]);
+        assert_eq!(f.unique_pad_count(&ctx), 4);
+        // "1", "2", "A12", "B1"
+        assert_eq!(f.numbered_pad_count(&ctx), 4);
+        assert_eq!(f.next_pad_number(&ctx, "1"), "3");
+        assert_eq!(f.next_pad_number(&ctx, "MP"), "MP0");
+        assert_eq!(f.next_pad_number(&ctx, "A7"), "A7");
+        assert_eq!(f.side(&ctx), PcbLayerId::FCu);
+        assert_eq!(f.likely_attribute(&ctx), footprint_attr::FP_THROUGH_HOLE);
+        assert!(f.has_through_hole_pads(&ctx));
+
+        let (board2, fp2) = board_with_fp();
+        let ctx2 = BoardCtx::bare(&board2);
+        // the mandatory fields are on F.SilkS / F.Fab, which are side specific, but GetSide
+        // only looks at pads, drawings and zones
+        assert_eq!(board2[fp2].side(&ctx2), PcbLayerId::UndefinedLayer);
+        assert_eq!(board2[fp2].likely_attribute(&ctx2), 0);
+    }
+
+    /// `MapPadNumbersToNetTieGroups`, `GetNetTiePads`, `IsNetTie`, `BuildNetTieCache` (pads
+    /// only) and the jumper groups.
+    #[test]
+    fn net_tie_groups_and_jumpers() {
+        let (mut board, fp) = board_with_fp();
+        let cu = Lset::from_layers(&[PcbLayerId::FCu]);
+        let p1 = add_pad(&mut board, fp, "1", cu.clone(), NetCode(1));
+        let p2 = add_pad(&mut board, fp, "2", cu.clone(), NetCode(2));
+        let p3 = add_pad(&mut board, fp, "3", cu.clone(), NetCode(3));
+        let pc = add_pad(&mut board, fp, "a,b", cu.clone(), NetCode(4));
+        board.modify_footprint(fp, |f, _| {
+            f.net_tie_pad_groups = vec![String::new()];
+        });
+        assert!(!board[fp].is_net_tie());
+        board.modify_footprint(fp, |f, _| {
+            f.net_tie_pad_groups = vec![" 1 ,\t2".to_string(), "a\\,b, X ,".to_string()];
+        });
+
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+        assert!(f.is_net_tie());
+        let map: Vec<(String, i32)> = f.map_pad_numbers_to_net_tie_groups(&ctx).into_iter().collect();
+        let expected: Vec<(String, i32)> = [("1", 0), ("2", 0), ("3", -1), ("X", 1), ("a,b", 1)]
+            .iter()
+            .map(|(k, v)| (k.to_string(), *v))
+            .collect();
+        assert_eq!(map, expected);
+        assert_eq!(f.net_tie_pads(&ctx, p1), vec![p1, p2]);
+        assert_eq!(f.net_tie_pads(&ctx, p3), Vec::<PadId>::new());
+        assert_eq!(f.net_tie_pads(&ctx, pc), vec![pc]);
+
+        board.build_net_tie_cache(fp);
+        let f = &board[fp];
+        let nets = |id: PadId| f.net_tie_cache(id.into()).iter().map(|n| n.0).collect::<Vec<_>>();
+        assert_eq!(nets(p1), vec![1, 2]);
+        assert_eq!(nets(p2), vec![1, 2]);
+        assert!(nets(p3).is_empty() && nets(pc).is_empty());
+
+        let mut jumpers = JumperGroupSet::default();
+        jumpers.add_names(["".to_string()].into_iter().collect());
+        assert!(jumpers.is_empty());
+        jumpers.add_names(["1".to_string(), "3".to_string(), String::new()].into_iter().collect());
+        assert_eq!(jumpers.all().len(), 1);
+        assert_eq!(jumpers.all()[0].names().len(), 2);
+        board.modify_footprint(fp, |f, _| f.jumper_pad_groups = jumpers.clone());
+        assert!(board[fp].jumper_pad_group("3").is_some_and(|g| g.contains("1")));
+        assert!(board[fp].jumper_pad_group("2").is_none());
+    }
+
+    /// `RunOnChildren` order, `IsOnLayer`, `FixUuids`, the attribute setters,
+    /// `IsLibNameValid`, `GetRefDesPrefix`, `IsWithinSchematicSheet`.
+    #[test]
+    fn children_layers_uuids_and_helpers() {
+        let (mut board, fp) = board_with_fp();
+        let pad = add_pad(&mut board, fp, "1", Lset::from_layers(&[PcbLayerId::BCu]), NetCode(0));
+        let ctx = BoardCtx::bare(&board);
+        let f = &board[fp];
+        let mut kinds = Vec::new();
+        f.run_on_children(&ctx, RecurseMode::Recurse, &mut |item| kinds.push(item.type_()));
+        assert_eq!(kinds.len(), 5);
+        assert_eq!(kinds[4], KicadT::PcbPadT);
+        assert!(f.is_on_layer(&ctx, PcbLayerId::BCu)); // the pad
+        assert!(f.is_on_layer(&ctx, PcbLayerId::FSilkS)); // the reference field
+        assert!(!f.is_on_layer(&ctx, PcbLayerId::In1Cu));
+
+        assert!(!board.footprint_fix_uuids(fp));
+        let nil_field = board[fp].fields[2];
+        board.rebind_item_uuid(nil_field.into(), Kiid::nil());
+        assert!(board.footprint_fix_uuids(fp));
+        assert_ne!(*BoardItem::uuid(&board[nil_field]), Kiid::nil());
+        assert_ne!(*BoardItem::uuid(&board[pad]), Kiid::nil());
+        board.check_invariants().unwrap();
+
+        let mut f = Footprint::default();
+        f.set_dnp(true);
+        f.set_excluded_from_bom(true);
+        f.set_board_only(true);
+        f.set_excluded_from_pos_files(true);
+        f.set_excluded_from_sim(true);
+        assert_eq!(f.attributes(), 0x40 | 0x08 | 0x10 | 0x04 | 0x80);
+        f.set_dnp(false);
+        assert!(!f.is_dnp() && f.is_excluded_from_sim());
+        f.set_footprint_type(FootprintType::Smd);
+        assert_eq!((f.footprint_type(), f.type_name()), (FootprintType::Smd, "SMD"));
+        f.set_footprint_type(FootprintType::Unspecified);
+        assert_eq!(f.footprint_type(), FootprintType::Unspecified);
+        f.set_is_placed(true);
+        f.set_needs_placed(true);
+        f.set_is_placed(false);
+        assert!(!f.is_placed() && f.needs_placed());
+        f.set_stackup_mode(FootprintStackup::CustomLayers);
+        f.set_stackup_layers(Lset::from_layers(&[PcbLayerId::FCu]));
+        assert_eq!(f.stackup_layers.count(), 1);
+        f.set_stackup_mode(FootprintStackup::ExpandInnerLayers);
+        assert_eq!(f.stackup_layers.count(), 3);
+
+        assert!(Footprint::is_lib_name_valid("R_0603"));
+        assert!(!Footprint::is_lib_name_valid("a/b") && !Footprint::is_lib_name_valid("x:y"));
+        assert_eq!(get_ref_des_prefix("U12"), "U");
+        assert_eq!(get_ref_des_prefix("R?"), "R");
+        assert_eq!(get_ref_des_prefix("12"), "");
+
+        let a = Kiid::parse("aaaaaaaa-0000-4000-8000-000000000001").unwrap();
+        let b = Kiid::parse("aaaaaaaa-0000-4000-8000-000000000002").unwrap();
+        let c = Kiid::parse("aaaaaaaa-0000-4000-8000-000000000003").unwrap();
+        f.path = KiidPath(vec![b, c]);
+        assert!(f.is_within_schematic_sheet(&KiidPath(vec![a, b])));
+        assert!(f.is_within_schematic_sheet(&KiidPath(vec![a])));
+        assert!(!f.is_within_schematic_sheet(&KiidPath(vec![a, c])));
+        assert!(!f.is_within_schematic_sheet(&KiidPath(vec![])));
+    }
+
+    /// `GetComponentClass` without assignment rules: the static class (or the empty class).
+    #[test]
+    fn component_class_without_rules() {
+        let (board, fp) = board_with_fp();
+        let ctx = BoardCtx::bare(&board);
+        let class = board[fp].component_class(&ctx).unwrap();
+        assert!(class.is_empty());
+        assert_eq!(board[fp].component_class_as_string(&ctx), "");
+    }
 }

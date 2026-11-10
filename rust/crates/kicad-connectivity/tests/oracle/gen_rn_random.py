@@ -68,6 +68,17 @@ class Board:
             "\t\t(layer \"%s\")\n\t\t(net %d)\n\t\t(uuid \"%s\")\n\t)\n"
             % (mm(x1), mm(y1), mm(x2), mm(y2), width, layer, net, self.uuid()))
 
+    def zone(self, pts, layer, net):
+        xy = " ".join("(xy %s %s)" % (mm(x), mm(y)) for x, y in pts)
+        self.items.append(
+            "\t(zone\n\t\t(net %d)\n\t\t(net_name \"N%d\")\n\t\t(layer \"%s\")\n"
+            "\t\t(uuid \"%s\")\n\t\t(hatch edge 0.5)\n\t\t(connect_pads\n\t\t\t(clearance 0.2)\n\t\t)\n"
+            "\t\t(min_thickness 0.2)\n\t\t(fill yes\n\t\t\t(thermal_gap 0.5)\n"
+            "\t\t\t(thermal_bridge_width 0.5)\n\t\t)\n"
+            "\t\t(polygon\n\t\t\t(pts\n\t\t\t\t%s\n\t\t\t)\n\t\t)\n"
+            "\t\t(filled_polygon\n\t\t\t(layer \"%s\")\n\t\t\t(pts\n\t\t\t\t%s\n\t\t\t)\n\t\t)\n\t)\n"
+            % (net, net, layer, self.uuid(), xy, layer, xy))
+
     def text(self):
         out = HEADER
         out += "\t(net 0 \"\")\n"
@@ -176,7 +187,43 @@ def mixed(seed):
     return b
 
 
+def star(rng, cx, cy, rmin, rmax, n):
+    """A star-shaped polygon around ( cx, cy ) with n vertices (counter-clockwise)."""
+    import math
+    pts = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        r = rng.randrange(rmin, rmax)
+        pts.append((cx + int(r * math.cos(a)) // 1000 * 1000, cy + int(r * math.sin(a)) // 1000 * 1000))
+    return pts
+
+
+def zones():
+    """Filled zones of two nets with vias inside (zone-to-zone anchor optimisation) and lone
+    vias / tracks outside (zone anchor optimisation)."""
+    b = Board(5, 2)
+    centers = []
+    for k in range(8):
+        cx, cy = b.rng.randrange(5, 95) * 1000000, b.rng.randrange(5, 95) * 1000000
+        net = 1 + (k % 2)
+        layer = b.rng.choice(["F.Cu", "B.Cu"])
+        b.zone(star(b.rng, cx, cy, 3000000, 9000000, b.rng.randrange(8, 40)), layer, net)
+        for _ in range(b.rng.randrange(1, 3)):
+            b.via(cx + b.rng.randrange(-500, 500) * 1000, cy + b.rng.randrange(-500, 500) * 1000,
+                  net)
+        centers.append((cx, cy, net))
+    for _ in range(12):
+        net = 1 + b.rng.randrange(2)
+        x, y = b.rng.randrange(0, 100) * 1000000, b.rng.randrange(0, 100) * 1000000
+        if b.rng.random() < 0.5:
+            b.via(x, y, net)
+        else:
+            b.seg(x, y, x + 1000000, y, b.rng.choice(["F.Cu", "B.Cu"]), net)
+    return b
+
+
 BOARDS = {
+    "rn_zones": zones,
     "rn_dense": dense,
     "rn_collinear": collinear,
     "rn_near_collinear": near_collinear,

@@ -1,0 +1,17 @@
+(kicad_pcb
+	(version 20260410)
+	(generator "pcbnew")
+	(generator_version "10.99")
+	(general (thickness 1.6) (legacy_teardrops no))
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal) (2 "B.Cu" signal) (5 "F.SilkS" user "F.Silkscreen")
+		(25 "Edge.Cuts" user) (31 "F.CrtYd" user "F.Courtyard")
+	)
+	(setup (pad_to_mask_clearance 0))
+	(net 0 "")
+	(gr_arc (start 110 100) (mid 120 110) (end 110 120) (stroke (width 0.05) (type solid)) (layer "Edge.Cuts") (uuid "21000000-0000-0000-0000-000000000080"))
+	(gr_arc (start 110 120) (mid 100 110) (end 110 100) (stroke (width 0.05) (type solid)) (layer "Edge.Cuts") (uuid "21000000-0000-0000-0000-000000000081"))
+	(gr_line (start 130 100) (end 140 100) (stroke (width 0.05) (type solid)) (layer "Edge.Cuts") (uuid "21000000-0000-0000-0000-000000000082"))
+	(embedded_fonts no)
+)

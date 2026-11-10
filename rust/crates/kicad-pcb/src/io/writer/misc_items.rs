@@ -26,8 +26,8 @@
 use kicad_core::eda_units::format_angle;
 use kicad_core::{Lset, PCB_IU_SCALE};
 use kicad_sexpr::{
-    IoError, OutputFormatter, format_bool, format_custom_properties, format_g,
-    format_stream_data, format_uuid,
+    IoError, OutputFormatter, format_bool, format_custom_properties, format_g, format_stream_data,
+    format_uuid,
 };
 
 use super::{PcbWriter, format_iu, format_iu_pt};
@@ -99,8 +99,10 @@ impl PcbWriter<'_> {
         }
 
         if bitmap.image_scale() != 1.0 {
-            self.out
-                .print(format_args!("(scale {})", format_g(bitmap.image_scale(), 6)))?;
+            self.out.print(format_args!(
+                "(scale {})",
+                format_g(bitmap.image_scale(), 6)
+            ))?;
         }
 
         if bitmap.opacity() < 1.0 {

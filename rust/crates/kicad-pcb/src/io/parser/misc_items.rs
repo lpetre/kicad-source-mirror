@@ -315,10 +315,8 @@ impl PcbParser {
                         .text
                         .set_text_size(&env, Vector2I::new(size, size), true);
                     let text_height = barcode.text.text.attributes.size.1;
-                    let thickness = std::cmp::max(
-                        1,
-                        kicad_font::gr_text::get_pen_size_for_normal(text_height),
-                    );
+                    let thickness =
+                        std::cmp::max(1, kicad_font::gr_text::get_pen_size_for_normal(text_height));
                     barcode.text.set_text_thickness(&env, thickness);
 
                     self.lexer.need_right()?;
@@ -466,9 +464,8 @@ impl PcbParser {
         let key = self.lexer.from_utf8();
         self.lexer.need_symbol()?;
         let value = self.lexer.from_utf8();
-        self.board.modify_table(table, |t, _| {
-            t.base.set_custom_property(&key, &value)
-        });
+        self.board
+            .modify_table(table, |t, _| t.base.set_custom_property(&key, &value));
         self.lexer.need_right()
     }
 
@@ -500,7 +497,8 @@ impl PcbParser {
         match token {
             T::T_column_count => {
                 let count = self.parse_int_expected("column count")?;
-                self.board.modify_table(table, |t, _| t.set_col_count(count));
+                self.board
+                    .modify_table(table, |t, _| t.set_col_count(count));
                 self.lexer.need_right()?;
                 Ok(true)
             }
@@ -518,7 +516,8 @@ impl PcbParser {
                 }
 
                 let locked = self.parse_bool()?;
-                self.board.modify_table(table, |t, _| t.base.is_locked = locked);
+                self.board
+                    .modify_table(table, |t, _| t.base.is_locked = locked);
                 self.lexer.need_right()?;
                 Ok(true)
             }
@@ -632,8 +631,7 @@ impl PcbParser {
                         }
                         T::T_cols => {
                             let on = self.parse_bool()?;
-                            self.board
-                                .modify_table(table, |t, _| t.stroke_columns = on);
+                            self.board.modify_table(table, |t, _| t.stroke_columns = on);
                             self.lexer.need_right()?;
                         }
                         T::T_stroke => {
@@ -679,7 +677,10 @@ impl PcbParser {
     }
 
     /// Port of `parsePCB_TABLE( BOARD_ITEM* aParent )`: a created, unattached table.
-    pub(crate) fn parse_pcb_table(&mut self, parent: ParentRef) -> Result<Option<TableId>, IoError> {
+    pub(crate) fn parse_pcb_table(
+        &mut self,
+        parent: ParentRef,
+    ) -> Result<Option<TableId>, IoError> {
         debug_assert!(
             self.lexer.cur_tok() == T::T_table,
             "Cannot parse {} as a table.",
@@ -722,9 +723,10 @@ impl PcbParser {
         // The constructor of the concrete class: PCB_DRILL_CHART uses 0.1 mm strokes and applies
         // the default template, PCB_STACKUP_TABLE DEFAULT_LINE_WIDTH and the schema defaults.
         let (line_width, data) = match kind {
-            GeneratedTableKind::DrillChart { .. } => {
-                (PCB_IU_SCALE.mm_to_iu(0.1), GeneratedTableData::new_drill_chart())
-            }
+            GeneratedTableKind::DrillChart { .. } => (
+                PCB_IU_SCALE.mm_to_iu(0.1),
+                GeneratedTableData::new_drill_chart(),
+            ),
             GeneratedTableKind::StackupTable => (
                 PCB_IU_SCALE.mm_to_iu(DEFAULT_LINE_WIDTH),
                 GeneratedTableData::new_stackup_table(),
@@ -759,7 +761,8 @@ impl PcbParser {
                 T::T_uuid => self.parse_table_uuid(id)?,
                 T::T_locked => {
                     let locked = self.parse_bool()?;
-                    self.board.modify_table(id, |t, _| t.base.is_locked = locked);
+                    self.board
+                        .modify_table(id, |t, _| t.base.is_locked = locked);
                     self.lexer.need_right()?;
                 }
                 T::T_layer => {
@@ -770,8 +773,7 @@ impl PcbParser {
                 T::T_units => {
                     self.lexer.need_symbol_or_number()?;
 
-                    if let Some(units) = generated_table_units_from_token(&self.lexer.from_utf8())
-                    {
+                    if let Some(units) = generated_table_units_from_token(&self.lexer.from_utf8()) {
                         self.generated_mut(id, |g| g.units = units);
                     }
 
@@ -1416,4 +1418,3 @@ impl PcbParser {
         Ok(Some(griditem))
     }
 }
-

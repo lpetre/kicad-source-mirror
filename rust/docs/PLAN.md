@@ -185,8 +185,14 @@ Progress log:
   plotting chain in kicad-fab) and PCBIO-13 generators (wb9xlvw89). Still running: M11 and
   PCBIO-08 (w7nqnu6z5), PCBIO-10 (wxze6tto6), CN-02.. and DRC-03 -> DRC-04 (w6koa0hnk),
   PCBIO-11 (wd75f0o07), GLUE-1 and PCBIO-12 (w3ztkctur), M19 -> PCBIO-06 -> PCBIO-07 and
-  M21 -> M20 (w3kdexuvx). Package files still to write: PCBIO-14, PCBIO-15, DRC-06..10,
-  DRC-12, DRC-21/22, ZF-*, TD-*.
+  M21 -> M20 (w3kdexuvx). 02:00 UTC: done M15 pad shapes (135 pads, 2820 values, 0
+  mismatches against pcb-dump), M12 dimensions (2012 reference lines match), PCBIO-10,
+  PCBIO-09, PCBIO-11, CN-01, CN-02, DRC-03. Launched: PROP-1 -> DRC-21 -> DRC-22 (property
+  tables, expression binding, functions) and DRC-06 -> DRC-07 -> DRC-08a -> DRC-08b -> DRC-09
+  -> DRC-10 -> DRC-12 (providers and the drc job) (w878ykkp2). Package files still to write:
+  PCBIO-14 (footprint library files), PCBIO-15 (loader glue in kicad-session, after CN-04),
+  ZF-01..06 and TD-01/02 (zone fill and teardrops, after CN-04 and DRC-04), tier-2 DRC
+  providers DRC-23..29, FAB-10..12.
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline
   (after M9), M20 footprint B; PCBIO-06 footprints -> PCBIO-07 pads (after M19; this unlocks
   real boards end to end), PCBIO-12 / 13 / 14; DRC providers DRC-06 .. DRC-10 and DRC-12

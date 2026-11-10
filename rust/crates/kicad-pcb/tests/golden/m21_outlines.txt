@@ -3727,3 +3727,194 @@ outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
 outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
 fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
 board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_bezier_slot.kicad_pcb
+test_items|err|(self-intersecting)|21000000-0000-0000-0000-000000000060|21000000-0000-0000-0000-000000000057|119132701,114775842
+test_items|ok=false
+drc_build|ok=true|n=1/72|poly=#4510f6cd13ec9a07
+outline|ok=true|n=1/203|poly=#5b6bd208d592acab
+outline_inferred|ok=true|n=1/203|poly=#5b6bd208d592acab
+outline_arcs|err|(self-intersecting)|-|-|115154046,112944799
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000056|21000000-0000-0000-0000-000000000060|116397103,109464262
+outline_arcs|err|(self-intersecting)|-|-|119132701,114775842
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000056|21000000-0000-0000-0000-000000000060|120927496,111354435
+outline_arcs|ok=false|n=2/239|poly=#284ef7c96c708999
+outline_npth|ok=true|n=1/203|poly=#5b6bd208d592acab
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=1/209|poly=#7a24538dd916fbc3
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_bowtie.kicad_pcb
+test_items|ok=true
+drc_build|err|(self-intersecting)|21000000-0000-0000-0000-000000000025|-|115000000,110000000
+drc_build|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline|err|(self-intersecting)|21000000-0000-0000-0000-000000000025|-|115000000,110000000
+outline|ok=false|n=2/6|poly=#77e5a797cf1ce351
+outline_inferred|err|(self-intersecting)|21000000-0000-0000-0000-000000000025|-|115000000,110000000
+outline_inferred|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000025|-|115000000,110000000
+outline_arcs|ok=false|n=2/6|poly=#77e5a797cf1ce351
+outline_npth|err|(self-intersecting)|21000000-0000-0000-0000-000000000025|-|115000000,110000000
+outline_npth|ok=false|n=2/6|poly=#77e5a797cf1ce351
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=2/6|poly=#77e5a797cf1ce351
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_branch.kicad_pcb
+test_items|ok=true
+drc_build|err|(not a closed shape)|21000000-0000-0000-0000-000000000033|21000000-0000-0000-0000-000000000029|115000000,100000000
+drc_build|ok=false|n=1/4|poly=#29fa9685d9601447
+outline|err|(not a closed shape)|21000000-0000-0000-0000-000000000033|21000000-0000-0000-0000-000000000029|115000000,100000000
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|err|(not a closed shape)|21000000-0000-0000-0000-000000000033|21000000-0000-0000-0000-000000000029|115000000,100000000
+outline_inferred|ok=false|n=1/4|poly=#29fa9685d9601447
+outline_arcs|err|(not a closed shape)|21000000-0000-0000-0000-000000000033|21000000-0000-0000-0000-000000000029|115000000,100000000
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|err|(not a closed shape)|21000000-0000-0000-0000-000000000033|21000000-0000-0000-0000-000000000029|115000000,100000000
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_disjoint.kicad_pcb
+test_items|ok=true
+drc_build|err|(self-intersecting)|21000000-0000-0000-0000-000000000076|21000000-0000-0000-0000-000000000072|150000000,100000000
+drc_build|err|(self-intersecting)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000075|130000000,100000000
+drc_build|err|(not a closed shape)|21000000-0000-0000-0000-000000000075|21000000-0000-0000-0000-000000000072|130000000,100000000
+drc_build|err|(not a closed shape)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000073|150000000,100000000
+drc_build|ok=false|n=1/4|poly=#b8f61ae260f5fd37
+outline|err|(self-intersecting)|21000000-0000-0000-0000-000000000076|21000000-0000-0000-0000-000000000072|150000000,100000000
+outline|err|(self-intersecting)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000075|130000000,100000000
+outline|err|(not a closed shape)|21000000-0000-0000-0000-000000000075|21000000-0000-0000-0000-000000000072|130000000,100000000
+outline|err|(not a closed shape)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000073|150000000,100000000
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|err|(self-intersecting)|21000000-0000-0000-0000-000000000076|21000000-0000-0000-0000-000000000072|150000000,100000000
+outline_inferred|err|(self-intersecting)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000075|130000000,100000000
+outline_inferred|err|(not a closed shape)|21000000-0000-0000-0000-000000000075|21000000-0000-0000-0000-000000000072|130000000,100000000
+outline_inferred|err|(not a closed shape)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000073|150000000,100000000
+outline_inferred|ok=false|n=1/4|poly=#b8f61ae260f5fd37
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000076|21000000-0000-0000-0000-000000000072|150000000,100000000
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000075|130000000,100000000
+outline_arcs|err|(not a closed shape)|21000000-0000-0000-0000-000000000075|21000000-0000-0000-0000-000000000072|130000000,100000000
+outline_arcs|err|(not a closed shape)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000073|150000000,100000000
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|err|(self-intersecting)|21000000-0000-0000-0000-000000000076|21000000-0000-0000-0000-000000000072|150000000,100000000
+outline_npth|err|(self-intersecting)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000075|130000000,100000000
+outline_npth|err|(not a closed shape)|21000000-0000-0000-0000-000000000075|21000000-0000-0000-0000-000000000072|130000000,100000000
+outline_npth|err|(not a closed shape)|21000000-0000-0000-0000-000000000072|21000000-0000-0000-0000-000000000073|150000000,100000000
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_ellipse.kicad_pcb
+test_items|ok=true
+drc_build|ok=true|n=1/81|poly=#bc8e70ef0aae1667
+outline|ok=true|n=1/257|poly=#3d79f559784bb140
+outline_inferred|ok=true|n=1/257|poly=#3d79f559784bb140
+outline_arcs|ok=true|n=1/257|poly=#3d79f559784bb140
+outline_npth|ok=true|n=1/257|poly=#3d79f559784bb140
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=1/260|poly=#145b6b2e492d48d4
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_empty.kicad_pcb
+test_items|ok=true
+drc_build|ok=false|n=1/4|poly=#5a708e5fb67ab127
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|ok=false|n=1/4|poly=#5a708e5fb67ab127
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_gap.kicad_pcb
+test_items|ok=true
+drc_build|err|(not a closed shape)|21000000-0000-0000-0000-000000000001|21000000-0000-0000-0000-000000000004|100000000,100250000
+drc_build|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline|err|(not a closed shape)|21000000-0000-0000-0000-000000000001|21000000-0000-0000-0000-000000000004|100000000,100250000
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|err|(not a closed shape)|21000000-0000-0000-0000-000000000001|21000000-0000-0000-0000-000000000004|100000000,100250000
+outline_inferred|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline_arcs|err|(not a closed shape)|21000000-0000-0000-0000-000000000001|21000000-0000-0000-0000-000000000004|100000000,100250000
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|err|(not a closed shape)|21000000-0000-0000-0000-000000000001|21000000-0000-0000-0000-000000000004|100000000,100250000
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_near_closed.kicad_pcb
+test_items|ok=true
+drc_build|ok=true|n=1/13|poly=#5b1d511a124424b7
+outline|ok=true|n=1/30|poly=#54699f308b99de9a
+outline_inferred|ok=true|n=1/30|poly=#54699f308b99de9a
+outline_arcs|ok=true|n=1/30|poly=#593d1e24eaa162ed
+outline_npth|ok=true|n=1/30|poly=#54699f308b99de9a
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=1/30|poly=#54699f308b99de9a
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_nested.kicad_pcb
+test_items|ok=true
+drc_build|ok=true|n=2/204|poly=#e117fa828aaff65c
+outline|ok=true|n=2/391|poly=#aa5c3087f629938b
+outline_inferred|ok=true|n=2/391|poly=#aa5c3087f629938b
+outline_arcs|ok=true|n=2/391|poly=#fbb6d2c087c66b73
+outline_npth|ok=true|n=2/391|poly=#aa5c3087f629938b
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=2/409|poly=#506e2dbbb92f0f2e
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_no_edges.kicad_pcb
+test_items|ok=true
+drc_build|ok=false|n=1/4|poly=#68aa4548b7e543d9
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|ok=false|n=1/4|poly=#68aa4548b7e543d9
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_overlap.kicad_pcb
+test_items|err|(self-intersecting)|21000000-0000-0000-0000-000000000038|21000000-0000-0000-0000-000000000039|118000000,115000000
+test_items|err|(self-intersecting)|21000000-0000-0000-0000-000000000040|21000000-0000-0000-0000-000000000041|132500000,110000000
+test_items|err|(self-intersecting)|21000000-0000-0000-0000-000000000041|21000000-0000-0000-0000-000000000042|137499999,113999999
+test_items|err|(self-intersecting)|21000000-0000-0000-0000-000000000042|21000000-0000-0000-0000-000000000037|140000000,118002542
+test_items|ok=false
+drc_build|ok=true|n=1/58|poly=#7844d8a942db4de4
+outline|ok=true|n=1/144|poly=#6a50b844f6448bbd
+outline_inferred|ok=true|n=1/144|poly=#6a50b844f6448bbd
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000039|21000000-0000-0000-0000-000000000038|118000000,111000400
+outline_arcs|err|(self-intersecting)|-|-|118000000,118999600
+outline_arcs|err|(self-intersecting)|-|-|130000000,112000000
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000041|21000000-0000-0000-0000-000000000040|135000000,108000000
+outline_arcs|err|(self-intersecting)|-|-|137174138,116000000
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000042|21000000-0000-0000-0000-000000000041|138000000,112765964
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000042|21000000-0000-0000-0000-000000000035|140000000,111997458
+outline_arcs|err|(self-intersecting)|-|21000000-0000-0000-0000-000000000035|140000000,118002542
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000035|21000000-0000-0000-0000-000000000042|140000000,111997458
+outline_arcs|err|(self-intersecting)|21000000-0000-0000-0000-000000000035|-|140000000,118002542
+outline_arcs|ok=false|n=4/209|poly=#24d1129248f75c9c
+outline_npth|ok=true|n=1/144|poly=#6a50b844f6448bbd
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=1/150|poly=#1576338d4f7c43f9
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_small.kicad_pcb
+test_items|err|(segment has null or very small length: 0 nm)|21000000-0000-0000-0000-000000000047|-|110000000,110000000
+test_items|err|(circle has null or very small radius: 500 nm)|21000000-0000-0000-0000-000000000048|-|115000000,110000000
+test_items|err|(rectangle has null or very small size: 707 nm)|21000000-0000-0000-0000-000000000049|-|120000000,110000000
+test_items|err|(arc has null or very small size: 282 nm)|21000000-0000-0000-0000-000000000050|-|125000200,110000000
+test_items|err|(ellipse has null or very small radii: major=2000000 nm, minor=500 nm)|21000000-0000-0000-0000-000000000051|-|105000000,105000000
+test_items|ok=false
+drc_build|err|(self-intersecting)|-|-|103000000,105000000
+drc_build|err|(self-intersecting)|-|-|125000000,110000000
+drc_build|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline|err|(self-intersecting)|-|-|103000000,105000000
+outline|err|(self-intersecting)|-|-|125000000,110000000
+outline|ok=false|n=1/8|poly=#b93f45aa8df07969
+outline_inferred|err|(self-intersecting)|-|-|103000000,105000000
+outline_inferred|err|(self-intersecting)|-|-|125000000,110000000
+outline_inferred|ok=false|n=1/4|poly=#4fcb5131ddb44e91
+outline_arcs|err|(self-intersecting)|-|-|103000000,105000000
+outline_arcs|err|(self-intersecting)|-|-|125000000,110000000
+outline_arcs|ok=false|n=1/8|poly=#b93f45aa8df07969
+outline_npth|err|(self-intersecting)|-|-|103000000,105000000
+outline_npth|err|(self-intersecting)|-|-|125000000,110000000
+outline_npth|ok=false|n=1/8|poly=#b93f45aa8df07969
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=1/8|poly=#b93f45aa8df07969
+board|rust__crates__kicad-pcb__tests__oracle__m21_fixtures__m21_two_arcs.kicad_pcb
+test_items|ok=true
+drc_build|err|(not a closed shape)|21000000-0000-0000-0000-000000000082|21000000-0000-0000-0000-000000000080|124472136,102763932
+drc_build|ok=false|n=1/4|poly=#1be24067b7025b5f
+outline|err|(not a closed shape)|21000000-0000-0000-0000-000000000082|21000000-0000-0000-0000-000000000080|124472136,102763932
+outline|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_inferred|err|(not a closed shape)|21000000-0000-0000-0000-000000000082|21000000-0000-0000-0000-000000000080|124472136,102763932
+outline_inferred|ok=false|n=1/4|poly=#1be24067b7025b5f
+outline_arcs|err|(not a closed shape)|21000000-0000-0000-0000-000000000082|21000000-0000-0000-0000-000000000080|124472136,102763932
+outline_arcs|ok=false|n=0/0|poly=#cbf29ce484222325
+outline_npth|err|(not a closed shape)|21000000-0000-0000-0000-000000000082|21000000-0000-0000-0000-000000000080|124472136,102763932
+outline_npth|ok=false|n=0/0|poly=#cbf29ce484222325
+fp_outline|ok=false|n=0/0|poly=#cbf29ce484222325
+board_outline|ok=true|n=0/0|poly=#cbf29ce484222325

@@ -130,3 +130,68 @@ Verification:
 - See verification: zones, pads and the via-net rule await the parser packages.
 - `ZONE::CacheTriangulation` is a model stub: callers (and the tests) triangulate the fills
   before `build`.
+
+## CN-03: ratsnest (`RN_NET`, `CN_EDGE`, Filter-Kruskal)
+
+| C++ | Rust | State |
+|---|---|---|
+| `CN_EDGE` (`connectivity_algo.h`: ctors, `operator<`, `StableSortCompare`, nodes, `RemoveInvalidRefs`, weight, visible, `GetLength`) | `edge::CnEdge`, end points `edge::CnEdgeNode` | ported |
+| `CN_PTR_CMP` + `RN_NET::m_nodes` multiset | `ratsnest::RnNet` (`BTreeMap` keyed `(x, y, insertion seq)` = libstdc++ upper-bound insertion) | ported |
+| `RN_NET::Clear`, `AddCluster`, `UpdateNet`, `compute`, `kruskalMST`, `OptimizeRNEdges` (both lambdas), `RemoveInvalidRefs`, `GetEdges` (stable sort per call), `GetUnsortedEdges`, `GetTotalAirlineLength`, `GetNodeCount`, `IsDirty` | `RnNet` methods of the same names | ported |
+| `RN_NET::TRIANGULATOR_STATE` (`Triangulate`, `areNodesColinear`) | `RnNet::triangulate`, `are_nodes_colinear` over `kicad_geom::thirdparty::delaunator` | ported |
+| `RN_NET::NearestBicoloredPair` | `RnNet::nearest_bicolored_pair` | ported, not verified (GUI only, tier 3) |
+| `KI_MST::FilterKruskal` (`libs/core/include/core/filter_kruskal.h`) | `ratsnest::filter_kruskal::filter_kruskal` (+ libstdc++ `std::partition` port `std_partition`) | ported (lives here because `KI_UNION_FIND` is in `algo`) |
+
+API: nodes are `CnAnchorRef`s into the item list; every method touching anchors takes the
+`CnList` (`update_net(ctx, list_mut)`, `optimize_rn_edges(ctx, list)`, `edges(list)`).
+`add_cluster(list_mut, cluster_id, &items)` takes the members separately (the cluster and the
+list both belong to the algorithm). Anchors created by `OptimizeRNEdges` are
+`CnEdgeNode::Optimized(CnAnchor)`, owned by the edge.
+
+Ported tests / verification:
+
+- `tests/cn03_filter_kruskal.rs`: port of `qa/tests/common/test_filter_kruskal.cpp` (8 cases,
+  same `mt19937` graphs; `std::shuffle` replaced by Fisher-Yates over the same generator, the
+  case only needs some permutation).
+- `tests/cn03_ratsnest_golden.rs`:
+  - `cn03_ratsnest_matches_cpp`: the `rn_net` lines of the CN-01/02 pcb-dump goldens
+    (name, node_count, nodes in multiset order, edges in `GetEdges()` order with source,
+    target, weight, visible; board unconnected counts). 15 of 30 boards load completely
+    (the others skip footprints in the parser), 117 fields, 0 mismatches; incl. issue2512
+    (zone anchor optimisation) and issue10697 (20 unconnected edges).
+  - `cn03_ratsnest_random_boards_match_cpp`: 7 synthetic boards (`tests/golden/rn_random/`,
+    generator `tests/oracle/gen_rn_random.py`, goldens `gen_rn_random.sh` = reference
+    pcb-dump `rn_net` lines): 1500-via net (> `KRUSKAL_THRESHOLD` candidates, recursion and
+    filter path), exactly collinear and near-collinear sets on large coordinates, coincident
+    F.Cu/B.Cu track ends of different clusters (20 weight-1 chain edges, R-2), single-position
+    nets with and without common layers, 1- and 2-node nets, filled zones of two nets with
+    vias inside (zone-to-zone `ClosestSegmentsFast`) and lone items outside (zone vertex
+    anchor). 2177 unconnected edges in total, 141 fields, 0 mismatches.
+  - `cn03_ratsnest_spans_clusters`: port of `checkRatsnestSpansClusters`
+    (`qa/tests/pcbnew/test_connectivity_clusters.cpp`) on the C++ test's boards (none loads
+    yet: footprints) plus the golden boards: 15 boards, 18 nets.
+- The ratsnest build in the tests reproduces `internalRecalculateRatsnest` + `updateRatsnest`
+  (sequential); the real facade is CN-04's.
+
+### Deviations (CN-03)
+
+- R-2: coincident-anchor chains are `std::sort`ed (libstdc++ port) by `CnClusterId` (cluster
+  creation order) instead of `CN_CLUSTER*` heap address. The synthetic coincident board
+  matches the reference build; glibc may reuse freed blocks so the address order is not
+  guaranteed in general (connectivity-zones.md R-2).
+- `kruskalMST` computes each candidate's `orderKey` once instead of on every comparison
+  (positions and tags do not change during the MST: identical results).
+- Delaunator failure (`std::runtime_error` in C++, swallowed by the thread pool's `wait()` in
+  `updateRatsnest`): `update_net` returns the error and leaves the net as the exception does
+  (edges, tags, dirty flag unchanged). Not exercised by any oracle case.
+- `m_nodes` keys cache the anchor position at insertion; C++ `CONNECTIVITY_DATA::Move`
+  (GUI, CN-06) moves anchors inside the multiset (same delta for all, so the order is kept).
+
+### Known gaps (CN-03)
+
+- `NearestBicoloredPair` and `RemoveInvalidRefs` are not verified against C++ (GUI /
+  incremental paths, CN-04/CN-06).
+- Edge visibility comes from `BOARD::UpdateRatsnestExclusions` (CN-04); every compared board
+  has all edges visible.
+- Boards with footprints are not compared until the footprint parser lands; rerun
+  `cargo test -p kicad-connectivity --test cn03_ratsnest_golden -- --nocapture` then.

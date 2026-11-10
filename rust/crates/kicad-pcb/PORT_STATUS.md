@@ -2330,3 +2330,66 @@ without UUID in the file), 0 differ, 85 stopped in other packages' code (mostly 
   only board-level zones are verified so far.
 - The dump (`src/dump/items.rs`) still reports `ZONE::GetNumCorners` / `ZONE::IsTeardropArea` as
   pending although the model has them (change request to the dump owner).
+
+## Package PCBIO-11: board file legacy net classes, net chains, variants, embedded files
+
+Files: `src/io/parser/netclass_embedded.rs`, `src/io/writer/netclass_embedded.rs`,
+`tests/data/pcbio11/`, `tests/golden/pcbio11/`, `tests/golden/pcbio11_corpus_netclass.txt`,
+`tests/golden/pcbio11_corpus_sections.txt`, `tests/oracle/pcbio11_golden.sh`.
+
+### C++ to Rust map
+
+| C++ | Rust | state |
+|---|---|---|
+| `parseVariants` (P:538-591) | `parser/netclass_embedded.rs` `parse_variants` | ported |
+| `parseNETCLASS` (P:3793-3883: name / description, the eight size tokens, `add_net` with the pre-20210606 overbar conversion into `SetNetclassPatternAssignment`, duplicate-name `IO_ERROR`, default class replacement) | `parse_netclass` | ported |
+| `parseNET_CHAINS_SECTION` (P:3647-3791: names, `(net <name>)`, legacy `(net <code>)` through `m_netCodes`, `(member (net ..))` wrapper, two terminal pads, `FindPadByUuid`) | `parse_net_chains_section`, `parse_net_chain_members` | ported |
+| `T_embedded_fonts` / `T_embedded_files` of `parseBOARD_unchecked` (P:1547-1591, append rule, `PARSE_ERROR` -> warning + skip to the closing `)`) | `parse_board_embedded_fonts`, `parse_board_embedded_files`, `parse_embedded_files_section` | ported |
+| `T_embedded_fonts` / `T_embedded_files` of `parseFOOTPRINT_unchecked` (P:7142-7175) | `parse_footprint_embedded_fonts`, `parse_footprint_embedded_files` (take the footprint's `EmbeddedFiles`) | ported, called once PCBIO-06 lands |
+| net-chain aggregation of `format( const BOARD* )` (W:962-1038: `std::map` keyed by `ValueStringCompare`, synthetic names, persistence rule) | `writer/netclass_embedded.rs` `format_net_chains` | ported |
+| `formatVariants`, embedded files consolidation (W:828-850, 1040-1063) | `writer/board.rs` (PCBIO-02) | already ported |
+| legacy class transfer to the project (`m_LegacyNetclassesLoaded`) | `project/board_project.rs` (SET-5) | already ported |
+
+### Tests (all in `src/io/parser/netclass_embedded.rs`)
+
+- `oracle_resave` (byte level): four hand-made boards (variants incl. case-insensitive duplicate
+  / nameless / `Default`; net chains by name, legacy code, `(member ..)`, unknown tokens, chain
+  names the `ValueStringCompare` map merges: `bus`/`BUS`, `1K5`/`1.5K`, numeric `42`; embedded
+  files with fonts flag; a bad checksum mid-section; a pre-V6 board with legacy net classes)
+  parsed and re-saved by the port: the **whole file** is byte-identical to the reference
+  `kicad-cli pcb upgrade --force` output (4/4), and the warning text equals the reference one.
+- `oracle_dump_netclass` (item level, feature `dump`): `pcb-dump board --no-init --sections
+  board`, lines `ds.netclass.*`, `netclass_pattern.*`, `net.<code>.*` (class, chain),
+  `effective_netclass.*`, of the 4 hand-made boards and the 7 corpus boards with legacy
+  `(net_class ..)` (issue4139, issue4257, issue18839, line_ending_* x3, cli ZoneFill-4.0.7):
+  all match (over 1000 lines; ZoneFill-4.0.7 has 26 `add_net` over several classes).
+- `oracle_corpus_sections` (byte level): the `(variants ..)`, `(net_chains ..)`,
+  `(embedded_fonts ..)`, `(embedded_files ..)` blocks of the reference re-save of the 18 corpus
+  boards (< 20 MB, vme-wren excluded) with one of these sections: 31 blocks identical, 5 pending (a model stub
+  `PCB_BARCODE::SetPosition` stops the parse of api_kitchen_sink; issue25265 / issue25303 carry
+  footprint-level embedded files, consolidated on save, PCBIO-06 pending). Every parsed embedded
+  file (15) validates its checksum, no parse warnings.
+- `legacy_netclass_errors`: the reference duplicate-class `IO_ERROR` text and the `Expecting`
+  text; `variants_registry`, `net_chains_resolution`: token loops.
+- Ports: `test_net_chain_terminal_pads.cpp` `SingleNetSignalNamePersists` and
+  `SignalsSurviveBuildListOfNets` (`net_chain_names_round_trip`), `test_variant.cpp`
+  `VariantTestProjectLoad` (board registry part: `variant_test_project_load`).
+
+### Deviations / notes
+
+- `parseNET_CHAINS_SECTION` `(members ..)` loop: the C++ never terminates at the end of a
+  truncated file (`skipCurrent` returns at EOF, `NextTok` keeps returning EOF); the port fails
+  with "Expecting ')'" instead of hanging.
+- `FindNet( 0 )` of a board without nets returns the static orphaned item, which the C++ would
+  modify; the port leaves it alone (it is not part of the board).
+- `KIID padUuids[2]` draws two fresh ids per chain from `board.kiid_generator`, as the C++
+  default constructor does.
+
+### Known gaps
+
+- Terminal pads resolve only once footprints / pads are parsed (PCBIO-06); until then the UUID
+  is kept and the pad pointer stays empty (as for a missing pad in C++), so
+  `SignalTerminalPadsRoundTrip` is not ported yet.
+- Footprint-level embedded files: PCBIO-06 must call `parse_footprint_embedded_fonts` /
+  `parse_footprint_embedded_files` with the footprint's `embedded_files`; the corpus test then
+  checks issue25265 / issue25303 automatically.

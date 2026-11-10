@@ -288,7 +288,7 @@ fast path, and the `DRC_ZONE_INDEX` queries. Golden: `tests/golden/rtree_oracle.
 | `KeepRefreshing`, `AdvanceProgress`, `SetMaxProgress`, `ReportProgress`, `ReportPhase`, `IsCancelled`; `PROGRESS_REPORTER` | `DrcRunState`; `ProgressReporter` trait (no-op defaults) | ported |
 | `HasRulesForConstraintType`, `QueryWorstConstraint`, `HasConditionalConstraint`, `HasUserDefinedConstraint`, `HasUserDefinedPhysicalConstraint`, `QueryDistinctConstraints`, `ClearClearanceCache`, `RulesValid`, `HasGeometryDependentRules` | `DrcEngine` | ported |
 | `MatchDpSuffix`, `IsNetADiffPair`, `IsNetTieExclusion` | `src/engine/diff_pair.rs` | ported |
-| `EvalRules`, `EvalZoneConnection`, `EvalClearanceBatch`, `ProcessAssertions`, `GetCachedOwnClearance`, `InvalidateClearanceCache`, `InitializeClearanceCache` | `src/engine/eval_rules.rs` | not this package (DRC-04); `RuleResolver::eval_rules` / `cached_own_clearance` are `port_pending!` |
+| `EvalRules`, `EvalZoneConnection`, `EvalClearanceBatch`, `ProcessAssertions`, `GetCachedOwnClearance`, `InvalidateClearanceCache`, `InitializeClearanceCache` | `src/engine/eval_rules.rs` | package DRC-04 (see its section) |
 | `GetItemsMatchingCondition`, `GetItemsMatchingRule`, show-match domains, `GetTestProvider`, debug overlay, drawing sheet, schematic netlist setters | - | skipped: GUI (rule editor) / providers are created per run |
 
 ### Verification
@@ -428,3 +428,79 @@ caches, zone trees, islands maps and pad hole entries wait for the QA boards abo
 - `run` cannot be reached from `DrcEngine::run_tests` yet: its `regenerate_caches` callback
   returns only `bool`, providers get no `&DrcBoardCaches`, and the connectivity is borrowed
   before the rebuild (change requests to DRC-03).
+
+## DRC-04: constraint resolution (`EvalRules` and friends)
+
+### File / class map
+
+| C++ (`pcbnew/drc/drc_engine.cpp` / `.h`) | Rust | State |
+|---|---|---|
+| `EvalRules` (net-tie exemption, local overrides, netclass fast path, `processConstraint` / `applyConstraint` / `checkCondition` incl. the per-call condition memo, DIFF_PAIR_GAP clearance floor, footprint inheritance and board-setup defaults, legacy local clearances, board minimum, NULL result) | `src/engine/eval_rules.rs` `DrcEngine::eval_rules_reporting` / `eval_rules` | ported (reporter texts: hooks, DRC-34) |
+| `EvalZoneConnection` | `DrcEngine::eval_zone_connection` | ported |
+| `EvalClearanceBatch`, `DRC_CLEARANCE_BATCH` | `DrcEngine::eval_clearance_batch`, `DrcClearanceBatch` | ported |
+| `ProcessAssertions` | `DrcEngine::process_assertions` | ported (assertion tests need DRC-21 to evaluate) |
+| `GetCachedOwnClearance`, `ClearClearanceCache`, `InvalidateClearanceCache` | `DrcEngine::cached_own_clearance_impl`, `clear_clearance_cache`, `invalidate_clearance_cache`; `OwnClearanceCache` | ported |
+| `InitializeClearanceCache` (GUI pre-population, thread pool) | - | skipped: pure optimisation for the editor's first render |
+| `RuleResolver::eval_rules` / `cached_own_clearance` (`board-model.md` 7) | `src/engine/mod.rs` `impl RuleResolver for DrcEngine` | ported |
+| `DRC_ENGINE_CONSTRAINT::constraint.m_Test`, `constraint.GetParentRule()` | `DrcEngineConstraint::test`, `rule_info` (filled by `compileRules`) | ported |
+
+### Verification
+
+* C++ oracle: new opt-in section `pcb-dump board --sections evalrules`
+  (`rust/tools/pcb-dump/dump_evalrules.cpp`). After the QA load path's `InitEngine` it prints,
+  per board track / arc / via / footprint pad / board zone / footprint zone / board shape and
+  text, `EvalRules` of CLEARANCE and `GetCachedOwnClearance` per enabled copper layer and 15
+  unary types (TRACK_WIDTH, VIA_DIAMETER, HOLE_SIZE, ANNULAR_WIDTH, EDGE_CLEARANCE,
+  HOLE_CLEARANCE, PHYSICAL_CLEARANCE, SILK_CLEARANCE, TEXT_HEIGHT, SOLDER_MASK_EXPANSION, both
+  SOLDER_PASTE margins, ZONE_CONNECTION, THERMAL_RELIEF_GAP, THERMAL_SPOKE_WIDTH) on the item's
+  layer, DISALLOW (own category), and for a deterministic pair sample (track-track, pad-pad,
+  track-pad, zone-track, pad-zone with `EvalZoneConnection` / thermal constraints, zone-zone)
+  CLEARANCE per shared copper layer plus HOLE_CLEARANCE, HOLE_TO_HOLE and DIFF_PAIR_GAP. Each
+  result prints type, min/opt/max presence and values, `GetName()`, the min rule's name, the
+  implicit-min flag, zone connection, disallow flags and severity.
+* Golden `tests/golden/evalrules_corpus.txt` (`tests/oracle/gen_evalrules_goldens.py`, 368
+  corpus boards < 5 MB, `--hash`, streamed): per board and category the key count, line count
+  and a hash; replay `tests/evalrules_oracle.rs`. A category is compared when the Rust board
+  yields the same number of keys.
+* Result today: **1128 categories match on 98 boards fully, 0 mismatches** (arc 23, disallow 93,
+  drawing 269, pair_tt 122, pair_zt 98, pair_zz 90, track 163, via 122, zone 148). Pending: every
+  pad-based category (the parser does not load pads yet, PCBIO-07), DISALLOW on 22 boards whose
+  items overlap a keepout (`intersectsKeepout`, DRC-10), 2 legacy `.pro` boards, 2 boards with a
+  `kicad-pcb` stub on the load path. 55 boards with user rule conditions are reported as
+  "needs DRC-21" and not compared.
+* `fast_path_equals_general_path`: on three boards the netclass fast path (no reporter) equals
+  the general path (forced by a reporter) for every item alone and two partners per item.
+* `last_rule_wins_per_field_and_board_minimum`: per-field override by later rules (min/max from
+  rule a, opt from rule b), explicit rule returned before the board minimum, own-clearance
+  cache hit without source.
+
+### Ported C++ tests
+
+* `test_drc_solder_mask_expansion.cpp`: `FootprintLevelSolderMaskExpansion` (returns early with
+  a "pending" note while the parser does not load pads; tightens automatically).
+* Not ported here: `DRCNetclassNameEndingInBackslash` (needs `RunTests` with the providers),
+  `DRCCopperGraphicLineEndingAgainstTrack` (needs DRC-08), `SolderMaskExpansionPerformance`
+  (a timing test).
+
+### Deviations
+
+* Own-clearance cache invalidation: instead of the C++ `InvalidateClearanceCache` calls from the
+  item setters the cache is stamped with `board.time_stamp()` and dropped whenever the stamp
+  moved (`board-model.md` 7). It is therefore also dropped at every `RunTests` start; the cached
+  value is always what `EvalRules` returns, so only C++ staleness bugs (edits that do not call
+  `InvalidateClearanceCache`) could differ.
+* `HOLE_TO_HOLE` with `b == None` dereferences null in C++ (router batch call); the port treats
+  the missing item as one without a hole (analysis R5). `EvalZoneConnection` with a THT_THERMAL
+  result, `a` not a pad and no `b` panics where the C++ dereferences null.
+* `GetLocalClearance( &source )` of the model has no virtual with a source; the engine asks the
+  two C++ overriders (pad: "pad", zone: "zone") directly.
+
+### Known gaps
+
+* REPORTER texts of `EvalRules` / `EvalZoneConnection` / `ProcessAssertions` (DRC-34): every
+  site is marked `REPORT (DRC-34)`; the reporter control flow (no fast path, no condition
+  memo, assertion tests evaluated) is in place.
+* Footprint courtyards (`FOOTPRINT::GetCourtyard`, model stub) are reached by DISALLOW for a
+  footprint item; keepout predicate (DRC-10) and the `Layer` property of tuning-profile rules
+  (DRC-21) are reached through the native implicit conditions.
+* `InitializeClearanceCache` not ported (editor only).
