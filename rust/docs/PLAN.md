@@ -925,6 +925,16 @@ Progress log:
   pending. Follow-up: the adapter's own wasm profile still uses opt-level "s".
   Web demo: Emscripten installed from the distribution's packages; agent working.
   Disk 11 GB free, load 1.7, memory fine.
+  14:46 UTC: the user wants to run the demo on a laptop. Attaching a laptop
+  folder to this cloud session is not offered for that computer, so the user starts a
+  local session; a suggested-task card with a self-contained prompt was queued for it
+  (task_2fc7d2ca: build the router tools and our module there, wire the page, run the
+  example in a local browser). The wiring script is pushed to the private branch.
+  CONSEQUENCE: a local session may push fixes to that branch under kicad-rs/. Before
+  every sync from here, `git pull` in the clone and carry such commits back into the
+  source of truth (rust/clients/gloopy-compat) first - sync.py overwrites the snapshot.
+  Here: the client's three router tools built to wasm with Emscripten 3.1.6, his Node
+  pipeline is running on our module (load, baseline, first seed routed).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
