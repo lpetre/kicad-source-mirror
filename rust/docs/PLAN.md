@@ -252,7 +252,34 @@ Progress log:
   03:10 UTC: done FIX-CN-1 (tie records on ratsnest edges + tie-aware comparison rule;
   evidence run of cn-order-oracle on all 365 DRC corpus boards: no board has a
   heap-dependent ratsnest in the reference, so corpus comparisons stay exact).
-  READY TO LAUNCH (package files written): after INT-2a: [FIX-DRC-1]; after PCBIO-07 finishes (workflow w3kdexuvx):
+  03:10 UTC: done (results read on Fable): INT-2a kernel integration (design rev 2.3;
+  docs/design/integration-2.md; a reference driver with 354 mutator values, all equal;
+  defaults scoreboard 3558 match / 124 pending / 0 mismatch), PCBIO-06 footprint parser +
+  writer (46 of 46 re-saves byte-identical; corpus scoreboard 98 identical, pads pending on
+  245), M20 footprint geometry / courtyards (48 of 48 reference values), PCBIO-15 loader
+  sequence (item level: 21912 match, 0 mismatch; upgrade corpus 111 identical, 0 differing,
+  259 waiting for pads), ZF-01 zone fill driver (no fill compared yet: needs ZF-03), FAB-04
+  pads / vias / tracks / zones plotting (3118 corpus Gerber files + 26 crafted pad files
+  byte-identical), M25a barcode model (no symbol encoder: zint port is a later package),
+  PROP-1 property tables (1286 of 1286 table lines identical), CLEAN-1 (std::set tree and
+  wxString::Matches moved with oracles, libeval duplicates removed, font x86 casts), DRC
+  providers DRC-06, 07, 23, 24, 25, 26, 27, 28 (each 0 differences on every board that loads;
+  pad paths wait for the pad parser).
+  Known red tests at this point (owners gone; GLUE-2 handles them): parser / writer
+  staging_stubs, netclass_embedded oracle_corpus_sections (issue25265), pcbio12
+  oracle_corpus_blocks (drill chart cells), drc24_courtyard_text (2), drc21_pcbexpr (in
+  progress), drc08a (in progress).
+  RUNNING NOW: INT-2b Fable review of kicad-pcb (wyvjfdjmb); GLUE-2 second wiring pass and
+  FIX-DRC-1 rule identity (wz048ddhz); CC-1 component class sync - the stub every CLI load
+  hits (wu41nwrio); PCBIO-07 pads (w3kdexuvx); ZF-03 -> ZF-06 -> TD-01 (w0obou2da); FAB-05
+  -> .. -> FAB-08 (wb9xlvw89); DRC-21 -> DRC-22 and DRC-08a -> .. -> DRC-12 (w878ykkp2);
+  DRC-29 (wxpfc9smx).
+  Still to write (tier 3, editor-only paths): FIX-GEN-1 (generator subclass arms of move /
+  rotate / flip / mirror / set_layer, via stitch default template), FIX-DIM-1
+  (PCB_DIMENSION_BASE::Update after text setters, i32-backed dimension enums, grid item
+  radius setters), ZINT-1 (barcode symbol encoder: CODE_39, CODE_128, QR, Micro QR, Data
+  Matrix; thirdparty/zint is BSD-3), M26 (generated tables refresh, drill chart).
+  READY TO LAUNCH (package files written): after PCBIO-07 finishes (workflow w3kdexuvx):
   [PCBIO-14]; after the FAB chain (wb9xlvw89): [FAB-10], [FAB-11], [FAB-12] (one agent at a
   time in kicad-fab: chain them); after DRC-12, FAB-07 / 08 and PCBIO-15: [WIRE-1]
   (session / CLI / wasm end-to-end wiring + e2e differential scoreboard + browser demo). After pads parse: the dedicated Fable reviews (connectivity, DRC resolver /

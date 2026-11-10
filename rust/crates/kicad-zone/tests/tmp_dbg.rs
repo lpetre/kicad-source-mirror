@@ -131,4 +131,21 @@ fn tmp_dbg() {
     board.increment_time_stamp();
     let mut filler = ZoneFiller::new(&board);
     filler.fill(&mut board, &mut connectivity, &engine, &zones);
+    let reff = std::env::var("DBG_REF").unwrap();
+    let rb = parse_board(&std::fs::read_to_string(&reff).unwrap(), "r", &ParseOptions::default()).unwrap();
+    for (rid, rz) in rb.zones() {
+        let Some((pid, pz)) = board.zones().find(|(_, z)| z.base.item.uuid == rz.base.item.uuid) else { continue };
+        let _ = (rid, pid);
+        for layer in rz.layer_set.iter() {
+            let e = ShapePolySet::new();
+            let a = rz.get_fill(layer).unwrap_or(&e);
+            let b = pz.get_fill(layer).unwrap_or(&e);
+            eprintln!("zone {} {:?}: ref {} outlines, port {}", rz.base.item.uuid.as_string(), layer, a.outline_count(), b.outline_count());
+            for o in 0..a.outline_count().min(b.outline_count()) {
+                let pa = a.c_outline(o).c_points(); let pb = b.c_outline(o).c_points();
+                eprintln!("  outline {o}: {} vs {} pts, area {} vs {}", pa.len(), pb.len(), a.c_outline(o).area(true), b.c_outline(o).area(true));
+                if pa != pb { for i in 0..pa.len().max(pb.len()) { eprintln!("    {i}: {:?} | {:?}", pa.get(i), pb.get(i)); } }
+            }
+        }
+    }
 }

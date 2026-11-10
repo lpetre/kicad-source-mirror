@@ -143,6 +143,10 @@ static std::unique_ptr<BOARD> loadBoardQa( const wxString& aPath )
     {
         std::unordered_set<wxString> dummy;
         board->SynchronizeComponentClasses( dummy );
+    }
+
+    return board;
+}
 
 
 int main( int argc, char** argv )
@@ -234,7 +238,7 @@ int main( int argc, char** argv )
 
                     line += "|";
 
-                    for( const PCB_SHAPE& s : marker.GetShapes() )
+                    for( const PCB_SHAPE& s : marker.GetPath() )
                     {
                         line += std::to_string( s.GetStart().x ) + "," + std::to_string( s.GetStart().y )
                                 + ";" + std::to_string( s.GetEnd().x ) + ","
