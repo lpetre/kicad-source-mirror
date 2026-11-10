@@ -759,7 +759,7 @@ Progress log:
   "affected == full" claim dependency by dependency with built counterexamples -> Opus
   fixes -> Fable verifies. Open follow-ups for the speed priority, to decide after the
   first loop rounds: persistent DRC state (hotspot 7), track reorder API.
-  11:15 UTC: adapter GK-1 reported (read on Fable): the shim built on the reference tree
+  11:06 UTC: adapter GK-1 reported (read on Fable): the shim built on the reference tree
   (3 source changes for master, 2 test-only additions), all thirteen steps plus the
   command line on the port's public API with NO change to the port; 28 boards x 10
   sequences = 280 runs: 104 byte-identical, 170 equal after masking date / report order /
