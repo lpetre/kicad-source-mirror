@@ -25,6 +25,7 @@
 
 pub mod api;
 pub mod board_api;
+pub mod live;
 
 use js_sys::{Error as JsError, Reflect};
 use kicad_session::jobs::{
@@ -383,6 +384,10 @@ pub struct Board {
     uuid_seed: Option<u32>,
     /// Load warnings (outline font fallbacks).
     warnings: Vec<String>,
+    /// Saved states of `checkpoint()` by token (package LIVE-1).
+    checkpoints: std::collections::BTreeMap<u32, kicad_session::board_api::commit::Checkpoint>,
+    /// The next checkpoint token.
+    next_checkpoint: u32,
 }
 
 impl Board {
@@ -403,6 +408,8 @@ impl Board {
             fixed_date,
             uuid_seed,
             warnings,
+            checkpoints: std::collections::BTreeMap::new(),
+            next_checkpoint: 1,
         }
     }
 

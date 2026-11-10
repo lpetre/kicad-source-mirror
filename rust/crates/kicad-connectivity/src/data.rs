@@ -177,6 +177,26 @@ pub struct ConnectivityData {
     time_stamp: Option<i32>,
     /// `m_fromToCache` (never null; C++ guards it with its own `std::recursive_mutex`).
     from_to_cache: std::sync::Mutex<FromToCache>,
+    /// The nets that were dirty in the last `internalRecalculateRatsnest` (after the net
+    /// propagation, right before `ClearDirtyFlags`), ascending. Not in C++: the change report
+    /// of the transaction layer (package LIVE-1) reads it.
+    last_dirty_nets: Vec<i32>,
+}
+
+/// A deep copy (package LIVE-1 checkpoints; C++ `CONNECTIVITY_DATA` is never copied). The
+/// copy refers to the same board items by handle, so it is valid for a clone of the board.
+impl Clone for ConnectivityData {
+    fn clone(&self) -> Self {
+        Self {
+            conn_algo: self.conn_algo.clone(),
+            nets: self.nets.clone(),
+            skip_ratsnest_update: self.skip_ratsnest_update,
+            netcode_map: self.netcode_map.clone(),
+            time_stamp: self.time_stamp,
+            from_to_cache: std::sync::Mutex::new(self.from_to_cache().clone()),
+            last_dirty_nets: self.last_dirty_nets.clone(),
+        }
+    }
 }
 
 impl ConnectivityData {
@@ -420,10 +440,29 @@ impl ConnectivityData {
             }
         }
 
+        self.last_dirty_nets = (0..last_net)
+            .filter(|&n| self.conn_algo.is_net_dirty(n))
+            .collect();
         self.conn_algo.clear_dirty_flags();
 
         if !self.skip_ratsnest_update {
             self.update_ratsnest(ctx);
+        }
+    }
+
+    /// The nets the last ratsnest recalculation rebuilt (dirty after the net propagation),
+    /// ascending (not in C++; package LIVE-1).
+    pub fn last_dirty_nets(&self) -> &[i32] {
+        &self.last_dirty_nets
+    }
+
+    /// Re-records the board time stamp after the caller has brought the connectivity up to
+    /// date incrementally (`Add` / `Remove` / `Update`, then `RecalculateRatsnest`), so that
+    /// [`ConnectivityData::is_stale`] stays false (not in C++; package LIVE-1). No effect
+    /// before the first build.
+    pub fn mark_up_to_date(&mut self, board: &Board) {
+        if self.time_stamp.is_some() {
+            self.time_stamp = Some(board.time_stamp());
         }
     }
 

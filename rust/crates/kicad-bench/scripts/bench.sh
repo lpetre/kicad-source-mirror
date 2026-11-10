@@ -61,7 +61,9 @@ if [ "$ALLOC" = 1 ]; then
     cp "$BIN" "$OUT/kicad-bench-timing"
     cargo build --release -p kicad-bench --features count-alloc
     cp "$BIN" "$OUT/kicad-bench-alloc"
-    cp "$OUT/kicad-bench-timing" "$BIN"
+    # BIN is a hard link into target/release/deps: replace the link, never write through it
+    # (that would overwrite the count-alloc build cargo then considers up to date).
+    cp --remove-destination "$OUT/kicad-bench-timing" "$BIN"
 fi
 
 echo "commit	board	stage	n	min_ms	median_ms	max_ms	peak_rss_mb	allocs	alloc_mb" > "$TSV"

@@ -194,7 +194,7 @@ pub struct ItemMapEntry {
 ///
 /// Not ported (tier 3, CN-06): `LocalBuild` / `m_isLocal` / `m_globalConnectivityData`
 /// (dynamic ratsnest of the interactive tools) and the progress reporter.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CnConnectivityAlgo {
     /// `m_itemList`
     item_list: CnList,

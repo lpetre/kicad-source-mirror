@@ -42,8 +42,12 @@
 //! | [`rules`] | resolved constraints through `DRC_ENGINE::EvalRules`, router default sizes |
 //! | [`edit`] | add / move / modify / remove items, batches, teardrops, refill |
 //! | [`check`] | structured DRC (full job and quick provider selection) |
+//! | [`commit`] | transactions (`BOARD_COMMIT::Push` with incremental connectivity), checkpoints, finalize |
+//! | [`bulk`] | flat integer record forms of the route items for batch transfer |
 
+pub mod bulk;
 pub mod check;
+pub mod commit;
 pub mod edit;
 pub mod read;
 pub mod rules;

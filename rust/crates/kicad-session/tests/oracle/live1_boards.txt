@@ -1,0 +1,33 @@
+# Package LIVE-1: boards of the incremental tests (tests/live1_incremental.rs: all of them;
+# the reference driver tests/oracle/live1_oracle.cpp: the first ten). Paths relative to the
+# KiCad source root.
+qa/data/pcbnew/issue23851/issue23851.kicad_pcb
+qa/data/pcbnew/issue2904.kicad_pcb
+qa/data/pcbnew/issue22809/issue22809.kicad_pcb
+demos/ecc83/ecc83-pp_v2.kicad_pcb
+qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
+qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
+qa/data/pcbnew/zone_filler.kicad_pcb
+qa/data/pcbnew/issue23550/issue23550.kicad_pcb
+qa/data/pcbnew/issue16182.kicad_pcb
+demos/pic_programmer/pic_programmer.kicad_pcb
+qa/data/pcbnew/issue21746/issue21746.kicad_pcb
+qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
+qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
+demos/ecc83/ecc83-pp.kicad_pcb
+qa/data/pcbnew/issue14130.kicad_pcb
+qa/data/pcbnew/issue17967/issue17967.kicad_pcb
+qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
+qa/data/pcbnew/issue14549.kicad_pcb
+qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
+qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
+qa/data/pcbnew/issue25580.kicad_pcb
+qa/data/pcbnew/issue6260.kicad_pcb
+qa/data/pcbnew/issue8407.kicad_pcb
+qa/data/pcbnew/issue5830.kicad_pcb
+qa/data/pcbnew/issue22010/issue22010.kicad_pcb
+qa/data/pcbnew/odbpp/net_name_collision.kicad_pcb
+qa/data/pcbnew/issue23053/issue23053.kicad_pcb
+qa/data/pcbnew/issue23515/issue23515.kicad_pcb
+qa/data/pcbnew/issue25101.kicad_pcb
+qa/data/pcbnew/issue6039.kicad_pcb

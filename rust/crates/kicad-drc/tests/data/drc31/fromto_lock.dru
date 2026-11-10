@@ -1,0 +1,4 @@
+(rule "fromto_lock"
+	(constraint length (min 1mm) (max 2mm))
+	(condition "A.fromTo('*','*')")
+)

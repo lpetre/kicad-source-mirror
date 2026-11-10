@@ -45,12 +45,12 @@ pub struct ViolationOptions {
     pub severities: Vec<String>,
 }
 
-fn required<T: for<'de> Deserialize<'de>>(value: JsValue) -> Result<T, JsValue> {
+pub(crate) fn required<T: for<'de> Deserialize<'de>>(value: JsValue) -> Result<T, JsValue> {
     serde_wasm_bindgen::from_value(value)
         .map_err(|e| session_error(kicad_session::SessionError::invalid_argument(e.to_string())))
 }
 
-fn ids(value: JsValue) -> Result<Vec<u64>, JsValue> {
+pub(crate) fn ids(value: JsValue) -> Result<Vec<u64>, JsValue> {
     let raw: Vec<f64> = required(value)?;
     raw.into_iter()
         .map(|id| {

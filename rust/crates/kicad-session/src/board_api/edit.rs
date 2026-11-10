@@ -18,10 +18,11 @@
 //! The edit half of the router API. Every edit goes through the model's mutation API (the
 //! item constructors, `BOARD::Add( item, ADD_MODE::APPEND )`, `Board::modify_*` with the
 //! setters `SetStart` / `SetEnd` / `SetMid` / `SetPosition` / `SetWidth` / `SetLayer` /
-//! `SetNetCode` / `SetLocked`, `BOARD::Remove`), then the board's connectivity is rebuilt once
-//! per call (`BOARD::BuildConnectivity`, the port's replacement for the incremental
-//! `CONNECTIVITY_DATA::Add / Remove / Update` of `BOARD_COMMIT::Push`, board-model.md 8.5).
-//! `apply_edits` runs any number of edits with one rebuild.
+//! `SetNetCode` / `SetLocked`, `BOARD::Remove`); the connectivity is updated once per call
+//! through the transaction layer ([`super::commit`], the port of
+//! `BOARD_COMMIT::Push`: `CONNECTIVITY_DATA::Add / Remove / Update`, then
+//! `RecalculateRatsnest` of the dirty nets). `apply_edits` runs any number of edits as one
+//! transaction.
 
 use std::collections::BTreeSet;
 
@@ -326,7 +327,7 @@ fn new_uuid(session: &Session, uuid: &Option<String>) -> Result<Option<Kiid>, Se
     Ok(Some(kiid))
 }
 
-fn copper_layer(name: &str) -> Result<PcbLayerId, SessionError> {
+pub(super) fn copper_layer(name: &str) -> Result<PcbLayerId, SessionError> {
     let layer = parse_layer(name)?;
 
     if !kicad_core::layer_ids::is_copper_layer(layer.as_i32()) {
@@ -390,7 +391,7 @@ fn apply_finish(v: &mut PcbVia, f: &super::read::ViaFinish) -> Result<(), Sessio
 }
 
 impl Session {
-    fn net_code(&self, net: i32) -> Result<NetCode, SessionError> {
+    pub(super) fn net_code(&self, net: i32) -> Result<NetCode, SessionError> {
         let code = NetCode(net);
 
         if self.board.find_net(code).is_none() {
@@ -406,10 +407,15 @@ impl Session {
         self.router_sizes(net, layer).ok()
     }
 
-    fn add_route_item(&mut self, track: Track, locked: bool) -> Result<ItemId, SessionError> {
+    fn add_route_item(
+        &mut self,
+        track: Track,
+        locked: bool,
+        mode: AddMode,
+    ) -> Result<ItemId, SessionError> {
         let id: ItemId = self
             .board
-            .add_track(track, AddMode::Append)
+            .add_track(track, mode)
             .map_err(|_| SessionError::invalid_argument("Cannot place Track on non-copper layer"))?
             .into();
 
@@ -420,7 +426,11 @@ impl Session {
         Ok(id)
     }
 
-    fn insert_track(&mut self, spec: &NewTrack) -> Result<ItemId, SessionError> {
+    pub(super) fn insert_track(
+        &mut self,
+        spec: &NewTrack,
+        mode: AddMode,
+    ) -> Result<ItemId, SessionError> {
         let layer = copper_layer(&spec.layer)?;
         let net = self.net_code(spec.net)?;
         let uuid = new_uuid(self, &spec.uuid)?;
@@ -444,10 +454,14 @@ impl Session {
         t.base.net = net;
         t.set_has_solder_mask(spec.solder_mask);
         t.set_local_solder_mask_margin(spec.solder_mask_margin);
-        self.add_route_item(Track::Trace(t), spec.locked)
+        self.add_route_item(Track::Trace(t), spec.locked, mode)
     }
 
-    fn insert_arc(&mut self, spec: &NewArc) -> Result<ItemId, SessionError> {
+    pub(super) fn insert_arc(
+        &mut self,
+        spec: &NewArc,
+        mode: AddMode,
+    ) -> Result<ItemId, SessionError> {
         let layer = copper_layer(&spec.layer)?;
         let net = self.net_code(spec.net)?;
         let uuid = new_uuid(self, &spec.uuid)?;
@@ -473,10 +487,14 @@ impl Session {
         a.track.set_has_solder_mask(spec.solder_mask);
         a.track
             .set_local_solder_mask_margin(spec.solder_mask_margin);
-        self.add_route_item(Track::Arc(a), spec.locked)
+        self.add_route_item(Track::Arc(a), spec.locked, mode)
     }
 
-    fn insert_via(&mut self, spec: &NewVia) -> Result<ItemId, SessionError> {
+    pub(super) fn insert_via(
+        &mut self,
+        spec: &NewVia,
+        mode: AddMode,
+    ) -> Result<ItemId, SessionError> {
         let net = self.net_code(spec.net)?;
         let uuid = new_uuid(self, &spec.uuid)?;
         let vt = via_type(spec.via_type.as_deref())?;
@@ -540,10 +558,10 @@ impl Session {
             td.store(&mut v.track.base.teardrop_params);
         }
 
-        self.add_route_item(Track::Via(Box::new(v)), spec.locked)
+        self.add_route_item(Track::Via(Box::new(v)), spec.locked, mode)
     }
 
-    fn change_item(&mut self, c: &ItemChange) -> Result<ItemId, SessionError> {
+    pub(super) fn change_item(&mut self, c: &ItemChange) -> Result<ItemId, SessionError> {
         let id = item_id(c.id)?;
         let Some(track_id) = id.typed::<Track>() else {
             return Err(SessionError::invalid_argument(
@@ -620,7 +638,7 @@ impl Session {
         Ok(id)
     }
 
-    fn routing_to_remove(&self, r: &RemoveRouting) -> Vec<ItemId> {
+    pub(super) fn routing_to_remove(&self, r: &RemoveRouting) -> Vec<ItemId> {
         let ctx = kicad_pcb::ctx::BoardCtx::bare(&self.board);
         let nets: BTreeSet<i32> = r.nets.iter().copied().collect();
         let vias = r.vias.unwrap_or(true);
@@ -641,67 +659,19 @@ impl Session {
     }
 
     /// Apply a batch of edits: removals (by handle, then `remove_routing`), changes, then
-    /// additions; one connectivity rebuild. Fails without changing anything when a handle is
-    /// stale or a layer / net / UUID is invalid in the removals or changes; an invalid
-    /// addition stops the batch after the edits before it (the error names it).
+    /// additions, as one transaction with `ADD_MODE::APPEND` ([`Session::commit`], the port of
+    /// `BOARD_COMMIT::Push`:
+    /// incremental connectivity, ratsnest of the dirty nets only). Fails without changing
+    /// anything when a handle is stale or a layer / net is invalid in the removals or
+    /// changes; an invalid addition stops the batch after the edits before it (the error
+    /// names it; the connectivity is brought up to date for what was applied).
     pub fn apply_edits(&mut self, batch: &EditBatch) -> Result<EditResult, SessionError> {
-        let mut result = EditResult::default();
-
-        for &id in &batch.remove {
-            let item = item_id(id)?;
-
-            if !self.board.contains(item) {
-                return Err(SessionError::StaleId { id });
-            }
-        }
-
-        let outcome = (|| {
-            for &id in &batch.remove {
-                let item = item_id(id)?;
-
-                if self.board.remove(item) {
-                    result.removed.push(id);
-                }
-            }
-
-            if let Some(r) = &batch.remove_routing {
-                for item in self.routing_to_remove(r) {
-                    if self.board.remove(item) {
-                        result.removed.push(item.to_bits());
-                    }
-                }
-            }
-
-            for c in &batch.change {
-                let id = self.change_item(c)?;
-                result.changed.push(id.to_bits());
-            }
-
-            for item in &batch.add {
-                let id = match item {
-                    NewItem::Track(t) => self.insert_track(t)?,
-                    NewItem::Arc(a) => self.insert_arc(a)?,
-                    NewItem::Via(v) => self.insert_via(v)?,
-                };
-                result.added.push(id.to_bits());
-            }
-
-            Ok::<(), SessionError>(())
-        })();
-
-        self.rebuild_connectivity();
-        outcome?;
-
-        let ctx = kicad_pcb::ctx::BoardCtx::bare(&self.board);
-        result.added_uuids = result
-            .added
-            .iter()
-            .filter_map(|&id| {
-                ctx.item(ItemId::from_bits(id)?)
-                    .map(|it| it.uuid().as_string())
-            })
-            .collect();
-        Ok(result)
+        let mut txn = super::commit::Transaction::begin();
+        txn.stage_batch(batch);
+        // WASM-API-1's contract: new items go to the end of BOARD::Tracks() (re-adding a
+        // recorded routing restores the loaded order)
+        txn.append = true;
+        self.commit(&txn).map(|r| r.edit)
     }
 
     /// One new track segment ([`Session::apply_edits`] with one addition).

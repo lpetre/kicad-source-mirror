@@ -799,7 +799,7 @@ fn net_of(item: &ItemRef<'_>) -> i32 {
 
 /// Port of `CN_LIST`: the connectivity items in list order (the iteration order of everything
 /// downstream) plus their r-tree.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct CnList {
     /// Item arena, indexed by `CnItemId`; slots are never reused.
     arena: Vec<CnItem>,

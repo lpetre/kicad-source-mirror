@@ -258,3 +258,28 @@ fn drc31_reference_cases() {
 
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
+
+/// Regression (perf gate, found on `vme-wren`): the provider held the from-to cache's lock
+/// while evaluating the length rules, and a `fromTo()` condition locks it again, so the run
+/// deadlocked. A `fromTo` length rule on a small board must finish.
+#[test]
+fn from_to_rule_condition_does_not_deadlock() {
+    let dir = Path::new(env!("CARGO_TARGET_TMPDIR")).join("drc31_fromto_lock");
+    let path = materialize(
+        "via_stack_track_width#fromto_lock",
+        "via_stack_track_width",
+        "replace:fromto_lock",
+        "-",
+        &dir,
+    );
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    std::thread::spawn(move || {
+        let mut loaded = load_board(&path).expect("board loads");
+        let entries = cli_report_entries_flow(&mut loaded, false, &["length"]);
+        let _ = tx.send(entries.len());
+    });
+
+    rx.recv_timeout(std::time::Duration::from_secs(120))
+        .expect("the length provider finished (no deadlock on the from-to cache)");
+}

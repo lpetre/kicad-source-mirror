@@ -29,6 +29,7 @@ use kicad_geom::math::box2::Box2I;
 /// `{ start layer, x, y } .. { end layer, right, bottom }`.  Non-owning (the payload is a
 /// handle).  The layer bounds are copper layer **ordinals** (F_Cu = 0, B_Cu = 31), the same as
 /// `CN_ITEM::StartLayer()` / `EndLayer()`.
+#[derive(Clone)]
 pub struct CnRtree<T> {
     /// `m_tree`
     tree: DynamicRTree<T, 3>,

@@ -649,6 +649,13 @@ Progress log:
   the full computation. These own crates/kicad-session/src/board_api and crates/kicad-wasm,
   which the performance loop's planner is told to leave alone; in kicad-drc / kicad-zone
   they add new files only.
+  09:10 UTC: the disk watchdog background task (ba2lo00ka) reached its time limit and was
+  stopped by the harness; per the harness note it is NOT restarted (it already had the
+  longest allowed timeout). Replacement: at every heartbeat run the one-off prune by hand
+  (stale target/debug/incremental and wasm32 incremental dirs older than 40 min, stale test
+  executables older than 45 min) and check df; the two agent groups now running
+  (performance loop, LIVE-1) follow the disk rules of PORTING.md section 7. Disk now: 16 GB
+  free.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
