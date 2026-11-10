@@ -284,7 +284,31 @@ pub fn format_angle(degrees: f64) -> String {
 /// Port of `EDA_UNIT_UTILS::FormatInternalUnits( const EDA_IU_SCALE&, int, EDA_DATA_TYPE )`:
 /// the value in millimetres (or ps, ps/mm, unscaled for the other data types) as written to
 /// KiCad files.
+///
+/// When the divisor is exactly 1e6 (PCB distances, the board writer's hot path) the text is
+/// produced by [`push_iu_1e6_exact`] straight from the integer; see there for why that is the
+/// same text as the C++ double formatting.  Every other divisor takes the ported generic path
+/// [`format_internal_units_generic`].
 pub fn format_internal_units(iu_scale: &EdaIuScale, value: i32, data_type: EdaDataType) -> String {
+    if get_scale_for_internal_unit_type(iu_scale, data_type) == 1e6 {
+        let mut buf = String::with_capacity(16);
+        push_iu_1e6_exact(&mut buf, value);
+        buf
+    } else {
+        format_internal_units_generic(iu_scale, value, data_type)
+    }
+}
+
+/// The statement-by-statement port of `FormatInternalUnits( const EDA_IU_SCALE&, int,
+/// EDA_DATA_TYPE )` (double division, `{:.10f}` with trailing zeros stripped for tiny values,
+/// `{:.10g}` otherwise).  Used for every divisor other than 1e6, and kept public (hidden) as
+/// the reference of the exactness tests of [`push_iu_1e6_exact`].
+#[doc(hidden)]
+pub fn format_internal_units_generic(
+    iu_scale: &EdaIuScale,
+    value: i32,
+    data_type: EdaDataType,
+) -> String {
     let mut eng_units = value as f64;
 
     eng_units /= get_scale_for_internal_unit_type(iu_scale, data_type);
@@ -309,15 +333,88 @@ pub fn format_internal_units(iu_scale: &EdaIuScale, value: i32, data_type: EdaDa
     }
 }
 
+/// Appends the exact decimal value of `value / 10^6` to `buf`: an optional `-`, the integer
+/// part, and, if the remainder is non-zero, `.` and the six-digit zero-padded remainder with
+/// its trailing zeros removed (`0`, `1`, `-0.000001`, `2147.483647`, `-2147.483648`).
+///
+/// Invariant (why this equals [`format_internal_units_generic`] for a divisor of exactly 1e6):
+/// `value as f64 / 1e6` is the correctly rounded quotient, within 2^-53 relative of the exact
+/// value, which has at most 10 significant and at most 6 fractional digits (|value| < 2^31).
+/// For |q| <= 1e-4 the C++ prints `{:.10f}` (grid 1e-10); otherwise `{:.10g}`, which stays in
+/// fixed notation because the decimal exponent is in [-4, 3] and so has a grid of at most 1e-6
+/// that contains the exact value.  Half a grid step exceeds the rounding error by a factor of
+/// at least 10^5, so both branches print the exact value, and the trailing zeros (and a bare
+/// `.`) are then stripped, as here.  `value == 0` gives `{:.10g}` of 0.0 = `0`.  Checked for
+/// all 2^32 `i32` values by `tests/format_internal_units_exact.rs` (ignored test).
+pub fn push_iu_1e6_exact(buf: &mut String, value: i32) {
+    // 64-bit magnitude so that i32::MIN does not overflow.
+    let magnitude = (value as i64).unsigned_abs();
+    let int_part = magnitude / 1_000_000;
+    let mut frac = (magnitude % 1_000_000) as u32;
+
+    if value < 0 {
+        buf.push('-');
+    }
+
+    let mut digits = [0u8; 10];
+    let mut n = 0;
+    let mut rest = int_part;
+
+    loop {
+        digits[n] = b'0' + (rest % 10) as u8;
+        n += 1;
+        rest /= 10;
+
+        if rest == 0 {
+            break;
+        }
+    }
+
+    for &d in digits[..n].iter().rev() {
+        buf.push(d as char);
+    }
+
+    if frac != 0 {
+        let mut width = 6;
+
+        while frac % 10 == 0 {
+            frac /= 10;
+            width -= 1;
+        }
+
+        buf.push('.');
+
+        let mut frac_digits = [b'0'; 6];
+
+        for slot in frac_digits[..width].iter_mut().rev() {
+            *slot = b'0' + (frac % 10) as u8;
+            frac /= 10;
+        }
+
+        for &d in &frac_digits[..width] {
+            buf.push(d as char);
+        }
+    }
+}
+
 /// [`format_internal_units`] with the default `EDA_DATA_TYPE::DISTANCE`.
 pub fn format_internal_units_distance(iu_scale: &EdaIuScale, value: i32) -> String {
     format_internal_units(iu_scale, value, EdaDataType::Distance)
 }
 
 /// Port of `EDA_UNIT_UTILS::FormatInternalUnits( const EDA_IU_SCALE&, const VECTOR2I& )`:
-/// `"x y"`.  The point is passed as its two coordinates.
+/// `"x y"`.  The point is passed as its two coordinates.  For a 1e6 scale both coordinates are
+/// written into one `String` by [`push_iu_1e6_exact`] (same text as the generic path).
 pub fn format_internal_units_point(iu_scale: &EdaIuScale, x: i32, y: i32) -> String {
-    format_internal_units_distance(iu_scale, x) + " " + &format_internal_units_distance(iu_scale, y)
+    if get_scale_for_internal_unit_type(iu_scale, EdaDataType::Distance) == 1e6 {
+        let mut buf = String::with_capacity(32);
+        push_iu_1e6_exact(&mut buf, x);
+        buf.push(' ');
+        push_iu_1e6_exact(&mut buf, y);
+        buf
+    } else {
+        format_internal_units_distance(iu_scale, x) + " " + &format_internal_units_distance(iu_scale, y)
+    }
 }
 
 /// Port of `EDA_UNIT_UTILS::GetScaleForInternalUnitType`.
