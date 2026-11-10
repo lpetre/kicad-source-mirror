@@ -36,6 +36,7 @@ pub mod matched_length;
 pub mod misc;
 pub mod net_chain_tuning_profiles;
 pub mod physical_clearance;
+pub mod run_host;
 pub mod silk_clearance;
 pub mod sliver_checker;
 pub mod solder_mask;

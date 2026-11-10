@@ -34,13 +34,14 @@ use std::sync::Arc;
 use kicad_core::color4d::Color4D;
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
-use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId, is_copper_layer};
+use kicad_core::layer_ids::is_copper_layer;
+use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, ShapePolySet, Vector2I, ki_round};
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::ids::{FootprintId, TrackId, ZoneId};
-use kicad_pcb::item::AnyItem;
+use kicad_pcb::AnyItem;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_track::Track;
 use kicad_plot::gbr_metadata::GbrMetadata;
@@ -368,7 +369,7 @@ pub fn plot_standard_layer(
     let mut gbr_metadata = GbrMetadata::new();
 
     if on_copper_layer {
-        gbr_metadata.set_aperture_attrib(GbrApertureAttrib::ViaPad);
+        gbr_metadata.set_aperture_attrib(GbrApertureAttrib::Viapad);
         gbr_metadata.set_net_attrib_type(gbr_netinfo::NET);
     }
 

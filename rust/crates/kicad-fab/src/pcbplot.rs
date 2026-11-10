@@ -26,7 +26,7 @@
 //! `GetBuildVersion()` and the wall clock read by `GbrMakeCreationDateAttributeString` are
 //! caller-supplied values ([`PlotEnv`]).
 
-use kicad_core::is_copper_layer;
+use kicad_core::layer_ids::is_copper_layer;
 use kicad_core::layer_ids::copper_layer_to_ordinal;
 use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_core::PcbLayerId;
