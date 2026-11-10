@@ -37,6 +37,9 @@ use crate::board_design_settings::BoardDesignSettings;
 
 use super::drill_operation::DrillOperation;
 
+// The I/O packages' crate-private reader / writer of the canonical form, compiled a third time
+// (see the module comment).
+#[allow(clippy::duplicate_mod)]
 #[path = "../io/parser/setup_drill_profile.rs"]
 mod model_form;
 
