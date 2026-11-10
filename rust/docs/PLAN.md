@@ -226,8 +226,14 @@ Progress log:
   PCBIO-07 and M21(done) -> M20 (w3kdexuvx); FAB-04 -> .. -> FAB-08 (wb9xlvw89); PROP-1 ->
   DRC-21 -> DRC-22 and DRC-06 -> .. -> DRC-12 (w878ykkp2); DRC-24 -> 26 -> 23 -> 29 and
   DRC-27 -> 25 -> 28 (wxpfc9smx).
-  READY TO LAUNCH (package file written): after PCBIO-07 finishes (workflow w3kdexuvx):
-  [PCBIO-14]. After pads parse: the dedicated Fable reviews (connectivity, DRC resolver /
+  Also running: the dedicated Fable reviews REV-CN (connectivity, pointer-order site table)
+  and REV-DRC (DRC engine core: EvalRules, rule parser, report order) (wh0st1sds); they write
+  docs/design/review-connectivity.md and review-drc-core.md and may write FIX-CN-<n> /
+  FIX-DRC-<n> packages to launch.
+  READY TO LAUNCH (package files written): after PCBIO-07 finishes (workflow w3kdexuvx):
+  [PCBIO-14]; after the FAB chain (wb9xlvw89): [FAB-10], [FAB-11], [FAB-12] (one agent at a
+  time in kicad-fab: chain them); after DRC-12, FAB-07 / 08 and PCBIO-15: [WIRE-1]
+  (session / CLI / wasm end-to-end wiring + e2e differential scoreboard + browser demo). After pads parse: the dedicated Fable reviews (connectivity, DRC resolver /
   EvalRules, zone filler) and a rerun of every oracle that skips footprint boards today.
   Dedicated Fable reviews are postponed until pads parse (then the EvalRules and
   connectivity oracles cover pads and a review can look at real mismatches).
