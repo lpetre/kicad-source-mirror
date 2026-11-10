@@ -48,10 +48,10 @@ use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::vector2::Vector2I;
 use kicad_geom::stdsort::{std_pop_heap, std_push_heap, std_sort, std_sort_heap};
 use kicad_pcb::drc_api::{DRCE_SILK_MASK_CLEARANCE, DRCE_SOLDERMASK_BRIDGE, DrcConstraint};
+use kicad_pcb::eda_shape::shapes::EdaShapeShapesExt;
 use kicad_pcb::item::SharedShape;
 use kicad_pcb::pad::Pad;
 use kicad_pcb::pcb_track::Track;
-use kicad_pcb::eda_shape::shapes::EdaShapeShapesExt;
 use kicad_pcb::{AnyItem, BoardConnectedItem, BoardCtx, ItemId, ItemRef, NetCode};
 
 use super::run_host::{RunHost, report_aux};
@@ -188,7 +188,12 @@ impl PendingBridge {
 struct FullSolderMaskTree {
     /// Per layer (`m_tree`): the tree (payload = index into `entries`), the indexed shape and
     /// the entries (sub-shape index of the shape, `None` for the whole shape).
-    layers: Vec<(PcbLayerId, PackedRTree<u32, 2, 16>, SharedShape, Vec<Option<u32>>)>,
+    layers: Vec<(
+        PcbLayerId,
+        PackedRTree<u32, 2, 16>,
+        SharedShape,
+        Vec<Option<u32>>,
+    )>,
 }
 
 impl FullSolderMaskTree {
@@ -586,11 +591,8 @@ impl<'c> DrcTestProviderSolderMask<'c> {
                     return true;
                 }
 
-                let item_shape = item.effective_shape(
-                    layer,
-                    Flashing::Default,
-                    DrcConstraintT::NullConstraint,
-                );
+                let item_shape =
+                    item.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
 
                 if let Some((actual, pos)) = self.full_solder_mask_rtree.query_colliding(
                     &item_bbox,
@@ -676,7 +678,8 @@ impl<'c> DrcTestProviderSolderMask<'c> {
                 && item_fp.id() == other.parent_footprint().and_then(|fp| fp.id())
             {
                 // Board-wide exclusion
-                if item_fp.has_board() && ctx.board.design_settings().allow_soldermask_bridges_in_fps
+                if item_fp.has_board()
+                    && ctx.board.design_settings().allow_soldermask_bridges_in_fps
                 {
                     return false;
                 }
@@ -800,15 +803,7 @@ impl<'c> DrcTestProviderSolderMask<'c> {
                 } else if is_mask_aperture(other) {
                     record_mask_aperture(aperture_items, other, item, ref_layer, item_net, pos);
                 } else if check_item_mask(other, item_net) {
-                    collect_bridge(
-                        bridges,
-                        bridge_limit,
-                        item,
-                        other,
-                        None,
-                        pos,
-                        target_layer,
-                    );
+                    collect_bridge(bridges, bridge_limit, item, other, None, pos, target_layer);
                 }
             }
 
@@ -836,8 +831,11 @@ impl<'c> DrcTestProviderSolderMask<'c> {
         mask_layer: PcbLayerId,
         target_layer: PcbLayerId,
     ) {
-        let item_shape =
-            item.effective_shape(mask_layer, Flashing::Default, DrcConstraintT::NullConstraint);
+        let item_shape = item.effective_shape(
+            mask_layer,
+            Flashing::Default,
+            DrcConstraintT::NullConstraint,
+        );
         let mut aperture_bbox = *item_bbox;
 
         aperture_bbox.merge(&item_shape.bbox(0));
@@ -1084,13 +1082,8 @@ impl<'c> DrcTestProviderSolderMask<'c> {
                 marker_pos = Seg::new(pt_x, pt_y).center();
             }
 
-            self.base.report_violation(
-                host,
-                Arc::new(drce),
-                marker_pos,
-                bridge.layer.0,
-                &no_path,
-            );
+            self.base
+                .report_violation(host, Arc::new(drce), marker_pos, bridge.layer.0, &no_path);
         }
     }
 

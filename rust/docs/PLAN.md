@@ -213,11 +213,22 @@ Progress log:
   bezier outlines; (b) M19 cascades re-stamp patched footprint caches (design 8.5) - check
   with the M20 oracle; (c) `Footprint::component_class` with dynamic rules is pending the
   DRC rule matcher.
-  READY TO LAUNCH (package files written): after CN-04 finishes (workflow w6koa0hnk):
-  chain [PCBIO-15] and chain [ZF-01, ZF-03, ZF-06] then [TD-01]; after PCBIO-07 finishes
-  (workflow w3kdexuvx): [PCBIO-14]; after GLUE-1 finishes (workflow w3ztkctur): Fable
-  integration #2 (see below; M9 / M11 / M12 / M15 / M18 are done, so it is no longer
-  blocked by them).
+  02:20 UTC: done CN-04 connectivity data facade (BuildConnectivity, ratsnest, queries,
+  IsConnectedOnLayer: 931 fields on the golden boards + 3052 on synthetic via / zone boards,
+  0 mismatches; corpus build 372 boards, 0 panics; pads unverified until the pad parser
+  lands). Pointer-order replacements to confirm in the connectivity review: GetNetItems /
+  GetConnectedTracks / GetConnectedPads / GetZoneIslandConnections by ItemId,
+  GetConnectedPadsAndVias by list index (teardrops depend on it).
+  RUNNING NOW: INT-2a -> INT-2b on Fable (wyvjfdjmb: kernel change requests, then the review
+  of every decision / deviation in kicad-pcb; writes docs/design/integration-2.md and
+  review-2.md, may write FIX-<n> packages to launch); M25a and CLEAN-1 (w2twswu4w);
+  PCBIO-15 and ZF-01 -> ZF-03 -> ZF-06 -> TD-01 (w0obou2da); M19(done) -> PCBIO-06 ->
+  PCBIO-07 and M21(done) -> M20 (w3kdexuvx); FAB-04 -> .. -> FAB-08 (wb9xlvw89); PROP-1 ->
+  DRC-21 -> DRC-22 and DRC-06 -> .. -> DRC-12 (w878ykkp2); DRC-24 -> 26 -> 23 -> 29 and
+  DRC-27 -> 25 -> 28 (wxpfc9smx).
+  READY TO LAUNCH (package file written): after PCBIO-07 finishes (workflow w3kdexuvx):
+  [PCBIO-14]. After pads parse: the dedicated Fable reviews (connectivity, DRC resolver /
+  EvalRules, zone filler) and a rerun of every oracle that skips footprint boards today.
   Dedicated Fable reviews are postponed until pads parse (then the EvalRules and
   connectivity oracles cover pads and a review can look at real mismatches).
 - next up when their dependencies land: M19 footprint A (after M9, M18), M21 board outline

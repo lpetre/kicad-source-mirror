@@ -574,3 +574,90 @@ The tests skip a board (with a note) while it is pending and tighten automatical
 
 * Outline font glyph generation (`OUTLINE_FONT::GetLinesAsGlyphs`) for texts without a valid
   render cache.
+
+## DRC-06: unary providers (track width, via diameter, hole size, annular width)
+
+### File / class map
+
+| C++ (`pcbnew/drc/`) | Rust | State |
+|---|---|---|
+| `drc_test_provider_track_width.cpp` (`DRC_TEST_PROVIDER_TRACK_WIDTH`, "width") | `src/providers/track_width.rs` (`DrcTestProviderTrackWidth`) | ported |
+| `drc_test_provider_via_diameter.cpp` (`DRC_TEST_PROVIDER_VIA_DIAMETER`, "diameter") | `src/providers/via_diameter.rs` (`DrcTestProviderViaDiameter`; the shared `layerDesc` lambda is `padstack_layer_desc`) | ported |
+| `drc_test_provider_hole_size.cpp` (`DRC_TEST_PROVIDER_HOLE_SIZE`: `Run`, `checkPadHole`, `checkViaHole`) | `src/providers/hole_size.rs` (`DrcTestProviderHoleSize`) | ported |
+| `drc_test_provider_annular_width.cpp` (`DRC_TEST_PROVIDER_ANNULAR_WIDTH`: `calcEffort`, `getPadAnnulusPts` incl. the same-number / overlapping pad handling of issues 19325 and 24340, `checkConstraint`, `checkAnnularWidth`) | `src/providers/annular_width.rs` (`DrcTestProviderAnnularWidth`) | ported |
+| `m_drcEngine` as seen by the provider base during a run; `REPORT_AUX` | `src/providers/run_host.rs` (`RunHost`: `DrcRunHost` over `DrcRunState`; `report_aux`) | ported (shared by all providers) |
+
+Each provider implements `engine::DrcTestProviderRun` (`RunTests( aUnits )` = set the user
+units, then `Run()`); `run()` takes the engine (rules), the run state and the board context.
+Violations: `item::create( code )`, `set_error_detail( formatMsg(...) )`, item ids = the item's
+UUID (`SetItems( item )`), violating rule = `constraint.parent_rule`, then the base helpers
+(`report_violation` with no path, `report_two_point_geometry`). All four walk the board
+sequentially in C++ as well (track order, footprint x pad order): the violation order is
+deterministic and the port reproduces it.
+
+### Verification
+
+Shared differential corpus harness (new, for every provider package):
+
+* `tests/oracle/gen_drc_corpus.py` runs the reference
+  `kicad-cli pcb drc --format json --severity-all --units mm` on a copy of every `.kicad_pcb`
+  under `qa/data/pcbnew` and `demos` below 5 MB (365 boards; the large demo boards of PORTING.md
+  section 7 are left out), sequentially, caches the raw reports under `rust/target/drc-corpus/`
+  and writes `tests/golden/drc_corpus.txt` (132 KB): the full entries of the ported error types
+  (`PORTED_TYPES` in the script; at most 20 per board and type) and, for everything else, one
+  line per board and type with the count and an FNV-1a hash of the entries in report order. A
+  provider package adds its types to `PORTED_TYPES` and reruns the script (cached reports make
+  that take seconds).
+* `tests/drc_harness/mod.rs` (`mod drc_harness;` from a test): loads a board like the CLI
+  (parser, project, rule file, `InitEngine`, `ResolveDRCExclusions( true )`), runs `RunTests`
+  with the given providers only (`prepare_run` + `run_providers`; no cache generator), turns the
+  violations into the report as `JobExportDrc` does (markers, `RecordDRCExclusions`,
+  `ResolveDRCExclusions( false )`, `DRC_ITEMS_PROVIDER::SetSeverities`, `DrcReport::json_report`
+  of DRC-11), filters both sides to the provider's types and compares per type (matched / missing
+  / extra multisets of (type, severity, excluded, description, items' uuid, description,
+  position)) plus the order. Summary types compare count + hash; on a mismatch the entries are
+  diffed from the cached raw report. `compare_corpus` returns a `Scoreboard` (`print`,
+  `assert_no_mismatch`); boards the parser loads only partially (`ParseReport::skipped`), boards
+  with user rule conditions (DRC-21), legacy `.pro` projects and load panics are listed as
+  pending; differences on partially loaded boards are printed but do not fail.
+
+Result (`tests/drc06_unary_providers.rs::unary_providers_match_reference_corpus`, 2026-11-10):
+**84 boards compared completely, 0 differences**: annular_width 74 matched, drill_out_of_range
+35, via_diameter 34, track_width 4, microvia_drill_out_of_range 0 (no corpus board has one);
+0 missing, 0 extra, report order identical (incl. entries excluded in the project). Pending:
+221 boards with skipped footprints (PCBIO-06), 55 boards with user rule conditions (DRC-21), 2
+`PCB_BARCODE::SetPosition` stubs, 2 legacy `.pro` projects, 1 board the reference cannot load
+(`plugins/fakeboard`). On the partially loaded boards every difference is explained by the
+missing footprints: the pad violations are missing, and on 5 `odbpp` boards the 199-entry limit
+of `drill_out_of_range` is then filled with via entries instead of pad entries.
+
+Not verified yet: every pad code path (hole size of pads, the pad annulus incl. the slow
+polygon path and the overlapping same-number pads of issues 19325 / 24340) - no corpus board
+with footprints loads yet. The comparisons tighten automatically when PCBIO-06 lands. Marker
+positions / layers are not part of the reports; they are checked only through the exclusion
+identities of `issue17429` (positions) for vias.
+
+### Ported C++ tests
+
+| C++ | Rust (`tests/drc06_unary_providers.rs`) |
+|---|---|
+| `test_drc_annular_overlap_issue24340.cpp` (`AnnularOverlapIssue24340`) | `annular_overlap_issue24340` (pending: footprints not loaded; returns with a note) |
+| `test_drc_regressions.cpp` `DRCFalseNegativeRegressions`: `issue12109` (8), `issue19325` (4, `hole_to_hole` ignored) | `false_negative_regressions_unary` with the four providers only: expected = the part of the C++ count the reference attributes to them (`issue12109` 7 of 8, the 8th is `via_dangling`; `issue19325` 4 of 4); pending: footprints not loaded |
+
+`test_drc_multi_netclasses.cpp` (track width with rule conditions and a zone fill) waits for
+DRC-21 and the zone filler.
+
+### Deviations
+
+- `RunHost` is a newtype over `&mut DrcRunState` implementing `DrcRunHost` (the engine run
+  state does not implement it itself).
+- The harness gives markers UUIDs from a private seeded generator: the board's default-seeded
+  generator reproduces the UUIDs of boards written by a deterministically seeded KiCad
+  (`issue10697`), and a marker with an item's UUID hijacks `ResolveItem`. Marker UUIDs are not
+  part of the reports.
+
+### Known gaps
+
+- Pad paths unverified (above).
+- The cache generator does not run in the harness (`run_tests` cannot reach it yet, DRC-05);
+  providers that need the copper / zone trees must run it themselves until then.

@@ -67,7 +67,10 @@ impl DrcTestProviderTrackWidth {
 
         let mut host = RunHost(run);
 
-        if !self.base.report_phase(&mut host, "Checking track widths...") {
+        if !self
+            .base
+            .report_phase(&mut host, "Checking track widths...")
+        {
             return false; // DRC cancelled
         }
 

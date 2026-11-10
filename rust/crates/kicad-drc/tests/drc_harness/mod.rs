@@ -46,10 +46,10 @@ use std::path::Path;
 use std::sync::Arc;
 
 use kicad_core::Severity;
-use kicad_core::kiid::KiidGenerator;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::json::{self, ObjectOrder};
 use kicad_core::json_settings::JsonSettingsInternals;
+use kicad_core::kiid::KiidGenerator;
 use kicad_drc::engine::implicit_condition::EngineCondition;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};

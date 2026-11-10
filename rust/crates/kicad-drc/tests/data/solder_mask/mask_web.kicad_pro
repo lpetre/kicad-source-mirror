@@ -1,0 +1,13 @@
+{
+  "board": {
+    "design_settings": {
+      "rules": {
+        "solder_mask_to_copper_clearance": 0.2
+      }
+    }
+  },
+  "meta": {
+    "filename": "mask_web.kicad_pro",
+    "version": 3
+  }
+}

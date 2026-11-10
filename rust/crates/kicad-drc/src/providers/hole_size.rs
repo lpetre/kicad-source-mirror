@@ -90,7 +90,8 @@ impl DrcTestProviderHoleSize {
 
             for (_, track) in board.tracks() {
                 if let Track::Via(_) = track {
-                    let exceed_micro = host.is_error_limit_exceeded(DRCE_MICROVIA_DRILL_OUT_OF_RANGE);
+                    let exceed_micro =
+                        host.is_error_limit_exceeded(DRCE_MICROVIA_DRILL_OUT_OF_RANGE);
                     let exceed_std = host.is_error_limit_exceeded(DRCE_DRILL_OUT_OF_RANGE);
 
                     if exceed_micro && exceed_std {

@@ -36,7 +36,7 @@ use kicad_drc::providers::hole_size::DrcTestProviderHoleSize;
 use kicad_drc::providers::track_width::DrcTestProviderTrackWidth;
 use kicad_drc::providers::via_diameter::DrcTestProviderViaDiameter;
 use kicad_geom::math::vector2::Vector2I;
-use kicad_pcb::drc_api::{DRCE_ANNULAR_WIDTH, DRCE_FIRST, DRCE_DRILLED_HOLES_TOO_CLOSE, DRCE_LAST};
+use kicad_pcb::drc_api::{DRCE_ANNULAR_WIDTH, DRCE_DRILLED_HOLES_TOO_CLOSE, DRCE_FIRST, DRCE_LAST};
 
 /// The error types of the four providers (settings keys).
 const TYPES: &[&str] = &[
@@ -109,14 +109,20 @@ fn annular_overlap_issue24340() {
             bds.drc_severities.insert(ii, Severity::Ignore);
         }
 
-        bds.drc_severities.insert(DRCE_ANNULAR_WIDTH, Severity::Error);
+        bds.drc_severities
+            .insert(DRCE_ANNULAR_WIDTH, Severity::Error);
     }
 
     let mut a = DrcTestProviderAnnularWidth::default();
     let mut h = DrcTestProviderHoleSize::default();
     let mut w = DrcTestProviderTrackWidth::default();
     let mut d = DrcTestProviderViaDiameter::default();
-    let found = run_providers(&mut loaded, EdaUnits::Mm, true, &mut [&mut a, &mut h, &mut w, &mut d]);
+    let found = run_providers(
+        &mut loaded,
+        EdaUnits::Mm,
+        true,
+        &mut [&mut a, &mut h, &mut w, &mut d],
+    );
 
     let annular: Vec<&Reported> = found
         .iter()
@@ -135,8 +141,7 @@ fn annular_overlap_issue24340() {
     for v in &annular {
         if (v.pos.x - bug_pos.x).abs() < tol && (v.pos.y - bug_pos.y).abs() < tol {
             on_bug_footprint += 1;
-        } else if (v.pos.x - control_pos.x).abs() < tol && (v.pos.y - control_pos.y).abs() < tol
-        {
+        } else if (v.pos.x - control_pos.x).abs() < tol && (v.pos.y - control_pos.y).abs() < tol {
             on_control_footprint += 1;
         }
     }
@@ -151,11 +156,13 @@ fn annular_overlap_issue24340() {
     assert_eq!(on_control_footprint, 1);
 }
 
-/// `DRCFalseNegativeRegressions` (`test_drc_regressions.cpp`) for the boards whose expected
-/// violations all belong to these providers according to the reference report: the count of
-/// violations (handler calls whose code is not ignored) of the four providers equals the C++
-/// expectation. Severities ignored as in the C++ test: `copper_sliver`, `lib_footprint_issues`,
-/// `lib_footprint_mismatch`, `track_not_centered_on_via`, plus the per-board extras.
+/// `DRCFalseNegativeRegressions` (`test_drc_regressions.cpp`) restricted to the four
+/// providers: the C++ expectation counts the violations of every provider, so the expected
+/// count here is the part of it that the reference report attributes to these providers
+/// (`drc.md` 9.4 item 5): `issue12109` 8 = 7 `annular_width` + 1 `via_dangling`, `issue19325`
+/// 4 = 4 `annular_width`. Severities ignored as in the C++ test: `copper_sliver`,
+/// `lib_footprint_issues`, `lib_footprint_mismatch`, `track_not_centered_on_via`, plus the
+/// per-board extras.
 #[test]
 fn false_negative_regressions_unary() {
     use kicad_pcb::drc_api::{
@@ -163,14 +170,18 @@ fn false_negative_regressions_unary() {
         DRCE_TRACK_NOT_CENTERED_ON_VIA,
     };
 
-    // ( board, expected count, extra ignored codes ); the reference report of each board
-    // contains only annular width violations besides the ignored codes.
-    let tests: [(&str, usize, &[i32]); 2] = [
-        ("issue12109", 8, &[]),
-        ("issue19325/issue19325", 4, &[DRCE_DRILLED_HOLES_TOO_CLOSE]),
+    // ( board, C++ expected count, the part of it from these providers, extra ignored codes )
+    let tests: [(&str, usize, usize, &[i32]); 2] = [
+        ("issue12109", 8, 7, &[]),
+        (
+            "issue19325/issue19325",
+            4,
+            4,
+            &[DRCE_DRILLED_HOLES_TOO_CLOSE],
+        ),
     ];
 
-    for (name, expected, extra) in tests {
+    for (name, _cxx_expected, expected, extra) in tests {
         let Some(mut loaded) = load_qa(name) else {
             continue;
         };

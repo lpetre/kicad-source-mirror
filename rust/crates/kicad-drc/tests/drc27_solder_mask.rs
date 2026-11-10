@@ -38,8 +38,8 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, Reported, cached_entries, cli_report_entries, golden,
-    has_compiled_conditions, load_board, panic_text, quiet, run_providers,
+    Entry, Loaded, Reported, cached_entries, cli_report_entries, golden, has_compiled_conditions,
+    load_board, panic_text, quiet, run_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
@@ -195,20 +195,22 @@ fn solder_mask_matches_reference_corpus() {
 
         let path = root.join(&rel);
         let result = quiet(|| {
-            catch_unwind(AssertUnwindSafe(|| -> Result<(Vec<Entry>, bool), String> {
-                let mut loaded = load_board(&path)?;
+            catch_unwind(AssertUnwindSafe(
+                || -> Result<(Vec<Entry>, bool), String> {
+                    let mut loaded = load_board(&path)?;
 
-                if has_compiled_conditions(&loaded.engine) {
-                    return Err("user rule conditions need DRC-21".to_string());
-                }
+                    if has_compiled_conditions(&loaded.engine) {
+                        return Err("user rule conditions need DRC-21".to_string());
+                    }
 
-                let entries = report_solder_mask(&mut loaded, false)
-                    .into_iter()
-                    .filter(|e| TYPES.contains(&e.type_.as_str()))
-                    .collect();
+                    let entries = report_solder_mask(&mut loaded, false)
+                        .into_iter()
+                        .filter(|e| TYPES.contains(&e.type_.as_str()))
+                        .collect();
 
-                Ok((entries, loaded.report.skipped.is_empty()))
-            }))
+                    Ok((entries, loaded.report.skipped.is_empty()))
+                },
+            ))
         });
 
         let (mine, complete) = match result {
@@ -291,6 +293,234 @@ fn solder_mask_matches_reference_corpus() {
     );
 }
 
+/// The golden entries of a synthetic board (`tests/oracle/gen_drc27_boards.py`).
+fn synthetic_golden(text: &str) -> Vec<Entry> {
+    text.lines()
+        .map(|line| {
+            let f: Vec<&str> = line.split('\t').collect();
+
+            Entry {
+                severity: f[0].to_string(),
+                type_: f[1].to_string(),
+                description: f[2].to_string(),
+                items: f[3..]
+                    .chunks(4)
+                    .map(|it| {
+                        (
+                            it[0].to_string(),
+                            it[1].to_string(),
+                            it[2].parse().unwrap(),
+                            it[3].parse().unwrap(),
+                        )
+                    })
+                    .collect(),
+                excluded: false,
+            }
+        })
+        .collect()
+}
+
+/// The synthetic boards (no footprints: tracks, arcs, vias, zones, mask graphics and texts,
+/// silkscreen) against the reference: every entry of the provider, in report order, with and
+/// without `--all-track-errors`.
+#[test]
+fn synthetic_boards_match_reference() {
+    let data = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/solder_mask");
+    let cases: &[(&str, bool, &str)] = &[
+        ("mask_web", false, include_str!("golden/drc27/mask_web.txt")),
+        (
+            "mask_web",
+            true,
+            include_str!("golden/drc27/mask_web_all.txt"),
+        ),
+        (
+            "mask_noweb",
+            false,
+            include_str!("golden/drc27/mask_noweb.txt"),
+        ),
+        (
+            "mask_noweb",
+            true,
+            include_str!("golden/drc27/mask_noweb_all.txt"),
+        ),
+        (
+            "mask_ignore_front",
+            false,
+            include_str!("golden/drc27/mask_ignore_front.txt"),
+        ),
+        (
+            "mask_ignore_front",
+            true,
+            include_str!("golden/drc27/mask_ignore_front_all.txt"),
+        ),
+    ];
+    let mut failures = Vec::new();
+
+    for &(name, all_tracks, golden_text) in cases {
+        let mut loaded = load_board(&data.join(format!("{name}.kicad_pcb"))).expect(name);
+        assert!(
+            loaded.report.skipped.is_empty(),
+            "{name}: {:?}",
+            loaded.report.skipped
+        );
+
+        let mine: Vec<Entry> = report_solder_mask(&mut loaded, all_tracks)
+            .into_iter()
+            .filter(is_ours)
+            .collect();
+        let reference = synthetic_golden(golden_text);
+
+        if mine != reference {
+            let (matched, missing, extra) = diff(&reference, &mine);
+            failures.push(format!(
+                "{name} (all tracks: {all_tracks}): matched {matched}, missing {missing:#?}, \
+                 extra {extra:#?}"
+            ));
+        } else {
+            println!(
+                "{name} (all tracks: {all_tracks}): {} entries identical",
+                mine.len()
+            );
+        }
+    }
+
+    assert!(failures.is_empty(), "{failures:#?}");
+}
+
+/// Marker positions (not part of the JSON report, but of the exclusion identity): the markers of
+/// the Rust run on the synthetic boards are written as DRC exclusions into a copy of the project
+/// and the reference is run on it; every entry of the provider must come back excluded, which
+/// needs the same error code, items, layer and marker position (`DRC_EXCLUSION::GetSortKey`).
+/// Needs the reference `kicad-cli` (skips silently without it).
+#[test]
+fn marker_positions_match_reference_via_exclusions() {
+    use kicad_core::json::{self, ObjectOrder, Value};
+
+    let Some(cli) = kicad_qa::oracle_cli() else {
+        return;
+    };
+
+    let data = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/solder_mask");
+    let scratch = kicad_qa::kicad_source_root().join("rust/target/drc27-oracle");
+
+    for (case, (name, all_tracks)) in [
+        ("mask_web", false),
+        ("mask_web", false),
+        ("mask_web", true),
+        ("mask_noweb", true),
+        ("mask_ignore_front", false),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let perturb = case == 0;
+        let mut loaded = load_board(&data.join(format!("{name}.kicad_pcb"))).expect(name);
+        let found = run_solder_mask(&mut loaded, all_tracks);
+        let exclusions: Vec<Value> = found
+            .iter()
+            .filter(|r| {
+                r.item.error_code() == DRCE_SOLDERMASK_BRIDGE
+                    || r.item.error_code() == DRCE_SILK_MASK_CLEARANCE
+            })
+            .enumerate()
+            .map(|(i, r)| {
+                let mut marker = r.marker.clone();
+
+                // Negative control: the first marker of the first case is moved by 1 nm and
+                // must then not match.
+                if perturb && i == 0 {
+                    marker.pos.x += 1;
+                }
+
+                kicad_drc::exclusion::from_marker(&marker).json
+            })
+            .collect();
+        let n = exclusions.len();
+
+        let dir = scratch.join(format!("{name}_{all_tracks}_{case}"));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("home")).unwrap();
+
+        for ext in ["kicad_pcb", "kicad_dru"] {
+            let src = data.join(format!("{name}.{ext}"));
+
+            if src.exists() {
+                std::fs::copy(&src, dir.join(format!("{name}.{ext}"))).unwrap();
+            }
+        }
+
+        let pro_text = std::fs::read(data.join(format!("{name}.kicad_pro"))).unwrap();
+        let mut pro = json::parse_bytes(&pro_text, ObjectOrder::Sorted, true).unwrap();
+        pro["board"]["design_settings"]["drc_exclusions"] = Value::Array(exclusions);
+        std::fs::write(
+            dir.join(format!("{name}.kicad_pro")),
+            json::dump(&pro, Some(2), ObjectOrder::Sorted),
+        )
+        .unwrap();
+
+        let out = dir.join("out.json");
+        let mut cmd = std::process::Command::new(&cli);
+        cmd.args([
+            "pcb",
+            "drc",
+            "--format",
+            "json",
+            "--severity-all",
+            "--units",
+            "mm",
+        ]);
+
+        if all_tracks {
+            cmd.arg("--all-track-errors");
+        }
+
+        let status = cmd
+            .arg("-o")
+            .arg(&out)
+            .arg(dir.join(format!("{name}.kicad_pcb")))
+            .env("KICAD_ORACLE_HOME", dir.join("home"))
+            .current_dir(&dir)
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .unwrap();
+        assert!(out.exists(), "{name}: reference run failed ({status})");
+
+        let report =
+            json::parse_bytes(&std::fs::read(&out).unwrap(), ObjectOrder::Sorted, true).unwrap();
+        let mut ours = 0;
+        let mut not_excluded = Vec::new();
+
+        for v in report["violations"].as_array().unwrap() {
+            let t = v["type"].as_str().unwrap_or("");
+            let items = v["items"].as_array().map_or(0, |a| a.len());
+
+            if t == "solder_mask_bridge" || (t == "silk_over_copper" && items == 1) {
+                ours += 1;
+
+                if v["excluded"].as_bool() != Some(true) {
+                    not_excluded.push(v["description"].to_string());
+                }
+            }
+        }
+
+        assert_eq!(ours, n, "{name}: entry count");
+
+        if perturb {
+            assert_eq!(not_excluded.len(), 1, "the moved marker must not match");
+            let _ = std::fs::remove_dir_all(&dir);
+            continue;
+        }
+
+        assert!(
+            not_excluded.is_empty(),
+            "{name} (all tracks: {all_tracks}): marker positions differ for {not_excluded:#?}"
+        );
+        println!("{name} (all tracks: {all_tracks}): {n} markers matched by exclusion");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}
+
 /// Loads a QA board (`qa/data/pcbnew/<name>.kicad_pcb`); `None` (reported) while the port
 /// cannot load it completely.
 fn load_qa(name: &str) -> Option<Loaded> {
@@ -335,7 +565,13 @@ fn errors_of(loaded: &Loaded, found: &[Reported], code: i32) -> usize {
     found
         .iter()
         .filter(|r| r.item.error_code() == code)
-        .filter(|r| loaded.board.design_settings().get_severity(r.item.error_code()) == Severity::Error)
+        .filter(|r| {
+            loaded
+                .board
+                .design_settings()
+                .get_severity(r.item.error_code())
+                == Severity::Error
+        })
         .count()
 }
 
@@ -404,7 +640,10 @@ fn drc_solder_mask_bridge_determinism_test() {
         })
         .collect();
 
-    assert!(keys.windows(2).all(|w| w[0] <= w[1]), "not reported in sorted order");
+    assert!(
+        keys.windows(2).all(|w| w[0] <= w[1]),
+        "not reported in sorted order"
+    );
 
     for _ in 0..2 {
         let found = try_run(&mut loaded, true).expect("second run");
@@ -473,7 +712,10 @@ fn drc_track_to_pad_bridge_test() {
         })
     });
 
-    assert!(found_track, "Expected to find a track-to-pad soldermask violation");
+    assert!(
+        found_track,
+        "Expected to find a track-to-pad soldermask violation"
+    );
 }
 
 /// `test_drc_solder_mask_npth_bridge.cpp`: `DRCSolderMaskNPTHBridge` (the C++ refills the

@@ -86,7 +86,10 @@ impl DrcTestProviderViaDiameter {
 
         let mut host = RunHost(run);
 
-        if !self.base.report_phase(&mut host, "Checking via diameters...") {
+        if !self
+            .base
+            .report_phase(&mut host, "Checking via diameters...")
+        {
             return false; // DRC cancelled
         }
 
