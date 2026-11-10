@@ -78,6 +78,50 @@ const BOARDS: &[&str] = &[
     "pcbnew/issue12609.kicad_pcb",
 ];
 
+/// Teardrop parameters of the synthetic boards (straight edges, as the C++ tests set).
+const TD_PARAMS: &str = "(teardrops (best_length_ratio 0.5) (max_length 1) (best_width_ratio 1) \
+     (max_width 2) (curved_edges no) (filter_ratio 0.9) (enabled yes) (allow_two_segments yes) \
+     (prefer_zone_connections yes))";
+
+/// The board of `addCrossingTrack` (`test_zone_filler.cpp`): a 0.3 mm F.Cu track from (0, 0)
+/// to (0, 20) mm on net N1, plus `item`.
+fn crossing_board(item: &str) -> String {
+    format!(
+        r#"(kicad_pcb (version 20260206) (generator "pcbnew") (generator_version "10.0")
+  (general (thickness 1.6) (legacy_teardrops no))
+  (paper "A4")
+  (layers (0 "F.Cu" signal) (2 "B.Cu" signal) (1 "F.Mask" user) (3 "B.Mask" user)
+    (25 "Edge.Cuts" user))
+  (setup (pad_to_mask_clearance 0))
+  (net 0 "") (net 1 "N1")
+  (segment (start 0 0) (end 0 20) (width 0.3) (layer "F.Cu") (net "N1")
+    (uuid "dddddddd-0000-0000-0000-000000000001"))
+  {item}
+)"#
+    )
+}
+
+/// The synthetic boards: (name, board text). `crossing_via` / `crossing_pad` are the boards
+/// of `CrossingTrackTeardropOnViaStaysOnTrack` / `CrossingTrackTeardropOnPadStaysOnTrack`
+/// (the item at `crossedPosition` (0.1, 10) mm, 0.1 mm beside the track axis).
+fn synthetic_board(name: &str) -> Option<String> {
+    match name {
+        "crossing_via" => Some(crossing_board(&format!(
+            r#"(via (at 0.1 10) (size 1) (drill 0.3) (layers "F.Cu" "B.Cu") (net "N1")
+    {TD_PARAMS} (uuid "cccccccc-0000-0000-0000-000000000001"))"#
+        ))),
+        "crossing_pad" => Some(crossing_board(&format!(
+            r#"(footprint "X" (layer "F.Cu") (at 0 0) (uuid "eeeeeeee-0000-0000-0000-000000000001")
+    (pad "1" thru_hole circle (at 0.1 10) (size 1 1) (drill 0.3) (layers "*.Cu") (net "N1")
+      {TD_PARAMS} (uuid "ffffffff-0000-0000-0000-000000000001")))"#
+        ))),
+        _ => None,
+    }
+}
+
+/// The synthetic board names (variant `synthetic`).
+const SYNTHETIC: &[&str] = &["crossing_via", "crossing_pad"];
+
 fn panic_text(payload: Box<dyn std::any::Any + Send>) -> String {
     payload
         .downcast_ref::<&str>()
@@ -294,6 +338,15 @@ fn add_track_masks(board: &str) -> String {
     out
 }
 
+/// Every (variant, boards) pair: the corpus boards in every parameter variant, then the
+/// synthetic boards.
+fn variant_boards() -> Vec<(&'static str, &'static [&'static str])> {
+    let mut list: Vec<(&'static str, &'static [&'static str])> =
+        VARIANTS.iter().map(|v| (*v, BOARDS)).collect();
+    list.push(("synthetic", SYNTHETIC));
+    list
+}
+
 /// Replaces the value of every `(token value)` in `text`.
 fn set_token(text: &str, token: &str, value: impl Fn(&str) -> String) -> String {
     let key = format!("({token} ");
@@ -357,6 +410,13 @@ fn apply_variant(variant: &str, board: &str, pro: Option<&str>) -> (String, Opti
 /// Writes the variant input of a `qa/data` board (board, `.kicad_pro`, `.kicad_dru`) into
 /// `dir`; returns the board path.
 fn write_variant(variant: &str, board: &str, dir: &Path) -> Option<PathBuf> {
+    if variant == "synthetic" {
+        std::fs::create_dir_all(dir).ok()?;
+        let out = dir.join(format!("{board}.kicad_pcb"));
+        std::fs::write(&out, synthetic_board(board)?).ok()?;
+        return Some(out);
+    }
+
     let src = kicad_qa::qa_data_dir().join(board);
     let text = std::fs::read_to_string(&src).ok()?;
     let pro = std::fs::read_to_string(src.with_extension("kicad_pro")).ok();
@@ -379,6 +439,10 @@ fn write_variant(variant: &str, board: &str, dir: &Path) -> Option<PathBuf> {
 
 /// Boards whose variant equals the base board are skipped (nothing new to compare).
 fn variant_differs(variant: &str, board: &str) -> bool {
+    if variant == "synthetic" {
+        return synthetic_board(board).is_some();
+    }
+
     if variant == "base" {
         return true;
     }
@@ -426,6 +490,8 @@ fn variants_dir() -> PathBuf {
 fn cache_dir(corpus: &Path, variant: &str, board: &str) -> PathBuf {
     if variant == "base" {
         corpus.join(corpus_name(board))
+    } else if variant == "synthetic" {
+        corpus.join(format!("rust__target__td01-variants__synthetic__{board}"))
     } else {
         corpus.join(format!(
             "rust__target__td01-variants__{variant}__{}",
@@ -444,8 +510,8 @@ fn teardrop_corpus() {
     if std::env::var("TD01_WRITE_VARIANTS").is_ok_and(|v| v == "1") {
         let mut list = String::new();
 
-        for variant in VARIANTS.iter().filter(|v| **v != "base") {
-            for board in BOARDS {
+        for (variant, boards) in variant_boards().iter().filter(|(v, _)| *v != "base") {
+            for board in boards {
                 if variant_differs(variant, board) {
                     if let Some(path) = write_variant(variant, board, &variants_dir().join(variant))
                     {
@@ -463,8 +529,8 @@ fn teardrop_corpus() {
     let mut golden = String::new();
     let (mut total, mut same) = (0, 0);
 
-    for variant in VARIANTS {
-        for board in BOARDS {
+    for (variant, boards) in variant_boards() {
+        for board in boards {
             if !variant_differs(variant, board) {
                 continue;
             }
@@ -542,7 +608,7 @@ fn teardrop_golden() {
     let mut failures = String::new();
 
     for (variant, board, ref_lines) in read_golden() {
-        if !kicad_qa::qa_data_dir().join(&board).exists() {
+        if variant != "synthetic" && !kicad_qa::qa_data_dir().join(&board).exists() {
             continue;
         }
 
@@ -567,4 +633,248 @@ fn teardrop_golden() {
         failures.is_empty(),
         "teardrops differ from the reference:\n{failures}"
     );
+}
+
+/// Port of `checkCrossingTrackTeardropsStayOnCopper` (`test_zone_filler.cpp`): two
+/// teardrops, every corner on the track or on the crossed item.
+fn check_crossing_track_teardrops_stay_on_copper(name: &str) {
+    let mut board = parse_board(
+        &synthetic_board(name).unwrap(),
+        "t.kicad_pcb",
+        &ParseOptions::default(),
+    )
+    .unwrap();
+    let mut engine = DrcEngine::new();
+    engine
+        .init_engine(
+            &mut board,
+            None,
+            kicad_drc::rule_parser::default_layer_choices(),
+            &TuningProfiles::default(),
+            None,
+        )
+        .expect("implicit rules");
+    let mut connectivity = ConnectivityData::new();
+    connectivity.build_connectivity(&mut board);
+
+    let crossed: kicad_pcb::ids::ItemId = {
+        let mut found = None;
+
+        for (id, track) in board.tracks() {
+            if matches!(track, kicad_pcb::pcb_track::Track::Via(_)) {
+                found = Some(id.into());
+            }
+        }
+
+        found.unwrap_or_else(|| board.get_pads()[0].into())
+    };
+    let track: kicad_pcb::ids::ItemId = board
+        .tracks()
+        .find(|(_, t)| matches!(t, kicad_pcb::pcb_track::Track::Trace(_)))
+        .map(|(id, _)| id.into())
+        .unwrap();
+
+    kicad_zone::tool::update_teardrops(&mut board, &mut connectivity, &engine, true);
+
+    // A straight edged teardrop has five corners. Two sit on the track, two on the crossed
+    // item and one behind its centre. The pad hit test uses an inscribed polygon, so allow its
+    // error.
+    let tolerance = board
+        .design_settings()
+        .max_error()
+        .max(kicad_core::PCB_IU_SCALE.mm_to_iu(0.001));
+    let ctx = BoardCtx::bare(&board).with_connectivity(&connectivity);
+    let mut teardrops = 0;
+
+    for (_, zone) in board.zones() {
+        if !zone.is_teardrop_area() {
+            continue;
+        }
+
+        teardrops += 1;
+
+        for &pt in zone.library_outline().c_outline(0).c_points() {
+            let on_track = ctx
+                .item(track)
+                .unwrap()
+                .as_dyn()
+                .hit_test(&ctx, pt, tolerance);
+            let on_crossed = ctx
+                .item(crossed)
+                .unwrap()
+                .as_dyn()
+                .hit_test(&ctx, pt, tolerance);
+
+            assert!(
+                on_track || on_crossed,
+                "Teardrop corner {pt:?} lies outside both the track and the crossed item"
+            );
+        }
+    }
+
+    assert_eq!(teardrops, 2);
+}
+
+/// Port of `CrossingTrackTeardropOnViaStaysOnTrack` (`qa/tests/pcbnew/test_zone_filler.cpp`).
+#[test]
+fn crossing_track_teardrop_on_via_stays_on_track() {
+    check_crossing_track_teardrops_stay_on_copper("crossing_via");
+}
+
+/// Port of `CrossingTrackTeardropOnPadStaysOnTrack` (`qa/tests/pcbnew/test_zone_filler.cpp`).
+#[test]
+fn crossing_track_teardrop_on_pad_stays_on_track() {
+    check_crossing_track_teardrops_stay_on_copper("crossing_pad");
+}
+
+/// Port of `NoTeardropOnZoneConnectedThermalPad` (`qa/tests/pcbnew/test_teardrop_shorts.cpp`):
+/// the QFN's exposed pad, held by the GND pour through thermal spokes, gets no teardrop
+/// although its centre falls in the thermal gap punched for the via underneath it. The C++
+/// fills the zones first (`KI_TEST::FillZones` + `BuildConnectivity`), then updates the
+/// teardrops.
+#[test]
+fn no_teardrop_on_zone_connected_thermal_pad() {
+    let input = kicad_qa::pcbnew_data_dir().join("teardrop_qfn_thermal_pad_zone.kicad_pcb");
+    let (mut board, engine, mut connectivity) = load_cli(&input).unwrap();
+
+    let zones: Vec<ZoneId> = board.zones().map(|(id, _)| id).collect();
+    kicad_zone::ZoneFiller::new(&board).fill(&mut board, &mut connectivity, &engine, &zones);
+    connectivity.build_connectivity(&mut board);
+
+    kicad_zone::tool::update_teardrops(&mut board, &mut connectivity, &engine, true);
+
+    let ctx = BoardCtx::bare(&board).with_connectivity(&connectivity);
+    let mut exposed_pad = None;
+
+    for (fp_id, fp) in board.footprints() {
+        for (_, pad) in board.footprint_pads(fp_id) {
+            // The footprint splits the exposed pad into eleven sub-pads all numbered 33.
+            if fp.reference(&ctx) == "U2"
+                && pad.number == "33"
+                && pad.size(&ctx, kicad_core::PcbLayerId::FCu).x
+                    > kicad_core::PCB_IU_SCALE.mm_to_iu(3.0)
+            {
+                exposed_pad = Some(pad);
+            }
+        }
+    }
+
+    let exposed_pad = exposed_pad.expect("exposed pad");
+    let mut pad_poly = kicad_geom::ShapePolySet::new();
+    exposed_pad.transform_shape_to_polygon(
+        &ctx,
+        &mut pad_poly,
+        kicad_core::PcbLayerId::FCu,
+        0,
+        board.design_settings().max_error(),
+        kicad_geom::geometry::approximation::ErrorLoc::Inside,
+        false,
+    );
+
+    let mut teardrops_on_pad = 0;
+
+    for (_, zone) in board.zones() {
+        if !zone.is_teardrop_area() || zone.first_layer() != kicad_core::PcbLayerId::FCu {
+            continue;
+        }
+
+        let mut overlap = zone.library_outline().clone();
+        overlap.boolean_intersection(&pad_poly);
+
+        if !overlap.is_empty() {
+            teardrops_on_pad += 1;
+        }
+    }
+
+    assert_eq!(teardrops_on_pad, 0);
+}
+
+/// Ports of `qa/tests/pcbnew/test_teardrop_uuid.cpp` (`KIID::Combine` / `Increment` as the
+/// teardrop UUIDs use them).
+mod teardrop_uuid {
+    use kicad_core::{Kiid, KiidGenerator};
+    use kicad_zone::teardrop::TeardropManager;
+
+    #[test]
+    fn combine_track_and_pad_uuids() {
+        let mut generator = KiidGenerator::seeded(1);
+        let track_uuid = Kiid::new(&mut generator);
+        let pad_uuid = Kiid::new(&mut generator);
+
+        let teardrop_uuid = TeardropManager::teardrop_uuid(&track_uuid, &pad_uuid, 0);
+
+        // The combined UUID should be different from both inputs
+        assert_ne!(teardrop_uuid, track_uuid);
+        assert_ne!(teardrop_uuid, pad_uuid);
+
+        // The same inputs should always produce the same output
+        let teardrop_uuid2 = Kiid::combine(&track_uuid, &pad_uuid);
+        assert_eq!(teardrop_uuid.as_string(), teardrop_uuid2.as_string());
+    }
+
+    #[test]
+    fn mask_uuid_is_incremented_from_teardrop_uuid() {
+        let mut generator = KiidGenerator::seeded(2);
+        let track_uuid = Kiid::new(&mut generator);
+        let pad_uuid = Kiid::new(&mut generator);
+
+        let teardrop_uuid = Kiid::combine(&track_uuid, &pad_uuid);
+        let mask_uuid = TeardropManager::mask_uuid_for(&teardrop_uuid);
+
+        // The mask UUID should be different from the teardrop UUID
+        assert_ne!(mask_uuid, teardrop_uuid);
+
+        // Both should be deterministic
+        let teardrop_uuid2 = Kiid::combine(&track_uuid, &pad_uuid);
+        let mut mask_uuid2 = Kiid::combine(&track_uuid, &pad_uuid);
+        mask_uuid2.increment();
+
+        assert_eq!(teardrop_uuid.as_string(), teardrop_uuid2.as_string());
+        assert_eq!(mask_uuid.as_string(), mask_uuid2.as_string());
+    }
+
+    #[test]
+    fn different_tracks_produce_different_teardrop_uuids() {
+        let mut generator = KiidGenerator::seeded(3);
+        let track1_uuid = Kiid::new(&mut generator);
+        let track2_uuid = Kiid::new(&mut generator);
+        let pad_uuid = Kiid::new(&mut generator);
+
+        let teardrop1_uuid = Kiid::combine(&track1_uuid, &pad_uuid);
+        let teardrop2_uuid = Kiid::combine(&track2_uuid, &pad_uuid);
+
+        // Different tracks should produce different teardrops
+        assert_ne!(teardrop1_uuid, teardrop2_uuid);
+
+        // Each should still be deterministic
+        assert_eq!(
+            teardrop1_uuid.as_string(),
+            Kiid::combine(&track1_uuid, &pad_uuid).as_string()
+        );
+        assert_eq!(
+            teardrop2_uuid.as_string(),
+            Kiid::combine(&track2_uuid, &pad_uuid).as_string()
+        );
+    }
+
+    #[test]
+    fn stable_across_regenerations() {
+        let track_uuid = Kiid::parse("12345678-1234-1234-1234-123456789012").unwrap();
+        let pad_uuid = Kiid::parse("abcdef01-abcd-abcd-abcd-abcdef012345").unwrap();
+
+        // First generation, then regeneration: identical.
+        let teardrop_uuid1 = TeardropManager::teardrop_uuid(&track_uuid, &pad_uuid, 0);
+        let teardrop_uuid2 = TeardropManager::teardrop_uuid(&track_uuid, &pad_uuid, 0);
+
+        assert_eq!(teardrop_uuid1.as_string(), teardrop_uuid2.as_string());
+
+        // A slot spans two UUIDs (the copper and its mask).
+        let mut expected = teardrop_uuid1;
+        expected.increment();
+        expected.increment();
+        assert_eq!(
+            TeardropManager::teardrop_uuid(&track_uuid, &pad_uuid, 1),
+            expected
+        );
+    }
 }

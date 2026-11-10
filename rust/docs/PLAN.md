@@ -401,6 +401,23 @@ Progress log:
   uncovered ones) and REV-FAB (fabrication: option and item coverage against the
   reference, statement-level reading of aperture / attribute / number formatting)
   (wktru4kxr). Running besides: DRC-12, TD-01, M26, FAB-GLUE -> FAB-10 -> 11 -> 12.
+  05:20 UTC (machine clock; some earlier stamps in this log run up to 20 min fast):
+  MILESTONE - DRC-12 done: `kicad-rs pcb drc` runs the real DRC (cache generator, every
+  ported provider in registry order, expression cache scope, markers, exclusions, text and
+  JSON reports, exit codes). Against the reference kicad-cli on 364 corpus boards: stdout
+  counts and exit codes agree on all 364; reports: 47 byte-identical, 254 identical after
+  filtering the codes of providers not ported yet (reported as "checks not run", never
+  silently omitted), 51 identical as sets (reference order is thread-dependent), 12 differ
+  with known causes (7 tuning profiles not loaded, 3 drawing-sheet text variables, 1
+  outline font, 1 pointer-order in the reference, 1 barcode clearance to recheck now that
+  the encoder exists). QA false-positive regression table: 21 of 21.
+  Launched: STAB-DRC (fix loop over every provider and corpus board with pads) and WIRE-1
+  (drill job, host inputs, tuning profiles, wasm API, browser demo, e2e scoreboard)
+  (w2agdqkgg).
+  Still to write: DS-1 drawing sheet model (default sheet + .kicad_wks) for the DRC text
+  variable check and `--ibt` plots; ZF-07 copper thieving (after TD-01); FONT-OL-1 (an
+  approximate outline engine is possible with ttf-parser + rustybuzz, but the reference
+  loads hinted outlines through FreeType, so bit equality is out of reach: low priority).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
