@@ -867,6 +867,18 @@ Progress log:
   still not built. Workflow live2-leftovers launched (run wf_77a7c00f-e08, task
   wp7ka5vw4): Opus repair of those leftovers plus the connection-width passage in
   kicad-drc PORT_STATUS -> Fable check.
+  14:15 UTC: the user attached the client's own repository to the session
+  (private; read-only clone outside this repository; nothing from it goes into tracked
+  files). It holds his browser pipeline with a Node runner, his KiCad wasm build recipe
+  and a real example board with a documented expected routing result. First check by
+  hand on that example board (open, fill, DRC, save, export; native): DRC entries equal
+  to the reference shim's as multisets, board export byte-identical, 0.33-0.42 s and
+  130 MB for the adapter against 0.48-0.58 s and 228 MB for the shim. Next, after the
+  running adapter workflow (GK-2 and its review) completes: package GK-3 (assignment
+  written in the excluded adapter folder) - run his unchanged Node pipeline on our
+  module (the integration is one re-export file at the path his runner imports), his
+  router tools built to wasm if Emscripten can be installed, expected result from his
+  example README, then the same with the rollback sessions class.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

@@ -255,12 +255,19 @@ pub(crate) fn net_damage(board: &kicad_pcb::Board, before: &[(ItemId, i32)]) -> 
 /// (package LIVE-2), the precondition of [`Session::refill_zones_affected`]. It is kept by the
 /// operations that report their damage ([`Session::commit`], [`Session::quick_drc`] /
 /// [`Session::check_items`], [`Session::finalize`], the refills) and saved and restored with
-/// a [`super::commit::Checkpoint`]. It is valid only while the board time stamp and the rule
-/// text are the ones the last of those operations left: any other change of the board (every
-/// `Board` mutator bumps the time stamp: `apply_edits`, `add_track`, `update_teardrops`,
-/// `run_drc`, design settings, a direct edit of `Session::board`, ...) or of
-/// `Session::rules_text` makes it unknown, and the next affected refill is a full one. A
-/// loaded board starts unknown (its fills come from the file).
+/// a [`super::commit::Checkpoint`]. The edit calls (`apply_edits`, `add_track_segment`,
+/// `add_arc`, `add_via_with`, `change`, `remove_items`, `remove_routing`) are commits and
+/// therefore tracked. The record is valid only while the board time stamp and the rule text
+/// are the ones the last tracked operation left: any other change of the board that bumps the
+/// time stamp (`update_teardrops` when it adds, changes or removes a teardrop - on a board
+/// without a teardrop target it changes nothing and the record stays known -, the markers
+/// of `run_drc`, design settings, per-item teardrop settings, a direct edit of
+/// `Session::board` through a `Board` mutator, ...) or of `Session::rules_text` makes it
+/// unknown, and the next affected refill is a full one. Writers of derived state are not
+/// noticed: `Board::zone_fill_mut` (fill polygons and fill flags, written by the filler and
+/// connectivity) deliberately does not bump the time stamp, as in C++, so fills written
+/// through it outside a refill leave the record as it was. A loaded board starts unknown
+/// (its fills come from the file).
 #[derive(Clone, Debug, Default)]
 pub struct FillTracking {
     known: Option<KnownFills>,
@@ -382,10 +389,12 @@ impl Session {
     /// checkpoints) plus `extra` (damage the caller knows of beyond that; pass
     /// `ChangeDamage::default()` when there is none, `ChangeDamage::full()` to force a full
     /// refill). The refill is a full one whenever the session cannot vouch for the fills:
-    /// after a load (fills from the file), after any change of the board or of the rule text
-    /// by another operation, when the board's worst clearance differs from the one of the last
-    /// refill, and when the custom rules use `fromTo()` (its from-to cache is rebuilt by
-    /// every DRC run and changes the clearance of items no damage area bounds).
+    /// after a load (fills from the file), after any change of the board (one that bumps its
+    /// time stamp; see [`FillTracking`] for the derived-state writers that do not) or of the
+    /// rule text by another operation, when the board's worst clearance differs from the one
+    /// of the last refill, and when the custom rule text contains `fromTo` in any letter case
+    /// (its from-to cache is rebuilt by every DRC run and changes the clearance of items no
+    /// damage area bounds).
     pub fn refill_zones_affected(
         &mut self,
         extra: &ChangeDamage,
@@ -412,10 +421,16 @@ impl Session {
             }
         }
 
+        // Decided from the rule text, case-insensitively (function names are case-insensitive
+        // in rule conditions: PCBEXPR lowers them), so any occurrence of the word (also in a
+        // comment, a rule name or a string) gives a full refill, which is always correct.
+        // Deciding from the compiled rules would need a kicad-drc change: a compiled
+        // `DrcRuleCondition` keeps its microcode behind the `CompiledCondition` trait, which
+        // exposes only `has_geometry_dependent_functions` / `requires_pair_items` /
+        // `references_item_b`, not the functions a condition calls.
         if self
             .rules_text
             .as_deref()
-            // function names are case-insensitive in rule conditions (PCBEXPR lowers them)
             .is_some_and(|t| t.to_ascii_lowercase().contains("fromto"))
         {
             damage = ChangeDamage::full();

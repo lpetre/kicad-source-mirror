@@ -488,6 +488,15 @@ pub fn fill_affected_zones(
     };
 
     let Some((set, reused_from, reasons)) = set else {
+        // The re-netting made the damage full. The take-over above has to come before the
+        // connectivity build that finds the re-netted items, so it is undone here: every
+        // re-created teardrop gets its new (empty) fill back, which the full `Fill()` hashes
+        // as the fill it replaces (as in the full refill). (Unreachable today: only tracks
+        // on copper layers are re-netted, and their areas never make the damage full.)
+        for (id, fill) in fresh {
+            *board.zone_fill_mut(id) = fill;
+        }
+
         return fill_after_teardrops(board, connectivity, rules, None);
     };
 

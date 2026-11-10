@@ -963,7 +963,15 @@ mod review_cases {
     /// The path is completed by a track 25 mm from the pour its first segment crosses. `fromTo`
     /// reads the from-to cache, which a DRC run rebuilds (`checkItems` in the router loop).
     fn from_to_board() -> Session {
-        let rules = "(version 1)\n(rule ft\n  (condition \"A.fromTo('R1-1', 'R2-1')\")\n  (constraint clearance (min 1.5mm)))\n";
+        from_to_board_spelled("fromTo")
+    }
+
+    /// [`from_to_board`] with the function name spelled `name` (function names are
+    /// case-insensitive in rule conditions).
+    fn from_to_board_spelled(name: &str) -> Session {
+        let rules = format!(
+            "(version 1)\n(rule ft\n  (condition \"A.{name}('R1-1', 'R2-1')\")\n  (constraint clearance (min 1.5mm)))\n"
+        );
         let mut b = Synth::new(&["GND", "N"], false);
         b.edge(0.0, 0.0, 100.0, 80.0);
         b.zone("ZG", 1, &["F.Cu"], 0, 0.3, 1, (20.0, 40.0, 45.0, 60.0), "");
@@ -973,10 +981,35 @@ mod review_cases {
         b.pad("R2", Pad::SmdFront, 90.0, 50.0, 2);
         b.track((10.0, 50.0), (50.0, 50.0), 0.25, "F.Cu", 2);
         b.track((50.0, 50.0), (70.0, 50.0), 0.25, "F.Cu", 2);
-        let mut s = b.load(Some(rules));
+        let mut s = b.load(Some(&rules));
         assert!(s.drc_init_error.is_none(), "{:?}", s.drc_init_error);
         s.refill_zones().expect("refill");
         s
+    }
+
+    /// [`from_to_rule_with_a_drc_run_between_commit_and_refill`] with the other letter cases of
+    /// the function name: each must give a full refill equal to the reference.
+    #[test]
+    fn from_to_rule_in_any_letter_case() {
+        for name in ["fromto", "FROMTO", "FromTo"] {
+            let mut s = from_to_board_spelled(name);
+            s.check_items(&[], &CheckItemsOptions::default())
+                .expect("check_items");
+            let mut damage = ChangeDamage::default();
+            let mut txn = Transaction::begin();
+            txn.stage_add(new_track((70.0, 50.0), (90.0, 50.0), "F.Cu", 2));
+            let r = s.commit(&txn).expect("commit");
+            damage.merge(&r.damage);
+            let summary = s
+                .check_items(&r.edit.added, &CheckItemsOptions::default())
+                .expect("check_items");
+            damage.merge(&summary.damage);
+
+            let out = compare(&mut s, &damage);
+            eprintln!("from_to_rule_in_any_letter_case {name}: {}", out.describe());
+            assert!(out.report.full, "{name}: the refill must be a full one");
+            assert!(out.equal && out.text_equal, "{name}: {}", out.describe());
+        }
     }
 
     #[test]
@@ -1192,6 +1225,38 @@ mod review_cases {
         // a load: the fills are the file's
         let s = free_via_board_unfilled();
         assert!(s.fill_damage().full, "load");
+    }
+
+    /// The positive case of `update_teardrops` in
+    /// [`untracked_operations_make_the_next_affected_refill_full`]: on a board with a teardrop
+    /// target (a via with teardrops enabled and a track ending on it) the update adds a
+    /// teardrop zone, bumps the time stamp, and the record becomes unknown.
+    #[test]
+    fn update_teardrops_with_a_target_makes_the_record_full() {
+        const TD: &str = "(teardrops (best_length_ratio 0.5) (max_length 1) (best_width_ratio 1) \
+             (max_width 2) (curved_edges no) (filter_ratio 0.9) (enabled yes) \
+             (allow_two_segments yes) (prefer_zone_connections yes))";
+        let mut b = Synth::new(&["GND", "A"], false);
+        b.edge(0.0, 0.0, 100.0, 60.0);
+        b.zone("ZG", 1, &["F.Cu"], 0, 0.3, 1, (10.0, 10.0, 40.0, 40.0), "");
+        b.pad("P1", Pad::SmdFront, 15.0, 15.0, 1);
+        b.track((60.0, 30.0), (75.0, 30.0), 0.25, "F.Cu", 2);
+        b.via((75.0, 30.0), 2, TD);
+        let mut s = b.load(None);
+        s.refill_zones().expect("refill");
+        assert!(!s.fill_damage().full, "a refill leaves a known record");
+
+        let outcome = s.update_teardrops().expect("teardrops");
+        assert!(
+            outcome.teardrops > 0,
+            "the case has no teardrop target: {outcome:?}"
+        );
+        assert!(s.fill_damage().full, "update_teardrops with a target");
+        assert!(
+            s.refill_zones_affected(&ChangeDamage::default())
+                .expect("refill")
+                .full
+        );
     }
 
     fn free_via_board_unfilled() -> Session {

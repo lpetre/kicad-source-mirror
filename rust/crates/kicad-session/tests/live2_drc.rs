@@ -39,7 +39,12 @@
 //!   unconnected items, the net the propagation gives a netless item touching two nets, and
 //!   report order. Each difference is classified: same entries in another order; an item
 //!   with another net after the reload; with equal nets, entries that differ in
-//!   `unconnected_items` only. Any other difference fails the test.
+//!   `unconnected_items` only. Otherwise both sides are run again with all-track-errors (the
+//!   job above reports only the first hit per track, which follows the track order) and their
+//!   entry multisets compared: equal; different in `unconnected_items` only; different in
+//!   the item lines (items and marker position) of length / skew / via count / diff-pair
+//!   entries only, which the C++ takes from pointer-keyed `std::set`s (see
+//!   [`item_set_order_type`]). Any other difference fails the test.
 //!
 //! `LIVE2_DRC_BOARDS` (default 6) and `LIVE2_DRC_BATCHES` (default 3) scale the campaign.
 
@@ -202,6 +207,10 @@ fn check_items_and_live_drc() {
     let mut failures = Vec::new();
     let (mut tested, mut commits, mut scoped_entries, mut full_entries) = (0, 0, 0usize, 0usize);
     let (mut fresh_same, mut fresh_order, mut fresh_nets, mut fresh_ratsnest) = (0, 0, 0, 0);
+    let (mut fresh_first_hit, mut fresh_first_hit_ratsnest, mut fresh_item_set) = (0, 0, 0);
+    let mut unexplained: Vec<String> = Vec::new();
+    let mut unexplained_types: std::collections::BTreeMap<String, usize> =
+        std::collections::BTreeMap::new();
     let mut panics: Vec<String> = Vec::new();
     let mut scoped_types: BTreeSet<String> = BTreeSet::new();
 
@@ -303,11 +312,50 @@ fn check_items_and_live_drc() {
                     {
                         fresh_ratsnest += 1;
                     } else {
-                        failures.push(format!(
-                            "{rel} batch {k}: live and reloaded reports differ in other than \
-                             unconnected items with equal nets: {:?}",
-                            differing_blocks(&live_report, &fresh_report).first()
-                        ));
+                        // Without all-track-errors a provider reports only the first hit per
+                        // track, which follows the track order. With it, both sides report
+                        // every hit: the entry multisets must then agree apart from
+                        // unconnected items (ratsnest edge ties).
+                        let (live_all, _) = drc_job(&mut s, true);
+                        let (fresh_all, _) = drc_job(&mut fresh, true);
+                        let rest = differing_blocks(&live_all, &fresh_all);
+
+                        let item_lines_only = || {
+                            let strip = |r: &str| -> Vec<String> {
+                                let mut v: Vec<String> = blocks(r)
+                                    .into_iter()
+                                    .filter(|b| item_set_order_type(b))
+                                    .map(|b| without_item_lines(&b))
+                                    .collect();
+                                v.sort();
+                                v
+                            };
+                            strip(&live_all) == strip(&fresh_all)
+                        };
+
+                        if rest.is_empty() {
+                            fresh_first_hit += 1;
+                        } else if rest.iter().all(|b| b.starts_with("[unconnected_items]")) {
+                            fresh_first_hit_ratsnest += 1;
+                        } else if rest.iter().all(|b| {
+                            b.starts_with("[unconnected_items]") || item_set_order_type(b)
+                        }) && item_lines_only()
+                        {
+                            fresh_item_set += 1;
+                        } else {
+                            for b in &rest {
+                                let t = b.split(']').next().unwrap_or("").to_string() + "]";
+                                *unexplained_types.entry(t).or_insert(0) += 1;
+                            }
+
+                            unexplained.push(format!(
+                                "{rel} batch {k}: live and reloaded all-track-errors reports \
+                                 differ in other than unconnected items with equal nets: \
+                                 first {:?}, last {:?}",
+                                rest.iter().find(|b| !b.starts_with("[unconnected_items]")),
+                                rest.iter().rfind(|b| !b.starts_with("[unconnected_items]"))
+                            ));
+                        }
                     }
 
                     if std::env::var("LIVE2_DEBUG").is_ok() {
@@ -416,9 +464,20 @@ fn check_items_and_live_drc() {
          {full_entries} full-run entries; types {scoped_types:?}; live vs fresh load: \
          {fresh_same} identical, {fresh_order} same entries in another order, {fresh_nets} \
          different with items of other nets after the reload, {fresh_ratsnest} different in \
-         unconnected items only"
+         unconnected items only, {fresh_first_hit} different without all-track-errors and \
+         equal with it, {fresh_first_hit_ratsnest} different with all-track-errors in \
+         unconnected items only, {fresh_item_set} different with all-track-errors in the \
+         items / marker position of length and diff-pair entries (and unconnected items) \
+         only, {} unexplained (block types {unexplained_types:?})",
+        unexplained.len()
     );
+
+    for u in unexplained.iter().take(5) {
+        eprintln!("live2 drc: unexplained: {u}");
+    }
+
     assert!(tested > 0);
+    failures.extend(unexplained);
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }
 
@@ -428,6 +487,34 @@ fn differing_blocks(a: &str, b: &str) -> Vec<String> {
     let mut out: Vec<String> = a.iter().filter(|x| !b.contains(x)).cloned().collect();
     out.extend(b.iter().filter(|x| !a.contains(x)).cloned());
     out
+}
+
+/// Entries whose items and marker position the C++ takes from a `std::set` of item pointers
+/// (address order; the port uses `ItemId` order, i.e. board track order, which the reload
+/// changes): the length, skew and via count entries of `matched_length` (`ENTRY::items`: the
+/// marker is at the first item, the item list is the last one) and the diff-pair entries
+/// (`DIFF_PAIR_ITEMS::itemsP` / `itemsN`). See the module comments of
+/// `kicad_drc::providers::{matched_length, diff_pair_coupling}`.
+fn item_set_order_type(block: &str) -> bool {
+    [
+        "[length_out_of_range]",
+        "[skew_out_of_range]",
+        "[too_many_vias]",
+        "[diff_pair_gap_out_of_range]",
+        "[diff_pair_uncoupled_length_too_long]",
+    ]
+    .iter()
+    .any(|t| block.starts_with(t))
+}
+
+/// A report block without its item lines (`    @(x, y): <item>`), which carry the marker
+/// position and the items.
+fn without_item_lines(block: &str) -> String {
+    block
+        .lines()
+        .filter(|l| !l.trim_start().starts_with("@("))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 /// UUID -> net of every track, arc, via and zone.
