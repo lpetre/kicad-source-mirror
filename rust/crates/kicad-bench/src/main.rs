@@ -36,7 +36,9 @@
 //!   drill` (CLI defaults), `pcb upgrade --force` (the board writer);
 //! * `refill`: load, `FillAllZones` (all zones), then `pcb drc` on the refilled board (the
 //!   two halves of `pcb drc --refill-zones`);
-//! * `fill` (not in the default list): load and `FillAllZones` only.
+//! * `fill` (not in the default list): load and `FillAllZones` only;
+//! * `edit` (not in the default list): the router client loop of `board_api` (see
+//!   `edit_loop`).
 //!
 //! The load is `getBoard` split into its steps: `parse` (project file read + board parser, up
 //! to the first post-parse step), `load.<LoadStep>` (each step of `initializeLoadedBoard`,
@@ -511,6 +513,87 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
     }
 }
 
+/// Tracks re-routed per edit batch of the `edit` pipeline, and batches per load.
+const EDIT_TRACKS: usize = 200;
+const EDIT_ROUNDS: usize = 3;
+
+/// The inner loop of a router client (`board_api`, docs/PERF.md "Note for planners"): per
+/// round, remove [`EDIT_TRACKS`] tracks and add them again with the same geometry (one
+/// `apply_edits` batch with its connectivity rebuild), `quick_drc` with the clearance and
+/// connectivity providers, zone refill, teardrop update; `save` at the end.
+fn edit_loop(rec: &mut Recorder, session: &mut Session, verbose: bool) -> Result<(), String> {
+    use kicad_session::board_api::check::QuickDrcOptions;
+    use kicad_session::board_api::edit::{EditBatch, NewItem, NewTrack};
+
+    let tracks: Vec<_> = session
+        .tracks()
+        .into_iter()
+        .filter(|t| t.kind == "track")
+        .collect();
+
+    for round in 0..EDIT_ROUNDS {
+        // a different window of the (re-ordered) track list each round
+        let chosen: Vec<_> = tracks
+            .iter()
+            .skip(round * EDIT_TRACKS)
+            .take(EDIT_TRACKS)
+            .collect();
+        let current = session.tracks();
+        let mut batch = EditBatch::default();
+
+        for t in &chosen {
+            // the handle of the same geometry in the current board (handles change on re-add)
+            if let Some(c) = current.iter().find(|c| {
+                c.kind == "track"
+                    && c.start == t.start
+                    && c.end == t.end
+                    && c.layer == t.layer
+                    && c.net == t.net
+                    && !batch.remove.contains(&c.id)
+            }) {
+                batch.remove.push(c.id);
+                batch.add.push(NewItem::Track(NewTrack {
+                    start: t.start,
+                    end: t.end,
+                    width: Some(t.width),
+                    layer: t.layer.clone(),
+                    net: t.net,
+                    ..NewTrack::default()
+                }));
+            }
+        }
+
+        let r = rec.stage("edit.apply_edits", || session.apply_edits(&batch));
+        r.map_err(|e| format!("apply_edits: {e}"))?;
+
+        let options = QuickDrcOptions {
+            providers: vec!["clearance".to_string(), "connectivity".to_string()],
+            ..QuickDrcOptions::default()
+        };
+        let r = rec.stage("edit.quick_drc", || session.quick_drc(&options));
+        let summary = r.map_err(|e| format!("quick_drc: {e}"))?;
+
+        let r = rec.stage("edit.zone_refill", || session.refill_zones());
+        r.map_err(|e| format!("edit zone_refill: {e}"))?;
+
+        let r = rec.stage("edit.update_teardrops", || session.update_teardrops());
+        r.map_err(|e| format!("update_teardrops: {e}"))?;
+
+        if verbose && round == 0 {
+            eprintln!(
+                "  edit: {} tracks re-added, quick_drc: {} markers, {} unconnected",
+                batch.add.len(),
+                summary.markers,
+                summary.unconnected
+            );
+        }
+    }
+
+    let r = rec.stage("edit.save", || session.save());
+    r.map_err(|e| format!("save: {e}"))?;
+    Ok(())
+}
+
 /// Runs one pipeline on a freshly loaded session.
 fn run_pipeline(
     rec: &mut Recorder,
@@ -603,6 +686,7 @@ fn run_pipeline(
             summarize(verbose, "drc_after_refill", &r);
             r.map_err(|e| format!("drc_after_refill: {e}"))?;
         }
+        "edit" => edit_loop(rec, &mut session, verbose)?,
         other => return Err(format!("unknown pipeline '{other}'")),
     }
 

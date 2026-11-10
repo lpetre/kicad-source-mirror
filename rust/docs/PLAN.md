@@ -630,6 +630,12 @@ Progress log:
   (saved board is right; not investigated); edits rebuild connectivity in full per batch.
   A planner note about the autorouter loop as the workload that matters was appended to
   docs/PERF.md.
+  08:35 UTC (heartbeat; next 09:35): the harness package PERF-1 was still benchmarking after
+  two hours, at the same time as the loop's gate agent takes its quiet baseline: stopped
+  PERF-1 (workflow wpwj3zgx6) so the two do not disturb each other. Its instrument
+  (crates/kicad-bench + scripts) and raw numbers (rust/target/bench/*.tsv) are on disk;
+  the gate agent writes the quiet baseline and the hotspot list. Only the performance loop
+  is running now. Disk 8.2 GB free; watchdog ba2lo00ka runs until about 09:10 (restart).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
