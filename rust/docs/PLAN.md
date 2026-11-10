@@ -935,6 +935,25 @@ Progress log:
   source of truth (rust/clients/gloopy-compat) first - sync.py overwrites the snapshot.
   Here: the client's three router tools built to wasm with Emscripten 3.1.6, his Node
   pipeline is running on our module (load, baseline, first seed routed).
+  15:10 UTC: THE CLIENT'S WEB DEMO RUNS ON OUR MODULE (workflow web-demo: Opus
+  work, Fable verification). His unchanged page (headless Chromium) and his unchanged
+  Node pipeline, with his real router tools built to wasm, on his example board with the
+  defaults: every seed clean and the best seed's via count and length exactly as his
+  example README states; same numbers in the page, under Node and in the verifier's
+  reruns (deterministic). The verifier proved at run time that the only KiCad wasm the
+  page loads is our module (7.9 MB, ordinary memory, one worker), rebuilt his tools
+  byte-identically from his sources, and checked the board the page offers with the
+  reference kicad-cli: the same ten findings as the page's report. No defect of the
+  module was met; no tracked file of his changed (wiring lives in ignored build paths).
+  Time in the page 99-107 s on this shared machine against about 30 s in his README;
+  the logs put it in his route tool (about 40 s per seed), KiCad steps 1-3 s each.
+  Correction of an earlier note: the distribution's Emscripten 3.1.6 could NOT build
+  his tools; the emsdk 4.0.23 with a hand-built zlib did. Guide, wiring script and a
+  browser check script are on the private branch; screenshots and a video went to the
+  user; the page is served here on port 8123 (preview reported; his page insists on
+  cross-origin isolation, which an embedded preview may not grant). Artifact version 5.
+  Emscripten from the emsdk stays in the scratchpad (1.7 GB); the unusable distribution
+  package (1.2 GB) can be removed if disk gets short.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
