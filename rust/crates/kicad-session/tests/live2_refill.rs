@@ -1155,8 +1155,10 @@ mod review_cases {
         s.save().expect("save");
         let cp = s.checkpoint();
         assert!(!s.fill_damage().full && !s.fill_damage().is_empty());
+        // This board has no teardrop target: the update changes nothing (no time stamp
+        // bump), so the record stays known. On a board with a teardrop it becomes full.
         s.update_teardrops().expect("teardrops");
-        assert!(s.fill_damage().full, "update_teardrops");
+        assert!(!s.fill_damage().full, "update_teardrops without a target");
         s.rollback(&cp);
         assert!(!s.fill_damage().full, "rollback restores the record");
         let report = s
@@ -1164,20 +1166,21 @@ mod review_cases {
             .expect("refill");
         assert!(!report.full);
 
-        // untracked
+        // apply_edits is begin + stage + commit, so it is tracked like a commit
         let mut s = fresh();
         s.apply_edits(&EditBatch {
             add: vec![new_track((80.0, 50.0), (85.0, 50.0), "B.Cu", 2)],
             ..EditBatch::default()
         })
         .expect("apply_edits");
-        assert!(s.fill_damage().full, "apply_edits");
+        assert!(!s.fill_damage().full && !s.fill_damage().is_empty(), "apply_edits");
         assert!(
-            s.refill_zones_affected(&ChangeDamage::default())
+            !s.refill_zones_affected(&ChangeDamage::default())
                 .expect("refill")
                 .full
         );
 
+        // untracked
         let mut s = fresh();
         s.rules_text = Some("(version 1)\n".to_string());
         assert!(s.fill_damage().full, "rules text");

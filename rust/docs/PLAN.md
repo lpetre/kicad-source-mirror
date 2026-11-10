@@ -856,6 +856,17 @@ Progress log:
     jetson). The judge is measuring; a note for it is in PERF.md (the connection-width
     fix and the LIVE-2 test repairs are not part of the round).
   Machine: load 2.7, 8.8 GB disk free, memory fine.
+  14:06 UTC: LIVE-2 verification (Fable) finished, verdict sound with findings:
+  seven of the eight code findings are fixed at the cause (variations of every
+  counterexample pass; refill campaign 30x50 equal on 1300 refills; a campaign with
+  skip-connectivity commits equal on 416 refills incl. 50 re-netting ones; scoped check
+  0 mismatches in 1500 commits). Left open: fromTo() detection was case-sensitive
+  (orchestrator fix: case-insensitive text match); the new test had two wrong
+  expectations (orchestrator fix); the live-vs-reload assertion fails at 30 boards
+  (classification does not hold); doc sentences and numbers stale; persistent DRC state
+  still not built. Workflow live2-leftovers launched (run wf_77a7c00f-e08, task
+  wp7ka5vw4): Opus repair of those leftovers plus the connection-width passage in
+  kicad-drc PORT_STATUS -> Fable check.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

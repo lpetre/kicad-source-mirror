@@ -415,7 +415,8 @@ impl Session {
         if self
             .rules_text
             .as_deref()
-            .is_some_and(|t| t.contains("fromTo"))
+            // function names are case-insensitive in rule conditions (PCBEXPR lowers them)
+            .is_some_and(|t| t.to_ascii_lowercase().contains("fromto"))
         {
             damage = ChangeDamage::full();
         }
