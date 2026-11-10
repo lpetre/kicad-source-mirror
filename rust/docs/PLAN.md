@@ -604,6 +604,19 @@ Progress log:
   for bit + quiet benchmark, keep or revert, commit) until two dry rounds). Single-thread
   speed first (helps wasm and native); native threading and wasm build tuning as planner
   options in later rounds.
+  08:25 UTC: PERFORMANCE LOOP LAUNCHED as workflow w604m78si (run wf_c0751b05-b7a; script
+  /root/.claude/projects/-home-user-kicad-source-mirror/76042f1d-984e-5683-9c58-69f73f0a28c8/workflows/scripts/perf-loop-wf_c0751b05-b7a.js,
+  args {"maxRounds": 8, "tasksPerRound": 3}; to resume after an interruption re-invoke it
+  with resumeFromRunId). Phases: Gate (Opus: builds rust/scripts/perf-gate.sh - "full" and
+  "changed <crate>.." - makes the whole suite green, takes the quiet baseline incl. the
+  reference kicad-cli, writes docs/PERF.md) -> per round: Plan (Fable; up to 3 tasks in
+  disjoint files, records the base commit) -> Optimise (Opus, one change each, must prove
+  no output change with the gate) -> Review (Fable reads every diff: can any output byte
+  change?) -> Judge (Opus: reverts rejected changes, runs the gate, measures on a quiet
+  machine, keeps only gains beyond noise, records the round in docs/PERF.md, commits with
+  the standard trailers; the orchestrator pushes). Stops after two rounds with nothing
+  kept or 8 rounds. The orchestrator's own checkpoint commits may contain in-progress
+  optimisations: the judge works relative to the round's base commit, so that is harmless.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

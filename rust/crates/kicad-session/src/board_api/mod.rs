@@ -189,16 +189,16 @@ mod tests {
         let mut set = ShapePolySet::new();
         let mut outer = ShapeLineChain::new();
         for p in [[0, 0], [10, 0], [10, 10], [0, 10]] {
-            outer.append(vec2(p));
+            outer.append_point(vec2(p), false);
         }
         outer.set_closed(true);
-        set.add_outline(outer);
+        set.add_outline(&outer);
         let mut hole = ShapeLineChain::new();
         for p in [[2, 2], [4, 2], [4, 4]] {
-            hole.append(vec2(p));
+            hole.append_point(vec2(p), false);
         }
         hole.set_closed(true);
-        set.add_hole(hole, -1);
+        set.add_hole(&hole, -1);
 
         let p = polygons(&set);
         assert_eq!(p.len(), 1);
