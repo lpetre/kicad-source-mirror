@@ -1520,3 +1520,40 @@ change request to call `PcbVia::set_zone_layer_override` / `clear_zone_layer_ove
   `hatching_knockouts`, `effective_shape` and `bounding_box` (M9) are still stubs, so the
   functions above are verified on test hosts; a real `PcbShape` goes through them once M9
   lands.
+
+## Package SET-4: board design settings JSON (`board.design_settings` in `.kicad_pro`)
+
+### C++ to Rust map
+
+| C++ | Rust (`src/project/board_design_settings_json.rs`) | State |
+|---|---|---|
+| `BOARD_DESIGN_SETTINGS` constructor: all 90 `m_params` registrations (BOM, `rules.*`, `defaults.*`, `defaults.zones.*`, lambdas `rule_severities`, `drc_exclusions`, `track_widths`, `via_dimensions`, `via_stack_presets`, `diff_pair_dimensions`, `teardrop_options`, `teardrop_parameters`, `tuning_pattern_settings`, zone lambdas) | `build_params` (registration order) | ported |
+| `registerMigration` 0->1 (`migrateSchema0to1`), 1->2 (inline lambda), 2->3 (`migrateSchema2to3`) | `register_migrations`, `migrate_schema_0_to_1`, `migrate_schema_2_to_3` | ported |
+| `BOARD_DESIGN_SETTINGS::LoadFromFile` (nested load + legacy post-step) | `BoardDesignSettingsJson::load_from_file` (`Err` = the exception that escapes C++) | ported |
+| `JSON_SETTINGS::Load` / `Store`, `NESTED_SETTINGS::SaveToFile` for this object | `load`, `store`, `save_to_file` | ported (generic part in kicad-core) |
+| `BOARD::SetProject`'s `bds.SetParent( &projectFile, !m_LegacyDesignSettingsLoaded )` | `load_board_design_settings` (caller skips it for legacy boards) | settings side only |
+| `FIELDS_TABLE_BOM_SETTINGS`, `BOM_FIELD`, `BOM_PRESET`, `BOM_FMT_PRESET` (`to_json`/`from_json`, `DefaultEditing`, `CSV`) | `FieldsTableBomSettings`, `BomField`, `BomPreset`, `BomFmtPreset` | ported (JSON only) |
+| `PNS::MEANDER_SETTINGS` JSON (`make_settings` / `read_settings`) | private `MeanderSettings` (the model keeps the `make_settings` objects) | ported |
+| `DRC_ITEM::GetItemsWithSeverities()` order | `ITEMS_WITH_SEVERITIES` | ported (headings included: a `""` key sets code 0 as in C++) |
+| `DRC_EXCLUSION` `from_json` / `FromLegacyStrings` | trait `DrcExclusionCodec` (implemented by the caller; `kicad-drc` has the functions), `RawDrcExclusionCodec` fallback | interface |
+
+API: `BoardDesignSettingsJson::new(path, codec)`; `load_from_file(Some(&mut project_internals), parent_is_project_file, &mut bds) -> Result<bool, JsonError>`; `save_to_file(&mut project_internals, &mut bds, force) -> bool`; then `JsonSettings::format_file_contents`-style output of the parent (`original` merged with `doc`, `dump(2)` sorted) is byte-exact. The BOM members live in `BoardDesignSettingsJson::bom` (not in `BoardDesignSettings`).
+
+### Tests
+
+- Differential oracle `tests/oracle/bds_json_oracle.cpp` + `bds_json_golden.sh` (real `SETTINGS_MANAGER::LoadProject`, `BOARD_DESIGN_SETTINGS::SetParent` + `LoadFromFile`, every touched member printed, then `SaveToFile` + `PROJECT_FILE::SerializeToString` and the `board.design_settings` subtree of the written file):
+  - `tests/golden/bds_json_scenarios.txt` (21 hand-written projects in `tests/data/bds_json`: migrations 0->1 (inch/mm/float units), 1->2 (truncation 0.0638 -> 63799, overflow -> INT_MIN, missing `rules`), 2->3 (legacy strings, a throwing entry aborting the chain), missing / wrong-typed / future / non-object versions, every range bound, wrong types per parameter class, all lambdas incl. aborting setters, `hole_near_hole`, the `""` key, legacy courtyard flags, `legacy` fillets incl. the escaping exception, BOM presets, a `stored=error` from `update()`): replayed line by line by `tests::oracle_scenarios` - all identical except the documented deviation SET-4-2 (one line).
+  - `tests/golden/bds_json_corpus.txt` (all 386 `.kicad_pro` of `qa/data` and `demos`, hashed; 2 are rejected by the C++ project loader): `tests::oracle_corpus` - 384/384 identical, including the stored subtree byte for byte; for the 6 projects with non-empty legacy `drc_exclusions` the exclusion lines are not compared (they need the kicad-drc codec, see Known gaps).
+- `tests/oracle/bds_json_ds_compare.py`: `pcb-dump board --sections board` (QA load path, project bound) vs the Rust parser + this loader (`tests::pcb_dump_ds_lines`, `--features dump --ignored`) on the 253 boards with a sibling project (large demos excluded): every `ds.*` field the parameters write (minima, severities, size lists, via stack presets, teardrops, layer classes, dimensions, style flags, default zone settings, max error, mask clearance) identical; only `ds.drc_exclusions` differs on the 6 legacy-exclusion projects (same cause).
+- Ported from `qa/tests/pcbnew/test_board_design_settings.cpp`: `NegativeSilkClearanceRoundTrip`, `SeededBoardValueSurvivesRoundTrip`, `OneMalformedPresetDoesNotDropTheRest`, `AnAbsurdPresetPitchIsClampedOnLoad`. From `qa/tests/common/test_project_file.cpp` only the BDS part of `NoRewriteWhenUnchanged` applies (`tests::no_rewrite_when_unchanged`); the other cases are project-file / sheet / manager behaviour (SET-5/SET-13).
+
+### Deviations
+
+- SET-4-1: without a DRC codec (`RawDrcExclusionCodec`) an exclusion object is kept verbatim with its compact sorted dump as sort key (no protobuf canonicalisation / ordering) and legacy marker strings are dropped. Callers that have `kicad-drc` must pass a codec built on `kicad_drc::exclusion::{from_json, from_legacy_strings}`.
+- SET-4-2: `defaults.zones.pad_connection` / `remove_islands` values without an enumerator (`static_cast` of an arbitrary int in C++) leave the member unchanged; C++ stores and writes the raw int back. No real project has such values.
+- The migration 1->2 member assignments are recorded by the migrator and applied right after the nested load (the C++ lambda assigns them during the migration); no parameter reads them in between, so the result is the same.
+
+### Known gaps
+
+- `DrcExclusionCodec` for `kicad-drc` is not implemented here (crate dependency direction); the 6 legacy-exclusion projects are verified only without their exclusions.
+- The board binding itself (`BOARD::SetProject`, legacy net classes) is SET-5.

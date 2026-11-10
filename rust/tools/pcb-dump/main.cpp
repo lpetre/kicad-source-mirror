@@ -73,7 +73,8 @@ static void usage()
              "usage: pcb-dump defaults [--hash]\n"
              "       pcb-dump board [--sections LIST] [--hash] [--loader] [--no-init] FILE...\n"
              "       pcb-dump rules [--component-classes] FILE...\n"
-             "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n" );
+             "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n"
+             "          connectivity (opt-in: printed only when listed explicitly)\n" );
 }
 
 
@@ -204,6 +205,7 @@ static std::unique_ptr<BOARD> loadBoardCli( const wxString& aPath )
 
 
 int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses ); // dump_rules.cpp
+void DumpConnectivity( BOARD* aBoard ); // dump_connectivity.cpp
 
 
 int main( int argc, char** argv )
@@ -345,6 +347,9 @@ int main( int argc, char** argv )
 
             ScanFileUuids( std::string( file.ToUTF8() ) );
             Guard( "dump", [&]() { DumpBoard( board.get(), opts ); } );
+
+            if( opts.sections.count( "connectivity" ) )
+                Guard( "connectivity", [&]() { DumpConnectivity( board.get() ); } );
             fflush( stdout );
 
             board->SetProject( nullptr );

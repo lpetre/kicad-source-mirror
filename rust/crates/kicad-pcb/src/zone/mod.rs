@@ -20,8 +20,7 @@
 //!
 //! This file holds the data, the constructor, the delegation shims (frozen after M0), the
 //! fill state with its derived-state writers (`board-model.md` 8.4) and the non-shape
-//! inherent methods; the shape methods are in `shapes.rs`. Bodies with logic are
-//! `port_pending!` stubs for package M18.
+//! inherent methods; the shape methods are in `shapes.rs`.
 
 pub mod shapes;
 
@@ -32,14 +31,21 @@ use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Kiid, KiidGenerator, Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::hash_128::Hash128;
-use kicad_geom::{Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg, ShapePolySet, Vector2I};
+use kicad_geom::geometry::shape_poly_set::VertexIndex;
+use kicad_geom::geometry::transform_trs::TransformTrs;
+use kicad_geom::{
+    Box2I, EdaAngle, EdaOrientation, FlipDirection, Seg, Shape, ShapeLineChain, ShapePolySet,
+    Vector2I,
+};
 
 use crate::board::Board;
 use crate::cache::KeyedCache;
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
-use crate::ids::ZoneId;
-use crate::item::{BoardItemBase, ConnectedItemBase, SharedShape};
+use crate::ids::{NetCode, ZoneId};
+use crate::item::{BoardItemBase, ConnectedItemBase, ItemFlags, SharedShape};
+use crate::pad::Pad;
+use crate::{board_connected_item, board_item};
 use crate::teardrop_parameters::TeardropType;
 use crate::traits::{BoardConnectedItem, BoardItem, BoardItemMut, Flashing, Invalidate};
 use crate::zone_settings::{
@@ -207,15 +213,32 @@ impl Zone {
         zone
     }
 
-    /// `new ZONE( aParent )` on a board: the member initialisers, then the board's default
-    /// zone settings exported (`GetDesignSettings().GetDefaultZoneSettings().ExportSetting`),
-    /// `SetIsRuleArea( true )` first for a footprint zone.
+    /// `new ZONE( aParent )` on a board: the member initialisers, `SetIsRuleArea( true )` for
+    /// a footprint zone, then the board's default zone settings exported
+    /// (`GetDesignSettings().GetDefaultZoneSettings().ExportSetting( *this, false )`), then
+    /// `m_needRefill = false`.
+    ///
+    /// Note (C++ behaviour kept): `ExportSetting` calls `SetIsRuleArea( m_isRuleArea )` of the
+    /// settings, so the footprint rule-area flag set before it is overwritten.
     pub fn new_with_settings(
         kiid_generator: &mut KiidGenerator,
         settings: &ZoneSettings,
         in_footprint: bool,
     ) -> Self {
-        crate::port_pending!("ZONE::ZONE", kiid_generator, settings, in_footprint)
+        // Every member the C++ initialiser list leaves at another value than Zone::default()
+        // is overwritten by ExportSetting( *this, false ) below (fill mode, clearance, min
+        // thickness, hatch and thieving settings, thermal values, pad connection, corner
+        // smoothing, keepout flags, lock, island removal, border style / pitch).
+        let mut zone = Zone::new(kiid_generator);
+
+        if in_footprint {
+            zone.is_rule_area = true; // Zones living in footprints have the rule area option
+        }
+
+        settings.export_setting(&mut zone, false);
+
+        zone.fill.need_refill = false; // True only after edits.
+        zone
     }
 
     // ---- outline (board-model.md 5) -----------------------------------------------------
@@ -231,14 +254,164 @@ impl Zone {
         &mut self.lib_outline
     }
 
-    /// `GetBoardOutline()`: the outline in the board frame.
-    pub fn board_outline(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
-        crate::port_pending!("ZONE::GetBoardOutline", ctx)
+    /// The parent footprint's transform (`GetParentFootprint()->GetTransform()`), `None` for
+    /// a zone that is not in a footprint.
+    pub(crate) fn parent_transform(&self, ctx: &BoardCtx<'_>) -> Option<TransformTrs> {
+        board_item::parent_footprint(self, ctx).map(|fp| fp.transform())
     }
 
-    /// `Outline()` for editing a board-frame outline.
+    /// The parent footprint's transform as a mutator sees it.
+    fn env_transform(env: &MutEnv) -> Option<TransformTrs> {
+        env.parent.map(|frame| frame.transform)
+    }
+
+    /// Port of `ZONE::GetBoardOutline()`: the outline in the board frame (the library
+    /// outline with the parent footprint transform applied to every vertex, holes included).
+    pub fn board_outline(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
+        let mut poly = self.lib_outline.clone_drop_triangulation();
+
+        if let Some(xform) = self.parent_transform(ctx) {
+            let mut it = poly.iterate_with_holes();
+            let mut moves: Vec<(VertexIndex, Vector2I)> = Vec::new();
+
+            while it.is_valid() {
+                moves.push((it.get_index(), xform.apply(it.get())));
+                it.advance();
+            }
+
+            for (index, pos) in moves {
+                poly.set_vertex_index(&index, pos);
+            }
+        }
+
+        poly
+    }
+
+    /// `Outline()`: the stored outline for editing. As in C++ this is `m_Poly`, i.e. the
+    /// library frame for a footprint zone (equal to the board frame for a board zone).
     pub fn outline_mut(&mut self, env: &MutEnv) -> &mut ShapePolySet {
-        crate::port_pending!("ZONE::Outline", env)
+        let _ = env;
+        &mut self.lib_outline
+    }
+
+    /// `Outline()` (const): the stored outline, see [`Zone::outline_mut`].
+    pub fn outline(&self) -> &ShapePolySet {
+        &self.lib_outline
+    }
+
+    /// Port of `ZONE::GetNumCorners()`: `m_Poly->TotalVertices()`.
+    pub fn num_corners(&self) -> i32 {
+        self.lib_outline.total_vertices()
+    }
+
+    /// Port of `ZONE::GetCornerPosition( aCornerIndex )` (stored frame, like C++). `None`
+    /// where C++ throws `std::out_of_range`.
+    pub fn corner_position(&self, corner_index: i32) -> Option<Vector2I> {
+        let index = self.lib_outline.get_relative_indices(corner_index)?;
+        Some(self.lib_outline.c_vertex_index(index))
+    }
+
+    /// Port of `ZONE::RemoveAllContours()`.
+    pub fn remove_all_contours(&mut self) {
+        self.lib_outline.remove_all_contours();
+    }
+
+    /// Port of `ZONE::NewHole()`: `m_Poly->NewHole()` (in the last outline).
+    pub fn new_hole(&mut self) {
+        self.lib_outline.new_hole(-1);
+    }
+
+    /// Port of `ZONE::AppendCorner( aPosition, aHoleIdx, aAllowDuplication )`: false when
+    /// `hole_idx` names a hole that does not exist.
+    pub fn append_corner(&mut self, position: Vector2I, hole_idx: i32, allow_duplication: bool) -> bool {
+        // Ensure the main outline exists:
+        if self.lib_outline.outline_count() == 0 {
+            self.lib_outline.new_outline();
+        }
+
+        // If aHoleIdx >= 0, the corner musty be added to the hole, index aHoleIdx.
+        // (remember: the index of the first hole is 0)
+        // Return error if it does not exist.
+        if hole_idx >= self.lib_outline.hole_count(0) {
+            return false;
+        }
+
+        self.lib_outline
+            .append(position.x, position.y, -1, hole_idx, allow_duplication);
+
+        self.fill.need_refill = true;
+
+        true
+    }
+
+    /// Port of `ZONE::AddPolygon( const SHAPE_LINE_CHAIN& )`: the first polygon becomes the
+    /// main outline, later ones holes in it.
+    pub fn add_polygon(&mut self, polygon: &ShapeLineChain) {
+        debug_assert!(polygon.is_closed());
+
+        // Add the outline as a new polygon in the polygon set
+        if self.lib_outline.outline_count() == 0 {
+            self.lib_outline.add_outline(polygon);
+        } else {
+            self.lib_outline.add_hole(polygon, -1);
+        }
+
+        self.fill.need_refill = true;
+    }
+
+    /// Port of `ZONE::AddPolygon( std::vector<VECTOR2I>& )`.
+    pub fn add_polygon_points(&mut self, polygon: &[Vector2I]) {
+        if polygon.is_empty() {
+            return;
+        }
+
+        let mut outline = ShapeLineChain::new();
+
+        // Create an outline and populate it with the points of aPolygon
+        for pt in polygon {
+            outline.append(*pt, false);
+        }
+
+        outline.set_closed(true);
+
+        self.add_polygon(&outline);
+    }
+
+    /// Port of `ZONE::RemoveCutout( aOutlineIdx, aHoleIdx )`.
+    pub fn remove_cutout(&mut self, outline_idx: i32, hole_idx: i32) {
+        // Ensure the requested cutout is valid
+        if self.lib_outline.outline_count() < outline_idx
+            || self.lib_outline.hole_count(outline_idx) < hole_idx
+        {
+            return;
+        }
+
+        let cut_poly = ShapePolySet::from_outline(self.lib_outline.c_hole(outline_idx, hole_idx));
+
+        // Add the cutout back to the zone
+        self.lib_outline.boolean_add(&cut_poly);
+
+        self.fill.need_refill = true;
+    }
+
+    /// Port of `ZONE::MoveEdge( offset, aEdge )`: moves both ends of edge `edge` (a global
+    /// vertex index) by the board-frame `offset`.
+    pub fn move_edge(&mut self, env: &MutEnv, offset: Vector2I, edge: i32) {
+        if let Some((_, next_corner)) = self.lib_outline.get_neighbour_indexes(edge) {
+            let mut lib_offset = offset;
+
+            if let Some(xform) = Self::env_transform(env) {
+                lib_offset = xform.inverse_apply(offset) - xform.inverse_apply(Vector2I::new(0, 0));
+            }
+
+            let a = self.lib_outline.c_vertex_global(edge) + lib_offset;
+            self.lib_outline.set_vertex(edge, a);
+            let b = self.lib_outline.c_vertex_global(next_corner) + lib_offset;
+            self.lib_outline.set_vertex(next_corner, b);
+            self.hatch_border(env);
+
+            self.fill.need_refill = true;
+        }
     }
 
     // ---- fill state (read side) ---------------------------------------------------------
@@ -254,9 +427,20 @@ impl Zone {
         Arc::clone(&self.fill.filled_polys_list[&layer])
     }
 
+    /// `GetFill( aLayer )`: the fill of `layer`, `None` without one.
+    pub fn get_fill(&self, layer: PcbLayerId) -> Option<&ShapePolySet> {
+        self.fill.filled_polys_list.get(&layer).map(|p| p.as_ref())
+    }
+
     /// `HasFilledPolysForLayer( aLayer )`.
     pub fn has_filled_polys_for_layer(&self, layer: PcbLayerId) -> bool {
         self.fill.filled_polys_list.contains_key(&layer)
+    }
+
+    /// Port of `ZONE::GetFilledLayers()`: the layers that carry a fill entry, in layer
+    /// order (`std::map` order).
+    pub fn filled_layers(&self) -> Vec<PcbLayerId> {
+        self.fill.filled_polys_list.keys().copied().collect()
     }
 
     /// `IsFilled()`.
@@ -282,9 +466,13 @@ impl Zone {
             .is_some_and(|set| set.contains(&poly_idx))
     }
 
-    /// `GetHashValue( aLayer )`: the hash of an empty polygon set for a layer without one.
+    /// Port of `ZONE::GetHashValue( aLayer )`: the hash of an empty polygon set for a layer
+    /// without one.
     pub fn hash_value(&self, layer: PcbLayerId) -> Hash128 {
-        crate::port_pending!("ZONE::GetHashValue", layer)
+        match self.fill.filled_polys_hash.get(&layer) {
+            None => ShapePolySet::new().get_hash(),
+            Some(hash) => *hash,
+        }
     }
 
     // ---- trivial accessors --------------------------------------------------------------
@@ -299,9 +487,28 @@ impl Zone {
         self.priority
     }
 
+    /// `SetAssignedPriority()`.
+    pub fn set_assigned_priority(&mut self, priority: u32) {
+        self.priority = priority;
+    }
+
     /// `GetIsRuleArea()`.
     pub fn is_rule_area(&self) -> bool {
         self.is_rule_area
+    }
+
+    /// `IsTeardropArea()`.
+    pub fn is_teardrop_area(&self) -> bool {
+        self.teardrop_type != TeardropType::TdNone
+    }
+
+    /// `HasKeepoutParametersSet()`.
+    pub fn has_keepout_parameters_set(&self) -> bool {
+        self.do_not_allow_tracks
+            || self.do_not_allow_vias
+            || self.do_not_allow_pads
+            || self.do_not_allow_footprints
+            || self.do_not_allow_zone_fills
     }
 
     /// `GetFillMode()`.
@@ -319,6 +526,31 @@ impl Zone {
         self.thieving_settings.pattern
     }
 
+    /// `GetThievingOrientation()`.
+    pub fn thieving_orientation(&self) -> EdaAngle {
+        self.thieving_settings.orientation.angle()
+    }
+
+    /// `SetThievingOrientation()`: stored normalised; a change marks the zone for refill.
+    pub fn set_thieving_orientation(&mut self, orientation: EdaAngle) {
+        let normalized_orientation = EdaOrientation::new(orientation);
+
+        if self.thieving_settings.orientation != normalized_orientation {
+            self.fill.need_refill = true;
+        }
+
+        self.thieving_settings.orientation = normalized_orientation;
+    }
+
+    /// `SetThievingSettings()`: a change marks the zone for refill.
+    pub fn set_thieving_settings(&mut self, settings: &ThievingSettings) {
+        if self.thieving_settings != *settings {
+            self.fill.need_refill = true;
+        }
+
+        self.thieving_settings = settings.clone();
+    }
+
     /// `GetPadConnection()`.
     pub fn pad_connection(&self) -> ZoneConnection {
         self.pad_connection
@@ -332,6 +564,11 @@ impl Zone {
     /// `GetHatchOrientation()`.
     pub fn hatch_orientation(&self) -> EdaAngle {
         self.hatch_orientation.angle()
+    }
+
+    /// `SetHatchOrientation()`.
+    pub fn set_hatch_orientation(&mut self, orientation: EdaAngle) {
+        self.hatch_orientation = EdaOrientation::new(orientation);
     }
 
     /// `GetDefaultHatchPitch()`.
@@ -349,25 +586,85 @@ impl Zone {
         self.local_flgs = flags;
     }
 
-    // ---- setters with side effects (package M18) ----------------------------------------
+    /// `GetThermalReliefGap()`.
+    pub fn thermal_relief_gap(&self) -> i32 {
+        self.thermal_relief_gap
+    }
 
-    /// `ZONE::SetFillMode()`.
+    /// Port of `ZONE::GetThermalReliefGap( PAD* aPad, wxString* aSource )`: (gap, source).
+    ///
+    /// C++ compares the pad's `std::optional` override with 0, so the zone value is only
+    /// used when the pad override is explicitly 0; without an override the pad branch
+    /// returns 0 (kept as in C++).
+    pub fn thermal_relief_gap_for_pad(&self, pad: &Pad, want_source: bool) -> (i32, Option<String>) {
+        if pad.padstack.thermal_gap(PcbLayerId::FCu) == Some(0) {
+            let source = want_source.then(|| "zone".to_string());
+            return (self.thermal_relief_gap, source);
+        }
+
+        pad.local_thermal_gap_override(want_source)
+    }
+
+    /// `GetThermalReliefSpokeWidth()`.
+    pub fn thermal_relief_spoke_width(&self) -> i32 {
+        self.thermal_relief_spoke_width
+    }
+
+    /// The `ZONE::SetNet` / `SetNetCode` override: copper-thieving zones are always
+    /// net-less. Returns the net code `BOARD_CONNECTED_ITEM::SetNetCode` must be given for a
+    /// requested `net` (callers that set a zone's net apply it first).
+    pub fn filter_net_code(&self, net: NetCode) -> NetCode {
+        if self.is_copper_thieving() {
+            return NetCode::UNCONNECTED;
+        }
+
+        net
+    }
+
+    // ---- setters with side effects ------------------------------------------------------
+
+    /// Port of `ZONE::SetFillMode()`. Switching to copper thieving clears the net
+    /// (`BOARD_CONNECTED_ITEM::SetNetCode( 0, true )`: net code 0 with or without a board)
+    /// and clamps the layer set to the first layer.
     pub fn set_fill_mode(&mut self, fill_mode: ZoneFillMode) {
-        crate::port_pending!("ZONE::SetFillMode", fill_mode)
+        if self.fill_mode == fill_mode {
+            return;
+        }
+
+        self.fill.need_refill = true;
+        self.fill_mode = fill_mode;
+
+        // Thieving zones are net-less and single-layer; clamp on transition so a
+        // multi-layer netted POLYGONS zone converted via the property panel or a
+        // load-time SetLayerSet-then-SetFillMode sequence cannot keep stale state.
+        if self.fill_mode == ZoneFillMode::CopperThieving {
+            self.base.net = NetCode::UNCONNECTED;
+            let first = self.first_layer();
+            self.set_layer_set(&MutEnv::detached(), Lset::from_layers(&[first]));
+        }
     }
 
-    /// `ZONE::SetMinThickness()`: also raises the hatch thickness / gap and the thieving line
-    /// width to at least `min_thickness`, and marks the zone for refill.
+    /// Port of `ZONE::SetMinThickness()`: also raises the hatch thickness / gap and the
+    /// thieving line width to at least `min_thickness`, and marks the zone for refill.
     pub fn set_min_thickness(&mut self, min_thickness: i32) {
-        crate::port_pending!("ZONE::SetMinThickness", min_thickness)
+        self.zone_min_thickness = min_thickness;
+        self.hatch_thickness = self.hatch_thickness.max(min_thickness);
+        self.hatch_gap = self.hatch_gap.max(min_thickness);
+        self.thieving_settings.line_width = self.thieving_settings.line_width.max(min_thickness);
+        self.fill.need_refill = true;
     }
 
-    /// `ZONE::SetCornerRadius()`.
+    /// Port of `ZONE::SetCornerRadius()`.
     pub fn set_corner_radius(&mut self, radius: u32) {
-        crate::port_pending!("ZONE::SetCornerRadius", radius)
+        if self.corner_radius != radius {
+            self.fill.need_refill = true;
+        }
+
+        self.corner_radius = radius;
     }
 
-    /// `ZONE::SetBorderDisplayStyle( aStyle, aPitch, aRebuildBorderHatch )`.
+    /// Port of `ZONE::SetBorderDisplayStyle( aStyle, aPitch, aRebuildBorderHatch )`: the
+    /// pitch is clamped to `ZONE_BORDER_HATCH_MINDIST_MM .. ZONE_BORDER_HATCH_MAXDIST_MM`.
     pub fn set_border_display_style(
         &mut self,
         env: &MutEnv,
@@ -375,100 +672,283 @@ impl Zone {
         pitch: i32,
         rebuild_border_hatch: bool,
     ) {
-        crate::port_pending!(
-            "ZONE::SetBorderDisplayStyle",
-            env,
-            style,
-            pitch,
-            rebuild_border_hatch
-        )
+        let mut pitch = pitch.max(PCB_IU_SCALE.mm_to_iu(ZONE_BORDER_HATCH_MINDIST_MM));
+        pitch = pitch.min(PCB_IU_SCALE.mm_to_iu(ZONE_BORDER_HATCH_MAXDIST_MM));
+        self.border_hatch_pitch = pitch;
+        self.border_style = style;
+
+        if rebuild_border_hatch {
+            self.hatch_border(env);
+        }
     }
 
-    /// `ZONE::HatchBorder()`: rebuild `border_hatch_lines` from the board-frame outline.
+    /// Port of `ZONE::UnHatchBorder()`.
+    pub fn unhatch_border(&mut self) {
+        self.border_hatch_lines.clear();
+    }
+
+    /// Port of `ZONE::HatchBorder()`: rebuild `border_hatch_lines` from the stored outline
+    /// (`m_Poly`, library frame for a footprint zone; [`Zone::hatch_lines`] returns them in
+    /// the board frame).
     pub fn hatch_border(&mut self, env: &MutEnv) {
-        crate::port_pending!("ZONE::HatchBorder", env)
+        let _ = env;
+        self.unhatch_border();
+
+        if self.border_style == ZoneBorderDisplayStyle::NoHatch
+            || self.border_hatch_pitch == 0
+            || self.lib_outline.is_empty()
+        {
+            return;
+        }
+
+        // set the "length" of hatch lines (the length on horizontal axis)
+        let mut hatch_line_len = self.border_hatch_pitch; // OK for DIAGONAL_EDGE style
+
+        // Calculate spacing between 2 hatch lines
+        let mut spacing = self.border_hatch_pitch; // OK for DIAGONAL_EDGE style
+
+        if self.border_style == ZoneBorderDisplayStyle::DiagonalFull {
+            // The spacing is twice the spacing for DIAGONAL_EDGE because one
+            // full diagonal replaces 2 edge diagonal hatch segments in code
+            spacing = self.border_hatch_pitch * 2;
+            hatch_line_len = -1; // Use full diagonal hatch line
+        }
+
+        // To have a better look, give a slope depending on the layer
+        let layer = self.first_layer().0;
+        let slopes: Vec<f64> = if self.is_teardrop_area() {
+            vec![0.7, -0.7]
+        } else if layer & 1 != 0 {
+            vec![1.0]
+        } else {
+            vec![-1.0]
+        };
+
+        self.border_hatch_lines = self
+            .lib_outline
+            .generate_hatch_lines(&slopes, spacing, hatch_line_len);
     }
 
-    /// `ZONE::UnFill()`: true if there was a fill.
+    /// Port of `ZONE::GetHatchLines()`: the border hatch lines in the board frame.
+    pub fn hatch_lines(&self, ctx: &BoardCtx<'_>) -> Vec<Seg> {
+        let Some(xform) = self.parent_transform(ctx) else {
+            return self.border_hatch_lines.clone();
+        };
+
+        self.border_hatch_lines
+            .iter()
+            .map(|seg| Seg::new(xform.apply(seg.a), xform.apply(seg.b)))
+            .collect()
+    }
+
+    /// Port of `ZONE::UnFill()`: true if there was a fill. Every fill entry is replaced by
+    /// a new empty set (holders of the old `Arc` keep their snapshot, like the C++
+    /// `shared_ptr` replacement).
     pub fn unfill(&mut self) -> bool {
-        crate::port_pending!("ZONE::UnFill")
+        self.fill.unfill_locked()
     }
 
-    /// `ZONE::CalculateFilledArea()`.
+    /// Port of `ZONE::CalculateFilledArea()`.
     pub fn calculate_filled_area(&mut self) -> f64 {
-        crate::port_pending!("ZONE::CalculateFilledArea")
+        self.area = 0.0;
+
+        for poly in self.fill.filled_polys_list.values() {
+            self.area += poly.area();
+        }
+
+        self.area
     }
 
-    /// `ZONE::CalculateOutlineArea()`.
+    /// Port of `ZONE::CalculateOutlineArea()`: the area of the stored outline (`m_Poly`,
+    /// library frame for a footprint zone, as in C++).
     pub fn calculate_outline_area(&mut self, ctx: &BoardCtx<'_>) -> f64 {
-        crate::port_pending!("ZONE::CalculateOutlineArea", ctx)
+        let _ = ctx;
+        self.outline_area = self.lib_outline.area().abs();
+        self.outline_area
     }
 
-    /// `ZONE::GetFirstLayer()`.
+    /// `GetFilledArea()`.
+    pub fn filled_area(&self) -> f64 {
+        self.area
+    }
+
+    /// `GetOutlineArea()`.
+    pub fn outline_area(&self) -> f64 {
+        self.outline_area
+    }
+
+    /// Port of `ZONE::GetFirstLayer()`: the first layer in UI order (a zone on a rescue layer
+    /// outside the UI order: the first layer of the set), `UNDEFINED_LAYER` for no layer.
     pub fn first_layer(&self) -> PcbLayerId {
-        crate::port_pending!("ZONE::GetFirstLayer")
+        if self.layer_set.count() == 0 {
+            return PcbLayerId::UndefinedLayer;
+        }
+
+        let ui_layers = self.layer_set.ui_order();
+
+        // This can't use m_layerSet.count() because it's possible to have a zone on
+        // a rescue layer that is not in the UI order.
+        if let Some(first) = ui_layers.first() {
+            return *first;
+        }
+
+        // If it's not in the UI set at all, just return the first layer in the set.
+        // (we know the count > 0)
+        self.layer_set.seq()[0]
     }
 
-    /// `ZONE::HigherPriority( aOther )`.
+    /// Port of `ZONE::HigherPriority( aOther )`: teardrops first, then the priority, then
+    /// the UUID.
     pub fn higher_priority(&self, other: &Zone) -> bool {
-        crate::port_pending!("ZONE::HigherPriority", other)
+        // Teardrops are always higher priority than regular zones, so if one zone is a teardrop
+        // and the other is not, then return higher priority as the teardrop
+        if (self.teardrop_type == TeardropType::TdNone)
+            ^ (other.teardrop_type == TeardropType::TdNone)
+        {
+            return (self.teardrop_type as i32) > (other.teardrop_type as i32);
+        }
+
+        if self.priority != other.priority {
+            return self.priority > other.priority;
+        }
+
+        self.base.item.uuid > other.base.item.uuid
     }
 
-    /// `ZONE::SameNet( aOther )`.
+    /// Port of `ZONE::SameNet( aOther )`.
     pub fn same_net(&self, other: &Zone) -> bool {
-        crate::port_pending!("ZONE::SameNet", other)
+        self.base.net == other.base.net
     }
 
-    /// `ZONE::IsConflicting()`.
+    /// Port of `ZONE::IsConflicting()`: `HasFlag( COURTYARD_CONFLICT )`.
     pub fn is_conflicting(&self, ctx: &BoardCtx<'_>) -> bool {
-        crate::port_pending!("ZONE::IsConflicting", ctx)
+        let _ = ctx;
+        self.base.item.flags.has(ItemFlags::COURTYARD_CONFLICT)
     }
 
-    /// `ZONE::BuildSmoothedPoly( aSmoothedPoly, aLayer, aBoardOutline, aSmoothedPolyWithApron )`:
-    /// false if the outline is degenerate.
-    pub fn build_smoothed_poly(
+    /// Port of `ZONE::SetLayerSetAndRemoveUnusedFills()`. The C++ loop only visits layers of
+    /// the new set and resets those not in it, i.e. none: only the layer set changes.
+    pub fn set_layer_set_and_remove_unused_fills(&mut self, layers: Lset) {
+        if layers.count() == 0 {
+            return;
+        }
+
+        self.layer_set = layers;
+    }
+
+    /// Port of `ZONE::GetInteractingZones( aLayer, aSameNetCollidingZones,
+    /// aOtherNetIntersectingZones )`: the board zones (not footprint zones, `BOARD::Zones()`)
+    /// on `layer` whose bounding box touches this one's (inflated by 1 um), excluding rule
+    /// and teardrop areas; same-net zones only if their outlines collide. Empty without a
+    /// board.
+    pub fn interacting_zones<'a>(
         &self,
-        ctx: &BoardCtx<'_>,
-        smoothed_poly: &mut ShapePolySet,
+        ctx: &BoardCtx<'a>,
         layer: PcbLayerId,
-        board_outline: Option<&ShapePolySet>,
-        smoothed_poly_with_apron: Option<&mut ShapePolySet>,
-    ) -> bool {
-        crate::port_pending!(
-            "ZONE::BuildSmoothedPoly",
-            ctx,
-            smoothed_poly,
-            layer,
-            board_outline,
-            smoothed_poly_with_apron
-        )
+    ) -> (Vec<(ZoneId, &'a Zone)>, Vec<(ZoneId, &'a Zone)>) {
+        let mut same_net_colliding = Vec::new();
+        let mut other_net_intersecting = Vec::new();
+
+        if !board_item::has_board(self, ctx) {
+            return (same_net_colliding, other_net_intersecting);
+        }
+
+        let board: &'a Board = ctx.board;
+        let epsilon = PCB_IU_SCALE.mm_to_iu(0.001);
+        let mut bbox = self.bounding_box(ctx);
+
+        bbox.inflate(epsilon);
+
+        let self_in_fp = self.parent_transform(ctx).is_some();
+
+        for (candidate_id, candidate) in board.zones() {
+            if self.base.item.id() == Some(candidate_id.into()) {
+                continue;
+            }
+
+            if !candidate.layer_set.test(layer) {
+                continue;
+            }
+
+            if candidate.is_rule_area() || candidate.is_teardrop_area() {
+                continue;
+            }
+
+            if !candidate.bounding_box(ctx).intersects(&bbox) {
+                continue;
+            }
+
+            if candidate.base.net == self.base.net {
+                // GetBoardOutline() is expensive.  Don't use it in Zone Filler unless we have to.
+                let self_storage;
+                let self_outline = if self_in_fp {
+                    self_storage = self.board_outline(ctx);
+                    &self_storage
+                } else {
+                    &self.lib_outline
+                };
+
+                let candidate_storage;
+                let candidate_outline = if candidate.parent_transform(ctx).is_some() {
+                    candidate_storage = candidate.board_outline(ctx);
+                    &candidate_storage
+                } else {
+                    &candidate.lib_outline
+                };
+
+                if self_outline.collide_shape(candidate_outline, 0, None, None) {
+                    same_net_colliding.push((candidate_id, candidate));
+                }
+            } else {
+                other_net_intersecting.push((candidate_id, candidate));
+            }
+        }
+
+        (same_net_colliding, other_net_intersecting)
     }
 
-    // ---- virtual overrides (package M18) ------------------------------------------------
+    // ---- virtual overrides --------------------------------------------------------------
 
-    /// `ZONE::GetLayer()`.
+    /// Port of `ZONE::GetLayer()`: the layer of a single-layer zone, `UNDEFINED_LAYER`
+    /// otherwise.
     pub fn layer(&self, ctx: &BoardCtx<'_>) -> PcbLayerId {
-        crate::port_pending!("ZONE::GetLayer", ctx)
+        let _ = ctx;
+
+        if self.layer_set.count() == 1 {
+            return self.first_layer();
+        }
+
+        PcbLayerId::UndefinedLayer
     }
 
-    /// `ZONE::GetLayerSet()`.
+    /// Port of `ZONE::GetLayerSet()`.
     pub fn layer_set(&self, ctx: &BoardCtx<'_>) -> Lset {
-        crate::port_pending!("ZONE::GetLayerSet", ctx)
+        let _ = ctx;
+        self.layer_set.clone()
     }
 
-    /// `ZONE::IsOnLayer()`.
+    /// Port of `ZONE::IsOnLayer()`.
     pub fn is_on_layer(&self, ctx: &BoardCtx<'_>, layer: PcbLayerId) -> bool {
-        crate::port_pending!("ZONE::IsOnLayer", ctx, layer)
+        let _ = ctx;
+        self.layer_set.test(layer)
     }
 
-    /// `ZONE::IsOnCopperLayer()`.
+    /// Port of `ZONE::IsOnCopperLayer()`.
     pub fn is_on_copper_layer(&self, ctx: &BoardCtx<'_>) -> bool {
-        crate::port_pending!("ZONE::IsOnCopperLayer", ctx)
+        let _ = ctx;
+        (self.layer_set.clone() & Lset::all_cu_mask()).count() > 0
     }
 
-    /// `ZONE::GetPosition()`: the first outline corner.
+    /// Port of `ZONE::GetPosition()`: the first corner of the stored outline (library frame
+    /// for a footprint zone, as in C++), (0, 0) for an empty outline.
     pub fn position(&self, ctx: &BoardCtx<'_>) -> Vector2I {
-        crate::port_pending!("ZONE::GetPosition", ctx)
+        let _ = ctx;
+
+        if self.lib_outline.outline_count() == 0 || self.lib_outline.total_vertices() == 0 {
+            return Vector2I::new(0, 0);
+        }
+
+        self.corner_position(0).unwrap_or_default()
     }
 
     /// `ZONE::IsConnected()`: `!GetIsRuleArea()`.
@@ -476,68 +956,287 @@ impl Zone {
         !self.is_rule_area
     }
 
-    /// `ZONE::GetLocalClearance()`: none for a rule area, else `m_ZoneClearance`.
+    /// Port of `ZONE::GetLocalClearance()` (no source argument): always a value, 0 for a
+    /// rule area, else `m_ZoneClearance`.
     pub fn local_clearance(&self) -> Option<i32> {
-        crate::port_pending!("ZONE::GetLocalClearance")
+        Some(if self.is_rule_area { 0 } else { self.zone_clearance })
     }
 
-    /// `ZONE::GetFriendlyName()`.
+    /// Port of `ZONE::GetLocalClearance( wxString* aSource )`: `None` for a rule area, else
+    /// (`m_ZoneClearance`, "zone" when asked).
+    pub fn local_clearance_with_source(&self, want_source: bool) -> Option<(i32, Option<String>)> {
+        if self.is_rule_area {
+            return None;
+        }
+
+        let source = want_source.then(|| "zone".to_string());
+        Some((self.local_clearance().unwrap_or(0), source))
+    }
+
+    /// Port of `ZONE::GetFriendlyName()` (English).
     pub fn friendly_name(&self, ctx: &BoardCtx<'_>) -> String {
-        crate::port_pending!("ZONE::GetFriendlyName", ctx)
+        if self.is_rule_area() {
+            "Rule Area".to_string()
+        } else if self.is_teardrop_area() {
+            "Teardrop Area".to_string()
+        } else if self.is_on_copper_layer(ctx) {
+            "Copper Zone".to_string()
+        } else {
+            "Non-copper Zone".to_string()
+        }
     }
 
-    /// `ZONE::GetItemDescription()`.
+    /// Port of `ZONE::GetItemDescription()` (English).
     pub fn item_description(
         &self,
         ctx: &BoardCtx<'_>,
         units: &UnitsProvider<'_>,
         full: bool,
     ) -> String {
-        crate::port_pending!("ZONE::GetItemDescription", ctx, units, full)
+        let _ = (units, full);
+        let layers = self.layer_set.seq();
+        let has_board = board_item::has_board(self, ctx);
+
+        let layer_name = |layer: PcbLayerId| -> String {
+            if has_board {
+                return ctx.board.layer_name(layer);
+            }
+
+            Board::standard_layer_name(layer)
+        };
+
+        let layer_desc = match layers.len() {
+            0 => String::new(),
+            1 => format!("on {}", layer_name(layers[0])),
+            2 => format!("on {} and {}", layer_name(layers[0]), layer_name(layers[1])),
+            3 => format!(
+                "on {}, {} and {}",
+                layer_name(layers[0]),
+                layer_name(layers[1]),
+                layer_name(layers[2])
+            ),
+            n => format!(
+                "on {}, {} and {} more",
+                layer_name(layers[0]),
+                layer_name(layers[1]),
+                n - 2
+            ),
+        };
+
+        if self.is_rule_area() {
+            if self.zone_name.is_empty() {
+                format!("Rule Area {layer_desc}")
+            } else {
+                format!("Rule area '{}' {}", self.zone_name, layer_desc)
+            }
+        } else if self.is_teardrop_area() {
+            format!(
+                "Teardrop {} {}",
+                board_connected_item::netname_msg(self, ctx),
+                layer_desc
+            )
+        } else if self.zone_name.is_empty() {
+            // "%d" of an unsigned priority
+            format!(
+                "Zone {} {}, priority {}",
+                board_connected_item::netname_msg(self, ctx),
+                layer_desc,
+                self.priority as i32
+            )
+        } else {
+            format!(
+                "Zone '{}' {} {}, priority {}",
+                self.zone_name,
+                board_connected_item::netname_msg(self, ctx),
+                layer_desc,
+                self.priority as i32
+            )
+        }
     }
 
-    /// `ZONE::SetPosition()`.
+    /// `ZONE::SetPosition()`: does nothing.
     pub fn set_position(&mut self, env: &MutEnv, pos: Vector2I) {
-        crate::port_pending!("ZONE::SetPosition", env, pos)
+        let _ = (env, pos);
     }
 
-    /// `ZONE::Move()`.
+    /// Port of `ZONE::Move()`: the outline moves by the offset expressed in its own frame,
+    /// the hatch lines are translated (not regenerated), the fills and the cached bounding
+    /// box move by the board-frame offset.
     pub fn move_by(&mut self, env: &MutEnv, delta: Vector2I) {
-        crate::port_pending!("ZONE::Move", env, delta)
+        let mut outline_offset = delta;
+
+        if let Some(xform) = Self::env_transform(env) {
+            outline_offset = xform.inverse_apply(delta) - xform.inverse_apply(Vector2I::new(0, 0));
+        }
+
+        self.lib_outline.move_(outline_offset);
+
+        // Translate existing hatch lines instead of regenerating them. HatchBorder() is expensive
+        // (O(n*m) segment intersections + point-in-polygon tests) and the hatch pattern is
+        // invariant under translation.
+        for seg in &mut self.border_hatch_lines {
+            seg.a += outline_offset;
+            seg.b += outline_offset;
+        }
+
+        /* move fills */
+        for poly in self.fill.filled_polys_list.values_mut() {
+            Arc::make_mut(poly).move_(delta);
+        }
+
+        // move boundingbox cache
+        //
+        // While the cache will get nuked at the conclusion of the operation, we use it for some
+        // things (such as drawing the parent group) during the move.
+        self.bbox_cache.update(|(bbox, _)| bbox.move_(delta));
     }
 
-    /// `ZONE::Rotate()`.
+    /// Port of `ZONE::Rotate()`.
     pub fn rotate(&mut self, env: &MutEnv, centre: Vector2I, angle: EdaAngle) {
-        crate::port_pending!("ZONE::Rotate", env, centre, angle)
+        let mut outline_centre = centre;
+
+        if let Some(xform) = Self::env_transform(env) {
+            outline_centre = xform.inverse_apply(centre);
+        }
+
+        self.lib_outline.rotate(angle, outline_centre);
+        self.bbox_cache.clear();
+        self.hatch_border(env);
+
+        /* rotate filled areas: */
+        for poly in self.fill.filled_polys_list.values_mut() {
+            Arc::make_mut(poly).rotate(angle, centre);
+        }
     }
 
-    /// `ZONE::Flip()`.
+    /// Port of `ZONE::Flip()`: mirror, then move every layer (layer set, per-layer
+    /// properties and fills) to its flipped layer.
     pub fn flip(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("ZONE::Flip", env, centre, dir)
+        self.mirror(env, centre, dir);
+
+        let fills_copy: BTreeMap<PcbLayerId, ShapePolySet> = self
+            .fill
+            .filled_polys_list
+            .iter()
+            .map(|(layer, poly)| (*layer, poly.as_ref().clone()))
+            .collect();
+
+        let layer_properties_copy = self.layer_properties.clone();
+
+        let mut flipped = Lset::new();
+
+        for layer in self.layer_set.seq().iter().copied() {
+            flipped.set(env.layers.flip_layer(layer));
+        }
+
+        self.set_layer_set(env, flipped);
+
+        for (old_layer, properties) in layer_properties_copy {
+            let new_layer = env.layers.flip_layer(old_layer);
+            self.layer_properties.insert(new_layer, properties);
+        }
+
+        for (old_layer, shape) in &fills_copy {
+            let new_layer = env.layers.flip_layer(*old_layer);
+            self.fill.set_filled_polys_list(new_layer, shape);
+        }
     }
 
-    /// `ZONE::Mirror()`.
+    /// Port of `ZONE::Mirror( aMirrorRef, aFlipDirection )`.
     pub fn mirror(&mut self, env: &MutEnv, centre: Vector2I, dir: FlipDirection) {
-        crate::port_pending!("ZONE::Mirror", env, centre, dir)
+        self.mirror_seg(env, &board_item::mirror_axis(centre, dir));
     }
 
-    /// `ZONE::SetLayer()`.
+    /// Port of `ZONE::Mirror( const SEG& aAxis )`.
+    pub fn mirror_seg(&mut self, env: &MutEnv, axis: &Seg) {
+        let axis_angle = -EdaAngle::from_vector(axis.b - axis.a);
+
+        self.set_hatch_orientation(self.hatch_orientation().reflect(axis_angle).normalized());
+        self.set_thieving_orientation(self.thieving_orientation().reflect(axis_angle).normalized());
+
+        if let Some(xform) = Self::env_transform(env) {
+            // Footprints are only ever flipped, never mirrored, so this is reached only from Flip(),
+            // which always passes a cardinal axis.
+            // (Handy, because otherwise we have to handle the footprint transform!)
+            let flip_direction = if axis.a.x == axis.b.x {
+                FlipDirection::LeftRight
+            } else {
+                FlipDirection::TopBottom
+            };
+
+            let flip_axis_start = xform.inverse_apply(axis.a);
+            self.lib_outline.mirror(flip_axis_start, flip_direction);
+        } else {
+            self.lib_outline.mirror_seg(axis);
+        }
+
+        self.bbox_cache.clear();
+
+        self.hatch_border(env);
+
+        for poly in self.fill.filled_polys_list.values_mut() {
+            Arc::make_mut(poly).mirror_seg(axis);
+        }
+    }
+
+    /// Port of `ZONE::SetLayer()`: `SetLayerSet( LSET( { aLayer } ) )`.
     pub fn set_layer(&mut self, env: &MutEnv, layer: PcbLayerId) {
-        crate::port_pending!("ZONE::SetLayer", env, layer)
+        self.set_layer_set(env, Lset::from_layers(&[layer]));
     }
 
-    /// `ZONE::SetLayerSet()`: ignores an empty set, clamps thieving zones to one layer,
-    /// clears the fills of a changed set.
+    /// Port of `ZONE::SetLayerSet()`: ignores an empty set, clamps thieving zones to one
+    /// layer, clears the fills of a changed set (one empty fill entry per new layer) and drops
+    /// the per-layer properties of layers no longer in the set.
     pub fn set_layer_set(&mut self, env: &MutEnv, layers: Lset) {
-        crate::port_pending!("ZONE::SetLayerSet (virtual)", env, layers)
+        let _ = env;
+
+        if layers.count() == 0 {
+            return;
+        }
+
+        // Thieving zones are single-layer; clamp here so direct callers cannot violate
+        // the invariant.  UIOrder().front() matches GetFirstLayer().
+        let effective_set = if self.is_copper_thieving() && layers.count() > 1 {
+            Lset::from_layers(&[layers.ui_order()[0]])
+        } else {
+            layers
+        };
+
+        if self.layer_set != effective_set {
+            self.fill.need_refill = true;
+
+            self.fill.unfill_locked();
+
+            self.fill.filled_polys_list.clear();
+            self.fill.filled_polys_hash.clear();
+            self.fill.insulated_islands.clear();
+
+            let fill = &mut self.fill;
+            effective_set.run_on_layers(|layer| {
+                fill.filled_polys_list
+                    .insert(layer, Arc::new(ShapePolySet::new()));
+                fill.filled_polys_hash.insert(layer, Hash128::default());
+                fill.insulated_islands.insert(layer, BTreeSet::new());
+            });
+
+            self.layer_properties
+                .retain(|layer, _| effective_set.contains(*layer));
+        }
+
+        self.layer_set = effective_set;
     }
 
-    /// `ZONE::OnFootprintTransformed()`.
+    /// Port of `ZONE::OnFootprintTransformed()`: footprint zone bounding boxes are derived
+    /// through the parent transform; the fill is dropped.
     pub fn on_footprint_transformed(&mut self, env: &MutEnv) {
-        crate::port_pending!("ZONE::OnFootprintTransformed", env)
+        let _ = env;
+        self.bbox_cache.clear();
+        self.fill.need_refill = true;
+        self.unfill();
     }
 
-    /// `ZONE::OnFootprintRescaled()`.
+    /// Port of `ZONE::OnFootprintRescaled()`: the outline auto-derives from the library
+    /// storage; only the fill is invalidated.
     pub fn on_footprint_rescaled(
         &mut self,
         env: &MutEnv,
@@ -547,20 +1246,84 @@ impl Zone {
         anchor: Vector2I,
         parent_rotate: EdaAngle,
     ) {
-        crate::port_pending!(
-            "ZONE::OnFootprintRescaled",
-            env,
-            ratio_x,
-            ratio_y,
-            linear_factor,
-            anchor,
-            parent_rotate
-        )
+        let _ = (env, linear_factor, anchor, parent_rotate);
+
+        if ratio_x == 1.0 && ratio_y == 1.0 {
+            return;
+        }
+
+        // Zone outline auto-derives from lib storage through the parent transform.
+        // Just invalidate the fill since geometry-on-screen has changed.
+        self.bbox_cache.clear();
+        self.fill.need_refill = true;
+        self.unfill();
     }
 
-    /// `ZONE::operator==( const BOARD_ITEM& )`.
+    /// Port of `ZONE::operator==( const BOARD_ITEM& )`: rule-area flags, or priority / min
+    /// thickness / corner smoothing / teardrop parameters, then the stored corners.
     pub fn eq_item(&self, ctx: &BoardCtx<'_>, other: &Zone) -> bool {
-        crate::port_pending!("ZONE::operator==", ctx, other)
+        let _ = ctx;
+
+        if self.is_rule_area() != other.is_rule_area() {
+            return false;
+        }
+
+        if self.is_rule_area() {
+            if self.do_not_allow_zone_fills != other.do_not_allow_zone_fills
+                || self.do_not_allow_tracks != other.do_not_allow_tracks
+                || self.do_not_allow_vias != other.do_not_allow_vias
+                || self.do_not_allow_footprints != other.do_not_allow_footprints
+                || self.do_not_allow_pads != other.do_not_allow_pads
+                || self.placement_area_enabled != other.placement_area_enabled
+                || self.placement_area_source_type != other.placement_area_source_type
+                || self.placement_area_source != other.placement_area_source
+            {
+                return false;
+            }
+        } else if self.priority != other.priority
+            || self.zone_min_thickness != other.zone_min_thickness
+            || self.corner_smoothing_type != other.corner_smoothing_type
+            || self.corner_radius != other.corner_radius
+            || self.base.teardrop_params != other.base.teardrop_params
+        {
+            return false;
+        }
+
+        if self.num_corners() != other.num_corners() {
+            return false;
+        }
+
+        for ii in 0..self.num_corners() {
+            if self.corner_position(ii) != other.corner_position(ii) {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Port of `ZONE::CacheOutlineTriangulation()`.
+    pub fn cache_outline_triangulation(&mut self) {
+        self.lib_outline.cache_triangulation(false);
+    }
+
+    /// Port of `ZONE::CacheTriangulation( aLayer )`: `UNDEFINED_LAYER` triangulates every
+    /// fill and the outline.
+    pub fn cache_triangulation(&mut self, layer: PcbLayerId) {
+        self.fill.cache_triangulation(layer);
+
+        if layer == PcbLayerId::UndefinedLayer {
+            self.lib_outline.cache_triangulation(false);
+        }
+    }
+
+    /// Port of `ZONE::CacheBoundingBox()`: preload the bounding-box cache for the current
+    /// board time stamp (no-op without a board, like C++).
+    pub fn cache_bounding_box(&self, ctx: &BoardCtx<'_>) {
+        if board_item::has_board(self, ctx) {
+            let bbox = self.compute_bounding_box(ctx);
+            self.bbox_cache.store((bbox, ctx.board.time_stamp()));
+        }
     }
 }
 
@@ -571,6 +1334,12 @@ impl ZoneFill {
     pub fn set_filled_polys_list(&mut self, layer: PcbLayerId, polys: &ShapePolySet) {
         self.filled_polys_list
             .insert(layer, Arc::new(polys.clone()));
+    }
+
+    /// `ZONE::MoveFilledPolysList( aLayer, aPolysList )` equivalent: installs `polys`
+    /// without copying.
+    pub fn move_filled_polys_list(&mut self, layer: PcbLayerId, polys: ShapePolySet) {
+        self.filled_polys_list.insert(layer, Arc::new(polys));
     }
 
     /// `ZONE::GetFillFlag( aLayer )`.
@@ -601,14 +1370,50 @@ impl ZoneFill {
             .insert(poly_idx);
     }
 
-    /// `ZONE::BuildHashValue( aLayer )`.
-    pub fn build_hash_value(&mut self, layer: PcbLayerId) {
-        crate::port_pending!("ZONE::BuildHashValue", layer)
+    /// Port of `ZONE::unFillLocked()`: every fill entry is replaced by a new empty set, the
+    /// island sets of those layers are emptied, `is_filled` and the fill flags are reset.
+    /// True if any fill was not empty.
+    pub(crate) fn unfill_locked(&mut self) -> bool {
+        let mut change = false;
+
+        for (layer, poly) in self.filled_polys_list.iter_mut() {
+            change |= !poly.is_empty();
+            self.insulated_islands.entry(*layer).or_default().clear();
+
+            // Replace the shared_ptr with a new empty object rather than clearing the existing one.
+            // This ensures that any CN_ZONE_LAYERs holding shared_ptr copies still have valid data
+            // (the old, now orphaned SHAPE_POLY_SET) while we get a fresh container.
+            *poly = Arc::new(ShapePolySet::new());
+        }
+
+        self.is_filled = false;
+        self.fill_flags = Lset::new();
+
+        change
     }
 
-    /// `ZONE::CacheTriangulation( aLayer )` (`UNDEFINED_LAYER`: every layer).
+    /// Port of `ZONE::BuildHashValue( aLayer )`: the hash of the layer's fill (of an empty
+    /// set for a layer without one).
+    pub fn build_hash_value(&mut self, layer: PcbLayerId) {
+        let hash = match self.filled_polys_list.get(&layer) {
+            None => ShapePolySet::new().get_hash(),
+            Some(poly) => poly.get_hash(),
+        };
+
+        self.filled_polys_hash.insert(layer, hash);
+    }
+
+    /// Port of the fill part of `ZONE::CacheTriangulation( aLayer )` (`UNDEFINED_LAYER`:
+    /// every layer); [`Zone::cache_triangulation`] also triangulates the outline. A fill
+    /// shared with another holder is copied first (`Arc::make_mut`).
     pub fn cache_triangulation(&mut self, layer: PcbLayerId) {
-        crate::port_pending!("ZONE::CacheTriangulation", layer)
+        if layer == PcbLayerId::UndefinedLayer {
+            for poly in self.filled_polys_list.values_mut() {
+                Arc::make_mut(poly).cache_triangulation(false);
+            }
+        } else if let Some(poly) = self.filled_polys_list.get_mut(&layer) {
+            Arc::make_mut(poly).cache_triangulation(false);
+        }
     }
 }
 

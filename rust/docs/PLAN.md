@@ -160,7 +160,8 @@ Progress log of launches (workflow task ids):
   cmath::cbrt with a glibc port because Rust's cbrt differs by 1 ulp) - orchestrator re-ran
   the crate: 555 tests pass, 0 fail.
 - running: PCBIO-17 corpus harness and DRC-11 report writers (wh3q6gcxx); W1 session / cli /
-  wasm skeleton and FAB-02 Excellon writer (wqbof03ge); SET-4 BDS JSON (w2szwoq36); M8 -> M9
+  wasm skeleton and FAB-02 Excellon writer (wqbof03ge); SET-5 project file + SetProject +
+  load sequences (wu5ii0v6b; SET-4 BDS JSON finished); M8 -> M9
   -> M11 (w3pcibnu5); PCBIO-04 setup and PCBIO-09 -> PCBIO-11 (wn7tddi73); M18 -> PCBIO-08
   and M12 -> PCBIO-10 (wr976icfj); PCBIO-03 and PCBIO-05 (wa5nbjjnh); M15 pad shapes and
   CN-01 -> CN-02 -> CN-03 -> CN-04 connectivity (wk55svoty); DRC-03 -> DRC-04 and DRC-02 ->

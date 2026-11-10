@@ -3,16 +3,20 @@
 # `kicad-cli pcb upgrade --force` (each board copied alone into a fresh scratch directory: no
 # project files):
 #  1. the hand-made boards tests/data/pcbio09/groups*.kicad_pcb (not *_bad*: those do not load)
-#     are re-saved to tests/golden/pcbio09/<name>.kicad_pcb;
+#     are re-saved to tests/golden/pcbio09/<name>.kicad_pcb (O1), O1 once more to
+#     <name>_o2.kicad_pcb when that differs (empty groups are not written, so a group whose
+#     only members were empty groups disappears in the second save);
 #  2. every board of qa/data/pcbnew and demos containing "(group " is re-saved and each
 #     (group ..) block of the result (any depth: board and footprint groups) is recorded in
 #     tests/golden/pcbio09_corpus_groups.txt as
 #       path|uuid|depth|members=N|fnv(header)|fnv(block)
 #     where block = the lines from "(group " to its closing ")" and header = the block lines
 #     before the first line containing "(members" (FNV-1a 64); "path|none" when the re-saved
-#     board has no group block, "path|error" when the reference build does not save it.
+#     board has no group block, "path|error" when the reference build does not save it;
+#  3. `pcb-dump board --no-init --sections misc,item` of the hand-made boards ->
+#     tests/golden/pcbio09/<name>.dump.txt (item level).
 # Replayed by the Rust tests `io::parser::group::tests::oracle_resave_groups` and
-# `oracle_corpus_groups` (the block extraction is mirrored there).
+# `oracle_corpus_groups` (the block extraction is mirrored there) and `oracle_dump_groups`.
 #
 # Usage: tests/oracle/pcbio09_golden.sh   (run from rust/crates/kicad-pcb; ~3 minutes)
 set -euo pipefail
@@ -74,8 +78,16 @@ PY
 
 mkdir -p "$here/golden/pcbio09"
 for f in "$here"/data/pcbio09/groups*.kicad_pcb; do
-    case "$f" in *_bad*) continue ;; esac
-    resave "$f" "$here/golden/pcbio09/$(basename "$f")"
+    case "$f" in *_bad*|*_o2*) continue ;; esac
+    o1=$here/golden/pcbio09/$(basename "$f")
+    resave "$f" "$o1"
+    resave "$o1" "$scratch/o2.kicad_pcb"
+    o2=${o1%.kicad_pcb}_o2.kicad_pcb
+    rm -f "$o2"
+    cmp -s "$o1" "$scratch/o2.kicad_pcb" || cp "$scratch/o2.kicad_pcb" "$o2"
+    mkdir -p "$scratch/d"; cp "$f" "$scratch/d/"
+    "${PCB_DUMP:-/home/user/kicad-oracle/bin/pcb-dump}" board --no-init --sections misc,item \
+        "$scratch/d/$(basename "$f")" > "$here/golden/pcbio09/$(basename "$f" .kicad_pcb).dump.txt" 2>/dev/null
     echo "$(basename "$f")"
 done
 

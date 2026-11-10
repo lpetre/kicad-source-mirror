@@ -197,3 +197,24 @@ Severities print as the C++ enumerator names (`RPT_SEVERITY_ERROR`, ...). Fields
 order shown. Rust twin: `rust/crates/kicad-drc/tests/common/mod.rs` (`dump_rules`), runnable as
 `cargo run -p kicad-drc --example rules_dump -- FILE...`; goldens in
 `rust/crates/kicad-drc/tests/golden/rules_*.txt` (generator `tests/oracle/gen_rules_goldens.py`).
+
+## 8. connectivity
+
+`pcb-dump board --sections connectivity FILE` (source `rust/tools/pcb-dump/dump_connectivity.cpp`).
+**Opt-in**: printed only when `connectivity` is listed explicitly, never as part of "all
+sections", so that the item-section goldens of other crates are unaffected. It reads the
+`CONNECTIVITY_DATA` built by the load path (`BuildConnectivity`) and prints five sections in
+this order (the last one mutates the connectivity, so it runs last):
+
+| Section | Key | Fields |
+|---|---|---|
+| `cn_item` | `#<n>`, `n` = position in `CN_LIST` | `ref`, `list_index`, `type` (`KICAD_T` name of the parent), `valid`, `net` (`CN_ITEM::Net()`), `can_change_net`, `layers` (`<start ordinal>..<end ordinal>`, copper ordinals: B.Cu = 31), `board_layer` (`GetBoardLayer()`), `bbox` (`BBox()`), `anchors` (stored `CN_ANCHOR` positions, `;`-separated), `anchor_count` (`AnchorCount()`), `get_anchor` (`GetAnchor( n )` for `n < AnchorCount()`, space-separated), `connected` (refs of `ConnectedItems()`, **sorted by list index**: the C++ order is heap-address order, which differs from run to run; list order is the port's replacement, connectivity-zones.md R-1), `anchor_connected_count` (`ConnectedItemsCount()` per anchor), `anchor_dangling` (`IsDangling()` per anchor); zone layer items also `zone_outline_points`, `zone_single_connection` (`HasSingleConnection()`) |
+| `cn_cluster` | `ratsnest#<k>` (`SearchClusters( CSM_RATSNEST )`), `propagate#<k>` (`SearchClusters( CSM_PROPAGATE )`), `k` = cluster order | `origin_net`, `origin_net_name` (`OriginNetName()`), `orphaned`, `conflicting`, `items` (refs in cluster order) |
+| `rn_net` | `n<netcode>` for every net with ratsnest nodes (codes 0 .. `GetNetCount()-1`); `board` | per net: `name`, `node_count`, `nodes` (`RN_NET::m_nodes` multiset order, `<x>,<y>@<ref>`), `edges` (`GetEdges()` order, `<src node>><dst node>:<weight>:<visible>`); `board`: `unconnected_count` (`GetUnconnectedCount( false )`), `unconnected_visible` (`( true )`) |
+| `cn_dangling` | item key of every `Tracks()` entry (segments, arcs, vias) | `dangling`, `pos` (`TestTrackEndpointDangling( track, false, &pos )`; `unset` when the call did not write `pos`), `dangling.ignore_in_pads`, `pos.ignore_in_pads` (the same with `aIgnoreTracksInPads = true`, as DRC calls it) |
+| `cn_island` | `<zone key>/<layer>` | `isolated`, `single_connection`: `FillIsolatedIslandsMap( map )` (re-adds the zones, `aConnectivityAlreadyRebuilt = false`) on the fills read from the file, for the map `ZONE_FILLER::Fill` builds (no rule areas, more than 2 corners, no thieving / teardrop zones, every layer of `GetLayerSet()`); `isolated` sorted descending (as the filler uses it), `single_connection` ascending (the push order follows a `std::map<ZONE*>`, i.e. addresses) |
+
+A `ref` names a `CN_ITEM` independently of list order: the parent's item key (section 3), plus
+`/<layer>/<outline index>` for a `CN_ZONE_LAYER`; `invalid` / `null` for an invalid or missing
+item. Verified deterministic (two runs, identical output) on the goldens in
+`rust/crates/kicad-connectivity/tests/golden/` (generator `tests/oracle/gen_goldens.sh` there).

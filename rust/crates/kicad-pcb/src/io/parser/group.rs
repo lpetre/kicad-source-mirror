@@ -516,3 +516,618 @@ impl PcbParser {
         ctx.item(id).and_then(|item| item.parent_footprint_id())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    //! PCBIO-09 tests: the differential oracle (`tests/oracle/pcbio09_golden.sh`) and the ports
+    //! of `qa/tests/pcbnew/test_group_load_save.cpp` and `group_saveload.cpp`.
+
+    use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+    use std::path::Path;
+
+    use kicad_core::Kiid;
+
+    use crate::board::{AddMode, Board};
+    use crate::ids::{GroupId, ItemId, ItemKind};
+    use crate::io::{FormatOptions, ParseOptions, format_board, parse_board, parse_board_report};
+    use crate::item_ref::OwnedItem;
+    use crate::pcb_group::PcbGroup;
+    use crate::pcb_text::PcbText;
+
+    const PENDING: &str = "kicad-pcb: port pending: ";
+
+    /// Runs `f`; a panic of a `port_pending!` model stub becomes `Err( stub name )`.
+    fn model<R>(f: impl FnOnce() -> R) -> Result<R, String> {
+        match catch_unwind(AssertUnwindSafe(f)) {
+            Ok(r) => Ok(r),
+            Err(payload) => {
+                let msg = payload
+                    .downcast_ref::<&str>()
+                    .map(|s| s.to_string())
+                    .or_else(|| payload.downcast_ref::<String>().cloned());
+
+                match msg {
+                    Some(m) if m.starts_with(PENDING) => Err(m[PENDING.len()..].to_string()),
+                    _ => resume_unwind(payload),
+                }
+            }
+        }
+    }
+
+    fn staging_parse() -> ParseOptions {
+        ParseOptions {
+            allow_pending: true,
+        }
+    }
+
+    fn staging() -> FormatOptions {
+        FormatOptions {
+            allow_pending: true,
+            ..FormatOptions::default()
+        }
+    }
+
+    fn crate_dir() -> &'static Path {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+    }
+
+    fn fnv1a64(bytes: &[u8]) -> String {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+
+        for &c in bytes {
+            h ^= u64::from(c);
+            h = h.wrapping_mul(0x0100_0000_01b3);
+        }
+
+        format!("{h:016x}")
+    }
+
+    /// One `(group ..)` block of a written file, as `pcbio09_golden.sh` extracts it.
+    struct Block {
+        uuid: String,
+        depth: usize,
+        members: usize,
+        header: String,
+        text: String,
+    }
+
+    /// The `(group ..)` blocks of a prettified file (mirror of the golden script).
+    fn group_blocks(text: &str) -> Vec<Block> {
+        let lines: Vec<&str> = text.split_inclusive('\n').collect();
+        let mut out = Vec::new();
+        let mut i = 0;
+
+        while i < lines.len() {
+            let line = lines[i];
+            let depth = line.len() - line.trim_start_matches('\t').len();
+
+            if depth == 0
+                || !line[depth..].starts_with("(group ")
+                || line.trim_end_matches('\n').ends_with(')')
+            {
+                i += 1;
+                continue;
+            }
+
+            let close = format!("{})\n", "\t".repeat(depth));
+            let mut j = i;
+
+            while j < lines.len() && lines[j] != close {
+                j += 1;
+            }
+
+            let block = &lines[i..(j + 1).min(lines.len())];
+            let header: String = block
+                .iter()
+                .take_while(|l| !l.contains("(members"))
+                .copied()
+                .collect();
+            let text: String = block.concat();
+            let uuid = block
+                .iter()
+                .find_map(|l| {
+                    let t = l.trim_start_matches('\t');
+                    t.strip_prefix("(uuid \"")
+                        .and_then(|r| r.split('"').next())
+                        .map(str::to_string)
+                })
+                .unwrap_or_default();
+            let members = text
+                .split("(members")
+                .nth(1)
+                .map(|r| r.split(')').next().unwrap_or("").matches('"').count() / 2)
+                .unwrap_or(0);
+
+            out.push(Block {
+                uuid,
+                depth,
+                members,
+                header,
+                text,
+            });
+            i = j + 1;
+        }
+
+        out
+    }
+
+    fn groups_text(text: &str) -> String {
+        group_blocks(text)
+            .into_iter()
+            .map(|b| b.text)
+            .collect::<Vec<_>>()
+            .concat()
+    }
+
+    /// Parse + format with the staging switches (setup and the other pending sections are
+    /// skipped on both sides).
+    fn resave(text: &str) -> String {
+        let board = parse_board(text, "", &staging_parse()).unwrap();
+        format_board(&board, &staging()).unwrap()
+    }
+
+    /// Byte level: the `(group ..)` blocks written for the hand-made boards equal those of the
+    /// reference `kicad-cli pcb upgrade --force`, and so do those of the reference output re-saved.
+    #[test]
+    fn oracle_resave_groups() {
+        for name in ["groups.kicad_pcb", "groups_v20231212.kicad_pcb"] {
+            let input =
+                std::fs::read_to_string(crate_dir().join("tests/data/pcbio09").join(name)).unwrap();
+            let golden =
+                std::fs::read_to_string(crate_dir().join("tests/golden/pcbio09").join(name))
+                    .unwrap();
+            let expected = groups_text(&golden);
+            assert!(!expected.is_empty(), "{name}");
+
+            assert_eq!(groups_text(&resave(&input)), expected, "{name}: input");
+
+            // The reference re-save of the reference output (`_o2` when it differs: a group
+            // whose members were only empty groups is not written the second time).
+            let o2_path = crate_dir()
+                .join("tests/golden/pcbio09")
+                .join(name.replace(".kicad_pcb", "_o2.kicad_pcb"));
+            let expected2 = match std::fs::read_to_string(o2_path) {
+                Ok(o2) => groups_text(&o2),
+                Err(_) => expected,
+            };
+            assert_eq!(groups_text(&resave(&golden)), expected2, "{name}: golden");
+        }
+    }
+
+    /// Item level: `pcb-dump board --no-init --sections misc,item` of the hand-made boards
+    /// (`tests/golden/pcbio09/*.dump.txt`) against the Rust dump.
+    #[cfg(feature = "dump")]
+    #[test]
+    fn oracle_dump_groups() {
+        use crate::dump::{DumpOptions, compare::compare, dump_board, scan_file_uuids};
+
+        for name in ["groups", "groups_v20231212"] {
+            let path = crate_dir()
+                .join("tests/data/pcbio09")
+                .join(format!("{name}.kicad_pcb"));
+            let text = std::fs::read_to_string(&path).unwrap();
+            let golden = std::fs::read_to_string(
+                crate_dir()
+                    .join("tests/golden/pcbio09")
+                    .join(format!("{name}.dump.txt")),
+            )
+            .unwrap();
+            let board = parse_board(&text, "", &staging_parse()).unwrap();
+            let opts = DumpOptions {
+                sections: ["misc", "item"].iter().map(|s| s.to_string()).collect(),
+                hash: false,
+                file_uuids: Some(scan_file_uuids(text.as_bytes())),
+            };
+            let rust = format!("file|{name}.kicad_pcb|\n{}", dump_board(&board, &opts));
+            let cmp = compare(&golden, &rust);
+
+            // `locked_flag` is the C++ non-virtual `BOARD_ITEM::IsLocked()` (parent group
+            // included); the Rust dump prints the raw flag (change request to DUMP-RS). The
+            // virtual `locked` field checks the same thing.
+            let failures: Vec<_> = cmp
+                .lines
+                .iter()
+                .filter(|l| l.0.is_failure() && !l.1.ends_with("|locked_flag"))
+                .collect();
+
+            assert!(failures.is_empty(), "{name}:\n{}", cmp.report(20));
+        }
+    }
+
+    /// The error texts of the reference build for a bad design block link and an unknown
+    /// token (`pcb-dump` load errors of `tests/data/pcbio09/groups_bad*.kicad_pcb`).
+    #[test]
+    fn parse_errors() {
+        let cases = [
+            (
+                "groups_badlib.kicad_pcb",
+                "Group library link mylib:x:y contains invalid character 'y' in '', line 5, \
+                 offset 69.",
+            ),
+            (
+                "groups_badtok.kicad_pcb",
+                "Expecting uuid, locked, lib_id, or members. Got ''layer'' in '', line 5, \
+                 offset 61.",
+            ),
+        ];
+
+        for (name, expected) in cases {
+            let text =
+                std::fs::read_to_string(crate_dir().join("tests/data/pcbio09").join(name)).unwrap();
+            let e = parse_board(&text, "", &staging_parse()).err().unwrap();
+            assert_eq!(e.what(), expected, "{name}");
+        }
+
+        let e = parse_board(
+            "(kicad_pcb (version 20240101) (group \"g\" foo (uuid \"x\")))",
+            "",
+            &staging_parse(),
+        )
+        .err()
+        .unwrap();
+        assert_eq!(
+            e.what(),
+            "Expecting group name or locked. Got ''symbol'' in '', line 1, offset 42."
+        );
+    }
+
+    /// Corpus, byte level: every `(group ..)` block of the corpus boards re-saved by the
+    /// reference build (`tests/golden/pcbio09_corpus_groups.txt`). A block is compared in full
+    /// when the parse skipped nothing; otherwise its header (name, uuid, lock, lib_id) must be
+    /// identical and it may list fewer members (those whose item parser is still a staging
+    /// stub); a group whose members are all pending is not written and counts as pending.
+    #[test]
+    fn oracle_corpus_groups() {
+        let golden =
+            std::fs::read_to_string(crate_dir().join("tests/golden/pcbio09_corpus_groups.txt"))
+                .unwrap();
+        let root = kicad_qa::kicad_source_root();
+        let mut boards: Vec<(&str, Vec<Vec<&str>>)> = Vec::new();
+
+        for line in golden
+            .lines()
+            .filter(|l| !l.starts_with('#') && !l.is_empty())
+        {
+            let fields: Vec<&str> = line.split('|').collect();
+
+            match boards.last_mut() {
+                Some((path, rows)) if *path == fields[0] => rows.push(fields[1..].to_vec()),
+                _ => boards.push((fields[0], vec![fields[1..].to_vec()])),
+            }
+        }
+
+        let (mut full, mut header_only, mut pending, mut stub_boards) = (0, 0, 0, 0);
+        let mut failures = Vec::new();
+
+        for (path, rows) in &boards {
+            if rows[0][0] == "error" || rows[0][0] == "none" {
+                continue;
+            }
+
+            let file = root.join(path);
+
+            // The large demo boards are the pcbio01 `corpus_large` set (ignored there too).
+            if std::fs::metadata(&file).unwrap().len() >= 20_000_000 {
+                pending += rows.len();
+                continue;
+            }
+
+            let text = String::from_utf8_lossy(&std::fs::read(&file).unwrap()).into_owned();
+            let result = model(|| {
+                let (board, report) = parse_board_report(&text, "", &staging_parse())
+                    .map_err(|e| e.what().to_string())?;
+                let out = format_board(&board, &staging()).map_err(|e| e.what().to_string())?;
+                Ok::<_, String>((out, report.skipped.is_empty()))
+            });
+
+            let (out, complete) = match result {
+                Err(stub) => {
+                    stub_boards += 1;
+                    pending += rows.len();
+                    println!("{path}: pending on model stub {stub}");
+                    continue;
+                }
+                Ok(Err(e)) => {
+                    failures.push(format!("{path}: {e}"));
+                    continue;
+                }
+                Ok(Ok(r)) => r,
+            };
+
+            let blocks = group_blocks(&out);
+
+            for row in rows {
+                let (uuid, depth, members, header, block) = (
+                    row[0],
+                    row[1].parse::<usize>().unwrap(),
+                    row[2]
+                        .trim_start_matches("members=")
+                        .parse::<usize>()
+                        .unwrap(),
+                    row[3],
+                    row[4],
+                );
+
+                let Some(b) = blocks.iter().find(|b| b.uuid == uuid && b.depth == depth) else {
+                    if complete {
+                        failures.push(format!("{path}: group {uuid} not written"));
+                    } else {
+                        pending += 1;
+                    }
+                    continue;
+                };
+
+                if fnv1a64(b.text.as_bytes()) == block {
+                    full += 1;
+                } else if complete {
+                    failures.push(format!("{path}: group {uuid} differs:\n{}", b.text));
+                } else if fnv1a64(b.header.as_bytes()) != header {
+                    failures.push(format!(
+                        "{path}: group {uuid} header differs:\n{}",
+                        b.header
+                    ));
+                } else if b.members > members {
+                    failures.push(format!(
+                        "{path}: group {uuid}: {} members > {members}",
+                        b.members
+                    ));
+                } else {
+                    header_only += 1;
+                }
+            }
+        }
+
+        println!(
+            "pcbio09 corpus groups: {full} identical, {header_only} identical header with \
+             pending members, {pending} pending ({stub_boards} boards on model stubs)"
+        );
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+    }
+
+    // ---- qa/tests/pcbnew/test_group_load_save.cpp -------------------------------------------
+
+    /// `GroupsLoadSave`: the group of `groups_load_save*.kicad_pcb` (locked, name, member
+    /// count). Its two members are graphic items (PCBIO-03 / PCBIO-05): while a parser of the
+    /// file is a staging stub, the member count is only bounded.
+    #[test]
+    fn groups_load_save() {
+        for (file, version) in [
+            ("groups_load_save.kicad_pcb", 20231231),
+            ("groups_load_save_v20231212.kicad_pcb", 20231212),
+        ] {
+            let text = std::fs::read_to_string(kicad_qa::pcbnew_data_dir().join(file)).unwrap();
+            let (board, report) = parse_board_report(&text, "", &staging_parse()).unwrap();
+            assert_eq!(board.file_format_version_at_load, version, "{file}");
+
+            let uuid = Kiid::parse("a78cc65c-451e-451e-9147-4460cc669685").unwrap();
+            let id = board.resolve_item(&uuid).expect("group");
+            assert_eq!(id.kind(), ItemKind::Group);
+
+            let ctx = crate::ctx::BoardCtx::bare(&board);
+            let item = ctx.item(id).unwrap();
+            let group = item.as_group().unwrap();
+            assert!(item.is_locked(), "{file}");
+            assert_eq!(group.name(), "GroupName");
+
+            if report.skipped.is_empty() {
+                assert_eq!(group.items().len(), 2, "{file}");
+            } else {
+                // Members whose parser is still a staging stub are not on the board.
+                assert!(group.items().len() <= 2, "{file}");
+                println!(
+                    "groups_load_save: {file}: {} of 2 members parsed (pending: {:?})",
+                    group.items().len(),
+                    report.skipped.iter().map(|s| &s.token).collect::<Vec<_>>()
+                );
+            }
+        }
+    }
+
+    // ---- qa/tests/pcbnew/group_saveload.cpp -------------------------------------------------
+
+    const TEXT0: usize = 0;
+    const TEXT1: usize = 1;
+    const TEXT2: usize = 2;
+    const TEXT3: usize = 3;
+    const TEXT4: usize = 4;
+    const TEXT5: usize = 5;
+    const TEXT6: usize = 6;
+    const REMOVED_TEXT: usize = 9;
+    const GROUP0: usize = 10;
+    const GROUP1: usize = 11;
+    const NAME_GROUP3: usize = 13;
+    const NUM_ITEMS: usize = 17;
+    const REMOVED_GROUP: usize = 16;
+
+    /// `createBoard( spec )` (valid groups only): texts 0..8 on the board, groups added when
+    /// they have a spec or are used by another group.
+    fn create_board(spec: &[&[usize]]) -> Board {
+        let mut board = Board::new();
+        let mut items: Vec<Option<ItemId>> = Vec::new();
+
+        for idx in 0..=REMOVED_TEXT {
+            let mut text = PcbText::new(&mut board.kiid_generator);
+            text.text.set_text(&format!("some text-{idx}"));
+
+            // Don't add REMOVED_TEXT to the board
+            if idx < REMOVED_TEXT {
+                items.push(Some(
+                    board
+                        .add(OwnedItem::Text(Box::new(text)), AddMode::Insert)
+                        .unwrap(),
+                ));
+            } else {
+                items.push(None);
+            }
+        }
+
+        let mut groups: Vec<PcbGroup> = Vec::new();
+
+        for idx in 0..(NUM_ITEMS - GROUP0) {
+            let mut gr = PcbGroup::new(&mut board.kiid_generator);
+
+            if idx >= NAME_GROUP3 - GROUP0 {
+                let n = if idx == 15 - GROUP0 { 3 } else { idx };
+                gr.set_name(&format!("group-{n}"));
+            }
+
+            groups.push(gr);
+        }
+
+        // The groups that end up on the board: those with a spec or used by another one.
+        let mut used = [false; NUM_ITEMS];
+
+        for group_spec in spec {
+            for &item in *group_spec {
+                used[item] = true;
+            }
+        }
+
+        for (offset, gr) in groups.into_iter().enumerate() {
+            let group_idx = GROUP0 + offset;
+
+            if (offset < spec.len() || used[group_idx]) && group_idx != REMOVED_GROUP {
+                let id: GroupId = board.add_group(gr, AddMode::Insert);
+                items.push(Some(id.into()));
+            } else {
+                items.push(None);
+            }
+        }
+
+        for (offset, group_spec) in spec.iter().enumerate() {
+            let group = items[GROUP0 + offset].unwrap();
+
+            for &item in *group_spec {
+                board.add_to_group(group, items[item].unwrap());
+            }
+
+            assert_eq!(board.group_members(group).count(), group_spec.len());
+        }
+
+        board
+    }
+
+    /// `testGroupsEqual`: same groups (by uuid), names and member uuids.
+    fn group_signature(board: &Board) -> Vec<(Kiid, String, Vec<Kiid>)> {
+        let mut out: Vec<_> = board
+            .groups()
+            .map(|(id, g)| {
+                let mut members: Vec<Kiid> = board
+                    .group_members(id.into())
+                    .filter_map(|m| board.uuid_of(m))
+                    .collect();
+                members.sort();
+                (g.base.uuid, g.name().to_string(), members)
+            })
+            .collect();
+        out.sort_by(|a, b| a.0.cmp(&b.0));
+        out
+    }
+
+    /// `testSaveLoad`: dump to a file and read it back. While the text writer (PCBIO-05) is a
+    /// staging stub the round trip is done with the staging switches and only the group to
+    /// group memberships can survive it: those are checked, and the test says it is pending.
+    fn test_save_load(spec: &[&[usize]]) {
+        let board1 = create_board(spec);
+        let expected = group_signature(&board1);
+
+        match model(|| format_board(&board1, &FormatOptions::default())) {
+            Ok(Ok(text)) => {
+                let board2 = parse_board(&text, "", &ParseOptions::default()).unwrap();
+                assert_eq!(group_signature(&board2), expected);
+            }
+            Ok(Err(e)) if e.what().starts_with("port pending: ") => {
+                println!(
+                    "group_saveload: {} - checking group-to-group membership",
+                    e.what()
+                );
+                let text = format_board(&board1, &staging()).unwrap();
+                let board2 = parse_board(&text, "", &staging_parse()).unwrap();
+                let groups: Vec<Kiid> = expected.iter().map(|g| g.0).collect();
+
+                // A group whose members are all texts is not written: it is lost.
+                let surviving: Vec<_> = expected
+                    .iter()
+                    .filter(|g| g.2.iter().any(|m| groups.contains(m)))
+                    .map(|(uuid, name, members)| {
+                        let members: Vec<Kiid> = members
+                            .iter()
+                            .filter(|m| groups.contains(m))
+                            .copied()
+                            .collect();
+                        (*uuid, name.clone(), members)
+                    })
+                    .collect();
+                let got: Vec<_> = group_signature(&board2)
+                    .into_iter()
+                    .filter(|g| !g.2.is_empty())
+                    .collect();
+                assert_eq!(got, surviving);
+            }
+            Ok(Err(e)) => panic!("{}", e.what()),
+            Err(stub) => println!("group_saveload: pending on model stub {stub}"),
+        }
+    }
+
+    /// `HealthyGroups`.
+    #[test]
+    fn healthy_groups() {
+        // Test board with no groups
+        test_save_load(&[]);
+
+        // Single group with 2 members
+        test_save_load(&[&[TEXT0, TEXT1]]);
+
+        // Two groups
+        test_save_load(&[&[TEXT0, TEXT1], &[TEXT2, TEXT3]]);
+        test_save_load(&[&[TEXT0, TEXT1], &[TEXT2, GROUP0]]);
+
+        // Subgroups with 2+ members each
+        test_save_load(&[&[TEXT0, TEXT1, GROUP1], &[TEXT2, TEXT3], &[TEXT4, GROUP0]]);
+        test_save_load(&[&[TEXT0, TEXT1], &[TEXT2, TEXT3], &[GROUP1, GROUP0]]);
+        test_save_load(&[
+            &[TEXT0, TEXT1],
+            &[TEXT2, TEXT3],
+            &[TEXT4, NAME_GROUP3],
+            &[TEXT5, TEXT6],
+        ]);
+    }
+
+    /// `SingleMemberGroupsSaved`.
+    #[test]
+    fn single_member_groups_saved() {
+        let board1 = create_board(&[&[TEXT0]]);
+
+        match model(|| format_board(&board1, &FormatOptions::default())) {
+            Ok(Ok(text)) => {
+                let board2 = parse_board(&text, "", &ParseOptions::default()).unwrap();
+                assert_eq!(board2.groups().count(), 1);
+            }
+            Ok(Err(e)) if e.what().starts_with("port pending: ") => {
+                // The text is not written yet, so the group is empty and not written either.
+                println!("single_member_groups_saved: pending ({})", e.what());
+                let text = format_board(&board1, &staging()).unwrap();
+                assert!(!text.contains("(group "));
+            }
+            Ok(Err(e)) => panic!("{}", e.what()),
+            Err(stub) => println!("single_member_groups_saved: pending on model stub {stub}"),
+        }
+    }
+
+    /// The group sanity check after loading: a cycle in the file cannot be built
+    /// (`EDA_GROUP::AddItem` refuses an ancestor), so `resolveGroups` leaves a sane board
+    /// (`InvalidGroups` itself is the M22 test of `GroupsSanityCheck`).
+    #[test]
+    fn cycles_in_file_are_refused() {
+        let text = std::fs::read_to_string(
+            crate_dir().join("tests/data/pcbio09/groups_v20231212.kicad_pcb"),
+        )
+        .unwrap();
+        let mut board = parse_board(&text, "", &staging_parse()).unwrap();
+        assert_eq!(board.groups_sanity_check(false), "");
+        let d = board
+            .resolve_item(&Kiid::parse("d78cc65c-451e-451e-9147-4460cc669685").unwrap())
+            .unwrap();
+        assert_eq!(board.group_members(d).count(), 0);
+    }
+}

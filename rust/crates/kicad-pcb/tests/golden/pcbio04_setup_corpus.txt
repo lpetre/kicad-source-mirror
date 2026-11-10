@@ -334,3 +334,10 @@ qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb|faa7c66b44aed
 qa/data/pcbnew/variant_test/variant_test.kicad_pcb|faa7c66b44aed9a3
 qa/data/pcbnew/via_dangling.kicad_pcb|faa7c66b44aed9a3
 qa/data/pcbnew/via_off_center.kicad_pcb|515f21d4359a2ff3
+qa/data/pcbnew/via_stack_track_width.kicad_pcb|ff9928fb7b3dc16c
+qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb|ff9928fb7b3dc16c
+qa/data/pcbnew/via_stacks.kicad_pcb|d1f4c04463a43efb
+qa/data/pcbnew/zone_filler.kicad_pcb|49ed87e084f273f8
+qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb|faa7c66b44aed9a3
+qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb|faa7c66b44aed9a3
+qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb|faa7c66b44aed9a3

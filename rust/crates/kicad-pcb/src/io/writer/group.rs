@@ -75,7 +75,11 @@ impl PcbWriter<'_> {
 
         format_uuid(self.out, &g.base.uuid.as_string())?;
 
-        if self.ctx.item(group_item).is_some_and(|item| item.is_locked()) {
+        if self
+            .ctx
+            .item(group_item)
+            .is_some_and(|item| item.is_locked())
+        {
             format_bool(self.out, "locked", true)?;
         }
 

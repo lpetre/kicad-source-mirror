@@ -223,7 +223,7 @@ fn corpus_scoreboard() {
         results.push(board_result(board, oracle));
     }
 
-    if let Some(q) = &single {
+    if single.is_some() {
         let r = &results[0];
         let report = render_board(r);
         println!("{report}");
@@ -246,7 +246,6 @@ fn corpus_scoreboard() {
 
         std::fs::write(dir.join("last.env"), env).unwrap();
         std::fs::write(dir.join(format!("{flat}.report.txt")), report).unwrap();
-        let _ = q;
         return;
     }
 
@@ -334,10 +333,11 @@ fn golden_staging() {
                 .or(ev.error.clone())
                 .unwrap_or_default();
             regressions.push(format!(
-                "{}: {} -> {} {diff}",
+                "{}: {} -> {} (recorded as waiting for: {}) {diff}",
                 e.stem,
                 e.status.label(),
-                now.label()
+                now.label(),
+                e.waiting_for
             ));
         } else if now.rank() > e.status.rank() {
             println!(
@@ -349,8 +349,6 @@ fn golden_staging() {
                 }
             );
         }
-
-        let _ = &e.waiting_for;
     }
 
     assert!(
