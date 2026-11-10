@@ -1,0 +1,127 @@
+(version 1)
+(rule a0
+  (condition "A.existsOnLayer('')")
+  (constraint clearance (min 0.1mm)))
+(rule a1
+  (condition "A.existsOnLayer()")
+  (constraint clearance (min 0.1mm)))
+(rule a2
+  (condition "A.existsOnLayer(5)")
+  (constraint clearance (min 0.1mm)))
+(rule a3
+  (condition "A.isPlated('x')")
+  (constraint clearance (min 0.1mm)))
+(rule a4
+  (condition "A.insideCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a5
+  (condition "A.insideFrontCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a6
+  (condition "A.insideBackCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a7
+  (condition "A.intersectsCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a8
+  (condition "A.intersectsFrontCourtyard()")
+  (constraint clearance (min 0.1mm)))
+(rule a9
+  (condition "A.intersectsFrontCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a10
+  (condition "A.intersectsBackCourtyard('')")
+  (constraint clearance (min 0.1mm)))
+(rule a11
+  (condition "A.intersectsFrontCourtyard(B.UnknownProperty)")
+  (constraint clearance (min 0.1mm)))
+(rule a12
+  (condition "A.intersectsFrontCourtyard(B.Parent.unknownFunction())")
+  (constraint clearance (min 0.1mm)))
+(rule a13
+  (condition "A.insideArea('')")
+  (constraint clearance (min 0.1mm)))
+(rule a14
+  (condition "A.intersectsArea('')")
+  (constraint clearance (min 0.1mm)))
+(rule a15
+  (condition "A.intersectsKeepout('')")
+  (constraint clearance (min 0.1mm)))
+(rule a16
+  (condition "A.enclosedByArea('')")
+  (constraint clearance (min 0.1mm)))
+(rule a17
+  (condition "A.intersectsArea()")
+  (constraint clearance (min 0.1mm)))
+(rule a18
+  (condition "A.memberOf('')")
+  (constraint clearance (min 0.1mm)))
+(rule a19
+  (condition "A.memberOfGroup('')")
+  (constraint clearance (min 0.1mm)))
+(rule a20
+  (condition "A.memberOfFootprint('')")
+  (constraint clearance (min 0.1mm)))
+(rule a21
+  (condition "A.memberOfSheet('')")
+  (constraint clearance (min 0.1mm)))
+(rule a22
+  (condition "A.memberOfSheetOrChildren('')")
+  (constraint clearance (min 0.1mm)))
+(rule a23
+  (condition "A.fromTo('U1-1')")
+  (constraint clearance (min 0.1mm)))
+(rule a24
+  (condition "A.fromTo('', 'U2-1')")
+  (constraint clearance (min 0.1mm)))
+(rule a25
+  (condition "A.fromTo('U1-1', '')")
+  (constraint clearance (min 0.1mm)))
+(rule a26
+  (condition "A.fromTo()")
+  (constraint clearance (min 0.1mm)))
+(rule a27
+  (condition "A.isCoupledDiffPair()")
+  (constraint clearance (min 0.1mm)))
+(rule a28
+  (condition "A.inDiffPair('')")
+  (constraint clearance (min 0.1mm)))
+(rule a29
+  (condition "A.inNetChain('')")
+  (constraint clearance (min 0.1mm)))
+(rule a30
+  (condition "A.hasNetChain()")
+  (constraint clearance (min 0.1mm)))
+(rule a31
+  (condition "A.inNetChainClass('')")
+  (constraint clearance (min 0.1mm)))
+(rule a32
+  (condition "A.getField('')")
+  (constraint clearance (min 0.1mm)))
+(rule a33
+  (condition "A.hasNetclass('')")
+  (constraint clearance (min 0.1mm)))
+(rule a34
+  (condition "A.hasExactNetclass('')")
+  (constraint clearance (min 0.1mm)))
+(rule a35
+  (condition "A.hasComponentClass('')")
+  (constraint clearance (min 0.1mm)))
+(rule a36
+  (condition "A.customProperty('')")
+  (constraint clearance (min 0.1mm)))
+(rule a37
+  (condition "A.hasCustomProperty('')")
+  (constraint clearance (min 0.1mm)))
+(rule a38
+  (condition "A.hasCustomProperty()")
+  (constraint clearance (min 0.1mm)))
+(rule a39
+  (condition "A.isMicroVia() && A.isBlindVia('x')")
+  (constraint clearance (min 0.1mm)))
+(rule a40
+  (condition "A.intersectsCourtyard('U1') && A.hasNetclass('')")
+  (constraint clearance (min 0.1mm)))
+(rule a41
+  (condition "A.memberOfSheet('/') || A.inDiffPair('')")
+  (constraint clearance (min 0.1mm)))
