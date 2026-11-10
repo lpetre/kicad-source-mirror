@@ -295,7 +295,7 @@ impl ConnectivityQuery for LazyConnectivity<'_> {
         layer: PcbLayerId,
         types: &[KicadT],
     ) -> bool {
-        ConnectivityQuery::is_connected_on_layer(self.get(), ctx, item, layer, types)
+        !ConnectivityQuery::is_connected_on_layer(self.get(), ctx, item, layer, types)
     }
 
     fn node_count(&self, net: Option<NetCode>) -> u32 {
