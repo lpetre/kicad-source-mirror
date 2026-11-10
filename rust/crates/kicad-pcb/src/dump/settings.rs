@@ -1231,13 +1231,14 @@ pub(crate) fn dump_order_section(o: &mut Out, ctx: &BoardCtx<'_>) {
             b.footprint_zones(fp).map(|(i, _)| i.into()).collect(),
             Some(footprint_cmp_zones),
         );
-        // PCB_GROUP::ptr_cmp has no Rust port yet.
+        // `PCB_GROUP::ptr_cmp` names the inherited `BOARD_ITEM::ptr_cmp` (pcb_group.h declares
+        // none of its own).
         emit_order(
             o,
             ctx,
             &format!("{p}groups"),
             b.footprint_groups(fp).map(|(i, _)| i.into()).collect(),
-            None,
+            Some(board_item_ptr_cmp),
         );
     }
 }

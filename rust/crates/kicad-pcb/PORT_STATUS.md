@@ -3387,3 +3387,67 @@ Deviations:
   `seed_generator` to reseed and keep them, or an entropy-seeded generator).
 
 Known gaps: the open findings of review-2.md (R2-07 .. R2-16).
+
+## Package PCBIO-14: footprint library files (.kicad_mod parse + write, fp upgrade)
+
+Supersedes the "`.kicad_mod` entry ... stub (PCBIO-14)" row of the PCBIO-01 table and the
+`fp_lib.rs` staging stubs of PCBIO-01 / PCBIO-02.
+
+### C++ to Rust map
+
+| C++ | Rust | state |
+|---|---|---|
+| `PCB_IO_KICAD_SEXPR_PARSER::ParseFootprintLib` (bare `footprint` / `module` file, `kicad_footprint_lib` header with `version` / `generator` / `generator_version`, `checkVersion`, the `parseFp` lambda: no nickname, unlocked, `SetFileFormatVersionAtLoad`, `finishItem`, insert-first-wins `ptr_map` by name) | `src/io/parser/fp_lib.rs` `PcbParser::parse_footprint_lib` (returns `BTreeMap<String, FootprintId>`) | ported |
+| per-file body of `FP_CACHE::Load` (parser with null board, `tmp.empty()` -> empty `IO_ERROR`, first entry of the map) | `src/io/mod.rs` `parse_footprint_file` (holder board, `BoardUse::FpHolder`, `board_present == false`, footprint attached) | ported; the rename to the file base name is the caller's (`run_fp_upgrade`) |
+| `PCB_IO_KICAD_SEXPR::FormatFootprintLibFile` (font embed / clear, initial comments, header, `format( fp, true )`) | `src/io/writer/fp_lib.rs` `PcbWriter::format_footprint_lib_file` | ported (`EmbedFonts()`: no font files, R7, as the board writer) |
+| `FootprintSave` normalisation (orientation 0, flip of a back footprint + orientation 0, leave group, `ClearAllNets`) | `src/io/writer/fp_lib.rs` `Board::footprint_save_normalise` | ported in place on a board the caller owns (no `Clone`, no `SetParent( nullptr )`) |
+| `FP_CACHE::Save` / `Load` file handling, `FootprintSave` cache and file naming, `FootprintEnumerate` | kicad-session `run_fp_upgrade`, kicad-cli `command_upgrade.rs` | host side (directory listing and writing in kicad-cli) |
+| `PCBNEW_JOBS_HANDLER::JobExportFpUpgrade` (KiCad library branch: load errors -> "Unable to load library", version check, `SetPath`, save errors -> "Unable to save library", "Footprint library was not updated") | kicad-session `jobs_handler.rs` `run_fp_upgrade` | ported (`ConvertLibrary` of legacy / foreign libraries: not ported, kicad-cli reports it) |
+
+### Tests and verification (2026-11-10)
+
+* D1 (`docs/analysis/pcb-io.md` 9.3) against the reference `kicad-cli fp upgrade --force -o OUT IN`,
+  every `.kicad_mod` of `qa/data` and `demos` (426 files, each in its own scratch library):
+  **393 byte-identical, 33 identical after masking the fresh UUIDs** the oracle draws for items
+  without one (legacy files; no sibling reordering occurred), 0 differing, 0 failing. Also the
+  messages and exit codes of: not updated (no `--force`, current file), in-place upgrade, a
+  broken file in the library ("Unable to load library", 2), output path conflict (4), missing
+  library / no output path (4): identical.
+* Committed: `tests/oracle/pcbio14_golden.sh` (+ `pcbio14_mask_hash.py`) produces three byte
+  goldens `tests/golden/pcbio14/*.kicad_mod` and the masked FNV-1a hash of the oracle output of
+  every corpus file `tests/golden/pcbio14_d1_corpus.txt`; `tests/pcbio14_fp_lib.rs`
+  `d1_byte_goldens` / `d1_corpus` replay them without the oracle (all 426 match).
+* Ported C++ tests (`tests/pcbio14_fp_lib.rs`): `FpLibLoadSave` (test_fp_lib_load_save.cpp, both
+  cases incl. roundtrip), `LegacyModuleFileImports`, `LibraryFootprintKeepsGroupsAndLoadsUnlocked`
+  (footprint built as text instead of with the model, saved with `CTL_FOR_LIBRARY`),
+  `ParseWarningDoesNotFailTheLibrary` (parser half here, library half in kicad-session
+  `tests/pcbio14_fp_upgrade.rs`), `FootprintSave_OmitsNetsOnAllBoardConnectedItems` (board as
+  text; checks the file has no `(net ` and every connected child is orphaned).
+  `MissingLibraryThrowsOnEveryEnumerate`: skipped (filesystem cache, host side).
+  The `.kicad_mod` cases of `BoardAndFootprintPrettifier` (writer/tests.rs) and the stub
+  assertions of `parser/tests.rs` / `writer/tests.rs` `staging_stubs` now exercise the port.
+
+### Deviations / notes
+
+* **Null board** (the recorded risk of the design review). The C++ library parser and writer run
+  with `GetBoard() == nullptr`. Parse: the holder board (`FpHolder`, default-constructed) is
+  present in the arena, `board_present == false` reproduces the parser's own `m_board` tests;
+  model defaults touched through `has_board` during the parse are shown equal empirically by the
+  426-file D1 corpus (zones, pads, padstacks, text, shapes, groups, embedded files all occur).
+  Write: two writer sites test `GetBoard()` on items of a footprint (`format( ZONE )` masks the
+  layers with the enabled layers, `format( PAD )` lists a custom padstack by the board's copper
+  count); with the holder attached the zone site differed (the 6 corpus files with a `*.Cu`
+  footprint zone were written with `F.Cu B.Cu` only) and the padstack site would (no corpus file
+  has a custom padstack in a footprint file). `format_footprint_lib_file` therefore writes a holder's
+  footprint from a copy of the holder in which the footprint has no parent (`ParentRef::None`),
+  so `has_board` is false for it and its children, exactly as for the boardless C++ footprint.
+  Footprints of a non-holder board are written as they are (the C++ GUI export path, a clone
+  keeping its parent).
+* Multi-footprint `kicad_footprint_lib` files: as in C++ only the first footprint by name is kept;
+  the others stay unattached in the holder's arena (the C++ map deletes them).
+* `parse_footprint_file` returns an `IoError` with an empty message for a file without
+  footprint (`THROW_IO_ERROR( wxEmptyString )`, caught by `FP_CACHE::Load`).
+
+### Known gaps
+
+* `PCB_IO_MGR::ConvertLibrary` (legacy / foreign libraries for `fp upgrade -o`), font embedding.

@@ -533,6 +533,78 @@ pub fn constraint_type_label(type_: PcbConstraintType) -> &'static str {
     }
 }
 
+/// `DIM_VALUE_MODE` (`pcbnew/constraints/constraint_builder.h`): Driven mirrors measured
+/// geometry, Driving forces geometry to the entered length, Arbitrary shows custom text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DimValueMode {
+    Driven,
+    Driving,
+    Arbitrary,
+}
+
+/// Port of `CollectResolvedConstraints( aBoard )` (constraint_builder.cpp): the board's
+/// constraints, plus those of every footprint when the board is a footprint holder.
+pub fn collect_resolved_constraints(board: &crate::board::Board) -> Vec<&PcbConstraint> {
+    let mut constraints: Vec<&PcbConstraint> = board.constraints().map(|(_, c)| c).collect();
+
+    if !board.is_footprint_holder() {
+        return constraints;
+    }
+
+    for (fp, _) in board.footprints() {
+        constraints.extend(board.footprint_constraints(fp).map(|(_, c)| c));
+    }
+
+    constraints
+}
+
+/// Port of `FindDimensionLengthConstraint( aBoard, aDimension )`: the first resolved
+/// `FIXED_LENGTH` constraint whose two members are the dimension's START and END anchors (in
+/// either order).
+pub fn find_dimension_length_constraint<'a>(
+    board: Option<&'a crate::board::Board>,
+    dimension: Option<&crate::pcb_dimension::PcbDimension>,
+) -> Option<&'a PcbConstraint> {
+    let (board, dimension) = (board?, dimension?);
+    let uuid = dimension.base().uuid;
+    let start_member = ConstraintMember::new(uuid, ConstraintAnchor::Start, -1);
+    let end_member = ConstraintMember::new(uuid, ConstraintAnchor::End, -1);
+
+    let matches = |constraint: &PcbConstraint| {
+        if constraint.constraint_type() != PcbConstraintType::FixedLength {
+            return false;
+        }
+
+        let members = constraint.members();
+
+        members.len() == 2
+            && ((members[0] == start_member && members[1] == end_member)
+                || (members[0] == end_member && members[1] == start_member))
+    };
+
+    collect_resolved_constraints(board)
+        .into_iter()
+        .find(|c| matches(c))
+}
+
+/// Port of `DimensionValueMode( aBoard, aDimension )` (= `PCB_DIMENSION_BASE::GetValueMode`).
+pub fn dimension_value_mode(
+    board: Option<&crate::board::Board>,
+    dimension: Option<&crate::pcb_dimension::PcbDimension>,
+) -> DimValueMode {
+    let length_constraint = find_dimension_length_constraint(board, dimension);
+
+    if length_constraint.is_some_and(|c| c.is_driving()) {
+        return DimValueMode::Driving;
+    }
+
+    if dimension.is_some_and(|d| d.override_text_enabled) {
+        return DimValueMode::Arbitrary;
+    }
+
+    DimValueMode::Driven
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

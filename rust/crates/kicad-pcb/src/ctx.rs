@@ -255,6 +255,10 @@ pub struct MutEnv {
     pub layers: Arc<LayerEnv>,
     pub max_error: i32,
     pub board_use: BoardUse,
+    /// The owning pad's `PAD::GetPrimitiveLibScale()` as seen by a custom-shape primitive's
+    /// mutators (`PCB_SHAPE::Flip` / `syncLibCoords` read it through `GetParent()`); `(1, 1)`
+    /// for everything that is not a pad primitive.
+    pub pad_primitive_scale: (f64, f64),
 }
 
 impl MutEnv {
@@ -265,6 +269,7 @@ impl MutEnv {
             layers: Arc::new(LayerEnv::no_board()),
             max_error: ARC_HIGH_DEF,
             board_use: BoardUse::Normal,
+            pad_primitive_scale: (1.0, 1.0),
         }
     }
 

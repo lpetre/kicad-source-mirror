@@ -108,10 +108,11 @@ fn run_board(dir: &Path) -> Result<Option<String>, String> {
     };
 
     let result = catch_unwind(AssertUnwindSafe(|| -> Result<String, String> {
-        let (mut session, _) = common::load_staged(LoadPath::Cli, &inputs).map_err(|e| match e {
-            SessionError::NotYetPorted { subsystem } => format!("not loadable: {subsystem}"),
-            other => format!("load error: {other}"),
-        })?;
+        let (mut session, _) =
+            common::load_staged(LoadPath::Cli, &inputs).map_err(|e| match e {
+                SessionError::NotYetPorted { subsystem } => format!("not loadable: {subsystem}"),
+                other => format!("load error: {other}"),
+            })?;
 
         let mut job = JobPcbDrc::new();
         job.rc.filename = source_name.clone();
@@ -142,6 +143,11 @@ fn run_board(dir: &Path) -> Result<Option<String>, String> {
         Ok(Err(e)) => return Err(e),
         Err(p) => return Err(format!("panic: {}", common::panic_text(p.as_ref()))),
     };
+
+    // `ZF06_KEEP=1`: keep the port's saved board next to the reference for inspection.
+    if std::env::var("ZF06_KEEP").is_ok_and(|v| v == "1") {
+        let _ = std::fs::write(dir.join("rust_saved.kicad_pcb"), &actual);
+    }
 
     let expected = normalise_new_uuids(&expected, &text);
     let actual = normalise_new_uuids(&actual, &text);

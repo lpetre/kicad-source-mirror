@@ -268,7 +268,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
             |it| {
                 PropertyValue::Enum(
                     EnumId::ZoneConnection,
-                    fp(&it).local_zone_connection() as i32,
+                    fp(&it).local_zone_connection_raw(),
                 )
             },
         ),

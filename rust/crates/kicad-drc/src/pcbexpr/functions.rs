@@ -488,7 +488,11 @@ fn test_footprint_selector(footprint: &ItemRef<'_>, selector: &str) -> bool {
     {
         // aSelector.Mid( 8, aSelector.Length() - 9 )
         let len = selector.chars().count();
-        let name: String = selector.chars().skip(8).take(len.saturating_sub(9)).collect();
+        let name: String = selector
+            .chars()
+            .skip(8)
+            .take(len.saturating_sub(9))
+            .collect();
 
         if let Some(comp_class) = fp.component_class(footprint.ctx) {
             if comp_class.contains_class_name(&name) {
@@ -1614,9 +1618,7 @@ fn in_diff_pair_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) {
 
                 if base_name.ends_with('_') {
                     // baseName.BeforeLast( '_' ): empty when there is no '_'
-                    let before_last = base_name
-                        .rfind('_')
-                        .map_or("", |pos| &base_name[..pos]);
+                    let before_last = base_name.rfind('_').map_or("", |pos| &base_name[..pos]);
 
                     if wx_string_matches(before_last, &arg) {
                         return 1.0;
@@ -1843,7 +1845,10 @@ fn has_exact_netclass_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef
 
     if arg_is_empty(ctx, arg) {
         report(ctx, || {
-            format!("Missing netclass name argument to {}.", "hasExactNetclass()")
+            format!(
+                "Missing netclass name argument to {}.",
+                "hasExactNetclass()"
+            )
         });
 
         return;

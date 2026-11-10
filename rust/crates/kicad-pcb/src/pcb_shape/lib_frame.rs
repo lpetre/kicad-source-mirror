@@ -579,16 +579,16 @@ impl PcbShape {
     }
 
     /// The `xform` / `hasXform` pair `syncLibCoords()` computes, as a mutator sees it: the
-    /// pad's `GetPrimitiveLibScale()` for a pad primitive, else the parent footprint's
-    /// transform (`transformFp()`), else none.
-    ///
-    /// Deviation: `MutEnv` does not carry the pad's primitive scale (the pad passes an
-    /// environment without parent frame to its primitives), so a pad primitive is treated as
-    /// unscaled (`(1, 1)`, `hasXform = false`), which is exact unless the parent footprint
-    /// is scaled (see `PORT_STATUS.md`, M9).
+    /// pad's `GetPrimitiveLibScale()` for a pad primitive (`MutEnv::pad_primitive_scale`,
+    /// set by the pad for its primitives), else the parent footprint's transform
+    /// (`transformFp()`), else none.
     pub(crate) fn sync_frame(&self, env: &MutEnv) -> (TransformTrs, bool) {
         if self.parent_is_pad() {
-            return (TransformTrs::default(), false);
+            let (sx, sy) = env.pad_primitive_scale;
+            let mut xform = TransformTrs::default();
+            xform.set_scale(sx, sy);
+            let has_xform = sx != 1.0 || sy != 1.0;
+            return (xform, has_xform);
         }
 
         match env.parent {

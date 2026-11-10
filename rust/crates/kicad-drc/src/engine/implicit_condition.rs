@@ -173,6 +173,7 @@ impl ImplicitCondition {
         a: Option<ItemRef<'_>>,
         b: Option<ItemRef<'_>>,
         constraint: i32,
+        layer: PcbLayerId,
         reporter: Option<&mut dyn Reporter>,
     ) -> bool {
         match atom {
@@ -196,7 +197,9 @@ impl ImplicitCondition {
                 )
             }
             ImplicitAtom::IntersectsKeepout(uuid) => {
-                crate::port_pending!("intersectsKeepoutFunc (DRC-10)", a, uuid)
+                // doIntersectsAreaFunc( aForKeepout = true ) with the context layer and the
+                // board's keepout caches (DRC-10; one implementation with the compiled form)
+                crate::pcbexpr::functions::intersects_keepout(a, b, uuid, constraint, layer)
             }
         }
     }
@@ -363,12 +366,12 @@ impl CompiledCondition for ImplicitCondition {
         a: Option<ItemRef<'e>>,
         b: Option<ItemRef<'e>>,
         constraint: i32,
-        _layer: PcbLayerId,
+        layer: PcbLayerId,
         mut reporter: Option<&mut dyn Reporter>,
     ) -> f64 {
         // TR_OP_BOOL_AND: the right operand is only evaluated if the left one is true
         for atom in &self.atoms {
-            if !Self::eval_atom(atom, a, b, constraint, reborrow(&mut reporter)) {
+            if !Self::eval_atom(atom, a, b, constraint, layer, reborrow(&mut reporter)) {
                 return 0.0;
             }
         }

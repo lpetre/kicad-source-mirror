@@ -257,7 +257,9 @@ impl Default for ShapeProps {
 #[derive(Clone, Debug, Default)]
 pub struct CopperLayerProps {
     pub shape: ShapeProps,
-    pub zone_connection: Option<ZoneConnection>,
+    /// `std::optional<ZONE_CONNECTION>` as stored: the raw integer (the parser's C cast of
+    /// a pad's top-level `zone_connect` keeps values outside the enum).
+    pub zone_connection: Option<i32>,
     pub thermal_spoke_width: Option<i32>,
     pub thermal_spoke_angle: Option<EdaOrientation>,
     pub thermal_gap: Option<i32>,
@@ -355,7 +357,7 @@ impl Default for Padstack {
         let mut copper_props = CopperPropsMap::new();
         *copper_props.index_or_default(Padstack::ALL_LAYERS) = CopperLayerProps {
             shape: ShapeProps::default(),
-            zone_connection: Some(ZoneConnection::Inherited),
+            zone_connection: Some(ZoneConnection::Inherited as i32),
             thermal_spoke_width: None,
             thermal_spoke_angle: Some(EdaOrientation::new(ANGLE_45)),
             thermal_gap: None,
@@ -1389,14 +1391,27 @@ impl Padstack {
         &mut self.outer_props_for_mut(layer).solder_paste_margin_ratio
     }
 
-    /// `ZoneConnection( aLayer )`.
+    /// `ZoneConnection( aLayer )` as its readers see it (`ZoneConnection::from_raw`: a
+    /// stored value outside the enum reads as `FULL`).
     pub fn zone_connection(&self, layer: PcbLayerId) -> Option<ZoneConnection> {
+        self.copper_props(layer)
+            .zone_connection
+            .map(ZoneConnection::from_raw)
+    }
+
+    /// `ZoneConnection( aLayer )` as stored (the raw integer; writer, comparisons).
+    pub fn zone_connection_raw(&self, layer: PcbLayerId) -> Option<i32> {
         self.copper_props(layer).zone_connection
     }
 
-    /// Mutable `ZoneConnection( aLayer )`.
-    pub fn zone_connection_mut(&mut self, layer: PcbLayerId) -> &mut Option<ZoneConnection> {
-        &mut self.copper_props_mut(layer).zone_connection
+    /// `ZoneConnection( aLayer ) = aValue`.
+    pub fn set_zone_connection(&mut self, layer: PcbLayerId, value: Option<ZoneConnection>) {
+        self.copper_props_mut(layer).zone_connection = value.map(|z| z as i32);
+    }
+
+    /// `ZoneConnection( aLayer ) = (ZONE_CONNECTION) aValue` (any integer).
+    pub fn set_zone_connection_raw(&mut self, layer: PcbLayerId, value: Option<i32>) {
+        self.copper_props_mut(layer).zone_connection = value;
     }
 
     /// `ThermalSpokeWidth( aLayer )`.
@@ -1878,8 +1893,8 @@ impl CopperLayerProps {
         test_opt!(
             self.zone_connection,
             other.zone_connection,
-            ZoneConnection::None,
-            |z: ZoneConnection| z as i32
+            ZoneConnection::None as i32,
+            |z: i32| z
         );
         test_opt!(
             self.thermal_spoke_width,
@@ -2239,7 +2254,7 @@ mod tests {
         assert_eq!(all.shape, ShapeProps::default());
         assert_eq!(all.shape.shape, PadShape::Circle);
         assert_eq!(all.shape.anchor_shape, PadShape::Rectangle);
-        assert_eq!(all.zone_connection, Some(ZoneConnection::Inherited));
+        assert_eq!(all.zone_connection, Some(ZoneConnection::Inherited as i32));
         assert_eq!(all.thermal_spoke_width, None);
         assert_eq!(all.thermal_spoke_angle, Some(EdaOrientation::new(ANGLE_45)));
         assert_eq!(all.thermal_gap, None);

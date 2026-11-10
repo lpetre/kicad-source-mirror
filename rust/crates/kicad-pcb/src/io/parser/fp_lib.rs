@@ -47,93 +47,92 @@ impl PcbParser {
     ///
     /// Starts by reading the initial comment lines (`ReadCommentLines`), i.e. it is called on
     /// a fresh parser.
-    pub(crate) fn parse_footprint_lib(
-        &mut self,
-    ) -> Result<BTreeMap<String, FootprintId>, IoError> {
+    pub(crate) fn parse_footprint_lib(&mut self) -> Result<BTreeMap<String, FootprintId>, IoError> {
         let mut footprints: BTreeMap<String, FootprintId> = BTreeMap::new();
 
         let mut initial_comments = self.lexer.read_comment_lines()?;
 
         let mut token = self.lexer.cur_tok();
 
-        while token != T::T_RIGHT {
-            if token != T::T_LEFT {
-                return Err(self.lexer.expecting(T::T_LEFT));
+        // for( token = CurTok(); token != T_RIGHT; token = NextTok() ): every case of the body
+        // returns or throws, so the loop runs at most once.
+        if token == T::T_RIGHT {
+            return Ok(footprints);
+        }
+
+        if token != T::T_LEFT {
+            return Err(self.lexer.expecting(T::T_LEFT));
+        }
+
+        token = self.lexer.next_tok()?;
+
+        match token {
+            // legacy token `module`; `footprint`: this is a footprint file prior to the
+            // header addition.
+            T::T_module | T::T_footprint => {
+                // There is only a single footprint so the closing ')' has already been
+                // parsed.
+                self.parse_lib_fp(&mut initial_comments, &mut footprints)?;
+                Ok(footprints)
             }
+            T::T_kicad_footprint_lib => {
+                let mut has_version = false;
 
-            token = self.lexer.next_tok()?;
+                token = self.lexer.next_tok()?;
 
-            match token {
-                // legacy token `module`; `footprint`: this is a footprint file prior to the
-                // header addition.
-                T::T_module | T::T_footprint => {
-                    // There is only a single footprint so the closing ')' has already been
-                    // parsed.
-                    self.parse_lib_fp(&mut initial_comments, &mut footprints)?;
-                    return Ok(footprints);
-                }
-                T::T_kicad_footprint_lib => {
-                    let mut has_version = false;
+                while token != T::T_RIGHT {
+                    if token != T::T_LEFT {
+                        return Err(self.lexer.expecting(T::T_LEFT));
+                    }
 
                     token = self.lexer.next_tok()?;
 
-                    while token != T::T_RIGHT {
-                        if token != T::T_LEFT {
-                            return Err(self.lexer.expecting(T::T_LEFT));
+                    match token {
+                        T::T_version => {
+                            if has_version {
+                                return Err(self.lexer.unexpected(token));
+                            }
+
+                            has_version = true;
+
+                            let version_number = self.parse_int_expected("version")?;
+
+                            self.required_version = version_number;
+                            self.too_recent = version_number > SEXPR_FOOTPRINT_LIB_FILE_VERSION;
+                            // Bar token is known from this version
+                            self.lexer.set_knows_bar(self.required_version >= 20240706);
+                            self.lexer.need_right()?;
                         }
-
-                        token = self.lexer.next_tok()?;
-
-                        match token {
-                            T::T_version => {
-                                if has_version {
-                                    return Err(self.lexer.unexpected(token));
-                                }
-
-                                has_version = true;
-
-                                let version_number = self.parse_int_expected("version")?;
-
-                                self.required_version = version_number;
-                                self.too_recent =
-                                    version_number > SEXPR_FOOTPRINT_LIB_FILE_VERSION;
-                                // Bar token is known from this version
-                                self.lexer.set_knows_bar(self.required_version >= 20240706);
-                                self.lexer.need_right()?;
-                            }
-                            T::T_generator => {
-                                self.lexer.need_symbol()?;
-                                self.lexer.need_right()?;
-                            }
-                            T::T_generator_version => {
-                                self.lexer.need_symbol()?;
-                                self.generator_version = self.lexer.from_utf8();
-                                self.lexer.need_right()?;
-                            }
-                            T::T_footprint => {
-                                self.check_lib_version(has_version)?;
-                                self.parse_lib_fp(&mut initial_comments, &mut footprints)?;
-                            }
-                            _ => {
-                                self.check_lib_version(has_version)?;
-                                return Err(self.lexer.expecting_str(
-                                    "footprint, generator, generator_version, or version",
-                                ));
-                            }
+                        T::T_generator => {
+                            self.lexer.need_symbol()?;
+                            self.lexer.need_right()?;
                         }
-
-                        token = self.lexer.next_tok()?;
+                        T::T_generator_version => {
+                            self.lexer.need_symbol()?;
+                            self.generator_version = self.lexer.from_utf8();
+                            self.lexer.need_right()?;
+                        }
+                        T::T_footprint => {
+                            self.check_lib_version(has_version)?;
+                            self.parse_lib_fp(&mut initial_comments, &mut footprints)?;
+                        }
+                        _ => {
+                            self.check_lib_version(has_version)?;
+                            return Err(self.lexer.expecting_str(
+                                "footprint, generator, generator_version, or version",
+                            ));
+                        }
                     }
 
-                    self.check_lib_version(has_version)?;
-
-                    return Ok(footprints);
+                    token = self.lexer.next_tok()?;
                 }
-                _ => return Err(self.lexer.expecting_str("footprint or kicad_footprint_lib")),
-            }
-        }
 
-        Ok(footprints)
+                self.check_lib_version(has_version)?;
+
+                Ok(footprints)
+            }
+            _ => Err(self.lexer.expecting_str("footprint or kicad_footprint_lib")),
+        }
     }
 
     /// The `checkVersion` lambda of `ParseFootprintLib`: version gates in the footprint parser

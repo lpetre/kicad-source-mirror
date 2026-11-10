@@ -210,10 +210,10 @@ impl PcbWriter<'_> {
                 .print(format_args!("(clearance {})", format_iu(clearance)))?;
         }
 
-        if fp.local_zone_connection() != ZoneConnection::Inherited {
+        if fp.local_zone_connection_raw() != ZoneConnection::Inherited as i32 {
             self.out.print(format_args!(
                 "(zone_connect {})",
-                fp.local_zone_connection() as i32
+                fp.local_zone_connection_raw()
             ))?;
         }
 

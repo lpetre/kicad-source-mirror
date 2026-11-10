@@ -582,4 +582,145 @@ mod tests {
             "board-drill.rpt"
         );
     }
+
+    #[test]
+    fn scale_selection() {
+        assert_eq!(scale_to_selection(0.0), 0);
+        assert_eq!(scale_to_selection(1.0), 1);
+        assert_eq!(scale_to_selection(1.5), 2);
+        assert_eq!(scale_to_selection(2.0), 3);
+        assert_eq!(scale_to_selection(3.0), 4);
+        assert_eq!(scale_to_selection(2.5), 1);
+    }
+
+    /// `PlotJobToPlotOpts` for the `gerbers` job as `kicad-cli` fills it.
+    #[test]
+    fn plot_job_to_plot_opts_gerbers() {
+        let mut job = JobExportPcbGerbers::new();
+        job.gerber.precision = 6;
+        job.gerber.use_x2_format = false;
+        job.gerber.plot.use_drill_origin = true;
+        job.gerber.plot.sketch_dnp_fps_on_fab_layers = false;
+        job.gerber.plot.plot_layer_sequence =
+            kicad_core::Lseq(vec![PcbLayerId::BCu, PcbLayerId::FCu, PcbLayerId::EdgeCuts]);
+        job.gerber.plot.plot_on_all_layers_sequence = kicad_core::Lseq(vec![PcbLayerId::FFab]);
+        job.gerber.plot.configured_output_path = "out/".to_string();
+
+        let mut opts = PcbPlotParams::default();
+        let mut reporter = crate::VecReporter::default();
+        plot_job_to_plot_opts(
+            &mut opts,
+            &job.gerber.plot,
+            PlotJobFormatOptions::Gerber(&job),
+            Some(&mut reporter),
+        );
+
+        assert!(reporter.messages.is_empty());
+        assert_eq!(opts.format, PlotFormat::Gerber);
+        assert_eq!(opts.drill_marks, DrillMarks::NoDrillShape);
+        assert_eq!(opts.gerber_precision(), 6);
+        assert!(!opts.use_gerber_x2_format);
+        assert!(opts.use_gerber_protel_extensions);
+        assert!(opts.include_gerber_netlist_info);
+        assert!(opts.create_gerber_job_file);
+        assert!(!opts.gerber_disable_apert_macros);
+        assert!(opts.use_aux_origin);
+        assert!(!opts.plot_drawing_sheet);
+        assert!(!opts.sketch_dnp_fps_on_fab_layers);
+        assert!(opts.crossout_dnp_fps_on_fab_layers);
+        assert!(!opts.black_and_white);
+        // the scale is not touched for Gerber
+        assert_eq!(opts.scale, PcbPlotParams::default().scale);
+        assert_eq!(
+            opts.layer_selection(),
+            &Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu, PcbLayerId::EdgeCuts])
+        );
+        assert_eq!(opts.plot_on_all_layers_sequence, vec![PcbLayerId::FFab]);
+        assert_eq!(opts.output_directory, "out/");
+    }
+
+    /// The colour theme warning needs a theme the settings manager does not know and a
+    /// colour plot (`GetBlackAndWhite()` of the options *before* the job's value is copied).
+    #[test]
+    fn plot_job_to_plot_opts_theme_warning() {
+        let mut job = JobExportPcbPlot::new(JobPlotFormat::Svg);
+        job.color_theme = "nonexistent".to_string();
+        job.scale = 0.0;
+
+        let mut opts = PcbPlotParams::default();
+        let mut reporter = crate::VecReporter::default();
+        plot_job_to_plot_opts(
+            &mut opts,
+            &job,
+            PlotJobFormatOptions::Svg {
+                precision: 4,
+                fit_page_to_board: true,
+            },
+            Some(&mut reporter),
+        );
+        // PCB_PLOT_PARAMS starts black and white: no warning
+        assert!(reporter.messages.is_empty());
+        assert!(opts.auto_scale);
+        assert_eq!(opts.scale_selection, 0);
+        assert_eq!(opts.drill_marks, DrillMarks::FullDrillShape);
+        assert_eq!(opts.svg_precision(), 4);
+        assert!(opts.svg_fit_page_to_board);
+        assert_eq!(opts.format, PlotFormat::Svg);
+
+        opts.black_and_white = false;
+        plot_job_to_plot_opts(
+            &mut opts,
+            &job,
+            PlotJobFormatOptions::Other,
+            Some(&mut reporter),
+        );
+        assert_eq!(
+            reporter.messages,
+            vec![(
+                "Color theme 'nonexistent' not found, will use theme from PCB Editor.\n"
+                    .to_string(),
+                Severity::Warning
+            )]
+        );
+
+        job.color_theme = COLOR_BUILTIN_CLASSIC.to_string();
+        reporter.messages.clear();
+        opts.black_and_white = false;
+        plot_job_to_plot_opts(
+            &mut opts,
+            &job,
+            PlotJobFormatOptions::Other,
+            Some(&mut reporter),
+        );
+        assert!(reporter.messages.is_empty());
+    }
+
+    /// Reduced port of `qa/tests/pcbnew/test_plot_job_layers.cpp`
+    /// `AllCopperLayersSurviveSmallerBoard`: a job that plots all copper layers
+    /// (`m_plotAllCopperLayers`, which `FromJson` derives from a legacy job listing every copper
+    /// layer; job JSON is not ported) saved on a 2-layer board plots all copper of a 4-layer
+    /// board. The boards are replaced by their enabled layer sets.
+    #[test]
+    fn all_copper_layers_survive_smaller_board() {
+        let two_layer = Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu, PcbLayerId::FFab]);
+        let four_layer = Lset::from_layers(&[
+            PcbLayerId::FCu,
+            PcbLayerId::In1Cu,
+            PcbLayerId::In2Cu,
+            PcbLayerId::BCu,
+            PcbLayerId::FFab,
+        ]);
+
+        let mut job = JobExportPcbGerbers::new();
+        let layers = Lset::all_cu_mask().clone()
+            | Lset::from_layers(&[PcbLayerId::FMask, PcbLayerId::BMask, PcbLayerId::EdgeCuts]);
+        // DialogLayerSelection( ..., twoLayer, true ): the checked layers the board shows
+        job.gerber.plot.plot_layer_sequence = (layers & two_layer).seq_stackup_for_plotting();
+        job.gerber.plot.plot_all_copper_layers = true;
+
+        let plotted = Lset::from(&job.gerber.plot.resolve_plot_layers(&four_layer));
+        let four_layer_copper = four_layer.clone() & Lset::all_cu_mask().clone();
+
+        assert_eq!(plotted & Lset::all_cu_mask().clone(), four_layer_copper);
+    }
 }

@@ -533,7 +533,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         enum_prop("Zone Connection Style", EnumId::ZoneConnection, |it| {
             PropertyValue::Enum(
                 EnumId::ZoneConnection,
-                pad(&it).local_zone_connection() as i32,
+                pad(&it).local_zone_connection_raw(),
             )
         }),
         group_overrides,

@@ -23,7 +23,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `plot_board_layers.rs` (`PlotStandardLayer` L383-930: pads, DNP cross, vias, tracks, zones), `plot_brditems_plotter.rs` (`getColor`, `PlotPadNumber`, `PlotPad`, `PlotZone`) | see "FAB-04" below | FAB-04 | ported |
 | `plot_brditems_shapes.rs` (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`, `PlotShape`, `PlotDimension`, `PlotPcbTarget`, `PlotBarCode`, `PlotTableBorders`), `line_ending_plot.rs` (`LINE_ENDING::Plot`) | see "FAB-05" below | FAB-05 | ported |
 | `plot_brditems_text.rs` (`PlotFootprintTextItems`, `PlotText`) | see "FAB-06" below | FAB-06 | ported |
-| `plot_layer_poly.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-07..13 | not started |
+| `jobs/job_export_pcb_plot.rs`, `jobs/job_export_pcb_gerbers.rs`, the Gerber part of `jobs_handler.rs` (`JobExportGerbers`, `PlotJobToPlotOpts`) | see "FAB-07" below | FAB-07 | ported (job file: FAB-09) |
+| `plot_layer_poly.rs`, `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-08..13 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -507,4 +508,76 @@ text (the engine is kicad-plot's; not compared here).
   (not moved by the footprint position) and degenerate when rotated:
   `qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb` F.Cu / B.Cu differ (cell
   text 40 / 28 mm off); the table borders match.
+
+## FAB-07: the `gerbers` job
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `JOB_EXPORT_PCB_PLOT` (members, `PLOT_FORMAT`, defaults, `ResolvePlotLayers`) | `jobs::job_export_pcb_plot::{JobExportPcbPlot, JobPlotFormat}` (options only; `configured_output_path`, `var_overrides` stand for the `JOB` base) |
+| `JOB_EXPORT_PCB_GERBER`, `JOB_EXPORT_PCB_GERBERS` (members, defaults) | `jobs::job_export_pcb_gerbers::{JobExportPcbGerber, JobExportPcbGerbers}` |
+| `PCB_PLOTTER::PlotJobToPlotOpts`, `scaleToSelection` (`pcb_plotter.cpp` L47-57, L426-555) | `jobs_handler::plot_job_to_plot_opts(opts, job, PlotJobFormatOptions, reporter)`, `scale_to_selection` |
+| `PCBNEW_JOBS_HANDLER::JobExportGerbers` L1832-1920 (per-layer plot sequence, plot options, extension, `BuildPlotFileName`, `AddGbrFile`, `LAYER` / `SHEETNAME` / `SHEETPATH` overrides, `StartPlotBoard`, `Plotted to '%s'.`, `PlotBoardLayers`, `EndPlot`, `AddOutput`, job file name) | `jobs_handler::job_export_gerbers -> GerbersJobOutcome { success, error, files, outputs, gbr_files, job_file_path }` |
+| `JobExportGerbers` L1750-1831 (board, variant, output path, zone refill, `convertLayerArg`, layer selection, `RefreshGeneratedTables`) | `kicad_session::jobs_handler::run_export_gerbers` (the session owns the raw layer arguments; `convert_layer_arg` / `gerbers_layers_to_plot` were ported and oracle-verified there before), which maps its job onto the structs above and calls `job_export_gerbers` |
+
+### Tests and verification
+
+All in `kicad-session/tests/gerbers_job.rs` (the whole `kicad-rs pcb export gerbers` path:
+session load, layer selection, this package, kicad-fab plotting), against the reference
+`kicad-cli pcb export gerbers`, normalising only the version / date lines:
+
+* `crafted_boards`: the 4 crafted boards of `tests/data/plot_driver` x the 7 option sets of
+  `tests/golden/plot_driver/generate.py` (defaults, `--no-x2`, `--precision 5`,
+  `--no-protel-ext`, `--use-drill-file-origin` with `-l`, `--board-plot-params`,
+  `-l F.Cu,B.Cu --cl Edge.Cuts,F.Fab`): **247 files, all byte-identical**, same names, same
+  order, same `Plotted to` messages, exit code 0.
+* `cli_test_pcb_export_gerber`: the `qa/tests/cli/test_pcb.py::test_pcb_export_gerber` cases
+  (`--no-x2 --use-drill-file-origin --layers L`): `Issue24143` F.Cu byte-identical to the
+  committed golden `Issue24143-F_Cu.gbr`; `ZoneFill-4.0.7` F.Cu / B.Cu byte-identical to the
+  reference kicad-cli output (hash; the committed `.gbr` goldens are from an older KiCad and
+  only pass the C++ test's image diff). `ZoneFill-Legacy.brd` needs the legacy board reader
+  (not in the port).
+* `corpus_replay`: every corpus board under 300 KB (380), CLI defaults and
+  `--no-x2 --use-drill-file-origin` (golden `kicad-session/tests/golden/gerbers_job/corpus.txt`,
+  `generate.py` there: exit code, stdout hash, file hashes). Today: **690 of 760 runs
+  identical** (exit code, messages, every file: 15 506 files), 2 runs not loadable
+  (`fakeboard`, rejected by kicad-cli too), 62 runs reach the FAB-10 stub (mask minimum
+  width), 2 reach `RefreshGeneratedTables` (M26), 4 files are known differences (barcodes
+  without symbol encoder, model M25a: `project_barcode` F.Silkscreen, `issue24525` Edge.Cuts).
+  Note: the three B.Mask files listed as known differences in `plot_driver_corpus.rs`
+  (`round_unequal_drill`, `issue7086`, `solder_mask_bridge_test`) are identical here: the
+  session plots with the board's DRC engine as rule resolver, those tests with
+  `BoardCtx::bare`.
+* The `kicad-rs` binary itself was compared on `ecc83-pp`, `issue7086`, `Issue24143`,
+  `ZoneFill-4.0.7`: files identical, stdout identical except the FAB-09 line.
+* Unit tests (`jobs_handler.rs`): `scaleToSelection`, `PlotJobToPlotOpts` for the CLI
+  `gerbers` job and the SVG branch / colour theme warning, and a reduced port of
+  `qa/tests/pcbnew/test_plot_job_layers.cpp` `AllCopperLayersSurviveSmallerBoard`
+  (`ResolvePlotLayers` with `m_plotAllCopperLayers`; job JSON and loading the two boards are
+  left out).
+
+### Deviations
+
+* The Gerber job file (`GERBER_JOBFILE_WRITER`, FAB-09) is not written: after the layer files
+  `job_export_gerbers` ends with `FabError::NotPorted`; `run_export_gerbers` returns the layer
+  files with exit code `NOT_YET_PORTED` and reports `not ported yet: GERBER_JOBFILE_WRITER::
+  CreateJobFile (FAB-09)` (an extra stdout line). `gbr_files` / `job_file_path` hold what
+  `AddGbrFile` and `CreateJobFile` receive.
+* An error of `StartPlotBoard` (a format or drawing sheet outside the port) stops the export
+  with that error instead of reporting `Failed to plot to '%s'.` and continuing (the C++ only
+  fails there when the file cannot be created, which the port cannot).
+* `PlotJobToPlotOpts`: the DXF / PDF / PostScript / PNG branches and `SetColorSettings` are
+  not ported (formats out of scope; no colour settings in `PcbPlotParams`). The colour theme
+  lookup knows only `_builtin_default`, `_builtin_classic` and `user`; an empty theme is the
+  PCB editor default `_builtin_default`. The warning cannot fire from kicad-cli (a fresh
+  `PCB_PLOT_PARAMS` is black and white when the check runs).
+* The creation date is `JobExportPcbPlot::creation_date` of the session job (default all
+  zeros); the hosts do not set it from the clock yet (change request).
+
+### Known gaps
+
+* `--check-zones`, `--variant`, `--ibt` (drawing sheet): session / FAB-14 / PLOT-08.
+* Boards with mask minimum width (FAB-10) and generated tables (M26) panic / stop in those
+  stubs; the corpus test counts them as pending.
 

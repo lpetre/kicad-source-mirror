@@ -1,0 +1,94 @@
+(kicad_footprint_lib
+	(version 20261031)
+	(generator "kicad_footprint_editor")
+	(generator_version "10.99")
+	(footprint "KEEP_OUT_LAYER"
+		(layer "F.Cu")
+		(property "Reference" "REF**"
+			(at 0.25478 -0.95 0)
+			(layer "F.SilkS")
+			(uuid "5e9de334-e354-4778-8c65-fbaa0700092a")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "KEEP_OUT_LAYER"
+			(at 0.25478 0.95 0)
+			(layer "F.Fab")
+			(uuid "f9bfc58e-fe83-4785-976d-9e370be16bbd")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "04e557ea-8d90-46f3-a7ee-7d4d987df0bc")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9285c00c-a826-428e-9699-a534e6baf792")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(duplicate_pad_numbers_are_jumpers no)
+		(zone
+			(layers "F.Cu" "B.Cu" "In1.Cu" "In2.Cu" "In3.Cu" "In4.Cu" "In5.Cu" "In6.Cu"
+				"In7.Cu" "In8.Cu" "In9.Cu" "In10.Cu" "In11.Cu" "In12.Cu" "In13.Cu" "In14.Cu"
+				"In15.Cu" "In16.Cu" "In17.Cu" "In18.Cu" "In19.Cu" "In20.Cu" "In21.Cu"
+				"In22.Cu" "In23.Cu" "In24.Cu" "In25.Cu" "In26.Cu" "In27.Cu" "In28.Cu"
+				"In29.Cu" "In30.Cu"
+			)
+			(uuid "94e716cf-7881-4d20-b42e-802b20f3c03b")
+			(hatch edge 0.5)
+			(connect_pads
+				(clearance 0)
+			)
+			(min_thickness 0.25)
+			(keepout
+				(tracks not_allowed)
+				(vias not_allowed)
+				(pads not_allowed)
+				(copperpour not_allowed)
+				(footprints allowed)
+			)
+			(placement
+				(enabled no)
+				(sheetname "")
+			)
+			(fill
+				(thermal_gap 0.5)
+				(thermal_bridge_width 0.5)
+				(island_removal_mode 0)
+			)
+			(polygon
+				(pts
+					(xy 0.659776 -0.12456) (xy 0.705557 -0.105597) (xy 0.740597 -0.070557) (xy 0.75956 -0.024776) (xy 0.75956 0.024776)
+					(xy 0.740597 0.070557) (xy 0.705557 0.105597) (xy 0.659776 0.12456) (xy 0.635 0.127) (xy 0 0.127)
+					(xy -0.024776 0.12456) (xy -0.070557 0.105597) (xy -0.105597 0.070557) (xy -0.12456 0.024776) (xy -0.12456 -0.024776)
+					(xy -0.105597 -0.070557) (xy -0.070557 -0.105597) (xy -0.024776 -0.12456) (xy 0 -0.127) (xy 0.635 -0.127)
+				)
+			)
+		)
+		(embedded_fonts no)
+	)
+)

@@ -244,10 +244,7 @@ impl DrcTestProviderHoleToHole {
                 // Test every drilled or milled hole, including oval (slotted) holes
                 if item.has_hole() {
                     let hole_shape = item
-                        .effective_hole_shape(
-                            UNDEFINED_LAYER,
-                            DrcConstraintT::HoleToHoleConstraint,
-                        )
+                        .effective_hole_shape(UNDEFINED_LAYER, DrcConstraintT::HoleToHoleConstraint)
                         .expect("a pad with a hole has a hole shape");
 
                     query(&mut host, item, hole_shape.as_ref());

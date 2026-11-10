@@ -54,20 +54,7 @@ use crate::item_ref::OwnedItem;
 use crate::pcb_3d_body::{ExtrusionMaterial, Pcb3dBody};
 use crate::pcb_field::{FieldT, PcbField};
 use crate::traits::BoardItemMut;
-use crate::zone_settings::ZoneConnection;
 
-/// `(ZONE_CONNECTION) aValue` for the values the enum has. The C++ cast keeps any other
-/// integer, which the Rust enum cannot hold: such a value reads as `INHERITED`
-/// (`PORT_STATUS.md`, PCBIO-06 deviations).
-fn zone_connection_from_int(value: i32) -> ZoneConnection {
-    match value {
-        0 => ZoneConnection::None,
-        1 => ZoneConnection::Thermal,
-        2 => ZoneConnection::Full,
-        3 => ZoneConnection::ThtThermal,
-        _ => ZoneConnection::Inherited,
-    }
-}
 
 impl PcbParser {
     /// The footprint being parsed (created by this parser, so always live).
@@ -481,7 +468,8 @@ impl PcbParser {
                 }
                 T::T_zone_connect => {
                     let value = self.parse_int_expected("zone connection value")?;
-                    self.fp_mut(fp).zone_connection = zone_connection_from_int(value);
+                    // (ZONE_CONNECTION) parseInt(..): the raw integer is kept.
+                    self.fp_mut(fp).set_local_zone_connection_raw(value);
                     self.lexer.need_right()?;
                 }
                 T::T_thermal_width | T::T_thermal_gap => {

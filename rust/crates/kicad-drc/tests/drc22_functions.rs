@@ -25,8 +25,8 @@
 
 use kicad_core::{KicadT, PcbLayerId};
 use kicad_drc::constraint_types::DrcConstraintT;
-use kicad_drc::pcbexpr::evaluator::{PcbExprContext, PcbExprUcode, PcbExprUnitResolver};
 use kicad_drc::pcbexpr::evaluator::pcbexpr_compiler;
+use kicad_drc::pcbexpr::evaluator::{PcbExprContext, PcbExprUcode, PcbExprUnitResolver};
 use kicad_drc::pcbexpr::functions::{PcbExprCacheScope, intersects_keepout};
 use kicad_drc::rule_condition::DrcRuleCondition;
 use kicad_geom::math::vector2::Vector2I;
@@ -121,7 +121,11 @@ fn eval_on<'e>(
         "{expr}: {:?}",
         compiler.error()
     );
-    assert!(!compiler.is_error_pending(), "{expr}: {:?}", compiler.error());
+    assert!(
+        !compiler.is_error_pending(),
+        "{expr}: {:?}",
+        compiler.error()
+    );
 
     let result = ucode.run(&mut context);
     context.value(result).as_double(&context)
@@ -535,10 +539,16 @@ fn rule_area_predicates() {
         // The keepout is on F.Cu only.
         assert_eq!(on("A.intersectsArea('K')", back, back, any), 0.0);
         assert_eq!(on("A.intersectsArea('R')", back, back, any), 1.0);
-        assert_eq!(on("A.intersectsArea('R')", back, back, PcbLayerId::BCu), 1.0);
+        assert_eq!(
+            on("A.intersectsArea('R')", back, back, PcbLayerId::BCu),
+            1.0
+        );
         // The context layer is tested even when the item is not on it (a track's effective
         // shape does not depend on the layer): the C++ answers true here as well.
-        assert_eq!(on("A.intersectsArea('R')", inside, inside, PcbLayerId::BCu), 1.0);
+        assert_eq!(
+            on("A.intersectsArea('R')", inside, inside, PcbLayerId::BCu),
+            1.0
+        );
 
         let by_uuid = format!("A.intersectsArea('{}')", uuid(0x50));
         assert_eq!(on(&by_uuid, inside, inside, any), 1.0);
@@ -613,15 +623,8 @@ fn item_predicates() {
     assert_eq!(eval("A.isCoupledDiffPair()", front, n), 0.0);
 
     let gap = DrcConstraintT::DiffPairGapConstraint as i32;
-    let coupled = |a: ItemRef<'_>| {
-        eval_on(
-            "A.isCoupledDiffPair()",
-            Some(a),
-            None,
-            gap,
-            PcbLayerId::FCu,
-        )
-    };
+    let coupled =
+        |a: ItemRef<'_>| eval_on("A.isCoupledDiffPair()", Some(a), None, gap, PcbLayerId::FCu);
     assert_eq!(coupled(p), 1.0);
     assert_eq!(coupled(lone), 0.0);
 

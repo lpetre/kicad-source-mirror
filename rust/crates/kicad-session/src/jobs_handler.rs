@@ -446,8 +446,8 @@ pub fn run_export_gerbers(
         creation_date: job.gerber.plot.creation_date,
     };
 
-    let mut ctx = kicad_pcb::ctx::BoardCtx::bare(&session.board)
-        .with_connectivity(&session.connectivity);
+    let mut ctx =
+        kicad_pcb::ctx::BoardCtx::bare(&session.board).with_connectivity(&session.connectivity);
 
     if let Some(engine) = session.drc_engine.as_ref() {
         ctx = ctx.with_rules(engine);
@@ -491,7 +491,7 @@ pub fn run_export_gerbers(
         Some(err) if result.job_file_path.is_some() => {
             // Every layer file is complete; only the Gerber job file (FAB-09) is missing: keep
             // the layer files and end with the not-yet-ported exit code.
-            reporter.report(format!("not yet ported: {err}\n"), Severity::Error);
+            reporter.report(format!("{err}\n"), Severity::Error);
 
             Ok(JobOutcome {
                 exit_code: exit_codes::NOT_YET_PORTED,
@@ -514,7 +514,9 @@ impl kicad_fab::Reporter for FabReporter<'_> {
 
 /// The session's `JOB_EXPORT_PCB_GERBERS` as kicad-fab's option struct (same members; the
 /// layer sequences after [`gerbers_layers_to_plot`]).
-fn fab_gerbers_job(job: &JobExportPcbGerbers) -> kicad_fab::jobs::job_export_pcb_gerbers::JobExportPcbGerbers {
+fn fab_gerbers_job(
+    job: &JobExportPcbGerbers,
+) -> kicad_fab::jobs::job_export_pcb_gerbers::JobExportPcbGerbers {
     use kicad_fab::jobs::job_export_pcb_gerbers as fab;
     use kicad_fab::jobs::job_export_pcb_plot as fab_plot;
 
@@ -698,13 +700,113 @@ pub fn run_fp_upgrade(
     job: &mut JobFpUpgrade,
     reporter: &mut Reporter,
 ) -> Result<JobOutcome, SessionError> {
-    let _ = (library, &job, &reporter);
+    use kicad_pcb::io::writer::CTL_FOR_LIBRARY;
+    use kicad_pcb::io::{FormatOptions, ParseOptions, SEXPR_FOOTPRINT_LIB_FILE_VERSION};
 
-    // FP_CACHE::Load (PCB_IO_KICAD_SEXPR CTL_FOR_LIBRARY), the version check against
-    // SEXPR_FOOTPRINT_LIB_FILE_VERSION and FP_CACHE::Save.
-    Err(SessionError::not_yet_ported(
-        "kicad-pcb: footprint library parser / writer (FP_CACHE::Load / Save)",
-    ))
+    // FP_CACHE::Load: every file of the library, keyed by its base name (the first file of a
+    // name wins, boost::ptr_map::insert). Errors are queued so that only the files that fail
+    // to parse don't get loaded; any error fails the load.
+    let mut fp_lib: BTreeMap<
+        String,
+        (String, kicad_pcb::board::Board, kicad_pcb::ids::FootprintId),
+    > = BTreeMap::new();
+    let mut cache_error = String::new();
+
+    for (full_name, text) in library {
+        let full_path = format!("{}/{}", job.library_path, full_name);
+
+        match kicad_pcb::io::parse_footprint_file(text, &full_path, &ParseOptions::default()) {
+            Ok((mut holder, _warnings)) => {
+                // wxFileName::GetName(): the name without the extension
+                let fp_name = match full_name.rfind('.') {
+                    Some(dot) if dot > 0 => full_name[..dot].to_string(),
+                    _ => full_name.clone(),
+                };
+
+                let Some(fp) = holder.footprints().next().map(|(id, _)| id) else {
+                    continue;
+                };
+
+                // The parser's entry has no file name, and saving uses the one cached here
+                holder.modify_footprint(fp, |footprint, _| {
+                    footprint.fpid = kicad_core::LibId::from_parts("", &fp_name);
+                });
+
+                fp_lib
+                    .entry(fp_name)
+                    .or_insert((full_name.clone(), holder, fp));
+            }
+            Err(e) => {
+                if !cache_error.is_empty() {
+                    cache_error.push_str("\n\n");
+                }
+
+                cache_error.push_str(&format!("Unable to read file '{full_path}'\n"));
+                cache_error.push_str(e.what());
+            }
+        }
+    }
+
+    if !cache_error.is_empty() {
+        reporter.report("Unable to load library\n", Severity::Error);
+        return Ok(JobOutcome::exit(exit_codes::ERR_UNKNOWN));
+    }
+
+    let mut should_save = job.force;
+
+    for (_, holder, fp) in fp_lib.values() {
+        let version = holder
+            .footprint(*fp)
+            .map_or(0, |f| f.file_format_version_at_load);
+
+        if version < SEXPR_FOOTPRINT_LIB_FILE_VERSION {
+            should_save = true;
+        }
+    }
+
+    if !should_save {
+        reporter.report("Footprint library was not updated\n", Severity::Error);
+        return Ok(JobOutcome::exit(exit_codes::SUCCESS));
+    }
+
+    // fpLib.SetPath( output ) when given, then FP_CACHE::Save with the PCB_IO_KICAD_SEXPR(
+    // CTL_FOR_LIBRARY ) owner: each footprint to <path>/<its file name>, in key order.
+    let lib_path = if job.output_library_path.is_empty() {
+        &job.library_path
+    } else {
+        &job.output_library_path
+    };
+
+    let options = FormatOptions {
+        ctl: CTL_FOR_LIBRARY,
+        ..FormatOptions::default()
+    };
+
+    let mut files = Vec::new();
+
+    for (full_name, holder, fp) in fp_lib.values() {
+        match kicad_pcb::io::format_footprint_lib_file(holder, *fp, &options) {
+            Ok((text, _)) => files.push(OutputFile {
+                name: format!("{lib_path}/{full_name}"),
+                contents: text.into_bytes(),
+            }),
+            Err(_) => {
+                // The files saved before the failure stay written, as in C++.
+                reporter.report("Unable to save library\n", Severity::Error);
+                return Ok(JobOutcome {
+                    exit_code: exit_codes::ERR_UNKNOWN,
+                    files,
+                    report_text: None,
+                });
+            }
+        }
+    }
+
+    Ok(JobOutcome {
+        exit_code: exit_codes::SUCCESS,
+        files,
+        report_text: None,
+    })
 }
 
 /// The board's directory part of the session's file name (`wxFileName::GetPath()`).

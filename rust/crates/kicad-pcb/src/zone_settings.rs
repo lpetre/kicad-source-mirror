@@ -70,6 +70,39 @@ pub enum ZoneConnection {
     ThtThermal,
 }
 
+impl ZoneConnection {
+    /// The value a reader sees for a raw `ZONE_CONNECTION` integer. The C++ parser casts file
+    /// integers with `(ZONE_CONNECTION) parseInt(..)` and keeps values outside the enum
+    /// (the stored value is the raw integer, see `Pad::local_zone_connection_raw`). Every
+    /// C++ reader of such a value compares it with `INHERITED` / `THERMAL` / `NONE` /
+    /// `THT_THERMAL` or switches on it with `FULL` in (or as) the `default:` branch
+    /// (`ZONE_FILLER::knockoutThermalReliefs` / `buildCopperItemClearances`,
+    /// `DRC_ENGINE::EvalRules` / `EvalZoneConnection`, `DRC_TEST_PROVIDER_ZONE_CONNECTIONS`),
+    /// so an out-of-range value behaves as `FULL` there: that is what this returns for it.
+    pub fn from_raw(value: i32) -> ZoneConnection {
+        match value {
+            -1 => ZoneConnection::Inherited,
+            0 => ZoneConnection::None,
+            1 => ZoneConnection::Thermal,
+            2 => ZoneConnection::Full,
+            3 => ZoneConnection::ThtThermal,
+            _ => ZoneConnection::Full,
+        }
+    }
+
+    /// `magic_enum::enum_cast<ZONE_CONNECTION>( aValue )`: the enumerator with that value.
+    pub fn enum_cast(value: i32) -> Option<ZoneConnection> {
+        match value {
+            -1 => Some(ZoneConnection::Inherited),
+            0 => Some(ZoneConnection::None),
+            1 => Some(ZoneConnection::Thermal),
+            2 => Some(ZoneConnection::Full),
+            3 => Some(ZoneConnection::ThtThermal),
+            _ => None,
+        }
+    }
+}
+
 /// `ZONE_LAYER_PROPERTIES` (`pcbnew/zone_settings.h`). Complete.
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct ZoneLayerProperties {

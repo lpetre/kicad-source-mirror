@@ -480,8 +480,7 @@ impl Session {
     pub fn fill_all_zones(&mut self) -> Result<kicad_zone::FillAllZonesOutcome, SessionError> {
         if self.drc_engine.is_none() {
             let mut engine = DrcEngine::new();
-            let rules_path =
-                crate::board_loader::with_extension(&self.source_name, "kicad_dru");
+            let rules_path = crate::board_loader::with_extension(&self.source_name, "kicad_dru");
             let _ = engine.init_engine(
                 &mut self.board,
                 self.rules_text.as_deref().map(|t| (t, rules_path.as_str())),

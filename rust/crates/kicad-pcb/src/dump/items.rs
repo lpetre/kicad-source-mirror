@@ -26,7 +26,7 @@ use kicad_geom::{ShapePolySet, Vector2I};
 
 use super::board::item_copper_count;
 use super::format::{
-    Out, copper_layers, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer,
+    Out, copper_layers, emit, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer,
     v_layer_names, v_layers, v_lset, v_opt_bool, v_opt_enum, v_opt_f64, v_opt_int, v_points,
     v_polyset, v_shape, v_str, v_vec,
 };
@@ -255,7 +255,8 @@ pub(crate) fn dump_padstack(o: &mut Out, p: &str, ps: &Padstack) {
         emit!(
             o,
             format!("{lp}zone_connection"),
-            v_opt_enum(c.zone_connection)
+            c.zone_connection
+                .map_or_else(|| "none".to_string(), v_zone_connection_raw)
         );
         emit!(
             o,
@@ -548,12 +549,12 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
     emit!(
         o,
         "local_zone_connection",
-        v_enum(pad.local_zone_connection())
+        v_zone_connection_raw(pad.local_zone_connection_raw())
     );
     emit!(
         o,
         "zone_connection_overrides",
-        v_enum(pad.zone_connection_overrides(ctx, false).0)
+        v_zone_connection_raw(pad.zone_connection_overrides_raw(ctx))
     );
     emit!(
         o,
@@ -817,6 +818,15 @@ pub(crate) fn dump_eda_shape(o: &mut Out, p: &str, it: ItemRef<'_>) {
     }
 }
 
+/// `VEnum( ZONE_CONNECTION )` of a stored (raw) value: the enumerator name, `?N` for an
+/// integer outside the enum (magic_enum has no name for it).
+fn v_zone_connection_raw(value: i32) -> String {
+    match crate::zone_settings::ZoneConnection::enum_cast(value) {
+        Some(z) => v_enum(z),
+        None => format!("?{value}"),
+    }
+}
+
 /// `DumpShape` (PCB_SHAPE, textbox, table cell).
 pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
     let ctx = it.ctx;
@@ -859,7 +869,9 @@ pub(crate) fn dump_shape(o: &mut Out, it: ItemRef<'_>) {
     }
 
     if st == ShapeT::Poly {
-        emit!(o, "lib.poly", v_polyset(&s.lib_poly_shape()));
+        // `GetLibraryPolyShape()`: the board polygon mapped back (not the stored `m_libPoly`,
+        // which keeps the closing vertex of the file in both languages).
+        emit!(o, "lib.poly", v_polyset(&s.library_poly_shape(ctx)));
     }
 
     if matches!(st, ShapeT::Ellipse | ShapeT::EllipseArc) {
@@ -1028,13 +1040,21 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
             v_polyset(&buf)
         } else {
             let mut buf = ShapePolySet::new();
-            it.as_text().expect("text").transform_text_to_poly_set(
-                ctx,
-                &mut buf,
-                0,
-                5000,
-                ErrorLoc::Inside,
-            );
+
+            match it.any() {
+                // PCB_TEXT::TransformTextToPolySet with the dimension as the host.
+                AnyItem::Dimension(d) => {
+                    d.transform_text_to_poly_set(ctx, &mut buf, 0, 5000, ErrorLoc::Inside)
+                }
+                _ => it.as_text().expect("text").transform_text_to_poly_set(
+                    ctx,
+                    &mut buf,
+                    0,
+                    5000,
+                    ErrorLoc::Inside,
+                ),
+            }
+
             v_polyset(&buf)
         }
     });
@@ -1065,7 +1085,7 @@ pub(crate) fn dump_dimension(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "lib_end", v_vec(d.lib_end()));
     emit!(o, "override_text_enabled", v_bool(d.override_text_enabled));
     emit!(o, "override_text", v_str(d.override_text()));
-    emit!(o, "value_mode", no_api("PCB_DIMENSION_BASE::GetValueMode"));
+    emit!(o, "value_mode", v_enum(d.value_mode(ctx)));
     emit!(o, "measured_value", v_int(d.measured_value));
     emit!(o, "value_text", v_str(&d.value_text()));
     emit!(o, "prefix", v_str(&d.prefix));
@@ -1301,7 +1321,7 @@ pub(crate) fn dump_footprint(o: &mut Out, it: ItemRef<'_>) {
     emit!(
         o,
         "local_zone_connection",
-        v_enum(fp.local_zone_connection())
+        v_zone_connection_raw(fp.local_zone_connection_raw())
     );
     emit!(o, "stackup_mode", v_enum(fp.stackup_mode));
     emit!(o, "stackup_layers", v_lset(&fp.stackup_layers));

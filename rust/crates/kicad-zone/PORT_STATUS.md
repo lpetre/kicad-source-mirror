@@ -144,3 +144,53 @@ Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-boa
 - Hatched fills are verified on one corpus board (`hatch_thermal_connectivity`: final fill and
   all 21 stage layers identical); the thermal-ring / hatch-hole-drop paths with vias and the
   custom-pad spoke path (`customSpokes`) are not exercised by any loadable corpus board yet.
+
+## ZF-06: headless FillAllZones, refill in the CLI jobs, save
+
+| C++ | Rust | State |
+|---|---|---|
+| `ZONE_FILLER_TOOL::FillAllZones( nullptr, reporter, true )` (`tools/zone_filler_tool.cpp`) | `tool.rs` `fill_all_zones` | ported (headless path) |
+| `PostFillRefresh( true )` / `rebuildConnectivity` (`BOARD::BuildConnectivity`) | `fill_all_zones` | ported |
+| `board()->OnZonesFilled`, `RegenerateDirtyGenerators`, `refillAroundGenerators` | - | nothing to do headless: the jobs handler's tool manager has no `GENERATOR_TOOL`, so no generator is regenerated and nothing refilled; `PCB_VIA_STITCH::OnZoneFillChanged` only sets an unsaved dirty flag |
+| `TEARDROP_MANAGER::UpdateTeardrops( commit, nullptr, nullptr, true )` | `tool.rs` `update_teardrops` | partial: the legacy-teardrop early return and the no-op case (no teardrop zone, no pad / via with enabled teardrops, track target disabled) are ported; every other board stops in `port_pending!` (TD-01 / TD-02) |
+| `JobExportDrc` refill / `--save-board` block, gerbers / SVG `--check-zones` | kicad-session `Session::refill_zones` / `fill_all_zones`, `jobs_handler::drc_save_board` | ported (see kicad-session PORT_STATUS) |
+
+Tests: `tests/zf06_tool.rs` (`fill_all_zones` = the bare filler's fill; the teardrop guard and
+its legacy early return); `kicad-session/tests/zf06_refill_save.rs` (end to end, below).
+
+Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-board` cached by
+`tools/zone-corpus/run.sh`):
+
+- Saved boards (`cargo test -p kicad-session --release --test zf06_refill_save -- --ignored
+  --nocapture`, report `target/zone-corpus/save_report.txt`): load (kicad-cli sequence) +
+  `Session::refill_zones` + `drc_save_board` vs the reference's saved board, byte for byte after
+  replacing UUIDs that are not in the input (freshly generated on both sides): 141 boards,
+  **125 identical**, 1 different, 15 not run. On 80 of the 125 the refill changes the fills
+  relative to the input file (so the comparison exercises the fill), all identical. The one
+  difference is `cli__artwork_generation_regressions__ZoneFill-4.0.7`: every footprint has
+  `(tstamp 3)`, the duplicates get fresh random UUIDs and the writer sorts footprints by UUID
+  (`BOARD_ITEM::ptr_cmp`), so the footprint order is random on both sides; its fills are
+  identical. Not run: 13 need teardrop regeneration (TD-01 hook), 2 copper thieving (ZF-07).
+- Zone-layer scoreboard (`tools/zone-corpus/run.sh`) after the chain: **336 identical, 0 same
+  area, 0 different** (DRC-21 has landed: `issue23339_zone_layer_rules` now matches). Harness
+  fixes: the DRC engine is initialised with the board's layer names
+  (`board_layer_choices`, as `BOARD_LOADER::Load`), and zones whose UUID the saved file does not
+  carry (teardrop areas: the writer omits it, so the reference reader generates a fresh one;
+  `issue17967`, legacy teardrops) are matched by `Zones()` position - those were the 2
+  "different" layers of `issue17967`, not a fill difference.
+
+### Deviations
+
+- `commit.Revert()` on a failed fill is not reproduced: `ZoneFiller::fill` cannot fail without
+  a progress reporter (`debug_assert!`).
+- The `m_fillInProgress` re-entrancy guard, the infobar about invalid DRC rules, the progress
+  dialog and the focus handling are GUI-only and not ported.
+
+### Known gaps
+
+- Teardrop regeneration (TD-01 / TD-02): boards with teardrop zones or enabled teardrop
+  parameters (not legacy) stop in `update_teardrops` with `port_pending!`.
+- `kicad-rs pcb drc --refill-zones --save-board` end to end still stops at the DRC run
+  (`run_drc` returns `NotYetPorted` until DRC-12 wires `RunTests` and the report): the refill
+  and the save are verified through the session API instead. DRC-12 must call
+  `jobs_handler::drc_save_board` after writing the report.

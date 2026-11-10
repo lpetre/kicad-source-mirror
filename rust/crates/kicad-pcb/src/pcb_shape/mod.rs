@@ -580,8 +580,9 @@ impl PcbShape {
 
             mirror_lib = true;
         } else if self.parent_is_pad() && self.shape.shape != self.lib.shape {
-            // GetPrimitiveLibScale(): not carried by MutEnv, (1, 1) (see sync_frame).
-            xform.set_scale(1.0, 1.0);
+            // GetPrimitiveLibScale() of the owning pad (carried by the primitive's MutEnv).
+            let (sx, sy) = env.pad_primitive_scale;
+            xform.set_scale(sx, sy);
             mirror_lib = true;
         }
 

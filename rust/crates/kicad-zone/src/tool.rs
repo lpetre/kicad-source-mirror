@@ -26,11 +26,11 @@
 //! pad / via / track target) and stops with `port_pending!` otherwise.
 
 use kicad_connectivity::data::ConnectivityData;
+use kicad_pcb::Board;
 use kicad_pcb::ctx::RuleResolver;
+use kicad_pcb::ids::ZoneId;
 use kicad_pcb::pcb_track::Track;
 use kicad_pcb::teardrop_parameters::TargetTd;
-use kicad_pcb::Board;
-use kicad_pcb::ids::ZoneId;
 
 use crate::filler::ZoneFiller;
 
@@ -84,7 +84,10 @@ pub fn fill_all_zones(
     } else {
         // commit.Revert(): unreachable in the port, `ZoneFiller::fill` fails only on a
         // cancelled progress reporter, which the port does not have.
-        debug_assert!(false, "ZoneFiller::fill has no failure path without a reporter");
+        debug_assert!(
+            false,
+            "ZoneFiller::fill has no failure path without a reporter"
+        );
     }
 
     outcome.warnings = filler.warnings().to_vec();

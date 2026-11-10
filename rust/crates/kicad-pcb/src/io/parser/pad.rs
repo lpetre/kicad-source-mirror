@@ -52,24 +52,6 @@ use crate::pcb_shape::PcbShape;
 use crate::pcb_track::ZoneLayerOverride;
 use crate::zone_settings::ZoneConnection;
 
-/// `(ZONE_CONNECTION) aValue` (top-level `zone_connect` of a pad) for the values the enum has.
-/// The C++ cast keeps any other integer, which the Rust enum cannot hold: such a value reads
-/// as `INHERITED` (`PORT_STATUS.md`, PCBIO-07 deviations; same rule as PCBIO-06).
-fn zone_connection_cast(value: i32) -> ZoneConnection {
-    zone_connection_enum_cast(value).unwrap_or(ZoneConnection::Inherited)
-}
-
-/// `magic_enum::enum_cast<ZONE_CONNECTION>( aValue )`: the enumerator with that value, if any.
-fn zone_connection_enum_cast(value: i32) -> Option<ZoneConnection> {
-    match value {
-        -1 => Some(ZoneConnection::Inherited),
-        0 => Some(ZoneConnection::None),
-        1 => Some(ZoneConnection::Thermal),
-        2 => Some(ZoneConnection::Full),
-        3 => Some(ZoneConnection::ThtThermal),
-        _ => None,
-    }
-}
 
 /// `PAD::SetRemoveUnconnected( aSet )` (inline in `pad.h`).
 fn set_remove_unconnected(pad: &mut Pad, set: bool) {
@@ -390,7 +372,8 @@ impl PcbParser {
                 }
                 T::T_zone_connect => {
                     let value = self.parse_int_expected("zone connection value")?;
-                    pad.set_local_zone_connection(zone_connection_cast(value));
+                    // (ZONE_CONNECTION) parseInt(..): the raw integer is kept.
+                    pad.set_local_zone_connection_raw(value);
                     self.lexer.need_right()?;
                 }
                 // legacy token thermal_width
@@ -1040,9 +1023,9 @@ impl PcbParser {
                     self.lexer.need_right()?;
                 }
                 T::T_zone_connect => {
-                    *pad.padstack.zone_connection_mut(cur_layer) = zone_connection_enum_cast(
-                        self.parse_int_expected("zone connection value")?,
-                    );
+                    let value = self.parse_int_expected("zone connection value")?;
+                    pad.padstack
+                        .set_zone_connection(cur_layer, ZoneConnection::enum_cast(value));
                     self.lexer.need_right()?;
                 }
                 T::T_clearance => {

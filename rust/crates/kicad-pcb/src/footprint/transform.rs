@@ -115,6 +115,7 @@ impl Board {
             layers: Arc::clone(&self.layer_env),
             max_error: self.design_settings.max_error(),
             board_use: self.board_use,
+            pad_primitive_scale: (1.0, 1.0),
         }
     }
 

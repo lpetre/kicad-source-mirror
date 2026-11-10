@@ -236,9 +236,11 @@ fn mirror_axis_seg(centre: Vector2I, dir: FlipDirection) -> Seg {
 /// The environment handed to a custom-shape primitive's mutators. Primitives are in the pad
 /// frame and C++ `PCB_SHAPE::transformFp()` is null for them, so they see no parent footprint
 /// frame (`board-model.md` 5 rule 6); the board facts (flip table, max error) are the pad's.
-fn primitive_env(env: &MutEnv) -> MutEnv {
+/// `scale` is the pad's `GetPrimitiveLibScale()` at the time of the call (`Pad::primitive_env`).
+fn primitive_env(env: &MutEnv, scale: (f64, f64)) -> MutEnv {
     MutEnv {
         parent: None,
+        pad_primitive_scale: scale,
         ..env.clone()
     }
 }
@@ -260,6 +262,13 @@ impl Pad {
     /// The parent footprint's `GetTransform()` as a mutator sees it.
     fn env_transform(env: &MutEnv) -> Option<TransformTrs> {
         env.parent.map(|frame| frame.transform)
+    }
+
+    /// The environment of this pad's primitives: no parent frame, and the pad's current
+    /// `GetPrimitiveLibScale()` (parent footprint of `env`, current relative orientation).
+    fn primitive_env(&self, env: &MutEnv) -> MutEnv {
+        let scale = Self::primitive_lib_scale_in(Self::env_transform(env), self.lib_orientation());
+        primitive_env(env, scale)
     }
 
     /// The handle of this pad as the C++ `this` owner of its padstack primitives.
@@ -1413,7 +1422,7 @@ impl Pad {
         self.set_local_solder_paste_margin(master.local_solder_paste_margin());
         self.set_local_solder_paste_margin_ratio(master.local_solder_paste_margin_ratio());
 
-        self.set_local_zone_connection(master.local_zone_connection());
+        self.set_local_zone_connection_raw(master.local_zone_connection_raw());
         self.set_local_thermal_spoke_width_override(master.local_thermal_spoke_width_override());
         self.set_thermal_spoke_angle(master.thermal_spoke_angle());
         self.set_local_thermal_gap_override(master.local_thermal_gap());
@@ -1480,16 +1489,30 @@ impl Pad {
             .solder_paste_margin_ratio_mut(PcbLayerId::BPaste) = ratio;
     }
 
-    /// `PAD::GetLocalZoneConnection()`: `INHERITED` when unset.
+    /// `PAD::GetLocalZoneConnection()`: `INHERITED` when unset; a stored value outside the
+    /// enum reads as `FULL` (`ZoneConnection::from_raw`, what every C++ reader does with it).
     pub fn local_zone_connection(&self) -> ZoneConnection {
+        ZoneConnection::from_raw(self.local_zone_connection_raw())
+    }
+
+    /// `static_cast<int>( PAD::GetLocalZoneConnection() )`: the stored integer, `-1`
+    /// (`INHERITED`) when unset (writer, library parity).
+    pub fn local_zone_connection_raw(&self) -> i32 {
         self.padstack
-            .zone_connection(PcbLayerId::FCu)
-            .unwrap_or(ZoneConnection::Inherited)
+            .zone_connection_raw(PcbLayerId::FCu)
+            .unwrap_or(ZoneConnection::Inherited as i32)
     }
 
     /// `PAD::SetLocalZoneConnection()`.
     pub fn set_local_zone_connection(&mut self, connection: ZoneConnection) {
-        *self.padstack.zone_connection_mut(PcbLayerId::FCu) = Some(connection);
+        self.set_local_zone_connection_raw(connection as i32);
+    }
+
+    /// `PAD::SetLocalZoneConnection( (ZONE_CONNECTION) aValue )` with any integer (the
+    /// parser's cast of `(zone_connect N)`).
+    pub fn set_local_zone_connection_raw(&mut self, value: i32) {
+        self.padstack
+            .set_zone_connection_raw(PcbLayerId::FCu, Some(value));
     }
 
     /// `PAD::GetLocalThermalSpokeWidthOverride()`.
@@ -1777,8 +1800,25 @@ impl Pad {
         pad_margin
     }
 
+    /// `static_cast<int>( PAD::GetZoneConnectionOverrides() )`: the stored integer of the
+    /// pad, else (when that is `INHERITED`) of the parent footprint.
+    pub fn zone_connection_overrides_raw(&self, ctx: &BoardCtx<'_>) -> i32 {
+        let connection = self.local_zone_connection_raw();
+
+        if connection == ZoneConnection::Inherited as i32 {
+            if let Some(parent_footprint) = self.parent_footprint(ctx) {
+                return parent_footprint.local_zone_connection_raw();
+            }
+        }
+
+        connection
+    }
+
     /// `PAD::GetZoneConnectionOverrides( aSource )`: pad, then footprint
     /// (`FOOTPRINT::GetZoneConnectionOverrides`, source "footprint <reference>").
+    ///
+    /// The connection is read through `ZoneConnection::from_raw`; see
+    /// [`Pad::zone_connection_overrides_raw`] for the stored integer.
     pub fn zone_connection_overrides(
         &self,
         ctx: &BoardCtx<'_>,
@@ -1796,7 +1836,7 @@ impl Pad {
 
         if connection == ZoneConnection::Inherited {
             if let Some(parent_footprint) = self.parent_footprint(ctx) {
-                connection = parent_footprint.zone_connection;
+                connection = parent_footprint.local_zone_connection();
 
                 if connection != ZoneConnection::Inherited && want_source {
                     source = Some(format!("footprint {}", parent_footprint.reference(ctx)));
@@ -1944,7 +1984,7 @@ impl Pad {
 
         let (local_sx, local_sy) =
             Self::primitive_lib_scale_in(Some(xform), self.lib_orientation());
-        primitive.rebake_with_scale(&primitive_env(env), local_sx, local_sy);
+        primitive.rebake_with_scale(&self.primitive_env(env), local_sx, local_sy);
     }
 
     /// Port of `PAD::AddPrimitivePoly( aLayer, const SHAPE_POLY_SET& aPoly, aThickness,
@@ -2039,7 +2079,7 @@ impl Pad {
     /// `PAD::FlipPrimitives()`: flip the custom-shape primitives about the pad origin.
     pub fn flip_primitives(&mut self, env: &MutEnv, dir: FlipDirection) {
         let parent = self.self_parent_ref();
-        let prim_env = primitive_env(env);
+        let prim_env = self.primitive_env(env);
 
         for layer in self.padstack.unique_layers() {
             for primitive in self.padstack.primitives_mut(layer) {
@@ -2071,7 +2111,7 @@ impl Pad {
         self.mirror_chamfer_positions(FlipDirection::TopBottom);
 
         let parent = self.self_parent_ref();
-        let prim_env = primitive_env(env);
+        let prim_env = self.primitive_env(env);
 
         for layer in self.padstack.unique_layers() {
             mirror_point(
@@ -2170,7 +2210,7 @@ impl Pad {
         if let Some(xform) = Self::env_transform(env) {
             let (local_sx, local_sy) =
                 Self::primitive_lib_scale_in(Some(xform), self.lib_orientation());
-            let prim_env = primitive_env(env);
+            let prim_env = self.primitive_env(env);
 
             for layer in self.padstack.unique_layers() {
                 for prim in self.padstack.primitives_mut(layer) {
@@ -2541,7 +2581,8 @@ mod tests {
         footprint.solder_mask_margin = opt_i32(&fields["local_solder_mask_margin"]);
         footprint.solder_paste_margin = opt_i32(&fields["local_solder_paste_margin"]);
         footprint.solder_paste_margin_ratio = opt_f64(&fields["local_solder_paste_margin_ratio"]);
-        footprint.zone_connection = pick(&fields["local_zone_connection"], &ZONE_CONNECTIONS);
+        footprint.zone_connection =
+            pick(&fields["local_zone_connection"], &ZONE_CONNECTIONS) as i32;
 
         let fp = board.insert_item(footprint, ParentRef::Board);
         board.footprint_list.push_back(fp);
@@ -2638,7 +2679,7 @@ mod tests {
             props.shape.chamfered_rect_positions = g("chamfered_rect_positions").parse().unwrap();
             props.shape.trapezoid_delta_size = vec(g("trapezoid_delta_size"));
             let zc = pick(g("zone_connection"), &ZONE_CONNECTIONS);
-            props.zone_connection = (zc != ZoneConnection::Inherited).then_some(zc);
+            props.zone_connection = (zc != ZoneConnection::Inherited).then_some(zc as i32);
             props.thermal_spoke_width = opt_i32(g("thermal_spoke_width"));
             props.thermal_spoke_angle = Some(EdaOrientation::new(EdaAngle::from_degrees(
                 g("thermal_spoke_angle").parse().unwrap(),

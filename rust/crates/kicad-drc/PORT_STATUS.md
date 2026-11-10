@@ -1464,3 +1464,80 @@ classes of `component_classes` / `component_classes_drc`, QA and CLI paths) and 
 `test_component_classes.cpp` `ComponentClasses`. Rules using DRC-22 functions (`getField`,
 `memberOfSheet`, `intersectsArea`) do not match until DRC-22 lands (those footprints are in
 ignored tests). `test_drc_component_classes.cpp` (a DRC run) is not ported here.
+
+## DRC-09: hole-to-hole and board edge clearance
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_test_provider_hole_to_hole.cpp` `DRC_TEST_PROVIDER_HOLE_TO_HOLE` (`Run`, `testHoleAgainstHole`) | `src/providers/hole_to_hole.rs` `DrcTestProviderHoleToHole` | ported |
+| `pcbnew/drc/drc_test_provider_edge_clearance.cpp` `DRC_TEST_PROVIDER_EDGE_CLEARANCE` (`Run`, `resolveSilkDisposition`, `testAgainstEdge`, `testCopperOutsideBoard`, `SILK_DISPOSITION`, `WORK_UNIT`, `COPPER_ITEM_UNITS`) | `src/providers/edge_clearance.rs` `DrcTestProviderEdgeClearance` | ported |
+| `m_edgesTree` (a `DRC_RTREE` of edge *copies*) | `edge_clearance.rs` `EdgeTree`: the `Insert` / `Build` / `QueryColliding` (no filter) / `GetObjectsAt` paths of a `PCB_SHAPE`, over the same `PackedRTree`, parent identity = index of the copy | ported (see Deviations) |
+
+Neither provider needs the cache generator's caches. Both need the run's connectivity in the
+`BoardCtx` (pad / via `FlashLayer`), as the CLI.
+
+### Verification
+
+Corpus replay `tests/drc09_hole_edge.rs` (`hole_to_hole_and_edge_clearance_match_reference_corpus`)
+against the shared reference corpus (`golden/drc_corpus.txt` + the cached raw reports under
+`rust/target/drc-corpus/`, `kicad-cli pcb drc --format json --severity-all --units mm`), the
+board loaded as the CLI (`BuildConnectivity`, `prepare_board`, connectivity rebuild), both
+providers in registry order (edge clearance, then hole to hole). Entry identity: type,
+severity, description (incl. the rule detail), item UUIDs / descriptions / positions.
+`hole_to_hole` / `holes_co_located` (sequential in C++) are compared in report order; the
+three edge codes as multisets (thread pool in C++). State of 2026-11-10: 332 boards compared,
+33 pending (30 with rule conditions that call functions: DRC-22; 2 legacy `.pro` projects; 1
+failed reference run).
+
+| Type | matched | missing | extra |
+|---|---|---|---|
+| `hole_to_hole` | 3 | 0 | 0 |
+| `holes_co_located` | 28 | 0 | 0 |
+| `copper_edge_clearance` | 274 | 0 | 2 (`issue23469`, known rule gap) |
+| `silk_edge_clearance` | 171 | 0 | 0 |
+| `copper_outside_board` | 216 | 0 | 0 |
+
+The two extras of `issue23469` are the rule-evaluation gap already recorded by DRC-08a:
+`A.Reference == 'J1'` does not match the pads of J1, so the board setup edge clearance (0.5 mm)
+is applied instead of the 0.2 mm rule (`KNOWN_RULE_GAPS` of the test; remove when fixed).
+The corpus has no `--all-track-errors` reference for these codes (the `reportAllTrackErrors`
+continuation of tracks along several edges is ported but not compared).
+
+### Ported C++ tests (`tests/drc09_hole_edge.rs`)
+
+| C++ | Rust |
+|---|---|
+| `test_drc_hole_to_hole_npth_slot_issue24541.cpp` `HoleToHoleNpthSlotIssue24541` | `hole_to_hole_npth_slot_issue24541` (passes) |
+| `test_drc_arc_arc_edge_clearance.cpp` `DRCArcArcEdgeClearance_InternalContainment` | `drc_arc_arc_edge_clearance_internal_containment` (passes) |
+| `test_drc_copper_outside_board_issue14650.cpp` `CopperOutsideBoardIssue14650` | `copper_outside_board_issue14650` (passes) |
+| `test_drc_regressions.cpp` `DRCHoleToHoleReportsRuleValue` (`issue22267`) | `drc_hole_to_hole_reports_rule_value` (passes) |
+| `test_drc_regressions.cpp` `DRCFalsePositiveRegressions`, hole / edge part (`issue5990`, `issue18839` and the other loadable boards) | `false_positive_regressions_hole_edge`: no error-severity entry of the five codes (passes) |
+| `test_drc_regressions.cpp` `DRCFalseNegativeRegressions` `issue18142` (1, the `hole_to_hole` between a blind/buried via and a microvia) | `false_negative_regression_issue18142` with the two codes enabled (passes) |
+
+Not ported: `test_drc_npth_slot_clearance_issue24799.cpp` (needs a zone refill), and
+`test_drc_issue23469.cpp` (rule-evaluation gap above).
+
+### Deviations
+
+- **Edge tree**: C++ inserts heap copies of the edge shapes (same UUID) into a `DRC_RTREE`;
+  `crate::rtree::DrcRtree` keys entries by board handles, which `detached_copy()` values do not
+  have, so the module keeps its own copy-indexed tree (`EdgeTree`, same packed r-tree, same
+  entry boxes and visit order). Rule evaluation and marker geometry use the copy
+  (`ctx.view(AnyItem::Shape(&copy))`), as the C++ does.
+- **Thread pool**: work units and copper-outside-board items run in index order. In C++ the
+  report order of all three edge codes, the work unit that wins the
+  `m_emittedEdgeReports` de-duplication of a multi-layer pad / via (only the marker layer
+  differs) and the set at an exceeded error limit depend on scheduling.
+- **`GetObjectsAt`** (nearest edge of a silk item crossing the outline): the first copy in
+  tree search order that passes `HitTest` (C++: `std::unordered_set` hash order; matters only
+  when several edges pass at the nearest outline point).
+- `m_silkDisposition` (`std::map<BOARD_ITEM*>`) and `checkedPairs` (pointer pairs) are lookup
+  only; keyed by `ItemId` / canonical `ItemId` pair.
+
+### Known gaps
+
+- Boards whose rule conditions call functions wait for DRC-22 (30 corpus boards, among them
+  `severities`, `issue24211`, `issue2512`).
+- `issue23469` rule-evaluation gap (above).

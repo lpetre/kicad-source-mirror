@@ -143,8 +143,8 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     // GetValueMode: DimensionValueMode( GetBoard(), this ) (the dimension's length constraint).
     pm.add_property(
-        denum("Value Mode", EnumId::DimValueMode, |_| {
-            no_rust_api("PCB_DIMENSION_BASE::GetValueMode")
+        denum("Value Mode", EnumId::DimValueMode, |it| {
+            PropertyValue::Enum(EnumId::DimValueMode, dim(&it).value_mode(it.ctx) as i32)
         }),
         group_dimension,
     )
@@ -159,7 +159,10 @@ pub(crate) fn register(pm: &mut PropertyManager) {
         group_dimension,
     )
     .set_available_func(dimension_has_value_mode)
-    .set_writeable_func(|_| no_rust_api("PCB_DIMENSION_BASE::GetValueMode"))
+    .set_writeable_func(|it| {
+        it.as_dimension()
+            .is_some_and(|d| d.value_mode(it.ctx) != crate::pcb_constraint::DimValueMode::Driven)
+    })
     .set_validator();
 
     pm.add_property(

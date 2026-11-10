@@ -329,6 +329,15 @@ Progress log:
   produces on a machine that has the font); stroke-font fallback plus a host warning
   otherwise. Package FONT-RC-1 is written; launch after STAB-PCB (same files). A real
   outline engine (FreeType / HarfBuzz equivalents, embedded fonts) stays a later package.
+  04:20 UTC: FIX-RESAVE-1 done - all 370 corpus boards of the re-save comparison are
+  explained and none of the 11 differing ones is a port defect: 358 byte-identical, 11
+  identical after two normalisations that the reference itself needs (teardrop zones are
+  saved without a uuid, get a random KIID at each load and the writer orders zones by uuid:
+  12 reference runs on one input gave 2 different outputs; render-cache glyphs come from
+  whatever font fontconfig substitutes on the oracle machine), 1 not loadable
+  (api_kitchen_sink: generated tables refresh, M26). `kicad-rs pcb upgrade` messages and
+  exit codes equal the reference in 36 of 36 runs. A default-run regression test over 308
+  boards guards it (kicad-session upgrade_corpus_small).
   Cross-crate leftovers for a GLUE-3 pass (package file written) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
   generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid

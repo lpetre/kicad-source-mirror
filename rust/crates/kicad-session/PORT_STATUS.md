@@ -26,7 +26,7 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
 | `preparePlotLayers` | `jobs_handler::prepare_plot_layers` | ported (zone refill done by the caller first, as in C++) |
 | `resolveJobOutputPath` | `jobs_handler::resolve_job_output_path` | partial: `loadOverrideDrawingSheet` and `BOARD::SynchronizeProperties` not called yet; project vars = the `-D` overrides |
 | `JobExportDrc` | `run_drc` | stub after the output-name logic: `NotYetPorted("kicad-drc ...")` |
-| `JobExportGerbers` | `run_export_gerbers` | stub after layer selection: `NotYetPorted("kicad-fab ...")` |
+| `JobExportGerbers` | `run_export_gerbers` | ported (FAB-07, `kicad_fab::jobs_handler::job_export_gerbers`); the Gerber job file (FAB-09) is missing: layer files + exit `NOT_YET_PORTED`; verified in `tests/gerbers_job.rs` (see kicad-fab `PORT_STATUS.md` FAB-07) |
 | `JobExportDrill` | `run_export_drill` | stub after the report path logic: `NotYetPorted("kicad-fab ...")` |
 | `JobExportSvg` (+ `resolvePlotOutputPath`) | `run_export_svg` | stub after layer preparation: `NotYetPorted("kicad-fab ...")` |
 | `JobUpgrade` | `run_pcb_upgrade` | ported (a board holding a generated table is `NotYetPorted`: `RefreshGeneratedTables`, M26); oracle-verified over the corpus (PCBIO-15) |
@@ -43,6 +43,12 @@ filesystem, process or clock access; `kicad-cli` and `kicad-wasm` are the hosts.
   (`tests/oracle/gen_gerbers_layer_args.sh`, golden `tests/golden/gerbers_layer_args.txt`):
   22 `--layers` arguments (groups, GUI and file names, whitespace, empty tokens, bad names,
   disabled layers) - messages and plotted layers in `UIOrder` identical.
+* `tests/gerbers_job.rs` (FAB-07): `run_export_gerbers` against the reference
+  `kicad-cli pcb export gerbers` (crafted boards x 7 option sets, the `test_pcb.py` gerber
+  cases, the corpus with defaults and `--no-x2 --use-drill-file-origin`; golden
+  `tests/golden/gerbers_job/`); results in kicad-fab `PORT_STATUS.md` FAB-07.
+  `JobExportPcbPlot::creation_date` (new, default zeros) carries the plot date the C++ reads
+  from the clock.
 * `tests/upgrade_oracle.rs`: `Session::load_board` + `run_pcb_upgrade` on
   `qa/data/pcbnew/issue10697.kicad_pcb` against the reference `kicad-cli pcb upgrade --force`
   (`tests/oracle/gen_upgrade_golden.sh`, goldens `tests/golden/upgrade/`): re-saved board
@@ -158,3 +164,73 @@ Tests (`tests/component_classes.rs`):
 * `component_classes`: port of qa/tests/pcbnew/test_component_classes.cpp `ComponentClasses`
   (same table), the same 5 footprints in the ignored `component_classes_all`.
 * `upgrade_oracle` (issue10697 byte-identical) and `upgrade_corpus` run the step now.
+
+## Package FIX-RESAVE-1: the last differing boards of the re-save comparison
+
+No code change was needed: none of the 11 boards that differed from the reference is a port
+bug. Both causes are things the reference cannot reproduce itself, so `tests/upgrade_corpus.rs`
+now compares through a documented normalisation.
+
+- **Render caches** (`tinytapeout-demo`, `issue22475`, and together with zone order
+  `RoyalBlue54L-Feather` and `issue14549`; these are the only 4 corpus boards with a
+  `(render_cache ..)`). The C++ drops the cache it read for every text. Board text:
+  `parsePCB_TEXT` ends with `SetVisible( true )`, which calls `ClearRenderCache`
+  (`pcb_io_kicad_sexpr_parser.cpp`, "Hidden PCB text is no longer supported"). Footprint
+  text: `SetLibTextSize`, or `SetTextAngle` / `Rotate` in legacy files. At save,
+  `formatRenderCache` -> `EDA_TEXT::GetRenderCache` then rebuilds the glyphs with
+  `OUTLINE_FONT::GetLinesAsGlyphs`, using whatever font fontconfig picks on the oracle
+  machine (none of the requested faces is installed except FreeMono / Liberation Mono:
+  Calibri -> Carlito Bold, Ubuntu Sans and Franklin Gothic Medium -> Inter). That is why `O1`
+  equals `O2` for every cache, while the glyphs differ from the input file's. The port has no
+  outline font engine (`kicad-font` D1). It drops the cache in the same places and writes
+  only the `(render_cache "text" angle)` header. The header (resolved text and draw angle)
+  equals the reference's on all 83 caches. Rule: glyph polygons are masked; nothing else
+  differs on these boards.
+- **Zone order** (`complex_hierarchy`, `issue11814`, `issue14559`, `issue21482`,
+  `issue25580`, `teardrop_issue_JPC2`, `teardrop_spike`, plus the two boards above). The
+  first differences were `zone > net` and `zone > priority`. `format( ZONE )` writes no
+  `(uuid ..)` for a teardrop zone, so every load gives it a fresh random `KIID`
+  (`boost::uuids::basic_random_generator`, never seeded in kicad-cli). The writer's
+  `std::set<BOARD_ITEM*, BOARD_ITEM::ptr_cmp>` orders zones by type, then layer set, then
+  UUID, so where a teardrop zone lands among the zones of its layer set is random. Measured:
+  12 reference runs on the same `teardrop_spike` `O1` gave 2 different outputs (8 x `O2`,
+  4 x `O1`). Nothing renumbers the priorities and no net changes: the zone blocks only move.
+  Rule: zones without a deterministic UUID are compared as a set; zones with one keep their
+  order.
+- Legacy inputs: random UUIDs are masked with `canonicalise_uuids_sorted`.
+
+Results (`upgrade_corpus_scoreboard`, input `O1`, expected `O2`): 358 identical, 11
+identical after normalisation, 1 not loadable (`api_kitchen_sink`: `RefreshGeneratedTables`
+is still the M26 `port_pending!` stub). So all 370 are explained and 0 differ.
+
+`upgrade_corpus_small` (default run, no oracle): every corpus board under 300 KB. The input
+is the repository file itself, with no project, and the expectation is `O1`, kept as hashes
+in `tests/golden/upgrade_corpus.txt` (board, status, fnv1a64 of `O1` and of the normalised
+`O1`). 252 boards are identical, 56 identical after normalisation (random UUIDs of legacy
+files), 0 differ. Each board must reach at least its recorded status. Refresh the golden with
+`UPGRADE_CORPUS_UPDATE_GOLDEN=1 cargo test -p kicad-session --test upgrade_corpus -- --ignored`.
+
+`pcb upgrade` CLI behaviour (`kicad-rs` vs reference `kicad-cli`) was checked on 12 inputs:
+file versions 20200119, 20200829, 20210126, 20211232, 20221018, 20230410, 20240609,
+20241228, 20251101 and 20261022, a current-version (20261031) `O1`, and the known-bad
+`fakeboard`. Each was run without `--force`, with `--force`, and again without `--force` on
+the result. The message and exit code matched in all 36 runs: "Successfully saved board file
+using the latest format" with 0, "Board file was not updated" with 0 for a current-version
+board without `--force`, "Failed to load board" with 3. The output files are byte-identical
+where the input has UUIDs everywhere. They are identical after normalisation for the 4
+pre-2022 boards, where even two reference runs differ from each other.
+
+## Package ZF-06: zone refill in the jobs, `--save-board`
+
+* `Session::refill_zones` / `Session::fill_all_zones`: `ZONE_FILLER_TOOL::FillAllZones( nullptr,
+  reporter, true )` through `kicad_zone::fill_all_zones` (teardrop guard, fill, connectivity
+  rebuild). Called by `run_drc` (`--refill-zones`), the gerbers and SVG jobs
+  (`--check-zones`) and the wasm `refillZones`. A session without a DRC engine
+  (`new_empty`) first gets one initialised from `rules_text`, as `ZONE_FILLER::Fill` does.
+* `jobs_handler::drc_save_board`: the `m_refillZones && m_saveBoard` block of `JobExportDrc`
+  (`BOARD_LOADER::SaveBoard`, "Saved board" / "Failed to save board.", exit code 4); the saved
+  board is an `OutputFile` named like the input. Not called yet: `run_drc` still returns
+  `NotYetPorted` at the DRC run (DRC-12 calls it after the report).
+* `tests/zf06_refill_save.rs` (ignored; needs the zone-corpus cache): 125 of 141 saved boards
+  byte-identical with the reference `pcb drc --refill-zones --save-board` (details in
+  kicad-zone PORT_STATUS, ZF-06).

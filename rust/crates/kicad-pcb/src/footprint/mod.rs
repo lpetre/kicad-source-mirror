@@ -110,7 +110,9 @@ pub struct Footprint {
     pub allow_missing_courtyard: bool,                  // m_allowMissingCourtyard
     pub allow_solder_mask_bridges: bool,                // m_allowSolderMaskBridges
 
-    pub zone_connection: ZoneConnection,  // m_zoneConnection
+    /// `m_zoneConnection` as stored: the raw integer (the parser's C cast keeps values
+    /// outside the enum); read it through `local_zone_connection()`.
+    pub zone_connection: i32,
     pub clearance: Option<i32>,           // m_clearance
     pub solder_mask_margin: Option<i32>,  // m_solderMaskMargin
     pub solder_paste_margin: Option<i32>, // m_solderPasteMargin
@@ -333,7 +335,7 @@ impl Default for Footprint {
             duplicate_pad_numbers_are_jumpers: false,
             allow_missing_courtyard: false,
             allow_solder_mask_bridges: false,
-            zone_connection: ZoneConnection::Inherited,
+            zone_connection: ZoneConnection::Inherited as i32,
             clearance: None,
             solder_mask_margin: None,
             solder_paste_margin: None,
@@ -857,9 +859,10 @@ impl Footprint {
         &self,
         ctx: &BoardCtx<'_>,
     ) -> (ZoneConnection, Option<String>) {
-        let source = (self.zone_connection != ZoneConnection::Inherited)
+        let connection = self.local_zone_connection();
+        let source = (connection != ZoneConnection::Inherited)
             .then(|| format!("footprint {}", self.reference(ctx)));
-        (self.zone_connection, source)
+        (connection, source)
     }
 
     /// `GetLocalClearance()`.
@@ -867,9 +870,27 @@ impl Footprint {
         self.clearance
     }
 
-    /// `GetLocalZoneConnection()`.
+    /// `GetLocalZoneConnection()`; a stored value outside the enum reads as `FULL`
+    /// (`ZoneConnection::from_raw`, what every C++ reader does with it).
     pub fn local_zone_connection(&self) -> ZoneConnection {
+        ZoneConnection::from_raw(self.zone_connection)
+    }
+
+    /// `static_cast<int>( GetLocalZoneConnection() )`: the stored integer (writer, library
+    /// parity).
+    pub fn local_zone_connection_raw(&self) -> i32 {
         self.zone_connection
+    }
+
+    /// `SetLocalZoneConnection( aType )`.
+    pub fn set_local_zone_connection(&mut self, connection: ZoneConnection) {
+        self.zone_connection = connection as i32;
+    }
+
+    /// `SetLocalZoneConnection( (ZONE_CONNECTION) aValue )` with any integer (the parser's
+    /// cast of `(zone_connect N)`).
+    pub fn set_local_zone_connection_raw(&mut self, value: i32) {
+        self.zone_connection = value;
     }
 
     /// `Add3DModel( a3DModel )`.
@@ -2003,7 +2024,7 @@ mod tests {
         );
         assert!(!fp.duplicate_pad_numbers_are_jumpers);
         assert!(!fp.allow_missing_courtyard && !fp.allow_solder_mask_bridges);
-        assert_eq!(fp.zone_connection, ZoneConnection::Inherited);
+        assert_eq!(fp.local_zone_connection(), ZoneConnection::Inherited);
         assert_eq!(fp.clearance, None);
         assert_eq!(fp.solder_paste_margin_ratio, None);
         assert_eq!(

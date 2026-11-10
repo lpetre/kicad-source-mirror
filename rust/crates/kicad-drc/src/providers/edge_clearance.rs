@@ -54,7 +54,9 @@ use kicad_geom::geometry::rtree::{PackedRTree, PackedRTreeBuilder};
 use kicad_geom::geometry::shape::{Shape, ShapeRef, ShapeType};
 use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::vector2::Vector2I;
-use kicad_pcb::drc_api::{DRCE_COPPER_OUTSIDE_BOARD, DRCE_EDGE_CLEARANCE, DRCE_SILK_EDGE_CLEARANCE};
+use kicad_pcb::drc_api::{
+    DRCE_COPPER_OUTSIDE_BOARD, DRCE_EDGE_CLEARANCE, DRCE_SILK_EDGE_CLEARANCE,
+};
 use kicad_pcb::eda_shape::{ShapeT, make_effective_shapes};
 use kicad_pcb::item::SharedShape;
 use kicad_pcb::padstack::{PadAttrib, PadProp};
@@ -606,10 +608,7 @@ impl DrcTestProviderEdgeClearance {
                     return false; // DRC cancelled
                 }
             } else {
-                report_aux(
-                    host.0,
-                    "Edge clearance violations ignored. Tests not run.",
-                );
+                report_aux(host.0, "Edge clearance violations ignored. Tests not run.");
                 return true; // continue with other tests
             }
         }

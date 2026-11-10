@@ -74,10 +74,6 @@ fn anchor_shape(pad: &Pad, layer: PcbLayerId) -> &'static str {
     }
 }
 
-/// `static_cast<int>( ZONE_CONNECTION )`.
-fn zone_connection_int(connection: ZoneConnection) -> i32 {
-    connection as i32
-}
 
 impl PcbWriter<'_> {
     /// Port of `format( const PAD* aPad )`: `(pad ..)`.
@@ -323,10 +319,10 @@ impl PcbWriter<'_> {
                 .print(format_args!("(clearance {})", format_iu(clearance)))?;
         }
 
-        if pad.local_zone_connection() != ZoneConnection::Inherited {
+        if pad.local_zone_connection_raw() != ZoneConnection::Inherited as i32 {
             self.out.print(format_args!(
                 "(zone_connect {})",
-                zone_connection_int(pad.local_zone_connection())
+                pad.local_zone_connection_raw()
             ))?;
         }
 
@@ -669,10 +665,10 @@ impl PcbWriter<'_> {
                 .print(format_args!("(clearance {})", format_iu(clearance)))?;
         }
 
-        if let Some(connection) = padstack.zone_connection(layer) {
+        if let Some(connection) = padstack.zone_connection_raw(layer) {
             self.out.print(format_args!(
                 "(zone_connect {})",
-                zone_connection_int(connection)
+                connection
             ))?;
         }
 

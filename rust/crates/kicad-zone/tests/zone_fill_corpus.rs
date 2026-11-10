@@ -39,7 +39,7 @@ use kicad_connectivity::data::ConnectivityData;
 use kicad_core::PcbLayerId;
 use kicad_drc::engine::DrcEngine;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
-use kicad_drc::rule_parser::default_layer_choices;
+use kicad_drc::rule_parser::board_layer_choices;
 use kicad_geom::ShapePolySet;
 use kicad_pcb::Board;
 use kicad_pcb::ids::ZoneId;
@@ -134,11 +134,13 @@ fn load_cli(path: &Path) -> Result<(Board, DrcEngine, ConnectivityData, Vec<Stri
         match outcome {
             Ok(Ok(StepOutcome::Session)) => match step {
                 LoadStep::InitDrcEngine => {
-                    // exceptions swallowed, like the C++ loader
+                    // The CLI loader has filled ENUM_MAP<PCB_LAYER_ID> with the board's layer
+                    // names (BOARD_LOADER::Load); exceptions swallowed, like the C++ loader
+                    let layer_choices = board_layer_choices(&board);
                     let _ = engine.init_engine(
                         &mut board,
                         rules.as_deref().map(|t| (t, rules_path.to_str().unwrap())),
-                        default_layer_choices(),
+                        layer_choices,
                         &TuningProfiles::default(),
                         None,
                     );
@@ -285,7 +287,12 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
     let mut local = Score::default();
     let mut first_diff = String::new();
 
-    for &zone_id in &zones {
+    // Zones whose UUID the saved file does not carry (the writer omits it for teardrop
+    // areas; the reference reader then generates a fresh one) are matched by their position
+    // in `Zones()` (the writer keeps the zone count and order).
+    let ref_zone_list: Vec<ZoneId> = ref_board.zones().map(|(id, _)| id).collect();
+
+    for (ordinal, &zone_id) in zones.iter().enumerate() {
         let zone = board.zone(zone_id).unwrap();
 
         if zone.is_rule_area() {
@@ -293,7 +300,8 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
         }
 
         let uuid = zone.base.item.uuid.as_string();
-        let Some(&ref_id) = ref_zones.get(&uuid) else {
+        let by_ordinal = ref_zone_list.get(ordinal).copied();
+        let Some(ref_id) = ref_zones.get(&uuid).copied().or(by_ordinal) else {
             local.different += 1;
             continue;
         };

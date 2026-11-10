@@ -35,7 +35,7 @@ use crate::board::Board;
 use crate::embedded_files::EmbeddedFileType;
 use crate::ids::{FootprintId, ItemId, NetCode};
 use crate::io::SEXPR_FOOTPRINT_LIB_FILE_VERSION;
-use crate::item::RecurseMode;
+use crate::item::{ParentRef, RecurseMode};
 
 impl PcbWriter<'_> {
     /// Port of `FormatFootprintLibFile( FOOTPRINT* aFootprint )`: the initial comments, then
@@ -46,7 +46,16 @@ impl PcbWriter<'_> {
     /// font files, `pcb-io.md` R7: a no-op here, the embedded font files already present are
     /// kept, as for the board writer), else `ClearEmbeddedFonts()`. The port keeps the source
     /// board immutable: when there is a font file to clear, the footprint is written from a
-    /// copy of the holder board with the fonts cleared.
+    /// copy of the board with the fonts cleared.
+    ///
+    /// The footprints the C++ writes into library files have no board (`FP_CACHE` entries are
+    /// parsed with a null board, `FootprintSave` detaches its clone, the QA helpers save what
+    /// `FootprintLoad` returned), so `GetBoard()` is null for the footprint and every child
+    /// while they are formatted (e.g. a zone's layers are not masked with the enabled layers, a
+    /// custom padstack lists only its explicit layers). The port's stand-in for such a
+    /// footprint is the one of a footprint holder board (`BoardUse::FpHolder`,
+    /// [`crate::io::parse_footprint_file`]): for a holder, the footprint is written from a copy
+    /// in which it has no parent (`ParentRef::None`), so that `has_board` is false below it.
     pub(crate) fn format_footprint_lib_file(
         &mut self,
         footprint: FootprintId,
@@ -62,11 +71,20 @@ impl PcbWriter<'_> {
                     .any(|file| file.type_ == EmbeddedFileType::Font)
         });
 
-        if clear_fonts {
+        let detach = src.is_footprint_holder() && src.footprint(footprint).is_some();
+
+        if clear_fonts || detach {
             let mut copy: Board = src.clone();
-            copy.modify_footprint(footprint, |fp, _| {
-                fp.embedded_files.clear_embedded_fonts();
-            });
+
+            if let Some(fp) = copy.footprints.get_mut(footprint) {
+                if clear_fonts {
+                    fp.embedded_files.clear_embedded_fonts();
+                }
+
+                if detach {
+                    fp.base.parent = ParentRef::None;
+                }
+            }
 
             let options = FormatOptions {
                 ctl: self.ctl,
@@ -123,7 +141,7 @@ impl Board {
     /// (`board-model.md` 2), the writer leaves `m_board` null for library files anyway. The file
     /// system part (cache validation, file naming, `FP_CACHE::Save`) is the host's.
     pub fn footprint_save_normalise(&mut self, fp: FootprintId, flip_direction: FlipDirection) {
-            let board = self;
+        let board = self;
         if board.footprint(fp).is_none() {
             return;
         }

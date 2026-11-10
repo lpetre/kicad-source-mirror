@@ -265,8 +265,7 @@ fn ctl_flags() {
 
 /// A save that reaches a staging stub fails with its "port pending" text. Every item of a
 /// board file is ported (footprints PCBIO-06, pads PCBIO-07): a board with a footprint saves
-/// in both modes with nothing skipped; the remaining stub is `FormatFootprintLibFile`
-/// (PCBIO-14).
+/// in both modes with nothing skipped; `FormatFootprintLibFile` (PCBIO-14) has landed too.
 #[test]
 fn staging_stubs() {
     let mut board = Board::new();
@@ -277,10 +276,11 @@ fn staging_stubs() {
     assert_eq!(text, strict);
     assert!(report.skipped.is_empty());
 
+    // FormatFootprintLibFile (PCBIO-14) is ported too.
     let mut holder = Board::new();
     let fp = holder.create_footprint();
-    let e = format_footprint_lib_file(&holder, fp, &FormatOptions::default()).unwrap_err();
-    assert_eq!(e.what(), "port pending: kicad_footprint_lib (PCBIO-14)");
+    let (_, report) = format_footprint_lib_file(&holder, fp, &staging()).unwrap();
+    assert!(report.skipped.is_empty());
 }
 
 /// The skeleton of a default board (`BOARD::BOARD()`), compared with what the reference build
@@ -602,9 +602,24 @@ fn board_and_footprint_prettifier() {
         );
 
         if ext == "kicad_mod" {
-            match parse_footprint_file(&in_data, "input file", &staging_parse()) {
-                Err(e) => println!("{test_case}: parse pending ({})", e.what()),
-                Ok(_) => panic!("{test_case}: PCBIO-14 landed: port the rest of this case"),
+            // `*original == *prettified` (with the footprint UUID hack) as: both parse and
+            // write the same library file text.
+            let r = model(|| {
+                let lib = |text: &str, source: &str| {
+                    let (holder, _) = parse_footprint_file(text, source, &staging_parse()).unwrap();
+                    let fp = holder.footprints().next().map(|(id, _)| id).unwrap();
+                    format_footprint_lib_file(&holder, fp, &staging())
+                        .unwrap()
+                        .0
+                };
+                assert!(
+                    lib(&in_data, "input file") == lib(&prettified, "prettified file"),
+                    "{test_case}: Formatted version of original board item does not parse the same way!"
+                );
+            });
+
+            if let Err(pending) = r {
+                println!("{test_case}: pending on model stub {pending}");
             }
             continue;
         }

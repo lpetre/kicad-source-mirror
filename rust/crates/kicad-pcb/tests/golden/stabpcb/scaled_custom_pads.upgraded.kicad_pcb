@@ -1,0 +1,282 @@
+(kicad_pcb
+	(version 20261031)
+	(generator "pcbnew")
+	(generator_version "10.99")
+	(general
+		(thickness 1.6)
+		(legacy_teardrops no)
+	)
+	(paper "A4")
+	(layers
+		(0 "F.Cu" signal)
+		(2 "B.Cu" signal)
+		(13 "F.Paste" user)
+		(15 "B.Paste" user)
+		(5 "F.SilkS" user "F.Silkscreen")
+		(7 "B.SilkS" user "B.Silkscreen")
+		(1 "F.Mask" user)
+		(3 "B.Mask" user)
+		(25 "Edge.Cuts" user)
+		(27 "Margin" user)
+		(31 "F.CrtYd" user "F.Courtyard")
+		(29 "B.CrtYd" user "B.Courtyard")
+		(35 "F.Fab" user)
+		(33 "B.Fab" user)
+	)
+	(setup
+		(pad_to_mask_clearance 0)
+		(allow_soldermask_bridges_in_footprints no)
+		(tenting
+			(front yes)
+			(back yes)
+		)
+		(covering
+			(front no)
+			(back no)
+		)
+		(plugging
+			(front no)
+			(back no)
+		)
+		(capping no)
+		(filling no)
+		(pcbplotparams
+			(layerselection 0x00000000_00000000_55555555_5755f5ff)
+			(plot_on_all_layers_selection 0x00000000_00000000_00000000_00000000)
+			(disableapertmacros no)
+			(usegerberextensions no)
+			(usegerberattributes yes)
+			(usegerberadvancedattributes yes)
+			(creategerberjobfile yes)
+			(dashed_line_dash_ratio 12)
+			(dashed_line_gap_ratio 3)
+			(svgprecision 4)
+			(pngdpi 300)
+			(pngantialias yes)
+			(plotframeref no)
+			(mode 1)
+			(useauxorigin no)
+			(pdf_front_fp_property_popups yes)
+			(pdf_back_fp_property_popups yes)
+			(pdf_metadata yes)
+			(pdf_single_document no)
+			(dxfpolygonmode yes)
+			(dxfimperialunits yes)
+			(dxfusepcbnewfont yes)
+			(psnegative no)
+			(psa4output no)
+			(plot_black_and_white yes)
+			(sketchpadsonfab no)
+			(plotpadnumbers no)
+			(hidednponfab no)
+			(sketchdnponfab yes)
+			(crossoutdnponfab yes)
+			(subtractmaskfromsilk no)
+			(outputformat 1)
+			(mirror no)
+			(drillshape 1)
+			(scaleselection 1)
+			(outputdirectory "")
+		)
+	)
+	(footprint "P:SCALED"
+		(layer "F.Cu")
+		(uuid "0000a001-0000-4000-8000-000000000000")
+		(transform
+			(translate 30 10)
+			(rotate 30)
+			(scale 2 1.5)
+		)
+		(property "Reference" "U1"
+			(at 0 -3 0)
+			(layer "F.SilkS")
+			(uuid "0000a001-0000-4000-8000-000000000ff1")
+			(effects
+				(font
+					(size 1.000001 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "V1"
+			(at 0 3 0)
+			(layer "F.Fab")
+			(uuid "0000a001-0000-4000-8000-000000000ff2")
+			(effects
+				(font
+					(size 1.000001 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 30)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "bc96e14e-7d73-4d90-98a3-c26e0250e888")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 30)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ae3d6412-d586-4a8a-b964-3e20ce204f68")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(zone_connect 7)
+		(duplicate_pad_numbers_are_jumpers no)
+		(pad "1" smd custom
+			(at 0 0 20)
+			(size 0.5 0.5)
+			(layers "F.Cu" "F.Mask")
+			(zone_connect 9)
+			(options
+				(clearance outline)
+				(anchor circle)
+			)
+			(primitives
+				(gr_curve
+					(pts
+						(xy 0 0) (xy 1 2) (xy 3 -1) (xy 4 0.5)
+					)
+					(width 0.1)
+				)
+				(gr_rect
+					(start -0.5 -0.5)
+					(end 0.5 0.5)
+					(radius 0.15)
+					(width 0.1)
+					(fill yes)
+				)
+				(gr_arc
+					(start 1 0)
+					(mid 0.5 0.5)
+					(end 0 0)
+					(width 0.1)
+				)
+				(gr_line
+					(start -1 -1)
+					(end 1.5 0.25)
+					(width 0.12)
+				)
+				(gr_circle
+					(center 0.25 -0.75)
+					(end 0.75 -0.75)
+					(width 0.05)
+					(fill yes)
+				)
+				(gr_poly
+					(pts
+						(xy -1 0) (xy 0 1.25) (xy 1 0.5) (xy 0.5 -0.5)
+					)
+					(width 0)
+					(fill yes)
+				)
+			)
+			(uuid "0000a001-0000-4000-8000-000000000001")
+		)
+		(pad "2" smd rect
+			(at 3 0)
+			(size 1 0.5)
+			(layers "F.Cu" "F.Mask" "F.Paste")
+			(zone_connect -4)
+			(uuid "0000a001-0000-4000-8000-000000000002")
+		)
+		(embedded_fonts no)
+	)
+	(footprint "P:UNIFORM"
+		(layer "F.Cu")
+		(uuid "0000a002-0000-4000-8000-000000000000")
+		(transform
+			(translate 60 20)
+			(rotate -45)
+			(scale 1.25 1.25)
+		)
+		(property "Reference" "U2"
+			(at 0 -3 0)
+			(layer "F.SilkS")
+			(uuid "0000a002-0000-4000-8000-000000000ff1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Value" "V2"
+			(at 0 3 0)
+			(layer "F.Fab")
+			(uuid "0000a002-0000-4000-8000-000000000ff2")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 315)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8026d2ce-61a6-4077-8cd9-a5d6b5136ae3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 315)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ddeefa3e-27f1-45e3-84b0-e283e580da1b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(duplicate_pad_numbers_are_jumpers no)
+		(pad "1" smd custom
+			(at 0.999999 0)
+			(size 0.5 0.5)
+			(layers "F.Cu" "F.Mask")
+			(options
+				(clearance outline)
+				(anchor rect)
+			)
+			(primitives
+				(gr_rect
+					(start -0.5 -0.25)
+					(end 0.75 0.5)
+					(width 0.1)
+					(fill yes)
+				)
+				(gr_arc
+					(start 1 0.2)
+					(mid 0.3 0.6)
+					(end 0 0)
+					(width 0.1)
+				)
+				(gr_poly
+					(pts
+						(xy -1 0) (xy 0 1) (xy 1 0)
+					)
+					(width 0.1)
+					(fill no)
+				)
+			)
+			(uuid "0000a002-0000-4000-8000-000000000001")
+		)
+		(embedded_fonts no)
+	)
+	(embedded_fonts no)
+)

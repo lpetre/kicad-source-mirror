@@ -108,6 +108,11 @@ fn load_board_qa(path: &Path) -> Result<(Board, ParseReport, DrcEngine, bool), S
         None,
     );
 
+    // KI_TEST::LoadBoard then calls BOARD::BuildConnectivity(), whose CONNECTIVITY_DATA::Build
+    // triangulates the board zone fills (BOARD::CacheTriangulation); the keepout predicates of
+    // the expression functions query the fills through those triangles (DRC-22).
+    kicad_connectivity::data::cache_board_triangulation(&mut board);
+
     Ok((board, report, engine, result.is_err()))
 }
 
@@ -821,6 +826,21 @@ fn evalrules_corpus_matches_cxx() {
 
     for b in &needs_drc21 {
         eprintln!("calls functions: {b}");
+    }
+
+    // The golden is dumped on the QA load path, whose ENUM_MAP<PCB_LAYER_ID> holds only the
+    // canonical layer names; the port matches layer patterns against the kicad-cli map
+    // (canonical and board names, DRC-21 deviation). issue24735's rule "A.Layer ==
+    // 'F.Silkscreen'" matches the board name only: `pcb-dump board --loader` gives the Rust
+    // values for this category.
+    const LAYER_MAP_DEVIATIONS: &[&str] =
+        &["qa/data/pcbnew/issue24735/issue24735.kicad_pcb: drawing:"];
+    let (known, mismatched): (Vec<String>, Vec<String>) = mismatched
+        .into_iter()
+        .partition(|m| LAYER_MAP_DEVIATIONS.iter().any(|d| m.starts_with(d)));
+
+    for m in &known {
+        eprintln!("known deviation (layer map of the QA load path): {m}");
     }
 
     assert!(

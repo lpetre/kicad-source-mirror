@@ -1570,6 +1570,27 @@ impl PcbDimension {
         self.start(ctx)
     }
 
+    /// `PCB_DIMENSION_BASE::GetValueMode()`: `DimensionValueMode( GetBoard(), this )`.
+    pub fn value_mode(&self, ctx: &BoardCtx<'_>) -> crate::pcb_constraint::DimValueMode {
+        crate::pcb_constraint::dimension_value_mode(Some(ctx.board), Some(self))
+    }
+
+    /// `PCB_TEXT::TransformTextToPolySet( aBuffer, aClearance, aMaxError, aErrorLoc )` on the
+    /// dimension's text (`PCB_DIMENSION_BASE` is a `PCB_TEXT`; the dimension's own text
+    /// overrides apply). Used for knockout / struck-out dimension text.
+    pub fn transform_text_to_poly_set(
+        &self,
+        ctx: &BoardCtx<'_>,
+        buffer: &mut ShapePolySet,
+        clearance: i32,
+        max_error: i32,
+        error_loc: ErrorLoc,
+    ) {
+        crate::pcb_text::transform_text_to_poly_set(
+            self, ctx, buffer, clearance, max_error, error_loc,
+        )
+    }
+
     /// `PCB_DIMENSION_BASE::TransformShapeToPolygon`: the cached circles and segments with
     /// the line thickness (the text is not included).
     pub fn transform_shape_to_polygon(
