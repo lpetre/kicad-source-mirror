@@ -3809,3 +3809,63 @@ resolver (`kicad-drc` `BoardRcItemResolver`) answers it after every item, as
 - Known gap: for the two oversized rectangles `rect_size` (`EDA_SHAPE::GetRectangleWidth /
   Height`, `end - start`) and `tpoly.*` (`TransformShapeToPolygon`) still panic with overflow in
   `eda_shape` (not part of this package; the reference wraps).
+
+## Package FIX-EDIT-1: editing paths (mutators no load path runs)
+
+Mutator oracle: `tests/oracle/editmut_oracle.cpp` (links the pcb-dump objects; one compile and
+link under the C++ lock, `editmut_golden.sh`) parses each board of `editmut_boards.txt` afresh
+per edit (`KIID::SeedGenerator( 5489 )`, the parser only), applies one scripted edit to every
+item of the walk (top level: footprints, drawings, tracks, zones, points, generators, groups;
+`c_*`: every child of every footprint), dumps the board (all pcb-dump sections) and saves it.
+`editmut_hash.py` condenses this into `tests/golden/editmut/editmut.txt` (FNV per edit, board
+and section; per saved file after replacing UUIDs drawn during the load by "generated").
+Replay: `tests/fix_edit1.rs` (feature `dump`). Edits: none, Move, Rotate 90 / 180 / 37.5 about a
+point, Flip and Mirror (both directions; Mirror skipped for the kinds without an override:
+footprint, barcode, target, marker), SetLayer B.Cu / B.SilkS (vias only to copper),
+SetPosition, SetWidth / pad SetSize, SetNetCode( 1 ), footprint SetOrientation / SetPosition /
+SetLayerAndFlip / SetTransformScale, and Move / Rotate / Flip / Mirror / SetLayer /
+SetPosition / SetWidth / SetNetCode on footprint children. 17 boards (every item kind incl.
+all generator types, dimension types, barcode, image, target, point, table, groups, scaled /
+rotated / flipped footprints with custom pads): 3198 hashes, 965 706 dump values plus 442
+saved files compared.
+
+| C++ | Rust | State |
+|---|---|---|
+| `PCB_TUNING_PATTERN::Move / Rotate / Flip / Mirror / SetLayer / baseMirror` | `board_item.rs` `generator_*`, `tuning_base_mirror` | ported, oracle |
+| `PCB_VIA_STITCH::Move`, `PCB_GENERATOR_POLY::Rotate / Flip / Mirror` | `board_item.rs` `generator_*` | ported, oracle |
+| `PCB_VIA_STACK::Move / Rotate / Flip / Mirror` | `board_item.rs` `generator_*` | ported (no via stack in the corpus boards: hops / start-end layers not covered by the oracle) |
+| `PCB_GENERATOR::Move / Rotate / Flip / Mirror / SetPosition` writing `GetProperties()` | `PcbGenerator::subclass_data` / `set_subclass_data` | ported, oracle (the saved property map was stale before) |
+| polymorphic `SetPosition` (`FOOTPRINT`, `PCB_GROUP`, `PCB_TABLE`, `PCB_GENERATOR`, leaves) | `Board::set_item_position` | ported, oracle |
+| `PCB_VIA_STITCH( aParent )` default `m_viaTemplate` | `PcbGenerator::create_from_type` | ported, oracle (`fixedit1/generators_no_template.kicad_pcb`: the reference writes the template) |
+| `PCB_TUNING_PATTERN( aParent, aLayer, aMode )` | `PcbGenerator::tuning_pattern`; defaults dump | ported, 23 defaults-dump values identical |
+| `PCB_GRID_ITEM::Get/SetOrientationDegrees`, `Get/SetRadiusExtent`, `Get/SetRadiusSpacing` | `pcb_grid_item.rs` | ported (one-line bodies, no oracle) |
+
+Mismatches found and fixed: via stitch Move moved the child vias and left the outline (and so
+`GetPosition` / bbox) in place, every transform of a via stitch left its outline unchanged, the
+tuning pattern's `m_end` / base lines / initial side were not transformed, `PCB_GENERATOR`
+transforms did not update the saved `origin` property (27 differing hashes on the generator
+board before, 0 after); the via stitch default template was missing from the save.
+
+Known mismatches (`tests/golden/editmut/known_mismatches.txt`, 13 hashes):
+- `BITMAP_BASE::Mirror` mirrors the pixels and re-encodes the PNG on save (wx / libpng / zlib);
+  the port keeps the stored image data (existing deviation of `pcb_reference_image.rs`): saves of
+  Flip / Mirror on `misc_items`.
+- Dimension text with `${LAYER}`: the reference does not clear the `EDA_TEXT` bbox cache on
+  `SetLayer` (stale width); the port recomputes (`dims_current` SetLayer: `text_box`, bbox).
+- `FOOTPRINT::GetFpPadsLocalBbox` differs by 1 nm on flipped footprints with custom pads after a
+  non-orthogonal footprint rotation or a pad SetPosition (5 values); the edited pads match, the
+  difference arises in the dummy copy (probably the custom-pad primitives' board coordinates,
+  which the dump does not show); root cause not located.
+
+Exclusions on both sides (`tests/oracle/editmut_exclude.txt`): `ds.meander.*` and barcode
+polygons (pending in pcb-dump-rs), `plot.layer` (indeterminate in the reference's parser-only
+load). Fixtures: `tests/data/fixedit1/` (stroke-font texts of `texts_current`, `zones_modern`
+with a UUID on every zone - with equal layers the save order of zones compares UUIDs, and
+UUIDs drawn during a load differ between the reference and the port).
+
+Not done in this package (still open): `PCB_DIMENSION_BASE::Update()` after every `EDA_TEXT`
+setter, `GetValueFieldText` / `ChangeValue*`, i32-backed `DimUnitsFormat` / `DimPrecision` /
+`DimTextPosition`; `Board::table_autosize` / `table_flip` hooks of generated tables;
+`Pad::padstack()` accessor for `TEARDROP_MANAGER::IsUniformlyRound`; `PcbShape::normalize` with
+the pad's primitive lib scale; PROP-1 generator property getters; remove / re-add of items in
+the mutator oracle; router-style item creation with incremental connectivity (part 3).

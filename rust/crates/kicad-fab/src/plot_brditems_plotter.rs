@@ -29,20 +29,29 @@
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::plot_enums::{DrillMarks, DxfOutlineMode, FillT, PlotFormat};
 use kicad_core::string_utils::{printable_char_count, unescape_string};
-use kicad_core::text_attributes::TextAttributes;
+use kicad_core::printf::format_f;
+use kicad_core::text_attributes::{GrTextHAlignT, GrTextVAlignT, TextAttributes};
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_font::Metrics;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::trigo::rotate_point;
 use kicad_geom::{ANGLE_0, ANGLE_90, EdaAngle, ShapePolySet, Vector2I, ki_round};
+use kicad_pcb::AnyItem;
 use kicad_pcb::ctx::BoardCtx;
+use kicad_pcb::drill::{
+    DrillMarkMode, DrillQuery, DrillSymbolProfile, drill_symbol_cache, enumerate_drill_operations,
+    enumerate_drill_spans,
+};
 use kicad_pcb::eda_shape::ShapeT;
 use kicad_pcb::item_ref::ItemRef;
 use kicad_pcb::padstack::{PadAttrib, PadDrillShape, PadProp, PadShape, Padstack};
+use kicad_pcb::pcb_drill_map::PcbDrillMap;
+use kicad_pcb::pcb_generated_table::GeneratedTableKind;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_track::Track;
 use kicad_pcb::traits::EdaShapeItem;
-use kicad_plot::Plotter;
+use kicad_plot::drill_markers::curated_shape;
+use kicad_plot::{PlotData, Plotter, USE_DEFAULT_LINE_WIDTH};
 use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
 
@@ -693,14 +702,199 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         }
     }
 
-    /// `BRDITEMS_PLOTTER::PlotDrillSymbols` (FAB-13, tier 3).
+    /// Port of `BRDITEMS_PLOTTER::PlotDrillSymbols`: the drill map items (`PCB_DRILL_MAP`) on
+    /// `a_layer`: for each map the board outline (moved by the map's offset), then a mark per
+    /// hole of the map's spans (a `PLOTTER::Marker` shape, a letter or the drill size as text),
+    /// the optional guide cross and the slot outline.
     pub fn plot_drill_symbols(&mut self, a_layer: PcbLayerId) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotDrillSymbols (FAB-13)", a_layer)
+        let ctx = self.ctx;
+        let maps = drill_maps_on_layer(ctx, a_layer);
+
+        if maps.is_empty() {
+            return;
+        }
+
+        let profile = DrillSymbolProfile::from_board(ctx.board.design_settings());
+        let symbol_width = profile.symbol_width();
+
+        // Resolved rather than read straight from the profile, so a map drawn without any chart
+        // ever having been placed still shows marks
+        let cache = drill_symbol_cache(ctx);
+
+        // DXF reads its sketch/filled mode back out of this. Without it every stroked mark is
+        // emitted filled no matter what the user asked for
+        let gbr_metadata = GbrMetadata::new();
+        let plot_format = self.plotter.plotter_type();
+
+        let color = self.get_color(a_layer.0);
+        self.plotter.set_color(&color);
+        self.plotter.set_current_line_width(symbol_width, None);
+
+        let mut query = DrillQuery {
+            merge_pth_npth: true,
+            ..DrillQuery::default()
+        };
+
+        // Several maps can share a layer. The UI prevents it but a parsed, pasted or
+        // API-created board need not
+        for map in maps {
+            let outlines = map.board_outlines(ctx);
+
+            for ii in 0..outlines.outline_count() {
+                self.plotter.plot_poly_chain(
+                    outlines.c_outline(ii),
+                    FillT::NoFill,
+                    symbol_width,
+                    get_metadata(plot_format, &gbr_metadata),
+                );
+
+                for jj in 0..outlines.hole_count(ii) {
+                    self.plotter.plot_poly_chain(
+                        outlines.c_hole(ii, jj),
+                        FillT::NoFill,
+                        symbol_width,
+                        get_metadata(plot_format, &gbr_metadata),
+                    );
+                }
+            }
+
+            for span in enumerate_drill_spans(ctx, false) {
+                // The map's own span filter, so a backdrill map does not print every other hole
+                // too
+                if !map.all_spans() && span != *map.span() {
+                    continue;
+                }
+
+                query.span = span;
+
+                for op in enumerate_drill_operations(ctx, &query) {
+                    // The map is a set of marks on the holes, displaced as a whole. The holes
+                    // themselves never move
+                    let pos = op.position + map.offset();
+
+                    let Some(assignment) = cache.by_group.get(&profile.group_key_string(&op))
+                    else {
+                        continue;
+                    };
+
+                    if assignment.mark_mode == DrillMarkMode::Shape {
+                        self.plotter.marker(
+                            pos,
+                            map.symbol_size(),
+                            curated_shape(assignment.shape_index),
+                        );
+                    } else {
+                        // wxString::Format( wxT( "%.2f" ), pcbIUScale.IUTomm( op.m_Diameter ) )
+                        let text = if assignment.mark_mode == DrillMarkMode::Letter {
+                            assignment.letter.clone()
+                        } else {
+                            format_f(PCB_IU_SCALE.iu_to_mm(op.diameter), 2)
+                        };
+
+                        let attrs = TextAttributes {
+                            size: (map.symbol_size(), map.symbol_size()),
+                            stroke_width: symbol_width,
+                            halign: GrTextHAlignT::Center,
+                            valign: GrTextVAlignT::Center,
+                            ..TextAttributes::default()
+                        };
+
+                        self.plotter.plot_text(
+                            pos,
+                            &color,
+                            &text,
+                            &attrs,
+                            None,
+                            Metrics::default_metrics(),
+                            None,
+                        );
+                    }
+
+                    if map.guide_cross() {
+                        let reach = map.symbol_size();
+
+                        self.plotter.thick_segment(
+                            pos - Vector2I::new(reach, 0),
+                            pos + Vector2I::new(reach, 0),
+                            symbol_width,
+                            get_metadata(plot_format, &gbr_metadata),
+                        );
+                        self.plotter.thick_segment(
+                            pos - Vector2I::new(0, reach),
+                            pos + Vector2I::new(0, reach),
+                            symbol_width,
+                            get_metadata(plot_format, &gbr_metadata),
+                        );
+                    }
+
+                    // A slot's true extent is the cost driver, so it is drawn as well as marked
+                    if map.outline_slots() && op.is_slot {
+                        self.plotter.thick_oval(
+                            pos,
+                            op.size_xy,
+                            op.orientation,
+                            symbol_width,
+                            get_metadata(plot_format, &gbr_metadata),
+                        );
+                    }
+                }
+            }
+        }
+
+        self.plotter
+            .set_current_line_width(USE_DEFAULT_LINE_WIDTH, None);
     }
 
-    /// `BRDITEMS_PLOTTER::PlotChartSymbols` (FAB-13, tier 3).
+    /// Port of `BRDITEMS_PLOTTER::PlotChartSymbols`: the curated marker of every drill chart
+    /// row that has one, centred in the row's cell of the symbol column.
     pub fn plot_chart_symbols(&mut self, a_chart: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotChartSymbols (FAB-13)", a_chart)
+        let ctx = a_chart.ctx;
+        let table = a_chart.as_table().expect("PCB_DRILL_CHART");
+
+        let Some(GeneratedTableKind::DrillChart {
+            row_shapes,
+            symbol_column,
+            ..
+        }) = table.generated.as_deref().map(|g| &g.kind)
+        else {
+            return;
+        };
+
+        if *symbol_column < 0 || row_shapes.is_empty() {
+            return;
+        }
+
+        let profile = DrillSymbolProfile::from_board(ctx.board.design_settings());
+
+        let color = self.get_color(a_chart.layer().0);
+        self.plotter.set_color(&color);
+        self.plotter
+            .set_current_line_width(profile.symbol_width(), None);
+
+        for (&row, &shape_index) in row_shapes {
+            let Some(cell) = table
+                .cell(row, *symbol_column)
+                .and_then(|id| ctx.item(id.into()))
+            else {
+                continue;
+            };
+
+            let bbox = cell.bounding_box();
+
+            // Same fit as the painter, so the plotted chart matches what was on screen
+            // std::min<int>( size, std::min( w, h ) * 2 / 3 ): the int64 fit narrowed to int
+            let size = profile
+                .symbol_size()
+                .min((bbox.width().min(bbox.height()) * 2 / 3) as i32);
+
+            if size > 0 {
+                self.plotter
+                    .marker(bbox.centre(), size, curated_shape(shape_index));
+            }
+        }
+
+        self.plotter
+            .set_current_line_width(USE_DEFAULT_LINE_WIDTH, None);
     }
 
     /// Port of `BRDITEMS_PLOTTER::getColor`.
@@ -735,4 +929,30 @@ fn std_clamp(v: i32, lo: i32, hi: i32) -> i32 {
 /// `VECTOR2I( BOX2I::GetSize() )`: the int64 size clamped to `int`.
 fn clamp_i64_to_i32(v: i64) -> i32 {
     v.clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32
+}
+
+/// Port of `BOARD::DrillMapsOnLayer( aLayer )`: the drill map items of `m_drawings` on
+/// `a_layer`, in drawing order.
+fn drill_maps_on_layer<'b>(ctx: &'b BoardCtx<'_>, a_layer: PcbLayerId) -> Vec<&'b PcbDrillMap> {
+    let mut maps = Vec::new();
+
+    for (_, item) in ctx.board.drawings() {
+        if let AnyItem::DrillMap(map) = item
+            && map.base.layer == a_layer
+        {
+            maps.push(map);
+        }
+    }
+
+    maps
+}
+
+/// `plotMetadata( m_plotter, gbr_metadata, this )` (the `getMetadata()` macro): the Gerber
+/// metadata for a Gerber plotter, nothing for SVG.
+fn get_metadata<'m>(plot_format: PlotFormat, gbr_metadata: &'m GbrMetadata) -> PlotData<'m> {
+    if plot_format == PlotFormat::Gerber {
+        Some(gbr_metadata)
+    } else {
+        None
+    }
 }

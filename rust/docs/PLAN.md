@@ -518,6 +518,37 @@ Progress log:
   tuning profiles in the reference's unordered_map order; via stitch; GetViolationLayers).
   The provider registry now has NO unported slot except schematic parity (out of scope)
   and what is running: creepage part 2 (DRC-33) and library parity (DRC-LP).
+  07:40 UTC (machine clock; the user is awake and has the morning summary): done since
+  the last entry -
+  DRC-LP footprint library parity (library tables, .pretty loading through a host-supplied
+  source, FootprintNeedsUpdate with every helper): the 175 boards that differed only by
+  library entries now match; 37 crafted mismatch cases identical; the QA false-negative
+  table (23 counts) now asserts and passes.
+  STAB-DRC-2: board UUID as a report item, from-to cache rebuilt in the run, marker UUIDs
+  from the board generator. Whole-report comparison of `kicad-rs pcb drc` vs the reference
+  on 364 boards: 298 byte-exact / 11 after filtering / 53 same set / 2 known (font not on
+  the oracle machine; pointer order in the reference). e2e drc-report on 308 boards: 276
+  identical / 26 order only / 6 differing (5 creepage boards - creepage has landed since -
+  and 1 skew item choice). `--severity-exclusions` 10 of 10; `--refill-zones --save-board`
+  through the DRC command: 20 of 20 (5 after the documented masks).
+  DRC-33 creepage part 2, engine and provider: every distance bit-identical on 1318
+  provider solves and 350 engine solves; all 30 corpus creepage violations match (2 up to
+  ties between equally short paths, heap-order in the reference). One board takes about
+  210 s where the reference takes 80 s (performance phase).
+  FIX-ZF-1 (two more crafted fill boards incl. a refill that never converges: the warning
+  text equals the reference; filler warnings reach the CLI's stderr), FIX-FAB-1 (pad state
+  carried between plotted layers: the 1-3 nm difference of the review is gone on 48 of 48
+  swept cases), FIX-FAB-3 (out-parameter expressions in collisions are lazy like the C++;
+  int sums that wrap in the reference wrap explicitly: 465,800 collision oracle cases incl.
+  20,800 new far-coordinate ones bit-exact; a board beyond 1.07 m loads in dev builds).
+  The DRC registry has no unported slot except schematic parity (out of scope).
+  Running: FAB-13 -> GLUE-3, FIX-FAB-2, FIX-EDIT-1, PERF-1, RT-0 (ANALYSIS of the
+  push-and-shove router for a port: inventory, execution pipelines, order / time-limit
+  sensitivity, the pns log-replay regression infrastructure as oracle, headless API, work
+  packages with a first milestone - docs/analysis/router.md; no code).
+  Then: E2E-2 (full end-to-end rerun of all seven commands with the final binary and
+  golden refresh), the cross-cutting adversarial Fable review, DOC-1 (README), PERF-2..
+  (hill-climb loop), and - after a Fable review of RT-0's document - the router packages.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
