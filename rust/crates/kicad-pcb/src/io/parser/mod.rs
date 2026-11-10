@@ -208,6 +208,40 @@ pub struct PcbParser {
     pub(crate) report: ParseReport,
 }
 
+/// The UUID-shaped tokens (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, hexadecimal) of a board
+/// file text, wherever they occur.
+fn file_uuids(text: &str) -> impl Iterator<Item = kicad_core::Kiid> + '_ {
+    let bytes = text.as_bytes();
+    let mut i = 0;
+
+    std::iter::from_fn(move || {
+        while i + 36 <= bytes.len() {
+            if bytes[i + 8] == b'-'
+                && bytes[i + 13] == b'-'
+                && bytes[i + 18] == b'-'
+                && bytes[i + 23] == b'-'
+            {
+                let token = &bytes[i..i + 36];
+                let is_uuid = token
+                    .iter()
+                    .enumerate()
+                    .all(|(k, b)| matches!(k, 8 | 13 | 18 | 23) || b.is_ascii_hexdigit());
+
+                if is_uuid {
+                    if let Some(id) = text.get(i..i + 36).and_then(kicad_core::Kiid::parse) {
+                        i += 36;
+                        return Some(id);
+                    }
+                }
+            }
+
+            i += 1;
+        }
+
+        None
+    })
+}
+
 impl PcbParser {
     /// Port of the constructor `PCB_IO_KICAD_SEXPR_PARSER( aReader, aBoard, ... )` (no query
     /// callback, no progress reporter, no preserved stackup, no append) followed by `init()`.
@@ -251,6 +285,15 @@ impl PcbParser {
         };
 
         parser.init();
+
+        // Port addition (no C++ counterpart; `docs/design/review-2.md` R2-05): the C++ draws
+        // fresh UUIDs from an entropy-seeded generator, so they never equal one stored in the
+        // file. The board's generator is deterministic and can reproduce the UUIDs of a file
+        // written by an equally seeded KiCad; every UUID of the file is therefore reserved
+        // before the first draw (items without a UUID, group and generator infos, net chain
+        // pads, markers created later).
+        parser.board.kiid_generator.reserve_all(file_uuids(text));
+
         parser
     }
 

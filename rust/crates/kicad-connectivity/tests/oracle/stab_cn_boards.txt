@@ -1,0 +1,45 @@
+# STAB-CN: corpus boards with footprints whose connectivity goldens are replayed by the
+# CN-01 .. CN-04 and order tests (paths relative to <kicad>/qa/data, without .kicad_pcb).
+# Golden name = last path component; tests/golden/stab_cn/<name>.txt (connectivity),
+# tests/golden/stab_cn/<name>.flash.txt (FlashLayer), tests/golden/order/<name>.txt.
+pcbnew/issue23467/issue23467
+pcbnew/issue22751/issue22751
+pcbnew/teardrop_close_via_rotated_pad
+pcbnew/issue24355/issue24355
+pcbnew/issue14412
+pcbnew/net_tie_hole_clearance
+pcbnew/issue22798
+pcbnew/issue18203
+pcbnew/net_chains/chain_bridging_3pad_2net
+pcbnew/net_chains/chain_bridging_4pad
+pcbnew/issue24974
+pcbnew/unconnected-netnames/unconnected-netnames
+pcbnew/issue19325/issue19325
+pcbnew/soldermask_bridge_all_tracks
+pcbnew/teardrop_custom_pad_anchor
+pcbnew/issue24799/issue24799
+pcbnew/issue20480/issue20480
+pcbnew/issue25521_zone_names
+pcbnew/stacked/stacked
+pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity
+pcbnew/issue23690_via_in_pad
+pcbnew/issue24924/keepout_self_exclude
+pcbnew/issue23451/3Rs_bv
+pcbnew/issue19956/issue19956
+pcbnew/issue7567
+pcbnew/npth_mask_bridge_test
+pcbnew/test_starved_thermal
+pcbnew/padstacks
+pcbnew/zone_refill_convergence_limit
+pcbnew/odbpp/custom_pad_mask_split
+pcbnew/issue14008
+pcbnew/issue22983/issue22983
+pcbnew/padstacks_normal
+pcbnew/issue6443
+pcbnew/teardrop_qfn_thermal_pad_zone
+pcbnew/zone_refill_cascading_islands
+pcbnew/issue6945
+pcbnew/issue7086
+pcbnew/issue22809/issue22809
+eeschema/netlists/jumpers/jumpers
+downgrade/golden/current/metadata

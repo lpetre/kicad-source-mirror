@@ -1,0 +1,8 @@
+pad|428e4bac-34ca-4a51-b0d3-29d74665fe80|flash.F.Cu=true
+pad|428e4bac-34ca-4a51-b0d3-29d74665fe80|flash.B.Cu=true
+pad|df2db49b-c7bf-4204-b92d-97bc58328158|flash.F.Cu=true
+pad|df2db49b-c7bf-4204-b92d-97bc58328158|flash.B.Cu=true
+pad|2a33842e-ac6a-4d9d-aeeb-8888cae3bbf3|flash.F.Cu=true
+pad|2a33842e-ac6a-4d9d-aeeb-8888cae3bbf3|flash.B.Cu=true
+pad|ff73c870-a414-4cea-8c0b-908e396698db|flash.F.Cu=true
+pad|ff73c870-a414-4cea-8c0b-908e396698db|flash.B.Cu=true

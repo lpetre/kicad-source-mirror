@@ -51,9 +51,11 @@
 //! code after `KIID::SeedGenerator` with the same seed.
 
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::fmt;
 use std::ops::{Add, AddAssign, Deref, DerefMut};
 use std::str::FromStr;
+use std::sync::Arc;
 
 use crate::mt19937::Mt19937;
 use crate::sha1::sha1;
@@ -527,11 +529,21 @@ fn parse_uuid_string(s: &[u8]) -> Option<[u8; 16]> {
 /// Beware that ids produced by two generators with the same seed collide; use
 /// [`KiidGenerator::from_entropy`] whenever generated ids end up in files that may later be
 /// combined with other files.
+///
+/// Port addition (no C++ counterpart): ids can be *reserved* ([`KiidGenerator::reserve_all`]);
+/// a random id that is reserved is skipped. The C++ generator is seeded from entropy, so a
+/// fresh id never equals one that is already in a file; a deterministic generator can
+/// reproduce the ids of a file written by an equally seeded KiCad, and a loader therefore
+/// reserves the ids of the file it reads. With nothing reserved the sequence is exactly the
+/// C++ one for the seed.
 #[derive(Clone, Debug)]
 pub struct KiidGenerator {
     rng: Mt19937,
     /// When true, always create nil uuids for performance, when valid ones aren't needed.
     create_nil_uuids: bool,
+    /// Ids [`KiidGenerator::random_uuid`] never returns; shared so that cloning a generator
+    /// (a board clone) stays cheap.
+    reserved: Option<Arc<HashSet<Kiid>>>,
 }
 
 impl KiidGenerator {
@@ -544,6 +556,7 @@ impl KiidGenerator {
         KiidGenerator {
             rng: Mt19937::from_seed(seed),
             create_nil_uuids: false,
+            reserved: None,
         }
     }
 
@@ -574,6 +587,7 @@ impl KiidGenerator {
         KiidGenerator {
             rng: Mt19937::from_seed_words(words),
             create_nil_uuids: false,
+            reserved: None,
         }
     }
 
@@ -607,10 +621,41 @@ impl KiidGenerator {
         }
     }
 
+    /// Reserve `ids`: [`KiidGenerator::random_uuid`] (and so [`KiidGenerator::generate`],
+    /// [`Kiid::new`], [`Kiid::from_string_or_random`]) will never return one of them. Port
+    /// addition, see the type documentation; a loader passes the ids of the file it reads.
+    /// Reservations accumulate and survive [`KiidGenerator::seed_generator`].
+    pub fn reserve_all(&mut self, ids: impl IntoIterator<Item = Kiid>) {
+        let mut ids = ids.into_iter().peekable();
+
+        if ids.peek().is_none() {
+            return;
+        }
+
+        Arc::make_mut(self.reserved.get_or_insert_with(Default::default)).extend(ids);
+    }
+
+    /// Whether `id` is reserved ([`KiidGenerator::reserve_all`]).
+    pub fn is_reserved(&self, id: &Kiid) -> bool {
+        self.reserved.as_ref().is_some_and(|r| r.contains(id))
+    }
+
     /// Port of `randomGenerator()`
     /// (`boost::uuids::basic_random_generator<boost::mt19937>::operator()`): a random
-    /// (version 4) UUID, regardless of the "create nil UUIDs" mode.
+    /// (version 4) UUID, regardless of the "create nil UUIDs" mode. Reserved ids are skipped
+    /// (port addition, [`KiidGenerator::reserve_all`]).
     pub fn random_uuid(&mut self) -> Kiid {
+        loop {
+            let id = self.next_random_uuid();
+
+            if !self.is_reserved(&id) {
+                return id;
+            }
+        }
+    }
+
+    /// One draw of `boost::uuids::basic_random_generator<boost::mt19937>::operator()`.
+    fn next_random_uuid(&mut self) -> Kiid {
         let mut u = [0u8; 16];
 
         for chunk in u.chunks_exact_mut(4) {

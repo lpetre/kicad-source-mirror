@@ -1,0 +1,5 @@
+file|issue23467.kicad_pcb|
+rn_net|board|unconnected_count=0
+rn_net|board|unconnected_visible=0
+cn_island|11111111-0000-0000-0000-000000000020/F.Cu|isolated=[]
+cn_island|11111111-0000-0000-0000-000000000020/F.Cu|single_connection=[]

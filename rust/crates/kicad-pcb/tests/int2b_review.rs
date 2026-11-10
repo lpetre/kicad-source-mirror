@@ -173,3 +173,124 @@ fn d3_legacy_scoreboard() {
     std::fs::write(dir.join("d3.md"), &out).unwrap();
     println!("{out}");
 }
+
+// ---- regression tests of the review's fixes ------------------------------------------------
+
+/// R2-05: a freshly drawn UUID never equals one stored in the file. The board's generator is
+/// seeded deterministically (`KIID::SeedGenerator( 5489 )` sequence: 5cbb91d0-..., 2c358220-...,
+/// ...); a file written by an equally seeded KiCad holds those very UUIDs. Here the second
+/// line carries the UUID the first (UUID-less) line would otherwise draw.
+#[test]
+fn fresh_uuids_never_collide_with_file_uuids() {
+    use kicad_pcb::io::{ParseOptions, parse_board};
+
+    let mut ids = Vec::new();
+
+    // The UUIDs a default-seeded generator hands out first
+    let mut generator = kicad_core::KiidGenerator::default();
+    for _ in 0..64 {
+        ids.push(generator.generate().as_string());
+    }
+
+    let mut text = String::from(
+        "(kicad_pcb (version 20241229) (generator \"pcbnew\") (generator_version \"9.0\")\n\
+         (general (thickness 1.6) (legacy_teardrops no)) (paper \"A4\")\n\
+         (layers (0 \"F.Cu\" signal) (2 \"B.Cu\" signal) (25 \"Edge.Cuts\" user))\n\
+         (setup (pad_to_mask_clearance 0)) (net 0 \"\")\n\
+         (gr_line (start 0 0) (end 1 0) (stroke (width 0.1) (type default)) (layer \"Edge.Cuts\"))\n",
+    );
+
+    // ... followed by lines that carry every one of those UUIDs
+    for (i, id) in ids.iter().enumerate() {
+        text.push_str(&format!(
+            "(gr_line (start 0 {i}) (end 1 {i}) (stroke (width 0.1) (type default)) \
+             (layer \"Edge.Cuts\") (uuid \"{id}\"))\n"
+        ));
+    }
+
+    text.push(')');
+
+    let board = parse_board(&text, "", &ParseOptions::default()).unwrap();
+    let ctx = kicad_pcb::BoardCtx::bare(&board);
+    let mut seen = std::collections::BTreeSet::new();
+
+    for (id, _) in board.drawings() {
+        let uuid = ctx.item(id).unwrap().uuid().as_string();
+        assert!(seen.insert(uuid.clone()), "duplicate UUID {uuid}");
+    }
+
+    assert_eq!(seen.len(), 65);
+
+    // and later draws (markers, new items) keep avoiding them
+    let mut board = board;
+    for _ in 0..64 {
+        let fresh = board.kiid_generator.generate().as_string();
+        assert!(!ids.contains(&fresh), "{fresh} is a UUID of the file");
+    }
+}
+
+/// `SECTION|KEY|FIELD` -> value of dump lines.
+#[cfg(feature = "dump")]
+fn dump_map(text: &str) -> BTreeMap<String, String> {
+    text.lines()
+        .filter_map(|l| l.split_once('='))
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect()
+}
+
+/// Replay of `tests/golden/int2b_review.txt` (reference `pcb-dump board --no-init --hash`,
+/// script `tests/oracle/int2b_golden.sh`):
+///
+/// * R2-03: `PAD::SetLocalSolderMaskMargin` / `SetLocalSolderPasteMargin` /
+///   `SetLocalSolderPasteMarginRatio` write both outer sides; the port wrote the front side
+///   only, so the back mask / paste margins, `GetSolderMaskExpansion( B_Mask )`,
+///   `GetSolderPasteMargin( B_Paste )` and the back mask shapes of every pad with a local
+///   margin were wrong.
+/// * R2-04: `bakeTextBoxLib` moves the cells of a table inside a footprint to the board
+///   frame (`GetParentFootprint()` walks through the table); the port left them at their
+///   library coordinates.
+#[cfg(feature = "dump")]
+#[test]
+fn int2b_matches_oracle() {
+    use kicad_pcb::dump::{DumpLoadMode, DumpOptions, dump_board, load_board_for_dump_mode};
+
+    let golden = include_str!("golden/int2b_review.txt");
+    let root = kicad_qa::qa_data_dir().join("../..");
+    let mut checked = 0;
+    let mut expected: Vec<(String, String, Vec<&str>)> = Vec::new();
+
+    for line in golden.lines() {
+        if let Some(rest) = line.strip_prefix("file|") {
+            let (path, sections) = rest.split_once("|sections=").unwrap();
+            expected.push((path.to_string(), sections.to_string(), Vec::new()));
+        } else if let Some(last) = expected.last_mut() {
+            last.2.push(line);
+        }
+    }
+
+    assert_eq!(expected.len(), 4);
+
+    for (path, sections, lines) in expected {
+        let file = root.join(&path);
+        let bytes = std::fs::read(&file).unwrap();
+        let (board, _) = load_board_for_dump_mode(&file, DumpLoadMode::NoInit).unwrap();
+        let opts = DumpOptions {
+            sections: sections.split(',').map(str::to_string).collect(),
+            hash: true,
+            file_uuids: Some(kicad_pcb::dump::scan_file_uuids(&bytes)),
+        };
+        let got = dump_map(&dump_board(&board, &opts));
+
+        for line in lines {
+            let (key, value) = line.split_once('=').unwrap();
+            assert_eq!(
+                got.get(key).map(String::as_str),
+                Some(value),
+                "{path}: {key}"
+            );
+            checked += 1;
+        }
+    }
+
+    assert_eq!(checked, 414);
+}

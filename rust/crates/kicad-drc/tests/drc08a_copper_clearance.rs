@@ -36,8 +36,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries, fnv1a64,
-    hash_text, load_board, panic_text, quiet, run_providers,
+    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries, fnv1a64, hash_text, load_board,
+    panic_text, quiet, run_providers,
 };
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
@@ -682,5 +682,78 @@ fn false_positive_regressions_copper_clearance() {
             "{name}: {:?}",
             entries.iter().map(Entry::key).collect::<Vec<_>>()
         );
+    }
+}
+
+// ---- DRC-08b: copper graphics, knockout text, zone-to-zone, teardrops ----
+
+/// The synthetic boards of `gen_drc08b_boards.py` (copper graphics against graphics, pads and
+/// zones, knockout text and fields, zone pairs, teardrops; with and without a rule file).
+#[test]
+fn drc08b_synthetic_boards_match_reference() {
+    let score = compare_golden(include_str!("golden/drc08b/synthetic.txt"), false, "");
+    print(&score, "DRC-08b copper clearance (synthetic)");
+    assert_eq!(score.compared, 2);
+    assert!(score.part2 > 0);
+    assert_no_differences(&score);
+}
+
+/// The number of entries of the provider's types on a QA board.
+fn provider_count(name: &str) -> Option<usize> {
+    let mut loaded = load_qa(name)?;
+    Some(report(&mut loaded, false).len())
+}
+
+/// Port of `DRCCopperGraphicsTest` (`test_drc_copper_graphics.cpp`): 4 violations ("What"
+/// copper text shorting a zone, the knockout text shorting two zones twice, the net-tie
+/// rectangle shorting a zone). The other codes the C++ test does not ignore produce none on
+/// this board (reference report), so all 4 are this provider's.
+#[test]
+fn copper_graphics_test() {
+    if let Some(n) = provider_count("test_copper_graphics") {
+        assert_eq!(n, 4);
+    }
+}
+
+/// Port of `DRCCopperGraphicLineEndingMatrix` (`test_drc_copper_graphics.cpp`): every code
+/// ignored but `DRCE_CLEARANCE` and `DRCE_SHORTING_ITEMS`; 123 violations on the failing
+/// matrix, none on the passing one.
+#[test]
+fn copper_graphic_line_ending_matrix() {
+    for (name, expected) in [
+        ("line_ending_drc/line_ending_drc_fail", 123),
+        ("line_ending_drc/line_ending_drc_pass", 0),
+    ] {
+        let Some(mut loaded) = load_qa(name) else {
+            continue;
+        };
+
+        let n = report(&mut loaded, false)
+            .iter()
+            .filter(|e| e.type_ == "clearance" || e.type_ == "shorting_items")
+            .count();
+
+        assert_eq!(n, expected, "{name}");
+    }
+}
+
+/// The copper clearance part of `DRCFalseNegativeRegressions` (`test_drc_regressions.cpp`):
+/// (board, the C++ expected total of all providers, the part of it that is this provider's
+/// error types according to the reference report). `issue11814` (teardrop clearance to pad)
+/// is pending while its rule conditions call functions (DRC-22).
+#[test]
+fn false_negative_regressions_copper_clearance() {
+    for (name, cpp_total, provider_part) in [
+        ("intersectingzones", 1, 1),
+        ("fill_bad", 1, 1),
+        // clearance 2, hole_clearance 1 (+ 1 solder_mask_bridge)
+        ("issue5750", 4, 3),
+        ("issue11814", 2, 2),
+    ] {
+        assert!(provider_part <= cpp_total);
+
+        if let Some(n) = provider_count(name) {
+            assert_eq!(n, provider_part, "{name}");
+        }
     }
 }

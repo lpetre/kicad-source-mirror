@@ -26,7 +26,8 @@
 //!
 //! The test skips silently without cached references. It reports and does not fail (boards
 //! still depend on pending packages: ZF-03 copper fill, footprints, teardrops) unless
-//! `ZONE_CORPUS_STRICT=1`. The report is also written to `target/zone-corpus/report.txt`.
+//! `ZONE_CORPUS_STRICT=1`. `ZONE_CORPUS_DIR` / `ZONE_CORPUS_DEBUG_STAGES=1` run the stage
+//! corpus of `tools/zone-corpus/stages.sh` (`DebugZoneFiller` dumps of every pipeline stage). The report is also written to `target/zone-corpus/report.txt`.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -48,8 +49,13 @@ use kicad_pcb::project::board_design_settings_json::RawDrcExclusionCodec;
 use kicad_pcb::project::{LoadPath, LoadStep, StepOutcome, load_project, run_model_step};
 use kicad_zone::ZoneFiller;
 
+/// `target/zone-corpus`, or `ZONE_CORPUS_DIR` (the stage corpus of
+/// `tools/zone-corpus/stages.sh`).
 fn corpus_dir() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/zone-corpus")
+    match std::env::var("ZONE_CORPUS_DIR") {
+        Ok(dir) => PathBuf::from(dir),
+        Err(_) => Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/zone-corpus"),
+    }
 }
 
 /// The single `.kicad_pcb` of a directory.
@@ -79,9 +85,7 @@ fn needs_teardrops(text: &str) -> bool {
     // `(attr teardrop ...)` (older files) or `(attr\n (teardrop (type ...)))` (a teardrop
     // zone written by the current writer).
     if text.match_indices("(attr").any(|(i, m)| {
-        text[i + m.len()..]
-            .trim_start()
-            .starts_with("(teardrop")
+        text[i + m.len()..].trim_start().starts_with("(teardrop")
             || text[i + m.len()..].starts_with(" teardrop")
     }) {
         return true;
@@ -255,6 +259,11 @@ fn run_board(dir: &Path, score: &mut Score) -> String {
 
     let filled = catch_unwind(AssertUnwindSafe(|| {
         let mut filler = ZoneFiller::new(&board);
+        // `ZONE_CORPUS_DEBUG_STAGES=1`: DebugZoneFiller, the In<k>.Cu fills hold the stage
+        // dumps of the F.Cu fill (the references were made with `DebugZoneFiller=1`).
+        filler.set_debug_zone_filler(
+            std::env::var("ZONE_CORPUS_DEBUG_STAGES").is_ok_and(|v| v == "1"),
+        );
         filler.fill(&mut board, &mut connectivity, &engine, &zones);
     }));
 

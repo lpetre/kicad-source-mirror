@@ -139,3 +139,22 @@ Known gaps (PCBIO-15):
   context): via `flash.<layer>` / `shape.<layer>` with `remove_unused_layers` differ from the
   C++ (which flashes through connectivity); those lines are verified by kicad-connectivity's
   CN-04 goldens. A `dump_board` variant taking a `BoardCtx` (kicad-pcb `dump`) would close it.
+
+## Package CC-1: component class synchronisation in the load sequence
+
+`board_loader::initialize_loaded_board_guarded` installs kicad-drc's component class rule
+compiler on the board (`kicad_drc::component_class_rules::install`) before the steps, so
+`LoadStep::SynchronizeComponentClasses` (`BOARD::SynchronizeComponentClasses`) runs on every
+load; the `KNOWN_PENDING_STEPS` entry of `tests/common/mod.rs` is gone.
+
+Tests (`tests/component_classes.rs`):
+* `component_classes_match_reference_dump`: `GetComponentClassAsString()` of every footprint of
+  `component_classes` and `component_classes_drc` (the corpus boards whose projects assign
+  classes) vs the reference `pcb-dump board [--loader] --sections footprint` (golden
+  `tests/golden/cc1_component_class.txt`, `tests/oracle/cc1_component_class_golden.sh`), QA and
+  CLI path: 26 of 36 identical, the 10 others (5 footprints x 2 paths) need DRC-22 functions
+  (`getField`, `memberOfSheet`, `intersectsArea`) and are checked by the ignored
+  `component_classes_match_reference_dump_all` only.
+* `component_classes`: port of qa/tests/pcbnew/test_component_classes.cpp `ComponentClasses`
+  (same table), the same 5 footprints in the ignored `component_classes_all`.
+* `upgrade_oracle` (issue10697 byte-identical) and `upgrade_corpus` run the step now.

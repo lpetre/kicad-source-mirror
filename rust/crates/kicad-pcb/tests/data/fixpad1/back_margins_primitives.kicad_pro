@@ -1,0 +1,13 @@
+{
+  "board": {
+    "design_settings": {
+      "rules": {
+        "max_error": 0.05
+      }
+    }
+  },
+  "meta": {
+    "filename": "back_margins_primitives.kicad_pro",
+    "version": 3
+  }
+}

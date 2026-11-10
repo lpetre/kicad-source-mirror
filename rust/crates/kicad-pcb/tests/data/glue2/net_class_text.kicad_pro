@@ -1,0 +1,8 @@
+{"meta": {"filename": "net_class_text.kicad_pro", "version": 3},
+ "net_settings": {"classes": [
+   {"name": "Default", "clearance": 0.2, "track_width": 0.25, "priority": 2147483647},
+   {"name": "L", "clearance": 0.3, "track_width": 0.5, "priority": 0},
+   {"name": "M", "clearance": 0.4, "priority": 1}],
+  "meta": {"version": 4},
+  "netclass_assignments": null,
+  "netclass_patterns": [{"netclass": "L", "pattern": "/N1"}, {"netclass": "M", "pattern": "/N*"}]}}

@@ -38,12 +38,12 @@ macro_rules! port_pending {
     }};
 }
 
+pub mod component_class_rules;
 pub mod constraint_types;
 pub mod reporter;
 pub mod rule;
 pub mod rule_condition;
 pub mod rule_parser;
-pub mod component_class_rules;
 pub mod rules_lexer;
 
 pub mod item;

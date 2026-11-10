@@ -1,0 +1,14 @@
+load|q|ci0|p0.0|[p0.0]
+load|q|ci2|p0.0|[p0.0]
+load|q|ci3|p0.0|[p0.0]
+load|q|icl|p0.0|any=00|flash=00
+load|q|ci0|p1.0|[p1.0]
+load|q|ci2|p1.0|[p1.0]
+load|q|ci3|p1.0|[p1.0]
+load|q|icl|p1.0|any=00|flash=00
+load|q|ci0|p2.0|[p2.0]
+load|q|ci2|p2.0|[p2.0]
+load|q|ci3|p2.0|[p2.0]
+load|q|icl|p2.0|any=00|flash=00
+load|q|net|1|[p0.0,p1.0,p2.0]
+load|rn|n1|[100000000,100000000@p0.0>110000000,100000000@p1.0:10000000,110000000,100000000@p1.0>120000000,100000000@p2.0:10000000]

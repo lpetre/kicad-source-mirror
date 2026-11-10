@@ -41,8 +41,8 @@ use crate::item_ref::{AnyItem, ItemRef};
 use crate::net_settings::NetSettings;
 use crate::netclass::Netclass;
 use crate::netinfo::NetinfoItem;
-use crate::pcb_field::{FieldT, PcbField};
 use crate::pcb_barcode::BarcodeT;
+use crate::pcb_field::{FieldT, PcbField};
 use crate::pcb_marker::{PcbMarker, RcItem};
 use crate::pcb_plot_params::PcbPlotParams;
 use crate::pcb_track::{PcbArc, PcbTrack, PcbVia, Track};
@@ -197,9 +197,21 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
                 emit!(o, "barcode.last_error", v_str(&b.last_error(ctx)));
             } else {
                 emit!(o, "barcode.poly", no_api("zint symbol encoder (ZINT-1)"));
-                emit!(o, "barcode.symbol_poly", no_api("zint symbol encoder (ZINT-1)"));
-                emit!(o, "barcode.text_poly", no_api("zint symbol encoder (ZINT-1)"));
-                emit!(o, "barcode.last_error", no_api("zint symbol encoder (ZINT-1)"));
+                emit!(
+                    o,
+                    "barcode.symbol_poly",
+                    no_api("zint symbol encoder (ZINT-1)")
+                );
+                emit!(
+                    o,
+                    "barcode.text_poly",
+                    no_api("zint symbol encoder (ZINT-1)")
+                );
+                emit!(
+                    o,
+                    "barcode.last_error",
+                    no_api("zint symbol encoder (ZINT-1)")
+                );
             }
         }
         AnyItem::Image(r) => {

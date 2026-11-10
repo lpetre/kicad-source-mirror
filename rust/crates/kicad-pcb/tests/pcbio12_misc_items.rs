@@ -314,7 +314,10 @@ fn oracle_corpus_blocks() {
                 // (board_loader.cpp RefreshGeneratedTables, M26): api_kitchen_sink's stored
                 // drill chart cells "0.30" are re-saved as "0.30 mm". Those blocks are compared
                 // by the pure parse + write driver only (oracle_parse_write_blocks).
-                let (out, o1) = (without_generated_tables(&out), without_generated_tables(&o1));
+                let (out, o1) = (
+                    without_generated_tables(&out),
+                    without_generated_tables(&o1),
+                );
                 let n = assert_same_blocks(path, &out, &o1, &input);
                 println!("{path}: {n} blocks identical");
             }
@@ -331,8 +334,7 @@ fn without_generated_tables(text: &str) -> String {
     let mut skipping = false;
 
     for line in text.split_inclusive('\n') {
-        if !skipping
-            && (line.starts_with("\t(drill_chart") || line.starts_with("\t(stackup_table"))
+        if !skipping && (line.starts_with("\t(drill_chart") || line.starts_with("\t(stackup_table"))
         {
             skipping = line.matches('(').count() != line.matches(')').count();
             continue;

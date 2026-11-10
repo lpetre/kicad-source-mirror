@@ -22,7 +22,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `pcbplot.rs`, `pcb_plotter.rs` (FAB-03 part), `plot_board_layers.rs` (driver + `PlotStandardLayer` skeleton), `plot_brditems_plotter.rs` (struct, pending entry points) | see "FAB-03" below | FAB-03 | ported (driver); item bodies see FAB-04 and FAB-05/06/10/11/13 |
 | `plot_board_layers.rs` (`PlotStandardLayer` L383-930: pads, DNP cross, vias, tracks, zones), `plot_brditems_plotter.rs` (`getColor`, `PlotPadNumber`, `PlotPad`, `PlotZone`) | see "FAB-04" below | FAB-04 | ported |
 | `plot_brditems_shapes.rs` (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`, `PlotShape`, `PlotDimension`, `PlotPcbTarget`, `PlotBarCode`, `PlotTableBorders`), `line_ending_plot.rs` (`LINE_ENDING::Plot`) | see "FAB-05" below | FAB-05 | ported |
-| `plot_layer_poly.rs`, `plot_brditems_text.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-06..13 | not started |
+| `plot_brditems_text.rs` (`PlotFootprintTextItems`, `PlotText`) | see "FAB-06" below | FAB-06 | ported |
+| `plot_layer_poly.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-07..13 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -422,12 +423,88 @@ tests).
 
 ### Known gaps
 
-* `PlotText` (text items, text box text, cells, dimension text) and `PlotFootprintTextItems`
-  are FAB-06; `PlotChartSymbols` FAB-13.
+* `PlotChartSymbols` FAB-13 (`PlotText` / `PlotFootprintTextItems`: FAB-06, done).
 * Model differences found by the corpus replay (reported as change requests, listed in
   `KNOWN_DIFFERENCES` of `plot_graphics_corpus.rs` and `plot_items_corpus.rs`): the pad's
   local solder mask margin is lost on B.Mask (`Pad::set_local_solder_mask_margin` sets the
   front mask props only; C++ `PAD::SetLocalSolderMaskMargin` sets F_Mask and B_Mask; same
   for the paste margin and ratio setters): 3 corpus B.Mask files differ. Barcodes plot
   nothing until the model has the zint encoder (M25a).
+
+## FAB-06: text items (footprint text rules, PlotText)
+
+### C++ to Rust
+
+| C++ (`pcbnew/plot_brditems_plotter.cpp`) | Rust (`plot_brditems_text.rs`, an `impl BrditemsPlotter` block) |
+|---|---|
+| `PlotFootprintTextItems` (L401-486) | `plot_footprint_text_items`: reference / value with their plot options and visibility, DNP hide / strike-out, other visible fields, then every `PCB_TEXT` of `GraphicalItems()` (text and, through the `PCB_TEXT` base, dimensions); Edge.Cuts / private layers / `${REFERENCE}` / `${VALUE}` rules |
+| `PlotText` (L786-899) | `plot_text( item, layer, knockout, &Metrics, strikeout )`: `GetDrawFont( RenderSettings )`, empty / layer checks, `NonConductor` on copper, effective pen width, draw rotation, knockout polygons (`TransformTextToPolySet` of text / field / text box / cell, `Fracture`), outline font from the render cache, multi-line through `GetLinePositions`, single line at `GetTextPos()` |
+| `strikeoutText` lambda | private `strikeout_text` |
+| `CALLBACK_GAL( stroke, polygon )` + `DrawGlyphs( *GetRenderCache() )` | `kicad_font::CallbackGal` recording the calls (`GlyphOp`), replayed in order onto `ThickSegment` / `PlotPoly`; outline glyphs fractured if they have holes as `CALLBACK_GAL::DrawGlyph` does |
+| `getMetadata()` | private `get_metadata` (Gerber: the metadata, SVG: none) |
+
+The engine side (`PLOTTER::PlotText`, stroke font) is kicad-plot / kicad-font. The text
+model calls (`GetShownText`, `GetTextPos`, `GetDrawPos`, `GetDrawRotation`,
+`GetEffectiveTextPenWidth`, `GetLinePositions`, `GetRenderCache`, `TransformTextToPolySet`)
+are the kicad-pcb ones.
+
+### Tests and verification
+
+* `tests/plot_text.rs::crafted_text_matches_cli`: `tests/data/plot_text/text.kicad_pcb`
+  (hand-written, re-saved with `kicad-cli pcb upgrade --force`; goldens
+  `tests/golden/plot_text/crafted.txt` + `crafted_files.txt` (default set), `generate.py`)
+  through `plot_gerber_layer_file`, 15 layers x 5 option sets (CLI defaults, `--erd`, `--ev`,
+  `--hdnp`, `--cdnp`). Content: four footprints (front, rotated 33 degrees and scaled 1.5,
+  back / mirrored, DNP) with visible / hidden / empty fields, bold and italic fields,
+  `${REFERENCE}` / `${VALUE}` texts, footprint text on Edge.Cuts (skipped), knockout and
+  copper footprint text, a keep-upright text at 200 degrees, a multi-line footprint text;
+  board texts multi-line with left/bottom and right/top justification (incl. an empty line),
+  rotated, mirrored, bold italic, auto thickness with non-square size, knockout, `${LAYER}`,
+  overbar / subscript / superscript markup, copper text; text boxes: empty knockout,
+  rotated multi-line with border, knockout on copper. **65 files byte-identical**, 10 known
+  differences (`User.2`, `User.3` in every set: outline fonts, below).
+* `tests/plot_graphics_corpus.rs`: the FAB-05 skips for text are gone; every layer runs the
+  full `PlotStandardLayer` sequence. Corpus: **8438 files byte-identical** (439 of them with
+  footprint text), 0 pending, 5 known differences (3 pad mask margin, 2 footprint table
+  cells, model), skipped 26 drill-map (FAB-13), 62 mask min width (FAB-10), 2 barcode
+  layers. Crafted FAB-04 / FAB-05 boards: 31 + 45 files, all identical.
+* `tests/plot_driver_corpus.rs` (whole `plot_gerber_layer_file`): **8438 of 8533 files
+  identical**, 88 pending (drill maps FAB-13, mask min width FAB-10), 7 known differences
+  (`KNOWN_DIFFERENCES` there: the 5 above and the 2 barcode layers), 0 failures.
+* `tests/plot_pads_qa.rs`: the literal C++ calls now run to the end and are asserted.
+* Ports of `ScaledFootprintReferencePlotsScaled`, `ScaledFootprintGraphicTextPlotsScaled`
+  (`test_plot_footprint_scaled_text.cpp`) and `EmptyKnockoutPlotsTheBox`
+  (`test_pcb_textbox.cpp`) in `tests/plot_text.rs`: the footprints / box come from board
+  text instead of the model setters (`(transform (scale 2 2))` = `SetTransformScale`); the
+  knockout box is read back from the Gerber regions (mm, 6 decimals = IU) instead of a
+  recording plotter. All pass.
+
+Not verified against the reference: outline-font text drawn from a valid render cache (the
+loader drops footprint text caches, see below; the code path is the C++ one), knockout or
+struck-out dimension text in a footprint (model accessor missing, see below), SVG output of
+text (the engine is kicad-plot's; not compared here).
+
+### Deviations
+
+* Outline fonts: without an outline font engine, text whose draw font is an outline font
+  is drawn from the render cache only when `GetRenderCache` finds it valid; a stale or
+  missing cache (C++ regenerates it with FreeType) and fonts embedded in the board (C++ lays
+  out with the outline font) fall back to the stroke font. Board-level texts always lose
+  their cache at load (`EDA_TEXT::SetVisible`), so board text in an outline font always
+  differs from the reference (crafted `User.2`).
+* `MarkFootprintPlotted` (PDF bookmarks) is not called (PDF is out of scope).
+* A footprint without a Reference / Value field (impossible in C++, which always has them)
+  plots no reference / value.
+
+### Known gaps / change requests
+
+* Knockout or strike-out of a footprint dimension's text reaches a pending panic: the model
+  has no public `PcbDimension::transform_text_to_poly_set` (`pcb_text::
+  transform_text_to_poly_set` is crate-private).
+* The model loader drops the render cache of footprint texts in an outline font (crafted
+  `User.3`: C++ plots the cached glyphs, the port gets no cache).
+* `PcbTablecell::corners` / `draw_pos` of a table inside a footprint are footprint-local
+  (not moved by the footprint position) and degenerate when rotated:
+  `qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb` F.Cu / B.Cu differ (cell
+  text 40 / 28 mm off); the table borders match.
 

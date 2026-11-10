@@ -1079,7 +1079,16 @@ impl Board {
             OwnedItem::Shape(s) => drawing!(*s),
             OwnedItem::Textbox(t) => drawing!(*t),
             OwnedItem::Image(i) => drawing!(*i),
-            OwnedItem::Pad(p) => child!(*p, pads),
+            OwnedItem::Pad(p) => {
+                let id = self.insert_fp_child(*p, fp);
+                // The `SetParent( this )` of `PAD::AddPrimitive` / the padstack copy: the
+                // pad's primitives are re-parented once the pad has its handle.
+                if let Some(pad) = self.pads.get_mut(id) {
+                    pad.reparent_primitives();
+                }
+                push_mode(&mut self.fp_mut(fp).pads, id, append);
+                ItemId::from(id)
+            }
             OwnedItem::Zone(z) => child!(*z, zones),
             OwnedItem::Group(g) => child!(g, groups),
             OwnedItem::Constraint(c) => child!(c, constraints),

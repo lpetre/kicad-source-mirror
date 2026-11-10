@@ -86,3 +86,61 @@ Of these, 7 have no fillable zone (rule areas only) and 19 reach `fillCopperZone
 `fillNonCopperZone` (ZF-03 pending). Driver smoke run with the stand-in fill on those 19: all
 driver passes run without error on every board. Zone layers compared vertex for vertex: 0
 (waiting for ZF-03).
+
+## ZF-03: copper fill core (knockouts, clearances, min width, thermal reliefs, hatching)
+
+Supersedes the `stub (ZF-03)` rows above: `fillCopperZone`, `fillNonCopperZone` and
+`postKnockoutMinWidthPrune` are ported.
+
+| C++ (`pcbnew/zone_filler.cpp`) | Rust | State |
+|---|---|---|
+| `RESULTS`, `VERTEX_CONNECTOR` (L69-245), `connect_nearby_polys` (L2982-3026) | `connect.rs` | ported (on `kicad_geom` `VertexSet`) |
+| `PAD_KNOCKOUT_KEY`, `VIA_KNOCKOUT_KEY`, `TRACK_KNOCKOUT_KEY`, `isZoneFillKeepout`, `appendZoneOutlineWithoutArcs` | `knockouts.rs` | ported (`HashSet` membership only) |
+| `addKnockout` (pad / via and graphic overloads), `addHoleKnockout` | `knockouts.rs` | ported |
+| `knockoutThermalReliefs`, `buildCopperItemClearances`, `buildDifferentNetZoneClearances`, `subtractHigherPriorityZones`, keepout holes of `fillCopperZone` | `knockouts.rs` | ported |
+| `DRC_ENGINE::EvalZoneConnection` | `knockouts::eval_zone_connection` | same body over `RuleResolver::eval_rules` (the trait has no `EvalZoneConnection`) |
+| `fillCopperZone`, `fillNonCopperZone`, `postKnockoutMinWidthPrune`, blob drop, `DUMP_POLYS_TO_COPPER_LAYER` | `copper_fill.rs` | ported (incl. the `DebugZoneFiller` stage dumps, `ZoneFiller::set_debug_zone_filler`) |
+| `buildThermalSpokes`, `buildHatchZoneThermalRings`, `addHatchFillTypeOnZone` | `thermal.rs` | ported |
+| `addCopperThievingPattern` | `thermal.rs` | stub (`port_pending!`, package ZF-07) |
+
+Ported tests: `ZoneFillDependencyKnockoutMargin` fill assertion
+(`zone_fill_dependency_knockout_margin_fills`, no longer ignored). The other cases of
+`test_zone_filler.cpp` assert through DRC runs / QA board loading and are covered by the corpus
+comparisons below instead.
+
+Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-board`):
+
+- Main corpus (`tools/zone-corpus/run.sh`): 330 zone layers identical vertex for vertex, 0 same
+  area, 6 different. The 6 are on `issue23339_zone_layer_rules` and `issue17967`: their custom
+  rules (`A.hasNetclass(..)`, `A.NetClass == ..` with `(layer outer)`) need the rule expression
+  binding (DRC-21); `EvalRules` answers the zone clearance there instead of the rule. Two
+  thieving boards stop in `addCopperThievingPattern` (ZF-07). 13 boards are skipped for teardrop
+  regeneration (TD-01; the harness now also detects teardrop zones written as
+  `(attr\n (teardrop ...))`, e.g. `issue24649`, whose stale teardrop zone the reference deletes).
+- Stage corpus (`tools/zone-corpus/stages.sh`, new): KiCad's own `DebugZoneFiller` mode on
+  22-layer variants of the 2-layer corpus boards (every pipeline stage of the F.Cu fill lands on
+  In1..In19): 1308 stage layers identical, 50 different, all on 4 multi-zone boards and only at
+  stages that read another zone's fill (In5/In6 spoke test areas, In14 full fill, In18/In19).
+  In debug mode the C++ task of a `(zone, In<k>)` item reads other zones' F.Cu fills without a
+  DAG dependency on them, so those reference stages depend on thread timing; the same boards'
+  real F.Cu fills are identical in the main corpus.
+
+### Deviations
+
+- `PCB_TEXT textCopy = *text` for a knockout field: the port clones the embedded `PcbText`, the
+  same slicing as the C++ copy.
+- `dim->PCB_TEXT::TransformShapeToPolygon`: called on the embedded `PcbText` of the dimension
+  (every virtual that body reaches is the inherited `PCB_TEXT` one).
+- `std::deque<SHAPE_LINE_CHAIN>` of spokes is a `Vec` (push back, last four rotated).
+- Progress reporter / cancellation checks are not ported (no reporter in the port).
+- Debug mode: `m_board->SetLayerName( b, c )` of `DUMP_POLYS_TO_COPPER_LAYER` is not reproduced.
+- A context without a rule resolver evaluates every constraint as the null constraint (the
+  C++ filler always has a DRC engine).
+
+### Known gaps
+
+- Copper thieving (`addCopperThievingPattern`, ZF-07) panics with `port_pending!`.
+- Boards whose custom rule conditions need DRC-21 differ until it lands (see above).
+- Hatched fills are verified on one corpus board (`hatch_thermal_connectivity`: final fill and
+  all 21 stage layers identical); the thermal-ring / hatch-hole-drop paths with vias and the
+  custom-pad spoke path (`customSpokes`) are not exercised by any loadable corpus board yet.

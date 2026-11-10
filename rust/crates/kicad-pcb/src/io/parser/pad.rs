@@ -41,7 +41,6 @@ use kicad_sexpr::keywords::pcb_keys_t::T;
 
 use super::PcbParser;
 use crate::ctx::{BoardCtx, MutEnv};
-use crate::eda_shape::ShapeT;
 use crate::ids::{FootprintId, NetCode};
 use crate::item::ParentRef;
 use crate::pad::Pad;
@@ -752,49 +751,12 @@ impl PcbParser {
         Ok(())
     }
 
-    /// Port of `PAD::AddPrimitive( aLayer, aPrimitive )` (`pcbnew/pad.cpp`) for a pad being
-    /// parsed: seed the lib state from the primitive's current values, then re-bake it with
-    /// `GetPrimitiveLibScale()` (`rebakePrimitiveToFootprint`: covers load, where the
-    /// footprint scale is set before the primitives are parsed), and append it to the layer.
-    ///
-    /// The C++ `SetParent( this )` cannot be reproduced on a local value (the pad has no
-    /// handle until the footprint adds it): the primitive keeps `ParentRef::None`
-    /// (`PORT_STATUS.md`, PCBIO-07 known gaps).
-    fn pad_add_primitive(&self, pad: &mut Pad, layer: PcbLayerId, mut primitive: PcbShape) {
-        let start = primitive.shape.start();
-        let end = primitive.shape.end();
-        let arc_mid = if primitive.shape.shape() == ShapeT::Arc {
-            primitive.shape.arc_mid()
-        } else {
-            Vector2I::new(0, 0)
-        };
-
-        primitive.override_lib_coords(start, end, arc_mid);
-
-        if primitive.shape.shape() == ShapeT::Bezier {
-            let (c1, c2) = (primitive.shape.bezier_c1(), primitive.shape.bezier_c2());
-            primitive.override_lib_bezier(c1, c2);
-        }
-
-        if primitive.shape.shape() == ShapeT::Poly {
-            let poly = primitive.shape.poly_shape().clone();
-            primitive.override_lib_poly(poly);
-        }
-
-        // rebakePrimitiveToFootprint( aPrimitive )
-        let ctx = BoardCtx::bare(&self.board);
-
-        if pad.parent_footprint(&ctx).is_some() {
-            let (local_sx, local_sy) = pad.primitive_lib_scale(&ctx);
-
-            // The primitive's environment: no parent frame (pad frame), the board's max error.
-            let mut prim_env = self.board.child_env(pad.base.item.parent);
-            prim_env.parent = None;
-            primitive.rebake_with_scale(&prim_env, local_sx, local_sy);
-        }
-
-        pad.padstack.add_primitive(primitive, layer);
-        pad.set_dirty();
+    /// `aPad->AddPrimitive( aLayer, shape )` for a pad being parsed: [`Pad::add_primitive`]
+    /// in the environment of the pad's parent footprint (its frame, the board's max error).
+    /// The pad has no handle yet, so the primitive's parent is set by `footprint_add`.
+    fn pad_add_primitive(&self, pad: &mut Pad, layer: PcbLayerId, primitive: PcbShape) {
+        let env = self.board.child_env(pad.base.item.parent);
+        pad.add_primitive(&env, layer, primitive);
     }
 
     /// Port of `parsePAD_option( PAD* aPad, PCB_LAYER_ID aLayer )`: parse only the

@@ -378,8 +378,7 @@ fn tracks_board() -> Board {
     board
 }
 
-/// `IntrospectedProperties`: the expressions without function calls are evaluated, the
-/// others (DRC-22) only compiled.
+/// `IntrospectedProperties` (the function calls since DRC-22).
 #[test]
 fn introspected_properties() {
     let board = tracks_board();
@@ -416,25 +415,22 @@ fn introspected_properties() {
         );
     }
 
-    // Function calls (pcbexpr_functions.cpp, package DRC-22): compile only.
-    for expr in [
-        "A.type == 'Pad' && B.type == 'Pad' && (A.existsOnLayer('F.Cu'))",
-        "A.hasNetclass('HV_LINE')",
-        "A.hasNetclass('HV_*')",
-        "A.existsOnLayer(B.Layer)",
-        "A.type == 'Via' && A.isMicroVia()",
+    // Function calls (pcbexpr_functions.cpp, package DRC-22).
+    for (expr, expected) in [
+        (
+            "A.type == 'Pad' && B.type == 'Pad' && (A.existsOnLayer('F.Cu'))",
+            0.0,
+        ),
+        ("A.hasNetclass('HV_LINE')", 1.0),
+        ("A.hasNetclass('HV_*')", 1.0),
+        ("A.existsOnLayer(B.Layer)", 1.0),
+        ("A.type == 'Via' && A.isMicroVia()", 0.0),
     ] {
-        assert!(!compile_error_pending(expr), "{expr}");
+        assert!(
+            test_eval_expr(expr, num(expected), false, Some(a), Some(b)),
+            "{expr}"
+        );
     }
-
-    // The first one is false whatever the function returns.
-    assert!(test_eval_expr(
-        "A.type == 'Pad' && B.type == 'Pad' && (A.existsOnLayer('F.Cu'))",
-        num(0.0),
-        false,
-        Some(a),
-        Some(b)
-    ));
 }
 
 /// `IntrospectedExtendedNumericProperties` (zone and footprint parts; the ellipse part is
@@ -670,7 +666,7 @@ const FOOTPRINT_J1: &str = r#"
 		(embedded_fonts no))
 "#;
 
-/// `ParentNavigation` (the `getField()` expressions need DRC-22: compile only).
+/// `ParentNavigation`.
 #[test]
 fn parent_navigation() {
     let board = load(FOOTPRINT_J1);
@@ -695,12 +691,18 @@ fn parent_navigation() {
         Some(text)
     ));
 
-    for expr in [
-        "A.Parent.getField('Reference') == 'J1'",
-        "A.Parent.getField('Reference') == A.Text",
-        "A.getField('Reference') == 'J1'",
+    // The headline capability: getField() only returns a value when its receiver is a
+    // footprint, so this passes solely because navigation steps from the text to its parent.
+    // Without navigation getField() has a non-footprint receiver and returns "".
+    for (expr, expected) in [
+        ("A.Parent.getField('Reference') == 'J1'", 1.0),
+        ("A.Parent.getField('Reference') == A.Text", 1.0),
+        ("A.getField('Reference') == 'J1'", 0.0),
     ] {
-        assert!(!compile_error_pending(expr), "{expr}");
+        assert!(
+            test_eval_expr(expr, num(expected), false, Some(text), Some(text)),
+            "{expr}"
+        );
     }
 
     assert!(compile_error_pending("A.Parent.bogusProperty"));
@@ -767,7 +769,7 @@ fn bool_property_evaluation() {
     ));
 }
 
-/// `VariantAwareEvaluation` (the DNP part; `getField('Value')` needs DRC-22).
+/// `VariantAwareEvaluation`.
 #[test]
 fn variant_aware_evaluation() {
     let mut board = load(&FOOTPRINT_J1.replace(
@@ -788,6 +790,13 @@ fn variant_aware_evaluation() {
             Some(fp),
             Some(fp)
         ));
+        assert!(test_eval_expr(
+            "A.getField('Value') == 'VariantVal'",
+            num(1.0),
+            false,
+            Some(fp),
+            Some(fp)
+        ));
     }
 
     // Without a current variant the base values apply.
@@ -802,7 +811,13 @@ fn variant_aware_evaluation() {
         Some(fp),
         Some(fp)
     ));
-    assert!(!compile_error_pending("A.getField('Value') == 'BaseVal'"));
+    assert!(test_eval_expr(
+        "A.getField('Value') == 'BaseVal'",
+        num(1.0),
+        false,
+        Some(fp),
+        Some(fp)
+    ));
 }
 
 /// `ReceiverValidation`.
@@ -983,7 +998,7 @@ fn value_classes() {
 }
 
 /// `DRC_RULE_CONDITION::EvaluateFor` with the default binding: commutative pairs and
-/// run-time messages of the function stubs.
+/// run-time messages of the function bodies.
 #[test]
 fn rule_condition_evaluate_for() {
     let board = tracks_board();
@@ -1000,7 +1015,8 @@ fn rule_condition_evaluate_for() {
     assert!(condition.evaluate_for(Some(b), Some(a), NULL_CONSTRAINT, PcbLayerId::FCu, None));
     assert!(!condition.evaluate_for(Some(a), Some(a), NULL_CONSTRAINT, PcbLayerId::FCu, None));
 
-    let mut stub = DrcRuleCondition::new("A.isPlated()");
+    // Run-time messages of the function bodies (DRC-22): the interpreted existsOnLayer().
+    let mut stub = DrcRuleCondition::new("A.existsOnLayer('X.Cu')");
     assert!(stub.compile(None, 0, 0));
     let mut reporter = kicad_drc::reporter::WxStringReporter::new();
     assert!(!stub.evaluate_for(
@@ -1014,7 +1030,7 @@ fn rule_condition_evaluate_for() {
         reporter
             .messages()
             .iter()
-            .any(|(m, _)| m == "ERROR: Function 'isPlated' is not yet ported (DRC-22)."),
+            .any(|(m, _)| m == "ERROR: Unrecognized layer 'X.Cu'"),
         "{:?}",
         reporter.messages()
     );

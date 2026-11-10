@@ -641,3 +641,37 @@ fn kiid_path() {
     assert_eq!((&path).into_iter().count(), 3);
     assert_eq!(path.into_iter().last(), Some(c));
 }
+
+/// Port addition (`KiidGenerator::reserve_all`, review INT-2b): a reserved id is skipped, the
+/// rest of the sequence is the C++ one for the seed. The ids are the first four of
+/// `KIID::SeedGenerator( 5489 )` (see `seeded_sequences_match_cpp`).
+#[test]
+fn reserved_ids_are_skipped() {
+    let first = [
+        "5cbb91d0-f69e-4e22-aefa-e1e7791fc3d5",
+        "2c358220-dfb7-47f8-8500-d3e9e1af9538",
+        "ba4be2a1-2b09-444e-a368-f81825a6168c",
+        "c4a84b47-1acd-4930-9f6d-008c10782dfe",
+    ];
+    let id = |s: &str| Kiid::parse(s).unwrap();
+
+    let mut plain = KiidGenerator::default();
+    assert_eq!(plain.generate().as_string(), first[0]);
+    assert!(!plain.is_reserved(&id(first[1])));
+
+    let mut generator = KiidGenerator::default();
+    generator.reserve_all([id(first[0]), id(first[2])]);
+    generator.reserve_all(std::iter::empty());
+    assert!(generator.is_reserved(&id(first[0])));
+
+    // A clone shares the reservations; reseeding keeps them
+    let mut clone = generator.clone();
+    assert_eq!(generator.generate().as_string(), first[1]);
+    assert_eq!(generator.generate().as_string(), first[3]);
+    clone.seed_generator(5489);
+    assert_eq!(clone.random_uuid().as_string(), first[1]);
+    assert_eq!(
+        Kiid::from_string_or_random("not a uuid", &mut clone).as_string(),
+        first[3]
+    );
+}

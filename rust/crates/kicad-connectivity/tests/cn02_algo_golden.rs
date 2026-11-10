@@ -31,6 +31,8 @@
 //! other field is compared on fully parsed boards only. The anchor fields
 //! (`anchor_connected_count`, `anchor_dangling`) need the ratsnest (CN-03).
 
+mod common;
+
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
@@ -52,7 +54,11 @@ struct Golden {
 
 impl Golden {
     fn read(name: &str) -> Golden {
-        let path = format!("{}/tests/golden/{name}.txt", env!("CARGO_MANIFEST_DIR"));
+        let path = format!(
+            "{}/tests/golden/{}.txt",
+            env!("CARGO_MANIFEST_DIR"),
+            common::golden_name(name)
+        );
         let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
         let mut map: HashMap<(String, String), BTreeMap<String, String>> = HashMap::new();
 
@@ -138,16 +144,9 @@ impl Stats {
     }
 }
 
-/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
-/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+/// The board file of a golden (`common::board_path`).
 fn board_path(name: &str) -> std::path::PathBuf {
-    if name.starts_with("rev_") {
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/golden/cn04")
-            .join(format!("{name}.kicad_pcb"))
-    } else {
-        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
-    }
+    common::board_path(name)
 }
 
 /// Parses a board; `None` (with a message) when the parser reached a model stub. Returns the
@@ -438,11 +437,13 @@ fn check_board(name: &str, stats: &mut Stats) -> Option<bool> {
 
     // FillIsolatedIslandsMap (re-adds the zones), last as in the dump
     if full {
+        let text = std::fs::read_to_string(board_path(name)).unwrap();
+        let dump_keys = common::dump_item_keys(&board, &text);
         let mut map = islands_map(&ctx);
         algo.fill_isolated_islands_map(&ctx, &mut map, false);
 
         for (zone_id, layers) in &map {
-            let zone_key = ctx.item((*zone_id).into()).unwrap().uuid().as_std_string();
+            let zone_key = &dump_keys[&(*zone_id).into()];
 
             for (layer, isl) in layers {
                 let key = format!("{zone_key}/{}", layer_name(*layer));
@@ -543,20 +544,25 @@ fn cn02_connectivity_matches_cpp() {
     let mut stats = Stats::default();
     let mut boards = 0;
     let mut full = Vec::new();
+    let names: Vec<String> = BOARDS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(common::stab_cn_boards())
+        .collect();
 
-    for name in BOARDS {
+    for name in &names {
         if let Some(f) = check_board(name, &mut stats) {
             boards += 1;
 
             if f {
-                full.push(*name);
+                full.push(name.as_str());
             }
         }
     }
 
     eprintln!(
         "cn02: {boards} of {} boards compared ({} fully: {}), {} fields, {} mismatches",
-        BOARDS.len(),
+        names.len(),
         full.len(),
         full.join(" "),
         stats.fields,
@@ -653,7 +659,14 @@ fn cn02_clusters_are_connected_components() {
     ];
     let mut checked = 0;
 
-    for name in cpp_boards.iter().chain(BOARDS) {
+    let stab = common::stab_cn_boards();
+
+    for name in cpp_boards
+        .iter()
+        .chain(BOARDS)
+        .copied()
+        .chain(stab.iter().map(String::as_str))
+    {
         let Some((board, _, _)) = load(name) else {
             continue;
         };

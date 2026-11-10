@@ -600,7 +600,9 @@ mod tests {
             // map, in the writer's footprint order (`std::set` with `BOARD_ITEM::ptr_cmp`).
             let ctx = crate::ctx::BoardCtx::bare(board);
             let sorted_footprints = crate::io::writer::sorted_set(
-                board.footprints().map(|(id, _)| crate::ids::ItemId::from(id)),
+                board
+                    .footprints()
+                    .map(|(id, _)| crate::ids::ItemId::from(id)),
                 |a, b| crate::board_item::board_item_ptr_cmp(&ctx, *a, *b),
             );
 

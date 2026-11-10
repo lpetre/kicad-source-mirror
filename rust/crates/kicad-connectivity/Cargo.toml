@@ -17,3 +17,5 @@ kicad-pcb = { path = "../kicad-pcb" }
 
 [dev-dependencies]
 kicad-qa = { path = "../kicad-qa" }
+# the pcb-dump item keys (`kicad_pcb::dump::format`) of the golden tests
+kicad-pcb = { path = "../kicad-pcb", features = ["dump"] }

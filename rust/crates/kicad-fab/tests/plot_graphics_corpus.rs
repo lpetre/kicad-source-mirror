@@ -15,19 +15,15 @@
 // You should have received a copy of the GNU General Public License along
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//! FAB-05 verification while FAB-06 (`PlotFootprintTextItems`, `PlotText`) is pending: the
-//! whole of `PlotStandardLayer` (board graphics, footprint graphics, pads, vias, tracks,
-//! zones) against the whole Gerber files of the reference kicad-cli, on every layer where the
-//! footprint text loop has nothing to plot.
+//! FAB-05 / FAB-06 verification: the whole of `PlotStandardLayer` (board graphics and text,
+//! footprint text, footprint graphics, pads, vias, tracks, zones) against the whole Gerber
+//! files of the reference kicad-cli.
 //!
 //! `PlotStandardLayer` runs `PlotBoardGraphicItem` for every board drawing,
 //! `PlotFootprintTextItems` for every footprint, `PlotFootprintGraphicItems` for every
-//! footprint, then the FAB-04 part. This test runs the same sequence; the footprint text loop
-//! is left out on layers that carry no visible footprint field and no footprint text or
-//! dimension (it plots nothing there), and the layer counts as pending otherwise. Text plotted
-//! by FAB-05 code (text boxes, table cells, dimensions) reaches the pending `PlotText` and
-//! makes the layer pending as well. Layers with drill maps (FAB-13) or a solder mask minimum
-//! width (FAB-10) are skipped. Goldens: the corpus (`tests/golden/plot_driver/corpus.txt`,
+//! footprint, then the FAB-04 part. This test runs the same sequence on every layer (it
+//! reports how many matched files carry footprint text). Layers with drill maps (FAB-13), a
+//! solder mask minimum width (FAB-10) or a barcode (no symbol encoder) are skipped. Goldens: the corpus (`tests/golden/plot_driver/corpus.txt`,
 //! CLI defaults), the FAB-04 crafted boards (`tests/golden/plot_items/crafted.txt`) and the
 //! FAB-05 crafted boards (`tests/golden/plot_graphics/crafted.txt`, `generate.py` there).
 //! `KICAD_FAB_CORPUS_REPORT=1` prints per-board results (`F` match, `.` pending, `X` differs,

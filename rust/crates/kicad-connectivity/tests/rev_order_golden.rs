@@ -34,6 +34,8 @@
 //! - `island` `FillIsolatedIslandsMap( map, true )` for the map `DRC_CACHE_GENERATOR::Run`
 //!   builds, in push order.
 
+mod common;
+
 use std::collections::HashMap;
 
 use kicad_connectivity::algo::IsolatedIslandsMap;
@@ -52,13 +54,7 @@ use kicad_pcb::zone::IsolatedIslands;
 /// a corpus board. `None` (with a message) when a parser package the board needs has not
 /// landed yet (footprints, pads, zones): the board is compared as soon as it parses.
 fn load(name: &str) -> Option<Board> {
-    let path = if name.starts_with("rev_") || name.starts_with("cn04_") {
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/golden/cn04")
-            .join(format!("{name}.kicad_pcb"))
-    } else {
-        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
-    };
+    let path = common::board_path(name);
     let text = std::fs::read_to_string(&path).unwrap();
     let options = ParseOptions {
         allow_pending: true,
@@ -364,8 +360,13 @@ fn rev_queries_match_cpp() {
     let mut lines = 0;
     let mut mismatches = Vec::new();
     let mut compared = Vec::new();
+    let names: Vec<String> = BOARDS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(common::stab_cn_boards())
+        .collect();
 
-    for name in BOARDS {
+    for name in &names {
         let path = format!(
             "{}/tests/golden/order/{name}.txt",
             env!("CARGO_MANIFEST_DIR")
@@ -383,7 +384,7 @@ fn rev_queries_match_cpp() {
             );
             continue;
         };
-        compared.push(*name);
+        compared.push(name.as_str());
         let rust = rust_lines(name, &mut board);
 
         // Compare as maps keyed by "<kind>|<key>" so that one difference is one message.
@@ -432,7 +433,7 @@ fn rev_queries_match_cpp() {
     eprintln!(
         "rev order: {} of {} boards compared ({}), {lines} lines, {} mismatches",
         compared.len(),
-        BOARDS.len(),
+        names.len(),
         compared.join(" "),
         mismatches.len()
     );

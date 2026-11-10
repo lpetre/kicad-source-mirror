@@ -688,7 +688,9 @@ impl PcbParser {
             _ => {}
         }
 
-        if parent_footprint_id(parent).is_some() {
+        // GetParentFootprint() walks the whole parent chain: a table cell's parent is its
+        // table, whose parent is the footprint (`env.parent` is that footprint's frame).
+        if env.parent.is_some() {
             textbox.on_footprint_transformed(&env);
         }
 

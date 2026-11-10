@@ -28,6 +28,8 @@
 //! Also ports the ratsnest half of `qa/tests/pcbnew/test_connectivity_clusters.cpp`
 //! (`checkRatsnestSpansClusters`).
 
+mod common;
+
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 
@@ -48,7 +50,11 @@ struct Golden {
 
 impl Golden {
     fn read(name: &str) -> Golden {
-        let path = format!("{}/tests/golden/{name}.txt", env!("CARGO_MANIFEST_DIR"));
+        let path = format!(
+            "{}/tests/golden/{}.txt",
+            env!("CARGO_MANIFEST_DIR"),
+            common::golden_name(name)
+        );
         let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
         let mut map: HashMap<(String, String), BTreeMap<String, String>> = HashMap::new();
 
@@ -99,16 +105,9 @@ fn cache_triangulation(board: &mut Board) {
     }
 }
 
-/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
-/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+/// The board file of a golden (`common::board_path`).
 fn board_path(name: &str) -> std::path::PathBuf {
-    if name.starts_with("rev_") {
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/golden/cn04")
-            .join(format!("{name}.kicad_pcb"))
-    } else {
-        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
-    }
+    common::board_path(name)
 }
 
 /// Parses a board completely; `None` (with a message) when the parser reached a model stub or
@@ -428,17 +427,22 @@ const BOARDS: &[&str] = &[
 fn cn03_ratsnest_matches_cpp() {
     let mut stats = Stats::default();
     let mut compared = Vec::new();
+    let names: Vec<String> = BOARDS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(common::stab_cn_boards())
+        .collect();
 
-    for name in BOARDS {
+    for name in &names {
         if check_board(name, &mut stats) {
-            compared.push(*name);
+            compared.push(name.as_str());
         }
     }
 
     eprintln!(
         "cn03: {} of {} boards compared ({}), {} fields, {} mismatches",
         compared.len(),
-        BOARDS.len(),
+        names.len(),
         compared.join(" "),
         stats.fields,
         stats.mismatches.len()
@@ -572,9 +576,13 @@ fn cn03_ratsnest_spans_clusters() {
     // full build gives no anchor (connectivity-zones.md R-5), so the reference build has fewer
     // edges than `clusters - 1` there too (their `rn_net` goldens say so). The C++ test runs
     // after FillZones, which re-adds the zones with anchors.
+    let stab = common::stab_cn_boards();
+
     for name in cpp_boards
         .iter()
         .chain(BOARDS.iter().filter(|n| !n.starts_with("rev_")))
+        .copied()
+        .chain(stab.iter().map(String::as_str))
     {
         let Some(board) = load(name) else {
             continue;

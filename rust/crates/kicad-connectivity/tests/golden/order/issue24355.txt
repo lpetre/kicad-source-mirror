@@ -1,0 +1,5 @@
+load|q|ci0|p0.1|[]
+load|q|ci2|p0.1|[]
+load|q|ci3|p0.1|[p0.1]
+load|q|icl|p0.1|any=00|flash=00
+load|q|net|0|[p0.1]

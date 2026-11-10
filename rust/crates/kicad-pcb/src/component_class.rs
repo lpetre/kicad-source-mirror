@@ -480,7 +480,7 @@ impl ComponentClassManager {
                     continue;
                 }
 
-                let sheet_name = sheet_name.replace('"', "").replace('\'', "");
+                let sheet_name = sheet_name.replace(['"', '\''], "");
 
                 let mut assignment = ComponentClassAssignmentData::default();
                 assignment.set_component_class(&sheet_name);
@@ -1545,6 +1545,122 @@ mod tests {
             &m.get_or_create_constituent_class("X", ComponentClassUsage::Effective),
             &m.none_class
         ));
+    }
+
+    /// A stand-in for the kicad-drc compiler: the class name between the first pair of
+    /// quotes, no condition; "BAD" does not compile. Records the rule sources.
+    struct FakeCompiler(std::sync::Mutex<Vec<String>>);
+
+    impl ComponentClassRuleCompiler for FakeCompiler {
+        fn compile(&self, rule_source: &str) -> Option<ComponentClassAssignmentRule> {
+            self.0.lock().unwrap().push(rule_source.to_string());
+            let class = rule_source.split('"').nth(1)?.to_string();
+            (class != "BAD").then_some(ComponentClassAssignmentRule {
+                component_class: class,
+                condition: None,
+            })
+        }
+    }
+
+    fn assignment(class: &str, reference: &str) -> ComponentClassAssignmentData {
+        let mut a = ComponentClassAssignmentData::default();
+        a.set_component_class(class);
+        a.add_condition(ConditionType::Reference, reference, "");
+        a
+    }
+
+    /// `SyncDynamicComponentClassAssignments` without assignments and sheet classes needs no
+    /// compiler (the loaders' common case).
+    #[test]
+    fn sync_without_assignments_needs_no_compiler() {
+        let mut m = ComponentClassManager::default();
+        assert!(m.sync_dynamic_component_class_assignments(&[], false, &BTreeSet::new(), []));
+        assert_eq!(m.ticker(), 1);
+        assert!(m.assignment_rules.is_empty() && m.constituent_classes.is_empty());
+
+        // an incomplete assignment (no class name) is not compiled and fails
+        let incomplete = ComponentClassAssignmentData::default();
+        assert!(!m.sync_dynamic_component_class_assignments(
+            &[incomplete],
+            false,
+            &BTreeSet::new(),
+            []
+        ));
+    }
+
+    /// `SyncDynamicComponentClassAssignments`: rules installed only when all compile, sheet
+    /// classes (empty and root sheets skipped, quotes removed), classes of rules no longer in
+    /// use deleted (dynamic only) or set back to `STATIC` (also static).
+    #[test]
+    fn sync_dynamic_assignments() {
+        let compiler = Arc::new(FakeCompiler(Default::default()));
+        let mut m = ComponentClassManager {
+            rule_compiler: Some(ComponentClassRuleCompilerHook(compiler.clone())),
+            ..Default::default()
+        };
+
+        let first = [assignment("D1", "R1"), assignment("S", "R2")];
+        assert!(m.sync_dynamic_component_class_assignments(&first, false, &BTreeSet::new(), []));
+        assert_eq!(
+            compiler.0.lock().unwrap()[0],
+            "(version 2) (assign_component_class \"D1\" (condition \"( A.Reference == 'R1' )\" ) )"
+        );
+        assert_eq!(m.assignment_rules.len(), 2);
+        assert_eq!(
+            m.constituent_classes["D1"].usage_context,
+            ComponentClassUsage::Dynamic
+        );
+
+        // S is also used statically, D1 is part of an effective class
+        m.get_effective_static_component_class(&names(&["S"]));
+        assert_eq!(
+            m.constituent_classes["S"].usage_context,
+            ComponentClassUsage::StaticAndDynamic
+        );
+        m.get_dynamic_component_classes_for_footprint(|_| true);
+        assert!(m.effective_classes.contains_key("D1,S"));
+
+        // sheet classes only
+        let sheets: BTreeSet<String> = ["/New/".to_string()].into_iter().collect();
+        assert!(m.sync_dynamic_component_class_assignments(
+            &[],
+            true,
+            &sheets,
+            ["", "/", "/A'\"x/", "/New/"]
+        ));
+        let mut classes: Vec<&str> = m
+            .assignment_rules
+            .iter()
+            .map(|r| r.component_class())
+            .collect();
+        classes.sort();
+        assert_eq!(classes, ["/Ax/", "/New/"]);
+        assert!(
+            compiler
+                .0
+                .lock()
+                .unwrap()
+                .contains(&"(version 2) (assign_component_class \"/Ax/\" (condition \"( A.memberOfSheet('/Ax/') )\" ) )".to_string())
+        );
+        assert!(!m.constituent_classes.contains_key("D1"));
+        assert!(!m.effective_classes.contains_key("D1,S"));
+        assert_eq!(
+            m.constituent_classes["S"].usage_context,
+            ComponentClassUsage::Static
+        );
+
+        // one rule fails: nothing installed, the previous classes go
+        let ticker = m.ticker();
+        assert!(!m.sync_dynamic_component_class_assignments(
+            &[assignment("BAD", "R1"), assignment("OK", "R2")],
+            false,
+            &BTreeSet::new(),
+            []
+        ));
+        assert_eq!(m.ticker(), ticker + 1);
+        assert!(m.assignment_rules.is_empty());
+        assert!(!m.constituent_classes.contains_key("/Ax/"));
+        assert!(!m.constituent_classes.contains_key("OK"));
     }
 
     fn board_with_footprint() -> (Board, FootprintId) {

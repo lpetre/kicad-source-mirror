@@ -235,7 +235,7 @@ pub fn connect_nearby_polys(polys: &mut ShapePolySet, distance: f64) {
         // pt2 second but still sorting the rest of the indices from highest to lowest.
         // This allows us to insert into the existing polygon without modifying the future
         // insertion points.
-        vertices.sort_by(|a, b| b.0.cmp(&a.0));
+        vertices.sort_by_key(|v| std::cmp::Reverse(v.0));
 
         let line = polys.outline(*outline);
 

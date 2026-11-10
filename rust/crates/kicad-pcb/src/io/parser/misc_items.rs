@@ -225,7 +225,6 @@ impl PcbParser {
         Ok(Some(bitmap))
     }
 
-
     /// Port of `parsePCB_BARCODE( BOARD_ITEM* aParent )`.
     ///
     /// The setters that end in `AssembleBarcode()` in C++ (`SetLayer`, `SetTextSize`,

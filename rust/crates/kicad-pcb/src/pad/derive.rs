@@ -26,9 +26,11 @@
 //! `parent` is the C++ `GetParentFootprint()` of a mutator). `padstack.orientation` is the
 //! baked board-frame orientation, written where C++ writes `m_padStack.SetOrientation`.
 
+use kicad_core::color4d::Color4D;
 use kicad_core::layer_ids::{
     is_back_layer, is_copper_layer, is_external_copper_layer, is_front_layer,
 };
+use kicad_core::stroke_params::{LineStyle, StrokeParams};
 use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{KicadT, Lset, PCB_LAYER_ID_COUNT, PcbLayerId};
 use kicad_geom::convert_basic_shapes_to_polygon::{
@@ -37,12 +39,13 @@ use kicad_geom::convert_basic_shapes_to_polygon::{
 };
 use kicad_geom::geometry::transform_trs::TransformTrs;
 use kicad_geom::{
-    ANGLE_0, EdaAngle, FlipDirection, Seg, Vector2I, ki_round, mirror_point, rotate_point,
-    rotate_point_around, std_clamp,
+    ANGLE_0, EdaAngle, FlipDirection, Seg, ShapePolySet, Vector2I, ki_round, mirror_point,
+    rotate_point, rotate_point_around, std_clamp,
 };
 
 use crate::ctx::{BoardCtx, MutEnv};
 use crate::drc_api::DrcConstraintT;
+use crate::eda_shape::ShapeT;
 use crate::footprint::Footprint;
 use crate::item::{BoardUse, ParentRef};
 use crate::item_ref::AnyItem;
@@ -52,6 +55,7 @@ use crate::padstack::{
     CustomShapeZoneMode, PadAttrib, PadDrillShape, PadShape, Padstack, PadstackMode,
     UnconnectedLayerMode,
 };
+use crate::pcb_shape::PcbShape;
 use crate::pcb_track::ZoneLayerOverride;
 use crate::zone_settings::ZoneConnection;
 
@@ -1468,8 +1472,12 @@ impl Pad {
 
     /// `PAD::SetLocalSolderPasteMarginRatio()`: both outer sides (`F_Paste` and `B_Paste`).
     pub fn set_local_solder_paste_margin_ratio(&mut self, ratio: Option<f64>) {
-        *self.padstack.solder_paste_margin_ratio_mut(PcbLayerId::FPaste) = ratio;
-        *self.padstack.solder_paste_margin_ratio_mut(PcbLayerId::BPaste) = ratio;
+        *self
+            .padstack
+            .solder_paste_margin_ratio_mut(PcbLayerId::FPaste) = ratio;
+        *self
+            .padstack
+            .solder_paste_margin_ratio_mut(PcbLayerId::BPaste) = ratio;
     }
 
     /// `PAD::GetLocalZoneConnection()`: `INHERITED` when unset.
@@ -1879,6 +1887,153 @@ impl Pad {
         self.flip_primitives(env, dir);
 
         self.set_dirty();
+    }
+
+    // ---- custom-shape primitives (pad.cpp: AddPrimitive & co.) ----------------------------
+
+    /// Port of `PAD::AddPrimitive( aLayer, aPrimitive )`: take ownership of `primitive`, make
+    /// the pad its parent, seed its lib state from its current values, re-bake it with
+    /// `GetPrimitiveLibScale()` (`rebakePrimitiveToFootprint`: covers load, where the
+    /// footprint scale is set before the primitives are parsed) and append it to `layer`.
+    ///
+    /// `env` is the pad's mutation environment: `env.parent` is the parent footprint's frame
+    /// (`GetParentFootprint()`), `env.max_error` the board's (the primitive's `GetMaxError()`
+    /// once its parent is the pad). A pad without a handle yet (a value being built, e.g. by
+    /// the parser) leaves the primitive's parent `ParentRef::None`; `Board::footprint_add`
+    /// sets it when the pad gets its handle ([`Pad::reparent_primitives`]).
+    pub fn add_primitive(&mut self, env: &MutEnv, layer: PcbLayerId, mut primitive: PcbShape) {
+        primitive.base.item.parent = self.self_parent_ref();
+
+        // Seed lib state from the primitive's current values, then rebake so the
+        // runtime cache reflects the parent FP transform reachable via the pad.
+        let start = primitive.shape.start();
+        let end = primitive.shape.end();
+        let arc_mid = if primitive.shape.shape() == ShapeT::Arc {
+            primitive.shape.arc_mid()
+        } else {
+            Vector2I::new(0, 0)
+        };
+
+        primitive.override_lib_coords(start, end, arc_mid);
+
+        if primitive.shape.shape() == ShapeT::Bezier {
+            let (c1, c2) = (primitive.shape.bezier_c1(), primitive.shape.bezier_c2());
+            primitive.override_lib_bezier(c1, c2);
+        }
+
+        if primitive.shape.shape() == ShapeT::Poly {
+            let poly = primitive.shape.poly_shape().clone();
+            primitive.override_lib_poly(poly);
+        }
+
+        // Covers load, where the footprint scale is set before the primitives are parsed.
+        self.rebake_primitive_to_footprint(env, &mut primitive);
+
+        self.padstack.add_primitive(primitive, layer);
+
+        self.set_dirty();
+    }
+
+    /// Port of `PAD::rebakePrimitiveToFootprint( aPrimitive )`: nothing without a parent
+    /// footprint, else `RebakeWithScale( GetPrimitiveLibScale() )`. The primitive's own
+    /// environment has no parent frame (`transformFp()` is null for a pad child).
+    fn rebake_primitive_to_footprint(&self, env: &MutEnv, primitive: &mut PcbShape) {
+        let Some(xform) = Self::env_transform(env) else {
+            return;
+        };
+
+        let (local_sx, local_sy) =
+            Self::primitive_lib_scale_in(Some(xform), self.lib_orientation());
+        primitive.rebake_with_scale(&primitive_env(env), local_sx, local_sy);
+    }
+
+    /// Port of `PAD::AddPrimitivePoly( aLayer, const SHAPE_POLY_SET& aPoly, aThickness,
+    /// aFilled )`: one filled / unfilled polygon primitive per outline (holes fractured).
+    pub fn add_primitive_poly(
+        &mut self,
+        env: &MutEnv,
+        layer: PcbLayerId,
+        poly: &ShapePolySet,
+        thickness: i32,
+        filled: bool,
+    ) {
+        // If aPoly has holes, convert it to a polygon with no holes.
+        let mut poly_no_hole = ShapePolySet::new();
+        poly_no_hole.append_set(poly);
+
+        if poly_no_hole.has_holes() {
+            poly_no_hole.fracture(true);
+        }
+
+        // `new PCB_SHAPE()` has no parent: its setters see no footprint frame.
+        let shape_env = MutEnv::detached();
+
+        // There should never be multiple shapes, but if there are, we split them into
+        // primitives so that we can edit them both.
+        for ii in 0..poly_no_hole.outline_count() {
+            let poly_outline = ShapePolySet::from_outline(poly_no_hole.c_outline(ii));
+            let mut item = PcbShape::default();
+            item.set_shape(&shape_env, ShapeT::Poly);
+            item.shape.set_filled(filled);
+            item.set_poly_shape(&shape_env, poly_outline);
+            item.set_stroke(
+                &shape_env,
+                StrokeParams::new(thickness, LineStyle::Solid, Color4D::UNSPECIFIED),
+            );
+            self.add_primitive(env, layer, item);
+        }
+
+        self.set_dirty();
+    }
+
+    /// Port of `PAD::AddPrimitivePoly( aLayer, const std::vector<VECTOR2I>& aPoly,
+    /// aThickness, aFilled )`.
+    pub fn add_primitive_poly_points(
+        &mut self,
+        env: &MutEnv,
+        layer: PcbLayerId,
+        poly: &[Vector2I],
+        thickness: i32,
+        filled: bool,
+    ) {
+        let shape_env = MutEnv::detached();
+        let mut item = PcbShape::default();
+        item.set_shape(&shape_env, ShapeT::Poly);
+        item.shape.set_filled(filled);
+        item.shape.set_poly_points(poly);
+        item.set_stroke(
+            &shape_env,
+            StrokeParams::new(thickness, LineStyle::Solid, Color4D::UNSPECIFIED),
+        );
+        self.add_primitive(env, layer, item);
+        self.set_dirty();
+    }
+
+    /// Port of `PAD::DeletePrimitivesList( aLayer )`: `UNDEFINED_LAYER` clears every unique
+    /// layer of the padstack.
+    pub fn delete_primitives_list(&mut self, layer: PcbLayerId) {
+        if layer == PcbLayerId::UndefinedLayer {
+            for l in self.padstack.unique_layers() {
+                self.padstack.clear_primitives(l);
+            }
+        } else {
+            self.padstack.clear_primitives(layer);
+        }
+
+        self.set_dirty();
+    }
+
+    /// The `SetParent( this )` of `PAD::AddPrimitive` (and of the `PADSTACK` copy, which
+    /// re-parents copied primitives to its owner) for a pad that has just received its
+    /// handle: every primitive of every unique layer gets `ParentRef::Item( pad )`.
+    pub fn reparent_primitives(&mut self) {
+        let parent = self.self_parent_ref();
+
+        for layer in self.padstack.unique_layers() {
+            for primitive in self.padstack.primitives_mut(layer) {
+                primitive.base.item.parent = parent;
+            }
+        }
     }
 
     /// `PAD::FlipPrimitives()`: flip the custom-shape primitives about the pad origin.
@@ -3106,5 +3261,94 @@ mod tests {
         assert_eq!(pad.item_description(&ctx, &units, true), "PTH pad 7");
         pad.set_attribute(PadAttrib::Npth);
         assert_eq!(pad.item_description(&ctx, &units, true), "NPTH pad");
+    }
+
+    /// FIX-PAD-1: `SetLocalSolderMaskMargin` / `SetLocalSolderPasteMargin` /
+    /// `SetLocalSolderPasteMarginRatio` (pad.h) write the front and the back outer layers; the
+    /// getters read the front (`F_Cu` default layer).
+    #[test]
+    fn local_margin_setters_write_both_outer_sides() {
+        let mut pad = Pad::default();
+        pad.set_local_solder_mask_margin(Some(70_000));
+        pad.set_local_solder_paste_margin(Some(-30_000));
+        pad.set_local_solder_paste_margin_ratio(Some(-0.12));
+
+        for ps in [
+            pad.padstack.front_outer_layers(),
+            pad.padstack.back_outer_layers(),
+        ] {
+            assert_eq!(ps.solder_mask_margin, Some(70_000));
+            assert_eq!(ps.solder_paste_margin, Some(-30_000));
+            assert_eq!(ps.solder_paste_margin_ratio, Some(-0.12));
+        }
+
+        assert_eq!(pad.local_solder_mask_margin(), Some(70_000));
+        pad.set_local_solder_mask_margin(None);
+        assert_eq!(pad.padstack.solder_mask_margin(PcbLayerId::BMask), None);
+    }
+
+    /// FIX-PAD-1: `PAD::AddPrimitive` makes the pad the primitive's parent; a pad without a
+    /// handle yet gets its primitives re-parented by `footprint_add`. `DeletePrimitivesList`
+    /// and `AddPrimitivePoly` (one primitive per outline).
+    #[test]
+    fn add_primitive_parents_and_poly() {
+        use crate::board::AddMode;
+        use crate::item_ref::OwnedItem;
+        use crate::pcb_shape::PcbShape;
+
+        let mut board = Board::new();
+        let fp = board.create_footprint();
+        board.attach_footprint(fp, AddMode::Append);
+        let env = board.child_env(ParentRef::Item(fp.into()));
+
+        let mut pad = Pad::new(&mut board.kiid_generator);
+        pad.base.item.parent = ParentRef::Item(fp.into());
+        pad.set_shape(PcbLayerId::FCu, PadShape::Custom);
+        let mut seg = PcbShape::default();
+        seg.shape.set_start(Vector2I::new(0, 0));
+        seg.shape.set_end(Vector2I::new(1000, 0));
+        pad.add_primitive(&env, Padstack::ALL_LAYERS, seg);
+        assert_eq!(
+            pad.padstack.primitives(PcbLayerId::FCu)[0].base.item.parent,
+            ParentRef::None
+        );
+        assert_eq!(
+            pad.padstack.primitives(PcbLayerId::FCu)[0].lib_end(),
+            Vector2I::new(1000, 0)
+        );
+
+        let id = board
+            .footprint_add(fp, OwnedItem::Pad(Box::new(pad)), AddMode::Append)
+            .unwrap_or_else(|_| panic!("pad refused"));
+        let pad_id: PadId = id.typed().unwrap();
+        let pad = &board[pad_id];
+        assert_eq!(
+            pad.padstack.primitives(PcbLayerId::FCu)[0].base.item.parent,
+            ParentRef::Item(id)
+        );
+
+        // On a pad with a handle, AddPrimitive sets the parent directly.
+        let mut pad = pad.clone();
+        let mut square = kicad_geom::ShapePolySet::new();
+        square.new_outline();
+        for (x, y) in [(0, 0), (100, 0), (100, 100), (0, 100)] {
+            square.append(x, y, -1, -1, false);
+        }
+        square.new_outline();
+        for (x, y) in [(500, 0), (600, 0), (600, 100)] {
+            square.append(x, y, -1, -1, false);
+        }
+        pad.add_primitive_poly(&env, Padstack::ALL_LAYERS, &square, 0, true);
+        let prims = pad.padstack.primitives(PcbLayerId::FCu);
+        assert_eq!(prims.len(), 3);
+        assert!(
+            prims
+                .iter()
+                .all(|p| p.base.item.parent == ParentRef::Item(id))
+        );
+        assert_eq!(prims[1].lib_poly().outline_count(), 1);
+
+        pad.delete_primitives_list(PcbLayerId::UndefinedLayer);
+        assert!(pad.padstack.primitives(PcbLayerId::FCu).is_empty());
     }
 }

@@ -28,6 +28,8 @@
 //! connection) and the cluster / ratsnest / dangling / island sections are replayed by CN-02 ..
 //! CN-04.
 
+mod common;
+
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -42,7 +44,11 @@ use kicad_pcb::io::{ParseOptions, parse_board_report};
 type Golden = BTreeMap<String, BTreeMap<String, String>>;
 
 fn read_golden(name: &str) -> Golden {
-    let path = format!("{}/tests/golden/{name}.txt", env!("CARGO_MANIFEST_DIR"));
+    let path = format!(
+        "{}/tests/golden/{}.txt",
+        env!("CARGO_MANIFEST_DIR"),
+        common::golden_name(name)
+    );
     let text = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
     let mut out: Golden = BTreeMap::new();
 
@@ -206,16 +212,9 @@ fn item_fields(ctx: &BoardCtx<'_>, item: &CnItem) -> BTreeMap<&'static str, Stri
     f
 }
 
-/// The board file of a golden: the corpus board, or for the REV-CN boards (`rev_*`) the
-/// synthetic board of `tests/oracle/gen_cn04.py` in `tests/golden/cn04/`.
+/// The board file of a golden (`common::board_path`).
 fn board_path(name: &str) -> std::path::PathBuf {
-    if name.starts_with("rev_") {
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/golden/cn04")
-            .join(format!("{name}.kicad_pcb"))
-    } else {
-        kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"))
-    }
+    common::board_path(name)
 }
 
 fn check_board(name: &str) -> Option<usize> {
@@ -362,7 +361,13 @@ fn cn01_items_match_cpp() {
     let mut boards = 0;
     let mut fields = 0;
 
-    for name in BOARDS {
+    let names: Vec<String> = BOARDS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(common::stab_cn_boards())
+        .collect();
+
+    for name in &names {
         if let Some(n) = check_board(name) {
             boards += 1;
             fields += n;
@@ -371,7 +376,7 @@ fn cn01_items_match_cpp() {
 
     eprintln!(
         "cn01: {boards} of {} boards compared, {fields} fields equal",
-        BOARDS.len()
+        names.len()
     );
     assert!(boards >= 3, "too few boards could be compared");
 }

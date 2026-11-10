@@ -262,7 +262,8 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
         let mut count = board.drawings().count();
 
         for (fp_id, _) in board.footprints() {
-            count += board.footprint_drawings(fp_id).count() + board.footprint_fields(fp_id).count();
+            count +=
+                board.footprint_drawings(fp_id).count() + board.footprint_fields(fp_id).count();
         }
 
         report_aux(host.0, &format!("Testing {count} graphics..."));
@@ -448,15 +449,17 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
         // A graphic's bbox inflates by width/2 where its shape inflates by (width + 1)/2, and
         // arc bounds differ again, so the credit is unsafe here
-        self.caches.copper_item_rtree().query_colliding_prepared_copper(
-            graphic,
-            &query_shape,
-            layer,
-            Some(&mut filter),
-            Some(&mut visitor),
-            self.caches.max_clearance,
-            false,
-        );
+        self.caches
+            .copper_item_rtree()
+            .query_colliding_prepared_copper(
+                graphic,
+                &query_shape,
+                layer,
+                Some(&mut filter),
+                Some(&mut visitor),
+                self.caches.max_clearance,
+                false,
+            );
     }
 
     /// Port of `testKnockoutTextAgainstZone`.
@@ -681,20 +684,18 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
         let mut candidates: Vec<(usize, usize, PcbLayerId)> = Vec::new();
         let mut participating: BTreeSet<(usize, PcbLayerId)> = BTreeSet::new();
 
-        let layer_range = LayerRange::new(
-            PcbLayerId::FCu,
-            PcbLayerId::BCu,
-            board.copper_layer_count(),
-        )
-        .expect("F_Cu and B_Cu are copper layers");
+        let layer_range =
+            LayerRange::new(PcbLayerId::FCu, PcbLayerId::BCu, board.copper_layer_count())
+                .expect("F_Cu and B_Cu are copper layers");
 
         for layer in layer_range.iter() {
             if !board.is_layer_enabled(layer) {
                 continue;
             }
 
-            let fill_box =
-                |index: usize| -> Option<Box2I> { zone_of(index).get_fill(layer).map(|p| p.bbox_from_caches()) };
+            let fill_box = |index: usize| -> Option<Box2I> {
+                zone_of(index).get_fill(layer).map(|p| p.bbox_from_caches())
+            };
 
             let indices = zone_idx_by_layer.entry(layer).or_default();
 
@@ -743,7 +744,8 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
                 continue;
             };
 
-            let mut segments: Vec<Seg> = Vec::with_capacity(poly.full_point_count().max(0) as usize);
+            let mut segments: Vec<Seg> =
+                Vec::with_capacity(poly.full_point_count().max(0) as usize);
 
             for mut seg in poly.iterate_segments_with_holes() {
                 if seg.a.x > seg.b.x {

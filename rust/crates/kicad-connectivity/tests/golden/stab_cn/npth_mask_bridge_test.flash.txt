@@ -1,0 +1,16 @@
+pad|ab1fc839-4908-4cb4-8969-fde56629e5d3|flash.F.Cu=true
+pad|ab1fc839-4908-4cb4-8969-fde56629e5d3|flash.B.Cu=true
+pad|0383ca60-27b8-4777-bca4-6d8c7b5519e5|flash.F.Cu=true
+pad|0383ca60-27b8-4777-bca4-6d8c7b5519e5|flash.B.Cu=false
+pad|7253c5b0-917e-453b-996b-4d2fbe00c043|flash.F.Cu=true
+pad|7253c5b0-917e-453b-996b-4d2fbe00c043|flash.B.Cu=false
+pad|4e09424f-5955-471d-ac10-fcc4a2176f36|flash.F.Cu=true
+pad|4e09424f-5955-471d-ac10-fcc4a2176f36|flash.B.Cu=false
+pad|c17e1ca7-96b5-43c8-a094-5847bb364c7a|flash.F.Cu=true
+pad|c17e1ca7-96b5-43c8-a094-5847bb364c7a|flash.B.Cu=false
+track|0ead909c-3857-460b-addd-4fba64117847|flash.F.Cu=true
+track|0ead909c-3857-460b-addd-4fba64117847|flash.B.Cu=true
+track|57420f31-5010-48d0-89a5-71b4a921b190|flash.F.Cu=true
+track|57420f31-5010-48d0-89a5-71b4a921b190|flash.B.Cu=true
+track|8500d82a-1ed1-433a-bb23-83ead045f961|flash.F.Cu=true
+track|8500d82a-1ed1-433a-bb23-83ead045f961|flash.B.Cu=true

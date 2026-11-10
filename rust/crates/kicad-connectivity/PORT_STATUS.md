@@ -432,3 +432,55 @@ are the per-board criterion (a board without flagged edges needs no tie handling
   already tied and then optimised without a tie, the optimised end's candidates are its one
   result.
 - The rule is not applied in kicad-drc yet (change request to DRC-12 / the campaign).
+
+## STAB-CN: pads verified (oracle rerun, 41 more corpus boards, corpus net scoreboard)
+
+No change to `src/`: every pad path matched the reference once the pad parser had landed.
+This closes the pad gaps listed under CN-01 .. CN-04 and REV-CN (F-10): pad anchors and
+layers, origin-pad ranking and conflicting clusters, jumper pad groups (`updateJumperPads`),
+`HasSingleConnection` / zone islands with pads, the pad branches of `IsConnectedOnLayer` and of
+the contact rules, `single_connection_outlines`, `PAD::FlashLayer`.
+
+New files: `tests/oracle/stab_cn_boards.txt` (41 corpus boards with footprints: THT and SMD,
+pads in zones with thermal reliefs and hatched zones, net ties, jumper pad groups
+(`eeschema/netlists/jumpers`, `downgrade/golden/current/metadata`, the one conflicting
+cluster), custom-shape pads, pads with `remove_unused_layers`, NPTH, padstacks, islands),
+`tests/oracle/gen_stab_cn.sh` (existing pcb-dump `connectivity`, `track,pad` flash lines and
+cn-order-oracle `--queries`, no C++ build; plain goldens, 1 MB in total, under
+`tests/golden/stab_cn/` and `tests/golden/order/`), `tests/common/mod.rs` (board / golden
+paths, the pcb-dump item keys), `tests/oracle/stab_cn_net_corpus.sh` +
+`stab_cn_net_compare.py` (step 4). The CN-01 .. CN-04 and order tests replay the new boards
+in addition to their lists.
+
+Results (`cargo test -p kicad-connectivity`), before (pads loaded, old board lists) / after:
+
+| Test | Before | After |
+|---|---|---|
+| cn01 items | 23 boards, 3145 fields | 64 boards, 11590 fields, 0 mismatches |
+| cn02 algo | 34 boards, 3342 fields | 75 boards (all fully), 8600 fields, 0 mismatches |
+| cn02 clusters are components | 39 boards | 80 boards |
+| cn03 ratsnest | 34 boards, 322 fields | 75 boards, 929 fields, 0 mismatches |
+| cn03 spans clusters | 35 boards, 423 nets | 76 boards, 544 nets |
+| cn04 golden (rn_net, dangling, flash) | 30 boards, 1435 fields | 71 boards, 5050 fields (1342 pad flash lines), 0 mismatches |
+| rev order (queries) | 22 boards, 1452 lines | 63 boards, 5025 lines, 0 mismatches |
+
+The only mismatch on the first run (2 fields, `teardrop_qfn_thermal_pad_zone` `cn_island`)
+was the test's key: a zone without a UUID in the file is keyed `#<ordinal>` by pcb-dump; the
+test now uses the dump's `InitItemKeys` rule (`common::dump_item_keys`, dev-dependency on
+kicad-pcb's `dump` feature).
+
+Net propagation on the corpus (step 4, `stab_cn_net_corpus.sh`): reference `pcb-dump board
+--loader --hash --sections item` vs `pcb-dump-session board --loader` (kicad-session), `net`
+and `netname` of every connected item, every board under 5 MB of `qa/data/pcbnew` and `demos`
+(368 boards incl. openair-max, tiny_tapeout, cm5_minima): 84 191 items (24 119 pads, 43 453
+tracks, 2 484 arcs, 11 533 vias, 2 107 zones, 490 copper shapes, 5 text boxes), net and
+netname 84 191 / 0 mismatches, 0 missing, 0 extra. `plugins/fakeboard` is rejected by both
+loaders; 4 boards have no items.
+
+### Known gaps (STAB-CN)
+
+- Boards over 5 MB (jetson, vme-wren, ...) are not compared item by item (disk / memory rules).
+- Jumper pads: two boards only (no corpus board has more); the conflicting-cluster path is
+  exercised by one cluster (`metadata`).
+- Heap-order sites stay as documented by REV-CN / FIX-CN-1; no STAB-CN board needed the
+  tie-aware rule (all `rn` lines of the order goldens match exactly).

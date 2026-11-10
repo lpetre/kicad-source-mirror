@@ -1141,10 +1141,9 @@ Not verified yet: the pad paths (the pad exclusion of the track angle test via
 | `DRC_TEST_PROVIDER_COPPER_CLEARANCE` (`m_drcEpsilon`, `m_zoneIndex`, `sub_e`), `Run` (phase gating on the error limits, `ZONE_INDEX_GUARD`) | `DrcTestProviderCopperClearance::new(&DrcBoardCaches)`, `run` (`DrcTestProviderRun`) | ported |
 | `collectZonesNear`, `testSingleLayerItemAgainstItem` (UUID canonical order, crossing tracks, shorts, net-tie exclusions, unflashed pad / via hole shapes, `--all-track-errors`, the two-way hole test incl. clearance 0), `testItemAgainstZone` (net-tie graphics exemption, flashed / plated pads, zone hole test) | same names in snake case | ported |
 | `testTrackClearances` (prepared-copper query with padding credit, UUID dedup filter, `freePadsUsageMap`), `testPadAgainstItem` (net-tie groups, same logical pad shorts, `unconnected-(` pads, the three hole directions), `testPadClearances` | same names | ported |
-| `testGraphicClearances`, `testKnockoutTextAgainstZone`, `testZonesToZones`, `testTeardropClearances` | `test_graphic_clearances`, ... | stub: `port_pending!` (package DRC-08b) |
+| `testGraphicClearances`, `testKnockoutTextAgainstZone`, `testZonesToZones`, `testTeardropClearances` | `test_graphic_clearances`, ... | ported (DRC-08b, see its section) |
 
-`new_without_pending( caches )` builds a provider whose `run` skips the three DRC-08b phases
-(verification aid until DRC-08b lands; DRC-08b removes it). The provider borrows the cache
+The provider borrows the cache
 generator's caches (`m_DRCMaxClearance`, `m_DRCCopperZonesByLayer`, copper item tree, zone
 trees) and must be run with a context that has the run's connectivity (FlashLayer);
 `tests/drc08a_copper_clearance.rs` `CopperWithCaches` shows the wiring.
@@ -1196,10 +1195,71 @@ cluster, which gets one net (also on the synthetic boards, where pads are absent
 
 ### Known gaps
 
-- DRC-08b phases (`port_pending!`); the provider is not yet wired into a full
-  `DrcEngine::run_tests` (the cache generator wiring of DRC-05's known gap).
+- The provider is not yet wired into a full `DrcEngine::run_tests` (the cache generator
+  wiring of DRC-05's known gap).
 - Pad-vs-barcode pairs: attributed to DRC-08a by the replay; the C++ also tests them from the
   graphic side (DRC-08b), not present in the corpus.
+
+## DRC-08b: copper clearance, part 2 (copper graphics, knockout text, zone-to-zone, teardrops)
+
+### File / class map
+
+| C++ (`drc_test_provider_copper_clearance.cpp`) | Rust (`src/providers/copper_clearance.rs`) | State |
+|---|---|---|
+| `testGraphicClearances` (board drawings, footprint graphics, footprint fields; the `testGraphicAgainstZone` and `testCopperGraphic` lambdas: reference images / hidden fields skipped, knockout text, copper item tree filter with footprint-shape, track, same-net and UUID dedup, no padding credit) | `test_graphic_clearances`, `test_graphic_against_zone`, `test_copper_graphic` | ported |
+| `testKnockoutTextAgainstZone` (inherited net of the first colliding zone, `shorting_items` / `clearance`, `clearance >= 0`) | `test_knockout_text_against_zone` (`aInheritedNet` = `Option<InheritedNet>`: code and name of the zone net) | ported |
+| `testZonesToZones` (teardrops excluded, `LAYER_RANGE( F_Cu, B_Cu )` order, `CollectOverlappingPairs` on fill `BBoxFromCaches`, same-net / rule-area skips, per-(zone, layer) segment `PACKED_RTREE<size_t>` with `A.x <= B.x` normalisation, first segment pair with `floor( sqrt( d2 ) + 0.5 ) < clearance`) | `test_zones_to_zones` | ported |
+| `testTeardropClearances` | `test_teardrop_clearances` | ported |
+
+`new_without_pending` and the phase switch of DRC-08a are removed: `DrcTestProviderCopperClearance::new( &caches )` runs all phases of `Run`.
+
+### Verification
+
+Replay (`tests/drc08a_copper_clearance.rs`, now covering both packages; the `origin` classifier still
+separates the phases but every non-physical entry is compared):
+
+| Golden | Boards compared | Result |
+|---|---|---|
+| `golden/drc08a/corpus.txt` | 332 (33 pending: 30 whose rule conditions call functions (DRC-22), 2 legacy `.pro`, 1 reference failure) | DRC-08b entries 129 (pad/shape 10, shape/shape 76, shape/text 4, graphic or text / zone 4, zone/zone 35) all matched; whole provider clearance 2067, hole_clearance 1407, shorting_items 371 matched; 0 missing, 0 extra except the two error-limit boards (`issue832`, `stickhub-extra-via`, as in DRC-08a) and the two boards of `KNOWN_RULE_GAPS` below |
+| `golden/drc08b/synthetic.txt` (`tests/oracle/gen_drc08b_boards.py`, boards `tests/data/drc08b/graphics*`: copper graphics against graphics / pads / zones, footprint copper shapes, knockout board text over one / two / same-net zones and 0.1 mm off a zone, knockout reference fields visible and hidden, text boxes, zone pairs on one and two layers, overlapping / same net / no net, teardrop pairs, teardrop against zones; with and without a rule file) | 2 | 40 DRC-08b entries + 2 track entries matched (clearance 22, shorting_items 20); 0 missing, 0 extra |
+
+The replay gate is narrower than before: boards are pending only when a user rule condition calls a
+function (the function bodies are DRC-22 stubs), not for every compiled condition; this adds 26
+corpus boards (e.g. the `line_ending_drc` matrix, 123 shorts). Two of them differ in DRC-08a phase
+entries because their conditions resolve differently from C++ (listed in `KNOWN_RULE_GAPS`, not
+failed): `issue16566` (`A.Pad_Shape == 'Oval'` does not match the oval pad: 4 missing
+`oval_clearance` entries) and `issue23469` (`A.Reference == 'J1' && B.Reference == 'J1'` does not
+match pad against NPTH pad of J1 for hole_clearance: 4 extra entries with the board default).
+
+Not compared: the report order (one thread-pool task per drawing / footprint / zone pair in C++;
+the port runs them in board order and candidate order).
+
+### Ported C++ tests (`tests/drc08a_copper_clearance.rs`)
+
+| C++ | Rust |
+|---|---|
+| `test_drc_copper_graphics.cpp` `DRCCopperGraphicsTest` (4) | `copper_graphics_test` |
+| `test_drc_copper_graphics.cpp` `DRCCopperGraphicLineEndingMatrix` (123 / 0) | `copper_graphic_line_ending_matrix` |
+| `test_drc_regressions.cpp` `DRCFalseNegativeRegressions`: `intersectingzones` (1), `fill_bad` (1), `issue5750` (4 in all, 3 of this provider's types per the reference report), `issue11814` (2; pending, its rules call functions) | `false_negative_regressions_copper_clearance` |
+
+Not ported: `DRCCopperGraphicLineEndingAgainstTrack` (builds its board in code; the pair is found
+by `testTrackClearances`, and the line-ending matrix covers the shapes) and
+`DRCTeardropOverCopperField` (`issue24649` needs `KI_TEST::FillZones`; a board refilled and saved by
+the reference CLI reports no short either, so the refill is not reproducible through the CLI).
+
+### Deviations
+
+- Teardrop-vs-teardrop pairs are tested once, from the teardrop with the smaller handle (C++:
+  `zone < teardrop` on `ZONE*` addresses). The arena handle order is the allocation order, which is
+  what the heap order of a freshly loaded board usually is; which teardrop becomes item 1 can differ
+  from a particular C++ run (`drc.md` 4.12).
+- `testZonesToZones` keeps the segments and the segment tree of a (zone, layer) together in one
+  `BTreeMap` (C++: two vectors of maps); a missing entry skips the pair as in C++.
+
+### Known gaps
+
+- Barcodes on copper (`PCB_BARCODE_T` graphics) are ported but no compared board has one.
+- `DRCTeardropOverCopperField` (needs the zone filler).
 
 ## DRC-21: PCB expression binding (`PCBEXPR_*` on kicad-libeval)
 
@@ -1390,3 +1450,17 @@ needs no caches.
   wraps) inside `Simplify` on `issue25089/odb_circle_edge_cases` (change request filed).
 * Refill-based expectations of the C++ tests need the zone filler (ZF-03) in a crate that can
   depend on both.
+
+## CC-1: component class assignment rules (compiler and matcher hooks)
+
+| C++ | Rust | State |
+|---|---|---|
+| `COMPONENT_CLASS_MANAGER::CompileAssignmentRule` (the `DRC_RULES_PARSER` part: `ParseComponentClassAssignmentRules`, `WX_STRING_REPORTER`, `PARSE_ERROR`, exactly one rule) | `component_class_rules::compile_assignment_rule_source`, `DrcComponentClassRuleCompiler` (implements `kicad_pcb::component_class::ComponentClassRuleCompiler`) | ported |
+| `COMPONENT_CLASS_ASSIGNMENT_RULE::Matches` (`EvaluateFor( fp, nullptr, 0, fp->GetSide(), nullptr )`) | `impl ComponentClassRuleCondition for DrcRuleCondition` | ported |
+| (load sequence) | `component_class_rules::install( board )`: puts the compiler on the board's manager | new |
+
+Verification: through kicad-session `tests/component_classes.rs` (reference pcb-dump effective
+classes of `component_classes` / `component_classes_drc`, QA and CLI paths) and the port of
+`test_component_classes.cpp` `ComponentClasses`. Rules using DRC-22 functions (`getField`,
+`memberOfSheet`, `intersectsArea`) do not match until DRC-22 lands (those footprints are in
+ignored tests). `test_drc_component_classes.cpp` (a DRC run) is not ported here.

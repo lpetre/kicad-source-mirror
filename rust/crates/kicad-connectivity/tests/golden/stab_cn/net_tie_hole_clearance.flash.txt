@@ -1,0 +1,6 @@
+pad|708192a3-b4c5-46d7-e8f9-0123456789ab|flash.F.Cu=true
+pad|708192a3-b4c5-46d7-e8f9-0123456789ab|flash.B.Cu=false
+pad|8192a3b4-c5d6-47e8-f901-23456789abcd|flash.F.Cu=false
+pad|8192a3b4-c5d6-47e8-f901-23456789abcd|flash.B.Cu=true
+pad|92a3b4c5-d6e7-48f9-0123-456789abcdef|flash.F.Cu=true
+pad|92a3b4c5-d6e7-48f9-0123-456789abcdef|flash.B.Cu=true

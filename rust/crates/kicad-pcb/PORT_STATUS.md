@@ -1118,7 +1118,7 @@ Staging: a stub called with `FormatOptions::allow_pending == false` fails with t
 | `picosha2::hash256_hex_string` | `embedded_files::sha256_hex` | local shim (FIPS vectors) |
 | `wxBase64Encode/Decode` (strict) | `wx_base64_encode/decode` | `base64` crate, wx-strict config |
 | `COMPONENT_CLASS` | `component_class.rs` | ported |
-| `COMPONENT_CLASS_MANAGER` (static / effective / combined / dynamic classes, netlist update, ticker) | `component_class.rs` | ported except `SyncDynamicComponentClassAssignments` (stub, tier 2: needs the DRC rule parser and `COMPONENT_CLASS_ASSIGNMENT_DATA`) |
+| `COMPONENT_CLASS_MANAGER` (static / effective / combined / dynamic classes, netlist update, ticker) | `component_class.rs` | ported (`SyncDynamicComponentClassAssignments`: package CC-1) |
 | `COMPONENT_CLASS_CACHE_PROXY::GetComponentClass/RecomputeComponentClass` | `ComponentClassManager::get_component_class/recompute_component_class` | ported; rule matching passed in (`COMPONENT_CLASS_ASSIGNMENT_RULE::Matches` is kicad-drc) |
 | `FinishNetlistUpdate` footprint pointer clearing | `Board::finish_component_class_netlist_update` | ported |
 
@@ -1173,11 +1173,8 @@ Differential oracle `tests/oracle/m24_oracle.cpp` (+ `m24_build_oracle.sh`; comp
 
 ### Known gaps / stubs left
 
-* `ComponentClassManager::sync_dynamic_component_class_assignments`: `port_pending!` (tier 2,
-  needs the DRC rule parser / `CompileAssignmentRule` and project component-class settings).
-* `FOOTPRINT::GetComponentClass` (footprint/mod.rs, not this package) can now be written with
-  `ComponentClassManager::get_component_class`, but needs `&mut` access to the manager and the
-  DRC rule matcher.
+* (closed by package CC-1: `SyncDynamicComponentClassAssignments`, `FOOTPRINT::GetComponentClass`
+  with assignment rules.)
 
 ## Package M14: pad model (PAD without shape generation)
 
@@ -3191,3 +3188,90 @@ Known gaps:
   F and B. Item-level mismatches on the back side (`padstack.back_outer.*`,
   `solder_mask_expansion.B.Mask`, `solder_paste_margin.B.Paste`, `shape.B.Mask`) on every board
   with pad margin overrides; the written file is unaffected (the writer reads the front).
+
+## Package CC-1: component class synchronisation (dynamic assignment rules)
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `COMPONENT_CLASS_MANAGER::SyncDynamicComponentClassAssignments` | `ComponentClassManager::sync_dynamic_component_class_assignments` | ported |
+| `COMPONENT_CLASS_MANAGER::CompileAssignmentRule` | `ComponentClassManager::compile_assignment_rule` + the `ComponentClassRuleCompiler` hook (kicad-drc `component_class_rules`) | ported |
+| `COMPONENT_CLASS_ASSIGNMENT_RULE` (`GetComponentClass`, `Matches`) | `ComponentClassAssignmentRule` (condition: `ComponentClassRuleCondition` hook, implemented by kicad-drc's `DrcRuleCondition`) | ported |
+| `COMPONENT_CLASS_ASSIGNMENT_DATA` (`AddCondition`, `GetConditionName`, `GetConditionType`, `GetAssignmentInDRCLanguage`) | `component_class.rs` `ComponentClassAssignmentData` | ported |
+| `COMPONENT_CLASS_SETTINGS` (parameters, `loadAssignment`, `saveAssignment`, nested load) | `ComponentClassSettings::load_from_parent` | ported (load; the getters exist for `Store`, nothing saves the project yet) |
+| `BOARD::SynchronizeComponentClasses` | `Board::synchronize_component_classes{,_for_sheets}` (project/board_project.rs) | ported |
+| `FOOTPRINT::GetComponentClass` dynamic path | `Footprint::component_class` (footprint/mod.rs) | ported (rules matched with the compiled conditions) |
+| `wxSplit( s, ',' )` (escape `\\`), `wxString::Trim`, `ToInt` | `wx_split`, `wx_trim_both`, `wx_to_int` (private) | ported; `wxSplit`'s escaped-escape handling measured on the reference build |
+
+### Tests and verification
+
+* `tests/oracle/cc1_oracle.cpp` (+ `build_cc1_oracle.sh`, cases `cc1_cases.txt`; links
+  libkicommon.so): golden `tests/golden/cc1_component_class.txt` (579 lines):
+  `GetAssignmentInDRCLanguage` of 399 hand-made assignments (every condition type, trimming,
+  rotations incl. int / long overflow, `wxSplit` on all 363 strings of up to 5 characters over
+  `a`, `\\`, `,`), and the `COMPONENT_CLASS_SETTINGS` loaded by `PROJECT_FILE::LoadFromFile`
+  from 16 synthetic project texts (wrong types, exceptions part-way, null / array / primitive
+  `conditions`, key order, NUL characters) and the 5 corpus projects with assignments. Replay
+  `tests/cc1_oracle.rs`: identical.
+* `component_class::tests::sync_without_assignments_needs_no_compiler`, `sync_dynamic_assignments`
+  (usage-context transitions, sheet classes, all-or-nothing install).
+* Board level (kicad-session `tests/component_classes.rs`): see kicad-session PORT_STATUS.md.
+
+### Deviations / notes
+
+* The settings are read from the bound project document (`BoardProject::document`) when
+  `SynchronizeComponentClasses` runs, not kept as a member of the project file (the project
+  reader has no `COMPONENT_CLASS_SETTINGS` member; same data at load time).
+* Without a project the default settings are used (C++ dereferences a null project).
+* The rule compiler is a hook on the manager (`rule_compiler`, kicad-drc installs it): compiling a
+  rule without one panics with a clear message (programming error; the loaders install it).
+  With no assignments and sheet classes off no hook is needed.
+* The C++ `unordered_set`s of `SyncDynamicComponentClassAssignments` are `BTreeSet`s: their order
+  only decides the order of `m_assignmentRules`, on which no result depends.
+* `loadAssignment` where nlohmann has undefined behaviour (`operator[]` of a missing key on a
+  const object) is treated like a thrown exception.
+* `Footprint::component_class(&self)` still computes against a copy of the manager (M24 note);
+  the rule conditions are evaluated without holding the footprint's cache lock.
+
+### Known gaps
+
+* Matching uses the DRC-22 expression functions: `getField`, `memberOfSheet`, `intersectsArea`
+  (and the others) are still "not yet ported" in kicad-drc, so rules using them do not match yet
+  (5 of 14 footprints of `component_classes.kicad_pcb`; the corresponding tests are `#[ignore]`d).
+
+
+## Package FIX-PAD-1: back-side pad margins, pad primitive parents, PAD::AddPrimitive in the model
+
+| C++ | Rust | State |
+|---|---|---|
+| `PAD::SetLocalSolderMaskMargin` / `SetLocalSolderPasteMargin` / `SetLocalSolderPasteMarginRatio` (pad.h: `F_Mask` + `B_Mask`, `F_Paste` + `B_Paste`) | `pad/derive.rs` setters | ported (both outer sides; getters read the `F_Cu` default = front) |
+| `PAD::AddPrimitive`, `rebakePrimitiveToFootprint` | `Pad::add_primitive( env, layer, shape )`, private `rebake_primitive_to_footprint` | ported; the parser's `pad_add_primitive` (io/parser/pad.rs) now calls it |
+| `PAD::AddPrimitivePoly` (both overloads), `PAD::DeletePrimitivesList` | `add_primitive_poly`, `add_primitive_poly_points`, `delete_primitives_list` | ported |
+| `SetParent( this )` of `AddPrimitive` / the `PADSTACK` copy for a pad that gets its handle | `Pad::reparent_primitives`, called by `Board::footprint_add` (Pad arm) | ported |
+
+Audit of the other two-sided accessors (pad.h / pad.cpp / padstack.cpp): `PADSTACK::SolderMaskMargin`
+& co. dispatch front / back by layer side; `IsTented` / `IsCovered` / `IsPlugged` by side;
+capping / filling are single drill props; zone connection / thermal / clearance setters write
+`CopperLayer( F_Cu )` as in C++; `FlipLayers` swaps the mask props and post machining; copies go
+through `assign_from` (re-parenting). No other defect found.
+
+Readers that depended on the parent: `lib_bezier_c1` / `c2`, `lib_poly_shape` now return the
+lib members (C++ `GetLibrary*` for a pad parent); `rebake_from_lib` is a no-op and
+`sync_lib_coords` uses the pad branch; `GetMaxError()` of a primitive (bezier / rounded
+rectangle / ellipse effective shapes of custom pads) is now the board's instead of
+`ARC_HIGH_DEF`.
+
+Verification: `tests/fixpad1_pads.rs` (feature `dump`), golden `tests/golden/fixpad1/` from
+`tests/oracle/fixpad1_golden.sh` (reference pcb-dump, QA load path, hashed): back-side SMD and
+PTH pads with mask / paste / ratio overrides, custom pad (bezier, rounded rect, arc) in a
+rotated, non-uniformly scaled footprint, project `max_error` 0.05 mm: all item / pad / bbox lines
+match except `own_clearance.*` (DRC-engine values of the C++ QA loader, a session step).
+`run.sh --dump --sections item,pad,bbox` on the PCBIO-07 boards and the corpus boards with
+back-side pads, custom pads or margin overrides: see the package report.
+
+Known gaps:
+* `PCB_SHAPE::Flip` / `syncLibCoords` of a pad primitive use the pad's `GetPrimitiveLibScale()`
+  in C++; `MutEnv` does not carry it, so the Rust treats it as (1, 1) (the M9 deviation in
+  `pcb_shape`, unchanged; only matters for primitives of pads in scaled footprints that are
+  flipped or edited after load).

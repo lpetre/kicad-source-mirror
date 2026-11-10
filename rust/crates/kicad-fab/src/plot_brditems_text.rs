@@ -302,7 +302,8 @@ impl BrditemsPlotter<'_, '_> {
         attrs.set_angle(text.draw_rotation(ctx).as_degrees());
         attrs.multiline = false;
 
-        self.plotter.set_current_line_width(attrs.stroke_width, None);
+        self.plotter
+            .set_current_line_width(attrs.stroke_width, None);
 
         if a_is_knockout {
             let mut final_poly = ShapePolySet::new();
@@ -349,15 +350,14 @@ impl BrditemsPlotter<'_, '_> {
             return;
         }
 
-        let cache = if font.is_outline_unavailable()
-            && !ctx.board.embedded_files().are_fonts_embedded()
-        {
-            // The C++ regenerates a stale cache with the outline font; without an outline
-            // font engine a stale or missing cache falls back to the stroke font below.
-            render_cache(text, ctx, &shown_text, Vector2I::default())
-        } else {
-            None
-        };
+        let cache =
+            if font.is_outline_unavailable() && !ctx.board.embedded_files().are_fonts_embedded() {
+                // The C++ regenerates a stale cache with the outline font; without an outline
+                // font engine a stale or missing cache falls back to the stroke font below.
+                render_cache(text, ctx, &shown_text, Vector2I::default())
+            } else {
+                None
+            };
 
         if let Some(cache) = cache {
             let mut ops: Vec<GlyphOp> = Vec::new();

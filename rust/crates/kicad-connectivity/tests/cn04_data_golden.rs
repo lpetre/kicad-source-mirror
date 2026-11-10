@@ -31,6 +31,8 @@
 //!
 //! Also ports `qa/tests/pcbnew/test_issue25621_via_flashing_contact_layer.cpp`.
 
+mod common;
+
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use kicad_connectivity::data::{ConnectivityData, EXCLUDE_ZONES, IGNORE_NETS};
@@ -471,13 +473,19 @@ fn cn04_golden_boards_match_cpp() {
     let mut stats = Stats::default();
     let mut compared = Vec::new();
 
-    for &name in BOARDS {
-        let mut golden = Golden::read(name);
-        let flash = Golden::read(&format!("cn04_flash/{name}"));
+    let names: Vec<String> = BOARDS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(common::stab_cn_boards())
+        .collect();
+
+    for name in &names {
+        let name = name.as_str();
+        let mut golden = Golden::read(&common::golden_name(name));
+        let flash = Golden::read(&common::flash_golden_name(name));
         golden.map.extend(flash.map);
 
-        let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
-        let Some(board) = load_path(name, &path) else {
+        let Some(board) = load_path(name, &common::board_path(name)) else {
             continue;
         };
 

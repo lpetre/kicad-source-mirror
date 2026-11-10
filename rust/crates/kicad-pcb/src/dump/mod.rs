@@ -141,8 +141,8 @@ pub fn load_board_for_dump_mode(
         _ => String::new(),
     };
 
-    let mut board = crate::io::parse_board(&text, &source_name, &options)
-        .map_err(|e| e.what().to_string())?;
+    let mut board =
+        crate::io::parse_board(&text, &source_name, &options).map_err(|e| e.what().to_string())?;
 
     let load_path = match mode {
         DumpLoadMode::NoInit => return Ok((board, Vec::new())),
@@ -159,7 +159,10 @@ pub fn load_board_for_dump_mode(
     let pro_text = read("kicad_pro").map(|t| String::from_utf8_lossy(&t).into_owned());
     let prl_text = read("kicad_prl").map(|t| String::from_utf8_lossy(&t).into_owned());
     let has_legacy_pro = abs.with_extension("pro").exists();
-    let pro_name = abs.with_extension("kicad_pro").to_string_lossy().into_owned();
+    let pro_name = abs
+        .with_extension("kicad_pro")
+        .to_string_lossy()
+        .into_owned();
 
     let mut project = if load_path == LoadPath::Cli || pro_text.is_some() || has_legacy_pro {
         Some(load_project(
@@ -176,9 +179,8 @@ pub fn load_board_for_dump_mode(
     let _quiet = SilentPanics::new();
 
     for &step in load_path.steps() {
-        let result = format::attempt(|| {
-            run_model_step(&mut board, load_path, step, &mut project, &codec)
-        });
+        let result =
+            format::attempt(|| run_model_step(&mut board, load_path, step, &mut project, &codec));
 
         match result {
             Ok(Ok(StepOutcome::Done)) => {}

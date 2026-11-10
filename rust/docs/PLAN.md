@@ -289,6 +289,14 @@ Progress log:
   Launched: FIX-PAD-1 -> PCBIO-14 (footprint library files) and STAB-CN (connectivity with
   pads: rerun every oracle, thirty more boards, net propagation scoreboard) (w16z105v0).
   Next heartbeat 04:25 UTC. Disk watchdog restarted 03:27 UTC as background task b9699ml7v (2 h lifetime: restart about 05:25 UTC).
+  03:45 UTC: done CC-1 component class sync (the stub every CLI load hit): `kicad-rs pcb
+  upgrade --force` is now byte-identical to the reference end to end; session upgrade corpus
+  358 identical / 11 different / 1 not loadable. 10 of 36 footprint classes on the two
+  component-class boards wait for the DRC-22 expression functions. Launched: FIX-RESAVE-1
+  (the 11 differing boards: zone net / priority, render caches) (w1juzof4g).
+  Package files written, to launch when their inputs land: STAB-PCB (after GLUE-2 and
+  FIX-PAD-1), STAB-DRC (after the DRC chains, GLUE-2, FIX-PAD-1), WIRE-1 (after DRC-12,
+  FAB-07 / 08), FAB-10 / 11 / 12 (after the FAB chain).
   Still to write (tier 3, editor-only paths): FIX-GEN-1 (generator subclass arms of move /
   rotate / flip / mirror / set_layer, via stitch default template), FIX-DIM-1
   (PCB_DIMENSION_BASE::Update after text setters, i32-backed dimension enums, grid item
