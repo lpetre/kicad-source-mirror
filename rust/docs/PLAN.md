@@ -720,7 +720,7 @@ Progress log:
   excluded from git (.git/info/exclude) until the owner agrees to publication. Only
   generic, client-neutral API additions go into the port. Until then that work exists in
   this container only.
-  10:40 UTC: the user asked for the adapter as an artifact instead: a private page (source
+  10:34 UTC: the user asked for the adapter as an artifact instead: a private page (source
   browser, status table, zip download) is published from
   scratchpad adapter_artifact/gloopy-adapter.html (generator gen.py + status.json beside
   it; rerun gen.py and republish the same file path at each milestone: GK-1 report, its
