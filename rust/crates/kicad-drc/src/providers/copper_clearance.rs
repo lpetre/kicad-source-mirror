@@ -151,11 +151,12 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
         self.drc_epsilon = ctx.board.design_settings().get_drc_epsilon();
 
-        self.zone_index.build(&caches.copper_zones_by_layer, |zone| {
-            ctx.item(ItemId::from(zone))
-                .expect("m_DRCCopperZonesByLayer holds board zones")
-                .bounding_box()
-        });
+        self.zone_index
+            .build(&caches.copper_zones_by_layer, |zone| {
+                ctx.item(ItemId::from(zone))
+                    .expect("m_DRCCopperZonesByLayer holds board zones")
+                    .bounding_box()
+            });
 
         let result = self.run_phases(engine, &mut RunHost(run), ctx);
 
@@ -590,7 +591,9 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
             return;
         }
 
-        if zone_net_code != 0 && item.is_connected() && Some(NetCode(zone_net_code)) == item.net_code()
+        if zone_net_code != 0
+            && item.is_connected()
+            && Some(NetCode(zone_net_code)) == item.net_code()
         {
             return;
         }
@@ -649,7 +652,11 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
                     if pad.bounding_box_layer(ctx, layer).intersects(&item_bbox)
                         && pad_ref
-                            .effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint)
+                            .effective_shape(
+                                layer,
+                                Flashing::Default,
+                                DrcConstraintT::NullConstraint,
+                            )
                             .collide(item_shape.as_ref(), 0, None, None)
                     {
                         return;
@@ -814,7 +821,9 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
                 // Filter:
                 let mut filter = |other_id: ItemId| -> bool {
-                    let other = ctx.item(other_id).expect("DRC_RTREE entries are board items");
+                    let other = ctx
+                        .item(other_id)
+                        .expect("DRC_RTREE entries are board items");
 
                     if other.is_connected() && other.net_code() == track.net_code() {
                         return false;
@@ -841,7 +850,9 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
                         return false;
                     }
 
-                    let other = ctx.item(other_id).expect("DRC_RTREE entries are board items");
+                    let other = ctx
+                        .item(other_id)
+                        .expect("DRC_RTREE entries are board items");
 
                     if other.type_() == KicadT::PcbPadT
                         && other.as_pad().is_some_and(|p| p.is_free_pad(ctx))
@@ -925,7 +936,8 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
         {
             let pad_to_net_tie_group_map = fp.map_pad_numbers_to_net_tie_groups(ctx);
             // std::map::operator[] inserts 0 for a number that is not in the map
-            let group_of = |number: &str| pad_to_net_tie_group_map.get(number).copied().unwrap_or(0);
+            let group_of =
+                |number: &str| pad_to_net_tie_group_map.get(number).copied().unwrap_or(0);
             let pad_group_idx = group_of(pad.number());
 
             if other.type_() == KicadT::PcbPadT {
@@ -1195,11 +1207,7 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
             }
         }
 
-        if test_holes
-            && other_pad.is_some()
-            && other.has_hole()
-            && pad.flash_layer(ctx, layer)
-        {
+        if test_holes && other_pad.is_some() && other.has_hole() && pad.flash_layer(ctx, layer) {
             clearance = constraint.value().min();
 
             if clearance > 0
@@ -1297,12 +1305,17 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
                         return;
                     }
 
-                    let pad_shape =
-                        pad.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+                    let pad_shape = pad.effective_shape(
+                        layer,
+                        Flashing::Default,
+                        DrcConstraintT::NullConstraint,
+                    );
 
                     // Filter:
                     let mut filter = |other_id: ItemId| -> bool {
-                        let other = ctx.item(other_id).expect("DRC_RTREE entries are board items");
+                        let other = ctx
+                            .item(other_id)
+                            .expect("DRC_RTREE entries are board items");
 
                         // Dedup on UUID, not heap address, so that exclusion checking against
                         // previously-generated violations will work
@@ -1311,7 +1324,9 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
 
                     // Visitor
                     let mut visitor = |other_id: ItemId, prepared_other: &SharedShape| -> bool {
-                        let other = ctx.item(other_id).expect("DRC_RTREE entries are board items");
+                        let other = ctx
+                            .item(other_id)
+                            .expect("DRC_RTREE entries are board items");
 
                         self.test_pad_against_item(
                             engine,

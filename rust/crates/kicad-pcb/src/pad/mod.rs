@@ -114,7 +114,6 @@ pub(crate) struct PadCacheKey {
 
 /// m_maskShapes: per layer, the expansion the shape was built for and the shape.
 #[derive(Debug)]
-#[allow(dead_code)] // built and read by package M15
 pub(crate) struct PadMaskShapes {
     pub key: PadCacheKey,
     pub by_layer: BTreeMap<PcbLayerId, (i32, Arc<ShapeCompound>)>,
@@ -122,7 +121,6 @@ pub(crate) struct PadMaskShapes {
 
 /// The shape part of PAD_DRAW_CACHE_DATA.
 #[derive(Debug)]
-#[allow(dead_code)] // built and read by package M15
 pub(crate) struct PadEffectiveShapes {
     pub key: PadCacheKey,
     pub bounding_box: Box2I, // m_effectiveBoundingBox
@@ -132,7 +130,6 @@ pub(crate) struct PadEffectiveShapes {
 
 /// The polygon part of PAD_DRAW_CACHE_DATA for one ERROR_LOC.
 #[derive(Debug)]
-#[allow(dead_code)] // built and read by package M15
 pub(crate) struct PadEffectivePolygons {
     pub key: PadCacheKey,
     pub polygons: BTreeMap<PcbLayerId, Arc<ShapePolySet>>, // m_effectivePolygons[layer][errorLoc]

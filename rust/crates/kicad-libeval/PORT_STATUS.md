@@ -96,8 +96,7 @@ and checked identical to the embedded ones (2026-11-09).
   rather than by keeping copies: `UnescapeString` there now uses this crate's explicit-stack
   form (same algorithm; deep nesting cannot overflow the stack), and `wxString::CmpNoCase` /
   `IsSameAs( .., false )` there is now the chunked wx 3.2 algorithm (it compares past embedded
-  NULs, as this crate's copy did; the old `kicad-core` one stopped at the first NUL and
-  returned the raw difference instead of -1/0/1).
+  NULs, as this crate's copy did; the old `kicad-core` one stopped at the first NUL).
 - `src/crt.rs` re-exports `kicad_core::wxstr` (`strtod`, `to_double`, case mapping,
   `IsSameAs`) and `kicad_core::printf::format_f`; only `isalpha` / `isalnum` / `atof` (not in
   `kicad-core`) are local. `kicad-core`'s `strtod` also accepts `inf` / `nan` / hex floats;

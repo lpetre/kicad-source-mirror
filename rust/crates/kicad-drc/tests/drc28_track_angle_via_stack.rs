@@ -504,7 +504,7 @@ fn drc_via_stack() {
 }
 
 /// `test_drc_regressions.cpp` `DRCFalseNegativeRegressions`, `issue18142` (1 violation with
-/// `microvia_crosses_core` ignored): the one violation is `hole_to_hole` (DRC-??), so with the
+/// `microvia_crosses_core` ignored): the one violation is `hole_to_hole` (another provider), so with the
 /// crossing-core check ignored these providers report nothing; the reference reports one
 /// `microvia_crosses_core` warning when it is not ignored (corpus), which the port matches.
 #[test]

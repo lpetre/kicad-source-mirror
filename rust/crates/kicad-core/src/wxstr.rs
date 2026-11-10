@@ -112,7 +112,9 @@ pub fn capitalize(s: &str) -> String {
 /// `!wxUSE_UNICODE_UTF8` branch of the reference platform): `wxStricmp` (`wcscasecmp`: the
 /// first difference of the lower-cased characters) on the NUL-delimited chunks of both
 /// strings, embedded NULs compared explicitly (a NUL sorts before anything else, a string
-/// that ends first is smaller); the result is normalised to -1, 0 or 1.
+/// that ends first is smaller).  The result is the `wcscasecmp` difference of the first
+/// differing chunk, or -1 / 1 from the NUL handling (checked against libwx_baseu 3.2:
+/// `"a"` / `"c"` gives -2, `"ab"` / `"a"` 98, `"a"` / `"a\0"` -1, `"a\0b"` / `"a\0c"` -1).
 pub fn cmp_no_case(a: &str, b: &str) -> i32 {
     let a: Vec<u32> = a.chars().map(|c| to_lower(c) as u32).collect();
     let b: Vec<u32> = b.chars().map(|c| to_lower(c) as u32).collect();
@@ -177,7 +179,7 @@ pub fn cmp_no_case(a: &str, b: &str) -> i32 {
         }
     }
 
-    rc.signum()
+    rc
 }
 
 /// `wxString::IsSameAs( other, false )`.

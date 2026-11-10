@@ -623,9 +623,10 @@ Built by `tests/oracle/build_c3_oracle.sh` (`regen` rewrites the goldens).
   `tests/golden/wx_matches_oracle.txt`): all match.
 - `wxstr` is a public module now (shared with `kicad-libeval`); the `KiROUND` helpers stay
   private.
-- Fixed `wxstr::cmp_no_case` (`wxString::CmpNoCase`): now the chunked wx 3.2 algorithm,
-  normalised to -1/0/1 (before: stopped at the first embedded NUL and returned the raw
-  `towlower` difference, which `ValueStringCompare` passed through).
+- Fixed `wxstr::cmp_no_case` (`wxString::CmpNoCase`): now the chunked wx 3.2 algorithm
+  (before: it stopped at the first embedded NUL, so `"a\0b"` and `"a\0c"` compared equal);
+  the return values were checked against libwx_baseu (raw `wcscasecmp` difference of the
+  first differing chunk, -1 / 1 from the NUL handling).
 - `unescape_string` uses an explicit stack instead of recursion (same algorithm, taken from
   `kicad-libeval`; deeply nested braces cannot overflow the call stack).
 - `EdaUnits::as_i32` / `from_i32`, `Default` for `EdaUnits` (`Unscaled`) and `EdaDataType`

@@ -24,7 +24,11 @@
 //!   sequentially, island removal, out-of-board islands, the second flashing pass);
 //! * [`index`]: the item indexes the filler builds once per fill;
 //! * [`refill`]: the iterative refill and `refillZoneFromCache`;
-//! * [`copper_fill`]: `fillSingleZone` and the per-zone copper computation (package ZF-03).
+//! * [`copper_fill`]: `fillSingleZone`, `fillCopperZone`, `fillNonCopperZone` and the
+//!   min-width prune;
+//! * [`knockouts`]: pad / via / track / graphic / zone knockouts and clearances;
+//! * [`thermal`]: thermal spokes, hatch thermal rings and the hatch pattern;
+//! * [`connect`]: `connect_nearby_polys` (`VERTEX_CONNECTOR`).
 
 /// Panics with "kicad-zone: port pending: <what>" for C++ code whose package has not landed
 /// yet (the crate-local twin of `kicad_pcb::port_pending!`).
@@ -36,9 +40,12 @@ macro_rules! port_pending {
     }};
 }
 
+pub mod connect;
 pub mod copper_fill;
 pub mod filler;
 pub mod index;
+pub mod knockouts;
 pub mod refill;
+pub mod thermal;
 
 pub use filler::ZoneFiller;

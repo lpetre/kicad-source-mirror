@@ -16,6 +16,10 @@ Revision 2.2 (wave 0b integration review): `Padstack::copper_props` is a `Copper
 (libstdc++ node order, `board-model.md` 10.1), `ComponentClass::is_constituent`,
 `GeneratedTableData::hidden`, the root-class convention of `Netclass::constituents`, the
 default of `PcbPlotParams::layer`, `NetclassPatternAssignment`.
+Revision 2.3 (integration step 2): `LayerEnv::layer_types`, `ItemFlags::STARTPOINT` /
+`ENDPOINT`; behaviour-only additions (`DrcConstraint::name` / `rule_name` / `merge`,
+`impl PartialEq for BoardDesignSettings`, `BoardDesignSettings::drill_symbol_width`) are in
+`board-model.md`.
 
 Conventions:
 
@@ -192,6 +196,8 @@ pub struct LayerEnv {
     pub enabled_layers: Lset,
     /// BOARD::FlipLayer for every layer id (user-layer opposites included).
     pub flipped: Vec<PcbLayerId>,                   // indexed by layer id
+    /// BOARD::GetLayerType for every layer id (rev 2.3); all LT_UNDEFINED without a board.
+    pub layer_types: Vec<LayerT>,                   // indexed by layer id
 }
 
 /// Value part of DRC_CONSTRAINT (pcbnew/drc/drc_rule.h), returned by RuleResolver::eval_rules.
@@ -251,6 +257,7 @@ impl ItemFlags {
     pub const IN_EDIT: u32 = 1 << 2;         pub const IS_MOVING: u32 = 1 << 3;
     pub const IS_NEW: u32 = 1 << 4;          pub const IS_BROKEN: u32 = 1 << 5;
     pub const IS_DELETED: u32 = 1 << 7;      pub const STRUCT_DELETED: u32 = 1 << 13;
+    pub const STARTPOINT: u32 = 1 << 9;      pub const ENDPOINT: u32 = 1 << 10;   // rev 2.3
     pub const CANDIDATE: u32 = 1 << 14;      pub const SKIP_STRUCT: u32 = 1 << 15;
     pub const IS_PASTED: u32 = 1 << 17;      pub const COURTYARD_CONFLICT: u32 = 1 << 19;
     pub const MALFORMED_F_COURTYARD: u32 = 1 << 20;

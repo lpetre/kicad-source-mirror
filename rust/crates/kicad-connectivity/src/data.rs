@@ -92,6 +92,69 @@ pub struct UnconnectedEdge {
     pub weight: u32,
     /// `IsVisible()` (false when excluded by a ratsnest marker)
     pub visible: bool,
+    /// Not in C++ (FIX-CN-1): `Some` when an end of this edge was chosen among candidates the
+    /// reference orders by heap address ([`crate::edge::CnEdgeTie`]); a differential
+    /// comparison must then accept any of the candidates ([`UnconnectedEdge::accepts`]).
+    pub tie: Option<UnconnectedEdgeTie>,
+}
+
+/// Not in C++ (FIX-CN-1): [`crate::edge::CnEdgeTie`] resolved to board items and positions.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct UnconnectedEdgeTie {
+    /// Coincident anchors of different clusters (`Triangulate` chain, site P7).
+    pub coincident_clusters: bool,
+    /// Tied zone layers in `optimizeZoneAnchor` (site P8).
+    pub zone_anchor: bool,
+    /// Tied pairs in `optimizeZoneToZoneAnchors` (site P9).
+    pub zone_to_zone: bool,
+    /// The reference may have the two ends the other way round.
+    pub unordered: bool,
+    /// The possible source ends `( Parent(), Pos() )`; empty: exactly `source_item` /
+    /// `source`.
+    pub source_candidates: Vec<(ItemId, Vector2I)>,
+    /// The possible target ends; empty: exactly `target_item` / `target`.
+    pub target_candidates: Vec<(ItemId, Vector2I)>,
+}
+
+impl UnconnectedEdge {
+    /// The possible source items: the candidates, or the edge's own item.
+    pub fn source_item_candidates(&self) -> Vec<ItemId> {
+        match &self.tie {
+            Some(t) if !t.source_candidates.is_empty() => {
+                t.source_candidates.iter().map(|c| c.0).collect()
+            }
+            _ => vec![self.source_item],
+        }
+    }
+
+    /// The possible target items: the candidates, or the edge's own item.
+    pub fn target_item_candidates(&self) -> Vec<ItemId> {
+        match &self.tie {
+            Some(t) if !t.target_candidates.is_empty() => {
+                t.target_candidates.iter().map(|c| c.0).collect()
+            }
+            _ => vec![self.target_item],
+        }
+    }
+
+    /// Not in C++ (FIX-CN-1): the tie-aware comparison rule. True when the reference edge
+    /// (or unconnected-items violation) of the same net with the items `( source, target )`
+    /// (in report order) is one the reference build can produce for this edge: an untied end
+    /// must be the edge's own item, a tied end any of its candidates; for an unordered tie
+    /// the swapped order is accepted as well. Without a tie this is plain equality of the
+    /// items.
+    pub fn accepts(&self, source: ItemId, target: ItemId) -> bool {
+        let src = self.source_item_candidates();
+        let dst = self.target_item_candidates();
+
+        if src.contains(&source) && dst.contains(&target) {
+            return true;
+        }
+
+        self.tie.as_ref().is_some_and(|t| t.unordered)
+            && src.contains(&target)
+            && dst.contains(&source)
+    }
 }
 
 /// Port of `CONNECTIVITY_DATA`: the connectivity graph of a board (`CN_CONNECTIVITY_ALGO`)
@@ -438,6 +501,26 @@ impl ConnectivityData {
                     target_item: dst.parent(list),
                     weight: edge.weight(),
                     visible: edge.is_visible(),
+                    tie: edge.tie().map(|t| {
+                        let resolve = |nodes: &[crate::edge::CnEdgeNode]| {
+                            nodes
+                                .iter()
+                                .map(|n| {
+                                    let a = n.resolve(list);
+                                    (a.parent(list), a.pos())
+                                })
+                                .collect()
+                        };
+
+                        UnconnectedEdgeTie {
+                            coincident_clusters: t.coincident_clusters,
+                            zone_anchor: t.zone_anchor,
+                            zone_to_zone: t.zone_to_zone,
+                            unordered: t.unordered,
+                            source_candidates: resolve(&t.source_candidates),
+                            target_candidates: resolve(&t.target_candidates),
+                        }
+                    }),
                 });
             }
         }

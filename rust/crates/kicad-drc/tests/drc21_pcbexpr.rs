@@ -38,14 +38,14 @@ use kicad_drc::pcbexpr::evaluator::{
     PcbExprValue, pcbexpr_compiler,
 };
 use kicad_drc::rule_condition::DrcRuleCondition;
+use kicad_geom::geometry::eda_angle::EdaAngle;
 use kicad_libeval::{Context, Ucode, Value, VarType};
-use kicad_pcb::ctx::BoardCtx;
-use kicad_pcb::io::{ParseOptions, parse_board};
 use kicad_pcb::AnyItemMut;
 use kicad_pcb::board::BoardProject;
+use kicad_pcb::ctx::BoardCtx;
+use kicad_pcb::io::{ParseOptions, parse_board};
 use kicad_pcb::netclass::Netclass;
 use kicad_pcb::{Board, ItemRef};
-use kicad_geom::geometry::eda_angle::EdaAngle;
 
 type PcbValue<'e> = Value<'e, PcbExprUcode>;
 
@@ -143,7 +143,8 @@ fn broken_rule_files_compile_as_cxx() {
     let golden = read_golden("rules_errors.txt");
 
     check(&golden, |name| {
-        let lines = common::dump_rules_with::<PcbExprUcode>(&read_text(&dir.join(name)), name, false);
+        let lines =
+            common::dump_rules_with::<PcbExprUcode>(&read_text(&dir.join(name)), name, false);
         (common::summary(&lines), lines)
     });
 }
@@ -168,10 +169,15 @@ fn codegen_cases_compile_as_cxx() {
                 .is_some_and(|x| x == "kicad_dru")
         })
         .count();
-    assert_eq!(on_disk, golden.len(), "regenerate with gen_drc21_goldens.py");
+    assert_eq!(
+        on_disk,
+        golden.len(),
+        "regenerate with gen_drc21_goldens.py"
+    );
 
     check(&golden, |name| {
-        let lines = common::dump_rules_with::<PcbExprUcode>(&read_text(&dir.join(name)), name, false);
+        let lines =
+            common::dump_rules_with::<PcbExprUcode>(&read_text(&dir.join(name)), name, false);
         (lines.clone(), lines)
     });
 }
@@ -268,7 +274,14 @@ fn test_eval_expr<'e>(
     a: Option<ItemRef<'e>>,
     b: Option<ItemRef<'e>>,
 ) -> bool {
-    test_eval_expr_on_layer(expr, expected, expect_error, a, b, PcbLayerId::UndefinedLayer)
+    test_eval_expr_on_layer(
+        expr,
+        expected,
+        expect_error,
+        a,
+        b,
+        PcbLayerId::UndefinedLayer,
+    )
 }
 
 fn test_eval_expr_on_layer<'e>(
@@ -397,7 +410,10 @@ fn introspected_properties() {
     ];
 
     for (expr, expected) in cases {
-        assert!(test_eval_expr(expr, expected, false, Some(a), Some(b)), "{expr}");
+        assert!(
+            test_eval_expr(expr, expected, false, Some(a), Some(b)),
+            "{expr}"
+        );
     }
 
     // Function calls (pcbexpr_functions.cpp, package DRC-22): compile only.
@@ -457,7 +473,13 @@ fn introspected_extended_numeric_properties() {
         let zone = item(&ctx, "00000000-0000-0000-0000-0000000000c1");
         let fp = item(&ctx, "00000000-0000-0000-0000-0000000000f1");
 
-        assert!(test_eval_expr("A.Priority == 7", num(1.0), false, Some(zone), None));
+        assert!(test_eval_expr(
+            "A.Priority == 7",
+            num(1.0),
+            false,
+            Some(zone),
+            None
+        ));
         assert!(test_eval_expr(
             "A.Hatch_Orientation == 45deg",
             num(1.0),
@@ -524,7 +546,10 @@ fn renamed_properties() {
         "A.Start_X == 1mm",
         "A.Start_Y == 2mm",
     ] {
-        assert!(test_eval_expr(expr, num(1.0), false, Some(track), None), "{expr}");
+        assert!(
+            test_eval_expr(expr, num(1.0), false, Some(track), None),
+            "{expr}"
+        );
     }
 }
 
@@ -573,7 +598,11 @@ fn expression_property_types_are_supported() {
     assert_eq!(shape_types.len(), 2);
 
     for (field, types) in &field_types {
-        assert_eq!(types.len(), 1, "Incompatible expression types for property: {field}");
+        assert_eq!(
+            types.len(),
+            1,
+            "Incompatible expression types for property: {field}"
+        );
     }
 
     assert!(compile_error_pending("A.Shape"));
@@ -604,12 +633,24 @@ fn introspected_property_availability() {
     let ctx = BoardCtx::bare(&board);
     let z = item(&ctx, "00000000-0000-0000-0000-0000000000c1");
     assert!(z.as_zone().unwrap().is_rule_area());
-    assert!(test_eval_expr("A.Priority == 7", num(0.0), false, Some(z), None));
+    assert!(test_eval_expr(
+        "A.Priority == 7",
+        num(0.0),
+        false,
+        Some(z),
+        None
+    ));
 
     let board = zone(false);
     let ctx = BoardCtx::bare(&board);
     let z = item(&ctx, "00000000-0000-0000-0000-0000000000c1");
-    assert!(test_eval_expr("A.Priority == 7", num(1.0), false, Some(z), None));
+    assert!(test_eval_expr(
+        "A.Priority == 7",
+        num(1.0),
+        false,
+        Some(z),
+        None
+    ));
 }
 
 /// A footprint J1 with a text item (and a pad) as in `ParentNavigation` /
@@ -844,7 +885,8 @@ fn value_classes() {
     let a = item(&ctx, "00000000-0000-0000-0000-00000000000a");
     let b = item(&ctx, "00000000-0000-0000-0000-00000000000b");
     // None while the pad parser (PCBIO-07) is pending: the pad cases are skipped.
-    let pad = ctx.resolve(&kicad_core::kiid::Kiid::parse("00000000-0000-0000-0000-0000000000f5").unwrap());
+    let pad = ctx
+        .resolve(&kicad_core::kiid::Kiid::parse("00000000-0000-0000-0000-0000000000f5").unwrap());
 
     let composite = a.effective_netclass().unwrap().get_name();
     assert!(composite.contains(','), "{composite}");
@@ -883,7 +925,12 @@ fn value_classes() {
         ("A.Pad_Type == 'SMD'", 0.0, Some(a), None),
         // numbers, strings, the type references
         ("A.Width == 0.254mm", 1.0, Some(a), None),
-        ("A.Type == 'Pad' && A.Parent.Type == 'Footprint'", 1.0, pad, None),
+        (
+            "A.Type == 'Pad' && A.Parent.Type == 'Footprint'",
+            1.0,
+            pad,
+            None,
+        ),
         ("A.Type == 'track'", 1.0, Some(a), None),
         ("!A.Locked", 1.0, Some(a), None),
         ("A.Pad_Number == '1'", 1.0, pad, None),
@@ -906,7 +953,11 @@ fn value_classes() {
             Context::new(PcbExprContext::new(NULL_CONSTRAINT, PcbLayerId::FCu));
 
         compiler.compile(expr, &mut ucode, &mut preflight);
-        assert!(!compiler.is_error_pending(), "{expr}: {:?}", compiler.error());
+        assert!(
+            !compiler.is_error_pending(),
+            "{expr}: {:?}",
+            compiler.error()
+        );
 
         let mut env = PcbExprContext::new(NULL_CONSTRAINT, PcbLayerId::FCu);
         env.set_items(a, b);
@@ -941,7 +992,8 @@ fn rule_condition_evaluate_for() {
     let a = item(&ctx, "00000000-0000-0000-0000-00000000000a");
     let b = item(&ctx, "00000000-0000-0000-0000-00000000000b");
 
-    let mut condition = DrcRuleCondition::new("A.NetClass == 'HV_LINE' && B.NetClass == 'otherClass'");
+    let mut condition =
+        DrcRuleCondition::new("A.NetClass == 'HV_LINE' && B.NetClass == 'otherClass'");
     assert!(condition.compile(None, 0, 0));
     assert!(condition.requires_pair_items());
     assert!(condition.evaluate_for(Some(a), Some(b), NULL_CONSTRAINT, PcbLayerId::FCu, None));

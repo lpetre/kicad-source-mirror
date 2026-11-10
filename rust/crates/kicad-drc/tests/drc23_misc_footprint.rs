@@ -23,6 +23,8 @@
 //! `test_drc_invalid_outline_issue24241.cpp`, `test_drc_text_var_issue24442.cpp`,
 //! `test_drc_netclass_literal.cpp` and `test_drc_tuning_profiles.cpp` (the misc part).
 
+// The harness includes `common` privately; this test needs its `SyntaxBinder` for InitEngine.
+#[allow(clippy::duplicate_mod)]
 mod common;
 mod drc_harness;
 
@@ -143,8 +145,7 @@ fn is_net_tie_shorting(loaded: &Loaded, e: &Entry) -> bool {
     let mut footprint = None;
 
     for (uuid, ..) in &e.items {
-        let Some(item) = kicad_core::kiid::Kiid::parse(uuid).and_then(|k| ctx.resolve(&k))
-        else {
+        let Some(item) = kicad_core::kiid::Kiid::parse(uuid).and_then(|k| ctx.resolve(&k)) else {
             return false;
         };
 
@@ -168,10 +169,7 @@ fn is_net_tie_shorting(loaded: &Loaded, e: &Entry) -> bool {
 
 /// The reference entries compared with the port: board items (`SetItems( m_board )`) dropped
 /// (the port has no board UUID), drawing-sheet entries (no items) set aside.
-fn normalise_reference(
-    loaded: &Loaded,
-    reference: &[Entry],
-) -> (Vec<Entry>, Vec<Entry>) {
+fn normalise_reference(loaded: &Loaded, reference: &[Entry]) -> (Vec<Entry>, Vec<Entry>) {
     let mut kept = Vec::new();
     let mut drawing_sheet = Vec::new();
 
@@ -244,7 +242,12 @@ fn misc_and_footprint_checks_match_reference_corpus() {
 
                     let (theirs, drawing_sheet) = normalise_reference(&loaded, &reference);
 
-                    Ok((mine, theirs, drawing_sheet, loaded.report.skipped.is_empty()))
+                    Ok((
+                        mine,
+                        theirs,
+                        drawing_sheet,
+                        loaded.report.skipped.is_empty(),
+                    ))
                 },
             ))
         });
@@ -406,7 +409,11 @@ fn invalid_outline_bezier_slot_issue24078() {
     let violations: Vec<_> = run_both(&mut loaded, tuning)
         .into_iter()
         .filter(|v| {
-            loaded.board.design_settings().get_severity(v.item.error_code()) == Severity::Error
+            loaded
+                .board
+                .design_settings()
+                .get_severity(v.item.error_code())
+                == Severity::Error
         })
         .collect();
 
@@ -427,7 +434,11 @@ fn degenerate_arc_outline_marker_issue24241() {
     let violations: Vec<_> = run_both(&mut loaded, tuning)
         .into_iter()
         .filter(|v| {
-            loaded.board.design_settings().get_severity(v.item.error_code()) == Severity::Error
+            loaded
+                .board
+                .design_settings()
+                .get_severity(v.item.error_code())
+                == Severity::Error
         })
         .collect();
 

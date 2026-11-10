@@ -466,7 +466,11 @@ impl DrcTestProviderMisc {
             if !host.is_error_limit_exceeded(DRCE_ASSERTION_FAILURE) && !host.is_cancelled() {
                 let mut failures: Vec<DrcConstraint> = Vec::new();
 
-                engine.process_assertions(item, &mut |c: &DrcConstraint| failures.push(c.clone()), None);
+                engine.process_assertions(
+                    item,
+                    &mut |c: &DrcConstraint| failures.push(c.clone()),
+                    None,
+                );
 
                 for c in failures {
                     let mut drc_item =
@@ -580,8 +584,8 @@ impl DrcTestProviderMisc {
             if self.test_assertion(host, None, &text.text, text.position, LAYER_DRAWINGSHEET) {
                 // Don't run unresolved test
             } else if var_ref_matches(&text.shown_text) {
-                let mut drc_item = item::create(DRCE_UNRESOLVED_VARIABLE)
-                    .expect("DRCE_UNRESOLVED_VARIABLE item");
+                let mut drc_item =
+                    item::create(DRCE_UNRESOLVED_VARIABLE).expect("DRCE_UNRESOLVED_VARIABLE item");
                 drc_item.set_item_ids(vec![drawing_sheet.proxy_uuid]);
 
                 self.base.report_violation(
@@ -615,8 +619,15 @@ impl DrcTestProviderMisc {
             "DRC_WARNING",
             DRCE_GENERIC_WARNING,
         );
-        let found_error =
-            self.report_each(host, item, text, pos, layer, "DRC_ERROR", DRCE_GENERIC_ERROR);
+        let found_error = self.report_each(
+            host,
+            item,
+            text,
+            pos,
+            layer,
+            "DRC_ERROR",
+            DRCE_GENERIC_ERROR,
+        );
 
         found_warning || found_error
     }

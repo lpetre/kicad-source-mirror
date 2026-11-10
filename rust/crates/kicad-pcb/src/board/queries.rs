@@ -30,7 +30,7 @@ use crate::board::Board;
 use crate::ctx::BoardCtx;
 use crate::ids::{FootprintId, ItemId, NetCode, PadId, TrackId, ZoneId};
 use crate::item::BoardUse;
-use crate::traits::{BoardConnectedItem, BoardItem};
+use crate::traits::BoardConnectedItem;
 
 impl Board {
     /// `BOARD::FindFootprintByReference`: the first footprint (board order) whose reference
@@ -51,15 +51,13 @@ impl Board {
     }
 
     /// `BOARD::FindPadByUuid`: the first pad with this UUID, footprints in board order, each
-    /// footprint's pads in its order. The loop over the pads is `FOOTPRINT::FindPadByUuid`
-    /// (inlined: the footprint package M19 has no Rust counterpart for it).
+    /// footprint's pads in its order (`FOOTPRINT::FindPadByUuid`).
     pub fn find_pad_by_uuid(&self, uuid: &Kiid) -> Option<PadId> {
-        for (fp, _) in self.footprints() {
-            // FOOTPRINT::FindPadByUuid
-            for (pad_id, pad) in self.footprint_pads(fp) {
-                if BoardItem::uuid(pad) == uuid {
-                    return Some(pad_id);
-                }
+        let ctx = BoardCtx::bare(self);
+
+        for (_, footprint) in self.footprints() {
+            if let Some(pad) = footprint.find_pad_by_uuid(&ctx, uuid) {
+                return Some(pad);
             }
         }
 
@@ -68,8 +66,7 @@ impl Board {
 
     /// `BOARD::GetPad( aPosition, aLayerSet )`: the first pad hit at `pos` on one of
     /// `layers` (all copper layers when `layers` is empty), among the footprints whose
-    /// bounding box contains `pos`. The pad loop is `FOOTPRINT::GetPad( aPosition,
-    /// aLayerMask )` (inlined: no Rust counterpart in the footprint package yet).
+    /// bounding box contains `pos` (`FOOTPRINT::GetPad( aPosition, aLayerMask )`).
     pub fn get_pad_at(&self, ctx: &BoardCtx<'_>, pos: Vector2I, layers: Lset) -> Option<PadId> {
         let mask = if layers.any() {
             layers
@@ -77,21 +74,13 @@ impl Board {
             Lset::all_cu_mask().clone()
         };
 
-        for (fp, footprint) in self.footprints() {
+        for (_, footprint) in self.footprints() {
             if !footprint.hit_test(ctx, pos, 0) {
                 continue;
             }
 
-            // FOOTPRINT::GetPad
-            for (pad_id, pad) in self.footprint_pads(fp) {
-                // ... and on the correct layer.
-                if !(&pad.layer_set(ctx) & &mask).any() {
-                    continue;
-                }
-
-                if pad.hit_test(ctx, pos, 0) {
-                    return Some(pad_id);
-                }
+            if let Some(pad) = footprint.get_pad_at(ctx, pos, &mask) {
+                return Some(pad);
             }
         }
 

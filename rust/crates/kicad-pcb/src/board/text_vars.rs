@@ -24,7 +24,7 @@
 use std::sync::Arc;
 
 use kicad_core::Kiid;
-use kicad_core::case_insensitive_map::{CaseInsensitiveKey, case_insensitive_cmp};
+use kicad_core::case_insensitive_map::case_insensitive_cmp;
 use kicad_core::string_utils::get_default_variant_name;
 use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_core::title_block::TitleBlockClock;
@@ -288,48 +288,17 @@ impl Board {
         self.increment_time_stamp();
     }
 
-    /// `FOOTPRINT::DeleteVariant` (`m_variants.erase( aVariantName )`, case-insensitive map),
-    /// inlined: the footprint package (M19) has no Rust counterpart yet.
+    /// `FOOTPRINT::DeleteVariant` on a stored footprint.
     fn footprint_delete_variant(&mut self, fp: FootprintId, name: &str) {
         if let Some(footprint) = self.footprints.get_mut(fp) {
-            footprint
-                .variants
-                .remove(&CaseInsensitiveKey(name.to_string()));
+            footprint.delete_variant(name);
         }
     }
 
-    /// `FOOTPRINT::RenameVariant`, inlined like `footprint_delete_variant`.
+    /// `FOOTPRINT::RenameVariant` on a stored footprint.
     fn footprint_rename_variant(&mut self, fp: FootprintId, old: &str, new: &str) {
-        let Some(footprint) = self.footprints.get_mut(fp) else {
-            return;
-        };
-
-        if new.is_empty() || same_no_case(new, &get_default_variant_name()) {
-            return;
-        }
-
-        let old_key = CaseInsensitiveKey(old.to_string());
-        let new_key = CaseInsensitiveKey(new.to_string());
-
-        let Some((stored_old, _)) = footprint.variants.get_key_value(&old_key) else {
-            return;
-        };
-
-        let stored_old = stored_old.as_str().to_string();
-
-        // existingIt != it: a different entry under the new name
-        if footprint.variants.contains_key(&new_key) && !same_no_case(&stored_old, new) {
-            return;
-        }
-
-        if stored_old == new {
-            return;
-        }
-
-        if let Some(mut variant) = footprint.variants.remove(&old_key) {
-            variant.name = new.to_string();
-            // emplace: keeps an existing entry (impossible here, it was the same key)
-            footprint.variants.entry(new_key).or_insert(variant);
+        if let Some(footprint) = self.footprints.get_mut(fp) {
+            footprint.rename_variant(old, new);
         }
     }
 
@@ -696,6 +665,8 @@ impl Board {
 #[cfg(test)]
 mod m22_tests {
     use std::collections::BTreeMap;
+
+    use kicad_core::case_insensitive_map::CaseInsensitiveKey;
 
     use super::*;
 

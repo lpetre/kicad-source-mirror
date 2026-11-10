@@ -79,6 +79,36 @@ pub struct CnEdge {
     weight: u32,
     /// `m_visible`
     visible: bool,
+    /// Not in C++: set when an end of this edge was chosen among candidates the reference
+    /// orders by heap address (FIX-CN-1, review-connectivity.md F-1); `None` for the edges
+    /// whose ends do not depend on that order.
+    tie: Option<Box<CnEdgeTie>>,
+}
+
+/// Not in C++ (FIX-CN-1): why and how the ends of a ratsnest edge depend on the heap order of
+/// the reference build, which no deterministic rule reproduces (review-connectivity.md 2.2).
+///
+/// A differential comparison accepts, for an edge carrying this record, any reference end
+/// among the candidates of that end: an end with an empty candidate list is exact (the edge's
+/// own node), otherwise the reference end is one of the candidates (item and position). With
+/// [`CnEdgeTie::unordered`] the two ends may also be swapped.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct CnEdgeTie {
+    /// The edge joins coincident anchors of different clusters (weight 1) of one chain of
+    /// `TRIANGULATOR_STATE::Triangulate`, sorted by `CN_CLUSTER` address in C++ (site P7).
+    pub coincident_clusters: bool,
+    /// An end was moved by `optimizeZoneAnchor` and several zone layers offer the closest
+    /// outline vertex at the same distance (`ConnectedItems()` order decides, site P8).
+    pub zone_anchor: bool,
+    /// The ends were moved (or not) by `optimizeZoneToZoneAnchors` and candidate pairs with
+    /// equal centre distances decide the result (`ConnectedItems()` order, site P9).
+    pub zone_to_zone: bool,
+    /// The reference may have the two ends the other way round (chain case).
+    pub unordered: bool,
+    /// The possible source ends (incl. the port's own); empty: the source end is exact.
+    pub source_candidates: Vec<CnEdgeNode>,
+    /// The possible target ends (incl. the port's own); empty: the target end is exact.
+    pub target_candidates: Vec<CnEdgeNode>,
 }
 
 impl Default for CnEdge {
@@ -89,6 +119,7 @@ impl Default for CnEdge {
             target: None,
             weight: 0,
             visible: true,
+            tie: None,
         }
     }
 }
@@ -101,6 +132,7 @@ impl CnEdge {
             target: Some(target),
             weight,
             visible: true,
+            tie: None,
         }
     }
 
@@ -231,6 +263,21 @@ impl CnEdge {
     /// `IsVisible()`.
     pub fn is_visible(&self) -> bool {
         self.visible
+    }
+
+    /// Not in C++ (FIX-CN-1): the heap-order dependence of this edge's ends, if any.
+    pub fn tie(&self) -> Option<&CnEdgeTie> {
+        self.tie.as_deref()
+    }
+
+    /// Not in C++ (FIX-CN-1): whether an end of this edge was chosen among tied candidates.
+    pub fn is_tied(&self) -> bool {
+        self.tie.is_some()
+    }
+
+    /// Not in C++ (FIX-CN-1): the tie record of this edge, created empty if missing.
+    pub fn tie_mut(&mut self) -> &mut CnEdgeTie {
+        self.tie.get_or_insert_with(Default::default)
     }
 
     /// `GetSourcePos()` (C++ dereferences the source unchecked).

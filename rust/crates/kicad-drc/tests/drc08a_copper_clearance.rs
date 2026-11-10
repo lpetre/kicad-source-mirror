@@ -36,8 +36,8 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries, fnv1a64, has_compiled_conditions,
-    hash_text, load_board, panic_text, quiet, run_providers,
+    Entry, FNV_OFFSET, Loaded, cached_entries, cli_report_entries, fnv1a64,
+    has_compiled_conditions, hash_text, load_board, panic_text, quiet, run_providers,
 };
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
@@ -147,7 +147,7 @@ enum Origin {
     Physical,
 }
 
-/// One golden entry: type, the first 8 characters of the item UUIDs and
+/// One golden entry: type, the last 8 characters of the item UUIDs and
 /// the entry hash.
 struct GoldenEntry {
     type_: &'static str,
@@ -197,7 +197,7 @@ fn entry_hash(e: &Entry) -> u64 {
     fnv1a64(FNV_OFFSET, hash_text(e).as_bytes())
 }
 
-/// The item types of the loaded board by UUID prefix (8 characters).
+/// The item types of the loaded board by the last 8 characters of their UUID.
 fn types_by_uuid(loaded: &Loaded) -> BTreeMap<String, KicadT> {
     let ctx = BoardCtx::bare(&loaded.board);
     let mut out = BTreeMap::new();
@@ -207,7 +207,7 @@ fn types_by_uuid(loaded: &Loaded) -> BTreeMap<String, KicadT> {
         .run_on_children(RecurseMode::Recurse, &mut |id| {
             if let Some(item) = ctx.item(id) {
                 let uuid = item.uuid().as_string();
-                out.insert(uuid[..8].to_string(), item.type_());
+                out.insert(uuid[uuid.len() - 8..].to_string(), item.type_());
             }
         });
 
@@ -469,7 +469,7 @@ fn print(score: &Score, title: &str) {
     }
 
     for d in &score.order_differs {
-        eprintln!("  order differs: {d}");
+        eprintln!("  order differs (thread-pool order in C++, not compared): {d}");
     }
 
     for d in &score.limit_boards {
@@ -481,6 +481,18 @@ fn print(score: &Score, title: &str) {
     }
 }
 
+/// The comparison verdict: the sets must match. The report order is not compared: every phase
+/// of the C++ provider runs on the thread pool (one task per track / footprint) and the
+/// reference order changes from run to run (three runs of `items.kicad_pcb` gave three
+/// orders, same set); the port reports in board order (`drc.md` 4.12).
+fn assert_no_differences(score: &Score) {
+    assert!(
+        score.differences.is_empty(),
+        "{} differences",
+        score.differences.len()
+    );
+}
+
 /// Every corpus board the port loads completely (no skipped items, no user rule conditions
 /// pending DRC-21): the DRC-08a entries of the default reference report, set and order.
 #[test]
@@ -488,12 +500,7 @@ fn copper_clearance_matches_reference_corpus() {
     let filter = std::env::var("DRC08A_FILTER").unwrap_or_default();
     let score = compare_golden(include_str!("golden/drc08a/corpus.txt"), false, &filter);
     print(&score, "DRC-08a copper clearance (corpus)");
-    assert!(
-        score.differences.is_empty() && score.order_differs.is_empty(),
-        "{} differences, {} order differences",
-        score.differences.len(),
-        score.order_differs.len()
-    );
+    assert_no_differences(&score);
 }
 
 /// The same with `--all-track-errors` (`GetReportAllTrackErrors()`).
@@ -506,12 +513,7 @@ fn copper_clearance_all_track_errors_matches_reference() {
         &filter,
     );
     print(&score, "DRC-08a copper clearance (--all-track-errors)");
-    assert!(
-        score.differences.is_empty() && score.order_differs.is_empty(),
-        "{} differences, {} order differences",
-        score.differences.len(),
-        score.order_differs.len()
-    );
+    assert_no_differences(&score);
 }
 
 /// The synthetic boards of `gen_drc08a_boards.py` (tracks, arcs, vias, zones, a rule file),
@@ -520,27 +522,20 @@ fn copper_clearance_all_track_errors_matches_reference() {
 fn synthetic_boards_match_reference() {
     let score = compare_golden(include_str!("golden/drc08a/synthetic.txt"), false, "");
     print(&score, "DRC-08a copper clearance (synthetic)");
-    assert_eq!(score.compared, 2);
-    assert!(
-        score.differences.is_empty() && score.order_differs.is_empty(),
-        "{} differences, {} order differences",
-        score.differences.len(),
-        score.order_differs.len()
-    );
+    assert_eq!(score.compared, 3);
+    assert_no_differences(&score);
 }
 
 /// The synthetic boards with `--all-track-errors`.
 #[test]
 fn synthetic_boards_all_track_errors_match_reference() {
     let score = compare_golden(include_str!("golden/drc08a/synthetic_ate.txt"), true, "");
-    print(&score, "DRC-08a copper clearance (synthetic, --all-track-errors)");
-    assert_eq!(score.compared, 2);
-    assert!(
-        score.differences.is_empty() && score.order_differs.is_empty(),
-        "{} differences, {} order differences",
-        score.differences.len(),
-        score.order_differs.len()
+    print(
+        &score,
+        "DRC-08a copper clearance (synthetic, --all-track-errors)",
     );
+    assert_eq!(score.compared, 3);
+    assert_no_differences(&score);
 }
 
 /// Loads a QA board; `None` (with a note) when the port does not load it completely yet.
@@ -582,7 +577,8 @@ fn hole_clearance_issue24355() {
             bds.drc_severities.insert(ii, Severity::Ignore);
         }
 
-        bds.drc_severities.insert(DRCE_HOLE_CLEARANCE, Severity::Error);
+        bds.drc_severities
+            .insert(DRCE_HOLE_CLEARANCE, Severity::Error);
     }
 
     let connectivity = prepare(&mut loaded);

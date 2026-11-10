@@ -20,9 +20,10 @@
 //!
 //! FAB-03 defines the struct (`pcbplot.h` L61-162) with its options and the inline members;
 //! FAB-04 ports `getColor`, `PlotPadNumber`, `PlotPad` (L72-398) and `PlotZone` (L902-957).
-//! The other per-item entry points are pending functions that name the work package porting
-//! them (FAB-05 graphics, FAB-06 text, FAB-11 drill marks, FAB-13 drill symbols). They panic
-//! with a "port pending" message until that package lands.
+//! FAB-05 ports the graphic items in `plot_brditems_shapes.rs` (an `impl` block of this
+//! struct). The other per-item entry points are pending functions that name the work package
+//! porting them (FAB-06 text, FAB-11 drill marks, FAB-13 drill symbols). They panic with a
+//! "port pending" message until that package lands.
 
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::plot_enums::{FillT, PlotFormat};
@@ -117,30 +118,12 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
             && (a_layer == PcbLayerId::FFab || a_layer == PcbLayerId::BFab)
     }
 
-    /// `BRDITEMS_PLOTTER::PlotFootprintGraphicItems` (FAB-05).
-    pub fn plot_footprint_graphic_items(&mut self, a_footprint: FootprintId) {
-        fab_port_pending!(
-            "BRDITEMS_PLOTTER::PlotFootprintGraphicItems (FAB-05)",
-            a_footprint
-        )
-    }
-
     /// `BRDITEMS_PLOTTER::PlotFootprintTextItems` (FAB-06).
     pub fn plot_footprint_text_items(&mut self, a_footprint: FootprintId) {
         fab_port_pending!(
             "BRDITEMS_PLOTTER::PlotFootprintTextItems (FAB-06)",
             a_footprint
         )
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotDimension` (FAB-05).
-    pub fn plot_dimension(&mut self, a_dim: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotDimension (FAB-05)", a_dim)
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotPcbTarget` (FAB-05).
-    pub fn plot_pcb_target(&mut self, a_mire: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotPcbTarget (FAB-05)", a_mire)
     }
 
     /// Port of `BRDITEMS_PLOTTER::PlotZone`: plot the outlines of `a_polys_list` (the fill of
@@ -221,21 +204,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
             a_font_metrics,
             a_strikeout
         )
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotShape` (FAB-05).
-    pub fn plot_shape(&mut self, a_shape: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotShape (FAB-05)", a_shape)
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotTableBorders` (FAB-05).
-    pub fn plot_table_borders(&mut self, a_table: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotTableBorders (FAB-05)", a_table)
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotBarCode` (FAB-05).
-    pub fn plot_bar_code(&mut self, a_bar_code: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotBarCode (FAB-05)", a_bar_code)
     }
 
     /// Port of `BRDITEMS_PLOTTER::PlotPad`: plot a pad (flashed, or outlined in sketch mode)
@@ -607,11 +575,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
             Metrics::default_metrics(),
             None,
         );
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotBoardGraphicItem` (FAB-05).
-    pub fn plot_board_graphic_item(&mut self, item: ItemRef<'_>) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotBoardGraphicItem (FAB-05)", item)
     }
 
     /// `BRDITEMS_PLOTTER::PlotDrillMarks` (FAB-11).

@@ -333,11 +333,9 @@ fn construct<T>(o: &mut Out, class: &str, f: impl FnOnce() -> T) -> Option<T> {
     }
 }
 
-/// `FOOTPRINT::GetNextFieldOrdinal()` (no Rust method yet; replace by it once it exists).
+/// `FOOTPRINT::GetNextFieldOrdinal()` of a stored footprint.
 fn next_field_ordinal(board: &Board, fp: crate::ids::FootprintId) -> i32 {
-    board
-        .footprint_fields(fp)
-        .fold(42, |ordinal, (_, f)| ordinal.max(f.ordinal + 1))
+    board[fp].next_field_ordinal(&BoardCtx::bare(board))
 }
 
 fn parented<T: BoardItem>(mut item: T, parent: ParentRef) -> T {

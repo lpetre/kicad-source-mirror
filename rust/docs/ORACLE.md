@@ -109,6 +109,8 @@ pcb-dump defaults [--hash]                              default-constructed clas
 pcb-dump board [--sections LIST] [--hash] FILE...       QA KI_TEST::LoadBoard path (default)
 pcb-dump board --no-init FILE                           parser only
 pcb-dump board --loader FILE                            kicad-cli path (BOARD_LOADER::Load)
+pcb-dump rules [--component-classes] FILE...            .kicad_dru parse dump (PCB_DUMP_FORMAT.md 7)
+pcb-dump props-table [--hash]                           property tables (PCB_DUMP_FORMAT.md 10)
 ```
 
 * `--hash` replaces each value by its 64-bit FNV-1a hash (`#<16 hex>`), keeping goldens small; rerun

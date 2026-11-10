@@ -249,6 +249,9 @@ Progress log:
   Tests of other packages failing at review time (to recheck in the campaign):
   drc21_pcbexpr (8), drc24_courtyard_text (2: courtyard cases once footprints started to
   load).
+  03:10 UTC: done FIX-CN-1 (tie records on ratsnest edges + tie-aware comparison rule;
+  evidence run of cn-order-oracle on all 365 DRC corpus boards: no board has a
+  heap-dependent ratsnest in the reference, so corpus comparisons stay exact).
   READY TO LAUNCH (package files written): after INT-2a: [FIX-DRC-1]; after PCBIO-07 finishes (workflow w3kdexuvx):
   [PCBIO-14]; after the FAB chain (wb9xlvw89): [FAB-10], [FAB-11], [FAB-12] (one agent at a
   time in kicad-fab: chain them); after DRC-12, FAB-07 / 08 and PCBIO-15: [WIRE-1]

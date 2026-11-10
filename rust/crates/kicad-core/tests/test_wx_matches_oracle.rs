@@ -119,3 +119,28 @@ fn wx_string_matches_rules() {
     // the C string ends at an embedded NUL
     assert!(wx_string_matches("ab\0cd", "ab"));
 }
+
+/// `wxString::CmpNoCase` / `IsSameAs( .., false )` values printed by libwx_baseu 3.2 (the
+/// reference build's wx) for the same strings.
+#[test]
+fn cmp_no_case_matches_wx() {
+    use kicad_core::wxstr::{cmp_no_case, is_same_as_no_case};
+
+    let cases: [(&str, &str, i32); 10] = [
+        ("a", "c", -2),
+        ("C", "a", 2),
+        ("ab", "a", 98),
+        ("a", "ab", -98),
+        ("a\0b", "a\0c", -1),
+        ("a", "a\0", -1),
+        ("a\0", "a", 1),
+        ("a\0\0x", "a\0y", -1),
+        ("x\0", "x\0", 0),
+        ("\u{e9}", "E", 132),
+    ];
+
+    for (a, b, expected) in cases {
+        assert_eq!(cmp_no_case(a, b), expected, "{a:?} {b:?}");
+        assert_eq!(is_same_as_no_case(a, b), expected == 0, "{a:?} {b:?}");
+    }
+}

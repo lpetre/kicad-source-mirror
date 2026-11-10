@@ -356,3 +356,79 @@ boards, 841 lines; 0 mismatches everywhere. `cn04_corpus_build`: 375 files, 374 
   with a pad), jumper pads, the pad branches of `IsConnectedOnLayer`: verified by unit tests
   only; goldens waiting.
 - Ratsnest exclusions (F-9), `NearestBicoloredPair`, `CN_ANCHOR::IsDangling` (tier 3).
+
+## FIX-CN-1: ratsnest ends that follow the heap in the reference (tie flags, comparison rule)
+
+Origin: review-connectivity.md F-1 (sites P7, P8, P9). No behaviour change: every edge, end
+and order is as before (all goldens unchanged); the port only *records* where the reference
+result depends on heap order.
+
+| C++ | Rust | State |
+|---|---|---|
+| `TRIANGULATOR_STATE::Triangulate` chain sort by `CN_CLUSTER*` (`ratsnest_data.cpp:253`) | `ratsnest.rs` `RnNet::triangulate`: every weight-1 chain edge carries `CnEdgeTie { coincident_clusters, unordered, candidates = the whole chain }` | ported + flag |
+| `optimizeZoneAnchor` (`:351`) | `optimize_zone_anchor` also returns one anchor per zone layer whose closest vertex is at the winning distance (its first such vertex); more than one: `zone_anchor`, candidates of the moved end (`record_zone_anchor_tie`) | ported + flag |
+| `optimizeZoneToZoneAnchors` (`:406-487`) | `optimize_zone_to_zone_anchors` also returns every result another input order could give (`zone_to_zone_outcomes`: groups of equal centre distance wholly inside the first 3 can come out in any order, the group straddling position 3 can contribute any calling member or, when enough of its members make no call, fall back to the groups before it; "no call" keeps the original ends); more than one: `zone_to_zone`, candidates of both ends (`record_zone_to_zone_tie`) | ported + flag |
+| - | `edge.rs` `CnEdgeTie`, `CnEdge::tie()` / `is_tied()` / `tie_mut()`; `data.rs` `UnconnectedEdge::tie` (`UnconnectedEdgeTie`: candidates resolved to `( ItemId, Vector2I )`), `UnconnectedEdge::accepts`, `source_item_candidates`, `target_item_candidates` | new (additions only) |
+
+### Comparison rule (for DRC-12 and the differential campaign)
+
+An unconnected-items violation is `( source item, target item )` of one ratsnest edge, marker at
+the source position (`drc_test_provider_connectivity.cpp`, `RunOnUnconnectedEdges`). For the
+reference violations of a board:
+
+1. Edges without a tie (`UnconnectedEdge::tie == None`, or `CnEdge::tie() == None` inside the
+   DRC provider) compare exactly: net, both items, item order, marker position.
+2. A flagged edge matches a reference violation of the same net when every end with an empty
+   candidate list is exactly the edge's own item / position, and every other end is a member
+   of its candidate list (items; positions, for the marker, from the same list). With
+   `unordered` (chain ties) the two items may also be swapped. `UnconnectedEdge::accepts( a, b )`
+   implements this for the items.
+3. Flagged edges change the `GetEdges()` order (it sorts by source position), so the
+   violations of a board are matched as a one-to-one assignment (bipartite matching), not by
+   position in the list; report the flagged matches in a separate "tie" list instead of
+   counting them as matches or mismatches.
+
+Candidates come from the port's own data: the DRC provider sees them on the `CnEdge` it gets
+from `run_on_unconnected_edges` (`edge.tie()`, resolve with `CnEdgeNode::resolve( list )`,
+item `parent( list )`), an external client on `ConnectivityData::unconnected_edges()`.
+
+### Verification (FIX-CN-1)
+
+- `tests/fix_cn1_ties.rs`: `rev_order_probe` has both nets flagged (N2 `zone_anchor`, one end
+  with 2 candidates; N3 `zone_to_zone`, both ends with 3 candidates), `rev_ratsnest_zones` has
+  none (its ties are inside one outline), the 41 coincident chains of `rn_coincident` give
+  weight-1 `coincident_clusters` edges only.
+- The DRC comparison against the reference: `tests/golden/fix_cn1_unconnected.txt`
+  (`tests/oracle/gen_fix_cn1.sh`, `kicad-cli pcb drc --format json`, `unconnected_items`:
+  `rev_order_probe` and `rev_ratsnest_zones` once, `rn_coincident` three runs, which differ in
+  the reference). With the rule every board and run matches; without it (ties stripped)
+  `rev_order_probe` and all three `rn_coincident` runs fail and `rev_ratsnest_zones` still
+  passes; every untied edge is in the reference exactly.
+- Unit tests of `zone_to_zone_outcomes` (`ratsnest.rs`).
+
+### Evidence run (step 3)
+
+`cn-order-oracle --loader --drc --queries`, one run, on the 365 boards of the DRC campaign
+corpus (`crates/kicad-drc/tests/golden/drc_corpus.txt`; it holds none of the large demo
+boards): the `rn_hash` and every `rn` line of the `load` and `drc` phases are identical on
+**364 boards** (79 of them have ratsnest edges; `issue16182` and `pns_regressions/ultrasound`
+have 6 / 13 multi-cluster coincident chains whose address order is the creation order in both
+phases); `qa/data/pcbnew/plugins/fakeboard.kicad_pcb` gives no data (not a loadable board).
+**No campaign board has a heap-dependent ratsnest** in this run. Positive controls:
+`rev_order_probe` (rn_hash load `9b0d876e..`, drc `b0dc7998..`) and `rn_coincident` (14 of 41
+chains reordered in the DRC phase) differ, `rev_ratsnest_zones` does not. Since the heap order
+varies between runs (review 2.1), a single run cannot prove a board tie-free; the port's flags
+are the per-board criterion (a board without flagged edges needs no tie handling).
+
+### Deviations (FIX-CN-1)
+
+- None in results. `CnEdge` carries the extra `tie` record (part of its `PartialEq`).
+
+### Known gaps (FIX-CN-1)
+
+- Second-order effects are not flagged: a chain tie that swaps the ends of an edge before
+  `OptimizeRNEdges` (the optimisation then starts from the other end), and a weight-1 chain
+  edge competing in Kruskal with a non-chain edge of the same key. For an edge that is
+  already tied and then optimised without a tie, the optimised end's candidates are its one
+  result.
+- The rule is not applied in kicad-drc yet (change request to DRC-12 / the campaign).

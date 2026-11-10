@@ -345,7 +345,7 @@ impl PcbWriter<'_> {
     /// The `formatPostMachining` lambda of `format( const PCB_TRACK* )`:
     /// `(<name> counterbore|countersink [(size ..)] [(depth ..)] [(angle ..)])`, nothing when
     /// not post-machined.
-    fn format_post_machining(
+    pub(crate) fn format_post_machining(
         &mut self,
         name: &str,
         props: &PostMachiningProps,

@@ -24,7 +24,7 @@ Two goldens, one line per report entry of the types `clearance`, `hole_clearance
     <index> TAB <type code> TAB <uuid of item 1> TAB <uuid of item 2> TAB <hash>
 
 (type codes C clearance, H hole_clearance, S shorting_items, X tracks_crossing; UUIDs cut to
-their first 8 characters to keep the golden small) where <hash> is the FNV-1a 64 of the entry text of `gen_drc_corpus.py` (`hash_line`: severity,
+their last 8 characters to keep the golden small) where <hash> is the FNV-1a 64 of the entry text of `gen_drc_corpus.py` (`hash_line`: severity,
 type, description, per item uuid, description and position in IU). Boards without such entries
 get `@ <path> TAB none`, failed reference runs `@ <path> TAB load_error`. The item UUIDs let the
 Rust replay attribute each entry to the phase that produced it (DRC-08a item tests, DRC-08b
@@ -79,7 +79,7 @@ def lines_for(rel, report):
         if v["type"] not in TYPES:
             continue
 
-        uuids = [item["uuid"][:8] for item in v.get("items", [])] + ["", ""]
+        uuids = [item["uuid"][-8:] for item in v.get("items", [])] + ["", ""]
         h = corpus.fnv1a64(corpus.FNV_OFFSET, corpus.hash_line(v).encode())
         out.append(f"{i}\t{TYPES[v['type']]}\t{uuids[0]}\t{uuids[1]}\t{h:016x}")
 

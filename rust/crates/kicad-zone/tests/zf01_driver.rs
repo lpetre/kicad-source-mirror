@@ -20,7 +20,7 @@
 //! iterative refill, on synthetic boards filled with the test stand-in
 //! (`set_trivial_copper_fill`: fill = smoothed outline). Port of the driver part of
 //! `qa/tests/pcbnew/test_zone_filler.cpp` `ZoneFillDependencyKnockoutMargin`; the cases that
-//! compare real fills are `#[ignore]`d until ZF-03 lands.
+//! compare real fills run the real copper fill (ZF-03).
 
 use std::sync::Arc;
 
@@ -196,10 +196,9 @@ fn zone_fill_dependency_knockout_margin_order() {
     );
 }
 
-/// The full C++ assertion of `ZoneFillDependencyKnockoutMargin`: the fills keep the
-/// clearance. Needs the real copper fill (package ZF-03).
+/// The fill assertion of `ZoneFillDependencyKnockoutMargin` with the real copper fill
+/// (package ZF-03): both zones fill.
 #[test]
-#[ignore = "needs fillCopperZone (package ZF-03)"]
 fn zone_fill_dependency_knockout_margin_fills() {
     let mut f = Fixture::new(&format!(
         "{}\n{}",

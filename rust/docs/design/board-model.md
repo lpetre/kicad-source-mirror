@@ -43,6 +43,20 @@ constituent list for the same reason); `GeneratedTableData::hidden` is added;
 `tools/check_item_shims.py` reads the subclasses folded into one Rust type (generators,
 dimensions, generated tables), whose overrides need a shim that dispatches on the subclass.
 
+Revision 2.3 (integration step 2, `integration-2.md`). Changes, all reflected in the code:
+`EdaShapeItem::corners_in_sequence` takes `ctx` (the `EDA_SHAPE` body reads the virtual
+`GetWidth()` through `getBoundingBox()`, 6.2a); `BoardItemMut::style_from_settings` takes
+`&MutEnv` (6.2); `BoardConnectedItem::set_net` is the `SetNet` virtual, with `ZONE`'s
+copper-thieving override, reached on stored items through `Board::set_item_netinfo` (6.2,
+8.2); the supertrait `AsAnyItem` and `board_item::with_this` give a base-class body its own
+`ItemRef` also for a detached value (6.2); `LayerEnv` carries the layer types, so mutators
+evaluate `BOARD_ITEM::IsSideSpecific` (`MutEnv::is_side_specific`) and `BOARD::IsBackLayer`
+exactly (8.2); `ConnectivityQuery::net_items` (7); `DrcConstraint::name` / `rule_name` /
+`merge` live in `drc_api.rs` (7); `Pad::is_free_pad`, `PcbDrillMap::symbol_extent` take `ctx`;
+`Track::eq_item` / `similarity` / `detached_copy` dispatch on the variant (6.3);
+`AnyItemMut::as_connected_mut` (6.3). The kernel files stay frozen for packages; the
+integrator is the only editor.
+
 ## 0. The design on one screen
 
 | Topic | Decision |
@@ -359,7 +373,14 @@ Three consequences of "a Rust struct does not inherit" (binding):
   calls one follows the generic-function rule above.
 
 ```rust
-pub trait BoardItem: Invalidate {
+/// `this` as a `BOARD_ITEM*` for a value that may live outside the arena (rev 2.3). Generated
+/// by `board_items!` for every arena type; by hand for `NetinfoItem` and for `PcbTrack` /
+/// `PcbArc` / `PcbVia`, whose `AnyItem` form is the tagged `Track` (they hand over a copy).
+/// Base-class bodies use `board_item::with_this(item, ctx, |this: ItemRef| ..)`: the stored
+/// item for a live handle, else a view of the value itself (`id() == None`).
+pub trait AsAnyItem { fn with_any_item(&self, f: &mut dyn FnMut(AnyItem<'_>)); }
+
+pub trait BoardItem: Invalidate + AsAnyItem {
     // identity / structure (no context)
     fn base(&self) -> &BoardItemBase;
     fn base_mut(&mut self) -> &mut BoardItemBase;
@@ -412,6 +433,9 @@ pub trait BoardItem: Invalidate {
 
 pub trait BoardConnectedItem: BoardItem {
     fn net_code(&self) -> NetCode { self.connected().map_or(NetCode::ORPHANED, |c| c.net) }
+    /// SetNet( aNetInfo ) (rev 2.3): stores the net as given, no copper check, no board lookup;
+    /// NetCode::ORPHANED is the null pointer. ZONE: a copper-thieving zone stores null.
+    fn set_net(&mut self, net: NetCode);
     fn is_connected(&self, ctx: &BoardCtx<'_>) -> bool { true }   // ZONE: !rule area; PCB_SHAPE: copper && no fp
     fn effective_netclass<'a>(&self, ctx: &BoardCtx<'a>) -> &'a Netclass;   // see 9.2
     /// GetOwnClearance( aLayer, aSource ): `ctx.rules.cached_own_clearance`, 0 without rules.
@@ -435,7 +459,9 @@ pub trait BoardItemMut: BoardItem {
     fn on_footprint_transformed(&mut self, env: &MutEnv) {}
     fn on_footprint_rescaled(&mut self, env: &MutEnv, ratio_x: f64, ratio_y: f64,
                              linear_factor: f64, anchor: Vector2I, parent_rotate: EdaAngle) {}
-    fn style_from_settings(&mut self, settings: &BoardDesignSettings, check_side: bool) {}
+    /// rev 2.3: takes the snapshot (PCB_TEXT / PCB_TEXTBOX call the frame-converting setters,
+    /// test GetParentFootprint() and ask BOARD::IsBackLayer).
+    fn style_from_settings(&mut self, env: &MutEnv, settings: &BoardDesignSettings, check_side: bool) {}
 }
 
 /// Every item clears its derived caches here; `Board` calls it before handing out `&mut`.
@@ -505,7 +531,7 @@ pub trait EdaShapeItem {
     // = GetTextAngle(), which adds the parent footprint's orientation: `ctx` as well.
     fn top_left(&self, ctx: &BoardCtx<'_>) -> Vector2I;
     fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I;
-    fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I>;
+    fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I>;  // rev 2.3
     fn shape_draw_rotation(&self, ctx: &BoardCtx<'_>) -> EdaAngle { ANGLE_0 }   // getDrawRotation
     fn shape_max_error(&self, ctx: &BoardCtx<'_>) -> i32 { 100 }    // getMaxError (PCB_SHAPE: board)
     fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet { ShapePolySet::new() } // PCB_SHAPE reads other items
@@ -595,6 +621,8 @@ impl AnyItemMut<'_> {
     /// The mutating virtuals of a leaf item; None for footprint, table, group, generator
     /// (they cascade through Board methods, 8.3). Used by `Board::move_item` etc.
     pub fn as_leaf_mut(&mut self) -> Option<&mut dyn BoardItemMut>;
+    /// dynamic_cast<BOARD_CONNECTED_ITEM*> of a mutable item (the SetNet virtual, rev 2.3).
+    pub fn as_connected_mut(&mut self) -> Option<&mut dyn BoardConnectedItem>;
 }
 ```
 
@@ -610,7 +638,9 @@ Typed per-class behaviour (`pad.flash_layer(ctx, layer)`, `via.layer_pair()`,
 `zone.filled_polys_list(layer)`, `padstack.for_each_unique_layer(..)`) is inherent methods on
 the structs, in the module that ports the C++ file. A virtual that a concrete class introduces
 is such an inherent method on every struct of the family plus a dispatcher on the tagged form
-(`Track::width()`, `Track::length()`, `Track::width_constraint(ctx, want_source)`). Rule C1: an inherent method that backs a
+(`Track::width()`, `Track::length()`, `Track::width_constraint(ctx, want_source)`; also the
+`operator==` / `Similarity` pair as `Track::eq_item` / `similarity`, false / 0.0 across
+variants, and `Track::detached_copy`, which is `PCB_VIA( const PCB_VIA& )` for a via). Rule C1: an inherent method that backs a
 trait method has **exactly the trait's signature** (so it always takes `ctx`, see 6.2); any
 other inherent method takes `ctx` iff the C++ body reaches beyond `self`. A method that must
 name its own item (`this`) uses `self.base().id` or `ctx.view(AnyItem::Pad(self))`.
@@ -671,8 +701,15 @@ pub trait ConnectivityQuery: Sync {
     /// CONNECTIVITY_DATA::GetNodeCount / GetPadCount (BOARD::GetNodesCount, net statistics).
     fn node_count(&self, net: Option<NetCode>) -> u32;
     fn pad_count(&self, net: Option<NetCode>) -> u32;
+    /// CONNECTIVITY_DATA::GetNetItems (rev 2.3; NETINFO_ITEM::GetBoundingBox): ItemId order.
+    fn net_items(&self, net: NetCode, types: &[KicadT]) -> Vec<ItemId>;
 }
 ```
+
+`DrcConstraint` carries the value-level members of `DRC_CONSTRAINT` as inherent methods
+(rev 2.3): `name()` (`GetName`), `rule_name(rule)` (`GetRuleName`), `merge(other)` (`Merge`).
+`kicad_drc::rule::DrcConstraintExt` keeps only what needs the rule set and forwards these
+three; a file that imported the extension trait for them alone no longer needs the import.
 
 * Re-entrancy: `eval_rules` calls item methods, which may call `cached_own_clearance`. Engine
   caches use `Mutex` (works on wasm32) and never hold a lock across an item call.
@@ -752,14 +789,25 @@ error) is fine; `check_invariants` reports one that is left over.
 #[derive(Clone)]
 pub struct MutEnv {
     pub parent: Option<ParentFrame>,       // None: board-level item
-    pub layers: Arc<LayerEnv>,             // copper count, enabled layers, BOARD::FlipLayer table
+    pub layers: Arc<LayerEnv>,             // copper count, enabled layers, BOARD::FlipLayer table,
+                                           // BOARD::GetLayerType per layer (rev 2.3)
     pub max_error: i32,
     pub board_use: BoardUse,
 }
 #[derive(Clone, Copy)]
 pub struct ParentFrame { pub footprint: FootprintId, pub transform: TransformTrs,
                          pub layer: PcbLayerId, pub flipped: bool }
-impl MutEnv { pub fn detached() -> MutEnv; }   // no board: the C++ null-board defaults
+impl MutEnv {
+    pub fn detached() -> MutEnv;               // no board: the C++ null-board defaults
+    /// BOARD_ITEM::IsSideSpecific() for a mutator (rev 2.3): the item's GetLayerSet() against
+    /// LSET::SideSpecificMask(), else the type of its principal layer (LT_FRONT / LT_BACK).
+    pub fn is_side_specific(&self, layer_set: &Lset, principal_layer: PcbLayerId) -> bool;
+}
+impl LayerEnv {                                // rev 2.3; `::IsBackLayer` etc. without a board
+    pub fn layer_type(&self, layer: PcbLayerId) -> LayerT;
+    pub fn is_front_layer(&self, layer: PcbLayerId) -> bool;   // BOARD::IsFrontLayer
+    pub fn is_back_layer(&self, layer: PcbLayerId) -> bool;    // BOARD::IsBackLayer
+}
 
 impl Board {
     pub fn mut_env(&self, id: ItemId) -> MutEnv;
@@ -779,8 +827,12 @@ impl Board {
     pub fn flip_item(&mut self, id: ItemId, centre: Vector2I, dir: FlipDirection);
     pub fn mirror_item(&mut self, id: ItemId, centre: Vector2I, dir: FlipDirection);
     pub fn set_item_layer(&mut self, id: ItemId, layer: PcbLayerId);
-    /// BOARD_CONNECTED_ITEM::SetNetCode with the board lookup: 0 off copper, unknown code -> -1.
+    /// BOARD_CONNECTED_ITEM::SetNetCode with the board lookup: 0 off copper, unknown code -> -1;
+    /// the ZONE::SetNetCode override (copper thieving: 0) applies.
     pub fn set_item_net(&mut self, id: ItemId, net: NetCode, no_assert: bool) -> bool;
+    /// The SetNet virtual on a stored item (rev 2.3): no copper check, no lookup, ORPHANED =
+    /// null; BOARD::Remove( net ) and BOARD::MapNets use it.
+    pub fn set_item_netinfo(&mut self, id: ItemId, net: NetCode) -> bool;
     pub fn set_item_locked(&mut self, id: ItemId, locked: bool);
 }
 ```
@@ -1276,6 +1328,18 @@ clients, and each can be added later without changing a signature above.
 | `OnceCache` | `KeyedCache` with an always-valid predicate | - |
 | `FootprintTree` / `TableTree` behaviour (`footprint_take`, adding a tree, copy between boards) | the parser creates containers in place; the types exist as data only | placing library footprints, clipboard, footprint update from library |
 | `Similarity`, `NormalizeForCompare`, `Duplicate`, `swapData` | editor and library-parity operations | with their first consumer |
+
+**Integration step 2 (revision 2.3): what stays open.** The triage of every change request
+is `integration-2.md`. Still deferred, each with its owner there: the subclass overrides of
+the generator arms of `move_item` / `rotate_item` / `flip_item` / `mirror_item` /
+`set_item_layer` and the via stitch default template (FIX-GEN-1: generator geometry members
+live in the property map); `PCB_DIMENSION_BASE::Update()` on every text setter and the
+i32-backed dimension enums; dynamic component classes (rule matcher hook);
+`CacheGeneratorConnectivity::build` applying the net changes (session glue); the forwarding
+wrapper `Pad::is_free_pad_ctx` (kept while a running package calls it; remove next) and the
+`env` parameter of `PcbBarcode::style_from_settings` (rule C1, after M25a).
+`BOARD_DESIGN_SETTINGS::operator==` is `impl PartialEq for BoardDesignSettings` without the
+BOM members, which the model does not carry.
 
 **Decisions of the orchestrator (they close the open questions of revision 1).**
 

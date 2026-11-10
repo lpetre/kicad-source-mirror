@@ -33,12 +33,12 @@ use std::sync::Arc;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::kiid::Kiid;
 use kicad_geom::math::vector2::Vector2I;
+use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{
     DRCE_FOOTPRINT, DRCE_FOOTPRINT_SCALED_WITH_PADS, DRCE_FOOTPRINT_TYPE_MISMATCH,
     DRCE_PAD_TH_WITH_NO_HOLE, DRCE_PADSTACK, DRCE_SHORTING_ITEMS,
 };
 use kicad_pcb::ids::ItemId;
-use kicad_pcb::BoardCtx;
 
 use super::run_host::RunHost;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
@@ -100,10 +100,7 @@ impl DrcTestProviderFootprintChecks {
     pub fn run(&self, _engine: &DrcEngine, run: &mut DrcRunState<'_>, ctx: &BoardCtx<'_>) -> bool {
         let mut host = RunHost(run);
 
-        if !self
-            .base
-            .report_phase(&mut host, "Checking footprints...")
-        {
+        if !self.base.report_phase(&mut host, "Checking footprints...") {
             return false; // DRC cancelled
         }
 
@@ -227,7 +224,6 @@ impl DrcTestProviderFootprintChecks {
                     );
                 }
             }
-
         }
 
         !host.is_cancelled()

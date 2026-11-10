@@ -232,21 +232,38 @@ def items_board():
     out += segment(185, 85, 185, 115, "B.Cu", "A")
     out += via(201, 95, "B", ("F.Cu", "B.Cu"), size=1.5, drill=1.2)
 
+    # DRC epsilon: gaps just below the clearance (0.2 mm; tracks 0.2 mm wide), within and
+    # beyond the epsilon, and an arc against a via.
+    for i, gap in enumerate((0.1999, 0.1995, 0.199, 0.2)):
+        y = 90 + 2 * i
+        out += segment(100, y, 110, y, "F.Cu", "A")
+        out += segment(100, y + 0.2 + gap, 110, y + 0.2 + gap, "F.Cu", "B")
+
+    out += arc(120, 95, 125, 90, 130, 95, "B.Cu", "D")
+    out += via(125, 90.55, "B")
+
     out += "\t(embedded_fonts no)\n)\n"
     return out
 
 
-# A rule file: hole clearance 0.4 mm (zone hole test and the via hole tests need it > 0),
-# and a 0 hole clearance rule for vias (the "actual < 0" message).
+# A rule file: hole clearance 0.4 mm (the zone hole test and the via hole tests need it > 0).
 RULES = """(version 1)
 (rule "hole clearance"
 \t(constraint hole_clearance (min 0.4mm)))
 """
 
+# Hole clearance 0: the hole test still runs (an item cannot be inside a hole; the "actual < 0"
+# message).
+RULES_ZERO = """(version 1)
+(rule "no hole clearance"
+\t(constraint hole_clearance (min 0mm)))
+"""
+
 
 def main():
     os.makedirs(DATA, exist_ok=True)
-    boards = {"items": (items_board(), None), "items_rules": (None, RULES)}
+    boards = {"items": (items_board(), None), "items_rules": (None, RULES),
+              "items_hole0": (None, RULES_ZERO)}
     rels = []
 
     for name, (text, rules) in boards.items():

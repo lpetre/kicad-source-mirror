@@ -246,7 +246,7 @@ impl Default for ShapeProps {
             offset: Vector2I::new(0, 0),
             round_rect_radius_ratio: 0.0,
             chamfered_rect_ratio: 0.0,
-            chamfered_rect_positions: 0,
+            chamfered_rect_positions: kicad_geom::convert_basic_shapes_to_polygon::RECT_NO_CHAMFER,
             trapezoid_delta_size: Vector2I::new(0, 0),
         }
     }

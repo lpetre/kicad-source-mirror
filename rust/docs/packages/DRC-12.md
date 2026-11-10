@@ -63,3 +63,12 @@ Verification is against the reference kicad-cli DRC reports (rust/docs/ORACLE.md
     edges for exactly this comparison).
   - `for_each_geometry_item`: track callbacks cannot stop the walk (as in C++); every other
     item kind can.
+- Unconnected-items comparison (package FIX-CN-1, done; rule in
+  kicad-connectivity/PORT_STATUS.md): ratsnest edges whose ends the reference picks in heap
+  order carry a tie record (`CnEdge::tie()`, `UnconnectedEdge::tie`). Edges without a tie
+  compare exactly (net, both items, item order, marker position); for a flagged edge an end
+  with an empty candidate list compares exactly, any other end by membership in its
+  candidate list, and with `unordered` the two items may be swapped
+  (`UnconnectedEdge::accepts(a, b)` implements it); match violations one-to-one, not by list
+  position; list flagged matches separately. No board of the 365-board DRC corpus has such
+  a tie in the reference, so on the corpus the comparison stays exact.

@@ -347,7 +347,8 @@ impl<T> StdSet<T> {
     {
         let rightmost = self.nodes[RB_HEADER].right;
 
-        let (x, p) = if self.len() > 0 && less(self.key(rightmost), &v) {
+        // size() > 0
+        let (x, p) = if !self.is_empty() && less(self.key(rightmost), &v) {
             (RB_NIL, rightmost)
         } else {
             match self.get_insert_unique_pos(&v, &mut less) {

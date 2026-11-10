@@ -34,7 +34,7 @@ use kicad_geom::thirdparty::delaunator::{Delaunator, DelaunatorError, INVALID_IN
 use kicad_pcb::ctx::BoardCtx;
 
 use crate::algo::KiUnionFind;
-use crate::edge::{CnEdge, CnEdgeNode, anchor_of, anchor_of_mut};
+use crate::edge::{CnEdge, CnEdgeNode, CnEdgeTie, anchor_of, anchor_of_mut};
 use crate::items::{CnAnchor, CnAnchorRef, CnClusterId, CnItemId, CnList};
 
 /// Key of `m_nodes`: `CN_PTR_CMP` orders by (x, y); libstdc++ `std::multiset::insert` puts an
@@ -311,7 +311,21 @@ impl RnNet {
                 } else {
                     0
                 };
-                mst_edges.push(CnEdge::between(prev_node, cur_node, weight));
+                let mut edge = CnEdge::between(prev_node, cur_node, weight);
+
+                // FIX-CN-1: which coincident anchors of different clusters are paired, and
+                // which way round, follows the CN_CLUSTER addresses in C++ (site P7).
+                if weight == 1 {
+                    *edge.tie_mut() = CnEdgeTie {
+                        coincident_clusters: true,
+                        unordered: true,
+                        source_candidates: chain.iter().map(|&r| CnEdgeNode::Anchor(r)).collect(),
+                        target_candidates: chain.iter().map(|&r| CnEdgeNode::Anchor(r)).collect(),
+                        ..CnEdgeTie::default()
+                    };
+                }
+
+                mst_edges.push(edge);
             }
         }
 
@@ -379,18 +393,25 @@ impl RnNet {
             }
 
             if source.connected_items_count(ctx, list) == 0 {
-                if let Some(optimized) = optimize_zone_anchor(ctx, list, &source, &target) {
+                if let Some((optimized, tied)) = optimize_zone_anchor(ctx, list, &source, &target) {
                     edge.set_target_node(CnEdgeNode::Optimized(optimized));
+                    record_zone_anchor_tie(edge, tied, false);
                 }
             } else if target.connected_items_count(ctx, list) == 0 {
-                if let Some(optimized) = optimize_zone_anchor(ctx, list, &target, &source) {
+                if let Some((optimized, tied)) = optimize_zone_anchor(ctx, list, &target, &source) {
                     edge.set_source_node(CnEdgeNode::Optimized(optimized));
+                    record_zone_anchor_tie(edge, tied, true);
                 }
             } else {
-                for (a, b) in optimize_zone_to_zone_anchors(list, &source, &target) {
+                let original = (edge.source_node().cloned(), edge.target_node().cloned());
+                let (calls, outcomes) = optimize_zone_to_zone_anchors(list, &source, &target);
+
+                for (a, b) in calls {
                     edge.set_source_node(CnEdgeNode::Optimized(a));
                     edge.set_target_node(CnEdgeNode::Optimized(b));
                 }
+
+                record_zone_to_zone_tie(edge, original, outcomes);
             }
         }
     }
@@ -589,12 +610,17 @@ fn are_nodes_colinear(list: &CnList, nodes: &[CnAnchorRef]) -> bool {
 /// layers of the same net connected to `anchor`'s item on one of the layers of `pos_anchor`'s
 /// parent, the outline vertex closest to `pos_anchor` (if closer than `anchor`) becomes a new
 /// anchor on that zone layer.
+///
+/// Also returns (FIX-CN-1) the anchors every other walk order of `ConnectedItems()` could have
+/// produced: one per zone layer whose closest vertex is at the winning distance (its first
+/// such vertex, as the strict `<` takes it); more than one means the C++ result follows the
+/// heap order of `m_connected` (site P8). The port's own result is among them.
 fn optimize_zone_anchor(
     ctx: &BoardCtx<'_>,
     list: &CnList,
     pos_anchor: &CnAnchor,
     anchor: &CnAnchor,
-) -> Option<CnAnchor> {
+) -> Option<(CnAnchor, Vec<CnAnchor>)> {
     let pos = pos_anchor.pos();
     let layer_set = ctx
         .item(pos_anchor.parent(list))
@@ -606,6 +632,9 @@ fn optimize_zone_anchor(
     let mut closest_item: Option<CnItemId> = None;
 
     let anchor_item = list.item(anchor.item().expect("CN_ANCHOR::Item: no item"));
+
+    // FIX-CN-1: per zone layer its closest vertex (the first one at that distance).
+    let mut per_item: Vec<(CnItemId, i64, Vector2I)> = Vec::new();
 
     for &item_id in anchor_item.connected_items() {
         let item = list.item(item_id);
@@ -621,9 +650,14 @@ fn optimize_zone_anchor(
 
         if layer_set.contains(item.board_layer()) {
             let pts = zone_layer.outline().c_points();
+            let mut item_best: Option<(i64, Vector2I)> = None;
 
             for &pt in pts {
                 let dist_sq: i64 = (pt - pos).squared_euclidean_norm();
+
+                if item_best.is_none_or(|(d, _)| dist_sq < d) {
+                    item_best = Some((dist_sq, pt));
+                }
 
                 if dist_sq < closest_dist_sq {
                     closest_pt = pt;
@@ -631,21 +665,102 @@ fn optimize_zone_anchor(
                     closest_dist_sq = dist_sq;
                 }
             }
+
+            if let Some((d, pt)) = item_best
+                && !per_item.iter().any(|&(id, _, _)| id == item_id)
+            {
+                per_item.push((item_id, d, pt));
+            }
         }
     }
 
-    closest_item.map(|item| CnAnchor::new(closest_pt, Some(item)))
+    closest_item.map(|item| {
+        let tied: Vec<CnAnchor> = per_item
+            .iter()
+            .filter(|&&(_, d, _)| d == closest_dist_sq)
+            .map(|&(id, _, pt)| CnAnchor::new(pt, Some(id)))
+            .collect();
+
+        (CnAnchor::new(closest_pt, Some(item)), tied)
+    })
+}
+
+/// FIX-CN-1: records on `edge` the candidates of the end `optimizeZoneAnchor` just set (the
+/// source end if `source_end`), flagging the edge when several zone layers tie (site P8).
+fn record_zone_anchor_tie(edge: &mut CnEdge, tied: Vec<CnAnchor>, source_end: bool) {
+    if tied.len() <= 1 && !edge.is_tied() {
+        return;
+    }
+
+    let tie = edge.tie_mut();
+
+    if tied.len() > 1 {
+        tie.zone_anchor = true;
+    }
+
+    let candidates = tied.into_iter().map(CnEdgeNode::Optimized).collect();
+
+    if source_end {
+        tie.source_candidates = candidates;
+    } else {
+        tie.target_candidates = candidates;
+    }
+}
+
+/// FIX-CN-1: flags `edge` when `optimizeZoneToZoneAnchors` could have produced more than one
+/// result under another `ConnectedItems()` order (site P9). `outcomes` are the possible
+/// results (`None`: the ends are left as they were, `original`).
+fn record_zone_to_zone_tie(
+    edge: &mut CnEdge,
+    original: (Option<CnEdgeNode>, Option<CnEdgeNode>),
+    outcomes: Vec<Option<(CnAnchor, CnAnchor)>>,
+) {
+    if outcomes.len() <= 1 {
+        return;
+    }
+
+    let mut sources: Vec<CnEdgeNode> = Vec::new();
+    let mut targets: Vec<CnEdgeNode> = Vec::new();
+
+    let push = |v: &mut Vec<CnEdgeNode>, n: Option<CnEdgeNode>| {
+        if let Some(n) = n
+            && !v.contains(&n)
+        {
+            v.push(n);
+        }
+    };
+
+    for outcome in outcomes {
+        match outcome {
+            Some((a, b)) => {
+                push(&mut sources, Some(CnEdgeNode::Optimized(a)));
+                push(&mut targets, Some(CnEdgeNode::Optimized(b)));
+            }
+            None => {
+                push(&mut sources, original.0.clone());
+                push(&mut targets, original.1.clone());
+            }
+        }
+    }
+
+    let tie = edge.tie_mut();
+    tie.zone_to_zone = true;
+    tie.source_candidates = sources;
+    tie.target_candidates = targets;
 }
 
 /// Port of the `optimizeZoneToZoneAnchors` lambda of `RN_NET::OptimizeRNEdges`: for the 3
 /// closest pairs (by bounding box centre) of zone layers connected to `a`'s and `b`'s items,
 /// the closest points of their outlines. Returns the `( setOptimizedATo, setOptimizedBTo )`
 /// calls in order (later ones overwrite earlier ones).
+///
+/// Also returns (FIX-CN-1) every result another order of the input pairs could have given
+/// (`None`: no call), deduplicated, the port's own among them; see [`zone_to_zone_outcomes`].
 fn optimize_zone_to_zone_anchors(
     list: &CnList,
     a: &CnAnchor,
     b: &CnAnchor,
-) -> Vec<(CnAnchor, CnAnchor)> {
+) -> (Vec<(CnAnchor, CnAnchor)>, Vec<Option<(CnAnchor, CnAnchor)>>) {
     #[derive(Clone, Copy, Default)]
     struct Center {
         pt: Vector2I,
@@ -707,14 +822,14 @@ fn optimize_zone_to_zone_anchors(
 
     const C_POLY_PAIRS_LIMIT: usize = 3;
 
-    let mut result = Vec::new();
-
-    for pair in pairs_to_test.iter().take(C_POLY_PAIRS_LIMIT) {
+    // The `( setOptimizedATo, setOptimizedBTo )` arguments of one pair, `None` when the pair
+    // is skipped or `ClosestSegmentsFast` fails.
+    let pair_result = |pair: &DistPair| -> Option<(CnAnchor, CnAnchor)> {
         let zone_layer_a = connected_items_a[pair.id_a];
         let zone_layer_b = connected_items_b[pair.id_b];
 
         if zone_layer_a == zone_layer_b {
-            continue;
+            return None;
         }
 
         let shape_a = list
@@ -728,13 +843,178 @@ fn optimize_zone_to_zone_anchors(
             .expect("zone layer")
             .outline();
 
-        if let Some((pt_a, pt_b)) = shape_a.closest_segments_fast(shape_b) {
-            result.push((
+        shape_a.closest_segments_fast(shape_b).map(|(pt_a, pt_b)| {
+            (
                 CnAnchor::new(pt_a, Some(zone_layer_a)),
                 CnAnchor::new(pt_b, Some(zone_layer_b)),
-            ));
+            )
+        })
+    };
+
+    let mut result = Vec::new();
+
+    for pair in pairs_to_test.iter().take(C_POLY_PAIRS_LIMIT) {
+        if let Some(r) = pair_result(pair) {
+            result.push(r);
         }
     }
 
-    result
+    let dists: Vec<i64> = pairs_to_test.iter().map(|p| p.dist_sq).collect();
+    let outcomes = zone_to_zone_outcomes(&dists, C_POLY_PAIRS_LIMIT, |i| {
+        pair_result(&pairs_to_test[i])
+    });
+
+    (result, outcomes)
+}
+
+/// FIX-CN-1: the results `optimizeZoneToZoneAnchors` can give for any order of its input
+/// pairs (the C++ builds them in `ConnectedItems()` order, i.e. heap order, and `std::sort`s
+/// them by centre distance, so equal distances come out in an order the port cannot know).
+///
+/// `dists` are the sorted distances, `limit` the number of pairs tested and `result( i )` the
+/// call pair `i` makes (`None`: none). The result is the last call among the first `limit`
+/// pairs. Groups of equal distance lying wholly inside the tested prefix can come out in any
+/// order: if one member makes a call, the last call is one of the group's. The group that
+/// straddles the end of the prefix (`k` of its members tested) can contribute any of its
+/// calling members, and when `k` of them make no call, the result falls back to the groups
+/// before it. Deduplicated, in discovery order; `None` stands for "no call at all".
+fn zone_to_zone_outcomes<T: Clone + PartialEq>(
+    dists: &[i64],
+    limit: usize,
+    result: impl Fn(usize) -> Option<T>,
+) -> Vec<Option<T>> {
+    let n = dists.len().min(limit);
+    let mut outcomes: Vec<Option<T>> = Vec::new();
+
+    if n == 0 {
+        return outcomes;
+    }
+
+    let push = |outcomes: &mut Vec<Option<T>>, o: Option<T>| {
+        if !outcomes.contains(&o) {
+            outcomes.push(o);
+        }
+    };
+
+    // Walk the groups backwards from the one holding the last tested position.
+    let mut end = n; // tested positions of the current group are [start, end)
+    let mut first = true;
+
+    loop {
+        let value = dists[end - 1];
+        let mut start = end - 1;
+
+        while start > 0 && dists[start - 1] == value {
+            start -= 1;
+        }
+
+        // The whole group (beyond the tested prefix too, for the straddling group).
+        let mut group_end = end;
+
+        if first {
+            while group_end < dists.len() && dists[group_end] == value {
+                group_end += 1;
+            }
+        }
+
+        let slots = end - start;
+        let mut calls = 0;
+        let mut silent = 0;
+
+        for i in start..group_end {
+            match result(i) {
+                Some(r) => {
+                    calls += 1;
+                    push(&mut outcomes, Some(r));
+                }
+                None => silent += 1,
+            }
+        }
+
+        // Can every tested slot of this group make no call?
+        let fall_back = calls == 0 || silent >= slots;
+
+        if !fall_back {
+            break;
+        }
+
+        if start == 0 {
+            push(&mut outcomes, None);
+            break;
+        }
+
+        end = start;
+        first = false;
+    }
+
+    outcomes
+}
+
+#[cfg(test)]
+mod tests {
+    use super::zone_to_zone_outcomes;
+
+    /// FIX-CN-1: the possible results of `optimizeZoneToZoneAnchors` under any order of tied
+    /// pairs (`None` in `results`: the pair makes no call).
+    fn outcomes(dists: &[i64], results: &[Option<u32>]) -> Vec<Option<u32>> {
+        let mut o = zone_to_zone_outcomes(dists, 3, |i| results[i]);
+        o.sort();
+        o
+    }
+
+    #[test]
+    fn distinct_distances_have_one_outcome() {
+        assert_eq!(
+            outcomes(&[1, 2, 3, 4], &[Some(0), Some(1), Some(2), Some(3)]),
+            vec![Some(2)]
+        );
+        assert_eq!(
+            outcomes(&[1, 2, 3, 4], &[Some(0), Some(1), None, Some(3)]),
+            vec![Some(1)]
+        );
+        assert_eq!(outcomes(&[1, 2], &[None, None]), vec![None]);
+        assert_eq!(outcomes(&[], &[]), Vec::<Option<u32>>::new());
+        // a tie beyond the tested prefix does not matter
+        assert_eq!(
+            outcomes(
+                &[1, 2, 3, 4, 4],
+                &[Some(0), Some(1), Some(2), Some(3), Some(4)]
+            ),
+            vec![Some(2)]
+        );
+    }
+
+    #[test]
+    fn tied_groups() {
+        // a tie inside the prefix: either member can come last
+        assert_eq!(
+            outcomes(&[1, 2, 2], &[Some(0), Some(1), Some(2)]),
+            vec![Some(1), Some(2)]
+        );
+        // a tie inside the prefix before the last pair does not matter
+        assert_eq!(
+            outcomes(&[1, 1, 2], &[Some(0), Some(1), Some(2)]),
+            vec![Some(2)]
+        );
+        // four pairs at one distance (rev_order_probe N3): any of them
+        assert_eq!(
+            outcomes(&[5, 5, 5, 5], &[Some(0), Some(1), Some(2), Some(3)]),
+            vec![Some(0), Some(1), Some(2), Some(3)]
+        );
+        // straddling group whose tested slot can be a silent pair: falls back
+        assert_eq!(
+            outcomes(&[1, 2, 3, 3], &[Some(0), Some(1), None, Some(3)]),
+            vec![Some(1), Some(3)]
+        );
+        // a silent group inside the prefix falls back to the group before it
+        assert_eq!(
+            outcomes(&[1, 1, 2], &[Some(0), Some(1), None]),
+            vec![Some(0), Some(1)]
+        );
+        // all silent but for one member of a straddling group
+        assert_eq!(
+            outcomes(&[1, 1, 1, 1], &[None, None, None, Some(3)]),
+            vec![None, Some(3)]
+        );
+    }
 }

@@ -3077,3 +3077,63 @@ Files: `src/io/parser/footprint.rs`, `src/io/writer/footprint.rs`, `tests/pcbio0
   pads or zones cannot be written until it lands; the goldens avoid that case.
 - Pads (`parsePAD` / `format( PAD* )`, PCBIO-07) are staging stubs: footprints lose their pads
   with `allow_pending`, and the `LEGACY_NET_TIES` pad group of a `net tie` footprint is empty.
+
+## Integration step 2 (INT-2a): kernel change requests
+
+Design revision 2.3 (`docs/design/board-model.md`); the triage of all change requests is
+`docs/design/integration-2.md`.
+
+| C++ | Rust | state |
+|---|---|---|
+| `EDA_SHAPE::GetCornersInSequence` (reads the virtual `GetWidth()` through `getBoundingBox()`) | `EdaShapeItem::corners_in_sequence(ctx, angle)`, `eda_shape::corners_in_sequence` | ported exactly; the M7 deviation (stored width) and the M11 private copies in `pcb_textbox.rs` are gone |
+| `BOARD_ITEM::StyleFromSettings` family | `BoardItemMut::style_from_settings(env, settings, check_side)`; `PcbText`, `PcbField`, `PcbDimension`, `PcbShape`, `PcbTextbox`, `PcbTablecell` | ported exactly (frame-converting `SetTextSize` / `SetTextThickness`, `GetParentFootprint()`, `BOARD::IsBackLayer`); supersedes the M10 / M11 / M12 "no MutEnv" deviations. `PcbBarcode` keeps its M25a body (shim ignores `env`) |
+| `BOARD_ITEM::IsSideSpecific` in `PCB_TEXT::Flip`, `PCB_TEXTBOX::Flip`, `PCB_DIMENSION_BASE::Mirror` | `MutEnv::is_side_specific`, `LayerEnv::{layer_types, layer_type, is_front_layer, is_back_layer}` | ported exactly (user layers typed `LT_FRONT` / `LT_BACK`); supersedes the "layer-set test only" deviations of M10 / M11 / M12 |
+| `BOARD_CONNECTED_ITEM::SetNet`, `ZONE::SetNet`, `ZONE::SetNetCode` | `BoardConnectedItem::set_net`, `board_connected_item::set_net`, `Zone::set_net`, `Board::set_item_netinfo`, the zone clamp in `Board::set_item_net` | ported; `BOARD::Remove( net )` and `MapNets` dispatch the virtual |
+| `this` of a detached value in `BOARD_CONNECTED_ITEM::GetOwnClearance` | `AsAnyItem`, `board_item::with_this` | ported (the `port_pending!` for a detached item is gone) |
+| `CONNECTIVITY_DATA::GetNetItems` as a hook, `NETINFO_ITEM::GetBoundingBox` | `ConnectivityQuery::net_items`, `NetinfoItem::bounding_box` | ported; pointer order -> `ItemId` order (3.1). Not compared against the reference (GUI only, see below) |
+| `DRC_CONSTRAINT::GetName`, `GetRuleName`, `Merge` | `DrcConstraint::{name, rule_name, merge}` (`drc_api.rs`) | ported (moved from `kicad-drc` / the private copies of `pcb_track`) |
+| `EDA_ITEM_FLAGS STARTPOINT`, `ENDPOINT` | `ItemFlags::{STARTPOINT, ENDPOINT}` | ported |
+| `PAD::IsFreePad` | `Pad::is_free_pad(ctx)` (`is_free_pad_ctx`: forwarding wrapper, to be removed) | ported |
+| `PCB_TRACK` family `operator==`, `Similarity`, copy constructor on a `PCB_TRACK*` | `Track::{eq_item, similarity, detached_copy}` | ported |
+| `PCB_VIA::ValidateViaParameters` in `ValidateDesignRules` | `board_design_settings.rs` calls `PcbVia::validate_via_parameters` | ported (private copy removed) |
+| `BOARD_DESIGN_SETTINGS::operator==` | `impl PartialEq for BoardDesignSettings` | ported without the BOM members (not modelled) |
+| `PCB_DRILL_MAP::GetSymbolExtent`, `DRILL_SYMBOL_PROFILE::GetSymbolWidth` | `PcbDrillMap::symbol_extent(ctx)`, `BoardDesignSettings::drill_symbol_width` | ported |
+| `FOOTPRINT::ResolveTextVar`, `GetFieldValueForVariant`, `FindPadByUuid`, `GetPad`, `DeleteVariant`, `RenameVariant`, `GetNextFieldOrdinal` call sites | `pcb_text.rs`, `pcb_field.rs` (`CmpNoCase` for the default variant), `board/text_vars.rs`, `board/queries.rs`, `dump/defaults.rs` | wired to the M19 methods |
+| `PCB_TABLE::Compare` in `BOARD::cmp_drawings` | `board/compare.rs` -> `PcbTable::compare` | wired |
+| `format( const PCB_TRACK* )` for a generator template | `io/writer/tracks.rs` `format_track_item(&Track)`, `io/writer/generator.rs` `format_template_item` | ported; supersedes the PCBIO-13 gap "template via not written" |
+| pcb-dump getters | `dump/items.rs` (footprint side, likely attribute, exclude from sim, pad count, through-hole pads, component class, area), `dump/board.rs` (`fp_pads_local_bbox`, `locked_flag` through the non-virtual `BOARD_ITEM::IsLocked`), `dump/defaults.rs` (table end / border style / separators style) | wired |
+
+Verification:
+
+* `tests/oracle/int2a_oracle.cpp` (driver linking the reference pcbnew, `int2a_golden.sh`),
+  golden `tests/golden/int2a_mutators.txt`, replay `integration2_tests::int2a_matches_oracle`
+  (feature `dump`): 354 values, all equal. Cases: `IsSideSpecific` / `Flip` / `Mirror` /
+  `StyleFromSettings` of text, text box and aligned dimension on eight layers of a board whose
+  `User.1` is `LT_FRONT` and `User.2` is `LT_BACK`; `StyleFromSettings` of text, text box and
+  the reference field inside a footprint at (10 mm, 20 mm), rotated 30 degrees, scaled
+  (1.5, 0.75); `SetNetCode` / `SetNet` on a copper-thieving and a solid zone, `SetNetCode` of
+  a track (known and unknown net), `BOARD::Remove( net )`; `GetSymbolExtent` with and without
+  a board; `BOARD_DESIGN_SETTINGS::operator==` after eight single-member edits.
+* Ported C++ tests: `ThievingZone_RejectsNetCodeViaBasePointer`,
+  `ThievingZone_RejectsSetNetViaBasePointer` (`test_board_connected_items.cpp`) as
+  `integration2_tests::thieving_zone_rejects_nets_via_base_pointer`.
+* `corners_in_sequence(ctx)`: `pcb_table::oracle_tests::m11_matches_oracle` (unchanged golden).
+* Generator template via: `tests/pcbio13_generators.rs` now compares whole blocks (the
+  stripped-hash fallback is removed): 3 corpus boards and 1 hand-made board with templates
+  are byte-identical to the reference re-save.
+* `PcbShape::connection_points` wired into `kicad-connectivity`: its `cn01` / `cn04` goldens
+  pass unchanged.
+* Defaults scoreboard (`pcb-dump defaults` vs `pcb-dump-rs defaults`, `compare.py`): 3533 ->
+  3558 match, 149 -> 124 pending, 0 mismatch. Board dumps (`--no-init`) of issue24853,
+  keepout_no_clearance, issue20249/dimension, issue24442, tuning_generators_load_save and
+  zone_thieving_track_bisection: identical scoreboards before and after (998 / 1028 / 1024 /
+  1068 / 2754 / 899 match, 0 mismatch).
+
+Not verified against the reference: `NetinfoItem::bounding_box` (needs a built connectivity;
+no pcb-dump line); `Track::detached_copy` of a via (the via body is M17's, verified there).
+
+Known gaps (owners in `integration-2.md`): generator subclass arms of the polymorphic
+mutators and the via stitch default template; `Update()` after text setters of a dimension;
+dynamic component classes; `PcbBarcode::style_from_settings` without `env`;
+`Pad::is_free_pad_ctx` still present; `PCB_DRILL_MAP::GetBoundingBox` / `HitTest` and
+`BOARD::GetTrackLength` pending their tier-2 dependencies.

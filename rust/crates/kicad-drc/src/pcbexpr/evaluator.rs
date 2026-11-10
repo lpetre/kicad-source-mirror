@@ -543,7 +543,12 @@ impl PcbExprVarRef {
     }
 
     /// Port of `PCBEXPR_VAR_REF::AddAllowedClass`.
-    fn add_allowed_class(&mut self, type_hash: ClassId, property: PropId, kind: PcbExprPropertyKind) {
+    fn add_allowed_class(
+        &mut self,
+        type_hash: ClassId,
+        property: PropId,
+        kind: PcbExprPropertyKind,
+    ) {
         self.matching_types
             .insert(type_hash, MatchedProperty { property, kind });
     }
@@ -635,7 +640,9 @@ impl PcbExprVarRef {
                         "Exclude From Bill of Materials" => {
                             Some(fp.excluded_from_bom_for_variant(variant))
                         }
-                        "Exclude From Simulation" => Some(fp.excluded_from_sim_for_variant(variant)),
+                        "Exclude From Simulation" => {
+                            Some(fp.excluded_from_sim_for_variant(variant))
+                        }
                         "Exclude From Position Files" => {
                             Some(fp.excluded_from_pos_files_for_variant(variant))
                         }
@@ -763,7 +770,11 @@ impl PcbExprVarRef {
 /// A getter whose value does not have the C++ type the property is registered with (the
 /// C++ `PROPERTY_BASE::get<T>` would throw). Not reachable with the reference tables.
 fn mistyped<'e>(property: &Property) -> PcbValue<'e> {
-    debug_assert!(false, "property '{}' returned a mistyped value", property.name);
+    debug_assert!(
+        false,
+        "property '{}' returned a mistyped value",
+        property.name
+    );
     PcbValue::new()
 }
 
@@ -862,7 +873,8 @@ pub enum PcbExprValue<'e> {
 
 /// `m_item->GetEffectiveNetClass()` of a connected item.
 fn effective_netclass<'e>(item: ItemRef<'e>) -> &'e Netclass {
-    item.effective_netclass().unwrap_or_else(|| Netclass::fallback())
+    item.effective_netclass()
+        .unwrap_or_else(|| Netclass::fallback())
 }
 
 /// The names of `NETCLASS::GetConstituentNetclasses()` (a root class lists itself).
@@ -870,7 +882,11 @@ fn constituent_netclass_names(netclass: &Netclass) -> Vec<String> {
     if netclass.constituents.is_empty() {
         vec![netclass.get_name()]
     } else {
-        netclass.constituents.iter().map(|nc| nc.get_name()).collect()
+        netclass
+            .constituents
+            .iter()
+            .map(|nc| nc.get_name())
+            .collect()
     }
 }
 
@@ -1044,7 +1060,8 @@ impl<'e> CustomValue<'e, PcbExprUcode> for PcbExprValue<'e> {
         match *self {
             PcbExprValue::Netclass(item) => {
                 if let Some(PcbExprValue::Netclass(b_item)) = b.custom() {
-                    return !effective_netclass(item).same_constituents(effective_netclass(*b_item));
+                    return !effective_netclass(item)
+                        .same_constituents(effective_netclass(*b_item));
                 }
 
                 if b.type_() == VarType::String {

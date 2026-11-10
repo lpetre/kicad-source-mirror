@@ -607,7 +607,9 @@ fn has_compiled_conditions(engine: &DrcEngine) -> bool {
         !c.parent_rule.is_implicit()
             && (matches!(&c.condition, Some(EngineCondition::Compiled(cond))
                     if calls_function(cond.expression()))
-                || c.test.as_ref().is_some_and(|t| calls_function(t.expression())))
+                || c.test
+                    .as_ref()
+                    .is_some_and(|t| calls_function(t.expression())))
     })
 }
 

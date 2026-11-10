@@ -1062,3 +1062,141 @@ Not verified yet: the pad paths (the pad exclusion of the track angle test via
 ### Known gaps
 
 - Pad paths and rule conditions unverified (above).
+
+## DRC-23: misc provider and footprint checks
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_test_provider_misc.cpp` `DRC_TEST_PROVIDER_MISC::Run`, `testUnquotableNetclasses`, `testOutline` (error handler with the marker heuristics, `findClosestOutlineGap`, "(Suspicious items ...)" / "(no edges found ...)"), `testDisabledLayers`, `testTextVars` (incl. the drawing-sheet loop), `testAssertions`, `testMissingTuningProfiles` | `providers/misc.rs` `DrcTestProviderMisc` (`Default`, `new(TuningProfiles)`, fields `drawing_sheet`, `environment`; `DrcTestProviderRun`) | ported |
+| `varRefRegEx`, `warningExpr`, `errorExpr` (`wxRegEx`) and the `reportEach` loop | `misc.rs` `var_ref_matches`, `match_marker` (hand-written matchers of these three expressions) | ported |
+| `common/common.cpp` `ExpandEnvVarSubstitutions` / `KIwxExpandEnvVars` (no project, Unix), `env_vars.cpp` `IsVersionedEnvVar`, `GetPredefinedEnvVars` | `misc.rs` `expand_env_var_substitutions` (private) | ported (environment passed in) |
+| `drc_test_provider_footprint_checks.cpp` `DRC_TEST_PROVIDER_FOOTPRINT_CHECKS::Run` | `providers/footprint_checks.rs` `DrcTestProviderFootprintChecks` | ported |
+| `pcbnew/footprint_utils.cpp` `CheckFootprintAttributes`, `CheckPads`, `CheckNetTies`, `CheckNetTiePadGroups` | `src/footprint_utils.rs` | ported |
+| `footprint_utils.cpp` `ComputeFootprintShift`, `CheckShortingPads`, `CheckClippedSilk` | - | skipped: no DRC caller (footprint update / footprint editor checker) |
+
+### Verification
+
+* Corpus (`tests/drc23_misc_footprint.rs` `misc_and_footprint_checks_match_reference_corpus`,
+  golden `tests/golden/drc23/corpus.txt` written by `tests/oracle/gen_drc23_golden.py` from the
+  cached raw reference reports of `gen_drc_corpus.py`; the random board UUID of
+  `SetItems( m_board )` is normalised to `board`): 104 boards load completely and were
+  compared: `invalid_outline` 62 / 62, `generic_warning` 2 / 2, `generic_error` 3 / 3,
+  `missing_tuning_profile` 1 / 1, 0 missing, 0 extra, same order. 6 drawing-sheet
+  `unresolved_variable` entries are not compared (no drawing sheet, below). Pending 260: the
+  parser skips pads (PCBIO-07) on every board with footprints, 56 boards need DRC-21 (rule
+  conditions: all assertion boards), 2 legacy `.pro`. On the partially loaded boards (information
+  only, printed by the test) 33 entries match; the 13 missing (`footprint_type_mismatch`,
+  `padstack`) and 80 extra (`footprint`: "net-tie pad group contains unknown pad number") are
+  all caused by the skipped pads. The test tightens automatically as pads load.
+* Text helpers against the reference build (`tests/oracle/build_drc23_text_oracle.sh`, driver
+  `drc23_text_oracle.cpp` linking `libkicommon.so`, cases `drc23_text_cases.txt`, golden
+  `tests/golden/drc23/text_oracle.txt`, replay `misc::tests::text_helpers_match_reference`):
+  `ExpandEnvVarSubstitutions`, `varRefRegEx.Matches` and every `reportEach` match (start,
+  length, message) of 48 inputs identical, including the `$125DRC_ERROR` pass-through quirk,
+  escapes, unterminated brackets, versioned env var fallbacks and multi-line messages.
+* Not verified yet: everything with pads (`footprint_type_mismatch`, pad checks, net ties,
+  pads on disabled layers), assertions (DRC-21), `item_on_disabled_layer` (no corpus board has
+  one), `footprint_scaled_with_pads`.
+
+### Ported C++ tests (`tests/drc23_misc_footprint.rs`)
+
+* `test_drc_invalid_outline_issue24078.cpp` -> `invalid_outline_bezier_slot_issue24078`
+* `test_drc_invalid_outline_issue24241.cpp` -> `degenerate_arc_outline_marker_issue24241`
+* `test_drc_text_var_issue24442.cpp` -> `drc_text_var_issue24442`
+* `test_drc_netclass_literal.cpp` -> `drc_netclass_name_ending_in_backslash` (the misc part;
+  the `EvalRules` `m_ImplicitNetclass` check needs `DrcRuleInfo::implicit_netclass`, engine)
+* `test_drc_tuning_profiles.cpp` -> `drc_missing_tuning_profile` (the misc part: exactly the
+  one `missing_tuning_profile` of the reference report)
+* Not ported: `test_drc_component_classes.cpp`, `test_drc_orientation.cpp` (assertions: need
+  DRC-21 conditions).
+
+### Deviations
+
+* `SetItems( m_board )` (outline "no edges" / "suspicious items") uses the nil UUID: the board
+  model has no `BOARD::m_Uuid` and `ResolveItem` cannot return the board, so the report entry
+  has no items where the reference lists `PCB` (a random UUID per run in C++).
+* `testAssertions` runs sequentially in `forEachGeometryItem` order (C++: thread pool; the
+  report order of assertion failures is scheduling dependent there).
+* `ExpandEnvVarSubstitutions` reads `DrcTestProviderMisc::environment` instead of the process
+  environment (empty by default); `wxIsalnum` is ASCII (the C locale of the reference CLI);
+  the "missing bracket" `wxLogWarning` is not reproduced.
+* The drawing sheet (`DS_DRAW_ITEM_LIST::BuildDrawItemsList`) is not ported: the host passes
+  its texts as `DrawingSheetTexts`; `None` (default) skips that loop, so drawing-sheet
+  `unresolved_variable` entries of the reference CLI (which sets a drawing sheet) are missing.
+* `reportProgress` of the assertion waiting loop is not called (sequential run).
+
+### Known gaps
+
+* `BOARD::m_Uuid` (change request: kicad-pcb board UUID resolving to the board, description
+  "PCB"); the drawing sheet engine; pad paths unverified until PCBIO-07 lands.
+
+## DRC-08a: copper clearance, part 1 (track / via / pad item tests, items against zones)
+
+### File / class map
+
+| C++ (`drc_test_provider_copper_clearance.cpp`) | Rust (`src/providers/copper_clearance.rs`) | State |
+|---|---|---|
+| `DRC_TEST_PROVIDER_COPPER_CLEARANCE` (`m_drcEpsilon`, `m_zoneIndex`, `sub_e`), `Run` (phase gating on the error limits, `ZONE_INDEX_GUARD`) | `DrcTestProviderCopperClearance::new(&DrcBoardCaches)`, `run` (`DrcTestProviderRun`) | ported |
+| `collectZonesNear`, `testSingleLayerItemAgainstItem` (UUID canonical order, crossing tracks, shorts, net-tie exclusions, unflashed pad / via hole shapes, `--all-track-errors`, the two-way hole test incl. clearance 0), `testItemAgainstZone` (net-tie graphics exemption, flashed / plated pads, zone hole test) | same names in snake case | ported |
+| `testTrackClearances` (prepared-copper query with padding credit, UUID dedup filter, `freePadsUsageMap`), `testPadAgainstItem` (net-tie groups, same logical pad shorts, `unconnected-(` pads, the three hole directions), `testPadClearances` | same names | ported |
+| `testGraphicClearances`, `testKnockoutTextAgainstZone`, `testZonesToZones`, `testTeardropClearances` | `test_graphic_clearances`, ... | stub: `port_pending!` (package DRC-08b) |
+
+`new_without_pending( caches )` builds a provider whose `run` skips the three DRC-08b phases
+(verification aid until DRC-08b lands; DRC-08b removes it). The provider borrows the cache
+generator's caches (`m_DRCMaxClearance`, `m_DRCCopperZonesByLayer`, copper item tree, zone
+trees) and must be run with a context that has the run's connectivity (FlashLayer);
+`tests/drc08a_copper_clearance.rs` `CopperWithCaches` shows the wiring.
+
+### Verification
+
+Reference: `kicad-cli pcb drc --format json --severity-all --units mm [--all-track-errors]`.
+Goldens (`tests/oracle/gen_drc08a_corpus.py`, `gen_drc08a_boards.py`) hold one line per entry of
+`clearance` / `hole_clearance` / `shorting_items` / `tracks_crossing` (entry hash of the shared
+corpus format + the last 8 characters of both item UUIDs). The replay attributes each reference
+entry to its phase by the types of its items (tracks / vias against anything, pads against
+anything but shapes / text boxes, tracks and pads against zones = DRC-08a; the rest = DRC-08b;
+entries naming a physical clearance constraint = the physical provider) and compares the DRC-08a
+entries as multisets. State 2026-11-10 (pads load now):
+
+| Golden | Boards compared | Result |
+|---|---|---|
+| `golden/drc08a/corpus.txt` (the 365 cached reports of `gen_drc_corpus.py`) | 306 (56 pending DRC-21 rule conditions, 2 legacy `.pro`, 1 reference failure) | clearance 2018 matched, hole_clearance 1407, shorting_items 239, tracks_crossing 0 (none in the corpus); 0 missing, 0 extra except the two error-limit boards below; 54 reference entries are DRC-08b's, 0 physical |
+| `golden/drc08a/all_track_errors.txt` (12 boards incl. `issue17429`, `issue5093`, `issue24355`, `issue8003`, `reverse_via`) | see test output | identical sets |
+| `golden/drc08a/synthetic*.txt`: `tests/data/drc08a/items*` (tracks, arcs, through / blind / micro vias, vias with unused layers removed, zone fills, DRC epsilon gaps; no rule file, hole clearance 0.4 mm, hole clearance 0) | 3 + 3 | default 45 + 1 + 3, all-track-errors 48 + 13 + 6 entries: identical sets |
+
+Not compared: the report **order**. Every C++ phase runs one thread-pool task per track /
+footprint, so the reference order changes between runs (three runs of `items.kicad_pcb`: three
+orders, one set); the port reports in board order (`drc.md` 4.12). The same scheduling makes
+the reported **set** nondeterministic once the 499-entry `clearance` limit is reached:
+`issue832` and `stickhub-extra-via` (571 entries differ in each direction, all within the
+limit-truncated lists) are listed, not failed. `tracks_crossing` and the `<no net>` short have
+no reference entry: on the compared boards crossing tracks always belong to one connectivity
+cluster, which gets one net (also on the synthetic boards, where pads are absent).
+
+### Ported C++ tests (`tests/drc08a_copper_clearance.rs`)
+
+| C++ | Rust |
+|---|---|
+| `test_drc_hole_clearance_issue24355.cpp` `HoleClearanceIssue24355` (2 hole clearance violations, `RunTests( MM, true, false )`) | `hole_clearance_issue24355` |
+| `test_drc_regressions.cpp` `DRCFalsePositiveRegressions`, copper clearance part (`issue4139`, `4774`, `5978`, `6443`, `12609`, `14008`, `18203`, `net_tie_hole_clearance`, `issue24974`: no entry of the provider's types) | `false_positive_regressions_copper_clearance` (boards with DRC-21 rule conditions are skipped with a note) |
+
+### Deviations
+
+- Sequential: tracks in track-list order, pads in footprint / pad order; `freePadsUsageMap`
+  (first track net to touch a free pad claims it) is claimed in that order (C++: first thread).
+- `freePadsUsageMap` is a `BTreeMap` keyed by `ItemId` (C++: `std::map<BOARD_ITEM*, int>`,
+  lookups only). The net-tie pad set of `testItemAgainstZone` is a `BTreeSet<PadId>` (C++:
+  `std::set<PAD*>`, only used for "any pad collides").
+- `GetNet()` pointer comparisons are net code comparisons (`None` for items that are not
+  connected), which is the same since every code has one `NETINFO_ITEM`.
+- A hole shape the C++ would dereference as null (an item with `HasHole()` but no hole shape)
+  is skipped.
+
+### Known gaps
+
+- DRC-08b phases (`port_pending!`); the provider is not yet wired into a full
+  `DrcEngine::run_tests` (the cache generator wiring of DRC-05's known gap).
+- Pad-vs-barcode pairs: attributed to DRC-08a by the replay; the C++ also tests them from the
+  graphic side (DRC-08b), not present in the corpus.
