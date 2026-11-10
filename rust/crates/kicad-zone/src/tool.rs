@@ -20,19 +20,16 @@
 //! `rebuildConnectivity`): what `kicad-cli pcb drc --refill-zones` and the plot jobs'
 //! `--check-zones` run (`pcbnew/pcbnew_jobs_handler.cpp`).
 //!
-//! The teardrop regeneration that precedes the fill (`TEARDROP_MANAGER::UpdateTeardrops`,
-//! packages TD-01 / TD-02) is not ported yet: [`update_teardrops`] returns at once where the
-//! C++ has nothing to do (legacy teardrops, or no teardrop zone and no teardrop-enabled
-//! pad / via / track target) and stops with `port_pending!` otherwise.
+//! The teardrop regeneration that precedes the fill (`TEARDROP_MANAGER::UpdateTeardrops`) is
+//! [`update_teardrops`] (crate::teardrop).
 
 use kicad_connectivity::data::ConnectivityData;
 use kicad_pcb::Board;
 use kicad_pcb::ctx::RuleResolver;
 use kicad_pcb::ids::ZoneId;
-use kicad_pcb::pcb_track::Track;
-use kicad_pcb::teardrop_parameters::TargetTd;
 
 use crate::filler::ZoneFiller;
+use crate::teardrop::TeardropManager;
 
 /// What [`fill_all_zones`] reports.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -62,7 +59,7 @@ pub fn fill_all_zones(
 
     // TEARDROP_MANAGER teardropMgr( board(), m_toolMgr );
     // teardropMgr.UpdateTeardrops( commit, nullptr, nullptr, true /* forceFullUpdate */ );
-    update_teardrops(board, connectivity, true);
+    update_teardrops(board, connectivity, rules, true);
 
     board.increment_time_stamp(); // Clear caches
 
@@ -99,44 +96,24 @@ pub fn fill_all_zones(
     outcome
 }
 
-/// `TEARDROP_MANAGER::UpdateTeardrops( aCommit, nullptr, nullptr, aForceFullUpdate )` (TD-01).
+/// `TEARDROP_MANAGER teardropMgr( board(), m_toolMgr );`
+/// `teardropMgr.UpdateTeardrops( commit, nullptr, nullptr, aForceFullUpdate )` (TD-01).
 ///
-/// Ported so far: the early return of a board with legacy teardrops, and the cases in which
-/// the C++ does nothing at all - no teardrop zone to delete (the forced full update deletes
-/// every one before rebuilding), no pad or via with enabled teardrop parameters, and the
-/// track-to-track target disabled (`m_prmsList->GetParameters( TARGET_TRACK )->m_Enabled`);
-/// `setTeardropPriorities` then has no teardrop zone to touch. Every other board stops in
-/// `port_pending!` rather than losing its teardrops silently (connectivity-zones.md 10.2,
-/// interim guard for ZF-06).
-pub fn update_teardrops(board: &Board, connectivity: &ConnectivityData, force_full_update: bool) {
-    if board.legacy_teardrops {
-        return;
-    }
-
-    let has_teardrop_zone = board.zones().any(|(_, zone)| zone.is_teardrop_area());
-
-    let pad_or_via_enabled = board
-        .footprints()
-        .flat_map(|(fp, _)| board.footprint_pads(fp))
-        .any(|(_, pad)| pad.base.teardrop_params.enabled)
-        || board.tracks().any(|(_, track)| match track {
-            Track::Via(via) => via.track.base.teardrop_params.enabled,
-            _ => false,
-        });
-
-    let track_target_enabled = board
-        .design_settings()
-        .teardrop_params_list()
-        .parameters(TargetTd::Track)
-        .enabled;
-
-    if !has_teardrop_zone && !pad_or_via_enabled && !track_target_enabled {
-        return;
-    }
-
-    crate::port_pending!(
-        "TEARDROP_MANAGER::UpdateTeardrops (TD-01 / TD-02)",
+/// `rules` is the board's DRC engine (`bds.m_DRCEngine`), which the teardrop width fit asks
+/// for clearances.
+pub fn update_teardrops(
+    board: &mut Board,
+    connectivity: &mut ConnectivityData,
+    rules: &dyn RuleResolver,
+    force_full_update: bool,
+) {
+    let mut manager = TeardropManager::new();
+    manager.update_teardrops(
+        board,
         connectivity,
-        force_full_update
+        Some(rules),
+        None,
+        None,
+        force_full_update,
     );
 }

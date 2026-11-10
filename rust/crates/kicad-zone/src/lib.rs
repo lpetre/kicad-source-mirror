@@ -29,6 +29,7 @@
 //! * [`knockouts`]: pad / via / track / graphic / zone knockouts and clearances;
 //! * [`thermal`]: thermal spokes, hatch thermal rings and the hatch pattern;
 //! * [`connect`]: `connect_nearby_polys` (`VERTEX_CONNECTOR`);
+//! * [`teardrop`]: `TEARDROP_MANAGER` (teardrop creation and outline geometry);
 //! * [`tool`]: the headless `ZONE_FILLER_TOOL::FillAllZones` of the CLI jobs.
 
 /// Panics with "kicad-zone: port pending: <what>" for C++ code whose package has not landed
@@ -47,6 +48,7 @@ pub mod filler;
 pub mod index;
 pub mod knockouts;
 pub mod refill;
+pub mod teardrop;
 pub mod thermal;
 pub mod tool;
 

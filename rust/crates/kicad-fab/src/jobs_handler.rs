@@ -41,6 +41,7 @@ use kicad_plot::GerberPlotter;
 use crate::exporters::gendrill_excellon_writer::{ExcellonWriter, reborrow};
 use crate::exporters::gendrill_report::{BoardHoleSource, HoleListSource};
 use crate::exporters::gendrill_writer_base::{DrillPrecision, ZerosFmt};
+use crate::exporters::gerber_jobfile_writer::GerberJobfileWriter;
 use crate::jobs::job_export_pcb_drill::{
     DrillExportEnv, DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, MapFormat, ZerosFormat,
 };
@@ -405,10 +406,10 @@ pub struct GerbersJobOutcome {
     /// this only stays `true` today.
     pub success: bool,
     /// A part of the port that is not available yet stopped the export (`StartPlotBoard` of
-    /// a format or drawing sheet outside the port; the Gerber job file, FAB-09, after all
-    /// layer files are complete). `files` holds what was produced before.
+    /// a format or drawing sheet outside the port). `files` holds what was produced before.
     pub error: Option<FabError>,
-    /// Every Gerber file, in the order the C++ writes them (`layersToPlot.UIOrder()`).
+    /// Every Gerber file, in the order the C++ writes them (`layersToPlot.UIOrder()`), then the
+    /// Gerber job file when `m_createJobsFile` is set.
     pub files: Vec<OutputFile>,
     /// `aJob->AddOutput( ... )` in order.
     pub outputs: Vec<String>,
@@ -433,8 +434,8 @@ pub struct GerbersJobOutcome {
 /// * `a_env`: `GetBuildVersion()` and the clock.
 /// * `a_reporter`: the job handler's `m_reporter` (`Plotted to '...'.`).
 ///
-/// The Gerber job file writer (`GERBER_JOBFILE_WRITER`, FAB-09) is not ported yet: with
-/// `m_createJobsFile` the outcome ends with `FabError::NotPorted` after every layer file.
+/// With `m_createJobsFile` the Gerber job file (`GERBER_JOBFILE_WRITER`, without reporter as
+/// in C++) is the last of `files` / `outputs`.
 pub fn job_export_gerbers(
     a_ctx: BoardCtx<'_>,
     a_gerber_job: &JobExportPcbGerbers,
@@ -448,6 +449,8 @@ pub fn job_export_gerbers(
         success: true,
         ..GerbersJobOutcome::default()
     };
+
+    let mut jobfile_writer = GerberJobfileWriter::new(a_ctx, None);
 
     let board_plot_options = &brd.plot_options;
     let var_overrides = &a_gerber_job.gerber.plot.var_overrides;
@@ -496,6 +499,7 @@ pub fn job_export_gerbers(
         build_plot_file_name(&mut fn_, a_out_path, &layer_name, &file_ext);
         let fullname = fn_.full_name();
 
+        jobfile_writer.add_gbr_file(layer, &fullname);
         outcome.gbr_files.push((layer, fullname));
 
         if let Some(value) = var_overrides.get("LAYER") {
@@ -554,10 +558,11 @@ pub fn job_export_gerbers(
 
         // Build gerber job file from basename
         build_plot_file_name(&mut fn_, a_out_path, "job", GERBER_JOB_FILE_EXTENSION);
-        outcome.job_file_path = Some(fn_.full_path());
-        outcome.error = Some(FabError::NotPorted(
-            "GERBER_JOBFILE_WRITER::CreateJobFile (FAB-09)",
-        ));
+        let full_path = fn_.full_path();
+        let job_file = jobfile_writer.create_job_file(&full_path, a_env);
+        outcome.files.push(job_file);
+        outcome.outputs.push(full_path.clone());
+        outcome.job_file_path = Some(full_path);
     }
 
     outcome

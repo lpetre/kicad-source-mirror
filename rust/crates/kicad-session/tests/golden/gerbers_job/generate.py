@@ -25,11 +25,13 @@ Every .kicad_pcb under qa/data and demos smaller than 300 KB (with its .kicad_pr
 Written to corpus.txt (compact): `B <set> <exit code> <stdout hash> <board path relative to the
 KiCad tree>`, then one line per file in "Plotted to" order with the first 8 hex digits of the
 FNV-1a 64 of the normalised file (the file names and their order are covered by the stdout
-hash: stdout with the output directory replaced by `out/`). The Gerber job file (.gbrjob) is
-not hashed (FAB-09).
+hash: stdout with the output directory replaced by `out/`), then `J <hash>` (same hash) of the
+normalised Gerber job file (.gbrjob) when kicad-cli wrote one. The crafted boards of kicad-fab
+(EXTRA) follow the corpus boards.
 
 Normalisation (docs/analysis/plot-fab.md 9.3): the lines carrying the version and the date are
-replaced by `<normalised>` (as kicad-fab's tests/golden/plot_driver/generate.py).
+replaced by `<normalised>` (as kicad-fab's tests/golden/plot_driver/generate.py); in the job file
+the members "Version" (Header.GenerationSoftware) and "CreationDate".
 """
 import os
 import re
@@ -40,6 +42,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 KICAD = os.path.abspath(os.path.join(HERE, "../../../../../.."))
 CLI = os.environ.get("KICAD_ORACLE_CLI", "/home/user/kicad-oracle/bin/kicad-cli")
 SCRATCH = os.environ.get("SCRATCH", os.path.join(KICAD, "rust/target/session-gerbers-job-golden"))
+
+# Crafted boards (relative to the KiCad tree), after the corpus boards.
+EXTRA_DIRS = [
+    "rust/crates/kicad-fab/tests/data/plot_driver",
+    "rust/crates/kicad-fab/tests/data/gerber_jobfile",
+]
 
 SETS = [
     ("default", []),
@@ -64,6 +72,15 @@ def normalise_line(line):
 def normalise(text):
     return "".join(normalise_line(l[:-1] if l.endswith("\n") else l) + ("\n" if l.endswith("\n") else "")
                    for l in text.splitlines(keepends=True))
+
+
+JOB_LINE = re.compile(r'^ *"(Version|CreationDate)": ".*$')
+
+
+def normalise_job(text):
+    return "".join(("<normalised>" if JOB_LINE.match(l[:-1] if l.endswith("\n") else l) else
+                    (l[:-1] if l.endswith("\n") else l)) + ("\n" if l.endswith("\n") else "")
+                   for l in re.findall(r"[^\n]*\n|[^\n]+$", text))
 
 
 def fnv(text):
@@ -93,6 +110,10 @@ def run(board, args, work):
     for f in files:
         with open(f, encoding="utf-8", newline="") as fh:
             hashes.append(fnv(normalise(fh.read()))[:8])
+    jobs = sorted(f for f in os.listdir(os.path.join(work, "out")) if f.endswith(".gbrjob"))
+    for f in jobs:
+        with open(os.path.join(work, "out", f), encoding="utf-8", newline="") as fh:
+            hashes.append("J " + fnv(normalise_job(fh.read()))[:8])
     stdout = res.stdout.replace(out_dir, "out/")
     shutil.rmtree(work, ignore_errors=True)
     return res.returncode, fnv(stdout)[:8], hashes
@@ -107,8 +128,12 @@ def main():
                 p = os.path.join(root, f)
                 if f.endswith(".kicad_pcb") and os.path.getsize(p) < 300 * 1024:
                     boards.append(os.path.relpath(p, KICAD))
+    boards.sort()
+    for d in EXTRA_DIRS:
+        boards.extend(os.path.join(d, f) for f in sorted(os.listdir(os.path.join(KICAD, d)))
+                      if f.endswith(".kicad_pcb"))
     lines = []
-    for rel in sorted(boards):
+    for rel in boards:
         for set_name, args in SETS:
             code, out_hash, hashes = run(os.path.join(KICAD, rel), args, os.path.join(SCRATCH, "w"))
             lines.append("B %s %d %s %s\n" % (set_name, code, out_hash, rel))

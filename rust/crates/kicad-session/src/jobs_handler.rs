@@ -488,17 +488,6 @@ pub fn run_export_gerbers(
             files,
             report_text: None,
         }),
-        Some(err) if result.job_file_path.is_some() => {
-            // Every layer file is complete; only the Gerber job file (FAB-09) is missing: keep
-            // the layer files and end with the not-yet-ported exit code.
-            reporter.report(format!("{err}\n"), Severity::Error);
-
-            Ok(JobOutcome {
-                exit_code: exit_codes::NOT_YET_PORTED,
-                files,
-                report_text: None,
-            })
-        }
         Some(err) => Err(SessionError::not_yet_ported(format!("kicad-fab: {err}"))),
     }
 }

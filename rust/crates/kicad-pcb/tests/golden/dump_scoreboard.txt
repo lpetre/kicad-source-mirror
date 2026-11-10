@@ -1,0 +1,94 @@
+# pcb-dump --no-init vs pcb-dump-rs over the corpus (tools/pcb-dump/scoreboard.sh)
+# boards: 344, reference without output: 1
+section        match   mismatch    pending rust-error    missing      extra  ref-error
+bbox          139330          9          2          0          0          0          0
+board         273798          4      15436          0          0          0          0
+dim             3540          0          0          0          0          0          0
+footprint     245251          0          0          0          0          0          0
+item         1720579          0          0          0          0          0          0
+misc             417          0         12          0          0          0          0
+order          16966          5          0          0          0          0          0
+pad          1767097          0          0          0          0          0          0
+shape         818466         16          0          0          0          0          0
+text          589465         30          0          0          0          0          0
+track         524942          0          0          0          0          0          0
+zone           36621          0          0          0          0          0          0
+TOTAL        6136472         64      15450          0          0          0          0
+
+# boards with failing lines (section.kind=count)
+qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb order.mismatch=3
+qa/data/pcbnew/api_kitchen_sink.kicad_pcb bbox.mismatch=2 board.mismatch=1
+qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb shape.mismatch=16
+qa/data/pcbnew/issue14549.kicad_pcb bbox.mismatch=6 board.mismatch=2 text.mismatch=30
+qa/data/pcbnew/issue24525/issue24525.kicad_pcb bbox.mismatch=1 board.mismatch=1
+qa/data/pcbnew/issue25580.kicad_pcb order.mismatch=1
+qa/data/pcbnew/issue4139.kicad_pcb order.mismatch=1
+qa/data/pcbnew/plugins/fakeboard.kicad_pcb ref-empty
+
+# failure / pending classes (kind section|field: values, boards, first board)
+pending board|ds.meander.diff_pair.initial_side: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.is_time_domain: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.keep_endpoints: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.len_pad_to_die: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.length_tolerance: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.override_custom_rules: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.signal_extra_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.signal_extra_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.step: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_signal_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_signal_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_skew: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.diff_pair.target_skew_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.initial_side: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.is_time_domain: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.keep_endpoints: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.len_pad_to_die: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.length_tolerance: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.override_custom_rules: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.signal_extra_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.signal_extra_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.step: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_signal_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_signal_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_skew: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.single.target_skew_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.initial_side: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.is_time_domain: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.keep_endpoints: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.len_pad_to_die: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.length_tolerance: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.override_custom_rules: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.signal_extra_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.signal_extra_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.step: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_signal_length: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_signal_length_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_skew: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+pending board|ds.meander.skew.target_skew_delay: 343 values, 343 boards, demos/complex_hierarchy/complex_hierarchy.kicad_pcb
+mismatch bbox|bbox: 9 values, 3 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+mismatch shape|lib.end: 8 values, 1 boards, qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+mismatch shape|lib.start: 8 values, 1 boards, qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
+mismatch text|effective_shape: 6 values, 1 boards, qa/data/pcbnew/issue14549.kicad_pcb
+mismatch text|interline: 6 values, 1 boards, qa/data/pcbnew/issue14549.kicad_pcb
+mismatch text|text_box: 6 values, 1 boards, qa/data/pcbnew/issue14549.kicad_pcb
+mismatch text|text_polys.cN_eN_in: 6 values, 1 boards, qa/data/pcbnew/issue14549.kicad_pcb
+mismatch text|text_shape: 6 values, 1 boards, qa/data/pcbnew/issue14549.kicad_pcb
+pending misc|barcode.last_error: 3 values, 2 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+pending misc|barcode.poly: 3 values, 2 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+pending misc|barcode.symbol_poly: 3 values, 2 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+pending misc|barcode.text_poly: 3 values, 2 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+mismatch board|bbox: 2 values, 2 boards, qa/data/pcbnew/issue14549.kicad_pcb
+mismatch board|bbox_physical: 2 values, 2 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+pending bbox|bbox: 2 values, 1 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb
+mismatch order|footprints: 1 values, 1 boards, qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+mismatch order|fp.#N.drawings: 1 values, 1 boards, qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+mismatch order|fp.U.drawings: 1 values, 1 boards, qa/data/pcbnew/issue4139.kicad_pcb
+mismatch order|tracks: 1 values, 1 boards, qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
+mismatch order|zones: 1 values, 1 boards, qa/data/pcbnew/issue25580.kicad_pcb
+pending board|bbox: 1 values, 1 boards, qa/data/pcbnew/api_kitchen_sink.kicad_pcb

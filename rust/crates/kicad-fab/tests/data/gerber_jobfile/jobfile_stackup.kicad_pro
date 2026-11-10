@@ -1,0 +1,14 @@
+{
+  "meta": { "filename": "jobfile_stackup.kicad_pro", "version": 3 },
+  "net_settings": {
+    "classes": [
+      { "name": "Default", "clearance": 0.2, "track_width": 0.2, "via_diameter": 0.6, "via_drill": 0.3, "priority": 2147483647, "schema_version": 0 },
+      { "name": "Fine", "clearance": 0.12, "track_width": 0.15, "priority": 0, "schema_version": 0 }
+    ],
+    "meta": { "version": 4 },
+    "net_colors": null,
+    "netclass_assignments": null,
+    "netclass_patterns": [ { "netclass": "Fine", "pattern": "SIG" } ]
+  },
+  "text_variables": { "REVNUM": "B2-ü" }
+}

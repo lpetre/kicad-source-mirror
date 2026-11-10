@@ -55,7 +55,6 @@ use crate::pcb_3d_body::{ExtrusionMaterial, Pcb3dBody};
 use crate::pcb_field::{FieldT, PcbField};
 use crate::traits::BoardItemMut;
 
-
 impl PcbParser {
     /// The footprint being parsed (created by this parser, so always live).
     fn fp_mut(&mut self, fp: FootprintId) -> &mut Footprint {

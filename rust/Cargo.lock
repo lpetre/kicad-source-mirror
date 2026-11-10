@@ -284,6 +284,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "kicad-zint"
+version = "0.1.0"
+
+[[package]]
 name = "kicad-zone"
 version = "0.1.0"
 dependencies = [

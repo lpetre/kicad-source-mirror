@@ -87,7 +87,7 @@ fn m0b_defaults() {
         fp.stackup_layers,
         Lset::from_layers(&[PcbLayerId::FCu, PcbLayerId::BCu, PcbLayerId::In1Cu])
     );
-    assert_eq!(fp.zone_connection, ZoneConnection::Inherited);
+    assert_eq!(fp.local_zone_connection(), ZoneConnection::Inherited);
 
     // ZONE|item.layerset=000...0, zone.local_clearance=500000, zone.min_thickness=250000,
     // zone.thermal_relief_gap=500000, zone.thermal_relief_spoke_width=500000,

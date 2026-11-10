@@ -74,7 +74,6 @@ fn anchor_shape(pad: &Pad, layer: PcbLayerId) -> &'static str {
     }
 }
 
-
 impl PcbWriter<'_> {
     /// Port of `format( const PAD* aPad )`: `(pad ..)`.
     ///
@@ -666,10 +665,8 @@ impl PcbWriter<'_> {
         }
 
         if let Some(connection) = padstack.zone_connection_raw(layer) {
-            self.out.print(format_args!(
-                "(zone_connect {})",
-                connection
-            ))?;
+            self.out
+                .print(format_args!("(zone_connect {})", connection))?;
         }
 
         Ok(())

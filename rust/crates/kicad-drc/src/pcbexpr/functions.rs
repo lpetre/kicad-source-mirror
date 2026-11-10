@@ -403,6 +403,7 @@ fn exists_on_layer_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) 
 }
 
 /// Port of `isPlatedFunc`.
+#[allow(clippy::if_same_then_else)] // keeps the C++ statement structure
 fn is_plated_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) {
     let result = push_zero(ctx);
 
@@ -467,6 +468,7 @@ fn collides_with_courtyard(
 }
 
 /// Port of the static `testFootprintSelector`.
+#[allow(clippy::if_same_then_else)] // keeps the C++ statement structure
 fn test_footprint_selector(footprint: &ItemRef<'_>, selector: &str) -> bool {
     // NOTE: This code may want to be somewhat more generalized, but for now it's implemented
     // here to support functions like insersectsCourtyard where we want multiple ways to search
@@ -1197,7 +1199,6 @@ fn enclosed_by_area_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>)
             }
 
             let mut item_shape = ShapePolySet::default();
-            let enclosed_by_area;
 
             if item.type_() == KicadT::PcbZoneT {
                 item_shape = item.as_zone().expect("zone item").board_outline(item.ctx);
@@ -1234,9 +1235,9 @@ fn enclosed_by_area_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>)
                 );
             }
 
-            if item_shape.is_empty() {
+            let enclosed_by_area = if item_shape.is_empty() {
                 // If it's already empty then our test will have no meaning.
-                enclosed_by_area = false;
+                false
             } else {
                 // GetBoardOutline() is expensive.  Only use it where we have to.
                 let area_outline = zone_outline_for_collision(&area);
@@ -1244,8 +1245,8 @@ fn enclosed_by_area_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>)
                 item_shape.clear_arcs();
                 item_shape.boolean_subtract(&area_outline);
 
-                enclosed_by_area = item_shape.is_empty();
-            }
+                item_shape.is_empty()
+            };
 
             if !is_transient(&item) {
                 if let (Some(c), Some(key)) = (&caches, key) {

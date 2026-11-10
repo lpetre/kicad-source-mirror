@@ -3451,3 +3451,87 @@ Supersedes the "`.kicad_mod` entry ... stub (PCBIO-14)" row of the PCBIO-01 tabl
 ### Known gaps
 
 * `PCB_IO_MGR::ConvertLibrary` (legacy / foreign libraries for `fp upgrade -o`), font embedding.
+
+## Package STAB-PCB: board model against the reference on the whole corpus
+
+Scoreboard driver: `rust/tools/pcb-dump/scoreboard.sh` (+ `scoreboard.py`): every corpus board
+under 1 MB (qa/data/pcbnew, qa/data/cli, demos; 344 boards), scratch copy, `pcb-dump board
+--no-init --hash --sections item,bbox,track,pad,shape,text,dim,zone,footprint,misc,board,order`
+(cached gzip under `rust/target/dump-corpus/ref/`, keyed by board and binary hash) against
+`pcb-dump-rs board --hash`, compare.py's classification, one line per board and section, the
+summary in `tests/golden/dump_scoreboard.txt`. Regression cases: `tests/stab_pcb.rs` (feature
+`dump`), goldens `tests/golden/stabpcb/` from `tests/oracle/stabpcb_golden.sh`
+(`stabpcb_oracle.cpp`, linked against the pcb-dump objects: flips every footprint and prints
+the pad primitives' board / library frame plus the pad and shape sections; and the reference
+`kicad-cli pcb upgrade` of the same board).
+
+Scoreboard (values): before 6133270 match / 257 mismatch / 18459 pending / 649 extra; after
+6136472 / 64 / 15450 / 0 (0 rust-error, 0 missing). Every remaining mismatch is explained:
+
+| class | values / boards | cause | status |
+|---|---|---|---|
+| `shape|lib.start`, `lib.end` of polygon cells (embedded_table_rotated_legacy_v10) | 16 / 1 | R2-09: `m_libStart` / `m_libEnd` of a cell whose library shape is POLY; never read for a POLY lib shape (`OnFootprintTransformed` / `rebakeFromLib` use `m_libPoly`) | expected (R2-09) |
+| `text|*` / `bbox` / `board|bbox` of issue14549 | 38 / 1 | outline font (host font vs stroke font, R2-06) | expected |
+| `bbox` / `board|bbox*` of barcodes (api_kitchen_sink, issue24525) | 6 / 2 | no zint symbol encoder (ZINT-1) | expected |
+| `order|*` of ZoneFill-4.0.7, issue25580, issue4139 | 5 / 3 | items without a UUID in the file get generated UUIDs, a sort key (R2-10) | expected |
+| pending `board|ds.meander.*` | 15436 / 343 | meander settings not modelled | expected |
+| pending `misc|barcode.*`, `bbox` | 14 / 2 | ZINT-1 | expected |
+
+Fixed here (C++ / Rust / state):
+
+| C++ | Rust | state |
+|---|---|---|
+| `PCB_SHAPE::Flip` / `syncLibCoords` of a pad primitive: `PAD::GetPrimitiveLibScale()` through `GetParent()` | `MutEnv::pad_primitive_scale` (new field, `(1, 1)` outside pad primitives), set by `Pad::primitive_env` (current fp transform and relative orientation); read by `PcbShape::flip` and `sync_frame` | fixed (was `(1, 1)`, the M9 / FIX-PAD-1 deviation); `flipped_scaled_custom_pads_match_oracle`: 572 reference values after a flip of a non-uniformly scaled and a uniformly scaled footprint with bezier / rounded-rect / arc / segment / circle / polygon primitives |
+| `(ZONE_CONNECTION) parseInt(..)` of pad and footprint `(zone_connect N)` keeps the integer; `format()` writes `static_cast<int>` | `CopperLayerProps::zone_connection: Option<i32>`, `Footprint::zone_connection: i32` (raw); `Pad::local_zone_connection_raw` / `set_local_zone_connection_raw`, `Footprint::local_zone_connection_raw` / `set_local_zone_connection[_raw]`, `Padstack::zone_connection_raw` / `set_zone_connection[_raw]`, `Pad::zone_connection_overrides_raw`; the enum accessors (`local_zone_connection`, `zone_connection_overrides`, `Padstack::zone_connection`) read through `ZoneConnection::from_raw` | fixed; `raw_zone_connect_values_survive_a_resave` (7 / 9 / -4 as the reference re-save). `from_raw` maps an out-of-range value to `FULL`: every C++ reader (zone filler switches with `FULL` in / as `default:`, `EvalRules` / `EvalZoneConnection` compare with `INHERITED` / `THT_THERMAL`, the zone connection test with `THERMAL`) treats it exactly like `FULL`. Writer, property getters and the dump use the raw value (`?N` as magic_enum prints it) |
+| `PCB_DIMENSION_BASE` as a `PCB_TEXT`: `TransformTextToPolySet` | `PcbDimension::transform_text_to_poly_set` (public; the dimension is the host) | added (kicad-fab request); the dump's `text_polys` of dimensions uses it (corpus: all match) |
+| `PCB_DIMENSION_BASE::GetValueMode`, `DimensionValueMode`, `FindDimensionLengthConstraint`, `CollectResolvedConstraints`, `DIM_VALUE_MODE` | `PcbDimension::value_mode`, `pcb_constraint::{dimension_value_mode, find_dimension_length_constraint, collect_resolved_constraints, DimValueMode}`; "Value Mode" property getter and the "Value" writeable predicate | ported (supersedes the M12 "skipped" row for `GetValueMode`); `dim|value_mode` 95 corpus values match. `GetValueFieldText` / `ChangeValue*` stay out of scope |
+| dump: `lib.poly` = `GetLibraryPolyShape()` | `dump/items.rs` -> `library_poly_shape(ctx)` | fixed (R2-08: 192 values on 27 boards were a dump artifact) |
+| dump: `fp.*.groups` order with `PCB_GROUP::ptr_cmp` (= the inherited `BOARD_ITEM::ptr_cmp`) | `dump/settings.rs` -> `board_item_ptr_cmp` | wired (2914 pending values now match) |
+| dump: `ForEachBoardItem` / `DumpMisc` handle `PCB_TABLE_T` only (not generated tables) | `dump/format.rs`, `dump/defaults.rs` guards on `type_() == PcbTableT` | fixed (api_kitchen_sink: 649 extra values, item count) |
+
+Reports checked against the reference, no model change:
+
+* `PcbTablecell::corners` / `draw_pos` in a footprint (kicad-fab): already right since R2-04;
+  every value of the cells of embedded_table_rotated_legacy_v10 matches (`--no-init` and
+  `--loader`), and kicad-fab's `plot_driver_corpus` (KICAD_FAB_CORPUS_REPORT=1) now matches
+  every file of that board: its two KNOWN_DIFFERENCES entries are stale (change request).
+* Render cache of outline-font text: C++ does not keep the stored cache, for `fp_text` either
+  (`SetLibTextSize` in `parsePCB_TEXT_effects` clears it, board text `SetVisible( true )`).
+  Crafted check: kicad-fab's `plot_text/text.kicad_pcb` with the `fp_text "Outline"` cache
+  replaced by a marker triangle; reference `kicad-cli pcb export gerbers -l User.3` plots the
+  regenerated DejaVu Sans glyphs (identical to the original cache because the host has the
+  font), no triangle. The kicad-fab difference is the missing outline font engine (R2-06).
+* `fp_poly` library polygon with the closing vertex: nothing in C++ merges `m_libPoly` either
+  (`OverrideLibPoly( GetPolyShape() )` in `parsePCB_SHAPE`, then `RebakeFromLib`, whose
+  `transformPolyVertices` merges it only in the *board* polygon via `SetClosed`); the 1084 /
+  1083 point counts came from the dump printing `m_libPoly` instead of `GetLibraryPolyShape()`
+  (R2-08, fixed in the dump). Readers (`FOOTPRINT::cmp_drawings`, library parity) use
+  `library_poly_shape`.
+
+Entries of earlier sections that no longer hold: M9 / FIX-PAD-1 "pad primitives use (1, 1)
+instead of `GetPrimitiveLibScale()`"; PCBIO-06 / PCBIO-07 / R2-14 / GLUE-2 "`zone_connect` out
+of range reads as INHERITED" (the dimension / pad_connection parts of R2-14 still hold); M12
+"`GetValueMode` skipped"; DUMP-RS "`PCB_GROUP::ptr_cmp` pending"; GLUE-2 known gap "fp_poly
+library polygon keeps the duplicated closing vertex" (same in C++, see above).
+
+io corpus (`tools/io-corpus/run.sh --update-golden`): 359 identical / 11 differ / 5 skipped
+(unchanged); every golden-set board is identical now, so the 15 strict tests of
+`tests/io_corpus.rs` run (their `#[ignore]` is gone). The 11: render caches of outline-font
+text (tinytapeout-demo, issue22475: nothing else differs from O2 once the caches are masked;
+RoyalBlue54L-Feather, issue14549: also zone nets) and zone net / priority / teardrop polygons
+from the reference's post-load steps (complex_hierarchy, issue11814, issue14559, issue21482,
+issue25580, teardrop_issue_JPC2, teardrop_spike). Each confirmed at session level: `kicad-rs pcb
+upgrade --force` of the repository board equals O1 for complex_hierarchy, issue11814,
+issue21482, and equals it modulo the generated UUIDs of UUID-less items (random in the
+reference) and render caches for issue14559, RoyalBlue54L-Feather, issue14549; issue25580 and
+the two teardrop boards are in kicad-session's `upgrade_corpus` golden (identical /
+normalised). Demos over 1 MB went through the same byte comparison (identical except the two
+render-cache demos); jetson, vme-wren (both copies) stay skipped as very large.
+
+`pcb_dimension::tests::oracle_dimensions_dump` skips `value_mode`: the M12 fixture re-creates
+the dimensions without the board's constraints (the field was pending before).
+
+Deviations: none new. Known gaps: R2-09 cell `lib.start` / `lib.end` (unread);
+`PCB_DIMENSION_BASE::GetValueFieldText`; out-of-range `zone_connect` in DRC report texts
+(`PrintZoneConnection`) and library parity comparisons depend on callers switching to the raw
+accessors (change requests).

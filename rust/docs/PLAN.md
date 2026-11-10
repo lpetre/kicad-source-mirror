@@ -345,6 +345,29 @@ Progress log:
   Launched: ZINT-1 (new crate kicad-zint: port of the zint subset behind PCB_BARCODE -
   Code 39, Code 128, QR, Micro QR, Data Matrix - with a differential oracle against the
   bundled C library).
+  04:45 UTC (heartbeat; next 05:28): done and read on Fable -
+  STAB-PCB: whole-corpus model scoreboard (rust/tools/pcb-dump/scoreboard.sh, 344 boards
+  under 1 MB, every section): 6,136,472 values match, 64 mismatch - all explained (38
+  outline-font text on one board, 16 never-read lib coordinates of table cells, 6 barcode
+  boxes, 5 order of UUID-less items) - 15,450 pending (15,436 meander settings, not
+  modelled). Fixed on the way: pad primitive lib scale on flip, raw zone_connect values
+  (the reference writes 7 back as 7), dimension value mode, dump wiring.
+  FAB-07 gerbers job through the whole `kicad-rs pcb export gerbers` path: 760 corpus runs
+  (380 boards x 2 option sets): 690 fully identical (exit code, stdout, 15,506 files), 62
+  pending on FAB-10 (mask minimum width: 31 boards - next in the fabrication chain), 2 on
+  generated tables, 4 barcode files, 0 other differences. The three B.Mask "known
+  differences" of the plot corpus were the missing rule resolver, not the model.
+  ZF-06 refill + save through the session: 125 of 126 runnable boards byte-identical after
+  `--refill-zones --save-board` (the other one is random in the reference), zone layers
+  336 of 336 identical; 13 boards wait for teardrops (TD-01, running), 2 for copper
+  thieving (ZF-07, to write).
+  DRC-09 hole-to-hole / edge clearance and DRC-10 disallow: every entry matches on 332 /
+  362 boards except 2 extra on issue23469 (the known rule-condition gap).
+  Launched: FONT-RC-1 (render cache stand-in) and M26 (generated tables + refresh)
+  (w25gr5ufv). Running: DRC-22, DRC-12, FAB-09 -> FAB-08, TD-01, ZINT-1.
+  Next: [FAB-10, FAB-11, FAB-12] when the fabrication chain ends; STAB-DRC when DRC-22 and
+  DRC-12 end; WIRE-1 after DRC-12 and FAB-08; ZF-07 after TD-01; GLUE-3 when the chains are
+  quiet; then the cross-cutting adversarial review, README and the performance phase.
   Cross-crate leftovers for a GLUE-3 pass (package file written) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
   generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid

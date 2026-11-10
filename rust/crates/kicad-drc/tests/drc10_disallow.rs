@@ -42,8 +42,8 @@ use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::json::{self, ObjectOrder};
 use kicad_core::typeinfo::KicadT;
-use kicad_drc::caches::DrcBoardCaches;
 use kicad_drc::cache_generator::{compute_max_clearances, prepare_board};
+use kicad_drc::caches::DrcBoardCaches;
 use kicad_drc::engine::implicit_rules::TuningProfiles;
 use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use kicad_drc::pcbexpr::functions::PcbExprCacheScope;
@@ -79,7 +79,7 @@ impl DrcTestProviderRun for DisallowWithCaches<'_> {
             rules: ctx.rules,
             connectivity: Some(self.connectivity),
         };
-        let _scope = (std::env::var("DRC10_NOSCOPE").is_err()).then(|| PcbExprCacheScope::enter(ctx.board));
+        let _scope = PcbExprCacheScope::enter(ctx.board);
         let mut caches = DrcBoardCaches::new();
         (caches.max_clearance, caches.max_physical_clearance) =
             compute_max_clearances(&cctx, engine);

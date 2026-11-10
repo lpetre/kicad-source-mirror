@@ -32,8 +32,10 @@
 //!   failed, so the test tightens as the port grows; `KICAD_GERBERS_JOB_REPORT=1` prints the
 //!   per-board result.
 //!
-//! The Gerber job file (`.gbrjob`, FAB-09) is not ported yet: the run ends with the
-//! not-yet-ported exit code after the layer files, which is accepted here as the C++ success.
+//! The Gerber job file (`.gbrjob`, FAB-09) is compared in `corpus_replay` (its `J` line), after
+//! normalising the members `Header.GenerationSoftware.Version` and `Header.CreationDate`; the
+//! corpus also holds the crafted boards of kicad-fab (`tests/data/plot_driver`,
+//! `tests/data/gerber_jobfile`).
 
 mod common;
 
@@ -44,9 +46,6 @@ use std::path::{Path, PathBuf};
 use kicad_pcb::project::LoadPath;
 use kicad_session::jobs::JobExportPcbGerbers;
 use kicad_session::{JobOutcome, LoadInputs, Reporter, Session, exit_codes, run_export_gerbers};
-
-/// The message the session reports after the layer files while FAB-09 is pending.
-const JOB_FILE_PENDING: &str = "not ported yet: GERBER_JOBFILE_WRITER::CreateJobFile (FAB-09)\n";
 
 fn kicad_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../..")
@@ -123,8 +122,10 @@ struct Run {
     exit_code: i32,
     /// The reporter text (C++ stdout), the FAB-09 message removed.
     messages: String,
-    /// `(file name, normalised text)` in order.
+    /// `(file name, normalised text)` of the Gerber files in order.
     files: Vec<(String, String)>,
+    /// `(file name, normalised text)` of the Gerber job file (always the last file).
+    job: Option<(String, String)>,
 }
 
 /// `run_export_gerbers`; `Err` when it reaches a pending part of the port.
@@ -141,27 +142,29 @@ fn run(session: &mut Session, args: &[&str]) -> Result<Run, String> {
         Err(payload) => return Err(format!("pending: {}", common::panic_text(payload.as_ref()))),
     };
 
-    let mut messages: String = reporter.lines().iter().map(|l| l.text.as_str()).collect();
-    let mut exit_code = outcome.exit_code;
+    let messages: String = reporter.lines().iter().map(|l| l.text.as_str()).collect();
+    let exit_code = outcome.exit_code;
+    let mut files = Vec::new();
+    let mut job = None;
 
-    if exit_code == exit_codes::NOT_YET_PORTED && messages.ends_with(JOB_FILE_PENDING) {
-        messages.truncate(messages.len() - JOB_FILE_PENDING.len());
-        exit_code = exit_codes::OK;
+    for f in &outcome.files {
+        let name = f.name.rsplit('/').next().unwrap().to_string();
+        let text = std::str::from_utf8(&f.contents).unwrap();
+
+        if name.ends_with(".gbrjob") {
+            assert!(job.is_none(), "one Gerber job file");
+            job = Some((name, normalise_job(text)));
+        } else {
+            assert!(job.is_none(), "the Gerber job file comes last");
+            files.push((name, normalise(text)));
+        }
     }
-
-    let files = outcome
-        .files
-        .iter()
-        .map(|f| {
-            let name = f.name.rsplit('/').next().unwrap().to_string();
-            (name, normalise(std::str::from_utf8(&f.contents).unwrap()))
-        })
-        .collect();
 
     Ok(Run {
         exit_code,
         messages,
         files,
+        job,
     })
 }
 
@@ -180,6 +183,32 @@ fn normalise(text: &str) -> String {
                 && body.ends_with('*'))
             || (body.starts_with("G04 #@! TF.GenerationSoftware,") && body.ends_with('*'))
             || (body.starts_with("G04 #@! TF.CreationDate,") && body.ends_with('*'));
+
+        if replace {
+            out.push_str("<normalised>");
+            if line.ends_with('\n') {
+                out.push('\n');
+            }
+        } else {
+            out.push_str(line);
+        }
+    }
+
+    out
+}
+
+/// Replaces the Gerber job file members `"Version"` (only in `Header.GenerationSoftware`) and
+/// `"CreationDate"` by `<normalised>` (the rule of `tests/golden/gerbers_job/generate.py`).
+fn normalise_job(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+
+    for line in text.split_inclusive('\n') {
+        let body = line
+            .strip_suffix('\n')
+            .unwrap_or(line)
+            .trim_start_matches(' ');
+        let replace =
+            body.starts_with("\"Version\": \"") || body.starts_with("\"CreationDate\": \"");
 
         if replace {
             out.push_str("<normalised>");
@@ -356,6 +385,8 @@ struct CorpusCase {
     stdout_hash: String,
     path: String,
     files: Vec<String>,
+    /// The hash of the normalised Gerber job file (`J` line), when the C++ wrote one.
+    job: Option<String>,
 }
 
 fn corpus_cases() -> Vec<CorpusCase> {
@@ -374,7 +405,10 @@ fn corpus_cases() -> Vec<CorpusCase> {
                 stdout_hash: parts.next().unwrap().to_string(),
                 path: parts.next().unwrap().to_string(),
                 files: Vec::new(),
+                job: None,
             });
+        } else if let Some(hash) = line.strip_prefix("J ") {
+            cases.last_mut().unwrap().job = Some(hash.to_string());
         } else {
             cases.last_mut().unwrap().files.push(line.to_string());
         }
@@ -425,7 +459,7 @@ fn corpus_replay() {
     assert!(cases.len() >= 700, "{} cases", cases.len());
 
     let (mut not_loadable, mut pending, mut runs_matched) = (0, 0, 0);
-    let (mut files_matched, mut files_known) = (0, 0);
+    let (mut files_matched, mut files_known, mut jobs_matched) = (0, 0, 0);
     let mut failures: Vec<String> = Vec::new();
     let mut sessions: BTreeMap<String, Option<Session>> = BTreeMap::new();
 
@@ -510,6 +544,31 @@ fn corpus_replay() {
             }
         }
 
+        match (&got.job, &case.job) {
+            (Some((name, text)), Some(expected)) => {
+                if h8(text) == *expected {
+                    jobs_matched += 1;
+                } else {
+                    if let Some(dir) = std::env::var_os("KICAD_GERBERS_JOB_DUMP") {
+                        let _ = std::fs::write(Path::new(&dir).join(name), text);
+                    }
+                    failures.push(format!("{} {} {name}: differs", case.path, case.set));
+                    ok = false;
+                }
+            }
+            (None, None) => {}
+            (got_job, expected) => {
+                failures.push(format!(
+                    "{} {}: job file {} / expected {}",
+                    case.path,
+                    case.set,
+                    got_job.is_some(),
+                    expected.is_some()
+                ));
+                ok = false;
+            }
+        }
+
         if ok {
             runs_matched += 1;
         }
@@ -532,7 +591,7 @@ fn corpus_replay() {
     println!(
         "gerbers job corpus: {} runs, {not_loadable} not loadable, {pending} pending, \
          {runs_matched} identical runs; {files_matched} files identical, {files_known} known \
-         differences, {} failures",
+         differences, {jobs_matched} job files identical, {} failures",
         cases.len(),
         failures.len()
     );

@@ -23,6 +23,7 @@ fcbf5425
 fcbf5425
 fcbf5425
 fcbf5425
+J 79f987ed
 B nox2_drill 0 ed6d8996 demos/constraints/constraints.kicad_pcb
 a2d6f7e1
 283280ef
@@ -48,6 +49,7 @@ fde9edb0
 0ec4b4e9
 0ec4b4e9
 0ec4b4e9
+J 79f987ed
 B default 0 aaa6a927 demos/ecc83/ecc83-pp.kicad_pcb
 515c1aba
 d8a332d8
@@ -69,6 +71,7 @@ d598eb5a
 31a479dc
 6f5a1a96
 6578c8fe
+J 8487c686
 B nox2_drill 0 aaa6a927 demos/ecc83/ecc83-pp.kicad_pcb
 58f29b0a
 4f0a5267
@@ -90,6 +93,7 @@ e3351dfe
 1299bf4c
 b91f2ce6
 47b78736
+J 8487c686
 B default 0 3df5859f demos/ecc83/ecc83-pp_v2.kicad_pcb
 e66e55ed
 dee24056
@@ -111,6 +115,7 @@ d03e6878
 53fa9329
 3c7da7ed
 05940cce
+J 0704314e
 B nox2_drill 0 3df5859f demos/ecc83/ecc83-pp_v2.kicad_pcb
 8e983c89
 b1e5961e
@@ -132,6 +137,7 @@ d61722e2
 035b1da0
 d120bd5a
 5353966d
+J 0704314e
 B default 0 31a92a4c demos/microwave/microwave.kicad_pcb
 aee6b1d4
 9b5f0c0c
@@ -153,6 +159,7 @@ eeb025bc
 eeb025bc
 beddf7cb
 b67849c9
+J 58b3812a
 B nox2_drill 0 31a92a4c demos/microwave/microwave.kicad_pcb
 e748fabe
 2e5124b5
@@ -174,6 +181,7 @@ aa528a47
 aa528a47
 5fa490e2
 8f650ec1
+J 58b3812a
 B default 0 b7159c85 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
 9731240d
 856ae1c0
@@ -240,6 +248,7 @@ a6a2500c
 5a2207db
 5a2207db
 5a2207db
+J 05157b4f
 B nox2_drill 0 b7159c85 demos/royalblue54L_feather/nfc_antenna/RoyalBlue54L-NFC-Antenna/RoyalBlue54L-NFC-Antenna.kicad_pcb
 fab999d0
 6efdcbb8
@@ -306,6 +315,7 @@ aae60e87
 0e1ac1b5
 0e1ac1b5
 0e1ac1b5
+J 05157b4f
 B default 0 5a5a5667 qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
 6ce27b8c
 fbd2e8d7
@@ -313,6 +323,7 @@ d3b611c2
 6a3d4821
 6a3d4821
 6a3d4821
+J 17f56bab
 B nox2_drill 0 5a5a5667 qa/data/cli/artwork_generation_regressions/Issue24143.kicad_pcb
 30764080
 3005ee4f
@@ -320,6 +331,7 @@ B nox2_drill 0 5a5a5667 qa/data/cli/artwork_generation_regressions/Issue24143.ki
 d51f9823
 d51f9823
 d51f9823
+J 17f56bab
 B default 0 a8b5aaef qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
 32f6ec26
 6c63be21
@@ -339,6 +351,7 @@ f14998b5
 2f1637a1
 2f1637a1
 2f1637a1
+J a409c4b5
 B nox2_drill 0 a8b5aaef qa/data/cli/artwork_generation_regressions/ZoneFill-4.0.7.kicad_pcb
 cf848e47
 520e4392
@@ -358,6 +371,7 @@ b7296531
 7b75ec1a
 7b75ec1a
 7b75ec1a
+J a409c4b5
 B default 0 e02777ec qa/data/cli/basic_test/basic_test.kicad_pcb
 9a703c30
 d4670a31
@@ -388,6 +402,7 @@ d1f2a0e2
 d1f2a0e2
 d1f2a0e2
 d1f2a0e2
+J 0a72710b
 B nox2_drill 0 e02777ec qa/data/cli/basic_test/basic_test.kicad_pcb
 fb850583
 5462fb1c
@@ -418,6 +433,7 @@ af972d16
 47febd1f
 47febd1f
 47febd1f
+J 0a72710b
 B default 0 be5143c0 qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
 59cc9b8f
 72313014
@@ -425,6 +441,7 @@ d4341389
 13598b21
 13598b21
 13598b21
+J 40aa1d3c
 B nox2_drill 0 be5143c0 qa/data/diff_merge/visual_diff/pcb_a.kicad_pcb
 178e8ed5
 d0600d49
@@ -432,6 +449,7 @@ d0600d49
 3f823b71
 3f823b71
 3f823b71
+J 40aa1d3c
 B default 0 a3503340 qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
 c5b22a08
 29dc62a9
@@ -439,6 +457,7 @@ b750a10f
 a01914f8
 a01914f8
 a01914f8
+J e9fa9f41
 B nox2_drill 0 a3503340 qa/data/diff_merge/visual_diff/pcb_b.kicad_pcb
 a3238db3
 f1244b25
@@ -446,6 +465,7 @@ ace3f8e9
 724ff98a
 724ff98a
 724ff98a
+J e9fa9f41
 B default 0 99a08fdd qa/data/downgrade/golden/current/geometry.kicad_pcb
 a9a4c13b
 112fb0a5
@@ -459,6 +479,7 @@ b653c288
 72d3e5ae
 9233e900
 e59e3b1a
+J 70eafd1a
 B nox2_drill 0 99a08fdd qa/data/downgrade/golden/current/geometry.kicad_pcb
 cec46ce8
 d70e63e2
@@ -472,6 +493,7 @@ bf1354c0
 bf1354c0
 2a1e39cf
 c4e60628
+J 70eafd1a
 B default 0 195fd3c1 qa/data/downgrade/golden/current/graphics.kicad_pcb
 123b7fef
 0630cf3c
@@ -480,6 +502,7 @@ B default 0 195fd3c1 qa/data/downgrade/golden/current/graphics.kicad_pcb
 399689a0
 399689a0
 399689a0
+J 40d5467b
 B nox2_drill 0 195fd3c1 qa/data/downgrade/golden/current/graphics.kicad_pcb
 cbf6bb8a
 0813cfc2
@@ -488,6 +511,7 @@ cbf6bb8a
 8ede6aba
 8ede6aba
 8ede6aba
+J 40d5467b
 B default 0 ab6e372c qa/data/downgrade/golden/current/metadata.kicad_pcb
 9740321c
 7eb95458
@@ -517,6 +541,7 @@ a16d3070
 9b120a74
 9b120a74
 9b120a74
+J 6e59b043
 B nox2_drill 0 ab6e372c qa/data/downgrade/golden/current/metadata.kicad_pcb
 f817e694
 73afc7b0
@@ -546,6 +571,7 @@ d70ac65b
 d70ac65b
 d70ac65b
 d70ac65b
+J 6e59b043
 B default 0 d30163fb qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
 7745f46b
 2f2d01fc
@@ -573,6 +599,7 @@ da903226
 6426d5ab
 6426d5ab
 6426d5ab
+J bfb9f7d7
 B nox2_drill 0 d30163fb qa/data/downgrade/golden/current/modern_metadata.kicad_pcb
 f0a2be98
 334ccc59
@@ -600,6 +627,7 @@ e570b0f5
 5e813ee0
 5e813ee0
 5e813ee0
+J bfb9f7d7
 B default 0 99a08fdd qa/data/downgrade/golden/seed/geometry.kicad_pcb
 a9a4c13b
 112fb0a5
@@ -613,6 +641,7 @@ b653c288
 72d3e5ae
 9233e900
 e59e3b1a
+J 70eafd1a
 B nox2_drill 0 99a08fdd qa/data/downgrade/golden/seed/geometry.kicad_pcb
 cec46ce8
 d70e63e2
@@ -626,6 +655,7 @@ bf1354c0
 bf1354c0
 2a1e39cf
 c4e60628
+J 70eafd1a
 B default 0 e39a8357 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
 8d380f15
 93f0a459
@@ -634,6 +664,7 @@ B default 0 e39a8357 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
 4b9c15ea
 4b9c15ea
 4b9c15ea
+J 6ce91993
 B nox2_drill 0 e39a8357 qa/data/downgrade/golden/seed/graphics-drop-v9.kicad_pcb
 cd5c02b3
 951c3291
@@ -642,6 +673,7 @@ cd5c02b3
 1191cda4
 1191cda4
 1191cda4
+J 6ce91993
 B default 0 57814719 qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
 8182c75b
 0a1aaf7c
@@ -650,6 +682,7 @@ c5923f5a
 ac93c435
 ac93c435
 ac93c435
+J 282451d9
 B nox2_drill 0 57814719 qa/data/downgrade/golden/seed/graphics-v10.kicad_pcb
 f7f483b6
 6ac709c3
@@ -658,6 +691,7 @@ cbf580b2
 f3d9cc73
 f3d9cc73
 f3d9cc73
+J 282451d9
 B default 0 977f230f qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
 ef3b63db
 a21bda4b
@@ -666,6 +700,7 @@ d9808648
 1277c89b
 1277c89b
 1277c89b
+J 32388c41
 B nox2_drill 0 977f230f qa/data/downgrade/golden/seed/graphics-v9.kicad_pcb
 931e55bc
 74e70e8b
@@ -674,6 +709,7 @@ f9f5e1bb
 e7b1390c
 e7b1390c
 e7b1390c
+J 32388c41
 B default 0 2fec6d91 qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
 b1da38df
 eb37d7fb
@@ -703,6 +739,7 @@ d874efbc
 d874efbc
 d874efbc
 d874efbc
+J 8aae9b8b
 B nox2_drill 0 2fec6d91 qa/data/downgrade/golden/seed/metadata-v9.kicad_pcb
 7ec6c202
 8053d17b
@@ -732,6 +769,7 @@ bf0bf8ff
 4d1862c5
 4d1862c5
 4d1862c5
+J 8aae9b8b
 B default 0 b6cef5a2 qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
 9c3d6a81
 d458c24d
@@ -759,6 +797,7 @@ c48e2d82
 c48e2d82
 c48e2d82
 c48e2d82
+J 958ae192
 B nox2_drill 0 b6cef5a2 qa/data/downgrade/golden/seed/modern_metadata-v9.kicad_pcb
 dda49a74
 14ad4573
@@ -786,6 +825,7 @@ eb9aca04
 eb9aca04
 eb9aca04
 eb9aca04
+J 958ae192
 B default 0 99a08fdd qa/data/downgrade/golden/v10/geometry.kicad_pcb
 a9a4c13b
 112fb0a5
@@ -799,6 +839,7 @@ b653c288
 72d3e5ae
 9233e900
 e59e3b1a
+J 70eafd1a
 B nox2_drill 0 99a08fdd qa/data/downgrade/golden/v10/geometry.kicad_pcb
 cec46ce8
 d70e63e2
@@ -812,6 +853,7 @@ bf1354c0
 bf1354c0
 2a1e39cf
 c4e60628
+J 70eafd1a
 B default 0 195fd3c1 qa/data/downgrade/golden/v10/graphics.kicad_pcb
 123b7fef
 0630cf3c
@@ -820,6 +862,7 @@ B default 0 195fd3c1 qa/data/downgrade/golden/v10/graphics.kicad_pcb
 399689a0
 399689a0
 399689a0
+J 40d5467b
 B nox2_drill 0 195fd3c1 qa/data/downgrade/golden/v10/graphics.kicad_pcb
 cbf6bb8a
 0813cfc2
@@ -828,6 +871,7 @@ cbf6bb8a
 8ede6aba
 8ede6aba
 8ede6aba
+J 40d5467b
 B default 0 ab6e372c qa/data/downgrade/golden/v10/metadata.kicad_pcb
 9740321c
 7eb95458
@@ -857,6 +901,7 @@ af9b839a
 9b120a74
 9b120a74
 9b120a74
+J 6e59b043
 B nox2_drill 0 ab6e372c qa/data/downgrade/golden/v10/metadata.kicad_pcb
 f817e694
 73afc7b0
@@ -886,6 +931,7 @@ d70ac65b
 d70ac65b
 d70ac65b
 d70ac65b
+J 6e59b043
 B default 0 d30163fb qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
 d6fcac69
 75769e96
@@ -913,6 +959,7 @@ da7a403a
 da7a403a
 da7a403a
 da7a403a
+J bfb9f7d7
 B nox2_drill 0 d30163fb qa/data/downgrade/golden/v10/modern_metadata.kicad_pcb
 ca81571c
 536a7830
@@ -940,6 +987,7 @@ a7cf9f9d
 69257891
 69257891
 69257891
+J bfb9f7d7
 B default 0 99a08fdd qa/data/downgrade/golden/v9/geometry.kicad_pcb
 a9a4c13b
 112fb0a5
@@ -953,6 +1001,7 @@ b653c288
 72d3e5ae
 9233e900
 e59e3b1a
+J 70eafd1a
 B nox2_drill 0 99a08fdd qa/data/downgrade/golden/v9/geometry.kicad_pcb
 cec46ce8
 d70e63e2
@@ -966,6 +1015,7 @@ bf1354c0
 bf1354c0
 2a1e39cf
 c4e60628
+J 70eafd1a
 B default 0 fa564739 qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
 b2024ba6
 ca66e02c
@@ -974,6 +1024,7 @@ ca66e02c
 dd6e4014
 dd6e4014
 dd6e4014
+J 67a54913
 B nox2_drill 0 fa564739 qa/data/downgrade/golden/v9/graphics-drop.kicad_pcb
 f23ce924
 403da696
@@ -982,6 +1033,7 @@ a9a056cc
 0c6be180
 0c6be180
 0c6be180
+J 67a54913
 B default 0 195fd3c1 qa/data/downgrade/golden/v9/graphics.kicad_pcb
 fff6cdf8
 0630cf3c
@@ -990,6 +1042,7 @@ e9888cf5
 399689a0
 399689a0
 399689a0
+J 40d5467b
 B nox2_drill 0 195fd3c1 qa/data/downgrade/golden/v9/graphics.kicad_pcb
 a39fd6ce
 0813cfc2
@@ -998,6 +1051,7 @@ a39fd6ce
 8ede6aba
 8ede6aba
 8ede6aba
+J 40d5467b
 B default 0 ab6e372c qa/data/downgrade/golden/v9/metadata.kicad_pcb
 9740321c
 7eb95458
@@ -1027,6 +1081,7 @@ af9b839a
 9b120a74
 9b120a74
 9b120a74
+J 7b6a099e
 B nox2_drill 0 ab6e372c qa/data/downgrade/golden/v9/metadata.kicad_pcb
 f817e694
 73afc7b0
@@ -1056,6 +1111,7 @@ d70ac65b
 d70ac65b
 d70ac65b
 d70ac65b
+J 7b6a099e
 B default 0 d30163fb qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
 d6fcac69
 75769e96
@@ -1083,6 +1139,7 @@ da7a403a
 da7a403a
 da7a403a
 da7a403a
+J bfb9f7d7
 B nox2_drill 0 d30163fb qa/data/downgrade/golden/v9/modern_metadata.kicad_pcb
 ca81571c
 536a7830
@@ -1110,6 +1167,7 @@ a7cf9f9d
 69257891
 69257891
 69257891
+J bfb9f7d7
 B default 0 4d4e76f6 qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
 da7edc63
 a83bbb82
@@ -1120,6 +1178,7 @@ db60da99
 0125c7fd
 0125c7fd
 0125c7fd
+J e0879a14
 B nox2_drill 0 4d4e76f6 qa/data/downgrade/regressions/custom_pad_arc.kicad_pcb
 de8d6ef6
 5ceb1098
@@ -1130,6 +1189,7 @@ baedc672
 fefdff7f
 fefdff7f
 fefdff7f
+J e0879a14
 B default 0 99731dd1 qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
 2e1f92bb
 90bba9f3
@@ -1157,6 +1217,7 @@ c87e5aa4
 33e18067
 33e18067
 33e18067
+J ceee2498
 B nox2_drill 0 99731dd1 qa/data/downgrade/regressions/group_placement/group_placement.kicad_pcb
 544ba056
 bfcdb084
@@ -1184,6 +1245,7 @@ ff7c7233
 5b2d58fc
 5b2d58fc
 5b2d58fc
+J ceee2498
 B default 0 1525b081 qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
 be16cbfb
 1cfe2452
@@ -1209,6 +1271,7 @@ c01c8cd9
 3e1ff60e
 3e1ff60e
 3e1ff60e
+J 5b795845
 B nox2_drill 0 1525b081 qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb
 ee2d6464
 9b5af67e
@@ -1234,6 +1297,7 @@ ea62d3f3
 9a58ac0e
 9a58ac0e
 9a58ac0e
+J 5b795845
 B default 0 60af4003 qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
 f592eef5
 1c5039fd
@@ -1259,6 +1323,7 @@ fb8cf8fb
 28c08919
 28c08919
 28c08919
+J 62221fbb
 B nox2_drill 0 60af4003 qa/data/downgrade/regressions/tuning_model_settings/tuning_model_settings.kicad_pcb
 127ed39f
 f469a69d
@@ -1284,6 +1349,7 @@ cb9109c0
 cb9109c0
 cb9109c0
 cb9109c0
+J 62221fbb
 B default 0 edcda483 qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
 d481fb17
 3ac4526d
@@ -1305,6 +1371,7 @@ aefa81c2
 aefa81c2
 2ab906be
 de5e05ba
+J 32f8b183
 B nox2_drill 0 edcda483 qa/data/downgrade/regressions/via_generators/via_generators.kicad_pcb
 589ea64b
 a190cf4c
@@ -1326,6 +1393,7 @@ f2692103
 4eec3e25
 66e7753b
 22596bb1
+J 32f8b183
 B default 0 9d187ff0 qa/data/eeschema/issue18119/issue18119.kicad_pcb
 02b26a8b
 52da6768
@@ -1356,6 +1424,7 @@ b649da78
 b649da78
 b649da78
 b649da78
+J d852a975
 B nox2_drill 0 9d187ff0 qa/data/eeschema/issue18119/issue18119.kicad_pcb
 a56088fb
 7ce6614b
@@ -1386,6 +1455,7 @@ d851a68b
 d851a68b
 d851a68b
 d851a68b
+J d852a975
 B default 0 02198620 qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
 79d509c4
 1f6ba715
@@ -1411,6 +1481,7 @@ ed2d4d08
 550d7cc5
 550d7cc5
 550d7cc5
+J eef1ceb0
 B nox2_drill 0 02198620 qa/data/eeschema/issue20173/Kicad 9 - multi channel test.kicad_pcb
 a43a2c73
 4b7297f2
@@ -1436,6 +1507,7 @@ d7195062
 01c88cb6
 01c88cb6
 01c88cb6
+J eef1ceb0
 B default 0 125af94f qa/data/eeschema/issue20173/issue20173.kicad_pcb
 4de35090
 b21adc01
@@ -1461,6 +1533,7 @@ ca45b3f4
 ca45b3f4
 ca45b3f4
 ca45b3f4
+J 73aaf41d
 B nox2_drill 0 125af94f qa/data/eeschema/issue20173/issue20173.kicad_pcb
 de0fa3f6
 8df54ad3
@@ -1486,6 +1559,7 @@ f545bae3
 f545bae3
 f545bae3
 f545bae3
+J 73aaf41d
 B default 0 0bdaef69 qa/data/eeschema/issue22873/issue22873.kicad_pcb
 d2c933d9
 09e30022
@@ -1511,6 +1585,7 @@ f599f563
 9cc3c1cd
 9cc3c1cd
 9cc3c1cd
+J 04a8bad0
 B nox2_drill 0 0bdaef69 qa/data/eeschema/issue22873/issue22873.kicad_pcb
 c7ec53ef
 31ee7c8e
@@ -1536,6 +1611,7 @@ a8689389
 802731e1
 802731e1
 802731e1
+J 04a8bad0
 B default 0 15b44721 qa/data/eeschema/issue23346/issue23346.kicad_pcb
 be35fa60
 ca81ca65
@@ -1561,6 +1637,7 @@ eb4e5117
 eb4e5117
 eb4e5117
 eb4e5117
+J 1bbd7ede
 B nox2_drill 0 15b44721 qa/data/eeschema/issue23346/issue23346.kicad_pcb
 c2561197
 2f53b6e7
@@ -1586,6 +1663,7 @@ a7b82e12
 28a479fe
 28a479fe
 28a479fe
+J 1bbd7ede
 B default 0 8d3dd929 qa/data/eeschema/issue23403/issue23403.kicad_pcb
 5dc7c272
 dcb547d9
@@ -1611,6 +1689,7 @@ a6d7d840
 89c79b12
 89c79b12
 89c79b12
+J ecf45760
 B nox2_drill 0 8d3dd929 qa/data/eeschema/issue23403/issue23403.kicad_pcb
 9b241f3d
 052647dc
@@ -1636,6 +1715,7 @@ c901be50
 c901be50
 c901be50
 c901be50
+J ecf45760
 B default 0 43652d28 qa/data/eeschema/issue23719/issue23719.kicad_pcb
 4a8377e8
 37921cbd
@@ -1661,6 +1741,7 @@ ba1bb286
 ba1bb286
 ba1bb286
 ba1bb286
+J c4b04e0f
 B nox2_drill 0 43652d28 qa/data/eeschema/issue23719/issue23719.kicad_pcb
 d886392b
 f9642b95
@@ -1686,6 +1767,7 @@ ce0a5cc9
 501ead60
 501ead60
 501ead60
+J c4b04e0f
 B default 0 7514c398 qa/data/eeschema/issue23962/issue23962.kicad_pcb
 b3e04c94
 ef303f37
@@ -1711,6 +1793,7 @@ e0d8fee5
 67ae6c01
 67ae6c01
 67ae6c01
+J c3133e6f
 B nox2_drill 0 7514c398 qa/data/eeschema/issue23962/issue23962.kicad_pcb
 30b47c80
 af121e22
@@ -1736,6 +1819,7 @@ c53c75b6
 25ecd0c1
 25ecd0c1
 25ecd0c1
+J c3133e6f
 B default 0 e9179dff qa/data/eeschema/issue24001/issue24001.kicad_pcb
 e15042a5
 c7f5f23d
@@ -1761,6 +1845,7 @@ bcbd8b78
 66cdfcb5
 66cdfcb5
 66cdfcb5
+J f3f26d9f
 B nox2_drill 0 e9179dff qa/data/eeschema/issue24001/issue24001.kicad_pcb
 306fb8f2
 53ebfe02
@@ -1786,6 +1871,7 @@ bab6cf62
 bab6cf62
 bab6cf62
 bab6cf62
+J f3f26d9f
 B default 0 25835e9e qa/data/eeschema/issue24044/issue24044.kicad_pcb
 ea5f4e81
 36bd1656
@@ -1811,6 +1897,7 @@ e74bc61f
 267cf434
 267cf434
 267cf434
+J 74949821
 B nox2_drill 0 25835e9e qa/data/eeschema/issue24044/issue24044.kicad_pcb
 3a29ea7e
 714cb06e
@@ -1836,6 +1923,7 @@ c1921a42
 c1921a42
 c1921a42
 c1921a42
+J 74949821
 B default 0 e8e1c713 qa/data/eeschema/issue24201/issue24201.kicad_pcb
 40a56c68
 80f5d8e2
@@ -1861,6 +1949,7 @@ b07df34b
 1be3bac6
 1be3bac6
 1be3bac6
+J e111a1c0
 B nox2_drill 0 e8e1c713 qa/data/eeschema/issue24201/issue24201.kicad_pcb
 d74b37f8
 553a2eaa
@@ -1886,6 +1975,7 @@ eddbca7a
 755aed42
 755aed42
 755aed42
+J e111a1c0
 B default 0 e8e1c713 qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
 40a56c68
 80f5d8e2
@@ -1911,6 +2001,7 @@ b07df34b
 1be3bac6
 1be3bac6
 1be3bac6
+J e111a1c0
 B nox2_drill 0 e8e1c713 qa/data/eeschema/issue24201_label/issue24201.kicad_pcb
 d74b37f8
 553a2eaa
@@ -1936,6 +2027,7 @@ eddbca7a
 755aed42
 755aed42
 755aed42
+J e111a1c0
 B default 0 273a3a6d qa/data/eeschema/issue24409/issue24409.kicad_pcb
 24e9d13d
 38b12ba0
@@ -1961,6 +2053,7 @@ a705d247
 45cfeb51
 45cfeb51
 45cfeb51
+J fcb2ada7
 B nox2_drill 0 273a3a6d qa/data/eeschema/issue24409/issue24409.kicad_pcb
 2d44cdff
 ad98009a
@@ -1986,6 +2079,7 @@ e4ee30cf
 64903f6b
 64903f6b
 64903f6b
+J fcb2ada7
 B default 0 5ed1a594 qa/data/eeschema/issue9673/issue9673.kicad_pcb
 92f5e13b
 7458845e
@@ -2016,6 +2110,7 @@ f969902a
 9bd39c24
 9bd39c24
 9bd39c24
+J 56d4ed35
 B nox2_drill 0 5ed1a594 qa/data/eeschema/issue9673/issue9673.kicad_pcb
 b88ff182
 2b383b71
@@ -2046,6 +2141,7 @@ b25d73a2
 b25d73a2
 b25d73a2
 b25d73a2
+J 56d4ed35
 B default 0 fcabd0fd qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
 2986cee5
 3d4d83f6
@@ -2071,6 +2167,7 @@ e8aab0bc
 e8aab0bc
 e8aab0bc
 e8aab0bc
+J b4cc6a2f
 B nox2_drill 0 fcabd0fd qa/data/eeschema/netlists/component_classes/component_classes.kicad_pcb
 a95bc45b
 f22f279c
@@ -2096,6 +2193,7 @@ a5ad77cf
 a5ad77cf
 a5ad77cf
 a5ad77cf
+J b4cc6a2f
 B default 0 38aed77a qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
 38bb027b
 be46f164
@@ -2121,6 +2219,7 @@ ba1ff645
 0a9d98d6
 0a9d98d6
 0a9d98d6
+J 370c6e74
 B nox2_drill 0 38aed77a qa/data/eeschema/netlists/issue16915/issue16915.kicad_pcb
 da36264d
 fe5f45a5
@@ -2146,6 +2245,7 @@ aba5ed79
 45fce285
 45fce285
 45fce285
+J 370c6e74
 B default 0 77df38a6 qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
 96aeec94
 8e5be9d2
@@ -2171,6 +2271,7 @@ e76aca19
 e76aca19
 e76aca19
 e76aca19
+J 3964d724
 B nox2_drill 0 77df38a6 qa/data/eeschema/netlists/jumpers/jumpers.kicad_pcb
 9db789f7
 1005429f
@@ -2196,6 +2297,7 @@ b6d81ba1
 b6d81ba1
 b6d81ba1
 b6d81ba1
+J 3964d724
 B default 0 f1af1962 qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
 882ca253
 c62ff23f
@@ -2221,6 +2323,7 @@ e3522a03
 6577c4d8
 6577c4d8
 6577c4d8
+J 21746cca
 B nox2_drill 0 f1af1962 qa/data/eeschema/netlists/legacy_power/legacy_power.kicad_pcb
 2a95b126
 e9876232
@@ -2246,6 +2349,7 @@ e5305ba7
 e5305ba7
 e5305ba7
 e5305ba7
+J 21746cca
 B default 0 a674fa85 qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
 3c632382
 431bb8c6
@@ -2271,6 +2375,7 @@ f1ee8831
 f1ee8831
 f1ee8831
 f1ee8831
+J 53feded2
 B nox2_drill 0 a674fa85 qa/data/eeschema/netlists/legacy_power4/legacy_power4.kicad_pcb
 a170881b
 ed7833c9
@@ -2296,6 +2401,7 @@ f6d99ec9
 1d9a8ee0
 1d9a8ee0
 1d9a8ee0
+J 53feded2
 B default 0 22dda4e6 qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
 dabd265a
 7bce9862
@@ -2321,6 +2427,7 @@ eeffcd23
 09724a79
 09724a79
 09724a79
+J 5249dc99
 B nox2_drill 0 22dda4e6 qa/data/eeschema/schematic_object_tests/not_shared_by_multiple_projects/not_shared_by_multiple_projects.kicad_pcb
 e4370c11
 74c94caf
@@ -2346,6 +2453,7 @@ ff559aaa
 ff559aaa
 ff559aaa
 ff559aaa
+J 5249dc99
 B default 0 3973d6fd qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
 a31154b7
 8d7cc0c4
@@ -2371,6 +2479,7 @@ c4c3cc8f
 c4c3cc8f
 c4c3cc8f
 c4c3cc8f
+J 9c3715a2
 B nox2_drill 0 3973d6fd qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_a/project_a.kicad_pcb
 9b8a254c
 da96a56c
@@ -2396,6 +2505,7 @@ dcb7c05e
 dcb7c05e
 dcb7c05e
 dcb7c05e
+J 9c3715a2
 B default 0 67628545 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
 04f393da
 c453fd05
@@ -2421,6 +2531,7 @@ bb50e0e6
 3ac70de8
 3ac70de8
 3ac70de8
+J 865a9015
 B nox2_drill 0 67628545 qa/data/eeschema/schematic_object_tests/shared_by_multiple_projects/project_b/project_b.kicad_pcb
 b6254332
 60922eec
@@ -2446,6 +2557,7 @@ b35294ed
 01570777
 01570777
 01570777
+J 865a9015
 B default 0 deaea130 qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
 0c97d349
 ada94552
@@ -2471,6 +2583,7 @@ d1c309f4
 d1c309f4
 d1c309f4
 d1c309f4
+J bd07e484
 B nox2_drill 0 deaea130 qa/data/eeschema/spice_netlists/chirp/chirp.kicad_pcb
 41bf8db9
 7e1ccbdd
@@ -2496,6 +2609,7 @@ cf038330
 cf038330
 cf038330
 cf038330
+J bd07e484
 B default 0 a841acb8 qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
 81bfd34b
 19e66daf
@@ -2521,6 +2635,7 @@ a7dcf0af
 a7dcf0af
 a7dcf0af
 a7dcf0af
+J 11697733
 B nox2_drill 0 a841acb8 qa/data/eeschema/spice_netlists/cmos_not/cmos_not.kicad_pcb
 e9394282
 76d506de
@@ -2546,6 +2661,7 @@ a3d4e3ae
 2ecd0912
 2ecd0912
 2ecd0912
+J 11697733
 B default 0 fdf99123 qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
 ca14f724
 2e3f2fc5
@@ -2571,6 +2687,7 @@ b931ab7d
 6a6e5b89
 6a6e5b89
 6a6e5b89
+J ef760f0f
 B nox2_drill 0 fdf99123 qa/data/eeschema/spice_netlists/directives/directives.kicad_pcb
 48036a13
 4b2a3d02
@@ -2596,6 +2713,7 @@ f2f39eea
 4091ac8f
 4091ac8f
 4091ac8f
+J ef760f0f
 B default 0 3988e366 qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
 13f07ac2
 1d6a1866
@@ -2621,6 +2739,7 @@ be94afd1
 be94afd1
 be94afd1
 be94afd1
+J ea798989
 B nox2_drill 0 3988e366 qa/data/eeschema/spice_netlists/fliege_filter/fliege_filter.kicad_pcb
 c2d841ca
 cd217ced
@@ -2646,6 +2765,7 @@ a8c98a3c
 a8c98a3c
 a8c98a3c
 a8c98a3c
+J ea798989
 B default 0 86871088 qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
 f24766d8
 f9e804a4
@@ -2671,6 +2791,7 @@ c351638f
 c351638f
 c351638f
 c351638f
+J ece80ae8
 B nox2_drill 0 86871088 qa/data/eeschema/spice_netlists/instance_params/instance_params.kicad_pcb
 eeafaf5d
 a7812dd2
@@ -2696,6 +2817,7 @@ af624976
 4652c1de
 4652c1de
 4652c1de
+J ece80ae8
 B default 0 f2cd439a qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
 7320735a
 4744f20f
@@ -2721,6 +2843,7 @@ a6a1a593
 8323528a
 8323528a
 8323528a
+J 52a6b650
 B nox2_drill 0 f2cd439a qa/data/eeschema/spice_netlists/legacy_opamp/legacy_opamp.kicad_pcb
 8ee8340f
 0eb89542
@@ -2746,6 +2869,7 @@ bb1287b0
 0a86c0d9
 0a86c0d9
 0a86c0d9
+J 52a6b650
 B default 0 6f0996b3 qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
 0fa98245
 24607ed8
@@ -2771,6 +2895,7 @@ d3f4a8c3
 178be7a1
 178be7a1
 178be7a1
+J abf7146e
 B nox2_drill 0 6f0996b3 qa/data/eeschema/spice_netlists/multiunit_pinmap_split/multiunit_pinmap_split.kicad_pcb
 24b593aa
 1cf48338
@@ -2796,6 +2921,7 @@ dd526998
 dd526998
 dd526998
 dd526998
+J abf7146e
 B default 0 9683ea5e qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
 2def630b
 9649b5ad
@@ -2821,6 +2947,7 @@ ae373ea1
 06c8cefc
 06c8cefc
 06c8cefc
+J 71988bc0
 B nox2_drill 0 9683ea5e qa/data/eeschema/spice_netlists/multiunit_repeat_opamp/multiunit_repeat_opamp.kicad_pcb
 88a7e7f4
 2222fec0
@@ -2846,6 +2973,7 @@ c8a1c519
 c8a1c519
 c8a1c519
 c8a1c519
+J 71988bc0
 B default 0 93d2f16c qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
 b435f236
 4be0eda3
@@ -2871,6 +2999,7 @@ b7a862ec
 b7a862ec
 b7a862ec
 b7a862ec
+J eac70b79
 B nox2_drill 0 93d2f16c qa/data/eeschema/spice_netlists/npn_ce_amp/npn_ce_amp.kicad_pcb
 611deeb6
 6601d73e
@@ -2896,6 +3025,7 @@ a8841898
 5cba4340
 5cba4340
 5cba4340
+J eac70b79
 B default 0 cd29cc87 qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
 6453d2be
 0da0ebaa
@@ -2921,6 +3051,7 @@ da7cc88c
 2b87ead8
 2b87ead8
 2b87ead8
+J 3b3fe9f2
 B nox2_drill 0 cd29cc87 qa/data/eeschema/spice_netlists/opamp/opamp.kicad_pcb
 4d930363
 db2ec7bf
@@ -2946,6 +3077,7 @@ ae9a0b62
 250dbc62
 250dbc62
 250dbc62
+J 3b3fe9f2
 B default 0 7210385f qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
 b93729c1
 3a9a3544
@@ -2953,6 +3085,7 @@ fdaa383e
 ca5c295a
 ca5c295a
 ca5c295a
+J e6c6f2f3
 B nox2_drill 0 7210385f qa/data/eeschema/spice_netlists/parallel_caps/parallel_caps.kicad_pcb
 b60918bd
 d2eacdca
@@ -2960,6 +3093,7 @@ cd42bcd9
 6c2c2e9b
 6c2c2e9b
 6c2c2e9b
+J e6c6f2f3
 B default 0 f6e13691 qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
 56f606a3
 f824c3de
@@ -2985,6 +3119,7 @@ d06acb9e
 d06acb9e
 d06acb9e
 d06acb9e
+J 8a8d900e
 B nox2_drill 0 f6e13691 qa/data/eeschema/spice_netlists/potentiometers/potentiometers.kicad_pcb
 4a534cdc
 dae58d7a
@@ -3010,6 +3145,7 @@ d33fea46
 14a8a686
 14a8a686
 14a8a686
+J 8a8d900e
 B default 0 d1b612de qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
 4ffbed02
 58a5021a
@@ -3035,6 +3171,7 @@ d529ef94
 3bb8a140
 3bb8a140
 3bb8a140
+J dfa53cf6
 B nox2_drill 0 d1b612de qa/data/eeschema/spice_netlists/rectifier/rectifier.kicad_pcb
 1cfecf5f
 9da61ef4
@@ -3060,6 +3197,7 @@ b316632f
 29f29498
 29f29498
 29f29498
+J dfa53cf6
 B default 0 e85b9de6 qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
 94871367
 bb445e70
@@ -3085,6 +3223,7 @@ a95ef958
 1165d52a
 1165d52a
 1165d52a
+J ceecd95e
 B nox2_drill 0 e85b9de6 qa/data/eeschema/spice_netlists/rlc/rlc.kicad_pcb
 1cd0194a
 9e6bb838
@@ -3110,6 +3249,7 @@ cee56bc4
 cee56bc4
 cee56bc4
 cee56bc4
+J ceecd95e
 B default 0 136a7ab5 qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
 b1748b2e
 87fcd0a6
@@ -3135,6 +3275,7 @@ ca247582
 ca247582
 ca247582
 ca247582
+J d56ac4e2
 B nox2_drill 0 136a7ab5 qa/data/eeschema/spice_netlists/sources/sources.kicad_pcb
 4334ab32
 c776a249
@@ -3160,6 +3301,7 @@ db723fb8
 443cfa35
 443cfa35
 443cfa35
+J d56ac4e2
 B default 0 3fe6da0e qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
 d56794f5
 de81ad9a
@@ -3185,6 +3327,7 @@ e83d5e4d
 1aaf2bcc
 1aaf2bcc
 1aaf2bcc
+J b03eaae7
 B nox2_drill 0 3fe6da0e qa/data/eeschema/spice_netlists/switches/switches.kicad_pcb
 8cac5dda
 be517ef3
@@ -3210,6 +3353,7 @@ b9fdebd3
 b9fdebd3
 b9fdebd3
 b9fdebd3
+J b03eaae7
 B default 0 3db67838 qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
 5b38eadb
 33265efc
@@ -3235,6 +3379,7 @@ ad3891ef
 ad3891ef
 ad3891ef
 ad3891ef
+J 8fde20b9
 B nox2_drill 0 3db67838 qa/data/eeschema/spice_netlists/tlines/tlines.kicad_pcb
 5c41560b
 aaa91c1c
@@ -3260,6 +3405,7 @@ c0aaf952
 c0aaf952
 c0aaf952
 c0aaf952
+J 8fde20b9
 B default 0 0f41ee97 qa/data/fuzz/pcb/sexpr/default.kicad_pcb
 addf8081
 fc0aa02b
@@ -3285,6 +3431,7 @@ ccb4f550
 ccb4f550
 ccb4f550
 ccb4f550
+J 88c56ad3
 B nox2_drill 0 0f41ee97 qa/data/fuzz/pcb/sexpr/default.kicad_pcb
 d61bde66
 934fba07
@@ -3310,6 +3457,7 @@ f8a0a148
 f8a0a148
 f8a0a148
 f8a0a148
+J 88c56ad3
 B default 0 822a7b54 qa/data/libraries/test_project/test_project.kicad_pcb
 159141a7
 4f726615
@@ -3335,6 +3483,7 @@ e63a567c
 5932e77a
 5932e77a
 5932e77a
+J 4b84955a
 B nox2_drill 0 822a7b54 qa/data/libraries/test_project/test_project.kicad_pcb
 99b0bf5c
 b6e42e70
@@ -3360,6 +3509,7 @@ c4668003
 c4668003
 c4668003
 c4668003
+J 4b84955a
 B default 0 5c405989 qa/data/pcbnew/bad_triangulation_case.kicad_pcb
 38a90126
 a289a29a
@@ -3390,6 +3540,7 @@ aa2a961e
 aa2a961e
 aa2a961e
 aa2a961e
+J d10dd0e9
 B nox2_drill 0 5c405989 qa/data/pcbnew/bad_triangulation_case.kicad_pcb
 3286aaf0
 e7650918
@@ -3420,6 +3571,7 @@ c4853317
 8777e3b7
 8777e3b7
 8777e3b7
+J d10dd0e9
 B default 0 fcabd0fd qa/data/pcbnew/component_classes.kicad_pcb
 95381477
 076eead8
@@ -3445,6 +3597,7 @@ e8aab0bc
 e8aab0bc
 e8aab0bc
 e8aab0bc
+J 820286c9
 B nox2_drill 0 fcabd0fd qa/data/pcbnew/component_classes.kicad_pcb
 269e7dd4
 16ba89e0
@@ -3470,6 +3623,7 @@ a5ad77cf
 a5ad77cf
 a5ad77cf
 a5ad77cf
+J 820286c9
 B default 0 56f341de qa/data/pcbnew/component_classes_drc.kicad_pcb
 783b7103
 18677b2d
@@ -3500,6 +3654,7 @@ b9756ba4
 0969669f
 0969669f
 0969669f
+J 8b02f0f9
 B nox2_drill 0 56f341de qa/data/pcbnew/component_classes_drc.kicad_pcb
 044b4907
 a6012ec3
@@ -3530,6 +3685,7 @@ d67302bd
 4c475be7
 4c475be7
 4c475be7
+J 8b02f0f9
 B default 0 39178057 qa/data/pcbnew/connection_width_rules.kicad_pcb
 ebf00694
 4b2ad17f
@@ -3560,6 +3716,7 @@ dc2f75eb
 8eb22c0a
 8eb22c0a
 8eb22c0a
+J 4917680f
 B nox2_drill 0 39178057 qa/data/pcbnew/connection_width_rules.kicad_pcb
 6162733d
 2dca8aed
@@ -3590,6 +3747,7 @@ b80f28db
 73ee30b4
 73ee30b4
 73ee30b4
+J 4917680f
 B default 0 bf5ea98d qa/data/pcbnew/creepage/creepage.kicad_pcb
 cb63f091
 e57abbec
@@ -3615,6 +3773,7 @@ c5aacf5c
 306e080e
 306e080e
 306e080e
+J c8194653
 B nox2_drill 0 bf5ea98d qa/data/pcbnew/creepage/creepage.kicad_pcb
 6bfc07c8
 446b3fe1
@@ -3640,6 +3799,7 @@ fd7e1432
 86afda07
 86afda07
 86afda07
+J c8194653
 B default 0 506e31e0 qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
 e3db341d
 196759e6
@@ -3665,6 +3825,7 @@ fd22c540
 62ac12bc
 62ac12bc
 62ac12bc
+J 90935f48
 B nox2_drill 0 506e31e0 qa/data/pcbnew/creepage/creepage_malformed_edge.kicad_pcb
 dd3cc372
 dbc4ef2b
@@ -3690,6 +3851,7 @@ d0b271af
 89293ae3
 89293ae3
 89293ae3
+J 90935f48
 B default 0 8731c551 qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
 91a895b6
 d0506ae2
@@ -3720,6 +3882,7 @@ df202d55
 df202d55
 df202d55
 df202d55
+J ff769aeb
 B nox2_drill 0 8731c551 qa/data/pcbnew/creepage_slots/creepage_slots.kicad_pcb
 0b62b642
 050351d1
@@ -3750,6 +3913,7 @@ a8f1d3bb
 683796ab
 683796ab
 683796ab
+J ff769aeb
 B default 0 4a76bc22 qa/data/pcbnew/custom_fields.kicad_pcb
 7782a7c9
 aceabea4
@@ -3780,6 +3944,7 @@ e13be481
 48336edf
 48336edf
 48336edf
+J daab62af
 B nox2_drill 0 4a76bc22 qa/data/pcbnew/custom_fields.kicad_pcb
 e50552d4
 a4aaf04d
@@ -3810,6 +3975,7 @@ e364216c
 37ebf8e5
 37ebf8e5
 37ebf8e5
+J daab62af
 B default 0 86043b7f qa/data/pcbnew/custom_pads.kicad_pcb
 4bfa3067
 14037dda
@@ -3831,6 +3997,7 @@ e116649e
 e116649e
 2801ec28
 f202412c
+J 3425a4e7
 B nox2_drill 0 86043b7f qa/data/pcbnew/custom_pads.kicad_pcb
 8f8c7cd9
 7acfd9c0
@@ -3852,6 +4019,7 @@ e766d5f5
 5ddb7803
 c277d0ff
 7f346cae
+J 3425a4e7
 B default 0 9049a069 qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
 1d2318de
 1377c6e0
@@ -3877,6 +4045,7 @@ fea381b0
 33009db2
 33009db2
 33009db2
+J 5d299de6
 B nox2_drill 0 9049a069 qa/data/pcbnew/diff_pair_uncoupled_tuning_drc.kicad_pcb
 396838a8
 679bdec8
@@ -3902,6 +4071,7 @@ d43d38b1
 0d2000a3
 0d2000a3
 0d2000a3
+J 5d299de6
 B default 0 086e064f qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
 7aed9bb8
 c9825141
@@ -3927,6 +4097,7 @@ fec165c6
 12334d51
 12334d51
 12334d51
+J ee09ba13
 B nox2_drill 0 086e064f qa/data/pcbnew/drc_arc_arc_edge_clearance/drc_arc_arc_edge_clearance.kicad_pcb
 96fd8bfc
 d18576d2
@@ -3952,6 +4123,7 @@ c8cbdcbd
 c8cbdcbd
 c8cbdcbd
 c8cbdcbd
+J ee09ba13
 B default 0 e4c9e7e3 qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
 51e999d0
 e33e2247
@@ -3977,6 +4149,7 @@ c852657b
 9981259a
 9981259a
 9981259a
+J 06a6ac45
 B nox2_drill 0 e4c9e7e3 qa/data/pcbnew/drc_copper_thieving/copper_thieving.kicad_pcb
 0662e075
 7ccbd322
@@ -4002,6 +4175,7 @@ ccbeeb58
 ccbeeb58
 ccbeeb58
 ccbeeb58
+J 06a6ac45
 B default 0 8e3594f9 qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
 f520e17d
 bae277df
@@ -4027,6 +4201,7 @@ e581bd11
 80e85b31
 80e85b31
 80e85b31
+J 68c16167
 B nox2_drill 0 8e3594f9 qa/data/pcbnew/drc_courtyard/invalid/empty_board.kicad_pcb
 5dcc38e7
 4fb81b74
@@ -4052,6 +4227,7 @@ b54fb50c
 b54fb50c
 b54fb50c
 b54fb50c
+J 68c16167
 B default 0 ac1d7049 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
 9f703fc2
 24fc2eac
@@ -4077,6 +4253,7 @@ e9f2d04c
 5744cd5f
 5744cd5f
 5744cd5f
+J 4ead6828
 B nox2_drill 0 ac1d7049 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_disjoint_courtyard.kicad_pcb
 0d59092e
 31822886
@@ -4102,6 +4279,7 @@ d4bbcbd2
 7e2cdf57
 7e2cdf57
 7e2cdf57
+J 4ead6828
 B default 0 15fb2498 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
 feca4d3f
 8495df51
@@ -4127,6 +4305,7 @@ bb84ee1e
 190d2bca
 190d2bca
 190d2bca
+J 275c5b96
 B nox2_drill 0 15fb2498 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_no_courtyard.kicad_pcb
 26e6b2fa
 a88251e8
@@ -4152,6 +4331,7 @@ dffc7aca
 7e73866b
 7e73866b
 7e73866b
+J 275c5b96
 B default 0 0282d4a9 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
 b844b80d
 16dfa794
@@ -4177,6 +4357,7 @@ dbd6d0d9
 dbd6d0d9
 dbd6d0d9
 dbd6d0d9
+J 96e1bef1
 B nox2_drill 0 0282d4a9 qa/data/pcbnew/drc_courtyard/invalid/single_footprint_unclosed_courtyard.kicad_pcb
 76064957
 3e85e190
@@ -4202,6 +4383,7 @@ fefc94d4
 0e856616
 0e856616
 0e856616
+J 96e1bef1
 B default 0 49707cb5 qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
 d62e50ef
 fac83f2f
@@ -4227,6 +4409,7 @@ d9e83aa5
 d9e83aa5
 d9e83aa5
 d9e83aa5
+J ab3c74a7
 B nox2_drill 0 49707cb5 qa/data/pcbnew/drc_courtyard/invalid/two_footprints_one_malformed.kicad_pcb
 960b8597
 c4256c50
@@ -4252,6 +4435,7 @@ bfc576f6
 4be0074f
 4be0074f
 4be0074f
+J ab3c74a7
 B default 0 8e3594f9 qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
 f520e17d
 bae277df
@@ -4277,6 +4461,7 @@ e581bd11
 80e85b31
 80e85b31
 80e85b31
+J 68c16167
 B nox2_drill 0 8e3594f9 qa/data/pcbnew/drc_courtyard/overlap/empty_board.kicad_pcb
 5dcc38e7
 4fb81b74
@@ -4302,6 +4487,7 @@ b54fb50c
 b54fb50c
 b54fb50c
 b54fb50c
+J 68c16167
 B default 0 48145410 qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
 921e45d8
 516174b5
@@ -4327,6 +4513,7 @@ fd96622e
 3ea3a2b7
 3ea3a2b7
 3ea3a2b7
+J 8589d289
 B nox2_drill 0 48145410 qa/data/pcbnew/drc_courtyard/overlap/single_empty_footprint.kicad_pcb
 345cb457
 163dcf1d
@@ -4352,6 +4539,7 @@ f1c1d38e
 f1c1d38e
 f1c1d38e
 f1c1d38e
+J 8589d289
 B default 0 6305e93d qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
 326191ae
 fe0ce589
@@ -4377,6 +4565,7 @@ fb4a44a3
 fb4a44a3
 fb4a44a3
 fb4a44a3
+J a63bedee
 B nox2_drill 0 6305e93d qa/data/pcbnew/drc_courtyard/overlap/single_footprint_single_courtyard.kicad_pcb
 3955c907
 5689381b
@@ -4402,6 +4591,7 @@ a06bd102
 3dafdb5a
 3dafdb5a
 3dafdb5a
+J a63bedee
 B default 0 badf0f10 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
 449ed99c
 a50acfb2
@@ -4427,6 +4617,7 @@ cb1cad52
 31c1df73
 31c1df73
 31c1df73
+J 3e1e3a5a
 B nox2_drill 0 badf0f10 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_bbox_overlap_only.kicad_pcb
 014006bb
 d8504b87
@@ -4452,6 +4643,7 @@ e548c1c1
 9bf0c9be
 9bf0c9be
 9bf0c9be
+J 3e1e3a5a
 B default 0 2e3db6eb qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
 02ca57bf
 f6115c24
@@ -4477,6 +4669,7 @@ ca7db477
 181c9ce7
 181c9ce7
 181c9ce7
+J f5540189
 B nox2_drill 0 2e3db6eb qa/data/pcbnew/drc_courtyard/overlap/two_footprints_multiple_courtyards_overlap.kicad_pcb
 38f458ea
 9378afd8
@@ -4502,6 +4695,7 @@ ed25c47f
 ed25c47f
 ed25c47f
 ed25c47f
+J f5540189
 B default 0 1932fb11 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
 4c3af961
 ca4d20be
@@ -4527,6 +4721,7 @@ e6fb219c
 5a3ce8e7
 5a3ce8e7
 5a3ce8e7
+J 294e7174
 B nox2_drill 0 1932fb11 qa/data/pcbnew/drc_courtyard/overlap/two_footprints_no_overlap.kicad_pcb
 c3dbd059
 8b9c0037
@@ -4552,6 +4747,7 @@ f4ab2143
 8aa11e97
 8aa11e97
 8aa11e97
+J 294e7174
 B default 0 ccb0578d qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
 0261b72c
 8d379d69
@@ -4577,6 +4773,7 @@ dadd76f8
 dadd76f8
 dadd76f8
 dadd76f8
+J 1a6dd1d6
 B nox2_drill 0 ccb0578d qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap.kicad_pcb
 9b8bf793
 e72e7a74
@@ -4602,6 +4799,7 @@ c12b0a0b
 381adc80
 381adc80
 381adc80
+J 1a6dd1d6
 B default 0 6912bb2f qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
 81bcda36
 235a6caa
@@ -4627,6 +4825,7 @@ a5310f7c
 9714033a
 9714033a
 9714033a
+J ba9ba7dd
 B nox2_drill 0 6912bb2f qa/data/pcbnew/drc_courtyard/overlap/two_footprints_overlap_different_sides.kicad_pcb
 e6dbf42b
 05ed47ca
@@ -4652,6 +4851,7 @@ b366f41a
 b366f41a
 b366f41a
 b366f41a
+J ba9ba7dd
 B default 0 eed33c8d qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
 55c83964
 9618a5de
@@ -4677,6 +4877,7 @@ b19189d9
 82535599
 82535599
 82535599
+J cef6e640
 B nox2_drill 0 eed33c8d qa/data/pcbnew/drc_courtyard/overlap/two_footprints_touching.kicad_pcb
 e717e37b
 9fe961ef
@@ -4702,6 +4903,7 @@ c1d67f83
 8c8d24b3
 8c8d24b3
 8c8d24b3
+J cef6e640
 B default 0 c82e95e8 qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
 5f2f3773
 4ab0aee4
@@ -4727,6 +4929,7 @@ c6c29437
 1f323478
 1f323478
 1f323478
+J c7c5e60d
 B nox2_drill 0 c82e95e8 qa/data/pcbnew/drc_missing_tuning_profile.kicad_pcb
 573a065e
 1efa363c
@@ -4752,6 +4955,7 @@ bb2fee18
 63157fae
 63157fae
 63157fae
+J c7c5e60d
 B default 0 a3631aeb qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
 8b2b3916
 f48909fe
@@ -4777,6 +4981,7 @@ bb01465c
 bb01465c
 bb01465c
 bb01465c
+J 95fc7e6d
 B nox2_drill 0 a3631aeb qa/data/pcbnew/drc_net_chain_tuning_profiles/test_drc_net_chain_tuning_profiles.kicad_pcb
 084bdfd0
 8efc5c22
@@ -4802,6 +5007,7 @@ ed523abb
 262c6068
 262c6068
 262c6068
+J 95fc7e6d
 B default 0 f83fef0e qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
 c2c3e827
 80301518
@@ -4827,6 +5033,7 @@ bff27fff
 2be9c661
 2be9c661
 2be9c661
+J f5762d6e
 B nox2_drill 0 f83fef0e qa/data/pcbnew/drc_skew/drc_skew.kicad_pcb
 bcc27fa9
 90d1ae7b
@@ -4852,6 +5059,7 @@ e34ea96a
 e34ea96a
 e34ea96a
 e34ea96a
+J f5762d6e
 B default 0 ea206a2c qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
 be08edc7
 023c690d
@@ -4871,6 +5079,7 @@ e731f606
 6a1aa48c
 129f3cd7
 e40dba15
+J 8ae676ac
 B nox2_drill 0 ea206a2c qa/data/pcbnew/drc_via_stack/ALoneMicroviaMayBeUnfilled.kicad_pcb
 4ad8fee2
 786d84e9
@@ -4890,6 +5099,7 @@ ef124e70
 1f98aaeb
 25bab83a
 0bffb97b
+J 8ae676ac
 B default 0 0e86e257 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
 a8975e53
 0fa1e06e
@@ -4909,6 +5119,7 @@ a8975e53
 9baaa1df
 c86dd6c7
 0d8cd3a6
+J 1d4a08f4
 B nox2_drill 0 0e86e257 qa/data/pcbnew/drc_via_stack/ASecondHopSharingALandingViaIsStillChecked.kicad_pcb
 f5041198
 03172e0f
@@ -4928,6 +5139,7 @@ e22fb4c9
 9c1c65e2
 129949cb
 58c06d45
+J 1d4a08f4
 B default 0 27f78736 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
 7c737707
 a8ea6709
@@ -4947,6 +5159,7 @@ bb5d6429
 8125186a
 fd5481f1
 4933af17
+J 93eb1fb0
 B nox2_drill 0 27f78736 qa/data/pcbnew/drc_via_stack/AViaCarriedTwiceIsReportedOnce.kicad_pcb
 9873c7b8
 345ac7dc
@@ -4966,6 +5179,7 @@ b2ae2308
 03579e0f
 794ddda5
 9851debf
+J 93eb1fb0
 B default 0 3154995b qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
 a3bb2c55
 6149176d
@@ -4985,6 +5199,7 @@ ed4dabe1
 779c17fc
 7562955f
 6ac5a530
+J a23d9c0f
 B nox2_drill 0 3154995b qa/data/pcbnew/drc_via_stack/ClearOfTheViaBelowIsAStaggerNotAStack.kicad_pcb
 5f6dc466
 060c6e09
@@ -5004,6 +5219,7 @@ e9a28264
 5827ef8b
 b1fe1ef5
 e0b9ad49
+J a23d9c0f
 B default 0 91981339 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
 f9575d41
 3823e127
@@ -5025,6 +5241,7 @@ b576bf96
 8c743d31
 7c9983d2
 eb50a087
+J c639e2f6
 B nox2_drill 0 91981339 qa/data/pcbnew/drc_via_stack/CoaxialButSeparatedMicroviasAreNotOneStack.kicad_pcb
 b1ee85f1
 d6375b1a
@@ -5046,6 +5263,7 @@ f035d58c
 f035d58c
 9fca4128
 89b2eee6
+J c639e2f6
 B default 0 f425f0c4 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
 5d998334
 d5288a1f
@@ -5065,6 +5283,7 @@ fb51fcca
 fb51fcca
 6b7534ea
 cc435661
+J 0d604bc6
 B nox2_drill 0 f425f0c4 qa/data/pcbnew/drc_via_stack/EveryHopOfAStackMustBeFilled.kicad_pcb
 c1179633
 71f90859
@@ -5084,6 +5303,7 @@ e7baf65c
 8b302562
 943a6932
 0a495890
+J 0d604bc6
 B default 0 25587461 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
 c3e52c53
 41493646
@@ -5103,6 +5323,7 @@ b9ecc156
 28a63f33
 4d0998cc
 65c1bcf5
+J a252b998
 B nox2_drill 0 25587461 qa/data/pcbnew/drc_via_stack/FillFromBoardHonoursTheBoardDefault.kicad_pcb
 3f4dcc3c
 67db8a6b
@@ -5122,6 +5343,7 @@ e8e4cac5
 4c248875
 970f1de4
 b748cc8a
+J a252b998
 B default 0 3b777aca qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
 226864ba
 77b4e160
@@ -5141,6 +5363,7 @@ b8b22a02
 67eb75a6
 5358170f
 d5ebf7af
+J c210280d
 B nox2_drill 0 3b777aca qa/data/pcbnew/drc_via_stack/GeneratorStackIsNotReportedTwice.kicad_pcb
 1129ba4a
 4c1514cc
@@ -5160,6 +5383,7 @@ ba86cc7a
 ba86cc7a
 b221e2b4
 b94f4d04
+J c210280d
 B default 0 3bf0f689 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
 a0443041
 bab065e5
@@ -5181,6 +5405,7 @@ a1c94e87
 a1c94e87
 fa6c4c38
 3a989f5d
+J 51cbe4e9
 B nox2_drill 0 3bf0f689 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportDepth.kicad_pcb
 92084023
 2696c568
@@ -5202,6 +5427,7 @@ b97b7caf
 6da10cda
 822a2279
 c10b0ada
+J 51cbe4e9
 B default 0 037f8792 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
 53e99f26
 5fc332da
@@ -5221,6 +5447,7 @@ bfa6b10d
 4aaffa6f
 0edf2768
 0ea1a004
+J 5f4ec6f3
 B nox2_drill 0 037f8792 qa/data/pcbnew/drc_via_stack/LooseStackedMicroviasReportNotFilled.kicad_pcb
 99d9be38
 7bca8410
@@ -5240,6 +5467,7 @@ bb786b01
 0af55b9a
 8998e74c
 aee37495
+J 5f4ec6f3
 B default 0 ee8e8b9f qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
 a15a65a7
 075681df
@@ -5267,6 +5495,7 @@ d07376bc
 0544971b
 0544971b
 0544971b
+J dfb1c1a3
 B nox2_drill 0 ee8e8b9f qa/data/pcbnew/drc_via_stack/MicroviaStackDepthRuleIsHonoured.kicad_pcb
 68fe4e80
 89bde433
@@ -5294,6 +5523,7 @@ e630ecae
 3bcd2d75
 3bcd2d75
 3bcd2d75
+J dfb1c1a3
 B default 0 2c725ce0 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
 cf057847
 130eb0b7
@@ -5313,6 +5543,7 @@ fdd7b0f9
 fdd7b0f9
 e3af49bd
 caf856b9
+J 9187e66a
 B nox2_drill 0 2c725ce0 qa/data/pcbnew/drc_via_stack/OverlappingButOffsetMicroviasAreOneStructure.kicad_pcb
 ab9d7cf4
 095cf4ad
@@ -5332,6 +5563,7 @@ cd729460
 424ffe62
 b33651e6
 49eb1d5d
+J 9187e66a
 B default 0 5ca9f82d qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
 446fddbc
 b541e3e1
@@ -5351,6 +5583,7 @@ feb01974
 feb01974
 2bd460c8
 cfa26100
+J 4533e789
 B nox2_drill 0 5ca9f82d qa/data/pcbnew/drc_via_stack/StackNotTilingItsSpanReported.kicad_pcb
 a133f0ec
 1bfad4c0
@@ -5370,6 +5603,7 @@ c3dea09b
 c3dea09b
 a0d3da36
 16e2c994
+J 4533e789
 B default 0 5bee0823 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
 15f72abd
 c246a20b
@@ -5389,6 +5623,7 @@ aaee758d
 423c4d2b
 07f023d6
 abbe240e
+J a1e674f0
 B nox2_drill 0 5bee0823 qa/data/pcbnew/drc_via_stack/StackTooDeepReported.kicad_pcb
 d11b0f16
 396bc37a
@@ -5408,6 +5643,7 @@ c429d16f
 c429d16f
 34bf3ede
 7bd2f2f6
+J a1e674f0
 B default 0 244203b5 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
 5e15a80e
 5b360078
@@ -5427,6 +5663,7 @@ fd6741dd
 667ad3c2
 cbf79ad2
 24a5077d
+J 3879ceaf
 B nox2_drill 0 244203b5 qa/data/pcbnew/drc_via_stack/TouchingHolesFormAColumn.kicad_pcb
 e10f5065
 b035eedb
@@ -5446,6 +5683,7 @@ c34b347d
 c34b347d
 0bc7ecbe
 a7c5c455
+J 3879ceaf
 B default 0 fc5f3204 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
 237f97d4
 606bb3c1
@@ -5465,6 +5703,7 @@ f9b9977c
 f9b9977c
 6f9ddfae
 e2deab6e
+J b9809c81
 B nox2_drill 0 fc5f3204 qa/data/pcbnew/drc_via_stack/UnfilledInnerHopReported.kicad_pcb
 edfe8b7e
 485ebe00
@@ -5484,6 +5723,7 @@ ab7ccf14
 41e41081
 983af47a
 7d2471c7
+J b9809c81
 B default 0 95784510 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
 58f1e419
 31621b0e
@@ -5503,6 +5743,7 @@ ddaef529
 252eaac0
 1dc9bc27
 670d1462
+J c0319930
 B nox2_drill 0 95784510 qa/data/pcbnew/drc_via_stack/ZeroSpanMicroviasDoNotMultiplyViolations.kicad_pcb
 cd99ca96
 5aefb929
@@ -5522,6 +5763,7 @@ da1dd9c8
 2fba1a8f
 f2a8b406
 0277ca35
+J c0319930
 B default 0 6ea5219e qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
 809c945e
 751bc7a3
@@ -5552,6 +5794,7 @@ c439e963
 0f8e56dc
 0f8e56dc
 0f8e56dc
+J b701d311
 B nox2_drill 0 6ea5219e qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb
 ab945203
 be1222cc
@@ -5582,6 +5825,7 @@ fd84ee36
 4923a28f
 4923a28f
 4923a28f
+J b701d311
 B default 0 ee6a6263 qa/data/pcbnew/fill_bad.kicad_pcb
 45d193ed
 7cf21512
@@ -5605,6 +5849,7 @@ b2adb448
 b2adb448
 d998446e
 11bbbc79
+J aaa2b984
 B nox2_drill 0 ee6a6263 qa/data/pcbnew/fill_bad.kicad_pcb
 bc366be6
 a9def893
@@ -5628,6 +5873,7 @@ a832b78a
 a832b78a
 d4824eb6
 da9cf813
+J aaa2b984
 B default 0 842988fe qa/data/pcbnew/footprints_load_save.kicad_pcb
 5f18af0b
 5cb19631
@@ -5658,6 +5904,7 @@ bcb38721
 2341ae18
 2341ae18
 2341ae18
+J 7cdcd572
 B nox2_drill 0 842988fe qa/data/pcbnew/footprints_load_save.kicad_pcb
 bcdc11ec
 d0eddbc4
@@ -5688,6 +5935,7 @@ f911e19f
 5336e52f
 5336e52f
 5336e52f
+J 7cdcd572
 B default 0 36e33712 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
 07a7b06b
 500e65c4
@@ -5718,6 +5966,7 @@ a876c4d4
 1719e3d3
 1719e3d3
 1719e3d3
+J c8251ac9
 B nox2_drill 0 36e33712 qa/data/pcbnew/graphics_load_save_v20240108.kicad_pcb
 61c902a9
 efb6390f
@@ -5748,6 +5997,7 @@ f840e1d3
 f840e1d3
 f840e1d3
 f840e1d3
+J c8251ac9
 B default 0 8a909922 qa/data/pcbnew/groups_load_save.kicad_pcb
 deb34ff1
 9ef1e0bc
@@ -5778,6 +6028,7 @@ d61f51b1
 92bb87d1
 92bb87d1
 92bb87d1
+J b5ebffe7
 B nox2_drill 0 8a909922 qa/data/pcbnew/groups_load_save.kicad_pcb
 da438f3b
 ef0b34d8
@@ -5808,6 +6059,7 @@ de51e26d
 21c06af0
 21c06af0
 21c06af0
+J b5ebffe7
 B default 0 68436e3c qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
 c3b1a842
 fbd5bfb5
@@ -5838,6 +6090,7 @@ cbb11627
 5d69834f
 5d69834f
 5d69834f
+J 9073d94a
 B nox2_drill 0 68436e3c qa/data/pcbnew/groups_load_save_v20231212.kicad_pcb
 ce521b59
 d6fc05e7
@@ -5868,6 +6121,7 @@ a9b25eaa
 a9b25eaa
 a9b25eaa
 a9b25eaa
+J 9073d94a
 B default 0 b0ebf762 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
 2c009645
 ce1119de
@@ -5893,6 +6147,7 @@ a1b7ceda
 013d5d26
 013d5d26
 013d5d26
+J ae0ec694
 B nox2_drill 0 b0ebf762 qa/data/pcbnew/hatch_thermal_connectivity/hatch_thermal_connectivity.kicad_pcb
 cf1fb174
 31cf6bd1
@@ -5918,6 +6173,7 @@ fa325537
 66f5026c
 66f5026c
 66f5026c
+J ae0ec694
 B default 0 4413885d qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
 82e8dcd9
 a12cb59c
@@ -5938,6 +6194,7 @@ c6c9fd55
 624c724c
 bbffba26
 314aa53b
+J 005ef22c
 B nox2_drill 0 4413885d qa/data/pcbnew/incorrect_text_mirroring_drc.kicad_pcb
 7209cddf
 433faf90
@@ -5958,6 +6215,7 @@ f33f7753
 27548d62
 afbcf384
 91338cbe
+J 005ef22c
 B default 0 d990ba26 qa/data/pcbnew/intersectingzones.kicad_pcb
 3f461224
 db00ef7c
@@ -5988,6 +6246,7 @@ f0b798cb
 083a0faf
 083a0faf
 083a0faf
+J b9da8e6c
 B nox2_drill 0 d990ba26 qa/data/pcbnew/intersectingzones.kicad_pcb
 75ec7a47
 41f32030
@@ -6018,6 +6277,7 @@ bc174495
 7debe238
 7debe238
 7debe238
+J b9da8e6c
 B default 0 c25414fc qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
 26bad4b7
 9c136d82
@@ -6028,6 +6288,7 @@ ed9d16f1
 76fb9b8e
 76fb9b8e
 76fb9b8e
+J 261aa807
 B nox2_drill 0 c25414fc qa/data/pcbnew/ipc2581/dielectric-sublayer.kicad_pcb
 c03b2350
 009dfbbc
@@ -6038,6 +6299,7 @@ f1470d5f
 2ce5f7c5
 2ce5f7c5
 2ce5f7c5
+J 261aa807
 B default 0 4abbba19 qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
 cada2064
 9efe9f1a
@@ -6048,6 +6310,7 @@ cada2064
 e42a92ac
 e42a92ac
 e42a92ac
+J b2032a32
 B nox2_drill 0 4abbba19 qa/data/pcbnew/ipc2581/edgecuts-circles-only.kicad_pcb
 62abe88e
 71ff8557
@@ -6058,6 +6321,7 @@ ca77e264
 cd5b7e5e
 cd5b7e5e
 cd5b7e5e
+J b2032a32
 B default 0 9f43fd8f qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
 e268ed2b
 63aadfb5
@@ -6068,6 +6332,7 @@ e268ed2b
 a6246235
 a6246235
 a6246235
+J d6c80631
 B nox2_drill 0 9f43fd8f qa/data/pcbnew/ipc2581/filled-silk-circle.kicad_pcb
 c0b9d352
 ca65f3c6
@@ -6078,6 +6343,7 @@ db951d94
 89e1d972
 89e1d972
 89e1d972
+J d6c80631
 B default 0 eec24a27 qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
 35ae74e8
 db4fea16
@@ -6088,6 +6354,7 @@ dc1035bb
 308cc91a
 308cc91a
 308cc91a
+J d1db52d4
 B nox2_drill 0 eec24a27 qa/data/pcbnew/ipc2581/filled-tented-via.kicad_pcb
 5dcf455d
 55a97d02
@@ -6098,6 +6365,7 @@ d19c5358
 3a703663
 3a703663
 3a703663
+J d1db52d4
 B default 0 4e060303 qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
 23a1eaf9
 b7a5d4fc
@@ -6107,6 +6375,7 @@ b7a5d4fc
 737bc9e1
 6d7f1fb7
 8031513b
+J b0efadcc
 B nox2_drill 0 4e060303 qa/data/pcbnew/ipc2581/netted_unnumbered.kicad_pcb
 2639e75d
 e707798a
@@ -6116,6 +6385,7 @@ c54bea9a
 7733a62c
 a01c6d69
 a13e91c8
+J b0efadcc
 B default 0 43bad9bf qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
 6f41cd4e
 e5cb2a56
@@ -6150,6 +6420,7 @@ bd955442
 bd955442
 bd955442
 bd955442
+J 7f3b2d4a
 B nox2_drill 0 43bad9bf qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb
 686e3b52
 6cc76c98
@@ -6184,6 +6455,7 @@ c8510a54
 c8510a54
 c8510a54
 c8510a54
+J 7f3b2d4a
 B default 0 bba56e93 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
 9c2363da
 1b10e941
@@ -6194,6 +6466,7 @@ a1c3082c
 331064bb
 331064bb
 331064bb
+J df62ab61
 B nox2_drill 0 bba56e93 qa/data/pcbnew/ipc2581/textbox-border.kicad_pcb
 0845dd9c
 2c6efcf4
@@ -6204,6 +6477,7 @@ f967b31e
 1a81a15b
 1a81a15b
 1a81a15b
+J df62ab61
 B default 0 96b01563 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
 65b6a771
 8c024401
@@ -6243,6 +6517,7 @@ bf95500c
 51a64c8e
 51a64c8e
 51a64c8e
+J 4aaf4037
 B nox2_drill 0 96b01563 qa/data/pcbnew/ipc2581/thirty-copper-layers.kicad_pcb
 111f6030
 8cff191e
@@ -6282,6 +6557,7 @@ d2eec5a5
 1a84557c
 1a84557c
 1a84557c
+J 4aaf4037
 B default 0 ef2163b9 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
 8ac4a69b
 a3293b20
@@ -6308,6 +6584,7 @@ a7a48e69
 720b7098
 720b7098
 78bcbe3b
+J fb1b1de2
 B nox2_drill 0 ef2163b9 qa/data/pcbnew/ipc2581/user10-content.kicad_pcb
 3f6ee87f
 031eb61e
@@ -6334,6 +6611,7 @@ f1edabd7
 5fe82cf7
 5fe82cf7
 ca976c50
+J fb1b1de2
 B default 0 3ded466f qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
 cc07007b
 4af485e2
@@ -6344,6 +6622,7 @@ a764d94e
 4346c89a
 4346c89a
 4346c89a
+J 5598d18c
 B nox2_drill 0 3ded466f qa/data/pcbnew/ipc2581/whitespace-text.kicad_pcb
 47942245
 7842fb95
@@ -6354,6 +6633,7 @@ da49a9bb
 51e2810a
 51e2810a
 51e2810a
+J 5598d18c
 B default 0 44979c20 qa/data/pcbnew/issue10697.kicad_pcb
 c628cbf6
 c954e03a
@@ -6381,6 +6661,7 @@ ff93f4a0
 ff93f4a0
 71bd1d90
 c5276faa
+J d2418db6
 B nox2_drill 0 44979c20 qa/data/pcbnew/issue10697.kicad_pcb
 0bcada04
 fe936874
@@ -6408,6 +6689,7 @@ ca814e42
 ca814e42
 d106f8b5
 5f68ba0d
+J d2418db6
 B default 0 01950847 qa/data/pcbnew/issue10906.kicad_pcb
 cfaa54a6
 25e3a92a
@@ -6438,6 +6720,7 @@ a39f2350
 a39f2350
 a39f2350
 a39f2350
+J 3b14dee3
 B nox2_drill 0 01950847 qa/data/pcbnew/issue10906.kicad_pcb
 ef15e9b6
 6cbbea8d
@@ -6468,6 +6751,7 @@ add6e5d2
 333aa897
 333aa897
 333aa897
+J 3b14dee3
 B default 0 2b08aa5c qa/data/pcbnew/issue10916.kicad_pcb
 44758803
 8cb20513
@@ -6498,6 +6782,7 @@ a9c2c224
 16cddc81
 16cddc81
 16cddc81
+J ee05570d
 B nox2_drill 0 2b08aa5c qa/data/pcbnew/issue10916.kicad_pcb
 4e8aa3c1
 b83f174f
@@ -6528,6 +6813,7 @@ c57b8965
 5744c5cd
 5744c5cd
 5744c5cd
+J ee05570d
 B default 0 fbb180e7 qa/data/pcbnew/issue12109.kicad_pcb
 5d10f274
 27e7d43a
@@ -6558,6 +6844,7 @@ aa77ad71
 870da152
 870da152
 870da152
+J 8debe70a
 B nox2_drill 0 fbb180e7 qa/data/pcbnew/issue12109.kicad_pcb
 713fa950
 463a6e00
@@ -6588,6 +6875,7 @@ c525f457
 2c96a84c
 2c96a84c
 2c96a84c
+J 8debe70a
 B default 0 b727d60b qa/data/pcbnew/issue12831.kicad_pcb
 48b25750
 3dc47630
@@ -6606,6 +6894,7 @@ af7be4cd
 01076846
 747ff4b3
 161cff23
+J bd8eb7c8
 B nox2_drill 0 b727d60b qa/data/pcbnew/issue12831.kicad_pcb
 34cd9243
 292c0492
@@ -6624,6 +6913,7 @@ f8f40aea
 3b67da58
 01879714
 fa376da8
+J bd8eb7c8
 B default 0 a2a1dc67 qa/data/pcbnew/issue12964/issue12964.kicad_pcb
 3335758c
 77d96eec
@@ -6645,6 +6935,7 @@ a0075c1a
 a0075c1a
 1ca6dba4
 a648bd62
+J 6ea30cca
 B nox2_drill 0 a2a1dc67 qa/data/pcbnew/issue12964/issue12964.kicad_pcb
 571984be
 cdd11de7
@@ -6666,6 +6957,7 @@ ed77e9f0
 037ca9fb
 a72ada61
 6fa5d86d
+J 6ea30cca
 B default 0 7ba5ba66 qa/data/pcbnew/issue1358.kicad_pcb
 affe19ba
 1915e6bd
@@ -6687,6 +6979,7 @@ cde3858c
 638b06f8
 76ab168a
 314e16bd
+J 49e7a0af
 B nox2_drill 0 7ba5ba66 qa/data/pcbnew/issue1358.kicad_pcb
 6e49f5f7
 8910b1d0
@@ -6708,6 +7001,7 @@ f9abcc9c
 4394f4b8
 5d1cb3be
 93e66ea3
+J 49e7a0af
 B default 0 e6e8b633 qa/data/pcbnew/issue14008.kicad_pcb
 7ab5fbfa
 5aea8090
@@ -6738,6 +7032,7 @@ dc915062
 dc915062
 dc915062
 dc915062
+J b0b3623e
 B nox2_drill 0 e6e8b633 qa/data/pcbnew/issue14008.kicad_pcb
 04a12c2d
 a1081752
@@ -6768,6 +7063,7 @@ e398de37
 03a241a9
 03a241a9
 03a241a9
+J b0b3623e
 B default 0 5ada63b0 qa/data/pcbnew/issue14130.kicad_pcb
 c95eb11d
 1142a614
@@ -6787,6 +7083,7 @@ c02c0b56
 14e22331
 1de9511f
 8febad7f
+J 9e9f758d
 B nox2_drill 0 5ada63b0 qa/data/pcbnew/issue14130.kicad_pcb
 1567dae6
 bed2135b
@@ -6806,6 +7103,7 @@ b0a5e1f9
 2bfa8882
 733a6565
 4e57b386
+J 9e9f758d
 B default 0 35d9f017 qa/data/pcbnew/issue14294.kicad_pcb
 2fbea609
 a69682d6
@@ -6840,6 +7138,7 @@ e7e00bc2
 4868fac1
 4868fac1
 4868fac1
+J 866d9921
 B nox2_drill 0 35d9f017 qa/data/pcbnew/issue14294.kicad_pcb
 4ce1d930
 7dfb4478
@@ -6874,6 +7173,7 @@ b33840b4
 3bd69b2d
 3bd69b2d
 3bd69b2d
+J 866d9921
 B default 0 77878812 qa/data/pcbnew/issue14334.kicad_pcb
 b32cc171
 d142e7fb
@@ -6904,6 +7204,7 @@ b7be3dc9
 b7be3dc9
 b7be3dc9
 b7be3dc9
+J 98e534e3
 B nox2_drill 0 77878812 qa/data/pcbnew/issue14334.kicad_pcb
 eddbc438
 38b6d3bc
@@ -6934,6 +7235,7 @@ ccffeacf
 5e574987
 5e574987
 5e574987
+J 98e534e3
 B default 0 66fefde5 qa/data/pcbnew/issue14412.kicad_pcb
 1addfcac
 552ec8df
@@ -6964,6 +7266,7 @@ be3da4e8
 71eb03b4
 71eb03b4
 71eb03b4
+J bf5a66c9
 B nox2_drill 0 66fefde5 qa/data/pcbnew/issue14412.kicad_pcb
 1b3b8d55
 e3fdaa6c
@@ -6994,6 +7297,7 @@ dbd37006
 634612f8
 634612f8
 634612f8
+J bf5a66c9
 B default 0 f5729d3e qa/data/pcbnew/issue14449.kicad_pcb
 5ef268c4
 c49e6707
@@ -7024,6 +7328,7 @@ e6f38f39
 305c6dc9
 305c6dc9
 305c6dc9
+J b54dc8f3
 B nox2_drill 0 f5729d3e qa/data/pcbnew/issue14449.kicad_pcb
 0e3245ea
 17d7dc16
@@ -7054,6 +7359,7 @@ fb01a4db
 46545d40
 46545d40
 46545d40
+J b54dc8f3
 B default 0 5a5d23fc qa/data/pcbnew/issue14549_2.kicad_pcb
 56b0d0fe
 71a981cf
@@ -7086,6 +7392,7 @@ dc0a5de8
 4f0e5f63
 4f0e5f63
 4f0e5f63
+J dccc1e1f
 B nox2_drill 0 5a5d23fc qa/data/pcbnew/issue14549_2.kicad_pcb
 413bf407
 a8d8498c
@@ -7118,6 +7425,7 @@ b0b64fb0
 9623684e
 9623684e
 9623684e
+J dccc1e1f
 B default 0 21d7409b qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
 88e65b67
 d034bdf6
@@ -7148,6 +7456,7 @@ f25c0441
 f25c0441
 f25c0441
 f25c0441
+J c695d306
 B nox2_drill 0 21d7409b qa/data/pcbnew/issue14650/KiCAD_Fiducial.kicad_pcb
 f59f3bc2
 e7be3abb
@@ -7178,6 +7487,7 @@ a360593e
 a360593e
 a360593e
 a360593e
+J c695d306
 B default 0 b3b4266e qa/data/pcbnew/issue15280.kicad_pcb
 3bea3e4b
 2e3630e5
@@ -7205,6 +7515,7 @@ b126bf28
 b2af492d
 b40c3386
 96ce858b
+J 33d2b956
 B nox2_drill 0 b3b4266e qa/data/pcbnew/issue15280.kicad_pcb
 9fb8ae42
 b57abab9
@@ -7232,6 +7543,7 @@ ec49b14b
 230f9392
 44c76010
 db6e8374
+J 33d2b956
 B default 0 9a78a672 qa/data/pcbnew/issue16182.kicad_pcb
 9ec86950
 fc11ad1a
@@ -7264,6 +7576,7 @@ d176e4b8
 5431e6c9
 5431e6c9
 5431e6c9
+J fe772c61
 B nox2_drill 0 9a78a672 qa/data/pcbnew/issue16182.kicad_pcb
 2e21e04f
 574cf665
@@ -7296,6 +7609,7 @@ b1074865
 7aefbf47
 7aefbf47
 7aefbf47
+J fe772c61
 B default 0 79884e61 qa/data/pcbnew/issue16566.kicad_pcb
 88b603ff
 7474aee5
@@ -7326,6 +7640,7 @@ d4e7ac1e
 7da6626d
 7da6626d
 7da6626d
+J 3f3a51e9
 B nox2_drill 0 79884e61 qa/data/pcbnew/issue16566.kicad_pcb
 d5c1dfd9
 8a9891c0
@@ -7356,6 +7671,7 @@ ab590047
 8e29b24a
 8e29b24a
 8e29b24a
+J 3f3a51e9
 B default 0 03a039be qa/data/pcbnew/issue16658/issue16658.kicad_pcb
 de3e0001
 26a90ea8
@@ -7365,6 +7681,7 @@ de3e0001
 0942aafa
 719f59e5
 eabb8466
+J 2dd6669f
 B nox2_drill 0 03a039be qa/data/pcbnew/issue16658/issue16658.kicad_pcb
 8415b218
 c649f550
@@ -7374,6 +7691,7 @@ c649f550
 e9652f08
 b644073f
 796031fb
+J 2dd6669f
 B default 0 f6e1a47b qa/data/pcbnew/issue17559.kicad_pcb
 14470bad
 faf6f504
@@ -7392,6 +7710,7 @@ e44b6c82
 a5ba63a7
 db8ae6ed
 3acd2d3f
+J 4ad7f041
 B nox2_drill 0 f6e1a47b qa/data/pcbnew/issue17559.kicad_pcb
 9588b722
 5fb58efc
@@ -7410,6 +7729,7 @@ a0b4aae1
 4a20f4fe
 4bd0135b
 d1167aa5
+J 4ad7f041
 B default 0 e87513c3 qa/data/pcbnew/issue17967/issue17967.kicad_pcb
 6bc57bc7
 e2827991
@@ -7431,6 +7751,7 @@ a575488b
 aedc0d76
 2a37b046
 8d8adf36
+J cb856230
 B nox2_drill 0 e87513c3 qa/data/pcbnew/issue17967/issue17967.kicad_pcb
 a5811410
 865024e8
@@ -7452,6 +7773,7 @@ caea1ef3
 bd0086b4
 b2ad80f5
 4ac74c04
+J cb856230
 B default 0 02d34121 qa/data/pcbnew/issue17971/issue17971.kicad_pcb
 6dab9848
 2aa72b55
@@ -7484,6 +7806,7 @@ e77a2317
 0d150bf2
 0d150bf2
 0d150bf2
+J 3fe45cab
 B nox2_drill 0 02d34121 qa/data/pcbnew/issue17971/issue17971.kicad_pcb
 68a4ccce
 7cbc7164
@@ -7516,6 +7839,7 @@ cf86e244
 38894274
 38894274
 38894274
+J 3fe45cab
 B default 0 42b27220 qa/data/pcbnew/issue18.kicad_pcb
 2b55b9e5
 09f02147
@@ -7541,6 +7865,7 @@ e4353eb0
 0e1c6aaa
 0a4f60c7
 bbe1ff7a
+J f090a71c
 B nox2_drill 0 42b27220 qa/data/pcbnew/issue18.kicad_pcb
 11a993ea
 ac90b260
@@ -7566,6 +7891,7 @@ daa1c91c
 93dab041
 1eb09468
 2ddd430c
+J f090a71c
 B default 0 e9742059 qa/data/pcbnew/issue18045/test_proj.kicad_pcb
 c187f503
 e5992bd5
@@ -7596,6 +7922,7 @@ a4650320
 43d38e89
 43d38e89
 43d38e89
+J 4176e4e3
 B nox2_drill 0 e9742059 qa/data/pcbnew/issue18045/test_proj.kicad_pcb
 9bf1312e
 168a653e
@@ -7626,6 +7953,7 @@ cbf61423
 392c1516
 392c1516
 392c1516
+J 4176e4e3
 B default 0 57b989f9 qa/data/pcbnew/issue18142.kicad_pcb
 e8efa950
 23cd8b10
@@ -7658,6 +7986,7 @@ eab9cf56
 447c14bb
 447c14bb
 447c14bb
+J b15e46ef
 B nox2_drill 0 57b989f9 qa/data/pcbnew/issue18142.kicad_pcb
 31035dfc
 0da70768
@@ -7690,6 +8019,7 @@ b07ead51
 5062f6d6
 5062f6d6
 5062f6d6
+J b15e46ef
 B default 0 09354205 qa/data/pcbnew/issue18203.kicad_pcb
 662594b9
 d4afab00
@@ -7720,6 +8050,7 @@ ae9acdc6
 750b1cf9
 750b1cf9
 750b1cf9
+J 4e739e83
 B nox2_drill 0 09354205 qa/data/pcbnew/issue18203.kicad_pcb
 00a7aef2
 813db66c
@@ -7750,6 +8081,7 @@ ddd355c1
 0f7d0117
 0f7d0117
 0f7d0117
+J 4e739e83
 B default 0 7898a080 qa/data/pcbnew/issue18839.kicad_pcb
 27519ef7
 f87399d0
@@ -7757,6 +8089,7 @@ e0caba1d
 c55265b1
 c55265b1
 c55265b1
+J 1df57dfd
 B nox2_drill 0 7898a080 qa/data/pcbnew/issue18839.kicad_pcb
 9b232b54
 61c9e1bb
@@ -7764,6 +8097,7 @@ B nox2_drill 0 7898a080 qa/data/pcbnew/issue18839.kicad_pcb
 25a566e8
 25a566e8
 25a566e8
+J 1df57dfd
 B default 0 ec80ed42 qa/data/pcbnew/issue18878.kicad_pcb
 720a063c
 10c32abc
@@ -7782,6 +8116,7 @@ ec8d9f6f
 2d2b5fdd
 7c5e639d
 b35ef104
+J d302bd9e
 B nox2_drill 0 ec80ed42 qa/data/pcbnew/issue18878.kicad_pcb
 2d39a597
 536f538c
@@ -7800,6 +8135,7 @@ cf4a56fc
 31e40138
 dfa867cc
 f5e4241d
+J d302bd9e
 B default 0 30a0b737 qa/data/pcbnew/issue19090/issue19090.kicad_pcb
 dbcdea6a
 e1b5f40f
@@ -7830,6 +8166,7 @@ b56bb0c6
 8d6bf27d
 8d6bf27d
 8d6bf27d
+J 4e7cb7f3
 B nox2_drill 0 30a0b737 qa/data/pcbnew/issue19090/issue19090.kicad_pcb
 dbbfd25f
 4e463022
@@ -7860,6 +8197,7 @@ eafd5b14
 40b65731
 40b65731
 40b65731
+J 4e7cb7f3
 B default 0 9240bdef qa/data/pcbnew/issue19325/issue19325.kicad_pcb
 b71cfd1c
 45d4cf77
@@ -7890,6 +8228,7 @@ e2ab9ff2
 1886d8ea
 1886d8ea
 1886d8ea
+J a3e61a7f
 B nox2_drill 0 9240bdef qa/data/pcbnew/issue19325/issue19325.kicad_pcb
 eca6af4f
 6aacb5e9
@@ -7920,6 +8259,7 @@ ffea9584
 ffea9584
 ffea9584
 ffea9584
+J a3e61a7f
 B default 0 47690482 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
 007583a1
 eac89e00
@@ -7941,6 +8281,7 @@ d4f0db09
 0bb49b88
 805779f7
 0bcefdf2
+J 33e29f8b
 B nox2_drill 0 47690482 qa/data/pcbnew/issue19405_roundrect_teardrop.kicad_pcb
 40bef1bd
 d5299829
@@ -7962,6 +8303,7 @@ e3c787b1
 e3c787b1
 48357dc0
 217a4037
+J 33e29f8b
 B default 0 623d929c qa/data/pcbnew/issue19574.kicad_pcb
 ca18e867
 f2f41b9c
@@ -7996,6 +8338,7 @@ c3d65dfe
 c3d65dfe
 c3d65dfe
 c3d65dfe
+J dd0a377f
 B nox2_drill 0 623d929c qa/data/pcbnew/issue19574.kicad_pcb
 91003335
 4551fb2c
@@ -8030,6 +8373,7 @@ d6b873a1
 d6b873a1
 d6b873a1
 d6b873a1
+J dd0a377f
 B default 0 a3919956 qa/data/pcbnew/issue19956/issue19956.kicad_pcb
 f09631b0
 d77b7d97
@@ -8062,6 +8406,7 @@ fb5fd907
 2941dbde
 2941dbde
 2941dbde
+J b8de0996
 B nox2_drill 0 a3919956 qa/data/pcbnew/issue19956/issue19956.kicad_pcb
 5f5415b6
 d2b83019
@@ -8094,6 +8439,7 @@ a3c54805
 2de5074d
 2de5074d
 2de5074d
+J b8de0996
 B default 0 1fb4395f qa/data/pcbnew/issue20249/dimension.kicad_pcb
 ea8a46ec
 7055d8fe
@@ -8119,6 +8465,7 @@ c48b840e
 c48b840e
 c48b840e
 c48b840e
+J eb23bcb9
 B nox2_drill 0 1fb4395f qa/data/pcbnew/issue20249/dimension.kicad_pcb
 91e07f67
 d0ecff86
@@ -8144,6 +8491,7 @@ be35d790
 13256b35
 13256b35
 13256b35
+J eb23bcb9
 B default 0 838f6b64 qa/data/pcbnew/issue20480/issue20480.kicad_pcb
 99abf072
 b6d2e5c0
@@ -8169,6 +8517,7 @@ fa1a8f04
 1e4082d7
 1e4082d7
 1e4082d7
+J 4240dce4
 B nox2_drill 0 838f6b64 qa/data/pcbnew/issue20480/issue20480.kicad_pcb
 dea3e4ad
 5fb7b76f
@@ -8194,6 +8543,7 @@ ed7f5f03
 ed7f5f03
 ed7f5f03
 ed7f5f03
+J 4240dce4
 B default 0 7912392a qa/data/pcbnew/issue21184/issue21184.kicad_pcb
 937a4ac7
 ad8caaf6
@@ -8219,6 +8569,7 @@ e656dae9
 1e9efa70
 1e9efa70
 1e9efa70
+J fe9c0e9a
 B nox2_drill 0 7912392a qa/data/pcbnew/issue21184/issue21184.kicad_pcb
 53a4b5fa
 91f34c6a
@@ -8244,6 +8595,7 @@ a8bec84b
 217bd810
 217bd810
 217bd810
+J fe9c0e9a
 B default 0 864a9e9b qa/data/pcbnew/issue21564/issue21564.kicad_pcb
 be3f7aab
 7d0886b5
@@ -8269,6 +8621,7 @@ b57deb17
 b57deb17
 b57deb17
 b57deb17
+J f1dda6d5
 B nox2_drill 0 864a9e9b qa/data/pcbnew/issue21564/issue21564.kicad_pcb
 2df446b9
 70f20369
@@ -8294,6 +8647,7 @@ b6344022
 b6344022
 b6344022
 b6344022
+J f1dda6d5
 B default 0 e761596c qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
 d82364ad
 fc1ccb0f
@@ -8321,6 +8675,7 @@ a6fab352
 a6fab352
 a6fab352
 a6fab352
+J 06596219
 B nox2_drill 0 e761596c qa/data/pcbnew/issue21739/topology_mismatch.kicad_pcb
 a3c437cd
 d209fc49
@@ -8348,6 +8703,7 @@ fcdfa745
 5a3732cb
 5a3732cb
 5a3732cb
+J 06596219
 B default 0 4349b78d qa/data/pcbnew/issue21746/issue21746.kicad_pcb
 7a6b55cd
 b77a7b49
@@ -8373,6 +8729,7 @@ e99a980c
 e99a980c
 e99a980c
 e99a980c
+J c76688a0
 B nox2_drill 0 4349b78d qa/data/pcbnew/issue21746/issue21746.kicad_pcb
 a8203df0
 283d585c
@@ -8398,6 +8755,7 @@ b26d682b
 946dc7e2
 946dc7e2
 946dc7e2
+J c76688a0
 B default 0 2df427b5 qa/data/pcbnew/issue22010/issue22010.kicad_pcb
 96e7c7fb
 7fb6056e
@@ -8445,6 +8803,7 @@ f67c1841
 398dc916
 398dc916
 398dc916
+J 9a326a0e
 B nox2_drill 0 2df427b5 qa/data/pcbnew/issue22010/issue22010.kicad_pcb
 fe135f3c
 580cfe56
@@ -8492,6 +8851,7 @@ b682c798
 b682c798
 b682c798
 b682c798
+J 9a326a0e
 B default 0 9be813c8 qa/data/pcbnew/issue22102.kicad_pcb
 c9d99be2
 9db232d7
@@ -8503,6 +8863,7 @@ f20e5549
 a91503dc
 9a2cede6
 a91503dc
+J 33f9f505
 B nox2_drill 0 9be813c8 qa/data/pcbnew/issue22102.kicad_pcb
 d2dc1224
 b45d10c5
@@ -8514,6 +8875,7 @@ c0ef2a49
 41c19a6b
 54b0bf63
 41c19a6b
+J 33f9f505
 B default 0 1aa75b1d qa/data/pcbnew/issue22267.kicad_pcb
 145f0c6a
 201b1bd6
@@ -8541,6 +8903,7 @@ b2eda71b
 b2eda71b
 b2eda71b
 b2eda71b
+J 15e562de
 B nox2_drill 0 1aa75b1d qa/data/pcbnew/issue22267.kicad_pcb
 e7eca751
 6dd6310b
@@ -8568,6 +8931,7 @@ f495a72f
 2f8faee6
 2f8faee6
 2f8faee6
+J 15e562de
 B default 0 6ef76cb3 qa/data/pcbnew/issue22316/issue22316.kicad_pcb
 d15f275f
 57813229
@@ -8593,6 +8957,7 @@ f3397b76
 f3397b76
 f3397b76
 f3397b76
+J a4efef48
 B nox2_drill 0 6ef76cb3 qa/data/pcbnew/issue22316/issue22316.kicad_pcb
 9d31b882
 56327fe9
@@ -8618,6 +8983,7 @@ e6b8bae4
 1bc81810
 1bc81810
 1bc81810
+J a4efef48
 B default 0 eb0765f9 qa/data/pcbnew/issue22318/issue22318.kicad_pcb
 5ba4a6d8
 82d961a3
@@ -8643,6 +9009,7 @@ b20c4e5b
 5e5aa13b
 5e5aa13b
 5e5aa13b
+J e398b493
 B nox2_drill 0 eb0765f9 qa/data/pcbnew/issue22318/issue22318.kicad_pcb
 e1147a74
 bae90189
@@ -8668,6 +9035,7 @@ c91c88f8
 720568c2
 720568c2
 720568c2
+J e398b493
 B default 0 db642aee qa/data/pcbnew/issue22536.kicad_pcb
 74ec8bfa
 cd7c43f2
@@ -8695,6 +9063,7 @@ e88c1ae5
 8874e07d
 8874e07d
 8874e07d
+J c5d273d6
 B nox2_drill 0 db642aee qa/data/pcbnew/issue22536.kicad_pcb
 b984aec2
 1c5be02a
@@ -8722,6 +9091,7 @@ ea0915d5
 ea0915d5
 ea0915d5
 ea0915d5
+J c5d273d6
 B default 0 708649c5 qa/data/pcbnew/issue22548/issue22548.kicad_pcb
 625232f2
 0277b411
@@ -8747,6 +9117,7 @@ d6f98123
 d6f98123
 d6f98123
 d6f98123
+J 20bee1db
 B nox2_drill 0 708649c5 qa/data/pcbnew/issue22548/issue22548.kicad_pcb
 3acf09a7
 3a33f2b7
@@ -8772,6 +9143,7 @@ d526d40f
 d526d40f
 d526d40f
 d526d40f
+J 20bee1db
 B default 0 05bba210 qa/data/pcbnew/issue22597/issue22597.kicad_pcb
 c47e9231
 77432819
@@ -8790,6 +9162,7 @@ e83a66df
 98832b29
 3e31516d
 e6b1b814
+J aa1b3035
 B nox2_drill 0 05bba210 qa/data/pcbnew/issue22597/issue22597.kicad_pcb
 92f079ee
 37750d12
@@ -8808,6 +9181,7 @@ fd7b7045
 27c6b071
 2187b5b9
 7fcc7f3a
+J aa1b3035
 B default 0 f2462baf qa/data/pcbnew/issue22751/issue22751.kicad_pcb
 f8d2681f
 75ad00c8
@@ -8829,6 +9203,7 @@ fe2567ef
 4706e39a
 63349164
 b69ee37e
+J 999bf5ef
 B nox2_drill 0 f2462baf qa/data/pcbnew/issue22751/issue22751.kicad_pcb
 5c3abeeb
 cd903495
@@ -8850,6 +9225,7 @@ a61d314b
 a61d314b
 9f8667a5
 f9804707
+J 999bf5ef
 B default 0 fc48c79f qa/data/pcbnew/issue22794.kicad_pcb
 d91fe040
 9b48be99
@@ -8875,6 +9251,7 @@ cfd92095
 cfd92095
 cfd92095
 cfd92095
+J 83515446
 B nox2_drill 0 fc48c79f qa/data/pcbnew/issue22794.kicad_pcb
 67e7f408
 b0bb574a
@@ -8900,6 +9277,7 @@ b0a2d1c6
 0b23cace
 0b23cace
 0b23cace
+J 83515446
 B default 0 f0e5c0c4 qa/data/pcbnew/issue22798.kicad_pcb
 5b17c8a8
 8926abe4
@@ -8925,6 +9303,7 @@ b6b99eab
 b6b99eab
 b6b99eab
 b6b99eab
+J 75567788
 B nox2_drill 0 f0e5c0c4 qa/data/pcbnew/issue22798.kicad_pcb
 02fef9a6
 13e35d50
@@ -8950,6 +9329,7 @@ c3ff77ab
 c3ff77ab
 c3ff77ab
 c3ff77ab
+J 75567788
 B default 0 e5c07aaa qa/data/pcbnew/issue22809/issue22809.kicad_pcb
 60eaf8f0
 10fdaff6
@@ -8977,6 +9357,7 @@ c1088881
 3eed6cf2
 3eed6cf2
 3eed6cf2
+J 4b63213e
 B nox2_drill 0 e5c07aaa qa/data/pcbnew/issue22809/issue22809.kicad_pcb
 243a0a5f
 f199a3b5
@@ -9004,6 +9385,7 @@ a6dc274e
 823a6403
 823a6403
 823a6403
+J 4b63213e
 B default 0 29bcd5c1 qa/data/pcbnew/issue22983/issue22983.kicad_pcb
 5b10e861
 4946b9ce
@@ -9031,6 +9413,7 @@ a8d50a30
 a8d50a30
 a8d50a30
 a8d50a30
+J 8e8b4ef7
 B nox2_drill 0 29bcd5c1 qa/data/pcbnew/issue22983/issue22983.kicad_pcb
 c6089a04
 69ec3ccf
@@ -9058,6 +9441,7 @@ c88607c2
 32744158
 32744158
 32744158
+J 8e8b4ef7
 B default 0 f5d526e1 qa/data/pcbnew/issue23053/issue23053.kicad_pcb
 900c852b
 69ff431a
@@ -9076,6 +9460,7 @@ c4b6bc27
 8bfdd361
 cc5d623d
 2f6da756
+J 93c8c201
 B nox2_drill 0 f5d526e1 qa/data/pcbnew/issue23053/issue23053.kicad_pcb
 014490ec
 c80821c6
@@ -9094,6 +9479,7 @@ a50a993a
 6f68ea77
 00d947ae
 d5bc3c44
+J 93c8c201
 B default 0 45c967c6 qa/data/pcbnew/issue23123_minimal.kicad_pcb
 0b7a5059
 468022b5
@@ -9101,6 +9487,7 @@ b0c29f74
 1633fe3e
 1633fe3e
 1633fe3e
+J 19c3a235
 B nox2_drill 0 45c967c6 qa/data/pcbnew/issue23123_minimal.kicad_pcb
 2cebb20b
 e1f07745
@@ -9108,6 +9495,7 @@ e1f07745
 e3c2141d
 e3c2141d
 e3c2141d
+J 19c3a235
 B default 0 23acaacb qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
 d1db0158
 85825e2b
@@ -9115,6 +9503,7 @@ d1db0158
 46e89848
 46e89848
 46e89848
+J 9948bc5a
 B nox2_drill 0 23acaacb qa/data/pcbnew/issue23332_min_width/issue23332_min_width.kicad_pcb
 90563174
 ce469384
@@ -9122,6 +9511,7 @@ c80b6b1b
 2f3703d0
 2f3703d0
 2f3703d0
+J 9948bc5a
 B default 0 91bd1e76 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
 4c90a7f0
 885faf84
@@ -9143,6 +9533,7 @@ f53bfc25
 d3b2d7e3
 d3b2d7e3
 d3b2d7e3
+J 5b09e275
 B nox2_drill 0 91bd1e76 qa/data/pcbnew/issue23339_zone_layer_rules.kicad_pcb
 790157a0
 944c68ab
@@ -9164,6 +9555,7 @@ e03cefab
 72731fe6
 72731fe6
 72731fe6
+J 5b09e275
 B default 0 ecc745d2 qa/data/pcbnew/issue23389/issue23389.kicad_pcb
 e2ba8c91
 f253fba3
@@ -9194,6 +9586,7 @@ f011c302
 f011c302
 f011c302
 f011c302
+J 172d108b
 B nox2_drill 0 ecc745d2 qa/data/pcbnew/issue23389/issue23389.kicad_pcb
 c7a4ed93
 de88ac79
@@ -9224,6 +9617,7 @@ b256f27a
 159578db
 159578db
 159578db
+J 172d108b
 B default 0 f8a903f3 qa/data/pcbnew/issue23418/testing.kicad_pcb
 fe3602b2
 432b666d
@@ -9249,6 +9643,7 @@ f4164897
 f4164897
 f4164897
 f4164897
+J 336b72ed
 B nox2_drill 0 f8a903f3 qa/data/pcbnew/issue23418/testing.kicad_pcb
 2784228f
 eee4b5c7
@@ -9274,6 +9669,7 @@ f6bf5bf1
 39ecdd79
 39ecdd79
 39ecdd79
+J 336b72ed
 B default 0 b9cfc4d5 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
 0c119a24
 432b666d
@@ -9281,6 +9677,7 @@ B default 0 b9cfc4d5 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
 f4164897
 f4164897
 f4164897
+J 0d6982d4
 B nox2_drill 0 b9cfc4d5 qa/data/pcbnew/issue23418_diffnet/testing.kicad_pcb
 cabb966f
 eee4b5c7
@@ -9288,6 +9685,7 @@ c72d302c
 39ecdd79
 39ecdd79
 39ecdd79
+J 0d6982d4
 B default 0 71862471 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
 030b6066
 1da3ce10
@@ -9311,6 +9709,7 @@ a8678ffb
 a4d8ae6a
 413b5e7a
 32acde99
+J 5a3dd27f
 B nox2_drill 0 71862471 qa/data/pcbnew/issue23451/3Rs_bv.kicad_pcb
 cf3b3ff4
 81dd335c
@@ -9334,6 +9733,7 @@ bea9f842
 2192b434
 25a521fa
 85e97e91
+J 5a3dd27f
 B default 0 e549770a qa/data/pcbnew/issue23467/issue23467.kicad_pcb
 f674afc0
 fd2d4504
@@ -9343,6 +9743,7 @@ cecf530e
 d1133b64
 d1133b64
 d1133b64
+J d577141f
 B nox2_drill 0 e549770a qa/data/pcbnew/issue23467/issue23467.kicad_pcb
 20f069d6
 f414c9b2
@@ -9352,6 +9753,7 @@ f3ff8b62
 965c7d6a
 965c7d6a
 965c7d6a
+J d577141f
 B default 0 e74023d3 qa/data/pcbnew/issue23469/issue23469.kicad_pcb
 5b39c81a
 adac6039
@@ -9379,6 +9781,7 @@ c0c910e9
 92f8200a
 92f8200a
 92f8200a
+J b386a283
 B nox2_drill 0 e74023d3 qa/data/pcbnew/issue23469/issue23469.kicad_pcb
 94d68872
 b73a277f
@@ -9406,6 +9809,7 @@ bc156c21
 bc156c21
 bc156c21
 bc156c21
+J b386a283
 B default 0 901563bf qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
 cc65a40e
 385331f5
@@ -9419,6 +9823,7 @@ d2a18297
 d2a18297
 f31d1303
 9902e8d1
+J 57387dcc
 B nox2_drill 0 901563bf qa/data/pcbnew/issue23535_minimal/issue23535_minimal.kicad_pcb
 3c5d2725
 4a530938
@@ -9432,6 +9837,7 @@ cca63c9e
 cca63c9e
 15d893dd
 f724c7fc
+J 57387dcc
 B default 0 472ddde1 qa/data/pcbnew/issue23550/issue23550.kicad_pcb
 25db803b
 c0db0db2
@@ -9471,6 +9877,7 @@ b78280d8
 019f08b1
 019f08b1
 019f08b1
+J 7338761b
 B nox2_drill 0 472ddde1 qa/data/pcbnew/issue23550/issue23550.kicad_pcb
 6a7a580a
 cae531bc
@@ -9510,6 +9917,7 @@ ea6ca976
 ea6ca976
 ea6ca976
 ea6ca976
+J 7338761b
 B default 0 0c178642 qa/data/pcbnew/issue23578/issue23578.kicad_pcb
 53db2672
 16dbfd77
@@ -9540,6 +9948,7 @@ d8f1381d
 d8f1381d
 d8f1381d
 d8f1381d
+J d531aaea
 B nox2_drill 0 0c178642 qa/data/pcbnew/issue23578/issue23578.kicad_pcb
 c6589209
 70d0102d
@@ -9570,6 +9979,7 @@ d7e2a8f4
 d7e2a8f4
 d7e2a8f4
 d7e2a8f4
+J d531aaea
 B default 0 96612370 qa/data/pcbnew/issue23658/issue23658.kicad_pcb
 33549e8d
 bef12e6f
@@ -9600,6 +10010,7 @@ d5030a36
 9692c60d
 9692c60d
 9692c60d
+J a8d715ac
 B nox2_drill 0 96612370 qa/data/pcbnew/issue23658/issue23658.kicad_pcb
 5cd7df89
 f3950d74
@@ -9630,6 +10041,7 @@ ca46bb63
 4ab105fd
 4ab105fd
 4ab105fd
+J a8d715ac
 B default 0 4710159d qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
 15d5b395
 f9853211
@@ -9657,6 +10069,7 @@ efca652a
 569e7049
 569e7049
 569e7049
+J 0fd80614
 B nox2_drill 0 4710159d qa/data/pcbnew/issue23690_via_in_pad.kicad_pcb
 649bdf52
 078cb5a9
@@ -9684,6 +10097,7 @@ fa52306b
 fa52306b
 fa52306b
 fa52306b
+J 0fd80614
 B default 0 3fbcfa2e qa/data/pcbnew/issue23704/issue23704.kicad_pcb
 6a459c58
 6f726f25
@@ -9716,6 +10130,7 @@ be9c4d01
 be9c4d01
 5d922934
 badb24dc
+J 622b72e1
 B nox2_drill 0 3fbcfa2e qa/data/pcbnew/issue23704/issue23704.kicad_pcb
 83f9b933
 7d0db31a
@@ -9748,6 +10163,7 @@ cb0dfb1d
 3419fd8a
 52e07208
 163100b5
+J 622b72e1
 B default 0 4632f1a9 qa/data/pcbnew/issue23790/issue23790.kicad_pcb
 daa3ff17
 8380c328
@@ -9773,6 +10189,7 @@ df7f58f4
 df7f58f4
 df7f58f4
 df7f58f4
+J 15dc997f
 B nox2_drill 0 4632f1a9 qa/data/pcbnew/issue23790/issue23790.kicad_pcb
 e8df668d
 48112321
@@ -9798,6 +10215,7 @@ d154f878
 d154f878
 d154f878
 d154f878
+J 15dc997f
 B default 0 3409c0f1 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
 7bbcf970
 14771084
@@ -9826,6 +10244,7 @@ dfe917f4
 46580674
 46580674
 46580674
+J d9be30aa
 B nox2_drill 0 3409c0f1 qa/data/pcbnew/issue23790/touching_zones.kicad_pcb
 e6cfa4a7
 8041fb4c
@@ -9854,6 +10273,7 @@ c72d0750
 c72d0750
 c72d0750
 c72d0750
+J d9be30aa
 B default 0 4505a23f qa/data/pcbnew/issue23851/issue23851.kicad_pcb
 f1194843
 a9af5b34
@@ -9879,6 +10299,7 @@ c94b4f28
 2e413ce4
 2e413ce4
 2e413ce4
+J 5dd0091f
 B nox2_drill 0 4505a23f qa/data/pcbnew/issue23851/issue23851.kicad_pcb
 61fd2b86
 72228144
@@ -9904,6 +10325,7 @@ d225d854
 2601d180
 2601d180
 2601d180
+J 5dd0091f
 B default 0 076ddbf8 qa/data/pcbnew/issue23868/issue23868.kicad_pcb
 d52c006d
 b3b4d3cb
@@ -9933,6 +10355,7 @@ a319662f
 a319662f
 a319662f
 a319662f
+J 17c9679a
 B nox2_drill 0 076ddbf8 qa/data/pcbnew/issue23868/issue23868.kicad_pcb
 796a4273
 872126e9
@@ -9962,6 +10385,7 @@ eb608142
 987f9742
 987f9742
 987f9742
+J 17c9679a
 B default 0 f0f72aa9 qa/data/pcbnew/issue24078/issue24078.kicad_pcb
 6aae5b34
 2082d5cd
@@ -9992,6 +10416,7 @@ b78e7125
 755af49d
 755af49d
 755af49d
+J 939a1a50
 B nox2_drill 0 f0f72aa9 qa/data/pcbnew/issue24078/issue24078.kicad_pcb
 2aff7295
 530fe0ea
@@ -10022,6 +10447,7 @@ c3877f80
 812d6ee4
 812d6ee4
 812d6ee4
+J 939a1a50
 B default 0 cf38f258 qa/data/pcbnew/issue24089/issue24089.kicad_pcb
 a0c6fa85
 c7129716
@@ -10054,6 +10480,7 @@ d0ee317c
 6d360515
 6d360515
 6d360515
+J cc02fb68
 B nox2_drill 0 cf38f258 qa/data/pcbnew/issue24089/issue24089.kicad_pcb
 f1549d42
 fcce22d0
@@ -10086,6 +10513,7 @@ f9d36e09
 78848089
 78848089
 78848089
+J cc02fb68
 B default 0 13051220 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
 55911d4c
 ab43049c
@@ -10111,6 +10539,7 @@ fbad5554
 43b18ac3
 43b18ac3
 43b18ac3
+J 03cff5a2
 B nox2_drill 0 13051220 qa/data/pcbnew/issue24177/silk_rule_area.kicad_pcb
 81902869
 a8d7d1ab
@@ -10136,6 +10565,7 @@ e0c76f34
 72fd9f6f
 72fd9f6f
 72fd9f6f
+J 03cff5a2
 B default 0 d26273a3 qa/data/pcbnew/issue24192/issue24192.kicad_pcb
 ffe2b647
 7779ea82
@@ -10161,6 +10591,7 @@ e3d57e53
 e3d57e53
 e3d57e53
 e3d57e53
+J 2cdfe5e9
 B nox2_drill 0 d26273a3 qa/data/pcbnew/issue24192/issue24192.kicad_pcb
 58dc6315
 16c049f3
@@ -10186,6 +10617,7 @@ de0eb520
 de0eb520
 de0eb520
 de0eb520
+J 2cdfe5e9
 B default 0 d415a664 qa/data/pcbnew/issue24241/issue24241.kicad_pcb
 a58be885
 b1d7b88a
@@ -10207,6 +10639,7 @@ c1cb0db7
 5ffa14e3
 d35d8207
 b173db9f
+J c2e89a78
 B nox2_drill 0 d415a664 qa/data/pcbnew/issue24241/issue24241.kicad_pcb
 ca7909fd
 1879c76f
@@ -10228,6 +10661,7 @@ c1f0d3e3
 c1f0d3e3
 03401ebd
 55139e28
+J c2e89a78
 B default 0 9b3eec1b qa/data/pcbnew/issue24264/issue24264.kicad_pcb
 26030774
 b206fc8e
@@ -10253,6 +10687,7 @@ deb55d89
 deb55d89
 deb55d89
 deb55d89
+J aa92d79a
 B nox2_drill 0 9b3eec1b qa/data/pcbnew/issue24264/issue24264.kicad_pcb
 1601d051
 0fbcf359
@@ -10278,6 +10713,7 @@ b16b8d3b
 8b658c42
 8b658c42
 8b658c42
+J aa92d79a
 B default 0 595e0494 qa/data/pcbnew/issue24286/issue24286.kicad_pcb
 63900b60
 9db42e8c
@@ -10308,6 +10744,7 @@ b5736883
 12546ae0
 12546ae0
 12546ae0
+J 083a4f69
 B nox2_drill 0 595e0494 qa/data/pcbnew/issue24286/issue24286.kicad_pcb
 c2ab6df2
 742229ce
@@ -10338,6 +10775,7 @@ d8070307
 d8070307
 d8070307
 d8070307
+J 083a4f69
 B default 0 ae2a0a18 qa/data/pcbnew/issue24312/issue24312.kicad_pcb
 eeb7ffe4
 5e5eec1a
@@ -10365,6 +10803,7 @@ e49f8aed
 e49f8aed
 e49f8aed
 4617ece3
+J 2456dc5e
 B nox2_drill 0 ae2a0a18 qa/data/pcbnew/issue24312/issue24312.kicad_pcb
 bea7d5c6
 03afb4d9
@@ -10392,6 +10831,7 @@ a83d559a
 92795f39
 92795f39
 51e4aca9
+J 2456dc5e
 B default 0 ec13fb3a qa/data/pcbnew/issue24340/issue24340.kicad_pcb
 2dc81107
 1fcdac72
@@ -10417,6 +10857,7 @@ f05986f5
 239c50ba
 239c50ba
 239c50ba
+J 45b267f4
 B nox2_drill 0 ec13fb3a qa/data/pcbnew/issue24340/issue24340.kicad_pcb
 6c9de9f3
 55011e7d
@@ -10442,6 +10883,7 @@ f8c6a486
 61e6f141
 61e6f141
 61e6f141
+J 45b267f4
 B default 0 21709609 qa/data/pcbnew/issue24355/issue24355.kicad_pcb
 ebbf1269
 4288237f
@@ -10467,6 +10909,7 @@ a18033eb
 95c9c058
 95c9c058
 95c9c058
+J 7a960ed6
 B nox2_drill 0 21709609 qa/data/pcbnew/issue24355/issue24355.kicad_pcb
 3a2c8260
 969c9637
@@ -10492,6 +10935,7 @@ b793fcab
 b793fcab
 b793fcab
 b793fcab
+J 7a960ed6
 B default 0 333f0159 qa/data/pcbnew/issue24442.kicad_pcb
 5e775c43
 eb6c0ad9
@@ -10513,6 +10957,7 @@ c0e6eec7
 5a7642a2
 5f9111fd
 61f6eccf
+J 9051281b
 B nox2_drill 0 333f0159 qa/data/pcbnew/issue24442.kicad_pcb
 b6ecc3a1
 ebd7a554
@@ -10534,6 +10979,7 @@ d9c42bb5
 61d64f7e
 e987a096
 abcf9a64
+J 9051281b
 B default 0 1a231f06 qa/data/pcbnew/issue24474/issue24474.kicad_pcb
 81b0bb60
 d8e915de
@@ -10559,6 +11005,7 @@ e638811a
 e638811a
 e638811a
 e638811a
+J f4cd415a
 B nox2_drill 0 1a231f06 qa/data/pcbnew/issue24474/issue24474.kicad_pcb
 8fdda137
 d6e6fd7d
@@ -10584,6 +11031,7 @@ c89bb4ce
 2db8ccd8
 2db8ccd8
 2db8ccd8
+J f4cd415a
 B default 0 7ea3b7ef qa/data/pcbnew/issue24523/issue24523.kicad_pcb
 62d14326
 5f601bca
@@ -10614,6 +11062,7 @@ b21437a7
 98425f75
 98425f75
 98425f75
+J e75e766b
 B nox2_drill 0 7ea3b7ef qa/data/pcbnew/issue24523/issue24523.kicad_pcb
 3ed758aa
 e5f919ce
@@ -10644,6 +11093,7 @@ dc417a21
 dc417a21
 dc417a21
 dc417a21
+J e75e766b
 B default 0 b58960de qa/data/pcbnew/issue24525/issue24525.kicad_pcb
 be0ddc23
 85f1a91f
@@ -10669,6 +11119,7 @@ c49c3eab
 7ab0acd6
 7ab0acd6
 7ab0acd6
+J 70d1ef63
 B nox2_drill 0 b58960de qa/data/pcbnew/issue24525/issue24525.kicad_pcb
 4a7fb9c3
 406d4d63
@@ -10694,6 +11145,7 @@ d61fd888
 d61fd888
 d61fd888
 d61fd888
+J 70d1ef63
 B default 0 628db775 qa/data/pcbnew/issue24541/issue24541.kicad_pcb
 ca030a01
 e80347cc
@@ -10724,6 +11176,7 @@ bfe6f1a0
 491cca77
 491cca77
 491cca77
+J ef990a1d
 B nox2_drill 0 628db775 qa/data/pcbnew/issue24541/issue24541.kicad_pcb
 71026e2d
 6135c4b8
@@ -10754,6 +11207,7 @@ ace66ec5
 905969d5
 905969d5
 905969d5
+J ef990a1d
 B default 0 1e7ef2e5 qa/data/pcbnew/issue24543/issue24543.kicad_pcb
 b140de00
 41a1e333
@@ -10784,6 +11238,7 @@ ed560069
 ed560069
 ed560069
 ed560069
+J 753e6f3d
 B nox2_drill 0 1e7ef2e5 qa/data/pcbnew/issue24543/issue24543.kicad_pcb
 e5e2cfbe
 e48017df
@@ -10814,6 +11269,7 @@ f21a3b75
 0a4208f0
 0a4208f0
 0a4208f0
+J 753e6f3d
 B default 0 a02721bc qa/data/pcbnew/issue24544/issue24544.kicad_pcb
 d0d4665b
 bca72c69
@@ -10844,6 +11300,7 @@ e398d707
 5901a250
 5901a250
 5901a250
+J ba193c15
 B nox2_drill 0 a02721bc qa/data/pcbnew/issue24544/issue24544.kicad_pcb
 d012184f
 48a0c311
@@ -10874,6 +11331,7 @@ b46178ce
 759abac4
 759abac4
 759abac4
+J ba193c15
 B default 0 5118f3f9 qa/data/pcbnew/issue24597/issue24597.kicad_pcb
 d5a26c31
 4005dba2
@@ -10904,6 +11362,7 @@ a5fe4a3c
 70a9c6a4
 70a9c6a4
 70a9c6a4
+J fcb91b91
 B nox2_drill 0 5118f3f9 qa/data/pcbnew/issue24597/issue24597.kicad_pcb
 2c10334a
 227f9a33
@@ -10934,6 +11393,7 @@ e10d6f31
 6dd1cbb5
 6dd1cbb5
 6dd1cbb5
+J fcb91b91
 B default 0 112bdbb6 qa/data/pcbnew/issue24649.kicad_pcb
 2c520a54
 c9db964d
@@ -10955,6 +11415,7 @@ c9db964d
 5cae7791
 2a54d8cf
 06d53cfa
+J e26645f4
 B nox2_drill 0 112bdbb6 qa/data/pcbnew/issue24649.kicad_pcb
 157dc0eb
 f03b895c
@@ -10976,6 +11437,7 @@ de5ae1a1
 9e4c12bb
 91d6c9ec
 2e4d9469
+J e26645f4
 B default 0 bc7a4f3d qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
 9618f65c
 44edb438
@@ -11001,6 +11463,7 @@ a7f38618
 a7f38618
 a7f38618
 a7f38618
+J 3f3068b9
 B nox2_drill 0 bc7a4f3d qa/data/pcbnew/issue24690/soldermask_shape.kicad_pcb
 1051e700
 4397a0ff
@@ -11026,6 +11489,7 @@ fca80881
 fca80881
 fca80881
 fca80881
+J 3f3068b9
 B default 0 d9d00f58 qa/data/pcbnew/issue24735/issue24735.kicad_pcb
 a7a44460
 fc259aa1
@@ -11044,6 +11508,7 @@ eae020a7
 2b888e42
 7296b7ce
 31babe3a
+J 5bbc5e55
 B nox2_drill 0 d9d00f58 qa/data/pcbnew/issue24735/issue24735.kicad_pcb
 3d150e96
 fc985a40
@@ -11062,6 +11527,7 @@ b5c84389
 89f079a0
 381f276e
 12294410
+J 5bbc5e55
 B default 0 6b4fa0f8 qa/data/pcbnew/issue24758/issue24758.kicad_pcb
 e0e74f96
 58862a72
@@ -11089,6 +11555,7 @@ e4570cf6
 668fa594
 668fa594
 668fa594
+J feeeabf5
 B nox2_drill 0 6b4fa0f8 qa/data/pcbnew/issue24758/issue24758.kicad_pcb
 6f60c818
 cf5f7d70
@@ -11116,6 +11583,7 @@ e9ebf629
 47b5ccde
 47b5ccde
 47b5ccde
+J feeeabf5
 B default 0 8bbc3650 qa/data/pcbnew/issue24799/issue24799.kicad_pcb
 c5968a86
 2f329a16
@@ -11141,6 +11609,7 @@ e6fd7c6c
 e6fd7c6c
 e6fd7c6c
 e6fd7c6c
+J a73942f1
 B nox2_drill 0 8bbc3650 qa/data/pcbnew/issue24799/issue24799.kicad_pcb
 847139fb
 f169cf5f
@@ -11166,6 +11635,7 @@ a7752972
 a7752972
 a7752972
 a7752972
+J a73942f1
 B default 0 8faa957d qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
 0b2fbfb9
 2b956860
@@ -11189,6 +11659,7 @@ bbc55953
 bbc55953
 a59cee65
 92eec4f8
+J 709a9757
 B nox2_drill 0 8faa957d qa/data/pcbnew/issue24835/issue24835-min.kicad_pcb
 d3685ca8
 ba837d61
@@ -11212,6 +11683,7 @@ f196fa50
 c4b9f567
 f5372352
 f3d5e65e
+J 709a9757
 B default 0 db303d78 qa/data/pcbnew/issue24853/issue24853.kicad_pcb
 0b33b91f
 f7423daa
@@ -11237,6 +11709,7 @@ b28ef406
 02e1c88d
 02e1c88d
 02e1c88d
+J 80bd3f01
 B nox2_drill 0 db303d78 qa/data/pcbnew/issue24853/issue24853.kicad_pcb
 cd090910
 dc62bdaa
@@ -11262,6 +11735,7 @@ eec62d70
 7df91a4f
 7df91a4f
 7df91a4f
+J 80bd3f01
 B default 0 f78439b8 qa/data/pcbnew/issue24865/issue24865.kicad_pcb
 70b78f43
 fe921d33
@@ -11289,6 +11763,7 @@ c058afb9
 c058afb9
 c058afb9
 c058afb9
+J 8d762382
 B nox2_drill 0 f78439b8 qa/data/pcbnew/issue24865/issue24865.kicad_pcb
 6db1b0ac
 8816946a
@@ -11316,6 +11791,7 @@ bee98009
 9a8eea6e
 9a8eea6e
 9a8eea6e
+J 8d762382
 B default 0 57be0cfe qa/data/pcbnew/issue24875/issue24875.kicad_pcb
 4c1cd8b5
 9a810ebd
@@ -11346,6 +11822,7 @@ c330ccbc
 782a331e
 782a331e
 782a331e
+J 9af9d037
 B nox2_drill 0 57be0cfe qa/data/pcbnew/issue24875/issue24875.kicad_pcb
 36137230
 4a98dc9e
@@ -11376,6 +11853,7 @@ ca920d86
 9c393f89
 9c393f89
 9c393f89
+J 9af9d037
 B default 0 a4964b21 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
 6a515ed1
 708d2d51
@@ -11406,6 +11884,7 @@ f3b0b089
 f3b0b089
 f3b0b089
 f3b0b089
+J 1a5a57a4
 B nox2_drill 0 a4964b21 qa/data/pcbnew/issue24875_capstraight/issue24875_capstraight.kicad_pcb
 a68a5a2f
 7497b680
@@ -11436,6 +11915,7 @@ f9040799
 f9040799
 f9040799
 f9040799
+J 1a5a57a4
 B default 0 479e7b71 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
 65ab5b1e
 6aeb6bfc
@@ -11466,6 +11946,7 @@ f90d7e80
 6d0a2cb8
 6d0a2cb8
 6d0a2cb8
+J 5398842f
 B nox2_drill 0 479e7b71 qa/data/pcbnew/issue24875_fullround/issue24875_fullround.kicad_pcb
 56db9be5
 017536ef
@@ -11496,6 +11977,7 @@ f0d28806
 9c1b24e3
 9c1b24e3
 9c1b24e3
+J 5398842f
 B default 0 19167b7a qa/data/pcbnew/issue24885/issue24885.kicad_pcb
 28c983a0
 81a1d0af
@@ -11526,6 +12008,7 @@ b7f87deb
 b7f87deb
 b7f87deb
 b7f87deb
+J 0310bb2c
 B nox2_drill 0 19167b7a qa/data/pcbnew/issue24885/issue24885.kicad_pcb
 516f5eb3
 898e4da9
@@ -11556,6 +12039,7 @@ a019fceb
 54812d5c
 54812d5c
 54812d5c
+J 0310bb2c
 B default 0 5123dbfe qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
 aa5a7f07
 86b0028b
@@ -11577,6 +12061,7 @@ d9d6d1df
 112f2276
 ee53cbae
 0f82f5f5
+J e4a2f6ba
 B nox2_drill 0 5123dbfe qa/data/pcbnew/issue24924/keepout_self_exclude.kicad_pcb
 cf829dd0
 88264649
@@ -11598,6 +12083,7 @@ b437b9a3
 2a026709
 bbc5656a
 5960a0bf
+J e4a2f6ba
 B default 0 8538cc17 qa/data/pcbnew/issue24935/issue24935.kicad_pcb
 7589f8f8
 cda330e4
@@ -11623,6 +12109,7 @@ f800572f
 4ec25528
 4ec25528
 4ec25528
+J dc1ff79f
 B nox2_drill 0 8538cc17 qa/data/pcbnew/issue24935/issue24935.kicad_pcb
 2414c3fe
 4336c599
@@ -11648,6 +12135,7 @@ d1607ad2
 1c11f805
 1c11f805
 1c11f805
+J dc1ff79f
 B default 0 d4429a19 qa/data/pcbnew/issue24974.kicad_pcb
 0a5cae9e
 44138c72
@@ -11673,6 +12161,7 @@ e5c7f08e
 e5c7f08e
 e5c7f08e
 e5c7f08e
+J 62eb725e
 B nox2_drill 0 d4429a19 qa/data/pcbnew/issue24974.kicad_pcb
 5deb39b7
 1229b965
@@ -11698,6 +12187,7 @@ e29432fa
 8f40b6ce
 8f40b6ce
 8f40b6ce
+J 62eb725e
 B default 0 d24d9aa7 qa/data/pcbnew/issue25021/backdrill.kicad_pcb
 be801cb8
 d8e7d917
@@ -11731,6 +12221,7 @@ ab4dea26
 06280764
 06280764
 06280764
+J 77c8b718
 B nox2_drill 0 d24d9aa7 qa/data/pcbnew/issue25021/backdrill.kicad_pcb
 fbd3eda5
 0c3bbf74
@@ -11764,6 +12255,7 @@ ef43f06d
 ef43f06d
 ef43f06d
 ef43f06d
+J 77c8b718
 B default 0 c1b640e0 qa/data/pcbnew/issue25065/issue25065.kicad_pcb
 67c84d24
 a59c66ac
@@ -11789,6 +12281,7 @@ d2d0dfcd
 d2d0dfcd
 d2d0dfcd
 d2d0dfcd
+J 16d1c7a9
 B nox2_drill 0 c1b640e0 qa/data/pcbnew/issue25065/issue25065.kicad_pcb
 ce9cede6
 118912ae
@@ -11814,6 +12307,7 @@ d6db8a01
 d6db8a01
 d6db8a01
 d6db8a01
+J 16d1c7a9
 B default 0 51ca76c9 qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
 3d70e2ca
 a158c21f
@@ -11839,6 +12333,7 @@ f080f3e7
 4f8d6af1
 4f8d6af1
 4f8d6af1
+J 8e468967
 B nox2_drill 0 51ca76c9 qa/data/pcbnew/issue25074/knockout_textbox.kicad_pcb
 30208dfa
 ea662c9b
@@ -11864,6 +12359,7 @@ d54de7da
 0ee6718b
 0ee6718b
 0ee6718b
+J 8e468967
 B default 0 b76fa01d qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
 743fc728
 0c912a57
@@ -11871,6 +12367,7 @@ B default 0 b76fa01d qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
 cda0a395
 cda0a395
 cda0a395
+J 3401f9ea
 B nox2_drill 0 b76fa01d qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pcb
 417e8b75
 59149529
@@ -11878,6 +12375,7 @@ B nox2_drill 0 b76fa01d qa/data/pcbnew/issue25089/odb_circle_edge_cases.kicad_pc
 795d9330
 795d9330
 795d9330
+J 3401f9ea
 B default 0 d54344e9 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
 65a865c8
 99c4e85c
@@ -11885,6 +12383,7 @@ B default 0 d54344e9 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
 4e80c770
 1f8bf653
 4e80c770
+J dd4d0746
 B nox2_drill 0 d54344e9 qa/data/pcbnew/issue25089/odb_circles.kicad_pcb
 f4d91a73
 4c8f8256
@@ -11892,6 +12391,7 @@ f4d91a73
 df027920
 3772dda2
 df027920
+J dd4d0746
 B default 0 3bbdd961 qa/data/pcbnew/issue25107/issue25107.kicad_pcb
 a58de805
 185ba519
@@ -11917,6 +12417,7 @@ ddfdc09a
 14c70846
 14c70846
 14c70846
+J 379866d9
 B nox2_drill 0 3bbdd961 qa/data/pcbnew/issue25107/issue25107.kicad_pcb
 4ec87828
 966a4e2c
@@ -11942,6 +12443,7 @@ efac0f81
 544dda00
 544dda00
 544dda00
+J 379866d9
 B default 0 6c5b654a qa/data/pcbnew/issue2512.kicad_pcb
 3ed306e7
 79269528
@@ -11965,6 +12467,7 @@ f262a714
 7daa4bd1
 c9d8e3e1
 2fc49709
+J a74020e1
 B nox2_drill 0 6c5b654a qa/data/pcbnew/issue2512.kicad_pcb
 a401d7e5
 78593c10
@@ -11988,6 +12491,7 @@ c4450663
 61724f3f
 bc2f5434
 10d8bbb3
+J a74020e1
 B default 0 bf8308cc qa/data/pcbnew/issue25265.kicad_pcb
 a0999eb0
 ba9fadd7
@@ -12013,6 +12517,7 @@ cf156695
 537c933c
 537c933c
 537c933c
+J cbb8721e
 B nox2_drill 0 bf8308cc qa/data/pcbnew/issue25265.kicad_pcb
 6edca835
 0b9cab68
@@ -12038,6 +12543,7 @@ cc741779
 67b8394a
 67b8394a
 67b8394a
+J cbb8721e
 B default 0 c6d420ba qa/data/pcbnew/issue2528.kicad_pcb
 868ae501
 a06aadef
@@ -12059,6 +12565,7 @@ cef7d2a1
 524792eb
 e4ebbece
 c4d5d8c3
+J 08cdfc27
 B nox2_drill 0 c6d420ba qa/data/pcbnew/issue2528.kicad_pcb
 9e978778
 51ce74ac
@@ -12080,6 +12587,7 @@ a87bdcf0
 2331f02a
 d7b60aa0
 dfed3e0a
+J 08cdfc27
 B default 0 aabdea33 qa/data/pcbnew/issue25303.kicad_pcb
 532c464c
 00449e9b
@@ -12107,6 +12615,7 @@ c5716c92
 9f550b02
 9f550b02
 9f550b02
+J 20657d17
 B nox2_drill 0 aabdea33 qa/data/pcbnew/issue25303.kicad_pcb
 7b6c600c
 0dd16570
@@ -12134,6 +12643,7 @@ be96053c
 911d5fc2
 911d5fc2
 911d5fc2
+J 20657d17
 B default 0 b92587bd qa/data/pcbnew/issue25439/issue25439.kicad_pcb
 6fc4db1d
 2e47fd89
@@ -12155,6 +12665,7 @@ c7cec9b5
 c7cec9b5
 afd7835b
 002cdd55
+J 3536db28
 B nox2_drill 0 b92587bd qa/data/pcbnew/issue25439/issue25439.kicad_pcb
 4ada29e1
 06a935d8
@@ -12176,6 +12687,7 @@ c1ff044f
 26c670fe
 45d80f66
 97ab8ed1
+J 3536db28
 B default 0 199f3125 qa/data/pcbnew/issue25521_zone_names.kicad_pcb
 67885df1
 2c5adbd8
@@ -12201,6 +12713,7 @@ a4913599
 a4913599
 a4913599
 a4913599
+J d66e61a0
 B nox2_drill 0 199f3125 qa/data/pcbnew/issue25521_zone_names.kicad_pcb
 2cbbf696
 5eb0a284
@@ -12226,6 +12739,7 @@ ee874da2
 ee874da2
 ee874da2
 ee874da2
+J d66e61a0
 B default 0 1cf8c239 qa/data/pcbnew/issue25580.kicad_pcb
 5e06822c
 6031cc4b
@@ -12253,6 +12767,7 @@ befca60a
 8ae52fe2
 8ae52fe2
 8ae52fe2
+J f4883f01
 B nox2_drill 0 1cf8c239 qa/data/pcbnew/issue25580.kicad_pcb
 f7769c1b
 953ab3d1
@@ -12280,6 +12795,7 @@ f35ad0fa
 f35ad0fa
 f35ad0fa
 f35ad0fa
+J f4883f01
 B default 0 2579f9c1 qa/data/pcbnew/issue25650/issue25650.kicad_pcb
 7905dfa5
 8e11ee3f
@@ -12305,6 +12821,7 @@ eee9449e
 eee9449e
 eee9449e
 eee9449e
+J 3e0c1ebd
 B nox2_drill 0 2579f9c1 qa/data/pcbnew/issue25650/issue25650.kicad_pcb
 24ace82b
 6a8faa1e
@@ -12330,6 +12847,7 @@ dc7c4e29
 6245b94c
 6245b94c
 6245b94c
+J 3e0c1ebd
 B default 0 ae33d666 qa/data/pcbnew/issue4139.kicad_pcb
 52dadce8
 7507c8f5
@@ -12351,6 +12869,7 @@ e23e5c72
 536cf91f
 73ab2794
 4f0dcf01
+J 86365f67
 B nox2_drill 0 ae33d666 qa/data/pcbnew/issue4139.kicad_pcb
 b1ab9e89
 d5cfb91d
@@ -12372,6 +12891,7 @@ ddf81550
 076dbb83
 4c8490e9
 853c5d40
+J 86365f67
 B default 0 773cddb5 qa/data/pcbnew/issue4257.kicad_pcb
 11652256
 1c0e44c6
@@ -12395,6 +12915,7 @@ a935c0fb
 07ab1b6a
 bbe8ccad
 6c3f8cd0
+J 32640ac4
 B nox2_drill 0 773cddb5 qa/data/pcbnew/issue4257.kicad_pcb
 6596e8ef
 b838303a
@@ -12418,6 +12939,7 @@ f26d78a7
 9e506337
 18f2d7dc
 19a243a1
+J 32640ac4
 B default 0 716f931e qa/data/pcbnew/issue5313.kicad_pcb
 f97c1851
 527900ba
@@ -12439,6 +12961,7 @@ b89b1a1f
 517ebdc4
 eb852690
 df30abcb
+J 38f01e00
 B nox2_drill 0 716f931e qa/data/pcbnew/issue5313.kicad_pcb
 bd2e9a21
 58462182
@@ -12460,6 +12983,7 @@ b50a5c8e
 3c3c9e2d
 b5f9ebad
 ba4c4597
+J 38f01e00
 B default 0 2a3ec6ee qa/data/pcbnew/issue5320.kicad_pcb
 f89382e6
 3bbf6fd6
@@ -12483,6 +13007,7 @@ ece2d80e
 15a24293
 919f9fcf
 51bcb21c
+J 8f1e7688
 B nox2_drill 0 2a3ec6ee qa/data/pcbnew/issue5320.kicad_pcb
 65e238d5
 a51e522a
@@ -12506,6 +13031,7 @@ ae47c833
 0b183cd7
 f56839e4
 e428d17c
+J 8f1e7688
 B default 0 6fc9aa2c qa/data/pcbnew/issue5567.kicad_pcb
 155bb9fa
 52134d92
@@ -12527,6 +13053,7 @@ e72efff5
 7084139f
 6dbc0a29
 03741426
+J 2a370e44
 B nox2_drill 0 6fc9aa2c qa/data/pcbnew/issue5567.kicad_pcb
 6908f22f
 3e2d5ef9
@@ -12548,6 +13075,7 @@ d602897a
 503c52a9
 6a7890a9
 86469312
+J 2a370e44
 B default 0 05a2e155 qa/data/pcbnew/issue5750.kicad_pcb
 b85f4d48
 d5da70d1
@@ -12569,6 +13097,7 @@ cadc3ea6
 48f0b3aa
 db9d7863
 eae8e0cc
+J dff0f139
 B nox2_drill 0 05a2e155 qa/data/pcbnew/issue5750.kicad_pcb
 a6ac162b
 4763c5e8
@@ -12590,6 +13119,7 @@ f6a1e9f5
 f6a1e9f5
 9d6892ee
 66a19173
+J dff0f139
 B default 0 52fc1502 qa/data/pcbnew/issue5854.kicad_pcb
 1badbaba
 bc40d004
@@ -12620,6 +13150,7 @@ adf25900
 98ffeab4
 98ffeab4
 98ffeab4
+J 05c65a86
 B nox2_drill 0 52fc1502 qa/data/pcbnew/issue5854.kicad_pcb
 299eca0d
 d7fca004
@@ -12650,6 +13181,7 @@ a90b362b
 a90b362b
 a90b362b
 a90b362b
+J 05c65a86
 B default 0 76c0e9ac qa/data/pcbnew/issue5978.kicad_pcb
 fd07dbb8
 4d6bd41d
@@ -12669,6 +13201,7 @@ ae6ac1f3
 fbcc4a9e
 e3ac17ec
 da423b4b
+J 8bd02876
 B nox2_drill 0 76c0e9ac qa/data/pcbnew/issue5978.kicad_pcb
 4fc72caf
 1c990bc2
@@ -12688,6 +13221,7 @@ e746005b
 2bc58097
 8a73b97c
 6b750d72
+J 8bd02876
 B default 0 ae652080 qa/data/pcbnew/issue6443.kicad_pcb
 80a021e3
 102331f7
@@ -12720,6 +13254,7 @@ a1bb501f
 6d138c76
 6d138c76
 6d138c76
+J e60d40ea
 B nox2_drill 0 ae652080 qa/data/pcbnew/issue6443.kicad_pcb
 0e394d16
 aba259eb
@@ -12752,6 +13287,7 @@ d6d4bf3d
 d6d4bf3d
 d6d4bf3d
 d6d4bf3d
+J e60d40ea
 B default 0 91505ca1 qa/data/pcbnew/issue6879.kicad_pcb
 0fb3cdd4
 5adbfc25
@@ -12782,6 +13318,7 @@ ee02b845
 1b3e8b8b
 1b3e8b8b
 1b3e8b8b
+J f347fd0a
 B nox2_drill 0 91505ca1 qa/data/pcbnew/issue6879.kicad_pcb
 b320fe4b
 b0222563
@@ -12812,6 +13349,7 @@ c81e4878
 c81e4878
 c81e4878
 c81e4878
+J f347fd0a
 B default 0 087166b3 qa/data/pcbnew/issue6945.kicad_pcb
 c2f20a22
 3355cde6
@@ -12833,6 +13371,7 @@ be93758b
 0141b942
 772188be
 657ac335
+J 10e05124
 B nox2_drill 0 087166b3 qa/data/pcbnew/issue6945.kicad_pcb
 61fc24a8
 bdd0a9e9
@@ -12854,6 +13393,7 @@ e7e3c4cf
 6a59eaec
 4248b3bb
 2ccb440a
+J 10e05124
 B default 0 8b5c0c2b qa/data/pcbnew/issue7086.kicad_pcb
 495f84ac
 faaed7a4
@@ -12884,6 +13424,7 @@ b8870e26
 5e307e82
 5e307e82
 5e307e82
+J 7b334144
 B nox2_drill 0 8b5c0c2b qa/data/pcbnew/issue7086.kicad_pcb
 d4f3ec2a
 b0c30717
@@ -12914,6 +13455,7 @@ fb7a6c8b
 fb7a6c8b
 fb7a6c8b
 fb7a6c8b
+J 7b334144
 B default 0 fdd15d46 qa/data/pcbnew/issue7241.kicad_pcb
 0d3c430a
 2c062b6a
@@ -12944,6 +13486,7 @@ f9b191a7
 1c2d0a33
 1c2d0a33
 1c2d0a33
+J 98afdb38
 B nox2_drill 0 fdd15d46 qa/data/pcbnew/issue7241.kicad_pcb
 7f43ef78
 be506f98
@@ -12974,6 +13517,7 @@ a9de2da0
 7064346a
 7064346a
 7064346a
+J 98afdb38
 B default 0 c29bf62a qa/data/pcbnew/issue7267.kicad_pcb
 3e9edf3c
 2aecdb07
@@ -13004,6 +13548,7 @@ cb6b1208
 6247d66d
 6247d66d
 6247d66d
+J 85e81e91
 B nox2_drill 0 c29bf62a qa/data/pcbnew/issue7267.kicad_pcb
 4b5e8749
 a0d8cfe2
@@ -13034,6 +13579,7 @@ d58e1ac0
 0ccad021
 0ccad021
 0ccad021
+J 85e81e91
 B default 0 4d9fed66 qa/data/pcbnew/issue7567.kicad_pcb
 4ec3b4ac
 40f4c6d0
@@ -13055,6 +13601,7 @@ b150b8b7
 a6992736
 7a641dca
 ca2ce29c
+J 620d0332
 B nox2_drill 0 4d9fed66 qa/data/pcbnew/issue7567.kicad_pcb
 0acae3bb
 b2c39ad9
@@ -13076,6 +13623,7 @@ e10010d2
 1ae61505
 3b9f6439
 a9faae1b
+J 620d0332
 B default 0 7116ea5d qa/data/pcbnew/issue7975.kicad_pcb
 9d247e9d
 8c4e2624
@@ -13106,6 +13654,7 @@ f9fd96b3
 95b0eb33
 95b0eb33
 95b0eb33
+J 62696c04
 B nox2_drill 0 7116ea5d qa/data/pcbnew/issue7975.kicad_pcb
 534b9362
 3fad13f4
@@ -13136,6 +13685,7 @@ db55c9a8
 4c8b9b38
 4c8b9b38
 4c8b9b38
+J 62696c04
 B default 0 430265ef qa/data/pcbnew/issue8003.kicad_pcb
 86181c48
 ecb4b310
@@ -13166,6 +13716,7 @@ eaf25c39
 eaf25c39
 eaf25c39
 eaf25c39
+J b67d2663
 B nox2_drill 0 430265ef qa/data/pcbnew/issue8003.kicad_pcb
 469cbbcc
 3a7f8282
@@ -13196,6 +13747,7 @@ d5a15ddc
 8221f967
 8221f967
 8221f967
+J b67d2663
 B default 0 075eb7c7 qa/data/pcbnew/issue8629/issue8629.kicad_pcb
 9262be69
 d42631ef
@@ -13226,6 +13778,7 @@ be83a4d8
 be83a4d8
 be83a4d8
 be83a4d8
+J e0484af7
 B nox2_drill 0 075eb7c7 qa/data/pcbnew/issue8629/issue8629.kicad_pcb
 063d44f4
 ef9505a5
@@ -13256,6 +13809,7 @@ a849c762
 603ddc51
 603ddc51
 603ddc51
+J e0484af7
 B default 0 18592cec qa/data/pcbnew/issue8883.kicad_pcb
 b54f3ae2
 49f06c9b
@@ -13274,6 +13828,7 @@ d5066042
 d5066042
 d8065561
 4e7d2f5a
+J b792c5f4
 B nox2_drill 0 18592cec qa/data/pcbnew/issue8883.kicad_pcb
 fecb813b
 99ba6295
@@ -13292,6 +13847,7 @@ a396d30e
 8e90f23e
 fdb86bbe
 db972504
+J b792c5f4
 B default 0 e5ccb495 qa/data/pcbnew/issue9081.kicad_pcb
 19527afc
 906f4e40
@@ -13322,6 +13878,7 @@ b8313539
 b8313539
 b8313539
 b8313539
+J f4c05428
 B nox2_drill 0 e5ccb495 qa/data/pcbnew/issue9081.kicad_pcb
 9fa66a2f
 948b8968
@@ -13352,6 +13909,7 @@ b6feb5cf
 b6feb5cf
 b6feb5cf
 b6feb5cf
+J f4c05428
 B default 0 581952f3 qa/data/pcbnew/issue9870.kicad_pcb
 f6b99ec9
 ac03e220
@@ -13373,6 +13931,7 @@ c87d6063
 112cf792
 6b3ff040
 51d6d348
+J ad595560
 B nox2_drill 0 581952f3 qa/data/pcbnew/issue9870.kicad_pcb
 bd851778
 38fd4d23
@@ -13394,6 +13953,7 @@ a8e9913c
 a8e9913c
 c0632bdf
 3e7f8c94
+J ad595560
 B default 0 c316df61 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
 f4eb54a2
 87e31de1
@@ -13401,6 +13961,7 @@ f4eb54a2
 5bd3a6e4
 5bd3a6e4
 5bd3a6e4
+J a647981e
 B nox2_drill 0 c316df61 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_pcb
 5522e21b
 7c6c9c41
@@ -13408,6 +13969,7 @@ B nox2_drill 0 c316df61 qa/data/pcbnew/keepout_disallow/keepout_disallow.kicad_p
 9a07730a
 9a07730a
 9a07730a
+J a647981e
 B default 0 b57938e4 qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
 bc9c65ce
 f47d9b3b
@@ -13433,6 +13995,7 @@ ceec2f76
 89ddb48d
 89ddb48d
 89ddb48d
+J a15ef0b4
 B nox2_drill 0 b57938e4 qa/data/pcbnew/keepout_no_clearance/keepout_no_clearance.kicad_pcb
 2256c9f9
 e5b37ca1
@@ -13458,6 +14021,7 @@ e878f26a
 e878f26a
 e878f26a
 e878f26a
+J a15ef0b4
 B default 0 934add29 qa/data/pcbnew/large_circle_teardrop.kicad_pcb
 7b63f411
 c3a9c264
@@ -13479,6 +14043,7 @@ b167734d
 6d5bb88c
 04f02714
 97241665
+J 144467e7
 B nox2_drill 0 934add29 qa/data/pcbnew/large_circle_teardrop.kicad_pcb
 88fe9ed5
 0269e7ec
@@ -13500,6 +14065,7 @@ ac0d8c2d
 3df9ce40
 7bfe1665
 15323b6d
+J 144467e7
 B default 0 abd9e444 qa/data/pcbnew/length_calculations.kicad_pcb
 60d982d4
 415862e3
@@ -13527,6 +14093,7 @@ b2817a8f
 6a19dc39
 6a19dc39
 6a19dc39
+J 083f8d90
 B nox2_drill 0 abd9e444 qa/data/pcbnew/length_calculations.kicad_pcb
 4565be95
 0841b796
@@ -13554,6 +14121,7 @@ eff6607c
 a45d57d6
 a45d57d6
 a45d57d6
+J 083f8d90
 B default 0 b97557e7 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
 f3f36d4a
 c61376e3
@@ -13569,6 +14137,7 @@ a5a245b4
 79f6fc9d
 0ecaa5b2
 98eb66c8
+J 482fe10e
 B nox2_drill 0 b97557e7 qa/data/pcbnew/line_ending_zone_flood/line_ending_zone_flood.kicad_pcb
 f05e48ea
 9880b3c8
@@ -13584,6 +14153,7 @@ a5f08706
 85aeaf63
 692e98ca
 53174688
+J 482fe10e
 B default 0 835adc7b qa/data/pcbnew/multinetclasses_drc.kicad_pcb
 2b56221e
 42b36995
@@ -13614,6 +14184,7 @@ ee0cba4c
 ee0cba4c
 ee0cba4c
 ee0cba4c
+J 082bcacc
 B nox2_drill 0 835adc7b qa/data/pcbnew/multinetclasses_drc.kicad_pcb
 4c6e88f6
 211f4fc3
@@ -13644,6 +14215,7 @@ c8d85c19
 9d48c6a1
 9d48c6a1
 9d48c6a1
+J 082bcacc
 B default 0 d2cad6b3 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
 692b618a
 110b958e
@@ -13669,6 +14241,7 @@ e3d31c85
 68ad0484
 68ad0484
 68ad0484
+J 4eec9e8e
 B nox2_drill 0 d2cad6b3 qa/data/pcbnew/net_chain_bridging_tuning_profiles.kicad_pcb
 83f0555b
 93bb12af
@@ -13694,6 +14267,7 @@ aa3459dc
 aa3459dc
 aa3459dc
 aa3459dc
+J 4eec9e8e
 B default 0 7406d9ae qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
 21964b0a
 ddaf443d
@@ -13701,6 +14275,7 @@ ba725700
 21d095a2
 eed1b2ca
 21d095a2
+J bb579c88
 B nox2_drill 0 7406d9ae qa/data/pcbnew/net_chains/chain_bridging_3pad_1net.kicad_pcb
 cf3f1364
 5897646e
@@ -13708,6 +14283,7 @@ cf3f1364
 849f52b4
 ba636597
 849f52b4
+J bb579c88
 B default 0 d42c6d39 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
 12c7ba0c
 93944b0d
@@ -13715,6 +14291,7 @@ d239ab7f
 339b1ad7
 a3d98c87
 339b1ad7
+J 043404b9
 B nox2_drill 0 d42c6d39 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad_pcb
 0361c5d5
 0dea5f4a
@@ -13722,6 +14299,7 @@ B nox2_drill 0 d42c6d39 qa/data/pcbnew/net_chains/chain_bridging_3pad_2net.kicad
 2664fbe9
 7b21e4e3
 2664fbe9
+J 043404b9
 B default 0 d4b9e509 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
 37359a7a
 198063cf
@@ -13729,6 +14307,7 @@ B default 0 d4b9e509 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pc
 62d84d95
 d928366d
 62d84d95
+J dcfd58aa
 B nox2_drill 0 d4b9e509 qa/data/pcbnew/net_chains/chain_bridging_3pad_3net.kicad_pcb
 916ba718
 a708647e
@@ -13736,6 +14315,7 @@ c9857427
 55486411
 b57ef185
 55486411
+J dcfd58aa
 B default 0 d9a3a31c qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
 4e523e80
 ea783447
@@ -13743,6 +14323,7 @@ ea783447
 6162979d
 ae4a2178
 6162979d
+J d14f8691
 B nox2_drill 0 d9a3a31c qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
 8c7bdbb4
 9da9b1bc
@@ -13750,6 +14331,7 @@ B nox2_drill 0 d9a3a31c qa/data/pcbnew/net_chains/chain_bridging_4pad.kicad_pcb
 7d40b1b7
 bd403090
 7d40b1b7
+J d14f8691
 B default 0 3ec3b371 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
 d333c25d
 7a908474
@@ -13757,6 +14339,7 @@ ad85ac6e
 2877baf7
 68534553
 2877baf7
+J 8ec4e799
 B nox2_drill 0 3ec3b371 qa/data/pcbnew/net_chains/chain_length_branched.kicad_pcb
 e70c8140
 4234eef2
@@ -13764,6 +14347,7 @@ e70c8140
 6eaf26d8
 98ea524c
 6eaf26d8
+J 8ec4e799
 B default 0 adcbb068 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
 e423ad76
 1af65a1a
@@ -13771,6 +14355,7 @@ a7901443
 9f33aff5
 639bb8c5
 9f33aff5
+J eca8afe7
 B nox2_drill 0 adcbb068 qa/data/pcbnew/net_chains/chain_length_daisy.kicad_pcb
 f84a2383
 2aee613f
@@ -13778,6 +14363,7 @@ e716edf4
 cffcbb44
 012e3cd6
 cffcbb44
+J eca8afe7
 B default 0 450c3dbb qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
 bd16bec5
 09ae6bef
@@ -13785,6 +14371,7 @@ bd16bec5
 4f6b05d6
 d35642f2
 4f6b05d6
+J 74cfab57
 B nox2_drill 0 450c3dbb qa/data/pcbnew/net_chains/chain_topology_cycle.kicad_pcb
 de9eb1a9
 854c0bea
@@ -13792,6 +14379,7 @@ b9d02342
 f5f6280f
 5abfd239
 f5f6280f
+J 74cfab57
 B default 0 d9c7554d qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
 10da89e3
 bacc70d4
@@ -13799,6 +14387,7 @@ b0805c61
 8326e172
 da89657c
 8326e172
+J 1c714de8
 B nox2_drill 0 d9c7554d qa/data/pcbnew/net_chains/chain_topology_disconnected.kicad_pcb
 c2af26dd
 35bbb1a3
@@ -13806,6 +14395,7 @@ d17cfe67
 154d82bd
 2f7e0107
 154d82bd
+J 1c714de8
 B default 0 c0447b91 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
 19d52627
 1fa8eed8
@@ -13813,6 +14403,7 @@ B default 0 c0447b91 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.k
 1d512ad2
 97f95829
 1d512ad2
+J 5d9a56fb
 B nox2_drill 0 c0447b91 qa/data/pcbnew/net_chains/chain_topology_missing_terminal.kicad_pcb
 346fc877
 36c6701c
@@ -13820,6 +14411,7 @@ B nox2_drill 0 c0447b91 qa/data/pcbnew/net_chains/chain_topology_missing_termina
 c39b2d52
 0a7d31cb
 c39b2d52
+J 5d9a56fb
 B default 0 7614176b qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
 321bcdb4
 89a15e99
@@ -13827,6 +14419,7 @@ B default 0 7614176b qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
 5dae78e6
 c19a2572
 5dae78e6
+J 1c1a018a
 B nox2_drill 0 7614176b qa/data/pcbnew/net_chains/chain_topology_t_stub.kicad_pcb
 19168f29
 ce79d879
@@ -13834,6 +14427,7 @@ ce79d879
 22f58e33
 e86ca1a2
 22f58e33
+J 1c1a018a
 B default 0 16116bba qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
 15ec96a5
 e81057ab
@@ -13841,6 +14435,7 @@ e81057ab
 28d4dd14
 d0c87165
 28d4dd14
+J 394f4c17
 B nox2_drill 0 16116bba qa/data/pcbnew/net_chains/chain_topology_trunk.kicad_pcb
 27850984
 0f1061fd
@@ -13848,6 +14443,7 @@ d8db3c9a
 8db49b3b
 9e731ec0
 8db49b3b
+J 394f4c17
 B default 0 f76aa3ee qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
 ad2efc7b
 eb9d0a74
@@ -13855,6 +14451,7 @@ f1a5bbd5
 be9e9dd0
 be9e9dd0
 be9e9dd0
+J b5da51dd
 B nox2_drill 0 f76aa3ee qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
 92f817e0
 13bcafbf
@@ -13862,6 +14459,7 @@ B nox2_drill 0 f76aa3ee qa/data/pcbnew/net_chains/length_with_chain.kicad_pcb
 a3534a57
 a3534a57
 a3534a57
+J b5da51dd
 B default 0 93934aa9 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
 9e302270
 34902f8c
@@ -13869,6 +14467,7 @@ d153d812
 79f8394e
 e71999d6
 79f8394e
+J 2ea7a815
 B nox2_drill 0 93934aa9 qa/data/pcbnew/net_chains/net_chain_total_length.kicad_pcb
 4aa85e1f
 e95d07dc
@@ -13876,6 +14475,7 @@ f1b50d7b
 caebb0a8
 c2cc6fb1
 caebb0a8
+J 2ea7a815
 B default 0 1a45668b qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
 a425fee3
 5db3f9a5
@@ -13883,6 +14483,7 @@ a425fee3
 1a8698e2
 1a8698e2
 1a8698e2
+J 1ed17e13
 B nox2_drill 0 1a45668b qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pcb
 21108f79
 42efef82
@@ -13890,6 +14491,7 @@ B nox2_drill 0 1a45668b qa/data/pcbnew/net_chains/net_chain_trunk_delay.kicad_pc
 30877ac2
 30877ac2
 30877ac2
+J 1ed17e13
 B default 0 0641746b qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
 d4447003
 7253a3f5
@@ -13897,6 +14499,7 @@ c7b57f91
 4860eff2
 4860eff2
 4860eff2
+J acab1711
 B nox2_drill 0 0641746b qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pcb
 85cf8eb5
 1e372a59
@@ -13904,6 +14507,7 @@ B nox2_drill 0 0641746b qa/data/pcbnew/net_chains/return_path_dual_zone.kicad_pc
 3c158094
 3c158094
 3c158094
+J acab1711
 B default 0 1ea45e2b qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
 a400f688
 3a0eea66
@@ -13911,6 +14515,7 @@ a400f688
 457d3c2f
 457d3c2f
 457d3c2f
+J 18ddd73d
 B nox2_drill 0 1ea45e2b qa/data/pcbnew/net_chains/return_path_partial.kicad_pcb
 33949fda
 f1176a68
@@ -13918,6 +14523,7 @@ f1176a68
 67c4d092
 67c4d092
 67c4d092
+J 18ddd73d
 B default 0 ace67026 qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
 7e153180
 200d9f19
@@ -13925,6 +14531,7 @@ e37c7e6c
 bc91977c
 bc91977c
 bc91977c
+J 2b74ea44
 B nox2_drill 0 ace67026 qa/data/pcbnew/net_chains/return_path_unshadowed.kicad_pcb
 7959743f
 ecfe67e4
@@ -13932,6 +14539,7 @@ ecfe67e4
 93131aea
 93131aea
 93131aea
+J 2b74ea44
 B default 0 b22b60bc qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
 47286d8e
 2571d9fd
@@ -13939,6 +14547,7 @@ B default 0 b22b60bc qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
 9fd60a2a
 9fd60a2a
 9fd60a2a
+J 43d06073
 B nox2_drill 0 b22b60bc qa/data/pcbnew/net_chains/return_path_zone_bbox.kicad_pcb
 82fcc618
 f104d7d2
@@ -13946,6 +14555,7 @@ f104d7d2
 aabd588e
 aabd588e
 aabd588e
+J 43d06073
 B default 0 38b41dad qa/data/pcbnew/net_chains/stub_length.kicad_pcb
 063d4718
 a2d72559
@@ -13953,6 +14563,7 @@ d04ad495
 60c22012
 302631a0
 60c22012
+J dd24043c
 B nox2_drill 0 38b41dad qa/data/pcbnew/net_chains/stub_length.kicad_pcb
 f6edad68
 8eb03ffc
@@ -13960,6 +14571,7 @@ b79dbfdd
 d22fd750
 df056c23
 d22fd750
+J dd24043c
 B default 0 525be7f3 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
 7dbf8993
 7c59a26f
@@ -13967,6 +14579,7 @@ B default 0 525be7f3 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
 6839291e
 b5b5c440
 6839291e
+J c0ce8751
 B nox2_drill 0 525be7f3 qa/data/pcbnew/net_chains/stub_length_pad_to_die.kicad_pcb
 7efa772a
 99a1ec2b
@@ -13974,6 +14587,7 @@ aa251ae3
 a8879655
 0f3f0a4c
 a8879655
+J c0ce8751
 B default 0 b727bb72 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
 743f3465
 370cfe7a
@@ -13981,6 +14595,7 @@ c6fe9b22
 7c14525a
 8c7a6efe
 7c14525a
+J 6730c57b
 B nox2_drill 0 b727bb72 qa/data/pcbnew/net_chains/stub_length_two_net.kicad_pcb
 8e3d90e9
 dfeeaf34
@@ -13988,6 +14603,7 @@ dfeeaf34
 610d9f5f
 a2f0ac3f
 610d9f5f
+J 6730c57b
 B default 0 75601d0f qa/data/pcbnew/net_tie_drc.kicad_pcb
 febc21c2
 ab089310
@@ -14018,6 +14634,7 @@ c3bc23de
 30e040d9
 30e040d9
 30e040d9
+J c4f19a5a
 B nox2_drill 0 75601d0f qa/data/pcbnew/net_tie_drc.kicad_pcb
 32359ea0
 be830e67
@@ -14048,6 +14665,7 @@ afc9bc5d
 afc9bc5d
 afc9bc5d
 afc9bc5d
+J c4f19a5a
 B default 0 99b1775f qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
 43b179fc
 5503b508
@@ -14073,6 +14691,7 @@ ec2bdd2e
 53165493
 53165493
 53165493
+J 772bf132
 B nox2_drill 0 99b1775f qa/data/pcbnew/net_tie_hole_clearance.kicad_pcb
 e3c47c9a
 8b6f8524
@@ -14098,6 +14717,7 @@ b6fae0e2
 56cb22c6
 56cb22c6
 56cb22c6
+J 772bf132
 B default 0 00cde05e qa/data/pcbnew/notched_zones.kicad_pcb
 c112df64
 71ee8120
@@ -14119,6 +14739,7 @@ fd5bd62a
 97f47aef
 ba3a7a70
 3dee08a4
+J b4d7f0ef
 B nox2_drill 0 00cde05e qa/data/pcbnew/notched_zones.kicad_pcb
 77b1088b
 0b7d0914
@@ -14140,6 +14761,7 @@ b2954729
 65c81021
 c30f53fe
 5fd41a0f
+J b4d7f0ef
 B default 0 b5ac44d0 qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
 ccf2955c
 fe71d056
@@ -14165,6 +14787,7 @@ e92e662f
 3b2a385a
 3b2a385a
 3b2a385a
+J f88a4171
 B nox2_drill 0 b5ac44d0 qa/data/pcbnew/npth_mask_bridge_test.kicad_pcb
 b4ce2eb3
 169425af
@@ -14190,6 +14813,7 @@ e854ecbf
 40af977b
 40af977b
 40af977b
+J f88a4171
 B default 0 36159033 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
 14bc2e83
 521ea000
@@ -14224,6 +14848,7 @@ efd4130c
 efd4130c
 efd4130c
 efd4130c
+J 79eb7cec
 B nox2_drill 0 36159033 qa/data/pcbnew/odbpp/custom_pad_mask_split.kicad_pcb
 a06ca407
 b00214c1
@@ -14258,6 +14883,7 @@ e920d7a0
 69e537d7
 69e537d7
 69e537d7
+J 79eb7cec
 B default 0 4f924965 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
 c17ef671
 afba5e80
@@ -14283,6 +14909,7 @@ d593026d
 d593026d
 d593026d
 d593026d
+J 9f7e7a3e
 B nox2_drill 0 4f924965 qa/data/pcbnew/odbpp/knockout_textbox_unicode.kicad_pcb
 75fb4a7c
 f796e96a
@@ -14308,6 +14935,7 @@ f5d384b1
 06145aa3
 06145aa3
 06145aa3
+J 9f7e7a3e
 B default 0 454dd122 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
 ef410e85
 37cdcf72
@@ -14333,6 +14961,7 @@ ee2e8913
 73042b18
 73042b18
 73042b18
+J b1bd4d6b
 B nox2_drill 0 454dd122 qa/data/pcbnew/odbpp/npth_pressfit.kicad_pcb
 aa02ad11
 32bf94d1
@@ -14358,6 +14987,7 @@ ecf10d9f
 62ceb91d
 62ceb91d
 62ceb91d
+J b1bd4d6b
 B default 0 619609fb qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
 995e6ee8
 a6e357dd
@@ -14383,6 +15013,7 @@ aab07c6f
 203a80bb
 203a80bb
 203a80bb
+J 91cffda5
 B nox2_drill 0 619609fb qa/data/pcbnew/odbpp/npth_pressfit_slot.kicad_pcb
 31e99960
 b209ba68
@@ -14408,6 +15039,7 @@ a3558dca
 2d067d75
 2d067d75
 2d067d75
+J 91cffda5
 B default 0 dac1f978 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
 a3c2ec6d
 dbb9eabf
@@ -14442,6 +15074,7 @@ b5fe444c
 116d8559
 116d8559
 116d8559
+J 5ee2708d
 B nox2_drill 0 dac1f978 qa/data/pcbnew/odbpp/pad_margin_shapes.kicad_pcb
 e641b88d
 53cffd3e
@@ -14476,6 +15109,7 @@ ce52ff32
 20faf601
 20faf601
 20faf601
+J 5ee2708d
 B default 0 4df13493 qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
 205ce68e
 92e840bf
@@ -14495,6 +15129,7 @@ c665e5e0
 7cc0638f
 2a874d2e
 42e4ebad
+J 2d2fc40e
 B nox2_drill 0 4df13493 qa/data/pcbnew/odbpp/two_board_islands.kicad_pcb
 768b721d
 4c4772eb
@@ -14514,6 +15149,7 @@ c02c02cd
 c1e724e9
 4cee9beb
 8267f61f
+J 2d2fc40e
 B default 0 09052fd2 qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
 6d5ff741
 4df66925
@@ -14539,6 +15175,7 @@ adb240d9
 adb240d9
 adb240d9
 adb240d9
+J b08f5cb4
 B nox2_drill 0 09052fd2 qa/data/pcbnew/odbpp/variant_field_textvar.kicad_pcb
 6e733d43
 cbe2da88
@@ -14564,6 +15201,7 @@ c49dab5c
 c49dab5c
 c49dab5c
 c49dab5c
+J b08f5cb4
 B default 0 43d60e7a qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
 e71c654b
 534cf7c4
@@ -14591,6 +15229,7 @@ bf564100
 2d6dc069
 2d6dc069
 2d6dc069
+J 05dcdda9
 B nox2_drill 0 43d60e7a qa/data/pcbnew/odbpp/via_in_pad.kicad_pcb
 850f866a
 f06e5eef
@@ -14618,6 +15257,7 @@ ac6d2455
 688f7094
 688f7094
 688f7094
+J 05dcdda9
 B default 0 c721741f qa/data/pcbnew/off_center_teardrop.kicad_pcb
 95d9521f
 c44f2e6a
@@ -14639,6 +15279,7 @@ aa4e9013
 5e409f8b
 9f59e40e
 319c52a8
+J 1e043b45
 B nox2_drill 0 c721741f qa/data/pcbnew/off_center_teardrop.kicad_pcb
 2df09ba3
 192bfb1f
@@ -14660,6 +15301,7 @@ b9177de2
 b9177de2
 f2d7f016
 dd10d80c
+J 1e043b45
 B default 0 0cabee9b qa/data/pcbnew/orientation_drc.kicad_pcb
 0867a95a
 a8d9d74d
@@ -14685,6 +15327,7 @@ c07518db
 54a96a92
 54a96a92
 54a96a92
+J ca158c68
 B nox2_drill 0 0cabee9b qa/data/pcbnew/orientation_drc.kicad_pcb
 fc9175b0
 d40541f7
@@ -14710,6 +15353,7 @@ ff3fac1b
 3bacf1f3
 3bacf1f3
 3bacf1f3
+J ca158c68
 B default 0 fcd088d4 qa/data/pcbnew/oval_teardrop.kicad_pcb
 f8a79c3b
 75d5d8bb
@@ -14731,6 +15375,7 @@ ee5ee01d
 014c9bcc
 05f5485b
 845dacca
+J c17c1104
 B nox2_drill 0 fcd088d4 qa/data/pcbnew/oval_teardrop.kicad_pcb
 7f3b27f5
 c8f9ff65
@@ -14752,6 +15397,7 @@ bb58e5d4
 4ecf8ea6
 2a5ac225
 adcad51c
+J c17c1104
 B default 0 fdffbfbe qa/data/pcbnew/padstacks.kicad_pcb
 6a760a6b
 fe8908f6
@@ -14786,6 +15432,7 @@ af5b79c5
 8e13b3aa
 8e13b3aa
 8e13b3aa
+J 0f4c217b
 B nox2_drill 0 fdffbfbe qa/data/pcbnew/padstacks.kicad_pcb
 39de4f72
 d4a6d842
@@ -14820,6 +15467,7 @@ afe4620e
 afe4620e
 afe4620e
 afe4620e
+J 0f4c217b
 B default 0 b5cfd6f4 qa/data/pcbnew/padstacks_complex.kicad_pcb
 9a43402c
 b8de7788
@@ -14848,6 +15496,7 @@ d48edd8f
 d48edd8f
 d48edd8f
 d48edd8f
+J 081e6465
 B nox2_drill 0 b5cfd6f4 qa/data/pcbnew/padstacks_complex.kicad_pcb
 e3e857be
 87a513b0
@@ -14876,6 +15525,7 @@ d204ca25
 73bfe221
 73bfe221
 73bfe221
+J 081e6465
 B default 0 dc4e52c1 qa/data/pcbnew/padstacks_normal.kicad_pcb
 548c2a6a
 c61303e8
@@ -14906,6 +15556,7 @@ d8904683
 d8904683
 d8904683
 d8904683
+J 397a5822
 B nox2_drill 0 dc4e52c1 qa/data/pcbnew/padstacks_normal.kicad_pcb
 573d4658
 42779222
@@ -14936,6 +15587,7 @@ a5aec619
 57f99381
 57f99381
 57f99381
+J 397a5822
 B default 3 cbf29ce4 qa/data/pcbnew/plugins/fakeboard.kicad_pcb
 B nox2_drill 3 cbf29ce4 qa/data/pcbnew/plugins/fakeboard.kicad_pcb
 B default 0 e6589f17 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
@@ -15004,6 +15656,7 @@ c5e83a56
 c5e83a56
 c5e83a56
 c5e83a56
+J e7aa859d
 B nox2_drill 0 e6589f17 qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerEnumerate.kicad_pcb
 9dbac4f4
 3da69417
@@ -15070,6 +15723,7 @@ f8ec0f6c
 f8ec0f6c
 f8ec0f6c
 f8ec0f6c
+J e7aa859d
 B default 0 4d3b6bcd qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
 bbbd4a49
 458b8f0c
@@ -15136,6 +15790,7 @@ d73fcff6
 0516b2ae
 0516b2ae
 0516b2ae
+J 096ddd89
 B nox2_drill 0 4d3b6bcd qa/data/pcbnew/plugins/kicad_sexpr/Issue19775_ZoneLayers/LayerWildcard.kicad_pcb
 63ce3a6c
 c5970901
@@ -15202,6 +15857,7 @@ e76e0bca
 e76e0bca
 e76e0bca
 e76e0bca
+J 096ddd89
 B default 0 8ed887e3 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
 93e29d85
 a7a95296
@@ -15209,6 +15865,7 @@ a7a95296
 d3ac2b00
 d3ac2b00
 d3ac2b00
+J 2c609cf8
 B nox2_drill 0 8ed887e3 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/EmptyZone.kicad_pcb
 19f179da
 86ef1f2a
@@ -15216,6 +15873,7 @@ B nox2_drill 0 8ed887e3 qa/data/pcbnew/plugins/kicad_sexpr/Issue23125_EmptyZone/
 25311132
 25311132
 25311132
+J 2c609cf8
 B default 0 bb208929 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
 ed9d0ec7
 0a4fded1
@@ -15227,6 +15885,7 @@ c602a5f5
 00df8d0b
 00df8d0b
 00df8d0b
+J 1912abec
 B nox2_drill 0 bb208929 qa/data/pcbnew/plugins/kicad_sexpr/Issue23625_CorruptedStackup/corrupted_stackup.kicad_pcb
 ee309c1c
 b5f0cbfa
@@ -15238,6 +15897,7 @@ f7d790db
 754b499e
 754b499e
 754b499e
+J 1912abec
 B default 0 49b62155 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
 34e4f0db
 ba70dfc5
@@ -15251,6 +15911,7 @@ ef58383f
 8cc44341
 8cc44341
 8cc44341
+J 6b2d116f
 B nox2_drill 0 49b62155 qa/data/pcbnew/plugins/kicad_sexpr/Issue24133_DuplicatedStackup/duplicated_stackup.kicad_pcb
 ef952e97
 7d16cba2
@@ -15264,6 +15925,7 @@ e909cd31
 f9fecadd
 f9fecadd
 f9fecadd
+J 6b2d116f
 B default 0 718fe49d qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
 862d418a
 425c3513
@@ -15289,6 +15951,7 @@ bc54e1d9
 bc54e1d9
 bc54e1d9
 bc54e1d9
+J 04584405
 B nox2_drill 0 718fe49d qa/data/pcbnew/plugins/kicad_sexpr/ScientificNotation.kicad_pcb
 68cc13bc
 71b69c00
@@ -15314,6 +15977,7 @@ aa5f717a
 381e9bbb
 381e9bbb
 381e9bbb
+J 04584405
 B default 0 35f03731 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
 7bdebcf3
 d96cc509
@@ -15339,6 +16003,7 @@ f3988b10
 63a70cc3
 63a70cc3
 63a70cc3
+J 7dd88339
 B nox2_drill 0 35f03731 qa/data/pcbnew/pns_regressions/boards/backspace1.kicad_pcb
 41dabe1a
 ddfb1585
@@ -15364,6 +16029,7 @@ bb360357
 4d839330
 4d839330
 4d839330
+J 7dd88339
 B default 0 098f102c qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
 36bf3c96
 cb348784
@@ -15389,6 +16055,7 @@ ea9e0c76
 0893e0a7
 0893e0a7
 0893e0a7
+J b9ed11e4
 B nox2_drill 0 098f102c qa/data/pcbnew/pns_regressions/boards/dp_test.kicad_pcb
 d108338e
 8760a3a0
@@ -15414,6 +16081,7 @@ de10d0e3
 de10d0e3
 de10d0e3
 de10d0e3
+J b9ed11e4
 B default 0 3ef13620 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
 a9af3cd8
 2e5f5b1d
@@ -15439,6 +16107,7 @@ fc545442
 fc545442
 fc545442
 fc545442
+J ea04dae0
 B nox2_drill 0 3ef13620 qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize-fix-corners.kicad_pcb
 f04dbad1
 999a0025
@@ -15464,6 +16133,7 @@ da5cb5a0
 da5cb5a0
 da5cb5a0
 da5cb5a0
+J ea04dae0
 B default 0 4b06ba6d qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
 8d344646
 66bd70ad
@@ -15489,6 +16159,7 @@ afdb103f
 27a7ed2c
 27a7ed2c
 27a7ed2c
+J e997aa6f
 B nox2_drill 0 4b06ba6d qa/data/pcbnew/pns_regressions/boards/drag-walk-optimize.kicad_pcb
 8d1204d4
 9f2690e3
@@ -15514,6 +16185,7 @@ e70f8ab2
 3423d7c4
 3423d7c4
 3423d7c4
+J e997aa6f
 B default 0 b72737ff qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
 07cb6e0b
 49c73e1a
@@ -15539,6 +16211,7 @@ f634b075
 94c2586d
 94c2586d
 94c2586d
+J efce01fc
 B nox2_drill 0 b72737ff qa/data/pcbnew/pns_regressions/boards/shove_same_net_via.kicad_pcb
 44e88be9
 4788e179
@@ -15564,6 +16237,7 @@ fdb558a5
 fdb558a5
 fdb558a5
 fdb558a5
+J efce01fc
 B default 0 56330911 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
 d18024f2
 33c61c51
@@ -15594,6 +16268,7 @@ edd73e0c
 6ab222db
 6ab222db
 6ab222db
+J 30a57230
 B nox2_drill 0 56330911 qa/data/pcbnew/pns_regressions/boards/simple.kicad_pcb
 dba8b5a8
 3d056588
@@ -15624,6 +16299,7 @@ da390380
 da390380
 da390380
 da390380
+J 30a57230
 B default 0 f980b23a qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
 fce3ef55
 f6bb9f6d
@@ -15654,6 +16330,7 @@ b5d63e13
 b5d63e13
 b5d63e13
 b5d63e13
+J 68638d9d
 B nox2_drill 0 f980b23a qa/data/pcbnew/prettifier/group_and_image.kicad_pcb
 cae2104a
 af29c305
@@ -15684,6 +16361,7 @@ dad691af
 dad691af
 dad691af
 dad691af
+J 68638d9d
 B default 0 771484aa qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
 8e198a89
 7fc3b57f
@@ -15714,6 +16392,7 @@ bcc10d85
 67e7c28a
 67e7c28a
 67e7c28a
+J 83dadd3e
 B nox2_drill 0 771484aa qa/data/pcbnew/prettifier/group_and_image_formatted.kicad_pcb
 243e954b
 a8331a19
@@ -15744,6 +16423,7 @@ f2f0e817
 f2f0e817
 f2f0e817
 f2f0e817
+J 83dadd3e
 B default 0 f7a1bac1 qa/data/pcbnew/reference_images_load_save.kicad_pcb
 71637f99
 58092f31
@@ -15774,6 +16454,7 @@ ed287f83
 9738f0c0
 9738f0c0
 9738f0c0
+J 88d4c6e6
 B nox2_drill 0 f7a1bac1 qa/data/pcbnew/reference_images_load_save.kicad_pcb
 a918676a
 d5c73f6c
@@ -15804,6 +16485,7 @@ dd216eb0
 dd216eb0
 dd216eb0
 dd216eb0
+J 88d4c6e6
 B default 0 dc487d30 qa/data/pcbnew/severities.kicad_pcb
 78db5d9e
 8cfbccaf
@@ -15825,6 +16507,7 @@ a59f71a1
 02e9b008
 f102edfc
 95a73da9
+J 643d03a1
 B nox2_drill 0 dc487d30 qa/data/pcbnew/severities.kicad_pcb
 bb6b552c
 74dc5bed
@@ -15846,6 +16529,7 @@ c0147510
 b7384a4d
 04bdebf6
 1de8db7d
+J 643d03a1
 B default 0 406e80ba qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
 358a0505
 c6192e74
@@ -15876,6 +16560,7 @@ c4bedc1a
 019299db
 019299db
 019299db
+J c6f2ed9a
 B nox2_drill 0 406e80ba qa/data/pcbnew/skew_group_matched_drc.kicad_pcb
 45a30df0
 d871c21a
@@ -15906,6 +16591,7 @@ dbd365bb
 3d3fe905
 3d3fe905
 3d3fe905
+J c6f2ed9a
 B default 0 bac972cd qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
 1f862725
 3b3a2cbe
@@ -15936,6 +16622,7 @@ a4824c9d
 a4824c9d
 a4824c9d
 a4824c9d
+J 1f43de67
 B nox2_drill 0 bac972cd qa/data/pcbnew/skew_within_diff_pairs_drc.kicad_pcb
 bf22c77a
 f4b9a173
@@ -15966,6 +16653,7 @@ afbefa0e
 5c1744c6
 5c1744c6
 5c1744c6
+J 1f43de67
 B default 0 30e03f2e qa/data/pcbnew/sliver.kicad_pcb
 300b7cbf
 c4c11cdb
@@ -15996,6 +16684,7 @@ c20551ff
 c20551ff
 c20551ff
 c20551ff
+J 2b7642c9
 B nox2_drill 0 30e03f2e qa/data/pcbnew/sliver.kicad_pcb
 01a7a623
 379c635f
@@ -16026,6 +16715,7 @@ b9c66ff8
 4f284f19
 4f284f19
 4f284f19
+J 2b7642c9
 B default 0 a047a5ce qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
 b20d46d4
 c079bf68
@@ -16056,6 +16746,7 @@ d8a57b68
 d8a57b68
 d8a57b68
 d8a57b68
+J 6f9f8f1a
 B nox2_drill 0 a047a5ce qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb
 3a5221c5
 12024076
@@ -16086,6 +16777,7 @@ f47371c3
 464179db
 464179db
 464179db
+J 6f9f8f1a
 B default 0 08eb8d94 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
 64e9c9c0
 3cd94be0
@@ -16111,6 +16803,7 @@ bdf060e2
 bdf060e2
 bdf060e2
 bdf060e2
+J 3c9913a1
 B nox2_drill 0 08eb8d94 qa/data/pcbnew/soldermask_bridge_all_tracks.kicad_pcb
 798353f6
 548e0035
@@ -16136,6 +16829,7 @@ bf19afc1
 2f10e816
 2f10e816
 2f10e816
+J 3c9913a1
 B default 0 5ae0ab9a qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
 9d1dd703
 544dc1ae
@@ -16166,6 +16860,7 @@ bffcf3f5
 2f16306c
 2f16306c
 2f16306c
+J 015ca9e1
 B nox2_drill 0 5ae0ab9a qa/data/pcbnew/soldermask_track_to_pad.kicad_pcb
 7df55053
 73d922b0
@@ -16196,6 +16891,7 @@ ac88707e
 ac88707e
 ac88707e
 ac88707e
+J 015ca9e1
 B default 0 f999260b qa/data/pcbnew/stacked/stacked.kicad_pcb
 5da553de
 755e07dc
@@ -16221,6 +16917,7 @@ ad2e5716
 5b444715
 5b444715
 5b444715
+J 5754b55e
 B nox2_drill 0 f999260b qa/data/pcbnew/stacked/stacked.kicad_pcb
 8041dce9
 edd634af
@@ -16246,6 +16943,7 @@ bd76e10d
 bd76e10d
 bd76e10d
 bd76e10d
+J 5754b55e
 B default 0 e3700f4c qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
 1c8644e4
 5b6b6efa
@@ -16273,6 +16971,7 @@ b72a2b7e
 0fb9a1d5
 0fb9a1d5
 0fb9a1d5
+J 27c8a051
 B nox2_drill 0 e3700f4c qa/data/pcbnew/stitch_fp_rulearea.kicad_pcb
 2da713b3
 b52c12c6
@@ -16300,6 +16999,7 @@ a1655958
 c1758f90
 c1758f90
 c1758f90
+J 27c8a051
 B default 0 837d4eb5 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
 0f25b675
 abfbc41f
@@ -16321,6 +17021,7 @@ f080e4d9
 353261ae
 734b1950
 c2746bc5
+J 7d85a525
 B nox2_drill 0 837d4eb5 qa/data/pcbnew/teardrop_arc_anchor.kicad_pcb
 b4e8ae75
 cb1418b8
@@ -16342,6 +17043,7 @@ af01cd87
 5121159a
 a4adc6bd
 12ec90cf
+J 7d85a525
 B default 0 c0020374 qa/data/pcbnew/teardrop_close_via.kicad_pcb
 e44128e3
 675a0b8a
@@ -16363,6 +17065,7 @@ b5724dfa
 40b9f2b8
 f47aa5bf
 5b3813eb
+J b641479f
 B nox2_drill 0 c0020374 qa/data/pcbnew/teardrop_close_via.kicad_pcb
 8dc43ea1
 9e5ec3c9
@@ -16384,6 +17087,7 @@ f153ad30
 3b43b4d1
 ad215d2b
 a44fcb8e
+J b641479f
 B default 0 755848c4 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
 44c6089b
 d16ddba3
@@ -16405,6 +17109,7 @@ cd6a0da0
 cd6a0da0
 473a781d
 7798bb9d
+J 1c9dd23c
 B nox2_drill 0 755848c4 qa/data/pcbnew/teardrop_close_via_rotated_pad.kicad_pcb
 c13e6550
 b5c3d90d
@@ -16426,6 +17131,7 @@ e301ef78
 62cade0e
 c829d652
 45e73fc3
+J 1c9dd23c
 B default 0 72364c91 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
 a6e28257
 b2b3e63d
@@ -16451,6 +17157,7 @@ dfb6ace7
 174488a0
 174488a0
 174488a0
+J 98ed5d41
 B nox2_drill 0 72364c91 qa/data/pcbnew/teardrop_custom_pad_anchor.kicad_pcb
 470e08f9
 e65bc972
@@ -16476,6 +17183,7 @@ b1764b99
 67b034aa
 67b034aa
 67b034aa
+J 98ed5d41
 B default 0 741b0dc0 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
 d51c4bd9
 f4916c28
@@ -16501,6 +17209,7 @@ f98bf351
 6d9f4c02
 6d9f4c02
 6d9f4c02
+J a52c65d3
 B nox2_drill 0 741b0dc0 qa/data/pcbnew/teardrop_elongated_pad.kicad_pcb
 601595e0
 5d4a225b
@@ -16526,6 +17235,7 @@ be64081d
 6b2cf636
 6b2cf636
 6b2cf636
+J a52c65d3
 B default 0 898c09ec qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
 69221acc
 3498ebe8
@@ -16548,6 +17258,7 @@ bf7a4df4
 7c029180
 cef696ae
 bf7a4df4
+J 0f087507
 B nox2_drill 0 898c09ec qa/data/pcbnew/teardrop_issue_JPC2.kicad_pcb
 4df047e6
 8640aa53
@@ -16570,6 +17281,7 @@ ef844bba
 0b87ef5e
 ee84f596
 71e98d69
+J 0f087507
 B default 0 7952930a qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
 5ca5df92
 a43224a0
@@ -16591,6 +17303,7 @@ d10d636b
 d10d636b
 258f8b9c
 f75f3b30
+J 5fe2216f
 B nox2_drill 0 7952930a qa/data/pcbnew/teardrop_multi_inside_via.kicad_pcb
 6db99801
 0484a535
@@ -16612,6 +17325,7 @@ bbd33383
 bbd33383
 a0dabecc
 fa276432
+J 5fe2216f
 B default 0 9fc538dd qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
 1b73b065
 57ae38a6
@@ -16633,6 +17347,7 @@ f5c8d39f
 76d0767a
 577492e8
 4cd7a2b8
+J 6192e949
 B nox2_drill 0 9fc538dd qa/data/pcbnew/teardrop_offcenter_two_segment.kicad_pcb
 e0783f94
 ab339cfc
@@ -16654,6 +17369,7 @@ da4bd949
 da4bd949
 78187f78
 24b4a7c9
+J 6192e949
 B default 0 a7096889 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
 80f675d7
 6f2a13fa
@@ -16690,6 +17406,7 @@ fbe44ab9
 16ebc36b
 16ebc36b
 16ebc36b
+J e24568fb
 B nox2_drill 0 a7096889 qa/data/pcbnew/teardrop_qfn_thermal_pad_zone.kicad_pcb
 d75ad21f
 22a3f302
@@ -16726,6 +17443,7 @@ e3513d85
 e3513d85
 e3513d85
 e3513d85
+J e24568fb
 B default 0 a748e2ab qa/data/pcbnew/teardrop_spike.kicad_pcb
 2ad81e5b
 0727dbd7
@@ -16756,6 +17474,7 @@ e3e8e978
 e3e8e978
 e3e8e978
 e3e8e978
+J fd630811
 B nox2_drill 0 a748e2ab qa/data/pcbnew/teardrop_spike.kicad_pcb
 c50b91fa
 2ca9f433
@@ -16786,6 +17505,7 @@ a27c2368
 28ec587a
 28ec587a
 28ec587a
+J fd630811
 B default 0 700adbae qa/data/pcbnew/test_copper_graphics.kicad_pcb
 44554b44
 4161eec0
@@ -16816,6 +17536,7 @@ a8de4e11
 a8de4e11
 a8de4e11
 a8de4e11
+J 80d0a0f2
 B nox2_drill 0 700adbae qa/data/pcbnew/test_copper_graphics.kicad_pcb
 51b66b74
 de607143
@@ -16846,6 +17567,7 @@ f089b234
 f089b234
 f089b234
 f089b234
+J 80d0a0f2
 B default 0 d81515e6 qa/data/pcbnew/test_starved_thermal.kicad_pcb
 b60ad481
 a5966cce
@@ -16876,6 +17598,7 @@ af5cab24
 1b9758d8
 1b9758d8
 1b9758d8
+J 9acfff18
 B nox2_drill 0 d81515e6 qa/data/pcbnew/test_starved_thermal.kicad_pcb
 6ec5365a
 2a0fc9bb
@@ -16906,6 +17629,7 @@ ca5cfc75
 855b939f
 855b939f
 855b939f
+J 9acfff18
 B default 0 ab6d8747 qa/data/pcbnew/time_calculations.kicad_pcb
 78501ec7
 96a2c5f8
@@ -16933,6 +17657,7 @@ a2186bc9
 2cadd864
 2cadd864
 2cadd864
+J dbcd55da
 B nox2_drill 0 ab6d8747 qa/data/pcbnew/time_calculations.kicad_pcb
 ea63b2f9
 a49cbf5d
@@ -16960,6 +17685,7 @@ c02334e9
 47cd639c
 47cd639c
 47cd639c
+J dbcd55da
 B default 0 542528f0 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
 8ea3792d
 5b5d08c2
@@ -16990,6 +17716,7 @@ fc493908
 2ad15b60
 2ad15b60
 2ad15b60
+J 2201ad2f
 B nox2_drill 0 542528f0 qa/data/pcbnew/tracks_arcs_vias.kicad_pcb
 c0762ecb
 a12a8c8b
@@ -17020,6 +17747,7 @@ a2d08c6b
 0bf0d927
 0bf0d927
 0bf0d927
+J 2201ad2f
 B default 0 5bfad44c qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
 46e45b81
 a97c8322
@@ -17050,6 +17778,7 @@ b6a6b090
 b6a6b090
 b6a6b090
 b6a6b090
+J 1c8f21cb
 B nox2_drill 0 5bfad44c qa/data/pcbnew/tuning_generators_load_save.kicad_pcb
 2f2137b0
 18639837
@@ -17080,6 +17809,7 @@ e1760e11
 810a643a
 810a643a
 810a643a
+J 1c8f21cb
 B default 0 9433cf47 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
 bcf59023
 eed5a624
@@ -17110,6 +17840,7 @@ e181f04d
 7585140f
 7585140f
 7585140f
+J 569f3dae
 B nox2_drill 0 9433cf47 qa/data/pcbnew/tuning_generators_load_save_v20231212.kicad_pcb
 a6b11341
 2879db6b
@@ -17140,6 +17871,7 @@ ea14a034
 88fe11f7
 88fe11f7
 88fe11f7
+J 569f3dae
 B default 0 213308a5 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
 dc186a2b
 81d406e1
@@ -17165,6 +17897,7 @@ c175cc11
 960d85ec
 960d85ec
 960d85ec
+J 8f590254
 B nox2_drill 0 213308a5 qa/data/pcbnew/tuning_path_through_pad.kicad_pcb
 c839ce2a
 02c5249a
@@ -17190,6 +17923,7 @@ ca03c663
 ca03c663
 ca03c663
 ca03c663
+J 8f590254
 B default 0 991f2206 qa/data/pcbnew/two_segment_teardrop.kicad_pcb
 7eae50a3
 6e897f77
@@ -17215,6 +17949,7 @@ aff6d87e
 433ab256
 433ab256
 433ab256
+J 7e0c63dc
 B nox2_drill 0 991f2206 qa/data/pcbnew/two_segment_teardrop.kicad_pcb
 3de729b1
 73543f0c
@@ -17240,6 +17975,7 @@ c18df0ca
 14771764
 14771764
 14771764
+J 7e0c63dc
 B default 0 977fcd00 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
 cd9bba57
 3402772c
@@ -17270,6 +18006,7 @@ bd8c7e6e
 3f075878
 3f075878
 3f075878
+J 18e6bb9f
 B nox2_drill 0 977fcd00 qa/data/pcbnew/unconnected-netnames/unconnected-netnames.kicad_pcb
 92fc1414
 6c44619f
@@ -17300,6 +18037,7 @@ eee96d7c
 8b0461d4
 8b0461d4
 8b0461d4
+J 18e6bb9f
 B default 0 c9b179c3 qa/data/pcbnew/variant_test/variant_test.kicad_pcb
 c31b336c
 090da982
@@ -17325,6 +18063,7 @@ c94f88f5
 3b66ca3c
 3b66ca3c
 3b66ca3c
+J daf1dba2
 B nox2_drill 0 c9b179c3 qa/data/pcbnew/variant_test/variant_test.kicad_pcb
 c805aff9
 51d50e08
@@ -17350,6 +18089,7 @@ f96c3195
 68444b92
 68444b92
 68444b92
+J daf1dba2
 B default 0 8db32431 qa/data/pcbnew/via_dangling.kicad_pcb
 b1069472
 bafaee4c
@@ -17357,6 +18097,7 @@ bafaee4c
 40ed9ea2
 40ed9ea2
 40ed9ea2
+J 0a178300
 B nox2_drill 0 8db32431 qa/data/pcbnew/via_dangling.kicad_pcb
 d3eb4f73
 16cd7c37
@@ -17364,6 +18105,7 @@ d3eb4f73
 50c3c9c9
 50c3c9c9
 50c3c9c9
+J 0a178300
 B default 0 82acccd3 qa/data/pcbnew/via_off_center.kicad_pcb
 3beb328b
 a5120822
@@ -17391,6 +18133,7 @@ e345d67f
 e345d67f
 e345d67f
 e345d67f
+J 1bb1a069
 B nox2_drill 0 82acccd3 qa/data/pcbnew/via_off_center.kicad_pcb
 f5a487f4
 1328c0df
@@ -17418,6 +18161,7 @@ bb60a92a
 bb60a92a
 bb60a92a
 bb60a92a
+J 1bb1a069
 B default 0 4d139c31 qa/data/pcbnew/via_stack_track_width.kicad_pcb
 9b0b1bcf
 20454693
@@ -17457,6 +18201,7 @@ b4159537
 61356da7
 61356da7
 61356da7
+J 790593f4
 B nox2_drill 0 4d139c31 qa/data/pcbnew/via_stack_track_width.kicad_pcb
 8a9b9a93
 fe513418
@@ -17496,6 +18241,7 @@ ee20e1fc
 570b1899
 570b1899
 570b1899
+J 790593f4
 B default 0 f95ac727 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
 87730f01
 bbc64108
@@ -17535,6 +18281,7 @@ ca740605
 ca740605
 ca740605
 ca740605
+J a8d07f3a
 B nox2_drill 0 f95ac727 qa/data/pcbnew/via_stack_uvia_rule.kicad_pcb
 f247c916
 a95c6fb7
@@ -17574,6 +18321,7 @@ fab3a445
 fab3a445
 fab3a445
 fab3a445
+J a8d07f3a
 B default 0 6d3f2ec4 qa/data/pcbnew/via_stacks.kicad_pcb
 01076392
 ef54a4eb
@@ -17603,6 +18351,7 @@ a2479fe4
 4f7e1b76
 4f7e1b76
 4f7e1b76
+J a886f432
 B nox2_drill 0 6d3f2ec4 qa/data/pcbnew/via_stacks.kicad_pcb
 32cdeca3
 72e67624
@@ -17632,6 +18381,7 @@ a20d6532
 79bbf911
 79bbf911
 79bbf911
+J a886f432
 B default 0 c06a2866 qa/data/pcbnew/zone_filler.kicad_pcb
 56d58e9d
 0930a81d
@@ -17653,6 +18403,7 @@ f523a947
 63906a28
 d58179f5
 cad6305d
+J 413ee1ec
 B nox2_drill 0 c06a2866 qa/data/pcbnew/zone_filler.kicad_pcb
 3c17aa25
 6aeef611
@@ -17674,6 +18425,7 @@ d1eccf3b
 6a97e9b9
 30f64307
 242788b2
+J 413ee1ec
 B default 0 d05fa47c qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
 a8e5129d
 52a8ed41
@@ -17699,6 +18451,7 @@ f1f5551b
 019b63ef
 019b63ef
 019b63ef
+J beb783fa
 B nox2_drill 0 d05fa47c qa/data/pcbnew/zone_refill_cascading_islands.kicad_pcb
 0ecf2f19
 2cd62beb
@@ -17724,6 +18477,7 @@ fc12f659
 416a427b
 416a427b
 416a427b
+J beb783fa
 B default 0 45083366 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
 83fae2c9
 600e8808
@@ -17749,6 +18503,7 @@ cd89c75f
 cd89c75f
 cd89c75f
 cd89c75f
+J d9bf429b
 B nox2_drill 0 45083366 qa/data/pcbnew/zone_refill_convergence_limit.kicad_pcb
 7c039c67
 ecac5f08
@@ -17774,6 +18529,7 @@ cb20b9ef
 86c1254c
 86c1254c
 86c1254c
+J d9bf429b
 B default 0 b3e13b82 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
 1785a561
 b5299e08
@@ -17799,6 +18555,7 @@ a9358126
 17572b2f
 17572b2f
 17572b2f
+J 1f5a96fb
 B nox2_drill 0 b3e13b82 qa/data/pcbnew/zone_thieving_track_bisection.kicad_pcb
 9d98bad4
 c530ba1a
@@ -17824,3 +18581,234 @@ ae72f850
 ae72f850
 ae72f850
 ae72f850
+J 1f5a96fb
+B default 0 586d57b7 rust/crates/kicad-fab/tests/data/plot_driver/cu32.kicad_pcb
+432573eb
+936848f7
+32bfbbeb
+a32c12d4
+8061b4fc
+68935071
+50178ebf
+0161a1f5
+25deb744
+1c8ba780
+c066f6d8
+84c3934f
+abf2a4a8
+51969411
+f23ac06a
+31d7274f
+5ab45db1
+77e888bd
+6bb578e9
+b11310e2
+878b0091
+2be1c314
+cb393608
+3ba58cf2
+18db2f19
+010cca8e
+e89108dc
+99db1c12
+be583162
+9c309bca
+b187c05f
+70ad4134
+206fe520
+b33fd486
+b33fd486
+b33fd486
+J 5e93cd74
+B nox2_drill 0 586d57b7 rust/crates/kicad-fab/tests/data/plot_driver/cu32.kicad_pcb
+6eb44ef3
+dbd5d8bb
+c74c9765
+ddedc987
+10ac9d07
+48109bc5
+2566327b
+8042f3cd
+a28cb575
+92f9213c
+31baac6b
+516d4619
+5d0d6af5
+aef45521
+3b62cec0
+b43ff667
+a97c21ac
+82dd186b
+36673f44
+62903c84
+84d9fe2c
+8ccf40e8
+4dfe38d3
+b50ff4e9
+5e73b122
+654cf3ac
+b35a4c79
+188906ee
+f7fd0c58
+92e1fcdb
+9f27372d
+3f43ddad
+969cb556
+ded5ff04
+ded5ff04
+ded5ff04
+J 5e93cd74
+B default 0 50ad146d rust/crates/kicad-fab/tests/data/plot_driver/hdr_4layer.kicad_pcb
+2dd5014b
+2e70ab10
+d24bfa68
+345d6845
+9d7d4928
+af198f3e
+b2dfe629
+5602536f
+8509fdf1
+8a6ac4db
+e0f25064
+a4b1291f
+97855036
+8a750781
+981db178
+6585706a
+620ae9e0
+894738fd
+894738fd
+894738fd
+c0c2be1a
+0a281b05
+894738fd
+J b0a70cb6
+B nox2_drill 0 50ad146d rust/crates/kicad-fab/tests/data/plot_driver/hdr_4layer.kicad_pcb
+d4b0aa11
+20a46637
+e513a73e
+50ce3be9
+d64460e0
+7b8d6f47
+25f8fbe9
+dd52340d
+46bcd83f
+c6130b0e
+748f34a5
+f3c94262
+12e37c9c
+ff70067b
+569a3554
+89cf9df0
+41636146
+079bcb5b
+079bcb5b
+079bcb5b
+8798dbcc
+fd87a10d
+079bcb5b
+J b0a70cb6
+B default 0 33cfbefe rust/crates/kicad-fab/tests/data/plot_driver/six_layer_a4neg.kicad_pcb
+63f547a9
+8a40e439
+296cbab5
+ecc99b1d
+8b9e35d6
+fca7561b
+9daa994a
+152199bf
+ed018f7b
+70f68899
+f2db69af
+e481927b
+e481927b
+e481927b
+8b77933d
+J b99b062d
+B nox2_drill 0 33cfbefe rust/crates/kicad-fab/tests/data/plot_driver/six_layer_a4neg.kicad_pcb
+936fb612
+597677fc
+bab4eccd
+d137ed3d
+dbfbc1f8
+eec4afd7
+ab4b3586
+a52b3956
+575a06d7
+7e7c8c04
+665d4af8
+19d45703
+19d45703
+19d45703
+1bde44cd
+J b99b062d
+B default 0 0afbabc5 rust/crates/kicad-fab/tests/data/plot_driver/x,y%z-é.kicad_pcb
+0689b929
+0c89e02f
+aea95f4c
+9e7f156f
+e6dd5d61
+b7c50390
+92cc29f9
+ee2f7999
+ee2f7999
+ee2f7999
+f4237a84
+J 876908a3
+B nox2_drill 0 0afbabc5 rust/crates/kicad-fab/tests/data/plot_driver/x,y%z-é.kicad_pcb
+2d43a6b2
+c9ded087
+3a5c101f
+a8c9941b
+e1f6f5dd
+97790cfb
+8e5bce0b
+5df12fe7
+5df12fe7
+5df12fe7
+4e222fea
+J 876908a3
+B default 0 7b23dd1d rust/crates/kicad-fab/tests/data/gerber_jobfile/jobfile_stackup.kicad_pcb
+314cb07a
+6f44e4c6
+42f440fe
+353c2d1e
+cdd8d96d
+df751f82
+7ad4dcc6
+1e32f828
+e07c583c
+cf9a2c92
+dad2e290
+79bf7112
+4a35df93
+d468c5c6
+5521ce35
+5521ce35
+5521ce35
+2d6d172b
+d9a5f272
+5521ce35
+J 93f962fe
+B nox2_drill 0 7b23dd1d rust/crates/kicad-fab/tests/data/gerber_jobfile/jobfile_stackup.kicad_pcb
+a319686e
+7398ce15
+cdb56ec5
+b7f2777d
+fbe9d973
+962079d5
+3eb7194c
+4ed3f196
+45df1849
+be5b11c9
+fdd890b5
+6c0e31dc
+86771b94
+6a3622fe
+12fbe2db
+12fbe2db
+12fbe2db
+ed1b984c
+82322363
+12fbe2db
+J 93f962fe

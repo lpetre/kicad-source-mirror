@@ -107,7 +107,7 @@ impl<'c> DrcTestProviderDisallow<'c> {
         // module documentation. The r-tree of the no-tracks keepouts is.)
         let mut anti_track_keepouts = DrcRtree::new();
 
-        for_each_geometry_item(ctx, &[KicadT::PcbZoneT], &Lset::all_layers_mask(), |item| {
+        for_each_geometry_item(ctx, &[KicadT::PcbZoneT], Lset::all_layers_mask(), |item| {
             let zone = item.as_zone().expect("PCB_ZONE_T item is a zone");
 
             if zone.is_rule_area() && zone.do_not_allow_tracks {
@@ -137,7 +137,7 @@ impl<'c> DrcTestProviderDisallow<'c> {
         // Collect items first, then process them (in parallel in C++).
         let mut all_items: Vec<ItemRef<'_>> = Vec::new();
 
-        for_each_geometry_item(ctx, &[], &Lset::all_layers_mask(), |item| {
+        for_each_geometry_item(ctx, &[], Lset::all_layers_mask(), |item| {
             all_items.push(item);
             true
         });

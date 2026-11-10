@@ -1541,3 +1541,167 @@ Not ported: `test_drc_npth_slot_clearance_issue24799.cpp` (needs a zone refill),
 - Boards whose rule conditions call functions wait for DRC-22 (30 corpus boards, among them
   `severities`, `issue24211`, `issue2512`).
 - `issue23469` rule-evaluation gap (above).
+
+## DRC-10: disallow provider (keepouts, text on Edge.Cuts) and the implicit keepout condition
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_test_provider_disallow.cpp` `DRC_TEST_PROVIDER_DISALLOW` (`Run`, `checkTextOnEdgeCuts`, `processItem`, `reportDisallow`) | `src/providers/disallow.rs` (`DrcTestProviderDisallow::new(&DrcBoardCaches)`) | ported (sequential; pair pre-computation omitted, see Deviations) |
+| implicit keepout rule condition `A.intersectsKeepout('<uuid>')` | `ImplicitAtom::IntersectsKeepout` in `src/engine/implicit_condition.rs` -> `pcbexpr::functions::intersects_keepout` (the `doIntersectsAreaFunc` / `collidesWithArea` / `searchAreas` port of DRC-22, one implementation for the compiled and the native form; the context layer is now passed to the native atoms) | ported |
+
+The provider needs `DrcBoardCaches::max_physical_clearance` (`board->m_DRCMaxPhysicalClearance`,
+the search distance of the no-tracks keepout tree query) and a `BoardCtx` with the connectivity
+(pad / via `FlashLayer`). `tests/drc10_disallow.rs` (`DisallowWithCaches`) shows the wiring.
+
+### Verification
+
+- `tests/drc10_disallow.rs` `disallow_matches_reference_corpus` (`DRC10_FILTER=<substring>`):
+  362 corpus boards compared against the reference kicad-cli JSON reports (3 pending: two
+  legacy `.pro` projects, `plugins/fakeboard` whose reference run fails).
+  `items_not_allowed`: 66 matched, 0 missing, 0 extra; `text_on_edge_cuts`: 6 matched, 0
+  missing, 0 extra (boards with violations: `component_classes`, `issue22475` (42),
+  `issue22826`, `issue24772/fw16_MCIO8i`, `issue6945`, `keepout_disallow`,
+  `pns_regressions/ultrasound`, `stitch_fp_rulearea`, `issue24525`, `issue7241`). Compared as
+  multisets of (code, description, items with UUID / description / position): the C++ runs
+  the item loop on the thread pool, so its report order is scheduling dependent.
+  User rule conditions are compiled with the real expression binding (the harness
+  `load_board` compiles with the syntax-only binder; the test re-runs `InitEngine`).
+- The implicit keepout condition is also covered by `evalrules_oracle.rs`: with the hook in
+  place no keepout category is pending any more; all 360 `disallow` categories match the C++
+  `EvalRules` dump (the one remaining mismatch is the known layer-map deviation of
+  `issue24735`).
+- The corpus result is the same with and without the board expression caches installed
+  (`PcbExprCacheScope`).
+
+### Ported C++ tests (`tests/drc10_disallow.rs`)
+
+| C++ | Rust |
+|---|---|
+| `test_drc_keepout_disallow.cpp` `DRCKeepoutDisallowViasAndTracks` (2 vias, 1 track, 3 total) | `drc_keepout_disallow_vias_and_tracks` (passes) |
+| `test_drc_keepout_disallow.cpp` `DRCKeepoutFootprintExcludesItself` (issue 24924) | `drc_keepout_footprint_excludes_itself` (passes) |
+| `test_drc_keepout_disallow.cpp` `DRCKeepoutNoClearanceInflation` | `drc_keepout_no_clearance_inflation` (passes) |
+| `test_drc_issue24525.cpp` `DRCIssue24525_TableAndBarcodeOnEdgeCuts` (text 1, dimension 1, table 2, barcode 1, reference image 0) | `drc_issue24525_table_and_barcode_on_edge_cuts` (passes) |
+| `test_drc_regressions.cpp` `DRCFalsePositiveRegressions` `issue7567` (disallow part) | `false_positive_regression_issue7567`: no error-severity violation of the two codes (passes) |
+
+### Deviations
+
+- **Keepout / copper zone pre-computation not ported**: the first C++ loop stores
+  `m_IntersectsKeepoutCache[ (keepout, zone, UNDEFINED_LAYER) ]` for every (no-zone-fills
+  keepout, copper zone) pair; `doIntersectsAreaFunc` reads that cache per concrete layer only,
+  so these entries are never read (`drc.md` 4.10.2 allows recording the omission). No
+  observable effect.
+- **Thread pool**: the item loop runs in `forEachGeometryItem` order. C++ report order (and
+  which violations survive an exceeded error limit, 199) is scheduling dependent.
+- **`HOLE_PROXY`**: instead of setting / clearing the flag on the shared item, the second
+  evaluation uses `ItemRef::as_hole_proxy()`; the proxy reference has the same handle, so the
+  expression caches (keyed by item handle, as the C++ ones by pointer) are shared between the
+  two evaluations as in C++.
+- Progress is reported per item (`reportProgress( i, count, 1 )`, return value ignored as the
+  C++ wait loop does); no progress for the omitted pre-computation.
+
+### Known gaps
+
+- The expression caches (`PcbExprCacheScope`) are installed by the test wrapper only; no
+  engine run path enters a scope yet, so production runs evaluate keepout / area predicates
+  uncached. Results are the same on the whole corpus, but the C++ result-cache aliasing
+  between the plain and the hole-proxy evaluation of an item (same `(item, selector, layer,
+  constraint)` key) is only reproduced inside a scope (see change requests of DRC-10).
+
+## DRC-22: PCB expression built-in functions (`pcbexpr_functions.cpp`)
+
+Supersedes the "stub (DRC-22)" notes of the DRC-21 section: every registered function has its
+C++ body; the `not_yet_ported` stub is gone.
+
+### File / class map
+
+| C++ (`pcbnew/pcbexpr_functions.cpp`) | Rust (`src/pcbexpr/functions.rs`) | State |
+|---|---|---|
+| `existsOnLayerFunc` (interpreted version with "Unrecognized layer", compiled version with `m_LayerExpressionCache`), `isPlatedFunc` | `exists_on_layer_func`, `is_plated_func` | ported |
+| `collidesWithCourtyard`, `testFootprintSelector` (`${CLASS:...}`, reference / LIB_ID wildcards), `searchFootprintsNearItem` (`GetFootprintCourtyardIndex`), `intersects{,Front,Back}CourtyardFunc` (+ `inside*Courtyard`) | `collides_with_courtyard`, `test_footprint_selector`, `search_footprints_near_item`, `intersects_courtyard_impl` | ported |
+| `getDeflatedZoneOutline`, `collidesWithArea`, `searchAreas`, `SCOPED_LAYERSET`, `doIntersectsAreaFunc`, `intersectsAreaFunc`, `intersectsKeepoutFunc` (+ `insideArea`), `enclosedByAreaFunc` | `get_deflated_zone_outline`, `collides_with_area`, `search_areas`, `intersects_area_eval` / `do_intersects_area_func`, `enclosed_by_area_func`; native form `intersects_keepout` (used by the implicit keepout atom, DRC-10) | ported |
+| `memberOfGroupFunc` (+ `memberOf`), `memberOfSheetFunc`, `memberOfSheetOrChildrenFunc`, `memberOfFootprintFunc` | same names | ported |
+| `isMicroVia`, `isBlindVia`, `isBuriedVia`, `isBlindBuriedViaFunc`, `isStackedViaFunc` (`m_StackedMicroviaCache`) | same names | ported |
+| `isCoupledDiffPairFunc`, `inDiffPairFunc`, `inNetChainFunc`, `hasNetChainFunc`, `inNetChainClassFunc` | same names | ported |
+| `getFieldFunc` (variants, `m_ItemFieldCache`), `hasNetclassFunc`, `hasExactNetclassFunc`, `hasComponentClassFunc`, `customPropertyFunc`, `hasCustomPropertyFunc` | same names | ported |
+| `fromToFunc` | `from_to_func` | partial: `FROM_TO_CACHE` (CN-05) is not ported, see Deviations |
+| `RegisterAllFunctions` | `register_all_functions` | ported (34 signatures) |
+| `BOARD` run-time caches of these functions (`m_Intersects*Cache`, `m_*ResultCache`, `m_EnclosedByAreaCache`, `m_ItemFieldCache`, `m_LayerExpressionCache`, `m_ZonesByNameCache`, `m_DeflatedZoneOutlineCache`, `m_StackedMicroviaCache`) | `PcbExprBoardCaches` (wraps `DrcPredicateCaches` of DRC-05), installed per thread and board by `PcbExprCacheScope::enter( &board )`, emptied when `board.time_stamp()` moved | ported (owner: see Known gaps) |
+
+### Verification
+
+* Compile-time argument validation against the real C++ (`pcb-dump rules`): new codegen case
+  file `tests/data/rules/drc21/arguments.kicad_dru` (42 rules: empty / missing / extra
+  arguments of every function, "Malformed expression" from popping an empty stack, the
+  `fromTo` argument order, unknown properties / functions inside arguments), golden
+  `drc21_conditions.txt` regenerated with `gen_drc21_goldens.py`; replayed by
+  `drc21_pcbexpr.rs::codegen_cases_compile_as_cxx`: **identical** (36 messages, texts and
+  offsets).
+* EvalRules oracle of DRC-04 (`tests/evalrules_oracle.rs`): the "needs DRC-22" skip is gone;
+  the 28 corpus boards whose rules call functions are compared (rules use `insideArea`,
+  `insideCourtyard`, `isPlated`, `existsOnLayer`, `memberOfFootprint`, `hasNetclass`,
+  `hasComponentClass`, `isMicroVia`, `inDiffPair`, `isCoupledDiffPair`, `intersectsArea`, ...).
+  Result: **2336 categories match (308 boards completely), 1 mismatch** - `issue24735`
+  `drawing`: the rule `A.Layer == 'F.Silkscreen'` matches a board layer name, which the QA
+  load path's `ENUM_MAP` does not hold (the DRC-21 layer-map deviation, not a function body);
+  `pcb-dump board --loader` (kicad-cli path) gives exactly the Rust values. It is listed as a
+  known deviation in the test. The replay now triangulates the board zone fills after
+  `InitEngine` as `KI_TEST::LoadBoard`'s `BuildConnectivity()` does (`CacheTriangulation`):
+  without it the keepout test of a filled zone (`collidesWithArea`, DRC r-tree of fill
+  triangles) found no triangles (`issue11814`, 4 zone categories).
+  No rule file of the corpus calls a function that is left unsupported (`fromTo` is not used).
+* Ported C++ tests (`qa/tests/pcbnew/test_libeval_compiler.cpp`), in `tests/drc22_functions.rs`:
+  `InNetChainClassWildcard`, `StackedMicroviaExpression` (the landing via is moved under the
+  lone microvia instead of added; the time stamp bump drops the cached relation),
+  `DynamicCourtyardArgument`, `FunctionArgumentValidation`; and in `tests/drc21_pcbexpr.rs` the
+  function expressions of `IntrospectedProperties`, `ParentNavigation` and
+  `VariantAwareEvaluation` are evaluated now (they were compile-only). Plus behaviour tests
+  (`courtyard_selectors`, `rule_area_predicates`, `item_predicates`) run with and without the
+  board caches.
+* Not verifiable here: the DRC regression boards of drc.md section 10 (`issue7567`,
+  `issue16566`, `issue6879`, `issue6945`, `issue7325`, `issue2512`, `test_custom_rule_severities`,
+  `test_drc_via_dangling`, `test_drc_multi_netclasses`, `test_drc_component_classes`, ...) are
+  full `RunTests` cases whose counts depend on the providers; they belong to the provider /
+  drc-job packages (their rule conditions now evaluate; the EvalRules part of these boards is
+  covered above).
+
+### Deviations
+
+- **Cache owner**: the C++ caches are `BOARD` members; here they live in
+  `PcbExprBoardCaches`, installed for one board on the current thread by a
+  `PcbExprCacheScope` guard and dropped when the board's time stamp moved (=
+  `IncrementTimeStamp`). Without a scope every evaluation is computed afresh. That differs
+  from C++ only where the caches are semantically visible: (1) the courtyard memo
+  `{ footprint, item }` ignores the layer the item shape was taken on (a pad with different
+  per-layer shapes), (2) the per-area memo `{ area, item, layer }` ignores the constraint
+  (silk clearance widens the area's layer set), (3) a memo hit does not repeat run-time error
+  reports, (4) the hole-proxy evaluation of the disallow provider shares the plain one's
+  result-cache entry. Inside a scope all four are reproduced.
+- Items without a handle (values outside the board) are never memoised (C++ keys them by
+  pointer).
+- `SCOPED_LAYERSET`: the C++ temporarily calls `ZONE::SetLayerSet` on the area, which (when a
+  silk-clearance evaluation adds a layer) un-fills the area zone and drops its layer
+  properties, and the restore does it again. The port passes the widened layer set to
+  `collidesWithArea` and leaves the immutable board untouched (only filled non-copper zones
+  that are also selected as rule areas would observe the C++ side effect).
+- `collidesWithArea` keepout branch: `board->GetCopperZoneRTree( zone )` is not reachable from
+  rule evaluation; the fallback branch builds the same single-zone tree for the layer (same
+  yes / no answer).
+- Layer map of `existsOnLayer`: the kicad-cli `ENUM_MAP` (canonical + board names), as
+  `PCBEXPR_LAYER_VALUE` of DRC-21.
+- `fromTo()`: `FROM_TO_CACHE` (connectivity package CN-05) is not ported; an evaluation takes the
+  C++ branch for a non-existent cache (result 0) and reports "Attempting to call fromTo() with
+  non-existent from-to cache." through the error callback (C++: `wxLogWarning`). The argument
+  checks are ported.
+- `collidesWithCourtyard`'s `aItemShape` is never assigned by any C++ caller; kept as an
+  always-empty parameter.
+
+### Known gaps
+
+- No engine run path installs a `PcbExprCacheScope` yet (the tests and the DRC-10 test wrapper
+  do): `DrcEngine::init_engine` / the run driver should enter one for the board (change
+  request).
+- `fromTo()` needs CN-05.
+- The shared DRC harness `tests/drc_harness` still compiles with the syntax-only binder
+  (DRC-21 known gap); with the function bodies in place it can switch to `PcbExprUcode`.

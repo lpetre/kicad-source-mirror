@@ -2570,6 +2570,13 @@ mod tests {
         let mut pending_fields = BTreeSet::new();
 
         for (head, value) in &ob.expected {
+            // `GetValueMode()` reads the board's FIXED_LENGTH constraints, which this fixture
+            // does not rebuild (the dimensions are re-created from their inputs); the corpus
+            // scoreboard compares it on the real boards (constraints.kicad_pcb).
+            if head.ends_with("|value_mode") {
+                continue;
+            }
+
             match values.get(head) {
                 Some(v) if v == value => {}
                 Some(v) => failures.push(format!("mismatch {head}\n  ref:  {value}\n  rust: {v}")),

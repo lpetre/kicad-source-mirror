@@ -26,9 +26,9 @@ use kicad_geom::{ShapePolySet, Vector2I};
 
 use super::board::item_copper_count;
 use super::format::{
-    Out, copper_layers, emit, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer,
-    v_layer_names, v_layers, v_lset, v_opt_bool, v_opt_enum, v_opt_f64, v_opt_int, v_points,
-    v_polyset, v_shape, v_str, v_vec,
+    Out, copper_layers, emit, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer, v_layer_names,
+    v_layers, v_lset, v_opt_bool, v_opt_enum, v_opt_f64, v_opt_int, v_points, v_polyset, v_shape,
+    v_str, v_vec,
 };
 use crate::drc_api::DrcConstraintT;
 use crate::eda_shape::{EdaShapeExt, ShapeT};

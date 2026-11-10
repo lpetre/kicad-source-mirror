@@ -265,12 +265,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
             c,
             ValueType::Enum(EnumId::ZoneConnection),
             true,
-            |it| {
-                PropertyValue::Enum(
-                    EnumId::ZoneConnection,
-                    fp(&it).local_zone_connection_raw(),
-                )
-            },
+            |it| PropertyValue::Enum(EnumId::ZoneConnection, fp(&it).local_zone_connection_raw()),
         ),
         group_overrides,
     )

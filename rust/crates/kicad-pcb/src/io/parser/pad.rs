@@ -52,7 +52,6 @@ use crate::pcb_shape::PcbShape;
 use crate::pcb_track::ZoneLayerOverride;
 use crate::zone_settings::ZoneConnection;
 
-
 /// `PAD::SetRemoveUnconnected( aSet )` (inline in `pad.h`).
 fn set_remove_unconnected(pad: &mut Pad, set: bool) {
     pad.set_unconnected_layer_mode(if set {

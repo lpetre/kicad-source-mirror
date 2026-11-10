@@ -113,9 +113,9 @@ pub struct Footprint {
     /// `m_zoneConnection` as stored: the raw integer (the parser's C cast keeps values
     /// outside the enum); read it through `local_zone_connection()`.
     pub zone_connection: i32,
-    pub clearance: Option<i32>,           // m_clearance
-    pub solder_mask_margin: Option<i32>,  // m_solderMaskMargin
-    pub solder_paste_margin: Option<i32>, // m_solderPasteMargin
+    pub clearance: Option<i32>,                 // m_clearance
+    pub solder_mask_margin: Option<i32>,        // m_solderMaskMargin
+    pub solder_paste_margin: Option<i32>,       // m_solderPasteMargin
     pub solder_paste_margin_ratio: Option<f64>, // m_solderPasteMarginRatio
 
     pub stackup_layers: Lset,           // m_stackupLayers
