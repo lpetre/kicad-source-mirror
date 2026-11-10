@@ -72,6 +72,17 @@ pub fn dump_board(board: &Board, opts: &DumpOptions) -> String {
     o.text
 }
 
+/// [`dump_board`] with a caller-built context, e.g. `BoardCtx::bare(board)
+/// .with_connectivity(..).with_rules(..)`, so that connectivity- and rule-dependent values
+/// (via flashing, `ds.biggest_clearance`) are those of a fully loaded board as in `pcb-dump`.
+pub fn dump_board_ctx(ctx: &crate::ctx::BoardCtx<'_>, opts: &DumpOptions) -> String {
+    let _quiet = SilentPanics::new();
+    let mut o = Out::new(opts.hash);
+    o.file_uuids = opts.file_uuids.clone();
+    board::dump_board_ctx_into(&mut o, ctx, opts);
+    o.text
+}
+
 /// `DumpDefaults`: the `defaults` command.
 pub fn dump_defaults(hash: bool) -> String {
     let _quiet = SilentPanics::new();

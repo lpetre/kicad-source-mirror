@@ -350,14 +350,29 @@ fn init_maps() {
 /// The staging stubs: an error without `allow_pending`, a recorded skip with it.
 #[test]
 fn staging_stubs() {
-    // `(segment ..)` (PCBIO-03) is ported; `(footprint ..)` is still a staging stub (PCBIO-06).
-    // When it lands, switch to another stub or to an artificial unknown token.
-    let text = "(kicad_pcb (version 20240101) (generator \"pcbnew\")\n  (footprint \"R\" (layer \"F.Cu\") (x))\n  (bogus))";
-    let e = parse_error(text, &strict()).unwrap();
-    assert_eq!(e, "port pending: footprint (PCBIO-06)");
+    // Every construct of a board file is ported (footprints PCBIO-06, pads PCBIO-07); the
+    // remaining staging stub is `ParseFootprintLib` (PCBIO-14), which no board file reaches.
+    // A board with a footprint therefore fails on the bogus token in both modes.
+    let text = "(kicad_pcb (version 20240101) (generator \"pcbnew\")\n  (footprint \"R\" (layer \"F.Cu\"))\n  (bogus))";
+    let bogus = "Unknown token 'bogus' in '', line 3, offset 4.";
+    assert_eq!(parse_error(text, &strict()).unwrap(), bogus);
+    assert_eq!(parse_error(text, &staging()).unwrap(), bogus);
 
-    let e = parse_error(text, &staging()).unwrap();
-    assert_eq!(e, "Unknown token 'bogus' in '', line 3, offset 4.");
+    // The stub itself: an error in strict mode, skipped and reported with `allow_pending`.
+    let lib = "(kicad_footprint_lib (version 20240101)) x";
+    let mut p = parser(lib);
+    p.lexer.next_tok().unwrap(); // (
+    p.lexer.next_tok().unwrap(); // kicad_footprint_lib
+    let e = p.parse_footprint_lib().unwrap_err();
+    assert_eq!(e.what(), "port pending: kicad_footprint_lib (PCBIO-14)");
+
+    let mut p = PcbParser::new(lib, "", Board::new(), true, staging());
+    p.lexer.next_tok().unwrap();
+    p.lexer.next_tok().unwrap();
+    assert!(p.parse_footprint_lib().unwrap().is_empty());
+    assert_eq!(p.report.skipped.len(), 1);
+    assert_eq!(p.report.skipped[0].token, "kicad_footprint_lib");
+    assert_eq!(p.report.skipped[0].package, "PCBIO-14");
 }
 
 // ---- errors (texts of the reference build) --------------------------------------------------

@@ -636,14 +636,11 @@ impl PcbParser {
                     if let Some(point) = self.parse_pcb_point()? {
                         let file_pos = point.lib_pos();
 
+                        // PCB_POINT::SetParent (inside FOOTPRINT::Add) recomputes the board
+                        // position from the library position.
                         if let Some(id) = self.add_fp_child(fp, OwnedItem::Point(point))
                             && let Some(point_id) = id.typed()
                         {
-                            // PCB_POINT::SetParent (inside FOOTPRINT::Add) recomputes the
-                            // board position from the library position.
-                            self.board
-                                .modify_point(point_id, |p, env| p.on_footprint_transformed(env));
-
                             // Legacy files stored footprint points in board frame
                             if self.required_version < FIRST_FP_AFFINE_TRANSFORM {
                                 self.board

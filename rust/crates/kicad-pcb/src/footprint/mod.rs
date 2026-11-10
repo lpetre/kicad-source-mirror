@@ -1560,8 +1560,9 @@ impl Footprint {
     /// the cached final class while the manager's ticker has not moved, else the class
     /// recomputed against a copy of the board's manager (the effective class the C++ registers
     /// in the manager on the way is not kept; use `Board::footprint_component_class` to keep
-    /// it). Dynamic assignment rules need the DRC condition matcher (kicad-drc): with rules
-    /// present this is `port_pending!`.
+    /// it). The dynamic assignment rules are matched with their compiled DRC conditions
+    /// (`COMPONENT_CLASS_ASSIGNMENT_RULE::Matches`); the cache cell is not held while they are
+    /// evaluated.
     pub fn component_class(&self, ctx: &BoardCtx<'_>) -> Option<Arc<ComponentClass>> {
         let manager = ctx.board.component_class_manager();
 
@@ -1573,17 +1574,15 @@ impl Footprint {
             return final_class;
         }
 
-        if !manager.assignment_rules.is_empty() {
-            crate::port_pending!(
-                "COMPONENT_CLASS_ASSIGNMENT_RULE::Matches (GetComponentClass)",
-                ctx
-            )
-        }
-
         let mut scratch = manager.clone();
-        self.component_class_cache.with(|cache| {
-            scratch.get_component_class(cache, self.static_component_class.as_deref(), |_| false)
-        })
+        let mut cache = self.component_class_cache.with(|cache| cache.clone());
+        let result = scratch.get_component_class(
+            &mut cache,
+            self.static_component_class.as_deref(),
+            |rule| rule.matches(self, ctx),
+        );
+        self.component_class_cache.with(|c| *c = cache);
+        result
     }
 
     /// `GetComponentClassAsString()`: the class name, empty for the empty class.

@@ -1250,12 +1250,6 @@ impl Pad {
             && self.pin_type == "free"
     }
 
-    /// Forwarding wrapper of [`Pad::is_free_pad`] under its pre-2.3 name; kept while running
-    /// packages still call it (removal: `docs/design/integration-2.md`).
-    pub fn is_free_pad_ctx(&self, ctx: &BoardCtx<'_>) -> bool {
-        self.is_free_pad(ctx)
-    }
-
     // ---- state / attributes -------------------------------------------------------------
 
     /// `PAD::IsLocked()`: parent group, footprint holder, footprint or own lock.

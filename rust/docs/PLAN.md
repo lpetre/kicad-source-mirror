@@ -274,6 +274,21 @@ Progress log:
   hits (wu41nwrio); PCBIO-07 pads (w3kdexuvx); ZF-03 -> ZF-06 -> TD-01 (w0obou2da); FAB-05
   -> .. -> FAB-08 (wb9xlvw89); DRC-21 -> DRC-22 and DRC-08a -> .. -> DRC-12 (w878ykkp2);
   DRC-29 (wxpfc9smx).
+  03:25 UTC: MILESTONE - PCBIO-07 pads / padstacks done: the io corpus now re-saves 359 of
+  370 boards byte-identically to `kicad-cli pcb upgrade --force` (all 287 fixed points; 0
+  pending, 0 errors; the 11 differing boards differ only in zone net / priority from the
+  reference's post-load steps and in outline-font render caches). Also done: DRC-29 sliver
+  and connection width (309 boards compared at item level through a new C++ driver, all
+  identical). Orchestrator fix in kicad-geom: `ShapePolySet::is_exterior_waist` wraps like
+  the reference (issue25089/odb_circle_edge_cases panicked in debug builds).
+  Found by PCBIO-07 in the model: pad margin setters wrote the front side only, pad
+  primitives had no parent -> FIX-PAD-1 (launched). With pads loading, several provider
+  tests of finished DRC packages went red (drc07 corpus, drc24, drc25 synthetic, drc27):
+  expected - first real pad comparisons; a DRC stabilisation package follows once FIX-PAD-1
+  and GLUE-2 have landed and the provider chains have finished.
+  Launched: FIX-PAD-1 -> PCBIO-14 (footprint library files) and STAB-CN (connectivity with
+  pads: rerun every oracle, thirty more boards, net propagation scoreboard) (w16z105v0).
+  Next heartbeat 04:25 UTC. Disk watchdog task bnp4nj8m6 ends about 03:40 UTC: restart it.
   Still to write (tier 3, editor-only paths): FIX-GEN-1 (generator subclass arms of move /
   rotate / flip / mirror / set_layer, via stitch default template), FIX-DIM-1
   (PCB_DIMENSION_BASE::Update after text setters, i32-backed dimension enums, grid item

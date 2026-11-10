@@ -76,7 +76,14 @@ fn needs_teardrops(text: &str) -> bool {
         return false;
     }
 
-    if text.contains("(attr teardrop") {
+    // `(attr teardrop ...)` (older files) or `(attr\n (teardrop (type ...)))` (a teardrop
+    // zone written by the current writer).
+    if text.match_indices("(attr").any(|(i, m)| {
+        text[i + m.len()..]
+            .trim_start()
+            .starts_with("(teardrop")
+            || text[i + m.len()..].starts_with(" teardrop")
+    }) {
         return true;
     }
 
@@ -96,6 +103,8 @@ fn load_cli(path: &Path) -> Result<(Board, DrcEngine, ConnectivityData, Vec<Stri
     let mut board =
         parse_board(&text, name, &ParseOptions::default()).map_err(|e| format!("{e:?}"))?;
     board.file_name = name.to_string();
+    // the rule compiler of the SynchronizeComponentClasses step (as kicad-session does)
+    kicad_drc::component_class_rules::install(&mut board);
 
     let pro_path = path.with_extension("kicad_pro");
     let pro = std::fs::read_to_string(&pro_path).ok();

@@ -109,7 +109,7 @@ fn is_mask_aperture(item: ItemRef<'_>) -> bool {
         && item
             .as_pad()
             .expect("PCB_PAD_T is a PAD")
-            .is_free_pad_ctx(item.ctx)
+            .is_free_pad(item.ctx)
     {
         return true;
     }

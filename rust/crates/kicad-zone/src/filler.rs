@@ -146,6 +146,14 @@ impl ZoneFiller {
         self.iterative_refill = enabled;
     }
 
+    /// `ADVANCED_CFG::m_DebugZoneFiller` (`DebugZoneFiller=1` in `kicad_advanced`): an inner
+    /// copper layer `In<k>.Cu` of a zone receives the intermediate polygons of stage `k` of its
+    /// F.Cu fill (`DUMP_POLYS_TO_COPPER_LAYER`). Used to compare the fill pipeline stage by stage
+    /// with the reference `kicad-cli`.
+    pub fn set_debug_zone_filler(&mut self, enabled: bool) {
+        self.debug_zone_filler = enabled;
+    }
+
     /// Test hook, not a C++ API: replace the pending copper fill (`fillCopperZone`, package
     /// ZF-03) by the smoothed outline without knockouts, so that the driver can be tested.
     #[doc(hidden)]

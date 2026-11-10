@@ -263,26 +263,19 @@ fn ctl_flags() {
 
 // ---- staging stubs -------------------------------------------------------------------------
 
-/// A save that reaches a staging stub fails with its "port pending" text; with
-/// `allow_pending` the item is skipped and reported (a footprint while PCBIO-06 is pending).
+/// A save that reaches a staging stub fails with its "port pending" text. Every item of a
+/// board file is ported (footprints PCBIO-06, pads PCBIO-07): a board with a footprint saves
+/// in both modes with nothing skipped; the remaining stub is `FormatFootprintLibFile`
+/// (PCBIO-14).
 #[test]
 fn staging_stubs() {
-    // The setup section (PCBIO-04) is ported; a footprint (PCBIO-06) is still a staging stub.
-    // When it lands, switch to another stub (generator, PCBIO-13; misc items, PCBIO-12).
     let mut board = Board::new();
     let fp = board.create_footprint();
     board.attach_footprint(fp, crate::board::AddMode::Append);
-    let e = format_board(&board, &FormatOptions::default()).unwrap_err();
-    assert_eq!(e.what(), "port pending: footprint (PCBIO-06)");
-
-    let (_, report) = format_board_report(&board, &staging()).unwrap();
-    assert_eq!(
-        report.skipped,
-        vec![SkippedFormat {
-            item: "footprint".to_string(),
-            package: "PCBIO-06"
-        }]
-    );
+    let strict = format_board(&board, &FormatOptions::default()).unwrap();
+    let (text, report) = format_board_report(&board, &staging()).unwrap();
+    assert_eq!(text, strict);
+    assert!(report.skipped.is_empty());
 
     let mut holder = Board::new();
     let fp = holder.create_footprint();

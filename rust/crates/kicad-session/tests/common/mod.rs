@@ -29,10 +29,7 @@ use kicad_session::{LoadInputs, Session, SessionError};
 /// The `port_pending!` stubs a load step may reach today, with the step. A step stopped by one
 /// of these is skipped and reported; any other panic fails the test. Remove an entry when its
 /// package lands.
-pub const KNOWN_PENDING_STEPS: &[(LoadStep, &str)] = &[(
-    LoadStep::SynchronizeComponentClasses,
-    "COMPONENT_CLASS_MANAGER::SyncDynamicComponentClassAssignments",
-)];
+pub const KNOWN_PENDING_STEPS: &[(LoadStep, &str)] = &[];
 
 /// The text of a panic payload.
 pub fn panic_text(payload: &(dyn std::any::Any + Send)) -> String {

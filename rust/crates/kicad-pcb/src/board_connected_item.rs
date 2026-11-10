@@ -75,9 +75,10 @@ pub fn effective_netclass<'a, B: BoardConnectedItem + ?Sized>(
     board.design_settings().net_settings.default_netclass()
 }
 
-/// Port of `BOARD_CONNECTED_ITEM::GetNetClassName`.
+/// Port of `BOARD_CONNECTED_ITEM::GetNetClassName`: `GetEffectiveNetClass()->GetName()`
+/// (the comma-joined constituent names of a composite netclass, e.g. `L,Default`).
 pub fn net_class_name<B: BoardConnectedItem + ?Sized>(item: &B, ctx: &BoardCtx<'_>) -> String {
-    item.effective_netclass(ctx).name.clone()
+    item.effective_netclass(ctx).get_name()
 }
 
 /// Port of `BOARD_CONNECTED_ITEM::GetOwnClearance( aLayer, aSource )`: the DRC engine's

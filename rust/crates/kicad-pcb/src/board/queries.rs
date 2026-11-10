@@ -274,12 +274,24 @@ impl Board {
         )
     }
 
-    /// `BOARD::GetVisibleLayers()`: the project's local-settings visible layers, else every
-    /// layer. The `.kicad_prl` visibility is not modelled (`BoardProject` has no field for it;
-    /// the `PROJECT_LOCAL_SETTINGS` default is `LSET::AllLayersMask()`), so this is every layer
-    /// in both cases.
+    /// `BOARD::GetVisibleLayers()`: the project's local-settings visible layers
+    /// (`m_project->GetLocalSettings().m_VisibleLayers`), else every layer.
     pub fn visible_layers(&self) -> Lset {
-        Lset::all_layers_mask().clone()
+        match self.project.as_ref() {
+            Some(p) => p.visible_layers.clone(),
+            None => Lset::all_layers_mask().clone(),
+        }
+    }
+
+    /// Port of `BOARD::IsLayerVisible`: an enabled layer that is visible in the project's
+    /// local settings.
+    pub fn is_layer_visible(&self, layer: PcbLayerId) -> bool {
+        // If there is no project, assume layer is visible always
+        self.design_settings().is_layer_enabled(layer)
+            && self
+                .project
+                .as_ref()
+                .is_none_or(|p| p.visible_layers.contains(layer))
     }
 
     /// `BOARD::IsFootprintHolder()`.

@@ -310,6 +310,11 @@ fn oracle_corpus_blocks() {
                 .map_err(|e| e.what().to_string())
         }) {
             Ok(Ok(out)) => {
+                // kicad-cli's loader rebuilds the cells of generated tables from the board
+                // (board_loader.cpp RefreshGeneratedTables, M26): api_kitchen_sink's stored
+                // drill chart cells "0.30" are re-saved as "0.30 mm". Those blocks are compared
+                // by the pure parse + write driver only (oracle_parse_write_blocks).
+                let (out, o1) = (without_generated_tables(&out), without_generated_tables(&o1));
                 let n = assert_same_blocks(path, &out, &o1, &input);
                 println!("{path}: {n} blocks identical");
             }
@@ -317,6 +322,31 @@ fn oracle_corpus_blocks() {
             Err(stub) => println!("{path}: pending on model stub {stub}"),
         }
     }
+}
+
+/// `text` without its top-level `(drill_chart ..)` and `(stackup_table ..)` blocks (generated
+/// tables, refreshed by the reference loader).
+fn without_generated_tables(text: &str) -> String {
+    let mut out = String::new();
+    let mut skipping = false;
+
+    for line in text.split_inclusive('\n') {
+        if !skipping
+            && (line.starts_with("\t(drill_chart") || line.starts_with("\t(stackup_table"))
+        {
+            skipping = line.matches('(').count() != line.matches(')').count();
+            continue;
+        }
+
+        if skipping {
+            skipping = line != "\t)\n";
+            continue;
+        }
+
+        out.push_str(line);
+    }
+
+    out
 }
 
 /// The items of `board`'s drawing list of one kind.

@@ -1653,7 +1653,10 @@ impl Plotter for GerberPlotter {
         a_scale: f64,
         a_mirror: bool,
     ) {
-        debug_assert!(!a_mirror);
+        // wxASSERT( aMirror == false ) / wxASSERT( aScale == 1 ) only log in the reference
+        // build: a board whose stored plot parameters ask for a mirror or a scale plots
+        // normally there, so no assertion here.
+        let _ = a_mirror;
         let _ = a_scale; // aScale parameter is not used in Gerber
         self.state.plot_mirror = false;
         self.state.plot_offset = a_offset;

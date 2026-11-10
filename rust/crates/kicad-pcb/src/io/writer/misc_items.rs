@@ -273,10 +273,10 @@ impl PcbWriter<'_> {
         let text = self.out.quotew(b.text.text.text());
         self.out.print(format_args!("(text {})", text))?;
 
-        // GetTextSize(): m_text.GetTextHeight()
+        // GetTextSize(): m_text.GetTextHeight(), the virtual GetTextSize().y (board frame).
         self.out.print(format_args!(
             "(text_height {})",
-            format_iu(b.text.text.attributes.size.1)
+            format_iu(b.text_size(&ctx))
         ))?;
 
         let type_str = match b.kind {

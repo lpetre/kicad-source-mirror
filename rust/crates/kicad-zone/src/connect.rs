@@ -62,8 +62,9 @@ impl VertexConnector {
 
             for j in 0..outline.point_count() {
                 let last = *distances.last().expect("non-empty");
-                distances
-                    .push(last + (outline.c_point(j + 1) - outline.c_point(j)).euclidean_norm() as f64);
+                distances.push(
+                    last + (outline.c_point(j + 1) - outline.c_point(j)).euclidean_norm() as f64,
+                );
             }
 
             outline_distances.push(distances);

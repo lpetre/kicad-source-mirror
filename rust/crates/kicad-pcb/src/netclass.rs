@@ -21,6 +21,7 @@
 
 use std::sync::{Arc, OnceLock};
 
+use kicad_core::string_utils::wx_string_matches;
 use kicad_core::{Color4D, PCB_IU_SCALE, SCH_IU_SCALE};
 
 /// `NETCLASS::Default`: the name of the default net class.
@@ -494,100 +495,6 @@ impl Netclass {
     /// `NETCLASS::HasTuningProfile`.
     pub fn has_tuning_profile(&self) -> bool {
         !self.tuning_profile.is_empty()
-    }
-}
-
-/// Port of `wxString::Matches( mask )` (wxWidgets 3.2, `src/common/string.cpp`, the
-/// non-regex branch): `*` and `?` wildcards, case sensitive, with wx's quirks kept: any `*` /
-/// `?` run after a `*` is skipped (so `"*?"` matches the empty string), the literal run after a
-/// `*` is found with `wxStrstr`, and only the last `*` is backtracked to.
-pub fn wx_string_matches(text: &str, mask: &str) -> bool {
-    // The C strings the wx code walks: up to the first NUL, NUL-terminated.
-    fn c_chars(s: &str) -> Vec<char> {
-        let mut v: Vec<char> = s.chars().take_while(|&c| c != '\0').collect();
-        v.push('\0');
-        v
-    }
-
-    let mask = c_chars(mask);
-    let txt = c_chars(text);
-    let mut m = 0usize;
-    let mut t = 0usize;
-    let mut last_star_in_text: Option<usize> = None;
-    let mut last_star_in_mask = 0usize;
-
-    loop {
-        // match:
-        let mut failed = false;
-
-        while mask[m] != '\0' {
-            match mask[m] {
-                '?' => {
-                    if txt[t] == '\0' {
-                        return false;
-                    }
-                }
-                '*' => {
-                    // remember where we started to be able to backtrack later
-                    last_star_in_text = Some(t);
-                    last_star_in_mask = m;
-
-                    // ignore special chars immediately following this one
-                    while mask[m] == '*' || mask[m] == '?' {
-                        m += 1;
-                    }
-
-                    // if there is nothing more, match
-                    if mask[m] == '\0' {
-                        return true;
-                    }
-
-                    // are there any other metacharacters in the mask?
-                    let len_mask = mask[m..]
-                        .iter()
-                        .position(|&c| c == '*' || c == '?' || c == '\0')
-                        .unwrap_or(0);
-                    let to_match = &mask[m..m + len_mask];
-
-                    // wxStrstr( pszTxt, strToMatch )
-                    let hay = &txt[t..txt.len() - 1];
-                    let Some(found) = hay.windows(len_mask).position(|w| w == to_match) else {
-                        return false;
-                    };
-
-                    // -1 to compensate "++" in the loop
-                    t = t + found + len_mask - 1;
-                    m += len_mask - 1;
-                }
-                c => {
-                    if c != txt[t] {
-                        failed = true;
-                        break;
-                    }
-                }
-            }
-
-            m += 1;
-            t += 1;
-        }
-
-        if failed {
-            return false;
-        }
-
-        // match only if nothing left
-        if txt[t] == '\0' {
-            return true;
-        }
-
-        // if we failed to match, backtrack if we can
-        match last_star_in_text.take() {
-            Some(star) => {
-                t = star + 1;
-                m = last_star_in_mask;
-            }
-            None => return false,
-        }
     }
 }
 

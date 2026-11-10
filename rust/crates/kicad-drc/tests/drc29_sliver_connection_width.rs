@@ -454,3 +454,146 @@ fn drc_copper_conn() {
         assert_eq!(n, stored, "DRC connection width: {name}");
     }
 }
+
+/// The `v|` lines of `drc29_oracle.cpp` for a run of the two providers with every code ignored
+/// but `DRCE_COPPER_SLIVER` and `DRCE_CONNECTION_WIDTH` (errors): slivers in handler order,
+/// then the connection width lines sorted, with their item uuids sorted.
+fn oracle_lines(loaded: &mut Loaded) -> Vec<String> {
+    {
+        let bds = loaded.board.design_settings_mut();
+
+        for ii in DRCE_FIRST..=DRCE_LAST {
+            bds.drc_severities.insert(ii, Severity::Ignore);
+        }
+
+        bds.drc_severities
+            .insert(DRCE_COPPER_SLIVER, Severity::Error);
+        bds.drc_severities
+            .insert(DRCE_CONNECTION_WIDTH, Severity::Error);
+    }
+
+    let connectivity = prepare(loaded);
+    let mut provider = WithCaches {
+        connectivity: &connectivity,
+    };
+    let found = run_providers(loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let mut slivers = Vec::new();
+    let mut widths = Vec::new();
+
+    for r in found {
+        let code = r.item.error_code();
+        let mut ids: Vec<String> = r.item.ids().iter().map(|id| id.as_string()).collect();
+
+        if code == DRCE_CONNECTION_WIDTH {
+            ids.sort();
+        }
+
+        let mut line = format!(
+            "v|{}|{}|{},{}|{}|{}|",
+            r.item.settings_key(),
+            r.item.error_message(),
+            r.pos.x,
+            r.pos.y,
+            r.layer,
+            ids.join(",")
+        );
+
+        for s in r.marker.path() {
+            let (a, b) = (s.shape.start(), s.shape.end());
+            line += &format!("{},{};{},{} ", a.x, a.y, b.x, b.y);
+        }
+
+        if code == DRCE_COPPER_SLIVER {
+            slivers.push(line);
+        } else if code == DRCE_CONNECTION_WIDTH {
+            widths.push(line);
+        }
+    }
+
+    widths.sort();
+    let (ns, nw) = (slivers.len(), widths.len());
+    slivers.extend(widths);
+    slivers.push(format!("n|{ns}|{nw}"));
+    slivers
+}
+
+/// Item level: every violation of the two providers (message, marker position and layer,
+/// items, marker path) against the reference build (`tests/golden/drc29/oracle.txt`), on every
+/// board the port loads completely. Sliver lines must also come in the same order.
+#[test]
+fn sliver_and_connection_width_match_item_oracle() {
+    let root = kicad_qa::kicad_source_root();
+    let filter = std::env::var("DRC29_FILTER").unwrap_or_default();
+    let mut boards: Vec<(String, Vec<String>)> = Vec::new();
+
+    for line in include_str!("golden/drc29/oracle.txt").lines() {
+        if let Some(rel) = line.strip_prefix("board|") {
+            boards.push((rel.to_string(), Vec::new()));
+        } else if let Some(b) = boards.last_mut() {
+            b.1.push(line.to_string());
+        }
+    }
+
+    let (mut compared, mut lines_matched, mut pending) = (0, 0, 0);
+    let mut differences = Vec::new();
+
+    for (rel, reference) in boards {
+        if !rel.contains(&filter) || reference.iter().any(|l| l.starts_with("error|")) {
+            continue;
+        }
+
+        let path = root.join(&rel);
+        let run = || -> Result<Vec<String>, String> {
+            let mut loaded = load_board(&path)?;
+
+            if has_compiled_conditions(&loaded.engine) {
+                return Err("user rule conditions need DRC-21".to_string());
+            }
+
+            if !loaded.report.skipped.is_empty() {
+                return Err("parser skipped items".to_string());
+            }
+
+            Ok(oracle_lines(&mut loaded))
+        };
+        let result = if std::env::var("DRC29_PANIC").is_ok() {
+            Ok(run())
+        } else {
+            quiet(|| catch_unwind(AssertUnwindSafe(run)))
+        };
+
+        let Ok(Ok(mine)) = result else {
+            pending += 1;
+            continue;
+        };
+
+        compared += 1;
+
+        if mine == reference {
+            lines_matched += reference.len() - 1;
+        } else {
+            differences.push(format!(
+                "{rel}:\n  reference:\n    {}\n  port:\n    {}",
+                reference.join("\n    "),
+                mine.join("\n    ")
+            ));
+        }
+    }
+
+    eprintln!(
+        "DRC-29 item oracle: {compared} boards compared ({lines_matched} violations identical), \
+         {pending} pending, {} differ",
+        differences.len()
+    );
+
+    for d in &differences {
+        eprintln!("  DIFF {d}");
+    }
+
+    assert!(compared > 0);
+    assert!(
+        differences.is_empty(),
+        "{} boards differ",
+        differences.len()
+    );
+}

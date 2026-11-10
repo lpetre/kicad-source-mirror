@@ -69,21 +69,6 @@ fn parent_footprint_id(parent: ParentRef) -> Option<crate::ids::FootprintId> {
     }
 }
 
-/// `FOOTPRINT::GetNextFieldOrdinal()`: one more than the largest field ordinal, at least 42
-/// (arbitrarily larger than any mandatory `FIELD_T` id). Not on `Footprint` yet (change
-/// request to the footprint model package); ported here for the field conversions.
-fn next_field_ordinal(parser: &PcbParser, footprint: &Footprint) -> i32 {
-    let mut ordinal = 42; // Arbitrarily larger than any mandatory FIELD_T id
-
-    for &field in &footprint.fields {
-        if let Some(field) = parser.board.field(field) {
-            ordinal = std::cmp::max(ordinal, field.ordinal() + 1);
-        }
-    }
-
-    ordinal
-}
-
 impl PcbParser {
     /// The `MutEnv` the virtual setters of a not yet added child of `parent` see.
     fn text_env(&self, parent: ParentRef) -> MutEnv {
@@ -438,7 +423,7 @@ impl PcbParser {
                 let (field_count, ordinal) = match self.board.footprint(fp) {
                     Some(footprint) => (
                         footprint.fields.len() as i32,
-                        next_field_ordinal(self, footprint),
+                        footprint.next_field_ordinal(&BoardCtx::bare(&self.board)),
                     ),
                     None => (0, 0),
                 };

@@ -225,20 +225,6 @@ impl PcbParser {
         Ok(Some(bitmap))
     }
 
-    /// The inline `PCB_BARCODE::SetOrientation( double aDegrees )` (`pcb_barcode.h`): rotate
-    /// about the position by the difference to the current angle. The barcode model has no
-    /// method for it; its parts (`GetAngle`, `GetPosition`, `Rotate`) are model calls.
-    fn barcode_set_orientation(&self, barcode: &mut PcbBarcode, env: &MutEnv, degrees: f64) {
-        let new_angle = EdaAngle::new(degrees, DEGREES_T).normalized();
-        let (old_angle, position) = {
-            let ctx = BoardCtx::bare(&self.board);
-            (barcode.angle(&ctx), barcode.position(&ctx))
-        };
-
-        if new_angle != old_angle {
-            barcode.rotate(env, position, new_angle - old_angle);
-        }
-    }
 
     /// Port of `parsePCB_BARCODE( BOARD_ITEM* aParent )`.
     ///
@@ -279,7 +265,7 @@ impl PcbParser {
 
                     if self.lexer.cur_tok() == T::T_NUMBER {
                         let degrees = self.parse_double()?;
-                        self.barcode_set_orientation(&mut barcode, &env, degrees);
+                        barcode.set_orientation(&env, degrees);
                     }
 
                     self.lexer.need_right()?;
@@ -301,23 +287,13 @@ impl PcbParser {
                         return Err(self.lexer.expecting(T::T_STRING));
                     }
 
-                    // PCB_BARCODE::SetText: m_text.SetText( aNewText )
                     let text = self.lexer.from_utf8();
-                    barcode.text.text.set_text(&text);
+                    barcode.set_text(&text);
                     self.lexer.need_right()?;
                 }
                 T::T_text_height => {
                     let h = self.parse_board_units_str("barcode text height")?;
-
-                    // PCB_BARCODE::SetTextSize( h )
-                    let size = std::cmp::max(1, h);
-                    barcode
-                        .text
-                        .set_text_size(&env, Vector2I::new(size, size), true);
-                    let text_height = barcode.text.text.attributes.size.1;
-                    let thickness =
-                        std::cmp::max(1, kicad_font::gr_text::get_pen_size_for_normal(text_height));
-                    barcode.text.set_text_thickness(&env, thickness);
+                    barcode.set_text_size(&env, h);
 
                     self.lexer.need_right()?;
                 }
@@ -333,16 +309,7 @@ impl PcbParser {
                         _ => return Err(self.lexer.expecting_str("barcode type")),
                     };
 
-                    // PCB_BARCODE::SetKind: when switching to Micro QR, validate and adjust
-                    // ECC if needed (don't auto-compute here as it may be called during
-                    // loading)
-                    barcode.kind = kind;
-
-                    if barcode.kind == BarcodeT::MicroQrCode
-                        && barcode.error_correction == BarcodeEccT::H
-                    {
-                        barcode.error_correction = BarcodeEccT::Q;
-                    }
+                    barcode.set_kind(kind);
 
                     self.lexer.need_right()?;
                 }
@@ -357,14 +324,7 @@ impl PcbParser {
                         _ => return Err(self.lexer.expecting_str("ecc level")),
                     };
 
-                    // PCB_BARCODE::SetErrorCorrection: Micro QR codes do not support High (H)
-                    // error correction level
-                    barcode.error_correction =
-                        if barcode.kind == BarcodeT::MicroQrCode && ecc == BarcodeEccT::H {
-                            BarcodeEccT::Q
-                        } else {
-                            ecc
-                        };
+                    barcode.set_error_correction(ecc);
 
                     self.lexer.need_right()?;
                 }
@@ -377,13 +337,13 @@ impl PcbParser {
                     self.lexer.need_right()?;
                 }
                 T::T_hide => {
-                    // PCB_BARCODE::SetShowText: m_text.SetVisible( aShow )
                     let hide = self.parse_bool()?;
-                    barcode.text.text.set_visible(!hide);
+                    barcode.set_show_text(!hide);
                     self.lexer.need_right()?;
                 }
                 T::T_knockout => {
-                    barcode.base.is_knockout = self.parse_bool()?;
+                    let knockout = self.parse_bool()?;
+                    barcode.set_is_knockout(knockout);
                     self.lexer.need_right()?;
                 }
                 T::T_margins => {

@@ -429,6 +429,13 @@ impl Zone {
         &self.fill
     }
 
+    /// The fill results of a detached zone for writing (`SetFilledPolysList` and friends on a
+    /// zone that is not on a board, e.g. the DRC solder mask bridge zone). A zone on a board
+    /// is written through `Board::zone_fill_mut`.
+    pub fn fill_mut(&mut self) -> &mut ZoneFill {
+        &mut self.fill
+    }
+
     /// `GetFilledPolysList( aLayer )` (`std::map::at`: panics for a layer without a fill,
     /// where C++ asserts and throws).
     pub fn filled_polys_list(&self, layer: PcbLayerId) -> Arc<ShapePolySet> {

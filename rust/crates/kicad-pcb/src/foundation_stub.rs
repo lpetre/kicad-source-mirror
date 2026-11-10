@@ -28,16 +28,6 @@
 
 use kicad_geom::geometry::ellipse::Ellipse;
 
-// REMOVE when kicad-font provides FontRef
-/// Stand-in for a cheap shared reference to a `KIFONT::FONT` (`EDA_TEXT::m_attributes.m_Font`,
-/// render-cache key): the font is identified by name and style, as `KIFONT::FONT::GetFont`.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct FontRef {
-    pub name: String,
-    pub bold: bool,
-    pub italic: bool,
-}
-
 // REMOVE when kicad-geom provides ShapeEllipse
 /// Stand-in for `SHAPE_ELLIPSE` (`libs/kimath/include/geometry/shape_ellipse.h`).
 #[derive(Clone, Debug)]

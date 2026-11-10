@@ -167,13 +167,39 @@ impl Board {
         design_rules_path(&self.file_name, self.project.as_ref())
     }
 
-    /// Port of `BOARD::SynchronizeComponentClasses( aNewSheetPaths )`: the project's
-    /// component class assignment rules (`COMPONENT_CLASS_SETTINGS`, package SET-10, not
-    /// ported) installed by the manager (`SyncDynamicComponentClassAssignments`, pending).
-    /// C++ dereferences the project unconditionally: call it with a project only.
+    /// Port of `BOARD::SynchronizeComponentClasses( {} )` (the loaders' call); see
+    /// [`Board::synchronize_component_classes_for_sheets`].
     pub fn synchronize_component_classes(&mut self) -> bool {
+        self.synchronize_component_classes_for_sheets(&std::collections::BTreeSet::new())
+    }
+
+    /// Port of `BOARD::SynchronizeComponentClasses( aNewSheetPaths )`: the project's
+    /// component class assignment rules (`COMPONENT_CLASS_SETTINGS`, read from the project
+    /// file document) installed by `COMPONENT_CLASS_MANAGER::
+    /// SyncDynamicComponentClassAssignments`. False when a rule did not compile.
+    ///
+    /// C++ dereferences the project unconditionally; without a project the default settings
+    /// (no assignments, no sheet classes) are used here.
+    pub fn synchronize_component_classes_for_sheets(
+        &mut self,
+        new_sheet_paths: &std::collections::BTreeSet<String>,
+    ) -> bool {
+        let settings = crate::component_class::ComponentClassSettings::load_from_parent(
+            self.project.as_ref().map(|p| &p.document),
+        );
+
+        let sheet_names: Vec<String> = self
+            .footprints()
+            .map(|(_, fp)| fp.sheetname.clone())
+            .collect();
+
         self.component_class_manager
-            .sync_dynamic_component_class_assignments()
+            .sync_dynamic_component_class_assignments(
+                &settings.component_class_assignments,
+                settings.enable_sheet_component_classes,
+                new_sheet_paths,
+                sheet_names.iter().map(String::as_str),
+            )
     }
 
     /// Port of `BOARD::UpdateUserUnits( aBoard, nullptr )` for the whole board: every

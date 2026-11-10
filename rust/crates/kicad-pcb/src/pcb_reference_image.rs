@@ -440,7 +440,8 @@ impl PcbReferenceImage {
     /// here, the stored image data stays as it is (`PORT_STATUS.md`).
     fn reference_image_flip(&mut self, centre: Vector2I, dir: FlipDirection) -> bool {
         let mut new_pos = self.pos;
-        mirror_point_wrapping(&mut new_pos, centre, dir);
+        // MIRROR wraps on `int` overflow like the reference build (the oracle's `edgeflip` case).
+        kicad_geom::mirror_point(&mut new_pos, centre, dir);
 
         let size = self.bounding_size();
 
@@ -456,7 +457,7 @@ impl PcbReferenceImage {
         // A reflection reverses the sense of the stored rotation.
         self.orientation = -self.orientation;
 
-        mirror_point_wrapping(&mut self.transform_origin_offset, Vector2I::new(0, 0), dir);
+        kicad_geom::mirror_point(&mut self.transform_origin_offset, Vector2I::new(0, 0), dir);
         true
     }
 
@@ -556,20 +557,6 @@ impl PcbReferenceImage {
         _full: bool,
     ) -> String {
         "Reference Image".to_string()
-    }
-}
-
-/// `MIRROR( VECTOR2I& aPoint, const VECTOR2I& aMirrorRef, FLIP_DIRECTION )` with the `int`
-/// arithmetic of the reference build: `-( aPoint - aMirrorRef ) + aMirrorRef` wraps there
-/// (signed overflow, reached by `REFERENCE_IMAGE::Flip` before its overflow check; the oracle's
-/// `edgeflip` case).
-fn mirror_point_wrapping(point: &mut Vector2I, mirror_ref: Vector2I, dir: FlipDirection) {
-    let mirror = |p: i32, r: i32| p.wrapping_sub(r).wrapping_neg().wrapping_add(r);
-
-    if dir == FlipDirection::LeftRight {
-        point.x = mirror(point.x, mirror_ref.x);
-    } else {
-        point.y = mirror(point.y, mirror_ref.y);
     }
 }
 

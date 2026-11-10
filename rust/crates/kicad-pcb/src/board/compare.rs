@@ -26,7 +26,7 @@ use kicad_core::KicadT;
 use crate::ctx::BoardCtx;
 use crate::eda_text::EdaTextExt;
 use crate::ids::ItemId;
-use crate::item_ref::ItemRef;
+use crate::item_ref::{AnyItem, ItemRef};
 
 /// `BOARD::cmp_items::operator()` as an `Ordering`: `Type()`, layer, position x then y,
 /// `m_Uuid`, then pointer order, which is `ItemId` order (`board-model.md` 3.1). A stale
@@ -137,9 +137,14 @@ fn pcb_table_compare(a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32 {
     }
 }
 
-/// `PCB_BARCODE::Compare`: the barcode package (M25) has no Rust counterpart yet.
+/// `PCB_BARCODE::Compare( barcode, other )` (0 if either item is not a barcode).
 fn pcb_barcode_compare(a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32 {
-    crate::port_pending!("PCB_BARCODE::Compare", a, b)
+    match (a.any(), b.any()) {
+        (AnyItem::Barcode(ba), AnyItem::Barcode(bb)) => {
+            crate::pcb_barcode::PcbBarcode::compare(a.ctx, ba, bb)
+        }
+        _ => 0,
+    }
 }
 
 /// Package M22 tests of the comparators on items whose getters are ported (tracks); the

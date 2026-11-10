@@ -19,7 +19,7 @@
 //! `fillCopperZone`, `fillNonCopperZone`, `postKnockoutMinWidthPrune` and
 //! `dropSubResolutionOutlines`.
 
-use kicad_core::{PCB_IU_SCALE, PcbLayerId};
+use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::convert_basic_shapes_to_polygon::transform_circle_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::geometry::corner_strategy::CornerStrategy;
@@ -36,6 +36,24 @@ use crate::connect::connect_nearby_polys;
 use crate::filler::ZoneFiller;
 use crate::index::board_and_footprint_zones;
 use crate::knockouts::{append_zone_outline_without_arcs, is_zone_fill_keepout};
+
+/// Port of the `DUMP_POLYS_TO_COPPER_LAYER( a, b, c )` macro of `zone_filler.cpp`: with the
+/// zone filler debug mode on and `debug_layer == b`, the fill becomes a fractured copy of the
+/// intermediate polygons `a` and the function returns false. (`m_board->SetLayerName( b, c )`
+/// is not reproduced: the port does not rename board layers during a fill.)
+macro_rules! dump_polys_to_copper_layer {
+    ($self:ident, $a:expr, $b:expr, $c:literal, $debug_layer:ident, $fill:ident) => {
+        if $self.debug_zone_filler && $debug_layer == $b {
+            let _ = $c;
+            let mut d = ($a).clone();
+            d.fracture(true);
+            *$fill = d;
+            return false;
+        }
+    };
+}
+
+pub(crate) use dump_polys_to_copper_layer;
 
 /// The result of [`ZoneFiller::fill_single_zone`] when it returns true in C++.
 #[derive(Clone, Debug)]
@@ -94,8 +112,9 @@ impl ZoneFiller {
     /// returns false (a degenerate zone), else the fill.
     ///
     /// `BuildSmoothedPoly`'s first output is the max extents and its apron output the smoothed
-    /// outline, as in C++. `m_debugZoneFiller` (the `DebugZoneFiller` advanced setting) is
-    /// always false in the port, so the debug-layer redirection is not reproduced.
+    /// outline, as in C++. With the zone filler debug mode (`DebugZoneFiller`, see
+    /// [`ZoneFiller::set_debug_zone_filler`]) an inner copper layer `In<k>.Cu` receives the
+    /// intermediate polygons of stage `k` of the F.Cu fill instead of its own fill.
     pub fn fill_single_zone(
         &mut self,
         ctx: &BoardCtx<'_>,
@@ -103,6 +122,7 @@ impl ZoneFiller {
         layer: PcbLayerId,
     ) -> Option<SingleZoneFill> {
         let zone = ctx.board.zone(zone_id)?;
+        let mut layer = layer;
         let board_outline = if self.brd_outlines_valid {
             Some(&self.board_outline)
         } else {
@@ -110,7 +130,12 @@ impl ZoneFiller {
         };
         let mut max_extents = ShapePolySet::new();
         let mut smoothed_poly = ShapePolySet::new();
-        let debug_layer = PcbLayerId::UndefinedLayer;
+        let mut debug_layer = PcbLayerId::UndefinedLayer;
+
+        if self.debug_zone_filler && Lset::internal_cu_mask().contains(layer) {
+            debug_layer = layer;
+            layer = PcbLayerId::FCu;
+        }
 
         if !zone.build_smoothed_poly(
             ctx,
@@ -168,9 +193,6 @@ impl ZoneFiller {
         max_extents: &ShapePolySet,
         fill_polys: &mut ShapePolySet,
     ) -> bool {
-        // m_debugZoneFiller is false: the DUMP_POLYS_TO_COPPER_LAYER exits never fire.
-        let _ = debug_layer;
-
         // Features which are min_width should survive pruning; features that are *less* than
         // min_width should not.  Therefore we subtract epsilon from the min_width when
         // deflating/inflating.
@@ -197,6 +219,14 @@ impl ZoneFiller {
         let mut clearance_holes = ShapePolySet::new();
 
         *fill_polys = smoothed_outline.clone();
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In1Cu,
+            "smoothed-outline",
+            debug_layer,
+            fill_polys
+        );
 
         // ---------------------------------------------------------------------------------
         // Knockout thermal reliefs.
@@ -210,6 +240,14 @@ impl ZoneFiller {
             &mut thermal_connection_pads,
             &mut no_connection_pads,
             &mut solid_connection_items,
+        );
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In2Cu,
+            "minus-thermal-reliefs",
+            debug_layer,
+            fill_polys
         );
 
         // ---------------------------------------------------------------------------------
@@ -229,6 +267,14 @@ impl ZoneFiller {
                 &thermal_connection_pads,
                 fill_polys,
                 &mut thermal_rings,
+            );
+            dump_polys_to_copper_layer!(
+                self,
+                *fill_polys,
+                PcbLayerId::In2Cu,
+                "plus-thermal-rings",
+                debug_layer,
+                fill_polys
             );
         }
 
@@ -253,11 +299,18 @@ impl ZoneFiller {
             !iterative_refill, // include zone clearances only if not iterative
         );
 
-        if iterative_refill
-            && self.collect_keepout_holes(ctx, zone, layer, &mut clearance_holes)
-        {
+        if iterative_refill && self.collect_keepout_holes(ctx, zone, layer, &mut clearance_holes) {
             clearance_holes.simplify();
         }
+
+        dump_polys_to_copper_layer!(
+            self,
+            clearance_holes,
+            PcbLayerId::In3Cu,
+            "clearance-holes",
+            debug_layer,
+            fill_polys
+        );
 
         // ---------------------------------------------------------------------------------
         // Add thermal relief spokes.
@@ -287,6 +340,8 @@ impl ZoneFiller {
             );
         }
 
+        let mut debug_spokes = ShapePolySet::new();
+
         // The spoke test area costs a clone, two booleans and a deflate/inflate cycle. Build
         // it only when a spoke exists. The debug filler still needs the intermediate dumps.
         if !thermal_spokes.is_empty() || self.debug_zone_filler {
@@ -300,14 +355,44 @@ impl ZoneFiller {
                 test_areas.boolean_subtract(&zone_clearances);
             }
 
+            dump_polys_to_copper_layer!(
+                self,
+                test_areas,
+                PcbLayerId::In4Cu,
+                "minus-clearance-holes",
+                debug_layer,
+                fill_polys
+            );
+
             // Prune features that don't meet minimum-width criteria
             if half_min_width - epsilon > epsilon {
-                test_areas.deflate(half_min_width - epsilon, fast_corner_strategy, self.max_error);
+                test_areas.deflate(
+                    half_min_width - epsilon,
+                    fast_corner_strategy,
+                    self.max_error,
+                );
+                dump_polys_to_copper_layer!(
+                    self,
+                    test_areas,
+                    PcbLayerId::In5Cu,
+                    "spoke-test-deflated",
+                    debug_layer,
+                    fill_polys
+                );
+
                 test_areas.inflate(
                     half_min_width - epsilon,
                     fast_corner_strategy,
                     self.max_error,
                     false,
+                );
+                dump_polys_to_copper_layer!(
+                    self,
+                    test_areas,
+                    PcbLayerId::In6Cu,
+                    "spoke-test-reinflated",
+                    debug_layer,
+                    fill_polys
                 );
             }
 
@@ -321,6 +406,10 @@ impl ZoneFiller {
 
                 // Hit-test against zone body
                 if spoke_test_index.contains(test_pt, 1) {
+                    if self.debug_zone_filler {
+                        debug_spokes.add_outline(spoke);
+                    }
+
                     fill_polys.add_outline(spoke);
                     continue;
                 }
@@ -333,6 +422,10 @@ impl ZoneFiller {
                         && other.point_inside(test_pt, 1, false)
                         && spoke.point_inside(other.c_point(3), 1, false)
                     {
+                        if self.debug_zone_filler {
+                            debug_spokes.add_outline(spoke);
+                        }
+
                         fill_polys.add_outline(spoke);
                         break;
                     }
@@ -340,13 +433,34 @@ impl ZoneFiller {
             }
         }
 
+        dump_polys_to_copper_layer!(
+            self,
+            debug_spokes,
+            PcbLayerId::In7Cu,
+            "spokes",
+            debug_layer,
+            fill_polys
+        );
+
         fill_polys.boolean_subtract(&clearance_holes);
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In8Cu,
+            "after-spoke-trimming",
+            debug_layer,
+            fill_polys
+        );
 
         // ---------------------------------------------------------------------------------
         // Prune features that don't meet minimum-width criteria
 
         if half_min_width - epsilon > epsilon {
-            fill_polys.deflate(half_min_width - epsilon, fast_corner_strategy, self.max_error);
+            fill_polys.deflate(
+                half_min_width - epsilon,
+                fast_corner_strategy,
+                self.max_error,
+            );
 
             // Also deflate thermal rings to match, for correct hatch hole notching
             if thermal_rings.outline_count() > 0 {
@@ -359,6 +473,15 @@ impl ZoneFiller {
         }
 
         drop_blobs(fill_polys, zone.min_thickness());
+
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In9Cu,
+            "deflated",
+            debug_layer,
+            fill_polys
+        );
 
         // ---------------------------------------------------------------------------------
         // Process the hatch pattern (note that we do this while deflated)
@@ -410,7 +533,12 @@ impl ZoneFiller {
                 let mut solid = fill_polys.clone_drop_triangulation();
 
                 if half_min_width - epsilon > epsilon {
-                    solid.inflate(half_min_width - epsilon, corner_strategy, self.max_error, true);
+                    solid.inflate(
+                        half_min_width - epsilon,
+                        corner_strategy,
+                        self.max_error,
+                        true,
+                    );
                 }
 
                 solid.boolean_intersection(max_extents);
@@ -420,8 +548,14 @@ impl ZoneFiller {
                     .insert((zone_id, layer), solid);
             }
 
-            if !self.add_hatch_fill_type_on_zone(ctx, zone, layer, fill_polys, &rings_to_protect)
-            {
+            if !self.add_hatch_fill_type_on_zone(
+                ctx,
+                zone,
+                layer,
+                debug_layer,
+                fill_polys,
+                &rings_to_protect,
+            ) {
                 return false;
             }
         } else if zone.fill_mode() == ZoneFillMode::CopperThieving {
@@ -434,18 +568,41 @@ impl ZoneFiller {
             // re-inflation.
             fill_polys.fracture(true);
             connect_nearby_polys(fill_polys, zone.min_thickness() as f64);
+
+            dump_polys_to_copper_layer!(
+                self,
+                *fill_polys,
+                PcbLayerId::In10Cu,
+                "connected-nearby-polys",
+                debug_layer,
+                fill_polys
+            );
         }
 
         // ---------------------------------------------------------------------------------
         // Finish minimum-width pruning by re-inflating
 
         if half_min_width - epsilon > epsilon {
-            fill_polys.inflate(half_min_width - epsilon, corner_strategy, self.max_error, true);
+            fill_polys.inflate(
+                half_min_width - epsilon,
+                corner_strategy,
+                self.max_error,
+                true,
+            );
         }
 
         // The deflation/inflation process can leave notches in the outline.  Remove these by
         // doing a union with the original ring
         fill_polys.boolean_add(&thermal_rings);
+
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In15Cu,
+            "after-reinflating",
+            debug_layer,
+            fill_polys
+        );
 
         // ---------------------------------------------------------------------------------
         // Ensure additive changes (thermal stubs and inflating acute corners) do not add copper
@@ -459,7 +616,23 @@ impl ZoneFiller {
         }
 
         fill_polys.boolean_intersection(max_extents);
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In16Cu,
+            "after-trim-to-outline",
+            debug_layer,
+            fill_polys
+        );
         fill_polys.boolean_subtract(&clearance_holes);
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In17Cu,
+            "after-trim-to-clearance-holes",
+            debug_layer,
+            fill_polys
+        );
 
         // Cache the pre-knockout fill for iterative refill optimization (issue 21746).
         // The cache stores the fill BEFORE zone-to-zone knockouts so the iterative refill can
@@ -500,10 +673,27 @@ impl ZoneFiller {
             self.post_knockout_min_width_prune(zone, fill_polys, &same_net_apron);
         }
 
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In18Cu,
+            "after-post-knockout-min-width",
+            debug_layer,
+            fill_polys
+        );
+
         // ---------------------------------------------------------------------------------
         // Lastly give any same-net but higher-priority zones control over their own area.
 
         self.subtract_higher_priority_zones(ctx, zone, layer, fill_polys);
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In19Cu,
+            "minus-higher-priority-zones",
+            debug_layer,
+            fill_polys
+        );
 
         drop_sub_resolution_outlines(fill_polys, self.max_error);
 
@@ -591,7 +781,14 @@ impl ZoneFiller {
         if zone.fill_mode() == ZoneFillMode::HatchPattern {
             let no_thermal_rings = ShapePolySet::new(); // Non-copper zones have no thermal reliefs
 
-            if !self.add_hatch_fill_type_on_zone(ctx, zone, layer, fill_polys, &no_thermal_rings) {
+            if !self.add_hatch_fill_type_on_zone(
+                ctx,
+                zone,
+                layer,
+                layer,
+                fill_polys,
+                &no_thermal_rings,
+            ) {
                 return false;
             }
         } else if zone.fill_mode() == ZoneFillMode::CopperThieving
@@ -638,7 +835,12 @@ impl ZoneFiller {
             // Overlap rather than abut the fill, or a rounding slit along the shared edge
             // opens into a notch
             let mut apron = same_net_apron.clone_drop_triangulation();
-            apron.inflate(epsilon, CornerStrategy::RoundAllCorners, self.max_error, false);
+            apron.inflate(
+                epsilon,
+                CornerStrategy::RoundAllCorners,
+                self.max_error,
+                false,
+            );
             fill_polys.boolean_add(&apron);
         }
 

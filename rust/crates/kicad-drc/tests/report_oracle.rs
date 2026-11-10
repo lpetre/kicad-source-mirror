@@ -250,6 +250,7 @@ fn run_scenario(root: &Path, path: &Path) -> (Vec<String>, String) {
                         name: f[7].to_string(),
                         severity: severity_from_name(f[8]),
                         implicit: false,
+                        rule_index: None,
                     });
                 }
 

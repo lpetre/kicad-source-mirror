@@ -21,7 +21,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `exporters/gerber_jobfile_writer.rs` | `gerber_jobfile_writer.*` | FAB-09 | not started |
 | `pcbplot.rs`, `pcb_plotter.rs` (FAB-03 part), `plot_board_layers.rs` (driver + `PlotStandardLayer` skeleton), `plot_brditems_plotter.rs` (struct, pending entry points) | see "FAB-03" below | FAB-03 | ported (driver); item bodies see FAB-04 and FAB-05/06/10/11/13 |
 | `plot_board_layers.rs` (`PlotStandardLayer` L383-930: pads, DNP cross, vias, tracks, zones), `plot_brditems_plotter.rs` (`getColor`, `PlotPadNumber`, `PlotPad`, `PlotZone`) | see "FAB-04" below | FAB-04 | ported |
-| `plot_layer_poly.rs`, `plot_brditems_shapes.rs`, `plot_brditems_text.rs`, `line_ending_plot.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the item bodies of `plot_board_layers.rs` / `plot_brditems_plotter.rs` | see each module header | FAB-04..11 | not started |
+| `plot_brditems_shapes.rs` (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`, `PlotShape`, `PlotDimension`, `PlotPcbTarget`, `PlotBarCode`, `PlotTableBorders`), `line_ending_plot.rs` (`LINE_ENDING::Plot`) | see "FAB-05" below | FAB-05 | ported |
+| `plot_layer_poly.rs`, `plot_brditems_text.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-06..13 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -346,3 +347,87 @@ custom rules).
   drawings or footprints.
 * Change request: `Pad::delete_primitives_list` / `Pad::add_primitive_poly` in the model
   (then the two local ports go).
+
+## FAB-05: graphic items (shapes, dimensions, targets, tables, barcodes, footprint graphics)
+
+### C++ to Rust
+
+| C++ (`pcbnew/plot_brditems_plotter.cpp`) | Rust |
+|---|---|
+| `PlotBoardGraphicItem` (L489-566) | `BrditemsPlotter::plot_board_graphic_item` (`plot_brditems_shapes.rs`; dispatch on `Type()`) |
+| `PlotDimension` (L569-621) | `plot_dimension` (one reused parentless `PcbShape` temp item, as in C++) |
+| `PlotPcbTarget` (L624-675) | `plot_pcb_target` |
+| `PlotFootprintGraphicItems` (L678-766) | `plot_footprint_graphic_items` (private layers, hidden DNP, layer mask) |
+| `plotMetadata` / `getMetadata()` (L769-783) | private `get_metadata` (Gerber: the metadata, SVG: none) |
+| `PlotShape` (L960-1350) incl. the `plotStrokeOutline` lambda | `plot_shape`, private `plot_stroke_outline` |
+| `PlotBarCode` (L1353-1370) | `plot_bar_code` |
+| `PlotTableBorders` (L1373-1406) | `plot_table_borders` (through `PcbTable::draw_borders`) |
+| table cell loop `PlotText( cell, ... )` | private `plot_table_cells` (calls the FAB-06 `plot_text`) |
+| `LINE_ENDING::Plot` (`common/line_ending.cpp` L240-265) | `line_ending_plot::line_ending_plot` (`GetShapes` is the model's `LineEnding::shapes`) |
+| `STROKE_PARAMS::Stroke( ..., m_plotter->RenderSettings(), ... )` | `kicad_pcb::stroke_params::stroke` with `StrokePatternLengths` from the plotter's `RenderSettings` (`dash_length` / `dot_length` / `gap_length` of `GetWidth()`) |
+
+Model calls used: `EdaShape::shorten_segment_for_endings`, `shorten_arc_for_endings`,
+`shortened_bezier_curve`, `shortened_body_poly_points`, `ending_tangents`,
+`line_ending_endpoints`, `calc_arc_angles`, `build_shape_ellipse`;
+`eda_shape::shapes::make_effective_shapes_for_stroking`, `shortened_bezier_polyline`,
+`eda_shape::hatching_data` (`GetHatching()`); `PcbShape::has_solder_mask`,
+`solder_mask_expansion`; `PcbTextbox::polygonal_box_shape`; `PcbDimension::shapes`;
+`BoardItem::transform_shape_to_poly_set` (barcode). `PlotLayerOutlines` (`plot_board_layers.cpp`
+L937-1017) is used for DXF only (`PlotLayer`), out of scope like DXF.
+
+### Tests and verification
+
+* `tests/plot_graphics_corpus.rs::corpus_graphics_replay`: the whole `PlotStandardLayer`
+  sequence (board graphics, footprint graphics, then the FAB-04 part) inside the CLI driver,
+  whole file compared against the reference kicad-cli corpus golden
+  (`tests/golden/plot_driver/corpus.txt`, CLI defaults), on all 379 loadable corpus boards
+  below 300 KB. The footprint text loop (FAB-06) is left out on layers without visible
+  footprint fields / footprint texts / footprint dimensions; board texts, text boxes and
+  tables on *other* layers are left out (the pending `PlotText` returns at once there).
+  Today: **7891 files byte-identical** (with 5139 board drawings / footprint graphic items on
+  their layers: Edge.Cuts, silk, fab, courtyard, user layers, copper graphics), 549 pending
+  (402 footprint text loop, 147 `PlotText`: FAB-06), 3 known differences (model, below),
+  skipped: 26 drill-map layers (FAB-13), 62 mask layers with a minimum width (FAB-10), 2 layers
+  with a barcode (no symbol encoder in the model, M25a). Pending files are counted, not
+  failed, so the test tightens when FAB-06 lands.
+* `crafted_graphics_replay`: crafted boards `tests/data/plot_graphics` (hand-written,
+  re-saved with `kicad-cli pcb upgrade --force`; goldens `tests/golden/plot_graphics/
+  crafted.txt` + `crafted_files.txt`, `generate.py`): `graphics.kicad_pcb` (every `SHAPE_T`
+  solid / dashed / dotted / dash-dot / dash-dot-dot, filled, hatched and cross-hatched,
+  rounded rectangles, zero-width filled shapes, Beziers, ellipses and ellipse arcs, every
+  line-ending style incl. explicit sizes and own stroke on segments / arcs / polylines /
+  Beziers, copper graphics with and without net, shapes with solder mask and positive /
+  negative margins on F.Mask / B.Mask, targets + and X, a rotated front footprint and a back
+  footprint with graphics on silk / fab / courtyard / copper / Edge.Cuts) with the CLI
+  defaults, `bp_dnp_sketch.kicad_pcb` and `bp_dnp_hide.kicad_pcb` with `--board-plot-params`
+  (DNP footprints on fab layers: sketch, hide). **45 files, all byte-identical**; the 31
+  files of the FAB-04 crafted boards: 28 identical, 3 pending (visible footprint fields).
+* `svg_graphics_match_cli`: `graphics.kicad_pcb` F.Silkscreen, User.Drawings mirrored and
+  F.Mask through the SVG engine (native Bezier curves) against `kicad-cli pcb export svg
+  --mode-single --exclude-drawing-sheet --drill-shape-opt 0 --black-and-white`
+  (`tests/golden/plot_graphics/svg_*.svg`): identical except the `<title>` date.
+
+Not verified yet (no reachable data until FAB-06 / the model gaps close): dimensions, text
+boxes with borders and tables (they all plot text first), barcodes (empty polygon), drill
+charts (FAB-13), shapes with a DRC rule for the mask expansion (no rule resolver in the
+tests).
+
+### Deviations
+
+* `MarkFootprintPlotted` (PDF bookmarks) is not called (PDF is out of scope).
+* DXF branches (`ThickPoly` / `ThickRect` in sketch mode, the unfractured DXF fill) are out
+  of scope: `plot_shape` reports a pending DXF panic; `StartPlotBoard` never creates a DXF
+  plotter.
+* `UNIMPLEMENTED_FOR` (unknown shape / item type) only logs in C++; the port does nothing.
+
+### Known gaps
+
+* `PlotText` (text items, text box text, cells, dimension text) and `PlotFootprintTextItems`
+  are FAB-06; `PlotChartSymbols` FAB-13.
+* Model differences found by the corpus replay (reported as change requests, listed in
+  `KNOWN_DIFFERENCES` of `plot_graphics_corpus.rs` and `plot_items_corpus.rs`): the pad's
+  local solder mask margin is lost on B.Mask (`Pad::set_local_solder_mask_margin` sets the
+  front mask props only; C++ `PAD::SetLocalSolderMaskMargin` sets F_Mask and B_Mask; same
+  for the paste margin and ratio setters): 3 corpus B.Mask files differ. Barcodes plot
+  nothing until the model has the zint encoder (M25a).
+

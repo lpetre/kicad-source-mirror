@@ -246,6 +246,10 @@ pub fn initialize_loaded_board_guarded(
     // The DRC_EXCLUSION conversions of the project-file reader (BOARD_DESIGN_SETTINGS).
     let codec: Rc<dyn DrcExclusionCodec> = Rc::new(KiapiDrcExclusionCodec::default());
 
+    // The DRC rule compiler of COMPONENT_CLASS_MANAGER::CompileAssignmentRule (kicad-drc),
+    // used by the SynchronizeComponentClasses step.
+    kicad_drc::component_class_rules::install(&mut board);
+
     let mut project = project;
     let mut loaded = LoadedBoard {
         board: Board::new(),

@@ -234,7 +234,11 @@ impl PcbWriter<'_> {
                 .print(format_args!("(sim_electrical_type {sim_electrical_type})"))?;
         }
 
-        self.format_layers(pad.layer_set(&ctx), false /* enumerate layers */, false)?;
+        self.format_layers(
+            pad.layer_set(&ctx),
+            false, /* enumerate layers */
+            false,
+        )?;
 
         if pad.attribute() == PadAttrib::Pth {
             format_bool(self.out, "remove_unused_layers", pad.remove_unconnected())?;
@@ -564,13 +568,11 @@ impl PcbWriter<'_> {
                         format_iu_pt(lib.end)
                     ))?;
                 }
-                ShapeT::Poly => {
-                    if primitive.shape.is_poly_shape_valid() {
-                        let outline = lib.poly.c_outline(0);
+                ShapeT::Poly if primitive.shape.is_poly_shape_valid() => {
+                    let outline = lib.poly.c_outline(0);
 
-                        self.out.print(format_args!("(gr_poly"))?;
-                        self.format_poly_pts(outline, None)?;
-                    }
+                    self.out.print(format_args!("(gr_poly"))?;
+                    self.format_poly_pts(outline, None)?;
                 }
                 _ => {}
             }
@@ -604,8 +606,10 @@ impl PcbWriter<'_> {
         self.out
             .print(format_args!("(shape {})", shape_name(pad, layer)))?;
 
-        self.out
-            .print(format_args!("(size {})", format_iu_pt(padstack.size(layer))))?;
+        self.out.print(format_args!(
+            "(size {})",
+            format_iu_pt(padstack.size(layer))
+        ))?;
 
         let delta: Vector2I = pad.delta(layer);
 
@@ -617,8 +621,10 @@ impl PcbWriter<'_> {
         let shapeoffset = pad.offset(&ctx, layer);
 
         if shapeoffset.x != 0 || shapeoffset.y != 0 {
-            self.out
-                .print(format_args!("(offset {})", format_iu_pt(padstack.offset(layer))))?;
+            self.out.print(format_args!(
+                "(offset {})",
+                format_iu_pt(padstack.offset(layer))
+            ))?;
         }
 
         self.format_corner_properties(pad, layer)?;
@@ -671,5 +677,496 @@ impl PcbWriter<'_> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Ports of the C++ pad save / reload tests. The C++ fixtures save to a file and read it
+    //! back (`KI_TEST::DumpBoardToFile` / `ReadBoardFromFile`, or a `.kicad_mod` for
+    //! `test_pad_roundtrip.cpp`); here the board is formatted to a string and parsed again.
+    //! Footprint-library files are package PCBIO-14, so `test_pad_roundtrip.cpp` round-trips
+    //! through a board file. `PAD::AddPrimitive` has no model port yet: the custom-shape cases
+    //! of `test_custom_pad_primitive_roundtrip.cpp` build their pad by parsing a board text
+    //! (the parser runs the same `AddPrimitive` statements) instead of with the setters.
+
+    use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
+    use kicad_geom::{EdaAngle, Vector2I};
+
+    use crate::AddMode;
+    use crate::board::Board;
+    use crate::ctx::{BoardCtx, MutEnv};
+    use crate::eda_shape::ShapeT;
+    use crate::footprint::FootprintStackup;
+    use crate::ids::{FootprintId, PadId};
+    use crate::io::parser::ParseOptions;
+    use crate::io::writer::FormatOptions;
+    use crate::io::{format_board, parse_board};
+    use crate::item::{BoardUse, ParentRef};
+    use crate::item_ref::OwnedItem;
+    use crate::pad::Pad;
+    use crate::padstack::{PadAttrib, PadShape, Padstack};
+    use crate::pcb_shape::PcbShape;
+
+    fn mm(value: f64) -> i32 {
+        PCB_IU_SCALE.mm_to_iu(value)
+    }
+
+    /// `new PAD( fp )` and the mutator environment of a child of `fp`.
+    fn new_pad(board: &mut Board, fp: FootprintId) -> (Pad, MutEnv) {
+        let parent = ParentRef::Item(fp.into());
+        let mut pad = Pad::new(&mut board.kiid_generator);
+        pad.base.item.parent = parent;
+        (pad, board.child_env(parent))
+    }
+
+    /// `fp->Add( pad, ADD_MODE::APPEND, true )`.
+    fn add_pad(board: &mut Board, fp: FootprintId, pad: Pad) -> PadId {
+        let id = board
+            .footprint_add(fp, OwnedItem::Pad(Box::new(pad)), AddMode::Append)
+            .unwrap_or_else(|_| panic!("FOOTPRINT::Add refused a pad"));
+        id.typed().expect("a pad")
+    }
+
+    /// `DumpBoardToFile` + `ReadBoardFromFile`.
+    fn round_trip(board: &Board) -> (String, Board) {
+        let text = format_board(board, &FormatOptions::default()).expect("save");
+        let reloaded = parse_board(&text, "board.kicad_pcb", &ParseOptions::default())
+            .unwrap_or_else(|e| panic!("reload: {e}\n{text}"));
+        (text, reloaded)
+    }
+
+    fn first_pad(board: &Board) -> &Pad {
+        let (fp, _) = board
+            .footprints()
+            .next()
+            .expect("Footprint not found in reloaded board");
+        let (_, pad) = board
+            .footprint_pads(fp)
+            .next()
+            .expect("Pad not found in reloaded footprint");
+        pad
+    }
+
+    /// A footprint at (50, 50) mm with the given orientation and scale, attached to `board`.
+    fn transformed_footprint(board: &mut Board, angle: f64, sx: f64, sy: f64) -> FootprintId {
+        let fp = board.create_footprint();
+        board.footprint_set_position(fp, Vector2I::new(mm(50.0), mm(50.0)));
+
+        if angle != 0.0 {
+            board.footprint_set_orientation(fp, EdaAngle::from_degrees(angle));
+        }
+
+        board.footprint_set_transform_scale(fp, sx, sy);
+        fp
+    }
+
+    /// An SMD pad on F.Cu with a library-frame size.
+    fn smd_pad(board: &mut Board, fp: FootprintId, shape: PadShape, lib_size: Vector2I) -> Pad {
+        let (mut pad, env) = new_pad(board, fp);
+        pad.set_number("1");
+        pad.set_attribute(PadAttrib::Smd);
+        pad.set_layer_set(&env, Lset::from_layers(&[PcbLayerId::FCu]));
+        pad.set_shape(Padstack::ALL_LAYERS, shape);
+        pad.set_lib_size(Padstack::ALL_LAYERS, lib_size);
+        pad
+    }
+
+    // ---- qa/tests/pcbnew/test_pad_roundtrip.cpp ---------------------------------------------
+
+    /// `PadRoundTrip/CopperOnlyPad`: a copper-only pad must survive a save/reload intact
+    /// (board file instead of the C++ `.kicad_mod`, see the module comment).
+    #[test]
+    fn copper_only_pad() {
+        let mut board = Board::new();
+        board.set_copper_layer_count(4);
+        let fp = board.create_footprint();
+
+        let (mut pad, env) = new_pad(&mut board, fp);
+        pad.set_number("1");
+        pad.set_attribute(PadAttrib::Smd);
+        pad.set_layer_set(&env, Lset::from_layers(&[PcbLayerId::FCu]));
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Rectangle);
+        pad.set_size(&env, Padstack::ALL_LAYERS, Vector2I::new(mm(1.0), mm(2.0)));
+
+        pad.set_attribute(PadAttrib::NonComponent);
+        pad.set_layer_set(&env, Lset::from_layers(&[PcbLayerId::In1Cu]));
+        add_pad(&mut board, fp, pad);
+
+        // Inner-layer pads need a custom stackup to be properly represented.
+        {
+            let footprint = board.footprints.get_mut(fp).unwrap();
+            footprint.set_stackup_mode(FootprintStackup::CustomLayers);
+            footprint.set_stackup_layers(Lset::all_cu_mask_n(4));
+        }
+
+        board.attach_footprint(fp, AddMode::Append);
+
+        let (_, loaded) = round_trip(&board);
+        let ctx = BoardCtx::bare(&loaded);
+        let (lfp, _) = loaded.footprints().next().unwrap();
+        assert_eq!(loaded.footprint_pads(lfp).count(), 1);
+
+        let loaded_pad = first_pad(&loaded);
+        assert_eq!(loaded_pad.attribute(), PadAttrib::NonComponent);
+        assert_eq!(
+            loaded_pad.layer_set(&ctx),
+            Lset::from_layers(&[PcbLayerId::In1Cu])
+        );
+        assert_eq!(loaded_pad.drill_size(&ctx).x, 0);
+        assert_eq!(loaded_pad.drill_size(&ctx).y, 0);
+    }
+
+    // ---- qa/tests/pcbnew/test_pad_tenting.cpp -----------------------------------------------
+
+    /// The fixture of the pad cases: an FP-holder board with one footprint at the origin.
+    fn tenting_board() -> (Board, FootprintId) {
+        let mut board = Board::new();
+        board.board_use = BoardUse::FpHolder;
+        let fp = board.create_footprint();
+        board.footprint_set_position(fp, Vector2I::new(0, 0));
+        (board, fp)
+    }
+
+    fn pth_pad(board: &mut Board, fp: FootprintId) -> Pad {
+        let (mut pad, env) = new_pad(board, fp);
+        pad.set_attribute(PadAttrib::Pth);
+        pad.set_layer_set(&env, Pad::pth_mask());
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Circle);
+        pad.set_size(&env, Padstack::ALL_LAYERS, Vector2I::new(mm(1.5), mm(1.5)));
+        pad.set_drill_size(&env, Vector2I::new(mm(0.8), mm(0.8)));
+        pad.set_number("1");
+        pad.set_position(&env, Vector2I::new(0, 0));
+        pad
+    }
+
+    fn save(board: &Board) -> String {
+        format_board(board, &FormatOptions::default()).expect("save")
+    }
+
+    /// `PadTenting/DefaultTentingNotSerialized`.
+    #[test]
+    fn default_tenting_not_serialized() {
+        let (mut board, fp) = tenting_board();
+        let pad = pth_pad(&mut board, fp);
+        assert!(pad.padstack.front_outer_layers().has_solder_mask.is_none());
+        assert!(pad.padstack.back_outer_layers().has_solder_mask.is_none());
+        add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let output = save(&board);
+        let tenting = output.find("(tenting");
+        assert!(
+            tenting.is_none() || tenting < output.find("(footprint"),
+            "PTH pad with default tenting should not have a (tenting) block. Board-level \
+             tenting in setup section is expected."
+        );
+    }
+
+    /// `PadTenting/ExplicitTentingSerialized`.
+    #[test]
+    fn explicit_tenting_serialized() {
+        let (mut board, fp) = tenting_board();
+        let mut pad = pth_pad(&mut board, fp);
+        pad.padstack.front_outer_layers_mut().has_solder_mask = Some(true);
+        assert!(pad.padstack.front_outer_layers().has_solder_mask.is_some());
+        add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let output = save(&board);
+        let fp_start = output.find("(footprint").expect("(footprint");
+        assert!(
+            output[fp_start..].contains("(tenting"),
+            "PTH pad with explicit tenting should have a (tenting) block"
+        );
+    }
+
+    /// `PadTenting/NpthDefaultTentingNotSerialized`.
+    #[test]
+    fn npth_default_tenting_not_serialized() {
+        let (mut board, fp) = tenting_board();
+        let (mut pad, env) = new_pad(&mut board, fp);
+        pad.set_attribute(PadAttrib::Npth);
+        pad.set_layer_set(&env, Pad::unplated_hole_mask());
+        pad.set_shape(Padstack::ALL_LAYERS, PadShape::Circle);
+        pad.set_size(&env, Padstack::ALL_LAYERS, Vector2I::new(mm(1.0), mm(1.0)));
+        pad.set_drill_size(&env, Vector2I::new(mm(1.0), mm(1.0)));
+        pad.set_number("");
+        pad.set_position(&env, Vector2I::new(PCB_IU_SCALE.mm_to_iu(5.0), 0));
+        assert!(pad.padstack.front_outer_layers().has_solder_mask.is_none());
+        assert!(pad.padstack.back_outer_layers().has_solder_mask.is_none());
+        add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let output = save(&board);
+        let fp_start = output.find("(footprint").expect("(footprint");
+        assert!(
+            !output[fp_start..].contains("(tenting"),
+            "NPTH pad with default tenting should not have a (tenting) block"
+        );
+    }
+
+    // ---- qa/tests/pcbnew/test_custom_pad_primitive_roundtrip.cpp ----------------------------
+
+    /// A board with one footprint at (50, 25) mm, rotated 30 degrees and scaled (2, 1.5),
+    /// holding a custom pad with the given primitives (library coordinates in mm).
+    fn custom_pad_board(primitives: &str) -> Board {
+        let text = format!(
+            "(kicad_pcb (version 20261031) (generator \"pcbnew\") (generator_version \"10.99\")
+              (general (thickness 1.6) (legacy_teardrops no))
+              (layers (0 \"F.Cu\" signal) (2 \"B.Cu\" signal) (1 \"F.Mask\" user) (3 \"B.Mask\" user))
+              (footprint \"U1\" (layer \"F.Cu\")
+                (transform (translate 50 25) (rotate 30) (scale 2 1.5))
+                (pad \"1\" smd custom (at 0 0) (size 1 1) (layers \"F.Cu\")
+                  (options (clearance outline) (anchor circle))
+                  (primitives {primitives}))))"
+        );
+        parse_board(&text, "board.kicad_pcb", &ParseOptions::default()).expect("fixture")
+    }
+
+    fn find_primitive(pad: &Pad, shape: ShapeT) -> Option<&PcbShape> {
+        pad.lib_padstack()
+            .primitives(Padstack::ALL_LAYERS)
+            .iter()
+            .find(|prim| prim.shape.shape() == shape)
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/BezierAndPolyOnTransformedFootprint`: a custom pad's
+    /// bezier and polygon primitives must survive a save/reload unchanged, even when the
+    /// parent footprint carries a non-trivial transform (rotated + non-uniform scale).
+    #[test]
+    fn bezier_and_poly_on_transformed_footprint() {
+        let board = custom_pad_board(
+            "(gr_curve (pts (xy 0 0) (xy 1 2) (xy 3 -1) (xy 4 0.5)) (width 0.1))
+             (gr_poly (pts (xy 1 0) (xy 3 1) (xy 2 4) (xy -1 2)) (width 0.1) (fill no))",
+        );
+        let ctx = BoardCtx::bare(&board);
+        let pad = first_pad(&board);
+        let bezier = find_primitive(pad, ShapeT::Bezier).expect("bezier");
+        let poly = find_primitive(pad, ShapeT::Poly).expect("poly");
+
+        // The values the C++ fixture sets.
+        assert_eq!(bezier.lib_start(), Vector2I::new(0, 0));
+        assert_eq!(bezier.lib.bezier_c1, Vector2I::new(mm(1.0), mm(2.0)));
+        assert_eq!(bezier.lib.bezier_c2, Vector2I::new(mm(3.0), mm(-1.0)));
+        assert_eq!(bezier.lib_end(), Vector2I::new(mm(4.0), mm(0.5)));
+
+        let exp_bezier = (
+            bezier.lib_start(),
+            bezier.lib.bezier_c1,
+            bezier.lib.bezier_c2,
+            bezier.lib_end(),
+            bezier.width(&ctx),
+        );
+        let exp_poly = poly.lib.poly.clone();
+        let exp_poly_width = poly.width(&ctx);
+
+        let (_, reloaded) = round_trip(&board);
+        let rctx = BoardCtx::bare(&reloaded);
+        let pad_found = first_pad(&reloaded);
+
+        let bezier_found =
+            find_primitive(pad_found, ShapeT::Bezier).expect("Bezier primitive not found");
+        assert_eq!(
+            (
+                bezier_found.lib_start(),
+                bezier_found.lib.bezier_c1,
+                bezier_found.lib.bezier_c2,
+                bezier_found.lib_end(),
+                bezier_found.width(&rctx),
+            ),
+            exp_bezier
+        );
+
+        let poly_found =
+            find_primitive(pad_found, ShapeT::Poly).expect("Polygon primitive not found");
+        assert!(poly_found.shape.is_poly_shape_valid());
+
+        let got = &poly_found.lib.poly;
+        assert_eq!(got.outline_count(), exp_poly.outline_count());
+        let (exp_outline, got_outline) = (exp_poly.c_outline(0), got.c_outline(0));
+        assert_eq!(got_outline.point_count(), exp_outline.point_count());
+
+        for ii in 0..exp_outline.point_count() {
+            assert_eq!(got_outline.c_point(ii), exp_outline.c_point(ii));
+        }
+
+        assert_eq!(poly_found.width(&rctx), exp_poly_width);
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/SimplePadPrimitivesOnTransformedFootprint`: a segment and
+    /// a circle (which the non-uniform scale bakes into an ellipse) keep their library
+    /// geometry over a save/reload.
+    #[test]
+    fn simple_pad_primitives_on_transformed_footprint() {
+        let board = custom_pad_board(
+            "(gr_line (start 1 1) (end 6 2) (width 0.1))
+             (gr_circle (center 3 3) (end 4 3) (width 0.01))",
+        );
+        let ctx = BoardCtx::bare(&board);
+        let pad = first_pad(&board);
+        let seg = find_primitive(pad, ShapeT::Segment).expect("segment");
+        let circle = find_primitive(pad, ShapeT::Ellipse).expect("circle baked to an ellipse");
+
+        let exp_seg = (seg.lib_start(), seg.lib_end(), seg.width(&ctx));
+        let exp_circle_center = circle.lib_start();
+        let exp_circle_radius =
+            kicad_geom::ki_round(circle.shape.start().distance(circle.shape.end()));
+
+        let (_, reloaded) = round_trip(&board);
+        let rctx = BoardCtx::bare(&reloaded);
+        let pad_found = first_pad(&reloaded);
+
+        let seg_found =
+            find_primitive(pad_found, ShapeT::Segment).expect("Segment primitive not found");
+        assert_eq!(
+            (
+                seg_found.lib_start(),
+                seg_found.lib_end(),
+                seg_found.width(&rctx)
+            ),
+            exp_seg
+        );
+
+        let circle_found =
+            find_primitive(pad_found, ShapeT::Ellipse).expect("Elipse primitive not found");
+        assert_eq!(circle_found.lib_start(), exp_circle_center);
+        assert_eq!(
+            kicad_geom::ki_round(
+                circle_found
+                    .shape
+                    .start()
+                    .distance(circle_found.shape.end())
+            ),
+            exp_circle_radius
+        );
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/ScaledFootprintRoundTripStable`.
+    #[test]
+    fn scaled_footprint_round_trip_stable() {
+        let mut board = Board::new();
+        let fp = transformed_footprint(&mut board, 0.0, 2.0, 1.5);
+        let pad = smd_pad(
+            &mut board,
+            fp,
+            PadShape::Circle,
+            Vector2I::new(mm(1.0), mm(1.0)),
+        );
+        add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let (_, reloaded) = round_trip(&board);
+        let (_, r) = reloaded.footprints().next().unwrap();
+        assert!((r.transform().scale_x() - 2.0).abs() <= 2.0 * 1e-8);
+        assert!((r.transform().scale_y() - 1.5).abs() <= 1.5 * 1e-8);
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/PadPositionAndOrientationRoundTripStable`.
+    #[test]
+    fn pad_position_and_orientation_round_trip_stable() {
+        let mut board = Board::new();
+        let fp = transformed_footprint(&mut board, 30.0, 2.0, 1.5);
+        let mut pad = smd_pad(
+            &mut board,
+            fp,
+            PadShape::Rectangle,
+            Vector2I::new(mm(1.0), mm(0.5)),
+        );
+        let env = board.child_env(ParentRef::Item(fp.into()));
+        pad.set_position(&env, Vector2I::new(mm(53.0), mm(51.0)));
+        pad.set_orientation(&env, EdaAngle::from_degrees(75.0));
+        let id = add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let ctx = BoardCtx::bare(&board);
+        let pos_before = board.pads.get(id).unwrap().position(&ctx);
+        let orient_before = board.pads.get(id).unwrap().orientation(&ctx);
+
+        let (_, reloaded) = round_trip(&board);
+        let rctx = BoardCtx::bare(&reloaded);
+        let r = first_pad(&reloaded);
+        assert_eq!(r.position(&rctx), pos_before);
+        let after = r.orientation(&rctx).as_degrees();
+        assert!((after - orient_before.as_degrees()).abs() <= orient_before.as_degrees() * 1e-8);
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/PadDeltaRoundTripStable`.
+    #[test]
+    fn pad_delta_round_trip_stable() {
+        let mut board = Board::new();
+        let fp = transformed_footprint(&mut board, 0.0, 2.0, 1.5);
+        let mut pad = smd_pad(
+            &mut board,
+            fp,
+            PadShape::Trapezoid,
+            Vector2I::new(mm(1.0), mm(1.0)),
+        );
+        pad.set_delta(Padstack::ALL_LAYERS, Vector2I::new(mm(0.4), mm(0.0)));
+        let before = pad.delta(Padstack::ALL_LAYERS);
+        add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let (_, reloaded) = round_trip(&board);
+        assert_eq!(first_pad(&reloaded).delta(Padstack::ALL_LAYERS), before);
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/PadOffsetRoundTripStable`.
+    #[test]
+    fn pad_offset_round_trip_stable() {
+        let mut board = Board::new();
+        let fp = transformed_footprint(&mut board, 0.0, 2.0, 1.5);
+        let mut pad = smd_pad(
+            &mut board,
+            fp,
+            PadShape::Rectangle,
+            Vector2I::new(mm(1.0), mm(1.0)),
+        );
+        pad.set_lib_offset(Padstack::ALL_LAYERS, Vector2I::new(mm(0.3), mm(0.2)));
+        let id = add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let before = board
+            .pads
+            .get(id)
+            .unwrap()
+            .offset(&BoardCtx::bare(&board), Padstack::ALL_LAYERS);
+
+        let (_, reloaded) = round_trip(&board);
+        let rctx = BoardCtx::bare(&reloaded);
+        assert_eq!(
+            first_pad(&reloaded).offset(&rctx, Padstack::ALL_LAYERS),
+            before
+        );
+    }
+
+    /// `CustomPadPrimitiveRoundTrip/RotatedPadSizeRoundTripStable`.
+    #[test]
+    fn rotated_pad_size_round_trip_stable() {
+        let mut board = Board::new();
+        let fp = transformed_footprint(&mut board, 0.0, 2.0, 1.5);
+        let mut pad = smd_pad(
+            &mut board,
+            fp,
+            PadShape::Rectangle,
+            Vector2I::new(mm(1.0), mm(0.5)),
+        );
+        let env = board.child_env(ParentRef::Item(fp.into()));
+        pad.set_orientation(&env, EdaAngle::from_degrees(90.0));
+        let id = add_pad(&mut board, fp, pad);
+        board.attach_footprint(fp, AddMode::Append);
+
+        let before = board
+            .pads
+            .get(id)
+            .unwrap()
+            .size(&BoardCtx::bare(&board), Padstack::ALL_LAYERS);
+
+        let (_, reloaded) = round_trip(&board);
+        let rctx = BoardCtx::bare(&reloaded);
+        assert_eq!(
+            first_pad(&reloaded).size(&rctx, Padstack::ALL_LAYERS),
+            before
+        );
     }
 }

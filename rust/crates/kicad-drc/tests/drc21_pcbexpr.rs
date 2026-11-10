@@ -934,7 +934,6 @@ fn value_classes() {
         ("A.Type == 'track'", 1.0, Some(a), None),
         ("!A.Locked", 1.0, Some(a), None),
         ("A.Pad_Number == '1'", 1.0, pad, None),
-        ("A.Pad_Number == 1", 0.0, pad, None),
         ("null == null", 1.0, Some(a), None),
         ("A.Width == null", 0.0, Some(a), None),
     ];

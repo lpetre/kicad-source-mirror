@@ -573,8 +573,7 @@ mod tests {
         parse_board(text, "", &ParseOptions::default()).unwrap()
     }
 
-    /// The parts of `format( const BOARD* )` this package covers, written with a board-only
-    /// embedded file map (footprints are pending): `formatVariants`, the net chains, the
+    /// The parts of `format( const BOARD* )` this package covers: `formatVariants`, the net chains, the
     /// `(embedded_fonts ..)` flag and the consolidated `(embedded_files ..)`.
     fn write_sections(board: &Board) -> String {
         let mut out = PrettifiedOutputFormatter::new(FormatMode::Normal, false);
@@ -595,6 +594,24 @@ mod tests {
                 }
 
                 files.add_file(file.clone());
+            }
+
+            // format( const BOARD* ): the footprints' files are consolidated into the same
+            // map, in the writer's footprint order (`std::set` with `BOARD_ITEM::ptr_cmp`).
+            let ctx = crate::ctx::BoardCtx::bare(board);
+            let sorted_footprints = crate::io::writer::sorted_set(
+                board.footprints().map(|(id, _)| crate::ids::ItemId::from(id)),
+                |a, b| crate::board_item::board_item_ptr_cmp(&ctx, *a, *b),
+            );
+
+            for item in sorted_footprints {
+                let Some(fp) = item.typed().and_then(|id| board.footprint(id)) else {
+                    continue;
+                };
+
+                for file in fp.embedded_files.embedded_file_map().values() {
+                    files.add_file(file.clone());
+                }
             }
 
             let fonts = if board.embedded_files.are_fonts_embedded() {
@@ -866,8 +883,14 @@ mod tests {
                 pending += rows.len();
                 continue;
             };
-            let (b, report) = parsed.unwrap();
+            let (mut b, report) = parsed.unwrap();
             assert!(report.warnings.is_empty(), "{path}: {:?}", report.warnings);
+
+            // The reference re-save runs BOARD_LOADER::Load, whose BuildListOfNets()
+            // (board_loader.cpp) keeps the terminal pad UUIDs but clears the resolved pad
+            // pointers (NETINFO_LIST::buildListOfNets): the saved chains have no terminal_pad
+            // (issue25065).
+            b.build_list_of_nets();
 
             for file in b.embedded_files.embedded_file_map().values() {
                 assert!(
@@ -877,22 +900,11 @@ mod tests {
                 files += 1;
             }
 
-            // Footprint-level embedded files are merged into the board's section on save.
-            let board_level = text.matches("\n\t(embedded_files").count()
-                + text.matches("\n  (embedded_files").count();
-            let footprint_files_pending = text.matches("(embedded_files").count() > board_level
-                && report.skipped.iter().any(|s| s.token == "footprint");
-
             let saved = write_sections(&b);
             let ours = blocks(&saved);
 
             for (kw, lines, hash) in rows {
                 if *kw == "none" {
-                    continue;
-                }
-
-                if *kw == "embedded_files" && footprint_files_pending {
-                    pending += 1;
                     continue;
                 }
 

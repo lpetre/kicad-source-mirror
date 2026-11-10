@@ -130,9 +130,11 @@ fn tmp_dbg() {
     }
     board.increment_time_stamp();
     let mut filler = ZoneFiller::new(&board);
+    filler.set_debug_zone_filler(std::env::var("DBG_DEBUG").is_ok());
     filler.fill(&mut board, &mut connectivity, &engine, &zones);
     let reff = std::env::var("DBG_REF").unwrap();
     let rb = parse_board(&std::fs::read_to_string(&reff).unwrap(), "r", &ParseOptions::default()).unwrap();
+    let (mut same, mut diff) = (0, 0);
     for (rid, rz) in rb.zones() {
         let Some((pid, pz)) = board.zones().find(|(_, z)| z.base.item.uuid == rz.base.item.uuid) else { continue };
         let _ = (rid, pid);
@@ -140,12 +142,16 @@ fn tmp_dbg() {
             let e = ShapePolySet::new();
             let a = rz.get_fill(layer).unwrap_or(&e);
             let b = pz.get_fill(layer).unwrap_or(&e);
+            let eq = a.outline_count() == b.outline_count() && (0..a.outline_count()).all(|o| a.c_outline(o).c_points() == b.c_outline(o).c_points());
+            if eq { same += 1; } else { diff += 1; eprintln!("DIFF zone {} {:?}", rz.base.item.uuid.as_string(), layer); }
+            if std::env::var("DBG_QUIET").is_ok() { continue; }
             eprintln!("zone {} {:?}: ref {} outlines, port {}", rz.base.item.uuid.as_string(), layer, a.outline_count(), b.outline_count());
             for o in 0..a.outline_count().min(b.outline_count()) {
                 let pa = a.c_outline(o).c_points(); let pb = b.c_outline(o).c_points();
                 eprintln!("  outline {o}: {} vs {} pts, area {} vs {}", pa.len(), pb.len(), a.c_outline(o).area(true), b.c_outline(o).area(true));
-                if pa != pb { for i in 0..pa.len().max(pb.len()) { eprintln!("    {i}: {:?} | {:?}", pa.get(i), pb.get(i)); } }
+                if pa != pb && std::env::var("DBG_QUIET").is_err() { for i in 0..pa.len().max(pb.len()) { eprintln!("    {i}: {:?} | {:?}", pa.get(i), pb.get(i)); } }
             }
         }
     }
+    eprintln!("SUMMARY identical {same} differ {diff}");
 }

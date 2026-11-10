@@ -1180,11 +1180,12 @@ pub(crate) fn dump_zone(o: &mut Out, it: ItemRef<'_>) {
     emit!(o, "need_refill", v_bool(z.need_refill()));
     emit!(o, "num_corners", v_int(z.num_corners()));
     emit!(o, "first_layer", v_layer(z.first_layer()));
-    emit!(o, "outline", v_polyset(&z.board_outline(ctx)));
+    // *Outline(): the stored m_Poly (library frame inside a footprint).
+    emit!(o, "outline", v_polyset(z.outline()));
     emit!(o, "library_outline", v_polyset(z.library_outline()));
     emit!(o, "hatch_lines", {
         let v: Vec<String> = z
-            .border_hatch_lines
+            .hatch_lines(ctx)
             .iter()
             .map(|s| format!("{}>{}", v_vec(s.a), v_vec(s.b)))
             .collect();

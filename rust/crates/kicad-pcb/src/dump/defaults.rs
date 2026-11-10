@@ -25,7 +25,8 @@ use kicad_geom::Vector2I;
 
 use super::board::{SectionFn, dump_bbox, dump_item_base, is_dimension};
 use super::format::{
-    Out, attempt, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_str, v_vec,
+    Out, attempt, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_polyset, v_str,
+    v_vec,
 };
 use super::{items, settings};
 use crate::board::Board;
@@ -41,6 +42,7 @@ use crate::net_settings::NetSettings;
 use crate::netclass::Netclass;
 use crate::netinfo::NetinfoItem;
 use crate::pcb_field::{FieldT, PcbField};
+use crate::pcb_barcode::BarcodeT;
 use crate::pcb_marker::{PcbMarker, RcItem};
 use crate::pcb_plot_params::PcbPlotParams;
 use crate::pcb_track::{PcbArc, PcbTrack, PcbVia, Track};
@@ -167,24 +169,38 @@ pub(crate) fn dump_misc(o: &mut Out, it: ItemRef<'_>) {
             emit!(o, "point.library_position", v_vec(p.lib_pos()));
         }
         AnyItem::Barcode(b) => {
-            emit!(o, "barcode.text", v_str(b.text.text.text()));
-            emit!(o, "barcode.kind", v_enum(b.kind));
+            // VEnum: the magic_enum names of BARCODE_T / BARCODE_ECC_T.
+            let kind = match b.kind {
+                BarcodeT::Code39 => "CODE_39",
+                BarcodeT::Code128 => "CODE_128",
+                BarcodeT::DataMatrix => "DATA_MATRIX",
+                BarcodeT::QrCode => "QR_CODE",
+                BarcodeT::MicroQrCode => "MICRO_QR_CODE",
+            };
+            emit!(o, "barcode.text", v_str(b.text()));
+            emit!(o, "barcode.kind", kind.to_string());
             emit!(o, "barcode.ecc", v_enum(b.error_correction));
-            emit!(o, "barcode.show_text", no_api("PCB_BARCODE::GetShowText"));
+            emit!(o, "barcode.show_text", v_bool(b.show_text()));
             emit!(o, "barcode.size", format!("{},{}", b.width, b.height));
-            emit!(o, "barcode.text_size", no_api("PCB_BARCODE::GetTextSize"));
+            emit!(o, "barcode.text_size", v_int(b.text_size(ctx)));
             emit!(o, "barcode.margin", v_vec(b.margin));
             emit!(o, "barcode.angle", v_angle(b.angle(ctx)));
             emit!(o, "barcode.library_pos", v_vec(b.lib_pos()));
             emit!(o, "barcode.library_angle", v_angle(b.lib_angle()));
-            emit!(o, "barcode.poly", no_api("PCB_BARCODE::GetPolyShape"));
-            emit!(
-                o,
-                "barcode.symbol_poly",
-                no_api("PCB_BARCODE::GetSymbolPoly")
-            );
-            emit!(o, "barcode.text_poly", no_api("PCB_BARCODE::GetTextPoly"));
-            emit!(o, "barcode.last_error", no_api("PCB_BARCODE::GetLastError"));
+
+            // The assembled polygons need the zint symbol encoder (ZINT-1) for any non-empty
+            // text; an empty text assembles without it.
+            if b.text().is_empty() {
+                emit!(o, "barcode.poly", v_polyset(&b.poly_shape(ctx)));
+                emit!(o, "barcode.symbol_poly", v_polyset(&b.symbol_poly(ctx)));
+                emit!(o, "barcode.text_poly", v_polyset(&b.text_poly(ctx)));
+                emit!(o, "barcode.last_error", v_str(&b.last_error(ctx)));
+            } else {
+                emit!(o, "barcode.poly", no_api("zint symbol encoder (ZINT-1)"));
+                emit!(o, "barcode.symbol_poly", no_api("zint symbol encoder (ZINT-1)"));
+                emit!(o, "barcode.text_poly", no_api("zint symbol encoder (ZINT-1)"));
+                emit!(o, "barcode.last_error", no_api("zint symbol encoder (ZINT-1)"));
+            }
         }
         AnyItem::Image(r) => {
             emit!(o, "image.position", v_vec(r.pos));

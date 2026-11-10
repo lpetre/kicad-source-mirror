@@ -58,6 +58,18 @@ use plot_common::*;
 /// Files that differ for a reason outside this crate (board label and layer name, reason).
 /// They are reported, not failed; once the cause is fixed they match and count as matched.
 const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
+    // A table inside a footprint (rotated by 33 degrees): the model's `PcbTablecell`
+    // `corners()` / `draw_pos()` are footprint-local (not moved by the footprint position)
+    // and two of the four rotated corners coincide, so the cell text is drawn 40 mm / 28 mm
+    // off (FAB-06 found it; change request to kicad-pcb). The table borders match.
+    (
+        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb F.Cu",
+        "footprint table cell geometry (model)",
+    ),
+    (
+        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb B.Cu",
+        "footprint table cell geometry (model)",
+    ),
     // `PAD::SetLocalSolderMaskMargin` sets the margin of the front AND the back mask layer
     // (`pcbnew/pad.h`); the model's `Pad::set_local_solder_mask_margin` sets the front only,
     // so a pad's local mask margin is lost on B.Mask (change request to kicad-pcb).
@@ -78,7 +90,7 @@ const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
 /// How a layer is treated.
 #[derive(Debug, PartialEq)]
 enum Class {
-    /// Compared; `true` when the footprint text loop has something to plot (pending FAB-06).
+    /// Compared; `true` when the footprint text loop has something to plot.
     Compare { fp_text: bool },
     /// A drill map item on the board (FAB-13).
     DrillMap,
@@ -182,13 +194,8 @@ fn graphic_items_on(ctx: &BoardCtx<'_>, layer: PcbLayerId) -> usize {
 
 /// `plot_gerber_layer_file` for one layer with the CLI options: `StartPlotBoard`,
 /// `PlotBoardLayers` / `PlotOneBoardLayer` / `PlotStandardLayer` for a Gerber plotter
-/// (the footprint text loop only when `fp_text`), `EndPlot`.
-fn plot_layer(
-    ctx: &BoardCtx<'_>,
-    opts: &PcbPlotParams,
-    layer: PcbLayerId,
-    fp_text: bool,
-) -> String {
+/// (with `PlotText`, FAB-06, on every layer), `EndPlot`.
+fn plot_layer(ctx: &BoardCtx<'_>, opts: &PcbPlotParams, layer: PcbLayerId) -> String {
     let board = ctx.board;
     let layer_name = board.layer_name(layer);
     let mut fn_ = WxFileName::new(&board.file_name);
@@ -239,32 +246,13 @@ fn plot_layer(
         // Plot edge layer and graphic items
         for (id, _) in board.drawings() {
             if let Some(item) = ctx.item(id) {
-                // While `PlotText` is pending (FAB-06), leave out the text items it would
-                // return from at once (`!m_layerMask[aLayer]`): a text, text box or table
-                // on another layer plots nothing (the box border and the table borders
-                // check the layer too, and Gerber ignores `SetTextMode`).
-                let text_only = matches!(
-                    item.type_(),
-                    KicadT::PcbTextT
-                        | KicadT::PcbTextboxT
-                        | KicadT::PcbTableT
-                        | KicadT::PcbDrillChartT
-                        | KicadT::PcbStackupTableT
-                );
-
-                if text_only && item.layer() != layer {
-                    continue;
-                }
-
                 itemplotter.plot_board_graphic_item(item);
             }
         }
 
         // Draw footprint texts:
-        if fp_text {
-            for (footprint, _) in board.footprints() {
-                itemplotter.plot_footprint_text_items(footprint);
-            }
+        for (footprint, _) in board.footprints() {
+            itemplotter.plot_footprint_text_items(footprint);
         }
 
         // Draw footprint other graphic items:
@@ -286,6 +274,8 @@ struct Score {
     /// Board drawings and footprint graphic items on the layers of the matched files.
     graphics_matched: usize,
     files_pending: usize,
+    /// Matched files on layers where the footprint text loop has something to plot.
+    fp_text_matched: usize,
     skipped_drill_map: usize,
     skipped_mask_min_width: usize,
     skipped_barcode: usize,
@@ -365,9 +355,10 @@ fn replay_board(
             }
         };
 
-        match catch_unwind(AssertUnwindSafe(|| plot_layer(&ctx, &opts, layer, fp_text))) {
+        match catch_unwind(AssertUnwindSafe(|| plot_layer(&ctx, &opts, layer))) {
             Ok(text) if fnv(&text)[..8] == *file_hash => {
                 score.files_matched += 1;
+                score.fp_text_matched += usize::from(fp_text);
                 score.graphics_matched += graphic_items_on(&ctx, layer);
                 line.push('F');
             }
@@ -463,11 +454,12 @@ fn run(
 
 fn finish(what: &str, score: &Score) {
     println!(
-        "{what}: {} boards loaded: files {} matched ({} graphic items on them) / {} pending, skipped {} (drill map) + {} \
+        "{what}: {} boards loaded: files {} matched ({} graphic items on them, {} with footprint text) / {} pending, skipped {} (drill map) + {} \
          (mask min width) + {} (barcode), {} known differences, {} failures",
         score.boards,
         score.files_matched,
         score.graphics_matched,
+        score.fp_text_matched,
         score.files_pending,
         score.skipped_drill_map,
         score.skipped_mask_min_width,

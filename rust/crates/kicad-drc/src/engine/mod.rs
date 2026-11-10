@@ -235,6 +235,9 @@ pub struct DrcEngine {
     explicit_constraints: ConstraintMap,
     /// `m_netclassClearances`: netclass name -> its implicit clearance rule (lookups only).
     netclass_clearances: BTreeMap<String, Arc<DrcRule>>,
+    /// The index in `rules` of each rule of `netclass_clearances` (the identity the fast path
+    /// of `EvalRules` puts into `DrcRuleInfo::rule_index`, see [`DrcRule::info_in_engine`]).
+    netclass_clearance_indices: BTreeMap<String, u32>,
     /// `m_ownClearanceCache`: (uuid, layer) -> clearance (lookups only), stamped with the board
     /// time stamp (see [`OwnClearanceCache`]).
     own_clearance_cache: Mutex<OwnClearanceCache>,
@@ -548,6 +551,12 @@ fn is_parse_error(error: &IoError) -> bool {
     matches!(error, IoError::Parse(_) | IoError::FutureFormat(_))
 }
 
+/// A position in `m_rules` as `DrcRuleInfo::rule_index`. A rule list cannot reach 2^32
+/// entries (each rule is parsed from text held in memory).
+fn rule_index_u32(index: usize) -> u32 {
+    u32::try_from(index).expect("rule index exceeds u32")
+}
+
 /// The marker loop at the start of both `InitEngine` overloads:
 /// `drcItem->SetViolatingRule( nullptr )` for every board marker, so that `GetSeverity()`
 /// falls back to the board design settings. The Rust marker holds a copy of the rule data, not
@@ -576,6 +585,7 @@ impl DrcEngine {
             constraint_map: BTreeMap::new(),
             explicit_constraints: BTreeMap::new(),
             netclass_clearances: BTreeMap::new(),
+            netclass_clearance_indices: BTreeMap::new(),
             own_clearance_cache: Mutex::new(OwnClearanceCache::default()),
             has_explicit_clearance_rules: false,
             has_geometry_dependent_rules: false,
@@ -651,6 +661,7 @@ impl DrcEngine {
         {
             self.lock_own_clearance_cache().clear();
             self.netclass_clearances.clear();
+            self.netclass_clearance_indices.clear();
         }
 
         self.has_explicit_clearance_rules = false;
@@ -719,6 +730,7 @@ impl DrcEngine {
 
         // The netclass clearance cache points at the rules just destroyed
         self.netclass_clearances.clear();
+        self.netclass_clearance_indices.clear();
 
         board.increment_time_stamp(); // Clear board-level caches
 
@@ -740,6 +752,8 @@ impl DrcEngine {
         self.rules.extend(rules.into_iter().map(Arc::new));
 
         for (name, index) in out.netclass_clearances {
+            self.netclass_clearance_indices
+                .insert(name.clone(), rule_index_u32(first + index));
             self.netclass_clearances
                 .insert(name, Arc::clone(&self.rules[first + index]));
         }
@@ -776,6 +790,12 @@ impl DrcEngine {
     /// ([`ImplicitCondition`]); all other conditions are compiled with the PCB expression
     /// binding. As in C++, a compile error stops the loop with a `PARSE_ERROR` and leaves the
     /// constraints of the rules before it in the lists.
+    ///
+    /// The rule copies of every entry (`rule_info` and the four rule slots of `constraint`)
+    /// carry the rule's index in `m_rules` as its identity (`DrcRuleInfo::rule_index`). After a
+    /// failed `InitEngine` the entries left over from the first pass keep the indices of the
+    /// discarded rule list (in C++ they keep the discarded rules alive through their
+    /// `shared_ptr`), so such an index may name a different rule of the current list.
     fn compile_rules(&mut self, log_reporter: Option<&mut dyn Reporter>) -> Result<(), IoError> {
         if let Some(r) = log_reporter {
             r.report("Compiling Rules", Severity::Undefined);
@@ -825,6 +845,7 @@ impl DrcEngine {
             }
 
             let rule = Arc::clone(&self.rules[index]);
+            let rule_index = rule_index_u32(index);
 
             for (constraint_index, constraint) in rule.constraints.iter().enumerate() {
                 let implicit_keepout_zone = if rule.is_implicit()
@@ -836,13 +857,31 @@ impl DrcEngine {
                     None
                 };
 
+                // The copy's rule pointers are pointers to this rule (`AddConstraint`).
+                let mut constraint_copy = constraint.clone();
+
+                for slot in [
+                    &mut constraint_copy.parent_rule,
+                    &mut constraint_copy.min_rule,
+                    &mut constraint_copy.opt_rule,
+                    &mut constraint_copy.max_rule,
+                ]
+                .into_iter()
+                .flatten()
+                {
+                    slot.rule_index = Some(rule_index);
+                }
+
                 let engine_constraint = Arc::new(DrcEngineConstraint {
                     layer_test: rule.layer_condition.clone(),
                     condition: condition.clone(),
                     parent_rule: Arc::clone(&rule),
-                    constraint: constraint.clone(),
+                    constraint: constraint_copy,
                     implicit_keepout_zone,
-                    rule_info: constraint.parent_rule.as_ref().map(|_| rule.info()),
+                    rule_info: constraint
+                        .parent_rule
+                        .as_ref()
+                        .map(|_| rule.info_in_engine(rule_index)),
                     test: rule
                         .constraint_tests
                         .get(constraint_index)
@@ -1033,6 +1072,24 @@ impl DrcEngine {
     /// `m_rules`, in evaluation order.
     pub fn rules(&self) -> &[Arc<DrcRule>] {
         &self.rules
+    }
+
+    /// The rule behind a `DrcRuleInfo::rule_index` (what dereferencing the C++ `DRC_RULE*`
+    /// gives access to: `m_Name`, the constraints, ...). `None` for an index that is not in
+    /// the current rule list.
+    pub fn rule(&self, rule_index: u32) -> Option<&Arc<DrcRule>> {
+        self.rules.get(rule_index as usize)
+    }
+
+    /// The netclass fast path's `m_netclassClearances[ aName ]` lookup with the identity of
+    /// the rule: its index in `m_rules`.
+    pub(crate) fn netclass_clearance_rule_indexed(
+        &self,
+        netclass_name: &str,
+    ) -> Option<(u32, &Arc<DrcRule>)> {
+        let rule = self.netclass_clearances.get(netclass_name)?;
+        let index = *self.netclass_clearance_indices.get(netclass_name)?;
+        Some((index, rule))
     }
 
     /// `m_constraintMap`.

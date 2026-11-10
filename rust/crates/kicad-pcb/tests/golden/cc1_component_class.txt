@@ -1,0 +1,579 @@
+0|drc|
+1|drc|(version 2) (assign_component_class "CLS")
+2|drc|(version 2) (assign_component_class "CLS")
+3|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'R1' )" ) )
+4|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'R1' || A.Reference == 'R2' || A.Reference == 'R3' )" ) )
+5|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'R1,R2' || A.Reference == 'R3' )" ) )
+6|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'R1\' || A.Reference == 'R2' )" ) )
+7|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == '' || A.Reference == '' )" ) )
+8|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'R1' || A.Reference == '' || A.Reference == 'R2' || A.Reference == '' )" ) )
+9|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == '\' )" ) )
+10|drc|(version 2) (assign_component_class "CLS" (condition "( A.Reference == 'a\b' || A.Reference == 'c\' )" ) )
+11|drc|(version 2) (assign_component_class "CLS")
+12|drc|(version 2) (assign_component_class "CLS" (condition "( A.Library_Link == 'Lib:Fp' ) && ( A.Layer == 'F.Cu' )" ) )
+13|drc|(version 2) (assign_component_class "CLS" (condition "( A.Layer == 'B.Cu' ) && ( A.Layer == 'B.Cu' ) && ( A.Layer == 'B.Cu' )" ) )
+14|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == 90 deg )" ) )
+15|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == -90 deg )" ) )
+16|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == +180 deg )" ) )
+17|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == 0 deg )" ) )
+18|drc|(version 2) (assign_component_class "ROT")
+19|drc|(version 2) (assign_component_class "ROT")
+20|drc|(version 2) (assign_component_class "ROT")
+21|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == 2147483647 deg )" ) )
+22|drc|(version 2) (assign_component_class "ROT")
+23|drc|(version 2) (assign_component_class "ROT" (condition "( A.Orientation == -2147483648 deg )" ) )
+24|drc|(version 2) (assign_component_class "ROT")
+25|drc|(version 2) (assign_component_class "ROT")
+26|drc|(version 2) (assign_component_class "ROT")
+27|drc|(version 2) (assign_component_class "ROT")
+28|drc|(version 2) (assign_component_class "ROT")
+29|drc|(version 2) (assign_component_class "ROT")
+30|drc|(version 2) (assign_component_class "ROT")
+31|drc|(version 2) (assign_component_class "F" (condition "( A.getField('F1') == 'V1' ) || ( A.getField('F2') == 'V2*' )" ) )
+32|drc|(version 2) (assign_component_class "C" (condition "( A.Type == 'Pad' )" ) )
+33|drc|(version 2) (assign_component_class "S" (condition "( A.memberOfSheet('/Sheet1/') )" ) )
+34|drc|(version 2) (assign_component_class "ÄÖ" (condition "( A.Reference == 'Ü1' ) || ( A.Reference == 'R1' )" ) )
+35|drc|(version 2) (assign_component_class "Q"x" (condition "( A.Reference == 'R'1' )" ) )
+36|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' )" ) )
+37|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' )" ) )
+38|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' )" ) )
+39|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' )" ) )
+40|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' )" ) )
+41|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' )" ) )
+42|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' )" ) )
+43|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' )" ) )
+44|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' )" ) )
+45|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' )" ) )
+46|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' )" ) )
+47|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+48|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa' )" ) )
+49|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\' )" ) )
+50|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '' )" ) )
+51|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' )" ) )
+52|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' )" ) )
+53|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,' )" ) )
+54|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a' )" ) )
+55|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\' )" ) )
+56|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '' )" ) )
+57|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' )" ) )
+58|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\' )" ) )
+59|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' )" ) )
+60|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' )" ) )
+61|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\' )" ) )
+62|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '' )" ) )
+63|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a' )" ) )
+64|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\' )" ) )
+65|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '' )" ) )
+66|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa' )" ) )
+67|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\' )" ) )
+68|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '' )" ) )
+69|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' )" ) )
+70|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' )" ) )
+71|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',' )" ) )
+72|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a' )" ) )
+73|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+74|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+75|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaaa' )" ) )
+76|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa\' )" ) )
+77|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa' || A.Reference == '' )" ) )
+78|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\a' )" ) )
+79|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\' )" ) )
+80|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa,' )" ) )
+81|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == 'a' )" ) )
+82|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '\' )" ) )
+83|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '' || A.Reference == '' )" ) )
+84|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\aa' )" ) )
+85|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a\' )" ) )
+86|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' || A.Reference == '' )" ) )
+87|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' )" ) )
+88|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\\' )" ) )
+89|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' || A.Reference == '' )" ) )
+90|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,a' )" ) )
+91|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,\' )" ) )
+92|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,' || A.Reference == '' )" ) )
+93|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'aa' )" ) )
+94|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a\' )" ) )
+95|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a' || A.Reference == '' )" ) )
+96|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\a' )" ) )
+97|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\' )" ) )
+98|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == ',' )" ) )
+99|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == 'a' )" ) )
+100|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '\' )" ) )
+101|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+102|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aaa' )" ) )
+103|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa\' )" ) )
+104|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' || A.Reference == '' )" ) )
+105|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\a' )" ) )
+106|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\' )" ) )
+107|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a,' )" ) )
+108|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == 'a' )" ) )
+109|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '\' )" ) )
+110|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' || A.Reference == '' )" ) )
+111|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' )" ) )
+112|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\' )" ) )
+113|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' )" ) )
+114|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\a' )" ) )
+115|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\' )" ) )
+116|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\,' )" ) )
+117|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == 'a' )" ) )
+118|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '\' )" ) )
+119|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '' || A.Reference == '' )" ) )
+120|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',aa' )" ) )
+121|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a\' )" ) )
+122|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a' || A.Reference == '' )" ) )
+123|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\a' )" ) )
+124|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\' )" ) )
+125|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',,' )" ) )
+126|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == 'a' )" ) )
+127|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '\' )" ) )
+128|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '' || A.Reference == '' )" ) )
+129|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aaa' )" ) )
+130|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa\' )" ) )
+131|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa' || A.Reference == '' )" ) )
+132|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\a' )" ) )
+133|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\' )" ) )
+134|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a,' )" ) )
+135|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == 'a' )" ) )
+136|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '\' )" ) )
+137|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '' || A.Reference == '' )" ) )
+138|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\aa' )" ) )
+139|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a\' )" ) )
+140|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' || A.Reference == '' )" ) )
+141|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' )" ) )
+142|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\\' )" ) )
+143|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' || A.Reference == '' )" ) )
+144|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',a' )" ) )
+145|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',\' )" ) )
+146|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',' || A.Reference == '' )" ) )
+147|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'aa' )" ) )
+148|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a\' )" ) )
+149|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a' || A.Reference == '' )" ) )
+150|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\a' )" ) )
+151|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+152|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == ',' )" ) )
+153|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == 'a' )" ) )
+154|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+155|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+156|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaaaa' )" ) )
+157|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaaa\' )" ) )
+158|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaaa' || A.Reference == '' )" ) )
+159|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa\a' )" ) )
+160|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa\' )" ) )
+161|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa,' )" ) )
+162|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa' || A.Reference == 'a' )" ) )
+163|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa' || A.Reference == '\' )" ) )
+164|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aaa' || A.Reference == '' || A.Reference == '' )" ) )
+165|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\aa' )" ) )
+166|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\a\' )" ) )
+167|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\a' || A.Reference == '' )" ) )
+168|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\a' )" ) )
+169|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\\' )" ) )
+170|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa\' || A.Reference == '' )" ) )
+171|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa,a' )" ) )
+172|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa,\' )" ) )
+173|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa,' || A.Reference == '' )" ) )
+174|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == 'aa' )" ) )
+175|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == 'a\' )" ) )
+176|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == 'a' || A.Reference == '' )" ) )
+177|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '\a' )" ) )
+178|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '\' )" ) )
+179|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == ',' )" ) )
+180|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '' || A.Reference == 'a' )" ) )
+181|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '' || A.Reference == '\' )" ) )
+182|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'aa' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+183|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\aaa' )" ) )
+184|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\aa\' )" ) )
+185|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\aa' || A.Reference == '' )" ) )
+186|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a\a' )" ) )
+187|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a\' )" ) )
+188|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a,' )" ) )
+189|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' || A.Reference == 'a' )" ) )
+190|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' || A.Reference == '\' )" ) )
+191|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' || A.Reference == '' || A.Reference == '' )" ) )
+192|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\aa' )" ) )
+193|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a\' )" ) )
+194|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\a' || A.Reference == '' )" ) )
+195|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\\a' )" ) )
+196|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\\' )" ) )
+197|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\,' )" ) )
+198|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' || A.Reference == 'a' )" ) )
+199|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' || A.Reference == '\' )" ) )
+200|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a\' || A.Reference == '' || A.Reference == '' )" ) )
+201|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,aa' )" ) )
+202|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,a\' )" ) )
+203|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,a' || A.Reference == '' )" ) )
+204|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,\a' )" ) )
+205|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,\' )" ) )
+206|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,,' )" ) )
+207|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,' || A.Reference == 'a' )" ) )
+208|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,' || A.Reference == '\' )" ) )
+209|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a,' || A.Reference == '' || A.Reference == '' )" ) )
+210|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'aaa' )" ) )
+211|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'aa\' )" ) )
+212|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'aa' || A.Reference == '' )" ) )
+213|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a\a' )" ) )
+214|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a\' )" ) )
+215|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a,' )" ) )
+216|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a' || A.Reference == 'a' )" ) )
+217|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a' || A.Reference == '\' )" ) )
+218|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == 'a' || A.Reference == '' || A.Reference == '' )" ) )
+219|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\aa' )" ) )
+220|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\a\' )" ) )
+221|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\a' || A.Reference == '' )" ) )
+222|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\a' )" ) )
+223|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\\' )" ) )
+224|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '\' || A.Reference == '' )" ) )
+225|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == ',a' )" ) )
+226|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == ',\' )" ) )
+227|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == ',' || A.Reference == '' )" ) )
+228|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == 'aa' )" ) )
+229|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == 'a\' )" ) )
+230|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == 'a' || A.Reference == '' )" ) )
+231|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '\a' )" ) )
+232|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '\' )" ) )
+233|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == ',' )" ) )
+234|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '' || A.Reference == 'a' )" ) )
+235|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+236|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == 'a' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+237|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aaaa' )" ) )
+238|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aaa\' )" ) )
+239|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aaa' || A.Reference == '' )" ) )
+240|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa\a' )" ) )
+241|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa\' )" ) )
+242|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa,' )" ) )
+243|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' || A.Reference == 'a' )" ) )
+244|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' || A.Reference == '\' )" ) )
+245|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' || A.Reference == '' || A.Reference == '' )" ) )
+246|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\aa' )" ) )
+247|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\a\' )" ) )
+248|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\a' || A.Reference == '' )" ) )
+249|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\a' )" ) )
+250|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\\' )" ) )
+251|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\' || A.Reference == '' )" ) )
+252|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a,a' )" ) )
+253|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a,\' )" ) )
+254|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a,' || A.Reference == '' )" ) )
+255|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == 'aa' )" ) )
+256|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == 'a\' )" ) )
+257|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == 'a' || A.Reference == '' )" ) )
+258|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '\a' )" ) )
+259|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '\' )" ) )
+260|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == ',' )" ) )
+261|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' || A.Reference == 'a' )" ) )
+262|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' || A.Reference == '\' )" ) )
+263|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+264|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aaa' )" ) )
+265|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa\' )" ) )
+266|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\aa' || A.Reference == '' )" ) )
+267|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\a' )" ) )
+268|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a\' )" ) )
+269|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a,' )" ) )
+270|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == 'a' )" ) )
+271|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '\' )" ) )
+272|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\a' || A.Reference == '' || A.Reference == '' )" ) )
+273|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\aa' )" ) )
+274|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\a\' )" ) )
+275|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\a' || A.Reference == '' )" ) )
+276|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\a' )" ) )
+277|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\\' )" ) )
+278|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\\' || A.Reference == '' )" ) )
+279|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\,a' )" ) )
+280|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\,\' )" ) )
+281|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\,' || A.Reference == '' )" ) )
+282|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == 'aa' )" ) )
+283|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == 'a\' )" ) )
+284|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == 'a' || A.Reference == '' )" ) )
+285|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '\a' )" ) )
+286|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '\' )" ) )
+287|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == ',' )" ) )
+288|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '' || A.Reference == 'a' )" ) )
+289|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '' || A.Reference == '\' )" ) )
+290|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '\' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+291|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',aaa' )" ) )
+292|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',aa\' )" ) )
+293|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',aa' || A.Reference == '' )" ) )
+294|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a\a' )" ) )
+295|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a\' )" ) )
+296|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a,' )" ) )
+297|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a' || A.Reference == 'a' )" ) )
+298|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a' || A.Reference == '\' )" ) )
+299|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',a' || A.Reference == '' || A.Reference == '' )" ) )
+300|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\aa' )" ) )
+301|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\a\' )" ) )
+302|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\a' || A.Reference == '' )" ) )
+303|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\a' )" ) )
+304|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\\' )" ) )
+305|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',\' || A.Reference == '' )" ) )
+306|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',,a' )" ) )
+307|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',,\' )" ) )
+308|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',,' || A.Reference == '' )" ) )
+309|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == 'aa' )" ) )
+310|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == 'a\' )" ) )
+311|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == 'a' || A.Reference == '' )" ) )
+312|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '\a' )" ) )
+313|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '\' )" ) )
+314|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == ',' )" ) )
+315|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '' || A.Reference == 'a' )" ) )
+316|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '' || A.Reference == '\' )" ) )
+317|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == ',' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+318|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aaaa' )" ) )
+319|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aaa\' )" ) )
+320|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aaa' || A.Reference == '' )" ) )
+321|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa\a' )" ) )
+322|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa\' )" ) )
+323|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa,' )" ) )
+324|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa' || A.Reference == 'a' )" ) )
+325|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa' || A.Reference == '\' )" ) )
+326|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'aa' || A.Reference == '' || A.Reference == '' )" ) )
+327|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\aa' )" ) )
+328|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\a\' )" ) )
+329|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\a' || A.Reference == '' )" ) )
+330|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\a' )" ) )
+331|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\\' )" ) )
+332|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a\' || A.Reference == '' )" ) )
+333|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a,a' )" ) )
+334|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a,\' )" ) )
+335|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a,' || A.Reference == '' )" ) )
+336|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == 'aa' )" ) )
+337|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == 'a\' )" ) )
+338|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == 'a' || A.Reference == '' )" ) )
+339|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '\a' )" ) )
+340|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '\' )" ) )
+341|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == ',' )" ) )
+342|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '' || A.Reference == 'a' )" ) )
+343|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '' || A.Reference == '\' )" ) )
+344|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == 'a' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+345|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\aaa' )" ) )
+346|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\aa\' )" ) )
+347|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\aa' || A.Reference == '' )" ) )
+348|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a\a' )" ) )
+349|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a\' )" ) )
+350|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a,' )" ) )
+351|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' || A.Reference == 'a' )" ) )
+352|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' || A.Reference == '\' )" ) )
+353|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' || A.Reference == '' || A.Reference == '' )" ) )
+354|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\aa' )" ) )
+355|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a\' )" ) )
+356|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\a' || A.Reference == '' )" ) )
+357|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\\a' )" ) )
+358|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\\' )" ) )
+359|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\,' )" ) )
+360|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' || A.Reference == 'a' )" ) )
+361|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' || A.Reference == '\' )" ) )
+362|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '\' || A.Reference == '' || A.Reference == '' )" ) )
+363|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',aa' )" ) )
+364|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',a\' )" ) )
+365|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',a' || A.Reference == '' )" ) )
+366|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',\a' )" ) )
+367|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',\' )" ) )
+368|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',,' )" ) )
+369|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',' || A.Reference == 'a' )" ) )
+370|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',' || A.Reference == '\' )" ) )
+371|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == ',' || A.Reference == '' || A.Reference == '' )" ) )
+372|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'aaa' )" ) )
+373|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'aa\' )" ) )
+374|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'aa' || A.Reference == '' )" ) )
+375|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a\a' )" ) )
+376|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a\' )" ) )
+377|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a,' )" ) )
+378|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a' || A.Reference == 'a' )" ) )
+379|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a' || A.Reference == '\' )" ) )
+380|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == 'a' || A.Reference == '' || A.Reference == '' )" ) )
+381|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\aa' )" ) )
+382|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\a\' )" ) )
+383|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\a' || A.Reference == '' )" ) )
+384|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\a' )" ) )
+385|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\\' )" ) )
+386|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '\' || A.Reference == '' )" ) )
+387|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == ',a' )" ) )
+388|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == ',\' )" ) )
+389|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == ',' || A.Reference == '' )" ) )
+390|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == 'aa' )" ) )
+391|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == 'a\' )" ) )
+392|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == 'a' || A.Reference == '' )" ) )
+393|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '\a' )" ) )
+394|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+395|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == ',' )" ) )
+396|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == 'a' )" ) )
+397|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '\' )" ) )
+398|drc|(version 2) (assign_component_class "SPLIT" (condition "( A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' || A.Reference == '' )" ) )
+399|loaded|1
+399|enabled|0
+399|count|0
+400|loaded|0
+400|enabled|1
+400|count|0
+401|loaded|0
+401|enabled|0
+401|count|0
+402|loaded|0
+402|enabled|0
+402|count|0
+403|loaded|0
+403|enabled|0
+403|count|0
+404|loaded|0
+404|enabled|0
+404|count|0
+405|loaded|0
+405|enabled|0
+405|count|2
+405|a0.class|A
+405|a0.op|ANY
+405|a0.c0|FOOTPRINT_FIELD	X	Y
+405|a0.c1|REFERENCE	R1	
+405|a0.c2|REFERENCE	R2	
+405|a0.c3|SIDE	Back	
+405|a0.drc|(version 2) (assign_component_class "A" (condition "( A.getField('X') == 'Y' ) || ( A.Reference == 'R1' ) || ( A.Reference == 'R2' ) || ( A.Layer == 'B.Cu' )" ) )
+405|a1.class|B
+405|a1.op|ANY
+405|a1.drc|(version 2) (assign_component_class "B")
+406|loaded|0
+406|enabled|0
+406|count|1
+406|a0.class|A
+406|a0.op|ALL
+406|a0.drc|(version 2) (assign_component_class "A")
+407|loaded|0
+407|enabled|0
+407|count|1
+407|a0.class|A
+407|a0.op|ALL
+407|a0.c0|REFERENCE	R1	
+407|a0.c1|REFERENCE		
+407|a0.drc|(version 2) (assign_component_class "A" (condition "( A.Reference == 'R1' )" ) )
+408|loaded|0
+408|enabled|0
+408|count|1
+408|a0.class|A
+408|a0.op|ALL
+408|a0.c0|REFERENCE		
+408|a0.drc|(version 2) (assign_component_class "A")
+409|loaded|0
+409|enabled|0
+409|count|1
+409|a0.class|A
+409|a0.op|ALL
+409|a0.c0|REFERENCE	R1	
+409|a0.drc|(version 2) (assign_component_class "A" (condition "( A.Reference == 'R1' )" ) )
+410|loaded|0
+410|enabled|0
+410|count|0
+411|loaded|0
+411|enabled|0
+411|count|0
+412|loaded|0
+412|enabled|0
+412|count|1
+412|a0.class|A
+412|a0.op|ALL
+412|a0.c0|REFERENCE	p	
+412|a0.c1|CUSTOM		
+412|a0.c2|FOOTPRINT	L:F	
+412|a0.c3|REFERENCE		
+412|a0.drc|(version 2) (assign_component_class "A" (condition "( A.Reference == 'p' ) && ( A.Library_Link == 'L:F' )" ) )
+413|loaded|0
+413|enabled|0
+413|count|1
+413|a0.class|A
+413|a0.op|ALL
+413|a0.c0|REFERENCE	R	
+413|a0.drc|(version 2) (assign_component_class "A" (condition "( A.Reference == 'R' )" ) )
+414|loaded|0
+414|enabled|0
+414|count|0
+415|loaded|1
+415|enabled|1
+415|count|10
+415|a0.class|CAP_1
+415|a0.op|ALL
+415|a0.c0|FOOTPRINT	Capacitor_SMD:C_0805_2012Metric	
+415|a0.c1|FOOTPRINT_FIELD	MY_FIELD	MY_VALUE
+415|a0.c2|REFERENCE	C1	
+415|a0.c3|ROTATION	90	
+415|a0.c4|SIDE	Front	
+415|a0.drc|(version 2) (assign_component_class "CAP_1" (condition "( A.Library_Link == 'Capacitor_SMD:C_0805_2012Metric' ) && ( A.getField('MY_FIELD') == 'MY_VALUE' ) && ( A.Reference == 'C1' ) && ( A.Orientation == 90 deg ) && ( A.Layer == 'F.Cu' )" ) )
+415|a1.class|CAP_2
+415|a1.op|ALL
+415|a1.c0|CUSTOM	A.intersectsArea('RULE_1')	
+415|a1.c1|REFERENCE	C?	
+415|a1.drc|(version 2) (assign_component_class "CAP_2" (condition "( A.intersectsArea('RULE_1') ) && ( A.Reference == 'C?' )" ) )
+415|a2.class|RES_1
+415|a2.op|ALL
+415|a2.c0|REFERENCE	R?	
+415|a2.drc|(version 2) (assign_component_class "RES_1" (condition "( A.Reference == 'R?' )" ) )
+415|a3.class|RES_2
+415|a3.op|ALL
+415|a3.c0|REFERENCE	R*	
+415|a3.drc|(version 2) (assign_component_class "RES_2" (condition "( A.Reference == 'R*' )" ) )
+415|a4.class|RES_3
+415|a4.op|ALL
+415|a4.c0|FOOTPRINT_FIELD	FIELD_2	ANOTHER*
+415|a4.drc|(version 2) (assign_component_class "RES_3" (condition "( A.getField('FIELD_2') == 'ANOTHER*' )" ) )
+415|a5.class|RES_4
+415|a5.op|ALL
+415|a5.c0|REFERENCE	R1	
+415|a5.c1|ROTATION	180	
+415|a5.c2|SIDE	Back	
+415|a5.drc|(version 2) (assign_component_class "RES_4" (condition "( A.Reference == 'R1' ) && ( A.Orientation == 180 deg ) && ( A.Layer == 'B.Cu' )" ) )
+415|a6.class|ANY
+415|a6.op|ANY
+415|a6.c0|FOOTPRINT_FIELD	FIELD2	VALUE
+415|a6.c1|REFERENCE	U1	
+415|a6.drc|(version 2) (assign_component_class "ANY" (condition "( A.getField('FIELD2') == 'VALUE' ) || ( A.Reference == 'U1' )" ) )
+415|a7.class|MULTI_REF
+415|a7.op|ALL
+415|a7.c0|REFERENCE	U3,U4	
+415|a7.drc|(version 2) (assign_component_class "MULTI_REF" (condition "( A.Reference == 'U3' || A.Reference == 'U4' )" ) )
+415|a8.class|REF_WILDCARD
+415|a8.op|ALL
+415|a8.c0|REFERENCE	U5?	
+415|a8.drc|(version 2) (assign_component_class "REF_WILDCARD" (condition "( A.Reference == 'U5?' )" ) )
+415|a9.class|REF_WILDCARD2
+415|a9.op|ALL
+415|a9.c0|REFERENCE	U5*	
+415|a9.drc|(version 2) (assign_component_class "REF_WILDCARD2" (condition "( A.Reference == 'U5*' )" ) )
+416|loaded|1
+416|enabled|0
+416|count|0
+417|loaded|1
+417|enabled|0
+417|count|6
+417|a0.class|Connector
+417|a0.op|ANY
+417|a0.c0|REFERENCE	J1,JP1	
+417|a0.drc|(version 2) (assign_component_class "Connector" (condition "( A.Reference == 'J1' || A.Reference == 'JP1' )" ) )
+417|a1.class|MCU
+417|a1.op|ANY
+417|a1.c0|REFERENCE	U6,U5	
+417|a1.drc|(version 2) (assign_component_class "MCU" (condition "( A.Reference == 'U6' || A.Reference == 'U5' )" ) )
+417|a2.class|DecouplingCap
+417|a2.op|ANY
+417|a2.c0|REFERENCE	C7,C6	
+417|a2.drc|(version 2) (assign_component_class "DecouplingCap" (condition "( A.Reference == 'C7' || A.Reference == 'C6' )" ) )
+417|a3.class|Mosfet
+417|a3.op|ANY
+417|a3.c0|REFERENCE	Q3,Q2,Q1	
+417|a3.drc|(version 2) (assign_component_class "Mosfet" (condition "( A.Reference == 'Q3' || A.Reference == 'Q2' || A.Reference == 'Q1' )" ) )
+417|a4.class|Inductor
+417|a4.op|ANY
+417|a4.c0|REFERENCE	L1	
+417|a4.drc|(version 2) (assign_component_class "Inductor" (condition "( A.Reference == 'L1' )" ) )
+417|a5.class|BulkCap
+417|a5.op|ANY
+417|a5.c0|REFERENCE	C1,C2	
+417|a5.drc|(version 2) (assign_component_class "BulkCap" (condition "( A.Reference == 'C1' || A.Reference == 'C2' )" ) )
+418|loaded|1
+418|enabled|0
+418|count|1
+418|a0.class|Overlapping
+418|a0.op|ALL
+418|a0.c0|REFERENCE	HS1, IC51	
+418|a0.drc|(version 2) (assign_component_class "Overlapping" (condition "( A.Reference == 'HS1' || A.Reference == 'IC51' )" ) )
+419|loaded|1
+419|enabled|0
+419|count|1
+419|a0.class|Overlapping
+419|a0.op|ALL
+419|a0.c0|REFERENCE	HS1, IC51	
+419|a0.drc|(version 2) (assign_component_class "Overlapping" (condition "( A.Reference == 'HS1' || A.Reference == 'IC51' )" ) )

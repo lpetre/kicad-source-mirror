@@ -55,7 +55,7 @@ use kicad_geom::{
 
 use crate::cache::CacheCell;
 use crate::ctx::{BoardCtx, MutEnv};
-use crate::foundation_stub::FontRef;
+use kicad_font::FontRef;
 use crate::traits::EdaTextItem;
 
 /// `DEFAULT_SIZE_TEXT`: default text height, in mils.

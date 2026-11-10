@@ -1083,7 +1083,13 @@ impl Board {
             OwnedItem::Zone(z) => child!(*z, zones),
             OwnedItem::Group(g) => child!(g, groups),
             OwnedItem::Constraint(c) => child!(c, constraints),
-            OwnedItem::Point(p) => child!(p, points),
+            OwnedItem::Point(mut p) => {
+                // PCB_POINT::SetParent (aBoardItem->SetParent( this ) in FOOTPRINT::Add)
+                // recomputes the board position from the library position.
+                let env = self.child_env(ParentRef::Item(fp.into()));
+                p.on_footprint_transformed(&env);
+                child!(p, points)
+            }
             OwnedItem::Body3d(b) => child!(*b, bodies),
             other => return Err(other),
         };

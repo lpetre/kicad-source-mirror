@@ -1277,5 +1277,116 @@ default binding `PcbExprUcode`.
   stand-in `SyntaxBinder` and skips boards with user rule conditions; switching it to the real
   binding (skipping only function-calling rules, as `evalrules_oracle.rs::has_compiled_conditions`
   now does) brings 27 more boards into every provider's comparison.
-- Footprint pads do not load yet (PCBIO-07): the pad cases of `value_classes` are skipped and run
-  automatically once pads load.
+- `value_classes` skips its pad cases when the board reader cannot load pads (they run since
+  PCBIO-07 landed).
+
+## FIX-DRC-1: rule identity behind `DRC_CONSTRAINT::GetParentRule()` (review finding R-01)
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `DRC_RULE*` identity (`m_parentRule`, `m_minRule`, `m_optRule`, `m_maxRule`) | `kicad_pcb::drc_api::DrcRuleInfo::rule_index` (index in `DRC_ENGINE::m_rules`, `None` outside an engine; part of `PartialEq`) | ported |
+| `compileRules`: `DRC_ENGINE_CONSTRAINT::parentRule` / `constraint` copy | `engine/mod.rs` `compile_rules`: `rule_info` and the four rule slots of `constraint` carry the index (`DrcRule::info_in_engine`) | ported |
+| `m_netclassClearances` fast path of `EvalRules` | `engine/eval_rules.rs`: same index as the general path (`netclass_clearance_rule_indexed`) | ported |
+| dereferencing the pointer (`matchingRule->m_Name`, ...) | `DrcEngine::rule( index )` | ported |
+
+### Verification
+
+- The engine and EvalRules goldens (`engine_corpus.txt`, `evalrules_corpus.txt`,
+  `evalrules_review.txt`) do not print the index and replay unchanged.
+- `evalrules_oracle.rs::same_named_rules_have_distinct_identity`: on `rev_explicit` the two
+  `"dup name"` rules give a via on F.Cu min 0.45 mm from the second and max 0.7 mm from the
+  first (the reference values of `evalrules_review.txt`), with equal names and severities but
+  different `rule_index`; every compiled constraint's index names its own `parentRule`.
+- `fast_path_equals_general_path` also compares the indices of the four rule slots.
+
+### Deviations
+
+- After a failed `InitEngine` the constraints left over from the first pass keep the indices
+  of the discarded rule list (C++: their `shared_ptr` keeps the discarded rules alive), so such
+  an index may name a different rule of the current list (documented on `compile_rules`).
+- Consumers that group by `DRC_RULE*` in a `std::map` (address order, unspecified) group by
+  `rule_index` in a `BTreeMap` instead: rule creation order, the deterministic order of
+  `drc.md` 4.12. Such reports are compared as sets.
+
+### Known gaps
+
+- Work item 3 (matched length `itemSets` / `matches`, `LENGTH_DELAY_STATS::matchingRule` in
+  `drc_length_report.h`) is not done: `providers/matched_length.rs` and `length_report.rs` are
+  still placeholders; their package must group by `rule_index` in a `BTreeMap` and verify a
+  board with two same-named length rules against the reference `kicad-cli pcb drc` (set
+  comparison). The diff-pair coupling provider (`gapRule` / `uncoupledRule`) only needs the
+  info, not grouping.
+
+## DRC-29: copper sliver checker and connection width
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_test_provider_sliver_checker.cpp` `DRC_TEST_PROVIDER_SLIVER_CHECKER::Run`, `layerDesc`, static `addItemPolysWithEndings` | `providers/sliver_checker.rs` `DrcTestProviderSliverChecker` (`Default`; `DrcTestProviderRun`), `add_item_polys_with_endings` (`pub(crate)`, shared with connection width) | ported |
+| `ADVANCED_CFG::m_SliverWidthTolerance` / `m_SliverMinimumLength` / `m_SliverAngleTolerance` | `sliver_checker::ADVANCED_CFG_SLIVER_*` (defaults 0.08 mm, 0.0008 mm, 20 deg) | constants (no advanced config file) |
+| `drc_test_provider_connection_width.cpp` `DRC_TEST_PROVIDER_CONNECTION_WIDTH::Run` (`build_netlayer_polys`, `min_checker`), `layerDesc` | `providers/connection_width.rs` `DrcTestProviderConnectionWidth::new(&DrcBoardCaches)` | ported |
+| `POLYGON_TEST` (`FindPairs`, `GetVertices`, `isSubstantial`, `getKink`) over `VERTEX_SET` | `connection_width::PolygonTest` on `kicad_geom::geometry::vertex_set::VertexSet` | ported |
+| `ADVANCED_CFG::m_ExtraClearance` | `connection_width::ADVANCED_CFG_EXTRA_CLEARANCE` (0.0005 mm) | constant |
+| `NETCODE_LAYER_CACHE_KEY` + `std::hash` | `BTreeMap<(net code, PcbLayerId), _>` key | replaced (order, below) |
+
+The connection width provider reads `m_DRCCopperZones`, `m_CopperItemRTreeCache` and
+`m_CopperZoneRTreeCache` from the run's `DrcBoardCaches` (constructor argument, like copper
+clearance); the run context must carry the connectivity (`FlashLayer`). The sliver checker
+needs no caches.
+
+### Verification
+
+* Item-level oracle (new): `tests/oracle/drc29_oracle.cpp` (built by `build_drc29_oracle.sh`
+  like cn-order-oracle, under the C++ lock; binary `/home/user/kicad-oracle/bin/drc29-oracle`)
+  loads each board like `KI_TEST::LoadBoard`, ignores every code but `COPPER_SLIVER` and
+  `CONNECTION_WIDTH`, runs the real `DRC_ENGINE::RunTests( MM, true, false )` and prints every
+  violation: message, marker position, layer, item uuids and marker path (slivers in handler
+  order, widths sorted). `tests/oracle/gen_drc29_oracle.sh` ran it on a copy of all 368 corpus
+  boards (one process per board) -> `tests/golden/drc29/oracle.txt`. Replay
+  `sliver_and_connection_width_match_item_oracle`: 309 boards loaded completely and compared,
+  all identical (20 violations: 2 slivers, 18 connection width, incl. positions, paths and
+  sliver order); 59 pending (DRC-21 rule conditions on 56, among them `issue16182` with 4
+  slivers, `connection_width_rules` and `fw16_MCIO8i`; 2 legacy `.pro`; `odb_circle_edge_cases`
+  panics in kicad-geom, below).
+* CLI corpus: `tests/golden/drc29/corpus.txt` (`gen_drc29_golden.py` from the cached reports of
+  `gen_drc_corpus.py`), replay `sliver_and_connection_width_match_reference_corpus`: same 309
+  boards, `connection_width` 18 / 18, `copper_sliver` 2 / 2, 0 missing, 0 extra, sliver order
+  identical. Connection width entries are compared as a multiset with sorted items.
+
+### Ported C++ tests (`tests/drc29_sliver_connection_width.rs`)
+
+* `test_drc_copper_sliver.cpp` `DRCCopperSliver` -> `drc_copper_sliver` (all 5 boards load)
+* `test_drc_copper_conn.cpp` `DRCCopperConn` -> `drc_copper_conn` (`connection_width_rules`
+  pending on DRC-21)
+* Both C++ tests call `KI_TEST::FillZones` first. kicad-zone (ZF-03 pending) depends on
+  kicad-drc, so the ports run on the stored fills and expect the reference build's counts on
+  those (oracle golden): identical to the C++ expectations except `issue9870` (13 stored,
+  12 after a refill).
+
+### Deviations
+
+* Sequential: the sliver layer polys are built in layer order (C++: thread pool; only the
+  build is parallel, the report loop is sequential, so the order is the C++ one).
+* Connection width order (`drc.md` 4.12): C++ iterates an `unordered_map` of (net, layer)
+  entries on the thread pool, holds the items of one entry in a `std::set<BOARD_ITEM*>`
+  (address order: polygon append order), and collects the items at a neck from
+  `DRC_RTREE::GetObjectsAt` (hash order) and `m_CopperZoneRTreeCache` (hash order). The port:
+  (net code, layer) key order, items in collection order (copper zones, tracks, pads), tree
+  search order then `ZoneId` order. Report order and item order within a violation (which
+  also decides which two items `EvalRules` sees) are not reproducible in C++; the set of
+  violations matched everywhere.
+* `calc_effort` / progress reporting is not ported (progress only). It calls
+  `GetFilledPolysList( layer )`, which throws in C++ for a zone layer without a fill entry.
+* `POLYGON_TEST::FindPairs` on an outline that yields no vertex returns false (C++:
+  `m_vertices.front()` of an empty deque, undefined).
+
+### Known gaps
+
+* Boards with user rule conditions wait for DRC-21 (`issue16182`, `connection_width_rules`).
+* `kicad_geom` `ShapePolySet::is_exterior_waist` overflows (`s + e` of huge coordinates, C++
+  wraps) inside `Simplify` on `issue25089/odb_circle_edge_cases` (change request filed).
+* Refill-based expectations of the C++ tests need the zone filler (ZF-03) in a crate that can
+  depend on both.

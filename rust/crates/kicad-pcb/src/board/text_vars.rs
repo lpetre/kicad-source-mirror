@@ -29,7 +29,7 @@ use kicad_core::string_utils::get_default_variant_name;
 use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_core::title_block::TitleBlockClock;
 
-use crate::board::{Board, BoardProject};
+use crate::board::Board;
 use crate::component_class::ComponentClassManager;
 use crate::ctx::BoardCtx;
 use crate::embedded_files::EmbeddedFiles;
@@ -67,74 +67,20 @@ fn file_full_name(path: &str) -> String {
     path.rsplit('/').next().unwrap_or("").to_string()
 }
 
-/// `wxFileName( aPath ).GetName()`: the last path component without its extension.
-fn file_name_stem(path: &str) -> String {
-    let full = file_full_name(path);
-
-    match full.rfind('.') {
-        Some(0) | None => full,
-        Some(dot) => full[..dot].to_string(),
-    }
-}
-
-/// `PROJECT::TextVarResolver( aToken )` for the board's project.
-///
-/// * `PROJECTNAME`: `BoardProject` has no project name; the name of the board file is used,
-///   which is what `kicad-cli` binds (`<board dir>/<board name>.kicad_pro`).
-/// * `CURRENT_DATE`, `CURRENT_TIME_*`: from `clock` (no wall clock in library code).
-/// * `VCSHASH` / `VCSSHORTHASH`: there is no git access in library code; they resolve to an
-///   empty string, what `GetCurrentHash` returns for a project outside a repository.
-fn project_text_var_resolver(
-    project: &BoardProject,
-    board_file_name: &str,
-    clock: &TitleBlockClock,
-    token: &mut String,
-) -> bool {
-    match token.as_str() {
-        "PROJECTNAME" => {
-            *token = file_name_stem(board_file_name);
-            true
-        }
-        "CURRENT_DATE" => {
-            *token = clock.current_date.clone();
-            true
-        }
-        "CURRENT_TIME_HH_MM_SS" => {
-            *token = clock.current_time_hhmmss.clone();
-            true
-        }
-        "CURRENT_TIME_LOCALE" => {
-            *token = clock.current_time_locale.clone();
-            true
-        }
-        "VCSHASH" | "VCSSHORTHASH" => {
-            *token = String::new();
-            true
-        }
-        _ => match project.text_vars.get(token.as_str()) {
-            Some(value) => {
-                *token = value.clone();
-                true
-            }
-            None => false,
-        },
-    }
-}
-
 impl Board {
-    /// The clock text variables resolve against. Library code has no wall clock: the dates and
-    /// times resolve to the `TitleBlockClock::default()` values (empty) until the board carries
-    /// a host-provided clock.
-    fn text_var_clock(&self) -> TitleBlockClock {
-        TitleBlockClock::default()
+    /// The clock text variables resolve against: `Board::text_var_clock`, which the host sets
+    /// (library code has no wall clock; the default is empty, so `CURRENT_DATE` and
+    /// `CURRENT_TIME_*` resolve to "" until a host provides the values).
+    fn text_var_clock(&self) -> &TitleBlockClock {
+        &self.text_var_clock
     }
 
-    /// `PROJECT::TextVarResolver` of the board's project (false without a project).
+    /// `GetProject()->TextVarResolver( token )`: `BoardProject::text_var_resolver` (the port of
+    /// `PROJECT::TextVarResolver`) of the bound project with the board's clock; `false`
+    /// without a project.
     fn project_text_var_resolver(&self, token: &mut String) -> bool {
         match &self.project {
-            Some(project) => {
-                project_text_var_resolver(project, &self.file_name, &self.text_var_clock(), token)
-            }
+            Some(project) => project.text_var_resolver(self.text_var_clock(), token),
             None => false,
         }
     }
@@ -145,7 +91,7 @@ impl Board {
     /// `${TOKEN}` afterwards counts as unresolved).
     fn title_block_text_var_resolver(&self, token: &mut String) -> bool {
         let original_token = token.clone();
-        let resolved = self.titles.text_var_resolver(token, &self.text_var_clock());
+        let resolved = self.titles.text_var_resolver(token, self.text_var_clock());
 
         if self.project.is_none() {
             return resolved;
@@ -475,9 +421,12 @@ impl Board {
                 *token = self.get_variant_description(variant);
                 return true;
             }
-            "PROJECTNAME" if self.project.is_some() => {
-                *token = file_name_stem(&self.file_name);
-                return true;
+            "PROJECTNAME" => {
+                // GetProject()->GetProjectName()
+                if let Some(project) = &self.project {
+                    *token = project.project_name.clone();
+                    return true;
+                }
             }
             "DRILL_OPERATIONS" | "DRILL_SITES" | "DRILL_GROUPS" => {
                 // Cached, because this resolves on every redraw of every text item and the model
@@ -669,6 +618,7 @@ mod m22_tests {
     use kicad_core::case_insensitive_map::CaseInsensitiveKey;
 
     use super::*;
+    use crate::board::BoardProject;
 
     /// `TEXT_VAR_RESOLUTION_FIXTURE`: a board bound to an (empty) project.
     fn board_with_project() -> Board {
@@ -768,8 +718,23 @@ mod m22_tests {
         );
         // PROJECTNAME needs a project.
         assert!(!resolve(&board, "PROJECTNAME").0);
+        // GetProject()->GetProjectName(), not the board file name: the QA load path leaves the
+        // board file name empty and still resolves the name of the bound project (reference:
+        // `pcb-dump board` on a board with `<name>.kicad_pro` prints "P=pn" for
+        // "P=${PROJECTNAME}", review-2.md R2-01).
         board.project = Some(BoardProject::default());
-        assert_eq!(resolve(&board, "PROJECTNAME"), (true, "my_board".into()));
+        assert_eq!(resolve(&board, "PROJECTNAME"), (true, String::new()));
+        board.project.as_mut().unwrap().project_name = "pn".into();
+        assert_eq!(resolve(&board, "PROJECTNAME"), (true, "pn".into()));
+
+        // The host clock (`Board::text_var_clock`) and the hash of a project outside a git
+        // repository ("no hash", `PROJECT_GIT_UTILS::GetCurrentHash`; the short form is its
+        // first 8 characters).
+        assert_eq!(resolve(&board, "CURRENT_DATE"), (true, String::new()));
+        board.text_var_clock.current_date = "2026-11-10".into();
+        assert_eq!(resolve(&board, "CURRENT_DATE"), (true, "2026-11-10".into()));
+        assert_eq!(resolve(&board, "VCSHASH"), (true, "no hash".into()));
+        assert_eq!(resolve(&board, "VCSSHORTHASH"), (true, "no hash".into()));
 
         // A cross reference to nothing on the board.
         assert_eq!(

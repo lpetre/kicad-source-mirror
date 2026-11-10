@@ -32,8 +32,15 @@ use crate::pcb_track::Track;
 
 /// `DumpBoard`: the whole board (keys must be initialised by the caller's `Out`).
 pub(crate) fn dump_board_into(o: &mut Out, board: &Board, opts: &DumpOptions) {
+    dump_board_ctx_into(o, &BoardCtx::bare(board), opts);
+}
+
+/// [`dump_board_into`] with a caller-built context (connectivity, rule resolver): the values
+/// that the C++ reads through the board's connectivity or DRC engine come from `ctx`.
+pub(crate) fn dump_board_ctx_into(o: &mut Out, ctx: &BoardCtx<'_>, opts: &DumpOptions) {
+    let board = ctx.board;
     init_item_keys(o, board);
-    let ctx = BoardCtx::bare(board);
+    let ctx = *ctx;
 
     if opts.want("board") {
         o.scope("board", "board", |o| {

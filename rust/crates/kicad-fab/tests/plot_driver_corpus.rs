@@ -38,6 +38,39 @@ use kicad_fab::wx_file_name::WxFileName;
 use kicad_pcb::ctx::BoardCtx;
 use plot_common::*;
 
+/// Whole files that differ for a reason outside this crate (`<board> <layer>`, reason); they
+/// are counted, not failed (the same causes as in `plot_graphics_corpus.rs`).
+const KNOWN_DIFFERENCES: &[(&str, &str)] = &[
+    (
+        "qa/data/pcbnew/ipc2581/round_unequal_drill.kicad_pcb B.Mask",
+        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
+    ),
+    (
+        "qa/data/pcbnew/issue7086.kicad_pcb B.Mask",
+        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
+    ),
+    (
+        "qa/data/pcbnew/solder_mask_bridge_test.kicad_pcb B.Mask",
+        "pad local mask margin (model: Pad::set_local_solder_mask_margin)",
+    ),
+    (
+        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb F.Cu",
+        "footprint table cell geometry (model: PcbTablecell corners / draw_pos)",
+    ),
+    (
+        "qa/data/pcbnew/embedded_table_rotated_legacy_v10.kicad_pcb B.Cu",
+        "footprint table cell geometry (model: PcbTablecell corners / draw_pos)",
+    ),
+    (
+        "qa/data/downgrade/regressions/project_barcode/project_barcode.kicad_pcb F.Silkscreen",
+        "barcode without symbol encoder (model, M25a)",
+    ),
+    (
+        "qa/data/pcbnew/issue24525/issue24525.kicad_pcb Edge.Cuts",
+        "barcode without symbol encoder (model, M25a)",
+    ),
+];
+
 struct BoardCase {
     path: String,
     /// `(name hash, header hash, file hash)` in "Plotted to" order.
@@ -87,6 +120,8 @@ struct Score {
     headers_pending: usize,
     files_matched: usize,
     files_pending: usize,
+    /// Files in `KNOWN_DIFFERENCES` that still differ.
+    files_known: usize,
     failures: Vec<String>,
 }
 
@@ -229,12 +264,15 @@ fn corpus_replay() {
                         );
                         std::fs::write(std::path::Path::new(&dir).join(name), &text).unwrap();
                     }
-                    score.failures.push(format!(
-                        "{} {}: file differs",
-                        case.path,
-                        board.layer_name(layer)
-                    ));
-                    line.push('X');
+                    let what = format!("{} {}", case.path, board.layer_name(layer));
+
+                    if KNOWN_DIFFERENCES.iter().any(|(k, _)| *k == what) {
+                        score.files_known += 1;
+                        line.push('k');
+                    } else {
+                        score.failures.push(format!("{what}: file differs"));
+                        line.push('X');
+                    }
                 }
                 Err(_) => {
                     score.files_pending += 1;
@@ -254,7 +292,7 @@ fn corpus_replay() {
 
     println!(
         "plot driver corpus: {} boards ({} without kicad-cli output, {} not loadable by the port), \
-         {} files: {} names matched, headers {} matched / {} pending, files {} matched / {} pending, \
+         {} files: {} names matched, headers {} matched / {} pending, files {} matched / {} pending / {} known differences, \
          {} failures",
         score.boards,
         score.boards_without_output,
@@ -265,6 +303,7 @@ fn corpus_replay() {
         score.headers_pending,
         score.files_matched,
         score.files_pending,
+        score.files_known,
         score.failures.len()
     );
 

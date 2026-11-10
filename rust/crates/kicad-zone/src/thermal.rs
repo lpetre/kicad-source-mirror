@@ -38,6 +38,7 @@ use kicad_pcb::pcb_track::PcbVia;
 use kicad_pcb::zone::Zone;
 use kicad_pcb::zone_settings::ZoneFillMode;
 
+use crate::copper_fill::dump_polys_to_copper_layer;
 use crate::filler::ZoneFiller;
 use crate::knockouts::eval_rules;
 
@@ -166,7 +167,8 @@ impl ZoneFiller {
 
                     let pad_size = pad.size(ctx, layer);
                     let spoke_max_allowed_w = pad_size.x.min(pad_size.y);
-                    spoke_w = std_clamp(spoke_w, constraint.value().min(), constraint.value().max());
+                    spoke_w =
+                        std_clamp(spoke_w, constraint.value().min(), constraint.value().max());
                     spoke_w = spoke_w.min(spoke_max_allowed_w);
 
                     if spoke_w < zone.min_thickness() {
@@ -335,8 +337,10 @@ impl ZoneFiller {
                         let offset = direction.perpendicular().resize(spoke_half_w);
                         // Extend the spoke edges by half the spoke width to capture convex pad
                         // shapes with a maximum of 45 degrees.
-                        let mut seg_l = Seg::new(seg.a - direction - offset, seg.b + direction - offset);
-                        let mut seg_r = Seg::new(seg.a - direction + offset, seg.b + direction + offset);
+                        let mut seg_l =
+                            Seg::new(seg.a - direction - offset, seg.b + direction - offset);
+                        let mut seg_r =
+                            Seg::new(seg.a - direction + offset, seg.b + direction + offset);
 
                         // Only create this spoke if both edges intersect the pad and thermal
                         // outline
@@ -609,13 +613,14 @@ impl ZoneFiller {
     }
 
     /// Port of `ZONE_FILLER::addHatchFillTypeOnZone( aZone, aLayer, aDebugLayer, aFillPolys,
-    /// aThermalRings )`: punch the hatch pattern holes into the (deflated) fill. Always true
-    /// (the debug-layer early return is not reproduced, `m_debugZoneFiller` is false).
+    /// aThermalRings )`: punch the hatch pattern holes into the (deflated) fill. False only
+    /// for a debug-mode stage dump.
     pub(crate) fn add_hatch_fill_type_on_zone(
         &self,
         ctx: &BoardCtx<'_>,
         zone: &Zone,
         layer: PcbLayerId,
+        debug_layer: PcbLayerId,
         fill_polys: &mut ShapePolySet,
         thermal_rings: &ShapePolySet,
     ) -> bool {
@@ -764,6 +769,15 @@ impl ZoneFiller {
 
         holes.clear_arcs();
 
+        dump_polys_to_copper_layer!(
+            self,
+            holes,
+            PcbLayerId::In10Cu,
+            "hatch-holes",
+            debug_layer,
+            fill_polys
+        );
+
         let mut deflated_thickness = zone.hatch_thickness - zone.min_thickness();
 
         // Don't let thickness drop below maxError * 2 or it might not get reinflated.
@@ -779,6 +793,14 @@ impl ZoneFiller {
             max_error,
         );
         holes.boolean_intersection(&deflated_filled_polys);
+        dump_polys_to_copper_layer!(
+            self,
+            holes,
+            PcbLayerId::In11Cu,
+            "fill-clipped-hatch-holes",
+            debug_layer,
+            fill_polys
+        );
 
         let mut deflated_outline = zone.board_outline(ctx);
         deflated_outline.clear_arcs();
@@ -788,6 +810,14 @@ impl ZoneFiller {
             max_error,
         );
         holes.boolean_intersection(&deflated_outline);
+        dump_polys_to_copper_layer!(
+            self,
+            holes,
+            PcbLayerId::In12Cu,
+            "outline-clipped-hatch-holes",
+            debug_layer,
+            fill_polys
+        );
 
         // Now filter truncated holes to avoid small holes in pattern
         // It happens for holes near the zone outline
@@ -860,6 +890,14 @@ impl ZoneFiller {
         // generate strictly simple polygons needed by Gerber files and Fracture()
         let fill_copy = fill_polys.clone();
         fill_polys.boolean_subtract_sets(&fill_copy, &holes);
+        dump_polys_to_copper_layer!(
+            self,
+            *fill_polys,
+            PcbLayerId::In14Cu,
+            "after-hatching",
+            debug_layer,
+            fill_polys
+        );
 
         true
     }

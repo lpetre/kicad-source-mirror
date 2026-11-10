@@ -22,8 +22,9 @@
 //! FAB-04 ports `getColor`, `PlotPadNumber`, `PlotPad` (L72-398) and `PlotZone` (L902-957).
 //! FAB-05 ports the graphic items in `plot_brditems_shapes.rs` (an `impl` block of this
 //! struct). The other per-item entry points are pending functions that name the work package
-//! porting them (FAB-06 text, FAB-11 drill marks, FAB-13 drill symbols). They panic with a
-//! "port pending" message until that package lands.
+//! porting them (FAB-11 drill marks, FAB-13 drill symbols); text (FAB-06) is in
+//! `plot_brditems_text.rs`. The pending ones panic with a "port pending" message until
+//! that package lands.
 
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::plot_enums::{FillT, PlotFormat};
@@ -36,7 +37,6 @@ use kicad_geom::trigo::rotate_point;
 use kicad_geom::{ANGLE_90, ShapePolySet, Vector2I, ki_round};
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::eda_shape::ShapeT;
-use kicad_pcb::ids::FootprintId;
 use kicad_pcb::item_ref::ItemRef;
 use kicad_pcb::padstack::{PadAttrib, PadProp, PadShape, Padstack};
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
@@ -118,14 +118,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
             && (a_layer == PcbLayerId::FFab || a_layer == PcbLayerId::BFab)
     }
 
-    /// `BRDITEMS_PLOTTER::PlotFootprintTextItems` (FAB-06).
-    pub fn plot_footprint_text_items(&mut self, a_footprint: FootprintId) {
-        fab_port_pending!(
-            "BRDITEMS_PLOTTER::PlotFootprintTextItems (FAB-06)",
-            a_footprint
-        )
-    }
-
     /// Port of `BRDITEMS_PLOTTER::PlotZone`: plot the outlines of `a_polys_list` (the fill of
     /// `a_zone` on `a_layer`, or a part of it) as filled polygons; Gerber regions carry the
     /// zone's net attributes. `a_zone` may be a detached copy (`ZONE dummy`).
@@ -185,25 +177,6 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         }
 
         self.plotter.end_block(None); // Clear object attributes
-    }
-
-    /// `BRDITEMS_PLOTTER::PlotText` (FAB-06). `a_text` is the item owning the `EDA_TEXT`.
-    pub fn plot_text(
-        &mut self,
-        a_text: ItemRef<'_>,
-        a_layer: PcbLayerId,
-        a_is_knockout: bool,
-        a_font_metrics: &kicad_font::Metrics,
-        a_strikeout: bool,
-    ) {
-        fab_port_pending!(
-            "BRDITEMS_PLOTTER::PlotText (FAB-06)",
-            a_text,
-            a_layer,
-            a_is_knockout,
-            a_font_metrics,
-            a_strikeout
-        )
     }
 
     /// Port of `BRDITEMS_PLOTTER::PlotPad`: plot a pad (flashed, or outlined in sketch mode)

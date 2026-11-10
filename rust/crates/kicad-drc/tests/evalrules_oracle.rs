@@ -989,6 +989,16 @@ fn fast_path_equals_general_path() {
                         constraint_text(&general),
                         "{name}: {a:?} / {b:?} on {layer:?}"
                     );
+                    // the same rule identity (FIX-DRC-1)
+                    let identity = |c: &DrcConstraint| {
+                        [&c.parent_rule, &c.min_rule, &c.opt_rule, &c.max_rule]
+                            .map(|r| r.as_ref().and_then(|r| r.rule_index))
+                    };
+                    assert_eq!(
+                        identity(&fast),
+                        identity(&general),
+                        "{name}: {a:?} / {b:?} on {layer:?}"
+                    );
                     compared += 1;
                 }
             }
@@ -1058,4 +1068,65 @@ fn last_rule_wins_per_field_and_board_minimum() {
         engine.cached_own_clearance(&ctx, track, track.layer(), true),
         (50000, None)
     );
+}
+
+/// FIX-DRC-1: the rule identity behind `DRC_CONSTRAINT::GetParentRule()` and friends. The two
+/// rules `"dup name"` of `rev_explicit.kicad_dru` (the reference loads both) have the same
+/// name and severity but are different rules: for a via on F.Cu the minimum comes from the
+/// second, the maximum from the first.
+#[test]
+fn same_named_rules_have_distinct_identity() {
+    let path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/review/rev_explicit.kicad_pcb");
+    let (board, _, engine, failed) = load_board_qa(&path).unwrap();
+    assert!(!failed);
+
+    let ctx = BoardCtx::bare(&board).with_rules(&engine);
+    let (via_id, _) = board.tracks().find(|(_, t)| t.as_via().is_some()).unwrap();
+    let via = ctx.item(via_id.item_id()).unwrap();
+
+    let c = engine.eval_rules(
+        &ctx,
+        DrcConstraintT::ViaDiameterConstraint,
+        Some(via),
+        None,
+        PcbLayerId::FCu,
+    );
+    assert_eq!(c.value.min(), 450000);
+    assert_eq!(c.value.max(), 700000);
+
+    let min_rule = c.min_rule.as_ref().unwrap();
+    let max_rule = c.max_rule.as_ref().unwrap();
+    assert_eq!(min_rule.name, "dup name");
+    assert_eq!(max_rule.name, "dup name");
+    assert_eq!(min_rule.severity, max_rule.severity);
+
+    let (min_index, max_index) = (min_rule.rule_index.unwrap(), max_rule.rule_index.unwrap());
+    assert!(min_index > max_index, "{min_index} / {max_index}");
+    assert_ne!(min_rule, max_rule);
+    // the parent rule is the last rule applied: the second one
+    assert_eq!(c.parent_rule.as_ref().unwrap().rule_index, Some(min_index));
+
+    // the index reaches the engine's rule
+    for (index, layer_source) in [(min_index, "F.Cu"), (max_index, "")] {
+        let rule = engine.rule(index).unwrap();
+        assert_eq!(rule.name, "dup name");
+        assert_eq!(rule.layer_source, layer_source);
+    }
+    assert!(engine.rule(engine.rules().len() as u32).is_none());
+
+    // every compiled constraint carries the index of its rule
+    for list in engine.constraint_map().values() {
+        for ec in list {
+            let index = ec.rule_info.as_ref().unwrap().rule_index.unwrap();
+            assert!(std::sync::Arc::ptr_eq(
+                engine.rule(index).unwrap(),
+                &ec.parent_rule
+            ));
+            assert_eq!(
+                ec.constraint.parent_rule.as_ref().unwrap().rule_index,
+                Some(index)
+            );
+        }
+    }
 }

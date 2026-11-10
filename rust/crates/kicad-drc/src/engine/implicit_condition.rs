@@ -261,7 +261,7 @@ fn in_diff_pair(item: Option<ItemRef<'_>>, arg: &str, reporter: Option<&mut dyn 
         let (polarity, coupled_net, base_name) = match_dp_suffix(netinfo.netname());
 
         if polarity != 0 && item.ctx.board.find_net_by_name(&coupled_net).is_some() {
-            if kicad_pcb::netclass::wx_string_matches(&base_name, arg) {
+            if kicad_core::string_utils::wx_string_matches(&base_name, arg) {
                 return true;
             }
 
@@ -269,7 +269,7 @@ fn in_diff_pair(item: Option<ItemRef<'_>>, arg: &str, reporter: Option<&mut dyn 
                 // baseName.BeforeLast( '_' )
                 let before_last = &base_name[..base_name.rfind('_').unwrap_or(0)];
 
-                if kicad_pcb::netclass::wx_string_matches(before_last, arg) {
+                if kicad_core::string_utils::wx_string_matches(before_last, arg) {
                     return true;
                 }
             }

@@ -833,6 +833,7 @@ fn init_engine_clears_marker_rules_and_single_rule_overload() {
         name: "r".to_string(),
         severity: Severity::Warning,
         implicit: false,
+        rule_index: None,
     });
     let mut g = KiidGenerator::default();
     board.add_marker(PcbMarker::new(

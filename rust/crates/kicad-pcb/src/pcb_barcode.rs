@@ -276,11 +276,11 @@ impl BoardItemMut for PcbBarcode {
     }
     fn style_from_settings(
         &mut self,
-        _env: &MutEnv,
+        env: &MutEnv,
         settings: &BoardDesignSettings,
         check_side: bool,
     ) {
-        PcbBarcode::style_from_settings(self, settings, check_side)
+        PcbBarcode::style_from_settings(self, env, settings, check_side)
     }
 }
 
@@ -494,13 +494,16 @@ impl PcbBarcode {
         self.move_by(env, delta);
     }
 
-    /// `PCB_BARCODE::StyleFromSettings`: `SetTextSize( settings.GetTextSize( GetLayer() ).y )`.
-    ///
-    /// The trait method has no `MutEnv`: the text size is set without the parent frame, like
-    /// `PcbText::style_from_settings` (PORT_STATUS.md).
-    pub fn style_from_settings(&mut self, settings: &BoardDesignSettings, _check_side: bool) {
+    /// `PCB_BARCODE::StyleFromSettings`: `SetTextSize( settings.GetTextSize( GetLayer() ).y )`
+    /// (the text setters see the parent footprint frame of `env`).
+    pub fn style_from_settings(
+        &mut self,
+        env: &MutEnv,
+        settings: &BoardDesignSettings,
+        _check_side: bool,
+    ) {
         let size = settings.get_text_size(self.base.layer).y;
-        self.set_text_size(&MutEnv::detached(), size);
+        self.set_text_size(env, size);
     }
 }
 

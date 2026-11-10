@@ -2080,20 +2080,30 @@ impl ShapePolySet {
         let s = pts[1];
         let e = pts[2];
 
+        // The `int` sums and differences below wrap in the reference build for coordinates
+        // near the `int` limits (qa/data/pcbnew/issue25089/odb_circle_edge_cases reaches this
+        // through Simplify; the reference reports no sliver there), so they wrap here too.
+        let wadd = |p: Vector2I, q: Vector2I| {
+            Vector2I::new(p.x.wrapping_add(q.x), p.y.wrapping_add(q.y))
+        };
+        let wsub = |p: Vector2I, q: Vector2I| {
+            Vector2I::new(p.x.wrapping_sub(q.x), p.y.wrapping_sub(q.y))
+        };
+
         // Check if there is polygon material on either side of the overlapping segments
         // Get the midpoint between s and e for testing
-        let midpoint = (s + e) / 2;
+        let midpoint = wadd(s, e) / 2;
 
         // Create perpendicular offset vector to check both sides
-        let seg_dir = e - s;
+        let seg_dir = wsub(e, s);
 
         if seg_dir.euclidean_norm() > 25 {
             let perp = seg_dir.perpendicular().resize(10);
 
             // Both sides must be outside for this to be an exterior waist. Short-circuit if
             // either side is inside the polygon to avoid the second O(N) point-in-polygon test.
-            if !self.point_inside(midpoint + perp, 0, false)
-                && !self.point_inside(midpoint - perp, 0, false)
+            if !self.point_inside(wadd(midpoint, perp), 0, false)
+                && !self.point_inside(wsub(midpoint, perp), 0, false)
             {
                 return true;
             }

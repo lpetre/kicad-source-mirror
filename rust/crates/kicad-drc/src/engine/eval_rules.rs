@@ -784,17 +784,19 @@ impl DrcEngine {
 
             if !nc_name_a.is_empty() || !nc_name_b.is_empty() {
                 if !nc_name_a.is_empty()
-                    && let Some(rule) = self.netclass_clearances.get(&nc_name_a)
+                    && let Some((rule_index, rule)) =
+                        self.netclass_clearance_rule_indexed(&nc_name_a)
                 {
-                    netclass_rule = Some(rule.info());
+                    netclass_rule = Some(rule.info_in_engine(rule_index));
                     clearance = rule.constraints[0].value.min();
                 }
 
                 if !nc_name_b.is_empty()
-                    && let Some(rule) = self.netclass_clearances.get(&nc_name_b)
+                    && let Some((rule_index, rule)) =
+                        self.netclass_clearance_rule_indexed(&nc_name_b)
                     && rule.constraints[0].value.min() > clearance
                 {
-                    netclass_rule = Some(rule.info());
+                    netclass_rule = Some(rule.info_in_engine(rule_index));
                     clearance = rule.constraints[0].value.min();
                 }
             }

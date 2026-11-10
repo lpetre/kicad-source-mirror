@@ -1334,7 +1334,7 @@ pub fn convert_outline_to_polygon(
 /// `PCB_TYPE_COLLECTOR::Collect( aBoard, { PCB_SHAPE_T } )`: the `PCB_SHAPE`s of every
 /// footprint (in footprint order, each in drawing order), then those of the board drawings
 /// (`BOARD::Visit` scans the footprints first).
-pub(crate) fn collect_board_shapes(ctx: &BoardCtx<'_>) -> Vec<ShapeId> {
+pub fn collect_board_shapes(ctx: &BoardCtx<'_>) -> Vec<ShapeId> {
     let board = ctx.board;
     let mut items = Vec::new();
 

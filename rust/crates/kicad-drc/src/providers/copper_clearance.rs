@@ -28,13 +28,14 @@
 //!
 //! Work package DRC-08a ported `Run`, `collectZonesNear`, `testSingleLayerItemAgainstItem`,
 //! `testItemAgainstZone`, `testTrackClearances`, `testPadAgainstItem` and
-//! `testPadClearances`. The graphic, knockout text, zone-to-zone and teardrop phases
-//! (`testGraphicClearances`, `testKnockoutTextAgainstZone`, `testZonesToZones`,
-//! `testTeardropClearances`) are work package DRC-08b and still `port_pending!`.
+//! `testPadClearances`; work package DRC-08b the graphic, knockout text, zone-to-zone and
+//! teardrop phases (`testGraphicClearances`, `testKnockoutTextAgainstZone`,
+//! `testZonesToZones`, `testTeardropClearances`).
 //!
-//! C++ runs one thread-pool task per track and per footprint; the port is sequential in board
-//! order (track list order, footprint list order), which is the order of a single-threaded
-//! C++ run (`drc.md` 4.12). The free-pad claims of `testTrackClearances` (`freePadsUsageMap`,
+//! C++ runs one thread-pool task per track, per footprint, per board drawing and per zone
+//! pair; the port is sequential in board order (track list order, footprint list order,
+//! drawing list order, candidate pair order), which is the order of a single-threaded C++ run
+//! (`drc.md` 4.12). The free-pad claims of `testTrackClearances` (`freePadsUsageMap`,
 //! first track net to touch a free pad wins) follow the same order.
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -43,11 +44,14 @@ use std::sync::Arc;
 use kicad_core::Severity;
 use kicad_core::eda_units::{EdaDataType, EdaUnits};
 use kicad_core::layer_ids::{Flashing, PcbLayerId, is_copper_layer};
+use kicad_core::layer_range::LayerRange;
 use kicad_core::lset::Lset;
 use kicad_core::typeinfo::KicadT;
+use kicad_geom::geometry::rtree::{PackedRTree, PackedRTreeBuilder};
 use kicad_geom::geometry::seg::Seg;
 use kicad_geom::geometry::shape::Shape;
 use kicad_geom::geometry::shape_segment::ShapeSegment;
+use kicad_geom::math::box2::Box2I;
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
     DRCE_CLEARANCE, DRCE_HOLE_CLEARANCE, DRCE_SHORTING_ITEMS, DRCE_TRACKS_CROSSING, DrcConstraint,
@@ -63,8 +67,8 @@ use crate::constraint_types::DrcConstraintT;
 use crate::engine::diff_pair::is_net_tie_exclusion;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use crate::item;
-use crate::test_provider::{DrcTestProviderBase, no_path};
-use crate::zone_index::DrcZoneIndex;
+use crate::test_provider::{DrcTestProviderBase, is_invisible_text, no_path};
+use crate::zone_index::{DrcZoneIndex, collect_overlapping_pairs};
 
 /// `"(%s clearance %s; actual %s)"`
 const CLEARANCE_MSG: &str = "(%s clearance %s; actual %s)";
@@ -89,6 +93,13 @@ fn nets_detail(a_code: i32, a_name: &str, b_code: i32, b_name: &str) -> String {
     )
 }
 
+/// The `NETINFO_ITEM*` a knockout text inherits from the first zone it collides with
+/// (`testKnockoutTextAgainstZone`'s `aInheritedNet`): its code and name.
+struct InheritedNet<'a> {
+    code: NetCode,
+    name: &'a str,
+}
+
 /// Port of `DRC_TEST_PROVIDER_COPPER_CLEARANCE`.
 ///
 /// `'c` is the lifetime of the borrowed per-run board caches (`m_DRCMaxClearance`,
@@ -103,9 +114,6 @@ pub struct DrcTestProviderCopperClearance<'c> {
     drc_epsilon: i32,
     /// `m_zoneIndex`
     zone_index: DrcZoneIndex,
-    /// Whether `Run` executes the DRC-08b phases (graphics, zone-to-zone, teardrops). Not a
-    /// C++ member: false only for [`DrcTestProviderCopperClearance::new_without_pending`].
-    run_pending_phases: bool,
 }
 
 impl<'c> DrcTestProviderCopperClearance<'c> {
@@ -116,17 +124,6 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
             caches,
             drc_epsilon: 0,
             zone_index: DrcZoneIndex::new(),
-            run_pending_phases: true,
-        }
-    }
-
-    /// Verification aid until work package DRC-08b lands: a provider whose `Run` executes only
-    /// the phases ported so far (track & via clearances, pad clearances) and skips the
-    /// graphic, zone-to-zone and teardrop phases, which are still `port_pending!`.
-    pub fn new_without_pending(caches: &'c DrcBoardCaches) -> Self {
-        DrcTestProviderCopperClearance {
-            run_pending_phases: false,
-            ..Self::new(caches)
         }
     }
 
@@ -206,10 +203,6 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
             self.test_pad_clearances(engine, host, ctx);
         }
 
-        if !self.run_pending_phases {
-            return !host.is_cancelled();
-        }
-
         if !host.is_error_limit_exceeded(DRCE_CLEARANCE) {
             if !self
                 .base
@@ -253,49 +246,616 @@ impl<'c> DrcTestProviderCopperClearance<'c> {
         !host.is_cancelled()
     }
 
-    /// `testGraphicClearances` (work package DRC-08b).
+    /// Port of `testGraphicClearances`: every board drawing, every footprint graphic and every
+    /// footprint field against the zones near on its layer; copper shapes and barcodes also
+    /// against the copper item tree.
+    ///
+    /// C++ runs one thread-pool task per board drawing and per footprint; the port runs them
+    /// in board order (drawings, then footprints with their graphics and then their fields).
     fn test_graphic_clearances(
         &self,
         engine: &DrcEngine,
         host: &mut RunHost<'_, '_>,
         ctx: &BoardCtx<'_>,
     ) {
-        crate::port_pending!(
-            "DRC_TEST_PROVIDER_COPPER_CLEARANCE::testGraphicClearances (DRC-08b)",
-            engine,
-            host,
-            ctx
-        );
+        let board = ctx.board;
+        let mut count = board.drawings().count();
+
+        for (fp_id, _) in board.footprints() {
+            count += board.footprint_drawings(fp_id).count() + board.footprint_fields(fp_id).count();
+        }
+
+        report_aux(host.0, &format!("Testing {count} graphics..."));
+
+        let test_graphic = |host: &mut RunHost<'_, '_>, item_id: ItemId| {
+            if host.is_cancelled() {
+                return;
+            }
+
+            let item = ctx.item(item_id).expect("board graphic");
+
+            self.test_graphic_against_zone(engine, host, ctx, item);
+
+            if matches!(item.type_(), KicadT::PcbShapeT | KicadT::PcbBarcodeT)
+                && item.as_dyn().is_on_copper_layer(ctx)
+            {
+                self.test_copper_graphic(engine, host, ctx, item);
+            }
+        };
+
+        for (item_id, _) in board.drawings() {
+            test_graphic(host, item_id);
+        }
+
+        for (fp_id, _) in board.footprints() {
+            for (item_id, _) in board.footprint_drawings(fp_id) {
+                test_graphic(host, item_id);
+            }
+
+            // Fields (reference, value, etc.) live in their own list but render as real
+            // copper when placed on a copper layer, so they must be tested too.
+            for (field_id, _) in board.footprint_fields(fp_id) {
+                if !host.is_cancelled() {
+                    let field = ctx.item(ItemId::from(field_id)).expect("footprint field");
+                    self.test_graphic_against_zone(engine, host, ctx, field);
+                }
+            }
+        }
     }
 
-    /// `testZonesToZones` (work package DRC-08b).
-    fn test_zones_to_zones(
+    /// The `testGraphicAgainstZone` lambda of `testGraphicClearances`.
+    fn test_graphic_against_zone<'x>(
         &self,
         engine: &DrcEngine,
         host: &mut RunHost<'_, '_>,
-        ctx: &BoardCtx<'_>,
+        ctx: &'x BoardCtx<'x>,
+        item: ItemRef<'x>,
     ) {
-        crate::port_pending!(
-            "DRC_TEST_PROVIDER_COPPER_CLEARANCE::testZonesToZones (DRC-08b)",
-            engine,
-            host,
-            ctx
+        if item.type_() == KicadT::PcbReferenceImageT || is_invisible_text(item) {
+            return;
+        }
+
+        if !is_copper_layer(item.layer()) {
+            return;
+        }
+
+        // The isKnockoutText lambda
+        let is_knockout_text = matches!(item.type_(), KicadT::PcbTextT | KicadT::PcbFieldT)
+            && item.as_dyn().is_knockout();
+
+        // Knockout text is most often knocked-out of a zone, so it's presumed to collide with
+        // one.  However, if it collides with more than one, and they have different nets, then
+        // we have a short.
+        let mut inherited_net: Option<InheritedNet<'x>> = None;
+
+        let layer = item.layer();
+
+        for zone in self.collect_zones_near(item, layer) {
+            if is_knockout_text {
+                self.test_knockout_text_against_zone(
+                    engine,
+                    host,
+                    ctx,
+                    item,
+                    &mut inherited_net,
+                    zone,
+                );
+            } else {
+                self.test_item_against_zone(engine, host, ctx, item, zone, layer);
+            }
+
+            if host.is_cancelled() {
+                return;
+            }
+        }
+    }
+
+    /// The `testCopperGraphic` lambda of `testGraphicClearances`: a copper shape or barcode
+    /// against the copper item tree (no padding credit).
+    fn test_copper_graphic<'x>(
+        &self,
+        engine: &DrcEngine,
+        host: &mut RunHost<'_, '_>,
+        ctx: &'x BoardCtx<'x>,
+        graphic: ItemRef<'x>,
+    ) {
+        let layer = graphic.layer();
+        let query_shape =
+            graphic.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+        let mut semantic_shape: Option<SharedShape> = None;
+        let graphic_type = graphic.type_();
+        let graphic_fp = graphic.parent_footprint_id();
+        let graphic_net = if graphic.is_connected() {
+            graphic.net_code().map_or(0, |n| n.0)
+        } else {
+            0
+        };
+
+        // Filter:
+        let mut filter = |other_id: ItemId| -> bool {
+            let other = ctx
+                .item(other_id)
+                .expect("DRC_RTREE entries are board items");
+            let other_type = other.type_();
+
+            // Graphics are often compound shapes so ignore collisions between shapes in a
+            // single footprint.
+            if graphic_type == KicadT::PcbShapeT
+                && other_type == KicadT::PcbShapeT
+                && graphic_fp.is_some()
+                && graphic_fp == other.parent_footprint_id()
+            {
+                return false;
+            }
+
+            // Track clearances are tested in testTrackClearances()
+            if matches!(
+                other_type,
+                KicadT::PcbTraceT | KicadT::PcbArcT | KicadT::PcbViaT
+            ) {
+                return false;
+            }
+
+            let other_net = if other.is_connected() {
+                other.net_code().map_or(0, |n| n.0)
+            } else {
+                0
+            };
+
+            if graphic_net != 0 && graphic_net == other_net {
+                return false;
+            }
+
+            // Dedup on UUID, not heap address, so that exclusion checking against
+            // previously-generated violations will work
+            if matches!(
+                other_type,
+                KicadT::PcbShapeT | KicadT::PcbTextboxT | KicadT::PcbBarcodeT
+            ) && graphic.uuid() > other.uuid()
+            {
+                return false;
+            }
+
+            true
+        };
+
+        // Visitor:
+        let mut visitor = |other_id: ItemId, prepared_other: &SharedShape| -> bool {
+            let other = ctx
+                .item(other_id)
+                .expect("DRC_RTREE entries are board items");
+            let semantic = Arc::clone(semantic_shape.get_or_insert_with(|| {
+                graphic.effective_shape(
+                    PcbLayerId::UndefinedLayer,
+                    Flashing::Default,
+                    DrcConstraintT::NullConstraint,
+                )
+            }));
+
+            self.test_single_layer_item_against_item(
+                engine,
+                host,
+                ctx,
+                graphic,
+                semantic.as_ref(),
+                layer,
+                other,
+                prepared_other.as_ref(),
+            );
+
+            !host.is_cancelled()
+        };
+
+        // A graphic's bbox inflates by width/2 where its shape inflates by (width + 1)/2, and
+        // arc bounds differ again, so the credit is unsafe here
+        self.caches.copper_item_rtree().query_colliding_prepared_copper(
+            graphic,
+            &query_shape,
+            layer,
+            Some(&mut filter),
+            Some(&mut visitor),
+            self.caches.max_clearance,
+            false,
         );
     }
 
-    /// `testTeardropClearances` (work package DRC-08b).
+    /// Port of `testKnockoutTextAgainstZone`.
+    ///
+    /// We have to special-case knockout text as it's most often knocked-out of a zone, so it's
+    /// presumed to collide with one.  However, if it collides with more than one, and they
+    /// have different nets, then we have a short.
+    ///
+    /// `inherited_net` is `aInheritedNet` (`None`: the null pointer): the net of the first
+    /// zone the text collides with.
+    fn test_knockout_text_against_zone<'x>(
+        &self,
+        engine: &DrcEngine,
+        host: &mut RunHost<'_, '_>,
+        ctx: &'x BoardCtx<'x>,
+        text: ItemRef<'x>,
+        inherited_net: &mut Option<InheritedNet<'x>>,
+        zone_id: ZoneId,
+    ) {
+        let test_clearance = !host.is_error_limit_exceeded(DRCE_CLEARANCE);
+        let test_shorts = !host.is_error_limit_exceeded(DRCE_SHORTING_ITEMS);
+
+        if !test_clearance && !test_shorts {
+            return;
+        }
+
+        let zone = ctx
+            .item(ItemId::from(zone_id))
+            .expect("m_DRCCopperZonesByLayer holds board zones");
+        let layer = text.layer();
+
+        if !zone.layer_set().contains(layer) {
+            return;
+        }
+
+        let item_bbox = text.bounding_box();
+        let mut worst_case_bbox = item_bbox;
+
+        worst_case_bbox.inflate(self.caches.max_clearance);
+
+        if !worst_case_bbox.intersects(&zone.bounding_box()) {
+            return;
+        }
+
+        let Some(zone_tree) = self.caches.copper_zone_rtree(zone_id) else {
+            return;
+        };
+
+        let item_shape =
+            text.effective_shape(layer, Flashing::Default, DrcConstraintT::NullConstraint);
+        // aZone->GetNet(): a zone is always connected
+        let zone_net = connected_net(zone);
+
+        if inherited_net.is_none()
+            && zone_tree.query_colliding_box(&item_bbox, item_shape.as_ref(), layer)
+        {
+            *inherited_net = zone_net.map(|code| InheritedNet {
+                code,
+                name: zone.netname(),
+            });
+        }
+
+        if inherited_net.as_ref().map(|n| n.code) == zone_net {
+            return;
+        }
+
+        let constraint = engine.eval_rules(
+            ctx,
+            DrcConstraintT::ClearanceConstraint,
+            Some(text),
+            Some(zone),
+            layer,
+        );
+        let clearance = constraint.value().min();
+
+        if constraint.severity() != Severity::Ignore
+            && clearance >= 0
+            && let Some((actual, pos)) = zone_tree.query_colliding_box_actual(
+                &item_bbox,
+                item_shape.as_ref(),
+                layer,
+                self.sub_e(clearance),
+            )
+        {
+            let mut drc_item;
+
+            if test_shorts
+                && actual == 0
+                && let Some(inherited) = inherited_net.as_ref()
+            {
+                let zone_net_code = zone.net_code().map_or(0, |n| n.0);
+
+                drc_item = item::create(DRCE_SHORTING_ITEMS).expect("DRCE_SHORTING_ITEMS item");
+                drc_item.set_error_detail(&nets_detail(
+                    inherited.code.0,
+                    inherited.name,
+                    zone_net_code,
+                    zone.netname(),
+                ));
+            } else {
+                drc_item = item::create(DRCE_CLEARANCE).expect("DRCE_CLEARANCE item");
+                drc_item.set_error_detail(&self.base.format_msg(
+                    CLEARANCE_MSG,
+                    &constraint.name(),
+                    clearance as f64,
+                    actual as f64,
+                    EdaDataType::Distance,
+                ));
+            }
+
+            drc_item.set_item_ids(vec![text.uuid(), zone.uuid()]);
+            drc_item.violating_rule = constraint.parent_rule.clone();
+            self.base.report_two_item_geometry(
+                host,
+                Arc::new(drc_item),
+                pos,
+                text,
+                zone,
+                layer,
+                actual,
+            );
+        }
+    }
+
+    /// Port of `testTeardropClearances`: every teardrop zone against the zones near through
+    /// `testItemAgainstZone`.
     fn test_teardrop_clearances(
         &self,
         engine: &DrcEngine,
         host: &mut RunHost<'_, '_>,
         ctx: &BoardCtx<'_>,
     ) {
-        crate::port_pending!(
-            "DRC_TEST_PROVIDER_COPPER_CLEARANCE::testTeardropClearances (DRC-08b)",
-            engine,
-            host,
-            ctx
-        );
+        let board_copper_layers = Lset::all_cu_mask_n(ctx.board.copper_layer_count());
+
+        for &teardrop_id in &self.caches.copper_zones {
+            let teardrop = ctx
+                .item(ItemId::from(teardrop_id))
+                .expect("m_DRCCopperZones holds board zones");
+
+            if !teardrop.as_zone().is_some_and(|z| z.is_teardrop_area()) {
+                continue;
+            }
+
+            for layer in (&teardrop.layer_set() & &board_copper_layers).iter() {
+                if host.is_cancelled() {
+                    return;
+                }
+
+                for zone_id in self.collect_zones_near(teardrop, layer) {
+                    if zone_id == teardrop_id {
+                        continue;
+                    }
+
+                    let zone_is_teardrop = ctx
+                        .item(ItemId::from(zone_id))
+                        .and_then(|z| z.as_zone())
+                        .is_some_and(|z| z.is_teardrop_area());
+
+                    // For teardrop-vs-teardrop pairs, use pointer ordering so each pair is
+                    // tested only once.  (C++ compares the ZONE* addresses; the port compares
+                    // the arena handles, i.e. the allocation order.)
+                    if zone_is_teardrop && zone_id < teardrop_id {
+                        continue;
+                    }
+
+                    self.test_item_against_zone(engine, host, ctx, teardrop, zone_id, layer);
+
+                    if host.is_cancelled() {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Port of `testZonesToZones`: zone fills of different nets on a layer against each other;
+    /// at most one violation per zone pair and layer.
+    ///
+    /// C++ checks each candidate pair in its own thread-pool task (report order depends on
+    /// the scheduling); the port checks them in candidate order.
+    fn test_zones_to_zones(
+        &self,
+        engine: &DrcEngine,
+        host: &mut RunHost<'_, '_>,
+        ctx: &BoardCtx<'_>,
+    ) {
+        type SegRtree = PackedRTree<usize, 2, 16>;
+
+        let board = ctx.board;
+        let copper_zones = &self.caches.copper_zones;
+        let zone_ref = |idx: usize| {
+            ctx.item(ItemId::from(copper_zones[idx]))
+                .expect("m_DRCCopperZones holds board zones")
+        };
+        let zone_of = |idx: usize| zone_ref(idx).as_zone().expect("a zone");
+
+        // poly_segments and seg_rtrees, per (zone index, layer); built together
+        let mut zone_segments: BTreeMap<(usize, PcbLayerId), (Vec<Seg>, SegRtree)> =
+            BTreeMap::new();
+
+        // Pre-sort zones into layers
+        let mut zone_idx_by_layer: BTreeMap<PcbLayerId, Vec<usize>> = BTreeMap::new();
+
+        for ii in 0..copper_zones.len() {
+            let zone = zone_ref(ii);
+
+            // Teardrop areas are tested as tracks, not zones
+            if zone.as_zone().is_some_and(|z| z.is_teardrop_area()) {
+                continue;
+            }
+
+            for layer in zone.layer_set().iter() {
+                if !is_copper_layer(layer) {
+                    continue;
+                }
+
+                zone_idx_by_layer.entry(layer).or_default().push(ii);
+            }
+        }
+
+        // ZONE_PAIR: (first, second, layer)
+        let mut candidates: Vec<(usize, usize, PcbLayerId)> = Vec::new();
+        let mut participating: BTreeSet<(usize, PcbLayerId)> = BTreeSet::new();
+
+        let layer_range = LayerRange::new(
+            PcbLayerId::FCu,
+            PcbLayerId::BCu,
+            board.copper_layer_count(),
+        )
+        .expect("F_Cu and B_Cu are copper layers");
+
+        for layer in layer_range.iter() {
+            if !board.is_layer_enabled(layer) {
+                continue;
+            }
+
+            let fill_box =
+                |index: usize| -> Option<Box2I> { zone_of(index).get_fill(layer).map(|p| p.bbox_from_caches()) };
+
+            let indices = zone_idx_by_layer.entry(layer).or_default();
+
+            for (ia, ia2) in collect_overlapping_pairs(indices, fill_box) {
+                let zone_a = zone_ref(ia);
+                let zone_b = zone_ref(ia2);
+                let net_a = zone_a.net_code().map_or(0, |n| n.0);
+                let net_b = zone_b.net_code().map_or(0, |n| n.0);
+
+                let same_net = net_a == net_b && net_a >= 0;
+
+                if same_net {
+                    continue;
+                }
+
+                let za = zone_of(ia);
+                let zb = zone_of(ia2);
+
+                // rule areas may overlap at will
+                if za.is_rule_area() || zb.is_rule_area() {
+                    continue;
+                }
+
+                // Redundant with the enumeration above; retained as the parity boundary
+                // because a future widening of this gate has to widen the enumeration by the
+                // same amount
+                let (Some(poly_a), Some(poly_b)) = (za.get_fill(layer), zb.get_fill(layer)) else {
+                    continue;
+                };
+
+                if !poly_a
+                    .bbox_from_caches()
+                    .intersects(&poly_b.bbox_from_caches())
+                {
+                    continue;
+                }
+
+                candidates.push((ia, ia2, layer));
+                participating.insert((ia, layer));
+                participating.insert((ia2, layer));
+            }
+        }
+
+        for &(zone_index, layer) in &participating {
+            let Some(poly) = zone_of(zone_index).get_fill(layer) else {
+                continue;
+            };
+
+            let mut segments: Vec<Seg> = Vec::with_capacity(poly.full_point_count().max(0) as usize);
+
+            for mut seg in poly.iterate_segments_with_holes() {
+                if seg.a.x > seg.b.x {
+                    seg.reverse();
+                }
+
+                segments.push(seg);
+            }
+
+            let mut builder: PackedRTreeBuilder<usize, 2, 16> = PackedRTreeBuilder::new();
+            builder.reserve(segments.len());
+
+            for (si, seg) in segments.iter().enumerate() {
+                let min = [seg.a.x.min(seg.b.x), seg.a.y.min(seg.b.y)];
+                let max = [seg.a.x.max(seg.b.x), seg.a.y.max(seg.b.y)];
+                builder.add(&min, &max, si);
+            }
+
+            let tree = builder.build();
+            zone_segments.insert((zone_index, layer), (segments, tree));
+        }
+
+        // The checkZones lambda, per candidate pair
+        for &(zone_a_idx, zone_b_idx, layer) in &candidates {
+            if host.is_cancelled() {
+                return;
+            }
+
+            let zone_a = zone_ref(zone_a_idx);
+            let zone_b = zone_ref(zone_b_idx);
+            let mut actual: i32 = 0;
+            let mut pt = Vector2I::default();
+            let mut other_pt = Vector2I::default();
+            let constraint = engine.eval_rules(
+                ctx,
+                DrcConstraintT::ClearanceConstraint,
+                Some(zone_a),
+                Some(zone_b),
+                layer,
+            );
+            let clearance = constraint.value().min();
+
+            if constraint.severity() == Severity::Ignore || clearance <= 0 {
+                continue;
+            }
+
+            let (Some((ref_segments, _)), Some((test_segments, test_tree))) = (
+                zone_segments.get(&(zone_a_idx, layer)),
+                zone_segments.get(&(zone_b_idx, layer)),
+            ) else {
+                continue;
+            };
+
+            if test_tree.is_empty() {
+                continue;
+            }
+
+            for ref_segment in ref_segments {
+                // A single zone pair can be a long scan on a dense board.
+                if host.is_cancelled() {
+                    return;
+                }
+
+                let min_x = ref_segment.a.x.min(ref_segment.b.x) - clearance;
+                let min_y = ref_segment.a.y.min(ref_segment.b.y) - clearance;
+                let max_x = ref_segment.a.x.max(ref_segment.b.x) + clearance;
+                let max_y = ref_segment.a.y.max(ref_segment.b.y) + clearance;
+                let qmin = [min_x, min_y];
+                let qmax = [max_x, max_y];
+                let mut found = false;
+
+                test_tree.search(&qmin, &qmax, |&seg_idx: &usize| -> bool {
+                    let test_segment = &test_segments[seg_idx];
+                    let (pt_a, pt_b, dist_sq) = ref_segment.nearest_points(test_segment);
+
+                    pt = pt_a;
+                    other_pt = pt_b;
+                    // int = std::floor( std::sqrt( dist_sq ) + 0.5 )
+                    actual = ((dist_sq as f64).sqrt() + 0.5).floor() as i32;
+
+                    if actual < clearance {
+                        found = true;
+                        return false;
+                    }
+
+                    true
+                });
+
+                if found {
+                    // reportZoneZoneViolation
+                    let mut drc_item = item::create(DRCE_CLEARANCE).expect("DRCE_CLEARANCE item");
+                    drc_item.set_error_detail(&self.base.format_msg(
+                        CLEARANCE_MSG,
+                        &constraint.name(),
+                        constraint.value().min() as f64,
+                        actual.max(0) as f64,
+                        EdaDataType::Distance,
+                    ));
+                    drc_item.set_item_ids(vec![zone_a.uuid(), zone_b.uuid()]);
+                    drc_item.violating_rule = constraint.parent_rule.clone();
+                    self.base.report_two_point_geometry(
+                        host,
+                        Arc::new(drc_item),
+                        pt,
+                        pt,
+                        if actual > 0 { other_pt } else { pt },
+                        layer,
+                    );
+                    break;
+                }
+            }
+        }
     }
 
     /// Port of `collectZonesNear`: copper zones on `layer` reachable from `item` at the worst

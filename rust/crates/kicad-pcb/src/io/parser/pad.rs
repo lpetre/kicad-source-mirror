@@ -324,7 +324,8 @@ impl PcbParser {
                     self.lexer.need_right()?;
                 }
                 T::T_die_length => {
-                    let length = self.parse_board_units_tok(T::T_die_length, EdaDataType::Distance)?;
+                    let length =
+                        self.parse_board_units_tok(T::T_die_length, EdaDataType::Distance)?;
                     pad.set_pad_to_die_length(length);
                     self.lexer.need_right()?;
                 }
@@ -344,7 +345,8 @@ impl PcbParser {
                     self.lexer.need_right()?;
 
                     // In pre-9.0 files "0" meant inherit.
-                    if self.required_version <= 20240201 && pad.local_solder_mask_margin() == Some(0)
+                    if self.required_version <= 20240201
+                        && pad.local_solder_mask_margin() == Some(0)
                     {
                         pad.set_local_solder_mask_margin(None);
                     }

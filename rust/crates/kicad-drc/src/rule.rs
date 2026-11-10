@@ -23,9 +23,10 @@
 //! extension trait [`DrcConstraintExt`]. Two representation changes follow from that type:
 //!
 //! * the rule back pointers (`m_parentRule`, `m_minRule`, `m_optRule`, `m_maxRule`) are
-//!   [`DrcRuleInfo`] copies (name, severity, implicit flag) taken when the pointer would be
-//!   set. A C++ pointer sees later changes of the rule (e.g. a `(severity ...)` clause after
-//!   the `(constraint ...)` clause), so whoever finishes modifying a rule calls
+//!   [`DrcRuleInfo`] copies (name, severity, implicit flag, and as the pointer's identity
+//!   the rule's index in the engine's rule list) taken when the pointer would be set. A C++
+//!   pointer sees later changes of the rule (e.g. a `(severity ...)` clause after the
+//!   `(constraint ...)` clause), so whoever finishes modifying a rule calls
 //!   [`DrcRule::sync_constraint_rule_info`] (the parser does it at the end of every rule);
 //! * `m_Test` (the assertion condition) is not a member of `DrcConstraint`; it is kept next to
 //!   the constraint in [`DrcRule::constraint_tests`] (same index).
@@ -165,12 +166,23 @@ impl DrcRule {
         self.implicit_source
     }
 
-    /// What a `DRC_RULE*` held by a constraint gives access to (see the module comment).
+    /// What a `DRC_RULE*` held by a constraint gives access to (see the module comment), for
+    /// a rule that is not (yet) in an engine: `rule_index` is `None`.
     pub fn info(&self) -> DrcRuleInfo {
         DrcRuleInfo {
             name: self.name.clone(),
             severity: self.severity,
             implicit: self.is_implicit(),
+            rule_index: None,
+        }
+    }
+
+    /// [`DrcRule::info`] of this rule as `DrcEngine::rules()[ rule_index ]`: the pointer
+    /// identity of the C++ is the index of the rule in the engine's rule list.
+    pub fn info_in_engine(&self, rule_index: u32) -> DrcRuleInfo {
+        DrcRuleInfo {
+            rule_index: Some(rule_index),
+            ..self.info()
         }
     }
 

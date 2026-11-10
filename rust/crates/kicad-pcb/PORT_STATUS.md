@@ -3137,3 +3137,57 @@ mutators and the via stitch default template; `Update()` after text setters of a
 dynamic component classes; `PcbBarcode::style_from_settings` without `env`;
 `Pad::is_free_pad_ctx` still present; `PCB_DRILL_MAP::GetBoundingBox` / `HitTest` and
 `BOARD::GetTrackLength` pending their tier-2 dependencies.
+
+## Package PCBIO-07: board file pads and padstacks (parse + write)
+
+| C++ | Rust | State |
+|---|---|---|
+| `parsePAD` (P:7320-8030), every token and version branch (`die_delay` length scale `<= 20250926`, zero margins = inherit `<= 20240201`, custom-pad circle-anchor spoke angle 90 `<= 20211014`, overbar net names `< 20210606`), legacy `(net N "name")` with name check / orphaning, zero-size clamp + warning, `CanHaveNumber` | `io/parser/pad.rs` `parse_pad`, `parse_pad_net`, `parse_pad_extra_drill`, `parse_chamfer_list` | ported |
+| `parsePAD_primitives`, `parsePAD_option`, `parsePostMachining`, `parsePadstack` (FRONT_INNER_BACK / CUSTOM layers) | `io/parser/pad.rs` | ported |
+| `PAD::AddPrimitive` (pad.cpp: lib override + `rebakePrimitiveToFootprint`) | `io/parser/pad.rs` `pad_add_primitive` (private, see known gaps) | ported for the parser |
+| `PAD::SetRemoveUnconnected` / `SetKeepTopBottom` (inline, pad.h) | `io/parser/pad.rs` free functions over `set_unconnected_layer_mode` | ported |
+| `format( const PAD* )` (W:1972-2549) with `shapeName`, `formatCornerProperties`, `anchorShape`, `formatPrimitives`, `formatPadLayer` | `io/writer/pad.rs` | ported |
+| `formatPostMachining` lambda | `io/writer/tracks.rs` `format_post_machining`, made `pub(crate)` (one-word edit, shared with the via writer) | ported (PCBIO-03) |
+
+Ported tests (`io/writer/pad.rs` tests): `test_pad_roundtrip.cpp` `CopperOnlyPad`;
+`test_pad_tenting.cpp` `DefaultTentingNotSerialized`, `ExplicitTentingSerialized`,
+`NpthDefaultTentingNotSerialized`; `test_custom_pad_primitive_roundtrip.cpp`
+`BezierAndPolyOnTransformedFootprint`, `SimplePadPrimitivesOnTransformedFootprint`,
+`ScaledFootprintRoundTripStable`, `PadPositionAndOrientationRoundTripStable`,
+`PadDeltaRoundTripStable`, `PadOffsetRoundTripStable`, `RotatedPadSizeRoundTripStable`.
+(`FootprintPointRoundTripStable` and `PadSizeScalesAlongFootprintAxis...` test points / the
+pad model, not the pad format; `test_footprint_pad_fixup.cpp` is in M20, the
+`test_backdrill_properties.cpp` legacy read cases in M13; `test_complex_padstack_export.cpp`
+tests the Gencad / Specctra / Hyperlynx exporters, out of scope.)
+
+Oracle (`tests/pcbio07_pads.rs`, goldens `tests/oracle/pcbio07_golden.sh` with
+`pcbio07_strip.py`): 4 hand-made boards (every pad token, all shapes, custom primitives incl.
+`gr_bbox` / `gr_vector`, both complex padstack modes, backdrill / tertiary / post machining,
+teardrops, tenting both syntaxes, rotated / flipped / non-uniformly scaled footprints, versions
+20210108, 20240108, 20250926, 20261031) and 19 corpus boards reduced to footprints with pads:
+46 re-saves (input -> O1 and O1 -> O2) byte-identical with `kicad-cli pcb upgrade --force`,
+including the oracle's own size drift on transformed footprints. Corpus (`tools/io-corpus/run.sh`):
+before 98 identical + 21 identical-modulo-pending of 370, 257 boards waiting for pads; after
+359 identical (all 287 fixed points), 11 differ (zone net / priority after the oracle's
+post-load steps, outline-font render caches; none in pad code), no pending construct.
+Item level (`run.sh --dump --sections item,pad[,bbox]`, 61 boards incl. padstacks*, custom_pads,
+m14 / m15 fixtures, one per format version from 20200119 to 20260101): zero mismatches except
+the back-side mask / paste values listed under known gaps.
+
+Deviations:
+* `(zone_connect N)` with a value outside the `ZONE_CONNECTION` enum reads as `INHERITED` (the
+  C++ cast keeps the integer; same rule as PCBIO-06).
+
+Known gaps:
+* Pad primitives keep `ParentRef::None` after the parse (C++ `AddPrimitive` sets the pad as
+  parent; the local pad has no handle until `footprint_add`). The writer reads the primitives'
+  `lib` members directly, which is what `GetLibrary*()` returns for a pad parent, so the output
+  is exact; context-free model getters (`lib_bezier_c1`, `lib_poly_shape`) and
+  `rebake_from_lib` / `sync_lib_coords` of such a primitive behave as for a detached shape.
+  Needs `footprint_add` (or the T_pad case of `parseFOOTPRINT`) to re-parent them (change
+  request); `PAD::AddPrimitive` itself belongs in the pad model.
+* `Pad::set_local_solder_mask_margin` / `set_local_solder_paste_margin` /
+  `set_local_solder_paste_margin_ratio` (M14) set the front outer layers only; the C++ sets
+  F and B. Item-level mismatches on the back side (`padstack.back_outer.*`,
+  `solder_mask_expansion.B.Mask`, `solder_paste_margin.B.Paste`, `shape.B.Mask`) on every board
+  with pad margin overrides; the written file is unaffected (the writer reads the front).

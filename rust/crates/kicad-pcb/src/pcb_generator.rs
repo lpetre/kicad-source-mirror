@@ -1347,6 +1347,26 @@ fn layer_from_name(name: &str, fallback: PcbLayerId) -> PcbLayerId {
 }
 
 impl ViaStackData {
+    /// Port of the static `PCB_VIA_STACK::IsSpanValid( aBoard, aStart, aEnd )`: both ends are
+    /// copper layers enabled on the board and they differ (`false` without a board).
+    pub fn is_span_valid(
+        board: Option<&crate::board::Board>,
+        start: PcbLayerId,
+        end: PcbLayerId,
+    ) -> bool {
+        let Some(board) = board else {
+            return false;
+        };
+
+        let enabled = Lset::all_cu_mask_n(board.copper_layer_count());
+
+        let present = |layer: PcbLayerId| {
+            layer.0 >= 0 && layer.0 < PCB_LAYER_ID_COUNT && enabled.contains(layer)
+        };
+
+        present(start) && present(end) && start != end
+    }
+
     /// `PCB_VIA_STACK::SetProperties( aProps )` on a default-constructed stack; `layer` is the
     /// generator's `m_layer`, which `SetStartLayer` also sets.
     fn from_properties(props: &PropertyMap<'_>, layer: &mut PcbLayerId) -> ViaStackData {

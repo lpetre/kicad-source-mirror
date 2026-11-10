@@ -124,6 +124,11 @@ pub struct DrcRuleInfo {
     pub severity: Severity, // m_Severity
     /// `IsImplicit()` (`m_implicitSource != DRC_IMPLICIT_SOURCE::NONE`).
     pub implicit: bool,
+    /// The identity of the `DRC_RULE*`: the index of the rule in `DRC_ENGINE::m_rules`
+    /// (`DrcEngine::rules()`), `None` for a rule that is not in an engine (a rule under
+    /// construction in the parser, synthetic rules of providers). Two distinct rules with the
+    /// same name and severity differ here, as their pointers do in C++.
+    pub rule_index: Option<u32>,
 }
 
 impl Default for DrcRuleInfo {
@@ -133,6 +138,7 @@ impl Default for DrcRuleInfo {
             name: String::new(),
             severity: Severity::Undefined,
             implicit: false,
+            rule_index: None,
         }
     }
 }

@@ -219,7 +219,10 @@ impl ZoneFiller {
             return;
         };
 
-        if let Some(pad) = item_ref.as_pad().filter(|p| p.shape(layer) == PadShape::Custom) {
+        if let Some(pad) = item_ref
+            .as_pad()
+            .filter(|p| p.shape(layer) == PadShape::Custom)
+        {
             let mut poly = ShapePolySet::new();
             pad.transform_shape_to_polygon(
                 ctx,
@@ -485,8 +488,7 @@ impl ZoneFiller {
                 let mut connection =
                     eval_zone_connection(ctx, pad_item, zone_item, layer).zone_connection;
 
-                if connection == ZoneConnection::Thermal && !pad.flash_layer_permitted(ctx, layer)
-                {
+                if connection == ZoneConnection::Thermal && !pad.flash_layer_permitted(ctx, layer) {
                     connection = ZoneConnection::None;
                 }
 
@@ -828,35 +830,88 @@ impl ZoneFiller {
 
         // Add non-connected track clearances
         //
-        let knockout_track_clearance = |track_item: ItemId, track: &Track, holes: &mut ShapePolySet| {
-            let Some(track_ref) = ctx.item(track_item) else {
-                return;
-            };
+        let knockout_track_clearance =
+            |track_item: ItemId, track: &Track, holes: &mut ShapePolySet| {
+                let Some(track_ref) = ctx.item(track_item) else {
+                    return;
+                };
 
-            if !track_ref.bounding_box().intersects(&zone_boundingbox) {
-                return;
-            }
+                if !track_ref.bounding_box().intersects(&zone_boundingbox) {
+                    return;
+                }
 
-            let mut same_net = track.net_code().0 == zone_net;
+                let mut same_net = track.net_code().0 == zone_net;
 
-            if !zone.is_teardrop_area() && zone_net == 0 {
-                same_net = false;
-            }
-
-            let mut gap = eval(DrcConstraintT::PhysicalClearanceConstraint, track_item);
-
-            if let Track::Via(via) = track {
-                if via.zone_layer_override(layer) == ZoneLayerOverride::ForceNoZoneConnection {
+                if !zone.is_teardrop_area() && zone_net == 0 {
                     same_net = false;
                 }
-            }
 
-            if !same_net {
-                gap = gap.max(eval(DrcConstraintT::ClearanceConstraint, track_item));
-            }
+                let mut gap = eval(DrcConstraintT::PhysicalClearanceConstraint, track_item);
 
-            if let Track::Via(via) = track {
-                if via.flash_layer(ctx, layer) && gap > 0 {
+                if let Track::Via(via) = track {
+                    if via.zone_layer_override(layer) == ZoneLayerOverride::ForceNoZoneConnection {
+                        same_net = false;
+                    }
+                }
+
+                if !same_net {
+                    gap = gap.max(eval(DrcConstraintT::ClearanceConstraint, track_item));
+                }
+
+                if let Track::Via(via) = track {
+                    if via.flash_layer(ctx, layer) && gap > 0 {
+                        track_ref.transform_shape_to_polygon(
+                            holes,
+                            layer,
+                            gap + extra_margin,
+                            self.max_error,
+                            ErrorLoc::Outside,
+                            false,
+                        );
+                    }
+
+                    let mut hole_gap =
+                        eval(DrcConstraintT::PhysicalHoleClearanceConstraint, track_item);
+
+                    if !same_net {
+                        hole_gap =
+                            hole_gap.max(eval(DrcConstraintT::HoleClearanceConstraint, track_item));
+                    }
+
+                    gap = gap.max(hole_gap);
+
+                    if gap >= 0 {
+                        let radius = via.drill_value(ctx) / 2;
+
+                        transform_circle_to_polygon(
+                            holes,
+                            via.position(ctx),
+                            radius + gap + extra_margin,
+                            self.max_error,
+                            ErrorLoc::Outside,
+                            0,
+                        );
+                    }
+
+                    // Handle backdrill and post-machining knockouts
+                    if via.is_backdrilled_or_post_machined(ctx, layer) {
+                        let knockout_size = via.padstack().max_hole_size();
+
+                        if knockout_size > 0 {
+                            // The bore widens the drill, so it keeps the drill's copper clearance
+                            let clearance = gap.max(0) + extra_margin;
+
+                            transform_circle_to_polygon(
+                                holes,
+                                via.position(ctx),
+                                knockout_size / 2 + clearance,
+                                self.max_error,
+                                ErrorLoc::Outside,
+                                0,
+                            );
+                        }
+                    }
+                } else if gap >= 0 {
                     track_ref.transform_shape_to_polygon(
                         holes,
                         layer,
@@ -866,57 +921,7 @@ impl ZoneFiller {
                         false,
                     );
                 }
-
-                let mut hole_gap = eval(DrcConstraintT::PhysicalHoleClearanceConstraint, track_item);
-
-                if !same_net {
-                    hole_gap = hole_gap.max(eval(DrcConstraintT::HoleClearanceConstraint, track_item));
-                }
-
-                gap = gap.max(hole_gap);
-
-                if gap >= 0 {
-                    let radius = via.drill_value(ctx) / 2;
-
-                    transform_circle_to_polygon(
-                        holes,
-                        via.position(ctx),
-                        radius + gap + extra_margin,
-                        self.max_error,
-                        ErrorLoc::Outside,
-                        0,
-                    );
-                }
-
-                // Handle backdrill and post-machining knockouts
-                if via.is_backdrilled_or_post_machined(ctx, layer) {
-                    let knockout_size = via.padstack().max_hole_size();
-
-                    if knockout_size > 0 {
-                        // The bore widens the drill, so it keeps the drill's copper clearance
-                        let clearance = gap.max(0) + extra_margin;
-
-                        transform_circle_to_polygon(
-                            holes,
-                            via.position(ctx),
-                            knockout_size / 2 + clearance,
-                            self.max_error,
-                            ErrorLoc::Outside,
-                            0,
-                        );
-                    }
-                }
-            } else if gap >= 0 {
-                track_ref.transform_shape_to_polygon(
-                    holes,
-                    layer,
-                    gap + extra_margin,
-                    self.max_error,
-                    ErrorLoc::Outside,
-                    false,
-                );
-            }
-        };
+            };
 
         let hits = match self.track_index.get(&layer) {
             Some(index) => query_index(index, &zone_boundingbox),
@@ -1060,7 +1065,11 @@ impl ZoneFiller {
                             }
 
                             for other in footprint.net_tie_pads(ctx, pad_id) {
-                                if ctx.board.pad(other).is_some_and(|o| o.is_on_layer(ctx, layer)) {
+                                if ctx
+                                    .board
+                                    .pad(other)
+                                    .is_some_and(|o| o.is_on_layer(ctx, layer))
+                                {
                                     set.insert(other);
                                 }
                             }
@@ -1081,8 +1090,7 @@ impl ZoneFiller {
         let mut fi = 0;
 
         while gi < gfx_hits.len() || fi < fp_hits.len() {
-            if fi < fp_hits.len() && (gi >= gfx_hits.len() || fp_hits[fi].seq <= gfx_hits[gi].seq)
-            {
+            if fi < fp_hits.len() && (gi >= gfx_hits.len() || fp_hits[fi].seq <= gfx_hits[gi].seq) {
                 if let Some(fp_id) = fp_hits[fi].item.typed::<kicad_pcb::footprint::Footprint>() {
                     knockout_courtyard_clearance(fp_id, holes);
                 }
@@ -1148,54 +1156,55 @@ impl ZoneFiller {
 
         // Add non-connected zone clearances
         //
-        let knockout_zone_clearance = |knockout_id: ZoneId, knockout: &Zone, holes: &mut ShapePolySet| {
-            // If the zones share no common layers
-            if !knockout.layer_set.test(layer) {
-                return;
-            }
-
-            if knockout.is_rule_area() {
-                if knockout.bounding_box(ctx).intersects(&zone_boundingbox)
-                    && knockout.do_not_allow_zone_fills
-                    && !zone.is_teardrop_area()
-                {
-                    // Keepouts use outline with no clearance
-                    knockout.transform_smoothed_outline_to_polygon(
-                        ctx,
-                        holes,
-                        layer,
-                        0,
-                        self.max_error,
-                        ErrorLoc::Outside,
-                        None,
-                    );
-                }
-            } else if knockout.higher_priority(zone)
-                && !knockout.same_net(zone)
-                && self.zone_knockout_may_interact(ctx, zone, knockout)
-            {
-                let knockout_item: ItemId = knockout_id.into();
-                let mut gap = eval(DrcConstraintT::PhysicalClearanceConstraint, knockout_item);
-                gap = gap.max(eval(DrcConstraintT::ClearanceConstraint, knockout_item));
-
-                // Negative clearance permits zones to short
-                if gap < 0 {
+        let knockout_zone_clearance =
+            |knockout_id: ZoneId, knockout: &Zone, holes: &mut ShapePolySet| {
+                // If the zones share no common layers
+                if !knockout.layer_set.test(layer) {
                     return;
                 }
 
-                let mut poly = ShapePolySet::new();
-                knockout.transform_shape_to_polygon(
-                    ctx,
-                    &mut poly,
-                    layer,
-                    gap + extra_margin,
-                    self.max_error,
-                    ErrorLoc::Outside,
-                    false,
-                );
-                holes.append_set(&poly);
-            }
-        };
+                if knockout.is_rule_area() {
+                    if knockout.bounding_box(ctx).intersects(&zone_boundingbox)
+                        && knockout.do_not_allow_zone_fills
+                        && !zone.is_teardrop_area()
+                    {
+                        // Keepouts use outline with no clearance
+                        knockout.transform_smoothed_outline_to_polygon(
+                            ctx,
+                            holes,
+                            layer,
+                            0,
+                            self.max_error,
+                            ErrorLoc::Outside,
+                            None,
+                        );
+                    }
+                } else if knockout.higher_priority(zone)
+                    && !knockout.same_net(zone)
+                    && self.zone_knockout_may_interact(ctx, zone, knockout)
+                {
+                    let knockout_item: ItemId = knockout_id.into();
+                    let mut gap = eval(DrcConstraintT::PhysicalClearanceConstraint, knockout_item);
+                    gap = gap.max(eval(DrcConstraintT::ClearanceConstraint, knockout_item));
+
+                    // Negative clearance permits zones to short
+                    if gap < 0 {
+                        return;
+                    }
+
+                    let mut poly = ShapePolySet::new();
+                    knockout.transform_shape_to_polygon(
+                        ctx,
+                        &mut poly,
+                        layer,
+                        gap + extra_margin,
+                        self.max_error,
+                        ErrorLoc::Outside,
+                        false,
+                    );
+                    holes.append_set(&poly);
+                }
+            };
 
         if let Some(index) = self.zone_index.get(&layer) {
             // The knockout reach is the wider of the two windows tested above.
@@ -1241,57 +1250,58 @@ impl ZoneFiller {
         // the fill process, before the deflate/inflate min-width cycle.  Subtracting them here
         // would trigger a second deflate/inflate pass that creates artifacts along curved
         // keepout boundaries (issue 23515).
-        let knockout_zone_clearance = |knockout_id: ZoneId, knockout: &Zone, holes: &mut ShapePolySet| {
-            if knockout.is_rule_area() {
-                return;
-            }
-
-            // buildCopperItemClearances() knocks teardrops out before the min-width cycle.
-            if knockout.is_teardrop_area() {
-                return;
-            }
-
-            if !knockout.layer_set.test(layer) {
-                return;
-            }
-
-            if knockout.higher_priority(zone)
-                && !knockout.same_net(zone)
-                && self.zone_knockout_may_interact(ctx, zone, knockout)
-            {
-                let knockout_item: ItemId = knockout_id.into();
-                let mut gap = eval_rules_for_items(
-                    ctx,
-                    DrcConstraintT::PhysicalClearanceConstraint,
-                    zone_item,
-                    knockout_item,
-                    layer,
-                );
-                gap = gap.max(eval_rules_for_items(
-                    ctx,
-                    DrcConstraintT::ClearanceConstraint,
-                    zone_item,
-                    knockout_item,
-                    layer,
-                ));
-
-                if gap < 0 {
+        let knockout_zone_clearance =
+            |knockout_id: ZoneId, knockout: &Zone, holes: &mut ShapePolySet| {
+                if knockout.is_rule_area() {
                     return;
                 }
 
-                let mut poly = ShapePolySet::new();
-                knockout.transform_shape_to_polygon(
-                    ctx,
-                    &mut poly,
-                    layer,
-                    gap + extra_margin,
-                    self.max_error,
-                    ErrorLoc::Outside,
-                    false,
-                );
-                holes.append_set(&poly);
-            }
-        };
+                // buildCopperItemClearances() knocks teardrops out before the min-width cycle.
+                if knockout.is_teardrop_area() {
+                    return;
+                }
+
+                if !knockout.layer_set.test(layer) {
+                    return;
+                }
+
+                if knockout.higher_priority(zone)
+                    && !knockout.same_net(zone)
+                    && self.zone_knockout_may_interact(ctx, zone, knockout)
+                {
+                    let knockout_item: ItemId = knockout_id.into();
+                    let mut gap = eval_rules_for_items(
+                        ctx,
+                        DrcConstraintT::PhysicalClearanceConstraint,
+                        zone_item,
+                        knockout_item,
+                        layer,
+                    );
+                    gap = gap.max(eval_rules_for_items(
+                        ctx,
+                        DrcConstraintT::ClearanceConstraint,
+                        zone_item,
+                        knockout_item,
+                        layer,
+                    ));
+
+                    if gap < 0 {
+                        return;
+                    }
+
+                    let mut poly = ShapePolySet::new();
+                    knockout.transform_shape_to_polygon(
+                        ctx,
+                        &mut poly,
+                        layer,
+                        gap + extra_margin,
+                        self.max_error,
+                        ErrorLoc::Outside,
+                        false,
+                    );
+                    holes.append_set(&poly);
+                }
+            };
 
         if let Some(index) = self.zone_index.get(&layer) {
             let hits = query_index(index, &self.zone_knockout_query_box(ctx, zone));

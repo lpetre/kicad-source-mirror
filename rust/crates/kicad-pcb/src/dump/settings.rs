@@ -591,6 +591,17 @@ const TARGETS: [(TargetTd, &str); 4] = [
 
 /// `DumpDesignSettings`.
 pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings) {
+    dump_design_settings_with(o, p, b, None);
+}
+
+/// [`dump_design_settings`] with the board's DRC engine as rule resolver (`m_DRCEngine` of
+/// `GetBiggestClearanceValue`), `None` without one.
+pub(crate) fn dump_design_settings_with(
+    o: &mut Out,
+    p: &str,
+    b: &BoardDesignSettings,
+    rules: Option<&dyn crate::ctx::RuleResolver>,
+) {
     emit!(
         o,
         format!("{p}track_width_list"),
@@ -913,7 +924,7 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
     emit!(
         o,
         format!("{p}biggest_clearance"),
-        v_int(b.get_biggest_clearance_value(None))
+        v_int(b.get_biggest_clearance_value(rules))
     );
     emit!(
         o,
@@ -1017,7 +1028,7 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         emit!(o, format!("property.{k}"), v_str(v));
     }
 
-    dump_design_settings(o, "ds.", b.design_settings());
+    dump_design_settings_with(o, "ds.", b.design_settings(), ctx.rules);
     dump_plot_params(o, "plot.", &b.plot_options);
 
     for net in b.nets() {
