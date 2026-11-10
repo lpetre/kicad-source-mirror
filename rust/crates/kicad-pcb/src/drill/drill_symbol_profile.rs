@@ -548,3 +548,91 @@ pub fn drill_mark_policy_from_token(token: &str) -> Option<DrillMarkPolicy> {
 pub fn drill_mark_mode_from_token(token: &str) -> Option<DrillMarkMode> {
     value_for(&MARK_MODE_TOKENS, token)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::drill::drill_operation::{DrillOpKind, HoleAttribute};
+    use crate::padstack::PadDrillPostMachiningMode;
+    use kicad_core::layer_ids::PcbLayerId;
+    use kicad_geom::Vector2I;
+
+    /// `GroupKeyString`: the keys of the board files (`api_kitchen_sink.kicad_pcb`:
+    /// `v1|d300000|s-|p1|L0-31|k0|m0:0:0:0/0:0:0:0`) and every optional part.
+    #[test]
+    fn group_key_string() {
+        let mut op = DrillOperation {
+            diameter: 300_000,
+            ..DrillOperation::default()
+        };
+        let mut profile = DrillSymbolProfile::default();
+        assert_eq!(
+            profile.group_key_string(&op),
+            "v1|d300000|s-|p1|L0-31|k0|m0:0:0:0/0:0:0:0"
+        );
+
+        op.is_slot = true;
+        op.size_xy = Vector2I::new(800_000, 400_000);
+        op.not_plated = true;
+        op.top_layer = PcbLayerId::In1Cu;
+        op.bottom_layer = PcbLayerId::BCu;
+        op.kind = DrillOpKind::TertiaryDrill;
+        op.attribute = HoleAttribute::HolePadCastellated;
+        op.filled = true;
+        op.bottom_tented = true;
+        op.front_post_machining.mode = PadDrillPostMachiningMode::Countersink;
+        op.front_post_machining.size = 1;
+        op.front_post_machining.depth = 2;
+        op.front_post_machining.angle = 900;
+        profile.set_grouped_by(DrillGroupKey::HoleFunction, true);
+        profile.set_grouped_by(DrillGroupKey::Protection, true);
+        assert_eq!(
+            profile.group_key_string(&op),
+            "v1|d300000|s800000x400000|p0|L1-31|k2|a5|r10000001|m3:1:2:900/0:0:0:0"
+        );
+
+        for key in profile.group_keys().clone() {
+            profile.set_grouped_by(key, false);
+        }
+
+        assert_eq!(profile.group_key_string(&op), "v1");
+    }
+
+    /// The board's canonical form round trips, and the default profile is stored as `None`.
+    #[test]
+    fn board_form_round_trip() {
+        let mut settings = BoardDesignSettings::default();
+        let default = DrillSymbolProfile::from_board(&settings);
+        assert_eq!(default, DrillSymbolProfile::default());
+        default.commit_to_board(&mut settings);
+        assert!(settings.drill_symbol_profile.is_none());
+
+        let mut profile = DrillSymbolProfile::default();
+        profile.set_mark_policy(DrillMarkPolicy::Letters);
+        profile.set_assignment(
+            "v1|d1",
+            DrillSymbolAssignment {
+                mark_mode: DrillMarkMode::Letter,
+                letter: "AB".to_string(),
+                description: "x".to_string(),
+                ..DrillSymbolAssignment::default()
+            },
+        );
+        profile.commit_to_board(&mut settings);
+        let back = DrillSymbolProfile::from_board(&settings);
+        assert_eq!(back, profile);
+        assert_eq!(back.fingerprint(), profile.fingerprint());
+        assert_ne!(back.fingerprint(), default.fingerprint());
+    }
+
+    #[test]
+    fn tokens() {
+        assert_eq!(drill_group_key_token(DrillGroupKey::PostMachining), "post_machining");
+        assert_eq!(
+            drill_mark_policy_from_token("shapes_then_letters"),
+            Some(DrillMarkPolicy::ShapesThenLetters)
+        );
+        assert_eq!(drill_mark_mode_token(DrillMarkMode::SizeText), "size_text");
+        assert_eq!(drill_mark_mode_from_token("Shape"), None);
+    }
+}

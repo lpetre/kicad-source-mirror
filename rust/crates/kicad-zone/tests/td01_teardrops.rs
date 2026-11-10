@@ -511,7 +511,7 @@ fn teardrop_corpus() {
         let mut list = String::new();
 
         for (variant, boards) in variant_boards().iter().filter(|(v, _)| *v != "base") {
-            for board in boards {
+            for board in boards.iter() {
                 if variant_differs(variant, board) {
                     if let Some(path) = write_variant(variant, board, &variants_dir().join(variant))
                     {

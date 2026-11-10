@@ -247,3 +247,85 @@ pub fn drill_symbol_cache(ctx: &BoardCtx<'_>) -> DrillSymbolCache {
 
     cache
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn groups(n: usize) -> Vec<DrillChartGroup> {
+        (0..n)
+            .map(|i| DrillChartGroup {
+                key: format!("k{i:03}"),
+                symbol_key: format!("k{i:03}"),
+                ..DrillChartGroup::default()
+            })
+            .collect()
+    }
+
+    fn marks(groups: &[DrillChartGroup]) -> Vec<String> {
+        groups
+            .iter()
+            .map(|g| match g.symbol.mark_mode {
+                DrillMarkMode::Shape => format!("#{}", g.symbol.shape_index),
+                DrillMarkMode::Letter => g.symbol.letter.clone(),
+                DrillMarkMode::SizeText => "size".to_string(),
+            })
+            .collect()
+    }
+
+    /// `AssignDrillSymbols`: the 12 curated shapes first, then letters (shapes_then_letters),
+    /// shape 0 again (shapes), "A".."Z", "AA".. (letters).
+    #[test]
+    fn marks_by_policy() {
+        let mut profile = DrillSymbolProfile::default();
+        let mut g = groups(14);
+        assign_drill_symbols(&mut g, &mut profile);
+        let m = marks(&g);
+        assert_eq!(m[0], "#0");
+        assert_eq!(m[11], "#11");
+        assert_eq!((m[12].as_str(), m[13].as_str()), ("A", "B"));
+        assert_eq!(profile.assignments().len(), 14);
+
+        let mut profile = DrillSymbolProfile::default();
+        profile.set_mark_policy(DrillMarkPolicy::Shapes);
+        let mut g = groups(13);
+        assign_drill_symbols(&mut g, &mut profile);
+        assert_eq!(marks(&g)[12], "#0");
+
+        let mut profile = DrillSymbolProfile::default();
+        profile.set_mark_policy(DrillMarkPolicy::Letters);
+        let mut g = groups(28);
+        assign_drill_symbols(&mut g, &mut profile);
+        let m = marks(&g);
+        assert_eq!((m[25].as_str(), m[26].as_str(), m[27].as_str()), ("Z", "AA", "AB"));
+
+        let mut profile = DrillSymbolProfile::default();
+        profile.set_mark_policy(DrillMarkPolicy::SizeText);
+        let mut g = groups(2);
+        assign_drill_symbols(&mut g, &mut profile);
+        assert_eq!(marks(&g), vec!["size", "size"]);
+    }
+
+    /// With freeze on, a recorded mark is kept and new groups take the lowest free one; with
+    /// freeze off every group is assigned afresh.
+    #[test]
+    fn frozen_assignments_are_kept() {
+        let mut profile = DrillSymbolProfile::default();
+        profile.set_assignment(
+            "k001",
+            DrillSymbolAssignment {
+                mark_mode: DrillMarkMode::Shape,
+                shape_index: 0,
+                ..DrillSymbolAssignment::default()
+            },
+        );
+        let mut g = groups(3);
+        assign_drill_symbols(&mut g, &mut profile);
+        assert_eq!(marks(&g), vec!["#1", "#0", "#2"]);
+
+        profile.set_freeze_assignments(false);
+        let mut g = groups(3);
+        assign_drill_symbols(&mut g, &mut profile);
+        assert_eq!(marks(&g), vec!["#0", "#1", "#2"]);
+    }
+}
