@@ -47,6 +47,7 @@ use kicad_plot::gbr_metadata::{GbrApertureAttrib, GbrMetadata};
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
 
 use crate::color_settings::ColorSettings;
+use crate::plot_board_layers::PadPlotState;
 
 /// Panic with a "port pending" message naming the C++ function and the work package that
 /// ports it (the plotting counterpart of `kicad_pcb::port_pending!`).
@@ -78,6 +79,11 @@ pub struct BrditemsPlotter<'a, 'p> {
     /// `ColorSettings()` of the `PCB_PLOT_PARAMS` base (the port's `PcbPlotParams` has no
     /// colour settings; the caller supplies them).
     pub colors: ColorSettings,
+    /// Not a C++ member: the board's pads as the `plotPadLayer` calls of the running plot job
+    /// left them (C++ modifies the board's pads in place, see [`PadPlotState`]). `None` (the
+    /// default of [`BrditemsPlotter::new`]) gives every `PlotStandardLayer` call its own
+    /// state; [`crate::plot_board_layers::plot_standard_layer`] installs the job's.
+    pub pad_state: Option<&'a PadPlotState>,
 }
 
 impl<'a, 'p> BrditemsPlotter<'a, 'p> {
@@ -95,6 +101,7 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
             ctx: a_board,
             layer_mask: Lset::new(),
             colors: a_colors,
+            pad_state: None,
         }
     }
 

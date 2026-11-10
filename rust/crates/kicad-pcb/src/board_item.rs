@@ -686,9 +686,7 @@ impl Board {
                 self.move_item(id, pos - current);
             }
             ItemKind::Generator => {
-                if let Some(generator) = id.typed() {
-                    self.modify_generator(generator, |g, _| g.origin = pos);
-                }
+                self.with_generator_data(id, |data| *data.origin_mut() = pos);
             }
             _ => {
                 self.modify(id, |mut item, env| {

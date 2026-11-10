@@ -140,7 +140,7 @@ fn normalise_reference(loaded: &Loaded, reference: &[Entry]) -> (Vec<Entry>, Vec
     let mut drawing_sheet = Vec::new();
 
     for e in reference {
-        let mut e = e.clone();
+        let e = e.clone();
 
         if e.type_ == "shorting_items" && !is_net_tie_shorting(loaded, &e) {
             continue;

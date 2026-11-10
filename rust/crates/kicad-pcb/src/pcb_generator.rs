@@ -308,6 +308,7 @@ impl PcbGenerator {
     /// `m_name`, layer `F_Cu`) with a nil UUID, `None` for an unknown type (the C++ loader then
     /// throws "Cannot create generated object of type '%s'"). The property map is empty; the
     /// constructor values of the typed members are what `normalize_properties` falls back to.
+    /// A via stitch starts with its default `PCB_VIA` template.
     pub fn create_from_type(generator_type: &str) -> Option<PcbGenerator> {
         let name = match generator_type {
             GENERATOR_TYPE_TUNING_PATTERN => "Tuning Pattern",
@@ -320,7 +321,36 @@ impl PcbGenerator {
         generator.generator_type = generator_type.to_string();
         generator.group.name = name.to_string();
 
+        if generator_type == GENERATOR_TYPE_VIA_STITCH {
+            // PCB_VIA_STITCH( aParent ): m_viaTemplate( std::make_unique<PCB_VIA>( this ) ),
+            // m_viaTemplate->SetIsFree( true ). GetTemplateItems() always returns it, so the
+            // writer prints a template even for a stitch read without one (package
+            // FIX-EDIT-1). The parent is set once the generator has its handle.
+            let mut via = crate::pcb_track::PcbVia::default();
+            via.is_free = true;
+            generator.templates.push((
+                "via".to_string(),
+                OwnedItem::Track(crate::pcb_track::Track::Via(Box::new(via))),
+            ));
+        }
+
         Some(generator)
+    }
+
+    /// `PCB_TUNING_PATTERN( aParent, aLayer, aMode )` (`generators/pcb_tuning_pattern.cpp`)
+    /// with a nil UUID: type and display name, `m_end = ( 10 mm, 0 )`,
+    /// `m_initialSide = MEANDER_SIDE_LEFT`, status `TUNED`; the typed members are stored as
+    /// the property map `GetProperties()` returns for them.
+    pub fn tuning_pattern(layer: PcbLayerId, mode: LengthTuningMode) -> PcbGenerator {
+        let mut generator = PcbGenerator::create_from_type(GENERATOR_TYPE_TUNING_PATTERN)
+            .expect("tuning_pattern is a registered generator type");
+        generator.group.base.layer = layer;
+        let data = TuningPatternData {
+            tuning_mode: mode,
+            ..TuningPatternData::default()
+        };
+        generator.set_subclass_data(&GeneratorData::TuningPattern(data));
+        generator
     }
 
     /// `LayerFollowsMembers()`: true, `PCB_VIA_STACK` false (its layer is the start layer). The

@@ -38,7 +38,7 @@ use crate::color_settings::ColorSettings;
 use crate::exporters::gendrill_excellon_writer::reborrow;
 use crate::exporters::gerber_jobfile_writer::GerberJobfileWriter;
 use crate::pcbplot::{PlotEnv, gerber_protel_extension};
-use crate::plot_board_layers::{plot_board_layers, start_plot_board};
+use crate::plot_board_layers::{PadPlotState, plot_board_layers, start_plot_board};
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile, Reporter};
 
@@ -215,6 +215,9 @@ pub fn plot(
     let mut sheet_path = String::new();
     let mut success = true;
     let mut page_num = 1;
+    // The board's pads as the plot of the previous files left them (C++ plots all files from
+    // the one loaded board, see `PadPlotState`)
+    let pad_state = PadPlotState::new();
 
     for i in 0..layers_to_plot.len() {
         let layer = layers_to_plot[i];
@@ -302,7 +305,14 @@ pub fn plot(
 
                 // m_PDFMetadata (AUTHOR / SUBJECT): PDF only.
 
-                plot_board_layers(ctx, plotter.as_mut(), &plot_sequence, a_plot_opts, a_colors);
+                plot_board_layers(
+                    ctx,
+                    plotter.as_mut(),
+                    &plot_sequence,
+                    a_plot_opts,
+                    a_colors,
+                    &pad_state,
+                );
 
                 // PlotInteractiveLayer: PDF only. PDF page break: PDF only.
 

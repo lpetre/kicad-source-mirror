@@ -1,0 +1,24 @@
+# FIX-EDIT-1: hashes of editmut.txt that are known to differ, one key per line with the reason
+# (PORT_STATUS.md, section "Package FIX-EDIT-1"). tests/fix_edit1.rs fails on any other
+# difference and reports an entry here that matches again.
+#
+# BITMAP_BASE::Mirror mirrors the pixels and re-encodes the PNG on save (wxImage / libpng /
+# zlib); the port keeps the stored image data (pcb_reference_image.rs deviation).
+flip_lr|misc_items.kicad_pcb|save
+flip_tb|misc_items.kicad_pcb|save
+mirror_lr|misc_items.kicad_pcb|save
+mirror_tb|misc_items.kicad_pcb|save
+# EDA_TEXT bounding-box cache of a dimension text with ${LAYER}: SetLayer does not clear it in
+# the reference (the box keeps the width of the old layer name); the port recomputes it.
+layer_bcu|dims_current.kicad_pcb|bbox
+layer_bcu|dims_current.kicad_pcb|text
+layer_bsilk|dims_current.kicad_pcb|bbox
+layer_bsilk|dims_current.kicad_pcb|text
+# FOOTPRINT::GetFpPadsLocalBbox off by 1 nm on flipped footprints with custom pads after a
+# non-orthogonal rotation or a pad SetPosition (the edited pads themselves match; the
+# difference is inside the dummy copy's Flip, root cause not located).
+c_flip_lr|handmade_pads_current.kicad_pcb|bbox
+fp_orient|handmade_pads_current.kicad_pcb|bbox
+c_setpos|m20_footprints.kicad_pcb|bbox
+fp_orient|m20_footprints.kicad_pcb|bbox
+rot37_5|m20_footprints.kicad_pcb|bbox

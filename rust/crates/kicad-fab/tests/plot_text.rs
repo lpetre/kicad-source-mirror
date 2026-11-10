@@ -192,6 +192,7 @@ fn plot_f_silks(board: &Board, mm6: bool) -> String {
         &Lset::from_layers(&[PcbLayerId::FSilkS]),
         &plot_opts,
         kicad_fab::color_settings::ColorSettings::default(),
+        &kicad_fab::plot_board_layers::PadPlotState::new(),
     );
     assert!(plotter.end_plot());
     plotter.output().to_string()

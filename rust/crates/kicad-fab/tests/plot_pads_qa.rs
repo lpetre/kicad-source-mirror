@@ -164,6 +164,7 @@ fn no_drill_flashes_on_edge_cuts() {
             &[PcbLayerId::EdgeCuts],
             &plot_opts,
             kicad_fab::color_settings::ColorSettings::default(),
+            &kicad_fab::plot_board_layers::PadPlotState::new(),
         );
         assert!(plotter.end_plot());
         plotter.output().to_string()
@@ -218,6 +219,7 @@ fn drill_marks_plotted_on_edge_cuts_svg() {
         &[PcbLayerId::EdgeCuts],
         &plot_opts,
         kicad_fab::color_settings::ColorSettings::default(),
+        &kicad_fab::plot_board_layers::PadPlotState::new(),
     );
     assert!(plotter.end_plot());
 
@@ -261,6 +263,7 @@ fn no_drill_marks_on_gerber_from_stored_options() {
             &[PcbLayerId::FCu],
             &plot_opts,
             kicad_fab::color_settings::ColorSettings::default(),
+            &kicad_fab::plot_board_layers::PadPlotState::new(),
         );
         assert!(plotter.end_plot());
         plotter.output().to_string()
@@ -388,6 +391,7 @@ fn round_rect_gerber_mask_aperture_has_correct_radius() {
             &layers,
             &plot_opts,
             kicad_fab::color_settings::ColorSettings::default(),
+            &kicad_fab::plot_board_layers::PadPlotState::new(),
         );
         assert!(plotter.end_plot());
         plotter.output().to_string()

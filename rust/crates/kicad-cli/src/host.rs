@@ -246,14 +246,38 @@ pub fn get_board(path: &str) -> Result<Session, i32> {
     }
 }
 
-fn ensure_parent_dir(file: &str) -> std::io::Result<()> {
-    if let Some(parent) = Path::new(file).parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)?;
-        }
+/// Creates the directory a job asks for ([`kicad_session::jobs_handler::OutputDir`]): `PATHS::EnsurePathExists`
+/// (`wxFileName::Mkdir( path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL )` when it does not exist) or,
+/// with `full == false`, a plain `wxFileName::Mkdir()` of the last component.
+fn ensure_output_dir(dir: &kicad_session::jobs_handler::OutputDir) -> bool {
+    if dir.path.is_empty() || Path::new(&dir.path).is_dir() {
+        return true;
     }
 
-    Ok(())
+    if dir.full {
+        std::fs::create_dir_all(&dir.path).is_ok()
+    } else {
+        std::fs::create_dir(&dir.path).is_ok()
+    }
+}
+
+/// `wxLogSysError( _( "can't open file '%s'" ), name )` of `wxFFile::Open` as kicad-cli's log
+/// target prints it: `HH:MM:SS: Error: can't open file '<name>' (error <errno>: <strerror>)`.
+fn log_cannot_open(name: &str, err: &std::io::Error) {
+    let clock = host_clock();
+    let text = err.to_string();
+    // std::io::Error's Display is "<strerror> (os error <errno>)"
+    let strerror = text
+        .rfind(" (os error ")
+        .map_or(text.as_str(), |at| &text[..at]);
+
+    eprintln!(
+        "{:02}:{:02}:{:02}: Error: can't open file '{name}' (error {}: {strerror})",
+        clock.hour,
+        clock.minute,
+        clock.second,
+        err.raw_os_error().unwrap_or(0)
+    );
 }
 
 /// Print the `wxLogWarning`s a job raised ([`Session::log_warnings`], e.g. the zone filler's
@@ -271,25 +295,39 @@ pub fn print_log_warnings(session: &mut Session) {
 }
 
 /// Print the messages of a run, write its files and return its exit code.
+///
+/// Only the job's own output directory is created ([`JobOutcome::output_dir`], C++
+/// `PATHS::EnsurePathExists` before the job writes); when that fails, the C++ message is printed
+/// instead of the job's messages (the C++ returns before them). A file that cannot be written
+/// (e.g. a drill report in a directory that does not exist, F-04) stops the run with the
+/// `wxFFile` log error and `ERR_INVALID_OUTPUT_CONFLICT`; the files written before it stay.
 pub fn finish_job(result: Result<JobOutcome, SessionError>, reporter: Reporter) -> i32 {
-    print_report(reporter.lines());
-
     match result {
         Ok(outcome) => {
-            for file in &outcome.files {
-                if ensure_parent_dir(&file.name).is_err() {
-                    eprintln!("Failed to create output directory");
-                    return exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
+            if let Some(dir) = &outcome.output_dir {
+                if !ensure_output_dir(dir) {
+                    print_report(&[ReportLine {
+                        severity: Severity::Error,
+                        text: dir.failure_message.clone(),
+                    }]);
+                    return dir.failure_exit_code;
                 }
+            }
 
-                if std::fs::write(&file.name, &file.contents).is_err() {
-                    eprintln!("Failed to write '{}'.", file.name);
+            print_report(reporter.lines());
+
+            for file in &outcome.files {
+                if let Err(err) = std::fs::write(&file.name, &file.contents) {
+                    log_cannot_open(&file.name, &err);
                     return exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
                 }
             }
 
             outcome.exit_code
         }
-        Err(err) => report_session_error(&err),
+        Err(err) => {
+            print_report(reporter.lines());
+            report_session_error(&err)
+        }
     }
 }

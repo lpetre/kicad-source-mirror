@@ -29,6 +29,9 @@
 //! branches (`PlotLayer`'s DXF outline mode, `setupPlotterNewPDFPage`, `plotBackgroundColor`,
 //! `PlotInteractiveLayer`, `ClearPlottedFootprints`), the drawing sheet (PLOT-08).
 
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::layer_ids::{
     Flashing, LAYER_DNP_MARKER, LAYER_DRAWINGSHEET, LAYER_VIAS, is_copper_layer,
@@ -67,14 +70,70 @@ use crate::plot_layer_poly::{plot_clipped_silk_layer, plot_solder_mask_layer_min
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile};
 
+/// The board's pads as the `plotPadLayer` lambda of `PlotStandardLayer` (L446-681) leaves
+/// them for the layers plotted after it.
+///
+/// The C++ plots the board's own pad: it sets the plotted size (and shape / radius), plots and
+/// restores with `SetSize( aLayer, padSize )`, `SetDelta`, `SetShape` and
+/// `SetRoundRectRadiusRatio`. `PAD::SetSize` is a board-frame setter that stores
+/// `derivePadLibSize( size )`, so for a pad of a footprint with a scale other than (1, 1) the
+/// restore is not exact (the library size becomes `KiROUND( KiROUND( L * s ) / s )`), and every
+/// layer plotted later from the same loaded board (the other layers of one file, and the other
+/// files of one job, `pcbnew_jobs_handler.cpp` L1835-1912) starts from that pad. The port keeps
+/// the board immutable (`board-model.md` 13): this overlay holds the restored pad of every pad
+/// plotted so far, keyed by its id, and `PlotStandardLayer` reads a pad from here before it
+/// falls back to the board. One instance belongs to one plot job (one loaded board), shared by
+/// all its files in plot order.
+#[derive(Debug, Default)]
+pub struct PadPlotState {
+    pads: RefCell<BTreeMap<PadId, Pad>>,
+}
+
+impl PadPlotState {
+    /// An empty state: every pad as in the board.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The pad `id` as the plot left it, `None` while it has not been plotted (it is the
+    /// board's pad then).
+    pub fn pad(&self, id: PadId) -> Option<Pad> {
+        self.pads.borrow().get(&id).cloned()
+    }
+
+    /// The number of pads the plot has modified.
+    pub fn len(&self) -> usize {
+        self.pads.borrow().len()
+    }
+
+    /// `true` while no pad has been plotted.
+    pub fn is_empty(&self) -> bool {
+        self.pads.borrow().is_empty()
+    }
+
+    /// Removes and returns the stored pad `id` (put back with [`Self::put`]).
+    fn take(&self, id: PadId) -> Option<Pad> {
+        self.pads.borrow_mut().remove(&id)
+    }
+
+    /// Stores `pad` as the current state of the board's pad `id`.
+    fn put(&self, id: PadId, pad: Pad) {
+        self.pads.borrow_mut().insert(id, pad);
+    }
+}
+
 /// Port of `PlotBoardLayers`: plot a sequence of board layers into one plotter (the first
 /// layer is the "primary" layer of the file).
+///
+/// `a_pad_state` is the state of the board's pads that the C++ carries in the board itself
+/// ([`PadPlotState`]): the caller passes the same instance for every file of one job.
 pub fn plot_board_layers(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
     a_layers: &[PcbLayerId],
     a_plot_options: &PcbPlotParams,
     a_colors: ColorSettings,
+    a_pad_state: &PadPlotState,
 ) {
     if a_layers.is_empty() {
         return;
@@ -98,6 +157,7 @@ pub fn plot_board_layers(
             &plot_options,
             a_colors,
             layer == a_layers[0],
+            a_pad_state,
         );
     }
 
@@ -137,6 +197,7 @@ pub fn plot_one_board_layer(
     a_plot_opt: &PcbPlotParams,
     a_colors: ColorSettings,
     is_primary_layer: bool,
+    a_pad_state: &PadPlotState,
 ) {
     let mut plot_opt = a_plot_opt.clone();
 
@@ -157,7 +218,7 @@ pub fn plot_one_board_layer(
             plot_opt.skip_npth_pads = true;
         }
 
-        plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+        plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
     } else {
         match a_layer {
             PcbLayerId::BMask | PcbLayerId::FMask => {
@@ -165,7 +226,14 @@ pub fn plot_one_board_layer(
                 plot_opt.dxf_polygon_mode = true;
 
                 // Plot solder mask:
-                plot_solder_mask_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+                plot_solder_mask_layer(
+                    a_board,
+                    a_plotter,
+                    &layer_mask,
+                    &plot_opt,
+                    a_colors,
+                    a_pad_state,
+                );
             }
 
             PcbLayerId::BAdhes | PcbLayerId::FAdhes | PcbLayerId::BPaste | PcbLayerId::FPaste => {
@@ -175,7 +243,7 @@ pub fn plot_one_board_layer(
                 // Use outline mode for DXF
                 plot_opt.dxf_polygon_mode = true;
 
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
             }
 
             PcbLayerId::FSilkS | PcbLayerId::BSilkS => {
@@ -187,7 +255,14 @@ pub fn plot_one_board_layer(
                         // will also knockout any other (non-silk) layers that were plotted
                         // before the silk layer.
 
-                        plot_standard_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+                        plot_standard_layer(
+                            a_board,
+                            a_plotter,
+                            &layer_mask,
+                            &plot_opt,
+                            a_colors,
+                            a_pad_state,
+                        );
 
                         // Create the mask to subtract by creating a negative layer polarity
                         a_plotter.set_layer_polarity(false);
@@ -207,6 +282,7 @@ pub fn plot_one_board_layer(
                             &layer_mask,
                             &plot_opt,
                             a_colors,
+                            a_pad_state,
                         );
 
                         // Disable the negative polarity
@@ -221,14 +297,14 @@ pub fn plot_one_board_layer(
                         );
                     }
                 } else {
-                    plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+                    plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
                 }
             }
 
             // Dwgs_User, Cmts_User, Eco1_User, Eco2_User, Edge_Cuts, Margin, F/B_CrtYd,
             // F/B_Fab and every other layer
             _ => {
-                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors);
+                plot_layer(a_board, a_plotter, &layer_mask, &plot_opt, a_colors, a_pad_state);
             }
         }
     }
@@ -242,11 +318,19 @@ fn plot_layer(
     layer_mask: &Lset,
     plot_opts: &PcbPlotParams,
     a_colors: ColorSettings,
+    a_pad_state: &PadPlotState,
 ) {
     if plot_opts.format == PlotFormat::Dxf && plot_opts.dxf_polygon_mode {
         fab_port_pending!("PlotLayerOutlines (DXF, out of scope)")
     } else {
-        plot_standard_layer(a_board, a_plotter, layer_mask, plot_opts, a_colors);
+        plot_standard_layer(
+            a_board,
+            a_plotter,
+            layer_mask,
+            plot_opts,
+            a_colors,
+            a_pad_state,
+        );
     }
 }
 
@@ -259,9 +343,17 @@ fn plot_solder_mask_layer(
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
     a_colors: ColorSettings,
+    a_pad_state: &PadPlotState,
 ) {
     if a_board.board.design_settings().solder_mask_min_width == 0 {
-        plot_layer(a_board, a_plotter, a_layer_mask, a_plot_opt, a_colors);
+        plot_layer(
+            a_board,
+            a_plotter,
+            a_layer_mask,
+            a_plot_opt,
+            a_colors,
+            a_pad_state,
+        );
         return;
     }
 
@@ -325,16 +417,19 @@ impl StandardLayerFlags {
 /// aperture list, all D-codes; it is ported literally. The board graphics and footprint
 /// texts / graphics are FAB-05 (`PlotBoardGraphicItem`, `PlotFootprintGraphicItems`) and
 /// FAB-06 (`PlotFootprintTextItems`); the rest (L385-930) is
-/// [`plot_standard_layer_pads_vias_tracks_zones`].
+/// [`plot_standard_layer_pads_vias_tracks_zones`]. `a_pad_state`: the board's pads as the
+/// earlier layers of the plot job left them ([`PadPlotState`]), updated here.
 pub fn plot_standard_layer(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
     a_layer_mask: &Lset,
     a_plot_opt: &PcbPlotParams,
     a_colors: ColorSettings,
+    a_pad_state: &PadPlotState,
 ) {
     let board = a_board.board;
     let mut itemplotter = BrditemsPlotter::new(a_plotter, a_board, a_plot_opt, a_colors);
+    itemplotter.pad_state = Some(a_pad_state);
 
     itemplotter.set_layer_set(a_layer_mask);
 
@@ -442,82 +537,32 @@ pub fn plot_standard_layer_footprint(
 ) {
     let ctx = itemplotter.ctx;
     let board = ctx.board;
-    let a_layer_mask = itemplotter.layer_mask.clone();
     let Some(footprint) = board.footprint(footprint_id) else {
         return;
     };
     let dnp = footprint.dnp_for_variant(&flags.variant_name);
-    let sketch_pads = flags.sketch_pads;
     let on_front_fab = flags.on_front_fab;
     let on_back_fab = flags.on_back_fab;
 
-    for (pad_id, pad) in board.footprint_pads(footprint_id) {
-        let mut do_sketch_pads = false;
-        let pad_layers = pad.layer_set(ctx);
-
-        if !(&pad_layers & &a_layer_mask).any() {
-            if sketch_pads
-                && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
-                    || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
-            {
-                do_sketch_pads = true;
-            } else {
-                continue;
-            }
+    // Without a job's state (a caller of `plot_standard_layer_pads_vias_tracks_zones` that
+    // does not install one) the pads start as in the board.
+    let local_pad_state;
+    let pad_state = match itemplotter.pad_state {
+        Some(state) => state,
+        None => {
+            local_pad_state = PadPlotState::new();
+            &local_pad_state
         }
+    };
 
-        if flags.on_copper_layer && !pad.is_on_copper_layer(ctx) {
-            continue;
-        }
+    for (pad_id, board_pad) in board.footprint_pads(footprint_id) {
+        // `pad` is the board's pad as the earlier `plotPadLayer` calls of the job left it.
+        let stored = pad_state.take(pad_id);
+        let restored =
+            plot_footprint_pad(itemplotter, pad_id, stored.as_ref().unwrap_or(board_pad), flags);
 
-        // pads not connected to copper are optionally not drawn
-        if flags.on_copper_layer && !pad.flash_layer_set(ctx, &a_layer_mask) {
-            continue;
-        }
-
-        // TODO(JE) padstacks - different behavior for single layer or multilayer
-
-        let mut color = Color4D::BLACK;
-
-        // If we're plotting a single layer, the color for that layer can be used directly.
-        if a_layer_mask.count() == 1 {
-            color = itemplotter.color_settings_color(a_layer_mask.seq()[0].0);
-        } else {
-            let pad_on_mask = &pad_layers & &a_layer_mask;
-
-            if pad_on_mask.contains(PcbLayerId::BCu) {
-                color = itemplotter.color_settings_color(PcbLayerId::BCu.0);
-            }
-
-            if pad_on_mask.contains(PcbLayerId::FCu) {
-                color = color.legacy_mix(&itemplotter.color_settings_color(PcbLayerId::FCu.0));
-            }
-
-            if sketch_pads && a_layer_mask.contains(PcbLayerId::FFab) {
-                color = itemplotter.color_settings_color(PcbLayerId::FFab.0);
-            } else if sketch_pads && a_layer_mask.contains(PcbLayerId::BFab) {
-                color = itemplotter.color_settings_color(PcbLayerId::BFab.0);
-            }
-        }
-
-        if sketch_pads
-            && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
-                || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
-            && itemplotter.opts.plot_pad_numbers
-        {
-            itemplotter.plot_pad_number(ctx.view(AnyItem::Pad(pad)), &color);
-        }
-
-        for layer in a_layer_mask.seq_stackup_for_plotting().iter() {
-            plot_pad_layer(
-                itemplotter,
-                pad_id,
-                pad,
-                *layer,
-                &color,
-                do_sketch_pads,
-                flags,
-            );
+        if let Some(pad) = restored.or(stored) {
+            pad_state.put(pad_id, pad);
         }
     }
 
@@ -588,12 +633,107 @@ pub fn plot_standard_layer_footprint(
     }
 }
 
+/// The body of the pad loop of `PlotStandardLayer` (L387-447 and the `plotPadLayer` calls) for
+/// one pad of a footprint: `pad` is the board's pad `pad_id` as the plot job left it so far.
+/// Returns the pad as the `plotPadLayer` calls leave it, `None` when no call modified it (the
+/// pad is skipped, or every layer returned before modifying it).
+fn plot_footprint_pad(
+    itemplotter: &mut BrditemsPlotter<'_, '_>,
+    pad_id: PadId,
+    pad: &Pad,
+    flags: &StandardLayerFlags,
+) -> Option<Pad> {
+    let ctx = itemplotter.ctx;
+    let a_layer_mask = itemplotter.layer_mask.clone();
+    let sketch_pads = flags.sketch_pads;
+    let on_front_fab = flags.on_front_fab;
+    let on_back_fab = flags.on_back_fab;
+    let mut do_sketch_pads = false;
+    let pad_layers = pad.layer_set(ctx);
+
+    if !(&pad_layers & &a_layer_mask).any() {
+        if sketch_pads
+            && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
+                || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
+        {
+            do_sketch_pads = true;
+        } else {
+            return None;
+        }
+    }
+
+    if flags.on_copper_layer && !pad.is_on_copper_layer(ctx) {
+        return None;
+    }
+
+    // pads not connected to copper are optionally not drawn
+    if flags.on_copper_layer && !pad.flash_layer_set(ctx, &a_layer_mask) {
+        return None;
+    }
+
+    // TODO(JE) padstacks - different behavior for single layer or multilayer
+
+    let mut color = Color4D::BLACK;
+
+    // If we're plotting a single layer, the color for that layer can be used directly.
+    if a_layer_mask.count() == 1 {
+        color = itemplotter.color_settings_color(a_layer_mask.seq()[0].0);
+    } else {
+        let pad_on_mask = &pad_layers & &a_layer_mask;
+
+        if pad_on_mask.contains(PcbLayerId::BCu) {
+            color = itemplotter.color_settings_color(PcbLayerId::BCu.0);
+        }
+
+        if pad_on_mask.contains(PcbLayerId::FCu) {
+            color = color.legacy_mix(&itemplotter.color_settings_color(PcbLayerId::FCu.0));
+        }
+
+        if sketch_pads && a_layer_mask.contains(PcbLayerId::FFab) {
+            color = itemplotter.color_settings_color(PcbLayerId::FFab.0);
+        } else if sketch_pads && a_layer_mask.contains(PcbLayerId::BFab) {
+            color = itemplotter.color_settings_color(PcbLayerId::BFab.0);
+        }
+    }
+
+    if sketch_pads
+        && ((on_front_fab && pad_layers.contains(PcbLayerId::FCu))
+            || (on_back_fab && pad_layers.contains(PcbLayerId::BCu)))
+        && itemplotter.opts.plot_pad_numbers
+    {
+        itemplotter.plot_pad_number(ctx.view(AnyItem::Pad(pad)), &color);
+    }
+
+    let mut restored: Option<Pad> = None;
+
+    for layer in a_layer_mask.seq_stackup_for_plotting().iter() {
+        let current = restored.as_ref().unwrap_or(pad);
+
+        if let Some(pad_after) = plot_pad_layer(
+            itemplotter,
+            pad_id,
+            current,
+            *layer,
+            &color,
+            do_sketch_pads,
+            flags,
+        ) {
+            restored = Some(pad_after);
+        }
+    }
+
+    restored
+}
+
 /// The `plotPadLayer` lambda of `PlotStandardLayer` (L446-681): plot `pad` on `a_layer` with
 /// its size, shape and corner radius adjusted by the mask / paste margin.
 ///
 /// C++ modifies the board's pad in place and restores the modified members afterwards (or
-/// plots a modified copy, `PAD dummy( *pad )`); the port always works on a detached copy
-/// (`board-model.md` 13), which is the same pad as far as `PlotPad` can tell.
+/// plots a modified copy, `PAD dummy( *pad )`); the port works on a detached copy of `pad`
+/// (`board-model.md` 13), applies the C++ restore sequence to it and returns it: the pad as
+/// the C++ leaves it on the board (the restore of the size is not exact for a footprint with a
+/// scale, see [`PadPlotState`]). `None`: the zero-size exit, which returns before anything is
+/// modified.
 fn plot_pad_layer(
     itemplotter: &mut BrditemsPlotter<'_, '_>,
     pad_id: PadId,
@@ -602,7 +742,7 @@ fn plot_pad_layer(
     color: &Color4D,
     do_sketch_pads: bool,
     flags: &StandardLayerFlags,
-) {
+) -> Option<Pad> {
     let ctx: BoardCtx<'_> = *itemplotter.ctx;
     let ctx = &ctx;
     let max_error = flags.max_error;
@@ -639,36 +779,39 @@ fn plot_pad_layer(
     let pad_shape = pad.shape(a_layer);
     let pad_size = pad.size(ctx, a_layer);
     let pad_delta = pad.delta(a_layer); // has meaning only for trapezoidal pads
+    // CornerRadius and CornerRadiusRatio can be modified
+    // the radius is built from the ratio, so saving/restoring the ratio is enough
+    let pad_corner_radius_ratio = pad.round_rect_radius_ratio(a_layer);
 
     // Don't draw a 0 sized pad.
     // Note: a custom pad can have its pad anchor with size = 0
     if pad_shape != PadShape::Custom && (pad_plots_size.x <= 0 || pad_plots_size.y <= 0) {
-        return;
+        return None;
     }
 
     // The mutators' view of the pad's parent footprint (`GetParentFootprint()`, board).
     let env = ctx.board.mut_env(pad_id.into());
-    // `pad` as C++ modifies it: a detached copy (the "restore" at the end is dropping it).
+    // `pad` as C++ modifies it: a detached copy, restored at the end and returned.
     let mut work = pad.detached_copy();
 
     match pad_shape {
         PadShape::Circle | PadShape::Oval => {
             work.set_size(&env, a_layer, pad_plots_size);
 
-            if itemplotter.opts.skip_npth_pads
+            // C++ `break`: the restore below still runs
+            let skip = itemplotter.opts.skip_npth_pads
                 && itemplotter.opts.drill_marks == DrillMarks::NoDrillShape
                 && work.size(ctx, a_layer) == work.drill_size(ctx)
-                && work.attribute() == PadAttrib::Npth
-            {
-                return;
-            }
+                && work.attribute() == PadAttrib::Npth;
 
-            itemplotter.plot_pad(
-                ctx.view(AnyItem::Pad(&work)),
-                a_layer,
-                color,
-                do_sketch_pads,
-            );
+            if !skip {
+                itemplotter.plot_pad(
+                    ctx.view(AnyItem::Pad(&work)),
+                    a_layer,
+                    color,
+                    do_sketch_pads,
+                );
+            }
         }
 
         PadShape::Rectangle => {
@@ -883,7 +1026,18 @@ fn plot_pad_layer(
         }
     }
 
-    // Restore the pad parameters modified by the plot code: `work` is a copy.
+    // Restore the pad parameters modified by the plot code.
+    // The board's pad keeps its identity (`work` is a detached copy without the arena id), so
+    // the restore is applied to a clone of `pad`: the plot code above modifies `work` only
+    // through the members restored here (size, shape, corner radius ratio of `a_layer`), each
+    // of which the restore overwrites, so the result is the pad C++ leaves on the board.
+    let mut restored = pad.clone();
+    restored.set_size(&env, a_layer, pad_size);
+    restored.set_delta(a_layer, pad_delta);
+    restored.set_shape(a_layer, pad_shape);
+    restored.set_round_rect_radius_ratio(a_layer, pad_corner_radius_ratio);
+
+    Some(restored)
 }
 
 /// The `getMetadata` lambda of `PlotStandardLayer`: the Gerber metadata for a Gerber
@@ -1456,13 +1610,15 @@ pub fn plot_gerber_layer_file(
         a_env,
     )?;
 
-    // The colour theme of `kicad-cli` (`_builtin_default`); Gerber output ignores colours
+    // The colour theme of `kicad-cli` (`_builtin_default`); Gerber output ignores colours.
+    // One file from a freshly loaded board: the pads start as in the board.
     plot_board_layers(
         a_board,
         plotter.as_mut(),
         a_plot_sequence,
         a_plot_opts,
         ColorSettings::builtin_default(),
+        &PadPlotState::new(),
     );
     plotter.end_plot();
 

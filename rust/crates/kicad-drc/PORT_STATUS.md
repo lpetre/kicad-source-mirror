@@ -2371,3 +2371,85 @@ Deviations:
 Known gaps: creepage paths between a track segment and an arc track inherit the DRC-32
 reference-UB deviation (no corpus board has one in a reported path). Performance: ~2.5x the
 reference on issue21482 (pad bounding boxes and effective shapes are recomputed per call).
+
+## DRC-34: leftovers (EvalRules reporter texts, own-clearance cache, net chain tuning profiles, via-stitch overlap, `GetViolationLayers`)
+
+Supersedes the "REPORT (DRC-34)" known gap and the `InitializeClearanceCache` "skipped" row of
+the DRC-04 section, and the two DRC-34 entries of `run_flow::UNPORTED_PROVIDERS` (DRC-12).
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_engine.cpp` `REPORT( ... )` texts of `EvalRules` (net tie, local overrides, `reportConstraintHeader`, `processConstraint`, `testAssertion`, DIFF_PAIR_GAP clearance floor, parent inheritance, local clearances / board minimum, footprint / zone connection and thermal defaults), `EvalZoneConnection`, `ProcessAssertions` | `src/engine/eval_rules.rs` (the sites), `src/engine/eval_rules_report.rs` (`report` = the `REPORT` macro, `report_constraint_header`, `ReportUnits` = the engine's `UNITS_PROVIDER`) | ported |
+| `PrintZoneConnection` (`pcbnew/zones.h`) | `engine::eval_rules_report::print_zone_connection` | ported |
+| `DRC_ENGINE` as `UNITS_PROVIDER` (`SetUserUnits` / `GetUserUnits`) | `DrcEngine::set_user_units` / `user_units` (`src/engine/mod.rs`, additive) | ported (see deviations) |
+| `DRC_ENGINE::InitializeClearanceCache` | `DrcEngine::initialize_clearance_cache` (`eval_rules.rs`) | ported (sequential) |
+| `DRC_ENGINE::InvalidateClearanceCache`, `ClearClearanceCache` (L3267-3294) | `invalidate_clearance_cache`, `clear_clearance_cache` (DRC-04) | ported (checked: complete) |
+| `drc_test_provider_net_chain_tuning_profiles.cpp` | `providers/net_chain_tuning_profiles.rs` `DrcTestProviderNetChainTuningProfiles`, `StdStringKeyedOrder` (libstdc++ `unordered_map<wxString,..>` node order) | ported |
+| `drc_test_provider_via_stitch.cpp` | `providers/via_stitch.rs` `DrcTestProviderViaStitch`, `via_stitch_net_code` (`PCB_VIA_STITCH::GetNetCode` after a load) | ported |
+| `drc_item.cpp` `DRC_ITEM::GetViolationLayers` (L628-710) | `src/violation_layers.rs` `violation_layers` -> `ViolationLayers` | ported |
+| `GetItemsMatchingCondition`, `GetItemsMatchingRule`, show-match domains (L2690-3210) | - | skipped: GUI (rule editor "show matches"), as recorded by DRC-03 |
+
+Both providers run in `run_flow::run_provider` (registry slots "net chain tuning profiles",
+"via_stitch_overlap"); `UNPORTED_PROVIDERS` holds only schematic parity now.
+
+### Verification
+
+* **Reporter texts** (`tests/drc34_report_oracle.rs`, C++ driver
+  `tests/oracle/drc34_report_oracle.cpp` + `build_drc34_report_oracle.sh` linking the
+  reference build, golden `tests/golden/drc34/evalrules_report.txt` from
+  `gen_drc34_report_golden.py`): every corpus board < 300 kB plus the four review boards,
+  QA load path; per item kind the first 6 items with CLEARANCE per copper layer and 39 other
+  constraint types, DISALLOW, `ProcessAssertions`, an `INCH` pass, and the dump_evalrules
+  pairs (CLEARANCE per layer, `EvalZoneConnection`, thermal, 11 pair types), each call with
+  its own `WX_STRING_REPORTER`. Result: **307 boards, 2367 categories = 235097 calls
+  byte-identical**; 4 categories differ because of code outside this package (listed, not
+  failed: `KNOWN_OTHER_PACKAGES`): issue2512 inch / pair_zt / zone - the expression evaluator
+  does not send its error callback ("ERROR: Unrecognized layer '*.Silkscreen'" of
+  `existsOnLayer`) to the reporter; issue24735 drawing - `A.Layer == 'F.Silkscreen'` is true
+  for the board `gr_text` on F.SilkS in the port and false in the reference (a rule result
+  difference: the "layer map of the QA load path" known deviation of `evalrules_oracle.rs`).
+  Pending: issue4257 (legacy `.pro`), fakeboard (reference
+  cannot load it).
+* **Net chain tuning profiles**: `DRCNetChainTuningProfiles` ported (1 violation, the
+  reference text); the synthetic boards `tests/data/drc34/chains_{3,14,17}` (generated from
+  the QA board by `gen_drc34_boards.py`, 3 / 14 / 17 conflicting chains incl. non-ASCII and
+  bracketed names, two rehashes) report every chain in the reference order (34 / 34, golden
+  `tests/golden/drc34/chains.txt`). Corpus: 362 boards, `net_chain_tuning_profiles` 1 / 1
+  matched, 0 missing / extra.
+* **Via-stitch overlap**: synthetic `tests/data/drc34/stitch_overlap` (issue25303's stitch
+  plus four copies: same net overlapping, other net overlapping, same net far away, same net
+  overlapping two) - 3 / 3 violations in the reference order with the reference items and item
+  positions (golden `tests/golden/drc34/stitch.txt`). Corpus: 362 boards, no
+  `via_stitch_overlap` in the reference, none in the port. The marker position (bbox centre of
+  the intersection) is not part of the CLI reports and is verified by review only.
+* **`GetViolationLayers`**: `test_drc_violation_layers_issue24941.cpp` (three cases) ported.
+
+### Ported C++ tests
+
+`test_drc_net_chain_tuning_profiles.cpp` (`DRCNetChainTuningProfiles`: only the provider
+under test runs; the C++ test counts all error-severity violations of a full run with four
+checks ignored), `test_drc_violation_layers_issue24941.cpp` (`EdgeClearanceFocusesEdgeCuts`,
+`MarkerLayerTakesPriority`, `FallbackToItemLayers`) in `tests/drc34_leftovers.rs`.
+
+### Deviations
+
+* Engine units: C++ `RunTests( aUnits )` calls `SetUserUnits` on the engine, so texts produced
+  after a run are in the run's units; the port keeps the run's units in `DrcRunState`, and the
+  texts use `DrcEngine::user_units` (MM until `set_user_units`). No CLI path produces texts.
+* `HOLE_TO_HOLE` with a hole in `a` and no `b`: the C++ dereferences null to name the item
+  without a hole; the port treats `b` as hole-less (DRC-04) and writes no text for it.
+* `InitializeClearanceCache`: the C++ thread blocks overwrite within a block and keep the first
+  block's value across blocks; the port keeps the first value of the list. Only duplicate
+  (uuid, layer) keys (duplicate UUIDs) can differ, and their value is a block-partition race in
+  C++.
+* Net chain map: keys beyond the modelled part of `__prime_list` (more than 953 net chains) are
+  iterated in name order (not reachable in practice). A net without a netclass (null
+  dereference in C++) counts as the empty profile.
+* `%.3f` of the hole aspect ratio header uses Rust `{:.3}`; the value is an `int / 1000.0`, never
+  an exact decimal tie, so both round the same.
+
+### Known gaps
+
+* The texts reach other packages' code that is compared only through this oracle: the item
+  descriptions (`GetItemDescription`) and the expression evaluator's reporter output; see the
+  two known causes above.

@@ -215,6 +215,7 @@ fn svg_start_plot_board_matches_cli() {
             &[layer],
             &opts,
             kicad_fab::color_settings::ColorSettings::builtin_default(),
+            &kicad_fab::plot_board_layers::PadPlotState::new(),
         );
         plotter.end_plot();
 

@@ -14,3 +14,4 @@ pcbio13/generators.kicad_pcb
 m20/m20_footprints.kicad_pcb
 stabpcb/scaled_custom_pads.kicad_pcb
 glue2/scaled_fp_items.kicad_pcb
+fixedit1/generators_no_template.kicad_pcb

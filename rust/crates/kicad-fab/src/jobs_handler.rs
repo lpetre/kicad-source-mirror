@@ -53,7 +53,7 @@ use crate::jobs::job_export_pcb_svg::{JobExportPcbSvg, SvgGenMode};
 use crate::pcb_plotter::build_plot_file_name;
 use crate::pcb_plotter::{PlotOutcome, plot};
 use crate::pcbplot::{PlotEnv, gerber_protel_extension};
-use crate::plot_board_layers::{plot_board_layers, start_plot_board};
+use crate::plot_board_layers::{PadPlotState, plot_board_layers, start_plot_board};
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile, Reporter};
 
@@ -484,6 +484,9 @@ pub fn job_export_gerbers(
 
     let board_plot_options = &brd.plot_options;
     let var_overrides = &a_gerber_job.gerber.plot.var_overrides;
+    // The board's pads as the plot of the previous files left them (C++ plots all files from
+    // the one loaded board, see `PadPlotState`)
+    let pad_state = PadPlotState::new();
 
     for layer in a_layers_to_plot.ui_order().0 {
         let mut plot_sequence: Vec<PcbLayerId> = Vec::new();
@@ -571,7 +574,14 @@ pub fn job_export_gerbers(
                     reporter.report(&format!("Plotted to '{full_path}'.\n"), Severity::Action);
                 }
 
-                plot_board_layers(&a_ctx, plotter.as_mut(), &plot_sequence, &plot_opts, colors);
+                plot_board_layers(
+                    &a_ctx,
+                    plotter.as_mut(),
+                    &plot_sequence,
+                    &plot_opts,
+                    colors,
+                    &pad_state,
+                );
                 plotter.end_plot();
 
                 outcome.files.push(OutputFile {

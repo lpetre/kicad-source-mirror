@@ -66,6 +66,49 @@ pub struct JobOutcome {
     pub files: Vec<OutputFile>,
     /// The report text (DRC report, drill report), when the job produces one.
     pub report_text: Option<String>,
+    /// The directory the C++ job creates before it writes (`PATHS::EnsurePathExists`, or the
+    /// `wxFileName::Mkdir` of `FP_CACHE::Save`); the host creates it and nothing else, so a
+    /// file outside it (e.g. a drill report in a directory that does not exist) fails to open
+    /// as in C++. `None`: the job creates no directory.
+    #[serde(skip)]
+    pub output_dir: Option<OutputDir>,
+}
+
+/// A directory a job creates before writing its files (see [`JobOutcome::output_dir`]).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OutputDir {
+    /// The directory, as the job resolved it (relative to the host's working directory;
+    /// empty: the working directory itself).
+    pub path: String,
+    /// `wxPATH_MKDIR_FULL`: missing parent directories are created too.
+    pub full: bool,
+    /// What the C++ reports (`RPT_SEVERITY_ERROR`) when the directory cannot be created;
+    /// the job's other messages are not printed then (the C++ returns before them).
+    pub failure_message: String,
+    /// The exit code the C++ returns then.
+    pub failure_exit_code: i32,
+}
+
+impl OutputDir {
+    /// Port of `PATHS::EnsurePathExists( aPath, aPathToFile )` as a request to the host: the
+    /// directory `aPath` (`aPathToFile == false`) or the directory part of the file `aPath`
+    /// (`wxFileName::GetPath()`), created with `wxPATH_MKDIR_FULL`; the job handlers report
+    /// `Failed to create output directory` and return `ERR_INVALID_OUTPUT_CONFLICT` when it
+    /// fails.
+    pub fn ensure_path_exists(a_path: &str, a_path_to_file: bool) -> OutputDir {
+        let path = if a_path_to_file {
+            file_dir(a_path).to_string()
+        } else {
+            a_path.to_string()
+        };
+
+        OutputDir {
+            path,
+            full: true,
+            failure_message: "Failed to create output directory\n".to_string(),
+            failure_exit_code: exit_codes::ERR_INVALID_OUTPUT_CONFLICT,
+        }
+    }
 }
 
 impl JobOutcome {
@@ -386,8 +429,9 @@ pub fn run_drc(
 
     let out_path = resolve_job_output_path(&mut job.rc.job, session);
 
-    // PATHS::EnsurePathExists( outPath, true ): the host creates the directory when it writes
-    // the file.
+    // PATHS::EnsurePathExists( outPath, true ): the host creates the directory
+    // (JobOutcome::output_dir) before it writes the file.
+    let output_dir = OutputDir::ensure_path_exists(&out_path, true);
 
     let units = drc_units(job.rc.units);
 
@@ -545,6 +589,7 @@ pub fn run_drc(
             contents: result.report.clone().into_bytes(),
         }],
         report_text: Some(result.report.clone()),
+        output_dir: Some(output_dir),
     };
 
     job.rc.job.add_output(&out_path);
@@ -626,6 +671,10 @@ pub fn run_export_gerbers(
     // resolveJobOutputPath( aJob, brd, &aGerberJob->m_drawingSheet )
     session.load_override_drawing_sheet(&job.gerber.plot.drawing_sheet, reporter);
 
+    // PATHS::EnsurePathExists( outPath, false ): the host creates the directory
+    // (JobOutcome::output_dir) before it writes the files.
+    let output_dir = OutputDir::ensure_path_exists(&out_path, false);
+
     if job.gerber.plot.check_zones_before_plot {
         session.refill_zones()?;
     }
@@ -658,6 +707,17 @@ pub fn run_export_gerbers(
 
     if let Some(engine) = session.drc_engine.as_ref() {
         ctx = ctx.with_rules(engine);
+    }
+
+    // `plotOpts = boardPlotOptions` with a stored HPGL format: StartPlotBoard fails for every
+    // layer (F-01)
+    if job.use_board_plot_params
+        && session.board.plot_options.format == kicad_core::plot_enums::PlotFormat::Hpgl
+    {
+        let mut outcome =
+            gerbers_start_plot_fails(job, ctx, &layers_to_plot, &out_path, &env, reporter);
+        outcome.output_dir = Some(output_dir);
+        return Ok(outcome);
     }
 
     let mut fab_reporter = FabReporter(reporter);
@@ -694,8 +754,97 @@ pub fn run_export_gerbers(
             exit_code,
             files,
             report_text: None,
+            output_dir: Some(output_dir),
         }),
         Some(err) => Err(SessionError::not_yet_ported(format!("kicad-fab: {err}"))),
+    }
+}
+
+/// The layer loop of `PCBNEW_JOBS_HANDLER::JobExportGerbers` (L1817-1919) for a run in which
+/// `StartPlotBoard` returns `nullptr` for every layer: `m_useBoardPlotParams` with a stored
+/// `PLOT_FORMAT::HPGL` (`plot_board_layers.cpp` L1456-1458). Per layer the file name is built
+/// and registered in the job file, `wxLogError( "HPGL plotting is no longer supported as of
+/// KiCad 10.0" )` and `Failed to plot to '<file>'.` are reported and the exit code becomes
+/// `ERR_INVALID_OUTPUT_CONFLICT`; the Gerber job file is still written.
+///
+/// kicad-fab's `job_export_gerbers` stops at the first layer the port cannot plot (its other
+/// errors are formats outside the port), so this case runs here. The `wxLogError` line goes to
+/// the reporter as an error, formatted as kicad-cli's log target prints it
+/// (`HH:MM:SS: Error: <text>`, the time of `creation_date`), so that it keeps its place among
+/// the `Failed to plot` lines on stderr.
+fn gerbers_start_plot_fails(
+    job: &mut JobExportPcbGerbers,
+    ctx: kicad_pcb::ctx::BoardCtx<'_>,
+    layers_to_plot: &Lset,
+    out_path: &str,
+    env: &kicad_fab::pcbplot::PlotEnv,
+    reporter: &mut Reporter,
+) -> JobOutcome {
+    use kicad_fab::exporters::gerber_jobfile_writer::GerberJobfileWriter;
+    use kicad_fab::pcb_plotter::build_plot_file_name;
+    use kicad_fab::wx_file_name::WxFileName;
+
+    let brd = ctx.board;
+    let plot_opts = &brd.plot_options;
+    let date = &job.gerber.plot.creation_date;
+    let mut jobfile_writer = GerberJobfileWriter::new(ctx, None);
+    let mut files = Vec::new();
+    let mut exit_code = exit_codes::OK;
+
+    for layer in layers_to_plot.ui_order().0 {
+        // Pick the basename from the board file
+        let mut fn_ = WxFileName::new(&brd.file_name);
+        let layer_name = brd.layer_name(layer);
+
+        let file_ext = if plot_opts.use_gerber_protel_extensions {
+            kicad_fab::pcbplot::gerber_protel_extension(layer.0)
+        } else {
+            // FILEEXT::GerberFileExtension
+            kicad_plot::GerberPlotter::default_file_extension().to_string()
+        };
+
+        build_plot_file_name(&mut fn_, out_path, &layer_name, &file_ext);
+        jobfile_writer.add_gbr_file(layer, &fn_.full_name());
+
+        // StartPlotBoard: case PLOT_FORMAT::HPGL
+        reporter.report(
+            format!(
+                "{:02}:{:02}:{:02}: Error: HPGL plotting is no longer supported as of KiCad 10.0\n",
+                date.hour, date.minute, date.second
+            ),
+            Severity::Error,
+        );
+        reporter.report(
+            format!("Failed to plot to '{}'.\n", fn_.full_path()),
+            Severity::Error,
+        );
+        exit_code = exit_codes::ERR_INVALID_OUTPUT_CONFLICT;
+    }
+
+    if job.create_jobs_file {
+        let mut fn_ = WxFileName::new(&brd.file_name);
+
+        // Build gerber job file from basename
+        build_plot_file_name(
+            &mut fn_,
+            out_path,
+            "job",
+            kicad_fab::jobs_handler::GERBER_JOB_FILE_EXTENSION,
+        );
+        let full_path = fn_.full_path();
+        let job_file = jobfile_writer.create_job_file(&full_path, env);
+        files.push(OutputFile {
+            name: job_file.name,
+            contents: job_file.contents,
+        });
+        job.gerber.plot.job.add_output(&full_path);
+    }
+
+    JobOutcome {
+        exit_code,
+        files,
+        report_text: None,
+        output_dir: None,
     }
 }
 
@@ -791,8 +940,10 @@ pub fn run_export_drill(
 
     let out_path = resolve_job_output_path(&mut job.job, session);
 
-    // PATHS::EnsurePathExists( outPath ): the host creates the directory when it writes the
-    // files.
+    // PATHS::EnsurePathExists( outPath ): the host creates the directory
+    // (JobOutcome::output_dir) before it writes the files. The report path is not created:
+    // GenDrillReportFile fails to open a file in a directory that does not exist (F-04).
+    let output_dir = OutputDir::ensure_path_exists(&out_path, false);
 
     let fab_job = fab::JobExportPcbDrill {
         excellon_mirror_y: job.excellon_mirror_y,
@@ -894,6 +1045,7 @@ pub fn run_export_drill(
         },
         files,
         report_text: None,
+        output_dir: Some(output_dir),
     })
 }
 
@@ -919,8 +1071,9 @@ pub fn run_export_svg(
     // resolveJobOutputPath( aJob, brd, &aSvgJob->m_drawingSheet )
     session.load_override_drawing_sheet(&job.plot.drawing_sheet, reporter);
 
-    // PATHS::EnsurePathExists( outPath, isSingle ): the host creates the directory when it
-    // writes the files.
+    // PATHS::EnsurePathExists( outPath, isSingle ): the host creates the directory
+    // (JobOutcome::output_dir) before it writes the files.
+    let output_dir = OutputDir::ensure_path_exists(&out_path, is_single);
 
     if job.plot.check_zones_before_plot {
         session.refill_zones()?;
@@ -933,7 +1086,10 @@ pub fn run_export_svg(
     let Some(layers_to_plot) =
         prepare_plot_layers(&mut job.plot, &enabled, Some(&user_name), reporter)
     else {
-        return Ok(JobOutcome::exit(exit_codes::ERR_ARGS));
+        return Ok(JobOutcome {
+            output_dir: Some(output_dir),
+            ..JobOutcome::exit(exit_codes::ERR_ARGS)
+        });
     };
 
     // PCB_PLOTTER::Plot: RefreshGeneratedTables( *m_board ) before plotting (it needs the
@@ -982,7 +1138,10 @@ pub fn run_export_svg(
 
     // plotJob: a failed plot returns before AddOutput
     if !result.success {
-        return Ok(JobOutcome::exit(exit_codes::ERR_UNKNOWN));
+        return Ok(JobOutcome {
+            output_dir: Some(output_dir),
+            ..JobOutcome::exit(exit_codes::ERR_UNKNOWN)
+        });
     }
 
     for output in &result.outputs {
@@ -1002,6 +1161,7 @@ pub fn run_export_svg(
         exit_code: exit_codes::OK,
         files,
         report_text: None,
+        output_dir: Some(output_dir),
     })
 }
 
@@ -1051,6 +1211,8 @@ pub fn run_pcb_upgrade(
                 contents: text.into_bytes(),
             }],
             report_text: None,
+            // the board is saved in place: no directory to create
+            output_dir: None,
         });
     }
 
@@ -1153,6 +1315,16 @@ pub fn run_fp_upgrade(
         ..FormatOptions::default()
     };
 
+    // FP_CACHE::Save: `if( !m_lib_path.DirExists() && !m_lib_path.Mkdir() )` (the library
+    // directory only, no wxPATH_MKDIR_FULL) throws, JobExportFpUpgrade reports "Unable to save
+    // library" and returns ERR_UNKNOWN
+    let output_dir = OutputDir {
+        path: lib_path.clone(),
+        full: false,
+        failure_message: "Unable to save library\n".to_string(),
+        failure_exit_code: exit_codes::ERR_UNKNOWN,
+    };
+
     let mut files = Vec::new();
 
     for (full_name, holder, fp) in fp_lib.values() {
@@ -1168,6 +1340,7 @@ pub fn run_fp_upgrade(
                     exit_code: exit_codes::ERR_UNKNOWN,
                     files,
                     report_text: None,
+                    output_dir: Some(output_dir),
                 });
             }
         }
@@ -1177,6 +1350,7 @@ pub fn run_fp_upgrade(
         exit_code: exit_codes::SUCCESS,
         files,
         report_text: None,
+        output_dir: Some(output_dir),
     })
 }
 

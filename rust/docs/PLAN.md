@@ -508,6 +508,16 @@ Progress log:
   Launched: FIX-FAB-1 (pad state carried between plotted layers) -> FAB-13 (drill and chart
   symbol plotting: the last pending plot stub) -> GLUE-3 (cross-crate leftovers), and
   FIX-FAB-2 (CLI leftovers of the exports).
+  07:25 UTC: done DRC-31 matched length / skew / via count / net chain stub and return
+  path, with the whole length-delay calculation, series-passive bridging and chain
+  topology (56 cases on 31 QA boards: 317 of 317 violations matched, 0 missing, 0 extra,
+  every description byte-exact incl. measured lengths and delays; chain topology numbers
+  are checked against the QA expectations only - the CLI never builds a topology because
+  terminal pads are cleared at load) and DRC-34 leftovers (EvalRules explain texts: 307
+  boards, 2367 categories, 235,097 calls byte-identical to a reference driver; net chain
+  tuning profiles in the reference's unordered_map order; via stitch; GetViolationLayers).
+  The provider registry now has NO unported slot except schematic parity (out of scope)
+  and what is running: creepage part 2 (DRC-33) and library parity (DRC-LP).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

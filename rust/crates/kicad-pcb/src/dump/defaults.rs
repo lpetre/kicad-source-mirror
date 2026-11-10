@@ -579,13 +579,22 @@ pub(crate) fn dump_defaults_into(o: &mut Out) {
         dump_default_item(o, "PCB_GROUP", ctx.view(AnyItem::Group(&g)));
     }
 
-    class_pending(
-        o,
-        "PCB_GENERATOR.PCB_TUNING_PATTERN",
-        super::format::Failure::Pending(
-            "PCB_TUNING_PATTERN::PCB_TUNING_PATTERN (no Rust API)".into(),
-        ),
-    );
+    // PCB_TUNING_PATTERN gen( &board ): layer F_Cu, mode SINGLE (package FIX-EDIT-1).
+    if let Some(g) = construct(o, "PCB_GENERATOR.PCB_TUNING_PATTERN", || {
+        parented(
+            crate::pcb_generator::PcbGenerator::tuning_pattern(
+                PcbLayerId::FCu,
+                crate::pcb_generator::LengthTuningMode::Single,
+            ),
+            on_board,
+        )
+    }) {
+        dump_default_item(
+            o,
+            "PCB_GENERATOR.PCB_TUNING_PATTERN",
+            ctx.view(AnyItem::Generator(&g)),
+        );
+    }
 
     if let Some(t) = construct(o, "PCB_TARGET", || {
         parented(crate::pcb_target::PcbTarget::default(), on_board)

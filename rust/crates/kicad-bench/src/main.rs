@@ -459,11 +459,7 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
         run.clear_violation_handler();
     }
 
-    let end_peak = if rec.mem {
-        proc_status_kb("VmHWM:")
-    } else {
-        0
-    };
+    let end_peak = if rec.mem { proc_status_kb("VmHWM:") } else { 0 };
     let end_alloc = alloc_snap();
     let end = Instant::now();
     rec.end("drc2.run_tests", &start);
@@ -476,12 +472,12 @@ fn drc_phases(rec: &mut Recorder, session: &mut Session, verbose: bool) {
     let mut prev_name = "drc2.prepare".to_string();
     let mut in_providers = false;
 
-    for (t, peak, a, text) in events.iter().cloned().chain(std::iter::once((
-        end,
-        end_peak,
-        end_alloc,
-        String::new(),
-    ))) {
+    for (t, peak, a, text) in
+        events
+            .iter()
+            .cloned()
+            .chain(std::iter::once((end, end_peak, end_alloc, String::new())))
+    {
         if in_providers && text.starts_with("phase:") {
             // provider phases stay in their provider's interval (not recorded by PhaseLog)
             continue;
@@ -781,7 +777,9 @@ fn cmd_run(a: &Args, files: &BoardFiles) -> ExitCode {
         let peak = peaks
             .iter()
             .find(|(n, _)| n == name)
-            .map_or("-".to_string(), |(_, kb)| format!("{:.1}", *kb as f64 / 1024.0));
+            .map_or("-".to_string(), |(_, kb)| {
+                format!("{:.1}", *kb as f64 / 1024.0)
+            });
         let (allocs, alloc_mb) = if cfg!(feature = "count-alloc") {
             let mut c: Vec<f64> = samples.iter().map(|s| s.allocs as f64).collect();
             let mut b: Vec<f64> = samples.iter().map(|s| s.alloc_bytes as f64).collect();
@@ -804,10 +802,7 @@ fn cmd_run(a: &Args, files: &BoardFiles) -> ExitCode {
     }
 
     for p in &failed {
-        println!(
-            "{}\t{}\t{p}\tFAILED\t-\t-\t-\t-\t-\t-",
-            a.commit, a.label
-        );
+        println!("{}\t{}\t{p}\tFAILED\t-\t-\t-\t-\t-\t-", a.commit, a.label);
     }
 
     ExitCode::SUCCESS
