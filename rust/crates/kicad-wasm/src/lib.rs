@@ -662,7 +662,14 @@ impl Board {
         Ok(info
             .edges
             .iter()
-            .flat_map(|e| [e.source_pos[0], e.source_pos[1], e.target_pos[0], e.target_pos[1]])
+            .flat_map(|e| {
+                [
+                    e.source_pos[0],
+                    e.source_pos[1],
+                    e.target_pos[0],
+                    e.target_pos[1],
+                ]
+            })
             .collect())
     }
 

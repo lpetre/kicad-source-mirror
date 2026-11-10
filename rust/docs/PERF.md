@@ -57,3 +57,19 @@ Reproduce: `crates/kicad-bench/scripts/bench.sh --set small --alloc` (likewise `
 `large`); `python3 crates/kicad-bench/scripts/ref_baseline.py BOARD...`;
 `python3 crates/kicad-bench/scripts/ref_baseline.py --tool rs --modes default BOARD...`;
 `node crates/kicad-bench/scripts/wasm_bench.mjs BOARD...`.
+
+## Note for planners: the workload that matters most (added by the orchestrator)
+
+The first real client of the port is a browser autorouter. Its inner loop, per routing
+candidate, is: remove a few hundred tracks, add about a thousand segments and move some
+vias (`board_api` `applyEdits`), rebuild connectivity, refill zones, update teardrops, run
+DRC (often only clearance + connectivity: `quickDrc`), and at the end save. It runs in
+WebAssembly, single-threaded, on small and medium boards (a few hundred pads), several
+candidates per run. So besides the batch stages measured above, these are worth a
+`kicad-bench` pipeline of their own and worth optimising: the cost of one edit batch incl.
+the connectivity rebuild (`board_api` rebuilds connectivity in full after every batch where
+KiCad's BOARD_COMMIT updates incrementally; kicad-connectivity has the incremental add /
+remove paths), `quickDrc` with few providers (how much fixed cost does a DRC run carry: the
+cache generator, r-tree builds, rule compilation on every call?), zone refill after a
+routing change, `updateTeardrops`, and the same numbers in wasm (`wasm_bench.mjs`), where
+the build profile currently optimises for size.

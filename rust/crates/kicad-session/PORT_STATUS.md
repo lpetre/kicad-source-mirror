@@ -338,3 +338,54 @@ counts are asserted now (all pass). `tests/drc12_corpus.rs` no longer filters th
 
 Verification: kicad-cli `tests/fab_matrix.rs` (golden `kicad-cli/tests/golden/fab_matrix/`),
 see kicad-cli `PORT_STATUS.md` FIX-FAB-2.
+
+## Package WASM-API-1: board access and editing API for external routers
+
+New API over ported model code (`src/board_api/`), bound in kicad-wasm; reference:
+`docs/WASM_API.md`.
+
+| Part | Rust | Calls / C++ origin | State |
+|---|---|---|---|
+| read | `board_api/read.rs` | `board_info`, `net_details`, `netclasses`, `pads`, `footprints_info`, `route_items`, `route_item`, `zones_info`, `copper_obstacles`, `edge_shapes`, `connectivity_info` (model getters; `GetEffectivePolygon`, `GetCourtyard`, `TransformShapeToPolygon`, `RecalculateRatsnest`, `GetClusters`) | done, oracle-verified |
+| rules | `board_api/rules.rs` | `constraint` (`DRC_ENGINE::EvalRules`, dummy items for bare nets as `PNS_PCBNEW_RULE_RESOLVER`), `router_sizes` (`PNS_KICAD_IFACE_BASE::ImportSizes` net class branches, `ROUTER_TOOL` micro via `SetSizeFromRules`) | done, `constraint` oracle-verified |
+| edit | `board_api/edit.rs` | `apply_edits` (+ single-edit wrappers), `remove_routing`, `rebuild_connectivity`, teardrop settings / per-item switch, `update_teardrops` (`TEARDROP_MANAGER::UpdateTeardrops` full) | done |
+| check | `board_api/check.rs` | `drc_violations` (markers of `run_drc`, `DRC_ITEMS_PROVIDER` severity filter), `quick_drc` (`run_tests_selected`) | done |
+
+Tests (all in the default run; oracle goldens committed):
+
+* `tests/board_api_read.rs`: 15 750 API values of 32 boards against the reference
+  `pcb-dump board --loader --hash` (golden `tests/golden/board_api_read.txt`, generator
+  `tests/oracle/gen_board_api_golden.sh`): identical. Not compared: `flash.<L>` of layers a
+  pad is not on (the API lists only the pad's layers), `item.locked` of items outside the API.
+* `tests/board_api_rules.rs`: 530 sampled `EvalRules` results (single items and pairs) of 9
+  boards with rule files against `pcb-dump --sections evalrules` (golden
+  `tests/golden/board_api_rules.txt`, generator `tests/oracle/gen_board_api_rules_golden.sh`):
+  identical except `zc` (`m_ZoneConnection`, not returned); `router_sizes` vs the evaluated
+  constraint.
+* `tests/board_api_round_trip.rs`: record / remove all routing / re-add with UUIDs / save is
+  byte-identical to the plain save on 290 corpus boards (3 known gaps below); DRC JSON
+  identical on ecc83 and 20 corpus boards.
+* `tests/board_api_edit.rs`: `update_teardrops` against the cached reference
+  `drc --refill-zones --save-board` boards (`target/zone-corpus`, skipped without it): the
+  teardrop zones of 72 boards identical as saved; `quick_drc` equals the full DRC for its
+  providers (3 boards); edit calls, defaults from `router_sizes`, error paths.
+
+Decisions: connectivity is rebuilt in full once per edit call (`BOARD::BuildConnectivity`,
+board-model.md 8.5) instead of the incremental `CONNECTIVITY_DATA::Add/Remove/Update` of
+`BOARD_COMMIT::Push`; net propagation therefore applies as in KiCad. The dummy items of
+constraint queries use a scratch UUID generator (the board's UUID sequence is unaffected).
+`TeardropOutcome::without` is computed by the API (no C++ value): an enabled, targeted pad /
+via with connected tracks and no zone with `teardropUuid( track, item, 0 )`.
+
+Known gaps:
+
+* Re-adding a removed track does not restore its group / generator membership.
+* `NewVia` has no per-layer padstack, backdrill or post-machining (round trip differs on
+  `issue24758`, `issue25021/backdrill`, `padstacks`).
+* Footprint fields on copper layers are not in `copper_obstacles`.
+* Right after `update_teardrops`, `zones_info` returns for some teardrop zones of
+  `teardrop_issue_JPC2` / `teardrop_qfn_thermal_pad_zone` (7 of 72 cached cases) outlines that
+  differ from the same board saved and re-read; the saved board equals the reference. Not
+  investigated (model or writer side).
+* `Session::ratsnest` (session.rs, not WASM-API-1's file) still returns `NotYetPorted`; the
+  wasm `ratsnest()` now uses `connectivity_info`.

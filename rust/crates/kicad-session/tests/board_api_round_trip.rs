@@ -20,7 +20,7 @@
 //! (`apply_edits` with `remove_routing`), add it back with the recorded UUIDs in one
 //! `apply_edits`, save again: the two saves must be identical (and the first equals the
 //! reference re-save, `upgrade_corpus.rs`). DRC (`run_drc`, JSON) on the round-tripped
-//! board must equal DRC on the original.
+//! board must equal DRC on the original (ecc83 and the first twenty corpus boards).
 
 mod common;
 
@@ -229,7 +229,10 @@ fn corpus_round_trip() {
             continue;
         }
 
-        match catch_unwind(AssertUnwindSafe(|| round_trip(&b.path, false))) {
+        // DRC (JSON report) compared on the first twenty boards.
+        let with_drc = ok < 20;
+
+        match catch_unwind(AssertUnwindSafe(|| round_trip(&b.path, with_drc))) {
             Ok(Ok(true)) => ok += 1,
             Ok(Ok(false)) => {}
             Ok(Err(e)) => failures.push(format!("{}: {e}", b.name)),
@@ -243,7 +246,7 @@ fn corpus_round_trip() {
         }
     }
 
-    eprintln!("round trip identical on {ok} boards");
-    assert!(ok >= 20, "only {ok} boards");
+    eprintln!("round trip identical on {ok} boards (DRC compared on 20)");
+    assert!(ok >= 280, "only {ok} boards");
     assert!(failures.is_empty(), "{}", failures.join("\n"));
 }

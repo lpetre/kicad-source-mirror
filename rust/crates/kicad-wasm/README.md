@@ -58,6 +58,7 @@ Item handles are `ItemId::to_bits()` numbers (< 2^53, exact as JS numbers), vali
 | `plotSvg({ layers, fitPageToBoard, blackAndWhite })` | SVG text (`pcb export svg --mode-single --exclude-drawing-sheet`) | pending (kicad-fab) |
 | `save()` | `.kicad_pcb` text (`PCB_IO_KICAD_SEXPR::SaveBoard`; byte-identical to `kicad-cli pcb upgrade --force` on the loadable corpus boards) | works (items whose writer package has not landed: `NotYetPortedError`) |
 | `ratsnest()` | `Int32Array` `[x1, y1, x2, y2] * n` | works |
+| router API: `boardInfo`, `netDetails`, `netclasses`, `pads`, `footprints`, `routeItems`, `zones`, `copperObstacles`, `edgeShapes`, `connectivity`, `constraint`, `routerSizes`, `applyEdits`, `addTrackSegment`, `addArc`, `placeVia`, `changeItem`, `removeItems`, `removeRouting`, `rebuildConnectivity`, `teardropSettings`, `setTeardropSettings`, `setItemTeardrops`, `updateTeardrops`, `quickDrc`, `drcViolations` | see `rust/docs/WASM_API.md` (JSON shapes typed in `pkg/kicad_wasm.d.ts`) | works |
 | `refillZones()` | - | works |
 
 `messages` are the C++ `REPORTER` lines: `[{ severity: "error"|"warning"|"info"|"action"|..., text }]`.

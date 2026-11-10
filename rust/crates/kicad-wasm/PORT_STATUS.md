@@ -58,3 +58,23 @@ project `fp-lib-table`, nested tables and `<lib>.pretty/<name>.kicad_mod` files)
 `globalLibraryTable` (text of the global `fp-lib-table`) and `libraryEnv` (URI variables)
 feed an in-memory library source (working directory `/`); without files and global table the
 library parity test has no tables, as kicad-cli without any `fp-lib-table`.
+
+## Package WASM-API-1: router API bindings
+
+`src/board_api.rs` binds `kicad_session::board_api` (one call per bulk query / edit batch,
+one JSON value each): `boardInfo`, `netDetails`, `netclasses`, `pads`, `footprints`,
+`routeItems`, `zones`, `copperObstacles`, `edgeShapes`, `connectivity`, `constraint`,
+`routerSizes`, `applyEdits`, `addTrackSegment`, `addArc`, `placeVia`, `changeItem`,
+`removeItems`, `removeRouting`, `rebuildConnectivity`, `teardropSettings`,
+`setTeardropSettings`, `setItemTeardrops`, `updateTeardrops`, `quickDrc`, `drcViolations`;
+`ratsnest()` now returns the unconnected edges. TypeScript: `types/board_api.d.ts` is
+embedded into the generated `pkg/kicad_wasm.d.ts` (`typescript_custom_section`) and the
+methods carry `unchecked_return_type` / `unchecked_param_type`; a strict `tsc` check of a
+client compiles (only wasm-bindgen's own `Symbol.dispose` needs `lib: esnext`).
+Reference: `docs/WASM_API.md`.
+
+Verification: `tests/router_loop.rs` runs the router loop natively on 3 boards (ecc83-pp,
+issue22010 with 24 copper layers, zones and 100 vias, teardrop_spike), asserts that the loop
+leaves the board and the DRC report as a plain load + refill does, and pins the results in
+`tests/golden/router_loop_native.json`; `web/test/router_loop.mjs` runs the same loop on the
+wasm build: identical (8 checks). `smoke.mjs` still passes (58 checks).

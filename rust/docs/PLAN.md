@@ -617,6 +617,19 @@ Progress log:
   the standard trailers; the orchestrator pushes). Stops after two rounds with nothing
   kept or 8 rounds. The orchestrator's own checkpoint commits may contain in-progress
   optimisations: the judge works relative to the round's base commit, so that is harmless.
+  08:45 UTC: done WASM-API-1 - the router-facing API (kicad_session::board_api + JS
+  bindings + TypeScript types + docs/WASM_API.md + web/test/router_loop.mjs). Read API
+  against the reference dump on 32 boards: 15,750 values identical (pad effective polygons
+  vertex for vertex, courtyards, zone outlines and fills, via sizes per layer); resolved
+  constraints against the reference EvalRules: 530 of 530; round trip (record routing,
+  remove all, re-add with the same UUIDs, save) byte-identical on 290 corpus boards;
+  updateTeardrops equal to 72 reference boards; quickDrc equals the full DRC for its
+  providers; native == wasm on 3 boards. Open from it: re-added tracks lose group /
+  generator membership; NewVia lacks per-layer padstack / backdrill; zone outlines read
+  right after updateTeardrops differ from the saved-and-reloaded ones on 7 of 72 boards
+  (saved board is right; not investigated); edits rebuild connectivity in full per batch.
+  A planner note about the autorouter loop as the workload that matters was appended to
+  docs/PERF.md.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
