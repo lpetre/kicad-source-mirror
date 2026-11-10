@@ -566,8 +566,8 @@ impl EdaShapeItem for PcbTablecell {
     fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbTablecell::bot_right(self, ctx)
     }
-    fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        PcbTablecell::corners_in_sequence(self, angle)
+    fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I> {
+        PcbTablecell::corners_in_sequence(self, ctx, angle)
     }
     fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
         PcbTablecell::hatching_knockouts(self, ctx)
@@ -844,8 +844,8 @@ impl PcbTablecell {
     }
 
     /// `PCB_TEXTBOX::GetCornersInSequence`, inherited by `PCB_TABLECELL` (the base body reaches no virtual that `PCB_TABLECELL` overrides).
-    pub fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        self.textbox.corners_in_sequence(angle)
+    pub fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I> {
+        self.textbox.corners_in_sequence(ctx, angle)
     }
 
     /// `PCB_SHAPE::getHatchingKnockouts (PCB_TABLECELL)`.

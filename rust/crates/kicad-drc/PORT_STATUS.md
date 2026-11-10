@@ -661,3 +661,76 @@ DRC-21 and the zone filler.
 - Pad paths unverified (above).
 - The cache generator does not run in the harness (`run_tests` cannot reach it yet, DRC-05);
   providers that need the copper / zone trees must run it themselves until then.
+
+## DRC-27: solder mask provider (silk-to-mask, mask bridges)
+
+### File / class map
+
+| C++ (`pcbnew/drc/drc_test_provider_solder_mask.cpp`) | Rust (`src/providers/solder_mask.rs`) | State |
+|---|---|---|
+| `DRC_TEST_PROVIDER_SOLDER_MASK` (`Run`, `addItemToRTrees`, `buildRTrees`, `testSilkToMaskClearance`, `testItemAgainstItems`, `testMaskItemAgainstZones`, `testMaskBridges`, `recordMaskAperture`, `maskApertureBridgeExcluded`, `checkItemMask`, `collectBridge` (bounded max-heap via `kicad_geom::stdsort` heap ops), `flushBridgeViolations`, `reportMaskApertureBridges`) | `DrcTestProviderSolderMask<'c>` (implements `DrcTestProviderRun`) | ported |
+| static `addItemPolysWithEndings`, `isNPTHPadWithNoCopper`, `isMaskAperture`, `PENDING_BRIDGE::operator<`, `MASK_APERTURE_ITEM` | free functions / private structs of the module | ported |
+| `m_fullSolderMaskRTree` (a `DRC_RTREE` holding the `m_SolderMaskBridges` zone) | `FullSolderMaskTree` (same `PackedRTree<_, 2, 16>`, same entry boxes, same `QueryColliding( box, shape, layer, clr, &actual, &pos )` body as `DrcRtree::query_colliding_box_actual`) | ported (see Deviations) |
+
+### Verification
+
+* Synthetic boards without footprints (`tests/data/solder_mask/`, generated with the reference
+  goldens by `tests/oracle/gen_drc27_boards.py`): mask-only apertures (`gr_rect`, `gr_circle`,
+  `gr_text`, a zone on B.Mask) exposing plain copper of 2-3 nets, exposed tracks / arcs with
+  local margins, untented vias (both sides), a copper zone next to exposed copper, silkscreen
+  lines / texts / circles over openings, a `bridged_mask` severity-ignore rule on F.Mask and a
+  `silk_clearance` rule (message detail). Three boards x with / without `--all-track-errors`:
+  **66 of 66 entries identical in report order** (type, severity, description, item UUIDs,
+  item descriptions and positions) - `synthetic_boards_match_reference`.
+* Marker positions (not in the JSON report; part of the exclusion identity): the Rust markers
+  are written as DRC exclusions into a copy of the project and the reference is run on it -
+  all **52 markers** (4 runs) come back excluded, a marker moved by 1 nm does not
+  (`marker_positions_match_reference_via_exclusions`, needs the reference CLI).
+* Shared corpus (`tests/golden/drc_corpus.txt` + cached raw reports): every board the port
+  loads completely is compared for `solder_mask_bridge` and the one-item `silk_over_copper`
+  entries (the two-item ones come from the silk clearance provider):
+  `solder_mask_matches_reference_corpus`. Today 84 boards compare (0 entries on both sides);
+  every board with footprints is pending (parser, PCBIO-06), as are those with user rule
+  conditions (DRC-21). The test tightens automatically.
+
+### Ported C++ tests (`tests/drc27_solder_mask.rs`)
+
+`test_solder_mask_bridging.cpp` (`DRCSolderMaskBridgingTest`, `DRCSolderMaskBridgeDeterminismTest`),
+`test_solder_mask_bridge_all_tracks.cpp` (both cases), `test_solder_mask_track_to_pad.cpp`,
+`test_drc_solder_mask_npth_bridge.cpp`, the solder mask boards of `test_drc_regressions.cpp`
+(`issue10906`, `issue14412`, `net_tie_drc`: 0; `issue18878`: 12). All their boards have
+footprints, so they report themselves as pending today and run once the parser loads them.
+The C++ refills zones (`KI_TEST::FillZones`) in three of them; the port runs on the fills saved
+in the files until the zone filler can be used here. `test_drc_solder_mask_expansion.cpp`:
+`FootprintLevelSolderMaskExpansion` is in DRC-04; the `SILK_MASK_EXPANSION_FIXTURE` cases run
+with a web width of 0, i.e. in the silk clearance provider, not here.
+
+### Deviations
+
+* **Scratch zone**: the whole-board mask is kept in the provider (`solder_mask( layer )`)
+  instead of being written into the fills of `DrcBoardCaches::solder_mask_bridges` (the fill
+  writer of a detached `Zone` is crate-private in kicad-pcb). Only the GUI reads that zone.
+  Likewise `m_fullSolderMaskRTree` is a local replica of the two `DRC_RTREE` calls, because
+  `DrcRtree::insert` cannot index an item without a handle.
+* **Board caches**: `m_DRCCopperZones` / `GetCopperZoneRTree` come from a `&DrcBoardCaches`
+  given to `DrcTestProviderSolderMask::new` (`DrcTestProviderRun::run_tests` has no caches
+  parameter yet).
+* **Thread pool**: `submit_loop` runs in item order (a cancelled run skips the remaining
+  items); the 100 ms progress polling of the wait loop is not reproduced. The C++ collects
+  and sorts the bridges itself, so the reported set and order do not depend on scheduling.
+* `m_checkedPairs` / `reportedPairs` key on `ItemId` pairs instead of addresses (dedup only).
+  `m_maskApertureItems` is a `HashMap`; its keys are sorted with the libstdc++ `std::sort` port
+  by (UUID, layer) like the C++, so the order differs only for two apertures with the same
+  UUID (C++: hash order, not deterministic either).
+* `Run` takes `PCB_TRACK::GetSolderMaskExpansion` (not virtual) for vias in `Tracks()`
+  (`Track::as_track()`), like the C++; `addItemToRTrees` adds no expansion for arcs (the C++
+  only tests `PCB_TRACE_T`).
+
+### Known gaps
+
+* Not verified yet: pads (aperture / net-tie / free-pad / same-logical-pad / NPTH paths,
+  `allow_soldermask_bridges`), footprint graphics and footprint zones - every QA board with
+  them waits for the footprint parser (PCBIO-06); the ported tests and the corpus replay run
+  them automatically once they load.
+* The runs use a context without connectivity (like the shared harness): conditionally
+  flashed vias / pads are not flashed on unconnected layers there.

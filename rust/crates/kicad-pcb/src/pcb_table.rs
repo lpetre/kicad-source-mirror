@@ -449,7 +449,7 @@ impl PcbTable {
         let cols = self.col_count();
         let corner_seq = |row: i32, col: i32, angle: EdaAngle| -> Vec<Vector2I> {
             self.cell_ref(ctx, row, col)
-                .map(|c| crate::pcb_textbox::corners_in_sequence_ctx(c, ctx, angle))
+                .map(|c| crate::pcb_textbox::corners_in_sequence(c, ctx, angle))
                 .unwrap_or_default()
         };
 
@@ -485,7 +485,7 @@ impl PcbTable {
                     continue;
                 }
 
-                let corners = crate::pcb_textbox::corners_in_sequence_ctx(cell, ctx, draw_angle);
+                let corners = crate::pcb_textbox::corners_in_sequence(cell, ctx, draw_angle);
 
                 if corners.len() == 4 {
                     callback(corners[1], corners[2], &stroke);
@@ -515,7 +515,7 @@ impl PcbTable {
                     continue;
                 }
 
-                let corners = crate::pcb_textbox::corners_in_sequence_ctx(cell, ctx, draw_angle);
+                let corners = crate::pcb_textbox::corners_in_sequence(cell, ctx, draw_angle);
 
                 if corners.len() == 4 {
                     callback(corners[2], corners[3], &stroke);
@@ -554,7 +554,7 @@ impl PcbTable {
             let angle = EdaTextItem::draw_rotation(cell00, ctx);
             let corner_seq = |row: i32, col: i32| -> Vec<Vector2I> {
                 self.cell_ref(ctx, row, col)
-                    .map(|c| crate::pcb_textbox::corners_in_sequence_ctx(c, ctx, angle))
+                    .map(|c| crate::pcb_textbox::corners_in_sequence(c, ctx, angle))
                     .unwrap_or_default()
             };
             let top_left = corner_seq(0, 0);

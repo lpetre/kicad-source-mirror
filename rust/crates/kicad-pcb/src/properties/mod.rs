@@ -66,6 +66,11 @@ mod tests;
 
 pub use enums::{EnumId, EnumMap};
 
+/// A `PCB_LAYER_ID` property value.
+pub(crate) fn layer_value(layer: kicad_core::PcbLayerId) -> PropertyValue {
+    PropertyValue::Enum(EnumId::PcbLayerId, i32::from(layer))
+}
+
 /// Panics like `port_pending!` for a C++ getter the Rust model has no method for yet (reported
 /// as pending by the dump; the owning package has to add the method and wire it up here).
 pub(crate) fn no_rust_api(cxx: &str) -> ! {

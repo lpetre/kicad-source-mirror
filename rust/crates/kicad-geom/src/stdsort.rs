@@ -16,7 +16,8 @@
 // with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 //! Ports of the unstable sorting algorithms of libstdc++ (GCC 13: `bits/stl_algo.h`,
-//! `bits/stl_heap.h`, `bits/stl_queue.h`), with exactly the same sequence of comparisons and
+//! `bits/stl_heap.h`, `bits/stl_queue.h`) and of the red-black tree insertion behind
+//! `std::set` (`bits/stl_tree.h`, `src/c++98/tree.cc`), with exactly the same sequence of comparisons and
 //! element moves, so that elements which compare equal end up in the same order as in KiCad
 //! built with g++/libstdc++ (the reference platform, see `PORTING.md` section 9).
 //!
@@ -37,6 +38,8 @@
 //! | `std::priority_queue<T, std::vector<T>, Compare>` | [`PriorityQueue`] |
 //! | `std::unique( first, last, pred )` + `erase` | [`std_unique`]`( &mut vec, pred )` |
 //! | `std::stable_sort` | `slice::sort_by` (both are stable; no port needed) |
+//! | `std::set<T, Compare>( first, last, comp )` (iteration order) | [`std_set_order`]`( items, less )` |
+//! | `std::set<T, Compare>` insertions | [`StdSet`] |
 //!
 //! `less( a, b )` is the C++ comparator `comp( a, b )` ("`a` goes before `b`") and must be a
 //! strict weak ordering, as in C++.  With a comparator that is not one (for example one that
@@ -219,6 +222,380 @@ where
     /// `priority_queue::empty`
     pub fn is_empty(&self) -> bool {
         self.c.is_empty()
+    }
+}
+
+// ---- std::set ------------------------------------------------------------------------------
+
+/// The iteration order of a C++ `std::set<T, Compare>` built from a range
+/// (`std::set( first, last, comp )`, also `set.insert( first, last )` on an empty set): the
+/// items in the in-order walk of the libstdc++ red-black tree after inserting them one by one
+/// with the hint `end()` (`_M_insert_range_unique`: `_M_insert_unique_( end(), item )`); an
+/// item comparing equivalent to one already in the tree is dropped (the earlier one is kept).
+///
+/// `less( a, b )` is the C++ `comp( a, b )`.  The tree is reproduced exactly (see [`StdSet`])
+/// because several KiCad comparators (`EDA_SHAPE::Compare` with its `EPSILON`, ...) are not
+/// strict weak orderings: then the result depends on the shape of the tree and on the exact
+/// sequence of comparisons, not only on the comparator.
+pub fn std_set_order<T, I, F>(items: I, mut less: F) -> Vec<T>
+where
+    I: IntoIterator<Item = T>,
+    F: FnMut(&T, &T) -> bool,
+{
+    let mut set = StdSet::new();
+
+    for item in items {
+        set.insert_hint_end(item, &mut less);
+    }
+
+    set.into_vec()
+}
+
+/// Null link of [`StdSet`].
+const RB_NIL: usize = usize::MAX;
+
+/// The header node index of [`StdSet`] (`_M_impl._M_header`).
+const RB_HEADER: usize = 0;
+
+/// A node of [`StdSet`] (`_Rb_tree_node_base` plus the value; the header has none).
+struct RbNode<T> {
+    value: Option<T>,
+    parent: usize,
+    left: usize,
+    right: usize,
+    red: bool,
+}
+
+/// Port of the insertion part of libstdc++'s `_Rb_tree` (GCC 13: `bits/stl_tree.h`,
+/// `src/c++98/tree.cc`) behind `std::set<T, Compare>`, on an index arena, with exactly the
+/// same comparisons and rebalancing.  The header's `parent` is the root, its `left` the
+/// leftmost and its `right` the rightmost node, as in libstdc++.
+///
+/// The comparator is passed to each insertion (`less( a, b )` is the C++ `comp( a, b )`); it
+/// must be the same for every call on one set, as it is for a C++ set.  Erasure is not
+/// ported (no caller needs it).
+pub struct StdSet<T> {
+    nodes: Vec<RbNode<T>>,
+}
+
+impl<T> Default for StdSet<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> StdSet<T> {
+    /// An empty set (`_M_reset()`: the header is red and links to itself as leftmost and
+    /// rightmost).
+    pub fn new() -> Self {
+        StdSet {
+            nodes: vec![RbNode {
+                value: None,
+                parent: RB_NIL,
+                left: RB_HEADER,
+                right: RB_HEADER,
+                red: true,
+            }],
+        }
+    }
+
+    /// `set::size`
+    pub fn len(&self) -> usize {
+        self.nodes.len() - 1
+    }
+
+    /// `set::empty`
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    fn key(&self, n: usize) -> &T {
+        self.nodes[n].value.as_ref().expect("value node")
+    }
+
+    fn root(&self) -> usize {
+        self.nodes[RB_HEADER].parent
+    }
+
+    /// Port of `set::insert( v )` (`_M_insert_unique`): returns `false` (and drops `v`) when
+    /// an equivalent key is present.
+    pub fn insert<F>(&mut self, v: T, mut less: F) -> bool
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        match self.get_insert_unique_pos(&v, &mut less) {
+            Some((x, p)) => {
+                self.insert_node(x, p, v, &mut less);
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// Port of `set::insert( end(), v )` (`_M_insert_unique_( end(), v )` with
+    /// `_M_get_insert_hint_unique_pos( end(), k )`), the insertion used by the range
+    /// constructor: returns `false` (and drops `v`) when an equivalent key is present.
+    pub fn insert_hint_end<F>(&mut self, v: T, mut less: F) -> bool
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        let rightmost = self.nodes[RB_HEADER].right;
+
+        let (x, p) = if self.len() > 0 && less(self.key(rightmost), &v) {
+            (RB_NIL, rightmost)
+        } else {
+            match self.get_insert_unique_pos(&v, &mut less) {
+                Some(pos) => pos,
+                None => return false,
+            }
+        };
+
+        self.insert_node(x, p, v, &mut less);
+        true
+    }
+
+    /// `_M_insert_( x, p, v )`.
+    fn insert_node<F>(&mut self, x: usize, p: usize, v: T, less: &mut F)
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        let insert_left = x != RB_NIL || p == RB_HEADER || less(&v, self.key(p));
+        self.nodes.push(RbNode {
+            value: Some(v),
+            parent: RB_NIL,
+            left: RB_NIL,
+            right: RB_NIL,
+            red: true,
+        });
+        let z = self.nodes.len() - 1;
+        self.insert_and_rebalance(insert_left, z, p);
+    }
+
+    /// `_M_get_insert_unique_pos( k )`: `(x, p)` of the insert position, `None` when an
+    /// equivalent key is present.
+    fn get_insert_unique_pos<F>(&self, k: &T, less: &mut F) -> Option<(usize, usize)>
+    where
+        F: FnMut(&T, &T) -> bool,
+    {
+        let mut x = self.root();
+        let mut y = RB_HEADER;
+        let mut comp = true;
+
+        while x != RB_NIL {
+            y = x;
+            comp = less(k, self.key(x));
+            x = if comp {
+                self.nodes[x].left
+            } else {
+                self.nodes[x].right
+            };
+        }
+
+        let mut j = y;
+
+        if comp {
+            if j == self.nodes[RB_HEADER].left {
+                // j == begin()
+                return Some((x, y));
+            }
+
+            j = self.decrement(j);
+        }
+
+        if less(self.key(j), k) {
+            return Some((x, y));
+        }
+
+        None
+    }
+
+    /// `_Rb_tree_decrement( x )`.
+    fn decrement(&self, mut x: usize) -> usize {
+        if self.nodes[x].red && self.nodes[self.nodes[x].parent].parent == x {
+            // x is the header (end()): its predecessor is the rightmost node
+            return self.nodes[x].right;
+        }
+
+        if self.nodes[x].left != RB_NIL {
+            let mut y = self.nodes[x].left;
+
+            while self.nodes[y].right != RB_NIL {
+                y = self.nodes[y].right;
+            }
+
+            return y;
+        }
+
+        let mut y = self.nodes[x].parent;
+
+        while x == self.nodes[y].left {
+            x = y;
+            y = self.nodes[y].parent;
+        }
+
+        y
+    }
+
+    /// `local_Rb_tree_rotate_left( x, root )`.
+    fn rotate_left(&mut self, x: usize) {
+        let y = self.nodes[x].right;
+        self.nodes[x].right = self.nodes[y].left;
+
+        if self.nodes[y].left != RB_NIL {
+            let yl = self.nodes[y].left;
+            self.nodes[yl].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].left {
+            self.nodes[xp].left = y;
+        } else {
+            self.nodes[xp].right = y;
+        }
+
+        self.nodes[y].left = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `local_Rb_tree_rotate_right( x, root )`.
+    fn rotate_right(&mut self, x: usize) {
+        let y = self.nodes[x].left;
+        self.nodes[x].left = self.nodes[y].right;
+
+        if self.nodes[y].right != RB_NIL {
+            let yr = self.nodes[y].right;
+            self.nodes[yr].parent = x;
+        }
+
+        self.nodes[y].parent = self.nodes[x].parent;
+        let xp = self.nodes[x].parent;
+
+        if x == self.root() {
+            self.nodes[RB_HEADER].parent = y;
+        } else if x == self.nodes[xp].right {
+            self.nodes[xp].right = y;
+        } else {
+            self.nodes[xp].left = y;
+        }
+
+        self.nodes[y].right = x;
+        self.nodes[x].parent = y;
+    }
+
+    /// `_Rb_tree_insert_and_rebalance( insert_left, x, p, header )`.
+    fn insert_and_rebalance(&mut self, insert_left: bool, mut x: usize, p: usize) {
+        // Initialize fields in new node to insert.
+        self.nodes[x].parent = p;
+        self.nodes[x].left = RB_NIL;
+        self.nodes[x].right = RB_NIL;
+        self.nodes[x].red = true;
+
+        // Insert.
+        // Make new node child of parent and maintain root, leftmost and rightmost nodes.
+        // N.B. First node is always inserted left.
+        if insert_left {
+            self.nodes[p].left = x; // also makes leftmost = x when p == &header
+
+            if p == RB_HEADER {
+                self.nodes[RB_HEADER].parent = x;
+                self.nodes[RB_HEADER].right = x;
+            } else if p == self.nodes[RB_HEADER].left {
+                self.nodes[RB_HEADER].left = x; // maintain leftmost pointing to min node
+            }
+        } else {
+            self.nodes[p].right = x;
+
+            if p == self.nodes[RB_HEADER].right {
+                self.nodes[RB_HEADER].right = x; // maintain rightmost pointing to max node
+            }
+        }
+
+        // Rebalance.
+        while x != self.root() && self.nodes[self.nodes[x].parent].red {
+            let xp = self.nodes[x].parent;
+            let xpp = self.nodes[xp].parent;
+
+            if xp == self.nodes[xpp].left {
+                let y = self.nodes[xpp].right;
+
+                if y != RB_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].right {
+                        x = xp;
+                        self.rotate_left(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_right(xpp);
+                }
+            } else {
+                let y = self.nodes[xpp].left;
+
+                if y != RB_NIL && self.nodes[y].red {
+                    self.nodes[xp].red = false;
+                    self.nodes[y].red = false;
+                    self.nodes[xpp].red = true;
+                    x = xpp;
+                } else {
+                    if x == self.nodes[xp].left {
+                        x = xp;
+                        self.rotate_right(x);
+                    }
+
+                    let xp = self.nodes[x].parent;
+                    self.nodes[xp].red = false;
+                    self.nodes[xpp].red = true;
+                    self.rotate_left(xpp);
+                }
+            }
+        }
+
+        let root = self.root();
+        self.nodes[root].red = false;
+    }
+
+    /// The node indices in iteration order (`begin()` .. `end()`).
+    fn in_order(&self) -> Vec<usize> {
+        let mut out = Vec::with_capacity(self.len());
+        let mut stack = Vec::new();
+        let mut x = self.root();
+
+        while x != RB_NIL || !stack.is_empty() {
+            while x != RB_NIL {
+                stack.push(x);
+                x = self.nodes[x].left;
+            }
+
+            let n = stack.pop().expect("non-empty stack");
+            out.push(n);
+            x = self.nodes[n].right;
+        }
+
+        out
+    }
+
+    /// The elements in iteration order (`begin()` .. `end()`).
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.in_order().into_iter().map(|n| self.key(n))
+    }
+
+    /// The elements in iteration order, consuming the set.
+    pub fn into_vec(mut self) -> Vec<T> {
+        let order = self.in_order();
+        order
+            .into_iter()
+            .map(|n| self.nodes[n].value.take().expect("value node"))
+            .collect()
     }
 }
 

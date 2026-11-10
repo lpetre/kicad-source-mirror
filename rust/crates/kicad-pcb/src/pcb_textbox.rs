@@ -735,8 +735,8 @@ impl EdaShapeItem for PcbTextbox {
     fn bot_right(&self, ctx: &BoardCtx<'_>) -> Vector2I {
         PcbTextbox::bot_right(self, ctx)
     }
-    fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        PcbTextbox::corners_in_sequence(self, angle)
+    fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I> {
+        PcbTextbox::corners_in_sequence(self, ctx, angle)
     }
     fn hatching_knockouts(&self, ctx: &BoardCtx<'_>) -> ShapePolySet {
         PcbTextbox::hatching_knockouts(self, ctx)
@@ -1224,8 +1224,8 @@ impl PcbTextbox {
     }
 
     /// Port of `PCB_TEXTBOX::GetCornersInSequence`.
-    pub fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        corners_in_sequence(self, angle)
+    pub fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I> {
+        corners_in_sequence(self, ctx, angle)
     }
 
     /// Port of `PCB_SHAPE::getHatchingKnockouts (PCB_TEXTBOX)`.
@@ -1279,127 +1279,17 @@ impl TextboxHost for PcbTextbox {
     }
 }
 
-/// Port of `EDA_SHAPE::GetCornersInSequence( aAngle )` for a host whose context is at hand:
-/// `getBoundingBox()` reads the virtual `GetWidth()` (`PCB_SHAPE`'s, scaled by the parent
-/// footprint). The context-free `EdaShapeItem::corners_in_sequence` has to use the stored
-/// width (`PORT_STATUS.md`, M7), which differs for a polygon box in a scaled footprint.
-fn eda_shape_corners_in_sequence<H: TextboxHost + ?Sized>(
-    host: &H,
-    ctx: &BoardCtx<'_>,
-    mut angle: EdaAngle,
-) -> Vec<Vector2I> {
-    let es = host.eda_shape();
-    let mut pts: Vec<Vector2I> = Vec::new();
-
-    angle.normalize();
-
-    let mut bbox = crate::eda_shape::shape_bounding_box(host, ctx);
-    bbox.normalize();
-
-    let tl = Vector2I::new(bbox.left(), bbox.top());
-    let tr = Vector2I::new(bbox.right(), bbox.top());
-    let br = Vector2I::new(bbox.right(), bbox.bottom());
-    let bl = Vector2I::new(bbox.left(), bbox.bottom());
-
-    if angle.is_cardinal() {
-        if angle == ANGLE_0 {
-            pts.extend([tl, tr, br, bl]);
-        } else if angle == ANGLE_90 {
-            pts.extend([bl, tl, tr, br]);
-        } else if angle == ANGLE_180 {
-            pts.extend([br, bl, tl, tr]);
-        } else if angle == ANGLE_270 {
-            pts.extend([tr, br, bl, tl]);
-        }
-    } else if es.shape() == ShapeT::Rectangle {
-        // Axis-aligned rectangle with non-cardinal rotation (used by textboxes).
-        let center = bbox.center();
-        let (mut tl, mut tr, mut br, mut bl) = (tl, tr, br, bl);
-
-        rotate_point_around(&mut tl, center, angle);
-        rotate_point_around(&mut tr, center, angle);
-        rotate_point_around(&mut br, center, angle);
-        rotate_point_around(&mut bl, center, angle);
-
-        pts.extend([tl, tr, br, bl]);
-    } else {
-        // A portion of the getCorners implementation for SHAPE_T::POLY elements, replicated
-        // in EDA_SHAPE (see the comment there).
-        let mut corners: Vec<Vector2I> = Vec::new();
-
-        for ii in 0..es.poly.outline_count() {
-            corners.extend_from_slice(es.poly.c_outline(ii).c_points());
-        }
-
-        if corners.is_empty() {
-            return pts;
-        }
-
-        while corners.len() < 4 {
-            let last = corners[corners.len() - 1];
-            corners.push(last + Vector2I::new(10, 10));
-        }
-
-        let (mut min_x, mut max_x, mut min_y, mut max_y) =
-            (corners[0], corners[0], corners[0], corners[0]);
-
-        for corner in &corners {
-            if corner.x < min_x.x {
-                min_x = *corner;
-            }
-
-            if corner.x > max_x.x {
-                max_x = *corner;
-            }
-
-            if corner.y < min_y.y {
-                min_y = *corner;
-            }
-
-            if corner.y > max_y.y {
-                max_y = *corner;
-            }
-        }
-
-        if angle < ANGLE_90 {
-            pts.extend([min_x, min_y, max_x, max_y]);
-        } else if angle < ANGLE_180 {
-            pts.extend([max_y, min_x, min_y, max_x]);
-        } else if angle < ANGLE_270 {
-            pts.extend([max_x, max_y, min_x, min_y]);
-        } else {
-            pts.extend([min_y, max_x, max_y, min_x]);
-        }
-    }
-
-    pts
-}
-
-/// Port of `PCB_TEXTBOX::GetCornersInSequence( angle )` as the C++ evaluates it (with the
-/// virtual `GetWidth()` for a polygon box): the read-only bodies that have a context use this
-/// one.
-pub(crate) fn corners_in_sequence_ctx<H: TextboxHost + ?Sized>(
-    host: &H,
-    ctx: &BoardCtx<'_>,
-    angle: EdaAngle,
-) -> Vec<Vector2I> {
-    if host.eda_shape().shape() != ShapeT::Rectangle {
-        return eda_shape_corners_in_sequence(host, ctx, angle);
-    }
-
-    corners_in_sequence(host, angle)
-}
-
 /// Port of `PCB_TEXTBOX::GetCornersInSequence( angle )`: the four corners of the box, in
 /// reading order for the text angle; `EDA_SHAPE::GetCornersInSequence` for a polygon box.
 pub(crate) fn corners_in_sequence<H: TextboxHost + ?Sized>(
     host: &H,
+    ctx: &BoardCtx<'_>,
     mut angle: EdaAngle,
 ) -> Vec<Vector2I> {
     let es = host.eda_shape();
 
     if es.shape() != ShapeT::Rectangle {
-        return crate::eda_shape::corners_in_sequence(host, angle);
+        return crate::eda_shape::corners_in_sequence(host, ctx, angle);
     }
 
     let (start, end) = (es.start(), es.end());
@@ -1430,7 +1320,7 @@ pub(crate) fn corners_in_sequence<H: TextboxHost + ?Sized>(
 
 /// Port of `PCB_TEXTBOX::GetCorners()`: `GetCornersInSequence( GetDrawRotation() )`.
 pub(crate) fn corners<H: TextboxHost + ?Sized>(host: &H, ctx: &BoardCtx<'_>) -> Vec<Vector2I> {
-    corners_in_sequence_ctx(host, ctx, host.draw_rotation(ctx))
+    corners_in_sequence(host, ctx, host.draw_rotation(ctx))
 }
 
 /// Port of `PCB_TEXTBOX::GetTopLeft()`.
@@ -1509,7 +1399,7 @@ pub(crate) fn draw_pos_flipped<H: TextboxHost + ?Sized>(
     let tb = host.textbox();
     let et = host.eda_text();
     let draw_angle = host.draw_rotation(ctx);
-    let corners = corners_in_sequence_ctx(host, ctx, draw_angle);
+    let corners = corners_in_sequence(host, ctx, draw_angle);
     let mut horizontal_alignment = et.horiz_justify();
     let vertical_alignment = et.vert_justify();
     let mut text_anchor = Vector2I::default();
@@ -1582,7 +1472,7 @@ pub(crate) fn linebreak_to_box<H: TextboxHost + ?Sized>(
     let lookup = et.draw_font_lookup();
     let font = lookup.font();
     let draw_angle = host.draw_rotation(ctx);
-    let corners = corners_in_sequence_ctx(host, ctx, draw_angle);
+    let corners = corners_in_sequence(host, ctx, draw_angle);
     let mut col_width: i32 = (corners[1] - corners[0]).euclidean_norm();
 
     if host.text_angle(ctx).is_horizontal() {

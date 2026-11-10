@@ -611,7 +611,7 @@ fn maps() -> &'static [EnumMap] {
         //     layerEnum.Map( layer, LSET::Name( layer ) );
         let layers = Lset::all_layers_mask()
             .iter()
-            .map(|l| (l as i32, &*Box::leak(Lset::name(l).into_boxed_str())))
+            .map(|l| (i32::from(l), &*Box::leak(Lset::name(l).into_boxed_str())))
             .collect();
         v.push(EnumMap {
             id: EnumId::PcbLayerId,

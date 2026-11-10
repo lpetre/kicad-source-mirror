@@ -66,8 +66,8 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     // footprints might be placed only on F.Cu & B.Cu
     let fp_layers = vec![
-        (PcbLayerId::FCu as i32, kicad_core::Lset::name(PcbLayerId::FCu)),
-        (PcbLayerId::BCu as i32, kicad_core::Lset::name(PcbLayerId::BCu)),
+        (i32::from(PcbLayerId::FCu), kicad_core::Lset::name(PcbLayerId::FCu)),
+        (i32::from(PcbLayerId::BCu), kicad_core::Lset::name(PcbLayerId::BCu)),
     ];
 
     pm.register_type(c);

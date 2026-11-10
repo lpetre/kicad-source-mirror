@@ -1320,7 +1320,10 @@ impl<'c> DrcTestProviderSolderMask<'c> {
 
         // Order is important here: m_webWidth must be added in before m_largestClearance is
         // maxed with the various clearance constraints.
-        self.largest_clearance += self.largest_clearance + self.web_width;
+        #[allow(clippy::misrefactored_assign_op)]
+        {
+            self.largest_clearance += self.largest_clearance + self.web_width;
+        }
 
         // Include SolderMaskToCopperClearance so R-tree queries find copper items that are
         // within the required distance of mask apertures. Without this, tracks passing near pad

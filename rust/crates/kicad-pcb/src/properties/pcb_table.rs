@@ -103,7 +103,7 @@ pub(crate) fn register_pcb_table(pm: &mut PropertyManager) {
 
     pm.add_property(
         Property::new("Border Color", c, ValueType::Color, true, |it| {
-            PropertyValue::Color(*table(&it).border_stroke.color())
+            PropertyValue::Color(table(&it).border_stroke.color().clone())
         }),
         table_props,
     )
@@ -144,7 +144,7 @@ pub(crate) fn register_pcb_table(pm: &mut PropertyManager) {
 
     pm.add_property(
         Property::new("Separators Color", c, ValueType::Color, true, |it| {
-            PropertyValue::Color(*table(&it).separators_stroke.color())
+            PropertyValue::Color(table(&it).separators_stroke.color().clone())
         }),
         table_props,
     )

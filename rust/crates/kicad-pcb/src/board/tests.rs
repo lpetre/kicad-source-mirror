@@ -409,7 +409,7 @@ fn textbox_method_syntax_is_unambiguous(tb: &mut PcbTextbox, ctx: &BoardCtx<'_>,
         tb.top_left(ctx),
         tb.bot_right(ctx),
     );
-    let _ = (tb.corners_in_sequence(ANGLE_0), tb.shape_draw_rotation(ctx));
+    let _ = (tb.corners_in_sequence(ctx, ANGLE_0), tb.shape_draw_rotation(ctx));
     let _ = (tb.shape_max_error(ctx), tb.hatching_knockouts(ctx));
     ext_only(tb);
     mutators(tb);

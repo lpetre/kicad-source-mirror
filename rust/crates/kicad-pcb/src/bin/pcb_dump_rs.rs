@@ -32,7 +32,7 @@ use kicad_pcb::dump::{
 
 fn usage() -> std::process::ExitCode {
     eprintln!(
-        "usage: pcb-dump-rs defaults [--hash]\n       pcb-dump-rs board [--sections LIST] [--hash] [--loader | --no-init] FILE..."
+        "usage: pcb-dump-rs defaults [--hash]\n       pcb-dump-rs props-table [--hash]\n       pcb-dump-rs board [--sections LIST] [--hash] [--loader | --no-init] FILE..."
     );
     std::process::ExitCode::from(2)
 }
@@ -71,6 +71,10 @@ fn main() -> std::process::ExitCode {
     let mut out = stdout.lock();
 
     match cmd.as_str() {
+        "props-table" => {
+            let _ = out.write_all(kicad_pcb::dump::dump_props_table(opts.hash).as_bytes());
+            std::process::ExitCode::SUCCESS
+        }
         "defaults" => {
             let _ = out.write_all(dump_defaults(opts.hash).as_bytes());
             std::process::ExitCode::SUCCESS

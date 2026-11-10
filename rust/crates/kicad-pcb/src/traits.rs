@@ -542,9 +542,10 @@ pub trait EdaShapeItem {
         eda_shape::bot_right(self, ctx)
     }
 
-    /// `GetCornersInSequence( aAngle )`.
-    fn corners_in_sequence(&self, angle: EdaAngle) -> Vec<Vector2I> {
-        eda_shape::corners_in_sequence(self, angle)
+    /// `GetCornersInSequence( aAngle )`. Takes the context because the `EDA_SHAPE` body reads
+    /// `getBoundingBox()`, i.e. the virtual `GetWidth()` (rev 2.3).
+    fn corners_in_sequence(&self, ctx: &BoardCtx<'_>, angle: EdaAngle) -> Vec<Vector2I> {
+        eda_shape::corners_in_sequence(self, ctx, angle)
     }
 
     /// `getDrawRotation()`.

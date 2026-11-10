@@ -36,9 +36,11 @@ pub mod compare;
 pub mod defaults;
 pub mod format;
 pub mod items;
+pub mod props;
 pub mod settings;
 
 pub use format::{Out, SilentPanics, fnv1a64, scan_file_uuids};
+pub use props::dump_props_table;
 
 use crate::board::Board;
 

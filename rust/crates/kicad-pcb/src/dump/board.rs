@@ -117,6 +117,11 @@ fn dump_item_sections(o: &mut Out, it: ItemRef<'_>, opts: &DumpOptions) {
     }
 
     section(o, "misc", defaults::dump_misc);
+
+    // Opt-in (not part of "all sections"): the property values (`dump_props.cpp`).
+    if opts.sections.contains("props") {
+        section(o, "props", super::props::dump_props);
+    }
 }
 
 /// `DumpItemBase`.

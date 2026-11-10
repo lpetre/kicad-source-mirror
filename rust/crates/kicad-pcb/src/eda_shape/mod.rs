@@ -441,14 +441,11 @@ pub fn bot_right<H: EdaShapeItem + ?Sized>(host: &H, _ctx: &BoardCtx<'_>) -> Vec
     host.eda_shape().end
 }
 
-/// `EDA_SHAPE::GetCornersInSequence( aAngle )`.
-///
-/// Deviation: the C++ reads `getBoundingBox()`, i.e. the virtual `GetWidth()`; the frozen
-/// trait signature has no context, so the stored (`EDA_SHAPE`) stroke width is used. This
-/// differs from `PCB_SHAPE::GetWidth()` only for a host inside a scaled footprint (see
-/// `PORT_STATUS.md`, M7).
+/// `EDA_SHAPE::GetCornersInSequence( aAngle )`. `getBoundingBox()` reads the virtual
+/// `GetWidth()` (`PCB_SHAPE`'s is scaled by the parent footprint), hence the context.
 pub fn corners_in_sequence<H: EdaShapeItem + ?Sized>(
     host: &H,
+    ctx: &BoardCtx<'_>,
     mut angle: EdaAngle,
 ) -> Vec<Vector2I> {
     let es = host.eda_shape();
@@ -456,9 +453,7 @@ pub fn corners_in_sequence<H: EdaShapeItem + ?Sized>(
 
     angle.normalize();
 
-    let mut bbox = es.bounding_box_core();
-    bbox.inflate(0.max(es.stroke.width()) / 2);
-    bbox.normalize();
+    let mut bbox = shape_bounding_box(host, ctx);
     bbox.normalize();
 
     let tl = Vector2I::new(bbox.left(), bbox.top());
@@ -1151,7 +1146,7 @@ mod tests {
         assert!(!circle.shape_hit_test(&ctx, v(0, 0), 0));
         assert_eq!(circle.shape_center(), v(0, 0));
         assert_eq!(
-            circle.corners_in_sequence(EdaAngle::from_degrees(0.0)),
+            circle.corners_in_sequence(&ctx, EdaAngle::from_degrees(0.0)),
             vec![
                 v(-1000, -1000),
                 v(1000, -1000),

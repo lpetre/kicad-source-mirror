@@ -103,6 +103,7 @@ pub mod zone_utils;
 pub mod dump;
 pub mod io;
 pub mod project;
+pub mod properties;
 
 pub use board::{AddMode, Board, RemoveMode};
 pub use ctx::{BoardCtx, ConnectivityQuery, LayerEnv, MutEnv, ParentFrame, RuleResolver};

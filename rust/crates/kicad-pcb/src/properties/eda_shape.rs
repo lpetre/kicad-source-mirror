@@ -268,7 +268,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     pm.add_property(
         Property::new("Line Color", c, ValueType::Color, true, |it| {
-            PropertyValue::Color(*es(&it).stroke.color())
+            PropertyValue::Color(es(&it).stroke.color().clone())
         }),
         shape_props,
     )
@@ -295,7 +295,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     pm.add_property(
         Property::new("Fill Color", c, ValueType::Color, true, |it| {
-            PropertyValue::Color(*es(&it).fill_color())
+            PropertyValue::Color(es(&it).fill_color().clone())
         }),
         shape_props,
     )

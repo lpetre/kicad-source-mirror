@@ -182,7 +182,7 @@ pub(crate) fn register(pm: &mut PropertyManager) {
 
     pm.add_property(
         Property::new("Color", c, ValueType::Color, true, |it| {
-            PropertyValue::Color(et(&it).attributes.color)
+            PropertyValue::Color(et(&it).attributes.color.clone())
         }),
         text_props,
     );
