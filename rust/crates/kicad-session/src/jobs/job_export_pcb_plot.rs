@@ -100,6 +100,9 @@ pub struct JobExportPcbPlot {
     pub use_drill_origin: bool,
     /// `m_checkZonesBeforePlot`
     pub check_zones_before_plot: bool,
+    /// The plot date the C++ takes from the clock (`wxDateTime::Now()`, local time and UTC
+    /// offset): set by the host (no clock in library crates); the default is all zeros.
+    pub creation_date: kicad_fab::jobs::job_export_pcb_plot::GbrCreationDate,
 }
 
 impl JobExportPcbPlot {
@@ -133,6 +136,7 @@ impl JobExportPcbPlot {
             drill_shape_option: DrillMarks::FullDrillShape,
             use_drill_origin: false,
             check_zones_before_plot: false,
+            creation_date: Default::default(),
         }
     }
 

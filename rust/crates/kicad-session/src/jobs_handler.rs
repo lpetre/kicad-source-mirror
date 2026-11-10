@@ -418,7 +418,7 @@ pub fn run_export_gerbers(
         ));
     }
 
-    let _out_path = resolve_job_output_path(&mut job.gerber.plot.job, session);
+    let out_path = resolve_job_output_path(&mut job.gerber.plot.job, session);
 
     if job.gerber.plot.check_zones_before_plot {
         session.refill_zones()?;
@@ -436,13 +436,136 @@ pub fn run_export_gerbers(
         Some((&plot_params.layer_selection, &plot_on_all)),
         reporter,
     );
-    let _ = layers_to_plot.ui_order();
 
-    // RefreshGeneratedTables, then per layer: PlotJobToPlotOpts, BuildPlotFileName,
-    // StartPlotBoard, PlotBoardLayers, EndPlot; then the Gerber job file.
-    Err(SessionError::not_yet_ported(
-        "kicad-fab: StartPlotBoard / PlotBoardLayers / GERBER_JOBFILE_WRITER",
-    ))
+    // Once for the run, not per file, so an update rebuilds each chart once
+    crate::board_loader::refresh_generated_tables(&session.board)?;
+
+    let fab_job = fab_gerbers_job(job);
+    let env = kicad_fab::pcbplot::PlotEnv {
+        build_version: crate::build_version::build_version().to_string(),
+        creation_date: job.gerber.plot.creation_date,
+    };
+
+    let mut ctx = kicad_pcb::ctx::BoardCtx::bare(&session.board)
+        .with_connectivity(&session.connectivity);
+
+    if let Some(engine) = session.drc_engine.as_ref() {
+        ctx = ctx.with_rules(engine);
+    }
+
+    let mut fab_reporter = FabReporter(reporter);
+    let result = kicad_fab::jobs_handler::job_export_gerbers(
+        ctx,
+        &fab_job,
+        &layers_to_plot,
+        &out_path,
+        &env,
+        Some(&mut fab_reporter),
+    );
+
+    for output in &result.outputs {
+        job.gerber.plot.job.add_output(output);
+    }
+
+    let files: Vec<OutputFile> = result
+        .files
+        .into_iter()
+        .map(|f| OutputFile {
+            name: f.name,
+            contents: f.contents,
+        })
+        .collect();
+
+    let exit_code = if result.success {
+        exit_codes::OK
+    } else {
+        exit_codes::ERR_INVALID_OUTPUT_CONFLICT
+    };
+
+    match result.error {
+        None => Ok(JobOutcome {
+            exit_code,
+            files,
+            report_text: None,
+        }),
+        Some(err) if result.job_file_path.is_some() => {
+            // Every layer file is complete; only the Gerber job file (FAB-09) is missing: keep
+            // the layer files and end with the not-yet-ported exit code.
+            reporter.report(format!("not yet ported: {err}\n"), Severity::Error);
+
+            Ok(JobOutcome {
+                exit_code: exit_codes::NOT_YET_PORTED,
+                files,
+                report_text: None,
+            })
+        }
+        Some(err) => Err(SessionError::not_yet_ported(format!("kicad-fab: {err}"))),
+    }
+}
+
+/// `m_reporter` as the `REPORTER` of kicad-fab.
+struct FabReporter<'a>(&'a mut Reporter);
+
+impl kicad_fab::Reporter for FabReporter<'_> {
+    fn report(&mut self, text: &str, severity: Severity) {
+        self.0.report(text, severity);
+    }
+}
+
+/// The session's `JOB_EXPORT_PCB_GERBERS` as kicad-fab's option struct (same members; the
+/// layer sequences after [`gerbers_layers_to_plot`]).
+fn fab_gerbers_job(job: &JobExportPcbGerbers) -> kicad_fab::jobs::job_export_pcb_gerbers::JobExportPcbGerbers {
+    use kicad_fab::jobs::job_export_pcb_gerbers as fab;
+    use kicad_fab::jobs::job_export_pcb_plot as fab_plot;
+
+    let p = &job.gerber.plot;
+    let plot_format = match p.plot_format {
+        crate::jobs::JobPlotFormat::Hpgl => fab_plot::JobPlotFormat::Hpgl,
+        crate::jobs::JobPlotFormat::Gerber => fab_plot::JobPlotFormat::Gerber,
+        crate::jobs::JobPlotFormat::Post => fab_plot::JobPlotFormat::Post,
+        crate::jobs::JobPlotFormat::Dxf => fab_plot::JobPlotFormat::Dxf,
+        crate::jobs::JobPlotFormat::Pdf => fab_plot::JobPlotFormat::Pdf,
+        crate::jobs::JobPlotFormat::Svg => fab_plot::JobPlotFormat::Svg,
+        crate::jobs::JobPlotFormat::Png => fab_plot::JobPlotFormat::Png,
+    };
+
+    let plot = fab_plot::JobExportPcbPlot {
+        plot_format,
+        color_theme: p.color_theme.clone(),
+        mirror: p.mirror,
+        black_and_white: p.black_and_white,
+        negative: p.negative,
+        scale: p.scale,
+        sketch_pads_on_fab_layers: p.sketch_pads_on_fab_layers,
+        hide_dnp_fps_on_fab_layers: p.hide_dnp_fps_on_fab_layers,
+        sketch_dnp_fps_on_fab_layers: p.sketch_dnp_fps_on_fab_layers,
+        crossout_dnp_fps_on_fab_layers: p.crossout_dnp_fps_on_fab_layers,
+        plot_footprint_values: p.plot_footprint_values,
+        plot_ref_des: p.plot_ref_des,
+        plot_drawing_sheet: p.plot_drawing_sheet,
+        subtract_solder_mask_from_silk: p.subtract_solder_mask_from_silk,
+        plot_pad_numbers: p.plot_pad_numbers,
+        plot_layer_sequence: p.plot_layer_sequence.clone(),
+        plot_all_copper_layers: p.plot_all_copper_layers,
+        plot_on_all_layers_sequence: p.plot_on_all_layers_sequence.clone(),
+        drill_shape_option: p.drill_shape_option,
+        use_drill_origin: p.use_drill_origin,
+        configured_output_path: p.job.configured_output_path().to_string(),
+        var_overrides: p.job.var_overrides.clone(),
+    };
+
+    fab::JobExportPcbGerbers {
+        gerber: fab::JobExportPcbGerber {
+            plot,
+            include_netlist_attributes: job.gerber.include_netlist_attributes,
+            use_x2_format: job.gerber.use_x2_format,
+            disable_aperture_macros: job.gerber.disable_aperture_macros,
+            use_protel_file_extension: job.gerber.use_protel_file_extension,
+            precision: job.gerber.precision,
+        },
+        use_board_plot_params: job.use_board_plot_params,
+        create_jobs_file: job.create_jobs_file,
+    }
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobExportDrill`.

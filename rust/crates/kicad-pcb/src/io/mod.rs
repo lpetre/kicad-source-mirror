@@ -146,12 +146,37 @@ pub fn parse_board_report(
 /// `PCB_IO_KICAD_SEXPR_PARSER::ParseFootprintLib`) into a holder board
 /// (`BoardUse::FpHolder`, `board-model.md` 2).
 ///
-/// Staging stub of package PCBIO-14: returns "port pending: kicad_footprint_lib (PCBIO-14)".
+/// Port of the per-file body of `FP_CACHE::Load` (package PCBIO-14): a
+/// `PCB_IO_KICAD_SEXPR_PARSER( &reader, nullptr, nullptr )` (no board: the port parses into a
+/// holder board with `board_present == false`), `ParseFootprintLib`, and the first entry of the
+/// name-ordered result (`tmp.begin()`) attached to the holder. The other footprints of a
+/// multi-footprint file are dropped, as in C++ (they stay unattached in the arena).
+///
+/// The footprint keeps the name read from the file (without library nickname); `FP_CACHE::Load`
+/// then renames it to the file base name, which is the caller's business (it knows the file).
+///
+/// # Errors
+///
+/// The parse errors (`PARSE_ERROR`, `FUTURE_FORMAT_ERROR`, `IO_ERROR`), and an [`IoError`] with
+/// an empty message when the file holds no footprint (`THROW_IO_ERROR( wxEmptyString )`).
 pub fn parse_footprint_file(
     text: &str,
     source_name: &str,
     options: &ParseOptions,
 ) -> Result<(Board, ParseReport), IoError> {
-    let _ = (text, source_name, options);
-    Err(IoError::new("port pending: kicad_footprint_lib (PCBIO-14)"))
+    let mut holder = Board::new();
+    holder.board_use = crate::item::BoardUse::FpHolder;
+
+    let mut parser = PcbParser::new(text, source_name, holder, false, options.clone());
+    let footprints = parser.parse_footprint_lib()?;
+
+    let Some(&first) = footprints.values().next() else {
+        // caught locally by FP_CACHE::Load ("Unable to read file '%s'")
+        return Err(IoError::new(""));
+    };
+
+    let (mut board, report) = parser.into_board_and_report();
+    board.attach_footprint(first, crate::board::AddMode::Append);
+
+    Ok((board, report))
 }

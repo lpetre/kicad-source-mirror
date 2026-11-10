@@ -38,6 +38,12 @@ crates/kicad-cli crates/kicad-wasm` and close every stub whose subsystem exists:
    for tests). The hosts must seed it per run: OS randomness natively, crypto.getRandomValues
    in wasm, with a `--deterministic-uuids <seed>` style switch / API option for reproducible
    runs (DRC-06 found that the default seed reproduces UUIDs stored in QA boards).
+   Also host-supplied values the model now reads (review R2-01 / R2-02 / R2-05): set
+   `Board::text_var_clock` (CURRENT_DATE / CURRENT_TIME_* text variables), the project
+   name, and a VCS hash where the host has one (native: ask git; wasm: API option; default
+   "no hash" as the reference outside a repository); hosts must seed with
+   `Board::seed_generator` (replacing `board.kiid_generator` loses the reservation of the
+   file's UUIDs).
 6. `rust/scripts/build-wasm.sh`: keep it working (wasm-bindgen 0.2.130 is pinned; wasm-opt
    is not installed - optional step), report module size.
 

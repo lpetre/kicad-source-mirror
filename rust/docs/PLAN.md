@@ -311,7 +311,25 @@ Progress log:
   Launched: STAB-PCB (wfdnc7cds) with the model defects reported so far (table cells in
   footprints, render cache dropped at load, dimension text polygons, fp_poly closing vertex,
   pad primitive lib scale, raw zone_connect values).
-  Cross-crate leftovers for a GLUE-3 pass once the FAB / DRC / ZF chains have finished:
+  04:10 UTC: INT-2b, the Fable review of every decision in kicad-pcb, is back
+  (docs/design/review-2.md): 238 status entries judged (181 ok, 51 documented difference, 3
+  wrong, 3 unproven); 16 findings (1 blocker, 4 major, 11 minor), 5 fixed with regression
+  cases: pad margin setters wrote one side (blocker; found by a new whole-corpus item sweep
+  of 7.3 million values, not by any status entry), table cells in footprints stayed at
+  library coordinates, ${PROJECTNAME} / clock text variables not wired, ${VCSHASH} gave ""
+  instead of "no hash", fresh UUIDs could collide with UUIDs of the file (the parser now
+  reserves the file's UUIDs). Legacy-input re-save scoreboard (D3): 361 of 370 identical,
+  the other 9 explained (4 outline-font caches, 4 post-load steps, 1 generated-table
+  refresh). Open: R2-06 outline fonts (see decision), R2-07 Bezier side effect (FIX-BEZ-1,
+  no corpus board affected), R2-11 private UUID generators in drc / fab, R2-12 generated
+  tables not refreshed at load, R2-13 barcode encoder, minor documented ones.
+  ORCHESTRATOR DECISION (R2-06): the reference never uses the render cache stored in a
+  board file - it regenerates outline-font glyphs from the host's fonts. The port has no
+  outline engine, so the stored glyphs become the stand-in (they are what the reference
+  produces on a machine that has the font); stroke-font fallback plus a host warning
+  otherwise. Package FONT-RC-1 is written; launch after STAB-PCB (same files). A real
+  outline engine (FreeType / HarfBuzz equivalents, embedded fonts) stays a later package.
+  Cross-crate leftovers for a GLUE-3 pass (package file written) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
   generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid
   + KiidGenerator seeding; pcb-dump-session -> dump_board_ctx.
