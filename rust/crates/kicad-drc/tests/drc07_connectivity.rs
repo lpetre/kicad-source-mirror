@@ -22,11 +22,9 @@
 //! the port of `qa/tests/pcbnew/drc/test_drc_copper_thieving.cpp`.
 //!
 //! The provider needs the connectivity rebuilt by the cache generator and its islands map /
-//! zone trees, so the run reproduces the CLI path around it: `BOARD_LOADER::Load`'s
-//! `BuildConnectivity`, then in `RunTests` the board-writing part of the cache generator
-//! (`prepare_board`) and its `connectivity->Build( board )` (both applied before the run:
-//! they mutate the board), and inside the run the zone lists, zone trees and
-//! `FillIsolatedIslandsMap( m_ZoneIsolatedIslandsMap, true )`.
+//! zone trees, so it runs through the real run path (`drc_harness::run_flow_providers`:
+//! `BOARD_LOADER::Load`'s `BuildConnectivity`, then `run_flow::run_tests` with the cache
+//! generator and the connectivity slot only).
 
 mod drc_harness;
 
@@ -34,22 +32,13 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, load_board, panic_text, quiet, run_providers, summarize,
+    Entry, Loaded, cached_entries, load_board, mask_generated_uuids, panic_text, quiet,
+    run_flow_providers, summarize,
 };
-use kicad_connectivity::algo::IsolatedIslandsMap;
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::cache_generator::{
-    build_zone_caches, build_zone_lists, init_zone_islands_map, prepare_board,
-};
-use kicad_drc::caches::DrcBoardCaches;
-use kicad_drc::constraint_types::DrcConstraintT;
-use kicad_drc::engine::implicit_condition::EngineCondition;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use kicad_drc::exclusion::{record_drc_exclusions, resolve_drc_exclusions};
 use kicad_drc::item::DrcItemsProvider;
-use kicad_drc::providers::connectivity::DrcTestProviderConnectivity;
 use kicad_drc::report::DrcReport;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{DRCE_ISOLATED_COPPER, DRCE_LAST};
@@ -68,63 +57,9 @@ const TYPES: &[&str] = &[
 /// The type of the `unconnected_items` array.
 const UNCONNECTED: &str = "unconnected_items";
 
-/// The connectivity provider with the parts of `DRC_CACHE_GENERATOR::Run()` it reads (zone
-/// lists, zone trees, isolated islands map) built from the run's context right before it.
-struct ConnectivityWithCaches<'a> {
-    connectivity: &'a mut ConnectivityData,
-}
-
-impl DrcTestProviderRun for ConnectivityWithCaches<'_> {
-    fn name(&self) -> &str {
-        "connectivity"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let mut caches = DrcBoardCaches::new();
-        build_zone_lists(ctx, &mut caches);
-        build_zone_caches(ctx, &mut caches);
-        init_zone_islands_map(ctx, &mut caches.zone_isolated_islands);
-
-        // connectivity->FillIsolatedIslandsMap( m_board->m_ZoneIsolatedIslandsMap, true )
-        let mut map: IsolatedIslandsMap = caches
-            .zone_isolated_islands
-            .iter()
-            .map(|(z, m)| (z, m.clone()))
-            .collect();
-        self.connectivity
-            .fill_isolated_islands_map(&BoardCtx::bare(ctx.board), &mut map, true);
-
-        for (z, m) in caches.zone_isolated_islands.iter_mut() {
-            *m = map.remove(&z).expect("zone of the islands map");
-        }
-
-        let mut provider = DrcTestProviderConnectivity::new(self.connectivity, &caches);
-        provider.run_tests(engine, run, ctx, units)
-    }
-}
-
-/// `BuildConnectivity` at load time, then the board-writing part of the cache generator and
-/// its `connectivity->Build( board )`.
-fn prepare(loaded: &mut Loaded) -> ConnectivityData {
-    let mut connectivity = ConnectivityData::new();
-    connectivity.build_connectivity(&mut loaded.board);
-    prepare_board(&mut loaded.board);
-    connectivity.clear_ratsnest();
-    connectivity.build_board(&mut loaded.board);
-    connectivity
-}
-
 /// The `violations` and `unconnected_items` of the CLI JSON report after a run of the
 /// connectivity provider (the steps of `drc_harness::cli_report_entries`).
 fn report_entries(loaded: &mut Loaded) -> (Vec<Entry>, Vec<Entry>) {
-    let mut connectivity = prepare(loaded);
-
     for marker in resolve_drc_exclusions(&mut loaded.board, true) {
         loaded.board.add_marker(marker);
     }
@@ -132,10 +67,7 @@ fn report_entries(loaded: &mut Loaded) -> (Vec<Entry>, Vec<Entry>) {
     record_drc_exclusions(&mut loaded.board);
     loaded.board.delete_markers(true, true);
 
-    let mut provider = ConnectivityWithCaches {
-        connectivity: &mut connectivity,
-    };
-    let found = run_providers(loaded, EdaUnits::Mm, false, &mut [&mut provider]);
+    let found = run_flow_providers(loaded, EdaUnits::Mm, false, &["connectivity"]);
 
     for r in found {
         loaded.board.add_marker(r.marker);
@@ -367,6 +299,14 @@ impl Score {
                 .collect(),
         };
 
+        // Items saved without a UUID (teardrops) get a random KIID at every load, also in
+        // the reference: compare them by description and position.
+        let (mut reference, mut mine) = (reference, mine);
+        let board_text = std::fs::read_to_string(kicad_qa::kicad_source_root().join(rel))
+            .unwrap_or_default();
+        mask_generated_uuids(&mut reference, &board_text);
+        mask_generated_uuids(&mut mine, &board_text);
+
         let (matched, missing, extra) = diff(&reference, &mine);
         s.matched += matched;
         s.missing += missing.len();
@@ -386,23 +326,8 @@ impl Score {
     }
 }
 
-/// True when the provider's only rule query (`EvalRules( VIA_DANGLING_CONSTRAINT, .. )`)
-/// would evaluate a user rule condition, which needs the expression binding (DRC-21). Rule
-/// conditions of other constraint types are never evaluated by this provider.
-fn evaluates_compiled_conditions(engine: &DrcEngine) -> bool {
-    engine
-        .constraint_map()
-        .get(&DrcConstraintT::ViaDanglingConstraint)
-        .into_iter()
-        .flatten()
-        .any(|c| {
-            !c.parent_rule.is_implicit()
-                && matches!(c.condition, Some(EngineCondition::Compiled(_)))
-        })
-}
-
-/// The corpus comparison: every board the port loads completely (no skipped items, no user
-/// `via_dangling` rule conditions pending DRC-21) is compared on the provider's error types; the
+/// The corpus comparison: every board the port loads completely (no skipped items) is
+/// compared on the provider's error types; the
 /// `isolated_copper` order may differ between zones (`ZONE*` address order in C++, board
 /// order in the port, `drc.md` 4.12) and is reported, not failed.
 #[test]
@@ -429,10 +354,6 @@ fn connectivity_matches_reference_corpus() {
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
-
-                    if evaluates_compiled_conditions(&loaded.engine) {
-                        return Err("via_dangling rule conditions need DRC-21".to_string());
-                    }
 
                     let (v, u) = report_entries(&mut loaded);
                     Ok((v, u, loaded.report.skipped.is_empty()))
@@ -547,11 +468,7 @@ fn thieving_zone_produces_no_isolated_copper_violations() {
     }
 
     // InitEngine: the error limits follow the severities.
-    let mut connectivity = prepare(&mut loaded);
-    let mut provider = ConnectivityWithCaches {
-        connectivity: &mut connectivity,
-    };
-    let found = run_providers(&mut loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, &["connectivity"]);
     let isolated_count = found
         .iter()
         .filter(|r| r.item.error_code() == DRCE_ISOLATED_COPPER)

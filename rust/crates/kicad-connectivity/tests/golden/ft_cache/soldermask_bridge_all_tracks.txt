@@ -1,0 +1,1 @@
+file|soldermask_bridge_all_tracks.kicad_pcb

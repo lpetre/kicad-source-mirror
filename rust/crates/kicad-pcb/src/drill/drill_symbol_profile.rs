@@ -627,7 +627,10 @@ mod tests {
 
     #[test]
     fn tokens() {
-        assert_eq!(drill_group_key_token(DrillGroupKey::PostMachining), "post_machining");
+        assert_eq!(
+            drill_group_key_token(DrillGroupKey::PostMachining),
+            "post_machining"
+        );
         assert_eq!(
             drill_mark_policy_from_token("shapes_then_letters"),
             Some(DrillMarkPolicy::ShapesThenLetters)

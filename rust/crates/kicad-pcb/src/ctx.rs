@@ -169,6 +169,21 @@ pub trait ConnectivityQuery: Sync {
     /// each once. C++ sorts the item pointers; the replacement is `ItemId` order
     /// (`board-model.md` 3.1).
     fn net_items(&self, net: NetCode, types: &[KicadT]) -> Vec<ItemId>;
+
+    /// `CONNECTIVITY_DATA::GetFromToCache()->IsOnFromToPath( aItem, aFrom, aTo )` (the rule
+    /// function `fromTo()`): whether the item lies on a path between the pads named by the
+    /// `from` and `to` wildcards. `None` when there is no from-to cache (the
+    /// `if( !ftCache )` branch of `fromToFunc`); the default, for connectivity stand-ins that
+    /// have none. A cache that was never rebuilt answers `Some( false )`, like C++.
+    fn is_on_from_to_path(
+        &self,
+        _ctx: &BoardCtx<'_>,
+        _item: ItemRef<'_>,
+        _from: &str,
+        _to: &str,
+    ) -> Option<bool> {
+        None
+    }
 }
 
 /// The board facts leaf mutators need (shared by every `MutEnv`): a snapshot of the design

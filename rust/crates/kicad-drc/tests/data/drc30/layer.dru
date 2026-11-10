@@ -1,0 +1,7 @@
+(rule "dp30_gap_front"
+	(layer "F.Cu")
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_gap (min 0.2mm) (max 0.21mm)))
+(rule "dp30_unc"
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_uncoupled (max 0.5mm)))

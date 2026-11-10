@@ -307,6 +307,35 @@ impl Session {
         self.pending_load_steps = PENDING_LOAD_STEPS.to_vec();
     }
 
+    /// Applies the host-supplied values the C++ takes from the process after a load: the
+    /// UUID generator seed (`boost::uuids::basic_random_generator` seeds itself from the
+    /// operating system; the hosts pass OS randomness, or a fixed seed for reproducible runs)
+    /// and the clock of the `CURRENT_DATE` / `CURRENT_TIME_*` text variables.
+    ///
+    /// The generator is reseeded in place (`KiidGenerator::seed_generator`), which keeps the
+    /// reservation of the UUIDs read from the file; replacing `board.kiid_generator` would
+    /// lose it.
+    pub fn apply_host_inputs(&mut self, clock: &crate::HostClock, uuid_seed: u32) {
+        self.board.kiid_generator.seed_generator(uuid_seed);
+        self.board.text_var_clock = clock.title_block_clock();
+    }
+
+    /// Not in C++ (FONT-RC-1): one warning per text item drawn in the stroke font because its
+    /// TrueType font has no usable stored glyphs (`kicad_pcb::eda_text::outline_font_fallbacks`).
+    pub fn outline_font_warnings(&self) -> Vec<String> {
+        let mut ctx =
+            kicad_pcb::ctx::BoardCtx::bare(&self.board).with_connectivity(&self.connectivity);
+
+        if let Some(engine) = self.drc_engine.as_ref() {
+            ctx = ctx.with_rules(engine);
+        }
+
+        kicad_pcb::eda_text::outline_font_fallbacks(&ctx)
+            .iter()
+            .map(|f| f.message())
+            .collect()
+    }
+
     /// The board's file name without directory and extension (`wxFileName::GetName()`).
     pub fn board_stem(&self) -> String {
         file_stem(&self.source_name)

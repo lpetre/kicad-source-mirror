@@ -1,0 +1,6 @@
+file|chain_bridging_3pad_2net.kicad_pcb
+ft|FB1-1|FB1-2|real=[]|paths=0|unique=[]
+ft|FB1-2|FB1-1|real=[]|paths=0|unique=[]
+ft|FB1-*|FB1-2|real=[]|paths=0|unique=[]
+ft|FB1-1|FB1|real=[]|paths=0|unique=[]
+ft|FB1-1|*|real=[]|paths=0|unique=[]

@@ -32,7 +32,7 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, has_compiled_conditions, load_board,
+    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board,
     panic_text, quiet, run_providers,
 };
 use kicad_core::Severity;
@@ -330,9 +330,6 @@ fn silk_and_physical_match_reference_corpus() {
                 || -> Result<(Vec<Entry>, Vec<String>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-                    if has_compiled_conditions(&loaded.engine) {
-                        return Err("user rule conditions need DRC-21".to_string());
-                    }
 
                     let names = physical_names(&loaded.engine);
                     let entries = report(&mut loaded)

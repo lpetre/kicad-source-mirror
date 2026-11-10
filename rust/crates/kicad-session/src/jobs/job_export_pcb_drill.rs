@@ -119,6 +119,10 @@ pub struct JobExportPcbDrill {
     pub generate_report: bool,
     /// `m_reportPath`
     pub report_path: String,
+    /// The file date the C++ writers take from the clock (`wxDateTime::Now()`, local time and
+    /// UTC offset; Excellon `; DRILL file ... date ...` and Gerber `%TF.CreationDate`): set by
+    /// the host (no clock in library crates); the default is all zeros.
+    pub creation_date: kicad_fab::jobs::job_export_pcb_plot::GbrCreationDate,
 }
 
 impl JobExportPcbDrill {
@@ -141,6 +145,7 @@ impl JobExportPcbDrill {
             generate_tenting: false,
             generate_report: false,
             report_path: String::new(),
+            creation_date: Default::default(),
         }
     }
 

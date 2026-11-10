@@ -1,0 +1,47 @@
+M48
+<normalised>
+; FORMAT={-:-/ absolute / metric / decimal}
+<normalised>
+<normalised>
+; #@! TF.FileFunction,Plated,1,4,PTH
+FMAT,2
+METRIC
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T1C0.300
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T2C0.600
+; #@! TA.AperFunction,Plated,PTH,ComponentDrill
+T3C0.600
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T4C0.800
+; #@! TA.AperFunction,Plated,PTH,ComponentDrill
+T5C0.800
+; #@! TA.AperFunction,Plated,PTH,CastelletedDrill
+T6C0.800
+; #@! TA.AperFunction,Plated,PTH,ComponentDrill,PressFit
+T7C0.800
+%
+G90
+G05
+T1
+X105.0Y-95.0
+X108.0Y-95.0
+T2
+X127.54Y-108.0
+T3
+X127.54Y-112.0
+T4
+X111.0Y-95.0
+X126.3Y-97.7
+T5
+X125.0Y-112.0
+T6
+X110.0Y-105.0
+T7
+X114.399Y-102.46
+T5
+X112.096Y-103.344G85X112.303Y-104.116
+G05
+X116.199Y-101.19G85X116.999Y-101.19
+G05
+M30

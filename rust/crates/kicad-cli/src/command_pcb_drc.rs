@@ -192,6 +192,11 @@ pub fn perform(m: &ArgMatches) -> i32 {
         Err(code) => return code,
     };
 
+    // Host inputs of JobExportDrc (the C++ reads them from the clock / filesystem)
+    job.report_date = host::host_clock().iso8601();
+    job.schematic_exists = host::schematic_exists(&job.rc.filename);
+    job.marker_uuid_seed = host::uuid_seed();
+
     let mut reporter = Reporter::new();
     let result = run_drc(&mut session, &mut job, &mut reporter);
     host::finish_job(result, reporter)

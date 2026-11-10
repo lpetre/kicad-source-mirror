@@ -173,7 +173,8 @@ fn run_port(board: &Board, set: &str) -> PortFiles {
         .messages
         .iter()
         .filter_map(|(m, _)| m.strip_prefix("Created file 'out/"))
-        .map(|m| m.strip_suffix("'.").unwrap().to_string())
+        // EXCELLON_WRITER reports "Created file '%s'" without the period of the other writers.
+        .map(|m| m.strip_suffix('\'').unwrap().to_string())
         .collect();
     let mut rest: Vec<String> = out
         .files
@@ -334,14 +335,20 @@ fn corpus_boards_match_cli() {
     assert_eq!(score.pending, 0, "no run reaches pending code");
 }
 
-/// The crafted boards' full normalised goldens (`<stem>/<set>/`) equal the port's files: a
-/// readable diff where the hash comparison only says "differs".
+/// `FULL_TEXT_SETS` of `generate.py`.
+const FULL_TEXT_SETS: [&str; 2] = ["default", "report_sep"];
+
+/// The crafted boards' full normalised goldens (`<stem>/<set>/`, `FULL_TEXT_SETS`) equal the
+/// port's files: a readable diff where the hash comparison only says "differs".
 #[test]
 fn crafted_boards_full_text() {
     let here = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/golden/excellon_corpus");
     let mut compared = 0;
 
-    for run in corpus().iter().filter(|r| r.path.starts_with("rust/")) {
+    for run in corpus()
+        .iter()
+        .filter(|r| r.path.starts_with("rust/") && FULL_TEXT_SETS.contains(&r.set.as_str()))
+    {
         let stem = Path::new(&run.path).file_stem().unwrap().to_str().unwrap();
         let board = load_board(&kicad_root().join(&run.path)).unwrap();
         let got = run_port(&board, &run.set);

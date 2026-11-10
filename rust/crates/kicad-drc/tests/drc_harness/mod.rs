@@ -56,7 +56,9 @@ use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
 use kicad_drc::exclusion::KiapiDrcExclusionCodec;
 use kicad_drc::exclusion::{record_drc_exclusions, resolve_drc_exclusions};
 use kicad_drc::item::DrcItemsProvider;
+use kicad_drc::pcbexpr::functions::PcbExprCacheScope;
 use kicad_drc::report::DrcReport;
+use kicad_drc::run_flow::{RunTestsOptions, run_tests_selected};
 use kicad_drc::rule_parser::default_layer_choices;
 use kicad_pcb::board::BoardProject;
 use kicad_pcb::io::{ParseOptions, ParseReport, parse_board_report};
@@ -254,6 +256,21 @@ pub fn cached_entries(rel: &str, type_: &str) -> Option<Vec<Entry>> {
     Some(out)
 }
 
+/// Replaces the UUID of every report item whose UUID does not occur in `board_text` (the
+/// board file) by `<generated>`. Items saved without a UUID (teardrop zones, the board
+/// itself in the outline entries) get a random `KIID` at every load, also in the
+/// reference: such items are compared by description and position (drc.md 9.4 (4), the
+/// FIX-CN-1 rule for unconnected items).
+pub fn mask_generated_uuids(entries: &mut [Entry], board_text: &str) {
+    for e in entries {
+        for item in &mut e.items {
+            if !item.0.is_empty() && !board_text.contains(&item.0) {
+                item.0 = "<generated>".to_string();
+            }
+        }
+    }
+}
+
 /// Multiset difference of two entry lists: (matched, missing, extra) with the texts.
 pub fn diff_entries(reference: &[Entry], rust: &[Entry]) -> (usize, Vec<String>, Vec<String>) {
     let mut remaining: Vec<Option<String>> = rust.iter().map(|e| Some(e.key())).collect();
@@ -320,11 +337,13 @@ pub struct Loaded {
     pub board: Board,
     pub report: ParseReport,
     pub engine: DrcEngine,
+    /// The project's tuning profiles (read by the test: not in the project model yet).
+    pub tuning_profiles: TuningProfiles,
 }
 
 /// The QA load path (`KI_TEST::LoadBoard`): parser, project file (design settings, net
-/// settings, tuning profiles), rule file, `InitEngine`. Rule conditions compile with the DRC-20
-/// stand-in binding until DRC-21 lands.
+/// settings, tuning profiles), rule file, `InitEngine` with the real expression binding, the
+/// zone fill triangulation of `BuildConnectivity`.
 pub fn load_board(path: &Path) -> Result<Loaded, String> {
     let mut tuning_profiles = TuningProfiles::default();
     let bytes = std::fs::read(path).map_err(|e| e.to_string())?;
@@ -370,7 +389,8 @@ pub fn load_board(path: &Path) -> Result<Loaded, String> {
     let dru_path = dru.to_string_lossy().to_string();
 
     let mut engine = DrcEngine::new();
-    let result = engine.init_engine_with::<common::SyntaxBinder>(
+    // The real expression binding (DRC-21) compiles and evaluates the user rule conditions.
+    let result = engine.init_engine(
         &mut board,
         dru_text.as_deref().map(|t| (t, dru_path.as_str())),
         default_layer_choices(),
@@ -382,15 +402,22 @@ pub fn load_board(path: &Path) -> Result<Loaded, String> {
         return Err("InitEngine failed".to_string());
     }
 
+    // KI_TEST::LoadBoard then calls BOARD::BuildConnectivity(), whose CONNECTIVITY_DATA::Build
+    // triangulates the board zone fills (BOARD::CacheTriangulation); the keepout predicates of
+    // the expression functions query the fills through those triangles (DRC-22).
+    kicad_connectivity::data::cache_board_triangulation(&mut board);
+
     Ok(Loaded {
         board,
         report,
         engine,
+        tuning_profiles,
     })
 }
 
-/// True when the engine holds a user rule whose condition needs the expression binding
-/// (DRC-21).
+/// True when the engine holds a compiled user rule condition. Since STAB-DRC the harness
+/// compiles them with the real binding (DRC-21) and compares such boards like the others;
+/// this is kept for the statistics of the tests.
 pub fn has_compiled_conditions(engine: &DrcEngine) -> bool {
     engine.constraint_map().values().flatten().any(|c| {
         !c.parent_rule.is_implicit() && matches!(c.condition, Some(EngineCondition::Compiled(_)))
@@ -458,6 +485,9 @@ pub fn run_providers(
         let ctx = BoardCtx::bare(&loaded.board)
             .with_rules(&loaded.engine)
             .with_connectivity(&connectivity);
+        // The board-level memo caches of the expression functions live from InitEngine
+        // through RunTests (run_flow::run_tests holds the same scope).
+        let _expression_caches = PcbExprCacheScope::enter(&loaded.board);
         loaded
             .engine
             .run_providers(&mut run, &ctx, units, providers);
@@ -477,6 +507,80 @@ pub fn cli_report_entries(
     report_all_track_errors: bool,
     providers: &mut [&mut dyn DrcTestProviderRun],
 ) -> Vec<Entry> {
+    cli_report_entries_with(loaded, &mut |loaded| {
+        run_providers(loaded, EdaUnits::Mm, report_all_track_errors, providers)
+    })
+}
+
+/// [`cli_report_entries`] through the real run path: `BOARD::BuildConnectivity()` of the
+/// load, then `kicad_drc::run_flow::run_tests` (cache generator, connectivity rebuild, the
+/// expression cache scope) with the registry slots named in `providers` only (their
+/// `GetName()`, e.g. `"connectivity"`, `"zone connections"`).
+pub fn cli_report_entries_flow(
+    loaded: &mut Loaded,
+    report_all_track_errors: bool,
+    providers: &[&str],
+) -> Vec<Entry> {
+    cli_report_entries_with(loaded, &mut |loaded| {
+        run_flow_providers(loaded, EdaUnits::Mm, report_all_track_errors, providers)
+    })
+}
+
+/// `RunTests` through `kicad_drc::run_flow::run_tests_selected` with the registry slots named
+/// in `providers`; the connectivity is built first as the board load does. Returns the
+/// violations in handler order (marker UUIDs as in [`run_providers`]).
+pub fn run_flow_providers(
+    loaded: &mut Loaded,
+    units: EdaUnits,
+    report_all_track_errors: bool,
+    providers: &[&str],
+) -> Vec<Reported> {
+    let mut found = Vec::new();
+    let mut generator = KiidGenerator::seeded(0xD5C0_0006);
+    let mut connectivity = kicad_connectivity::data::ConnectivityData::new();
+    connectivity.build_connectivity(&mut loaded.board);
+
+    let mut run = DrcRunState::new();
+    run.set_violation_handler(Box::new(|item, pos, layer, path| {
+        let mut marker = PcbMarker::new(&mut generator, item.clone(), pos, layer);
+
+        if let Some(path) = path {
+            path(&mut marker);
+        }
+
+        found.push(Reported {
+            item: item.clone(),
+            pos,
+            layer,
+            marker,
+        });
+    }));
+
+    let options = RunTestsOptions {
+        units,
+        report_all_track_errors,
+        test_footprints: false,
+        tuning_profiles: &loaded.tuning_profiles,
+    };
+
+    run_tests_selected(
+        &loaded.engine,
+        &mut run,
+        &mut loaded.board,
+        &mut connectivity,
+        &options,
+        &|name| providers.contains(&name),
+    );
+    drop(run);
+
+    found
+}
+
+/// The steps of [`cli_report_entries`] around the run, with the run done by `run`.
+pub fn cli_report_entries_with(
+    loaded: &mut Loaded,
+    run: &mut dyn FnMut(&mut Loaded) -> Vec<Reported>,
+) -> Vec<Entry> {
     // BOARD_LOADER::Load: the markers of the exclusions stored in the project.
     for marker in resolve_drc_exclusions(&mut loaded.board, true) {
         loaded.board.add_marker(marker);
@@ -485,7 +589,7 @@ pub fn cli_report_entries(
     record_drc_exclusions(&mut loaded.board);
     loaded.board.delete_markers(true, true);
 
-    let found = run_providers(loaded, EdaUnits::Mm, report_all_track_errors, providers);
+    let found = run(loaded);
 
     for r in found {
         loaded.board.add_marker(r.marker);
@@ -609,6 +713,32 @@ pub fn compare_corpus(
     filter: &str,
     make: &mut dyn FnMut() -> Vec<Box<dyn DrcTestProviderRun>>,
 ) -> Scoreboard {
+    compare_corpus_with(types, filter, &mut |loaded| {
+        let mut providers = make();
+        let mut refs: Vec<&mut dyn DrcTestProviderRun> = Vec::new();
+
+        for p in providers.iter_mut() {
+            refs.push(&mut **p);
+        }
+
+        cli_report_entries(loaded, false, &mut refs)
+    })
+}
+
+/// [`compare_corpus`] through the real run path ([`cli_report_entries_flow`]) with the
+/// registry slots named in `providers`.
+pub fn compare_corpus_flow(types: &[&str], filter: &str, providers: &[&str]) -> Scoreboard {
+    compare_corpus_with(types, filter, &mut |loaded| {
+        cli_report_entries_flow(loaded, false, providers)
+    })
+}
+
+/// [`compare_corpus`] with the report entries of a board made by `entries`.
+pub fn compare_corpus_with(
+    types: &[&str],
+    filter: &str,
+    entries: &mut dyn FnMut(&mut Loaded) -> Vec<Entry>,
+) -> Scoreboard {
     let root = kicad_qa::kicad_source_root();
     let mut score = Scoreboard::default();
 
@@ -631,18 +761,7 @@ pub fn compare_corpus(
             catch_unwind(AssertUnwindSafe(
                 || -> Result<(Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
-
-                    if has_compiled_conditions(&loaded.engine) {
-                        return Err("user rule conditions need DRC-21".to_string());
-                    }
-
-                    let mut providers = make();
-                    let mut refs: Vec<&mut dyn DrcTestProviderRun> = Vec::new();
-
-                    for p in providers.iter_mut() {
-                        refs.push(&mut **p);
-                    }
-                    let entries = cli_report_entries(&mut loaded, false, &mut refs)
+                    let entries = entries(&mut loaded)
                         .into_iter()
                         .filter(|e| types.contains(&e.type_.as_str()))
                         .collect();

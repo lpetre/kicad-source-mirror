@@ -1653,6 +1653,48 @@ impl Board {
         });
     }
 
+    /// Port of the `PCB_GENERATED_TABLE::Flip( aCentre, aFlipDirection )` override after
+    /// `PCB_TABLE::Flip` (which reverses the columns of the cells in either direction): the
+    /// column set is reversed with them, so the next rebuild does not lay the columns back out in
+    /// their old order; the drill chart's symbol column follows (`onColumnsReversed`); a hidden
+    /// column keeps its place in the reversed order; trailer rows, laid out by position rather
+    /// than by column, get their text back to where a rebuild puts it (the cells stay where the
+    /// flip left them). `Mirror` goes through `Flip` too. To be called by the table flip cascade
+    /// (`Board::table_flip`, package M11) for a generated table.
+    pub fn generated_after_flip(&mut self, table: TableId) {
+        self.modify_table(table, |t, _| {
+            let data = t.generated.as_deref_mut().expect("generated table");
+            data.columns.reverse();
+            crate::pcb_drill_chart::on_columns_reversed(data);
+
+            let total = (data.columns.len() + data.hidden.len()) as i32;
+
+            for hidden in data.hidden.iter_mut() {
+                hidden.position = total - 1 - hidden.position;
+            }
+
+            data.hidden.reverse();
+        });
+
+        let (rows, cols) = (self[table].row_count(), self[table].col_count());
+
+        for row in 1..rows {
+            if self[table].is_data_row(row) {
+                continue;
+            }
+
+            for col in 0..cols / 2 {
+                let left = self[table].cell(row, col).expect("cell");
+                let right = self[table].cell(row, cols - 1 - col).expect("cell");
+                let left_text = self[left].textbox.text.text().to_string();
+                let right_text = self[right].textbox.text.text().to_string();
+
+                self.modify_tablecell(left, |c, _| c.textbox.text.set_text(&right_text));
+                self.modify_tablecell(right, |c, _| c.textbox.text.set_text(&left_text));
+            }
+        }
+    }
+
     /// `PCB_TABLE::GetPosition()` of a stored table.
     fn generated_table_position(&self, table: TableId) -> Vector2I {
         let ctx = BoardCtx::bare(self);
@@ -1688,5 +1730,29 @@ mod tests {
             (c.id, c.width, c.visible, c.align),
             (0, 0, true, GeneratedTableAlign::Left)
         );
+    }
+
+    /// `FormatGeneratedTableLength` (`"%.*f mm"`, `"%.*f″"`, `"%.*f mil"`) and
+    /// `DocumentationLayers()`.
+    #[test]
+    fn schema_free_functions() {
+        let mm = GeneratedTableUnits::Mm;
+        assert_eq!(format_generated_table_length(300_000, mm, 3), "0.300 mm");
+        assert_eq!(format_generated_table_length(1_143_000, mm, 2), "1.14 mm");
+        assert_eq!(format_generated_table_length(-125_000, mm, 2), "-0.12 mm");
+        assert_eq!(
+            format_generated_table_length(300_000, GeneratedTableUnits::Inch, 4),
+            "0.0118\u{2033}"
+        );
+        assert_eq!(
+            format_generated_table_length(35_000, GeneratedTableUnits::Mils, 1),
+            "1.4 mil"
+        );
+        assert_eq!(format_generated_table_length(1_500_000, mm, 0), "2 mm");
+
+        let layers = documentation_layers();
+        assert!(layers.contains(PcbLayerId::DwgsUser) && layers.contains(PcbLayerId::BFab));
+        assert!(!layers.contains(PcbLayerId::FSilkS) && !layers.contains(PcbLayerId::EdgeCuts));
+        assert!(!layers.contains(PcbLayerId::FCrtYd) && !layers.contains(PcbLayerId::FCu));
     }
 }

@@ -1,0 +1,6 @@
+file|tracks_arcs_vias.kicad_pcb
+ft|REF**-1|REF**-6|real=[p0.0,p0.5,t15,t16,t17,t18,t19,t20,t21,t23,t24,t25,t26,t27,t28,t29,t30]|paths=1|unique=[1]
+ft|REF**-6|REF**-1|real=[p0.0,p0.5,t15,t16,t17,t18,t19,t20,t21,t23,t24,t25,t26,t27,t28,t29,t30]|paths=1|unique=[1]
+ft|REF**-*|REF**-6|real=[p0.0,p0.5,t15,t16,t17,t18,t19,t20,t21,t23,t24,t25,t26,t27,t28,t29,t30]|paths=1|unique=[1]
+ft|REF**-1|REF**|real=[]|paths=0|unique=[]
+ft|REF**-1|*|real=[]|paths=0|unique=[]

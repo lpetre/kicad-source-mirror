@@ -28,8 +28,8 @@ Written to corpus.txt (compact): `B <set> <exit code> <board path relative to th
 then one line `F <file name> <hash>` per "Created file" line of stdout, in order, then one
 `F` line per other file of the output directory (the drill report, which kicad-cli does not
 announce), sorted by name. <hash> is the first 8 hex digits of the FNV-1a 64 of the normalised
-file. For the crafted boards (EXTRA_DIRS) the normalised files are also stored in full under
-<board stem>/<set>/.
+file. For the crafted boards (EXTRA_DIRS) the normalised files of the
+FULL_TEXT_SETS are also stored in full under <board stem>/<set>/.
 
 Normalisation: the Excellon header lines carrying the version and the date
 (`; DRILL file KiCad ... date ...`, `; #@! TF.CreationDate,`, `; #@! TF.GenerationSoftware,`)
@@ -66,6 +66,10 @@ SETS = [
     ("report", ["--generate-report"]),
     ("report_sep", ["--generate-report", "--excellon-separate-th"]),
 ]
+
+# The option sets whose normalised files of the crafted boards are stored in full (the others
+# are compared by hash only; keeps the goldens small).
+FULL_TEXT_SETS = ("default", "report_sep")
 
 
 def normalise_line(line):
@@ -141,7 +145,7 @@ def main():
     for rel, crafted in boards:
         for set_name, args in SETS:
             keep = None
-            if crafted:
+            if crafted and set_name in FULL_TEXT_SETS:
                 stem = os.path.splitext(os.path.basename(rel))[0]
                 keep = os.path.join(HERE, stem, set_name)
             code, lines = run(os.path.join(KICAD, rel), args, os.path.join(SCRATCH, "w"), keep)

@@ -1,0 +1,6 @@
+file|issue10916.kicad_pcb
+ft|REF**-1|REF**-1|real=[p0.0,p1.0,t0,t1]|paths=2|unique=[1,1]
+ft|REF**-1|REF**-1|real=[p0.0,p1.0,t0,t1]|paths=2|unique=[1,1]
+ft|REF**-*|REF**-1|real=[p0.0,p1.0,t0,t1]|paths=2|unique=[1,1]
+ft|REF**-1|REF**|real=[]|paths=0|unique=[]
+ft|REF**-1|*|real=[]|paths=0|unique=[]

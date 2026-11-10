@@ -33,7 +33,9 @@
 //! Not ported (tier 3, CN-06): the local / dynamic ratsnest (`Build( global, localItems )`,
 //! `ComputeLocalRatsnest`, `ClearLocalRatsnest`, `HideLocalRatsnest`, `GetLocalRatsnest`,
 //! `BlockRatsnestItems`, `Move`), the progress reporter and the spin lock, the net settings
-//! weak pointer (ratsnest drawing only) and the from-to cache (CN-05, `from_to`).
+//! weak pointer (ratsnest drawing only). The from-to cache (`m_fromToCache`, CN-05) is
+//! [`crate::from_to::FromToCache`], kept behind a `Mutex` so that `fromTo()` can query it
+//! through `ConnectivityQuery`.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -55,6 +57,7 @@ use crate::algo::{
     ClusterSearchMode, CnConnectivityAlgo, IsolatedIslandsMap, items_touch_on_layer,
 };
 use crate::edge::CnEdge;
+use crate::from_to::FromToCache;
 use crate::items::CnList;
 use crate::ratsnest::RnNet;
 
@@ -171,12 +174,33 @@ pub struct ConnectivityData {
     netcode_map: BTreeMap<i32, String>,
     /// `board.time_stamp()` after the last build (board-model.md 13); `None` before.
     time_stamp: Option<i32>,
+    /// `m_fromToCache` (never null; C++ guards it with its own `std::recursive_mutex`).
+    from_to_cache: std::sync::Mutex<FromToCache>,
 }
 
 impl ConnectivityData {
     /// Port of `CONNECTIVITY_DATA()`.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// `GetFromToCache()`: the from-to cache (locked; see [`FromToCache`]).
+    pub fn from_to_cache(&self) -> std::sync::MutexGuard<'_, FromToCache> {
+        self.from_to_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    /// `GetFromToCache()->Rebuild( aBoard )` (`DRC_ENGINE::RunTests` after the cache
+    /// generator, `ShowMatches`, the length and diff pair providers). Also takes the cluster
+    /// snapshot the from-to queries read (`FromToCache::rebuild`), which is why it needs
+    /// `&mut self`.
+    pub fn rebuild_from_to_cache(&mut self, ctx: &BoardCtx<'_>) {
+        let cache = self
+            .from_to_cache
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        cache.rebuild(ctx, &mut self.conn_algo);
     }
 
     /// `m_skipRatsnestUpdate` (the C++ constructor argument of the local connectivity).
@@ -1406,5 +1430,18 @@ impl ConnectivityQuery for ConnectivityData {
         }
 
         n
+    }
+
+    fn is_on_from_to_path(
+        &self,
+        ctx: &BoardCtx<'_>,
+        item: ItemRef<'_>,
+        from: &str,
+        to: &str,
+    ) -> Option<bool> {
+        Some(
+            self.from_to_cache()
+                .is_on_from_to_path(ctx, &self.conn_algo, item.id(), from, to),
+        )
     }
 }

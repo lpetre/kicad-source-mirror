@@ -1,0 +1,10 @@
+file|chain_bridging_4pad.kicad_pcb
+ft|U1-1|U1-2|real=[]|paths=0|unique=[]
+ft|U1-2|U1-1|real=[]|paths=0|unique=[]
+ft|U1-*|U1-2|real=[]|paths=0|unique=[]
+ft|U1-1|U1|real=[]|paths=0|unique=[]
+ft|U1-1|*|real=[]|paths=0|unique=[]
+ft|U1-3|U1-4|real=[]|paths=0|unique=[]
+ft|U1-4|U1-3|real=[]|paths=0|unique=[]
+ft|U1-*|U1-4|real=[]|paths=0|unique=[]
+ft|U1-3|U1|real=[]|paths=0|unique=[]

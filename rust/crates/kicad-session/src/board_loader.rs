@@ -61,6 +61,11 @@ pub struct LoadInputs<'a> {
     /// (`wxFileName::MakeAbsolute`) before deriving the project name from it; the host should
     /// pass an absolute path for the same project name and path (`${PROJECTNAME}`, ...).
     pub source_name: &'a str,
+    /// The project's full name as `getProjectForBoard` computes it: `<board>.kicad_pro` made
+    /// absolute (`wxFileName::MakeAbsolute`, which needs the working directory: the host's
+    /// job). `None`: derived from `source_name` as given. The board's own file name stays as
+    /// given (`BOARD::SetFileName( aFileName )`), as in C++.
+    pub project_path: Option<&'a str>,
     /// Text of `<board>.kicad_pro`, `None` when the file does not exist.
     pub project_json: Option<&'a str>,
     /// Text of `<board>.kicad_prl`, `None` when the file does not exist.
@@ -165,12 +170,15 @@ pub fn load_guarded(
     inputs: &LoadInputs<'_>,
     guard: Option<StepGuard<'_>>,
 ) -> Result<LoadedBoard, SessionError> {
-    let pro_name = with_extension(inputs.source_name, "kicad_pro");
+    let pro_name = match inputs.project_path {
+        Some(path) => path.to_string(),
+        None => with_extension(inputs.source_name, "kicad_pro"),
+    };
 
     let (board, project) = match path {
         LoadPath::Cli => {
-            // getProjectForBoard: <board>.kicad_pro (MakeAbsolute is the host's job, see
-            // LoadInputs); SETTINGS_MANAGER::LoadProject also reads the .kicad_prl
+            // getProjectForBoard: <board>.kicad_pro made absolute (by the host, see
+            // LoadInputs::project_path); SETTINGS_MANAGER::LoadProject also reads the .kicad_prl
             let project = load_project(inputs.project_json, inputs.local_settings_json, &pro_name);
 
             // PCB_IO::LoadBoard: newBoard->SetFileName( aFileName ), then loadBoard()

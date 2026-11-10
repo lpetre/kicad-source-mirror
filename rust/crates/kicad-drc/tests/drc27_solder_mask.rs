@@ -38,8 +38,7 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, Reported, cached_entries, cli_report_entries, golden, has_compiled_conditions,
-    load_board, panic_text, quiet, run_providers,
+    Entry, Loaded, Reported, cached_entries, cli_report_entries, golden, load_board, panic_text, quiet, run_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
@@ -199,9 +198,6 @@ fn solder_mask_matches_reference_corpus() {
                 || -> Result<(Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-                    if has_compiled_conditions(&loaded.engine) {
-                        return Err("user rule conditions need DRC-21".to_string());
-                    }
 
                     let entries = report_solder_mask(&mut loaded, false)
                         .into_iter()

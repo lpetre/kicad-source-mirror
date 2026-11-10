@@ -1,0 +1,10 @@
+file|metadata.kicad_pcb
+ft|U1-1|U2-1|real=[p0.0,p1.0,t0]|paths=1|unique=[1]
+ft|U2-1|U1-1|real=[p0.0,p1.0,t0]|paths=1|unique=[1]
+ft|U1-*|U2-1|real=[p0.0,p1.0,t0]|paths=1|unique=[1]
+ft|U1-1|U2|real=[p0.0,p1.0,t0]|paths=1|unique=[1]
+ft|U1-1|*|real=[]|paths=0|unique=[]
+ft|U1-2|U2-2|real=[]|paths=0|unique=[]
+ft|U2-2|U1-2|real=[]|paths=0|unique=[]
+ft|U1-*|U2-2|real=[]|paths=0|unique=[]
+ft|U1-2|U2|real=[]|paths=0|unique=[]

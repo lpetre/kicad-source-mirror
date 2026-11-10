@@ -1,0 +1,1 @@
+file|issue24974.kicad_pcb

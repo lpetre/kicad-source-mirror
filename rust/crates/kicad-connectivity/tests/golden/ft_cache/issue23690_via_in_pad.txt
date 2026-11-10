@@ -1,0 +1,6 @@
+file|issue23690_via_in_pad.kicad_pcb
+ft|REF**-B3|REF**-B1|real=[p0.12,p1.11,t0,t1,t2]|paths=1|unique=[1]
+ft|REF**-B1|REF**-B3|real=[p0.12,p1.11,t0,t1,t2]|paths=1|unique=[1]
+ft|REF**-*|REF**-B1|real=[p0.12,p1.11,t0,t1,t2]|paths=1|unique=[1]
+ft|REF**-B3|REF**|real=[]|paths=0|unique=[]
+ft|REF**-B3|*|real=[]|paths=0|unique=[]

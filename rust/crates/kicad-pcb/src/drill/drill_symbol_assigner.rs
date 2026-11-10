@@ -297,7 +297,10 @@ mod tests {
         let mut g = groups(28);
         assign_drill_symbols(&mut g, &mut profile);
         let m = marks(&g);
-        assert_eq!((m[25].as_str(), m[26].as_str(), m[27].as_str()), ("Z", "AA", "AB"));
+        assert_eq!(
+            (m[25].as_str(), m[26].as_str(), m[27].as_str()),
+            ("Z", "AA", "AB")
+        );
 
         let mut profile = DrillSymbolProfile::default();
         profile.set_mark_policy(DrillMarkPolicy::SizeText);

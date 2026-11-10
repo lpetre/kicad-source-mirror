@@ -1,0 +1,17 @@
+M48
+<normalised>
+; FORMAT={-:-/ absolute / metric / decimal}
+<normalised>
+<normalised>
+; #@! TF.FileFunction,NonPlated,6,10,Blind
+FMAT,2
+METRIC
+; #@! TA.AperFunction,NonPlated,BackDrill
+T1C0.500
+; Backdrill stub 0.790mm (0.0311"), post-machining
+%
+G90
+G05
+T1
+X110.0Y-66.0
+M30

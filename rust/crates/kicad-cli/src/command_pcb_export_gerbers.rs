@@ -267,6 +267,9 @@ pub fn perform(m: &ArgMatches) -> i32 {
         Err(code) => return code,
     };
 
+    // wxDateTime::Now() of the Gerber file attributes
+    gerber_job.gerber.plot.creation_date = host::host_clock().gbr_creation_date();
+
     let mut reporter = Reporter::new();
     let result = run_export_gerbers(&mut session, &mut gerber_job, &mut reporter);
     host::finish_job(result, reporter)

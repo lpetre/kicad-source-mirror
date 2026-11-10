@@ -264,9 +264,11 @@ fn zone_outline_for_collision(zone: &ItemRef<'_>) -> ShapePolySet {
 
 /// Port of `fromToFunc`.
 ///
-/// `CONNECTIVITY_DATA::GetFromToCache()` (package CN-05) is not ported: an evaluation takes
-/// the C++ branch for a non-existent from-to cache (result 0), reporting its warning text
-/// through the error callback instead of `wxLogWarning`.
+/// The from-to cache is reached through the item's context
+/// (`ConnectivityQuery::is_on_from_to_path`, `kicad_connectivity::from_to`). A context
+/// without connectivity, or a connectivity stand-in without a from-to cache, takes the C++
+/// branch for a non-existent cache (result 0), reporting its warning text through the error
+/// callback instead of `wxLogWarning`.
 fn from_to_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) -> bool {
     let item = receiver(ctx, vref);
     let result = ctx.alloc_value();
@@ -276,9 +278,9 @@ fn from_to_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) -> bool 
     ctx.value_mut(result).set_double(0.0);
     ctx.push(result);
 
-    if item.is_none() {
+    let Some(item) = item else {
         return false;
-    }
+    };
 
     if arg_is_empty(ctx, arg_from) {
         report(ctx, || {
@@ -305,10 +307,25 @@ fn from_to_func(ctx: &mut PcbContext<'_>, vref: Option<&PcbExprVarRef>) -> bool 
     }
 
     // auto ftCache = item->GetBoard()->GetConnectivity()->GetFromToCache();
-    // if( !ftCache ) { wxLogWarning( ... ); return true; }
-    report(ctx, || {
-        "Attempting to call fromTo() with non-existent from-to cache.".to_string()
-    });
+    let from = arg_string(ctx, arg_from);
+    let to = arg_string(ctx, arg_to);
+    let on_path = item
+        .ctx
+        .connectivity
+        .and_then(|conn| conn.is_on_from_to_path(item.ctx, item, &from, &to));
+
+    let Some(on_path) = on_path else {
+        // if( !ftCache ) { wxLogWarning( ... ); return true; }
+        report(ctx, || {
+            "Attempting to call fromTo() with non-existent from-to cache.".to_string()
+        });
+
+        return true;
+    };
+
+    if on_path {
+        ctx.value_mut(result).set_double(1.0);
+    }
 
     true
 }

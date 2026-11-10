@@ -1,0 +1,10 @@
+file|issue25521_zone_names.kicad_pcb
+ft|C2-1|C1-1|real=[]|paths=0|unique=[]
+ft|C1-1|C2-1|real=[]|paths=0|unique=[]
+ft|C2-*|C1-1|real=[]|paths=0|unique=[]
+ft|C2-1|C1|real=[]|paths=0|unique=[]
+ft|C2-1|*|real=[]|paths=0|unique=[]
+ft|C2-2|C1-2|real=[]|paths=0|unique=[]
+ft|C1-2|C2-2|real=[]|paths=0|unique=[]
+ft|C2-*|C1-2|real=[]|paths=0|unique=[]
+ft|C2-2|C1|real=[]|paths=0|unique=[]

@@ -3641,3 +3641,94 @@ supersedes the M25a deviation "No symbol encoder" and the gap "`encode_symbol` a
 Verification: `barcodes_match_reference_dump` (feature `dump`): 600 values (barcode polygons,
 `last_error`, all bounding boxes of five boards with 36 barcodes) equal to `pcb-dump`.
 
+
+## Package M26: generated tables (drill chart, stackup table) and their refresh
+
+### C++ to Rust map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drill/drill_operation.h`, `HOLE_ATTRIBUTE` / `DRILL_LAYER_PAIR` of `drill_span.h` | `drill/drill_operation.rs` | ported (FAB-01's port moved to the model level; `DRILL_SPAN` is `pcb_drill_map::DrillSpan`, now `Eq` + `Ord` = `operator<`) |
+| `drill/drill_enumerator.cpp` (`EnumerateDrillOperations`, `EnumerateDrillSpans`, `IsDrillSlot`) | `drill/drill_enumerator.rs` | ported (copy of FAB-01's `kicad-fab/src/drill/drill_enumerator.rs` with the M17 via methods instead of its `via_access` placeholders) |
+| `drill/drill_symbol_profile.*` (profile, `GroupKeyString`, `Fingerprint`, token functions) | `drill/drill_symbol_profile.rs` | ported; `from_board` / `commit_to_board` read and write the board's canonical s-expression form through `io/parser/setup_drill_profile.rs` (compiled a third time as `model_form`) |
+| `drill/drill_symbol_assigner.*` (`AssignDrillSymbols`, `ResolveDrillSymbols`, `DRILL_SYMBOL_ENTRY`, `ResolveDrillSymbolsByItem`), `BOARD::DrillSymbolCache` / `DRILL_SYMBOL_CACHE` | `drill/drill_symbol_assigner.rs` | ported; the cache is computed afresh per call (no generation / fingerprint reuse; same values) |
+| `drill/drill_chart_model.*` | `drill/drill_chart_model.rs` | ported |
+| `drill/drill_chart_template.*` (`DRILL_CHART_TEMPLATE`, `MakeDefault`) | `drill/drill_chart_template.rs` | ported; `SaveToFile` / `LoadFromFile` (template JSON files of the editor) **not ported** |
+| `pcb_generated_table.cpp`: `IsDataRow`, `dataRows`, `IsStale`, `RebuildCells`, `migrateRows`, `setAutosizedRowHeights`, `metricRowHeight`, `minRowHeight`, `nearestDataCell`, `styleFromColumn`, `copyCellStyle`, row-height / font property getters and setters, `Flip` override | `pcb_generated_table.rs` (`PcbTable::is_data_row` .., `Board::generated_rebuild_cells`, `generated_table_autosize`, `generated_after_flip` ..) | ported; `SetColumns` / `moveShownCells` / `placeCells` / `styleCreatedCells` / `ApplySettings` / `CopyFrom` / `Similarity` / `Visit` / msg panel / property registration (editor paths) **not ported** |
+| `board_tables/generated_table_schema.cpp` free functions (`DocumentationLayers`, `FormatGeneratedTableLength`, `ToGeneratedTableUnits`) | `pcb_generated_table.rs` | ported (the parser keeps its own `documentation_layers`) |
+| `board_tables/generated_table_refresh.*` (`GENERATED_TABLE_REFRESH`, `RefreshGeneratedTables`) | `board_tables/generated_table_refresh.rs`, `pcb_generated_table::GeneratedTableRefresh` | ported (`OnItemsChanged` has no listener to notify) |
+| `board_tables/stackup_table_model.cpp` (`BuildStackupTableRows`), `pcb_stackup_table.cpp` (`generate`, `styleNewCell`) | `pcb_stackup_table.rs` | ported |
+| `pcb_drill_chart.cpp` (`generate`, `buildGroups`, `onRebuilt`, `onColumnsReversed`, `ApplyTemplate`, text helpers) | `pcb_drill_chart.rs` (+ `onRebuilt` at the end of `generated_rebuild_cells`) | ported; protobuf `Serialize` / `Deserialize` not ported (no API layer) |
+| `board_tables/board_characteristics_table.cpp` | - | **not ported**: a one-shot plain `PCB_TABLE` the editor places, never refreshed; needs `ComputeBoardStatistics` (unported) |
+| `PCB_DRILL_MAP::GetBoundingBox`, `HitTest( point )`, `GetBoardOutlines` (without its cache), `GetSpanChoice` / `SetSpanChoice` | `pcb_drill_map.rs` | ported (the M23 stubs are gone); `RefreshDrillSymbolLayers` / `DrillSymbolLayers` / `ExpandBoundingBoxForDrillSymbols` not needed by the refresh, not ported |
+| `PCB_TEXTBOX::GetDrawPos` | `pcb_textbox.rs` | fix: the corner sum of the box centre wraps like the x86-64 C++ `int` sum (a new cell's half-`INT_MAX` box laid out before the table moves home) |
+
+Call sites: `kicad-session` `board_loader::refresh_generated_tables` (now the real refresh;
+`BOARD_LOADER::SaveBoard`), `jobs_handler::run_export_gerbers` and `run_pcb_upgrade` (a rebuilt
+table marks the board as changed). The SVG job's refresh belongs to `PCB_PLOTTER::Plot` (FAB).
+
+### Tests and verification
+
+* `tests/m26_generated_tables.rs` + `tests/oracle/m26_generated_tables.{sh,py}` (golden
+  `tests/golden/m26_generated_tables.txt`, cases `tests/data/m26/`): 13 boards, the reference
+  `kicad-cli pcb upgrade --force` vs parse + `refresh_generated_tables` + write. 7 crafted boards
+  (corpus boards with through / blind / micro vias, backdrills, slots, NPTH, press-fit, 2 / 4 / 6
+  copper layers with and without stackup, a letters and a size-text profile) each with 3 drill
+  charts (default columns; all 12 columns in inches, a hidden and a min-width column; a back-layer
+  mils chart without totals) and 2 stackup tables, created without cells; 4 second-generation
+  boards (the refreshed tables of one board on other boards: rows migrate by key, by position
+  without row keys, and from restyled donor cells); `api_kitchen_sink` and
+  `downgrade/golden/current/modern_metadata`. Every generated block (and the committed drill
+  symbol profile) hashes like the reference's after normalising the UUIDs of new cells, with
+  widths, heights and texts in clear in the golden; each output refreshed again equals the
+  reference's second upgrade (12 fixed points; `m26_gen3_styled` moves column widths by 1 nm on
+  the second upgrade in the reference too, reproduced). Measured once: all 26 full output files
+  (O1 and O2) byte-identical after that normalisation.
+* Session level (scratch run of `run_pcb_upgrade` over the same 12 inputs, 2026-11-10): all
+  identical, `api_kitchen_sink` byte-identical (it was "not loadable" in the kicad-session
+  upgrade corpus). Gerber job corpus (`kicad-session/tests/gerbers_job.rs`): the 2 runs that were
+  pending on `RefreshGeneratedTables` (`modern_metadata`) now refresh and stop at
+  `BRDITEMS_PLOTTER::PlotChartSymbols (FAB-13)`.
+* `tests/pcbio12_misc_items.rs`: the generated-table masks are gone; `oracle_resave_blocks` and
+  `oracle_corpus_blocks` refresh before writing (the kicad-cli path), new cell UUIDs masked;
+  the parse + write test (`oracle_parse_write_blocks`) stays without refresh.
+* Ported C++ tests (`tests/m26_drill_chart.rs`, `qa/tests/pcbnew/test_drill_chart.cpp`):
+  `GroupsHolesBySizeAndPlating`, `RebuildKeepsCellIdentity`, `AChartFollowsTheBoardWithoutBeingAsked`
+  (row counts), `MapIsHitAtItsMarksAndNowhereElse`, `MapIsHitOnItsOutlineWhenTheBoardHasNoHoles`,
+  `MapBoardOutlineFollowsItsOffset`, `SpanChoiceRoundTripsThroughTheBoardSpans`,
+  `CellFormattingSurvivesARebuild`, `CellFormattingFollowsItsGroupWhenAGroupIsAdded` / `Removed`,
+  `RowsKeepSeparateCellsWhenARebuildReordersThem`, `FreshChartIsBuiltAtTheOrigin`,
+  `RebuildKeepsChartPosition`, `EverySymbolResolvesWithoutAChart` (boards written as files; the
+  module comment lists the cases left out). No `test_generated_table*` / `test_stackup_table*`
+  exist in the tree.
+* Unit tests: symbol assignment per policy (shapes exhausted, letters past Z, frozen
+  assignments), `GroupKeyString` with every key, profile board-form round trip and fingerprint,
+  token tables, `FormatGeneratedTableLength`, `DocumentationLayers`.
+
+### Deviations
+
+* `PCB_DRILL_CHART::IsStale` compares `m_builtGeneration` with `BOARD::GetDrillModelGeneration()`;
+  the port keeps neither and treats a drill chart as always stale. The C++ chart is stale after
+  every load (built generation 0, board generation >= 1), so the first refresh of a session is
+  the same; a second refresh without a drill change rebuilds the chart again (the C++ skips it)
+  and counts it in the return value. Rebuilding a fresh chart reproduces its cells (12 of 13
+  oracle boards; the 13th moves by 1 nm in the C++ as well).
+* `m_laidOutShowTotals` is not kept (set only between a `SetShowTotals` edit and the next rebuild).
+* `DRILL_SYMBOL_PROFILE::m_uuid` is not kept (not in the board file, not in `operator==`).
+* New cells take UUIDs from the board's `KiidGenerator` (random in the C++).
+
+### Known gaps
+
+* Not wired (change requests): `Board::table_autosize` / `PcbTable::set_autosized_row_heights`
+  still reach the M26 `port_pending!` for a generated table (the refresh uses
+  `Board::generated_table_autosize`); `Board::table_flip` / `table_mirror` do not call
+  `Board::generated_after_flip` (ported, not oracle-verified).
+* `kicad-fab/src/drill/` duplicates `drill/drill_operation.rs` / `drill_enumerator.rs` (and
+  `DrillSpan`); consolidation: kicad-fab re-exports `kicad_pcb::drill`.
+* Drill symbol and chart symbol plotting (`plot_brditems_plotter.cpp` L1515-1656) is FAB-13: it
+  needs `crate::drill::drill_symbol_cache` (`by_item`: per hole the assignment, span, position,
+  kind, diameter, size, orientation, slot flag), `PcbDrillMap::board_outlines` / `span` /
+  `all_spans` / `offset` / `symbol_size`, the profile's `symbol_width`, and for charts
+  `GeneratedTableKind::DrillChart { row_shapes, symbol_column }` with the cell geometry.
+* Editor-only parts listed in the map (column editing, templates as files, board
+  characteristics table, protobuf).

@@ -45,7 +45,7 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, Loaded, cli_report_entries, has_compiled_conditions, load_board, panic_text, quiet,
+    Entry, Loaded, cli_report_entries, load_board, panic_text, quiet,
     run_providers,
 };
 use kicad_connectivity::data::ConnectivityData;
@@ -231,9 +231,6 @@ fn sliver_and_connection_width_match_reference_corpus() {
         let run = || -> Result<(Vec<Entry>, bool), String> {
             let mut loaded = load_board(&path)?;
 
-            if has_compiled_conditions(&loaded.engine) {
-                return Err("user rule conditions need DRC-21".to_string());
-            }
 
             let complete = loaded.report.skipped.is_empty();
             Ok((report(&mut loaded), complete))
@@ -336,9 +333,9 @@ fn load_qa(name: &str) -> Option<Loaded> {
     let path = kicad_qa::pcbnew_data_dir().join(format!("{name}.kicad_pcb"));
 
     match quiet(|| catch_unwind(AssertUnwindSafe(|| load_board(&path)))) {
-        Ok(Ok(l)) if l.report.skipped.is_empty() && !has_compiled_conditions(&l.engine) => Some(l),
+        Ok(Ok(l)) if l.report.skipped.is_empty() => Some(l),
         Ok(Ok(_)) => {
-            eprintln!("{name}: pending (skipped items or rule conditions)");
+            eprintln!("{name}: pending (skipped items)");
             None
         }
         Ok(Err(e)) => {
@@ -546,9 +543,6 @@ fn sliver_and_connection_width_match_item_oracle() {
         let run = || -> Result<Vec<String>, String> {
             let mut loaded = load_board(&path)?;
 
-            if has_compiled_conditions(&loaded.engine) {
-                return Err("user rule conditions need DRC-21".to_string());
-            }
 
             if !loaded.report.skipped.is_empty() {
                 return Err("parser skipped items".to_string());

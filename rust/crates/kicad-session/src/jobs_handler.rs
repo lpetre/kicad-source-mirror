@@ -382,7 +382,14 @@ pub fn run_drc(
         .is_some_and(|engine| engine.rules_valid());
 
     if !rules_valid {
-        let rules_path = crate::board_loader::with_extension(&session.source_name, "kicad_dru");
+        // drcEngine->InitEngine( brd->GetDesignRulesPath() ): the project's rule file path
+        // (absolute in kicad-cli, see LoadInputs::project_path)
+        let mut rules_path = session.board.get_design_rules_path();
+
+        if rules_path.is_empty() {
+            // a session without a project (Session::new_empty)
+            rules_path = crate::board_loader::with_extension(&session.source_name, "kicad_dru");
+        }
         let layer_choices = kicad_drc::rule_parser::board_layer_choices(&session.board);
         // TUNING_PROFILES are not in the port's project model yet (SET-11).
         let tuning_profiles = kicad_drc::engine::implicit_rules::TuningProfiles::default();
@@ -558,9 +565,7 @@ pub fn run_export_gerbers(
     reporter: &mut Reporter,
 ) -> Result<JobOutcome, SessionError> {
     if !job.gerber.plot.variant.is_empty() {
-        return Err(SessionError::not_yet_ported(
-            "kicad-pcb: BOARD::SetCurrentVariant",
-        ));
+        session.board.set_current_variant(&job.gerber.plot.variant);
     }
 
     let out_path = resolve_job_output_path(&mut job.gerber.plot.job, session);
@@ -705,27 +710,119 @@ fn fab_gerbers_job(
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobExportDrill`.
+///
+/// The writers (`EXCELLON_WRITER` / `GERBER_WRITER`: option mapping, drill and map files,
+/// `GenDrillReportFile`) are `kicad_fab::jobs_handler::job_export_drill`; this function maps
+/// the job onto it (`resolveJobOutputPath`, the report path through
+/// `JOB::ResolveOutputPath( reportPathSetting, false, project )`, the build version and the
+/// creation date of the files) and records `AddOutput` in the C++ order.
+///
+/// A writer failure returns `ERR_INVALID_OUTPUT_CONFLICT` as in C++ (the files written before
+/// the failure are still returned); a part kicad-fab has not ported (e.g. a PDF drill map) is
+/// `NotYetPorted`.
 pub fn run_export_drill(
     session: &mut Session,
     job: &mut JobExportPcbDrill,
     reporter: &mut Reporter,
 ) -> Result<JobOutcome, SessionError> {
-    let _ = &reporter;
+    use kicad_fab::jobs::job_export_pcb_drill as fab;
+
     let out_path = resolve_job_output_path(&mut job.job, session);
 
-    // Keep the generated default out of the job so it is not saved into the jobset
-    let mut report_path_setting = job.report_path.clone();
+    // PATHS::EnsurePathExists( outPath ): the host creates the directory when it writes the
+    // files.
 
-    if job.generate_report && report_path_setting.is_empty() {
-        report_path_setting = drill_default_report_path(&out_path, &session.source_name);
+    let fab_job = fab::JobExportPcbDrill {
+        excellon_mirror_y: job.excellon_mirror_y,
+        excellon_minimal_header: job.excellon_minimal_header,
+        excellon_combine_pth_npth: job.excellon_combine_pth_npth,
+        excellon_oval_drill_route: job.excellon_oval_drill_route,
+        format: match job.format {
+            DrillFormat::Excellon => fab::DrillFormat::Excellon,
+            DrillFormat::Gerber => fab::DrillFormat::Gerber,
+        },
+        drill_origin: match job.drill_origin {
+            crate::jobs::DrillOrigin::Abs => fab::DrillOrigin::Abs,
+            crate::jobs::DrillOrigin::Plot => fab::DrillOrigin::Plot,
+        },
+        drill_units: match job.drill_units {
+            crate::jobs::DrillUnits::Inch => fab::DrillUnits::Inch,
+            crate::jobs::DrillUnits::Mm => fab::DrillUnits::Mm,
+        },
+        zero_format: match job.zero_format {
+            crate::jobs::ZerosFormat::Decimal => fab::ZerosFormat::Decimal,
+            crate::jobs::ZerosFormat::SuppressLeading => fab::ZerosFormat::SuppressLeading,
+            crate::jobs::ZerosFormat::SuppressTrailing => fab::ZerosFormat::SuppressTrailing,
+            crate::jobs::ZerosFormat::KeepZeros => fab::ZerosFormat::KeepZeros,
+        },
+        map_format: match job.map_format {
+            crate::jobs::MapFormat::Postscript => fab::MapFormat::Postscript,
+            crate::jobs::MapFormat::GerberX2 => fab::MapFormat::GerberX2,
+            crate::jobs::MapFormat::Dxf => fab::MapFormat::Dxf,
+            crate::jobs::MapFormat::Svg => fab::MapFormat::Svg,
+            crate::jobs::MapFormat::Pdf => fab::MapFormat::Pdf,
+        },
+        gerber_precision: job.gerber_precision,
+        generate_map: job.generate_map,
+        generate_tenting: job.generate_tenting,
+        generate_report: job.generate_report,
+        report_path: job.report_path.clone(),
+    };
+
+    let env = fab::DrillExportEnv {
+        build_version: crate::build_version::build_version().to_string(),
+        creation_date: job.creation_date,
+    };
+
+    // aDrillJob->ResolveOutputPath( reportPathSetting, false, brd->GetProject() ): the
+    // project text variables are the -D overrides (resolveJobOutputPath applied them)
+    let project_vars = job.job.var_overrides.clone();
+    let resolver_job = job.job.clone();
+    let resolve = move |path: &str| resolver_job.resolve_output_path(path, false, Some(&project_vars));
+
+    let mut ctx =
+        kicad_pcb::ctx::BoardCtx::bare(&session.board).with_connectivity(&session.connectivity);
+
+    if let Some(engine) = session.drc_engine.as_ref() {
+        ctx = ctx.with_rules(engine);
     }
 
-    let _ = report_path_setting;
+    let mut fab_reporter = FabReporter(reporter);
+    let result = kicad_fab::jobs_handler::job_export_drill(
+        ctx,
+        &fab_job,
+        &out_path,
+        &env,
+        Some(&resolve),
+        Some(&mut fab_reporter),
+    );
 
-    Err(SessionError::not_yet_ported(match job.format {
-        DrillFormat::Excellon => "kicad-fab: EXCELLON_WRITER::CreateDrillandMapFilesSet",
-        DrillFormat::Gerber => "kicad-fab: GERBER_WRITER::CreateDrillandMapFilesSet",
-    }))
+    if let Some(err) = result.error {
+        return Err(SessionError::not_yet_ported(format!("kicad-fab: {err}")));
+    }
+
+    for output in &result.outputs {
+        job.job.add_output(output);
+    }
+
+    let files: Vec<OutputFile> = result
+        .files
+        .into_iter()
+        .map(|f| OutputFile {
+            name: f.name,
+            contents: f.contents,
+        })
+        .collect();
+
+    Ok(JobOutcome {
+        exit_code: if result.success {
+            exit_codes::OK
+        } else {
+            exit_codes::ERR_INVALID_OUTPUT_CONFLICT
+        },
+        files,
+        report_text: None,
+    })
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobExportSvg`.
@@ -735,9 +832,7 @@ pub fn run_export_svg(
     reporter: &mut Reporter,
 ) -> Result<JobOutcome, SessionError> {
     if !job.plot.variant.is_empty() {
-        return Err(SessionError::not_yet_ported(
-            "kicad-pcb: BOARD::SetCurrentVariant",
-        ));
+        session.board.set_current_variant(&job.plot.variant);
     }
 
     // resolvePlotOutputPath: single output without a configured path -> <board name>.svg

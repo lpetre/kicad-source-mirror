@@ -1,0 +1,1 @@
+file|teardrop_close_via_rotated_pad.kicad_pcb

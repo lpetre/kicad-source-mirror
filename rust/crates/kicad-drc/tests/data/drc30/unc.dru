@@ -1,0 +1,3 @@
+(rule "dp30_unc"
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_uncoupled (max 0.5mm)))

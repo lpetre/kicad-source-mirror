@@ -45,8 +45,7 @@ use kicad_core::json::{ObjectOrder, Value, dump_stream};
 use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
-    DRCE_CREEPAGE, DRCE_DP_GAP_OUT_OF_RANGE, DRCE_DP_UNCOUPLED_LENGTH_TOO_LONG,
-    DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
+    DRCE_CREEPAGE, DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
     DRCE_LENGTH_OUT_OF_RANGE, DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH,
     DRCE_MISSING_FOOTPRINT, DRCE_NET_CHAIN_RETURN_PATH_BREAK, DRCE_NET_CHAIN_STUB_TOO_LONG,
     DRCE_NET_CHAIN_TUNING_PROFILES, DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY,
@@ -59,7 +58,6 @@ use kicad_pcb::{Board, BoardCtx, ConnectivityQuery};
 use crate::cache_generator::{CacheGeneratorConnectivity, DrcCacheGenerator};
 use crate::caches::{DrcBoardCaches, ZoneIslandsMap};
 use crate::constraint_types::DrcConstraintT;
-use crate::engine::diff_pair::is_net_a_diff_pair;
 use crate::engine::implicit_rules::TuningProfiles;
 use crate::engine::{DrcEngine, DrcRunState, DrcTestProviderRun, PROVIDER_ORDER};
 use crate::exclusion::{record_drc_exclusions, resolve_drc_exclusions};
@@ -70,6 +68,7 @@ use crate::providers::connection_width::DrcTestProviderConnectionWidth;
 use crate::providers::connectivity::DrcTestProviderConnectivity;
 use crate::providers::copper_clearance::DrcTestProviderCopperClearance;
 use crate::providers::courtyard_clearance::DrcTestProviderCourtyardClearance;
+use crate::providers::diff_pair_coupling::DrcTestProviderDiffPairCoupling;
 use crate::providers::disallow::DrcTestProviderDisallow;
 use crate::providers::edge_clearance::DrcTestProviderEdgeClearance;
 use crate::providers::footprint_checks::DrcTestProviderFootprintChecks;
@@ -104,7 +103,7 @@ pub struct UnportedProvider {
 }
 
 /// The providers of [`PROVIDER_ORDER`] that are not ported yet (registry order).
-pub const UNPORTED_PROVIDERS: [UnportedProvider; 7] = [
+pub const UNPORTED_PROVIDERS: [UnportedProvider; 6] = [
     UnportedProvider {
         name: "creepage",
         package: "DRC-33",
@@ -148,11 +147,6 @@ pub const UNPORTED_PROVIDERS: [UnportedProvider; 7] = [
             DRCE_SKEW_OUT_OF_RANGE,
             DRCE_VIA_COUNT_OUT_OF_RANGE,
         ],
-    },
-    UnportedProvider {
-        name: "diff_pair_coupling",
-        package: "DRC-30",
-        codes: &[DRCE_DP_GAP_OUT_OF_RANGE, DRCE_DP_UNCOUPLED_LENGTH_TOO_LONG],
     },
 ];
 
@@ -329,21 +323,6 @@ pub fn unported_check_would_run(
 
             not_ported()
         }
-        // Every report needs a track, arc or via whose net is a diff pair
-        // (DRC_ENGINE::IsNetADiffPair) with a resolved diff pair gap or max uncoupled
-        // constraint.
-        "diff_pair_coupling" => {
-            if (!engine.has_rules_for_constraint_type(DrcConstraintT::DiffPairGapConstraint)
-                && !engine.has_rules_for_constraint_type(DrcConstraintT::MaxUncoupledConstraint))
-                || board
-                    .nets()
-                    .all(|net| is_net_a_diff_pair(board, net).is_none())
-            {
-                return None;
-            }
-
-            not_ported()
-        }
         _ => not_ported(),
     }
 }
@@ -413,6 +392,7 @@ fn run_provider(
         "silk_clearance" => Box::new(DrcTestProviderSilkClearance::default()),
         "sliver checker" => Box::new(DrcTestProviderSliverChecker::default()),
         "text_mirroring" => Box::new(DrcTestProviderTextMirroring::default()),
+        "diff_pair_coupling" => Box::new(DrcTestProviderDiffPairCoupling::new(caches)),
         _ => unreachable!("provider '{name}' is neither ported nor in UNPORTED_PROVIDERS"),
     };
 
@@ -438,6 +418,22 @@ pub fn run_tests(
     board: &mut Board,
     connectivity: &mut ConnectivityData,
     options: &RunTestsOptions<'_>,
+) -> RunTestsOutcome {
+    run_tests_selected(engine, run, board, connectivity, options, &|_| true)
+}
+
+/// [`run_tests`] with only the registry slots whose `GetName()` `selected` accepts (not a C++
+/// API: the provider tests run their providers through the real run path, cache generator,
+/// connectivity build and expression cache scope included, like
+/// `qa/tests/pcbnew/drc` does by disabling the other providers with `SetEnabled( false )`).
+/// Slots not selected are skipped without a [`CheckNotRun`].
+pub fn run_tests_selected(
+    engine: &DrcEngine,
+    run: &mut DrcRunState<'_>,
+    board: &mut Board,
+    connectivity: &mut ConnectivityData,
+    options: &RunTestsOptions<'_>,
+    selected: &dyn Fn(&str) -> bool,
 ) -> RunTestsOutcome {
     let mut outcome = RunTestsOutcome::default();
 
@@ -474,6 +470,10 @@ pub fn run_tests(
     let _expression_caches = PcbExprCacheScope::enter(board);
 
     for name in PROVIDER_ORDER {
+        if !selected(name) {
+            continue;
+        }
+
         if let Some(p) = unported_provider(name) {
             if let Some(reason) = unported_check_would_run(p, engine, run, board) {
                 outcome.checks_not_run.push(CheckNotRun {

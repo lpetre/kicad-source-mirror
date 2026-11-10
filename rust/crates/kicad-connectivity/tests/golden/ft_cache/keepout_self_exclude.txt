@@ -1,0 +1,1 @@
+file|keepout_self_exclude.kicad_pcb

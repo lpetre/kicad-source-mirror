@@ -1,0 +1,10 @@
+file|multinetclasses_drc.kicad_pcb
+ft|R1-2|R2-1|real=[p1.1,p3.0,t0]|paths=1|unique=[1]
+ft|R2-1|R1-2|real=[p1.1,p3.0,t0]|paths=1|unique=[1]
+ft|R1-*|R2-1|real=[p1.1,p3.0,t0]|paths=1|unique=[1]
+ft|R1-2|R2|real=[p1.1,p3.0,t0]|paths=1|unique=[1]
+ft|R1-2|*|real=[]|paths=0|unique=[]
+ft|R4-2|R3-1|real=[p0.1,p2.0,t1]|paths=1|unique=[1]
+ft|R3-1|R4-2|real=[p0.1,p2.0,t1]|paths=1|unique=[1]
+ft|R4-*|R3-1|real=[p0.1,p2.0,t1]|paths=1|unique=[1]
+ft|R4-2|R3|real=[p0.1,p2.0,t1]|paths=1|unique=[1]

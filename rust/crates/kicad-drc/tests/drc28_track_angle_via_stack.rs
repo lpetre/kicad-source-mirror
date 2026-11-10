@@ -35,7 +35,7 @@ mod drc_harness;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use drc_harness::{Entry, cli_report_entries, compare_corpus, has_compiled_conditions, load_board};
+use drc_harness::{Entry, cli_report_entries, compare_corpus, load_board};
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::eda_units::EdaUnits;
 use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
@@ -127,9 +127,6 @@ fn report(path: &std::path::Path) -> Result<Vec<Entry>, String> {
         return Err(format!("parser skipped {:?}", first.token));
     }
 
-    if has_compiled_conditions(&loaded.engine) {
-        return Err("user rule conditions need DRC-21".to_string());
-    }
 
     let mut owned = providers();
     let mut refs: Vec<&mut dyn DrcTestProviderRun> = Vec::new();

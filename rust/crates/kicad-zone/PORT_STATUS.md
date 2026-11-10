@@ -194,3 +194,79 @@ Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-boa
   (`run_drc` returns `NotYetPorted` until DRC-12 wires `RunTests` and the report): the refill
   and the save are verified through the session API instead. DRC-12 must call
   `jobs_handler::drc_save_board` after writing the report.
+
+## TD-01: teardrops (`TEARDROP_MANAGER`, manager and outline geometry; TD-01 + TD-02 rows)
+
+Supersedes the `partial` teardrop row and the teardrop known gap of ZF-06: `tool.rs`
+`update_teardrops` now runs the full `UpdateTeardrops( commit, nullptr, nullptr, true )`.
+
+| C++ (`pcbnew/teardrop/`) | Rust (`src/teardrop/`) | State |
+|---|---|---|
+| `TEARDROP_MANAGER` members, constructor, `TEARDROP_VARIANT` | `mod.rs` `TeardropManager`, `TeardropVariant` | ported |
+| `teardropUuid`, `maskUuidFor`, `buildCrossingStub` | `mod.rs` | ported |
+| `createTeardrop`, `createTeardropMask`, `createAndAddTeardropWithMask`, `tryCreateTrackTeardrop` | `mod.rs` | ported |
+| `RemoveTeardrops`, `UpdateTeardrops`, `DeleteTrackToTrackTeardrops`, `setTeardropPriorities`, `AddTeardropsOnTracks` | `mod.rs` | ported |
+| `BOARD::BulkRemoveStaleTeardrops` | `mod.rs` `bulk_remove_stale_teardrops` | ported (local helper) |
+| `TRACK_BUFFER`, `GetWidth`, `IsRound`, `BuildTrackCaches`, `ensureCopperIndex`, `copperNetcode`, `pairClearance`, `zoneConnections`, `areItemsInSameZone` | `utils.rs` | ported |
+| `collidesWithOtherNets`, `computeFittedTeardropPolygon`, `computeChordThroughShape`, `findTouchingTrack` | `utils.rs` | ported |
+| `computeCurvedForRoundShape`, `computeCurvedForRectShape`, corner / oval-end helpers, `computeAnchorPoints`, `findAnchorPointsOnTrack`, `computeTeardropPolygon` | `utils.rs` | ported |
+| `IsUniformlyRound` | - | skipped: GUI-only (teardrop dialog); needs a public `Pad` padstack accessor |
+| `TEARDROP_PARAMETERS`, `TEARDROP_PARAMETERS_LIST`, `teardrop_types.h` | `kicad_pcb::teardrop_parameters` | ported earlier (board model) |
+
+Ported C++ tests (`tests/td01_teardrops.rs`): `test_teardrop_uuid.cpp` (all 4),
+`test_teardrop_shorts.cpp` `NoTeardropOnZoneConnectedThermalPad`, `test_zone_filler.cpp`
+`CrossingTrackTeardropOnViaStaysOnTrack` / `CrossingTrackTeardropOnPadStaysOnTrack`. The board
+cases of `test_zone_filler.cpp` (L1090-2790: roundrect, spike, custom pad anchor, arc anchor,
+oval, large circle, off-centre symmetry, elongated pad, two-segment, close via) use the
+`teardrop_*` / `*_teardrop` boards, whose teardrops are compared vertex for vertex with the
+reference below (a stronger check than their geometric assertions); they are not ported
+one by one.
+
+Verification (2026-11-10, reference `kicad-cli pcb drc --refill-zones --save-board`, cached by
+`tools/zone-corpus/run.sh`):
+
+- `tests/td01_teardrops.rs` `teardrop_corpus` (`--ignored`; report
+  `target/zone-corpus/td01_report.txt`): every teardrop zone after `UpdateTeardrops` (type,
+  layer, net, priority, outline vertices) against the saved reference, in the writer's save
+  order. 25 `qa/data` boards (all boards under 500 KB that regenerate teardrops, plus the two
+  with track-to-track teardrops enabled in the project) in six parameter variants (`base`;
+  `curved`: curved / straight flipped; `sized`: length / width ratios and limits changed, two
+  segments and pads-in-zones flipped; `trackend`: track-to-track enabled; `mask`: tracks with
+  solder mask (mask teardrops); `wide`: no width / length limit, so 30 candidates go through
+  the clearance fit and its bisection) plus two synthetic crossing boards (crossing stubs):
+  **283 / 283 teardrop zones identical**. Golden: `tests/golden/td01_teardrops.txt` (made with
+  `TD01_WRITE_GOLDEN=1`; variant inputs with `TD01_WRITE_VARIANTS=1` into
+  `target/td01-variants/`), replayed by the default test `teardrop_golden`.
+- Zone corpus (`tools/zone-corpus/run.sh`, `needs_teardrops` filter removed; the harness runs
+  `update_teardrops` before the fill and matches teardrop zones by save order): **656 zone
+  layers identical, 0 same area, 0 different** (incl. the variant boards); 2 thieving boards
+  stop in ZF-07.
+- Saved boards (`kicad-session` `zf06_refill_save`): **233 identical**, 1 different (the known
+  random-footprint-UUID case `ZoneFill-4.0.7`), 2 not run (ZF-07). Every teardrop board is now
+  byte identical after UUID normalisation.
+
+### Deviations
+
+- No `BOARD_COMMIT`: zones are added to / removed from the board and connectivity directly
+  (`aCommit.Added` / `Removed` only record in C++). `STRUCT_DELETED` is a local set.
+- Address-ordered containers: `GetConnectedPadsAndVias` (creation order of the teardrops) uses
+  the CN-01 list order (R-1), `dirtyTracks` / `std::set<PCB_TRACK*>` are `BTreeSet<ItemId>`. The
+  creation order only matters where a later teardrop's clearance fit sees an earlier one
+  (`m_createdTdRTree`); priorities (`setTeardropPriorities` sorts by layer / area / UUID) and the
+  save order (UUID) do not depend on it. No corpus case differs.
+- `m_createdTdRTree` (dynamic r-tree) is a list scanned with the same inclusive box test: only
+  "does any created teardrop collide" is asked, so the visit order does not matter.
+- `computeChordThroughShape` reproduces `( hit.p - extStart ).Dot( dir )`, which converts the
+  `VECTOR2D` direction to `VECTOR2I` (clamp + truncation) before the integer dot product.
+- `findAnchorPointsOnTrack` / `computeChordThroughShape` read `Outline( 0 )` unconditionally in
+  C++; a pad without copper on the layer (no outline) returns "no teardrop" instead of UB.
+- `wxCHECK2( radius != 0, radius = 1 )` applies the fix without a debug assertion.
+- The stub `PCB_TRACK` and the teardrop zones draw a UUID from `Board::kiid_generator` like the
+  C++ constructors (overwritten for the zones).
+
+### Known gaps
+
+- `IsUniformlyRound` (GUI only) is not ported.
+- `RemoveTeardrops` / incremental `UpdateTeardrops` (dirty lists) and
+  `DeleteTrackToTrackTeardrops` are ported but only reached by editor flows; they are not
+  verified against the reference (no CLI path runs them).

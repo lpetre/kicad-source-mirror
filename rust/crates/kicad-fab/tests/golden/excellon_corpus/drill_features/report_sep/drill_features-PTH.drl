@@ -1,0 +1,42 @@
+M48
+<normalised>
+; FORMAT={-:-/ absolute / metric / decimal}
+<normalised>
+<normalised>
+; #@! TF.FileFunction,Plated,1,10,PTH
+FMAT,2
+METRIC
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T1C0.300
+; #@! TA.AperFunction,Plated,PTH,ViaDrill
+T2C0.400
+; Post-machining
+; #@! TA.AperFunction,Plated,PTH,CastelletedDrill
+T3C0.700
+; #@! TA.AperFunction,Plated,PTH,ComponentDrill
+T4C0.800
+; #@! TA.AperFunction,Plated,PTH,ComponentDrill
+T5C1.000
+%
+G90
+G05
+T1
+X105.0Y-66.0
+X105.0Y-70.0
+X105.0Y-74.0
+X105.0Y-78.0
+X110.0Y-70.0
+T2
+; Post-machining front countersink dia 0.700mm depth 0.200mm angle 90deg
+; Post-machining back counterbore dia 0.750mm depth 0.150mm
+X110.0Y-66.0
+T5
+X117.402Y-73.5
+X124.098Y-73.098
+T3
+X122.298Y-69.98G85X122.898Y-71.02
+G05
+T4
+X119.896Y-72.386G85X120.104Y-71.614
+G05
+M30

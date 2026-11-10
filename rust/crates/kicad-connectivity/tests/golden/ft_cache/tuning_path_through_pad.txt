@@ -1,0 +1,10 @@
+file|tuning_path_through_pad.kicad_pcb
+ft|TP1-1|R1-2|real=[p0.0,p1.1,t1,t2]|paths=1|unique=[1]
+ft|TP1-1|TP2-1|real=[p0.0,p2.0,t0,t1,t2]|paths=1|unique=[0]
+ft|R1-2|TP1-1|real=[p0.0,p1.1,t1,t2]|paths=1|unique=[1]
+ft|R1-2|TP2-1|real=[p1.1,p2.0,t0,t1,t2]|paths=1|unique=[0]
+ft|TP2-1|TP1-1|real=[p0.0,p2.0,t2]|paths=1|unique=[1]
+ft|TP2-1|R1-2|real=[p1.1,p2.0,t1]|paths=1|unique=[1]
+ft|TP1-*|TP2-1|real=[p0.0,p2.0,t0,t1,t2]|paths=1|unique=[0]
+ft|TP1-1|TP2|real=[p0.0,p2.0,t0,t1,t2]|paths=1|unique=[0]
+ft|TP1-1|*|real=[]|paths=0|unique=[]

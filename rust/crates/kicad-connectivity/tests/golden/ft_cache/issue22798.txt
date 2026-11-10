@@ -1,0 +1,10 @@
+file|issue22798.kicad_pcb
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1-1|real=[]|paths=0|unique=[]
+ft|H1-*|H1-1|real=[]|paths=0|unique=[]
+ft|H1-1|H1|real=[]|paths=0|unique=[]
+ft|H1-1|*|real=[]|paths=0|unique=[]

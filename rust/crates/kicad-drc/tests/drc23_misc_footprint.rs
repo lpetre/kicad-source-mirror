@@ -34,7 +34,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use drc_harness::{
-    Entry, Loaded, cli_report_entries, diff_entries, has_compiled_conditions, load_board,
+    Entry, Loaded, cli_report_entries, diff_entries, load_board,
     panic_text, quiet, read_tuning_profiles, run_providers,
 };
 use kicad_core::Severity;
@@ -226,9 +226,6 @@ fn misc_and_footprint_checks_match_reference_corpus() {
                 || -> Result<(Vec<Entry>, Vec<Entry>, Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-                    if has_compiled_conditions(&loaded.engine) {
-                        return Err("user rule conditions need DRC-21".to_string());
-                    }
 
                     let mut providers = FootprintAndMisc::new(&path);
                     let mine: Vec<Entry> = cli_report_entries(

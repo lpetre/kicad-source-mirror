@@ -1,0 +1,1 @@
+file|hatch_thermal_connectivity.kicad_pcb

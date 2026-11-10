@@ -1,0 +1,3 @@
+(rule "dp30_gap"
+	(condition "A.inDiffPair('*')")
+	(constraint diff_pair_gap (min 0.2mm) (max 0.21mm)))

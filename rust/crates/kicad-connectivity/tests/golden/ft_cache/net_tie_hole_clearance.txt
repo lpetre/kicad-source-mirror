@@ -1,0 +1,1 @@
+file|net_tie_hole_clearance.kicad_pcb

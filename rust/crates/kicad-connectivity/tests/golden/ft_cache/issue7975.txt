@@ -1,0 +1,10 @@
+file|issue7975.kicad_pcb
+ft|U101-11|U102-6|real=[p0.10,p1.5,t0,t1,t2,t3,t4]|paths=1|unique=[1]
+ft|U102-6|U101-11|real=[p0.10,p1.5,t0,t1,t2,t3,t4]|paths=1|unique=[1]
+ft|U101-*|U102-6|real=[p0.10,p1.5,t0,t1,t2,t3,t4]|paths=1|unique=[1]
+ft|U101-11|U102|real=[p0.10,p1.5,t0,t1,t2,t3,t4]|paths=1|unique=[1]
+ft|U101-11|*|real=[]|paths=0|unique=[]
+ft|U101-10|U102-7|real=[p0.9,p1.6,t5,t6,t7,t8,t9]|paths=1|unique=[1]
+ft|U102-7|U101-10|real=[p0.9,p1.6,t5,t6,t7,t8,t9]|paths=1|unique=[1]
+ft|U101-*|U102-7|real=[p0.9,p1.6,t5,t6,t7,t8,t9]|paths=1|unique=[1]
+ft|U101-10|U102|real=[p0.9,p1.6,t5,t6,t7,t8,t9]|paths=1|unique=[1]

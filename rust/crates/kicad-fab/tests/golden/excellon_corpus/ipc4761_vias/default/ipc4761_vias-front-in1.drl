@@ -1,0 +1,20 @@
+M48
+<normalised>
+; FORMAT={-:-/ absolute / metric / decimal}
+<normalised>
+<normalised>
+; #@! TF.FileFunction,Plated,1,2,Blind
+FMAT,2
+METRIC
+; #@! TA.AperFunction,Plated,Buried,ViaDrill
+T1C0.150
+; #@! TA.AperFunction,Plated,Buried,ViaDrill
+T2C0.200
+%
+G90
+G05
+T1
+X123.0Y-95.0
+T2
+X114.0Y-95.0
+M30

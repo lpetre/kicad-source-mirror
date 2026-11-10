@@ -418,6 +418,12 @@ Progress log:
   variable check and `--ibt` plots; ZF-07 copper thieving (after TD-01); FONT-OL-1 (an
   approximate outline engine is possible with ttf-parser + rustybuzz, but the reference
   loads hinted outlines through FreeType, so bit equality is out of reach: low priority).
+  05:27 UTC: done TD-01 teardrops (manager + geometry, both analysis rows): 283 of 283
+  teardrop zones identical to the reference (25 boards x 6 parameter variants + 2 synthetic
+  crossing boards: type, layer, net, priority, every outline vertex); with teardrop
+  regeneration before the fill the zone corpus is 656 of 656 zone layers identical and the
+  refill-and-save comparison 233 identical / 1 random in the reference / 2 waiting for
+  copper thieving. Launched ZF-07 copper thieving (wgcovhd2v).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

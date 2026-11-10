@@ -262,6 +262,9 @@ pub fn perform(m: &ArgMatches) -> i32 {
         Err(code) => return code,
     };
 
+    // wxDateTime::Now() of the drill / map file headers
+    job.creation_date = host::host_clock().gbr_creation_date();
+
     let mut reporter = Reporter::new();
     let result = run_export_drill(&mut session, &mut job, &mut reporter);
     host::finish_job(result, reporter)

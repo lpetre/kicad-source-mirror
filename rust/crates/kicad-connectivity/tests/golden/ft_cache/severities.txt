@@ -1,0 +1,10 @@
+file|severities.kicad_pcb
+ft|J1-5|J1-6|real=[]|paths=0|unique=[]
+ft|J1-5|J1-6|real=[]|paths=0|unique=[]
+ft|J1-6|J1-5|real=[]|paths=0|unique=[]
+ft|J1-6|J1-6|real=[]|paths=0|unique=[]
+ft|J1-6|J1-5|real=[]|paths=0|unique=[]
+ft|J1-6|J1-6|real=[]|paths=0|unique=[]
+ft|J1-*|J1-6|real=[]|paths=0|unique=[]
+ft|J1-5|J1|real=[]|paths=0|unique=[]
+ft|J1-5|*|real=[]|paths=0|unique=[]

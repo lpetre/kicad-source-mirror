@@ -1,0 +1,6 @@
+file|net_tie_drc.kicad_pcb
+ft|R1705-2|NT1701-2|real=[p0.1,p1.1]|paths=1|unique=[1]
+ft|NT1701-2|R1705-2|real=[p0.1,p1.1]|paths=1|unique=[1]
+ft|R1705-*|NT1701-2|real=[p0.1,p1.1]|paths=1|unique=[1]
+ft|R1705-2|NT1701|real=[p0.1,p1.1]|paths=1|unique=[1]
+ft|R1705-2|*|real=[]|paths=0|unique=[]

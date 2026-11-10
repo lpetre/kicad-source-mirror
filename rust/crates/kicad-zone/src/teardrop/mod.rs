@@ -1054,9 +1054,9 @@ impl TeardropManager {
             let priority = priority_base;
             board.modify_zone(td, |zone, _| zone.set_assigned_priority(priority));
 
-            if priority_base < u32::MAX {
-                priority_base += 1;
-            }
+            // if( priority_base < std::numeric_limits<unsigned>::max() ) priority_base++;
+
+            priority_base = priority_base.saturating_add(1);
         }
     }
 

@@ -34,7 +34,7 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, has_compiled_conditions, load_board,
+    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board,
     panic_text, quiet, run_providers, summarize,
 };
 use kicad_connectivity::data::ConnectivityData;
@@ -217,9 +217,6 @@ fn zone_connections_match_reference_corpus() {
                 || -> Result<(Vec<Entry>, bool), String> {
                     let mut loaded = load_board(&path)?;
 
-                    if has_compiled_conditions(&loaded.engine) {
-                        return Err("user rule conditions need DRC-21".to_string());
-                    }
 
                     let entries = report_zone_connections(&mut loaded);
                     Ok((entries, loaded.report.skipped.is_empty()))
@@ -333,9 +330,6 @@ fn starved_thermal_errors(rel: &str) -> Result<usize, String> {
         ));
     }
 
-    if has_compiled_conditions(&loaded.engine) {
-        return Err("user rule conditions need DRC-21".to_string());
-    }
 
     loaded
         .board
