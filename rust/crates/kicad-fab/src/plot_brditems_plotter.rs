@@ -739,6 +739,7 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
         // API-created board need not
         for map in maps {
             let outlines = map.board_outlines(ctx);
+            eprintln!("DBG outlines {} {} {:?}", ctx.board.file_name.rsplit("/").next().unwrap(), outlines.outline_count(), ctx.board.get_board_polygon_outlines(ctx, false, None, false, false).1);
 
             for ii in 0..outlines.outline_count() {
                 self.plotter.plot_poly_chain(
