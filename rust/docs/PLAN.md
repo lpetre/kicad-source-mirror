@@ -393,7 +393,7 @@ Progress log:
   copy of the stand-in glyphs (stored glyphs have holes fractured into slits; with the
   unfracture the check equals the reference at every tested threshold); plot and save keep
   the stored polygons. Goes into STAB-DRC.
-  Disk watchdog restarted 05:13 UTC as background task bbwthhml5 (restart about 07:10).
+  Disk watchdog restarted 07:11 UTC as background task ba2lo00ka (restart about 09:05).
   05:35 UTC: launched the next wave - DRC-30 diff pair coupling -> DRC-31 matched length /
   skew / via count / net chains (with the length calculation) -> DRC-34 leftovers, and
   CN-05 from-to cache (wf3foz4r4); DRC-32 -> DRC-33 creepage (w2bvh6638); the owed Fable
