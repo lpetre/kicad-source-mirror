@@ -801,7 +801,6 @@ mod m22_oracle {
         // is parsed by the board core (PCBIO-01).
         let options = ParseOptions {
             allow_pending: true,
-            ..ParseOptions::default()
         };
         parse_board(&text, &path.to_string_lossy(), &options).unwrap()
     }

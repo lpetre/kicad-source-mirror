@@ -764,7 +764,7 @@ pub(crate) fn dump_design_settings(o: &mut Out, p: &str, b: &BoardDesignSettings
             emit!(
                 o,
                 format!("{p}netclass_pattern.{}", 2 * i + 1),
-                format!("{} {}", v_str(&matcher.pattern()), v_str(nc_name))
+                format!("{} {}", v_str(matcher.pattern()), v_str(nc_name))
             );
         }
 
@@ -862,9 +862,8 @@ pub(crate) fn dump_board_section(o: &mut Out, ctx: &BoardCtx<'_>) {
         }
     });
 
-    match o.cond("stackup_or_default.*", || b.get_stackup_or_default()) {
-        Some(s) => dump_stackup(o, "stackup_or_default.", &s),
-        None => {}
+    if let Some(s) = o.cond("stackup_or_default.*", || b.get_stackup_or_default()) {
+        dump_stackup(o, "stackup_or_default.", &s);
     }
 
     emit!(o, "bbox", v_box(b.compute_bounding_box(ctx, false, false)));

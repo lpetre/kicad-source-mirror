@@ -43,6 +43,9 @@ doc_lazy_continuation = "allow"
 
 [profile.dev]
 opt-level = 1
+# No debug info: with many test binaries the target directory otherwise grows by gigabytes
+# (panic messages still carry file:line).
+debug = 0
 
 [profile.release]
 opt-level = 3

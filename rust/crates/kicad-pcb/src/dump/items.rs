@@ -648,15 +648,14 @@ pub(crate) fn dump_pad(o: &mut Out, it: ItemRef<'_>) {
         });
     }
 
-    match o.cond("tpoly.*", || {
+    if let Some(tl) = o.cond("tpoly.*", || {
         if pad.is_on_layer(ctx, PcbLayerId::FCu) {
             PcbLayerId::FCu
         } else {
             pad.principal_layer(ctx)
         }
     }) {
-        Some(tl) => dump_transformed_polys(o, it, tl),
-        None => {}
+        dump_transformed_polys(o, it, tl);
     }
 }
 

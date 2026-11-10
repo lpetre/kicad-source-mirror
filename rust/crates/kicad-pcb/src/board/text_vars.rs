@@ -760,7 +760,7 @@ mod m22_tests {
             .insert("LEGACY_VAR".into(), "legacy_value".into());
 
         assert_eq!(resolve(&board, "LEGACY_VAR"), (true, "legacy_value".into()));
-        assert_eq!(resolve(&board, "UNKNOWN").0, false);
+        assert!(!resolve(&board, "UNKNOWN").0);
     }
 
     /// `TITLE_BLOCK::TextVarResolver` with a project expands the value against the project, and
@@ -775,7 +775,7 @@ mod m22_tests {
         // "${COMPANY}" expands to itself through the project: unresolved, then the project and
         // the properties are asked.
         board.titles.set_company("${COMPANY}");
-        assert_eq!(resolve(&board, "COMPANY").0, false);
+        assert!(!resolve(&board, "COMPANY").0);
         project_vars(&mut board).insert("COMPANY".into(), "ACME".into());
         assert_eq!(resolve(&board, "COMPANY"), (true, "ACME".into()));
 
@@ -799,7 +799,7 @@ mod m22_tests {
             (true, "/tmp/dir/my_board.kicad_pcb".into())
         );
         // PROJECTNAME needs a project.
-        assert_eq!(resolve(&board, "PROJECTNAME").0, false);
+        assert!(!resolve(&board, "PROJECTNAME").0);
         board.project = Some(BoardProject::default());
         assert_eq!(resolve(&board, "PROJECTNAME"), (true, "my_board".into()));
 

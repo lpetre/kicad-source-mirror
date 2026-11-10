@@ -1311,7 +1311,7 @@ fn collide_ellipse_circle(
     a_a: &ShapeEllipse,
     a_b: &ShapeCircle,
     a_clearance: i32,
-    mut a_actual: Option<&mut i32>,
+    a_actual: Option<&mut i32>,
     mut a_location: Option<&mut Vector2I>,
 ) -> bool {
     // "MTV not implemented for SHAPE_ELLIPSE collisions" (wxASSERT_MSG)
