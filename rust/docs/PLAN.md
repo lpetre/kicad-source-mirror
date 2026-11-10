@@ -725,6 +725,23 @@ Progress log:
   scratchpad adapter_artifact/gloopy-adapter.html (generator gen.py + status.json beside
   it; rerun gen.py and republish the same file path at each milestone: GK-1 report, its
   review and fixes, GK-2, its review). The folder stays excluded from git.
+  10:38 UTC (heartbeat; next about 11:36): the gate passed - 30 of 30 entries, 28 min, at
+  03b6a6fd (scripts/perf-gate.sh; log target/perf/gate-20261110-094933.log). PERF.md now
+  has the quiet baseline and a ranked hotspot list from callgrind: 1 Clipper2 offsets in
+  the filler (33-37 % of fill), 2 fill triangulation (14-16 % of fill, 34-44 % of load),
+  3 Board::resolve_item linear-scan misses in the DRC job (13 % of the jetson DRC job),
+  4 rule evaluation, 5 copper width / sliver polygon work, 6 clearance r-tree queries,
+  7 per-run connectivity and r-tree rebuild, 8 cluster search in the filler, 9 float
+  formatting in the writer, 10 parser, 11 Gerber per-layer iteration, 12 allocations.
+  Found by the gate agent and fixed: a DEADLOCK in the matched-length provider (the
+  from-to cache mutex was held across rule evaluation; `pcb drc` hung on every board with
+  a fromTo() length rule, e.g. vme-wren) with a regression test; bench.sh --alloc wrote
+  through a hard link. Round 1 of the loop is planning. LIVE-2 has first numbers in
+  PERF.md: check_items 20-64 ms native, affected-only refill wins only when the edit is
+  away from the big pours (an empty commit refills nothing: 6.9 ms against 106 ms), on
+  board-wide pours it is level with a full refill; still running. Adapter: all thirteen
+  steps and the command line are written, comparison not run yet. Disk 11 GB free after
+  pruning, memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
