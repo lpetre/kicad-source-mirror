@@ -105,6 +105,9 @@ static bool isDimension( KICAD_T aType )
 }
 
 
+void DumpProps( BOARD_ITEM* aItem ); // dump_props.cpp
+
+
 void DumpItemSections( BOARD* aBoard, BOARD_ITEM* aItem, const DUMP_OPTIONS& aOpts )
 {
     const std::string key = ItemKey( aItem );
@@ -147,6 +150,10 @@ void DumpItemSections( BOARD* aBoard, BOARD_ITEM* aItem, const DUMP_OPTIONS& aOp
         section( "footprint", DumpFootprint );
 
     section( "misc", DumpMisc );
+
+    // Opt-in (not part of "all sections"): the property values (dump_props.cpp).
+    if( aOpts.sections.count( "props" ) )
+        section( "props", DumpProps );
 }
 
 

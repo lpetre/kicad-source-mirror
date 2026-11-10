@@ -504,3 +504,73 @@ caches, zone trees, islands maps and pad hole entries wait for the QA boards abo
   footprint item; keepout predicate (DRC-10) and the `Layer` property of tuning-profile rules
   (DRC-21) are reached through the native implicit conditions.
 * `InitializeClearanceCache` not ported (editor only).
+
+## DRC-24: courtyard clearance, text dimensions, text mirroring
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `drc_test_provider_courtyard_clearance.cpp` `DRC_TEST_PROVIDER_COURTYARD_CLEARANCE` (`Run`, `testFootprintCourtyardDefinitions`, `testCourtyardClearances`, `testPadAgainstCourtyards` lambda) | `providers/courtyard_clearance.rs` `DrcTestProviderCourtyardClearance` | ported (runs once kicad-pcb M20 courtyards land) |
+| `drc_test_provider_text_dims.cpp` `DRC_TEST_PROVIDER_TEXT_DIMS` (`Run`, `checkTextHeight` / `checkTextThickness` lambdas) | `providers/text_dims.rs` `DrcTestProviderTextDims` (`check_text_height`, `check_text_thickness` public) | ported; outline-font glyph regeneration pending |
+| `drc_test_provider_text_mirroring.cpp` `DRC_TEST_PROVIDER_TEXT_MIRRORING` | `providers/text_mirroring.rs` `DrcTestProviderTextMirroring` | ported |
+| `BOARD::IsLayerVisible` | `providers/text_mirroring.rs` `board_is_layer_visible` (local helper; kicad-pcb has no such method yet) | ported |
+
+### Verification
+
+`tests/drc24_courtyard_text.rs` on the shared corpus harness (`tests/drc_harness`, golden
+`tests/golden/drc_corpus.txt` from the reference `kicad-cli pcb drc --format json
+--severity-all`), set and order per error type. State at the time of writing: 84 corpus boards
+load completely and were compared; 281 are pending per test (about 220: the parser still
+skips footprint contents; 55: user rule conditions need DRC-21; 2 legacy `.pro`; 2 barcode
+stub; 1 failed reference run; in the text test `issue22475`, an outline-font text without
+render cache). Result on the compared boards:
+`mirrored_text_on_front_layer` 4 / 4 matched, `nonmirrored_text_on_back_layer` 4 / 4 matched,
+0 missing, 0 extra, same order (`incorrect_text_mirroring_drc`). No compared board carries
+courtyard or text dimension violations yet (every reference violation of those types is on a
+board with footprints). On the partially loaded boards all 461 differences are missing entries
+of skipped items, no extra entry.
+
+Not verifiable yet:
+
+* the whole courtyard provider: `FOOTPRINT::GetCourtyard`, `BuildCourtyardCaches`, the
+  malformed flags and `FOOTPRINT::GetBoundingBox` are `port_pending!` in kicad-pcb (M20), and
+  every courtyard board of the corpus has footprints the parser still skips;
+* `text_height` / `text_thickness` (stroke font): reference violations are all on footprint
+  fields / texts of boards that do not load completely yet;
+* the TrueType branch of `checkTextThickness`: `text_thickness_truetype_render_cache_issue22475`
+  runs it on the one text of `issue22475` whose render cache is in the file and compares with
+  the reference entry (count and hash), but the board loader currently drops that parsed render
+  cache (reported to kicad-pcb), so the test reports itself pending.
+
+The tests skip a board (with a note) while it is pending and tighten automatically.
+
+### Ported C++ tests
+
+* `test_drc_courtyard_invalid.cpp` `InvalidCases` -> `courtyard_invalid_cases` (all five
+  boards pending: footprints)
+* `test_drc_courtyard_overlap.cpp` `OverlapCases` -> `courtyard_overlap_cases` (pending except
+  `empty_board`)
+* `test_drc_incorrect_text_mirror.cpp` `DRCIncorrectTextMirror` -> `drc_incorrect_text_mirror`
+  (passes: 8 violations; the C++ `KI_TEST::FillZones` is not run, it cannot influence the
+  provider)
+
+### Deviations
+
+* `GetCourtyard` returns a copy in the port; the `BuildBBoxCaches()` of the first pass are made
+  on those copies, which the second pass reuses (`FootprintCourtyards`). Footprints the first
+  pass does not keep (malformed, missing, pass skipped) are fetched again in the second pass,
+  which is what the C++ shared cache holds then. When every courtyard error type is ignored the
+  first pass is skipped and the box caches are those of the copies kicad-pcb returns.
+* The outline-font branch of `checkTextThickness` uses the render cache read from the file
+  (`eda_text::render_cache`); where C++ would regenerate the glyphs with the outline font engine
+  the provider stops with `port_pending!` (no outline font engine in the port).
+* The `ii` counter that `checkTextThickness` reuses from `Run` (C++ lambda capture by reference)
+  is reproduced; it only affects progress values.
+* Order: sequential port of single-threaded providers; the courtyard pairs follow the
+  `std::sort` by UUID (libstdc++-exact `std_sort`), as in C++.
+
+### Known gaps
+
+* Outline font glyph generation (`OUTLINE_FONT::GetLinesAsGlyphs`) for texts without a valid
+  render cache.

@@ -1,0 +1,4 @@
+pad|bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb|flash.F.Cu=true
+pad|bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb|flash.B.Cu=true
+pad|dddddddd-dddd-dddd-dddd-dddddddddddd|flash.F.Cu=true
+pad|dddddddd-dddd-dddd-dddd-dddddddddddd|flash.B.Cu=true

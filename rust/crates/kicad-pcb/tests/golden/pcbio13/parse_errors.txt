@@ -1,0 +1,10 @@
+Expecting ''uuid'' in 't.kicad_pcb', line 3, offset 13.
+Expecting a number, symbol, string or (. Got ''symbol'' in 't.kicad_pcb', line 3, offset 63.
+Expecting xy, pts or cells. Got ''symbol'' in 't.kicad_pcb', line 3, offset 64.
+Expecting name or via. Got ''symbol'' in 't.kicad_pcb', line 3, offset 80.
+Expecting ''ij'' in 't.kicad_pcb', line 3, offset 71.
+Cannot create generated object of type 'bogus_type'
+Expecting type, uuid, members, value, or driving. Got ''symbol'' in 't.kicad_pcb', line 3, offset 32.
+Expecting vertex index. Got ''x'' in 't.kicad_pcb', line 3, offset 94.
+Expecting '')'' in 't.kicad_pcb', line 3, offset 93.
+Expecting member. Got ''symbol'' in 't.kicad_pcb', line 3, offset 41.

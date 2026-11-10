@@ -19,7 +19,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `jobs/job_export_pcb_drill.rs`, `jobs_handler.rs` (`job_export_drill`) | `job_export_pcb_drill.*` (options), `pcbnew_jobs_handler.cpp` `JobExportDrill` | FAB-02 | ported (Excellon); Gerber branch waits for FAB-08 |
 | `exporters/gendrill_gerber_writer.rs` | `gendrill_gerber_writer.*` | FAB-08 | not started |
 | `exporters/gerber_jobfile_writer.rs` | `gerber_jobfile_writer.*` | FAB-09 | not started |
-| `pcbplot.rs`, `pcb_plotter.rs`, `plot_board_layers.rs`, `plot_layer_poly.rs`, `plot_brditems_*.rs`, `line_ending_plot.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs` | see each module header | FAB-03..11 | not started |
+| `pcbplot.rs`, `pcb_plotter.rs` (FAB-03 part), `plot_board_layers.rs` (driver + `PlotStandardLayer` skeleton), `plot_brditems_plotter.rs` (struct, pending entry points) | see "FAB-03" below | FAB-03 | ported (driver); item bodies pending (FAB-04/05/06/10/11/13) |
+| `plot_layer_poly.rs`, `plot_brditems_shapes.rs`, `plot_brditems_text.rs`, `line_ending_plot.rs`, other `jobs/*`, the Gerber / SVG parts of `jobs_handler.rs`, the item bodies of `plot_board_layers.rs` / `plot_brditems_plotter.rs` | see each module header | FAB-04..11 | not started |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -187,3 +188,78 @@ maps onto (see the change request in the FAB-02 result).
   must pass its own `getDrillFileName` override to `gen_drill_report_file`).
 * `--generate-map`: `FabError::NotPorted` until FAB-12 (as in FAB-01).
 * End-to-end from a `.kicad_pcb` file: waits for the parser / M14 / M17 (see above).
+
+## FAB-03: board plot driver, Gerber X2 header, file names
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `GetGerberProtelExtension`, `GetGerberFileFunctionAttribute`, `GetGerberFilePolarityAttribute`, `makeStringCompatX1`, `replaceReservedCharsField` | `pcbplot::gerber_protel_extension`, `gerber_file_function_attribute`, `gerber_file_polarity_attribute` (pub), private `make_string_compat_x1`, `replace_reserved_chars_field` |
+| `AddGerberX2Header`, `AddGerberX2Attribute` | `pcbplot::add_gerber_x2_header(plotter, board, env, x1)`, `add_gerber_x2_attribute(plotter, board, layer, env, x1)` |
+| `GetBuildVersion()`, `wxDateTime::Now()` | `pcbplot::PlotEnv { build_version, creation_date }` (caller supplied) |
+| `PLOT_MIN_SCALE`, `PLOT_MAX_SCALE` | same names in `pcbplot` |
+| `PCB_PLOTTER::BuildPlotFileName`, `getPlotSequence`, `copperLayerShouldBeSkipped` | `pcb_plotter::build_plot_file_name`, `get_plot_sequence`, `copper_layer_should_be_skipped` |
+| `StartPlotBoard`, `initializePlotter`, `FillNegativeKnockout` | `plot_board_layers::start_plot_board -> Result<Box<dyn Plotter>, FabError>`, private `initialize_plotter`, `fill_negative_knockout` |
+| `PlotBoardLayers`, `PlotOneBoardLayer`, `PlotLayer`, `PlotSolderMaskLayer` (min width 0 branch) | `plot_board_layers::plot_board_layers`, `plot_one_board_layer`, private `plot_layer`, `plot_solder_mask_layer` |
+| `PlotStandardLayer` (L357-931) | `plot_board_layers::plot_standard_layer`: preamble flags (`StandardLayerFlags`), container order, `StartBlock` / `EndBlock`, the via / track `GBR_METADATA` set-up are ported; the loop bodies are the pending `plot_standard_layer_footprint` / `_via` / `_track` / `_zone` (FAB-04) |
+| `BRDITEMS_PLOTTER` (struct, `getFineWidthAdj`, `SetLayerSet`, `hideDNPItems`, `crossoutDNPItems`) | `plot_brditems_plotter::BrditemsPlotter { opts, plotter, ctx, layer_mask }`; every other member is a pending method naming its package (`fab_port_pending!`) |
+| `BOARD::DrillSymbolLayers()` | private `drill_symbol_layers` (computed from the drill map items; the model has no `m_drillSymbolLayers`) |
+| per-layer body of `JobExportGerbers` (name, `StartPlotBoard`, `PlotBoardLayers`, `EndPlot`) | `plot_board_layers::plot_gerber_layer_file -> OutputFile` (the end-to-end entry point until FAB-07) |
+| `TransformRoundChamferedRectToPolygon` as plotter callback | `plot_board_layers::round_chamfered_rect_to_polygon` (installed into the SVG plotter; FAB-04 passes it to `flash_pad_chamfer_round_rect`) |
+
+### Tests and verification
+
+* `tests/plot_driver.rs::crafted_boards_match_cli_goldens`: 4 hand-written boards
+  (`tests/data/plot_driver`, re-saved with `kicad-cli pcb upgrade --force`: 4 copper layers
+  with renamed layers, a revision with reserved characters and an aux origin used by the
+  stored options; 2 layers with a `,`/`%`/non-ASCII file name, a `${REV}` revision from the
+  `.kicad_pro`, a negative aux origin, stored `psnegative`; 6 layers with stored X1,
+  precision 5, A4 output, negative, macros off; 32 copper layers) x 7 option sets of
+  `kicad-cli pcb export gerbers` (defaults, `--no-x2`, `--precision 5`, `--no-protel-ext`,
+  `--use-drill-file-origin`, `--board-plot-params`, `--cl Edge.Cuts,F.Fab`). Golden
+  `tests/golden/plot_driver/crafted.txt` (`generate.py crafted`). **247 files, all
+  byte-identical** after normalising the version / date lines, including file names and order
+  (default set), X1 comments, `Fmt 4.5`, `TF.SameCoordinates,PXff676980PYfec731e0`,
+  `TF.ProjectId` escaping / GUID, and the negative knockout regions (`--board-plot-params`
+  with `psnegative`, incl. the A4 auto-centre offset).
+* `tests/plot_driver.rs::svg_start_plot_board_matches_cli`: SVG `StartPlotBoard` +
+  `PlotBoardLayers` + `EndPlot` on an empty layer against `kicad-cli pcb export svg
+  --mode-single --exclude-drawing-sheet --drill-shape-opt 0` (black and white; colour +
+  negative + mirror): identical except the `<title>` date.
+* `tests/plot_driver_corpus.rs::corpus_replay`: all 380 boards under `qa/data` and `demos`
+  below 300 KB, CLI defaults, compact golden `tests/golden/plot_driver/corpus.txt` (8533
+  files: name / header / file hash, `generate.py corpus`). Today: 136 boards load in the
+  port (243 are rejected by the parser / reach model stubs, 1 produces no kicad-cli output);
+  of their 2840 files **2840 names and 2840 headers match, 874 whole files match** (the
+  layers with nothing on them), 1966 are pending (items: FAB-04/05/06), 0 differ. Pending
+  parts are counted, not failed, so the test tightens automatically;
+  `KICAD_FAB_CORPUS_REPORT=1` prints the per-board result.
+* Unit tests: Protel extensions, polarity, X1 conversion, reserved characters, `ToAscii`,
+  `BuildPlotFileName` (trim, forbidden characters, empty suffix, ASCII-only trim),
+  `getPlotSequence`.
+
+### Deviations
+
+* `StartPlotBoard` returns `Err` instead of `nullptr`: DXF / PostScript / PDF / PNG plotters
+  are out of scope (`FabError::Unsupported`), HPGL keeps the C++ message; a requested drawing
+  sheet (`plotframeref`) is `FabError::NotPorted` (PLOT-07/08) instead of being plotted.
+* The `wxLogError` for an invalid Gerber layer is not emitted (no log); the header is written
+  as in C++.
+* `PCB_RENDER_SETTINGS::LoadColors` / `SetLayerName` are not applied (colour themes: FAB-11;
+  layer name: drawing sheet only).
+* `TF.ProjectId` revision: `ExpandTextVars( rev, project )` uses a private copy of the model's
+  `PROJECT::TextVarResolver` (change request to expose it); date / time / VCS variables
+  resolve to empty strings as in the model.
+
+### Known gaps
+
+* Item plotting (`PlotStandardLayer` bodies, `BRDITEMS_PLOTTER` members): FAB-04, 05, 06;
+  solder mask minimum width and clipped silk: FAB-10; drill marks: FAB-11; drill symbols:
+  FAB-13. Any board with drawings, footprints, tracks or zones on a plotted layer panics with
+  a "port pending" message there.
+* `initializePlotter` with autoscale / scale != 1 and a non-empty bounding box, and SVG
+  fit-to-board (`PCB_PLOTTER::Plot`, FAB-11), cannot be compared yet (needs item plotting).
+* `GerberPlotter::set_viewport` has `debug_assert!(!a_mirror)` (C++ `wxASSERT`, which only
+  logs): a board with stored `(mirror yes)` plotted with `--board-plot-params` panics in debug
+  builds (change request to kicad-plot); the crafted board therefore stores `mirror no`.

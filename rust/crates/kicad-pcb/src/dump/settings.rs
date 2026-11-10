@@ -20,8 +20,8 @@
 use std::cmp::Ordering;
 use std::sync::Arc;
 
-use kicad_core::{PCB_IU_SCALE, PcbLayerId};
 use kicad_core::json::Value as JsonValue;
+use kicad_core::{PCB_IU_SCALE, PcbLayerId};
 
 use super::format::{
     Out, board_items, emit, no_api, v_angle, v_bool, v_box, v_enum, v_f64, v_int, v_layer,
@@ -51,8 +51,16 @@ fn dump_meander(o: &mut Out, p: &str, entry: &JsonValue) {
             .map_or(default, |v| PCB_IU_SCALE.mm_to_iu(v))
     };
 
-    emit!(o, format!("{p}min_amplitude"), v_int(mm("min_amplitude", 200_000)));
-    emit!(o, format!("{p}max_amplitude"), v_int(mm("max_amplitude", 1_000_000)));
+    emit!(
+        o,
+        format!("{p}min_amplitude"),
+        v_int(mm("min_amplitude", 200_000))
+    );
+    emit!(
+        o,
+        format!("{p}max_amplitude"),
+        v_int(mm("max_amplitude", 1_000_000))
+    );
     emit!(o, format!("{p}spacing"), v_int(mm("spacing", 600_000)));
 
     for f in [
@@ -82,7 +90,7 @@ fn dump_meander(o: &mut Out, p: &str, entry: &JsonValue) {
         // get<int>(): a floating point value is truncated.
         let pct = entry.get("corner_radius_percentage").map_or(80, |v| {
             v.as_i64()
-                .map_or_else(|| v.as_f64().unwrap_or(80.0) as i64, |i| i)
+                .unwrap_or_else(|| v.as_f64().unwrap_or(80.0) as i64)
         });
         v_int(pct)
     });
@@ -95,7 +103,12 @@ fn dump_meander(o: &mut Out, p: &str, entry: &JsonValue) {
         )
     });
 
-    for f in ["initial_side", "length_tolerance", "keep_endpoints", "is_time_domain"] {
+    for f in [
+        "initial_side",
+        "length_tolerance",
+        "keep_endpoints",
+        "is_time_domain",
+    ] {
         emit!(o, format!("{p}{f}"), no_api("PNS::MEANDER_SETTINGS"));
     }
 }
@@ -1107,7 +1120,10 @@ fn emit_order(o: &mut Out, ctx: &BoardCtx<'_>, field: &str, items: Vec<ItemId>, 
 
 /// `PCB_TRACK::cmp_tracks` on item handles (both are tracks here).
 fn track_cmp(ctx: &BoardCtx<'_>, a: ItemId, b: ItemId) -> Ordering {
-    match (a.typed::<crate::pcb_track::Track>(), b.typed::<crate::pcb_track::Track>()) {
+    match (
+        a.typed::<crate::pcb_track::Track>(),
+        b.typed::<crate::pcb_track::Track>(),
+    ) {
         (Some(ta), Some(tb)) => crate::pcb_track::pcb_track_cmp_tracks(ctx, ta, tb),
         _ => a.cmp(&b),
     }

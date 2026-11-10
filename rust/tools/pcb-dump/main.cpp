@@ -73,10 +73,12 @@ static void usage()
              "usage: pcb-dump defaults [--hash]\n"
              "       pcb-dump board [--sections LIST] [--hash] [--loader] [--no-init] FILE...\n"
              "       pcb-dump rules [--component-classes] FILE...\n"
+             "       pcb-dump props-table [--hash]\n"
              "sections: item,bbox,track,pad,shape,text,dim,zone,footprint,board,order\n"
              "          connectivity (opt-in: printed only when listed explicitly)\n"
              "          engine (opt-in: DRC engine rules and constraint lists)\n"
-             "          evalrules (opt-in: EvalRules per item and for sampled pairs)\n" );
+             "          evalrules (opt-in: EvalRules per item and for sampled pairs)\n"
+             "          props (opt-in: property values per item)\n" );
 }
 
 
@@ -210,6 +212,7 @@ int DumpRulesFiles( const std::vector<wxString>& aFiles, bool aComponentClasses 
 void DumpEngineSection( BOARD* aBoard );                                          // dump_engine.cpp
 void DumpEvalRulesSection( BOARD* aBoard );                                       // dump_evalrules.cpp
 void DumpConnectivity( BOARD* aBoard ); // dump_connectivity.cpp
+void DumpPropsTable();                  // dump_props.cpp
 
 
 int main( int argc, char** argv )
@@ -282,7 +285,7 @@ int main( int argc, char** argv )
         }
     }
 
-    if( cmd != "defaults" && cmd != "board" && cmd != "rules" )
+    if( cmd != "defaults" && cmd != "board" && cmd != "rules" && cmd != "props-table" )
     {
         usage();
         return 2;
@@ -303,6 +306,10 @@ int main( int argc, char** argv )
     if( cmd == "defaults" )
     {
         Guard( "defaults", [&]() { DumpDefaults(); } );
+    }
+    else if( cmd == "props-table" )
+    {
+        Guard( "props-table", [&]() { DumpPropsTable(); } );
     }
     else if( cmd == "rules" )
     {

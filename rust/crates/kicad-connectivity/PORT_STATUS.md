@@ -195,3 +195,87 @@ Ported tests / verification:
   has all edges visible.
 - Boards with footprints are not compared until the footprint parser lands; rerun
   `cargo test -p kicad-connectivity --test cn03_ratsnest_golden -- --nocapture` then.
+
+## CN-04: `CONNECTIVITY_DATA` facade and queries
+
+| C++ | Rust | State |
+|---|---|---|
+| `CONNECTIVITY_DATA::Build( BOARD* )` | `data::ConnectivityData::build( ctx )` (no triangulation, nets recorded), `build_board( &mut Board )` (+ fill triangulation, net changes applied, stamp re-recorded) | ported |
+| `BOARD::BuildConnectivity`, `BOARD::UpdateRatsnestExclusions` (`board.cpp`) | `build_connectivity`, `update_ratsnest_exclusions` | ported |
+| `BOARD::CacheTriangulation` (fills) | `data::cache_board_triangulation` | ported (sequential; outline triangulation left to the DRC cache generator, connectivity never reads it) |
+| `Add` / `Remove` / `Update`, `PropagateNets`, `FillIsolatedIslandsMap`, `RecalculateRatsnest`, `internalRecalculateRatsnest`, `updateRatsnest`, `addRatsnestCluster` | same names | ported (sequential) |
+| `GetNetCount`, `GetRatsnestForNet`, `ClearRatsnest`, `GetUnconnectedCount`, `RunOnUnconnectedEdges`, `GetNodeCount`, `GetPadCount` | `net_count`, `ratsnest_for_net(_mut)` / `net_edges`, `clear_ratsnest`, `unconnected_count`, `run_on_unconnected_edges`, `node_count_of`, `pad_count_of` | ported |
+| `IsConnectedOnLayer` (type filter, footprint / pad-pad / ItemsTouchOnLayer skips, pad and via zone-island tests) | `is_connected_on_layer` + `impl ConnectivityQuery` | ported |
+| `GetConnectedItems` (`IGNORE_NETS`, `EXCLUDE_ZONES`), `GetNetItems`, `GetConnectedTracks`, `GetConnectedPads` (both), `GetConnectedPadsAndVias`, `GetZoneIslandConnections`, `GetConnectedItemsAtAnchor` | `connected_items`, `net_items`, `connected_tracks`, `connected_pads(_into)`, `connected_pads_and_vias`, `zone_island_connections`, `connected_items_at_anchor` | ported |
+| `TestTrackEndpointDangling`, `getMinDist` | `test_track_endpoint_dangling` (zone R-tree cache through the `CopperZoneRtrees` trait), `min_dist` | ported |
+| `MarkItemNetAsDirty`, `RemoveInvalidRefs`, `RefreshNetcodeMap`, `HasNetNameForNetCode`, `GetNetNameForNetCode`, `GetRatsnestForItems` / `ForPad` / `ForComponent` | same names | ported |
+| `Build( global, localItems )`, `ComputeLocalRatsnest`, `ClearLocalRatsnest`, `HideLocalRatsnest`, `GetLocalRatsnest`, `BlockRatsnestItems`, `Move`, `SetProgressReporter`, `GetNetSettings`, `GetLock` | - | skipped: tier 3 (CN-06) / GUI only |
+| `GetFromToCache` | - | CN-05 (`from_to`) |
+
+Client API (autorouter, DRC unconnected test): `unconnected_edges()` returns per net, in
+`GetEdges()` order, the point pairs with the items they join (`UnconnectedEdge`), edges with a
+missing or dirty node left out.
+
+Verification (`tests/cn04_data_golden.rs`, goldens `tests/oracle/gen_cn04.sh`, which only runs
+the existing pcb-dump):
+
+- `cn04_golden_boards_match_cpp`: the connectivity goldens of `gen_goldens.sh` through the
+  facade (`BuildConnectivity`): `rn_net` (nodes, edges in `GetEdges()` order, unconnected
+  counts incl. visible), `cn_dangling` (both `aIgnoreTracksInPads` values, `aPos`), and the
+  `flash.<layer>` lines of vias / pads (`tests/golden/cn04_flash/`, `FlashLayer` with this
+  connectivity = `IsConnectedOnLayer`). 15 of 30 boards load (the others: footprints skipped
+  by the parser), 931 fields, 0 mismatches (incl. issue10697: blind vias with
+  `remove_unused_layers` stacked on through vias).
+- `cn04_synthetic_boards_match_cpp`: 4 four-layer boards of `gen_cn04.py` (conditionally
+  flashed through / blind / buried vias touching tracks, arcs, other vias on some layers only,
+  other-net and near-miss tracks, net-less items, a via inside a zone; dangling: free ends,
+  ends on vias, short tracks inside one via with and without a second item, chains, tracks in
+  a zone fill, vias on one / two layers, net-less via, arcs, zero-length tracks; two random
+  boards with 250 items each): 3052 fields, 0 mismatches.
+- `issue25621::*`: port of `qa/tests/pcbnew/test_issue25621_via_flashing_contact_layer.cpp`
+  (2 cases, real build: the pad case builds a FRONT_INNER_BACK PTH pad through the model API).
+- `cn04_queries_are_consistent`: self-consistency of the queries without a dump line
+  (`GetConnectedItems`, `GetConnectedTracks`, `GetConnectedPadsAndVias`, `GetNetItems`,
+  `GetZoneIslandConnections`, `GetRatsnestForItems` / `ForPad`, `RunOnUnconnectedEdges`,
+  `GetNodeCount`) on the synthetic boards.
+- `cn04_corpus_build` (`--ignored`): build + dangling test over every corpus board the parser
+  loads (qa/data/pcbnew + demos): 375 files, 372 built, 3 not parsed, 0 panics, 9.5 s in total
+  (vme-wren 3.3 s, jetson 1.3 s, VCU118 1.2 s; test profile). Footprints are still skipped by
+  the parser, so these boards have no pads.
+
+### Pointer-order replacements (CN-04, for the reviewer)
+
+| C++ (`connectivity_data.cpp`) | C++ order | Port | Goldens |
+|---|---|---|---|
+| L631 `GetNetItems`: `std::sort` + `unique` of `BOARD_CONNECTED_ITEM*` | address | `ItemId` order (board-model.md 3.1 rule 2: file order within a kind; across kinds footprints, pads, tracks, zones, graphics) | no dump line: not confirmed |
+| L642 `GetConnectedTracks`: `std::set<PCB_TRACK*>` | address | `BTreeSet<ItemId>` (tracks / arcs / vias share one arena: board track order) | not confirmed |
+| L664 / L680 `GetConnectedPads`: `std::set<PAD*>` | address | `BTreeSet<ItemId>` (pad arena order = footprint / file order) | not confirmed (no pads load yet) |
+| L690 `GetConnectedPadsAndVias`: `ConnectedItems()` order | address (`m_connected` sorted by `CN_ITEM*`) | list index (CN-01, R-1) | not confirmed (teardrop order consumer is TD-01) |
+| L723 `GetZoneIslandConnections`: `std::set<const BOARD_ITEM*>` | address | `BTreeSet<ItemId>` | not confirmed |
+| L1025 / L1106 `GetRatsnestForItems` / `ForComponent`: `std::set` of items / pads | address | `BTreeSet<ItemId>` | membership only: no order effect |
+| L424 `IsConnectedOnLayer`, L805 `TestTrackEndpointDangling`: iterate `ConnectedItems()` | address | list index | order-independent results (any-true; counts, `aPos` written only on true); confirmed by the flash and `cn_dangling` goldens |
+
+### Deviations (CN-04)
+
+- `GetUnconnectedCount` counts `GetUnsortedEdges()` (C++ sorts first; the count is the same).
+- The `ConnectivityQuery::pad_count` hook (no context) compares the pad items' cached net (pads
+  never change net, so it equals `GetNetCode()` after a build); `pad_count_of( ctx, net )`
+  reads the board like C++.
+- `GetNetNameForNetCode` returns `None` for an unknown code (C++ `std::map::at` throws).
+- `IsConnectedOnLayer` with a zone island: a missing fill layer is skipped (C++ dereferences
+  a null `GetFill()`), and an empty pad hull contains no point (C++ `Outline( 0 )` of an empty
+  set is undefined).
+- `TestTrackEndpointDangling` reads item shapes with `ctx.connectivity = self` (C++ items reach
+  this object through `GetBoard()->GetConnectivity()`); a stale connected parent is skipped.
+- Build with a spin lock that cannot be contended: always returns true.
+
+### Known gaps (CN-04)
+
+- Pads and footprint boards are not compared until the footprint parser lands; rerun
+  `cargo test -p kicad-connectivity --test cn04_data_golden -- --nocapture` then (the pad
+  `flash` lines of `tests/golden/cn04_flash/` are compared automatically).
+- No compared board has an excluded ratsnest marker, so `UpdateRatsnestExclusions` hiding an
+  edge is not verified against C++; the zone R-tree path of `TestTrackEndpointDangling` (DRC
+  cache) is not exercised by the dump (pcb-dump boards have no DRC cache).
+- `IsConnectedOnLayer` zone-island branches only run with an empty type list (FlashLayer
+  excludes zones); not reached by any oracle case.

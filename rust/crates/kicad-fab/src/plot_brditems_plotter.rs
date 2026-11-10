@@ -114,7 +114,10 @@ impl<'a, 'p> BrditemsPlotter<'a, 'p> {
 
     /// `BRDITEMS_PLOTTER::PlotFootprintTextItems` (FAB-06).
     pub fn plot_footprint_text_items(&mut self, a_footprint: FootprintId) {
-        fab_port_pending!("BRDITEMS_PLOTTER::PlotFootprintTextItems (FAB-06)", a_footprint)
+        fab_port_pending!(
+            "BRDITEMS_PLOTTER::PlotFootprintTextItems (FAB-06)",
+            a_footprint
+        )
     }
 
     /// `BRDITEMS_PLOTTER::PlotDimension` (FAB-05).

@@ -393,17 +393,45 @@ pub(crate) fn dump_track(o: &mut Out, it: ItemRef<'_>) {
         emit!(o, "is_tented.F", v_bool(it.is_tented(PcbLayerId::FMask)));
         emit!(o, "is_tented.B", v_bool(it.is_tented(PcbLayerId::BMask)));
 
-        emit!(o, "primary_drill_filled", v_opt_bool(v.primary_drill_filled()));
-        emit!(o, "primary_drill_capped", v_opt_bool(v.primary_drill_capped()));
-        emit!(o, "secondary_drill_size", v_opt_int(v.secondary_drill_size()));
+        emit!(
+            o,
+            "primary_drill_filled",
+            v_opt_bool(v.primary_drill_filled())
+        );
+        emit!(
+            o,
+            "primary_drill_capped",
+            v_opt_bool(v.primary_drill_capped())
+        );
+        emit!(
+            o,
+            "secondary_drill_size",
+            v_opt_int(v.secondary_drill_size())
+        );
         emit!(o, "tertiary_drill_size", v_opt_int(v.tertiary_drill_size()));
         emit!(o, "backdrill_mode", v_enum(v.backdrill_mode()));
-        emit!(o, "bottom_backdrill_size", v_opt_int(v.bottom_backdrill_size()));
-        emit!(o, "bottom_backdrill_layer", v_layer(v.bottom_backdrill_layer()));
+        emit!(
+            o,
+            "bottom_backdrill_size",
+            v_opt_int(v.bottom_backdrill_size())
+        );
+        emit!(
+            o,
+            "bottom_backdrill_layer",
+            v_layer(v.bottom_backdrill_layer())
+        );
         emit!(o, "top_backdrill_size", v_opt_int(v.top_backdrill_size()));
         emit!(o, "top_backdrill_layer", v_layer(v.top_backdrill_layer()));
-        emit!(o, "front_post_machining", v_opt_enum(v.front_post_machining()));
-        emit!(o, "back_post_machining", v_opt_enum(v.back_post_machining()));
+        emit!(
+            o,
+            "front_post_machining",
+            v_opt_enum(v.front_post_machining())
+        );
+        emit!(
+            o,
+            "back_post_machining",
+            v_opt_enum(v.back_post_machining())
+        );
 
         if it.has_board() {
             emit!(
@@ -952,11 +980,7 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
             )
         );
         emit!(o, "textbox.border_enabled", v_bool(tb.border_enabled));
-        emit!(
-            o,
-            "textbox.border_width",
-            v_int(tb.border_width())
-        );
+        emit!(o, "textbox.border_width", v_int(tb.border_width()));
         emit!(
             o,
             "textbox.corners",
@@ -995,13 +1019,10 @@ pub(crate) fn dump_text(o: &mut Out, it: ItemRef<'_>) {
                     5000,
                     ErrorLoc::Inside,
                 ),
-                _ => it.as_textbox().expect("textbox").transform_text_to_poly_set(
-                    ctx,
-                    &mut buf,
-                    0,
-                    5000,
-                    ErrorLoc::Inside,
-                ),
+                _ => it
+                    .as_textbox()
+                    .expect("textbox")
+                    .transform_text_to_poly_set(ctx, &mut buf, 0, 5000, ErrorLoc::Inside),
             }
 
             v_polyset(&buf)

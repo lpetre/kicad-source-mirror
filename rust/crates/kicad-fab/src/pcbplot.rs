@@ -26,10 +26,10 @@
 //! `GetBuildVersion()` and the wall clock read by `GbrMakeCreationDateAttributeString` are
 //! caller-supplied values ([`PlotEnv`]).
 
-use kicad_core::layer_ids::is_copper_layer;
-use kicad_core::layer_ids::copper_layer_to_ordinal;
-use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_core::PcbLayerId;
+use kicad_core::layer_ids::copper_layer_to_ordinal;
+use kicad_core::layer_ids::is_copper_layer;
+use kicad_core::text_vars::{ResolutionContext, expand_text_vars};
 use kicad_pcb::board::Board;
 use kicad_plot::Plotter;
 use kicad_plot::gbr_metadata::{
@@ -60,7 +60,9 @@ impl PlotEnv {
     /// `wxDateTime::Now().FormatISOCombined( ' ' )` (`YYYY-MM-DD HH:MM:SS`), the date of the
     /// Gerber `G04 Created by KiCad` comment.
     pub fn gerber_comment_date(&self) -> String {
-        self.creation_date.format_iso_combined().replacen('T', " ", 1)
+        self.creation_date
+            .format_iso_combined()
+            .replacen('T', " ", 1)
     }
 
     /// `GetISO8601CurrentDateTime()` (`YYYY-MM-DDTHH:MM:SS`), the date of the SVG title.
@@ -235,7 +237,10 @@ fn expand_project_text_vars(a_board: &Board, a_source: &str) -> String {
                 *token = WxFileName::new(&a_board.file_name).name().to_string();
                 true
             }
-            "CURRENT_DATE" | "CURRENT_TIME_HH_MM_SS" | "CURRENT_TIME_LOCALE" | "VCSHASH"
+            "CURRENT_DATE"
+            | "CURRENT_TIME_HH_MM_SS"
+            | "CURRENT_TIME_LOCALE"
+            | "VCSHASH"
             | "VCSSHORTHASH" => {
                 *token = String::new();
                 true

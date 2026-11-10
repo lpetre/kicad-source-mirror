@@ -2521,3 +2521,254 @@ file was mirrored by hand (the reference tool cannot flip); its field angle (180
   `PCB_BARCODE::Flip` / `Move` / `Rotate` (M25) inside `Flip`, `MoveAnchorPosition`,
   `SetOrientation` of a footprint holding a barcode; `PCB_TABLE` / barcode bounding boxes etc.
   are not reached by the cascades.
+
+## Package PCBIO-12: board file reference images, barcodes, targets, points, grid items, tables, generated tables, drill maps (parse + write)
+
+Files: `src/io/parser/misc_items.rs`, `src/io/writer/misc_items.rs`, `tests/pcbio12_misc_items.rs`,
+`tests/data/pcbio12/`, `tests/golden/pcbio12/`, `tests/oracle/pcbio12_golden.sh`,
+`tests/oracle/pcbio12_resave.cpp` + `pcbio12_build_oracle.sh` (pure parse + write driver).
+
+### C++ to Rust map
+
+| C++ (`pcb_io_kicad_sexpr_parser.cpp`, `pcb_io_kicad_sexpr.cpp`) | Rust | state |
+|---|---|---|
+| `parsePCB_REFERENCE_IMAGE` (base64 `data`, `Failed to read image data.`, `isnormal` scale, PPI re-scale < 20260623) | `parse_pcb_reference_image` | ported, verified |
+| `parsePCB_BARCODE` (`at` with optional angle = inline `SetOrientation`, `SetKind` / `SetErrorCorrection` Micro-QR rule, `SetTextSize` pen size, `parseMaybeAbsentBool` locked) | `parse_pcb_barcode` | ported; blocked at run time by `PCB_BARCODE::SetPosition` (model M25) |
+| `parsePCB_TABLECELL`, `parseTableBodyToken`, `parseTableBody`, `parsePCB_TABLE` | `parse_pcb_tablecell` (cell mirrored like the C++ constructor), `parse_table_body_token`, `parse_table_body`, `parse_pcb_table` | ported, verified |
+| `parseGeneratedTable`, `parseGeneratedTableExtra` (columns replacing defaults, `m_Id = -1`, `Validate`, any-shown, documentation-layer check, drill chart filter / totals / row shapes, row keys) | `parse_generated_table`, `parse_generated_table_extra` | ported, verified (pure parse + write oracle) |
+| `parseDrillSpanBody`, `parsePCB_DRILL_MAP` | `parse_drill_span_body`, `parse_pcb_drill_map` | ported, verified |
+| `parsePCB_POINT`, `parsePCB_TARGET`, `parsePCB_GRID_ITEM` (polar / cartesian `spacing` / `extent`, `affects`) | `parse_pcb_point`, `parse_pcb_target`, `parse_pcb_grid_item` | ported, verified |
+| `DocumentationLayers()` (`board_tables/generated_table_schema.cpp`) | `parser::misc_items::documentation_layers` | ported (belongs to the table model; change request) |
+| `format( PCB_REFERENCE_IMAGE / PCB_POINT / PCB_TARGET / PCB_GRID_ITEM )` | `format_reference_image`, `format_point`, `format_target`, `format_grid_item` | ported, verified |
+| `format( PCB_BARCODE )` | `format_barcode` | ported; blocked by `PCB_BARCODE::GetPosition` / `GetAngle` (M25) |
+| `formatTableData`, `format( PCB_TABLE )`, `format( PCB_GENERATED_TABLE )`, `formatGeneratedTableExtras`, `format( PCB_DRILL_MAP )`, static `formatDrillSpan` | `format_table_data`, `format_table`, `format_generated_table`, `format_generated_table_extras`, `format_drill_map`, `format_drill_span` | ported, verified |
+
+### Tests and verification
+
+- Byte level, `kicad-cli pcb upgrade --force` (`oracle_resave_blocks`): 6 hand-made boards in
+  `tests/data/pcbio12` (images incl. rotate / scale / opacity / lock / custom property, targets
+  incl. `tstamp` and width 0, points, cartesian / polar / clamped grid items, drill maps incl.
+  backdrill / npth spans and an unknown token, two tables incl. the rotated table of issue24525,
+  a pre-20260623 image board for the PPI migration, barcodes) and the corpus boards
+  reference_images_load_save, group_and_image, issue7567: every top-level block of these kinds
+  in the Rust re-save equals the reference re-save (O1), and the Rust re-save of O1 equals the
+  reference re-save of O1 (O2 / O1): 48 blocks, 0 differences (random uuids of uuid-less input
+  items masked).
+- Byte level, pure parse + write (`oracle_parse_write_blocks`): kicad-cli's loader rebuilds the
+  cells of generated tables (`RefreshGeneratedTables`), so `tests/oracle/pcbio12_resave.cpp`
+  (reference `ReadBoardFromFileOrStream` + `PCB_IO_KICAD_SEXPR::SaveBoard`, linked like
+  pcb-dump) writes `<name>_pw.kicad_pcb`: 21 blocks identical, including a drill chart
+  (precision, renamed column, row keys, filter, totals, row shapes) and a stack-up table (units,
+  hidden column, a repeated and an unknown column dropped by `Validate`, unknown token skipped).
+- Corpus (`oracle_corpus_blocks`, io-corpus cache): reference_images_load_save,
+  group_and_image(_formatted), issue7567, stonehenge identical; issue24525 and api_kitchen_sink
+  pending on the barcode model.
+- Item level: `pcb-dump board --no-init --sections item,misc,text` vs pcb-dump-rs on copies of
+  the data boards and the three corpus boards: 0 mismatches (misc_items 302 match,
+  tables 479 match + 6 pending dump-rs fields, reference_images 216, group_and_image 257,
+  issue7567 136 match; its missing lines are footprints, PCBIO-06).
+- Ported C++ tests: `test_reference_image_load.cpp` `ReferenceImageLoading` (load part),
+  `ReferenceImagePpiScaleMigration` (file part), `test_custom_property_roundtrip.cpp`
+  `EveryBoardItemKeepsItsCustomProperty` (image, target, point, grid item, drill map),
+  `test_drill_chart.cpp` `MapSymbolSizeSurvivesBoardFileRoundTrip` (file part); error texts of
+  the strict places (`strict_errors`). Not ported: `test_barcode_load_save.cpp` (barcode model
+  M25), the other `test_drill_chart.cpp` cases (refresh / hit tests: M26 / M23).
+
+### Deviations / notes
+
+- `PCB_DRILL_MAP( aParent )` takes the symbol size of the board's drill symbol profile; the
+  profile is kept verbatim (tier-2 drill symbol package), so a map without `(size ..)` gets the
+  default profile's size. The writer always writes `(size ..)`.
+- The barcode setters that end in `AssembleBarcode()` only refill the keyed symbol cache; the
+  port calls `assemble_barcode` once at the end like the parser's final call.
+- `parsePCB_BARCODE`'s `(at x y)` without an angle needs a second `)` (C++ `NextTok` +
+  `NeedRIGHT`); reproduced.
+
+### Known gaps
+
+- Barcodes end to end: `PCB_BARCODE::SetPosition` / `GetPosition` / `GetAngle` / `Rotate` /
+  `SetLayer` / `AssembleBarcode` are `port_pending!` (M25); `barcodes.kicad_pcb` goldens are
+  committed (both oracles) and compare once they land.
+
+## Package GLUE-1: finished ports wired into their call sites
+
+Owned changes (no trait or public signature changed):
+
+| C++ | Rust | state |
+|---|---|---|
+| `BOARD::cmp_drawings` shape / textbox branch (`shape->Compare( other )`) | `board/compare.rs` `eda_shape_compare` -> `EdaShape::compare` | ported |
+| `PADSTACK::COPPER_LAYER_PROPS::Compare` custom shapes loop | `padstack.rs` `CopperLayerProps::compare` | ported |
+| `BOARD_ITEM::GetLayerName`, `GetFPRelativePosition`, `BOARD_CONNECTED_ITEM::GetNetname` | `item_ref.rs` forwarders (`""` for non-connected kinds) | ported |
+| `BOARD::ApplyNetChainNetclasses` | `board/nets.rs` | ported |
+| `std::set<T, CMP>( begin, end )` | `io/writer/mod.rs` `sorted_set` (also used by the dump's `order` section) | ported: libstdc++ `_Rb_tree` (hinted `_M_insert_unique_( end() )`, `_M_get_insert_unique_pos`, `_Rb_tree_insert_and_rebalance`) on an index arena |
+| pcb-dump getters | `dump/{items,board,defaults,settings}.rs`: pad (`IsFlipped`, `IsNPTHWithNoCopper`, `IsFreePad`, local zone connection / spoke width / thermal gap, `GetThermalGap`, `GetDelta`, `GetRoundRectCornerRadius`, `GetBoundingBox( aLayer )`), textbox border width and `TransformTextToPolySet`, dimension units mode / aligned angle / radial knee, zone teardrop area / corner count, reference image bbox, `BOARD::GetVisibleLayers`, the six JSON-backed `MEANDER_SETTINGS` members | wired |
+
+Why `sorted_set` changed: the former stable sort + dedup equals `std::set` only for a strict weak
+ordering. `EDA_SHAPE::Compare` (EPSILON = 2 IU) is not transitive, so the C++ order depends on
+the shape of the red-black tree: `reverse_via.kicad_pcb` (Bezier curves whose start x differ by
+1..22 nm) had 6 drawings in a different order. With the tree port the drawing order of that
+board equals `pcb-dump --sections order` exactly (4116 items).
+
+Verification:
+* PCBIO-03 corpus oracle (`tests/pcbio03_tracks_shapes.rs` `oracle_corpus_blocks`), before ->
+  after: identical 256 -> 510, same set 4 -> 12 (all `tracks`, net codes follow footprint pads,
+  PCBIO-06), pending 272 -> 3 (`PCB_BARCODE::SetPosition`, M25), explained 1 -> 1, differ 0 -> 0.
+* Defaults scoreboard (`tests/pcb_dump_defaults.rs`): match 3447 -> 3533, mismatch 0 -> 0,
+  pending 235 -> 149.
+* Item level, `pcb-dump board --no-init` vs `pcb-dump-rs` through `compare.py` on 6 small boards
+  with text boxes, dimensions, keepout zones (`textbox-border`, `knockout_textbox`,
+  `issue20249/dimension`, `issue24853`, `keepout_no_clearance`, `issue24442`): 5990 match,
+  0 mismatch, 272 pending (meander members below, `GetValueMode`).
+* Pad getters can only be checked on the defaults dump until footprints load (PCBIO-06).
+
+Deviations / known gaps:
+* `meander.*`: only `min_amplitude`, `max_amplitude`, `spacing`, `corner_style`,
+  `corner_radius_percentage`, `single_sided` exist in the model (the JSON of
+  `tuning_pattern_settings`, read back as `read_settings` does); the other 15 members of
+  `PNS::MEANDER_SETTINGS` are not modelled and stay pending.
+* Left pending (target not ported): `FOOTPRINT::ResolveTextVar`, `GetFieldValueForVariant`
+  (M19 / M20), `BOARD::GetTrackLength`, `BOARD::DrillSymbolCache`, `PCB_DIMENSION_BASE::GetValueMode`,
+  table / barcode / footprint getters without a Rust method, `PAD::IsFreePad()` without ctx
+  (signature change needed; the dump uses `is_free_pad_ctx`).
+* Staging-stub tests now use `(footprint ..)` (PCBIO-06) as the remaining stub; `oracle_resave`
+  compares whole files (the setup section is ported).
+
+## Package M21: board outline (convert_shape_list_to_polygon, GetBoardPolygonOutlines)
+
+| C++ | Rust | state |
+|---|---|---|
+| `convert_shape_list_to_polygon.h/.cpp`: `close_enough`, `closer_to_first`, `free_end`, `isCopperOutside`, `PCB_SHAPE_ENDPOINTS_ADAPTOR` + nanoflann `KDTree`, `processClosedShape`, `processShapeSegment`, `buildContourHierarchy`, `addOutlinesToPolygon`, `addHolesToPolygon`, `checkSelfIntersections`, `findNeighbours` / `closerEndpoint`, `findCrossingContours`, `buildChainedClosedContour`, `doConvertOutlineToPolygon` | `convert_shape_list_to_polygon.rs` (private fns of the same names, `do_convert_outline_to_polygon` `pub(crate)`) | ported |
+| `ConvertOutlineToPolygon`, `TestBoardOutlinesGraphicItems`, `BuildBoardPolygonOutlines`, `BuildFootprintPolygonOutlines`, `buildBoardBoundingBoxPoly`, `projectPointOnSegment`, `findEndSegments` | `convert_outline_to_polygon`, `test_board_outlines_graphic_items`, `build_board_polygon_outlines`, `build_footprint_polygon_outlines`, `build_board_bounding_box_poly`, `project_point_on_segment`, `find_end_segments` (all `pub`, `ctx` first, shape lists as `&[ShapeId]`, `aPolygons` / `aOutlines` as `&mut ShapePolySet`) | ported |
+| `PCB_TYPE_COLLECTOR::Collect( board/footprint, { PCB_SHAPE_T } )` | `collect_board_shapes` (footprint drawings in footprint order, then board drawings: `BOARD::Visit` order), `collect_footprint_shapes` | ported |
+| `BOARD::GetBoardPolygonOutlines` (NPTH subtraction, per-island simplify with arcs) | `Board::get_board_polygon_outlines` (`board/outline.rs`) | ported |
+| `BOARD::UpdateBoardOutline` + `PCB_BOARD_OUTLINE::GetOutline()` | `Board::board_outline(ctx)`, `BoardCaches::board_outline` (built on first use after a time stamp bump: outlines without inference, fractured on success) | ported |
+| `PCB_BOARD_OUTLINE` item class (view layers, Similarity, operator==, Clone) | - | skipped: the outline is a cache, not an item (board-model-types.md 15) |
+| `GetBoardEdgesBoundingBox`, `ComputeBoundingBox` | `board/queries.rs` (M0d / M22) | used as they are |
+
+Tests: `convert_shape_list_to_polygon::tests`: `degenerate_arc_outline_marker_issue24241` and
+`invalid_outline_bezier_slot_issue24078` (ports of `test_drc_invalid_outline_issue24241.cpp` /
+`_issue24078.cpp`, outline-building part: the handler calls of `TestBoardOutlinesGraphicItems` +
+`BuildBoardPolygonOutlines` with the DRC parameters; 24078 skips itself until footprints parse,
+PCBIO-06), `oracle_corpus` (differential), `closures_are_outline_error_handlers`.
+
+Verification: `tests/oracle/m21_outline_oracle.cpp` (built by `m21_outline_golden.sh` on the
+pcb-dump objects) runs, on scratch copies of every corpus board under 500 KB (qa/data/pcbnew,
+demos) plus 13 malformed-outline fixtures (`tests/oracle/m21_fixtures.py`: gaps, sub-epsilon
+gaps, arc closure, nested holes of every closed kind, bow tie, T junction, overlapping closed
+shapes, degenerate items, bezier slots, ellipses / ellipse arcs, disjoint outlines, duplicate
+segments, no edges, empty board), `TestBoardOutlinesGraphicItems`, `BuildBoardPolygonOutlines`
+(DRC parameters), `GetBoardPolygonOutlines` (plain, inferred, arcs, NPTH), 
+`BuildFootprintPolygonOutlines`, `ConvertOutlineToPolygon` on each footprint's F.CrtYd shapes
+(courtyard parameters, `aAllowDisjoint = false`) and `UpdateBoardOutline`, recording every
+error-handler call (message, item UUIDs, position, order) and a hash of each polygon (vertex
+for vertex, contour order, closed flags, arc counts). Golden `tests/golden/m21_outlines.txt`
+(333 boards). Result: 103 boards load in the Rust parser today (no footprints / barcodes /
+generators), all 103 identical, with two documented pointer-order lines (below). Also
+`pcb-dump board --no-init --sections board` vs `pcb-dump-rs` (`outline`, `outline_inferred`,
+`outline_arcs` and their `.ok`): identical on all 95 footprint-free corpus/fixture boards the
+Rust parser loads (boards with footprints differ only because the footprints are not parsed
+yet). Not verifiable yet: footprint Edge.Cuts handling (`isCopperOutside`, footprint holes,
+`BuildFootprintPolygonOutlines` with a footprint, NPTH subtraction, courtyards) - covered by the
+golden for 230 boards that need PCBIO-06 / PCBIO-12 / PCBIO-13; `oracle_corpus` picks them up
+automatically once they parse.
+
+Deviations:
+
+- `TestBoardOutlinesGraphicItems` iterates `std::set<PCB_SHAPE*> openShapes` (heap-address
+  order) to seed the slot chaining and to build the nanoflann point list; the port uses
+  `ShapeId` order (board-model.md 3.1 rule 2). It decides which shape owns a chained slot
+  contour (item B of a "(self-intersecting)" overlap report) and the contour's start point. The
+  oracle shows the reference allocator does not hand out ascending addresses: 2 of the 13
+  fixtures (`m21_overlap`, `m21_bezier_slot`) report a different owner (and, for the bezier
+  slot, a different marker position); listed in `POINTER_ORDER_DEVIATIONS`. None of the 90
+  compared corpus boards is affected.
+- `processShapeSegment` calls `PCB_SHAPE::RebuildBezierToSegmentsPointsList( aErrorMax )`,
+  which rewrites the board item's `m_bezierPoints` (the board stays modified after the call,
+  e.g. after DRC with 0.05 mm). The port does not mutate the board: it uses a locally built
+  point list and, within the same top-level call, gives the error reports
+  (`GetEffectiveShape()` of a bezier) a copy rebuilt with that error (`OutlineScratch`). Effects
+  across calls (a later `GetEffectiveShape()` / length of the bezier) are not reproduced.
+- `SKIP_STRUCT` flags live in `OutlineScratch` (algorithm-local set), not in `base.flags`.
+- `BuildFootprintPolygonOutlines`, one-segment case: the C++ dereferences possibly empty
+  `OPT_VECTOR2I`s in the corner branches (undefined behaviour for a segment parallel to two bbox
+  sides that falls through); the port uses (0, 0).
+- `Board::get_board_polygon_outlines` returns a fresh set (C++ appends to `aOutlines`; every
+  caller passes an empty one).
+
+Known gaps: wxLogTrace output of `traceBoardOutline` is dropped. No stubs left in the two files.
+
+## Package PCBIO-13: board file generators and geometric constraints
+
+Files: `src/io/parser/generator.rs`, `src/io/writer/generator.rs`, `tests/pcbio13_generators.rs`,
+`tests/data/pcbio13/`, `tests/golden/pcbio13/`, `tests/golden/pcbio13_corpus.txt`,
+`tests/oracle/pcbio13_golden.sh`.
+
+### C++ to Rust map
+
+| C++ (`pcb_io_kicad_sexpr_parser.cpp` / `pcb_io_kicad_sexpr.cpp`) | Rust | state |
+|---|---|---|
+| `parseGENERATOR` (`uuid` / legacy `id` header, type, name, `locked`, layer, members, templates, custom properties, typed property map: `yes`/`no`, number, quoted string, `(xy ..)`, `(pts ..)`, `(cells (ij ..))`, `emplace` = first value of a key wins; ghost tuning patterns / member-less via stacks dropped) | `parser/generator.rs` `parse_generator`, `parse_generator_property` | ported |
+| `parseGENERATOR_templates` | `parse_generator_templates` | ported |
+| `parseCONSTRAINT` (type, uuid, members with the optional VERTEX index, value in mm for length types, driving, custom properties) | `parse_constraint` | ported |
+| `resolveConstraints` (footprint lookup map, `BOARD::ResolveItem`, append-mode remap with `find`, dangling members kept, other-footprint members dropped, `Add( INSERT )` to the recorded parent) | `resolve_constraints` | ported |
+| generator creation (`CreateFromType`, `SetLayer`, `SetProperties`, `SetTemplateItem`) | PCBIO-09 `generator_from_info` (unchanged) | ported (now exercised) |
+| `format( const PCB_GENERATOR* )` (ghost skip, `(type ..)` bare, name / layer quoted, `locked`, properties in key order with `{:.10g}` numbers, `FormatBool`, `(xy ..)`, `formatPolyPts`, `(cells (ij ..))`, quoted strings; templates; sorted member uuids; custom properties) | `writer/generator.rs` `format_generator` | ported except the template item itself (see known gaps) |
+| `format( const PCB_CONSTRAINT* )` (member-less skip, VERTEX index, `FormatDouble2Str` value, lengths divided by `IU_PER_MM`, `(driving no)`) | `format_constraint` | ported |
+
+### Tests and verification (2026-11-10)
+
+- Byte level, corpus (`oracle_corpus_generators`, golden `pcbio13_corpus.txt` from the
+  io-corpus re-saves of the reference `kicad-cli pcb upgrade --force`): 23 corpus boards with
+  `(generated` or `(constraint`; 22 checked (incl. the demos cm5_minima and openair-max; the
+  only top-level constraints are `demos/constraints`, the orientation_drc match is a rule),
+  all `(generated ..)` / `(constraint ..)` blocks identical (68 generators on 20 boards, 87
+  constraints); on issue25265, issue25303 and
+  stitch_fp_rulearea identical except the template via (pending, below). api_kitchen_sink
+  (footprint-level constraints only) stops on the `PCB_BARCODE::SetPosition` model stub.
+  `qa/data/pcbnew/vme-wren.kicad_pcb` (29 MB, not in the io-corpus cache) checked once by hand
+  with `oracle_large_board` (`--ignored`): 89 blocks identical. Not run: the large demos
+  jetson-agx-thor and demos/vme-wren (machine rules).
+- Byte level, hand-made board `tests/data/pcbio13/generators.kicad_pcb` (via stack with hops,
+  quoted / escaped strings, duplicate key, wrong layer normalised by `start_layer`; ghost via
+  stack; locked via stitch with cells, chain with an arc, unknown key, template via; constraints
+  of every anchor, vertex with and without index, dangling member, values for length / angle /
+  tiny length, `(driving no)`, custom property, member-less constraint): the Rust re-save of the
+  input and of the reference re-save reproduce the reference blocks (`oracle_resave_handmade`).
+- Parse errors (`parse_errors`): 10 malformed generator / constraint bodies give the reference
+  load error texts byte for byte (golden `tests/golden/pcbio13/parse_errors.txt`, recorded from
+  `kicad-cli`), incl. "Cannot create generated object of type '%s'".
+- Item level (`tools/io-corpus/run.sh --dump NAME --sections item,misc`, pcb-dump `--no-init`
+  vs pcb-dump-rs): via_stacks, both tuning_generators_load_save files, the 4 drc_via_stack
+  boards, demos/constraints: 0 mismatch / 0 missing; issue25265, issue25303,
+  stitch_fp_rulearea, drc_skew, issue22536, issue18045, issue23550, issue17971,
+  diff_pair_uncoupled_tuning_drc, multichannel_nested: every generator line and every
+  generator membership matches; the remaining mismatches are `net` codes and group members /
+  positions that are footprints (PCBIO-06 pending), missing lines are footprint items.
+- Ports: `test_generator_load_save.cpp` `GeneratorLoading` (both files, lock / name / 47
+  members) + save / reload; `test_via_stack_saveload.cpp` `GoldenFileStillLoads`,
+  `PropertiesAndMembersRoundTrip` (on the golden board: the via stack setters are editor code),
+  `MemberlessStackIsNotSaved` (load here, save in the hand-made oracle);
+  `constraints/test_constraint_serialization.cpp` `RoundTrip`, `VertexIndexRoundTrip`,
+  `VertexIndexValidation`, `MissingShapeMemberPreservedAsError`. Not ported:
+  `AppendRemapsConstraintMembers` (append mode is PCBIO-16; `resolve_constraints` has the
+  remap branch).
+
+### Deviations / notes
+
+- `STRING_ANY_MAP::emplace` keeps the first value of a repeated key (`entry().or_insert`).
+- A declaration interrupted by a parse error stays recorded, as in C++ (harmless: the parse
+  fails).
+- The ids the C++ draws (`GENERATOR_INFO()`, `CONSTRAINT_INFO()`, `new PCB_CONSTRAINT`) are
+  drawn from `board.kiid_generator` at the same points.
+
+### Known gaps
+
+- Generator template items (the via stitch's via template) are parsed and kept, but not
+  written: `format_track` (PCBIO-03) takes an arena handle, the template is owned by the
+  generator. The writer prints `(templates (template (name "via")` and skips the via with
+  "port pending: generator template (PCBIO-13)" (`allow_pending`) until `writer/tracks.rs`
+  gains a `&Track` entry point (change request); then `format_template_item` becomes one call.
+- A via stitch without a parsed template: C++ always has a default `PCB_VIA` template and
+  writes it; the model keeps no default template (M23 gap). No corpus board has one.
+- Footprint-level constraints are parsed once `parseFOOTPRINT` (PCBIO-06) calls
+  `parse_constraint`; `resolve_constraints` already handles footprint parents.

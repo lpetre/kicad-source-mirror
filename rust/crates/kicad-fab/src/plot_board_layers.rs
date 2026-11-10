@@ -32,21 +32,21 @@
 use std::sync::Arc;
 
 use kicad_core::color4d::Color4D;
+use kicad_core::layer_ids::is_copper_layer;
 use kicad_core::page_info::{CustomPageSize, PageInfo, PageSizeType};
 use kicad_core::plot_enums::{DrillMarks, FillT, PlotFormat};
-use kicad_core::layer_ids::is_copper_layer;
 use kicad_core::{Lset, PCB_IU_SCALE, PcbLayerId};
 use kicad_geom::convert_basic_shapes_to_polygon::transform_round_chamfered_rect_to_polygon;
 use kicad_geom::geometry::approximation::ErrorLoc;
 use kicad_geom::{Box2I, EdaAngle, ShapePolySet, Vector2I, ki_round};
+use kicad_pcb::AnyItem;
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::ids::{FootprintId, TrackId, ZoneId};
-use kicad_pcb::AnyItem;
 use kicad_pcb::pcb_plot_params::PcbPlotParams;
 use kicad_pcb::pcb_track::Track;
+use kicad_plot::gbr_metadata::GbrApertureAttrib;
 use kicad_plot::gbr_metadata::GbrMetadata;
 use kicad_plot::gbr_netlist_metadata::gbr_netinfo;
-use kicad_plot::gbr_metadata::GbrApertureAttrib;
 use kicad_plot::{GerberPlotter, Plotter, RenderSettings, SvgPlotter};
 
 use crate::pcb_plotter::build_plot_file_name;
@@ -134,6 +134,8 @@ fn drill_symbol_layers(a_board: &BoardCtx<'_>) -> Lset {
 }
 
 /// Port of `PlotOneBoardLayer`: plot one layer with the function its kind needs.
+// The silk arm keeps the C++ `if( GetSubtractMaskFromSilk() ) { ... break; }` structure.
+#[allow(clippy::collapsible_match)]
 pub fn plot_one_board_layer(
     a_board: &BoardCtx<'_>,
     a_plotter: &mut dyn Plotter,
@@ -569,8 +571,10 @@ fn initialize_plotter(
     let mut offset = Vector2I::new(0, 0);
 
     if autocenter {
-        offset.x = ki_round(board_center.x as f64 - (paper_size_iu.x as f64 / 2.0) / compound_scale);
-        offset.y = ki_round(board_center.y as f64 - (paper_size_iu.y as f64 / 2.0) / compound_scale);
+        offset.x =
+            ki_round(board_center.x as f64 - (paper_size_iu.x as f64 / 2.0) / compound_scale);
+        offset.y =
+            ki_round(board_center.y as f64 - (paper_size_iu.y as f64 / 2.0) / compound_scale);
     } else if a_plot_opts.use_aux_origin {
         offset = board.design_settings().aux_origin();
     }

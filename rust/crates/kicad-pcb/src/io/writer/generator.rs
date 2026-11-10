@@ -23,8 +23,8 @@
 //! normalises the file map through `PcbGenerator::normalize_properties` (the subclass
 //! `SetProperties` / `GetProperties` round trip, M23), so the map is written as stored.
 
-use kicad_core::{Lset, PCB_IU_SCALE};
 use kicad_core::string_utils::format_double2_str;
+use kicad_core::{Lset, PCB_IU_SCALE};
 use kicad_sexpr::IoError;
 use kicad_sexpr::format_g;
 use kicad_sexpr::{format_bool, format_custom_properties, format_uuid};
@@ -128,8 +128,7 @@ impl PcbWriter<'_> {
 
             for (name, template) in &g.templates {
                 let quoted = self.out.quotew(name);
-                self.out
-                    .print(format_args!("(template (name {quoted})"))?;
+                self.out.print(format_args!("(template (name {quoted})"))?;
                 self.format_template_item(template)?;
                 self.out.print(format_args!(")"))?; // Close `template` token.
             }

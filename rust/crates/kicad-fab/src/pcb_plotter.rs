@@ -124,14 +124,17 @@ mod tests {
 
     #[test]
     fn plot_file_names() {
-        assert_eq!(name("/a/demo.kicad_pcb", "out", "F.Cu", "gtl"), "out/demo-F_Cu.gtl");
+        assert_eq!(
+            name("/a/demo.kicad_pcb", "out", "F.Cu", "gtl"),
+            "out/demo-F_Cu.gtl"
+        );
         assert_eq!(
             name("demo.kicad_pcb", "out/", " Inner Top \t", "g1"),
             "out/demo-Inner Top.g1"
         );
         assert_eq!(
             name("demo.kicad_pcb", "o", "My:Layer.x*?\\/\"<>|%", "gbr"),
-            "o/demo-My_Layer_x________.gbr"
+            "o/demo-My_Layer_x_________.gbr"
         );
         assert_eq!(name("demo.kicad_pcb", "o", "  ", "gbrjob"), "o/demo.gbrjob");
         // wxString::Trim only removes ASCII white space

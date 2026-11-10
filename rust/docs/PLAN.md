@@ -196,6 +196,23 @@ Progress log:
   kicad-pcb model stubs: 793 -> 73 (barcode tier 2, footprint geometry M20 running).
   Launched: tier-2 DRC providers DRC-24 -> DRC-26 -> DRC-23 -> DRC-29 and DRC-27 -> DRC-25
   -> DRC-28 (wxpfc9smx).
+  02:05 UTC (clock corrected: earlier stamps in this log ran ~25 min fast): done GLUE-1
+  (stale stubs wired; `sorted_set` is now an exact libstdc++ RB-tree `std::set` port;
+  PCBIO-03 corpus oracle identical on 510 board-kind pairs; defaults scoreboard 3533 match,
+  149 pending, 0 mismatch), PCBIO-12 other items (69 blocks byte-identical; barcodes wait for
+  M25a), M19 footprint A (cascades, fields, variants, net ties; 110 reference values equal),
+  M21 board outline (333-board golden; all 103 loadable boards identical; 2 fixture lines
+  differ by the documented pointer-order rule), FAB-03 plot driver (247/247 Gerber files of
+  crafted boards byte-identical; corpus: 2840/2840 headers, 874 whole files, 0 differ, rest
+  pending item plotting), PCBIO-13 generators / constraints (155 blocks on 22 boards
+  byte-identical; template via pending a writer entry point). Launched: Fable integration #2
+  (below), M25a barcode model (no symbol encoder yet) and CLEAN-1 foundation consolidation.
+  Watch list from the Fable read of these results: (a) M21 keeps the board immutable where
+  C++ `RebuildBezierToSegmentsPointsList(aErrorMax)` re-approximates Edge.Cuts beziers in
+  place during the outline build - first suspect if DRC / plot output differs on boards with
+  bezier outlines; (b) M19 cascades re-stamp patched footprint caches (design 8.5) - check
+  with the M20 oracle; (c) `Footprint::component_class` with dynamic rules is pending the
+  DRC rule matcher.
   READY TO LAUNCH (package files written): after CN-04 finishes (workflow w6koa0hnk):
   chain [PCBIO-15] and chain [ZF-01, ZF-03, ZF-06] then [TD-01]; after PCBIO-07 finishes
   (workflow w3kdexuvx): [PCBIO-14]; after GLUE-1 finishes (workflow w3ztkctur): Fable

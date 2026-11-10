@@ -1,0 +1,8 @@
+pad|01d6b91f-b519-4000-9ea0-db5a3aad940e|flash.F.Cu=true
+pad|01d6b91f-b519-4000-9ea0-db5a3aad940e|flash.In1.Cu=false
+pad|01d6b91f-b519-4000-9ea0-db5a3aad940e|flash.In2.Cu=false
+pad|01d6b91f-b519-4000-9ea0-db5a3aad940e|flash.B.Cu=false
+pad|346be68c-a951-4598-9dfa-9f55a97eec49|flash.F.Cu=true
+pad|346be68c-a951-4598-9dfa-9f55a97eec49|flash.In1.Cu=false
+pad|346be68c-a951-4598-9dfa-9f55a97eec49|flash.In2.Cu=false
+pad|346be68c-a951-4598-9dfa-9f55a97eec49|flash.B.Cu=false

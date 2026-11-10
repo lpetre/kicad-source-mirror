@@ -1,0 +1,4075 @@
+#case cu32 default
+#file cu32-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In2_Cu.g2
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L3,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In3_Cu.g3
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L4,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In4_Cu.g4
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L5,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In5_Cu.g5
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In6_Cu.g6
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L7,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In7_Cu.g7
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L8,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In8_Cu.g8
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L9,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In9_Cu.g9
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L10,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In10_Cu.g10
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L11,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In11_Cu.g11
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L12,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In12_Cu.g12
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L13,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In13_Cu.g13
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L14,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In14_Cu.g14
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L15,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In15_Cu.g15
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L16,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In16_Cu.g16
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L17,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In17_Cu.g17
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L18,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In18_Cu.g18
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L19,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In19_Cu.g19
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L20,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In20_Cu.g20
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L21,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In21_Cu.g21
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L22,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In22_Cu.g22
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L23,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In23_Cu.g23
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L24,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In24_Cu.g24
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L25,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In25_Cu.g25
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L26,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In26_Cu.g26
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L27,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In27_Cu.g27
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L28,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In28_Cu.g28
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L29,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In29_Cu.g29
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L30,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In30_Cu.g30
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L31,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Margin.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-F_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 no_x2
+#file cu32-F_Cu.gtl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L1,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.g1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L2,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L32,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gm1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 prec5
+#file cu32-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 no_protel
+#file cu32-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 drill_origin
+#file cu32-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 board_params
+#file cu32-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In1_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In2_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L3,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In3_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L4,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In4_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L5,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In5_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In6_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L7,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In7_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L8,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In8_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L9,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In9_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L10,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In10_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L11,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In11_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L12,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In12_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L13,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In13_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L14,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In14_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L15,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In15_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L16,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In16_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L17,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In17_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L18,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In18_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L19,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In19_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L20,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In20_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L21,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In21_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L22,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In22_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L23,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In23_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L24,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In24_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L25,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In25_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L26,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In26_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L27,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In27_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L28,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In28_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L29,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In29_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L30,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-In30_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L31,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case cu32 common
+#file cu32-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file cu32-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,cu32,63753332-2e6b-4696-9361-645f70636258,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L32,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer default
+#file hdr_4layer-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.g1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-In2_Cu.g2
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L3,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Adhesive.gta
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Glue,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Adhesive.gba
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Glue,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Paste.gbp
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Silkscreen.gbo
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Mask.gbs
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-User_Drawings.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,OtherDrawing,Comment*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-User_Comments.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,Comment*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-User_Eco1.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,ECO1*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-User_Eco2.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,ECO2*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Margin.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Fab.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,AssemblyDrawing,Top*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Fab.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,AssemblyDrawing,Bot*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-My_Layer_x.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer no_x2
+#file hdr_4layer-F_Cu.gtl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Copper,L1,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.g1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Copper,L2,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Copper,L4,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gtp
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Paste,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gto
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Legend,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gts
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Soldermask,Top*
+G04 #@! TF.FilePolarity,Negative*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gm1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-My_Layer_x.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*
+G04 #@! TF.SameCoordinates,PX5f5e100PY2faf080*
+G04 #@! TF.FileFunction,Other,User*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer prec5
+#file hdr_4layer-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.g1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-My_Layer_x.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer no_protel
+#file hdr_4layer-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-My_Layer_x.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer drill_origin
+#file hdr_4layer-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.g1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-My_Layer_x.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer board_params
+#file hdr_4layer-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Inner Top.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-In2_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L3,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Paste.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Paste.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Paste,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Silkscreen.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Silkscreen.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Legend,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-F_Mask.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Mask.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case hdr_4layer common
+#file hdr_4layer-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file hdr_4layer-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,hdr_4layer,6864725f-346c-4617-9965-722e6b696361,1.2_a\u002Ab\u0025c*%
+%TF.SameCoordinates,PX5f5e100PY2faf080*%
+%TF.FileFunction,Copper,L4,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg default
+#file six_layer_a4neg-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In2_Cu.g2
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L3,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In3_Cu.g3
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L4,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In4_Cu.g4
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L5,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Paste.gbp
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Paste,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Mask.gbs
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Margin.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Fab.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,AssemblyDrawing,Bot*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg no_x2
+#file six_layer_a4neg-F_Cu.gtl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L1,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In1_Cu.g1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L2,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L6,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Paste.gtp
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Paste,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Mask.gts
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Soldermask,Top*
+G04 #@! TF.FilePolarity,Negative*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gm1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg prec5
+#file six_layer_a4neg-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg no_protel
+#file six_layer_a4neg-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In1_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Paste.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Mask.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg drill_origin
+#file six_layer_a4neg-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-In1_Cu.g1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L2,Inr*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Paste.gtp
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Paste,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case six_layer_a4neg board_params
+#file six_layer_a4neg-F_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L1,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-In1_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L2,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-In2_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L3,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-In3_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L4,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-In4_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L5,Inr*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-B_Cu.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Copper,L6,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-F_Paste.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Paste,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-B_Paste.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Paste,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-F_Mask.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Soldermask,Top*
+G04 #@! TF.FilePolarity,Negative*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-B_Mask.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Soldermask,Bot*
+G04 #@! TF.FilePolarity,Negative*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#file six_layer_a4neg-Edge_Cuts.gbr
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*
+G04 #@! TF.SameCoordinates,Original*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X29200220Y-20500720D02*
+G01*
+X29200220Y-21500720D01*
+X30200220Y-21500720D01*
+X30200220Y-20500720D01*
+X29200220Y-20500720D01*
+G37*
+M02*
+#case six_layer_a4neg common
+#file six_layer_a4neg-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file six_layer_a4neg-B_Cu.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,six_layer_a4neg,7369785f-6c61-4796-9572-5f61346e6567,rev?*%
+%TF.SameCoordinates,Original*%
+%TF.FileFunction,Copper,L6,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é default
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-B_Silkscreen.gbo
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-B_Mask.gbs
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Margin.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-B_Courtyard.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Other,User*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Fab.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,AssemblyDrawing,Top*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é no_x2
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*
+G04 #@! TF.SameCoordinates,PXff676980PYfec731e0*
+G04 #@! TF.FileFunction,Copper,L1,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*
+G04 #@! TF.SameCoordinates,PXff676980PYfec731e0*
+G04 #@! TF.FileFunction,Copper,L2,Bot*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Silkscreen.gto
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*
+G04 #@! TF.SameCoordinates,PXff676980PYfec731e0*
+G04 #@! TF.FileFunction,Legend,Top*
+G04 #@! TF.FilePolarity,Positive*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Mask.gts
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*
+G04 #@! TF.SameCoordinates,PXff676980PYfec731e0*
+G04 #@! TF.FileFunction,Soldermask,Top*
+G04 #@! TF.FilePolarity,Negative*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Edge_Cuts.gm1
+<normalised>
+<normalised>
+G04 #@! TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*
+G04 #@! TF.SameCoordinates,PXff676980PYfec731e0*
+G04 #@! TF.FileFunction,Profile,NP*
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é prec5
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX45Y45*%
+G04 Gerber Fmt 4.5, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é no_protel
+#file x,y%z-é-F_Cu.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Silkscreen.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Mask.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Edge_Cuts.gbr
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é drill_origin
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#case x,y%z-é board_params
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-F_Silkscreen.gto
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-B_Silkscreen.gbo
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Legend,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-F_Mask.gts
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Top*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-B_Mask.gbs
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Soldermask,Bot*%
+%TF.FilePolarity,Negative*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#file x,y%z-é-Edge_Cuts.gm1
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Profile,NP*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+G36*
+X5000000Y-15500000D02*
+G01*
+X5000000Y-25500000D01*
+X15000000Y-25500000D01*
+X15000000Y-15500000D01*
+X5000000Y-15500000D01*
+G37*
+M02*
+#case x,y%z-é common
+#file x,y%z-é-F_Cu.gtl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L1,Top*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*
+#file x,y%z-é-Bottom Côté.gbl
+<normalised>
+<normalised>
+%TF.ProjectId,x_y\u0025z-_,782c7925-7a2d-4e92-9e6b-696361645f70,7\u002Ax__*%
+%TF.SameCoordinates,PXff676980PYfec731e0*%
+%TF.FileFunction,Copper,L2,Bot*%
+%TF.FilePolarity,Positive*%
+%FSLAX46Y46*%
+G04 Gerber Fmt 4.6, Leading zero omitted, Abs format (unit mm)*
+<normalised>
+%MOMM*%
+%LPD*%
+G01*
+G04 APERTURE LIST*
+G04 APERTURE END LIST*
+M02*

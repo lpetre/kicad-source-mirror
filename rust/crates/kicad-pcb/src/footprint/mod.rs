@@ -1767,7 +1767,7 @@ impl Board {
         let net_of = |id: PadId| {
             self.pads
                 .get(id)
-                .map_or(NetCode::ORPHANED, |p| BoardConnectedItem::net_code(p))
+                .map_or(NetCode::ORPHANED, BoardConnectedItem::net_code)
         };
 
         for (ii, &pad) in pads.iter().enumerate() {
@@ -2208,7 +2208,7 @@ mod tests {
         assert_eq!(resolve("EXCLUDE_FROM_BOARD", None), (true, String::new()));
         assert_eq!(resolve("EXCLUDE_FROM_BOM", None), (true, String::new()));
         assert_eq!(resolve("LAYER", None), (true, "F.Cu".to_string()));
-        assert_eq!(resolve("NOT_A_VAR", Some("")).0, false);
+        assert!(!resolve("NOT_A_VAR", Some("")).0);
         assert_eq!(
             f.field_value_for_variant(&ctx, "production", "Value"),
             "22k"

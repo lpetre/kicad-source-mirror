@@ -35,9 +35,19 @@ order (tab separated, so that descriptions may contain anything but tabs and new
     <path relative to <kicad>> TAB <index> TAB <severity> TAB <type> TAB <description>
         { TAB <uuid> TAB <item description> TAB <x> TAB <y> }
 
-with x / y exactly as printed by the reference (mm). Boards whose run fails get one line
-`<path> TAB load_error`, boards without violations `<path> TAB none`. The Rust replay
-(tests/drc_harness) filters both sides to the error types of the providers under test.
+with x / y exactly as printed by the reference (mm), for the error types of the ported
+providers (PORTED_TYPES below: a provider package adds its types and reruns the script, which
+re-uses the cached reports) with at most MAX_FULL entries on the board. Every other type gets
+one summary line per board
+
+    <path> TAB # TAB <type> TAB <count> TAB <FNV-1a 64 of the entry texts in report order>
+
+where an entry text is severity, type, description and per item uuid, description, x, y with
+the position in IU (round( mm * 1e6 )), tab separated, ending in a newline. The golden stays
+small; the severity of an entry excluded in the project gets the suffix `/excluded` (such
+entries are sorted after the others). The replay prints the entries of a mismatching summary from the cached report. Boards whose run fails get one line `<path> TAB load_error`,
+boards without violations `<path> TAB none`. The Rust replay (tests/drc_harness) filters both
+sides to the error types of the providers under test.
 """
 
 import json
@@ -52,6 +62,23 @@ KICAD = os.path.abspath(os.path.join(HERE, "..", "..", "..", "..", ".."))
 GOLDEN = os.path.join(HERE, "..", "golden", "drc_corpus.txt")
 CACHE = os.path.join(KICAD, "rust", "target", "drc-corpus")
 MAX_SIZE = 5 * 1024 * 1024
+# Error types whose entries are stored in full (providers that have been ported).
+PORTED_TYPES = {
+    # DRC-06
+    "annular_width", "drill_out_of_range", "microvia_drill_out_of_range", "track_width",
+    "via_diameter",
+}
+# More entries of one type on one board are stored as a summary line only.
+MAX_FULL = 20
+FNV_OFFSET = 0xCBF29CE484222325
+FNV_PRIME = 0x100000001B3
+
+
+def fnv1a64(h, data):
+    for b in data:
+        h ^= b
+        h = (h * FNV_PRIME) & 0xFFFFFFFFFFFFFFFF
+    return h
 # Large demo boards that must not run next to other jobs (PORTING.md section 7).
 EXCLUDED = ("openair-max", "tiny_tapeout", "cm5_minima", "jetson", "vme-wren")
 
@@ -107,20 +134,53 @@ def run_board(cli, rel, env):
     return report
 
 
+def severity(v):
+    """The severity field: `/excluded` appended for entries excluded in the project."""
+    return v["severity"] + ("/excluded" if v.get("excluded") else "")
+
+
+def hash_line(v):
+    """The text an entry contributes to a summary hash (positions in IU, see the docstring)."""
+    fields = [severity(v), v["type"], v["description"]]
+
+    for item in v.get("items", []):
+        fields += [item["uuid"], item["description"], str(round(item["pos"]["x"] * 1e6)),
+                   str(round(item["pos"]["y"] * 1e6))]
+
+    return "\t".join(f.replace("\t", " ").replace("\n", " ") for f in fields) + "\n"
+
+
 def golden_lines(rel, report):
     if report is None:
         return [f"{rel}\tload_error"]
 
+    violations = report.get("violations", [])
+    counts = {}
+
+    for v in violations:
+        counts[v["type"]] = counts.get(v["type"], 0) + 1
+
     out = []
+    summary = {}
 
-    for i, v in enumerate(report.get("violations", [])):
-        fields = [rel, str(i), v["severity"], v["type"], v["description"]]
+    for i, v in enumerate(violations):
+        t = v["type"]
 
-        for item in v.get("items", []):
-            fields += [item["uuid"], item["description"], repr(item["pos"]["x"]),
-                       repr(item["pos"]["y"])]
+        if t in PORTED_TYPES and counts[t] <= MAX_FULL:
+            fields = [rel, str(i), severity(v), t, v["description"]]
 
-        out.append("\t".join(f.replace("\t", " ").replace("\n", " ") for f in fields))
+            for item in v.get("items", []):
+                fields += [item["uuid"], item["description"], repr(item["pos"]["x"]),
+                           repr(item["pos"]["y"])]
+
+            out.append("\t".join(f.replace("\t", " ").replace("\n", " ") for f in fields))
+        else:
+            n, h = summary.get(t, (0, FNV_OFFSET))
+            summary[t] = (n + 1, fnv1a64(h, hash_line(v).encode()))
+
+    for t in sorted(summary):
+        n, h = summary[t]
+        out.append(f"{rel}\t#\t{t}\t{n}\t{h:016x}")
 
     return out or [f"{rel}\tnone"]
 

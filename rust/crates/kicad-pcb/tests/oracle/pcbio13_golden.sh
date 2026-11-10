@@ -1,0 +1,123 @@
+#!/bin/bash
+# This program source code file is part of KiCad, a free EDA CAD application.
+#
+# Copyright The KiCad Developers, see AUTHORS.txt for contributors.
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# PCBIO-13 differential oracle (generators and geometric constraints), two parts, both with the
+# reference `kicad-cli pcb upgrade --force` of a board copied alone into a fresh scratch
+# directory (no project files):
+#  1. the hand-made boards tests/data/pcbio13/*.kicad_pcb are re-saved to
+#     tests/golden/pcbio13/<name>.kicad_pcb;
+#     The parse error texts of tests/data/pcbio13/parse_error_cases.txt go to
+#     tests/golden/pcbio13/parse_errors.txt (see below);
+#  2. every corpus board (qa/data/pcbnew and demos) containing "(generated" or "(constraint"
+#     re-saved by the io-corpus harness (rust/tools/io-corpus/run.sh, cache
+#     rust/target/io-corpus/boards/<flat>/o1.kicad_pcb, which is exactly such a re-save; run it
+#     first) is reduced to its top-level (one tab) "generated" and "constraint" blocks,
+#     recorded in tests/golden/pcbio13_corpus.txt as
+#       path|count|fnv(blocks in file order)|fnv(blocks without their "(templates" sub-block)
+#     (FNV-1a 64; a block is the lines from its keyword to its closing ")" line).
+# Replayed by tests/pcbio13_generators.rs (the block extraction is mirrored there).
+#
+# Usage: tests/oracle/pcbio13_golden.sh   (run from rust/crates/kicad-pcb)
+set -euo pipefail
+here=$(cd "$(dirname "$0")/.." && pwd)
+rust=$(cd "$here/../../.." && pwd)
+kicad=$(cd "$rust/.." && pwd)
+cli=${KICAD_ORACLE_CLI:-/home/user/kicad-oracle/bin/kicad-cli}
+cache=${IO_CORPUS_DIR:-$rust/target/io-corpus}/boards
+scratch=$(mktemp -d)
+trap 'rm -rf "$scratch"' EXIT
+export KICAD_ORACLE_HOME=$scratch/home
+
+resave() {   # resave <in> <out>
+    local d=$scratch/b
+    rm -rf "$d"; mkdir -p "$d"
+    cp "$1" "$d/board.kicad_pcb"
+    timeout 300 nice -n 10 "$cli" pcb upgrade --force "$d/board.kicad_pcb" > "$d/log" 2>&1 \
+        && grep -q "Successfully saved" "$d/log" && cp "$d/board.kicad_pcb" "$2"
+}
+
+mkdir -p "$here/golden/pcbio13"
+for f in "$here"/data/pcbio13/*.kicad_pcb; do
+    resave "$f" "$here/golden/pcbio13/$(basename "$f")"
+done
+
+# Parse errors: each line of tests/data/pcbio13/parse_error_cases.txt is put into a minimal board
+# (header of version 20260206, F.Cu / B.Cu); the reference load error (the text after "Failed to
+# load board: ") is recorded in tests/golden/pcbio13/parse_errors.txt, one line per case.
+: > "$here/golden/pcbio13/parse_errors.txt"
+while IFS= read -r body; do
+    d=$scratch/e; rm -rf "$d"; mkdir -p "$d"
+    printf '(kicad_pcb (version 20260206) (generator "pcbnew") (generator_version "10.0")\n(layers (0 "F.Cu" signal) (2 "B.Cu" signal))\n%s\n)\n' "$body" > "$d/t.kicad_pcb"
+    (cd "$d" && timeout 60 nice -n 10 "$cli" pcb upgrade --force t.kicad_pcb 2>&1 || true) \
+        | grep '^Failed to load board: ' | sed 's/^Failed to load board: //' >> "$here/golden/pcbio13/parse_errors.txt"
+done < "$here/data/pcbio13/parse_error_cases.txt"
+
+python3 -I - "$cache" "$kicad" > "$here/golden/pcbio13_corpus.txt" <<'PY'
+import os, re, sys
+KINDS = (b'generated', b'constraint')
+def fnv(b):
+    h = 0xcbf29ce484222325
+    for c in b:
+        h ^= c
+        h = (h * 0x100000001b3) & 0xffffffffffffffff
+    return '%016x' % h
+def blocks(data):
+    out = []
+    lines = data.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        l = lines[i]
+        if l.startswith(b'\t(') and not l.startswith(b'\t\t'):
+            word = l[2:].split(b' ')[0].split(b'\n')[0].rstrip(b')')
+            j = i
+            if not l.rstrip(b'\n').endswith(b')') or l.count(b'(') != l.count(b')'):
+                while j < len(lines) and lines[j] != b'\t)\n':
+                    j += 1
+            if word in KINDS:
+                out.append(b''.join(lines[i:j + 1]))
+            i = j + 1
+        else:
+            i += 1
+    return out
+def strip_templates(block):
+    out = []
+    lines = block.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        if lines[i].startswith(b'\t\t(templates'):
+            while i < len(lines) and lines[i] != b'\t\t)\n':
+                i += 1
+            i += 1
+            continue
+        out.append(lines[i])
+        i += 1
+    return b''.join(out)
+cache, kicad = sys.argv[1], sys.argv[2]
+print('# generated by tests/oracle/pcbio13_golden.sh')
+for flat in sorted(os.listdir(cache)):
+    d = os.path.join(cache, flat)
+    meta = open(os.path.join(d, 'meta')).read()
+    if 'saved' not in meta:
+        continue
+    path = flat.replace('__', '/')
+    src = open(os.path.join(kicad, path), 'rb').read()
+    if b'(generated' not in src and not re.search(rb'\(constraint\s', src):
+        continue
+    b = blocks(open(os.path.join(d, 'o1.kicad_pcb'), 'rb').read())
+    print('%s|%d|%s|%s' % (path, len(b), fnv(b''.join(b)), fnv(b''.join(strip_templates(x) for x in b))))
+PY
