@@ -37,12 +37,12 @@
 //! list to the reports, so a report never silently omits a check; with an empty list the
 //! reports are byte for byte those of the C++.
 
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use kicad_connectivity::data::ConnectivityData;
 use kicad_core::eda_units::EdaUnits;
 use kicad_core::json::{ObjectOrder, Value, dump_stream};
-use kicad_core::{Kiid, Severity};
+use kicad_core::{KicadT, Kiid, PcbLayerId, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::board::index::UuidPresence;
 use kicad_pcb::drc_api::{
@@ -50,7 +50,7 @@ use kicad_pcb::drc_api::{
     DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY, DRCE_SCHEMATIC_PARITY,
 };
 use kicad_pcb::pcb_marker::{MarkerT, PcbMarker, RcItem};
-use kicad_pcb::{Board, BoardCtx, ConnectivityQuery};
+use kicad_pcb::{Board, BoardCtx, ConnectivityQuery, ItemId, ItemRef, NetCode};
 
 use crate::cache_generator::{CacheGeneratorConnectivity, DrcCacheGenerator};
 use crate::caches::{DrcBoardCaches, ZoneIslandsMap};
@@ -238,6 +238,89 @@ pub fn unported_check_would_run(
     }
 }
 
+/// The second connectivity of the zone connections provider (see [`run_provider`]), built
+/// on its first query instead of before the provider runs. Not a C++ type: C++ has one
+/// connectivity; the port needs a second one only because the provider holds the run's
+/// connectivity as `&mut` while the context needs a shared [`ConnectivityQuery`].
+///
+/// Invariant that makes the laziness output-neutral: the value is a function of `board`
+/// only, and `board` is an immutable `&Board` for the whole provider loop of
+/// [`run_tests_selected`], so building it at the first query gives the same object as
+/// building it before the provider; when nothing queries it, nothing observes it (the bare
+/// build only warms self-validating item caches, which the cache generator's own bare
+/// builds warm on the same board state). If the board ever becomes mutable during the
+/// provider loop, this must go back to an eager build.
+pub static TMP_LAZY_BUILDS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+struct LazyConnectivity<'b> {
+    board: &'b Board,
+    /// False when the board has no copper zones: the query is the empty `ConnectivityData`.
+    build: bool,
+    /// `OnceLock` because `ConnectivityQuery: Sync` (providers may query from several threads).
+    cell: OnceLock<ConnectivityData>,
+}
+
+impl<'b> LazyConnectivity<'b> {
+    fn new(board: &'b Board, build: bool) -> Self {
+        LazyConnectivity {
+            board,
+            build,
+            cell: OnceLock::new(),
+        }
+    }
+
+    /// The connectivity, built on the first call exactly as the eager code built it.
+    fn get(&self) -> &ConnectivityData {
+        self.cell.get_or_init(|| {
+            let mut query = ConnectivityData::new();
+
+            if self.build {
+                TMP_LAZY_BUILDS.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                query.build(&BoardCtx::bare(self.board));
+                // The same from-to cache as the run's connectivity (rebuilt in run_tests).
+                query.rebuild_from_to_cache(&BoardCtx::bare(self.board));
+            }
+
+            query
+        })
+    }
+}
+
+/// Forwards every method (`is_on_from_to_path` included: the trait default would answer
+/// `None`) to the built connectivity.
+impl ConnectivityQuery for LazyConnectivity<'_> {
+    fn is_connected_on_layer(
+        &self,
+        ctx: &BoardCtx<'_>,
+        item: ItemRef<'_>,
+        layer: PcbLayerId,
+        types: &[KicadT],
+    ) -> bool {
+        ConnectivityQuery::is_connected_on_layer(self.get(), ctx, item, layer, types)
+    }
+
+    fn node_count(&self, net: Option<NetCode>) -> u32 {
+        ConnectivityQuery::node_count(self.get(), net)
+    }
+
+    fn pad_count(&self, net: Option<NetCode>) -> u32 {
+        ConnectivityQuery::pad_count(self.get(), net)
+    }
+
+    fn net_items(&self, net: NetCode, types: &[KicadT]) -> Vec<ItemId> {
+        ConnectivityQuery::net_items(self.get(), net, types)
+    }
+
+    fn is_on_from_to_path(
+        &self,
+        ctx: &BoardCtx<'_>,
+        item: ItemRef<'_>,
+        from: &str,
+        to: &str,
+    ) -> Option<bool> {
+        ConnectivityQuery::is_on_from_to_path(self.get(), ctx, item, from, to)
+    }
+}
+
 /// Runs one provider of the registry (`provider->RunTests( aUnits )`): false when it was
 /// cancelled. The providers are created per run with the caches of the generator.
 #[allow(clippy::too_many_arguments)]
@@ -283,13 +366,9 @@ fn run_provider(
             return DrcTestProviderMatchedLength::new(conn).run_tests(engine, run, &ctx, units);
         }
         "zone connections" => {
-            let mut query = ConnectivityData::new();
-
-            if !caches.copper_zones.is_empty() {
-                query.build(&BoardCtx::bare(board));
-                // The same from-to cache as the run's connectivity (rebuilt in run_tests).
-                query.rebuild_from_to_cache(&BoardCtx::bare(board));
-            }
+            // The second connectivity is built at its first query only (most boards never
+            // query it): see LazyConnectivity.
+            let query = LazyConnectivity::new(board, !caches.copper_zones.is_empty());
 
             let ctx = BoardCtx::bare(board)
                 .with_rules(engine)

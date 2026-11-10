@@ -1322,14 +1322,15 @@ impl ZoneFiller {
 
     /// Port of `ZONE_FILLER::subtractHigherPriorityZones( aZone, aLayer, aRawFill )`: removes
     /// the outlines of higher-priority zones with the same net.  These zones should be in
-    /// charge of the fill parameters within their own outlines.
+    /// charge of the fill parameters within their own outlines. Returns whether anything was
+    /// subtracted (port addition, for the refill result cache seeding).
     pub(crate) fn subtract_higher_priority_zones(
         &self,
         ctx: &BoardCtx<'_>,
         zone: &Zone,
         layer: PcbLayerId,
         raw_fill: &mut ShapePolySet,
-    ) {
+    ) -> bool {
         let zone_bbox = zone.bounding_box(ctx);
         let mut knockouts = ShapePolySet::new();
 
@@ -1364,7 +1365,10 @@ impl ZoneFiller {
 
         if knockouts.outline_count() > 0 {
             raw_fill.boolean_subtract(&knockouts);
+            return true;
         }
+
+        false
     }
 
     /// The keepout holes of `fillCopperZone` (`collectKeepoutHoles`, iterative refill only):

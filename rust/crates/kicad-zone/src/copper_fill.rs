@@ -121,6 +121,19 @@ impl ZoneFiller {
         zone_id: ZoneId,
         layer: PcbLayerId,
     ) -> Option<SingleZoneFill> {
+        self.fill_single_zone_impl(ctx, zone_id, layer)
+            .map(|(fill, _)| fill)
+    }
+
+    /// [`ZoneFiller::fill_single_zone`] that also reports whether the fill may seed the refill
+    /// result cache: true if `fillCopperZone` ran to its end and its tail after the
+    /// pre-knockout cache insert applied no knockout (see `fill_copper_zone`).
+    pub(crate) fn fill_single_zone_impl(
+        &mut self,
+        ctx: &BoardCtx<'_>,
+        zone_id: ZoneId,
+        layer: PcbLayerId,
+    ) -> Option<(SingleZoneFill, bool)> {
         let zone = ctx.board.zone(zone_id)?;
         let mut layer = layer;
         let board_outline = if self.brd_outlines_valid {
@@ -148,6 +161,7 @@ impl ZoneFiller {
         }
 
         let mut fill_polys = ShapePolySet::new();
+        let mut knockout_free = false;
 
         let ok = if self.trivial_copper_fill {
             self.trivial_fill(zone_id, layer, &smoothed_poly, &mut fill_polys)
@@ -161,15 +175,19 @@ impl ZoneFiller {
                 &smoothed_poly,
                 &max_extents,
                 &mut fill_polys,
+                &mut knockout_free,
             )
         } else {
             self.fill_non_copper_zone(ctx, zone, layer, &smoothed_poly, &mut fill_polys)
         };
 
-        Some(SingleZoneFill {
-            polys: fill_polys,
-            clear_need_refill: ok,
-        })
+        Some((
+            SingleZoneFill {
+                polys: fill_polys,
+                clear_need_refill: ok,
+            },
+            knockout_free,
+        ))
     }
 
     /// Port of `ZONE_FILLER::fillCopperZone( aZone, aLayer, aDebugLayer, aSmoothedOutline,
@@ -181,6 +199,12 @@ impl ZoneFiller {
     /// same-net zones.  This is to prevent the re-inflation post min-width trimming from
     /// creating divots between adjacent zones.  The final `max_extents` trimming will remove
     /// these areas from the final fill.
+    ///
+    /// `knockout_free` (port addition, for the refill result cache) is set to true when the
+    /// function reaches its final `Fracture()` with the iterative refill on, the debug mode off
+    /// and no knockout applied after the pre-knockout cache insert (no different-net zone
+    /// clearance, no same-net higher-priority zone subtracted). The fill is then exactly
+    /// `dropSubResolutionOutlines` + `Fracture()` of the cached pre-knockout fill.
     #[allow(clippy::too_many_arguments)]
     pub(crate) fn fill_copper_zone(
         &mut self,
@@ -192,7 +216,10 @@ impl ZoneFiller {
         smoothed_outline: &ShapePolySet,
         max_extents: &ShapePolySet,
         fill_polys: &mut ShapePolySet,
+        knockout_free: &mut bool,
     ) -> bool {
+        *knockout_free = false;
+
         // Features which are min_width should survive pruning; features that are *less* than
         // min_width should not.  Therefore we subtract epsilon from the min_width when
         // deflating/inflating.
@@ -685,7 +712,7 @@ impl ZoneFiller {
         // ---------------------------------------------------------------------------------
         // Lastly give any same-net but higher-priority zones control over their own area.
 
-        self.subtract_higher_priority_zones(ctx, zone, layer, fill_polys);
+        let same_net_subtracted = self.subtract_higher_priority_zones(ctx, zone, layer, fill_polys);
         dump_polys_to_copper_layer!(
             self,
             *fill_polys,
@@ -698,6 +725,11 @@ impl ZoneFiller {
         drop_sub_resolution_outlines(fill_polys, self.max_error);
 
         fill_polys.fracture(true);
+
+        *knockout_free = iterative_refill
+            && !knockouts_applied
+            && !same_net_subtracted
+            && !self.debug_zone_filler;
         true
     }
 

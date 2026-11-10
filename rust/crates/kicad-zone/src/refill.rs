@@ -20,8 +20,9 @@
 //!
 //! Each wave reads a snapshot of the fills taken before it, so the candidates of one wave are
 //! independent and the sequential port refills them in candidate order. The refill result
-//! cache (`m_refillResultCache`, keyed by a hash of the knockouts) is a pure optimisation and
-//! is not ported (connectivity-zones.md R-13).
+//! cache (`m_refillResultCache`, keyed by the hashes of the knockouts) is ported as
+//! `ZoneFiller::refill_result_cache`; the port also seeds it from the initial fill (see
+//! [`RefillKey`]).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
@@ -48,6 +49,77 @@ use crate::index::{board_and_footprint_zones, query_index};
 
 /// Port of `ZONE_FILLER::FillSnapshot`: zone fills captured before an iterative refill wave.
 pub type FillSnapshot = BTreeMap<FillKey, ShapePolySet>;
+
+/// The identity of one knockout set in a [`RefillKey`]: `GetHash()` plus the outline and
+/// vertex counts.
+type KnockoutId = (Hash128, i32, i32);
+
+fn knockout_id(knockouts: &ShapePolySet) -> KnockoutId {
+    (
+        knockouts.get_hash(),
+        knockouts.outline_count(),
+        knockouts.total_vertices(),
+    )
+}
+
+/// The key of a `m_refillResultCache` entry: what `refillZoneFromCache` reads besides inputs
+/// that are constant within one `Fill()` (the pre-knockout fill, apron and pre-hatch caches,
+/// the zone settings and `m_maxError`).
+///
+/// The C++ keys by the combined hash of the two knockout sets only. The port adds
+/// `knockouts_applied` (it decides whether the min-width prune runs, so the result depends on
+/// it) and the outline / vertex counts of both sets. Equal keys therefore mean equal inputs,
+/// and the cached result equals the one the refill would compute.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct RefillKey {
+    knockouts_applied: bool,
+    diff_net: KnockoutId,
+    same_net: KnockoutId,
+}
+
+impl RefillKey {
+    fn new(knockouts_applied: bool, diff_net: &ShapePolySet, same_net: &ShapePolySet) -> Self {
+        RefillKey {
+            knockouts_applied,
+            diff_net: knockout_id(diff_net),
+            same_net: knockout_id(same_net),
+        }
+    }
+
+    /// The key of a refill without any knockout. Its result is the pre-knockout fill after
+    /// `dropSubResolutionOutlines` + `Fracture()`, which is exactly what `fillCopperZone`
+    /// produced for a (zone, layer) whose tail applied no knockout; `run_fill_dag` seeds the
+    /// cache with that fill under this key (a port addition).
+    pub(crate) fn without_knockouts() -> Self {
+        let empty = ShapePolySet::new();
+        RefillKey::new(false, &empty, &empty)
+    }
+}
+
+/// The result of [`ZoneFiller::refill_zone_from_cache_keyed`].
+pub(crate) enum RefillResult {
+    /// A `m_refillResultCache` hit: the fill (with its triangulation) computed earlier in this
+    /// `Fill()` for the same knockouts.
+    Cached(Arc<ShapePolySet>),
+    /// A freshly computed fill and the key to cache it under.
+    Computed(ShapePolySet, RefillKey),
+}
+
+/// True if both sets hold the same outlines and holes, point for point (the debug-build cross
+/// check of a refill result cache hit).
+fn same_polygons(a: &ShapePolySet, b: &ShapePolySet) -> bool {
+    let (pa, pb) = (a.c_polygons(), b.c_polygons());
+
+    pa.len() == pb.len()
+        && pa.iter().zip(pb).all(|(x, y)| {
+            x.len() == y.len()
+                && x.iter().zip(y).all(|(cx, cy)| {
+                    cx.is_closed() == cy.is_closed()
+                        && cx.c_points() == cy.c_points()
+                        && cx.c_shapes() == cy.c_shapes()
+                })
+        })
+}
 
 /// The anonymous `appendZoneOutlineWithoutArcs( aZone, aPolys )`.
 fn append_zone_outline_without_arcs(ctx: &BoardCtx<'_>, zone: &Zone, polys: &mut ShapePolySet) {
@@ -113,19 +185,44 @@ impl ZoneFiller {
                     let ctx = BoardCtx::bare(board)
                         .with_rules(rules)
                         .with_connectivity(&*connectivity);
-                    self.refill_zone_from_cache(&ctx, zone_id, layer, Some(&snapshot))
+                    self.refill_zone_from_cache_keyed(&ctx, zone_id, layer, Some(&snapshot))
                 };
 
-                let Some(fill_polys) = result else {
+                let Some(result) = result else {
                     continue;
                 };
 
                 let fill = board.zone_fill_mut(zone_id);
-                fill.move_filled_polys_list(layer, fill_polys);
-                fill.set_fill_flag(layer, false);
 
-                fill.cache_triangulation(layer);
-                fill.set_fill_flag(layer, true);
+                match result {
+                    RefillResult::Cached(cached) => {
+                        if std::env::var_os("R2_TRACE").is_some() { eprintln!("R2TRACE hit wave={} zone={:?}", iteration + 1, zone_id); }
+                        // The cached set already carries the triangulation the miss path
+                        // computed for exactly these polygons (or the failed-triangulation
+                        // state the miss path would reproduce), so cache_triangulation() is
+                        // skipped: it would only copy the shared set (Arc::make_mut) and
+                        // return early.
+                        fill.filled_polys_list.insert(layer, cached);
+                        fill.set_fill_flag(layer, false);
+                        fill.set_fill_flag(layer, true);
+                    }
+                    RefillResult::Computed(fill_polys, key) => {
+                        fill.move_filled_polys_list(layer, fill_polys);
+                        fill.set_fill_flag(layer, false);
+
+                        fill.cache_triangulation(layer);
+                        fill.set_fill_flag(layer, true);
+
+                        // m_refillResultCache[cacheKey] = { knockoutHash, aFillPolys }: one
+                        // entry per (zone, layer), overwritten. The entry shares the board's
+                        // fill; island removal below copies it first (Arc::make_mut), so the
+                        // cached set stays the refill result.
+                        if let Some(installed) = fill.filled_polys_list.get(&layer) {
+                            self.refill_result_cache
+                                .insert((zone_id, layer), (key, Arc::clone(installed)));
+                        }
+                    }
+                }
             }
 
             // Island detection on the refilled zones only.  Zones that grew into freed space
@@ -305,11 +402,29 @@ impl ZoneFiller {
         layer: PcbLayerId,
         snapshot: Option<&FillSnapshot>,
     ) -> Option<ShapePolySet> {
+        match self.refill_zone_from_cache_keyed(ctx, zone_id, layer, snapshot)? {
+            // aFillPolys = it->second.second (a copy)
+            RefillResult::Cached(cached) => Some((*cached).clone()),
+            RefillResult::Computed(fill_polys, _) => Some(fill_polys),
+        }
+    }
+
+    /// [`ZoneFiller::refill_zone_from_cache`] with the `m_refillResultCache` lookup made
+    /// visible: a hit hands out the shared cached fill, a miss the computed fill with the key
+    /// the caller caches it under.
+    pub(crate) fn refill_zone_from_cache_keyed(
+        &self,
+        ctx: &BoardCtx<'_>,
+        zone_id: ZoneId,
+        layer: PcbLayerId,
+        snapshot: Option<&FillSnapshot>,
+    ) -> Option<RefillResult> {
         let cache_key = (zone_id, layer);
         let zone = ctx.board.zone(zone_id)?;
 
-        // Restore the cached pre-knockout fill
-        let mut fill_polys = self.pre_knockout_fill_cache.get(&cache_key)?.clone();
+        // Restore the cached pre-knockout fill (copied below, once a result cache miss is
+        // certain)
+        let pre_knockout_fill = self.pre_knockout_fill_cache.get(&cache_key)?;
 
         // Subtract the FILLED area of higher-priority zones (with clearance for different
         // nets).  For same-net zones: subtract the filled area directly.  For different-net
@@ -441,6 +556,56 @@ impl ZoneFiller {
             }
         }
 
+        // Refill output is a pure function of the (fill-constant) pre-knockout fill and these
+        // knockouts; skip the subtract + min-width prune below on a cache hit.
+        let refill_key =
+            RefillKey::new(knockouts_applied, &diff_net_knockouts, &same_net_knockouts);
+
+        if let Some((cached_key, cached)) = self.refill_result_cache.get(&cache_key) {
+            if *cached_key == refill_key {
+                // Debug builds prove every hit: the recomputed fill must equal the cached one.
+                if cfg!(debug_assertions) {
+                    let recomputed = self.apply_refill_knockouts(
+                        zone,
+                        cache_key,
+                        pre_knockout_fill.clone(),
+                        &diff_net_knockouts,
+                        &same_net_knockouts,
+                        knockouts_applied,
+                    );
+                    debug_assert!(
+                        same_polygons(&recomputed, cached),
+                        "refill result cache hit differs from the recomputed fill"
+                    );
+                }
+
+                return Some(RefillResult::Cached(Arc::clone(cached)));
+            }
+        }
+
+        let fill_polys = self.apply_refill_knockouts(
+            zone,
+            cache_key,
+            pre_knockout_fill.clone(),
+            &diff_net_knockouts,
+            &same_net_knockouts,
+            knockouts_applied,
+        );
+
+        Some(RefillResult::Computed(fill_polys, refill_key))
+    }
+
+    /// The second half of `refillZoneFromCache` (after the result cache lookup): apply the
+    /// collected knockouts to the pre-knockout fill `fill_polys`.
+    fn apply_refill_knockouts(
+        &self,
+        zone: &Zone,
+        cache_key: FillKey,
+        mut fill_polys: ShapePolySet,
+        diff_net_knockouts: &ShapePolySet,
+        same_net_knockouts: &ShapePolySet,
+        knockouts_applied: bool,
+    ) -> ShapePolySet {
         // Keepout zones are not collected here because they are already baked into the cached
         // pre-knockout fill.  They were subtracted before the initial deflate/inflate min-width
         // cycle so the cached fill already reflects keepout boundaries (issue 23515).
@@ -451,7 +616,7 @@ impl ZoneFiller {
         // abutting same-net zones and keep the deflate/inflate cycle from carving divots at
         // their shared boundaries.
         if diff_net_knockouts.outline_count() > 0 {
-            fill_polys.boolean_subtract(&diff_net_knockouts);
+            fill_polys.boolean_subtract(diff_net_knockouts);
         }
 
         if knockouts_applied {
@@ -464,7 +629,7 @@ impl ZoneFiller {
             // The apron may only buffer where copper can still go, so it takes the same
             // knockouts
             if same_net_apron.outline_count() > 0 && diff_net_knockouts.outline_count() > 0 {
-                same_net_apron.boolean_subtract(&diff_net_knockouts);
+                same_net_apron.boolean_subtract(diff_net_knockouts);
             }
 
             // The test stand-in for the pending copper fill has no min-width cycle.
@@ -474,7 +639,7 @@ impl ZoneFiller {
         }
 
         if same_net_knockouts.outline_count() > 0 {
-            fill_polys.boolean_subtract(&same_net_knockouts);
+            fill_polys.boolean_subtract(same_net_knockouts);
         }
 
         // The cache was hatched before these knockouts, so restore the border the carve cut
@@ -488,7 +653,7 @@ impl ZoneFiller {
                 .unwrap_or_default();
 
             let mut knockouts = diff_net_knockouts.clone();
-            knockouts.append_set(&same_net_knockouts);
+            knockouts.append_set(same_net_knockouts);
 
             if solid_extent.outline_count() > 0 && knockouts.outline_count() > 0 {
                 let mut border = knockouts.clone();
@@ -509,7 +674,7 @@ impl ZoneFiller {
 
         fill_polys.fracture(true);
 
-        Some(fill_polys)
+        fill_polys
     }
 }
 

@@ -46,6 +46,7 @@ use kicad_pcb::zone::{IsolatedIslands, Zone};
 use kicad_pcb::zone_settings::{CornerSmoothing, IslandRemovalMode};
 
 use crate::index::{ItemRtree, board_and_footprint_zones};
+use crate::refill::RefillKey;
 
 /// A `(zone, layer)` fill item: `std::pair<ZONE*, PCB_LAYER_ID>` with the zone handle in place
 /// of the pointer (ordered containers keyed by it iterate in arena order instead of address
@@ -98,6 +99,13 @@ pub struct ZoneFiller {
     /// `m_sameNetApronCache`: band just outside each (zone, layer) that an abutting same-net
     /// zone pours into (#23790).
     pub(crate) same_net_apron_cache: BTreeMap<FillKey, ShapePolySet>,
+    /// `m_refillResultCache`: the last refill result per (zone, layer) with the key of the
+    /// knockouts it was computed for, so a refill with unchanged knockouts reuses it. Seeded
+    /// by `run_fill_dag` with the knockout-free initial fills (a port addition, see
+    /// `RefillKey::without_knockouts`). Valid for one `Fill()` only: cleared at its start and
+    /// again right after the iterative refill loop, so that no cached `Arc` shares a board
+    /// fill afterwards (a later `Arc::make_mut` would deep-copy it).
+    pub(crate) refill_result_cache: BTreeMap<FillKey, (RefillKey, Arc<ShapePolySet>)>,
     /// Test stand-in for the pending copper fill (see `set_trivial_copper_fill`).
     pub(crate) trivial_copper_fill: bool,
     /// The `wxLogWarning` messages of the last fill.
@@ -135,6 +143,7 @@ impl ZoneFiller {
             pre_knockout_fill_cache: BTreeMap::new(),
             pre_hatch_solid_fill_cache: BTreeMap::new(),
             same_net_apron_cache: BTreeMap::new(),
+            refill_result_cache: BTreeMap::new(),
             trivial_copper_fill: false,
             warnings: Vec::new(),
             fill_order: Vec::new(),
@@ -270,7 +279,8 @@ impl ZoneFiller {
         zones: &[ZoneId],
     ) -> bool {
         // Keyed on knockout geometry only; valid for this fill's passes (pre-knockout fill is
-        // rebuilt below). The refill result cache is a pure optimisation that the port omits.
+        // rebuilt below).
+        self.refill_result_cache.clear();
         self.pre_hatch_solid_fill_cache.clear();
         self.same_net_apron_cache.clear();
         self.warnings.clear();
@@ -465,6 +475,10 @@ impl ZoneFiller {
                 &initially_fully_isolated_layers,
             );
         }
+
+        // The refill results are not needed any more; drop their references to the board's
+        // fills before anything below modifies them.
+        self.refill_result_cache.clear();
 
         self.remove_out_of_board_islands(board, zones);
 
@@ -863,12 +877,15 @@ impl ZoneFiller {
                 let ctx = BoardCtx::bare(board)
                     .with_rules(rules)
                     .with_connectivity(connectivity);
-                self.fill_single_zone(&ctx, zone_id, layer)
+                self.fill_single_zone_impl(&ctx, zone_id, layer)
             };
 
             let filled = result.is_some();
+            let mut seeds_refill_cache = false;
 
-            if let Some(result) = result {
+            if let Some((result, knockout_free)) = result {
+                seeds_refill_cache = knockout_free;
+
                 let fill = board.zone_fill_mut(zone_id);
 
                 if result.clear_need_refill {
@@ -892,6 +909,18 @@ impl ZoneFiller {
                 let fill = board.zone_fill_mut(zone_id);
                 fill.cache_triangulation(layer);
                 fill.set_fill_flag(layer, true);
+
+                // A fill whose tail applied no knockout is what a refill without knockouts
+                // computes from the same pre-knockout fill (both run exactly
+                // dropSubResolutionOutlines + Fracture on it), triangulation included.
+                if seeds_refill_cache {
+                    if let Some(installed) = fill.filled_polys_list.get(&layer) {
+                        self.refill_result_cache.insert(
+                            (zone_id, layer),
+                            (RefillKey::without_knockouts(), Arc::clone(installed)),
+                        );
+                    }
+                }
             }
 
             self.fill_order.push(fill_items[idx]);

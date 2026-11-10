@@ -954,6 +954,12 @@ Progress log:
   cross-origin isolation, which an embedded preview may not grant). Artifact version 5.
   Emscripten from the emsdk stays in the scratchpad (1.7 GB); the unusable distribution
   package (1.2 GB) can be removed if disk gets short.
+  15:39 UTC (heartbeat; next in about an hour): performance round 2 is in its
+  Optimise phase with two tasks - a result cache in the zone refill (the largest
+  remaining cost) and a lazy zone-connection query in DRC. The round-1 judge removed the
+  orchestrator's note from PERF.md itself; its changes went in through the checkpoint
+  commits. Adapter GK-2 still running. No commits from a local session on the private
+  branch yet. Demo page served on port 8123. Disk 8.4 GB free, load 4, memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
