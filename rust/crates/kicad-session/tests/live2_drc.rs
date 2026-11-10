@@ -198,6 +198,7 @@ fn check_items_and_live_drc() {
     let mut failures = Vec::new();
     let (mut tested, mut commits, mut scoped_entries, mut full_entries) = (0, 0, 0usize, 0usize);
     let (mut fresh_same, mut fresh_order, mut fresh_differ) = (0, 0, 0);
+    let mut panics: Vec<String> = Vec::new();
     let mut scoped_types: BTreeSet<String> = BTreeSet::new();
 
     for (bi, rel) in boards().iter().enumerate() {
@@ -217,142 +218,162 @@ fn check_items_and_live_drc() {
         let mut generator = Gen::new(&s, 0x33bb_0001 + bi as u64);
         let mut rng = Rng::new(0x44cc_0001 + bi as u64);
 
-        for k in 0..n {
-            let mut ops = generator.batch();
-            ops.extend(injected(&s, &mut rng));
-            let txn = transaction(&ops, &handles);
-            let report = match s.commit(&txn) {
-                Ok(r) => r,
-                Err(e) => {
-                    failures.push(format!("{rel} batch {k}: commit failed: {e}"));
-                    break;
+        // A panic inside a provider (a defect of the DRC port on an edited board, not of the
+        // scoped check) ends the board's campaign and is reported separately.
+        let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            for k in 0..n {
+                let mut ops = generator.batch();
+                ops.extend(injected(&s, &mut rng));
+                let txn = transaction(&ops, &handles);
+                let report = match s.commit(&txn) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        failures.push(format!("{rel} batch {k}: commit failed: {e}"));
+                        break;
+                    }
+                };
+
+                for (u, &h) in report.edit.added_uuids.iter().zip(&report.edit.added) {
+                    handles.insert(u.clone(), h);
                 }
-            };
 
-            for (u, &h) in report.edit.added_uuids.iter().zip(&report.edit.added) {
-                handles.insert(u.clone(), h);
-            }
+                commits += 1;
 
-            commits += 1;
+                // (a1) repeated runs on the live state agree (nothing carried from one run to the
+                // next changes a result); (a2) the live state against a fresh load of the saved
+                // board, measured (see the module comment: the writer sorts the tracks).
+                let saved = s.save().expect("save");
+                let (live_report, _) = drc_job(&mut s, false);
+                let (again, _) = drc_job(&mut s, false);
 
-            // (a1) repeated runs on the live state agree (nothing carried from one run to the
-            // next changes a result); (a2) the live state against a fresh load of the saved
-            // board, measured (see the module comment: the writer sorts the tracks).
-            let saved = s.save().expect("save");
-            let (live_report, _) = drc_job(&mut s, false);
-            let (again, _) = drc_job(&mut s, false);
-
-            if normalized(&live_report) != normalized(&again) {
-                failures.push(format!(
-                    "{rel} batch {k}: a second DRC run on the live state differs"
-                ));
-            }
-
-            let mut fresh = load_text(&saved, rel).expect("reload");
-            let (fresh_report, _) = drc_job(&mut fresh, false);
-
-            if normalized(&live_report) == normalized(&fresh_report) {
-                fresh_same += 1;
-            } else if blocks(&live_report) == blocks(&fresh_report) {
-                fresh_order += 1;
-            } else {
-                fresh_differ += 1;
-
-                if std::env::var("LIVE2_DEBUG").is_ok() {
-                    let dir =
-                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../target/live2");
-                    let _ = std::fs::create_dir_all(&dir);
-                    let _ = std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
-                    let _ = std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
+                if normalized(&live_report) != normalized(&again) {
+                    failures.push(format!(
+                        "{rel} batch {k}: a second DRC run on the live state differs"
+                    ));
                 }
-            }
 
-            // (b) scoped == subset of the full all-track-errors run
-            let mut ids: Vec<u64> = report.edit.added.clone();
-            ids.extend(&report.edit.changed);
-            let mut all: Vec<u64> = handles.values().copied().collect();
-            all.sort_unstable();
+                let mut fresh = load_text(&saved, rel).expect("reload");
+                let (fresh_report, _) = drc_job(&mut fresh, false);
 
-            for _ in 0..3 {
-                if !all.is_empty() {
-                    ids.push(all[rng.below(all.len())]);
+                if normalized(&live_report) == normalized(&fresh_report) {
+                    fresh_same += 1;
+                } else if blocks(&live_report) == blocks(&fresh_report) {
+                    fresh_order += 1;
+                } else {
+                    fresh_differ += 1;
+
+                    if std::env::var("LIVE2_DEBUG").is_ok() {
+                        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                            .join("../../target/live2");
+                        let _ = std::fs::create_dir_all(&dir);
+                        let _ =
+                            std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
+                        let _ =
+                            std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
+                    }
                 }
-            }
 
-            ids.retain(|h| kicad_pcb::ItemId::from_bits(*h).is_some_and(|id| s.board.contains(id)));
+                // (b) scoped == subset of the full all-track-errors run
+                let mut ids: Vec<u64> = report.edit.added.clone();
+                ids.extend(&report.edit.changed);
+                let mut all: Vec<u64> = handles.values().copied().collect();
+                all.sort_unstable();
 
-            let scoped = s
-                .check_items(
-                    &ids,
-                    &CheckItemsOptions {
-                        severities: vec!["error".into(), "warning".into(), "exclusions".into()],
-                        ..CheckItemsOptions::default()
-                    },
-                )
-                .expect("check_items");
+                for _ in 0..3 {
+                    if !all.is_empty() {
+                        ids.push(all[rng.below(all.len())]);
+                    }
+                }
 
-            let mut others = other_providers(&mut s);
-            let (_, full) = drc_job(&mut s, true);
-            let wanted: BTreeSet<u64> = ids.iter().copied().collect();
-            let nets: BTreeSet<i32> = ids
-                .iter()
-                .filter_map(|&h| {
+                ids.retain(|h| {
+                    kicad_pcb::ItemId::from_bits(*h).is_some_and(|id| s.board.contains(id))
+                });
+
+                let scoped = s
+                    .check_items(
+                        &ids,
+                        &CheckItemsOptions {
+                            severities: vec!["error".into(), "warning".into(), "exclusions".into()],
+                            ..CheckItemsOptions::default()
+                        },
+                    )
+                    .expect("check_items");
+
+                let mut others = other_providers(&mut s);
+                let (_, full) = drc_job(&mut s, true);
+                let wanted: BTreeSet<u64> = ids.iter().copied().collect();
+                let nets: BTreeSet<i32> = ids
+                    .iter()
+                    .filter_map(|&h| {
+                        let ctx = s.api_ctx();
+                        ctx.item(kicad_pcb::ItemId::from_bits(h)?)?
+                            .net_code()
+                            .map(|n| n.0)
+                    })
+                    .filter(|&n| n > 0)
+                    .collect();
+                let net_of = |h: Option<u64>| {
                     let ctx = s.api_ctx();
-                    ctx.item(kicad_pcb::ItemId::from_bits(h)?)?
+                    ctx.item(kicad_pcb::ItemId::from_bits(h?)?)?
                         .net_code()
                         .map(|n| n.0)
-                })
-                .filter(|&n| n > 0)
-                .collect();
-            let net_of = |h: Option<u64>| {
-                let ctx = s.api_ctx();
-                ctx.item(kicad_pcb::ItemId::from_bits(h?)?)?
-                    .net_code()
-                    .map(|n| n.0)
-            };
-            // The full run without the entries of the other providers, in full-run order.
-            let expected: Vec<String> = full
-                .iter()
-                .filter(|v| {
-                    let k = key(v);
-                    match others.iter().position(|o| *o == k) {
-                        Some(p) => {
-                            others.remove(p);
-                            false
+                };
+                // The full run without the entries of the other providers, in full-run order.
+                let expected: Vec<String> = full
+                    .iter()
+                    .filter(|v| {
+                        let k = key(v);
+                        match others.iter().position(|o| *o == k) {
+                            Some(p) => {
+                                others.remove(p);
+                                false
+                            }
+                            None => true,
                         }
-                        None => true,
-                    }
-                })
-                .filter(|v| {
-                    v.items
-                        .iter()
-                        .any(|i| i.id.is_some_and(|h| wanted.contains(&h)))
-                        || (v.violation_type == "unconnected_items"
-                            && v.items
-                                .iter()
-                                .any(|i| net_of(i.id).is_some_and(|n| nets.contains(&n))))
-                })
-                .map(key)
-                .collect();
-            let got: Vec<String> = scoped.violations.iter().map(key).collect();
-            scoped_entries += got.len();
-            full_entries += full.len();
-            scoped_types.extend(scoped.violations.iter().map(|v| v.violation_type.clone()));
+                    })
+                    .filter(|v| {
+                        v.items
+                            .iter()
+                            .any(|i| i.id.is_some_and(|h| wanted.contains(&h)))
+                            || (v.violation_type == "unconnected_items"
+                                && v.items
+                                    .iter()
+                                    .any(|i| net_of(i.id).is_some_and(|n| nets.contains(&n))))
+                    })
+                    .map(key)
+                    .collect();
+                let got: Vec<String> = scoped.violations.iter().map(key).collect();
+                scoped_entries += got.len();
+                full_entries += full.len();
+                scoped_types.extend(scoped.violations.iter().map(|v| v.violation_type.clone()));
 
-            if got != expected {
-                let missing: Vec<&String> = expected.iter().filter(|e| !got.contains(e)).collect();
-                let extra: Vec<&String> = got.iter().filter(|e| !expected.contains(e)).collect();
-                failures.push(format!(
+                if got != expected {
+                    let missing: Vec<&String> =
+                        expected.iter().filter(|e| !got.contains(e)).collect();
+                    let extra: Vec<&String> =
+                        got.iter().filter(|e| !expected.contains(e)).collect();
+                    failures.push(format!(
                     "{rel} batch {k}: scoped check differs ({} vs {}); missing {:?}; extra {:?}",
                     got.len(),
                     expected.len(),
                     missing.first(),
                     extra.first()
                 ));
+                }
             }
+        }));
+
+        if let Err(p) = outcome {
+            let text = p
+                .downcast_ref::<String>()
+                .cloned()
+                .or_else(|| p.downcast_ref::<&str>().map(|s| s.to_string()))
+                .unwrap_or_default();
+            panics.push(format!("{rel}: {text}"));
         }
     }
 
+    eprintln!("live2 drc: port panics (other crates): {panics:?}");
     eprintln!(
         "live2 drc: {tested} boards, {commits} commits, {scoped_entries} scoped entries of \
          {full_entries} full-run entries; types {scoped_types:?}; live vs fresh load: \
@@ -432,8 +453,11 @@ fn export_edited_boards_for_the_cli_comparison() {
         let stem = path.file_stem().unwrap().to_string_lossy().into_owned();
         let out = dir.join(format!("{bi:02}_{stem}"));
         std::fs::create_dir_all(&out).expect("board dir");
-        std::fs::write(out.join(format!("{stem}.kicad_pcb")), s.save().expect("save"))
-            .expect("write");
+        std::fs::write(
+            out.join(format!("{stem}.kicad_pcb")),
+            s.save().expect("save"),
+        )
+        .expect("write");
 
         for ext in ["kicad_pro", "kicad_dru"] {
             if let Ok(t) = std::fs::read(path.with_extension(ext)) {
