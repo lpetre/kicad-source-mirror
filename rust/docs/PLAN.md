@@ -742,6 +742,23 @@ Progress log:
   board-wide pours it is level with a full refill; still running. Adapter: all thirteen
   steps and the command line are written, comparison not run yet. Disk 11 GB free after
   pruning, memory fine.
+  10:50 UTC: LIVE-2 finished (read on Fable). Delivered: check_items (a filtered run of
+  eight providers; 294,485 scoped entries on 1470 commits equal to the full job's),
+  refill_zones_affected with change damage carried by commits (affected == full refill on
+  1300 refills, 26 boards, every fill vertex and the saved text; 5778 of 20993 zone fills
+  recomputed), wasm bindings checkItems / refillZonesAffected / zoneDamage. NOT delivered:
+  the persistent DRC state (needs a run_flow entry taking prebuilt caches) - every DRC
+  call still rebuilds connectivity and r-trees. Speed: no gain from the affected refill
+  on boards whose fill time is the board-wide pours (level with a full refill); gain only
+  for edits away from the pours. Live board vs reload of its save: DRC entry sets equal on
+  95 of 1469 states only, because the writer sorts tracks - same root cause as LIVE-1's
+  finalize() gap (needs the "reorder tracks to save order" API in kicad-pcb).
+  Orchestrator fix: kicad-drc diff_pair_coupling total_coupled now wraps like the C++
+  int (debug panic on heavily edited boards, found by the LIVE-2 campaign).
+  Workflow review-live2 launched (run wf_cc66a05a-e4a): Fable reviewer attacks the
+  "affected == full" claim dependency by dependency with built counterexamples -> Opus
+  fixes -> Fable verifies. Open follow-ups for the speed priority, to decide after the
+  first loop rounds: persistent DRC state (hotspot 7), track reorder API.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

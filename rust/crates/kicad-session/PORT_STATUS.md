@@ -503,11 +503,35 @@ Decisions:
   damage itself, saves it with checkpoints and makes it full after any edit that does not
   report one.
 
-Verification (numbers in the final report of the package): c) affected == full refill on the
-live1 corpus boards with zones (fills vertex for vertex, flags, islands, hashes, zone list,
-saved text), one or two commits per refill; b) check_items == the job's all-track-errors
-entries minus those of the other providers, filtered by the same rule, in order; a1) two DRC
-runs in a row on the live state are identical; a2) live vs fresh reload: measured only.
+Verification:
+
+* c) `LIVE2_BOARDS=30 LIVE2_BATCHES=50 cargo test -p kicad-session --test live2_refill`: 26
+  boards with zones (of the 30 live1 boards), 1950 commits, 1300 refills (one or two commits
+  each): affected == full refill every time (every zone's fill vertex for vertex per layer,
+  fill flags, `IsFilled`, `NeedRefill`, insulated islands, fill hashes, zone list, saved text);
+  5778 of 20993 zone fills recomputed. Plus: without changes the affected refill keeps every
+  fill and equals a second full refill on every board (`Fill()` hashes the fill it replaces:
+  kept zones get the hash of their current fill, re-created teardrops that of their empty one).
+* b) `LIVE2_DRC_BOARDS=30 LIVE2_DRC_BATCHES=50 cargo test -p kicad-session --test live2_drc`:
+  30 boards, 1470 commits with injected violations: `check_items` == the full job's
+  all-track-errors entries minus the entries of the other providers, filtered by the same rule,
+  entry for entry and in order, every time (294,485 scoped entries; types clearance,
+  shorting_items, tracks_crossing, hole_clearance, hole_to_hole, holes_co_located,
+  copper_edge_clearance, copper_outside_board, items_not_allowed, track_width, via_diameter,
+  annular_width, track_dangling, via_dangling, unconnected_items). One board
+  (`diff_pair_uncoupled_tuning_drc`) stopped after a panic in the diff pair provider
+  (`kicad-drc` `diff_pair_coupling.rs:858`, `total_coupled += length` overflows an `i32`; C++
+  `int` wraps on x86): change request.
+* a1) two DRC runs in a row on the live state: identical on all 1470 commits.
+* a2) live vs a fresh load of the saved board (measured): 95 identical as entry sets, 1374
+  different (order-dependent entries, see Known gaps).
+* d) `LIVE2_EXPORT=<dir> LIVE2_DRC_BATCHES=5 cargo test ... export_edited` +
+  `tests/oracle/live2_cli_compare.sh <dir>`: 20 edited boards (`finalize`, full refill, save),
+  reference `kicad-cli pcb drc` against `kicad-rs pcb drc`: 13 identical as entry sets, 16
+  when the two items of an unconnected entry are compared unordered; the other 4 differ only
+  in tie-dependent entries (1 board: 4 unconnected-item edge ends; 3 boards: the position the
+  diff-pair uncoupled-length / skew entry picks). Report order differs on all 20 (the
+  reference's order follows heap addresses, `docs/design/review-connectivity.md`).
 
 Known gaps:
 
@@ -518,10 +542,9 @@ Known gaps:
   generator's results alive needs an entry point in `kicad_drc::run_flow` that takes prebuilt
   caches (`run_provider` is private there; files of the performance loop): change request.
 * a2: the DRC report of the live (edited) board differs from that of the reloaded saved board
-  in order-dependent entries on most edited boards (6 of 18 commits on the default campaign
-  identical as sets only, the rest also in content: ratsnest edge ends under ties, nets the
-  propagation gives to netless items touching two nets). Cause: the writer saves the tracks
-  sorted (`PCB_TRACK::cmp_tracks`); the same as LIVE-1's `finalize()` gap.
+  in order-dependent entries on most edited boards (ratsnest edge ends under ties, nets the
+  propagation gives to netless items touching two nets, report order). Cause: the writer saves
+  the tracks sorted (`PCB_TRACK::cmp_tracks`); the same as LIVE-1's `finalize()` gap.
 * The affected refill refills a zone in whole: a board-wide ground pour is refilled by any
   edit inside it, so boards with one big pour gain nothing (pic_programmer, complex_hierarchy:
   the pours dominate the fill time even when 3 of 168 zones are refilled).

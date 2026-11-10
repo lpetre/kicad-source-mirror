@@ -855,7 +855,9 @@ impl<'c> DrcTestProviderDiffPairCoupling<'c> {
                 }
 
                 if !dp.coupling_fail_min && !dp.coupling_fail_max {
-                    item_set.total_coupled += length;
+                    // C++ `int += int`: wraps on overflow (PORTING.md section 3); heavily edited
+                    // boards reach it (found by the LIVE-2 campaign).
+                    item_set.total_coupled = item_set.total_coupled.wrapping_add(length);
                 }
             }
 
@@ -880,7 +882,7 @@ impl<'c> DrcTestProviderDiffPairCoupling<'c> {
                 );
             }
 
-            let total_uncoupled = total_len - item_set.total_coupled;
+            let total_uncoupled = total_len.wrapping_sub(item_set.total_coupled);
             let mut uncoupled_violation = false;
 
             if let Some(val) = &key.uncoupled_constraint
