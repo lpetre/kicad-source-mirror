@@ -27,10 +27,16 @@
 //! items at a neck from `DRC_RTREE::GetObjectsAt` (an `unordered_set`) and from
 //! `m_CopperZoneRTreeCache` (an `unordered_map`). The port runs sequentially in (net code,
 //! layer) order, adds the items of an entry in collection order (copper zones, tracks, pads),
-//! and takes the contributing items in tree search order, then zones in `ZoneId` order. The
-//! report order and the order of the items inside one violation (which also decides which two
-//! items `EvalRules` sees) are therefore not reproducible in C++; the necks found per entry
-//! are (`m_hits` is a `std::set`).
+//! and takes the contributing items in the order libstdc++ iterates the `unordered_set` when
+//! no bucket collision reorders it (reverse insertion order of the distinct parents the tree
+//! search visits), then zones in `ZoneId` order. With one or two contributing tree items the
+//! order inside a violation (which also decides which two items `EvalRules` sees) is therefore
+//! the C++ one. With three or more it depends on heap addresses in C++: an insert into a
+//! non-empty bucket is linked after that bucket's predecessor node instead of at the front of
+//! the list (address modulo the bucket count: 13 buckets for up to 13 items, then 29, 59, ...), and
+//! a rehash re-links the whole list; the port's order is the collision-free one. The zone part
+//! (`unordered_map` over all zone trees) and the report order are not reproducible either; the
+//! necks found per entry are (`m_hits` is a `std::set`).
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
@@ -494,11 +500,18 @@ impl<'c> DrcTestProviderConnectionWidth<'c> {
 
                 let mut contributing_items: Vec<ItemId> = Vec::new();
 
-                for id in self
+                // GetObjectsAt() returns a std::unordered_set<BOARD_ITEM*>; iterating it with
+                // libstdc++ visits the distinct parents in reverse insertion order (each new
+                // node goes to the front of the list, or of its bucket's group) whenever no
+                // new item lands in the bucket of an item other than the list's first. That is
+                // exact for one or two items; see the module comment for three or more.
+                let mut objects = self
                     .caches
                     .copper_item_rtree()
-                    .get_objects_at(location, layer, min_width)
-                {
+                    .get_objects_at(location, layer, min_width);
+                objects.reverse();
+
+                for id in objects {
                     let item = ctx.item(id).expect("copper item tree entry");
 
                     if item.as_dyn().hit_test(ctx, location, min_width) {

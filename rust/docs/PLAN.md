@@ -804,6 +804,17 @@ Progress log:
   files, session methods and quoted log lines of his tool. Reworded now in the tree; the
   earlier text remains in the pushed history of this public fork (withdrawing it needs a
   history rewrite and a force push, which is the user's decision). Artifact version 3.
+  12:34 UTC: at the user's request the branch history was rewritten and force
+  pushed: the 28 commits from the first one that carried that text were replaced by
+  commits with the reworded passages (same messages, authors, dates, re-signed; every
+  other file byte-identical; the tree at the tip unchanged), and the two commit hashes
+  cited in PERF.md and this file were repointed to the replacement commits. A scan of all
+  135 commits of the new history finds none of the client's identifiers. The commits
+  before today 07:50 UTC keep their hashes. The round-1 base commit of the performance
+  loop is now a local-only object (still usable by its judge). What a force push cannot
+  do: the hosting service keeps the replaced commits fetchable by hash until it collects
+  garbage, and its activity view lists the forced updates; removing those needs the
+  service's support, and anyone who fetched the branch earlier today has them.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

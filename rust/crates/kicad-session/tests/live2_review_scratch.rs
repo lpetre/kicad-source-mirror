@@ -20,6 +20,26 @@
 //! two exactly as `live2_refill.rs` does (fill state of every zone and the saved board), on
 //! small synthetic boards, plus a rerun of the random campaign with other boards and seeds
 //! (`LIVE2R_LIST`, `LIVE2R_BATCHES`, `LIVE2R_SEED`).
+//!
+//! State at the end of the review (second pass): the following cases FAIL, each a counterexample
+//! to "affected refill == full refill" or to the `check_items` definition (see the review):
+//!
+//! * `free_via_on_a_dangling_track_far_from_the_pour`, `skip_connectivity_commit_then_affected_refill`:
+//!   items the refill's own connectivity build re-nets are not part of the selection;
+//! * `removing_the_zone_that_sets_the_worst_clearance` (and `..._then_another_commit`),
+//!   `removing_the_pad_that_sets_the_worst_clearance`: the seed reach uses the worst clearance
+//!   of the board after the edit;
+//! * `removing_an_npth_pad_on_mask_layers`: a hole knocks out every copper layer, the damage
+//!   area carries the pad's layers only;
+//! * `removing_a_rule_area_a_custom_rule_names`: a rule area named by a custom rule changes the
+//!   clearance of items far from it;
+//! * `from_to_rule_with_a_drc_run_between_commit_and_refill`: a DRC run rebuilds the from-to
+//!   cache a `fromTo()` rule reads;
+//! * `check_items_unconnected_entries_follow_the_net_after_the_run`: the nets of the given
+//!   items are read before the run re-nets them.
+//!
+//! Everything else passes; the campaigns and probes do nothing without their environment
+//! variables (`LIVE2R_LIST`, `LIVE2R_LOCAL_LIST`, `LIVE2R_TD_LIST`, `LIVE2R_SYNTH_OUT`).
 
 mod live1_common;
 
@@ -970,6 +990,361 @@ fn removing_a_zone_with_local_effects_is_covered() {
 }
 
 // ------------------------------------------------------------------------------------------
+// Second review pass (cases added after the first reviewer's)
+// ------------------------------------------------------------------------------------------
+
+impl Synth {
+    /// An SMD pad on F.Cu with extra pad tokens (e.g. a local clearance).
+    fn pad_with(&mut self, reference: &str, x: f64, y: f64, net: usize, extra: &str) {
+        let (fu, ru, vu, pu) = (self.uuid(), self.uuid(), self.uuid(), self.uuid());
+        let name = self.net_name(net);
+        self.items.push_str(&format!(
+            "\t(footprint \"synth:P\"\n\t\t(layer \"F.Cu\")\n\t\t(uuid \"{fu}\")\n\t\t(at {x} {y})\n\
+             \t\t(property \"Reference\" \"{reference}\" (at 0 -2 0) (layer \"F.SilkS\") (uuid \"{ru}\") (effects (font (size 1 1) (thickness 0.15))))\n\
+             \t\t(property \"Value\" \"V\" (at 0 2 0) (layer \"F.Fab\") (uuid \"{vu}\") (effects (font (size 1 1) (thickness 0.15))))\n\
+             \t\t(attr smd)\n\t\t(pad \"1\" smd rect (at 0 0) (size 1 1) (layers \"F.Cu\" \"F.Mask\" \"F.Paste\") (net {net} \"{name}\") {extra} (uuid \"{pu}\"))\n\t)\n"
+        ));
+    }
+}
+
+/// The worst clearance of the board comes from a pad's local clearance (8 mm); the pad sits
+/// 6.5 mm from a pour of another net and knocks 1.5 mm out of it. Removing the pad (a
+/// transaction removal by handle, recorded as a local damage area) leaves a board whose worst
+/// clearance is the default 0.2 mm, so the pour is outside the seed margin computed from it.
+#[test]
+fn removing_the_pad_that_sets_the_worst_clearance() {
+    let mut b = Synth::new(&["GND", "A"], false);
+    b.edge(0.0, 0.0, 100.0, 60.0);
+    b.pad_with("PX", 31.0, 25.0, 2, "(clearance 8)");
+    b.zone("ZL", 1, &["F.Cu"], 1, 0.2, 1, (38.0, 10.0, 70.0, 40.0), "");
+    b.pad("PG", Pad::SmdFront, 65.0, 25.0, 1);
+    let mut s = b.load(None);
+    s.refill_zones().expect("refill");
+
+    let pad = s
+        .pads(false)
+        .into_iter()
+        .find(|p| p.reference == "PX")
+        .expect("pad")
+        .id;
+    let mut txn = Transaction::begin();
+    txn.stage_remove(pad);
+    let r = s.commit(&txn).expect("commit");
+    assert_eq!(r.edit.removed.len(), 1, "pad not removed");
+    let out = compare(&mut s, &r.damage);
+    eprintln!(
+        "removing_the_pad_that_sets_the_worst_clearance: {}",
+        out.describe()
+    );
+    assert!(out.changed_in_full > 0, "the case does not probe anything");
+    assert!(out.equal && out.text_equal, "{}", out.describe());
+}
+
+/// After the wrong affected refill of `free_via_on_a_dangling_track_far_from_the_pour` the
+/// report carries the re-netted track as damage "for the next affected refill". Is the state
+/// right after that next refill (the wasm `Board` passes `RefillReport::damage` on)?
+#[test]
+fn free_via_case_heals_with_the_next_affected_refill() {
+    let (mut s, _) = free_via_board();
+    let mut txn = Transaction::begin();
+    txn.stage_add(free_via((70.0, 25.0), 2));
+    let r = s.commit(&txn).expect("commit");
+    let first = s.refill_zones_affected(&r.damage).expect("refill");
+    eprintln!(
+        "free_via_case_heals_with_the_next_affected_refill: first refill refilled {} kept {} damage {:?}",
+        first.refilled.len(),
+        first.kept,
+        first.damage
+    );
+    assert!(!first.damage.is_empty(), "the first refill reports no net damage");
+    let out = compare(&mut s, &first.damage);
+    eprintln!(
+        "free_via_case_heals_with_the_next_affected_refill: second refill {}",
+        out.describe()
+    );
+    assert!(out.equal && out.text_equal, "{}", out.describe());
+}
+
+/// `check_items` keeps the entries that NAME a given item. A track of another net that cuts a
+/// pour in two leaves an island (island mode "never": kept); the connectivity provider reports
+/// it as `isolated_copper` naming the zone only (`drc_test_provider_connectivity.cpp`:
+/// `drcItem->SetItems( zone )`). Demonstration (passes when the scoped result omits it).
+#[test]
+fn demo_check_items_drops_isolated_copper_the_item_causes() {
+    let mut b = Synth::new(&["GND", "A"], false);
+    b.edge(0.0, 0.0, 100.0, 60.0);
+    b.zone("ZG", 1, &["F.Cu"], 0, 0.3, 1, (10.0, 10.0, 60.0, 40.0), "");
+    b.pad("P1", Pad::SmdFront, 15.0, 25.0, 1);
+    b.pad("PA", Pad::SmdFront, 35.0, 5.0, 2);
+    b.pad("PB", Pad::SmdFront, 35.0, 45.0, 2);
+    let mut s = b.load(None);
+    s.refill_zones().expect("refill");
+
+    let count = |s: &mut Session, ids: Option<&[u64]>| -> (usize, usize) {
+        let v = match ids {
+            Some(ids) => s
+                .check_items(ids, &CheckItemsOptions::default())
+                .expect("check_items")
+                .violations,
+            None => s
+                .quick_drc(&QuickDrcOptions {
+                    providers: CHECK_ITEMS_PROVIDERS.iter().map(|p| p.to_string()).collect(),
+                    all_track_errors: true,
+                    severities: Vec::new(),
+                })
+                .expect("quick_drc")
+                .violations,
+        };
+        (
+            v.iter().filter(|x| x.violation_type == "isolated_copper").count(),
+            v.len(),
+        )
+    };
+
+    let (before, _) = count(&mut s, None);
+
+    let mut txn = Transaction::begin();
+    txn.stage_add(new_track((35.0, 5.0), (35.0, 45.0), "F.Cu", 2));
+    let r = s.commit(&txn).expect("commit");
+    s.refill_zones_affected(&r.damage).expect("refill");
+
+    let (full_iso, full_all) = count(&mut s, None);
+    let added = r.edit.added.clone();
+    let (scoped_iso, scoped_all) = count(&mut s, Some(&added));
+    eprintln!(
+        "demo_check_items_drops_isolated_copper_the_item_causes: isolated_copper before the track {before}, after it: full run {full_iso} (of {full_all} entries), check_items(track) {scoped_iso} (of {scoped_all})"
+    );
+    assert_eq!(before, 0);
+    assert!(full_iso > 0, "the track does not create an isolated island");
+    assert_eq!(scoped_iso, 0, "check_items now returns the zone-only entry");
+}
+
+/// Control: a custom rule gives net A a 5 mm clearance (the board's worst value, read by the
+/// seed margin). A track of net A added 4 mm outside a pour knocks 1 mm out of it.
+#[test]
+fn custom_rule_clearance_reaches_a_pour_from_outside_is_covered() {
+    let rules = "(version 1)\n(rule wide\n  (condition \"A.NetName == 'A'\")\n  (constraint clearance (min 5mm)))\n";
+    let mut b = Synth::new(&["GND", "A"], false);
+    b.edge(0.0, 0.0, 100.0, 60.0);
+    b.zone("ZG", 1, &["F.Cu"], 0, 0.3, 1, (10.0, 10.0, 40.0, 40.0), "");
+    b.pad("P1", Pad::SmdFront, 15.0, 15.0, 1);
+    b.pad("PA", Pad::SmdFront, 44.5, 50.0, 2);
+    let mut s = b.load(Some(rules));
+    assert!(s.drc_init_error.is_none(), "{:?}", s.drc_init_error);
+    s.refill_zones().expect("refill");
+
+    let mut txn = Transaction::begin();
+    txn.stage_add(new_track((44.125, 50.0), (44.125, 20.0), "F.Cu", 2));
+    let r = s.commit(&txn).expect("commit");
+    let out = compare(&mut s, &r.damage);
+    eprintln!(
+        "custom_rule_clearance_reaches_a_pour_from_outside_is_covered: {}",
+        out.describe()
+    );
+    assert!(out.changed_in_full > 0, "the case does not probe anything");
+    assert!(out.equal && out.text_equal, "{}", out.describe());
+}
+
+/// Probe (prints, asserts only equality): what an affected refill with EMPTY damage does on
+/// boards with teardrops (`LIVE2R_TD_LIST`): how many re-created teardrops take over their
+/// fill, how many zones are refilled.
+#[test]
+fn probe_empty_damage_on_teardrop_boards() {
+    let Ok(list) = std::env::var("LIVE2R_TD_LIST") else {
+        return;
+    };
+
+    for rel in list.split(',').map(str::trim) {
+        let Some((mut s, how)) = load_full(rel) else {
+            eprintln!("{rel}: load failed");
+            continue;
+        };
+
+        s.refill_zones().expect("full refill");
+        let zones = s.board.zones().count();
+        let teardrops = s.board.zones().filter(|(_, z)| z.is_teardrop_area()).count();
+        let out = compare(&mut s, &ChangeDamage::default());
+        eprintln!(
+            "probe empty damage: {rel} [{how}] {zones} zones ({teardrops} teardrops): refilled {} reused {} kept {} reasons {:?}; equal={} saved_equal={}",
+            out.report.refilled.len(),
+            out.report.reused.len(),
+            out.report.kept,
+            out.report.reasons,
+            out.equal,
+            out.text_equal
+        );
+        assert!(out.equal && out.text_equal, "{rel}: {}", out.describe());
+    }
+}
+
+impl Synth {
+    /// A copper zone with a chosen pad connection (`yes` solid, empty: thermal reliefs) and
+    /// fill tokens (e.g. hatch mode).
+    #[allow(clippy::too_many_arguments)]
+    fn zone_ex(
+        &mut self,
+        name: &str,
+        net: usize,
+        layers: &[&str],
+        priority: u32,
+        island_mode: u32,
+        r: (f64, f64, f64, f64),
+        connect: &str,
+        fill_extra: &str,
+    ) {
+        let u = self.uuid();
+        let net_name = self.net_name(net);
+        let layer_token = if layers.len() == 1 {
+            format!("(layer \"{}\")", layers[0])
+        } else {
+            format!(
+                "(layers {})",
+                layers
+                    .iter()
+                    .map(|l| format!("\"{l}\""))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        };
+        self.items.push_str(&format!(
+            "\t(zone\n\t\t(net {net})\n\t\t(net_name \"{net_name}\")\n\t\t{layer_token}\n\t\t(uuid \"{u}\")\n\t\t(name \"{name}\")\n\
+             \t\t(hatch edge 0.5)\n\t\t(priority {priority})\n\t\t(connect_pads {connect} (clearance 0.3))\n\
+             \t\t(min_thickness 0.25)\n\t\t(filled_areas_thickness no)\n\
+             \t\t(fill yes {fill_extra} (thermal_gap 0.5) (thermal_bridge_width 0.5) (island_removal_mode {island_mode}))\n\
+             \t\t(polygon (pts (xy {} {}) (xy {} {}) (xy {} {}) (xy {} {})))\n\t)\n",
+            r.0, r.1, r.2, r.1, r.2, r.3, r.0, r.3
+        ));
+    }
+}
+
+/// A four-layer board with 60 small pours of six nets (priorities, overlaps between
+/// neighbours, same-net overlaps, both island modes, thermal reliefs, a few hatched), pads of
+/// the pour nets and of four signal nets, signal routes with vias (some removing unused
+/// layers) across the pours. Most local edits touch one or two pours, so a missed dependency
+/// of a kept pour shows.
+fn many_zones_board(seed: u64) -> Synth {
+    let nets = ["G1", "G2", "G3", "G4", "G5", "G6", "S1", "S2", "S3", "S4"];
+    let mut b = Synth::new(&nets, true);
+    let mut rng = Rng::new(seed);
+    b.edge(0.0, 0.0, 232.0, 148.0);
+    let layers = ["F.Cu", "In1.Cu", "In2.Cu", "B.Cu"];
+
+    for (li, layer) in layers.iter().enumerate() {
+        for i in 0..5 {
+            for j in 0..3 {
+                let net = 1 + (i + 2 * j + 3 * li) % 6;
+                let x0 = 10.0 + 43.0 * i as f64 - rng.below(3) as f64 * 3.0;
+                let y0 = 10.0 + 43.0 * j as f64 - rng.below(3) as f64 * 3.0;
+                let x1 = 10.0 + 43.0 * i as f64 + 40.0 + rng.below(3) as f64 * 3.0;
+                let y1 = 10.0 + 43.0 * j as f64 + 40.0 + rng.below(3) as f64 * 3.0;
+                let priority = rng.below(4) as u32;
+                let island = rng.below(2) as u32;
+                let connect = if rng.chance(50) { "yes" } else { "" };
+                let hatch = if rng.chance(12) {
+                    "(mode hatch) (hatch_thickness 0.6) (hatch_gap 1.2) (hatch_orientation 0)"
+                } else {
+                    ""
+                };
+                b.zone_ex(
+                    &format!("Z{li}{i}{j}"),
+                    net,
+                    &[layer],
+                    priority,
+                    island,
+                    (x0, y0, x1, y1),
+                    connect,
+                    hatch,
+                );
+            }
+        }
+    }
+
+    // pads of the pour nets (through hole) and of the signal nets
+    let mut n = 0;
+
+    for i in 0..11 {
+        for j in 0..7 {
+            let x = 16.0 + 20.0 * i as f64 + rng.below(5) as f64;
+            let y = 16.0 + 19.0 * j as f64 + rng.below(5) as f64;
+            n += 1;
+
+            if rng.chance(55) {
+                b.pad(&format!("G{n}"), Pad::Thru, x, y, 1 + rng.below(6));
+            } else if rng.chance(60) {
+                b.pad(&format!("S{n}"), Pad::Thru, x, y, 7 + rng.below(4));
+            } else {
+                b.pad(&format!("T{n}"), Pad::SmdFront, x, y, 7 + rng.below(4));
+            }
+        }
+    }
+
+    // signal routes: an L of two segments with a via at the corner
+    for k in 0..40 {
+        let net = 7 + rng.below(4);
+        let x = 14.0 + rng.below(200) as f64;
+        let y = 14.0 + rng.below(118) as f64;
+        let dx = 6.0 + rng.below(30) as f64;
+        let dy = 6.0 + rng.below(20) as f64;
+        let l1 = layers[rng.below(4)];
+        let l2 = layers[rng.below(4)];
+        b.track((x, y), ((x + dx).min(226.0), y), 0.25, l1, net);
+        b.track(
+            ((x + dx).min(226.0), y),
+            ((x + dx).min(226.0), (y + dy).min(142.0)),
+            0.25,
+            l2,
+            net,
+        );
+        let extra = if k % 3 == 0 {
+            "(remove_unused_layers yes) (keep_end_layers no)"
+        } else {
+            ""
+        };
+        b.via(((x + dx).min(226.0), y), net, extra);
+    }
+
+    // stitching vias of the pour nets (some removing unused layers)
+    for k in 0..50 {
+        let x = 14.0 + rng.below(204) as f64 + 0.5;
+        let y = 14.0 + rng.below(120) as f64 + 0.5;
+        let extra = if k % 2 == 0 {
+            "(remove_unused_layers yes) (keep_end_layers no)"
+        } else {
+            ""
+        };
+        b.via((x, y), 1 + rng.below(6), extra);
+    }
+
+    b
+}
+
+/// Writes [`many_zones_board`] to `LIVE2R_SYNTH_OUT` (for `LIVE2R_LOCAL_LIST` with an absolute
+/// path).
+#[test]
+fn probe_write_synth_many_zones() {
+    let Ok(out) = std::env::var("LIVE2R_SYNTH_OUT") else {
+        return;
+    };
+    let seed = env_usize("LIVE2R_SYNTH_SEED", 0xbeef) as u64;
+    let b = many_zones_board(seed);
+    let text = b.text();
+    let mut s = b.load(None);
+    s.refill_zones().expect("refill");
+    let filled = s
+        .board
+        .zones()
+        .filter(|(_, z)| z.fill().filled_polys_list.iter().any(|(_, p)| p.outline_count() > 0))
+        .count();
+    eprintln!(
+        "synthetic board: {} zones ({filled} with copper), {} pads, {} route items",
+        s.board.zones().count(),
+        s.pads(false).len(),
+        s.route_items().len()
+    );
+    std::fs::write(&out, text).expect("write");
+}
+
+// ------------------------------------------------------------------------------------------
 // The random campaign on other boards with other seeds
 // ------------------------------------------------------------------------------------------
 
@@ -1139,12 +1514,16 @@ struct LocalGen {
     pads: Vec<([i32; 2], i32)>,
     nets: Vec<i32>,
     layers: Vec<String>,
+    /// `LIVE2R_CLEAN`: only edits a router makes on purpose (own net, no free vias, no net
+    /// changes).
+    clean: bool,
 }
 
 impl LocalGen {
     fn new(s: &Session, seed: u64) -> LocalGen {
         LocalGen {
             rng: Rng::new(seed),
+            clean: std::env::var("LIVE2R_CLEAN").is_ok(),
             items: Vec::new(),
             pads: s.pads(false).into_iter().map(|p| (p.position, p.net)).collect(),
             nets: s.net_details().into_iter().map(|n| n.code).collect(),
@@ -1187,6 +1566,10 @@ impl LocalGen {
     }
 
     fn net_for(&mut self, own: i32) -> i32 {
+        if self.clean {
+            return own;
+        }
+
         match self.rng.below(10) {
             0..=6 => own,
             7..=8 if !self.nets.is_empty() => self.nets[self.rng.below(self.nets.len())],
@@ -1222,7 +1605,7 @@ impl LocalGen {
                 9..=12 => {
                     let (a, net) = self.anchor();
                     let net = self.net_for(net);
-                    let free = self.rng.chance(40);
+                    let free = self.rng.chance(40) && !self.clean;
                     txn.stage_add(NewItem::Via(NewVia {
                         at: a,
                         diameter: Some(600_000),
@@ -1269,7 +1652,7 @@ impl LocalGen {
                     }
                 }
                 _ => {
-                    if self.items.is_empty() || self.nets.is_empty() {
+                    if self.items.is_empty() || self.nets.is_empty() || self.clean {
                         continue;
                     }
 
