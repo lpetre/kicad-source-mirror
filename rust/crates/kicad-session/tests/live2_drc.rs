@@ -23,19 +23,23 @@
 //! 40 mm to the right (over the edge on small boards), a via next to another via. After
 //! every commit:
 //!
-//! * (b) `check_items( handles )` for the new and changed items plus a few untouched ones
-//!   equals, entry for entry and in order, the entries of the full DRC job with
-//!   `--all-track-errors` that name one of the handles (unconnected entries: or have one's
-//!   net), for the providers of `CHECK_ITEMS_PROVIDERS`;
+//! * (b) `check_items( handles )` for the new and changed items plus a few untouched ones,
+//!   as the first DRC after the commit, equals, entry for entry and in order, the entries of
+//!   the full DRC job with `--all-track-errors` that name one of the handles (entries of
+//!   `NET_SCOPED_TYPES`: or name an item with one's net; `isolated_copper`: or name a zone
+//!   whose bounding box meets a handle's inflated by the worst clearance), for the providers
+//!   of `CHECK_ITEMS_PROVIDERS`;
 //! * (a1) two DRC runs in a row on the live session (incremental connectivity, after the
 //!   edits) give the same report, byte for byte apart from the date and file name lines:
 //!   the DRC carries no state from one run to the next that changes a result;
-//! * (a2, measured, not asserted) the live report against the report of a fresh load of the
-//!   board the live session saves. They differ in order-dependent entries, as in pcbnew:
-//!   the writer saves the tracks sorted (`PCB_TRACK::cmp_tracks`), so the reloaded board
-//!   iterates its tracks in another order than the edited one, which changes ratsnest edge
-//!   ties of unconnected items, the net the propagation gives a netless item touching two
-//!   nets, and report order.
+//! * (a2, classified) the live report against the report of a fresh load of the board the
+//!   live session saves. They differ in order-dependent entries, as in pcbnew: the writer
+//!   saves the tracks sorted (`PCB_TRACK::cmp_tracks`), so the reloaded board iterates its
+//!   tracks in another order than the edited one, which changes ratsnest edge ties of
+//!   unconnected items, the net the propagation gives a netless item touching two nets, and
+//!   report order. Each difference is classified: same entries in another order; an item
+//!   with another net after the reload; with equal nets, entries that differ in
+//!   `unconnected_items` only. Any other difference fails the test.
 //!
 //! `LIVE2_DRC_BOARDS` (default 6) and `LIVE2_DRC_BATCHES` (default 3) scale the campaign.
 
@@ -45,7 +49,7 @@ use std::collections::BTreeSet;
 
 use kicad_core::Severity;
 use kicad_session::board_api::check::{
-    CHECK_ITEMS_PROVIDERS, CheckItemsOptions, QuickDrcOptions, Violation,
+    CHECK_ITEMS_PROVIDERS, CheckItemsOptions, NET_SCOPED_TYPES, QuickDrcOptions, Violation,
 };
 use kicad_session::jobs::{JobPcbDrc, RcOutputFormat, RcUnits};
 use kicad_session::{LoadInputs, Reporter, Session, run_drc};
@@ -197,7 +201,7 @@ fn check_items_and_live_drc() {
     let max_boards = env_usize("LIVE2_DRC_BOARDS", 6);
     let mut failures = Vec::new();
     let (mut tested, mut commits, mut scoped_entries, mut full_entries) = (0, 0, 0usize, 0usize);
-    let (mut fresh_same, mut fresh_order, mut fresh_differ) = (0, 0, 0);
+    let (mut fresh_same, mut fresh_order, mut fresh_nets, mut fresh_ratsnest) = (0, 0, 0, 0);
     let mut panics: Vec<String> = Vec::new();
     let mut scoped_types: BTreeSet<String> = BTreeSet::new();
 
@@ -239,41 +243,8 @@ fn check_items_and_live_drc() {
 
                 commits += 1;
 
-                // (a1) repeated runs on the live state agree (nothing carried from one run to the
-                // next changes a result); (a2) the live state against a fresh load of the saved
-                // board, measured (see the module comment: the writer sorts the tracks).
-                let saved = s.save().expect("save");
-                let (live_report, _) = drc_job(&mut s, false);
-                let (again, _) = drc_job(&mut s, false);
-
-                if normalized(&live_report) != normalized(&again) {
-                    failures.push(format!(
-                        "{rel} batch {k}: a second DRC run on the live state differs"
-                    ));
-                }
-
-                let mut fresh = load_text(&saved, rel).expect("reload");
-                let (fresh_report, _) = drc_job(&mut fresh, false);
-
-                if normalized(&live_report) == normalized(&fresh_report) {
-                    fresh_same += 1;
-                } else if blocks(&live_report) == blocks(&fresh_report) {
-                    fresh_order += 1;
-                } else {
-                    fresh_differ += 1;
-
-                    if std::env::var("LIVE2_DEBUG").is_ok() {
-                        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                            .join("../../target/live2");
-                        let _ = std::fs::create_dir_all(&dir);
-                        let _ =
-                            std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
-                        let _ =
-                            std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
-                    }
-                }
-
-                // (b) scoped == subset of the full all-track-errors run
+                // (b) first, as the first DRC after the commit (its connectivity build can
+                // re-net items): the handles of the new and changed items plus a few others.
                 let mut ids: Vec<u64> = report.edit.added.clone();
                 ids.extend(&report.edit.changed);
                 let mut all: Vec<u64> = handles.values().copied().collect();
@@ -299,6 +270,58 @@ fn check_items_and_live_drc() {
                     )
                     .expect("check_items");
 
+                // (a1) repeated runs on the live state agree (nothing carried from one run to the
+                // next changes a result); (a2) the live state against a fresh load of the saved
+                // board, measured (see the module comment: the writer sorts the tracks).
+                let saved = s.save().expect("save");
+                let (live_report, _) = drc_job(&mut s, false);
+                let (again, _) = drc_job(&mut s, false);
+
+                if normalized(&live_report) != normalized(&again) {
+                    failures.push(format!(
+                        "{rel} batch {k}: a second DRC run on the live state differs"
+                    ));
+                }
+
+                let mut fresh = load_text(&saved, rel).expect("reload");
+                let (fresh_report, _) = drc_job(&mut fresh, false);
+
+                if normalized(&live_report) == normalized(&fresh_report) {
+                    fresh_same += 1;
+                } else if blocks(&live_report) == blocks(&fresh_report) {
+                    fresh_order += 1;
+                } else {
+                    // Classified: the reload gave an item another net (the propagation of a
+                    // netless item touching two nets follows the track order), else the
+                    // entries differ in unconnected items only (ratsnest edge ties), else
+                    // unexplained (a failure).
+                    if nets_by_uuid(&s) != nets_by_uuid(&fresh) {
+                        fresh_nets += 1;
+                    } else if differing_blocks(&live_report, &fresh_report)
+                        .iter()
+                        .all(|b| b.starts_with("[unconnected_items]"))
+                    {
+                        fresh_ratsnest += 1;
+                    } else {
+                        failures.push(format!(
+                            "{rel} batch {k}: live and reloaded reports differ in other than \
+                             unconnected items with equal nets: {:?}",
+                            differing_blocks(&live_report, &fresh_report).first()
+                        ));
+                    }
+
+                    if std::env::var("LIVE2_DEBUG").is_ok() {
+                        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                            .join("../../target/live2");
+                        let _ = std::fs::create_dir_all(&dir);
+                        let _ =
+                            std::fs::write(dir.join(format!("live_{bi}_{k}.rpt")), &live_report);
+                        let _ =
+                            std::fs::write(dir.join(format!("fresh_{bi}_{k}.rpt")), &fresh_report);
+                    }
+                }
+
+                // (b) scoped == subset of the full all-track-errors run
                 let mut others = other_providers(&mut s);
                 let (_, full) = drc_job(&mut s, true);
                 let wanted: BTreeSet<u64> = ids.iter().copied().collect();
@@ -318,6 +341,18 @@ fn check_items_and_live_drc() {
                         .net_code()
                         .map(|n| n.0)
                 };
+                let areas = item_areas(&s, &ids);
+                let zone_near = |h: Option<u64>| {
+                    let ctx = s.api_ctx();
+                    let it = ctx.item(kicad_pcb::ItemId::from_bits(h?)?)?;
+                    let (b, l) = (it.bounding_box(), it.layer_set());
+                    Some(
+                        it.type_() == kicad_core::typeinfo::KicadT::PcbZoneT
+                            && areas
+                                .iter()
+                                .any(|(a, al)| (&l & al).any() && b.intersects(a)),
+                    )
+                };
                 // The full run without the entries of the other providers, in full-run order.
                 let expected: Vec<String> = full
                     .iter()
@@ -335,10 +370,12 @@ fn check_items_and_live_drc() {
                         v.items
                             .iter()
                             .any(|i| i.id.is_some_and(|h| wanted.contains(&h)))
-                            || (v.violation_type == "unconnected_items"
+                            || (NET_SCOPED_TYPES.contains(&v.violation_type.as_str())
                                 && v.items
                                     .iter()
                                     .any(|i| net_of(i.id).is_some_and(|n| nets.contains(&n))))
+                            || (v.violation_type == "isolated_copper"
+                                && v.items.iter().any(|i| zone_near(i.id) == Some(true)))
                     })
                     .map(key)
                     .collect();
@@ -377,11 +414,53 @@ fn check_items_and_live_drc() {
     eprintln!(
         "live2 drc: {tested} boards, {commits} commits, {scoped_entries} scoped entries of \
          {full_entries} full-run entries; types {scoped_types:?}; live vs fresh load: \
-         {fresh_same} identical, {fresh_order} same entries in another order, {fresh_differ} \
-         different"
+         {fresh_same} identical, {fresh_order} same entries in another order, {fresh_nets} \
+         different with items of other nets after the reload, {fresh_ratsnest} different in \
+         unconnected items only"
     );
     assert!(tested > 0);
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+/// The blocks ([`blocks`]) one of the two reports has and the other has not.
+fn differing_blocks(a: &str, b: &str) -> Vec<String> {
+    let (a, b) = (blocks(a), blocks(b));
+    let mut out: Vec<String> = a.iter().filter(|x| !b.contains(x)).cloned().collect();
+    out.extend(b.iter().filter(|x| !a.contains(x)).cloned());
+    out
+}
+
+/// UUID -> net of every track, arc, via and zone.
+fn nets_by_uuid(s: &Session) -> std::collections::BTreeMap<String, i32> {
+    let mut m: std::collections::BTreeMap<String, i32> = s
+        .board
+        .tracks()
+        .map(|(_, t)| {
+            let t = t.as_track();
+            (t.base.item.uuid.as_string(), t.base.net.0)
+        })
+        .collect();
+    m.extend(
+        s.board
+            .zones()
+            .map(|(_, z)| (z.base.item.uuid.as_string(), z.base.net.0)),
+    );
+    m
+}
+
+/// The bounding boxes (inflated by the board's worst clearance) and layers of the items, as
+/// `check_items` matches `isolated_copper` entries of zones against them.
+fn item_areas(s: &Session, ids: &[u64]) -> Vec<(kicad_geom::Box2I, kicad_core::lset::Lset)> {
+    let ctx = s.api_ctx();
+    let worst = s.board.get_max_clearance_value(&ctx);
+    ids.iter()
+        .filter_map(|&h| ctx.item(kicad_pcb::ItemId::from_bits(h)?))
+        .map(|it| {
+            let mut b = it.bounding_box();
+            b.inflate(worst);
+            (b, it.layer_set())
+        })
+        .collect()
 }
 
 /// The entries of the providers outside [`CHECK_ITEMS_PROVIDERS`] (all-track-errors).

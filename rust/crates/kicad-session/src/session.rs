@@ -160,6 +160,9 @@ pub struct Session {
     /// with [`Session::load_footprint_libraries`]; `None`: no library tables (the library
     /// parity test then finds no library).
     pub footprint_libraries: Option<kicad_pcb::libraries::FootprintLibraryAdapter>,
+    /// Not in C++ (package LIVE-2): what changed since the fills were last those of a refill,
+    /// the precondition of [`Session::refill_zones_affected`].
+    pub(crate) fill_tracking: crate::board_api::refill::FillTracking,
 }
 
 /// A net as the item access API returns it.
@@ -304,6 +307,7 @@ impl Session {
             drawing_sheet: Session::default_drawing_sheet(),
             host_read_file: None,
             footprint_libraries: None,
+            fill_tracking: Default::default(),
         };
 
         session.initialize_loaded_board();
@@ -328,6 +332,7 @@ impl Session {
             drawing_sheet: Session::default_drawing_sheet(),
             host_read_file: None,
             footprint_libraries: None,
+            fill_tracking: Default::default(),
         }
     }
 
@@ -683,9 +688,8 @@ impl Session {
     /// see [`Session::fill_all_zones`]. The filler's `wxLogWarning`s go to
     /// [`Session::log_warnings`].
     pub fn refill_zones(&mut self) -> Result<(), SessionError> {
-        let outcome = self.fill_all_zones()?;
-        self.log_warnings.extend(outcome.warnings);
-        Ok(())
+        // the fills are then those of a refill (package LIVE-2: see `board_api::refill`)
+        self.refill_zones_tracked()
     }
 
     /// Port of the headless `ZONE_FILLER_TOOL::FillAllZones` the CLI jobs call

@@ -397,4 +397,11 @@ update) take over its fill unless a coupled re-created teardrop changed its prio
 Existing files touched: `src/lib.rs` (one `pub mod affected;` line). Uses the crate-private
 `ZoneFiller::zone_knockout_may_interact`, `worst_clearance`, `zone_knockout_slack`,
 `max_zone_corner_radius`. Deviation: one extra connectivity build (`build_board`, the same one
-`Fill()` starts with) before the selection.
+`Fill()` starts with) before the selection. The items that build re-nets (net propagation:
+a commit with `SKIP_CONNECTIVITY`, a pad-less cluster taking the net of its first item) are
+compared with the nets at the start of the refill and added to the damage (area, old and new
+net) before the via / pad hit test and the selection (review finding: such an item was in no
+damage and a zone it crossed kept its old fill for one refill). The callers' precondition
+(fills of a refill, worst clearance unchanged since, no pad / zone removal, no `fromTo()`
+rules) is checked by kicad-session (`board_api::refill::FillTracking`), which passes full
+damage otherwise.

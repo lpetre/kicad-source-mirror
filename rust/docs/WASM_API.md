@@ -209,20 +209,28 @@ remove or re-add a tenth of the routing): commit 0.50 ms native / 0.99 ms wasm, 
 
 | Call | Does |
 |---|---|
-| `checkItems(handles, { providers?, severities? })` | the violations that involve one of the items: the subset of a run of the providers (default `annular_width`, `disallow`, `connectivity`, `clearance`, `edge_clearance`, `hole_to_hole_clearance`, `width`, `diameter`) with `aReportAllTrackErrors = true` whose entries name one of the handles; `unconnected_items` entries also when an end has the net of one; returns `DrcSummary` |
+| `checkItems(handles, { providers?, severities? })` | the violations that involve one of the items: the subset of a run of the providers (default `annular_width`, `disallow`, `connectivity`, `clearance`, `edge_clearance`, `hole_to_hole_clearance`, `width`, `diameter`) with `aReportAllTrackErrors = true` whose entries name one of the handles; the connectivity entries `unconnected_items`, `isolated_copper`, `track_dangling`, `via_dangling` also when an item they name has the net of one (after the run); `isolated_copper` (it names the zone only) also when the zone's bounding box meets a handle's, inflated by the worst clearance, on a shared layer; returns `DrcSummary`, whose `providersNotRun` lists every DRC provider not run (their violations are not in the result: in particular `physical_clearance`, whose entries carry the same `clearance` / `hole_clearance` types, `solder_mask_issues`, `hole_size`, `copper width`, `miscellaneous`, `track angle`, `segment_length`, `microvia_stack`, `via_stitch_overlap`, `zone connections`, `length`, `diff_pair_coupling`, `creepage`, `sliver checker`); exclusions are not resolved |
 | `refillZonesAffected()` | `FillAllZones` with `ZONE_FILLER::Fill` on the zones the changes since the last refill can affect; the board ends up as `refillZones()` leaves it, fills vertex for vertex, flags, teardrops and saved text; returns `RefillReport { full, refilled, reused, kept, reasons }` |
 | `zoneDamage()` | the changes the next `refillZonesAffected()` refills for (`ChangeDamage { full, areas: [{ bbox, layers }], nets }`) |
 | `commit(t).damage`, `quickDrc(..).damage` | what a commit changed (areas and nets of removed, changed, added and re-netted items), and the nets a DRC run's connectivity build gave to items |
 
-The Board object keeps the damage itself: every `commit` / `commitBulk`, `quickDrc`,
+The session keeps the damage itself (natively too: `Session::refill_zones_affected( extra )`
+refills for what the session recorded plus `extra`): every `commit` / `commitBulk`, `quickDrc`,
 `checkItems` and `finalize` adds what it changed, `checkpoint` / `rollback` save and restore it
-with the board, a refill resets it; any other edit (`applyEdits`, `addTrackSegment`, `removeItems`,
-`updateTeardrops`, `runDrc`, ...) and the load make the next affected refill a full one. The
-precondition of the identity is that the fills are those of a full refill of the board before
-the changes, which this bookkeeping guarantees (natively: start from `ChangeDamage::full()`, merge
-`CommitReport::damage` of every commit, pass it to `Session::refill_zones_affected`).
+with the board, a refill (`refillZones()` included) resets it. The record is valid only while
+the board's time stamp and the rule text are those the last of these calls left, so any other
+edit (`applyEdits`, `addTrackSegment`, `removeItems`, `updateTeardrops`, `runDrc`, design
+settings, a direct edit of `Session::board` natively, ...) and the load make the next affected
+refill a full one. It is also a full one when a commit removed a pad or a zone (rule areas and
+teardrops included: they set the worst clearance, knock holes out of every copper layer, or
+change rule clearances by area membership), when the board's worst clearance differs from that
+of the last refill, and when the custom rules use `fromTo()` (every DRC run rebuilds the from-to
+cache that rule reads). The precondition of the identity, fills that are those of a refill of
+the board before the changes, is therefore checked by the session, not left to the caller.
 
-Which zones are refilled (`kicad_zone::affected`): every zone sharing a layer with a changed
+Which zones are refilled (`kicad_zone::affected`): the items the refill's own connectivity
+build gives another net (a commit with `skipConnectivity`, a pad-less cluster taking the net
+of its first item) are changed areas too; every zone sharing a layer with a changed
 area within the knockout reach (twice the worst clearance and thermal relief, minimum width,
 corner radii, 1 mm), every zone of a net whose connectivity cluster near a change meets the
 zone (islands), every unfilled zone and every new teardrop; closed under the
@@ -245,8 +253,10 @@ for (const c of candidates) {
 
 The DRC itself keeps no state between runs beyond the compiled rules (`DRC_ENGINE`, reused
 while valid): each `quickDrc` / `checkItems` / `runDrc` runs the cache generator (connectivity
-build, r-trees) as `RunTests` does. A persistent cache generator is not built (see
-`crates/kicad-session/PORT_STATUS.md`, LIVE-2).
+build, r-trees) as `RunTests` does, so `checkItems` costs a run of its providers (it saves
+nothing over `quickDrc` with the same providers; it only filters). A persistent cache
+generator is not built (package item 1 is open, see `crates/kicad-session/PORT_STATUS.md`,
+LIVE-2).
 
 ## Verification (package WASM-API-1)
 

@@ -89,6 +89,11 @@ pub struct DrcSummary {
     /// `Build` + `PropagateNets`): damage for [`Session::refill_zones_affected`].
     #[serde(default, skip_serializing_if = "super::refill::ChangeDamage::is_empty")]
     pub damage: super::refill::ChangeDamage,
+    /// [`Session::check_items`]: the providers of the DRC (`PROVIDER_ORDER`) it did not run,
+    /// whose violations involving the items are therefore not in the result (see
+    /// [`CHECK_ITEMS_PROVIDERS_DOC`]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub providers_not_run: Vec<String>,
 }
 
 /// Options of [`Session::quick_drc`].
@@ -212,6 +217,7 @@ impl Session {
             }
         }
 
+        let tracking_valid = self.fill_tracking_valid();
         let needs_init = !self
             .drc_engine
             .as_ref()
@@ -297,6 +303,14 @@ impl Session {
         );
         let mut summary = summarize(&ctx, &refs, mask);
         summary.damage = super::refill::net_damage(&self.board, &nets_before);
+
+        // A newly compiled engine: the rules the next refill reads are not known to be the
+        // last refill's.
+        if needs_init {
+            summary.damage = super::refill::ChangeDamage::full();
+        }
+
+        self.fill_tracking_advance(tracking_valid, &summary.damage);
         summary.checks_not_run = outcome
             .checks_not_run
             .iter()
@@ -335,8 +349,35 @@ pub const CHECK_ITEMS_PROVIDERS: [&str; 8] = [
 /// | `diameter` | every via (and pad stack layer) | once per item |
 /// | `annular_width` | every via and plated pad | once per item |
 /// | `disallow` | every item against the disallow rules (keepout rule areas compile to implicit rules) | once per item and rule |
-/// | `connectivity` | dangling tracks and vias per item; unconnected items per ratsnest edge (two items); isolated copper per zone island | per item / per edge; unconnected entries are kept when either end is a given item or has the net of one |
+/// | `connectivity` | dangling tracks and vias per item; unconnected items per ratsnest edge (two items); isolated copper per zone island | per item / per edge / per island; the entries of [`NET_SCOPED_TYPES`] are kept when an item they name is a given item or has the net of one (after the run) |
+///
+/// Entries the scoped check keeps without their naming a given item: `isolated_copper` names
+/// the zone only (`drc_test_provider_connectivity.cpp`), so it is kept when the zone has the
+/// net of a given item or when the zone's bounding box meets a given item's bounding box
+/// inflated by the board's worst clearance on a shared layer (the island a track of another
+/// net cuts off); a track left dangling by a removal names the remaining track, kept through
+/// its net; unconnected entries name the two ends of a ratsnest edge, kept through their
+/// nets.
+///
+/// Not in the result unless named in [`CheckItemsOptions::providers`] (each run is reported
+/// in [`DrcSummary::providers_not_run`]): every other provider of the DRC, in particular
+/// `physical_clearance` (whose entries of `physical_clearance` / `physical_hole_clearance`
+/// rules carry the same `clearance` / `hole_clearance` type keys as the clearance
+/// provider's), `solder_mask_issues` (`solder_mask_bridge`), `hole_size`, `copper width`
+/// (connection width), `miscellaneous` (disabled layer, assertions), `track angle`,
+/// `segment_length`, `microvia_stack`, `via_stitch_overlap`, `zone connections`, `length`,
+/// `diff_pair_coupling`, `creepage` and `sliver checker`. Exclusions are not
+/// resolved: an entry the board excludes keeps its rule severity.
 pub const CHECK_ITEMS_PROVIDERS_DOC: () = ();
+
+/// The connectivity entries [`Session::check_items`] keeps when one of their items has the
+/// net of a given item (after the run), besides those naming a given item.
+pub const NET_SCOPED_TYPES: [&str; 4] = [
+    "unconnected_items",
+    "isolated_copper",
+    "track_dangling",
+    "via_dangling",
+];
 
 /// Options of [`Session::check_items`].
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -351,28 +392,23 @@ pub struct CheckItemsOptions {
 impl Session {
     /// The violations that involve at least one of the items `handles`: the subset of a run
     /// of the chosen providers with `aReportAllTrackErrors = true` (`kicad-cli pcb drc
-    /// --all-track-errors`) whose entries name one of the items; `unconnected_items` entries
-    /// are also kept when one of their items has the net of a given item. The board's markers
-    /// are not touched. See [`CHECK_ITEMS_PROVIDERS_DOC`].
+    /// --all-track-errors`) whose entries name one of the items; the entries of
+    /// [`NET_SCOPED_TYPES`] are also kept when one of their items has the net of a given item
+    /// (the nets after the run, whose connectivity build can re-net items). The board's
+    /// markers are not touched. The run is a full run of the chosen providers (no persistent
+    /// DRC state); [`DrcSummary::providers_not_run`] lists the providers it skipped. See
+    /// [`CHECK_ITEMS_PROVIDERS_DOC`].
     pub fn check_items(
         &mut self,
         handles: &[u64],
         options: &CheckItemsOptions,
     ) -> Result<DrcSummary, SessionError> {
-        let mut nets = std::collections::BTreeSet::new();
-
         {
             let ctx = self.api_ctx();
 
             for &h in handles {
                 let id = super::item_id(h)?;
-                let item = ctx.item(id).ok_or(SessionError::StaleId { id: h })?;
-
-                if let Some(net) = item.net_code() {
-                    if net.0 > 0 {
-                        nets.insert(net.0);
-                    }
-                }
+                ctx.item(id).ok_or(SessionError::StaleId { id: h })?;
             }
         }
 
@@ -385,13 +421,40 @@ impl Session {
             options.providers.clone()
         };
         let full = self.quick_drc(&QuickDrcOptions {
-            providers,
+            providers: providers.clone(),
             all_track_errors: true,
             severities: options.severities.clone(),
         })?;
 
         let wanted: std::collections::BTreeSet<u64> = handles.iter().copied().collect();
         let ctx = self.api_ctx();
+
+        // The nets of the items after the run: its connectivity build can re-net them
+        // (`PropagateNets`), and the entries name the items with those nets.
+        let nets: std::collections::BTreeSet<i32> = handles
+            .iter()
+            .filter_map(|&h| ctx.item(kicad_pcb::ItemId::from_bits(h)?)?.net_code())
+            .map(|n| n.0)
+            .filter(|&n| n > 0)
+            .collect();
+        // The given items' areas, inflated by the board's worst clearance: an isolated island
+        // of a zone of another net that an item splits off lies within its zone's bounding
+        // box, which then meets the item's area on a shared layer.
+        let worst = self.board.get_max_clearance_value(&ctx);
+        let areas: Vec<(kicad_geom::Box2I, kicad_core::lset::Lset)> = handles
+            .iter()
+            .filter_map(|&h| ctx.item(kicad_pcb::ItemId::from_bits(h)?))
+            .map(|it| {
+                let mut b = it.bounding_box();
+                b.inflate(worst);
+                (b, it.layer_set())
+            })
+            .collect();
+        let zone_area = |v: &ViolationItem| {
+            let it = ctx.item(kicad_pcb::ItemId::from_bits(v.id?)?)?;
+            (it.type_() == kicad_core::typeinfo::KicadT::PcbZoneT)
+                .then(|| (it.bounding_box(), it.layer_set()))
+        };
         let net_of = |v: &ViolationItem| {
             v.id.and_then(kicad_pcb::ItemId::from_bits)
                 .and_then(|id| ctx.item(id))
@@ -401,6 +464,11 @@ impl Session {
         let mut s = DrcSummary {
             checks_not_run: full.checks_not_run,
             damage: full.damage,
+            providers_not_run: kicad_drc::engine::PROVIDER_ORDER
+                .iter()
+                .filter(|p| !providers.iter().any(|q| q == *p))
+                .map(|p| p.to_string())
+                .collect(),
             ..DrcSummary::default()
         };
 
@@ -409,12 +477,20 @@ impl Session {
                 .items
                 .iter()
                 .any(|i| i.id.is_some_and(|id| wanted.contains(&id)));
-            let by_net = v.violation_type == "unconnected_items"
+            let by_net = NET_SCOPED_TYPES.contains(&v.violation_type.as_str())
                 && v.items
                     .iter()
                     .any(|i| net_of(i).is_some_and(|n| nets.contains(&n)));
+            let zone_near = v.violation_type == "isolated_copper"
+                && v.items.iter().any(|i| {
+                    zone_area(i).is_some_and(|(bbox, layers)| {
+                        areas
+                            .iter()
+                            .any(|(b, l)| (&layers & l).any() && bbox.intersects(b))
+                    })
+                });
 
-            if !(named || by_net) {
+            if !(named || by_net || zone_near) {
                 continue;
             }
 

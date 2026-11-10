@@ -147,6 +147,9 @@ export interface DrcSummary {
     checksNotRun: string[];
     /** LIVE-2: nets the run's connectivity build gave to items (absent when none). */
     damage?: ChangeDamage;
+    /** `checkItems`: the DRC providers it did not run (their violations are not in the
+     *  result; absent for the other calls). */
+    providersNotRun?: string[];
 }
 export interface QuickDrcOptions { providers?: string[]; allTrackErrors?: boolean; severities?: string[] }
 export interface ReadOptions { polygons?: boolean }
@@ -188,5 +191,6 @@ export interface RefillReport {
     reasons: [number, number, number, number, number, number]; damage?: ChangeDamage;
 }
 /** `checkItems(handles, options)`: providers by name (default: annular_width, disallow,
- *  connectivity, clearance, edge_clearance, hole_to_hole_clearance, width, diameter). */
+ *  connectivity, clearance, edge_clearance, hole_to_hole_clearance, width, diameter; the
+ *  others, e.g. physical_clearance, are listed in `DrcSummary.providersNotRun`). */
 export interface CheckItemsOptions { providers?: string[]; severities?: string[] }

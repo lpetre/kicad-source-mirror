@@ -480,28 +480,50 @@ result is defined as, and tested equal to, the full computation of the C++ port.
 | Change damage of a commit (`BOARD_COMMIT::propagateDamage` inputs: removed / changed (before and after) / added / re-netted items' bounding box, layers, nets) | `board_api::refill::ChangeDamage`, `CommitReport::damage` | done |
 | Nets a DRC run's connectivity build changed (`DrcSummary::damage`), and a refill's / `finalize`'s (`RefillReport::damage`, `Session::finalize_tracked`) | `board_api::refill::net_damage` | done |
 | Affected-only refill (`FillAllZones` with `ZONE_FILLER::Fill( affected )`) | `Session::refill_zones_affected` -> `kicad_zone::affected::fill_affected_zones` | done |
-| Item-scoped check (subset of a full all-track-errors run naming the items) | `Session::check_items`, `board_api::check::CHECK_ITEMS_PROVIDERS(_DOC)` | done (filter of a provider run) |
+| Session-held damage record (precondition of the identity checked by the session) | `board_api::refill::FillTracking`, `Session::fill_damage` | done |
+| Item-scoped check (subset of a full all-track-errors run involving the items) | `Session::check_items`, `board_api::check::CHECK_ITEMS_PROVIDERS(_DOC)`, `NET_SCOPED_TYPES`, `DrcSummary::providers_not_run` | done (filter of a full provider run: saves no time over `quick_drc`) |
 | Persistent DRC state (cache generator, r-trees and caches updated per change) | - | not built (see Known gaps) |
 | Bench | kicad-bench `edit` pipeline (`edit.commit`, `edit.check_items`, `edit.refill_affected`, `edit.local_*`), `wasm_bench.mjs --pipelines live2` | done |
 
-Tests: `tests/live2_refill.rs` (verification c), `tests/live2_drc.rs` (b, a1, a2 measured, d
-export), `tests/oracle/live2_cli_compare.sh` (d).
+Tests: `tests/live2_refill.rs` (verification c; module `review_cases`: the independent
+review's counterexamples and controls on synthetic boards, plus its env-gated campaigns
+`LIVE2R_LIST` / `LIVE2R_LOCAL_LIST`), `tests/live2_drc.rs` (b, a1, a2 classified, d export),
+`tests/oracle/live2_cli_compare.sh` (d).
 
 Decisions:
 
 * `check_items` runs the providers in full with `aReportAllTrackErrors = true` (through
   `quick_drc`, i.e. `run_tests_selected`) and keeps the entries that name a given item (by
-  handle), plus `unconnected_items` entries one of whose ends has the net of a given item. The
+  handle), plus the entries of `NET_SCOPED_TYPES` (`unconnected_items`, `isolated_copper`,
+  `track_dangling`, `via_dangling`) naming an item with the net of a given item (nets read
+  after the run, whose connectivity build can re-net items), plus `isolated_copper` entries
+  (they name the zone only) of zones whose bounding box meets a given item's, inflated by the
+  worst clearance, on a shared layer (the island a track of another net cuts off).
+  `DrcSummary::providers_not_run` lists every provider not run (`physical_clearance`, whose
+  entries carry the `clearance` / `hole_clearance` types too, `solder_mask_issues`,
+  `hole_size`, `copper width`, ...; full list in `CHECK_ITEMS_PROVIDERS_DOC`). The
   kept entries are therefore the full run's entries byte for byte, whichever item of a pair the
   C++ loop visits first (table in `CHECK_ITEMS_PROVIDERS_DOC`). It costs a run of its providers;
   the providers are not restricted to the items (that would need item filters inside the
   provider loops, files of the performance loop).
 * `check_items` resolves no exclusions (like `quick_drc`); an excluded marker of the job shows
   as `exclusion` there and as its own severity here.
-* The damage travels with the commit report instead of living in the `Session` (no session
-  field was added: `session.rs` is not this package's file). The wasm `Board` keeps the merged
-  damage itself, saves it with checkpoints and makes it full after any edit that does not
-  report one.
+* The damage lives in the session (`Session::fill_tracking`, one field added to
+  `session.rs`, and `Session::refill_zones` now goes through the tracked full refill):
+  `commit`, `quick_drc` / `check_items`, `finalize` add their damage, `checkpoint` /
+  `rollback` save and restore it, a refill resets it. It is valid only while the board time
+  stamp (bumped by every `Board` mutator) and the rule text are those the last tracked call
+  left; otherwise, and after a load, `refill_zones_affected` refills everything. The argument
+  of `refill_zones_affected` is extra damage (union), so passing commit damage as before still
+  works, and passing nothing after an untracked edit is safe. A replaced
+  `Session::drc_engine` with other rules than `rules_text` would not be noticed.
+* Full damage (no damage area bounds the effect): the removal of a pad or a zone (rule areas
+  and teardrops included: worst clearance of `GetMaxClearanceValue`, NPTH holes knocked out of
+  every copper layer, area-membership rule clearances), a worst clearance differing from the
+  last refill's, custom rules using `fromTo()` (every DRC run rebuilds the from-to cache), a
+  DRC run that had to compile the engine, a commit that failed half way.
+* The refill's own pre-fill connectivity build re-nets items (skip-connectivity commits,
+  pad-less clusters): they are damage of the same refill (`kicad_zone::affected`).
 
 Verification:
 
@@ -535,6 +557,9 @@ Verification:
 
 Known gaps:
 
+* Package item 1 (persistent DRC state) and verification a (live state == fresh load) are not
+  met; the package statement is reduced to: `check_items` is a filter of a full run of its
+  providers (timings in `docs/PERF.md`: `check_items` is not faster than `quick_drc`).
 * No persistent DRC state: every DRC call runs the cache generator (`ClearRatsnest` + `Build`
   of the connectivity, copper / zone r-trees, clearance caches) as `DRC_ENGINE::RunTests`
   does; only the compiled rules persist (`DrcEngine`, reused while `rules_valid()`; a changed

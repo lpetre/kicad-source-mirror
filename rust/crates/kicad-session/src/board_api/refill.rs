@@ -21,11 +21,15 @@
 //!   by every [`super::commit::CommitReport`] (the areas, layers and nets of the items the
 //!   commit removed, changed, added or re-netted, as `BOARD_COMMIT::propagateDamage` sees
 //!   them). Merge the reports of all commits since the last refill.
+//! * [`FillTracking`]: the session's own record of the damage since the last refill, kept by
+//!   the operations that report their damage and checked against the board time stamp and
+//!   the rule text, so that the precondition of the identity (the fills before the damage are
+//!   those of a refill) does not rest on the caller.
 //! * [`Session::refill_zones_affected`]: `FillAllZones` with `ZONE_FILLER::Fill` on the zones
-//!   the damage can affect (`kicad_zone::affected::fill_affected_zones`), identical to
-//!   [`Session::refill_zones`] provided the fills before the damage were those of a full
-//!   refill (the board after a full or affected refill; not a freshly loaded board, whose
-//!   fills come from the file: start with [`ChangeDamage::full`]).
+//!   the recorded damage can affect (`kicad_zone::affected::fill_affected_zones`), identical
+//!   to [`Session::refill_zones`]; a full refill whenever the record is unknown (after a load
+//!   or any untracked change) or a change has effects no damage area bounds (removal of a pad
+//!   or zone, a changed worst clearance, `fromTo()` rules).
 
 use kicad_core::PcbLayerId;
 use kicad_core::lset::Lset;
@@ -165,6 +169,27 @@ impl ChangeDamage {
         }
     }
 
+    /// Records an item a commit removes: as [`ChangeDamage::record_item`], except that the
+    /// removal of a pad or a zone (rule areas and teardrops included) makes the damage full.
+    /// Those items set inputs of every fill that the damage area does not bound: the board's
+    /// worst clearance (`GetMaxClearanceValue`: zone and pad local clearances), which is the
+    /// reach of every knockout query of `ZONE_FILLER::Fill`; the copper layers a pad hole
+    /// knocks out (an NPTH pad on the mask layers only knocks its hole out of every copper
+    /// layer); the clearances of items anywhere that a custom rule gives by area membership
+    /// (`intersectsArea` / `insideArea` / `enclosedByArea`).
+    pub(crate) fn record_removed(&mut self, ctx: &BoardCtx<'_>, id: ItemId) {
+        if let Some(item) = ctx.item(id) {
+            if matches!(item.type_(), KicadT::PcbPadT | KicadT::PcbZoneT) {
+                self.full = true;
+                self.areas.clear();
+                self.nets.clear();
+                return;
+            }
+        }
+
+        self.record_item(ctx, id);
+    }
+
     /// Records a net whose connectivity changed.
     pub(crate) fn record_net(&mut self, net: i32) {
         if let Err(pos) = self.nets.binary_search(&net) {
@@ -226,28 +251,176 @@ pub(crate) fn net_damage(board: &kicad_pcb::Board, before: &[(ItemId, i32)]) -> 
     d
 }
 
+/// The session's record of what changed since the fills were last those of a refill
+/// (package LIVE-2), the precondition of [`Session::refill_zones_affected`]. It is kept by the
+/// operations that report their damage ([`Session::commit`], [`Session::quick_drc`] /
+/// [`Session::check_items`], [`Session::finalize`], the refills) and saved and restored with
+/// a [`super::commit::Checkpoint`]. It is valid only while the board time stamp and the rule
+/// text are the ones the last of those operations left: any other change of the board (every
+/// `Board` mutator bumps the time stamp: `apply_edits`, `add_track`, `update_teardrops`,
+/// `run_drc`, design settings, a direct edit of `Session::board`, ...) or of
+/// `Session::rules_text` makes it unknown, and the next affected refill is a full one. A
+/// loaded board starts unknown (its fills come from the file).
+#[derive(Clone, Debug, Default)]
+pub struct FillTracking {
+    known: Option<KnownFills>,
+}
+
+#[derive(Clone, Debug)]
+struct KnownFills {
+    /// `BOARD::GetTimeStamp()` after the last tracked operation.
+    stamp: i32,
+    /// Fingerprint of `Session::rules_text` at the last refill.
+    rules: u64,
+    /// `GetMaxClearanceValue()` at the end of the last refill.
+    worst_clearance: i32,
+    /// The merged damage since the last refill.
+    damage: ChangeDamage,
+}
+
+/// A fingerprint of the custom rule text (the rules the engine compiles).
+fn rules_fingerprint(rules: Option<&str>) -> u64 {
+    use std::hash::{Hash, Hasher};
+
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    rules.hash(&mut h);
+    h.finish()
+}
+
 impl Session {
-    /// [`Session::finalize`] returning the items whose net the full rebuild changed, as
-    /// damage for [`Session::refill_zones_affected`].
-    pub fn finalize_tracked(&mut self) -> ChangeDamage {
-        let before = net_snapshot(&self.board);
-        self.finalize();
-        net_damage(&self.board, &before)
+    /// Whether [`FillTracking`] describes the board as it is now.
+    pub(crate) fn fill_tracking_valid(&self) -> bool {
+        self.fill_tracking.known.as_ref().is_some_and(|k| {
+            k.stamp == self.board.time_stamp()
+                && k.rules == rules_fingerprint(self.rules_text.as_deref())
+        })
     }
 
-    /// `FillAllZones` refilling only the zones `damage` (the merged
-    /// [`super::commit::CommitReport::damage`] of every commit since the last refill) can
-    /// affect; the fills, flags, teardrops and connectivity end up as [`Session::refill_zones`]
-    /// leaves them (see the module comment for the precondition).
+    /// Adds the damage of a tracked operation that started with the tracking `was_valid`
+    /// ([`Session::fill_tracking_valid`] before it); otherwise the tracking becomes unknown.
+    pub(crate) fn fill_tracking_advance(&mut self, was_valid: bool, damage: &ChangeDamage) {
+        let stamp = self.board.time_stamp();
+
+        match (&mut self.fill_tracking.known, was_valid) {
+            (Some(k), true) => {
+                k.damage.merge(damage);
+                k.stamp = stamp;
+            }
+            _ => self.fill_tracking.known = None,
+        }
+    }
+
+    /// Records the fills as those of a refill; `damage` is what the refill's own
+    /// connectivity builds changed after it filled.
+    fn fill_tracking_reset(&mut self, damage: ChangeDamage) {
+        let worst_clearance = match self.drc_engine.as_ref() {
+            Some(engine) => self
+                .board
+                .get_max_clearance_value(&BoardCtx::bare(&self.board).with_rules(engine)),
+            None => {
+                self.fill_tracking.known = None;
+                return;
+            }
+        };
+
+        self.fill_tracking.known = Some(KnownFills {
+            stamp: self.board.time_stamp(),
+            rules: rules_fingerprint(self.rules_text.as_deref()),
+            worst_clearance,
+            damage,
+        });
+    }
+
+    /// The damage the next [`Session::refill_zones_affected`] refills for: the merged damage
+    /// of the tracked operations since the last refill, or [`ChangeDamage::full`] when the
+    /// fills are not known to be those of a refill of the board as it is.
+    pub fn fill_damage(&self) -> ChangeDamage {
+        match &self.fill_tracking.known {
+            Some(k) if self.fill_tracking_valid() => k.damage.clone(),
+            _ => ChangeDamage::full(),
+        }
+    }
+
+    /// The session's tracking state, for [`super::commit::Checkpoint`].
+    pub(crate) fn fill_tracking_state(&self) -> FillTracking {
+        self.fill_tracking.clone()
+    }
+
+    /// Puts the tracking state of a checkpoint back.
+    pub(crate) fn set_fill_tracking_state(&mut self, state: FillTracking) {
+        self.fill_tracking = state;
+    }
+
+    /// [`Session::finalize`] returning the items whose net the full rebuild changed (also
+    /// recorded by the session for the next [`Session::refill_zones_affected`]).
+    pub fn finalize_tracked(&mut self) -> ChangeDamage {
+        let valid = self.fill_tracking_valid();
+        let before = net_snapshot(&self.board);
+        self.rebuild_connectivity();
+        let damage = net_damage(&self.board, &before);
+        self.fill_tracking_advance(valid, &damage);
+        damage
+    }
+
+    /// The full refill [`Session::refill_zones`] with the session's tracking: afterwards the
+    /// fills are known to be those of a refill.
+    pub(crate) fn refill_zones_tracked(&mut self) -> Result<(), SessionError> {
+        let before = net_snapshot(&self.board);
+        let outcome = self.fill_all_zones()?;
+        self.log_warnings.extend(outcome.warnings);
+        let damage = net_damage(&self.board, &before);
+        self.fill_tracking_reset(damage);
+        Ok(())
+    }
+
+    /// `FillAllZones` refilling only the zones the changes since the last refill can affect;
+    /// the fills, flags, teardrops and connectivity end up as [`Session::refill_zones`]
+    /// leaves them.
+    ///
+    /// The changes are those the session recorded ([`Session::fill_damage`]: the damage of
+    /// every commit, DRC run and `finalize` since the last refill, restored with
+    /// checkpoints) plus `extra` (damage the caller knows of beyond that; pass
+    /// `ChangeDamage::default()` when there is none, `ChangeDamage::full()` to force a full
+    /// refill). The refill is a full one whenever the session cannot vouch for the fills:
+    /// after a load (fills from the file), after any change of the board or of the rule text
+    /// by another operation, when the board's worst clearance differs from the one of the last
+    /// refill, and when the custom rules use `fromTo()` (its from-to cache is rebuilt by
+    /// every DRC run and changes the clearance of items no damage area bounds).
     pub fn refill_zones_affected(
         &mut self,
-        damage: &ChangeDamage,
+        extra: &ChangeDamage,
     ) -> Result<RefillReport, SessionError> {
+        let mut damage = self.fill_damage();
         self.ensure_drc_engine();
 
         let Some(engine) = self.drc_engine.as_ref() else {
             return Err(SessionError::not_yet_ported("DRC engine"));
         };
+
+        if !damage.full {
+            let worst = self
+                .board
+                .get_max_clearance_value(&BoardCtx::bare(&self.board).with_rules(engine));
+
+            if self
+                .fill_tracking
+                .known
+                .as_ref()
+                .is_none_or(|k| k.worst_clearance != worst)
+            {
+                damage = ChangeDamage::full();
+            }
+        }
+
+        if self
+            .rules_text
+            .as_deref()
+            .is_some_and(|t| t.contains("fromTo"))
+        {
+            damage = ChangeDamage::full();
+        }
+
+        damage.merge(extra);
 
         let before = net_snapshot(&self.board);
         let outcome = fill_affected_zones(
@@ -257,6 +430,8 @@ impl Session {
             &damage.to_zone_damage(),
         );
         self.log_warnings.extend(outcome.warnings);
+        let after = net_damage(&self.board, &before);
+        self.fill_tracking_reset(after.clone());
 
         Ok(RefillReport {
             full: outcome.full,
@@ -264,7 +439,7 @@ impl Session {
             reused: outcome.reused.into_iter().map(handle).collect(),
             kept: outcome.kept,
             reasons: outcome.reasons,
-            damage: net_damage(&self.board, &before),
+            damage: after,
         })
     }
 }

@@ -821,6 +821,41 @@ Progress log:
   will measure under load unless the others finish first. Disk: pruned 2.2 GB of the
   port's own build artifacts older than three hours (unchanged crates will rebuild once);
   9.9 GB free. Memory fine.
+  13:38 UTC (heartbeat; next in about an hour). Read on Fable:
+  - LIVE-2 review, verdict NOT SOUND: the claim "affected refill == full refill" failed in
+    five ways, each with a test: items the refill's own connectivity build re-nets were
+    not damage; the seed reach used the worst clearance AFTER the edit (removing the zone
+    or pad that set it); an NPTH hole knocks out copper layers the damage did not carry;
+    removing a rule area that a custom rule names is not local; a DRC run between commit
+    and refill rebuilds the from-to cache a fromTo() rule reads. Also check_items read
+    nets before the run that re-nets, and the native API did not guard its precondition.
+    For what a router does on purpose (own-net tracks and vias added, moved, removed) no
+    counterexample in 2430 new-seed refills, incl. a synthetic board where 81 % of the
+    fills were kept. Repair (Opus): re-netted items become damage; removing a pad or
+    zone, a changed worst clearance and rules using fromTo force a full refill;
+    check_items reads nets after the run, keeps net-scoped entries, lists providers not
+    run; the session keeps its own damage record and falls back to a full refill when it
+    is unknown (one field in session.rs). Reviewer's cases are permanent tests. NOT done
+    by the repair: the 30x50 campaigns, one new test not compiled. Fable verify running.
+    LIVE-2 item 1 (persistent DRC state) is recorded as not delivered.
+  - Adapter GK-1 repair: every finding fixed except JSON parse error texts (documented);
+    port fix in kicad-drc connection_width.rs (items in the order the C++ unordered_set
+    yields them: exact for one or two items, collision-free order for three or more);
+    corpus now 45 boards x 10 sequences = 450 rows, 0 different with the reviewer's
+    strict masks (9 reference-unstable); 109 edge cases, 6 differ in error texts only;
+    fnmatch equal to glibc on 1.2 million cases bar one undefined read. UUID seed from
+    host entropy by default. Follow-up: kicad-drc PORT_STATUS still describes the old
+    item order. GK-2 (wasm drop-in, one-process opens, faster sessions) is running.
+    Artifact version 4.
+  - Performance round 1, three changes, all passed the Fable output review: wasm profile
+    opt-level 3 (wasm stages 8-23 % faster, .wasm 8.7 -> 10.6 MB raw; same output hashes
+    on 6 boards x 6 outputs x 4 builds); DRC marker lookup through a UUID presence
+    snapshot instead of a linear scan per marker plus a clearance memo (jetson DRC
+    11.9 -> 9.7 s, vme-wren 17.6 -> 14.7 s, identical report hashes); split-collinear
+    pre-check and extent filter (copper width -16 % on coldfire, sliver check -10 % on
+    jetson). The judge is measuring; a note for it is in PERF.md (the connection-width
+    fix and the LIVE-2 test repairs are not part of the round).
+  Machine: load 2.7, 8.8 GB disk free, memory fine.
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect

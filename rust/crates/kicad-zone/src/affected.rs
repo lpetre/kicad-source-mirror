@@ -30,7 +30,12 @@
 //!    setting and in its outline to a removed, filled one ("re-created") takes over the old
 //!    fill unless it has a coupled zone of equal priority (the `HigherPriority()` tie is
 //!    broken by the UUID, which changed). Any other added or removed teardrop is damage.
-//! 2. Seeds: every fillable zone that shares a layer with a damage rectangle (any layer:
+//! 2. Damage added by the refill itself: the connectivity build `Fill()` starts with (run
+//!    here before the selection) propagates nets (`PropagateNets`: a pad-less cluster takes
+//!    the net of its first item), so every track, arc, via or zone whose net differs from
+//!    the one it had when the refill started is a damage rectangle with its old and new net
+//!    (a commit with `SKIP_CONNECTIVITY` leaves all its propagation to this build).
+//!    Seeds: every fillable zone that shares a layer with a damage rectangle (any layer:
 //!    non-copper zones knock out the items on their layer) and whose
 //!    bounding box, inflated by the reach of [`seed_margin`], meets it; every zone that a
 //!    connectivity cluster of its net touching a changed area meets (island removal reads
@@ -303,6 +308,11 @@ pub fn fill_affected_zones(
         return full_refill(board, connectivity, rules);
     }
 
+    // The nets of the items a connectivity build can give another net (`PropagateNets`),
+    // before the teardrop update and the build `Fill()` starts with: the items they re-net
+    // are damage of this refill (their old fill knocked them out with the old net).
+    let nets_at_start = item_nets(board);
+
     let worst_before = board.get_max_clearance_value(&BoardCtx::bare(board).with_rules(rules));
 
     // The teardrops before the update (they are all removed and re-created by it).
@@ -393,59 +403,88 @@ pub fn fill_affected_zones(
     connectivity.clear_ratsnest();
     connectivity.build_board(board);
 
+    let renetted: Vec<(kicad_pcb::ItemId, i32, i32)> = {
+        let after: std::collections::HashMap<kicad_pcb::ItemId, i32> =
+            item_nets(board).into_iter().collect();
+        nets_at_start
+            .iter()
+            .filter_map(|&(id, old)| match after.get(&id) {
+                Some(&new) if new != old => Some((id, old, new)),
+                _ => None,
+            })
+            .collect()
+    };
+
     let set = {
         let ctx = BoardCtx::bare(board).with_rules(rules);
-        filler.worst_clearance = worst_after;
 
-        for zone in board.get_zone_list(true) {
-            if let Some(z) = board.zone(zone) {
-                // (int) zone->GetCornerRadius()
-                filler.max_zone_corner_radius =
-                    filler.max_zone_corner_radius.max(z.corner_radius as i32);
+        // Items the build re-netted (a commit with `SKIP_CONNECTIVITY`, a pad-less cluster
+        // taking the net of its first item): their areas with the old and the new net.
+        for &(id, old, new) in &renetted {
+            match ctx.item(id) {
+                Some(item) => {
+                    damage.nets.insert(old);
+                    damage.add_area(item.bounding_box(), item.layer_set(), Some(new));
+                }
+                None => damage.full = true,
             }
         }
 
-        // Vias and pads at a changed area: their flashing reads the connectivity there.
-        let rects = damage.rects.clone();
-        let hit = |bbox: &Box2I| rects.iter().any(|r| r.bbox.intersects(bbox));
+        if damage.full {
+            None
+        } else {
+            filler.worst_clearance = worst_after;
 
-        for (id, t) in board.tracks() {
-            if matches!(t, kicad_pcb::pcb_track::Track::Via(_)) {
-                if let Some(item) = ctx.item(id.into()) {
-                    let bbox = item.bounding_box();
+            for zone in board.get_zone_list(true) {
+                if let Some(z) = board.zone(zone) {
+                    // (int) zone->GetCornerRadius()
+                    filler.max_zone_corner_radius =
+                        filler.max_zone_corner_radius.max(z.corner_radius as i32);
+                }
+            }
 
-                    if hit(&bbox) {
-                        damage.add_area(bbox, item.layer_set(), None);
+            // Vias and pads at a changed area: their flashing reads the connectivity there.
+            let rects = damage.rects.clone();
+            let hit = |bbox: &Box2I| rects.iter().any(|r| r.bbox.intersects(bbox));
+
+            for (id, t) in board.tracks() {
+                if matches!(t, kicad_pcb::pcb_track::Track::Via(_)) {
+                    if let Some(item) = ctx.item(id.into()) {
+                        let bbox = item.bounding_box();
+
+                        if hit(&bbox) {
+                            damage.add_area(bbox, item.layer_set(), None);
+                        }
                     }
                 }
             }
-        }
 
-        for (fp, _) in board.footprints() {
-            for (pad, _) in board.footprint_pads(fp) {
-                if let Some(item) = ctx.item(pad.into()) {
-                    let bbox = item.bounding_box();
+            for (fp, _) in board.footprints() {
+                for (pad, _) in board.footprint_pads(fp) {
+                    if let Some(item) = ctx.item(pad.into()) {
+                        let bbox = item.bounding_box();
 
-                    if hit(&bbox) {
-                        damage.add_area(bbox, item.layer_set(), None);
+                        if hit(&bbox) {
+                            damage.add_area(bbox, item.layer_set(), None);
+                        }
                     }
                 }
             }
+
+            let near_clusters = clusters_near(&ctx, connectivity, &damage);
+
+            affected_set(
+                board,
+                &ctx,
+                rules,
+                &filler,
+                &damage,
+                &zones,
+                &recreated,
+                &old_keys,
+                &near_clusters,
+            )
         }
-
-        let near_clusters = clusters_near(&ctx, connectivity, &damage);
-
-        affected_set(
-            board,
-            &ctx,
-            rules,
-            &filler,
-            &damage,
-            &zones,
-            &recreated,
-            &old_keys,
-            &near_clusters,
-        )
     };
 
     let Some((set, reused_from, reasons)) = set else {
@@ -509,6 +548,21 @@ pub fn fill_affected_zones(
     outcome.reasons = reasons;
     outcome.kept = (zones.len() - outcome.refilled.len() - outcome.reused.len()) as u32;
     outcome
+}
+
+/// The net of every track, arc, via and zone (the items whose net a connectivity build can
+/// change), in board order.
+fn item_nets(board: &Board) -> Vec<(kicad_pcb::ItemId, i32)> {
+    let mut v: Vec<(kicad_pcb::ItemId, i32)> = board
+        .tracks()
+        .map(|(id, t)| (kicad_pcb::ItemId::from(id), t.as_track().base.net.0))
+        .collect();
+    v.extend(
+        board
+            .zones()
+            .map(|(id, z)| (kicad_pcb::ItemId::from(id), z.base.net.0)),
+    );
+    v
 }
 
 /// Steps 2 and 3 of the module comment: the zones to refill, and the number of re-created

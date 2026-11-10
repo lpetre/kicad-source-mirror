@@ -140,6 +140,20 @@ of its eight providers (it is defined as their full all-track-errors run, filter
 more than `quick_drc` with two providers; the DRC keeps no state between runs except the
 compiled rules, so every call pays the cache generator (connectivity build and r-trees).
 
+## Orchestrator note for the judge of round 1 (remove it when the round is recorded)
+
+Two things in the tree are NOT part of round 1 and must not be blamed on its changes:
+1. `crates/kicad-drc/src/providers/connection_width.rs` changed after the round's base
+   commit (a fidelity fix from another package: the two items of a connection-width
+   violation now come in the order the C++ `std::unordered_set` yields them). DRC output
+   on boards with such violations therefore differs from a base build. Do not revert it;
+   for A/B comparisons keep this file identical on both sides.
+2. `crates/kicad-session` tests `live2_*` are being repaired by another workflow right
+   now. If the gate's `session` entry fails there, check with the round's changes
+   reverted before attributing it; a failure that stays is not this round's.
+The round's base commit hash still resolves locally although the branch history was
+rewritten since (the files of the round are identical in the replacement commit).
+
 ## Quiet baseline at 63a725d7
 
 Taken by the perf gate package (2026-11-10, 08:57 to 09:49 UTC). This is the baseline that

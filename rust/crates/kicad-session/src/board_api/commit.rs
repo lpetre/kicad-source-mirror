@@ -187,6 +187,8 @@ pub struct CommitReport {
 pub struct Checkpoint {
     board: Board,
     connectivity: ConnectivityData,
+    /// The damage the session recorded since the last refill (package LIVE-2).
+    fill_tracking: super::refill::FillTracking,
 }
 
 impl Session {
@@ -236,7 +238,7 @@ impl Session {
             return; // already removed by an earlier entry
         }
 
-        damage.record_item(&BoardCtx::bare(&self.board), item);
+        damage.record_removed(&BoardCtx::bare(&self.board), item);
 
         self.connectivity.remove(&BoardCtx::bare(&self.board), item);
 
@@ -255,6 +257,7 @@ impl Session {
     pub fn commit(&mut self, txn: &Transaction) -> Result<CommitReport, SessionError> {
         self.validate(txn)?;
 
+        let tracking_valid = self.fill_tracking_valid();
         let mut report = CommitReport::default();
 
         // if( Empty() ) return;
@@ -319,6 +322,13 @@ impl Session {
 
         report.unconnected = self.connectivity.unconnected_count(false);
         report.unconnected_visible = self.connectivity.unconnected_count(true);
+
+        // A failed entry may have left an item half edited: the next refill is a full one.
+        if outcome.is_err() {
+            report.damage = ChangeDamage::full();
+        }
+
+        self.fill_tracking_advance(tracking_valid, &report.damage);
         outcome?;
 
         let ctx = BoardCtx::bare(&self.board);
@@ -400,6 +410,7 @@ impl Session {
         Checkpoint {
             board: self.board.clone(),
             connectivity: self.connectivity.clone(),
+            fill_tracking: self.fill_tracking_state(),
         }
     }
 
@@ -413,6 +424,7 @@ impl Session {
     pub fn restore(&mut self, checkpoint: Checkpoint) {
         self.board = checkpoint.board;
         self.connectivity = checkpoint.connectivity;
+        self.set_fill_tracking_state(checkpoint.fill_tracking);
 
         if let Some(engine) = &self.drc_engine {
             engine.clear_clearance_cache();
@@ -421,8 +433,10 @@ impl Session {
 
     /// The full rebuild `BOARD::BuildConnectivity()` that a reload of the saved board runs:
     /// after it the connectivity (and what follows: full refill, full DRC, save) is the one a
-    /// fresh load computes, independent of the order of the incremental edits.
+    /// fresh load computes, independent of the order of the incremental edits. The items the
+    /// rebuild re-nets are recorded for the next [`Session::refill_zones_affected`]
+    /// ([`Session::finalize_tracked`] returns them).
     pub fn finalize(&mut self) {
-        self.rebuild_connectivity();
+        let _ = self.finalize_tracked();
     }
 }

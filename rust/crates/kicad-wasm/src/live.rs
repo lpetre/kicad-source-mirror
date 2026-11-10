@@ -274,6 +274,16 @@ impl Board {
     pub(crate) fn untracked_edit(&mut self) {
         self.zone_damage = ChangeDamage::full();
     }
+
+    /// What the board object adds to the session's own record for the next affected refill:
+    /// a full refill after an edit it marked untracked.
+    fn extra_damage(&self) -> ChangeDamage {
+        if self.zone_damage.full {
+            ChangeDamage::full()
+        } else {
+            ChangeDamage::default()
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -283,9 +293,11 @@ impl Board {
     /// makes the next refill a full one). The result is identical to `refillZones()`.
     #[wasm_bindgen(js_name = refillZonesAffected, unchecked_return_type = "RefillReport")]
     pub fn refill_zones_affected(&mut self) -> Result<JsValue, JsValue> {
+        // The session records the damage of its own operations (and falls back to a full
+        // refill on anything else); the board object adds only its own full resets.
         let report = self
             .session
-            .refill_zones_affected(&self.zone_damage)
+            .refill_zones_affected(&self.extra_damage())
             .map_err(session_error)?;
         self.zone_damage = report.damage.clone();
         to_js(&report)
@@ -294,7 +306,9 @@ impl Board {
     /// The changes the next `refillZonesAffected` refills for.
     #[wasm_bindgen(js_name = zoneDamage, unchecked_return_type = "ChangeDamage")]
     pub fn zone_damage(&self) -> Result<JsValue, JsValue> {
-        to_js(&self.zone_damage)
+        let mut damage = self.session.fill_damage();
+        damage.merge(&self.extra_damage());
+        to_js(&damage)
     }
 
     /// The violations that involve one of the items (the subset of a full all-track-errors
