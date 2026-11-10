@@ -27,10 +27,8 @@
 //!   `rust/target/int2b/d3.md`.
 
 #[path = "io_corpus/board_file_utils.rs"]
-#[allow(dead_code)]
 mod board_file_utils;
 #[path = "io_corpus/resave.rs"]
-#[allow(dead_code)]
 mod resave;
 
 use std::collections::BTreeMap;
@@ -49,11 +47,7 @@ fn locate(text: &str, line: usize) -> String {
     for l in lines.iter().take(line + 1) {
         if let Some(rest) = l.strip_prefix("\t(") {
             if !rest.starts_with('\t') {
-                block = rest
-                    .split(|c: char| c == ' ' || c == ')')
-                    .next()
-                    .unwrap_or("")
-                    .to_string();
+                block = rest.split([' ', ')']).next().unwrap_or("").to_string();
             }
         }
     }
@@ -63,7 +57,7 @@ fn locate(text: &str, line: usize) -> String {
         .map(|l| {
             l.trim_start()
                 .trim_start_matches('(')
-                .split(|c: char| c == ' ' || c == ')')
+                .split([' ', ')'])
                 .next()
                 .unwrap_or("")
                 .to_string()

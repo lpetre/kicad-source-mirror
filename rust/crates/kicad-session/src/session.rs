@@ -466,10 +466,40 @@ impl Session {
         ))
     }
 
-    /// `ZONE_FILLER_TOOL::FillAllZones` (`board.refillZones()`).
+    /// `ZONE_FILLER_TOOL::FillAllZones( nullptr, reporter, true )` (`board.refillZones()`):
+    /// see [`Session::fill_all_zones`].
     pub fn refill_zones(&mut self) -> Result<(), SessionError> {
-        Err(SessionError::not_yet_ported(
-            "kicad-zone: ZONE_FILLER::Fill",
+        self.fill_all_zones().map(|_| ())
+    }
+
+    /// Port of the headless `ZONE_FILLER_TOOL::FillAllZones` the CLI jobs call
+    /// (`kicad_zone::fill_all_zones`: teardrop update, fill, connectivity rebuild), with the
+    /// filler's warnings. A board without a DRC engine ([`Session::new_empty`]) first gets one,
+    /// initialised from the session's rule text, as `ZONE_FILLER::Fill` does (rule errors are
+    /// swallowed there).
+    pub fn fill_all_zones(&mut self) -> Result<kicad_zone::FillAllZonesOutcome, SessionError> {
+        if self.drc_engine.is_none() {
+            let mut engine = DrcEngine::new();
+            let rules_path =
+                crate::board_loader::with_extension(&self.source_name, "kicad_dru");
+            let _ = engine.init_engine(
+                &mut self.board,
+                self.rules_text.as_deref().map(|t| (t, rules_path.as_str())),
+                kicad_drc::rule_parser::default_layer_choices(),
+                &kicad_drc::engine::implicit_rules::TuningProfiles::default(),
+                None,
+            );
+            self.drc_engine = Some(engine);
+        }
+
+        let Some(engine) = self.drc_engine.as_ref() else {
+            return Err(SessionError::not_yet_ported("DRC engine"));
+        };
+
+        Ok(kicad_zone::fill_all_zones(
+            &mut self.board,
+            &mut self.connectivity,
+            engine,
         ))
     }
 }

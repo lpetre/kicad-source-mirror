@@ -163,3 +163,56 @@ was compared against the reference is in `crates/kicad-pcb/PORT_STATUS.md`, sect
 * **SET-10 + DRC rule matcher**: dynamic component classes, `TUNING_PROFILES`.
 * **CLEAN-1**: `wx_string_matches`, `StdRbTree`, `Reporter`, `kicad_geom::mirror` overflow.
 * **M20 / M25a / M26 / PCBIO-06 / FAB / DRC packages**: the items in their own files above.
+
+## GLUE-2: triage of `target/orchestrator/change_requests_2.txt`
+
+States as above. What was compared against the reference: `crates/kicad-pcb/PORT_STATUS.md`,
+section "Package GLUE-2".
+
+| Request (from) | State |
+|---|---|
+| `pcb_text` / `pcb_field` / `board/text_vars.rs` forward to `Footprint::resolve_text_var*`, `field_value_for_variant`, `CmpNoCase` (M19, M20, DRC-26) | done: INT-2a |
+| `board/text_vars.rs` `delete_variant` / `rename_variant`; `board/queries.rs` `find_pad_by_uuid` / `get_pad_at`; `dump/defaults.rs` `next_field_ordinal`; `dump/items.rs` footprint getters; `dump/board.rs` `fp_pads_local_bbox` / `area` (M19, M20) | done: INT-2a |
+| `io/parser/text.rs` local `next_field_ordinal` (M19, INT-2a) | apply |
+| PORT_STATUS M0b rows "stubs (M19 / M20)" (M19, M20) | defer: INT-2b doc pass (rows of other sections) |
+| `pcb_table.rs` raw `PCB_TABLE::Flip` for `footprint_flip` (M19) | defer: as INT-2a (INT-2b / M20 review) |
+| parser / writer `staging_stubs`, `oracle_board_section` stitch_fp_rulearea (M19, M20, PCBIO-06, INT-2a) | apply (staging tests now on PCBIO-14's stub); `oracle_board_section`: done (passes since PCBIO-07 pads) |
+| `tests/pcbio13_generators.rs` `Kiid::from_string` (M19) | done: compiles |
+| `footprint/geometry.rs` tests use `crate::dump` without the feature; `pending.rs` doctest (M25a, package file) | done: `#[cfg(feature = "dump")]` in place; doctest passes |
+| PCBIO-06 `footprint_fix_up_pads_for_board` call (M20) | done: PCBIO-06 / PCBIO-07 |
+| `netclass_embedded` `oracle_corpus_sections` (PCBIO-06, INT-2a) | apply: footprint files merged in `write_sections`; replay applies `BuildListOfNets()` like the reference loader (issue25065 terminal pads) |
+| pcbio12 `oracle_corpus_blocks` '0.30' vs '0.30 mm' (PCBIO-06, INT-2a) | apply: the reference's `RefreshGeneratedTables` (board_loader.cpp; the file stores '0.30'); generated-table blocks skipped in that test, as in `oracle_resave_blocks` |
+| barcode writer `text_height`, parser setters, `pcb_barcode_compare`, dump barcode fields (M25a) | apply |
+| `PcbBarcode::style_from_settings` env (INT-2a) | apply |
+| dump zone `outline` / `hatch_lines` (PCBIO-06) | apply |
+| `dump_board_ctx(ctx, opts)` (PCBIO-15) | apply; switching `kicad-session/src/bin/pcb_dump_session.rs` to it: defer to PCBIO-15 / WIRE-1 (session file) |
+| `net_class_name()` (PROP-1) | apply |
+| `Board::uuid`, the board as resolvable report item (DRC-23) | defer: C++ draws a random KIID per run; a deterministic port needs a decision on the board's `KiidGenerator` (DRC-06's seeding request, kicad-core `kiid.rs` is being changed) and a board arm in kicad-drc's `BoardRcItemResolver`; one package for both (orchestrator) |
+| `KiidGenerator` seeding so markers cannot collide with file UUIDs (DRC-06) | defer: same package |
+| `Board::is_layer_visible` (DRC-24) | apply (`visible_layers` now from the project); switching `providers/text_mirroring.rs`: defer to its DRC owner |
+| `Zone::fill_mut` (DRC-27) | apply |
+| `collect_board_shapes` public (DRC-23) | apply |
+| `PCB_VIA_STACK::IsSpanValid` (DRC-28) | apply (`ViaStackData::is_span_valid`); drop kicad-drc's copy: DRC-28 owner |
+| via `layer_range` public (DRC-28) | reject: `kicad_core::LayerRange` is the C++ type; the DRC port uses it directly |
+| `Pad::delete_primitives_list` / `add_primitive_poly` (FAB-04) | done: FIX-PAD-1; switching kicad-fab's local ports: defer to the FAB chain (running in kicad-fab) |
+| `PcbShape::connection_points` (CN-01) | done: INT-2a |
+| fp_poly library polygon closing vertex (PCBIO-06) | defer: the C++ merges it in `transformPolyVertices` (`SetClosed`) during a later `syncLibCoords` whose caller is not located; needs a C++ driver; output bytes unaffected (FIX package for PCB_SHAPE) |
+| `Board::footprint_add` of a PCB_POINT (PCBIO-06) | apply |
+| issue24525 `ComputeBoundingBox( false )` (PCBIO-15) | reject as a bbox bug: the QR barcode's box is `0,0,0,0` without the zint encoder; resolves with ZINT-1 |
+| CLEAN-1: `wx_string_matches`, `FontRef`, `mirror_point_wrapping` (CLEAN-1) | apply |
+| CLEAN-1: kicad-fab round-rect generator / `round_chamfered_rect_to_polygon`, kicad-drc `to_core_units`, `wild_compare_string` | defer: FAB chain (kicad-fab files being edited) and DRC-21 (pcbexpr being edited) |
+| `(zone_connect N)` out of range (package file) | defer: confirmed with the reference (`(zone_connect 7)` re-saved as 7); needs an i32-backed `ZONE_CONNECTION` across pads (PCBIO-07 running), footprints and the zone filler (ZF running): FIX-DIM-1-style package with the other i32-backed enums |
+| `Pad::is_free_pad_ctx` removal + solder_mask.rs switch (INT-2a) | apply |
+| clippy collapsible-match io/writer/pad.rs:568 (INT-2a) | done: clean |
+| rustfmt `dump/mod.rs` (INT-2a) | apply |
+| kicad-fab `drill/via_access.rs` -> `PcbVia` methods (INT-2a) | defer: FAB chain |
+| kicad-plot `set_viewport` assert (FAB-03, INT-2a) | apply (the `a_scale == 1` assert does not exist) |
+| `Board::expand_project_text_vars` public, `Board::drill_symbol_layers` (FAB-03) | defer: INT-2b names it; drill symbol layers with M26 |
+| `SyncDynamicComponentClassAssignments` (FAB-03, ZF-01, PCBIO-15) | done / running: CC-1 |
+| ZF-01 via zone layer override, `unfill_locked` pub | done (ZF-01) |
+| `Board::zone_calculate_filled_area` (ZF-01) | reject: `m_area` is GUI-only |
+| `rule_index` in `DrcRuleInfo` (REV-DRC) | done / running: FIX-DRC-1 |
+| PCBIO-13: `format_track_item`, via stitch default template, footprint `(generated)` / `(constraint)` | done: INT-2a / PCBIO-06; default template: FIX-GEN-1 |
+| kicad-connectivity `pub use`, CN-04 / DRC-05 / DRC-06 / DRC-07 / DRC-25 / DRC-27 engine and harness requests, REV-CN / FIX-CN-1 docs and comparisons, PROP-1 model APIs | defer: DRC engine packages (running), PCBIO-15 / WIRE-1, FIX-GEN-1, docs (INT-2b) - not kicad-pcb files |
+| unused `DrcConstraintExt` imports, `duplicate_mod`, kicad-geom `len_zero` (DRC-26, REV-DRC, FAB-04) | defer: owning DRC packages; `len_zero` done (CLEAN-1) |
+| failing drc21 / drc24 tests (DRC-07, DRC-26, DRC-28, REV-DRC) | defer: their owners (running) |

@@ -698,11 +698,14 @@ fn replay_golden(golden: &str) -> Replay {
             continue;
         }
 
+        // Since DRC-22 these boards are compared like the others; they are only counted.
         if has_compiled_conditions(&engine) {
             needs_drc21.push(rel.to_string());
-            continue;
         }
 
+        // The board-level caches of the expression functions live as long as the C++ BOARD
+        // members do during the dump (filled by the evaluations, never cleared in between).
+        let _caches = kicad_drc::pcbexpr::functions::PcbExprCacheScope::enter(&board);
         let rust = quiet(|| dump_board(&board, &engine));
         let mut all_matched = true;
 
@@ -794,7 +797,7 @@ fn evalrules_corpus_matches_cxx() {
 
     eprintln!(
         "evalrules corpus: {} categories match ({} boards completely), {} pending, {} mismatch; \
-         {} boards need DRC-22 (user rule conditions calling functions)",
+         {} boards call expression functions (compared since DRC-22)",
         matched.len(),
         matched_boards,
         pending.len(),
@@ -817,7 +820,7 @@ fn evalrules_corpus_matches_cxx() {
     }
 
     for b in &needs_drc21 {
-        eprintln!("needs DRC-22: {b}");
+        eprintln!("calls functions: {b}");
     }
 
     assert!(

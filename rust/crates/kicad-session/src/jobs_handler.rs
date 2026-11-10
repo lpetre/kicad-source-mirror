@@ -365,9 +365,45 @@ pub fn run_drc(
         session.refill_zones()?;
     }
 
+    // ... then, after the report: drc_save_board (below).
     Err(SessionError::not_yet_ported(
         "kicad-drc: DRC_ENGINE::InitEngine / RunTests and DRC_REPORT",
     ))
+}
+
+/// The `if( drcJob->m_refillZones && drcJob->m_saveBoard )` block at the end of
+/// `PCBNEW_JOBS_HANDLER::JobExportDrc` (after the report is written):
+/// `BOARD_LOADER::SaveBoard( drcJob->m_filename, *brd )` ([`crate::board_loader::save_board`]),
+/// "Saved board" / "Failed to save board." on the reporter. The saved board is pushed onto
+/// `outcome.files` under the input file name (the C++ overwrites the board in place).
+///
+/// Returns `Some( exit code )` for the C++ early `return` (save failure), `None` to go on
+/// with the `--exit-code-violations` check.
+pub fn drc_save_board(
+    session: &mut Session,
+    job: &JobPcbDrc,
+    reporter: &mut Reporter,
+    outcome: &mut JobOutcome,
+) -> Result<Option<i32>, SessionError> {
+    if !(job.refill_zones && job.save_board) {
+        return Ok(None);
+    }
+
+    match crate::board_loader::save_board(&mut session.board, &mut session.connectivity) {
+        Ok(text) => {
+            outcome.files.push(OutputFile {
+                name: job.rc.filename.clone(),
+                contents: text.into_bytes(),
+            });
+            reporter.report("Saved board\n", Severity::Action);
+            Ok(None)
+        }
+        Err(SessionError::Save { .. }) => {
+            reporter.report("Failed to save board.\n", Severity::Error);
+            Ok(Some(exit_codes::ERR_INVALID_OUTPUT_CONFLICT))
+        }
+        Err(e) => Err(e),
+    }
 }
 
 /// Port of `PCBNEW_JOBS_HANDLER::JobExportGerbers`.

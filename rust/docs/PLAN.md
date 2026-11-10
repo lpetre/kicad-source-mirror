@@ -294,8 +294,28 @@ Progress log:
   358 identical / 11 different / 1 not loadable. 10 of 36 footprint classes on the two
   component-class boards wait for the DRC-22 expression functions. Launched: FIX-RESAVE-1
   (the 11 differing boards: zone net / priority, render caches) (w1juzof4g).
-  Package files written, to launch when their inputs land: STAB-PCB (after GLUE-2 and
-  FIX-PAD-1), STAB-DRC (after the DRC chains, GLUE-2, FIX-PAD-1), WIRE-1 (after DRC-12,
+  04:00 UTC: done (read on Fable): GLUE-2 (kicad-pcb tests all green again: lib 584 +
+  integration; defaults 3564 / 118 / 0), FIX-DRC-1 (rule_index identity), FIX-PAD-1 (41
+  boards: zero pad / item mismatches), STAB-CN (NO defect found in connectivity with pads:
+  41 more boards in the goldens, all fields equal; net propagation on 368 boards: 84,191
+  items, 0 mismatches), ZF-03 zone copper fill (FIRST FILL COMPARISON: 330 zone layers
+  vertex-identical to `kicad-cli --refill-zones`, 6 differ on two boards whose custom rules
+  needed the expression binding; copper thieving ZF-07 pending; 13 teardrop boards wait for
+  TD-01), FAB-05 graphics + FAB-06 text plotting (full Gerber driver: 8438 of 8533 corpus
+  files byte-identical, 88 pending on FAB-10 / 13, 7 known differences from model defects:
+  3 fixed since by FIX-PAD-1, 2 table-cell geometry in a footprint, 2 barcode layers), DRC-21
+  expression binding (EvalRules 1244 categories on 102 boards, 0 mismatches; function bodies
+  = DRC-22, running), DRC-08a + 08b copper clearance (332 boards: clearance 2067,
+  hole_clearance 1407, shorting 371 matched; differences only on 2 boards over the error
+  limit - reference order there is thread-dependent - and 2 boards with rule-condition gaps).
+  Launched: STAB-PCB (wfdnc7cds) with the model defects reported so far (table cells in
+  footprints, render cache dropped at load, dimension text polygons, fp_poly closing vertex,
+  pad primitive lib scale, raw zone_connect values).
+  Cross-crate leftovers for a GLUE-3 pass once the FAB / DRC / ZF chains have finished:
+  kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
+  generator; kicad-drc local copies -> model; RuleResolver::eval_zone_connection; Board::uuid
+  + KiidGenerator seeding; pcb-dump-session -> dump_board_ctx.
+  Package files written, to launch when their inputs land: (after the DRC chains: DRC-22 and DRC-09 -> 10 -> 12 are running), WIRE-1 (after DRC-12,
   FAB-07 / 08), FAB-10 / 11 / 12 (after the FAB chain).
   Still to write (tier 3, editor-only paths): FIX-GEN-1 (generator subclass arms of move /
   rotate / flip / mirror / set_layer, via stitch default template), FIX-DIM-1

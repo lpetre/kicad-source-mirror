@@ -18,16 +18,25 @@
 //! Port of the drill / Gerber / SVG parts of `pcbnew/pcbnew_jobs_handler.cpp` (`convertLayerArg`,
 //! `JobExportGerbers`, `JobExportDrill`, `JobExportSvg`), pure: board in, `OutputFile`s out.
 //!
-//! Work packages FAB-02 (`JobExportDrill`: [`job_export_drill`]), FAB-07, FAB-11
-//! (`docs/analysis/plot-fab.md` 10.2; the latter two not started).
+//! Work packages FAB-02 (`JobExportDrill`: [`job_export_drill`]), FAB-07 (`JobExportGerbers`:
+//! [`job_export_gerbers`], and `PCB_PLOTTER::PlotJobToPlotOpts` of `pcbnew/pcb_plotter.cpp`:
+//! [`plot_job_to_plot_opts`]), FAB-11 (`docs/analysis/plot-fab.md` 10.2; not started).
+//!
+//! `convertLayerArg` and the layer selection of `JobExportGerbers` (L1784-1830) are ported in
+//! `kicad-session` (`jobs_handler::convert_layer_arg`, `gerbers_layers_to_plot`), which owns
+//! the raw `--layers` arguments; [`job_export_gerbers`] continues from `layersToPlot`.
 //!
 //! The host (`kicad-session`) loads the board (`getBoard`), resolves the output directory
 //! (`resolveJobOutputPath`), creates it (`PATHS::EnsurePathExists`), writes the returned files
 //! and turns the outcome into the CLI exit code.
 
-use kicad_core::plot_enums::PlotFormat;
+use kicad_core::plot_enums::{DrillMarks, PlotFormat};
+use kicad_core::report_severity::Severity;
+use kicad_core::{Lset, PcbLayerId};
 use kicad_geom::Vector2I;
 use kicad_pcb::BoardCtx;
+use kicad_pcb::pcb_plot_params::PcbPlotParams;
+use kicad_plot::GerberPlotter;
 
 use crate::exporters::gendrill_excellon_writer::{ExcellonWriter, reborrow};
 use crate::exporters::gendrill_report::{BoardHoleSource, HoleListSource};
@@ -35,6 +44,11 @@ use crate::exporters::gendrill_writer_base::{DrillPrecision, ZerosFmt};
 use crate::jobs::job_export_pcb_drill::{
     DrillExportEnv, DrillFormat, DrillOrigin, DrillUnits, JobExportPcbDrill, MapFormat, ZerosFormat,
 };
+use crate::jobs::job_export_pcb_gerbers::JobExportPcbGerbers;
+use crate::jobs::job_export_pcb_plot::{JobExportPcbPlot, JobPlotFormat};
+use crate::pcb_plotter::build_plot_file_name;
+use crate::pcbplot::{PlotEnv, gerber_protel_extension};
+use crate::plot_board_layers::{plot_board_layers, start_plot_board};
 use crate::wx_file_name::WxFileName;
 use crate::{FabError, OutputFile, Reporter};
 
@@ -222,6 +236,330 @@ pub fn job_export_drill_from(
     }
 
     outcome.success = true;
+    outcome
+}
+
+/// `COLOR_SETTINGS::COLOR_BUILTIN_DEFAULT`.
+pub const COLOR_BUILTIN_DEFAULT: &str = "_builtin_default";
+
+/// `COLOR_SETTINGS::COLOR_BUILTIN_CLASSIC`.
+pub const COLOR_BUILTIN_CLASSIC: &str = "_builtin_classic";
+
+/// `DEFAULT_THEME` (`settings_manager.h`): the file name `SETTINGS_MANAGER::GetColorSettings`
+/// gives a theme it could not find.
+pub const DEFAULT_THEME: &str = "user";
+
+/// `FILEEXT::GerberJobFileExtension`.
+pub const GERBER_JOB_FILE_EXTENSION: &str = "gbrjob";
+
+/// The members of the derived job classes `PCB_PLOTTER::PlotJobToPlotOpts` reads through
+/// `static_cast` (C++ dispatches on `m_plotFormat`; the port passes the derived part).
+#[derive(Clone, Copy, Debug)]
+pub enum PlotJobFormatOptions<'a> {
+    /// `JOB_EXPORT_PCB_GERBERS` (`m_plotFormat == GERBER`).
+    Gerber(&'a JobExportPcbGerbers),
+    /// `JOB_EXPORT_PCB_SVG::m_precision`, `m_fitPageToBoard` (`m_plotFormat == SVG`).
+    Svg {
+        /// `m_precision`
+        precision: u32,
+        /// `m_fitPageToBoard`
+        fit_page_to_board: bool,
+    },
+    /// Any other format: the DXF / PDF / PostScript / PNG job members are not part of the port
+    /// (those formats are out of scope, `StartPlotBoard` rejects them).
+    Other,
+}
+
+/// Port of `scaleToSelection` (`pcbnew/pcb_plotter.cpp`).
+pub fn scale_to_selection(scale: f64) -> i32 {
+    let mut selection = 1;
+
+    if scale == 0.0 {
+        selection = 0;
+    } else if scale == 1.5 {
+        selection = 2;
+    } else if scale == 2.0 {
+        selection = 3;
+    } else if scale == 3.0 {
+        selection = 4;
+    }
+
+    selection
+}
+
+/// `::GetColorSettings( theme )->GetFilename()` as far as the port has colour themes: the two
+/// built-in themes (found by their key, file name = key) and the `user` theme. Every other name
+/// (a display name, a user theme file) is "not found": `SETTINGS_MANAGER` then registers a copy
+/// of the default theme whose file name is [`DEFAULT_THEME`]. The port has no settings files
+/// (`PORT_STATUS.md`).
+fn color_settings_filename(theme: &str) -> &str {
+    match theme {
+        COLOR_BUILTIN_DEFAULT | COLOR_BUILTIN_CLASSIC | DEFAULT_THEME => theme,
+        _ => DEFAULT_THEME,
+    }
+}
+
+/// Port of `PCB_PLOTTER::PlotJobToPlotOpts( aOpts, aJob, aReporter )`
+/// (`pcbnew/pcb_plotter.cpp` L426-555): copy the job options into `a_opts`.
+///
+/// `a_format_options` is the derived job part read for the Gerber and SVG formats. The DXF,
+/// PDF, PostScript and PNG branches are not ported (formats out of scope), nor is
+/// `SetColorSettings` (`PCB_PLOT_PARAMS` of the port has no colour settings; FAB-11). An empty
+/// theme takes the PCB editor theme, which is [`COLOR_BUILTIN_DEFAULT`] in a fresh
+/// configuration (`APP_SETTINGS_BASE::m_ColorTheme` default).
+pub fn plot_job_to_plot_opts(
+    a_opts: &mut PcbPlotParams,
+    a_job: &JobExportPcbPlot,
+    a_format_options: PlotJobFormatOptions<'_>,
+    a_reporter: Option<&mut dyn Reporter>,
+) {
+    if a_job.plot_format == JobPlotFormat::Gerber {
+        if let PlotJobFormatOptions::Gerber(g_job) = a_format_options {
+            a_opts.gerber_disable_apert_macros = g_job.gerber.disable_aperture_macros;
+            a_opts.use_gerber_protel_extensions = g_job.gerber.use_protel_file_extension;
+            a_opts.use_gerber_x2_format = g_job.gerber.use_x2_format;
+            a_opts.include_gerber_netlist_info = g_job.gerber.include_netlist_attributes;
+            a_opts.create_gerber_job_file = g_job.create_jobs_file;
+            a_opts.set_gerber_precision(g_job.gerber.precision);
+        }
+
+        // Always disable plot pad holes
+        a_opts.drill_marks = DrillMarks::NoDrillShape;
+    } else {
+        // Scale, doesn't apply to GERBER
+        a_opts.scale = a_job.scale;
+        a_opts.auto_scale = a_job.scale == 0.0;
+        a_opts.scale_selection = scale_to_selection(a_job.scale);
+
+        // Drill marks doesn't apply to GERBER
+        a_opts.drill_marks = match a_job.drill_shape_option {
+            DrillMarks::NoDrillShape => DrillMarks::NoDrillShape,
+            DrillMarks::SmallDrillShape => DrillMarks::SmallDrillShape,
+            DrillMarks::FullDrillShape => DrillMarks::FullDrillShape,
+        };
+    }
+
+    if a_job.plot_format == JobPlotFormat::Svg {
+        if let PlotJobFormatOptions::Svg {
+            precision,
+            fit_page_to_board,
+        } = a_format_options
+        {
+            a_opts.set_svg_precision(precision);
+            a_opts.svg_fit_page_to_board = fit_page_to_board;
+        }
+    }
+
+    let mut theme = a_job.color_theme.as_str();
+
+    // Theme may be empty when running from a job in GUI context, so use the GUI settings.
+    if theme.is_empty() {
+        theme = COLOR_BUILTIN_DEFAULT;
+    }
+
+    if color_settings_filename(theme) != theme && !a_opts.black_and_white {
+        if let Some(reporter) = a_reporter {
+            reporter.report(
+                &format!("Color theme '{theme}' not found, will use theme from PCB Editor.\n"),
+                Severity::Warning,
+            );
+        }
+    }
+
+    a_opts.use_aux_origin = a_job.use_drill_origin;
+    a_opts.plot_drawing_sheet = a_job.plot_drawing_sheet;
+    a_opts.subtract_mask_from_silk = a_job.subtract_solder_mask_from_silk;
+    a_opts.plot_reference = a_job.plot_ref_des;
+    a_opts.plot_value = a_job.plot_footprint_values;
+    a_opts.sketch_pads_on_fab_layers = a_job.sketch_pads_on_fab_layers;
+    a_opts.hide_dnp_fps_on_fab_layers = a_job.hide_dnp_fps_on_fab_layers;
+    a_opts.sketch_dnp_fps_on_fab_layers = a_job.sketch_dnp_fps_on_fab_layers;
+    a_opts.crossout_dnp_fps_on_fab_layers = a_job.crossout_dnp_fps_on_fab_layers;
+    a_opts.plot_pad_numbers = a_job.plot_pad_numbers;
+
+    a_opts.black_and_white = a_job.black_and_white;
+    a_opts.mirror = a_job.mirror;
+    a_opts.negative = a_job.negative;
+
+    a_opts.set_layer_selection(&Lset::from(&a_job.plot_layer_sequence));
+    a_opts.set_plot_on_all_layers_sequence(a_job.plot_on_all_layers_sequence.0.clone());
+
+    match a_job.plot_format {
+        JobPlotFormat::Gerber => a_opts.format = PlotFormat::Gerber,
+        JobPlotFormat::Post => a_opts.format = PlotFormat::Post,
+        JobPlotFormat::Svg => a_opts.format = PlotFormat::Svg,
+        JobPlotFormat::Dxf => a_opts.format = PlotFormat::Dxf,
+        JobPlotFormat::Hpgl => { /* no longer supported */ }
+        JobPlotFormat::Pdf => a_opts.format = PlotFormat::Pdf,
+        JobPlotFormat::Png => a_opts.format = PlotFormat::Png,
+    }
+
+    a_opts.output_directory = a_job.configured_output_path.clone();
+}
+
+/// The result of [`job_export_gerbers`].
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct GerbersJobOutcome {
+    /// `false` where the C++ returns `CLI::EXIT_CODES::ERR_INVALID_OUTPUT_CONFLICT` ("Failed to
+    /// plot to ..."; the C++ continues with the next layer). The port has no file system, so
+    /// this only stays `true` today.
+    pub success: bool,
+    /// A part of the port that is not available yet stopped the export (`StartPlotBoard` of
+    /// a format or drawing sheet outside the port; the Gerber job file, FAB-09, after all
+    /// layer files are complete). `files` holds what was produced before.
+    pub error: Option<FabError>,
+    /// Every Gerber file, in the order the C++ writes them (`layersToPlot.UIOrder()`).
+    pub files: Vec<OutputFile>,
+    /// `aJob->AddOutput( ... )` in order.
+    pub outputs: Vec<String>,
+    /// `jobfile_writer.AddGbrFile( layer, fullname )` in order: the input of the Gerber job
+    /// file writer (FAB-09).
+    pub gbr_files: Vec<(PcbLayerId, String)>,
+    /// The path of the Gerber job file (`<board>-job.gbrjob`) when `m_createJobsFile` is set.
+    pub job_file_path: Option<String>,
+}
+
+/// Port of `PCBNEW_JOBS_HANDLER::JobExportGerbers( aJob )` (L1750-1923) from `layersToPlot`
+/// on (L1832): plot one Gerber file per layer of `a_layers_to_plot` in `UIOrder()` into
+/// `a_out_path`, then name the Gerber job file.
+///
+/// The caller (the session) has loaded the board (`getBoard`), set the variant, resolved and
+/// created `a_out_path` (`resolveJobOutputPath`), refilled the zones (`m_checkZonesBeforePlot`),
+/// converted the layer arguments into `a_job`'s `m_plotLayerSequence` /
+/// `m_plotOnAllLayersSequence` (incl. the `--board-plot-params` replacement), computed
+/// `a_layers_to_plot = LSET( ResolvePlotLayers( enabled ) ) & enabled` and run
+/// `RefreshGeneratedTables`.
+///
+/// * `a_env`: `GetBuildVersion()` and the clock.
+/// * `a_reporter`: the job handler's `m_reporter` (`Plotted to '...'.`).
+///
+/// The Gerber job file writer (`GERBER_JOBFILE_WRITER`, FAB-09) is not ported yet: with
+/// `m_createJobsFile` the outcome ends with `FabError::NotPorted` after every layer file.
+pub fn job_export_gerbers(
+    a_ctx: BoardCtx<'_>,
+    a_gerber_job: &JobExportPcbGerbers,
+    a_layers_to_plot: &Lset,
+    a_out_path: &str,
+    a_env: &PlotEnv,
+    mut a_reporter: Option<&mut dyn Reporter>,
+) -> GerbersJobOutcome {
+    let brd = a_ctx.board;
+    let mut outcome = GerbersJobOutcome {
+        success: true,
+        ..GerbersJobOutcome::default()
+    };
+
+    let board_plot_options = &brd.plot_options;
+    let var_overrides = &a_gerber_job.gerber.plot.var_overrides;
+
+    for layer in a_layers_to_plot.ui_order().0 {
+        let mut plot_sequence: Vec<PcbLayerId> = Vec::new();
+
+        // Base layer always gets plotted first.
+        plot_sequence.push(layer);
+
+        // Now all the "include on all" layers
+        for &layer_all in &a_gerber_job.gerber.plot.plot_on_all_layers_sequence.0 {
+            // Don't plot the same layer more than once;
+            if plot_sequence.contains(&layer_all) {
+                continue;
+            }
+
+            plot_sequence.push(layer_all);
+        }
+
+        // Pick the basename from the board file
+        let mut fn_ = WxFileName::new(&brd.file_name);
+        let mut layer_name = brd.layer_name(layer);
+        let mut sheet_name = String::new();
+        let mut sheet_path = String::new();
+        let mut plot_opts = PcbPlotParams::default();
+
+        if a_gerber_job.use_board_plot_params {
+            plot_opts = board_plot_options.clone();
+        } else {
+            plot_job_to_plot_opts(
+                &mut plot_opts,
+                &a_gerber_job.gerber.plot,
+                PlotJobFormatOptions::Gerber(a_gerber_job),
+                reborrow(&mut a_reporter),
+            );
+        }
+
+        let file_ext = if plot_opts.use_gerber_protel_extensions {
+            gerber_protel_extension(layer.0)
+        } else {
+            // FILEEXT::GerberFileExtension
+            GerberPlotter::default_file_extension().to_string()
+        };
+
+        build_plot_file_name(&mut fn_, a_out_path, &layer_name, &file_ext);
+        let fullname = fn_.full_name();
+
+        outcome.gbr_files.push((layer, fullname));
+
+        if let Some(value) = var_overrides.get("LAYER") {
+            layer_name = value.clone();
+        }
+
+        if let Some(value) = var_overrides.get("SHEETNAME") {
+            sheet_name = value.clone();
+        }
+
+        if let Some(value) = var_overrides.get("SHEETPATH") {
+            sheet_path = value.clone();
+        }
+
+        let full_path = fn_.full_path();
+
+        // We are feeding it one layer at the start here to silence a logic check
+        let plotter = start_plot_board(
+            &a_ctx,
+            &plot_opts,
+            layer.0,
+            &layer_name,
+            &full_path,
+            &sheet_name,
+            &sheet_path,
+            "1",
+            a_env,
+        );
+
+        match plotter {
+            Ok(mut plotter) => {
+                if let Some(reporter) = reborrow(&mut a_reporter) {
+                    reporter.report(&format!("Plotted to '{full_path}'.\n"), Severity::Action);
+                }
+
+                plot_board_layers(&a_ctx, plotter.as_mut(), &plot_sequence, &plot_opts);
+                plotter.end_plot();
+
+                outcome.files.push(OutputFile {
+                    name: full_path.clone(),
+                    contents: plotter.output().as_bytes().to_vec(),
+                });
+                outcome.outputs.push(full_path);
+            }
+            Err(err) => {
+                // The C++ reports "Failed to plot to '%s'." when the file cannot be created;
+                // the port's errors are parts outside the port: stop here.
+                outcome.error = Some(err);
+                return outcome;
+            }
+        }
+    }
+
+    if a_gerber_job.create_jobs_file {
+        let mut fn_ = WxFileName::new(&brd.file_name);
+
+        // Build gerber job file from basename
+        build_plot_file_name(&mut fn_, a_out_path, "job", GERBER_JOB_FILE_EXTENSION);
+        outcome.job_file_path = Some(fn_.full_path());
+        outcome.error = Some(FabError::NotPorted(
+            "GERBER_JOBFILE_WRITER::CreateJobFile (FAB-09)",
+        ));
+    }
+
     outcome
 }
 

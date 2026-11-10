@@ -43,3 +43,33 @@ corpus scoreboard is clean.
 Report: baseline and final scoreboard per error code (boards compared, matched, missing,
 extra, order differences); every fixed defect in one line with its board; every open
 difference with the smallest reproducing board and your diagnosis.
+
+## Notes collected from the packages that ran before you (orchestrator)
+
+- The shared harness still loads with the stand-in `SyntaxBinder` and skips every board with
+  user rule conditions: switch it to the real expression binding (`engine.init_engine`, as
+  tests/evalrules_oracle.rs does since DRC-21) and skip only what is still unported. This
+  adds the boards with user rules to every provider's corpus comparison.
+- Rule-condition evaluation gaps found by the copper clearance provider (DRC-08b):
+  `A.Pad_Shape == 'Oval'` does not match an oval pad (qa/data/pcbnew/issue16566: 4 clearance
+  entries missing); `A.Reference == 'J1' && B.Reference == 'J1'` does not match a pad against
+  the NPTH pad of J1 in the hole test (issue23469: 4 extra hole_clearance entries, the
+  parent-footprint fallback for the hole proxy or for B?). Remove the boards from
+  KNOWN_RULE_GAPS in tests/drc08a_copper_clearance.rs when fixed.
+- Zone fill found EvalRules returning the zone clearance instead of a custom rule's value
+  on issue23339_zone_layer_rules and issue17967 while conditions (hasNetclass, NetClass ==,
+  layer outer) were unported: recheck with the real binding and the DRC-22 functions.
+- Local copies to replace by the model functions that exist now: providers/text_mirroring.rs
+  `board_is_layer_visible` -> `Board::is_layer_visible`; providers/via_stack.rs
+  `is_span_valid` -> `ViaStackData::is_span_valid`; providers/misc.rs collector walk ->
+  `convert_shape_list_to_polygon::collect_board_shapes`; providers/solder_mask.rs can write
+  the bridge zone's fill through `Zone::fill_mut`; `Pad::is_free_pad(ctx)`.
+- Rule identity: `DrcRuleInfo::rule_index` exists (FIX-DRC-1); nothing may use
+  `DrcRuleInfo` equality as identity.
+- The DRC-23 outline entries list the board as an item in the reference (description 'PCB',
+  a random UUID per run): the port has no `Board::uuid` yet - decide the comparison rule
+  (mask that UUID) and report what the model needs.
+- kicad-zone re-expresses EvalZoneConnection over `RuleResolver::eval_rules` because the
+  trait has no such method: add `eval_zone_connection` to the trait (kicad-pcb ctx.rs, one
+  method with a default that panics or forwards - check board-model.md 7) implemented by
+  `DrcEngine::eval_zone_connection`, and tell kicad-zone's owner in change_requests.

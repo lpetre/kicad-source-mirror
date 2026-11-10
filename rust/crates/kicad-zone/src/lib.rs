@@ -28,7 +28,8 @@
 //!   min-width prune;
 //! * [`knockouts`]: pad / via / track / graphic / zone knockouts and clearances;
 //! * [`thermal`]: thermal spokes, hatch thermal rings and the hatch pattern;
-//! * [`connect`]: `connect_nearby_polys` (`VERTEX_CONNECTOR`).
+//! * [`connect`]: `connect_nearby_polys` (`VERTEX_CONNECTOR`);
+//! * [`tool`]: the headless `ZONE_FILLER_TOOL::FillAllZones` of the CLI jobs.
 
 /// Panics with "kicad-zone: port pending: <what>" for C++ code whose package has not landed
 /// yet (the crate-local twin of `kicad_pcb::port_pending!`).
@@ -47,5 +48,7 @@ pub mod index;
 pub mod knockouts;
 pub mod refill;
 pub mod thermal;
+pub mod tool;
 
 pub use filler::ZoneFiller;
+pub use tool::{FillAllZonesOutcome, fill_all_zones};

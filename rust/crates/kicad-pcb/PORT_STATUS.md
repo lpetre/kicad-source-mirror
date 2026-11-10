@@ -3275,3 +3275,115 @@ Known gaps:
   in C++; `MutEnv` does not carry it, so the Rust treats it as (1, 1) (the M9 deviation in
   `pcb_shape`, unchanged; only matters for primitives of pads in scaled footprints that are
   flipped or edited after load).
+
+## Package GLUE-2: second wiring pass (change requests since GLUE-1)
+
+Triage of every request: `docs/design/integration-2.md`, section "GLUE-2".
+
+| C++ | Rust | state |
+|---|---|---|
+| `parsePCB_BARCODE`: `SetOrientation`, `SetText`, `SetTextSize`, `SetKind`, `SetErrorCorrection`, `SetShowText`, `SetIsKnockout` | `io/parser/misc_items.rs` calls the M25a setters | wired; the inlined copies (and the parser's `barcode_set_orientation`) are gone. The text pen width now uses the board-frame height (`SetTextSize` reads `m_text.GetTextHeight()`) |
+| `format( PCB_BARCODE* )` `(text_height ..)` = `GetTextSize()` | `io/writer/misc_items.rs` -> `PcbBarcode::text_size(ctx)` | wired (board frame) |
+| `PCB_BARCODE::Compare` in `BOARD::cmp_drawings` | `board/compare.rs` -> `PcbBarcode::compare` | wired (the `port_pending!` is gone) |
+| `PCB_BARCODE::StyleFromSettings` | `PcbBarcode::style_from_settings(env, ..)` | the trait's `env` reaches `SetTextSize`; supersedes the M25a / INT-2a "shim ignores env" note |
+| `BOARD_CONNECTED_ITEM::GetNetClassName` | `board_connected_item::net_class_name` -> `Netclass::get_name()` | fixed (was the composite's `name` field, "Effective for net: .."); only caller `FOOTPRINT::ResolveTextVar` `NET_CLASS(n)` |
+| `BOARD::IsLayerVisible`, `BOARD::GetVisibleLayers` | `Board::is_layer_visible`, `Board::visible_layers` | ported; `visible_layers` now reads the project's `m_VisibleLayers` (was always all layers) |
+| `FOOTPRINT::Add` -> `PCB_POINT::SetParent` (`recomputePosition`) | `Board::footprint_add` (Point arm) | ported; the parser's `modify_point(.. on_footprint_transformed)` work-around is gone |
+| `PCB_VIA_STACK::IsSpanValid` (static) | `ViaStackData::is_span_valid(Option<&Board>, start, end)` | ported (kicad-drc keeps its local copy until its owner switches) |
+| `ZONE` fill of a detached zone | `Zone::fill_mut` | added (DRC-27) |
+| `PCB_TYPE_COLLECTOR` walk of `BuildBoardPolygonOutlines` | `convert_shape_list_to_polygon::collect_board_shapes` | now `pub` (DRC-23) |
+| `FOOTPRINT::GetNextFieldOrdinal` in `parseFOOTPRINT` text conversion | `io/parser/text.rs` -> `Footprint::next_field_ordinal` | wired (local copy removed) |
+| CLEAN-1 switches | `netclass.rs` / kicad-drc `implicit_condition.rs` -> `kicad_core::string_utils::wx_string_matches`; `eda_text.rs` -> `kicad_font::FontRef` (stand-in removed from `foundation_stub.rs`); `pcb_reference_image.rs` -> `kicad_geom::mirror_point` (wraps) | done |
+| `Pad::is_free_pad_ctx` | removed; kicad-drc `providers/solder_mask.rs` calls `Pad::is_free_pad(ctx)` | done |
+| kicad-plot `GERBER_PLOTTER::SetViewport` `wxASSERT( aMirror == false )` | `debug_assert!` removed (wxASSERT only logs) | done |
+| pcb-dump: zone `outline` (`*Outline()`), `hatch_lines` (`GetHatchLines()`), barcode `show_text`, `text_size`, `kind` (magic_enum `CODE_39` ..), `poly` / `symbol_poly` / `text_poly` / `last_error` | `dump/items.rs`, `dump/defaults.rs` | wired; the polygons only for an empty text (otherwise pending on the zint encoder, ZINT-1) |
+| pcb-dump with a caller context | `dump::dump_board_ctx(ctx, opts)`; `ds.biggest_clearance` uses `ctx.rules` | added (for kicad-session's `pcb-dump-session`) |
+
+Tests updated (stale since footprints / pads landed): `io::parser::tests::staging_stubs` and
+`io::writer::tests::staging_stubs` (the remaining stub is PCBIO-14's `kicad_footprint_lib`);
+`netclass_embedded::oracle_corpus_sections` (footprint files merged as `format( BOARD* )` does;
+the reference re-save runs `BuildListOfNets()`, which clears the resolved terminal pads, so the
+replay calls `build_list_of_nets()`: issue25065); `pcbio12_misc_items::oracle_corpus_blocks`
+compares api_kitchen_sink without its drill chart: the reference's '0.30 mm' cells come from
+`RefreshGeneratedTables` in `board_loader.cpp` (the stored cells are '0.30'), not from a
+formatting bug.
+
+Verification:
+
+* `tests/glue2.rs` (golden `tests/golden/glue2/scaled_fp_items.kicad_pcb`, reference
+  `kicad-cli pcb upgrade --force` of `tests/data/glue2/scaled_fp_items.kicad_pcb`: two barcodes
+  and a point in a footprint rotated 30 degrees, scaled (1.5, 0.75)): footprint block
+  byte-identical (UUIDs of the reference's new Datasheet / Description fields masked);
+  barcode `text_size` / `show_text` / kind / ECC and the point position equal `pcb-dump`;
+  `${U1:NET_CLASS(n)}` with a project assigning two classes gives `L,M,Default|M,Default` as
+  `pcb-dump` (`tests/data/glue2/net_class_text.kicad_{pcb,pro}`).
+* `pcb-dump --no-init` vs `pcb-dump-rs` on the same board: 919 match, 9 mismatch, all from the
+  QR barcode's empty symbol (no zint encoder, ZINT-1). The issue24525
+  `ComputeBoundingBox( false )` difference has the same cause (its QR barcode's bbox is
+  `0,0,0,0` without an encoder); nothing to fix in the bbox code.
+* Zone section (`--sections zone`) of the 4 PCBIO-06 boards with zones: 0 mismatches.
+* Defaults scoreboard: 3558 / 124 / 0 (INT-2a) -> 3564 match, 118 pending, 0 mismatch.
+* io-corpus scoreboard (`tools/io-corpus/run.sh`): 359 identical / 11 differs / 5 skipped
+  before and after.
+* `(zone_connect 7)` in a footprint: the reference re-save writes `(zone_connect 7)` back (raw
+  cast in `parseFOOTPRINT` / `parsePAD`); the port reads INHERITED and drops it. Not changed
+  here (deferred, see Known gaps).
+
+Known gaps (owners in `integration-2.md`, GLUE-2): `ZONE_CONNECTION` out-of-range values (an
+i32-backed type: pads, footprints, zone filler); `BOARD::m_Uuid` and the board as a resolvable
+report item; `fp_poly` library polygon keeps the duplicated closing vertex (the C++ re-derives
+`m_libPoly` through `transformPolyVertices`, whose `SetClosed` merges it, at a later
+`syncLibCoords` not yet located; output bytes unaffected); `BOARD::DrillSymbolLayers`, public
+`expand_project_text_vars`.
+
+## Review INT-2b: port decisions of the crate (reviewer pass)
+
+Findings, verdicts per package and the evidence: `rust/docs/design/review-2.md`. Files of
+this package: `tests/int2b_review.rs`, `tests/golden/int2b_review.txt`,
+`tests/oracle/int2b_golden.sh`, `rust/docs/packages/FIX-BEZ-1.md`. Fixes made in finished
+packages' files:
+
+| C++ | Rust | state |
+|---|---|---|
+| `PAD::SetLocalSolderMaskMargin`, `SetLocalSolderPasteMargin`, `SetLocalSolderPasteMarginRatio` (pad.h: both outer sides) | `pad/derive.rs` | fixed (R2-03): the back side was not written |
+| `bakeTextBoxLib` -> `OnFootprintTransformed` for the cells of a table inside a footprint (`GetParentFootprint()` through the table) | `io/parser/text.rs` `bake_text_box_lib` | fixed (R2-04) |
+| `BOARD::ResolveTextVar` `PROJECTNAME`, `GetProject()->TextVarResolver` | `board/text_vars.rs` calls `BoardProject::text_var_resolver` with `Board::text_var_clock` | fixed (R2-01) |
+| `PROJECT_GIT_UTILS::GetCurrentHash` outside a repository | `project/project.rs`: "no hash" | fixed (R2-02) |
+| fresh `KIID()` never equals a UUID of the file (entropy-seeded in C++) | `kicad_core::KiidGenerator::reserve_all`; `io/parser/mod.rs` reserves every UUID-shaped token of the file in `PcbParser::new` | port addition (R2-05) |
+
+Entries of earlier sections that no longer hold:
+
+- M22 "`PROJECTNAME` resolves to the board file name ... `VCSHASH` / `VCSSHORTHASH` resolve to
+  "" ... no clock field on `Board`": `PROJECTNAME` is `BoardProject::project_name`, the hash
+  variables resolve to "no hash" (the reference value for a project outside a repository),
+  the clock is `Board::text_var_clock` (empty until a host sets it).
+- SET-5 "`VCSHASH` / `VCSSHORTHASH` resolve to """: "no hash".
+- M22 / M20 "every layer is visible": `Board::visible_layers()` reads the project's
+  `.kicad_prl` mask (changed by a concurrent package; checked against `pcb-dump --loader`).
+- PCBIO-03 / PCBIO-08 "a generated UUID ... the port's generator is deterministic": still
+  deterministic, but never equal to a UUID of the file (R2-05).
+
+Verification:
+
+- `tests/int2b_review.rs` `int2b_matches_oracle` (feature `dump`): 414 reference values
+  (`pcb-dump board --no-init --hash`, `tests/oracle/int2b_golden.sh`) of four corpus boards:
+  pad mask / paste margins, expansions and mask shapes of both sides, positions and boxes of
+  the cells of a footprint table.
+- `fresh_uuids_never_collide_with_file_uuids` (fails with "duplicate UUID 5cbb91d0-..."
+  without the reservation); kicad-core `reserved_ids_are_skipped`.
+- `board::text_vars::tests::built_in_variables` with the reference values of a `pcb-dump`
+  run (review-2.md section 6).
+- `d3_legacy_scoreboard` (ignored, needs the oracle cache): parse + format of the original
+  corpus files against the reference re-save, 361 of 370 identical, the other 9 explained.
+- Item-level corpus run (`pcb-dump` against `pcb-dump-rs`, 347 boards up to 1.5 MB, about 7.3
+  million values): after the fixes the only mismatch classes left are the dump artifact
+  `lib.poly` (R2-08), the barcode symbol, outline fonts, generated tables and UUID-less items.
+
+Deviations:
+
+- `KiidGenerator::reserve_all` and the parser's reservation have no C++ counterpart: the C++
+  generator is seeded from entropy. With nothing reserved the sequence is the C++ one for the
+  seed. A host that replaces `board.kiid_generator` after a load drops the reservations (use
+  `seed_generator` to reseed and keep them, or an entropy-seeded generator).
+
+Known gaps: the open findings of review-2.md (R2-07 .. R2-16).
