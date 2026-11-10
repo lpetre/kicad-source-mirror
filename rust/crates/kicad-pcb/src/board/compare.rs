@@ -119,10 +119,14 @@ fn eda_text_compare(ctx: &BoardCtx<'_>, a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32
     }
 }
 
-/// `EDA_SHAPE::Compare` (`PCB_SHAPE::Compare` / `textbox->PCB_SHAPE::Compare`): the EdaShape
-/// package (M7) has no Rust counterpart yet.
+/// `EDA_SHAPE::Compare` (`shape->Compare( other )` / `textbox->PCB_SHAPE::Compare( other )`):
+/// a non-virtual member reading only `EDA_SHAPE` data, so the embedded base data of both items
+/// is compared.
 fn eda_shape_compare(a: &ItemRef<'_>, b: &ItemRef<'_>) -> i32 {
-    crate::port_pending!("EDA_SHAPE::Compare", a, b)
+    match (a.as_eda_shape(), b.as_eda_shape()) {
+        (Some(sa), Some(sb)) => sa.eda_shape().compare(sb.eda_shape()),
+        _ => 0,
+    }
 }
 
 /// `PCB_TABLE::Compare`: the table package (M11) has no Rust counterpart yet.

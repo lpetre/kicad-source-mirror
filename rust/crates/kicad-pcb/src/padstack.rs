@@ -1917,10 +1917,13 @@ impl CopperLayerProps {
             return diff;
         }
 
-        if !self.custom_shapes.is_empty() {
-            // custom_shapes[ii]->Compare( aOther.custom_shapes[ii].get() ) is
-            // `EDA_SHAPE::Compare`, which has no port or stub yet (package M7).
-            crate::port_pending!("EDA_SHAPE::Compare", other.custom_shapes.len())
+        for (mine, theirs) in self.custom_shapes.iter().zip(&other.custom_shapes) {
+            // custom_shapes[ii]->Compare( aOther.custom_shapes[ii].get() ): `EDA_SHAPE::Compare`
+            let diff = mine.eda_shape().compare(theirs.eda_shape());
+
+            if diff != 0 {
+                return diff;
+            }
         }
 
         0
