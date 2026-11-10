@@ -484,6 +484,12 @@ Progress log:
   FAB-12, DS-1. Queue: FIX-FAB-1 / FIX-FAB-2 and GLUE-3 after the fabrication chain;
   DRC-34 after DRC-31; FAB-13 drill / chart symbol plotting; FIX-GEN-1 / FIX-DIM-1 (editor
   paths); then the cross-cutting adversarial review, README, performance phase.
+  06:35 UTC (heartbeat; next 07:31): nothing stalled, 11 GB disk free. Launched FIX-EDIT-1
+  (editing paths: every mutator of every item kind against a reference driver - Move /
+  Rotate / Flip / Mirror / SetLayer / footprint transforms / add and remove, the deferred
+  generator and dimension items, router-style item creation with incremental connectivity)
+  and PERF-1 (new crate kicad-bench: per-stage timings and memory, reference baseline,
+  profiles, ranked hotspot list in docs/PERF.md; changes no library code) (wpwj3zgx6).
   Cross-crate leftovers for a GLUE-3 pass (package file written; its kicad-fab part moved
   into FAB-GLUE) once the FAB / DRC / ZF chains have finished:
   kicad-fab local pad primitive ports and via_access.rs -> model methods, default round-rect
