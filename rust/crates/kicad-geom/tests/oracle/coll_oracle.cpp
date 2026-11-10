@@ -718,6 +718,123 @@ void sectionChainIndex( const char* aName, uint64_t aSeed, int aCount )
     }
 }
 
+// FIX-FAB-3: touching pairs near the far corners of the coordinate range (centres at
+// +/-1.2e9 and +/-2.0e9 nm), where the int sums of two points (( aA.GetCenter() +
+// aB.GetCenter() ) / 2, ( ptA + ptB ) / 2) wrap in the reference build.  Every case is
+// recorded with and without the out-parameters (recCollide).  Scale and offsets are limited so
+// that the generated shapes themselves stay inside the int range.
+VECTOR2I farOrigin( RNG& rng )
+{
+    static const int c[] = { 1200000000, -1200000000, 2000000000, -2000000000 };
+    int x = c[rng.next() % 4];
+    int y = c[rng.next() % 4];
+    return VECTOR2I( x, y );
+}
+
+
+void sectionFar( const char* aName, uint64_t aSeed, int aCount )
+{
+    SECTION sec( aName );
+
+    for( int n = 0; n < aCount; n++ )
+    {
+        RNG      rng( aSeed * 1000003 + n );
+        int      ka = (int) ( rng.next() % K_COUNT );
+        int      kb = (int) ( rng.next() % K_COUNT );
+        VECTOR2I o = farOrigin( rng );
+        int      S = std::min( scale( rng ), 200000 );
+        OPTS     opts;
+        // no effectively straight arcs: their clamped centre is far outside the int range here
+        // (SEG::LineProject( centre ) overflows, PORT_STATUS.md D11)
+        opts.allowStraight = false;
+
+        GEN      a = gen( rng, ka, S, o, opts );
+        uint64_t seedB = rng.next();
+        BOX2I    bbA = a.get()->BBox();
+        BOX2I    bbB;
+
+        {
+            RNG rb( seedB );
+            GEN b0 = gen( rb, kb, S, o, opts );
+            bbB = b0.get()->BBox();
+        }
+
+        int64_t j = rng.range( -2, 2 );
+        int64_t t = rng.range( -S / 2, S / 2 );
+        int64_t dx, dy;
+
+        switch( rng.next() % 5 )
+        {
+        case 0: dx = (int64_t) bbA.GetRight() - bbB.GetLeft() + j; dy = t; break;
+        case 1: dx = (int64_t) bbA.GetLeft() - bbB.GetRight() + j; dy = t; break;
+        case 2: dx = t; dy = (int64_t) bbA.GetBottom() - bbB.GetTop() + j; break;
+        case 3: dx = t; dy = (int64_t) bbA.GetTop() - bbB.GetBottom() + j; break;
+        default:
+            dx = (int64_t) bbA.GetRight() - bbB.GetLeft() + j;
+            dy = (int64_t) bbA.GetBottom() - bbB.GetTop() + rng.range( -2, 2 );
+            break;
+        }
+
+        dx = std::clamp<int64_t>( dx, -2000000, 2000000 );
+        dy = std::clamp<int64_t>( dy, -2000000, 2000000 );
+
+        RNG rb( seedB );
+        GEN b = gen( rb, kb, S, o + VECTOR2I( (int) dx, (int) dy ), opts );
+        int cl = clearance( rng, S );
+
+        REC r;
+        r.i( ka ).i( kb ).i( S ).i( cl ).v( o ).box( a.get()->BBox() ).box( b.get()->BBox() );
+        recCollide( r, a.get(), b.get(), cl );
+        recCollide( r, b.get(), a.get(), cl );
+        sec.add( r );
+    }
+}
+
+
+// FIX-FAB-3: shapes on opposite sides of the coordinate range: the int differences of points
+// of the two shapes (delta of two circle centres, pn - c of rectangle and circle, the
+// pushout force) wrap in the reference build, and with large radii the wrapped distance
+// reports a collision.
+void sectionFarApart( const char* aName )
+{
+    SECTION sec( aName );
+
+    const int far[] = { 1200000000, -1200000000, 2000000000, -2000000000, 0 };
+    const int radii[] = { 0, 1000, 300000000, 1000000000 };
+
+    for( int xa : far )
+    {
+        for( int xb : far )
+        {
+            for( int ra : radii )
+            {
+                for( int rb : radii )
+                {
+                    for( int cl : { 0, 100000 } )
+                    {
+                        VECTOR2I     pa( xa, xa / 2 );
+                        VECTOR2I     pb( xb, -xb / 3 );
+                        SHAPE_CIRCLE ca( pa, ra );
+                        SHAPE_CIRCLE cb( pb, rb );
+                        SHAPE_RECT   rect( pa - VECTOR2I( 1000, 1000 ), 2000, 3000 );
+                        SHAPE_SEGMENT seg( pa, pa + VECTOR2I( 5000, -7000 ), 1000 );
+
+                        REC r;
+                        r.i( xa ).i( xb ).i( ra ).i( rb ).i( cl );
+                        recCollide( r, &ca, &cb, cl );
+                        recCollide( r, &cb, &ca, cl );
+                        recCollide( r, &rect, &cb, cl );
+                        recCollide( r, &cb, &rect, cl );
+                        recCollide( r, &seg, &cb, cl );
+                        recCollide( r, &cb, &seg, cl );
+                        sec.add( r );
+                    }
+                }
+            }
+        }
+    }
+}
+
 } // namespace
 
 
@@ -738,6 +855,8 @@ int main( int argc, char** argv )
     sectionNearest( "libm:coll_nearest", 603, 60000 );
     sectionTouching( "libm:coll_nearest_touching", 604, 20000, true );
     sectionChainIndex( "coll_chain_index", 605, 5000 );
+    sectionFar( "libm:coll_far", 606, 20000 );
+    sectionFarApart( "libm:coll_far_apart" );
 
     if( g_dump )
         fclose( g_dump );

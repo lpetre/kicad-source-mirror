@@ -193,6 +193,9 @@ fn corpus_replay() {
                     "",
                     "",
                     "1",
+                    "",
+                    1,
+                    &kicad_fab::color_settings::ColorSettings::builtin_default(),
                     &env(),
                 )
                 .unwrap();

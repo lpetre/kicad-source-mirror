@@ -138,15 +138,10 @@ fn filter_text(text: &str, sort: bool, unported: &[&str]) -> (String, Vec<usize>
     (out, counts)
 }
 
-/// `normalise_block` of `drc12_cli_compare.py`: the item line of the board itself (`PCB`)
-/// dropped, the item lines of `connection_width` sorted (both known model gaps / C++ address
-/// order, kicad-drc PORT_STATUS.md DRC-12).
+/// `normalise_block` of `drc12_cli_compare.py`: the item lines of `connection_width` sorted
+/// (C++ address order, kicad-drc PORT_STATUS.md DRC-12).
 fn normalise_block(block: &str) -> String {
-    let is_board_line = |l: &str| l.starts_with("    @(") && l.ends_with("): PCB");
-    let lines: Vec<&str> = block
-        .split('\n')
-        .filter(|l| !l.is_empty() && !is_board_line(l))
-        .collect();
+    let lines: Vec<&str> = block.split('\n').filter(|l| !l.is_empty()).collect();
     let mut out: Vec<&str> = lines.clone();
 
     if block.starts_with("[connection_width]") {

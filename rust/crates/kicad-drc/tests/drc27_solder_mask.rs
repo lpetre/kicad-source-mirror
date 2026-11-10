@@ -28,9 +28,9 @@
 //!   `DRCFalsePositiveRegressions` (`issue10906`, `issue14412`, `net_tie_drc`) and
 //!   `DRCFalseNegativeRegressions` (`issue18878`, 12 violations).
 //!
-//! The provider needs the per-run board caches, so the run is `RunTests` with the cache
-//! generator's phases (`prepare_board`, zone lists, zone trees) between the time stamp and the
-//! provider, as `DRC_ENGINE::RunTests` orders them.
+//! The provider needs the per-run board caches, so it runs through the real run path
+//! (`run_flow::run_tests_selected`: cache generator, connectivity rebuild), as
+//! `DRC_ENGINE::RunTests` orders them.
 
 mod drc_harness;
 
@@ -38,66 +38,31 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, Reported, cached_entries, cli_report_entries, golden, load_board, panic_text,
-    quiet, run_providers,
+    Entry, Loaded, Reported, cached_entries, cli_report_entries_flow, golden, load_board,
+    panic_text, quiet, run_flow_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::cache_generator::{build_zone_caches, build_zone_lists, prepare_board};
-use kicad_drc::caches::DrcBoardCaches;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::solder_mask::DrcTestProviderSolderMask;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{DRCE_SILK_MASK_CLEARANCE, DRCE_SOLDERMASK_BRIDGE};
 
 /// The error types of the provider.
 const TYPES: &[&str] = &["solder_mask_bridge", "silk_over_copper"];
 
-/// The solder mask provider with the parts of `DRC_CACHE_GENERATOR::Run()` it reads (zone
-/// lists, zone trees) built from the run's context right before it, as `RunTests` orders them.
-/// The board-mutating part of the cache generator ([`prepare_board`]) runs before the run.
-struct SolderMaskWithCaches;
-
-impl DrcTestProviderRun for SolderMaskWithCaches {
-    fn name(&self) -> &str {
-        "solder_mask_issues"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let mut caches = DrcBoardCaches::new();
-        build_zone_lists(ctx, &mut caches);
-        build_zone_caches(ctx, &mut caches);
-
-        let mut provider = DrcTestProviderSolderMask::new(&caches);
-        provider.run_tests(engine, run, ctx, units)
-    }
-}
-
-/// `RunTests( aUnits, aReportAllTrackErrors, false )` with the solder mask provider only.
+/// `RunTests( aUnits, aReportAllTrackErrors, false )` with the solder mask provider only
+/// (the real run path: cache generator, connectivity rebuild, expression cache scope).
 fn run_solder_mask(loaded: &mut Loaded, report_all_track_errors: bool) -> Vec<Reported> {
-    prepare_board(&mut loaded.board);
-
-    let mut provider = SolderMaskWithCaches;
-    run_providers(
+    run_flow_providers(
         loaded,
         EdaUnits::Mm,
         report_all_track_errors,
-        &mut [&mut provider],
+        &["solder_mask_issues"],
     )
 }
 
 /// The report entries (`kicad-cli pcb drc --format json`) of a run of the solder mask provider.
 fn report_solder_mask(loaded: &mut Loaded, report_all_track_errors: bool) -> Vec<Entry> {
-    prepare_board(&mut loaded.board);
-
-    let mut provider = SolderMaskWithCaches;
-    cli_report_entries(loaded, report_all_track_errors, &mut [&mut provider])
+    cli_report_entries_flow(loaded, report_all_track_errors, &["solder_mask_issues"])
 }
 
 /// Whether a reference entry was produced by this provider: every `solder_mask_bridge`, and

@@ -225,8 +225,9 @@ impl DrawingSheetParser {
 
                 T::T_tbtext => {
                     self.lexer.need_symbol_or_number()?;
-                    let mut item =
-                        DsDataItem::new_text(&convert_legacy_variable_refs(&self.lexer.from_utf8()));
+                    let mut item = DsDataItem::new_text(&convert_legacy_variable_refs(
+                        &self.lexer.from_utf8(),
+                    ));
                     self.parse_text(&mut item)?;
                     a_layout.append(item);
                 }
@@ -581,7 +582,11 @@ impl DrawingSheetParser {
         let mut stream: Vec<u8> = Vec::new();
         let mut end_seen = false;
 
-        for line in tmp.iter().map(|s| s.as_str()).chain(std::iter::once("EndData")) {
+        for line in tmp
+            .iter()
+            .map(|s| s.as_str())
+            .chain(std::iter::once("EndData"))
+        {
             // A (data ..) token may hold line breaks: STRING_LINE_READER splits on them.
             for line in line.split_inclusive('\n') {
                 if line.len() >= 4 && line.as_bytes()[..4].eq_ignore_ascii_case(b"EndD") {
@@ -1047,7 +1052,10 @@ mod tests {
     #[test]
     fn legacy_refs() {
         assert_eq!(convert_legacy_variable_refs("Size: %Z"), "Size: ${PAPER}");
-        assert_eq!(convert_legacy_variable_refs("%C0 %C8 %C9"), "${COMMENT1} ${COMMENT9} ");
+        assert_eq!(
+            convert_legacy_variable_refs("%C0 %C8 %C9"),
+            "${COMMENT1} ${COMMENT9} "
+        );
         assert_eq!(convert_legacy_variable_refs("100%%"), "100%");
         assert_eq!(convert_legacy_variable_refs("a%"), "a");
         assert_eq!(convert_legacy_variable_refs("%C"), "");

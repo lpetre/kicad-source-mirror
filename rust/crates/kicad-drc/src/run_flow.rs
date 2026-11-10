@@ -46,11 +46,9 @@ use kicad_core::{Kiid, Severity};
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{
     DRCE_DUPLICATE_FOOTPRINT, DRCE_EXTRA_FOOTPRINT, DRCE_FOOTPRINT_FILTERS,
-    DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH,
-    DRCE_MISSING_FOOTPRINT,
+    DRCE_LIB_FOOTPRINT_ISSUES, DRCE_LIB_FOOTPRINT_MISMATCH, DRCE_MISSING_FOOTPRINT,
     DRCE_NET_CHAIN_TUNING_PROFILES, DRCE_NET_CONFLICT, DRCE_SCHEMATIC_FIELDS_PARITY,
-    DRCE_SCHEMATIC_PARITY,
-    DRCE_VIA_STITCH_OVERLAP,
+    DRCE_SCHEMATIC_PARITY, DRCE_VIA_STITCH_OVERLAP,
 };
 use kicad_pcb::pcb_marker::{MarkerT, PcbMarker, RcItem};
 use kicad_pcb::{Board, BoardCtx, ConnectivityQuery};
@@ -299,8 +297,10 @@ fn run_provider(
     let units = options.units;
 
     // The two providers that query the connectivity through `&mut` get a context without
-    // it: the connectivity provider builds its own from the same object; for the zone
-    // connections provider the item shapes see a second build of the same connectivity.
+    // it: the connectivity provider puts the same object into the context it evaluates its
+    // rule with (`check_tracks`: `VIA_DANGLING_CONSTRAINT`, fromTo() conditions see the
+    // from-to cache rebuilt by `run_tests`); for the zone connections provider the item
+    // shapes and the rules see a second build of the same connectivity.
     match name {
         "connectivity" => {
             let ctx = BoardCtx::bare(board).with_rules(engine);
@@ -331,6 +331,8 @@ fn run_provider(
 
             if !caches.copper_zones.is_empty() {
                 query.build(&BoardCtx::bare(board));
+                // The same from-to cache as the run's connectivity (rebuilt in run_tests).
+                query.rebuild_from_to_cache(&BoardCtx::bare(board));
             }
 
             let ctx = BoardCtx::bare(board)
@@ -391,8 +393,9 @@ fn run_provider(
 /// `GetComponentClassManager().ForceComponentClassRecalculation()` is not needed in the
 /// port: a footprint's component class is a cache keyed on the manager's ticker and is
 /// recomputed from its inputs on use, and nothing between the load and the run changes a
-/// footprint. The from-to cache (`GetFromToCache()->Rebuild`) is not ported (`fromTo()`
-/// conditions report their missing cache, DRC-22).
+/// footprint. The from-to cache is rebuilt right after the generator
+/// (`connectivity->GetFromToCache()->Rebuild( m_board )`), so `fromTo()` conditions work in
+/// every provider that evaluates rules with the run's connectivity.
 pub fn run_tests(
     engine: &DrcEngine,
     run: &mut DrcRunState<'_>,
@@ -445,6 +448,11 @@ pub fn run_tests_selected(
     // The SetNetCode calls of the connectivity build (CN_CONNECTIVITY_ALGO::PropagateNets).
     connectivity.apply_net_changes(board);
     caches.time_stamp = board.time_stamp();
+
+    // Recompute component classes: not needed in the port (see the function comment).
+
+    // fromTo() conditions are evaluated by every provider, not only the length ones
+    connectivity.rebuild_from_to_cache(&BoardCtx::bare(board));
 
     let board: &Board = board;
     let timestamp = board.time_stamp();
@@ -505,8 +513,8 @@ pub struct DrcJobOptions<'a> {
     pub date: String,
     /// `GetMajorMinorPatchVersion()` ([`crate::report::KICAD_MAJOR_MINOR_PATCH_VERSION`]).
     pub kicad_version: String,
-    /// Seed of the marker UUIDs (`PCB_MARKER` KIIDs are random in C++; the host supplies the
-    /// seed). Markers never appear in a report by UUID; see [`run_drc_job`] for collisions.
+    /// Not used any more: the marker UUIDs (random KIIDs in C++) are drawn from the board's
+    /// generator ([`run_drc_job`]), which the host seeds. Kept for the callers' API.
     pub marker_uuid_seed: u32,
 }
 
@@ -544,9 +552,10 @@ struct Found {
 /// * the three `DRC_ITEMS_PROVIDER`s with `SetSeverities( m_severity )`;
 /// * `DRC_REPORT::WriteJsonReport` / `WriteTextReport`.
 ///
-/// Marker UUIDs: the C++ `PCB_MARKER` gets a random KIID. Here they come from a generator
-/// seeded with `marker_uuid_seed`, and a UUID that names an item of the board (or an earlier
-/// marker) is drawn again, so a marker can never take over the resolution of a report item.
+/// Marker UUIDs: the C++ `PCB_MARKER` gets a random KIID. Here they come from the board's
+/// generator (`Board::kiid_generator`, reserved file UUIDs and the board's own skipped), and a
+/// UUID that names an item of the board is drawn again, so a marker can never take over the
+/// resolution of a report item.
 pub fn run_drc_job(
     engine: &DrcEngine,
     board: &mut Board,
@@ -554,8 +563,10 @@ pub fn run_drc_job(
     options: &DrcJobOptions<'_>,
 ) -> DrcJobResult {
     let mut found: Vec<Found> = Vec::new();
-    // The handler only builds the marker; its final UUID is drawn below.
-    let mut scratch_generator = kicad_core::KiidGenerator::seeded(options.marker_uuid_seed);
+    // The handler only builds the marker (the board is borrowed by the run); its UUID is
+    // drawn from the board's generator below.
+    let mut scratch_generator = kicad_core::KiidGenerator::default();
+    scratch_generator.create_nil_uuids(true);
 
     record_drc_exclusions(board);
     board.delete_markers(true, true);
@@ -582,14 +593,15 @@ pub fn run_drc_job(
         outcome
     };
 
-    // commit.Push(): the markers are appended to the board in report order.
-    let mut generator = kicad_core::KiidGenerator::seeded(options.marker_uuid_seed.wrapping_add(1));
-
+    // commit.Push(): the markers are appended to the board in report order. The UUIDs come
+    // from the board's generator (review R2-11), which never returns the UUIDs of the loaded
+    // file nor the board's own; the loop only guards against an item UUID a host assigned by
+    // hand.
     for Found { mut marker } in found {
-        let mut uuid = Kiid::new(&mut generator);
+        let mut uuid = Kiid::new(&mut board.kiid_generator);
 
-        while board.resolve_item(&uuid).is_some() {
-            uuid = Kiid::new(&mut generator);
+        while board.resolve_item(&uuid).is_some() || uuid == board.uuid() {
+            uuid = Kiid::new(&mut board.kiid_generator);
         }
 
         marker.base.uuid = uuid;

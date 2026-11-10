@@ -1,0 +1,6 @@
+zone cu FCu outlines 1
+  0 pts 242 island 0 hash 0b41eb752b5be441
+zone dwgs DwgsUser outlines 1
+  0 pts 16 island 1 hash b66195b9fb5d1fd9
+zone silk FSilkS outlines 1
+  0 pts 129 island 1 hash 63c79e8f483e4958

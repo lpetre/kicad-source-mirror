@@ -431,7 +431,9 @@ impl<'a> LengthDelayCalculation<'a> {
     }
 
     fn item(&self, id: ItemId) -> ItemRef<'a> {
-        self.ctx.item(id).expect("a board item of the length calculation")
+        self.ctx
+            .item(id)
+            .expect("a board item of the length calculation")
     }
 
     /// Port of `TUNING_PROFILE_PARAMETERS_USER_DEFINED::GetTuningProfile`.
@@ -478,7 +480,13 @@ impl<'a> LengthDelayCalculation<'a> {
     }
 
     /// Port of `LENGTH_DELAY_CALCULATION::clipLineToPad`.
-    fn clip_line_to_pad(&self, line: &mut ShapeLineChain, pad: ItemRef<'_>, layer: PcbLayerId, forward: bool) {
+    fn clip_line_to_pad(
+        &self,
+        line: &mut ShapeLineChain,
+        pad: ItemRef<'_>,
+        layer: PcbLayerId,
+        forward: bool,
+    ) {
         debug_assert!(line.point_count() >= 2);
 
         let start = if forward { 0 } else { line.point_count() - 1 };
@@ -494,7 +502,11 @@ impl<'a> LengthDelayCalculation<'a> {
 
         let mut vertex = start + delta;
 
-        while if forward { vertex < line.point_count() } else { vertex >= 0 } {
+        while if forward {
+            vertex < line.point_count()
+        } else {
+            vertex >= 0
+        } {
             if !shape.contains(line.c_point(vertex), -1, 0, false) {
                 first_outside = vertex;
                 let prev_vertex = vertex - delta;
@@ -577,8 +589,7 @@ impl<'a> LengthDelayCalculation<'a> {
     ) -> LengthDelayStats {
         // If this set of items has not been optimised, optimise for shortest electrical path
         // (the C++ tests MergeTracks twice; OptimiseTracesInPads alone does not trigger it)
-        if optimisations.optimise_vias || optimisations.merge_tracks || optimisations.merge_tracks
-        {
+        if optimisations.optimise_vias || optimisations.merge_tracks || optimisations.merge_tracks {
             let mut pads: Vec<usize> = Vec::new();
             let mut lines: Vec<usize> = Vec::new();
             let mut vias: Vec<usize> = Vec::new();
@@ -712,7 +723,8 @@ impl<'a> LengthDelayCalculation<'a> {
                     per_item.lengths_and_delays[i].0 = pad_to_die;
                 }
 
-                details.pad_to_die_length = details.pad_to_die_length.wrapping_add(pad_to_die as i32);
+                details.pad_to_die_length =
+                    details.pad_to_die_length.wrapping_add(pad_to_die as i32);
                 details.num_pads += 1;
             }
         }
@@ -1093,7 +1105,12 @@ impl<'a> LengthDelayCalculation<'a> {
 
     /// Port of `LENGTH_DELAY_CALCULATION::OptimiseTraceInPad`: optimises the given trace to
     /// minimise the electrical path length within the pad.
-    pub fn optimise_trace_in_pad(&self, line: &mut ShapeLineChain, pad: ItemRef<'_>, pcb_layer: PcbLayerId) {
+    pub fn optimise_trace_in_pad(
+        &self,
+        line: &mut ShapeLineChain,
+        pad: ItemRef<'_>,
+        pcb_layer: PcbLayerId,
+    ) {
         let pad_pos = pad.position();
 
         // Only consider lines which terminate in the pad
@@ -1117,7 +1134,12 @@ impl<'a> LengthDelayCalculation<'a> {
     }
 
     /// Port of `LENGTH_DELAY_CALCULATION::clipLineToVia`.
-    fn clip_line_to_via(line: &mut ShapeLineChain, via: ItemRef<'_>, layer: PcbLayerId, forward: bool) {
+    fn clip_line_to_via(
+        line: &mut ShapeLineChain,
+        via: ItemRef<'_>,
+        layer: PcbLayerId,
+        forward: bool,
+    ) {
         debug_assert!(line.point_count() >= 2);
 
         let start = if forward { 0 } else { line.point_count() - 1 };
@@ -1140,7 +1162,11 @@ impl<'a> LengthDelayCalculation<'a> {
 
         let mut vertex = start + delta;
 
-        while if forward { vertex < line.point_count() } else { vertex >= 0 } {
+        while if forward {
+            vertex < line.point_count()
+        } else {
+            vertex >= 0
+        } {
             if !via_shape.collide_point(line.c_point(vertex), 0, None, None) {
                 first_outside = vertex;
                 let prev_vertex = vertex - delta;
@@ -1203,7 +1229,12 @@ impl<'a> LengthDelayCalculation<'a> {
 
     /// Port of `LENGTH_DELAY_CALCULATION::OptimiseTraceInVia`: clips trace portions inside a
     /// via pad and replaces them with a straight segment to the via centre.
-    pub fn optimise_trace_in_via(&self, line: &mut ShapeLineChain, via: ItemRef<'_>, layer: PcbLayerId) {
+    pub fn optimise_trace_in_via(
+        &self,
+        line: &mut ShapeLineChain,
+        via: ItemRef<'_>,
+        layer: PcbLayerId,
+    ) {
         let via_shape = via.effective_shape(
             layer,
             Flashing::AlwaysFlashed,
@@ -1248,8 +1279,12 @@ impl<'a> LengthDelayCalculation<'a> {
                 }
                 Track::Arc(arc) => {
                     let base = track.as_track();
-                    let shape_arc =
-                        ShapeArc::from_start_mid_end(base.start(), arc.mid(), base.end(), base.width());
+                    let shape_arc = ShapeArc::from_start_mid_end(
+                        base.start(),
+                        arc.mid(),
+                        base.end(),
+                        base.width(),
+                    );
                     let chain_arc = ShapeLineChain::from_arc(&shape_arc, false, None);
 
                     let mut item = LengthDelayCalculationItem::default();
@@ -1295,7 +1330,12 @@ impl<'a> LengthDelayCalculation<'a> {
 
     /// Port of `LENGTH_DELAY_CALCULATION::CalculateLengthForDelay` (user-defined provider:
     /// `GetTrackLengthForPropagationDelay`).
-    pub fn calculate_length_for_delay(&self, desired_delay: i64, tuning_profile: &str, layer: PcbLayerId) -> i64 {
+    pub fn calculate_length_for_delay(
+        &self,
+        desired_delay: i64,
+        tuning_profile: &str,
+        layer: PcbLayerId,
+    ) -> i64 {
         let delay_unit = self.track_delay_per_mm(tuning_profile, layer);
 
         if delay_unit <= 0.0 {
@@ -1339,7 +1379,11 @@ impl<'a> LengthDelayCalculation<'a> {
     }
 
     /// Port of `TUNING_PROFILE_PARAMETERS_USER_DEFINED::getPropagationDelay`.
-    fn propagation_delay(&self, item: &LengthDelayCalculationItem, delay_profile: &TuningProfile) -> i64 {
+    fn propagation_delay(
+        &self,
+        item: &LengthDelayCalculationItem,
+        delay_profile: &TuningProfile,
+    ) -> i64 {
         if item.merge_status() == MergeStatus::MergedRetired {
             return 0;
         }
@@ -1454,7 +1498,9 @@ impl<'a> LengthDelayCalculation<'a> {
 
 /// `DELAY_PROFILE_TRACK_PROPAGATION_ENTRY::GetDelay()`: the delay, 0 unless time domain tuning
 /// is enabled for the entry.
-fn entry_delay(entry: &kicad_pcb::project::tuning_profiles_json::DelayProfileTrackPropagationEntry) -> i32 {
+fn entry_delay(
+    entry: &kicad_pcb::project::tuning_profiles_json::DelayProfileTrackPropagationEntry,
+) -> i32 {
     if entry.enable_time_domain_tuning {
         entry.delay
     } else {

@@ -324,8 +324,8 @@ pub fn drill_default_report_path(out_path: &str, board_file_name: &str) -> Strin
 /// `BOARD::SynchronizeProperties`, and resolve the output path with the project's
 /// `TextVarResolver`.
 ///
-/// The override drawing sheet (`loadOverrideDrawingSheet`, `--drawing-sheet`) is not ported
-/// (no drawing sheet model; `PORT_STATUS.md`).
+/// The override drawing sheet (`loadOverrideDrawingSheet`, `--drawing-sheet`) is loaded by the
+/// plot jobs right after this ([`Session::load_override_drawing_sheet`]).
 fn resolve_job_output_path(job: &mut crate::jobs::Job, session: &mut Session) -> String {
     job.set_title_block(session.board.titles.clone());
 
@@ -621,6 +621,8 @@ pub fn run_export_gerbers(
     }
 
     let out_path = resolve_job_output_path(&mut job.gerber.plot.job, session);
+    // resolveJobOutputPath( aJob, brd, &aGerberJob->m_drawingSheet )
+    session.load_override_drawing_sheet(&job.gerber.plot.drawing_sheet, reporter);
 
     if job.gerber.plot.check_zones_before_plot {
         session.refill_zones()?;
@@ -912,6 +914,8 @@ pub fn run_export_svg(
     }
 
     let out_path = resolve_job_output_path(&mut job.plot.job, session);
+    // resolveJobOutputPath( aJob, brd, &aSvgJob->m_drawingSheet )
+    session.load_override_drawing_sheet(&job.plot.drawing_sheet, reporter);
 
     // PATHS::EnsurePathExists( outPath, isSingle ): the host creates the directory when it
     // writes the files.

@@ -165,6 +165,9 @@ fn plot_layer(ctx: &BoardCtx<'_>, opts: &PcbPlotParams, layer: PcbLayerId) -> St
         "",
         "",
         "1",
+        "",
+        1,
+        &kicad_fab::color_settings::ColorSettings::builtin_default(),
         &env(),
     )
     .unwrap();
@@ -515,6 +518,9 @@ fn svg_graphics_match_cli() {
             &layer_name,
             "",
             &layer_name,
+            "",
+            1,
+            &kicad_fab::color_settings::ColorSettings::builtin_default(),
             &env(),
         )
         .unwrap();

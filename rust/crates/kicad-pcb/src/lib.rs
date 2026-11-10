@@ -74,6 +74,7 @@ pub mod eda_shape;
 pub mod eda_text;
 pub mod footprint;
 pub mod footprint_courtyard_index;
+pub mod libraries;
 pub mod line_ending;
 pub mod pad;
 pub mod pad_utils;

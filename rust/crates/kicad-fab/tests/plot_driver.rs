@@ -202,6 +202,9 @@ fn svg_start_plot_board_matches_cli() {
             &layer_name,
             "",
             &layer_name,
+            "",
+            1,
+            &kicad_fab::color_settings::ColorSettings::builtin_default(),
             &env(),
         )
         .unwrap();

@@ -967,17 +967,20 @@ impl Seg {
             // Find midpoint of overlap region
             let overlap_start: i32 = seg1_min.max(seg2_min);
             let overlap_end: i32 = seg1_max.min(seg2_max);
-            let intersection_proj: i32 = (overlap_start + overlap_end) / 2;
+            // ( overlap_start + overlap_end ) / 2: int addition, wraps in the reference build
+            // for collinear overlaps beyond 2^30 nm (FIX-FAB-3, `coll_far` oracle section)
+            let intersection_proj: i32 = overlap_start.wrapping_add(overlap_end) / 2;
 
             // Calculate corresponding coordinate on the other axis
             let intersection_other: i32 = if seg1_end != seg1_start {
                 // Use this segment's line equation to find other coordinate
-                coord1_start
-                    + rescale(
-                        intersection_proj - seg1_start,
-                        coord1_end - coord1_start,
-                        seg1_end - seg1_start,
-                    )
+                // (int arithmetic on the possibly wrapped midpoint: wraps as in the reference
+                // build)
+                coord1_start.wrapping_add(rescale(
+                    intersection_proj.wrapping_sub(seg1_start),
+                    coord1_end.wrapping_sub(coord1_start),
+                    seg1_end.wrapping_sub(seg1_start),
+                ))
             } else {
                 // Degenerate segment (point) or perpendicular to projection axis
                 coord1_start

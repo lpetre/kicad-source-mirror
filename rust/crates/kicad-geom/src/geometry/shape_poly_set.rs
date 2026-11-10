@@ -3228,7 +3228,12 @@ impl ShapePolySet {
             && self.contains_single(a_segment.b, a_polygon_index, 1, false)
         {
             if let Some(n) = a_nearest {
-                *n = (a_segment.a + a_segment.b) / 2;
+                // ( aSegment.A + aSegment.B ) / 2: int addition, wraps in the reference build
+                // beyond 2^30 nm (FIX-FAB-3, `coll_far` oracle section)
+                *n = Vector2I::new(
+                    a_segment.a.x.wrapping_add(a_segment.b.x),
+                    a_segment.a.y.wrapping_add(a_segment.b.y),
+                ) / 2;
             }
 
             return 0;

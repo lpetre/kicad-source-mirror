@@ -238,5 +238,6 @@ pub fn perform(m: &ArgMatches) -> i32 {
 
     let mut reporter = Reporter::new();
     let result = run_export_svg(&mut session, &mut job, &mut reporter);
+    host::print_log_warnings(&mut session);
     host::finish_job(result, reporter)
 }

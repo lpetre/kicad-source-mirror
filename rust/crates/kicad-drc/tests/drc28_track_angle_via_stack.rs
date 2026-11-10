@@ -35,14 +35,7 @@ mod drc_harness;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-use drc_harness::{Entry, cli_report_entries, compare_corpus, load_board};
-use kicad_connectivity::data::ConnectivityData;
-use kicad_core::eda_units::EdaUnits;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::track_angle::DrcTestProviderTrackAngle;
-use kicad_drc::providers::track_segment_length::DrcTestProviderTrackSegmentLength;
-use kicad_drc::providers::via_stack::DrcTestProviderViaStack;
-use kicad_pcb::BoardCtx;
+use drc_harness::{Entry, cli_report_entries_flow, compare_corpus_flow, load_board};
 
 /// The error types of the three providers.
 const TYPES: [&str; 7] = [
@@ -55,38 +48,9 @@ const TYPES: [&str; 7] = [
     "microvia_crosses_core",
 ];
 
-/// The track angle provider with the board's connectivity (`BOARD::GetConnectivity()`), built
-/// from the board the run sees.
-struct TrackAngleWithConnectivity;
-
-impl DrcTestProviderRun for TrackAngleWithConnectivity {
-    fn name(&self) -> &str {
-        "track angle"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let mut conn = ConnectivityData::new();
-        conn.build(&BoardCtx::bare(ctx.board));
-        let mut provider = DrcTestProviderTrackAngle::new(&conn);
-        provider.run_tests(engine, run, ctx, units)
-    }
-}
-
-/// The three providers in registry order (`PROVIDER_ORDER`: track angle, track segment
-/// length, via stack).
-fn providers() -> Vec<Box<dyn DrcTestProviderRun>> {
-    vec![
-        Box::new(TrackAngleWithConnectivity),
-        Box::new(DrcTestProviderTrackSegmentLength::default()),
-        Box::new(DrcTestProviderViaStack::default()),
-    ]
-}
+/// The registry slots (`GetName()`) of the three providers (`PROVIDER_ORDER`: track angle,
+/// track segment length, via stack).
+const PROVIDERS: &[&str] = &["track angle", "segment_length", "microvia_stack"];
 
 fn data_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/drc28")
@@ -127,14 +91,7 @@ fn report(path: &std::path::Path) -> Result<Vec<Entry>, String> {
         return Err(format!("parser skipped {:?}", first.token));
     }
 
-    let mut owned = providers();
-    let mut refs: Vec<&mut dyn DrcTestProviderRun> = Vec::new();
-
-    for p in owned.iter_mut() {
-        refs.push(&mut **p);
-    }
-
-    Ok(cli_report_entries(&mut loaded, false, &mut refs)
+    Ok(cli_report_entries_flow(&mut loaded, false, PROVIDERS)
         .into_iter()
         .filter(|e| TYPES.contains(&e.type_.as_str()))
         .collect())
@@ -526,7 +483,7 @@ fn issue18142() {
 #[test]
 fn track_angle_via_stack_match_reference_corpus() {
     let filter = std::env::var("DRC28_FILTER").unwrap_or_default();
-    let score = compare_corpus(&TYPES, &filter, &mut providers);
+    let score = compare_corpus_flow(&TYPES, &filter, PROVIDERS);
     score.print("DRC-28 track angle / segment length / via stack");
     score.assert_no_mismatch();
 }

@@ -2049,3 +2049,77 @@ expected difference below. All kicad-drc tests green.
 - Raw zone_connect values: the `PrintZoneConnection` REPORT texts are not ported (DRC-34);
   `DrcConstraint::zone_connection` is an enum, so an out-of-range pad / footprint value reads
   as FULL (C++ keeps the raw value); not reachable from the corpus.
+
+## DRC-31: matched length, skew, via count, net chains
+
+### File / class map
+
+| C++ | Rust | State |
+|---|---|---|
+| `pcbnew/drc/drc_test_provider_matched_length.cpp` (`DRC_TEST_PROVIDER_MATCHED_LENGTH`) | `src/providers/matched_length.rs` (`DrcTestProviderMatchedLength::new(&ConnectivityData)`) | ported (delay report mode not ported) |
+| `pcbnew/drc/drc_length_report.h` | `src/length_report.rs` (`DrcLengthReport`, `LengthReportEntry`) | ported |
+| `pcbnew/drc/drc_chain_topology.h` / `.cpp` (`CHAIN_TOPOLOGY`) | `src/chain_topology.rs` (`ChainTopology`) | ported |
+| `pcbnew/net_chain_bridging.cpp` / `.h` | `src/net_chain_bridging.rs` | ported except `PartitionNetChainAroundNet` (tuner / net inspector only) |
+| `pcbnew/length_delay_calculation/length_delay_calculation.cpp` / `.h`, `length_delay_calculation_item.cpp` / `.h` | `src/length_delay_calculation.rs` (`LengthDelayCalculation`, `LengthDelayCalculationItem`, `LengthDelayStats`, `PathOptimisations`) | ported (in `kicad-drc`: it needs the connectivity) |
+| `pcbnew/length_delay_calculation/tuning_profile_parameters_user_defined.cpp` / `.h` | the tuning-profile methods of `LengthDelayCalculation` (`get_propagation_delays`, `get_via_propagation_delay`, `calculate_length_for_delay`, ...) | ported (the only provider of `TUNING_PROFILE_PARAMETERS_IFACE` the DRC uses) |
+| `run_flow` registry slot `"length"` | `run_flow::run_provider` (rebuilds the from-to cache first) | wired; removed from `UNPORTED_PROVIDERS` |
+
+### Verification
+
+- Reference CLI: `tests/drc31_matched_length.rs` replays `tests/golden/drc31/reference.txt`
+  (`python3 -I tests/oracle/gen_drc31_golden.py`, ~20 s): 56 cases (`tests/data/drc31/cases.tsv`)
+  over 31 QA boards: the boards with their own length / skew rules (`length_calculations`,
+  `time_calculations`, `issue22536`, `via_off_center`, `drc_skew`, `skew_within_diff_pairs_drc`,
+  `skew_group_matched_drc`, `issue18045`, `issue23868`), rule variants appended (`all`: length +
+  skew + via count, `same`: two rules with the same name (FIX-DRC-1 work item 3), `time`: time
+  domain, `dp`: skew within diff pairs), the `net_chains/*` fixtures and `issue25065` with net
+  chains inserted and chain rules (`chain`, `chaintime`, `lenchain`, return path `rp*`). Result:
+  length_out_of_range 161/161, skew_out_of_range 66/66, too_many_vias 58/58,
+  net_chain_stub_length 27/27, net_chain_return_path 5/5 matched, 0 missing, 0 extra (all
+  descriptions byte-exact, including the measured lengths / delays).
+- Comparison rule: entries as a multiset (rules are grouped in `std::map<DRC_RULE*, ...>`, address
+  order); the report shows only the first two items of an entry (address order of a
+  `std::set<BOARD_CONNECTED_ITEM*>`): items compared by count, the single item of a skew / via
+  count entry by its net.
+- `CHAIN_TOPOLOGY` is not reachable from the CLI: the load's `BuildListOfNets()`
+  (`NETINFO_LIST::buildListOfNets`) clears the terminal pad pointers and restores only their
+  UUIDs, so every chain of a loaded board reports `NO_TERMINAL_PADS` and the provider takes the
+  legacy fallbacks (the reference agrees: the stub entries all carry "on net"). The topology
+  is verified against the C++ QA expectations only (`tests/drc31_chain_topology.rs`, terminal
+  pads re-resolved from their UUIDs as the tests' `SetTerminalPad` does), not bit for bit.
+
+### Ported C++ tests
+
+- `test_drc_lengths.cpp`: `DRCLengths` (4 boards, 0 violations: the `#base` cases of the
+  reference replay) and `ViaElectricalSpan` (`drc31_chain_topology.rs::via_electrical_span`).
+- `test_drc_chain_topology.cpp`: all 5 cases; `test_drc_chain_length_trunk.cpp`: both cases.
+- `test_drc_skew.cpp`, `test_drc_skew_arc.cpp`, `test_drc_stub_length.cpp`,
+  `test_drc_return_path_*.cpp`, `test_drc_length_with_chain.cpp`,
+  `test_drc_chain_bridging_multipad.cpp`: their boards and rules are cases of the reference
+  replay (chains assigned through the file instead of in code; the reference decides the
+  expectation). Not ported as separate tests: the cases that set terminal pads on single nets
+  in code (no mutable net API on a loaded board), the rule parser assertions of
+  `test_drc_stub_length.cpp` (DRC-20 territory) and `test_drc_length_item_order.cpp`
+  (address-order specific).
+
+### Deviations
+
+- Rule identity: `itemSets` / `matches` are keyed by `DrcRuleInfo::rule_index` (C++: rule
+  address); a constraint without a rule index is skipped (C++ would dereference it). Report
+  order across rules therefore differs from (the non-reproducible) C++ order.
+- Item order: `ItemId` order for every `std::set<BOARD_CONNECTED_ITEM*>` (length calculation
+  input order, the first item giving the marker position, the last item of skew / via count
+  entries), for `CHAIN_TOPOLOGY`'s node / edge numbering and its `std::map<PAD*, ...>`; the
+  first pad of `GetConnectedPads( via )` in `optimiseVias` (review-connectivity F-6).
+- `TUNING_PROFILES::GetTuningProfile` of an unknown name returns the null profile whose
+  `m_NetChainBridgePropagationDelay` is not initialised in C++; the port uses 0.
+- Tuning profiles are read from the bound project when the calculator is constructed (C++:
+  cached at `SynchronizeTuningProfileProperties`).
+
+### Known gaps
+
+- `runInternal( aDelayReportMode = true )` (net inspector delay report) is not ported.
+- `PartitionNetChainAroundNet` is not ported (not used by DRC).
+- The `PNS_TUNE` trace output of the length calculation is not ported.
+- The chain topology has no bit-exact C++ oracle (see Verification); a C++ driver building
+  `CHAIN_TOPOLOGY` on a board with terminal pads set in code would close this.

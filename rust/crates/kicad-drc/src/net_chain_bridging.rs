@@ -66,7 +66,11 @@ fn pad_center(ctx: &BoardCtx<'_>, pad: PadId) -> Vector2D {
 
 /// Port of `FootprintChainBridgingLength`: the largest centre-to-centre span between two pads
 /// of different nets of the chain on the footprint (0 when no pad pair crosses nets).
-pub fn footprint_chain_bridging_length(ctx: &BoardCtx<'_>, fp: FootprintId, net_chain: &str) -> f64 {
+pub fn footprint_chain_bridging_length(
+    ctx: &BoardCtx<'_>,
+    fp: FootprintId,
+    net_chain: &str,
+) -> f64 {
     if net_chain.is_empty() {
         return 0.0;
     }
@@ -120,7 +124,11 @@ pub fn board_chain_bridging_length(ctx: &BoardCtx<'_>, net_chain: &str) -> f64 {
 
 /// Port of `ChainBridgingDelayPerMm`: the bridge propagation delay per mm of the tuning profile
 /// of the first track of the chain whose net class has one, else the default.
-pub fn chain_bridging_delay_per_mm(ctx: &BoardCtx<'_>, net_chain: &str, default_bridge_unit_delay: f64) -> f64 {
+pub fn chain_bridging_delay_per_mm(
+    ctx: &BoardCtx<'_>,
+    net_chain: &str,
+    default_bridge_unit_delay: f64,
+) -> f64 {
     if net_chain.is_empty() {
         return default_bridge_unit_delay;
     }
@@ -138,7 +146,11 @@ pub fn chain_bridging_delay_per_mm(ctx: &BoardCtx<'_>, net_chain: &str, default_
 
         let netclass = match ninfo.netclass() {
             Some(nc) => nc.clone(),
-            None => board.design_settings().net_settings.default_netclass().clone(),
+            None => board
+                .design_settings()
+                .net_settings
+                .default_netclass()
+                .clone(),
         };
 
         if !netclass.has_tuning_profile() {
@@ -150,8 +162,7 @@ pub fn chain_bridging_delay_per_mm(ctx: &BoardCtx<'_>, net_chain: &str, default_
         // aBoard->GetProject()->GetProjectFile().TuningProfileParameters(): GetTuningProfile
         // answers its null profile for an unknown name (bridge delay 0 in the port; the C++
         // member is not initialised).
-        let (params, _) =
-            load_tuning_profiles(board.project.as_ref().map(|p| &p.document));
+        let (params, _) = load_tuning_profiles(board.project.as_ref().map(|p| &p.document));
 
         return params
             .tuning_profiles
@@ -164,7 +175,11 @@ pub fn chain_bridging_delay_per_mm(ctx: &BoardCtx<'_>, net_chain: &str, default_
 }
 
 /// Port of `BoardChainBridging`: (length, delay) added by the series passives of the chain.
-pub fn board_chain_bridging(ctx: &BoardCtx<'_>, net_chain: &str, default_bridge_unit_delay: f64) -> (f64, f64) {
+pub fn board_chain_bridging(
+    ctx: &BoardCtx<'_>,
+    net_chain: &str,
+    default_bridge_unit_delay: f64,
+) -> (f64, f64) {
     if net_chain.is_empty() {
         return (0.0, 0.0);
     }
@@ -175,7 +190,8 @@ pub fn board_chain_bridging(ctx: &BoardCtx<'_>, net_chain: &str, default_bridge_
         return (0.0, 0.0);
     }
 
-    let delay_iu = chain_bridging_delay_per_mm(ctx, net_chain, default_bridge_unit_delay) * length_iu
+    let delay_iu = chain_bridging_delay_per_mm(ctx, net_chain, default_bridge_unit_delay)
+        * length_iu
         / PCB_IU_SCALE.iu_per_mm;
 
     (length_iu, delay_iu)

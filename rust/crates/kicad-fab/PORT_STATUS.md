@@ -24,7 +24,8 @@ of 10.1 exists; modules of packages that have not started contain only their `//
 | `plot_brditems_text.rs` (`PlotFootprintTextItems`, `PlotText`) | see "FAB-06" below | FAB-06 | ported |
 | `jobs/job_export_pcb_plot.rs`, `jobs/job_export_pcb_gerbers.rs`, the Gerber part of `jobs_handler.rs` (`JobExportGerbers`, `PlotJobToPlotOpts`) | see "FAB-07" below | FAB-07 | ported (job file: FAB-09) |
 | `plot_layer_poly.rs` (`PlotPolySet`, `PlotSolderMaskLayer` min-width path, `PlotClippedSilkLayer`, `GenerateLayerPoly`) | `plot_board_layers.cpp` L49-125, L1020-1275 | FAB-10 | ported (see "FAB-10" below) |
-| `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, the remaining pending members of `plot_brditems_plotter.rs` | see each module header | FAB-11..13 | not started |
+| `color_settings.rs`, `pcb_plotter.rs` (`plot`), `jobs/job_export_pcb_svg.rs`, the SVG part of `jobs_handler.rs`, `plot_brditems_plotter.rs` (`PlotDrillMarks`, `GetColor`) | see "FAB-11" below | FAB-11 | ported |
+| `plot_brditems_plotter.rs` (`PlotDrillSymbols`, `PlotChartSymbols`) | `plot_brditems_plotter.cpp` | FAB-13 | stub |
 
 Drill report (`GenDrillReportFile`, `printToolSummary`, `gendrill_writer_base.cpp` L850-993,
 L1022-1070): FAB-02, `exporters/gendrill_report.rs` (an `impl GendrillWriterBase` block).
@@ -818,3 +819,72 @@ items, zones, vias, exotic names, extreme coordinates).
 
 `--variant` (model stub), `--ibt` / `plotframeref` (drawing sheet), `--generate-map` (FAB-12),
 drill chart symbols (FAB-13): the boards and option sets to rerun are in the report.
+
+## FAB-11: SVG board plots, drill marks, colour themes, the svg job
+
+### C++ to Rust
+
+| C++ | Rust |
+|---|---|
+| `PCB_PLOTTER::Plot` (`pcb_plotter.cpp` L68-354) | `pcb_plotter::plot -> PlotOutcome { success, error, files, outputs }` (single / multi mode, common layers, skipped copper layers, file names, `Plotted to '%s'.`, `Done.`, Gerber job file branch) |
+| `PCBNEW_JOBS_HANDLER::JobExportSvg` from `PCB_PLOT_PARAMS plotOpts` on, static `plotJob` (L1506-1579) | `jobs_handler::job_export_svg`; the rest (`getBoard`, variant, `resolvePlotOutputPath`, `preparePlotLayers`, `RefreshGeneratedTables`) is `kicad_session::jobs_handler::run_export_svg` |
+| `JOB_EXPORT_PCB_SVG` (members, defaults, `GEN_MODE`) | `jobs::job_export_pcb_svg::{JobExportPcbSvg, SvgGenMode, SVG_PRECISION_DEFAULT}` (options only) |
+| `BRDITEMS_PLOTTER::PlotDrillMarks`, `plotOneDrillMark` (L1409-1477) | `BrditemsPlotter::plot_drill_marks`, private `plot_one_drill_mark`; `ADVANCED_CFG::m_SmallDrillMarkSize` = `SMALL_DRILL_MARK_SIZE` (0.35 mm default) |
+| `COLOR_SETTINGS` (`GetColor`, `GetFilename`), `s_defaultTheme` / `s_classicTheme`, `CreateBuiltinColorSettings`, `SETTINGS_MANAGER::GetColorSettings` | `color_settings::{ColorSettings, get_color_settings}` (board layers, `LAYER_DNP_MARKER`, `LAYER_PCB_BACKGROUND`, `LAYER_DRAWINGSHEET`; 98 entries per built-in theme, generated from `builtin_color_themes.h`) |
+| `PCB_PLOT_PARAMS::SetColorSettings` / `ColorSettings()` | `plot_job_to_plot_opts` returns the `ColorSettings`; the plot functions (`plot_board_layers`, `plot_one_board_layer`, `plot_standard_layer`, `plot_poly_set`, `plot_solder_mask_layer_min_width`, `plot_clipped_silk_layer`, `BrditemsPlotter::new`) take it as a parameter (the model's `PcbPlotParams` dropped `m_colors`); `BrditemsPlotter::color_settings_color` = `ColorSettings()->GetColor` |
+| `PCB_TEXT::TransformTextToPolySet` of a `PCB_DIMENSION_BASE` (knockout / struck-out dimension text in a footprint) | `plot_brditems_text::pcb_text_transform_text_to_poly_set` calls `PcbDimension::transform_text_to_poly_set` |
+
+### Tests and verification (reference kicad-cli)
+
+* kicad-session `tests/svg_job.rs` `corpus_replay` (session path: CLI loader, connectivity, DRC
+  engine as rule resolver; golden `kicad-session/tests/golden/svg_job/corpus.txt`,
+  `generate.py` there): every corpus board under 300 KB plus the crafted boards of
+  `tests/data/{plot_driver,plot_items,plot_graphics,plot_layer_poly,plot_text,svg_plot}` with
+  16 layers in multi mode, colour, full drill marks; and 5 boards (ecc83-pp, microwave,
+  `plot_items/pads`, `plot_graphics/graphics`, `svg_plot/svg_marks`) x 19 option sets
+  (`--mode-single`, single + `--fit-page-to-board`, `--cl`, `--black-and-white`, `--negative`,
+  `--mirror`, `--drill-shape-opt 0` / `1`, `--page-size-mode 0` / `1` / `2`,
+  `--fit-page-to-board`, `-t _builtin_classic`, `-t no_such_theme` (warning), 
+  `--subtract-soldermask`, `--scale 2`, `--cdnp`, b&w + negative + mirror + small marks, and
+  the drawing sheet). **492 runs: 490 identical** (exit code, stdout, every file byte for
+  byte after normalising the `<title>` date: 6531 files), 1 pending (FAB-13 chart symbols:
+  `modern_metadata`), 1 not loadable (`fakeboard`, rejected by kicad-cli too). The drawing
+  sheet runs match since the drawing sheet package landed (before: the documented NotPorted
+  error, which the test still accepts).
+* `cli_test_pcb_export_svg`: `qa/tests/cli/test_pcb.py::test_pcb_export_svg` for
+  `ZoneFill-4.0.7` (F.Cu, B.Cu; `--page-size-mode 1 --exclude-drawing-sheet --black-and-white`)
+  byte-identical to the reference kicad-cli (the committed `.svg` files are from an older KiCad
+  and only pass the C++ test's image diff); `ZoneFill-Legacy.brd` needs the legacy reader.
+* `tests/data/svg_plot/svg_marks.kicad_pcb` (hand-written `svg_marks_input.kicad_pcb`, re-saved
+  by `kicad-cli pcb upgrade --force`): rotated footprint with round, oval-slot, NPTH (size ==
+  drill: black mark), SMD, small-drill and B.Cu-only pads, two vias, a knockout aligned
+  dimension on F.SilkS inside a footprint, a DNP footprint whose F.Fab dimension shows
+  `${REFERENCE}` (struck out with `--cdnp`). Also checked once by hand through
+  `pcb export gerbers --cdnp -l F.SilkS,F.Fab,F.Cu`: all files identical.
+* `tests/plot_pads_qa.rs::drill_marks_plotted_on_edge_cuts_svg`: port of
+  `DrillMarksPlottedOnEdgeCutsSvg` (`test_plot_edge_cuts_drill_marks.cpp`); the two Gerber cases
+  were ported by FAB-04.
+* `color_settings.rs` unit test (lookup by key / display name / unknown name, unloaded
+  settings); the Gerber corpus (`gerbers_job.rs`) is unchanged by the colour plumbing.
+
+### Deviations
+
+* `PcbPlotParams` has no colour settings: the theme travels as an explicit `ColorSettings`
+  argument. The tests that mimic C++ QA code with a default `PCB_PLOT_PARAMS` pass
+  `ColorSettings::default()` (never loaded: every colour `UNSPECIFIED`, as in C++).
+* Colour theme files (`<config>/colors/*.json`, `--theme <user theme>`) cannot be read (no file
+  system): every name that is not `_builtin_default`, `_builtin_classic`, `user` or a built-in
+  display name behaves as a missing theme does in C++ (warning, default colours).
+* `PCB_RENDER_SETTINGS::LoadColors` is not applied to the plotter's render settings; the board
+  plot reads colours from `ColorSettings()` only (the render settings' layer colours are read
+  by the drawing sheet, which takes its colour from its own package).
+* `PCB_PLOTTER::Plot`: SVG fit-to-board changes the page and aux origin on a copy of the board
+  (the C++ changes and restores the board); `RefreshGeneratedTables` runs in the session before
+  the call; `SetTitle` gets the unexpanded title (only PDF reads it); an error of
+  `StartPlotBoard` (a part outside the port) stops the plot instead of reporting `Failed to
+  create file` (the port cannot fail to create a file).
+
+### Known gaps
+
+* `PlotDrillSymbols` / `PlotChartSymbols` (FAB-13): the board `modern_metadata` is pending.
+* PDF / DXF / PostScript / PNG branches of `PCB_PLOTTER::Plot` (formats out of scope).

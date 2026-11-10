@@ -651,6 +651,108 @@ fn section_chain_index(results: &mut Results, name: &'static str, seed: u64, cou
     }
 }
 
+/// FIX-FAB-3: `farOrigin()` of the C++ driver.
+fn far_origin(rng: &mut Rng) -> Vector2I {
+    const C: [i32; 4] = [1200000000, -1200000000, 2000000000, -2000000000];
+    let x = C[(rng.next() % 4) as usize];
+    let y = C[(rng.next() % 4) as usize];
+    v(x, y)
+}
+
+/// FIX-FAB-3: `sectionFar()`, touching pairs near the far corners of the coordinate range.
+fn section_far(results: &mut Results, name: &'static str, seed: u64, count: u64) {
+    let mut sec = Section::new(results, name);
+
+    for n in 0..count {
+        let mut rng = Rng::new(seed * 1000003 + n);
+        let ka = rng.next() % K_COUNT;
+        let kb = rng.next() % K_COUNT;
+        let o = far_origin(&mut rng);
+        let s = scale(&mut rng).min(200000);
+        // no effectively straight arcs (see the C++ driver)
+        let opts = Opts {
+            degenerate: false,
+            allow_straight: false,
+        };
+
+        let a = gen_shape(&mut rng, ka, s, o, opts);
+        let seed_b = rng.next();
+        let bb_a = a.bbox(0);
+        let bb_b = {
+            let mut rb = Rng::new(seed_b);
+            gen_shape(&mut rb, kb, s, o, opts).bbox(0)
+        };
+
+        let j = rng.range(-2, 2);
+        let t = rng.range((-s / 2) as i64, (s / 2) as i64);
+        let (dx, dy) = match rng.next() % 5 {
+            0 => (bb_a.right() as i64 - bb_b.left() as i64 + j, t),
+            1 => (bb_a.left() as i64 - bb_b.right() as i64 + j, t),
+            2 => (t, bb_a.bottom() as i64 - bb_b.top() as i64 + j),
+            3 => (t, bb_a.top() as i64 - bb_b.bottom() as i64 + j),
+            _ => {
+                let dx = bb_a.right() as i64 - bb_b.left() as i64 + j;
+                let dy = bb_a.bottom() as i64 - bb_b.top() as i64 + rng.range(-2, 2);
+                (dx, dy)
+            }
+        };
+
+        let dx = dx.clamp(-2000000, 2000000);
+        let dy = dy.clamp(-2000000, 2000000);
+
+        let mut rb = Rng::new(seed_b);
+        let b = gen_shape(&mut rb, kb, s, o + v(dx as i32, dy as i32), opts);
+        let cl = clearance(&mut rng, s);
+
+        let mut r = Rec::default();
+        r.i(ka as i64)
+            .i(kb as i64)
+            .i(s)
+            .i(cl)
+            .v(o)
+            .bx(&a.bbox(0))
+            .bx(&b.bbox(0));
+        rec_collide(&mut r, a.as_ref(), b.as_ref(), cl);
+        rec_collide(&mut r, b.as_ref(), a.as_ref(), cl);
+        sec.add(&r);
+    }
+}
+
+/// FIX-FAB-3: `sectionFarApart()`, shapes on opposite sides of the coordinate range.
+fn section_far_apart(results: &mut Results, name: &'static str) {
+    let mut sec = Section::new(results, name);
+
+    const FAR: [i32; 5] = [1200000000, -1200000000, 2000000000, -2000000000, 0];
+    const RADII: [i32; 4] = [0, 1000, 300000000, 1000000000];
+
+    for xa in FAR {
+        for xb in FAR {
+            for ra in RADII {
+                for rb in RADII {
+                    for cl in [0, 100000] {
+                        let pa = v(xa, xa / 2);
+                        let pb = v(xb, -xb / 3);
+                        let ca = ShapeCircle::new(pa, ra);
+                        let cb = ShapeCircle::new(pb, rb);
+                        let rect = ShapeRect::from_pos_size(pa - v(1000, 1000), 2000, 3000);
+                        let seg = ShapeSegment::new(pa, pa + v(5000, -7000), 1000);
+
+                        let mut r = Rec::default();
+                        r.i(xa).i(xb).i(ra).i(rb).i(cl);
+                        rec_collide(&mut r, &ca, &cb, cl);
+                        rec_collide(&mut r, &cb, &ca, cl);
+                        rec_collide(&mut r, &rect, &cb, cl);
+                        rec_collide(&mut r, &cb, &rect, cl);
+                        rec_collide(&mut r, &seg, &cb, cl);
+                        rec_collide(&mut r, &cb, &seg, cl);
+                        sec.add(&r);
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn run_all(results: &mut Results) {
     super::sections::section_libm_probe(results);
     section_matrix(results, "libm:coll_matrix", 600, 100000, false);
@@ -659,4 +761,6 @@ pub fn run_all(results: &mut Results) {
     section_nearest(results, "libm:coll_nearest", 603, 60000);
     section_touching(results, "libm:coll_nearest_touching", 604, 20000, true);
     section_chain_index(results, "coll_chain_index", 605, 5000);
+    section_far(results, "libm:coll_far", 606, 20000);
+    section_far_apart(results, "libm:coll_far_apart");
 }

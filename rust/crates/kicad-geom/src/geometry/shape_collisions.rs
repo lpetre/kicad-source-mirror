@@ -43,11 +43,28 @@ use crate::math::util::ki_round;
 use crate::math::vector2::Vector2I;
 use crate::stdsort::std_sort;
 
-/// Writes `v` through an optional out-parameter.
-fn set<T>(a_out: &mut Option<&mut T>, v: T) {
+/// Writes the value computed by `f` through an optional out-parameter: the C++
+/// `if( aOut ) *aOut = <expression>;`.  The expression is evaluated only when the out-parameter
+/// is present, exactly as in the C++ (an eagerly evaluated argument would run arithmetic the C++
+/// never executes, e.g. the overflowing `( aA.GetCenter() + aB.GetCenter() ) / 2` of two circles
+/// beyond 1.07 m in the connectivity search, which passes no location).
+fn set_with<T>(a_out: &mut Option<&mut T>, f: impl FnOnce() -> T) {
     if let Some(o) = a_out.as_deref_mut() {
-        *o = v;
+        *o = f();
     }
+}
+
+/// `a + b` of two `VECTOR2I` points of different shapes, evaluated in `int`: the reference
+/// build (x86-64) wraps on overflow (UB in C++), so the port wraps explicitly here
+/// (PORTING.md section 3; verified by the `coll_far` oracle sections).
+fn wrapping_add_v(a: Vector2I, b: Vector2I) -> Vector2I {
+    Vector2I::new(a.x.wrapping_add(b.x), a.y.wrapping_add(b.y))
+}
+
+/// `a - b` of two `VECTOR2I` points of different shapes, evaluated in `int` with the
+/// two's-complement wrap of the reference build (see [`wrapping_add_v`]).
+fn wrapping_sub_v(a: Vector2I, b: Vector2I) -> Vector2I {
+    Vector2I::new(a.x.wrapping_sub(b.x), a.y.wrapping_sub(b.y))
 }
 
 /// The C++ fallback for a pair the collision matrix does not know ("Unsupported collision",
@@ -70,20 +87,28 @@ fn collide_circle_circle(
     let min_dist: Ecoord = (a_clearance + a_a.get_radius() + a_b.get_radius()) as Ecoord;
     let min_dist_sq: Ecoord = min_dist * min_dist;
 
-    let delta = a_b.get_center() - a_a.get_center();
+    // const VECTOR2I delta = aB.GetCenter() - aA.GetCenter();  (int, wraps in the reference
+    // build for centres more than 2^31 nm apart)
+    let delta = wrapping_sub_v(a_b.get_center(), a_a.get_center());
     let dist_sq: Ecoord = delta.squared_euclidean_norm();
 
     if dist_sq == 0 || dist_sq < min_dist_sq {
-        set(
-            &mut a_actual,
-            0.max((dist_sq as f64).sqrt() as i32 - a_a.get_radius() - a_b.get_radius()),
-        );
-        set(&mut a_location, (a_a.get_center() + a_b.get_center()) / 2);
+        // sqrt( dist_sq ) < min_dist <= INT_MAX here: the cast is in range
+        set_with(&mut a_actual, || {
+            0.max((dist_sq as f64).sqrt() as i32 - a_a.get_radius() - a_b.get_radius())
+        });
+        // *aLocation = ( aA.GetCenter() + aB.GetCenter() ) / 2;  (int addition, wraps in the
+        // reference build for centres beyond 2^30 nm)
+        set_with(&mut a_location, || {
+            wrapping_add_v(a_a.get_center(), a_b.get_center()) / 2
+        });
         // fixme: apparent rounding error
-        set(
-            &mut a_mtv,
-            delta.resize((min_dist as f64 - (dist_sq as f64).sqrt() + 3.0) as i32),
-        );
+        // (Resize() takes an int: plain double to int conversion, cvttsd2si)
+        set_with(&mut a_mtv, || {
+            delta.resize(f64_to_i32_x86(
+                min_dist as f64 - (dist_sq as f64).sqrt() + 3.0,
+            ))
+        });
 
         return true;
     }
@@ -143,7 +168,9 @@ fn collide_rect_circle(
         let side = Seg::new(vts[i], vts[i + 1]);
 
         let pn = side.nearest_point(c);
-        let side_dist_sq: Ecoord = (pn - c).squared_euclidean_norm();
+        // ( pn - c ).SquaredEuclideanNorm(): int subtraction, wraps in the reference build for
+        // a circle more than 2^31 nm away from the rectangle
+        let side_dist_sq: Ecoord = wrapping_sub_v(pn, c).squared_euclidean_norm();
 
         if side_dist_sq < nearest_side_dist_sq {
             nearest = pn;
@@ -165,14 +192,14 @@ fn collide_rect_circle(
     }
 
     if inside || nearest_side_dist_sq == 0 || nearest_side_dist_sq < min_dist_sq {
-        set(&mut a_location, nearest);
-        set(
-            &mut a_actual,
-            0.max((nearest_side_dist_sq as f64).sqrt() as i32 - r),
-        );
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || {
+            0.max((nearest_side_dist_sq as f64).sqrt() as i32 - r)
+        });
 
         if let Some(mtv) = a_mtv {
-            let delta = c - nearest;
+            // const VECTOR2I delta = c - nearest;  (int, wraps in the reference build)
+            let delta = wrapping_sub_v(c, nearest);
             let nearest_dist: f64 = (nearest_side_dist_sq as f64).sqrt();
 
             if inside {
@@ -197,12 +224,13 @@ fn pushout_force(a_a: &ShapeCircle, a_b: &Seg, a_clearance: i32) -> Vector2I {
 
     let r: i32 = a_a.get_radius();
 
-    let dist: i32 = (nearest - c).euclidean_norm();
+    // ( nearest - c ).EuclideanNorm(): int subtraction (wraps in the reference build)
+    let dist: i32 = wrapping_sub_v(nearest, c).euclidean_norm();
     let min_dist: i32 = a_clearance + r;
 
     if dist < min_dist {
         for corr in 0..5 {
-            f = (a_a.get_center() - nearest).resize(min_dist - dist + corr);
+            f = wrapping_sub_v(a_a.get_center(), nearest).resize(min_dist - dist + corr);
 
             if a_b.distance(c + f) >= min_dist {
                 break;
@@ -277,8 +305,8 @@ fn collide_circle_lcb(
     }
 
     if closest_dist == 0 || closest_dist < a_clearance {
-        set(&mut a_location, nearest);
-        set(&mut a_actual, closest_dist);
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || closest_dist);
 
         if let Some(mtv) = a_mtv {
             let mut cmoved = *a_a;
@@ -289,7 +317,9 @@ fn collide_circle_lcb(
             if closest_mtv_seg >= 0 {
                 let cs = a_b.get_segment(closest_mtv_seg);
                 let np = cs.nearest_point(a_a.get_center());
-                f = (np - a_a.get_center()) + (np - a_a.get_center()).resize(a_a.get_radius());
+                // ( np - aA.GetCenter() ): int subtraction (wraps in the reference build)
+                let d = wrapping_sub_v(np, a_a.get_center());
+                f = wrapping_add_v(d, d.resize(a_a.get_radius()));
             }
 
             cmoved.set_center(cmoved.get_center() + f);
@@ -325,10 +355,9 @@ fn collide_circle_segment(
         a_actual.as_deref_mut(),
         a_location,
     ) {
-        set(
-            &mut a_mtv,
-            -pushout_force(a_a, a_seg.get_seg(), a_clearance + a_seg.get_width() / 2),
-        );
+        set_with(&mut a_mtv, || {
+            -pushout_force(a_a, a_seg.get_seg(), a_clearance + a_seg.get_width() / 2)
+        });
 
         if let Some(a) = a_actual {
             *a = 0.max(*a - a_seg.get_width() / 2);
@@ -400,8 +429,8 @@ fn collide_rect_lcb(
     }
 
     if closest_dist == 0 || closest_dist < a_clearance {
-        set(&mut a_location, nearest);
-        set(&mut a_actual, closest_dist);
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || closest_dist);
 
         return true;
     }
@@ -527,12 +556,16 @@ fn arc_nearest_points_result(
     a_mtv: Option<&mut Vector2I>,
 ) -> bool {
     if dist_sq == 0 || dist_sq < Seg::square(a_clearance) {
-        set(&mut a_location, (pt_a + pt_b) / 2);
-        set(&mut a_actual, 0.max(ki_round((dist_sq as f64).sqrt())));
+        // *aLocation = ( ptA + ptB ) / 2;  (int addition, wraps in the reference build for
+        // points beyond 2^30 nm)
+        set_with(&mut a_location, || wrapping_add_v(pt_a, pt_b) / 2);
+        set_with(&mut a_actual, || 0.max(ki_round((dist_sq as f64).sqrt())));
 
         if let Some(mtv) = a_mtv {
-            let delta = pt_b - pt_a;
-            *mtv = delta.resize((a_clearance as f64 - (dist_sq as f64).sqrt() + 3.0) as i32);
+            let delta = wrapping_sub_v(pt_b, pt_a);
+            *mtv = delta.resize(f64_to_i32_x86(
+                a_clearance as f64 - (dist_sq as f64).sqrt() + 3.0,
+            ));
         }
 
         return true;
@@ -673,8 +706,8 @@ fn collide_arc_line_chain(
     }
 
     if closest_dist == 0 || closest_dist < a_clearance {
-        set(&mut a_location, nearest);
-        set(&mut a_actual, closest_dist);
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || closest_dist);
 
         return true;
     }
@@ -826,8 +859,8 @@ fn collide_arc_lcb(
     }
 
     if closest_dist == 0 || closest_dist < a_clearance {
-        set(&mut a_location, nearest);
-        set(&mut a_actual, closest_dist);
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || closest_dist);
 
         return true;
     }
@@ -1129,8 +1162,8 @@ pub fn collide_lcb_lcb(
                         );
 
                         if result == CollisionResult::Exact {
-                            set(&mut a_location, nearest);
-                            set(&mut a_actual, closest_dist);
+                            set_with(&mut a_location, || nearest);
+                            set_with(&mut a_actual, || closest_dist);
 
                             return true;
                         }
@@ -1191,8 +1224,8 @@ pub fn collide_lcb_lcb(
     }
 
     if closest_dist == 0 || closest_dist < a_clearance {
-        set(&mut a_location, nearest);
-        set(&mut a_actual, closest_dist);
+        set_with(&mut a_location, || nearest);
+        set_with(&mut a_actual, || closest_dist);
 
         return true;
     }
@@ -1252,14 +1285,14 @@ fn collide_ellipse_vs_segments(
     }
 
     if found {
-        set(&mut a_actual, 0.max(best_actual - a_half_width));
-        set(&mut a_location, best_location);
+        set_with(&mut a_actual, || 0.max(best_actual - a_half_width));
+        set_with(&mut a_location, || best_location);
         return true;
     }
 
     if a_containment() {
-        set(&mut a_actual, 0);
-        set(&mut a_location, a_a.get_center());
+        set_with(&mut a_actual, || 0);
+        set_with(&mut a_location, || a_a.get_center());
         return true;
     }
 
@@ -1298,8 +1331,8 @@ fn collide_ellipse_segment(
             None
         },
     ) {
-        set(&mut a_actual, 0.max(local_actual - half_width));
-        set(&mut a_location, local_loc);
+        set_with(&mut a_actual, || 0.max(local_actual - half_width));
+        set_with(&mut a_location, || local_loc);
         return true;
     }
 
@@ -1327,7 +1360,7 @@ fn collide_ellipse_circle(
             *a = 0.max(d - r);
         }
 
-        set(&mut a_location, c);
+        set_with(&mut a_location, || c);
         return true;
     }
 
@@ -1415,14 +1448,14 @@ fn collide_ellipse_ellipse(
 ) -> bool {
     // "MTV not implemented for SHAPE_ELLIPSE collisions" (wxASSERT_MSG)
     if !a_a.is_arc() && a_a.point_inside(a_b.get_center(), 0, false) {
-        set(&mut a_actual, 0);
-        set(&mut a_location, a_b.get_center());
+        set_with(&mut a_actual, || 0);
+        set_with(&mut a_location, || a_b.get_center());
         return true;
     }
 
     if !a_b.is_arc() && a_b.point_inside(a_a.get_center(), 0, false) {
-        set(&mut a_actual, 0);
-        set(&mut a_location, a_a.get_center());
+        set_with(&mut a_actual, || 0);
+        set_with(&mut a_location, || a_a.get_center());
         return true;
     }
 
@@ -1717,9 +1750,9 @@ pub fn collide_shapes(
     }
 
     if colliding {
-        set(&mut a_location, current_location);
-        set(&mut a_actual, current_actual);
-        set(&mut a_mtv, current_mtv);
+        set_with(&mut a_location, || current_location);
+        set_with(&mut a_actual, || current_actual);
+        set_with(&mut a_mtv, || current_mtv);
     }
 
     colliding

@@ -38,8 +38,8 @@ use kicad_core::title_block::{TitleBlock, TitleBlockClock};
 use kicad_geom::{Box2I, Vector2I};
 use kicad_plot::common_plot_functions::{PlotDrawingSheetArgs, plot_drawing_sheet};
 use kicad_plot::drawing_sheet::{
-    CornerAnchor, DrawingSheetFile, DsDataItemKind, DsDataModel, DsDrawItemList,
-    DsDrawItemShape, DsItemType, ImageInfo, PageOption,
+    CornerAnchor, DrawingSheetFile, DsDataItemKind, DsDataModel, DsDrawItemList, DsDrawItemShape,
+    DsItemType, ImageInfo, PageOption,
 };
 use kicad_plot::plotter::Plotter;
 use kicad_plot::{GerberPlotter, RenderSettings, SvgPlotter};
@@ -158,11 +158,7 @@ fn png_probe(data: &[u8]) -> Option<ImageInfo> {
         pos += 12 + len;
     }
 
-    Some(ImageInfo {
-        width,
-        height,
-        ppi,
-    })
+    Some(ImageInfo { width, height, ppi })
 }
 
 fn dump_model(model: &DsDataModel, out: &mut String) {
@@ -271,7 +267,12 @@ fn dump_model(model: &DsDataModel, out: &mut String) {
 
 fn dump_list(model: &DsDataModel, list: &DsDrawItemList<'_>, out: &mut String) {
     for (k, item) in list.items().iter().enumerate() {
-        write!(out, "I {} p={} i={}", k, item.peer.peer, item.peer.index_in_peer).unwrap();
+        write!(
+            out,
+            "I {} p={} i={}",
+            k, item.peer.peer, item.peer.index_in_peer
+        )
+        .unwrap();
         let bb = item.bounding_box(model);
 
         match &item.shape {
@@ -293,7 +294,14 @@ fn dump_list(model: &DsDataModel, list: &DsDrawItemList<'_>, out: &mut String) {
                 .unwrap();
             }
             DsDrawItemShape::PolyPolygons(p) => {
-                write!(out, " P {} w={} bb={}", pt(p.pos), p.get_pen_width(), bx(&bb)).unwrap();
+                write!(
+                    out,
+                    " P {} w={} bb={}",
+                    pt(p.pos),
+                    p.get_pen_width(),
+                    bx(&bb)
+                )
+                .unwrap();
 
                 for idx in 0..p.polygons.outline_count() {
                     let o = p.polygons.c_outline(idx);
@@ -484,7 +492,11 @@ fn run_cases(full: bool) -> String {
                     list.build_draw_items_list(&mut model, &page, &tb);
                     let mut block = String::new();
                     dump_list(&model, &list, &mut block);
-                    out.push_str(&if full { block.clone() } else { block_line(&block) });
+                    out.push_str(&if full {
+                        block.clone()
+                    } else {
+                        block_line(&block)
+                    });
                     continue;
                 }
 
@@ -511,7 +523,11 @@ fn run_cases(full: bool) -> String {
                     list.build_draw_items_list(&mut model, &page, &tb);
                     let mut block = String::new();
                     dump_list(&model, &list, &mut block);
-                    out.push_str(&if full { block.clone() } else { block_line(&block) });
+                    out.push_str(&if full {
+                        block.clone()
+                    } else {
+                        block_line(&block)
+                    });
                     continue;
                 }
 
@@ -580,7 +596,14 @@ fn run_cases(full: bool) -> String {
                 }
 
                 let file = normalise(plotter.output().to_string(), is_svg);
-                writeln!(out, "H {} {} {:016x}", mode, file.len(), fnv(file.as_bytes())).unwrap();
+                writeln!(
+                    out,
+                    "H {} {} {:016x}",
+                    mode,
+                    file.len(),
+                    fnv(file.as_bytes())
+                )
+                .unwrap();
 
                 if full {
                     writeln!(out, "{file}\nF-END").unwrap();

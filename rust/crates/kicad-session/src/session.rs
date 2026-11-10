@@ -143,11 +143,19 @@ pub struct Session {
     /// The parser's non-fatal warnings (`LoadedBoard::parse_warnings`); kicad-cli prints them
     /// as `wxLogWarning`s.
     pub parse_warnings: Vec<String>,
+    /// The `wxLogWarning`s raised while a job ran: the zone filler's warnings of
+    /// [`Session::refill_zones`] (`ZONE_FILLER::Fill`: iterative refill not converged; the
+    /// port's dependency-cycle warning). kicad-cli prints them on stderr as
+    /// `<HH:MM:SS>: Warning: <text>`.
+    pub log_warnings: Vec<String>,
     /// `DS_DATA_MODEL::GetTheInstance()`, the drawing sheet plots (`plotframeref`) and DRC
     /// (`SetDrawingSheet`) use. [`Session::default_drawing_sheet`]: the default sheet; a host
     /// that resolves the project's drawing sheet file (`BOARD_LOADER::initializeLoadedBoard`)
     /// loads it here with `DsDataModel::load_drawing_sheet`.
     pub drawing_sheet: kicad_plot::drawing_sheet::DrawingSheetEnv,
+    /// Not in C++: how the host reads a file (`wxFFile`), for the drawing sheet files
+    /// ([`Session::load_project_drawing_sheet`], `--drawing-sheet`); `None` reads nothing.
+    pub host_read_file: Option<fn(&str) -> Option<Vec<u8>>>,
 }
 
 /// A net as the item access API returns it.
@@ -288,7 +296,9 @@ impl Session {
             drc_init_error: loaded.drc_init_error,
             load_warnings: loaded.warnings,
             parse_warnings: loaded.parse_warnings,
+            log_warnings: Vec::new(),
             drawing_sheet: Session::default_drawing_sheet(),
+            host_read_file: None,
         };
 
         session.initialize_loaded_board();
@@ -309,8 +319,142 @@ impl Session {
             drc_init_error: None,
             load_warnings: Vec::new(),
             parse_warnings: Vec::new(),
+            log_warnings: Vec::new(),
             drawing_sheet: Session::default_drawing_sheet(),
+            host_read_file: None,
         }
+    }
+
+    /// Reduced port of `FILENAME_RESOLVER::ResolvePath( aFileName, aWorkingPath, { board
+    /// embedded files } )` followed by `DS_DATA_MODEL::LoadDrawingSheet` on the session's
+    /// drawing sheet: Windows separators become `/`, `${KIPRJMOD}` / `$(KIPRJMOD)` expand to
+    /// the project directory (no other environment variable is known to library code, so a
+    /// name starting with another `${VAR}` does not resolve), `kicad-embed://NAME` reads the
+    /// board's embedded file, otherwise the name as given, then relative to the project
+    /// directory, read with [`Session::host_read_file`]. A name that does not resolve loads
+    /// the default sheet (`ResolvePath` returns an empty name). Returns the `LoadDrawingSheet`
+    /// message of a failed load.
+    fn resolve_and_load_drawing_sheet(&mut self, a_file_name: &str) -> Result<(), String> {
+        use kicad_plot::drawing_sheet::DrawingSheetFile;
+
+        let model = &mut self.drawing_sheet.model;
+
+        if a_file_name.is_empty() {
+            return model.load_drawing_sheet(DrawingSheetFile::NoFileName, false);
+        }
+
+        let project_dir = self
+            .board
+            .project
+            .as_ref()
+            .map(|p| match p.full_name.rfind('/') {
+                Some(pos) => p.full_name[..pos].to_string(),
+                None => String::new(),
+            })
+            .unwrap_or_default();
+
+        let tname = a_file_name
+            .replace('\\', "/")
+            .replace("${KIPRJMOD}", &project_dir)
+            .replace("$(KIPRJMOD)", &project_dir);
+
+        if let Some(name) = tname.strip_prefix("kicad-embed://") {
+            return match self.board.embedded_files.get_embedded_file(name) {
+                Some(file) => model.load_drawing_sheet(
+                    DrawingSheetFile::Content {
+                        file_name: &tname,
+                        data: &file.decompressed_data,
+                    },
+                    false,
+                ),
+                None => model.load_drawing_sheet(DrawingSheetFile::NoFileName, false),
+            };
+        }
+
+        let read = |path: &str| self.host_read_file.and_then(|read| read(path));
+
+        if let Some(data) = read(&tname) {
+            return model.load_drawing_sheet(
+                DrawingSheetFile::Content {
+                    file_name: &tname,
+                    data: &data,
+                },
+                false,
+            );
+        }
+
+        if tname.starts_with("${") || tname.starts_with("$(") || tname.starts_with(':') {
+            return model.load_drawing_sheet(DrawingSheetFile::NoFileName, false);
+        }
+
+        let full_path = format!("{project_dir}/{tname}");
+
+        match read(&full_path) {
+            Some(data) => model.load_drawing_sheet(
+                DrawingSheetFile::Content {
+                    file_name: &full_path,
+                    data: &data,
+                },
+                false,
+            ),
+            None => model.load_drawing_sheet(DrawingSheetFile::NoFileName, false),
+        }
+    }
+
+    /// Port of the drawing sheet step of `BOARD_LOADER::initializeLoadedBoard`: resolve the
+    /// project's drawing sheet file (`PROJECT_FILE::m_BoardDrawingSheetFile`) and load it into
+    /// [`Session::drawing_sheet`] (see `resolve_and_load_drawing_sheet` for the resolution).
+    /// kicad-cli sets no error callback: the message of a failed load is returned, not
+    /// reported.
+    pub fn load_project_drawing_sheet(&mut self) -> Result<(), String> {
+        let name = self
+            .board
+            .project
+            .as_ref()
+            .map(|p| p.board_drawing_sheet_file.clone())
+            .unwrap_or_default();
+
+        self.resolve_and_load_drawing_sheet(&name)
+    }
+
+    /// Port of `PCBNEW_JOBS_HANDLER::loadOverrideDrawingSheet( aBrd, aSheetPath )`
+    /// (`--drawing-sheet`): load the given sheet, on failure report it and load the project's
+    /// sheet instead.
+    pub fn load_override_drawing_sheet(
+        &mut self,
+        a_sheet_path: &str,
+        reporter: &mut crate::reporter::Reporter,
+    ) {
+        // dont bother attempting to load a empty path, if there was one
+        if a_sheet_path.is_empty() {
+            return;
+        }
+
+        let mut load_sheet = |session: &mut Session, path: &str| -> bool {
+            match session.resolve_and_load_drawing_sheet(path) {
+                Ok(()) => true,
+                Err(msg) => {
+                    reporter.report(
+                        format!("Error loading drawing sheet '{path}'.\n{msg}\n"),
+                        kicad_core::report_severity::Severity::Error,
+                    );
+                    false
+                }
+            }
+        };
+
+        if load_sheet(self, a_sheet_path) {
+            return;
+        }
+
+        // failed loading custom path, revert back to default
+        let project_sheet = self
+            .board
+            .project
+            .as_ref()
+            .map(|p| p.board_drawing_sheet_file.clone())
+            .unwrap_or_default();
+        load_sheet(self, &project_sheet);
     }
 
     /// The drawing sheet of a kicad-cli run without a drawing sheet file: an empty
@@ -530,9 +674,12 @@ impl Session {
     }
 
     /// `ZONE_FILLER_TOOL::FillAllZones( nullptr, reporter, true )` (`board.refillZones()`):
-    /// see [`Session::fill_all_zones`].
+    /// see [`Session::fill_all_zones`]. The filler's `wxLogWarning`s go to
+    /// [`Session::log_warnings`].
     pub fn refill_zones(&mut self) -> Result<(), SessionError> {
-        self.fill_all_zones().map(|_| ())
+        let outcome = self.fill_all_zones()?;
+        self.log_warnings.extend(outcome.warnings);
+        Ok(())
     }
 
     /// Port of the headless `ZONE_FILLER_TOOL::FillAllZones` the CLI jobs call

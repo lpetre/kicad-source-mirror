@@ -40,11 +40,12 @@ use kicad_core::text_vars::{
 use kicad_core::title_block::{TitleBlock, TitleBlockClock};
 use kicad_font::font::ITALIC_TILT;
 use kicad_font::gr_text::{
-    BOLD_STROKE_MULTIPLIER, clamp_text_pen_size_vec, get_pen_size_for_bold,
-    get_pen_size_for_normal,
+    BOLD_STROKE_MULTIPLIER, clamp_text_pen_size_vec, get_pen_size_for_bold, get_pen_size_for_normal,
 };
 use kicad_font::{Font, FontExt, Metrics, StrokeFont, default_font};
-use kicad_geom::{Box2I, EdaAngle, Shape, ShapePolySet, Vector2I, ki_round, rotate_point, rotate_point_around};
+use kicad_geom::{
+    Box2I, EdaAngle, Shape, ShapePolySet, Vector2I, ki_round, rotate_point, rotate_point_around,
+};
 
 use super::ds_data_item::{DsDataItem, DsDataItemKind, DsDrawEnv, DsItemType, PageOption};
 use super::ds_data_model::{DrawingSheetFile, DsDataModel};
@@ -87,7 +88,11 @@ pub struct DsDrawItemSegment {
 impl DsDrawItemSegment {
     /// Port of `DS_DRAW_ITEM_BASE::GetPenWidth`: `m_penWidth`, or 1 when it is not positive.
     pub fn get_pen_width(&self) -> i32 {
-        if self.pen_width > 0 { self.pen_width } else { 1 }
+        if self.pen_width > 0 {
+            self.pen_width
+        } else {
+            1
+        }
     }
 
     /// Port of `DS_DRAW_ITEM_LINE::GetBoundingBox` / `DS_DRAW_ITEM_RECT::GetBoundingBox`.
@@ -110,7 +115,11 @@ pub struct DsDrawItemPolyPolygons {
 impl DsDrawItemPolyPolygons {
     /// Port of `DS_DRAW_ITEM_BASE::GetPenWidth`: `m_penWidth`, or 1 when it is not positive.
     pub fn get_pen_width(&self) -> i32 {
-        if self.pen_width > 0 { self.pen_width } else { 1 }
+        if self.pen_width > 0 {
+            self.pen_width
+        } else {
+            1
+        }
     }
 }
 
@@ -318,8 +327,14 @@ impl DsDrawItemText {
         // lines)
         if self.multiline_allowed && a_line < 0 && strings.len() > 1 {
             for s in strings.iter().skip(1) {
-                extents =
-                    font.string_boundary_limits(s, font_size, thickness, bold, italic, font_metrics());
+                extents = font.string_boundary_limits(
+                    s,
+                    font_size,
+                    thickness,
+                    bold,
+                    italic,
+                    font_metrics(),
+                );
                 textsize.x = textsize.x.max(extents.x);
             }
 
@@ -761,12 +776,12 @@ impl<'a> DsDrawItemList<'a> {
         let (env, items) = model.env_and_items_mut();
         let env = *env;
 
+        #[allow(clippy::if_same_then_else)] // the C++ structure
         for (idx, ws_item) in items.iter_mut().enumerate() {
             // Generate it only if the page option allows this
             if ws_item.page1_option() == PageOption::FirstPageOnly && !self.is_first_page {
                 continue;
-            } else if ws_item.page1_option() == PageOption::SubsequentPages && self.is_first_page
-            {
+            } else if ws_item.page1_option() == PageOption::SubsequentPages && self.is_first_page {
                 continue;
             }
 
@@ -978,7 +993,11 @@ impl<'a> DsDrawItemList<'a> {
 
     /// Port of `TITLE_BLOCK::TextVarResolver( aToken, aProject, aContext )` for the list's
     /// project (the clock fields read the list's clock).
-    fn title_block_text_var_resolver(&self, a_title_block: &TitleBlock, a_token: &mut String) -> bool {
+    fn title_block_text_var_resolver(
+        &self,
+        a_title_block: &TitleBlock,
+        a_token: &mut String,
+    ) -> bool {
         let original_token = a_token.clone();
         let mut token_updated = false;
 
@@ -1123,8 +1142,7 @@ impl<'a> DsDrawItemList<'a> {
         }
 
         if token_updated {
-            let project_resolver =
-                |t: &mut String| -> bool { self.project.is_some_and(|p| p(t)) };
+            let project_resolver = |t: &mut String| -> bool { self.project.is_some_and(|p| p(t)) };
 
             let mut depth = 0;
             let opts = TextVarOptions {

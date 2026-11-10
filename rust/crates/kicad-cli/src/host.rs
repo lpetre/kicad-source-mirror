@@ -231,6 +231,11 @@ pub fn get_board(path: &str) -> Result<Session, i32> {
 
             session.apply_host_inputs(&clock, uuid_seed());
 
+            // BOARD_LOADER::initializeLoadedBoard: the project's drawing sheet (a failed load
+            // keeps the default sheet; kicad-cli sets no error callback)
+            session.host_read_file = Some(|path| std::fs::read(path).ok());
+            let _ = session.load_project_drawing_sheet();
+
             for warning in session.outline_font_warnings() {
                 eprintln!("Warning: {warning}");
             }
@@ -249,6 +254,20 @@ fn ensure_parent_dir(file: &str) -> std::io::Result<()> {
     }
 
     Ok(())
+}
+
+/// Print the `wxLogWarning`s a job raised ([`Session::log_warnings`], e.g. the zone filler's
+/// non-convergence warning of `ZONE_FILLER::Fill`) the way kicad-cli's log target does:
+/// `<HH:MM:SS>: Warning: <text>` on stderr.
+pub fn print_log_warnings(session: &mut Session) {
+    let clock = host_clock();
+
+    for warning in std::mem::take(&mut session.log_warnings) {
+        eprintln!(
+            "{:02}:{:02}:{:02}: Warning: {warning}",
+            clock.hour, clock.minute, clock.second
+        );
+    }
 }
 
 /// Print the messages of a run, write its files and return its exit code.

@@ -32,19 +32,13 @@ use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 use drc_harness::{
-    Entry, Loaded, cached_entries, cli_report_entries, golden, load_board, panic_text, quiet,
-    run_providers,
+    Entry, Loaded, cached_entries, cli_report_entries_flow, golden, load_board, panic_text, quiet,
+    run_flow_providers,
 };
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::cache_generator::{
-    build_zone_caches, build_zone_lists, compute_max_clearances, prepare_board,
-};
-use kicad_drc::caches::DrcBoardCaches;
 use kicad_drc::constraint_types::DrcConstraintT;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::physical_clearance::DrcTestProviderPhysicalClearance;
-use kicad_drc::providers::silk_clearance::DrcTestProviderSilkClearance;
+use kicad_drc::engine::DrcEngine;
 use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{
     DRCE_LAST, DRCE_SILK_CLEARANCE, DRCE_SILK_EDGE_CLEARANCE, DRCE_SILK_MASK_CLEARANCE,
@@ -59,63 +53,10 @@ const TYPES: &[&str] = &[
     "hole_clearance",
 ];
 
-/// The physical clearance provider then the silk clearance provider (registry order), with the
-/// parts of `DRC_CACHE_GENERATOR::Run()` the physical provider reads built from the run's
-/// context right before it. The board-mutating part of the cache generator
-/// ([`prepare_board`]) runs before the run.
-struct PhysicalAndSilk {
-    physical: bool,
-    silk: bool,
-}
-
-impl DrcTestProviderRun for PhysicalAndSilk {
-    fn name(&self) -> &str {
-        "physical_clearance+silk_clearance"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        if self.physical {
-            let mut caches = DrcBoardCaches::new();
-            let (max_clearance, max_physical_clearance) = compute_max_clearances(ctx, engine);
-            caches.max_clearance = max_clearance;
-            caches.max_physical_clearance = max_physical_clearance;
-            build_zone_lists(ctx, &mut caches);
-            build_zone_caches(ctx, &mut caches);
-
-            let mut provider = DrcTestProviderPhysicalClearance::new(&caches);
-
-            if !provider.run_tests(engine, run, ctx, units) {
-                return false;
-            }
-        }
-
-        if self.silk {
-            let mut provider = DrcTestProviderSilkClearance::default();
-
-            if !provider.run_tests(engine, run, ctx, units) {
-                return false;
-            }
-        }
-
-        true
-    }
-}
-
-/// The report entries (`kicad-cli pcb drc --format json`) of a run of the two providers.
+/// The report entries (`kicad-cli pcb drc --format json`) of a run of the physical clearance
+/// and silk clearance providers through the real run path (registry order).
 fn report(loaded: &mut Loaded) -> Vec<Entry> {
-    prepare_board(&mut loaded.board);
-
-    let mut provider = PhysicalAndSilk {
-        physical: true,
-        silk: true,
-    };
-    cli_report_entries(loaded, false, &mut [&mut provider])
+    cli_report_entries_flow(loaded, false, &["physical_clearance", "silk_clearance"])
 }
 
 /// The names (`DRC_CONSTRAINT::GetName()`) of the physical clearance constraints of the engine:
@@ -481,11 +422,7 @@ fn rule_area_does_not_cause_silk_or_mask_violations_issue24177() {
         bds.drc_severities.insert(code, Severity::Error);
     }
 
-    let mut provider = PhysicalAndSilk {
-        physical: false,
-        silk: true,
-    };
-    let found = run_providers(&mut loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, &["silk_clearance"]);
 
     let count = |code: i32| found.iter().filter(|r| r.item.error_code == code).count();
 

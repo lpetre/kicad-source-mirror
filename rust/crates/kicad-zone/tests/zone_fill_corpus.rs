@@ -88,7 +88,9 @@ fn load_cli(path: &Path) -> Result<(Board, DrcEngine, ConnectivityData, Vec<Stri
 
     let pro_path = path.with_extension("kicad_pro");
     let pro = std::fs::read_to_string(&pro_path).ok();
-    let project = load_project(pro.as_deref(), None, pro_path.to_str().unwrap());
+    // the project local settings (`m_PrototypeZoneFill`, review-zone-fill.md F-4)
+    let prl = std::fs::read_to_string(path.with_extension("kicad_prl")).ok();
+    let project = load_project(pro.as_deref(), prl.as_deref(), pro_path.to_str().unwrap());
     let rules_path = path.with_extension("kicad_dru");
     let rules = std::fs::read_to_string(&rules_path).ok();
 

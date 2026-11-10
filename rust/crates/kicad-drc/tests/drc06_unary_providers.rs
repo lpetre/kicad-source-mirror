@@ -26,15 +26,10 @@
 
 mod drc_harness;
 
-use drc_harness::{Reported, load_board, run_providers};
+use drc_harness::{Reported, load_board, run_flow_providers};
 use kicad_core::Severity;
 use kicad_core::base_units::PCB_IU_SCALE;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::engine::DrcTestProviderRun;
-use kicad_drc::providers::annular_width::DrcTestProviderAnnularWidth;
-use kicad_drc::providers::hole_size::DrcTestProviderHoleSize;
-use kicad_drc::providers::track_width::DrcTestProviderTrackWidth;
-use kicad_drc::providers::via_diameter::DrcTestProviderViaDiameter;
 use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::drc_api::{DRCE_ANNULAR_WIDTH, DRCE_DRILLED_HOLES_TOO_CLOSE, DRCE_FIRST, DRCE_LAST};
 
@@ -47,21 +42,14 @@ const TYPES: &[&str] = &[
     "via_diameter",
 ];
 
-/// The four providers in registry order (`PROVIDER_ORDER`).
-fn providers() -> Vec<Box<dyn DrcTestProviderRun>> {
-    vec![
-        Box::new(DrcTestProviderAnnularWidth::default()),
-        Box::new(DrcTestProviderHoleSize::default()),
-        Box::new(DrcTestProviderTrackWidth::default()),
-        Box::new(DrcTestProviderViaDiameter::default()),
-    ]
-}
+/// The registry slots (`GetName()`) of the four providers.
+const PROVIDERS: &[&str] = &["annular_width", "hole_size", "width", "diameter"];
 
 /// Every corpus board the port loads completely: the violations of the four providers equal
 /// the reference report's (set and order).
 #[test]
 fn unary_providers_match_reference_corpus() {
-    let score = drc_harness::compare_corpus(TYPES, "", &mut providers);
+    let score = drc_harness::compare_corpus_flow(TYPES, "", PROVIDERS);
     score.print("DRC-06 unary providers");
     score.assert_no_mismatch();
 }
@@ -112,17 +100,7 @@ fn annular_overlap_issue24340() {
         bds.drc_severities
             .insert(DRCE_ANNULAR_WIDTH, Severity::Error);
     }
-
-    let mut a = DrcTestProviderAnnularWidth::default();
-    let mut h = DrcTestProviderHoleSize::default();
-    let mut w = DrcTestProviderTrackWidth::default();
-    let mut d = DrcTestProviderViaDiameter::default();
-    let found = run_providers(
-        &mut loaded,
-        EdaUnits::Mm,
-        true,
-        &mut [&mut a, &mut h, &mut w, &mut d],
-    );
+    let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, PROVIDERS);
 
     let annular: Vec<&Reported> = found
         .iter()
@@ -201,17 +179,7 @@ fn false_negative_regressions_unary() {
                 bds.drc_severities.insert(*code, Severity::Ignore);
             }
         }
-
-        let mut a = DrcTestProviderAnnularWidth::default();
-        let mut h = DrcTestProviderHoleSize::default();
-        let mut w = DrcTestProviderTrackWidth::default();
-        let mut d = DrcTestProviderViaDiameter::default();
-        let found = run_providers(
-            &mut loaded,
-            EdaUnits::Mm,
-            true,
-            &mut [&mut a, &mut h, &mut w, &mut d],
-        );
+        let found = run_flow_providers(&mut loaded, EdaUnits::Mm, true, PROVIDERS);
 
         assert_eq!(found.len(), expected, "{name}");
     }

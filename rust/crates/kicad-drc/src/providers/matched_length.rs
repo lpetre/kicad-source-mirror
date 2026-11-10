@@ -102,7 +102,11 @@ pub struct DrcTestProviderMatchedLength<'c> {
 
 /// A rule's constraint as `rule->FindConstraint( type )` gives it, with the parent rule as
 /// the engine knows it (with its `rule_index`).
-fn find_constraint(engine: &DrcEngine, rule: &DrcRuleInfo, type_: DrcConstraintT) -> Option<DrcConstraint> {
+fn find_constraint(
+    engine: &DrcEngine,
+    rule: &DrcRuleInfo,
+    type_: DrcConstraintT,
+) -> Option<DrcConstraint> {
     let r = engine.rule(rule.rule_index?)?;
     let mut c = r.find_constraint(type_)?;
     c.parent_rule = Some(rule.clone());
@@ -419,7 +423,11 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
 
     /// Port of `DRC_TEST_PROVIDER_MATCHED_LENGTH::chainTopologyFor`: the topology of the named
     /// chain, built from every track and pad of the board on the chain (cached per run).
-    fn chain_topology_for(&mut self, calc: &LengthDelayCalculation<'_>, chain: &str) -> Arc<ChainTopology> {
+    fn chain_topology_for(
+        &mut self,
+        calc: &LengthDelayCalculation<'_>,
+        chain: &str,
+    ) -> Arc<ChainTopology> {
         if let Some(topo) = self.chain_topo_cache.get(chain) {
             return topo.clone();
         }
@@ -455,7 +463,12 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
 
     /// Port of `DRC_TEST_PROVIDER_MATCHED_LENGTH::zoneUnionFor`: the union of the copper of the
     /// zones on the reference layer (whose net matches the pattern), cached per run.
-    fn zone_union_for(&mut self, ctx: &BoardCtx<'_>, ref_layer: PcbLayerId, ref_net: &str) -> ShapePolySet {
+    fn zone_union_for(
+        &mut self,
+        ctx: &BoardCtx<'_>,
+        ref_layer: PcbLayerId,
+        ref_net: &str,
+    ) -> ShapePolySet {
         let key = (ref_layer.0, ref_net.to_string());
 
         if let Some(u) = self.ref_union_cache.get(&key) {
@@ -474,7 +487,7 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
             if !ref_net.is_empty() {
                 let zone_net = zone_ref.netname();
 
-                if !wild_compare_string(ref_net, &zone_net, false) {
+                if !wild_compare_string(ref_net, zone_net, false) {
                     continue;
                 }
             }
@@ -694,22 +707,23 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
             layer: PcbLayerId,
         }
 
-        let flag_item = |item: ItemRef<'_>, flagged: &mut Vec<FlaggedRegion>, region: &ShapePolySet| {
-            for o in 0..region.outline_count() {
-                let mut poly = ShapePolySet::new();
-                poly.add_outline(region.c_outline(o));
+        let flag_item =
+            |item: ItemRef<'_>, flagged: &mut Vec<FlaggedRegion>, region: &ShapePolySet| {
+                for o in 0..region.outline_count() {
+                    let mut poly = ShapePolySet::new();
+                    poly.add_outline(region.c_outline(o));
 
-                for h in 0..region.hole_count(o) {
-                    poly.add_hole(region.c_hole(o, h), -1);
+                    for h in 0..region.hole_count(o) {
+                        poly.add_hole(region.c_hole(o, h), -1);
+                    }
+
+                    flagged.push(FlaggedRegion {
+                        poly,
+                        items: vec![item.id().expect("a board item")],
+                        layer: item.layer(),
+                    });
                 }
-
-                flagged.push(FlaggedRegion {
-                    poly,
-                    items: vec![item.id().expect("a board item")],
-                    layer: item.layer(),
-                });
-            }
-        };
+            };
 
         for (chain_name, agg) in chain_agg {
             let mut flagged: Vec<FlaggedRegion> = Vec::new();
@@ -877,7 +891,12 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
     }
 
     /// Port of `DRC_TEST_PROVIDER_MATCHED_LENGTH::Run` (`runInternal( false )`).
-    pub fn run(&mut self, engine: &DrcEngine, run: &mut DrcRunState<'_>, ctx: &BoardCtx<'_>) -> bool {
+    pub fn run(
+        &mut self,
+        engine: &DrcEngine,
+        run: &mut DrcRunState<'_>,
+        ctx: &BoardCtx<'_>,
+    ) -> bool {
         let board = ctx.board;
         self.report.clear();
         self.chain_topo_cache.clear();
@@ -917,7 +936,10 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
         let mut cancelled = false;
 
         for_each_geometry_item(ctx, &types, &board_copper_layers, |item| {
-            if !self.base.report_progress(&mut host, ii, count, progress_delta) {
+            if !self
+                .base
+                .report_progress(&mut host, ii, count, progress_delta)
+            {
                 cancelled = true;
                 return false;
             }
@@ -1018,7 +1040,8 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
                 ent.total_route_delay = details.track_delay as f64;
                 ent.total_pad_to_die = details.pad_to_die_length;
                 ent.total_pad_to_die_delay = details.pad_to_die_delay;
-                ent.total = ent.total_route + f64::from(ent.total_via) + f64::from(ent.total_pad_to_die);
+                ent.total =
+                    ent.total_route + f64::from(ent.total_via) + f64::from(ent.total_pad_to_die);
                 ent.total_delay = ent.total_route_delay
                     + ent.total_via_delay as f64
                     + ent.total_pad_to_die_delay as f64;
@@ -1054,7 +1077,10 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
         count = matches.len();
 
         for (_, (rule, mut matched_connections)) in matches {
-            if !self.base.report_progress(&mut host, ii, count, progress_delta) {
+            if !self
+                .base
+                .report_progress(&mut host, ii, count, progress_delta)
+            {
                 return false;
             }
 
@@ -1092,7 +1118,8 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
             }
 
             // Check both net-level and net-chain-level length constraints
-            let length_constraint = find_constraint(engine, &rule, DrcConstraintT::LengthConstraint);
+            let length_constraint =
+                find_constraint(engine, &rule, DrcConstraintT::LengthConstraint);
             let net_chain_length_constraint =
                 find_constraint(engine, &rule, DrcConstraintT::NetChainLengthConstraint);
 
@@ -1116,7 +1143,8 @@ impl<'c> DrcTestProviderMatchedLength<'c> {
 
             if needs_chain_agg {
                 for conn in &matched_connections {
-                    let Some(netinfo) = conn.netinfo.and_then(|n| board.find_net(NetCode(n))) else {
+                    let Some(netinfo) = conn.netinfo.and_then(|n| board.find_net(NetCode(n)))
+                    else {
                         continue;
                     };
 

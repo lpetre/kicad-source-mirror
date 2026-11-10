@@ -42,93 +42,24 @@ mod drc_harness;
 
 use std::collections::BTreeMap;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::sync::Arc;
 
 use drc_harness::{
-    Entry, Loaded, cli_report_entries, load_board, panic_text, quiet, run_providers,
+    Entry, Loaded, cli_report_entries_flow, load_board, panic_text, quiet, run_flow_providers,
 };
-use kicad_connectivity::data::ConnectivityData;
 use kicad_core::Severity;
 use kicad_core::eda_units::EdaUnits;
-use kicad_drc::cache_generator::{
-    build_copper_item_rtree, build_zone_caches, build_zone_lists, compute_max_clearances,
-    prepare_board,
-};
-use kicad_drc::caches::DrcBoardCaches;
-use kicad_drc::engine::{DrcEngine, DrcRunState, DrcTestProviderRun};
-use kicad_drc::providers::connection_width::DrcTestProviderConnectionWidth;
-use kicad_drc::providers::sliver_checker::DrcTestProviderSliverChecker;
-use kicad_pcb::BoardCtx;
 use kicad_pcb::drc_api::{DRCE_CONNECTION_WIDTH, DRCE_COPPER_SLIVER, DRCE_FIRST, DRCE_LAST};
 
 /// The error types of the two providers.
 const TYPES: &[&str] = &["copper_sliver", "connection_width"];
 
-/// The two providers in `PROVIDER_ORDER` ("copper width" before "sliver checker") with the
-/// parts of `DRC_CACHE_GENERATOR::Run()` the connection width provider reads (copper zone
-/// list, copper item tree, zone trees) built right before them, and the run's connectivity
-/// (`FlashLayer` of pads and vias).
-struct WithCaches<'a> {
-    connectivity: &'a ConnectivityData,
-}
-
-impl DrcTestProviderRun for WithCaches<'_> {
-    fn name(&self) -> &str {
-        "copper width"
-    }
-
-    fn run_tests(
-        &mut self,
-        engine: &DrcEngine,
-        run: &mut DrcRunState<'_>,
-        ctx: &BoardCtx<'_>,
-        units: EdaUnits,
-    ) -> bool {
-        let cctx = BoardCtx {
-            board: ctx.board,
-            rules: ctx.rules,
-            connectivity: Some(self.connectivity),
-        };
-        let mut caches = DrcBoardCaches::new();
-        (caches.max_clearance, caches.max_physical_clearance) =
-            compute_max_clearances(&cctx, engine);
-        build_zone_lists(&cctx, &mut caches);
-        caches.copper_item_rtree = Some(Arc::new(build_copper_item_rtree(
-            &cctx,
-            caches.max_clearance,
-        )));
-        build_zone_caches(&cctx, &mut caches);
-
-        let mut width = DrcTestProviderConnectionWidth::new(&caches);
-
-        if !width.run_tests(engine, run, &cctx, units) {
-            return false;
-        }
-
-        let mut sliver = DrcTestProviderSliverChecker::default();
-        sliver.run_tests(engine, run, &cctx, units)
-    }
-}
-
-/// `BuildConnectivity` at load time, then the board-writing part of the cache generator and
-/// its `connectivity->Build( board )` (as `drc08a_copper_clearance.rs`).
-fn prepare(loaded: &mut Loaded) -> ConnectivityData {
-    let mut connectivity = ConnectivityData::new();
-    connectivity.build_connectivity(&mut loaded.board);
-    prepare_board(&mut loaded.board);
-    connectivity.clear_ratsnest();
-    connectivity.build_board(&mut loaded.board);
-    connectivity
-}
+/// The registry slots of the two providers (`PROVIDER_ORDER`: "copper width" before "sliver
+/// checker"), run through the real run path (cache generator, connectivity rebuild).
+const PROVIDERS: &[&str] = &["copper width", "sliver checker"];
 
 /// The report entries of the two types after a run of the providers.
 fn report(loaded: &mut Loaded) -> Vec<Entry> {
-    let connectivity = prepare(loaded);
-    let mut provider = WithCaches {
-        connectivity: &connectivity,
-    };
-
-    cli_report_entries(loaded, false, &mut [&mut provider])
+    cli_report_entries_flow(loaded, false, PROVIDERS)
         .into_iter()
         .filter(|e| TYPES.contains(&e.type_.as_str()))
         .collect()
@@ -390,11 +321,7 @@ fn count_violations(loaded: &mut Loaded, code: i32, ignored: Option<&[i32]>) -> 
         bds.drc_severities.insert(code, Severity::Error);
     }
 
-    let connectivity = prepare(loaded);
-    let mut provider = WithCaches {
-        connectivity: &connectivity,
-    };
-    let found = run_providers(loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(loaded, EdaUnits::Mm, true, PROVIDERS);
 
     found
         .iter()
@@ -488,11 +415,7 @@ fn oracle_lines(loaded: &mut Loaded) -> Vec<String> {
             .insert(DRCE_CONNECTION_WIDTH, Severity::Error);
     }
 
-    let connectivity = prepare(loaded);
-    let mut provider = WithCaches {
-        connectivity: &connectivity,
-    };
-    let found = run_providers(loaded, EdaUnits::Mm, true, &mut [&mut provider]);
+    let found = run_flow_providers(loaded, EdaUnits::Mm, true, PROVIDERS);
     let mut slivers = Vec::new();
     let mut widths = Vec::new();
 

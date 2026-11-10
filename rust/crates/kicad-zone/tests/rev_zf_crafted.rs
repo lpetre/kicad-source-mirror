@@ -25,7 +25,9 @@
 //! backdrilled and post-machined pads / vias, arc outlines, the UUID priority tie-break,
 //! zones too thin for the min-width cycle, the prototype zone fill setting, conditional
 //! flashing against hatch fills, courtyard knockouts, coincident item deduplication, net
-//! ties).
+//! ties, knockouts of tables on copper and Margin and the tables / generated tables that are
+//! no knockouts of documentation and technical layer zones, an iterative refill that does not
+//! converge).
 //!
 //! Each board is loaded like kicad-cli (`BOARD_LOADER::Load`, with its `.kicad_pro`,
 //! `.kicad_prl` and `.kicad_dru`), refilled like `ZONE_FILLER_TOOL::FillAllZones` and compared
@@ -68,11 +70,23 @@ const BOARDS: &[&str] = &[
     "hatch_vias",
     "islands",
     "mixed_layers",
+    "no_converge",
     "priority",
     "prototype",
     "rules_conn",
+    "tables",
     "thin",
 ];
+
+/// The boards on which the reference prints the non-convergence `wxLogWarning` of the
+/// iterative refill (`Fill()` L1633-1657) and the port must report it.
+const NON_CONVERGING: &[&str] = &["no_converge"];
+
+/// The `wxLogWarning` text of `ZONE_FILLER::Fill()` for an iterative refill that did not
+/// converge, as the reference kicad-cli prints it after its `<HH:MM:SS>: Warning: ` prefix.
+const NON_CONVERGENCE_WARNING: &str = "Zone fills may be incorrect: iterative refill did not \
+     converge after 8 passes.\n\nThis can happen with complex overlapping zones.  Consider \
+     simplifying your zones.";
 
 fn data_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/rev_zf")
@@ -232,11 +246,16 @@ fn rev_zf_crafted_boards_match_the_reference() {
         let actual = golden_text(&board);
 
         assert!(outcome.filled);
-        assert!(
-            outcome.warnings.is_empty(),
-            "{name}: {:?}",
-            outcome.warnings
-        );
+
+        if NON_CONVERGING.contains(name) {
+            assert_eq!(outcome.warnings, [NON_CONVERGENCE_WARNING], "{name}");
+        } else {
+            assert!(
+                outcome.warnings.is_empty(),
+                "{name}: {:?}",
+                outcome.warnings
+            );
+        }
 
         if actual != golden {
             let first = golden

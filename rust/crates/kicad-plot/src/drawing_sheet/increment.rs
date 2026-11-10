@@ -234,7 +234,11 @@ pub fn index_from_alphabetic(a_str: &str, a_alphabet: &str) -> i32 {
 }
 
 /// Port of `AlphabeticFromIndex( aN, aAlphabet, aZeroBasedNonUnitCols )`.
-pub fn alphabetic_from_index(mut a_n: usize, a_alphabet: &str, a_zero_based_non_unit_cols: bool) -> String {
+pub fn alphabetic_from_index(
+    mut a_n: usize,
+    a_alphabet: &str,
+    a_zero_based_non_unit_cols: bool,
+) -> String {
     let alphabet: Vec<char> = a_alphabet.chars().collect();
     let radix = alphabet.len();
     let mut item_num: Vec<char> = Vec::new();

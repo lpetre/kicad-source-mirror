@@ -596,6 +596,92 @@ def dedupe_courtyard():
     return b
 
 
+def table_str(b, x, y, layer, cols, rows, texts, knockout=False, border=True, separators=True,
+              border_w=0.2, sep_w=0.12):
+    """A plain `(table ...)` (PCB_TABLE) with cells laid out from (x, y)."""
+    ko = "yes" if knockout else "no"
+    cells = []
+    yy = y
+    for r, h in enumerate(rows):
+        xx = x
+        for c, w in enumerate(cols):
+            t = texts[r * len(cols) + c]
+            cells.append(f'(table_cell "{t}" (start {xx} {yy}) (end {xx + w:.4g} {yy + h:.4g}) '
+                         f'(margins 0.5 0.5 0.5 0.5) (span 1 1) (layer "{layer}") (uuid "{b.uuid()}") '
+                         f'(effects (font (size 1 1) (thickness 0.15))) (knockout {ko}))')
+            xx += w
+        yy += h
+    yn = lambda v: "yes" if v else "no"
+    return (f'(table (uuid "{b.uuid()}") (layer "{layer}") (column_count {len(cols)}) '
+            f'(border (external {yn(border)}) (header {yn(border)}) (stroke (width {border_w}) (type solid))) '
+            f'(separators (rows {yn(separators)}) (cols {yn(separators)}) (stroke (width {sep_w}) (type solid))) '
+            f'(column_widths {" ".join(str(c) for c in cols)}) (row_heights {" ".join(str(r) for r in rows)}) '
+            f'(cells {" ".join(cells)}))')
+
+
+def tables():
+    """addKnockout graphic overload for PCB_TABLE (copper fill: table on the zone layer and on
+    Margin), fillNonCopperZone with tables whose cells are knockout and generated tables (drill
+    chart, stackup table) under a documentation-layer zone: PCB_TABLE::IsKnockout() is never
+    true (the parser sets it on the cells only), so these are no knockouts there."""
+    b = Board("tables")
+    b.zone(box(101, 101, 139, 114), "F.Cu", net="A", name="cu")
+    b.add(table_str(b, 104, 103, "F.Cu", [6, 4.5], [2.5, 3], ["A1", "B1", "A2", ""]))
+    b.add(table_str(b, 118, 104, "F.Cu", [5, 5], [3], ["X", "Y"], border=False, separators=False))
+    b.add(table_str(b, 130, 103, "Margin", [4], [2, 2], ["M", "N"], separators=False, border_w=0.3))
+    b.footprint("P1", 136, 112, [b.pad("1", "smd", "rect", (0, 0), (1.5, 1.5), "A", SMD)])
+    # documentation and technical layers
+    b.zone(box(101, 116, 139, 129), "Dwgs.User", name="dwgs", min_thickness=0.2)
+    b.zone(box(101, 116, 119, 129), "F.SilkS", name="silk", min_thickness=0.2)
+    b.add(table_str(b, 103, 118, "F.SilkS", [5, 5], [3, 3], ["K1", "K2", "K3", "K4"], knockout=True))
+    b.add(table_str(b, 103, 125, "Dwgs.User", [5, 5], [2.5], ["D1", "D2"], knockout=True))
+    b.text("KT", 115, 126, "F.SilkS", knockout=True, size=2)
+    b.add(f'(drill_chart (uuid "{b.uuid()}") (layer "Dwgs.User") (precision 2) '
+          '(column (id symbol) (width 8)) (column (id drill_diameter) (name "Drill (mm)") (width 12)) '
+          '(filter (plated yes) (npth yes) (vias yes) (slots yes) (backdrill no) (castellated yes)) (totals no) '
+          f'(column_count 2) (border (external yes) (header yes) (stroke (width 0.15) (type default))) '
+          '(separators (rows yes) (cols yes) (stroke (width 0.15) (type default))) '
+          '(column_widths 8 12) (row_heights 2.5) '
+          f'(cells (table_cell "SYM" (start 121 117) (end 129 119.5) (margins 0.5 0.5 0.5 0.5) (span 1 1) '
+          f'(layer "Dwgs.User") (uuid "{b.uuid()}") (effects (font (size 1 1))) (knockout yes)) '
+          f'(table_cell "Drill (mm)" (start 129 117) (end 141 119.5) (margins 0.5 0.5 0.5 0.5) (span 1 1) '
+          f'(layer "Dwgs.User") (uuid "{b.uuid()}") (effects (font (size 1 1))) (knockout yes))))')
+    b.add(f'(stackup_table (uuid "{b.uuid()}") (layer "Dwgs.User") '
+          '(column (id layer_name) (name "Layer") (width 9)) (column (id thickness) (width 7)) '
+          '(column_count 2) (border (external yes) (header yes) (stroke (width 0.1) (type solid))) '
+          '(separators (rows yes) (cols no) (stroke (width 0.1) (type solid))) '
+          '(column_widths 9 7) (row_heights 2.5) '
+          f'(cells (table_cell "Layer" (start 121 122) (end 130 124.5) (margins 0.5 0.5 0.5 0.5) (span 1 1) '
+          f'(layer "Dwgs.User") (uuid "{b.uuid()}") (effects (font (size 1 1))) (knockout yes)) '
+          f'(table_cell "Thickness" (start 130 122) (end 137 124.5) (margins 0.5 0.5 0.5 0.5) (span 1 1) '
+          f'(layer "Dwgs.User") (uuid "{b.uuid()}") (effects (font (size 1 1))) (knockout yes))))')
+    b.via(110, 112, "A", size=0.8, drill=0.4)
+    b.footprint("P2", 112, 126, [b.pad("1", "thru_hole", "circle", (0, 0), (1.8, 1.8), "A", THT, drill=0.9)],
+                attr="through_hole")
+    return b
+
+
+def no_converge():
+    """Fill() iterative refill that never converges (L1633-1657): the island of `a` (net N1,
+    priority 3) blocks the corridor of `b` (net N2, priority 2) through a wall of keepouts; the
+    cut-off part of `b` is an island and is removed; then `c` (net N1, priority 1) fills that
+    area and connects the island of `a`.  Every refill wave reads the previous wave's snapshot,
+    so the three zones flip between the two states with period 2 and the 8 passes run out."""
+    b = Board("no_converge")
+    # wall at x = 120 with a gap at y 113 .. 117
+    b.zone(box(119.5, 100.5, 120.5, 113), "F.Cu", name="wall_top", keepout="not_allowed")
+    b.zone(box(119.5, 117, 120.5, 129.5), "F.Cu", name="wall_bot", keepout="not_allowed")
+    # `a`: main body with its pad, and the corridor piece cut off by a keepout bar
+    b.zone(box(108, 111, 122, 119), "F.Cu", net="N1", name="a", priority=3)
+    b.zone(box(116.5, 110, 117.5, 120), "F.Cu", name="cut", keepout="not_allowed")
+    b.zone(box(101, 101, 139, 129), "F.Cu", net="N2", name="b", priority=2)
+    b.zone(box(119, 101, 139, 129), "F.Cu", net="N1", name="c", priority=1, connect="yes")
+    b.footprint("P1", 112, 115, [b.pad("1", "smd", "rect", (0, 0), (1.5, 1.5), "N1", SMD)])
+    b.footprint("P2", 105, 105, [b.pad("1", "smd", "rect", (0, 0), (1.5, 1.5), "N2", SMD)])
+    b.footprint("P3", 132, 115, [b.pad("1", "smd", "rect", (0, 0), (2, 2), "N1", SMD)])
+    return b
+
+
 def mixed_isolated():
     """F-1: the reference segfaults (double deletion of outline 0); no golden."""
     b = Board("mixed_isolated")
@@ -623,7 +709,8 @@ def main():
     os.makedirs(out, exist_ok=True)
     for b in (custom_spokes(), hatch_vias(), hatch_noncu(), islands(), fp_zones(), mixed_layers(), rules_conn(),
               backdrill(), arcs_smooth("arcs_smooth", False), arcs_smooth("arcs_extfillet", True), priority(),
-              thin(), prototype(), hatch_flashing(), dedupe_courtyard(), mixed_isolated(), dup_uuid()):
+              thin(), prototype(), hatch_flashing(), dedupe_courtyard(), tables(), no_converge(), mixed_isolated(),
+              dup_uuid()):
         b.write(out)
 
 

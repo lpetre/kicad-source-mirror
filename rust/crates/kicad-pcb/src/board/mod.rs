@@ -139,6 +139,8 @@ board_items!(gen_board, {
         /// items; deterministic by default, hosts reseed it.
         pub kiid_generator: KiidGenerator,
         pub(crate) caches: BoardCaches,
+        /// `m_Uuid` of the board itself (`EDA_ITEM` base): see [`Board::uuid`].
+        pub(crate) uuid: Kiid,
     }
 });
 
@@ -265,7 +267,11 @@ impl Default for Board {
             journal: ChangeJournal::default(),
             kiid_generator: KiidGenerator::default(),
             caches: BoardCaches::default(),
+            uuid: board_own_uuid(),
         };
+
+        // The board's own UUID is never handed out to an item.
+        board.kiid_generator.reserve_all([board.uuid]);
 
         // m_NetInfo( this ): net 0 takes the default class of the NET_SETTINGS constructor,
         // which the constructor body replaces below (the net keeps the old one, as in C++).
@@ -293,10 +299,31 @@ impl Default for Board {
     }
 }
 
+/// Seed of the generator that draws the board's own UUID ([`Board::uuid`]); any value
+/// different from the seeds the hosts use for item UUIDs.
+const BOARD_UUID_SEED: u32 = 0x5043_4221;
+
+/// The board's own `m_Uuid`: in C++ the `EDA_ITEM` constructor draws a random KIID (from the
+/// global generator, so the value differs per run). The port draws it from a generator of its
+/// own, so that the board's item generator (whose sequence the deterministic outputs depend
+/// on) is not consumed, and reserves it in [`Board::kiid_generator`] like the UUIDs of a file.
+fn board_own_uuid() -> Kiid {
+    KiidGenerator::seeded(BOARD_UUID_SEED).random_uuid()
+}
+
 impl Board {
     /// `new BOARD()`.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// `m_Uuid` of the board itself (`BOARD` is an `EDA_ITEM`). `BOARD::ResolveItem` returns
+    /// the board for it; [`Board::resolve_item`] has no handle for the board, so code that
+    /// resolves report items (`BOARD_RC_ITEM_RESOLVER`) compares with this first. The value
+    /// is random in C++ (a fresh KIID per run); here it is the same for every board and never
+    /// equals an item UUID (reserved in [`Board::kiid_generator`]).
+    pub fn uuid(&self) -> Kiid {
+        self.uuid
     }
 
     // ---- time stamp (board-model.md 8.5) ----

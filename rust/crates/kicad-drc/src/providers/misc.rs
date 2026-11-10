@@ -314,7 +314,7 @@ impl DrcTestProviderMisc {
                 let mut drc_item =
                     item::create(DRCE_INVALID_OUTLINE).expect("DRCE_INVALID_OUTLINE item");
                 drc_item.set_error_detail("(Suspicious items found on Edge.Cuts layer)");
-                drc_item.set_item_ids(vec![board_uuid()]);
+                drc_item.set_item_ids(vec![ctx.board.uuid()]);
 
                 let centre = ctx.board.compute_bounding_box(ctx, false, false).centre();
                 self.base.report_violation(
@@ -351,7 +351,7 @@ impl DrcTestProviderMisc {
                 let mut drc_item =
                     item::create(DRCE_INVALID_OUTLINE).expect("DRCE_INVALID_OUTLINE item");
                 drc_item.set_error_detail("(no edges found on Edge.Cuts layer)");
-                drc_item.set_item_ids(vec![board_uuid()]);
+                drc_item.set_item_ids(vec![ctx.board.uuid()]);
 
                 let centre = ctx.board.compute_bounding_box(ctx, false, false).centre();
                 self.base.report_violation(
@@ -791,14 +791,6 @@ impl DrcTestProviderRun for DrcTestProviderMisc {
     }
 }
 
-/// `m_board->m_Uuid` for `SetItems( m_board )`. The board model of the port has no UUID of its
-/// own (`BOARD::m_Uuid` is a fresh random KIID per run in C++, and `ResolveItem` maps it to the
-/// board): the nil UUID stands for it, which the report writers cannot resolve
-/// (`PORT_STATUS.md`, deviations).
-fn board_uuid() -> Kiid {
-    Kiid::default()
-}
-
 /// `RC_ITEM::SetItems( aItem, bItem )` with item pointers: the UUIDs of the items present.
 fn item_uuids(ctx: &BoardCtx<'_>, ids: &[Option<ItemId>]) -> Vec<Kiid> {
     ids.iter()
@@ -829,21 +821,7 @@ fn find_closest_outline_gap(
 ) -> (Option<ShapeId>, Option<ShapeId>, Vector2I, i32) {
     // PCB_TYPE_COLLECTOR::Collect( aBoard, { PCB_SHAPE_T } ): BOARD::Visit scans the
     // footprints (each footprint's drawings) before the board drawings.
-    let mut items: Vec<ShapeId> = Vec::new();
-
-    for (fp, _) in ctx.board.footprints() {
-        items.extend(
-            ctx.board
-                .footprint_drawings(fp)
-                .filter_map(|(id, _)| id.typed::<PcbShape>()),
-        );
-    }
-
-    items.extend(
-        ctx.board
-            .drawings()
-            .filter_map(|(id, _)| id.typed::<PcbShape>()),
-    );
+    let items = kicad_pcb::convert_shape_list_to_polygon::collect_board_shapes(ctx);
 
     let shapes: Vec<ShapeId> = items
         .into_iter()

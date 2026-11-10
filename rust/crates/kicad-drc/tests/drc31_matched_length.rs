@@ -79,8 +79,7 @@ fn materialize(case: &str, rel: &str, mode: &str, chains: &str, dir: &Path) -> P
         let extra = std::fs::read_to_string(data_dir().join(format!("{variant}.dru"))).unwrap();
 
         if kind == "append" {
-            let base =
-                std::fs::read_to_string(&own_dru).unwrap_or_else(|_| "(version 1)\n".into());
+            let base = std::fs::read_to_string(&own_dru).unwrap_or_else(|_| "(version 1)\n".into());
             Some(format!("{base}\n{extra}"))
         } else {
             Some(format!("(version 1)\n{extra}"))
@@ -227,7 +226,11 @@ fn drc31_reference_cases() {
         let (_, missing, extra) = diff(&reference, &mine);
 
         for t in TYPES {
-            let r: Vec<Entry> = reference.iter().filter(|e| e.type_ == *t).cloned().collect();
+            let r: Vec<Entry> = reference
+                .iter()
+                .filter(|e| e.type_ == *t)
+                .cloned()
+                .collect();
             let m: Vec<Entry> = mine.iter().filter(|e| e.type_ == *t).cloned().collect();
             let (matched, mi, ex) = diff(&r, &m);
             let s = per_type.entry(t.to_string()).or_default();

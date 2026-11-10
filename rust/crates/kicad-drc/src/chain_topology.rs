@@ -159,7 +159,12 @@ fn euclidean(a: Vector2I, b: Vector2I) -> f64 {
 }
 
 /// Port of `trackDelay`: the delay of one track from the per-item length calculation.
-fn track_delay(track: ItemRef<'_>, length: f64, calc: &LengthDelayCalculation<'_>, fallback_delay_per_mm: f64) -> f64 {
+fn track_delay(
+    track: ItemRef<'_>,
+    length: f64,
+    calc: &LengthDelayCalculation<'_>,
+    fallback_delay_per_mm: f64,
+) -> f64 {
     if length <= 0.0 {
         return 0.0;
     }
@@ -272,7 +277,11 @@ fn pad_center(ctx: &BoardCtx<'_>, pad: ItemRef<'_>) -> Vector2I {
 }
 
 /// Port of `addPadNodes`: one node per copper layer of the pad.
-fn add_pad_nodes(graph: &mut Graph, ctx: &BoardCtx<'_>, pad: ItemRef<'_>) -> Vec<(PcbLayerId, usize)> {
+fn add_pad_nodes(
+    graph: &mut Graph,
+    ctx: &BoardCtx<'_>,
+    pad: ItemRef<'_>,
+) -> Vec<(PcbLayerId, usize)> {
     let mut nodes = Vec::new();
     let center = pad_center(ctx, pad);
 
@@ -449,7 +458,10 @@ fn split_track_t_junctions(graph: &mut Graph, ctx: &BoardCtx<'_>) {
 /// encountering a back-edge to a non-parent visited node. Returns (cycle, parent node,
 /// parent edge, visited).
 #[allow(clippy::type_complexity)]
-fn dfs_spanning_tree(graph: &Graph, root: usize) -> (bool, Vec<Option<usize>>, Vec<Option<usize>>, Vec<bool>) {
+fn dfs_spanning_tree(
+    graph: &Graph,
+    root: usize,
+) -> (bool, Vec<Option<usize>>, Vec<Option<usize>>, Vec<bool>) {
     let n = graph.node_pos.len();
     let mut parent_node = vec![None; n];
     let mut parent_edge: Vec<Option<usize>> = vec![None; n];
@@ -528,7 +540,12 @@ impl ChainTopology {
         topo
     }
 
-    fn build(&mut self, calc: &LengthDelayCalculation<'_>, chain_items: &BTreeSet<ItemId>, default_unit_delay: f64) {
+    fn build(
+        &mut self,
+        calc: &LengthDelayCalculation<'_>,
+        chain_items: &BTreeSet<ItemId>,
+        default_unit_delay: f64,
+    ) {
         let ctx = calc.ctx();
 
         if self.chain_name.is_empty() || chain_items.is_empty() {
@@ -567,7 +584,8 @@ impl ChainTopology {
 
         // Build the graph.
         let mut graph = Graph::default();
-        let fallback_delay_per_mm = chain_bridging_delay_per_mm(ctx, &self.chain_name, default_unit_delay);
+        let fallback_delay_per_mm =
+            chain_bridging_delay_per_mm(ctx, &self.chain_name, default_unit_delay);
 
         // Collect pads belonging to chain-member nets — including ones not in
         // aChainItems (terminal pads sit on the chain but might not be in the
@@ -576,27 +594,28 @@ impl ChainTopology {
         // anchors regardless.
         let mut seen_pads: BTreeSet<ItemId> = BTreeSet::new();
 
-        let register_all_pad_layers = |graph: &mut Graph, seen_pads: &mut BTreeSet<ItemId>, pad: ItemId| {
-            let Some(pad_ref) = ctx.item(pad) else {
-                return;
+        let register_all_pad_layers =
+            |graph: &mut Graph, seen_pads: &mut BTreeSet<ItemId>, pad: ItemId| {
+                let Some(pad_ref) = ctx.item(pad) else {
+                    return;
+                };
+
+                if !seen_pads.insert(pad) {
+                    return;
+                }
+
+                add_pad_nodes(graph, ctx, pad_ref);
+
+                // Track which nodes belong to this pad for later terminal lookup.
+                let center = pad_center(ctx, pad_ref);
+                let mut list = Vec::new();
+
+                for layer in pad_cu_stack(pad_ref) {
+                    list.push(graph.add_node(center, layer));
+                }
+
+                graph.pad_nodes.insert(pad, list);
             };
-
-            if !seen_pads.insert(pad) {
-                return;
-            }
-
-            add_pad_nodes(graph, ctx, pad_ref);
-
-            // Track which nodes belong to this pad for later terminal lookup.
-            let center = pad_center(ctx, pad_ref);
-            let mut list = Vec::new();
-
-            for layer in pad_cu_stack(pad_ref) {
-                list.push(graph.add_node(center, layer));
-            }
-
-            graph.pad_nodes.insert(pad, list);
-        };
 
         register_all_pad_layers(&mut graph, &mut seen_pads, terminal_a);
         register_all_pad_layers(&mut graph, &mut seen_pads, terminal_b);
@@ -666,8 +685,9 @@ impl ChainTopology {
         // Tag terminal nodes — pick any layer in the pad's LSET (the pad has zero
         // intrinsic length so any anchor layer works for path queries; tracks
         // terminating at the pad on layer L will share the same (x, y, L) node).
-        let first_pad_node =
-            |graph: &mut Graph, pad: ItemId| graph.pad_nodes.entry(pad).or_default().first().copied();
+        let first_pad_node = |graph: &mut Graph, pad: ItemId| {
+            graph.pad_nodes.entry(pad).or_default().first().copied()
+        };
 
         let root_a = first_pad_node(&mut graph, terminal_a);
         let root_b = first_pad_node(&mut graph, terminal_b);

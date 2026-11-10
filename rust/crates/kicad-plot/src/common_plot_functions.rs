@@ -21,13 +21,13 @@
 
 use std::collections::BTreeMap;
 
+use kicad_core::base_units::UNITY_SCALE;
 use kicad_core::color4d::{Color4D, EdaColorT};
 use kicad_core::page_info::PageInfo;
 use kicad_core::plot_enums::{FillT, PlotFormat};
 use kicad_core::string_utils::wx_string_split;
 use kicad_core::text_vars::{ResolutionContext, TextVarResolver};
 use kicad_core::title_block::{TitleBlock, TitleBlockClock};
-use kicad_core::base_units::UNITY_SCALE;
 use kicad_font::{Metrics, get_font};
 use kicad_geom::Vector2I;
 
@@ -230,7 +230,10 @@ pub fn plot_drawing_sheet(
                 if let Some(face) = &text.font
                     && get_font(face, text.bold, text.italic, None, false).is_outline_unavailable()
                 {
-                    plotter.state_mut().outline_font_fallbacks.push(face.clone());
+                    plotter
+                        .state_mut()
+                        .outline_font_fallbacks
+                        .push(face.clone());
                 }
 
                 let mut color = plot_color.clone();

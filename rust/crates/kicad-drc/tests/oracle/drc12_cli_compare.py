@@ -32,8 +32,10 @@ and demos without the large demos). Each tool runs on a copy of the board (with 
 `ref` caches the reference outputs (report, stdout, exit code; the date line replaced by
 <DATE>) under rust/target/drc12-cli/<path>.{rpt,json,out}. `cmp` runs kicad-rs and compares:
 
-* exact: report, JSON and stdout byte for byte after normalising the date (both tools print
-  the same version and the same file name, nothing else is normalised);
+* exact: report, JSON and stdout byte for byte after normalising the date and the UUID of
+  the board itself (`PCB` items, e.g. of `invalid_outline`: a random KIID per run in the
+  reference); both tools print the same version and the same file name, nothing else is
+  normalised;
 * filtered: the entries of the error types whose provider is not ported (UNPORTED below) are
   removed from both reports (text: the entry blocks, with the section counts recomputed;
   JSON: the array entries), the not-run section / key of the Rust reports is removed, and the
@@ -129,6 +131,15 @@ def normalise(text):
     return re.sub(r'^    "date": ".*",$', '    "date": "<DATE>",', text, flags=re.M)
 
 
+# The JSON item of the board itself (BOARD::m_Uuid is a random KIID per run in C++).
+BOARD_ITEM_UUID = re.compile(r'("description": "PCB",\n\s+"pos": \{[^}]*\},\n\s+"uuid": ")'
+                             r'[0-9a-f-]{36}"')
+
+
+def normalise_board_uuid(text):
+    return BOARD_ITEM_UUID.sub(r'\1<BOARD>"', text) if text is not None else None
+
+
 def cache_path(rel, ext):
     return os.path.join(CACHE, rel + "." + ext)
 
@@ -192,10 +203,9 @@ def parse_text(text):
 
 
 def normalise_block(block):
-    """Known model gaps, applied to both sides: the item line of the BOARD itself (`PCB`, a
-    random UUID in C++; the port's board has no UUID yet, kicad-drc DRC-23), and the item
-    order of `connection_width` (C++ std::set of item pointers: address order)."""
-    lines = [l for l in block.split("\n") if l and not re.match(r"^    @\(.*\): PCB$", l)]
+    """Known reference effect, applied to both sides: the item order of `connection_width`
+    (C++ std::set of item pointers: address order)."""
+    lines = [l for l in block.split("\n") if l]
     if block.startswith("[connection_width]"):
         lines = lines[:1] + sorted(l for l in lines[1:] if l.startswith("    @")) + \
             [l for l in lines[1:] if not l.startswith("    @")]
@@ -261,8 +271,8 @@ def filter_json(text, rel):
         for v in doc[key]:
             if "items" not in v:
                 continue
-            v["items"] = [i for i in v["items"] if i["description"] != "PCB"]
-            # drc.md 9.4 (4): items without a UUID in the file get a random one in C++
+            # drc.md 9.4 (4): items without a UUID in the file get a random one in C++ (the
+            # board itself, `PCB`, too)
             for i in v["items"]:
                 if i["uuid"] not in board_text:
                     i["uuid"] = "<generated>"
@@ -304,6 +314,7 @@ def compare(selected, rs):
 
         rs_rpt, rs_out_r, rs_code_r = run_tool(rs, rel, "report", env)
         rs_js, rs_out_j, rs_code_j = run_tool(rs, rel, "json", env)
+        ref_js, rs_js = normalise_board_uuid(ref_js), normalise_board_uuid(rs_js)
         if rs_rpt is None or rs_js is None:
             score["rs_failed"] += 1
             print("RS-FAILED", rel, rs_code_r, rs_out_r.strip()[:200])

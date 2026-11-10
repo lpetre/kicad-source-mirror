@@ -17,7 +17,9 @@ out=${GEOM_ORACLE_BUILD_DIR:-$kicad/rust/target/geom-oracle}
 
 mkdir -p "$out"
 
+# Every C++ compile runs under the machine-wide lock (PORTING.md section 7)
 # shellcheck disable=SC2046
+flock /home/user/kicad-oracle/cxx-build.lock nice -n 10 \
 ${CXX:-g++} -std=c++20 -O2 -ffp-contract=off -DWXUSINGDLL -D__WXGTK__ -DUSINGZ \
     -I "$build" \
     -I "$kicad/libs/kimath/include" \

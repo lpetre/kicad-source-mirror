@@ -263,9 +263,19 @@ impl Shape for ShapeRect {
             } else if a_location.is_some() && dist_sq == closest_dist_sq {
                 let near = side.nearest_point_seg(a_seg);
 
-                if (near - a_seg.a).squared_euclidean_norm()
-                    < (nearest - a_seg.a).squared_euclidean_norm()
-                {
+                // int subtractions, wrapping in the reference build when a nearest point of
+                // SEG::NearestPoint( SEG ) has wrapped (collinear overlaps beyond 2^30 nm,
+                // FIX-FAB-3, `coll_far` oracle section)
+                let d_near = Vector2I::new(
+                    near.x.wrapping_sub(a_seg.a.x),
+                    near.y.wrapping_sub(a_seg.a.y),
+                );
+                let d_nearest = Vector2I::new(
+                    nearest.x.wrapping_sub(a_seg.a.x),
+                    nearest.y.wrapping_sub(a_seg.a.y),
+                );
+
+                if d_near.squared_euclidean_norm() < d_nearest.squared_euclidean_norm() {
                     nearest = near;
                 }
             }

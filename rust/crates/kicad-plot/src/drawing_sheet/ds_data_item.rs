@@ -424,11 +424,11 @@ impl DsDataItem {
             CornerAnchor::RtCorner => {
                 // right top corner
                 pos.x = env.rb_corner.x - pos.x;
-                pos.y = env.lt_corner.y + pos.y;
+                pos.y += env.lt_corner.y;
             }
             CornerAnchor::LbCorner => {
                 // left bottom corner
-                pos.x = env.lt_corner.x + pos.x;
+                pos.x += env.lt_corner.x;
                 pos.y = env.rb_corner.y - pos.y;
             }
             CornerAnchor::LtCorner => {
@@ -459,10 +459,10 @@ impl DsDataItem {
             }
             CornerAnchor::RtCorner => {
                 pos.x = env.rb_corner.x - pos.x;
-                pos.y = env.lt_corner.y + pos.y;
+                pos.y += env.lt_corner.y;
             }
             CornerAnchor::LbCorner => {
-                pos.x = env.lt_corner.x + pos.x;
+                pos.x += env.lt_corner.x;
                 pos.y = env.rb_corner.y - pos.y;
             }
             CornerAnchor::LtCorner => {
@@ -476,7 +476,7 @@ impl DsDataItem {
     /// Port of `DS_DATA_ITEM::GetEndPosIU( int ii )`.
     pub fn end_pos_iu(&self, env: &DsDrawEnv, ii: i32) -> Vector2I {
         let mut pos = self.end_pos(env, ii);
-        pos = pos * env.ws_units2_iu;
+        pos *= env.ws_units2_iu;
         Vector2I::new(ki_round(pos.x), ki_round(pos.y))
     }
 
@@ -563,7 +563,8 @@ impl DsDataItem {
     /// list).
     pub fn close_contour(&mut self) {
         if let DsDataItemKind::Polygons(p) = &mut self.kind {
-            p.poly_index_end.push((p.corners.len() as u32).wrapping_sub(1));
+            p.poly_index_end
+                .push((p.corners.len() as u32).wrapping_sub(1));
         }
     }
 
@@ -586,7 +587,10 @@ impl DsDataItem {
         let to_int = |v: Vector2D| -> Vector2I {
             let min_i = i32::MIN as f64;
             let max_i = i32::MAX as f64;
-            Vector2I::new(v.x.clamp(min_i, max_i) as i32, v.y.clamp(min_i, max_i) as i32)
+            Vector2I::new(
+                v.x.clamp(min_i, max_i) as i32,
+                v.y.clamp(min_i, max_i) as i32,
+            )
         };
 
         let mut pos = to_int(p.corners[0]);
@@ -659,7 +663,7 @@ impl DsDataItem {
     /// units, truncated) of the corner `a_idx` of the repeated item `a_repeat`.
     pub fn corner_position_iu(&self, env: &DsDrawEnv, a_idx: u32, a_repeat: i32) -> Vector2I {
         let mut pos = self.corner_position(env, a_idx, a_repeat);
-        pos = pos * env.ws_units2_iu;
+        pos *= env.ws_units2_iu;
         Vector2I::new(f64_to_i32_x86(pos.x), f64_to_i32_x86(pos.y))
     }
 
@@ -675,7 +679,7 @@ impl DsDataItem {
         };
 
         let incrementer = StringIncrementer {
-            skip_iosqxz: false,         // step through every letter
+            skip_iosqxz: false,       // step through every letter
             alphabetic_max_index: -1, // no upper bound on label length
         };
 

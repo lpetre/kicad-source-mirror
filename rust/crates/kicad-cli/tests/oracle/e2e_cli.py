@@ -188,6 +188,8 @@ def not_runnable_reason(rs):
 UUID_RE = re.compile(rb"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 NOT_RUN_REPORT_RE = re.compile(rb"\*\* Checks not run \(not ported yet\) \*\*\n(    - [^\n]*\n)*\n")
 NOT_RUN_JSON_RE = re.compile(rb'\n    "checks_not_run": \[\n.*?\n    \],', re.S)
+BOARD_ITEM_UUID_RE = re.compile(rb'("description": "PCB",\n\s+"pos": \{[^}]*\},\n\s+"uuid": ")'
+                                rb'[0-9a-f-]{36}"')
 NOT_RUN_STDOUT_RE = re.compile(rb"(?m)^DRC check '[^']*' was not run: [^\n]*\n")
 
 
@@ -222,11 +224,13 @@ def compare(ref, rs):
     if stripped != rs and first_difference(ref, stripped) is None:
         return "identical-masked", "unported DRC checks listed"
 
-    # The item line of the board itself in a DRC report entry (`@(0.0000 mm, 0.0000 mm): PCB`):
-    # the port's board has no UUID (kicad-drc PORT_STATUS DRC-12 / DRC-23 gap)
-    board_line = re.compile(rb"(?m)^    @\([^)]*\): PCB\n")
-    if first_difference(mask(ref, lambda v: board_line.sub(b"", v)), stripped) is None:
-        return "identical-masked", "board item line (DRC-23 gap)" + (
+    # The UUID of the board itself in a DRC JSON item (`"description": "PCB"`): BOARD::m_Uuid
+    # is a random KIID per run in the reference (kicad-drc PORT_STATUS STAB-DRC-2)
+    def board_uuid(v):
+        return BOARD_ITEM_UUID_RE.sub(rb'\1<BOARD>"', v)
+
+    if first_difference(mask(ref, board_uuid), mask(stripped, board_uuid)) is None:
+        return "identical-masked", "board UUID" + (
             "; unported DRC checks listed" if stripped != rs else "")
 
     # Random UUIDs of items without one in the file (legacy boards; FIX-RESAVE-1)

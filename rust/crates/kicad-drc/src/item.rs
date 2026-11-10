@@ -27,7 +27,9 @@
 //! `DRC_ITEM::GetViolationLayers` (GUI: layer focus of the DRC dialog) and
 //! `DRC_ITEMS_PROVIDER::DeleteItem` (GUI).
 
+use kicad_core::units_provider::UnitsProvider;
 use kicad_core::{Kiid, NILUUID};
+use kicad_geom::math::vector2::Vector2I;
 use kicad_pcb::Board;
 use kicad_pcb::ctx::BoardCtx;
 use kicad_pcb::drc_api::*;
@@ -499,9 +501,39 @@ impl<'a> BoardRcItemResolver<'a> {
 impl ResolveItemById for BoardRcItemResolver<'_> {
     /// `BOARD_RC_ITEM_RESOLVER::doResolveItemById`.
     fn do_resolve_item_by_id(&self, kiid: &Kiid) -> Option<Box<dyn RcReportItem + '_>> {
-        self.ctx
-            .resolve(kiid)
-            .map(|item| Box::new(item) as Box<dyn RcReportItem + '_>)
+        if let Some(item) = self.ctx.resolve(kiid) {
+            return Some(Box::new(item));
+        }
+
+        // if( m_Uuid == aID ) return const_cast<BOARD*>( this ); (after every item)
+        if *kiid == self.ctx.board.uuid() {
+            return Some(Box::new(BoardAsReportItem {
+                uuid: self.ctx.board.uuid(),
+            }));
+        }
+
+        None
+    }
+}
+
+/// The `BOARD` itself as a report item (`SetItems( m_board )`, e.g. `invalid_outline`).
+struct BoardAsReportItem {
+    uuid: Kiid,
+}
+
+impl RcReportItem for BoardAsReportItem {
+    fn uuid(&self) -> Kiid {
+        self.uuid
+    }
+
+    /// `BOARD::GetPosition()`: `ZeroOffset`.
+    fn position(&self) -> Vector2I {
+        Vector2I::new(0, 0)
+    }
+
+    /// `BOARD::GetItemDescription`: `_( "PCB" )`.
+    fn item_description(&self, _units: &UnitsProvider<'_>, _full: bool) -> String {
+        "PCB".to_string()
     }
 }
 

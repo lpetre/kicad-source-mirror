@@ -1,0 +1,6 @@
+zone a FCu outlines 1
+  0 pts 90 island 0 hash f22da32a20ecbade
+zone b FCu outlines 1
+  0 pts 185 island 0 hash f08b29384bed63ab
+zone c FCu outlines 1
+  0 pts 16 island 0 hash 1bd6dee995ee9bd6
